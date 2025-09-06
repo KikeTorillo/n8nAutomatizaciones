@@ -1,0 +1,96 @@
+services:
+  # Base de datos PostgreSQL compartida
+  postgres:
+    image: postgres:17-alpine
+    container_name: postgres_db
+    restart: always
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - TZ=${TZ}
+    volumes:
+      - ./data/postgres:/var/lib/postgresql/data
+      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Servicio n8n con PostgreSQL
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_server
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "5678:5678"
+    environment:
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_DATABASE: n8n_db
+      DB_POSTGRESDB_USER: ${POSTGRES_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_HOST: postgres
+      DB_POSTGRESDB_PORT: 5432
+      N8N_HOST: 0.0.0.0
+      WEBHOOK_URL: ${WEBHOOK_URL}
+      N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL}
+      GENERIC_TIMEZONE: ${TZ}
+      TZ: ${TZ}
+    volumes:
+      - ./data/n8n:/home/node/.n8n
+    networks:
+      - backend_network
+
+  # Evolution API v2 con PostgreSQL
+  evolution_api:
+    container_name: evolution_api
+    image: atendai/evolution-api
+    restart: always
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8080"
+    environment:
+      DATABASE_ENABLED: "true"
+      DATABASE_PROVIDER: postgresql
+      DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/evolution_db"
+      AUTHENTICATION_API_KEY: ${AUTHENTICATION_API_KEY}
+      SERVER_URL: ${SERVER_URL}
+      DEL_INSTANCE: "false"
+      CACHE_REDIS_ENABLED: "false"            # Opcional: habilitar Redis si se necesita
+      CONFIG_SESSION_PHONE_VERSION: "${CONFIG_SESSION_PHONE_VERSION}"
+    volumes:
+      - ./data/evolution:/evolution/instances
+    networks:
+      - backend_network
+
+  # pgAdmin para administrar PostgreSQL
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8001:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    volumes:
+      - ./data/pgadmin:/var/lib/pgadmin
+    networks:
+      - backend_network
+
+# Configuración de redes
+networks:
+  backend_network:
+    driver: bridge

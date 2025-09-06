@@ -1,0 +1,40 @@
+{
+  "name": "n8n-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "WhatsApp Bot with n8n, DeepSeek AI Agent, and Google Calendar integration",
+  "license": "MIT",
+  "author": "Kike",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "start": "docker compose up -d",
+    "stop": "docker compose down",
+    "restart": "npm run stop && npm run start",
+    "dev": "docker compose up -d --build",
+    "dev:fresh": "docker compose down --volumes --remove-orphans && docker compose up -d --build",
+    "logs": "docker compose logs -f",
+    "logs:n8n": "docker compose logs -f n8n",
+    "logs:evolution": "docker compose logs -f evolution_api",
+    "logs:postgres": "docker compose logs -f postgres_db",
+    "status": "docker compose ps",
+    "clean": "docker compose down --volumes --remove-orphans && docker system prune -f",
+    "clean:data": "docker compose down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n && docker system prune -f",
+    "fresh:clean": "npm run clean:data && docker compose up -d --build",
+    "backup:db": "docker exec postgres_db pg_dumpall -U admin > backup_$(date +%Y%m%d_%H%M%S).sql",
+    "db:connect": "docker exec -it postgres_db psql -U admin -d postgres"
+  },
+  "keywords": [
+    "n8n",
+    "whatsapp",
+    "bot",
+    "deepseek",
+    "ai",
+    "google-calendar",
+    "docker",
+    "automation"
+  ],
+  "engines": {
+    "node": ">=18.0.0",
+    "docker": ">=20.0.0"
+  }
+}

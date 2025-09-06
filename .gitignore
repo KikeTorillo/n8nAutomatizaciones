@@ -1,0 +1,31 @@
+# Datos sensibles - No subir al repositorio
+data/postgres/
+data/n8n/
+data/evolution/
+
+# Logs
+*.log
+logs/
+
+# Variables de entorno (si las usas)
+.env
+.env.dev
+.env.prod
+data
+
+# Docker
+.docker/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporal
+tmp/
+temp/

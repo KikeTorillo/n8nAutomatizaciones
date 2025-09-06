@@ -1,0 +1,267 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -240,
+        -32
+      ],
+      "id": "3a862062-321c-4faf-b447-dab13c8f2491",
+      "name": "When chat message received",
+      "webhookId": "77ad8945-5538-4f44-8063-2029fbfd7f2d"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "documentURL": "https://docs.google.com/document/d/1xpwit_B2G8WbgzEl1RkKASztF3VfkWmx3BbL7dTUSxA/edit?tab=t.0"
+      },
+      "type": "n8n-nodes-base.googleDocs",
+      "typeVersion": 2,
+      "position": [
+        -32,
+        -32
+      ],
+      "id": "9bb27494-d8c0-4062-8f59-7c6b38b7c61b",
+      "name": "Read Google Docs",
+      "credentials": {
+        "googleDocsOAuth2Api": {
+          "id": "TViHYEHtRsqRUAYo",
+          "name": "Google Docs account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Procesar el contenido del documento\nconst content = $input.first().json.content;\n\n// Usar regex para extraer los datos\nconst titleMatch = content.match(/Titulo\\s+(.+)/i);\nconst categoryMatch = content.match(/accion|comedia|drama|terror|romance/gi);\nconst durationMatch = content.match(/(\\d+)\\s*horas?/i);\n\n// Extraer valores\nconst titulo = titleMatch ? titleMatch[1].trim() : 'No encontrado';\nconst categoria = categoryMatch ? categoryMatch[0].toLowerCase() : 'No encontrado';\nconst duracion = durationMatch ? durationMatch[0] : 'No encontrado';\n\n// Retornar datos estructurados\nreturn [{\n  json: {\n    titulo: titulo,\n    categoria: categoria,\n    duracion: duracion,\n    content: content,\n    processed: true\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        176,
+        -32
+      ],
+      "id": "f1758b21-d479-453e-8f45-79a56d03fe05",
+      "name": "Process Data"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "Crea una hoja llamada 'Datos Extraídos' y llena los datos estructurados",
+        "options": {
+          "systemMessage": "Tienes datos ya procesados y estructurados.\n\nTU TRABAJO:\n1. CREAR una nueva hoja llamada \"Datos Extraídos\"\n2. LLENAR la hoja con los datos que ya tienes estructurados\n\nDatos disponibles:\n- titulo: {{ $json.titulo }}\n- categoria: {{ $json.categoria }}\n- duracion: {{ $json.duracion }}\n\nUSA las herramientas en este orden:\n1. Create sheet con título \"Datos Extraídos\"\n2. Append row con los datos estructurados\n\nNo analices el contenido, usa directamente los datos ya procesados."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        384,
+        -32
+      ],
+      "id": "38bccd0f-f77e-4205-af38-643499649c56",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        384,
+        176
+      ],
+      "id": "29d3b77d-f253-4ff4-ae28-1d4ed245727a",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "ljbItpb9sc8jI7Sc",
+          "name": "DeepSeek account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1I5FBEO1sJmDjNdjU2OXO33odQbQJjFva2MOVpYLmCW4",
+          "mode": "list",
+          "cachedResultName": "prueba",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I5FBEO1sJmDjNdjU2OXO33odQbQJjFva2MOVpYLmCW4/edit?usp=drivesdk"
+        },
+        "title": "={{ $fromAI('Title', ``, 'string') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        720,
+        144
+      ],
+      "id": "9d359263-2fa6-47d7-a428-eb07dd7f50c9",
+      "name": "Create sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g1s698RS6vv487JY",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1I5FBEO1sJmDjNdjU2OXO33odQbQJjFva2MOVpYLmCW4",
+          "mode": "list",
+          "cachedResultName": "prueba",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1I5FBEO1sJmDjNdjU2OXO33odQbQJjFva2MOVpYLmCW4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "list"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Titulo": "={{ $('Process Data').item.json.titulo }}",
+            "Categoria": "={{ $('Process Data').item.json.categoria }}",
+            "Duracion": "={{ $('Process Data').item.json.duracion }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Titulo",
+              "displayName": "Titulo",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Categoria",
+              "displayName": "Categoria",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Duracion",
+              "displayName": "Duracion",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        832,
+        -48
+      ],
+      "id": "d303cd5b-a8e3-4914-ae70-f7d2cac4adcb",
+      "name": "Append or update row in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "g1s698RS6vv487JY",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Read Google Docs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read Google Docs": {
+      "main": [
+        [
+          {
+            "node": "Process Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Process Data": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append or update row in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "0c078cd5-8b18-4a16-9eec-c0eab6dfc69e",
+  "meta": {
+    "instanceId": "273540601caf0f354a7db8cd32f312b7f540a592af68c2a09b2f9c1978f4eb01"
+  },
+  "id": "CMWhy2d5mCWQgML1",
+  "tags": []
+}
