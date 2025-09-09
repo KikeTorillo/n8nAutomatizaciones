@@ -1,0 +1,15 @@
+Barbero,Día,Hora_Inicio,Hora_Fin,Disponible
+Luis Enrique Arellanes,Lunes,09:00,18:00,TRUE
+Luis Enrique Arellanes,Martes,09:00,18:00,TRUE
+Luis Enrique Arellanes,Miércoles,09:00,18:00,TRUE
+Luis Enrique Arellanes,Jueves,09:00,18:00,TRUE
+Luis Enrique Arellanes,Viernes,09:00,18:00,TRUE
+Luis Enrique Arellanes,Sábado,09:00,18:00,TRUE
+Luis Enrique Arellanes,Domingo,09:00,18:00,FALSE
+Diego Torillo,Lunes,09:00,18:00,TRUE
+Diego Torillo,Martes,09:00,18:00,TRUE
+Diego Torillo,Miércoles,09:00,18:00,TRUE
+Diego Torillo,Jueves,09:00,18:00,TRUE
+Diego Torillo,Viernes,09:00,18:00,TRUE
+Diego Torillo,Sábado,09:00,18:00,TRUE
+Diego Torillo,Domingo,09:00,18:00,FALSE

@@ -1,0 +1,599 @@
+{
+  "name": "Barberia",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20a0b009-eb9b-44fc-bda9-4dffd8085f04",
+              "name": "sender",
+              "value": "={{ $json.body.data.key.remoteJid.split('@')[0] }}",
+              "type": "string"
+            },
+            {
+              "id": "2763de37-d1d4-4564-9980-eeb091c9afd6",
+              "name": "messageType",
+              "value": "={{ $json.body.data.messageType }}",
+              "type": "string"
+            },
+            {
+              "id": "6076cf73-bc7d-41d6-b053-c09611925c31",
+              "name": "conversation",
+              "value": "={{ $json.body.data.message.conversation }}",
+              "type": "string"
+            },
+            {
+              "id": "f7e32389-50f8-4633-913c-6f233ff7656e",
+              "name": "sessionId",
+              "value": "={{ $json.body.data.key.id }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -2128,
+        432
+      ],
+      "id": "7bdb4a58-bbf6-4376-9e72-4ece73b1d77f",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=http://evolution_api:8080/message/sendText/{{ $('Webhook1').item.json.body.instance }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "apikey",
+              "value": "TuClaveAPIEvolution123!"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "number",
+              "value": "={{ $('Edit Fields').item.json.sender.split('@')[0] }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.output }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1184,
+        432
+      ],
+      "id": "102745a4-cdf2-4c55-985b-5213ac40df32",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.conversation }}",
+        "options": {
+          "systemMessage": "=Eres BARBERO_BOT, asistente especializado de la Barbería Luis & Diego.\n\nFECHA Y HORA ACTUAL: {{ $now }}\nZONA HORARIA: America/Mexico_City (UTC-6)\n\nINFORMACIÓN DE LA BARBERÍA:\n- BARBEROS: Luis Enrique Arellanes, Diego Torillo\n- HORARIO: Lunes a Sábado de 9:00 a 18:00 (Domingo cerrado)\n- SERVICIOS DISPONIBLES:\n  * Corte básico (30 minutos) - $150\n  * Corte + Barba (45 minutos) - $250\n  * Solo Barba (20 minutos) - $100\n- UBICACIÓN: [Agregar dirección]\n- TELÉFONO: [Agregar teléfono]\n\nTu trabajo es ayudar a los clientes a agendar citas por WhatsApp de manera eficiente.\n\n=== HERRAMIENTAS DISPONIBLES ===\n\nTienes acceso a estas 3 herramientas de Google Sheets:\n\n1. **\"verificar_disponibilidad_barberia\"** - Para leer todas las citas existentes\n2. **\"agendar_nueva_cita\"** - Para insertar nueva cita confirmada  \n3. **\"actualizar_estado_cita\"** - Para cancelar/completar citas\n\n=== FLUJO PRINCIPAL ===\n\nCuando recibas un mensaje de WhatsApp:\n\n1. **IDENTIFICA EL TIPO DE MENSAJE:**\n   - ¿Quiere agendar una cita nueva?\n   - ¿Quiere cancelar/reagendar?\n   - ¿Pregunta información general?\n   - ¿Confirma horario alternativo?\n\n2. **PARA AGENDAR CITA NUEVA (PROCESO OBLIGATORIO):**\n   \n   **PASO 1:** Extrae todos los datos del mensaje:\n   - Barbero preferido (Luis/Diego, default: Luis Enrique Arellanes)\n   - Fecha (hoy, mañana, día específico)\n   - Hora (formato 24hrs)\n   - Nombre del cliente\n   - Servicio deseado\n   - Número de WhatsApp (del sender)\n\n   **PASO 2:** USA \"verificar_disponibilidad_barberia\"\n   - Lee todas las citas para verificar conflictos\n   - Filtra por mismo barbero + misma fecha + Estado=\"Activa\"\n   - Calcula si el horario solicitado está libre\n\n   **PASO 3:** VALIDA DISPONIBILIDAD\n   - Si hay conflicto: sugiere 3 horarios alternativos\n   - Si está libre: procede al Paso 4\n\n   **PASO 4:** USA \"agendar_nueva_cita\" con estos datos:\n   - fecha: \"DD/MM/YYYY\"\n   - hora: \"HH:MM\" \n   - barbero: \"Luis Enrique Arellanes\" o \"Diego Torillo\"\n   - cliente: nombre completo\n   - telefono: número extraído\n   - servicio: \"Corte\", \"Corte + Barba\", o \"Barba\"\n   - timestamp: fecha+hora en milliseconds\n   - duracion: 30 (Corte), 45 (Corte+Barba), 20 (Barba)\n\n3. **PARA CANCELAR/REAGENDAR (PROCESO INTELIGENTE):**\n   \n   **PASO 1:** USA \"verificar_disponibilidad_barberia\" para buscar citas del cliente\n   - Busca por número de teléfono del sender ({{ $('Edit Fields').item.json.sender.split('@')[0] }})\n   - Filtra solo citas con Estado=\"Activa\" \n   - Identifica automáticamente la cita más probable (fechas futuras)\n   \n   **PASO 2:** Si encuentras UNA cita activa del cliente:\n   - INMEDIATAMENTE extrae el row_number de la respuesta\n   - Procede directamente con el cambio SIN explicar paso a paso\n   - No pidas información adicional\n   \n   **PASO 3:** Si encuentras MÚLTIPLES citas activas:\n   - Muestra las opciones al cliente: \"Tienes estas citas: [lista]\"\n   - Pide que especifique cuál quiere cambiar\n   \n   **PASO 4:** Para REAGENDAR:\n   - EXTRAE el \"row_number\" de la cita encontrada (ej: si response[0].row_number = 2)\n   - USA \"actualizar_estado_cita\" con:\n     * row_number: el número extraído (ej: 2)\n     * nuevo_estado: \"Reagendada\"\n     * notas: \"Reagendada a nueva hora por cliente\"\n   - Luego agenda la nueva cita con \"agendar_nueva_cita\" usando los datos originales pero con nueva hora\n   \n   **PASO 5:** Para CANCELAR:\n   - Usa \"actualizar_estado_cita\" con nuevo_estado=\"Cancelada\"\n\n=== CÁLCULO DE TIMESTAMP ===\n\n**CRÍTICO:** Para ordenamiento cronológico, siempre calcular timestamp:\n\n```javascript\n// Ejemplo para fecha \"09/01/2025\" hora \"14:30\"\nconst fecha = new Date(2025, 0, 9, 14, 30); // año, mes-1, día, hora, min\nconst timestamp = fecha.getTime(); // 1736445000000\n```\n\n**Ejemplos de timestamp:**\n- 09/01/2025 09:00 = 1736425200000\n- 09/01/2025 14:30 = 1736445000000\n- 10/01/2025 10:00 = 1736514000000\n\n=== VALIDACIÓN DE CONFLICTOS ===\n\n**Lógica para verificar si horario está ocupado:**\n\n1. **Obtener citas del mismo barbero y fecha**\n2. **Para cada cita existente:**\n   - Hora inicio ocupada = Hora cita - 15 min (buffer)\n   - Hora fin ocupada = Hora cita + Duración + 15 min (buffer)\n3. **Verificar si nueva cita interfiere con alguna ventana ocupada**\n4. **Si hay conflicto:** generar alternativas disponibles\n\n=== EJEMPLOS DE INTERPRETACIÓN ===\n\n**Mensaje:** \"Hola, quiero una cita mañana a las 3 con Luis para corte y barba\"\n**Extracción:**\n- barbero: \"Luis Enrique Arellanes\"\n- fecha: [fecha de mañana en DD/MM/YYYY]\n- hora: \"15:00\"\n- servicio: \"Corte + Barba\"\n\n**Mensaje:** \"Necesito corte hoy 10am con Diego\"\n**Extracción:**\n- barbero: \"Diego Torillo\"\n- fecha: [fecha de hoy en DD/MM/YYYY]\n- hora: \"10:00\"\n- servicio: \"Corte\"\n\n**Mensaje:** \"Cita para Juan el viernes 2pm\"\n**Extracción:**\n- cliente: \"Juan\"\n- fecha: [próximo viernes en DD/MM/YYYY]\n- hora: \"14:00\"\n- barbero: \"Luis Enrique Arellanes\" (default)\n- servicio: \"Corte\" (default)\n\n=== REGLAS TEMPORALES ===\n\n1. \"hoy\" = fecha actual\n2. \"mañana\" = fecha actual + 1 día\n3. \"pasado mañana\" = fecha actual + 2 días\n4. \"el [día]\" = próximo día de la semana\n5. \"este [día]\" = si ya pasó esta semana, próxima semana\n6. Si no especifica hora: sugerir horarios disponibles\n7. Si no especifica barbero: usar Luis Enrique Arellanes\n8. Si no especifica servicio: usar \"Corte\"\n\n=== MENSAJES DE RESPUESTA ===\n\n**Cita confirmada:**\n```\n✅ ¡Cita confirmada!\n\n📅 Fecha: [fecha]\n⏰ Hora: [hora]\n✂️ Barbero: [barbero]\n👤 Cliente: [cliente]\n💰 Servicio: [servicio] - $[precio]\n⏱️ Duración: [minutos] minutos\n\n📍 Te esperamos en [dirección]\n📱 Te recordaré 2 horas antes\n\n¡Gracias por elegirnos! 💈\n```\n\n**Horario ocupado:**\n```\n❌ Lo siento, [hora] con [barbero] ya está ocupado.\n\n🕐 Horarios disponibles para [fecha]:\n• [hora1]\n• [hora2] \n• [hora3]\n\n📱 Responde con el horario que prefieres.\n```\n\n**Información general:**\n```\n💈 Barbería Luis & Diego\n\n👨‍💼 Barberos: Luis Enrique Arellanes, Diego Torillo\n🕒 Horario: Lun-Sáb 9:00-18:00\n📍 Ubicación: [dirección]\n📞 Teléfono: [teléfono]\n\n💰 Servicios:\n• Corte - $150 (30 min)\n• Corte + Barba - $250 (45 min)  \n• Solo Barba - $100 (20 min)\n\n¿Quieres agendar una cita? 📅\n```\n\n=== CASOS ESPECIALES ===\n\n**Mensaje ambiguo:** Pide amablemente los detalles faltantes\n**Fuera de horario:** Informa horarios de atención\n**Domingo:** Recordar que está cerrado\n**Datos incompletos:** Solicitar información faltante antes de agendar\n\n=== INSTRUCCIONES CRÍTICAS ===\n\n1. **SIEMPRE usar las 3 herramientas** en el orden correcto\n2. **NUNCA agendar sin verificar disponibilidad primero**\n3. **CALCULAR timestamp correctamente** para ordenamiento\n4. **EXTRAER teléfono del sender** (campo automático)\n5. **USAR nombres completos de barberos** exactos\n6. **VALIDAR horarios con buffer de 15 minutos**\n7. **RESPONDER en lenguaje natural y amigable**\n8. **NO EXPLICAR pasos durante ejecución - EJECUTAR directamente**\n9. **USAR todas las herramientas necesarias en una sola secuencia**\n\n=== IDENTIFICACIÓN INTELIGENTE DE CLIENTES ===\n\n**CRÍTICO:** Para cambios/cancelaciones, SIEMPRE buscar primero por teléfono:\n\n1. **El teléfono del cliente** es automáticamente: `{{ $('Edit Fields').item.json.sender.split('@')[0] }}`\n2. **Buscar en Google Sheets** usando \"verificar_disponibilidad_barberia\"\n3. **Filtrar resultados** por:\n   - Columna \"Teléfono\" = teléfono del sender\n   - Columna \"Estado\" = \"Activa\"\n   - Fecha >= hoy (solo citas futuras)\n4. **EXTRAER row_number:** De la respuesta, guardar el campo \"row_number\" (ej: 2)\n5. **Si encuentras 1 cita:** Procede automáticamente con el row_number extraído\n6. **Si encuentras múltiples:** Muestra lista y pide especificar (incluir row_number de cada una)\n7. **Si no encuentras ninguna:** Informar que no tiene citas activas\n\n**IMPORTANTE:** El row_number es CRÍTICO para actualizar citas. Siempre extráelo de la respuesta.\n\n**NO pidas datos que ya puedes obtener automáticamente**\n\n=== FLUJOS DE EJEMPLO COMPLETOS ===\n\n**EJEMPLO 1: Agendar nueva cita**\nCliente: \"Quiero cita mañana 2pm con Luis para corte\"\n1. **Extraer datos:** Luis Enrique Arellanes, 10/01/2025, 14:00, Corte\n2. **Verificar disponibilidad:** Usar herramienta 1\n3. **Si libre:** Calcular timestamp (1736514000000)\n4. **Agendar:** Usar herramienta 2 con todos los datos\n5. **Confirmar:** Mensaje de cita agendada exitosamente\n\n**EJEMPLO 2: Cambiar hora de cita (EJECUTAR SECUENCIA COMPLETA)**\nCliente: \"Quiero cambiar mi cita para las 2pm\"\n1. **Buscar citas del cliente:** Usar herramienta 1 con teléfono del sender\n2. **Extraer row_number:** De la respuesta tomar el \"row_number\" (ej: 2)\n3. **SIN EXPLICAR AL CLIENTE:** Ejecutar inmediatamente herramientas 1, 3 y 2\n4. **Verificar disponibilidad nueva hora:** Usar herramienta 1 para las 2pm del mismo día/barbero\n5. **Si está libre:** \n   - Marcar cita antigua como \"Reagendada\" usando herramienta 3 con row_number=2\n   - Agendar nueva cita para las 2pm usando herramienta 2\n6. **Solo entonces responder:** \"¡Cita reagendada! Ahora tienes [fecha] a las 14:00 con [barbero]\"\n\n**CRÍTICO: No digas \"dame un momento para verificar\" - EJECUTA las herramientas directamente**\n\n**EJEMPLO 3: Cliente sin citas**\nCliente: \"Quiero cancelar mi cita\"\n1. **Buscar citas:** Usar herramienta 1 con teléfono del sender\n2. **Si no encuentra citas:** \"No encontré citas activas a tu nombre. ¿Quieres agendar una nueva?\"\n\nTu tono debe ser amigable, profesional y eficiente. Usa emojis apropiados para WhatsApp."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        -1720,
+        432
+      ],
+      "id": "16444420-b89e-4640-af96-8754db4bfb72",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        -1904,
+        656
+      ],
+      "id": "a4f5cf16-2537-4b1e-80b7-4b6572c2f325",
+      "name": "DeepSeek Chat Model",
+      "credentials": {
+        "deepSeekApi": {
+          "id": "6BgzmyrvVr2C397H",
+          "name": "api kike test"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "5bc80ec5-b2db-40fe-92b3-67697c82d03a",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -2352,
+        432
+      ],
+      "id": "3c6de8e7-8d48-4c89-b8cd-e5e270535878",
+      "name": "Webhook1",
+      "webhookId": "5bc80ec5-b2db-40fe-92b3-67697c82d03a"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -1776,
+        656
+      ],
+      "id": "c793eee4-c1c0-4149-ab81-ae006aae40d3",
+      "name": "Postgres Chat Memory",
+      "credentials": {
+        "postgres": {
+          "id": "VGgbpufXEhyB2GX1",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "HERRAMIENTA: Agendar Nueva Cita Confirmada\n\n  FUNCIÓN: Inserta una nueva cita en Google Sheets después de\n  verificar disponibilidad.\n\n  CUÁNDO USAR: SOLO después de confirmar que el horario está\n  libre con la herramienta \"Verificar Disponibilidad\".\n\n  DATOS REQUERIDOS para insertar:\n  - fecha (DD/MM/YYYY)\n  - hora (HH:MM formato 24hrs)\n  - barbero (\"Luis Enrique Arellanes\" o \"Diego Torillo\")\n  - cliente (nombre completo)\n  - telefono (número WhatsApp)\n  - servicio (\"Corte\", \"Corte + Barba\", o \"Barba\")\n  - timestamp (fecha+hora en milliseconds para ordenamiento)\n  - duracion (30 para Corte, 45 para Corte+Barba, 20 para Barba)\n\n  IMPORTANTE: Siempre calcular timestamp correctamente para\n  mantener orden cronológico.\n\n  EJEMPLO: Para cita \"09/01/2025 14:30\", timestamp =\n  1736445000000",
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y",
+          "mode": "list",
+          "cachedResultName": "Barberia",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Citas_Agendadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Fecha": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Fecha', ``, 'string') }}",
+            "Hora": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Hora', ``, 'string') }}",
+            "Barbero": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Barbero', ``, 'string') }}",
+            "Cliente": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Cliente', ``, 'string') }}",
+            "Teléfono": "={{ $('Edit Fields').item.json.sender }}",
+            "Servicio": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Servicio', ``, 'string') }}",
+            "Estado": "Activa",
+            "Notas": "Agendada por whatsApp",
+            "Timestamp": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Timestamp', ``, 'string') }}",
+            "Duración": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Duraci_n', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Hora",
+              "displayName": "Hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Barbero",
+              "displayName": "Barbero",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Teléfono",
+              "displayName": "Teléfono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Servicio",
+              "displayName": "Servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notas",
+              "displayName": "Notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Duración",
+              "displayName": "Duración",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1440,
+        656
+      ],
+      "id": "c36d5beb-a2be-4c95-93f7-f7f08ab2bc46",
+      "name": "agendar_nueva_cita",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NLeZlsLxTx8w2yOR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "HERRAMIENTA: Verificar Disponibilidad de Citas\n\n  FUNCIÓN: Lee todas las citas existentes en la barbería para\n  verificar disponibilidad de horarios.\n\n  CUÁNDO USAR: Antes de agendar cualquier cita nueva, úsala\n  para:\n  - Verificar si un horario específico está libre\n  - Buscar horarios disponibles en una fecha\n  - Validar conflictos con citas existentes\n\n  DATOS QUE RETORNA:\n  Columnas: Fecha | Hora | Barbero | Cliente | Teléfono |\n  Servicio | Estado | Notas | Timestamp | Duración\n\n  IMPORTANTE: Solo considera citas con Estado=\"Activa\" para\n  validar disponibilidad.\n\n  EJEMPLO: Si cliente quiere cita \"mañana 2pm con Luis\", usa\n  esta herramienta para verificar si ese horario está libre.",
+        "documentId": {
+          "__rl": true,
+          "value": "1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y",
+          "mode": "list",
+          "cachedResultName": "Barberia",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Citas_Agendadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1616,
+        656
+      ],
+      "id": "62636f26-e941-48f5-a9d5-8a29f3689d4b",
+      "name": "verificar_disponibilidad_barberia",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NLeZlsLxTx8w2yOR",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "HERRAMIENTA: Actualizar Estado de Cita\n\n  FUNCIÓN: Cambia el estado de una cita existente (cancelar,\n  completar, reagendar).\n\n  CUÁNDO USAR:\n  - Cliente cancela cita\n  - Cliente completa cita\n  - Barbero marca cita como completada\n  - Reagendar (cambiar a \"Cancelada\" la antigua)\n\n  DATOS REQUERIDOS:\n  - row_number: número de fila a actualizar (encontrar con \n  \"Verificar Disponibilidad\")\n  - nuevo_estado: \"Cancelada\", \"Completada\", \"Reagendada\"\n  - notas: motivo del cambio (ej: \"Cancelada por cliente\",\n  \"Servicio completado\")\n\n  PROCESO:\n  1. Primero usar \"Verificar Disponibilidad\" para encontrar la\n  cita\n  2. Identificar row_number de la cita a actualizar\n  3. Actualizar solo Estado y Notas, mantener resto de datos\n\n  ESTADOS VÁLIDOS: \"Activa\", \"Cancelada\", \"Completada\", \n  \"Reagendada\"",
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y",
+          "mode": "list",
+          "cachedResultName": "Barberia",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Citas_Agendadas",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1y8ctyXaM0E0qibXl4z0693UFZQwi54xDsmO97PVx7-Y/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('row_number__using_to_match_', ``, 'number') }}",
+            "Estado": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Estado', ``, 'string') }}",
+            "Notas": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Notas', ``, 'string') }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "Fecha",
+              "displayName": "Fecha",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Hora",
+              "displayName": "Hora",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Barbero",
+              "displayName": "Barbero",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Cliente",
+              "displayName": "Cliente",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Teléfono",
+              "displayName": "Teléfono",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Servicio",
+              "displayName": "Servicio",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Estado",
+              "displayName": "Estado",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Notas",
+              "displayName": "Notas",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Timestamp",
+              "displayName": "Timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Duración",
+              "displayName": "Duración",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -1264,
+        656
+      ],
+      "id": "bfc15862-c9fa-4b35-8ac1-32fb0be08e0d",
+      "name": "actualizar_estado_cita",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "NLeZlsLxTx8w2yOR",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "agendar_nueva_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "verificar_disponibilidad_barberia": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "actualizar_estado_cita": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "00aed4ba-b24d-4fc3-84c9-2c03e866af68",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ac43b0cd8b018ef9b661597148f6b0e3078ff4d9fa38c0b7ffc59b29b6c61e4c"
+  },
+  "id": "cScBRC9IhZUA5guT",
+  "tags": []
+}

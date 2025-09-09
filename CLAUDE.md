@@ -1,6 +1,6 @@
-# QWEN.md
+# CLAUDE.md
 
-Este archivo proporciona orientación a Qwen cuando trabaja con código en este repositorio.
+Este archivo proporciona orientación a Claude Code (claude.ai/code) cuando trabaja con código en este repositorio.
 
 ## Preferencia de Idioma
 
