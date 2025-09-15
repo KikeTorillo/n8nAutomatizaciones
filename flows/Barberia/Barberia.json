@@ -30,10 +30,10 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        224,
-        648
+        144,
+        760
       ],
-      "id": "bd7d8f93-23f6-4726-bf9e-ffca99b18226",
+      "id": "46e1b5bb-6c9b-40cb-a900-15e96d79be12",
       "name": "Edit Fields"
     },
     {
@@ -71,10 +71,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        0,
-        224
+        -80,
+        336
       ],
-      "id": "5890f363-8827-4f42-8271-1ab17ec04a7e",
+      "id": "5ede2c78-8b41-4110-a534-847f23bce4c0",
       "name": "HTTP Request",
       "disabled": true
     },
@@ -83,16 +83,16 @@
         "promptType": "define",
         "text": "={{ $('Redis1').item.json.propertyName.join(\" \") }}",
         "options": {
-          "systemMessage": "=Eres BARBERO_BOT, asistente especializado de la Barbería suavecito.\n\nFECHA Y HORA ACTUAL: {{ $now }}\nZONA HORARIA: America/Mexico_City (UTC-6)\n\nINFORMACIÓN DE LA BARBERÍA:\n- BARBEROS: Luis Enrique Arellanes, Diego Torillo\n- HORARIO: Lunes a Sábado de 9:00 a 18:00 (Domingo cerrado)\n- SERVICIOS DISPONIBLES:\n  * Corte (30 minutos) - $150\n  * Corte + Barba (45 minutos) - $250\n  * Solo Barba (20 minutos) - $100\n\nTu trabajo es ayudar a los clientes a agendar citas por redes sociales de manera eficiente.\n\n=== HERRAMIENTAS DISPONIBLES ===\n\nTienes acceso a estas 3 herramientas de Google Sheets:\n\n1. **\"verificar_disponibilidad_barberia\"** - Para leer todas las citas existentes\n2. **\"agendar_nueva_cita\"** - Para insertar nueva cita confirmada  \n3. **\"actualizar_estado_cita\"** - Para cancelar/completar citas\n\n=== FLUJO PRINCIPAL ===\n\n**IMPORTANTE - CONTROL DE CONVERSACIÓN:**\n- SOLO responde al mensaje más reciente o relevante\n- Si hay múltiples saludos consecutivos, responde UNA SOLA VEZ al último\n- Si hay mensajes duplicados o repetitivos, ignora los anteriores y responde solo al más reciente\n- Usa la memoria del hilo de conversación para evitar preguntar información ya proporcionada\n\nCuando recibas un mensaje:\n\n1. **IDENTIFICA EL TIPO DE MENSAJE:**\n   - ¿Quiere agendar una cita nueva?\n   - ¿Quiere cancelar/reagendar?\n   - ¿Pregunta información general?\n   - ¿Confirma horario alternativo?\n   - ¿Solo saluda? (responder UNA VEZ por sesión de saludo)\n\n2. **PARA AGENDAR CITA NUEVA (PROCESO OBLIGATORIO):**\n   \n   **PASO 1:** Extrae y VALIDA todos los datos del mensaje:\n   - Barbero preferido (Luis/Diego, default: Luis Enrique Arellanes)\n   - Fecha (hoy, mañana, día específico) (OBLIGATORIO)\n   - Hora (formato 24hrs) (OBLIGATORIO)\n   - Nombre del cliente (OBLIGATORIO)\n   - Servicio deseado (OBLIGATORIO)\n\n   **PASO 2:** USA \"verificar_disponibilidad_barberia\"\n   - Lee todas las citas para verificar conflictos\n   - Filtra por mismo barbero + misma fecha + Estado=\"Activa\"\n   - Calcula si el horario solicitado está libre\n\n   **PASO 3:** VALIDA DISPONIBILIDAD\n   - Si hay conflicto: sugiere 3 horarios alternativos\n   - Si está libre: procede al Paso 4\n\n   **PASO 4:** USA \"agendar_nueva_cita\" con estos datos:\n   - fecha: \"DD/MM/YYYY\"\n   - hora: \"HH:MM\" \n   - barbero: \"Luis Enrique Arellanes\" o \"Diego Torillo\"\n   - cliente: nombre extraido\n   - servicio: \"Corte\", \"Corte + Barba\", o \"Barba\"\n   - timestamp: fecha+hora en milliseconds\n   - duracion: 30 (Corte), 45 (Corte+Barba), 20 (Barba)\n\n=== CONTROL DE SESIÓN Y MEMORIA ===\n\n**VALIDACIÓN DE MENSAJES:**\n- Mantén el contexto completo de la conversación en memoria\n- Identifica el ÚLTIMO mensaje relevante como punto de interacción actual\n- Para saludos múltiples: responde SOLO UNA VEZ al saludo más reciente\n- Para solicitudes de cita: usa toda la información acumulada en el hilo\n\n**MANEJO DE DUPLICADOS:**\n- Si detectas mensajes idénticos o muy similares consecutivos, procesa SOLO el último\n- Evita respuestas múltiples a la misma intención\n- Usa el historial para no repetir preguntas ya respondidas\n\n**EJEMPLO:**\n- Usuario: \"hola\" \"hola\" \"hola\" → Responder UNA vez: \"¡Hola! ¿En qué puedo ayudarte con tu cita en Barbería Suavecito?\"\n- Usuario ya dio nombre → No volver a preguntar el nombre en la misma sesión"
+          "systemMessage": "=Eres BARBERO_BOT, asistente especializado de la Barbería suavecito.\n\nFECHA Y HORA ACTUAL: {{ $now }}\nZONA HORARIA: America/Mexico_City (UTC-6)\n\nINFORMACIÓN DE LA BARBERÍA:\n- BARBEROS: Luis Enrique Arellanes, Diego Torillo\n- HORARIO: Lunes a Sábado de 9:00 a 18:00 (Domingo cerrado)\n- SERVICIOS DISPONIBLES:\n  * Corte (30 minutos) - $150\n  * Corte + Barba (45 minutos) - $250\n  * Solo Barba (20 minutos) - $100\n\nTu trabajo es ayudar a los clientes a agendar citas por redes sociales de manera eficiente.\n\n=== HERRAMIENTAS DISPONIBLES ===\n\nTienes acceso a estas 3 herramientas de Google Sheets:\n\n1. **\"verificar_disponibilidad_barberia\"** - Para leer todas las citas existentes\n2. **\"agendar_nueva_cita\"** - Para insertar nueva cita confirmada  \n3. **\"actualizar_estado_cita\"** - Para cancelar/completar citas\n\n=== FLUJO PRINCIPAL ===\n\n**IMPORTANTE - CONTROL DE CONVERSACIÓN:**\n- Usa la memoria del hilo de conversación para evitar preguntar información ya proporcionada\n\nCuando recibas un mensaje:\n\n1. **IDENTIFICA EL TIPO DE MENSAJE:**\n   - ¿Quiere agendar una cita nueva?\n   - ¿Quiere cancelar/reagendar?\n   - ¿Pregunta información general?\n   - ¿Confirma horario alternativo?\n   - ¿Solo saluda? (responder UNA VEZ por sesión de saludo)\n\n2. **PARA AGENDAR CITA NUEVA (PROCESO OBLIGATORIO):**\n   \n   **PASO 1:** Extrae y VALIDA todos los datos del mensaje:\n   - Barbero preferido (Luis/Diego, default: Luis Enrique Arellanes)\n   - Fecha (hoy, mañana, día específico) (OBLIGATORIO)\n   - Hora (formato 24hrs) (OBLIGATORIO)\n   - Nombre del cliente (OBLIGATORIO)\n   - Servicio deseado (OBLIGATORIO)\n\n   **PASO 2:** USA \"verificar_disponibilidad_barberia\"\n   - Lee todas las citas para verificar conflictos\n   - Filtra por mismo barbero + misma fecha + Estado=\"Activa\"\n   - Calcula si el horario solicitado está libre\n\n   **PASO 3:** VALIDA DISPONIBILIDAD\n   - Si hay conflicto: sugiere 3 horarios alternativos\n   - Si está libre: procede al Paso 4\n\n   **PASO 4:** USA \"agendar_nueva_cita\" con estos datos:\n   - fecha: \"DD/MM/YYYY\"\n   - hora: \"HH:MM\" \n   - barbero: \"Luis Enrique Arellanes\" o \"Diego Torillo\"\n   - cliente: nombre extraido\n   - servicio: \"Corte\", \"Corte + Barba\", o \"Barba\"\n   - timestamp: fecha+hora en milliseconds\n   - duracion: 30 (Corte), 45 (Corte+Barba), 20 (Barba)"
         }
       },
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 2.2,
       "position": [
-        1752,
-        552
+        1672,
+        664
       ],
-      "id": "1616e97e-534d-434c-bde3-4b963812470e",
+      "id": "a32b6567-69cb-4287-9ec3-432cce759139",
       "name": "AI Agent"
     },
     {
@@ -102,14 +102,14 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
       "typeVersion": 1,
       "position": [
-        1568,
-        776
+        1488,
+        888
       ],
-      "id": "3a124d66-f66a-4df0-ab2f-07d1f0617ce1",
+      "id": "47b070c2-56c1-40fb-a152-e01b976f5903",
       "name": "DeepSeek Chat Model",
       "credentials": {
         "deepSeekApi": {
-          "id": "H8ytwrlf66QWd6dY",
+          "id": "X4UDNzCzMtE1TKqv",
           "name": "DeepSeek account"
         }
       }
@@ -123,10 +123,10 @@
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2.1,
       "position": [
-        0,
-        0
+        -80,
+        112
       ],
-      "id": "190d1d05-825a-4b52-9077-1dc80ec517d0",
+      "id": "a9ab51a0-67cf-4f18-828b-c8f4a76614b0",
       "name": "Webhook1",
       "webhookId": "5bc80ec5-b2db-40fe-92b3-67697c82d03a",
       "disabled": true
@@ -265,14 +265,14 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.7,
       "position": [
-        1824,
-        776
+        1744,
+        888
       ],
-      "id": "e968ffeb-5d22-4e63-934a-e5dcd885d493",
+      "id": "a877056b-91d8-44fc-bf09-576bae20fa4f",
       "name": "agendar_nueva_cita",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "ovfzzLNUvqsxjH0R",
+          "id": "sZJkL7oy9zcIS4FK",
           "name": "Google Sheets account"
         }
       }
@@ -300,14 +300,14 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.7,
       "position": [
-        1952,
-        776
+        1872,
+        888
       ],
-      "id": "d3ef7983-8ef0-4c92-bbc4-f2d3f8f2373a",
+      "id": "8a0bfcc8-3971-4d23-ab7c-a0eb0aa1b42d",
       "name": "verificar_disponibilidad_barberia",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "ovfzzLNUvqsxjH0R",
+          "id": "sZJkL7oy9zcIS4FK",
           "name": "Google Sheets account"
         }
       }
@@ -460,14 +460,14 @@
       "type": "n8n-nodes-base.googleSheetsTool",
       "typeVersion": 4.7,
       "position": [
-        2080,
-        776
+        2000,
+        888
       ],
-      "id": "ce47ff26-00f5-4980-a242-5e106a3ecd23",
+      "id": "8ba1fa33-ab88-456a-9f48-459130bd9512",
       "name": "actualizar_estado_cita",
       "credentials": {
         "googleSheetsOAuth2Api": {
-          "id": "ovfzzLNUvqsxjH0R",
+          "id": "sZJkL7oy9zcIS4FK",
           "name": "Google Sheets account"
         }
       }
@@ -482,15 +482,15 @@
       "type": "n8n-nodes-base.telegramTrigger",
       "typeVersion": 1.2,
       "position": [
-        0,
-        648
+        -80,
+        760
       ],
-      "id": "e872ba53-029b-4f1a-9221-78b6b383a4c2",
+      "id": "a242c7d8-c020-40d2-90b4-59f4a5bb7a9c",
       "name": "Telegram Trigger",
       "webhookId": "283c4db9-3815-432c-a162-1d6f0909e82d",
       "credentials": {
         "telegramApi": {
-          "id": "HNabKLD65krlpf8i",
+          "id": "9t8epX5nziFJ93dh",
           "name": "Telegram account"
         }
       }
@@ -504,15 +504,15 @@
       "type": "n8n-nodes-base.telegram",
       "typeVersion": 1.2,
       "position": [
-        2288,
-        552
+        2208,
+        664
       ],
-      "id": "e32020bd-ac55-4e40-87bc-d3623a313f53",
+      "id": "b08156ed-28d7-4895-be64-702d6704219b",
       "name": "Send a text message",
       "webhookId": "fae227d9-91cb-4d40-832e-2c2bbb1e5a46",
       "credentials": {
         "telegramApi": {
-          "id": "HNabKLD65krlpf8i",
+          "id": "9t8epX5nziFJ93dh",
           "name": "Telegram account"
         }
       }
@@ -527,14 +527,14 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        448,
-        648
+        368,
+        760
       ],
-      "id": "2f7f4e4d-f6ae-438d-89b8-29326f218237",
+      "id": "99a73d5e-1de0-474c-b1c3-9abe150b4e5e",
       "name": "Redis",
       "credentials": {
         "redis": {
-          "id": "gUqV6KKVvaBoRg42",
+          "id": "HH6xe8bsloDby31m",
           "name": "Redis account"
         }
       }
@@ -546,10 +546,10 @@
       "type": "n8n-nodes-base.wait",
       "typeVersion": 1.1,
       "position": [
-        672,
-        648
+        592,
+        760
       ],
-      "id": "b71ae138-f2b9-4b12-a212-5ce5c088402f",
+      "id": "0e74c4d4-ee8a-4dfa-b296-ea78d6b65a45",
       "name": "Wait",
       "webhookId": "ff194028-6953-4cea-9cda-4c009d3a687c"
     },
@@ -562,14 +562,14 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        896,
-        648
+        816,
+        760
       ],
-      "id": "fb1e5dcd-f1b0-40ba-bf2e-6e7d10b79d7e",
+      "id": "cc80f240-d40d-4d78-845f-2b575849495c",
       "name": "Redis1",
       "credentials": {
         "redis": {
-          "id": "gUqV6KKVvaBoRg42",
+          "id": "HH6xe8bsloDby31m",
           "name": "Redis account"
         }
       }
@@ -602,10 +602,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.2,
       "position": [
-        1120,
-        648
+        1040,
+        760
       ],
-      "id": "c2adc91e-5677-44a1-b8ba-eb353fd04bc1",
+      "id": "ff9e4ca9-d343-4493-b39a-c160426a3eb3",
       "name": "If"
     },
     {
@@ -613,10 +613,10 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [
-        1344,
-        744
+        1264,
+        856
       ],
-      "id": "030b6f71-808e-49cc-8fda-14fd998a4dd5",
+      "id": "a6b14eeb-5e19-4553-b46a-ca569c91e9b5",
       "name": "No Operation, do nothing"
     },
     {
@@ -627,14 +627,14 @@
       "type": "n8n-nodes-base.redis",
       "typeVersion": 1,
       "position": [
-        1344,
-        552
+        1264,
+        664
       ],
-      "id": "cac06cd5-5e12-4435-97e5-dfce33ca3c8a",
+      "id": "e61e2dae-5b2e-4290-a124-1a4cb761f1a3",
       "name": "Redis2",
       "credentials": {
         "redis": {
-          "id": "gUqV6KKVvaBoRg42",
+          "id": "HH6xe8bsloDby31m",
           "name": "Redis account"
         }
       }
@@ -647,14 +647,14 @@
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        1696,
-        776
+        1616,
+        888
       ],
-      "id": "8700d231-930d-499c-b6ff-a122db8aa7a4",
+      "id": "9494e316-8aec-41dc-ad2b-b52bc3df55de",
       "name": "Postgres Chat Memory",
       "credentials": {
         "postgres": {
-          "id": "31UeekgJd9Dxr9eL",
+          "id": "RT6uUkIS6irS5VZo",
           "name": "Postgres account"
         }
       }
@@ -817,11 +817,11 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "d7b3de4c-d63b-4cf1-890e-ed875d7f1da1",
+  "versionId": "7690d85f-0e11-4c91-afd9-f0eb1b0e3385",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "e1ced58e1fd8c7afefe8506d67fc257f88f98993670ec4135680d93bf1535008"
   },
-  "id": "5DoxlEovq9xi7ATz",
+  "id": "GfXCndwTdKKSWDw6",
   "tags": []
 }
