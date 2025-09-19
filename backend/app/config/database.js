@@ -3,6 +3,9 @@
  * Usa pools de conexiones PostgreSQL nativas para máximo rendimiento
  */
 
+// Cargar variables de entorno
+require('dotenv').config();
+
 const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
@@ -19,10 +22,10 @@ class DatabaseConfig {
     // Pool principal SaaS
     this.pools.saas = new Pool({
       host: process.env.DB_HOST,
-      port: process.env.DB_PORT,
+      port: parseInt(process.env.DB_PORT),
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
+      password: String(process.env.DB_PASSWORD),
       max: 20,              // Máximo 20 conexiones
       min: 5,               // Mínimo 5 conexiones
       idleTimeoutMillis: 30000,
@@ -33,10 +36,10 @@ class DatabaseConfig {
     // Pool para n8n (sincronización)
     this.pools.n8n = new Pool({
       host: process.env.N8N_DB_HOST,
-      port: process.env.N8N_DB_PORT,
+      port: parseInt(process.env.N8N_DB_PORT),
       database: process.env.N8N_DB_NAME,
       user: process.env.N8N_DB_USER,
-      password: process.env.N8N_DB_PASSWORD,
+      password: String(process.env.N8N_DB_PASSWORD),
       max: 10,
       min: 2,
       idleTimeoutMillis: 30000,
@@ -47,10 +50,10 @@ class DatabaseConfig {
     // Pool para Evolution API (WhatsApp)
     this.pools.evolution = new Pool({
       host: process.env.EVOLUTION_DB_HOST,
-      port: process.env.EVOLUTION_DB_PORT,
+      port: parseInt(process.env.EVOLUTION_DB_PORT),
       database: process.env.EVOLUTION_DB_NAME,
       user: process.env.EVOLUTION_DB_USER,
-      password: process.env.EVOLUTION_DB_PASSWORD,
+      password: String(process.env.EVOLUTION_DB_PASSWORD),
       max: 8,
       min: 2,
       idleTimeoutMillis: 30000,
@@ -61,10 +64,10 @@ class DatabaseConfig {
     // Pool para Chat Memories (IA)
     this.pools.chat = new Pool({
       host: process.env.CHAT_DB_HOST,
-      port: process.env.CHAT_DB_PORT,
+      port: parseInt(process.env.CHAT_DB_PORT),
       database: process.env.CHAT_DB_NAME,
       user: process.env.CHAT_DB_USER,
-      password: process.env.CHAT_DB_PASSWORD,
+      password: String(process.env.CHAT_DB_PASSWORD),
       max: 5,
       min: 1,
       idleTimeoutMillis: 30000,
@@ -287,4 +290,32 @@ class DatabaseConfig {
 // Singleton
 const database = new DatabaseConfig();
 
-module.exports = database;
+/**
+ * Función helper para obtener una conexión de la base de datos principal (SaaS)
+ * Compatible con la interfaz esperada por los modelos
+ * @returns {Promise<Object>} Cliente de base de datos
+ */
+async function getDb() {
+  const pool = database.getPool('saas');
+  return await pool.connect();
+}
+
+/**
+ * Función helper para obtener el pool principal directamente
+ * @returns {Pool} Pool de conexiones SaaS
+ */
+function getPool() {
+  return database.getPool('saas');
+}
+
+module.exports = {
+  database,
+  getDb,
+  getPool,
+  // Exportar también las funciones principales del database
+  query: (query, params, tenantId) => database.query(query, params, tenantId),
+  queryDatabase: (db, query, params) => database.queryDatabase(db, query, params),
+  transaction: (callback, tenantId) => database.transaction(callback, tenantId),
+  healthCheck: () => database.healthCheck(),
+  close: () => database.close()
+};

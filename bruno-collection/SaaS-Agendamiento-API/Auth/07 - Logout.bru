@@ -1,0 +1,41 @@
+meta {
+  name: 07 - Logout
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/auth/logout
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "refreshToken": "{{refreshToken}}"
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should clear tokens", function() {
+    bru.setVar("accessToken", "");
+    bru.setVar("refreshToken", "");
+  });
+}

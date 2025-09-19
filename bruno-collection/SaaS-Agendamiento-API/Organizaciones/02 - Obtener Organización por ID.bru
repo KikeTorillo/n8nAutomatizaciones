@@ -1,0 +1,60 @@
+meta {
+  name: 02 - Obtener Organización por ID
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/v1/organizaciones/{{organizacionId}}
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+  
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+  
+  test("Response should contain organization data", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data');
+    expect(body.data).to.be.an('object');
+  });
+  
+  test("Organization should have all required fields", function() {
+    const body = res.getBody();
+    const org = body.data;
+    
+    expect(org).to.have.property('id');
+    expect(org).to.have.property('codigo_tenant');
+    expect(org).to.have.property('slug');
+    expect(org).to.have.property('nombre_comercial');
+    expect(org).to.have.property('tipo_industria');
+    expect(org).to.have.property('email_admin');
+    expect(org).to.have.property('activo');
+    expect(org).to.have.property('suspendido');
+    expect(org).to.have.property('plan_actual');
+    expect(org).to.have.property('fecha_registro');
+    expect(org).to.have.property('creado_en');
+    expect(org).to.have.property('actualizado_en');
+  });
+  
+  test("Organization ID should match requested", function() {
+    const body = res.getBody();
+    const requestedId = parseInt(bru.getVar("organizacionId"));
+    expect(body.data.id).to.equal(requestedId);
+  });
+}

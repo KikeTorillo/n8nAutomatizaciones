@@ -1,0 +1,45 @@
+meta {
+  name: 05 - Update Profile
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/{{apiVersion}}/auth/profile
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "nombre": "Nombre Actualizado",
+    "apellidos": "Apellidos Actualizados",
+    "telefono": "+9876543210",
+    "zona_horaria": "America/Mexico_City",
+    "idioma": "es"
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain updated user data", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('usuario');
+  });
+}

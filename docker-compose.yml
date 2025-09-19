@@ -9,9 +9,18 @@ services:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       TZ: ${TZ}
+      # Variables para contraseñas de usuarios específicos
+      SAAS_APP_PASSWORD: ${SAAS_APP_PASSWORD}
+      N8N_APP_PASSWORD: ${N8N_APP_PASSWORD}
+      EVOLUTION_APP_PASSWORD: ${EVOLUTION_APP_PASSWORD}
+      READONLY_USER_PASSWORD: ${READONLY_USER_PASSWORD}
+      INTEGRATION_USER_PASSWORD: ${INTEGRATION_USER_PASSWORD}
     volumes:
       - ./data/postgres:/var/lib/postgresql/data
       - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh
+      - ./sql:/docker-entrypoint-initdb.d/sql
+    ports:
+      - "5432:5432"
     networks:
       - backend_network
     healthcheck:
@@ -46,8 +55,8 @@ services:
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_DATABASE: n8n_db
-      DB_POSTGRESDB_USER: ${POSTGRES_USER}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_USER: n8n_app
+      DB_POSTGRESDB_PASSWORD: ${N8N_APP_PASSWORD}
       DB_POSTGRESDB_HOST: postgres
       DB_POSTGRESDB_PORT: 5432
       EXECUTIONS_MODE: "queue"
@@ -82,8 +91,8 @@ services:
     environment:
       DB_TYPE: postgresdb
       DB_POSTGRESDB_DATABASE: n8n_db
-      DB_POSTGRESDB_USER: ${POSTGRES_USER}
-      DB_POSTGRESDB_PASSWORD: ${POSTGRES_PASSWORD}
+      DB_POSTGRESDB_USER: n8n_app
+      DB_POSTGRESDB_PASSWORD: ${N8N_APP_PASSWORD}
       DB_POSTGRESDB_HOST: postgres
       DB_POSTGRESDB_PORT: 5432
       EXECUTIONS_MODE: "queue"
@@ -120,7 +129,7 @@ services:
     environment:
       DATABASE_ENABLED: "true"
       DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/evolution_db"
+      DATABASE_CONNECTION_URI: "postgresql://evolution_app:${EVOLUTION_APP_PASSWORD}@postgres:5432/evolution_db"
       AUTHENTICATION_API_KEY: ${AUTHENTICATION_API_KEY}
       SERVER_URL: ${SERVER_URL}
       DEL_INSTANCE: "false"

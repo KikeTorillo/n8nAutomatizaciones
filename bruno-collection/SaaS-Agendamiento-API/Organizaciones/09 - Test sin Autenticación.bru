@@ -1,0 +1,31 @@
+meta {
+  name: 09 - Test sin Autenticación
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/v1/organizaciones
+  body: none
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Status should be 401", function() {
+    expect(res.getStatus()).to.equal(401);
+  });
+
+  test("Response should contain success false", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', false);
+  });
+
+  test("Should require authentication", function() {
+    const body = res.getBody();
+    expect(body.message).to.include('autenticación requerido');
+  });
+}

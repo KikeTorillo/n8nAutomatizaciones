@@ -1,0 +1,74 @@
+meta {
+  name: 04 - Actualizar Organización
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/v1/organizaciones/{{newOrganizacionId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre_comercial": "Bruno Test Organización ACTUALIZADA",
+    "telefono": "+573001234567",
+    "email_admin": "updated@bruno-collection.com"
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain updated organization", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data');
+    expect(body.data).to.be.an('object');
+  });
+
+  test("Organization should have updated fields", function() {
+    const body = res.getBody();
+    const org = body.data;
+    
+    expect(org).to.have.property('nombre_comercial', 'Bruno Test Organización ACTUALIZADA');
+    expect(org).to.have.property('telefono', '+573001234567');
+    expect(org).to.have.property('email_admin', 'updated@bruno-collection.com');
+  });
+
+  test("Should update timestamp", function() {
+    const body = res.getBody();
+    const org = body.data;
+    
+    const createdAt = new Date(org.creado_en);
+    const updatedAt = new Date(org.actualizado_en);
+    
+    expect(updatedAt.getTime()).to.be.greaterThan(createdAt.getTime());
+  });
+
+  test("Should preserve ID and other fields", function() {
+    const body = res.getBody();
+    const org = body.data;
+    const expectedId = parseInt(bru.getVar("newOrganizacionId"));
+    
+    expect(org.id).to.equal(expectedId);
+    expect(org).to.have.property('codigo_tenant');
+    expect(org).to.have.property('slug');
+    expect(org).to.have.property('activo', true);
+  });
+}

@@ -1,0 +1,63 @@
+meta {
+  name: 03 - Register
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/register
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "testbruno@ejemplo.com",
+    "password": "Test123456",
+    "nombre": "Usuario",
+    "apellidos": "De Prueba",
+    "telefono": "+525555123456",
+    "rol": "super_admin"
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain user data", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('usuario');
+    const usuario = body.data.usuario;
+    expect(usuario).to.have.property('id');
+    expect(usuario).to.have.property('email');
+    expect(usuario).to.have.property('nombre');
+  });
+
+  test("User should not contain password", function() {
+    const body = res.getBody();
+    const usuario = body.data.usuario;
+    expect(usuario).to.not.have.property('password');
+    expect(usuario).to.not.have.property('password_hash');
+  });
+
+  test("Should handle phone validation", function() {
+    const body = res.getBody();
+    if (!body.success && body.errors) {
+      const phoneError = body.errors.find(e => e.path === 'telefono');
+      if (phoneError) {
+        console.log('Phone validation error:', phoneError.msg);
+      }
+    }
+  });
+}

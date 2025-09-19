@@ -1,0 +1,64 @@
+meta {
+  name: 07 - Crear Organización Datos Inválidos
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/organizaciones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre_comercial": "A",
+    "configuracion_industria": "industria_inexistente",
+    "email_admin": "email-invalido",
+    "telefono": "123"
+  }
+}
+
+tests {
+  test("Status should be 400", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Response should contain success false", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', false);
+  });
+
+  test("Response should contain validation errors", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('errors');
+    expect(body.errors).to.be.an('array');
+    expect(body.errors.length).to.be.greaterThan(0);
+  });
+
+  test("Should validate nombre_comercial length", function() {
+    const body = res.getBody();
+    const nameError = body.errors.find(err => err.path === 'nombre_comercial');
+    expect(nameError).to.not.be.undefined;
+  });
+
+  test("Should validate configuracion_industria enum", function() {
+    const body = res.getBody();
+    const industryError = body.errors.find(err => err.path === 'configuracion_industria');
+    expect(industryError).to.not.be.undefined;
+  });
+
+  test("Should validate email format", function() {
+    const body = res.getBody();
+    const emailError = body.errors.find(err => err.path === 'email_admin');
+    expect(emailError).to.not.be.undefined;
+  });
+}

@@ -1,0 +1,74 @@
+meta {
+  name: 03 - Crear Organización
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/v1/organizaciones
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre_comercial": "Bruno Test Organización",
+    "configuracion_industria": "consultorio_medico",
+    "email_admin": "test@bruno-collection.com",
+    "telefono": "+573009999999"
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain created organization", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('data');
+    expect(body.data).to.be.an('object');
+  });
+
+  test("Created organization should have correct data", function() {
+    const body = res.getBody();
+    const org = body.data;
+    
+    expect(org).to.have.property('id');
+    expect(org).to.have.property('nombre_comercial', 'Bruno Test Organización');
+    expect(org).to.have.property('tipo_industria', 'consultorio_medico');
+    expect(org).to.have.property('email_admin', 'test@bruno-collection.com');
+    expect(org).to.have.property('codigo_tenant');
+    expect(org).to.have.property('slug');
+  });
+
+  test("Should generate unique identifiers", function() {
+    const body = res.getBody();
+    const org = body.data;
+    
+    expect(org.codigo_tenant).to.be.a('string');
+    expect(org.codigo_tenant).to.have.lengthOf.above(10);
+    expect(org.slug).to.be.a('string');
+    expect(org.slug).to.include('bruno-test-organizaci');
+  });
+
+  test("Should save new organization ID for cleanup", function() {
+    const body = res.getBody();
+    if (body.success && body.data.id) {
+      bru.setVar("newOrganizacionId", body.data.id);
+    }
+  });
+}

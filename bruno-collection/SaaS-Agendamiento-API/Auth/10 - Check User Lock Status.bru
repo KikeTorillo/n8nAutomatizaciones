@@ -1,0 +1,124 @@
+meta {
+  name: 10 - Check User Lock Status
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/api/v1/auth/check-lock/{{targetUserId}}
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: Bearer {{accessToken}}
+}
+
+vars:pre-request {
+  targetUserId: 2
+}
+
+vars:post-response {
+  userIsLocked: res.body.data ? res.body.data.is_locked : false
+  attemptsRemaining: res.body.data ? res.body.data.attempts_remaining : 0
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Should have success property", function() {
+    expect(res.getBody()).to.have.property('success');
+  });
+
+  test("Should return lock status info", function() {
+    expect(res.getBody().success).to.be.true;
+    expect(res.getBody()).to.have.property('data');
+  });
+
+  test("Data should contain lock status fields", function() {
+    const data = res.getBody().data;
+    expect(data).to.have.property('user_id');
+    expect(data).to.have.property('is_locked');
+    expect(data).to.have.property('intentos_fallidos');
+    expect(data).to.have.property('attempts_remaining');
+    expect(data.user_id).to.equal(parseInt(bru.getVar('targetUserId')));
+  });
+
+  test("Should have valid attempt counts", function() {
+    const data = res.getBody().data;
+    expect(data.intentos_fallidos).to.be.at.least(0);
+    expect(data.attempts_remaining).to.be.at.least(0);
+    expect(data.intentos_fallidos + data.attempts_remaining).to.be.at.most(5);
+  });
+
+  test("If locked, should have blocked_until", function() {
+    const data = res.getBody().data;
+    if (data.is_locked) {
+      expect(data).to.have.property('blocked_until');
+      expect(data.blocked_until).to.not.be.null;
+    }
+  });
+
+  test("Should require authentication", function() {
+    expect(res.getStatus()).to.not.equal(401);
+  });
+}
+
+docs {
+  # Verificar Estado de Bloqueo de Usuario
+
+  Este endpoint permite verificar el estado de bloqueo de un usuario específico, incluyendo intentos fallidos y tiempo de bloqueo restante.
+
+  ## Requisitos:
+  - Autenticación: Bearer Token requerido
+  - Rol: Administrador o el propio usuario
+  - Rate Limiting: API estándar
+
+  ## Parámetros de Ruta:
+  - `userId` (number): ID del usuario a verificar
+
+  ## Variables de Entorno:
+  - `targetUserId`: ID del usuario a verificar (modifica en vars:pre-request)
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "message": "Estado de bloqueo obtenido exitosamente",
+    "data": {
+      "user_id": 2,
+      "email": "usuario@ejemplo.com",
+      "is_locked": true,
+      "intentos_fallidos": 5,
+      "attempts_remaining": 0,
+      "blocked_until": "2024-01-15T10:30:00Z",
+      "last_attempt": "2024-01-15T10:00:00Z",
+      "lock_reason": "Múltiples intentos fallidos de login"
+    }
+  }
+  ```
+
+  ## Si el usuario no está bloqueado:
+  ```json
+  {
+    "success": true,
+    "message": "Usuario no está bloqueado",
+    "data": {
+      "user_id": 2,
+      "email": "usuario@ejemplo.com",
+      "is_locked": false,
+      "intentos_fallidos": 2,
+      "attempts_remaining": 3,
+      "blocked_until": null,
+      "last_attempt": "2024-01-15T09:45:00Z"
+    }
+  }
+  ```
+
+  ## Errores Comunes:
+  - 401: No autenticado
+  - 403: Sin permisos para ver este usuario
+  - 404: Usuario no encontrado
+}
