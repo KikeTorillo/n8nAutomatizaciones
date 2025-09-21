@@ -1,0 +1,91 @@
+meta {
+  name: 07 - Crear Cliente VIP Barbería
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/api/v1/clientes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{managerBarberiaToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Ricardo",
+    "apellidos": "Mendoza Silva",
+    "email": "ricardo.mendoza@empresa.com",
+    "telefono": "+573201234567",
+    "fecha_nacimiento": "1978-09-22",
+    "preferencias": {
+      "profesional_preferido": "{{estilistaId}}",
+      "servicios_frecuentes": ["corte_moderno", "styling", "tratamientos_capilares"],
+      "horario_preferido": "mañana",
+      "frecuencia_visitas": "semanal",
+      "notas_especiales": "Ejecutivo, requiere citas tempranas. Cliente VIP con servicios premium."
+    },
+    "informacion_adicional": {
+      "ocupacion": "Director Comercial",
+      "como_conocio": "redes_sociales",
+      "fecha_primer_visita": "2023-02-20",
+      "cliente_desde": "2023-02-20",
+      "tipo_cliente": "VIP",
+      "descuento_fidelidad": 15
+    }
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should create VIP cliente", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('nombre', 'Ricardo');
+    expect(body.data.informacion_adicional).to.have.property('tipo_cliente', 'VIP');
+  });
+
+  test("Should belong to barbería organization", function() {
+    const body = res.getBody();
+    expect(body.data.organizacion_id).to.equal(bru.getVar("barbariaOrgId"));
+  });
+
+  test("Should have estilista as preferred professional", function() {
+    const body = res.getBody();
+    expect(body.data.preferencias.profesional_preferido).to.equal(bru.getVar("estilistaId"));
+  });
+
+  test("Should set VIP cliente variables", function() {
+    const body = res.getBody();
+    if (body.success && body.data.id) {
+      bru.setVar("clienteVIPId", body.data.id);
+    }
+  });
+
+  test("Cliente VIP barbería ready", function() {
+    const body = res.getBody();
+    console.log("⭐ Cliente VIP de Barbería creado exitosamente");
+    console.log(`👤 Nombre: ${body.data.nombre} ${body.data.apellidos}`);
+    console.log(`💼 Ocupación: ${body.data.informacion_adicional.ocupacion}`);
+    console.log(`📧 Email: ${body.data.email}`);
+    console.log(`🌟 Tipo: ${body.data.informacion_adicional.tipo_cliente}`);
+    console.log(`💰 Descuento fidelidad: ${body.data.informacion_adicional.descuento_fidelidad}%`);
+    console.log(`⭐ Profesional preferido: Estilista (${body.data.preferencias.profesional_preferido})`);
+    console.log(`💇‍♂️ Servicios VIP: ${body.data.preferencias.servicios_frecuentes.join(', ')}`);
+    console.log(`🆔 ID Cliente VIP: ${body.data.id}`);
+  });
+}

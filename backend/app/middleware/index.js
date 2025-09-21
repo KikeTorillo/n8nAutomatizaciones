@@ -27,6 +27,7 @@ module.exports = {
     injectTenantId: tenant.injectTenantId,
     verifyTenantActive: tenant.verifyTenantActive,
     requirePlan: tenant.requirePlan,
+    releaseTenantConnection: tenant.releaseTenantConnection,
     simulateTenant: tenant.simulateTenant
   },
 
@@ -57,9 +58,10 @@ module.exports = {
 
 /**
  * Middleware compuesto para rutas que requieren autenticación completa
- * Incluye: autenticación, tenant context y verificación de organización activa
+ * Incluye: autenticación, tenant context, verificación de organización activa y liberación de conexión
  */
 const requireFullAuth = [
+  tenant.releaseTenantConnection,  // Primero configurar liberación de conexión
   auth.authenticateToken,
   tenant.setTenantContext,
   tenant.verifyTenantActive

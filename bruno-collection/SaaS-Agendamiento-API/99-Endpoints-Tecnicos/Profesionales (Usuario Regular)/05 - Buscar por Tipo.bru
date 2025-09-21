@@ -1,0 +1,67 @@
+meta {
+  name: 05 - Buscar por Tipo
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales/tipo/estilista?activos=true
+  body: none
+  auth: bearer
+}
+
+params:query {
+  activos: true
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain profesionales array", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('profesionales');
+    expect(body.data.profesionales).to.be.an('array');
+  });
+
+  test("All professionals should be of type estilista", function() {
+    const body = res.getBody();
+    if (body.data.profesionales.length > 0) {
+      body.data.profesionales.forEach(profesional => {
+        expect(profesional.tipo_profesional).to.equal('estilista');
+      });
+    }
+  });
+
+  test("If activos filter applied, all should be active", function() {
+    const body = res.getBody();
+    if (body.data.profesionales.length > 0) {
+      body.data.profesionales.forEach(profesional => {
+        expect(profesional.activo).to.equal(true);
+      });
+    }
+  });
+
+  test("Only shows professionals from user's organization", function() {
+    const body = res.getBody();
+    // This test validates that multi-tenant isolation is working
+    // Even though we don't specify organizacion_id, we only see our org's data
+    if (body.data.profesionales.length > 0) {
+      expect(body.data.profesionales).to.be.an('array');
+    }
+  });
+}

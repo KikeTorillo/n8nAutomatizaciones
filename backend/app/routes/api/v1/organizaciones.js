@@ -32,7 +32,7 @@ const router = express.Router();
  * @access  Public (para registro inicial) / Private (super_admin)
  */
 router.post('/',
-    // auth.authenticateToken, // Comentado temporalmente para testing
+    auth.authenticateToken, // Comentado temporalmente para testing
     [
         body('nombre_comercial')
             .isLength({ min: 2, max: 150 })

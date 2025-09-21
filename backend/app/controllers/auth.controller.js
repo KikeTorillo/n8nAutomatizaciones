@@ -8,6 +8,8 @@
 const UsuarioModel = require('../database/usuario.model');
 const { validationResult } = require('express-validator');
 const logger = require('../utils/logger');
+const jwt = require('jsonwebtoken');
+const { addToTokenBlacklist } = require('../middleware/auth');
 
 /**
  * Controlador de Autenticación
@@ -59,15 +61,22 @@ class AuthController {
                 maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
             });
 
-            // Respuesta exitosa
+            // Respuesta exitosa (incluir refreshToken en body para development/testing)
+            const responseData = {
+                usuario: resultado.usuario,
+                accessToken: resultado.accessToken,
+                expiresIn: resultado.expiresIn
+            };
+
+            // En desarrollo, incluir refreshToken en el response para testing con Bruno
+            if (process.env.NODE_ENV !== 'production') {
+                responseData.refreshToken = resultado.refreshToken;
+            }
+
             res.status(200).json({
                 success: true,
                 message: 'Login exitoso',
-                data: {
-                    usuario: resultado.usuario,
-                    accessToken: resultado.accessToken,
-                    expiresIn: resultado.expiresIn
-                }
+                data: responseData
             });
 
         } catch (error) {
@@ -241,6 +250,31 @@ class AuthController {
      */
     static async logout(req, res) {
         try {
+            // Obtener el token del header Authorization
+            const authHeader = req.headers.authorization;
+            if (authHeader && authHeader.startsWith('Bearer ')) {
+                const token = authHeader.substring(7);
+
+                // Decodificar el token para obtener información de expiración
+                try {
+                    const decoded = jwt.decode(token);
+                    if (decoded && decoded.exp) {
+                        // Agregar token a la blacklist con tiempo de expiración
+                        await addToTokenBlacklist(token, decoded.exp);
+                        logger.info('Token agregado a blacklist durante logout', {
+                            userId: req.user?.id,
+                            tokenExp: new Date(decoded.exp * 1000).toISOString()
+                        });
+                    }
+                } catch (tokenError) {
+                    logger.warn('Error procesando token durante logout', {
+                        error: tokenError.message,
+                        userId: req.user?.id
+                    });
+                    // Continuar con logout aunque haya error con el token
+                }
+            }
+
             // Limpiar cookie del refresh token
             res.clearCookie('refreshToken');
 

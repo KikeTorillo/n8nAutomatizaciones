@@ -31,9 +31,41 @@ npm run dev        # Iniciar servidor Node.js
 
 ## 📁 Estructura de la Colección
 
-### 🔐 Autenticación (`/Auth/`)
-Endpoints completos para gestión de usuarios y sesiones:
+### 🎯 FLUJOS EMPRESARIALES (Casos de Uso Reales)
 
+#### 🏗️ **00-Setup-Sistema/** - Verificación Inicial
+Flujo completo de verificación del sistema SaaS:
+1. **01 - Login Super Admin** - Autenticación administrador
+2. **02 - Health Check Sistema** - Estado de infraestructura
+3. **03 - Verificar Plantillas Servicios** - Catálogo de 370+ servicios
+4. **04 - Verificar Infraestructura Docker** - Estado contenedores
+
+#### 🏪 **01-Flujo-Barberia-Completo/** - Caso de Uso: Barbería
+Flujo completo desde setup hasta operaciones diarias:
+1. **01 - Setup Organización Barbería** - Crear "Barbería El Clásico"
+2. **02 - Crear Usuario Manager Barbería** - Manager: Carlos Rodríguez
+3. **03 - Login Manager Barbería** - Autenticación manager
+4. **04 - Crear Barberos** - Juan Carlos (barbero)
+5. **05 - Crear Segundo Barbero** - Miguel (estilista_masculino)
+6. **06 - Crear Clientes Barbería** - Andrés (cliente regular)
+7. **07 - Crear Cliente VIP** - Ricardo (cliente VIP)
+8. **08 - Operaciones Diarias** - Resumen operacional completo
+
+#### 🛡️ **04-Testing-Multi-Tenant/** - Validación Crítica
+Validación exhaustiva del sistema multi-tenant enterprise:
+1. **01 - Test Aislamiento Organizaciones** - RLS profesionales
+2. **02 - Test Clientes Aislamiento** - RLS clientes
+3. **03 - Test Permisos Super Admin** - Acceso global vs limitado
+4. **04 - Test Validación Industria-Profesional** - Rechazo automático incompatibles
+5. **05 - Test Acceso Negado Entre Organizaciones** - Seguridad entre tenants
+6. **06 - Test Emails Únicos Por Organización** - Validación unicidad
+7. **07 - Test Resumen Multi-Tenant** - Validación completa enterprise
+
+### 🔧 ENDPOINTS TÉCNICOS (Testing Individual)
+
+#### 🏢 **99-Endpoints-Tecnicos/** - Testing Granular por Entidad
+
+##### 🔐 **Auth/** (11 endpoints)
 1. **01 - Login** - Iniciar sesión
 2. **02 - Get Me** - Información del usuario actual
 3. **03 - Register** - Registro de nuevo usuario
@@ -44,11 +76,9 @@ Endpoints completos para gestión de usuarios y sesiones:
 8. **08 - Unlock User** - Desbloquear usuario (admin)
 9. **09 - Get Blocked Users** - Lista de usuarios bloqueados (admin)
 10. **10 - Check User Lock Status** - Verificar estado de bloqueo
-11. **11 - Test Auth (Development)** - Prueba de autenticación (solo desarrollo)
+11. **11 - Test Auth (Development)** - Prueba de autenticación
 
-### � Organizaciones (`/Organizaciones/`)
-Endpoints completos para gestión multi-tenant de organizaciones:
-
+##### 🏢 **Organizaciones/** (10 endpoints)
 1. **01 - Listar Organizaciones** - Lista con paginación y filtros
 2. **02 - Obtener Organización por ID** - Detalle específico
 3. **03 - Crear Organización** - Nueva organización (super_admin)
@@ -60,10 +90,32 @@ Endpoints completos para gestión multi-tenant de organizaciones:
 9. **09 - Test sin Autenticación** - Error 401
 10. **10 - Test Paginación** - Funcionalidad de paginación
 
-### �🏥 Gestión de Citas (`/Citas/`)
-- **Get Citas** - Obtener lista de citas
+##### 👥 **Profesionales/** (Super Admin - 10 endpoints)
+1. **01 - Crear Profesional** - Nuevo profesional en organización
+2. **02 - Listar Profesionales** - Lista con filtros y paginación
+3. **03 - Obtener por ID** - Detalle específico de profesional
+4. **04 - Actualizar Profesional** - Modificar datos existentes
+5. **05 - Cambiar Estado** - Desactivar profesional (con motivo)
+6. **06 - Buscar por Tipo** - Filtrar por tipo profesional
+7. **07 - Validar Email** - Verificar disponibilidad de email
+8. **08 - Eliminar Profesional** - Soft delete con motivo
+9. **09 - Estadísticas Profesionales** - Métricas de profesionales
+10. **10 - Activar Profesional** - Reactivar profesional
 
-### 🩺 Salud del Sistema (`/Health/`)
+##### 👥 **Profesionales (Usuario Regular)/** (9 endpoints)
+Endpoints para usuarios regulares con permisos limitados
+
+##### 👨‍💼 **Clientes/** ✨ **NUEVO** (8 endpoints)
+1. **01 - Crear Cliente** - Nuevo cliente en organización
+2. **02 - Listar Clientes** - Lista con paginación
+3. **03 - Obtener Cliente** - Detalle específico
+4. **04 - Actualizar Cliente** - Modificar datos
+5. **05 - Buscar Clientes** - Búsqueda por criterios
+6. **06 - Estadísticas Clientes** - Métricas y analytics
+7. **07 - Cambiar Estado Cliente** - Activar/Desactivar
+8. **08 - Eliminar Cliente** - Soft delete con confirmación
+
+##### 🩺 **Health/** (1 endpoint)
 - **Health Check** - Verificar estado de la API
 
 ## 🔧 Variables de Entorno
@@ -82,6 +134,7 @@ Las siguientes variables se configuran automáticamente:
 - `userId` - ID del usuario logueado
 - `organizacionId` - ID de la organización del usuario (desde Auth)
 - `newOrganizacionId` - ID de organización creada (desde Organizaciones)
+- `profesionalId` - ID del profesional creado (desde Profesionales/01 - Crear)
 
 ## 🧪 Flujo de Testing Recomendado
 
@@ -110,7 +163,13 @@ Login → Get Me → Update Profile → Change Password
 Login (admin) → Listar Organizaciones → Crear Organización → Actualizar → Desactivar
 ```
 
-### 7. Testing y Validaciones
+### 7. Gestión de Profesionales ✨ **NUEVO**
+```
+Login (admin) → Crear Profesional → Listar Profesionales → Obtener por ID →
+Actualizar Profesional → Buscar por Tipo → Cambiar Estado → Activar → Eliminar
+```
+
+### 8. Testing y Validaciones
 ```
 Test sin Autenticación → Crear con Datos Inválidos → Obtener Inexistente → Test Paginación
 ```

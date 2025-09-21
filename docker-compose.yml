@@ -158,6 +158,66 @@ services:
       - ./data/pgadmin:/var/lib/pgadmin
     networks:
       - backend_network
+  
+  backend:
+    build:
+      context: ./backend/app
+      dockerfile: dockerfile.dev
+    container_name: back
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+
+      N8N_DB_HOST: ${N8N_DB_HOST}
+      N8N_DB_PORT: ${N8N_DB_PORT}
+      N8N_DB_NAME: ${N8N_DB_NAME}
+      N8N_DB_USER: ${N8N_DB_USER}
+      N8N_DB_PASSWORD: ${N8N_DB_PASSWORD}
+
+      EVOLUTION_DB_HOST: ${EVOLUTION_DB_HOST}
+      EVOLUTION_DB_PORT: ${EVOLUTION_DB_PORT}
+      EVOLUTION_DB_NAME: ${EVOLUTION_DB_NAME}
+      EVOLUTION_DB_USER: ${EVOLUTION_DB_USER}
+      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD}
+
+      CHAT_DB_HOST: ${CHAT_DB_HOST}
+      CHAT_DB_PORT: ${CHAT_DB_PORT}
+      CHAT_DB_NAME: ${CHAT_DB_NAME}
+      CHAT_DB_USER: ${CHAT_DB_USER}
+      CHAT_DB_PASSWORD: ${CHAT_DB_PASSWORD}
+
+      NODE_ENV: ${NODE_ENV}
+      PORT: ${PORT}
+      LOG_LEVEL: ${LOG_LEVEL}
+
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
+
+      CORS_ORIGIN: ${CORS_ORIGIN}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS}
+      RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS}
+
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    volumes:
+      - ./backend/app:/usr/src/app
+      - /usr/src/app/node_modules
+    networks:
+      - backend_network
+    ports:
+      - "3000:3000"
 
 # Configuración de redes
 networks:

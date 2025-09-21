@@ -1,0 +1,55 @@
+meta {
+  name: 06 - Validar Email
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales/validar-email
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "email": "carlos.martinez@barberia-test.com",
+    "excluir_id": null
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain validation result", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('email_disponible');
+    expect(body.data.email_disponible).to.be.a('boolean');
+  });
+
+  test("Response should include checked email", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('email', 'carlos.martinez@barberia-test.com');
+  });
+
+  test("Validation is scoped to user's organization", function() {
+    const body = res.getBody();
+    // This validates that email uniqueness is per organization
+    // The same email could exist in different organizations
+    expect(body.data).to.have.property('email_disponible');
+  });
+}

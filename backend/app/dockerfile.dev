@@ -1,0 +1,23 @@
+# Etapa única para desarrollo
+FROM node
+
+WORKDIR /usr/src/app
+
+#RUN apk add --no-cache ffmpeg
+
+RUN apt-get update 
+#&& apt-get install -y ffmpeg
+
+# Instala dependencias y nodemon global
+COPY package*.json ./
+
+# Instalar dependencias (incluyendo devDependencies para desarrollo)
+RUN npm install
+
+RUN npm install -g nodemon
+
+# No copiamos código aquí porque lo montaremos como volumen
+EXPOSE 3000
+
+# Escucha cambios en todo el proyecto
+CMD ["nodemon", "--watch", ".", "app.js"]

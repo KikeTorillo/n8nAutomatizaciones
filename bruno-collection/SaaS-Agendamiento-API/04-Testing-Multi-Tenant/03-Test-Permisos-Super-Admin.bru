@@ -1,0 +1,66 @@
+meta {
+  name: 03 - Test Permisos Super Admin
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/api/v1/organizaciones
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{adminToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Super admin debe ver TODAS las organizaciones", function() {
+    const body = res.getBody();
+    const organizaciones = body.data;
+
+    // Super admin debe ver al menos la barbería creada
+    expect(organizaciones.length).to.be.greaterThan(0, "Super admin debe ver organizaciones");
+
+    // Verificar que incluye la barbería
+    const barberia = organizaciones.find(org => org.id === bru.getVar("barbariaOrgId"));
+    expect(barberia).to.exist("Super admin debe ver la barbería creada");
+    expect(barberia.nombre).to.equal("Barbería El Clásico");
+  });
+
+  test("Super admin puede ver diferentes tipos de industria", function() {
+    const body = res.getBody();
+    const organizaciones = body.data;
+
+    console.log("🏢 Organizaciones visibles para Super Admin:");
+    organizaciones.forEach(org => {
+      console.log(`  • ${org.nombre} (${org.tipo_industria}) - ID: ${org.id}`);
+    });
+
+    // Al menos debe tener la barbería
+    const tiposIndustria = [...new Set(organizaciones.map(org => org.tipo_industria))];
+    expect(tiposIndustria).to.include("barberia", "Debe incluir tipo barbería");
+  });
+
+  test("Verificar acceso privilegiado super admin", function() {
+    const body = res.getBody();
+    console.log("🔑 PERMISOS SUPER ADMIN VALIDADOS:");
+    console.log(`  • Total organizaciones visibles: ${body.data.length}`);
+    console.log("  • ✅ Acceso global a todas las organizaciones");
+    console.log("  • ✅ Sin restricciones RLS para super_admin");
+    console.log("  • ✅ Puede gestionar múltiples tenants");
+  });
+}

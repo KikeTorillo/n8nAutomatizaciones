@@ -12,9 +12,26 @@ class OrganizacionModel {
      * Crear una nueva organización
      * @param {Object} organizacionData - Datos de la organización
      * @param {string} organizacionData.nombre_comercial - Nombre comercial de la organización
-     * @param {string} organizacionData.configuracion_industria - Configuración de industria (barberia, spa, consultorio_medico, etc.)
+     * @param {string} organizacionData.tipo_industria - ENUM: Clasificación categórica (barberia, spa, consultorio_medico, etc.)
+     * @param {Object} [organizacionData.configuracion_industria] - JSONB: Configuraciones operativas específicas por industria
      * @param {string} organizacionData.email_admin - Email del administrador
      * @param {string} [organizacionData.telefono] - Teléfono de contacto
+     *
+     * @description
+     * CAMPOS DE INDUSTRIA (DOS PROPÓSITOS DIFERENTES):
+     * - tipo_industria: ENUM fijo para clasificación y validaciones
+     * - configuracion_industria: JSONB flexible para configuraciones operativas
+     *
+     * @example
+     * // Ejemplo de uso:
+     * {
+     *   "tipo_industria": "barberia",  // ENUM: Clasificación fija
+     *   "configuracion_industria": {   // JSONB: Config personalizada
+     *     "horario_especial": true,
+     *     "servicios_a_domicilio": false
+     *   }
+     * }
+     *
      * @returns {Promise<Object>} Organización creada
      */
     static async crear(organizacionData) {
@@ -41,13 +58,15 @@ class OrganizacionModel {
                 bypass: checkBypass.rows[0].bypass
             });
 
-            // Simplificar INSERT para debugging
+            // INSERT con ambos campos de industria y telefono opcional
             const query = `
                 INSERT INTO organizaciones (
-                    nombre_comercial, tipo_industria, email_admin, codigo_tenant, slug
-                ) VALUES ($1, $2, $3, $4, $5)
+                    nombre_comercial, tipo_industria, configuracion_industria,
+                    email_admin, telefono, codigo_tenant, slug
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING
-                    id, nombre_comercial, tipo_industria, email_admin, codigo_tenant, slug
+                    id, nombre_comercial, tipo_industria, configuracion_industria,
+                    email_admin, telefono, codigo_tenant, slug
             `;
 
             // Generar código único para el tenant
@@ -59,8 +78,10 @@ class OrganizacionModel {
 
             const values = [
                 organizacionData.nombre_comercial,
-                organizacionData.configuracion_industria, // tipo_industria ENUM
+                organizacionData.tipo_industria, // ENUM: Clasificación categórica
+                organizacionData.configuracion_industria || {}, // JSONB: Configuraciones operativas
                 organizacionData.email_admin,
+                organizacionData.telefono || null, // telefono opcional
                 codigoTenant,
                 slug
             ];
@@ -107,7 +128,8 @@ class OrganizacionModel {
 
             const query = `
                 SELECT
-                    id, codigo_tenant, slug, nombre_comercial, tipo_industria,
+                    id, codigo_tenant, slug, nombre_comercial,
+                    tipo_industria, configuracion_industria,
                     email_admin, telefono, plan_actual, activo, suspendido,
                     fecha_registro, creado_en, actualizado_en
                 FROM organizaciones

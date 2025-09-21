@@ -1,0 +1,33 @@
+{
+  "variables": {
+    "barbariaOrgId": "",
+    "barbariaEmail": "contacto@barbariaelclasico.com",
+    "barbariaTelefono": "+573001234567",
+    "managerBarberiaId": "",
+    "managerBarberiaEmail": "manager@barbariaelclasico.com",
+    "managerBarberiaToken": "",
+    "barberoId": "",
+    "barberoEmail": "juan.barbero@barbariaelclasico.com",
+    "estilistaId": "",
+    "estilistaEmail": "miguel.estilista@barbariaelclasico.com",
+    "clienteBarberiaId": "",
+    "clienteBarberiaEmail": "andres.gomez@email.com",
+    "clienteVIPId": ""
+  },
+  "description": "Variables para flujo completo Barbería El Clásico",
+  "notes": [
+    "barbariaOrgId: Se establece al crear la organización",
+    "managerBarberiaToken: Token JWT del manager para operaciones",
+    "barberoId/estilistaId: IDs de profesionales para referencias",
+    "clienteBarberiaId/clienteVIPId: IDs de clientes para testing",
+    "Flujo completo: Setup → Manager → Profesionales → Clientes → Operaciones"
+  ],
+  "flow_description": {
+    "industria": "barberia",
+    "profesionales_compatibles": ["barbero", "estilista_masculino", "estilista"],
+    "servicios_tipicos": ["corte_clasico", "corte_moderno", "barba", "bigote", "afeitado_navaja", "styling"],
+    "horarios_tipicos": "08:00-20:00, Lun-Sáb",
+    "tipos_cliente": ["regular", "VIP"],
+    "frecuencia_visitas": ["semanal", "quincenal", "mensual"]
+  }
+}

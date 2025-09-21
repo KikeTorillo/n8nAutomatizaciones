@@ -1,0 +1,65 @@
+meta {
+  name: 08 - Eliminar Cliente
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/api/{{apiVersion}}/clientes/{{clienteId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "confirmar_eliminacion": true,
+    "motivo": "Cliente solicitó eliminación de datos",
+    "conservar_historial": false
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should confirm deletion", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('message');
+    expect(body.message.toLowerCase()).to.include('eliminado');
+  });
+
+  test("Should include deletion metadata", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('cliente_eliminado');
+    expect(body.data).to.have.property('fecha_eliminacion');
+    expect(body.data).to.have.property('motivo');
+  });
+
+  test("Should clear cliente ID variable", function() {
+    const body = res.getBody();
+    if (body.success) {
+      bru.setVar("clienteId", "");
+    }
+  });
+
+  test("Warning about data retention should be included", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('advertencia');
+    const warning = body.advertencia.toLowerCase();
+    expect(warning).to.include('datos') || expect(warning).to.include('historial');
+  });
+}

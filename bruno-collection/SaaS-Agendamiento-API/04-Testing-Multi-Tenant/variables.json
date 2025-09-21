@@ -1,0 +1,41 @@
+{
+  "variables": {
+    "adminToken": "",
+    "managerBarberiaToken": "",
+    "barbariaOrgId": "",
+    "barberoId": "",
+    "estilistaId": "",
+    "clienteBarberiaId": "",
+    "clienteVIPId": ""
+  },
+  "description": "Variables para testing multi-tenant y aislamiento",
+  "notes": [
+    "Utiliza tokens y IDs de los flujos anteriores",
+    "adminToken: Token super admin para tests globales",
+    "managerBarberiaToken: Token manager para tests de aislamiento",
+    "barbariaOrgId: ID organización para verificar pertenencia",
+    "Profesionales/Clientes IDs: Para tests de acceso y validaciones"
+  ],
+  "test_scenarios": {
+    "aislamiento_datos": [
+      "Manager solo ve profesionales de su organización",
+      "Manager solo ve clientes de su organización",
+      "Datos completamente aislados por tenant"
+    ],
+    "permisos_roles": [
+      "Super admin ve todas las organizaciones",
+      "Manager acceso limitado a su organización",
+      "Validación correcta de roles"
+    ],
+    "validaciones_automaticas": [
+      "Industria-Profesional: Rechaza combinaciones inválidas",
+      "Emails únicos por organización",
+      "Referencias válidas entre entidades"
+    ],
+    "seguridad_enterprise": [
+      "Row Level Security (RLS) activo",
+      "JWT authentication funcionando",
+      "Middleware de seguridad operativo"
+    ]
+  }
+}

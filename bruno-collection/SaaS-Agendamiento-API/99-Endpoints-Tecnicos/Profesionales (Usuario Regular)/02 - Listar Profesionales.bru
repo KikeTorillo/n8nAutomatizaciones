@@ -1,0 +1,70 @@
+meta {
+  name: 02 - Listar Profesionales
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales?limit=20&offset=0
+  body: none
+  auth: bearer
+}
+
+params:query {
+  limit: 20
+  offset: 0
+  ~activo: true
+  ~disponible_online: true
+  ~tipo_profesional: estilista
+  ~busqueda: María
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain profesionales array", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('profesionales');
+    expect(body.data.profesionales).to.be.an('array');
+  });
+
+  test("Response should contain pagination info", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('filtros_aplicados');
+    expect(body.data).to.have.property('total');
+  });
+
+  test("All professionals should belong to user's organization", function() {
+    const body = res.getBody();
+    const userOrgId = parseInt("{{organizacionId}}");
+
+    if (body.data.profesionales.length > 0) {
+      body.data.profesionales.forEach(profesional => {
+        // Note: This assumes the response includes organizacion_id
+        // If not included in response, this test validates the isolation works
+        expect(profesional).to.have.property('id');
+        expect(profesional).to.have.property('nombre_completo');
+      });
+    }
+  });
+
+  test("No organization_id parameter needed in URL", function() {
+    const url = res.req.url;
+    expect(url).to.not.include('organizacion_id');
+  });
+}

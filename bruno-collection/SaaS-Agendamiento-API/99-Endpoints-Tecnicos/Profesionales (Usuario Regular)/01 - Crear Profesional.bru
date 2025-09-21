@@ -1,0 +1,73 @@
+meta {
+  name: 01 - Crear Profesional
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "nombre_completo": "Pedro Martínez Barbero",
+    "email": "pedro.martinez@barberia-test.com",
+    "telefono": "5559876543",
+    "tipo_profesional": "barbero",
+    "años_experiencia": 5,
+    "especialidades": ["cortes clásicos", "barbas", "bigotes"],
+    "color_calendario": "#9b59b6",
+    "activo": true,
+    "disponible_online": true,
+    "comision_porcentaje": 18.0,
+    "forma_pago": "comision"
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain profesional data", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('id');
+    expect(body.data).to.have.property('nombre_completo');
+    expect(body.data).to.have.property('email');
+    expect(body.data).to.have.property('tipo_profesional');
+  });
+
+  test("Should set profesional ID variable", function() {
+    const body = res.getBody();
+    if (body.success && body.data.id) {
+      bru.setVar("profesionalId", body.data.id);
+    }
+  });
+
+  test("Professional should belong to user's organization", function() {
+    const body = res.getBody();
+    const userOrgId = parseInt("{{organizacionId}}");
+    expect(body.data).to.have.property('organizacion_id', userOrgId);
+  });
+
+  test("Organization ID should not be in request body", function() {
+    const body = res.getBody();
+    // Verificar que el sistema asignó automáticamente la organización
+    expect(body.data.organizacion_id).to.be.a('number');
+  });
+}

@@ -1,0 +1,65 @@
+meta {
+  name: 01 - Login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/v1/auth/login
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "email": "admin@saas-agendamiento.com",
+    "password": "admin123"
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain access token", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('accessToken');
+  });
+
+  test("Should set access token variable", function() {
+    const body = res.getBody();
+    if (body.success && body.data.accessToken) {
+      bru.setVar("accessToken", body.data.accessToken);
+    }
+  });
+
+  test("Response should contain refresh token", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('refreshToken');
+  });
+
+  test("Should set refresh token variable", function() {
+    const body = res.getBody();
+    if (body.success && body.data.refreshToken) {
+      bru.setVar("refreshToken", body.data.refreshToken);
+    }
+  });
+
+  test("Should set user info variables", function() {
+    const body = res.getBody();
+    if (body.success && body.data.usuario) {
+      bru.setVar("userId", body.data.usuario.id);
+      bru.setVar("organizacionId", body.data.usuario.organizacion_id);
+    }
+  });
+}

@@ -27,24 +27,83 @@ const { ResponseHelper } = require('../utils/helpers');
  * Debe usarse después del middleware de autenticación
  */
 const setTenantContext = async (req, res, next) => {
+  let client;
   try {
-    if (!req.user || !req.user.organizacion_id) {
+    if (!req.user) {
       logger.error('Middleware setTenantContext usado sin usuario autenticado');
       return ResponseHelper.error(res, 'Error de configuración', 500);
     }
 
-    // Configurar el tenant ID en la sesión de base de datos
-    // Esto activa automáticamente las políticas de Row Level Security
-    await database.query('SET app.current_tenant_id = $1', [req.user.organizacion_id]);
+    // Para super_admin, usar el ID de la URL como contexto tenant
+    let tenantId;
 
-    logger.debug('Contexto de tenant configurado', {
-      tenantId: req.user.organizacion_id,
-      userId: req.user.id,
+    logger.debug('Determinando tenant context', {
+      userRol: req.user.rol,
+      organizacionId: req.user.organizacion_id,
+      allParams: req.params,
       path: req.path
     });
 
+    if (req.user.rol === 'super_admin' && req.params.id) {
+      logger.debug('Usando ID de URL para super_admin', { paramsId: req.params.id });
+      tenantId = parseInt(req.params.id);
+      if (isNaN(tenantId)) {
+        logger.error('ID de organización inválido en URL', {
+          paramsId: req.params.id,
+          parsedId: tenantId
+        });
+        return ResponseHelper.error(res, 'ID de organización inválido', 400);
+      }
+      logger.debug('Tenant ID asignado desde params', { tenantId });
+    } else if (req.user.organizacion_id) {
+      logger.debug('Usando organizacion_id del usuario', { organizacionId: req.user.organizacion_id });
+      tenantId = req.user.organizacion_id;
+    } else {
+      logger.error('No se pudo determinar tenant context', {
+        userRol: req.user.rol,
+        organizacionId: req.user.organizacion_id,
+        paramsId: req.params.id,
+        allParams: req.params
+      });
+      return ResponseHelper.error(res, 'Error de configuración de tenant', 500);
+    }
+
+    logger.debug('Tenant ID final', { tenantId });
+
+    // Inicializar objeto tenant en request
+    if (!req.tenant) {
+      req.tenant = {};
+    }
+    req.tenant.organizacionId = tenantId;
+
+    // Obtener conexión del pool principal para configurar contexto
+    client = await database.getPool('saas').connect();
+
+    // Configurar el tenant ID en la sesión de base de datos
+    // Esto activa automáticamente las políticas de Row Level Security
+    // Nota: SET no acepta parámetros preparados, usamos interpolación segura
+    await client.query(`SET app.current_tenant_id = '${tenantId}'`);
+
+    // Asegurar que RLS esté activo (por defecto debería estar en false)
+    await client.query('SET app.bypass_rls = \'false\'');
+
+    logger.debug('Contexto de tenant configurado', {
+      tenantId: tenantId,
+      userId: req.user.id,
+      userRol: req.user.rol,
+      path: req.path
+    });
+
+    // Almacenar la conexión en el request para uso posterior
+    req.dbClient = client;
+
     next();
   } catch (error) {
+    // Liberar conexión en caso de error
+    if (client) {
+      client.release();
+    }
+
     logger.error('Error configurando contexto de tenant', {
       error: error.message,
       tenantId: req.user?.organizacion_id,
@@ -150,13 +209,20 @@ const injectTenantId = (req, res, next) => {
  * Middleware para verificar que la organización esté activa
  */
 const verifyTenantActive = async (req, res, next) => {
+  let client;
   try {
     if (!req.user || !req.user.organizacion_id) {
       return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
-    const result = await database.query(
-      'SELECT activo, plan, fecha_vencimiento FROM organizaciones WHERE id = $1',
+    // Obtener conexión del pool principal para bypass RLS
+    client = await database.getPool('saas').connect();
+
+    // Configurar bypass RLS para esta consulta específica
+    await client.query('SET app.bypass_rls = \'true\'');
+
+    const result = await client.query(
+      'SELECT activo, suspendido, plan_actual, fecha_activacion FROM organizaciones WHERE id = $1',
       [req.user.organizacion_id]
     );
 
@@ -170,37 +236,31 @@ const verifyTenantActive = async (req, res, next) => {
 
     const organizacion = result.rows[0];
 
-    if (!organizacion.activo) {
-      logger.warn('Intento de acceso con organización inactiva', {
+    if (!organizacion.activo || organizacion.suspendido) {
+      logger.warn('Intento de acceso con organización inactiva o suspendida', {
         organizacionId: req.user.organizacion_id,
-        userId: req.user.id
+        userId: req.user.id,
+        activo: organizacion.activo,
+        suspendido: organizacion.suspendido
       });
       return ResponseHelper.error(res, 'Organización suspendida', 403, {
         code: 'ORGANIZATION_SUSPENDED'
       });
     }
 
-    // Verificar si la suscripción está vencida
-    if (organizacion.fecha_vencimiento) {
-      const now = new Date();
-      const vencimiento = new Date(organizacion.fecha_vencimiento);
-
-      if (now > vencimiento) {
-        logger.warn('Intento de acceso con suscripción vencida', {
-          organizacionId: req.user.organizacion_id,
-          userId: req.user.id,
-          fechaVencimiento: organizacion.fecha_vencimiento
-        });
-        return ResponseHelper.error(res, 'Suscripción vencida', 403, {
-          code: 'SUBSCRIPTION_EXPIRED',
-          fechaVencimiento: organizacion.fecha_vencimiento
-        });
-      }
-    }
-
     // Agregar información de la organización al request
-    req.tenant.plan = organizacion.plan;
-    req.tenant.fecha_vencimiento = organizacion.fecha_vencimiento;
+    if (!req.tenant) {
+      req.tenant = {};
+    }
+    req.tenant.organizacionId = req.user.organizacion_id;
+    req.tenant.plan = organizacion.plan_actual;
+    req.tenant.fecha_activacion = organizacion.fecha_activacion;
+
+    logger.debug('Organización verificada y activa', {
+      organizacionId: req.user.organizacion_id,
+      plan: organizacion.plan_actual,
+      activo: organizacion.activo
+    });
 
     next();
   } catch (error) {
@@ -210,6 +270,12 @@ const verifyTenantActive = async (req, res, next) => {
       userId: req.user?.id
     });
     return ResponseHelper.error(res, 'Error interno del servidor', 500);
+  } finally {
+    // Asegurar que la conexión se libere
+    if (client) {
+      await client.query('SET app.bypass_rls = \'false\'');
+      client.release();
+    }
   }
 };
 
@@ -253,6 +319,31 @@ const requirePlan = (allowedPlans) => {
 };
 
 /**
+ * Middleware para liberar la conexión de base de datos al final del request
+ * Debe ser el último middleware en ejecutarse
+ */
+const releaseTenantConnection = (req, res, next) => {
+  // Interceptar el final de la respuesta para liberar la conexión
+  const originalEnd = res.end;
+
+  res.end = function(...args) {
+    // Liberar conexión si existe
+    if (req.dbClient) {
+      req.dbClient.release();
+      logger.debug('Conexión de tenant liberada', {
+        tenantId: req.tenant?.organizacionId,
+        path: req.path
+      });
+    }
+
+    // Llamar al método original
+    originalEnd.apply(this, args);
+  };
+
+  next();
+};
+
+/**
  * Middleware de desarrollo para simular diferentes tenants (solo en desarrollo)
  */
 const simulateTenant = (req, res, next) => {
@@ -282,5 +373,6 @@ module.exports = {
   injectTenantId,
   verifyTenantActive,
   requirePlan,
+  releaseTenantConnection,
   simulateTenant
 };

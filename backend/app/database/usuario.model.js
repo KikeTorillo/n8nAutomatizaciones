@@ -237,10 +237,10 @@ class UsuarioModel {
             { expiresIn: '1h' }
         );
 
-        // Refresh token (7 días) - usar mismo secret por ahora
+        // Refresh token (7 días) - usar secret dedicado para mayor seguridad
         const refreshToken = jwt.sign(
             { userId: usuario.id, type: 'refresh' },
-            process.env.JWT_SECRET,
+            process.env.JWT_REFRESH_SECRET,
             { expiresIn: '7d' }
         );
 
@@ -255,8 +255,8 @@ class UsuarioModel {
      */
     static async refrescarToken(refreshToken) {
         try {
-            // Verificar refresh token - usar mismo secret por ahora
-            const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+            // Verificar refresh token - usar secret dedicado
+            const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
 
             // Buscar usuario por ID
             const usuario = await this.buscarPorId(decoded.userId);

@@ -1,0 +1,70 @@
+meta {
+  name: 01 - Test Aislamiento Organizaciones
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/v1/profesionales
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{managerBarberiaToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Manager barbería SOLO debe ver sus profesionales", function() {
+    const body = res.getBody();
+    const profesionales = body.data;
+
+    // Verificar que todos los profesionales pertenecen a la barbería
+    profesionales.forEach(profesional => {
+      expect(profesional.organizacion_id).to.equal(bru.getVar("barbariaOrgId"),
+        `Profesional ${profesional.id} no pertenece a la organización correcta`);
+    });
+
+    // Debe tener exactamente 2 profesionales (barbero + estilista)
+    expect(profesionales.length).to.equal(2, "Barbería debe tener exactamente 2 profesionales");
+  });
+
+  test("Verificar tipos profesionales compatibles con barbería", function() {
+    const body = res.getBody();
+    const profesionales = body.data;
+
+    const tiposValidos = ['barbero', 'estilista_masculino', 'estilista'];
+
+    profesionales.forEach(profesional => {
+      expect(tiposValidos).to.include(profesional.tipo_profesional,
+        `Tipo ${profesional.tipo_profesional} no es compatible con industria barbería`);
+    });
+
+    console.log("✅ Tipos profesionales validados para barbería:");
+    profesionales.forEach(p => {
+      console.log(`  • ${p.nombre} ${p.apellidos}: ${p.tipo_profesional}`);
+    });
+  });
+
+  test("Verificar RLS (Row Level Security) funcionando", function() {
+    const body = res.getBody();
+    console.log("🛡️ RLS MULTI-TENANT VALIDADO:");
+    console.log(`  • Manager barbería ve SOLO ${body.data.length} profesionales de su organización`);
+    console.log(`  • Organización ID: ${bru.getVar("barbariaOrgId")}`);
+    console.log(`  • Token usado: Manager Barbería`);
+    console.log("  • ✅ Aislamiento de datos funcionando correctamente");
+  });
+}

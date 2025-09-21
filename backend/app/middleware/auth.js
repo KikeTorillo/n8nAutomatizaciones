@@ -1,315 +1,326 @@
 /**
- * @fileoverview Middleware de Autenticación JWT Enterprise Multi-Tenant
- *
- * Sistema completo de autenticación y autorización para arquitectura SaaS multi-tenant.
- * Maneja verificación de tokens JWT, control de roles, aislamiento de datos por
- * organización y configuración automática de contexto para Row Level Security.
- *
- * Características principales:
- * - Verificación JWT con access y refresh tokens
- * - Sistema de roles jerárquico (super_admin > admin > propietario > empleado > cliente)
- * - Aislamiento automático multi-tenant via PostgreSQL RLS
- * - Configuración de contexto de base de datos por request
- * - Validación de organizaciones activas y suscripciones vigentes
- * - Logging detallado de eventos de seguridad
- *
- * @author Backend Team
- * @version 1.0.0
- * @since 2025-09-17
+ * @fileoverview Middleware de Autenticación JWT para sistema multi-tenant
+ * @description Middleware simple y robusto para autenticación con JWT
+ * @author SaaS Agendamiento
+ * @version 2.0.0
  */
 
+const jwt = require('jsonwebtoken');
 const { getDb } = require('../config/database');
-const UsuarioModel = require('../database/usuario.model');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
-const jwt = require('jsonwebtoken');
+
+// Cache en memoria para la blacklist de tokens (en producción usar Redis)
+const tokenBlacklist = new Set();
 
 /**
- * Middleware principal de autenticación JWT con contexto multi-tenant
- *
- * Realiza autenticación completa del usuario y configuración automática del
- * contexto multi-tenant. Este es el middleware core que debe usarse en todas
- * las rutas que requieren autenticación.
- *
- * Flujo de autenticación:
- * 1. Extrae token del header Authorization
- * 2. Verifica y decodifica el JWT
- * 3. Consulta información completa del usuario y organización
- * 4. Verifica que usuario y organización estén activos
- * 5. Configura contexto de tenant en PostgreSQL (RLS)
- * 6. Inyecta req.user y req.tenant para middlewares posteriores
- *
- * @async
- * @param {import('express').Request} req - Request de Express
- * @param {import('express').Response} res - Response de Express
- * @param {import('express').NextFunction} next - Función next de Express
- *
- * @example
- * // Uso básico en rutas protegidas
- * router.get('/profile', authenticateToken, (req, res) => {
- *   console.log(req.user.id);           // ID del usuario
- *   console.log(req.tenant.id);         // ID de la organización
- * });
- *
- * @example
- * // req.user contendrá:
- * {
- *   id: 123,
- *   email: 'admin@empresa.com',
- *   nombre: 'Juan Pérez',
- *   rol: 'admin',
- *   organizacion_id: 456,
- *   organizacion_nombre: 'Barbería El Corte'
- * }
- *
- * @example
- * // req.tenant contendrá:
- * {
- *   id: 456,
- *   nombre: 'Barbería El Corte'
- * }
+ * Agregar token a la blacklist
+ * @param {string} token - Token JWT a invalidar
+ * @param {number} expiration - Tiempo de expiración del token en segundos
+ */
+async function addToTokenBlacklist(token, expiration = null) {
+    try {
+        // Almacenar en cache en memoria
+        tokenBlacklist.add(token);
+
+        // Si tenemos expiration, programar limpieza automática
+        if (expiration) {
+            const timeUntilExpiry = (expiration * 1000) - Date.now();
+            if (timeUntilExpiry > 0) {
+                setTimeout(() => {
+                    tokenBlacklist.delete(token);
+                    logger.debug('Token removido automáticamente de blacklist', { token: token.substring(0, 20) + '...' });
+                }, timeUntilExpiry);
+            }
+        }
+
+        logger.debug('Token agregado a blacklist', {
+            token: token.substring(0, 20) + '...',
+            blacklistSize: tokenBlacklist.size
+        });
+    } catch (error) {
+        logger.error('Error agregando token a blacklist', { error: error.message });
+        throw error;
+    }
+}
+
+/**
+ * Verificar si un token está en la blacklist
+ * @param {string} token - Token JWT a verificar
+ * @returns {boolean} - true si está en blacklist, false si no
+ */
+async function checkTokenBlacklist(token) {
+    try {
+        return tokenBlacklist.has(token);
+    } catch (error) {
+        logger.error('Error verificando blacklist', { error: error.message });
+        return false; // Fail-open: si hay error, permitir el token
+    }
+}
+
+/**
+ * Middleware básico de autenticación JWT
+ * Verifica el token y obtiene información del usuario
  */
 const authenticateToken = async (req, res, next) => {
-  try {
-    const authHeader = req.headers.authorization;
-
-    // Extraer token del header
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      logger.warn('Token de autenticación faltante', {
-        ip: req.ip,
-        userAgent: req.get('User-Agent'),
-        path: req.path
-      });
-      return ResponseHelper.error(res, 'Token de autenticación requerido', 401);
-    }
-
-    const token = authHeader.substring(7); // Remover "Bearer "
-
-    // Verificar y decodificar token JWT
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    // Obtener información completa del usuario usando nuestro modelo
-    const usuario = await UsuarioModel.buscarPorId(decoded.userId);
-
-    if (!usuario || !usuario.activo) {
-      logger.warn('Usuario no encontrado o inactivo', {
-        userId: decoded.userId,
-        ip: req.ip
-      });
-      return ResponseHelper.error(res, 'Usuario no autorizado', 401);
-    }
-
-    // Verificar que la organización esté activa (excepto super_admin)
-    if (usuario.rol !== 'super_admin' && !usuario.organizacion_activa) {
-      logger.warn('Organización inactiva', {
-        userId: usuario.id,
-        organizacionId: usuario.organizacion_id,
-        ip: req.ip
-      });
-      return ResponseHelper.error(res, 'Organización suspendida', 403);
-    }
-
-    // Configurar contexto multi-tenant en la base de datos
-    const db = getDb('saas');
-    if (usuario.organizacion_id) {
-      await db.query('SET app.current_tenant_id = $1', [usuario.organizacion_id]);
-      await db.query('SET app.current_user_id = $1', [usuario.id]);
-    }
-
-    // Agregar información al request
-    req.user = {
-      id: usuario.id,
-      email: usuario.email,
-      nombre: usuario.nombre,
-      apellidos: usuario.apellidos,
-      telefono: usuario.telefono,
-      rol: usuario.rol,
-      organizacion_id: usuario.organizacion_id,
-      organizacion_nombre: usuario.organizacion_nombre,
-      codigo_tenant: usuario.codigo_tenant,
-      tipo_industria: usuario.tipo_industria
-    };
-
-    req.tenant = {
-      id: usuario.organizacion_id,
-      nombre: usuario.organizacion_nombre,
-      codigo: usuario.codigo_tenant,
-      tipo_industria: usuario.tipo_industria
-    };
-
-    // Configurar contexto RLS para la sesión actual
     try {
-      const UsuarioModel = require('../database/usuario.model');
-      const { getDb } = require('../config/database');
-      const db = await getDb();
-      try {
-        await UsuarioModel.configurarContextoRLS(db, usuario.id, usuario.rol, usuario.organizacion_id);
-      } finally {
-        db.release();
-      }
+        // 1. Verificar que existe el header de autorización
+        const authHeader = req.headers.authorization;
+
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            logger.warn('Intento de acceso sin token', {
+                ip: req.ip,
+                path: req.path,
+                userAgent: req.get('User-Agent')
+            });
+            return ResponseHelper.error(res, 'Token de autenticación requerido', 401);
+        }
+
+        // 2. Extraer y verificar el token JWT
+        const token = authHeader.substring(7); // Remover "Bearer "
+
+        let decoded;
+        try {
+            decoded = jwt.verify(token, process.env.JWT_SECRET);
+        } catch (jwtError) {
+            logger.warn('Token JWT inválido', {
+                error: jwtError.message,
+                errorType: jwtError.name,
+                ip: req.ip,
+                path: req.path
+            });
+
+            // Manejar diferentes tipos de errores JWT
+            if (jwtError.name === 'TokenExpiredError') {
+                return ResponseHelper.error(res, 'Token expirado', 401, { code: 'TOKEN_EXPIRED' });
+            } else if (jwtError.name === 'JsonWebTokenError') {
+                return ResponseHelper.error(res, 'Token inválido', 401, { code: 'TOKEN_INVALID' });
+            } else if (jwtError.name === 'NotBeforeError') {
+                return ResponseHelper.error(res, 'Token no válido aún', 401, { code: 'TOKEN_NOT_ACTIVE' });
+            } else {
+                return ResponseHelper.error(res, 'Token malformado', 401, { code: 'TOKEN_MALFORMED' });
+            }
+        }
+
+        // 3. Verificar que el token contiene la información necesaria
+        if (!decoded.userId || !decoded.email || !decoded.rol) {
+            logger.error('Token JWT válido pero incompleto', {
+                decoded: decoded,
+                ip: req.ip,
+                path: req.path
+            });
+            return ResponseHelper.error(res, 'Token incompleto', 401, { code: 'TOKEN_INCOMPLETE' });
+        }
+
+        // 3.5. Verificar si el token está en la blacklist (invalidado por logout)
+        try {
+            const tokenBlacklisted = await checkTokenBlacklist(token);
+            if (tokenBlacklisted) {
+                logger.warn('Intento de uso de token invalidado', {
+                    userId: decoded.userId,
+                    tokenId: decoded.jti || 'sin_jti',
+                    ip: req.ip,
+                    path: req.path
+                });
+                return ResponseHelper.error(res, 'Token invalidado', 401, { code: 'TOKEN_BLACKLISTED' });
+            }
+        } catch (blacklistError) {
+            logger.error('Error verificando blacklist de tokens', {
+                error: blacklistError.message,
+                userId: decoded.userId
+            });
+            // En caso de error con blacklist, continuamos (fail-open para disponibilidad)
+        }
+
+        // 4. Obtener información básica del usuario desde la base de datos
+        const db = await getDb();
+        let usuario;
+
+        try {
+            // Configurar bypass RLS para consulta de autenticación
+            await db.query("SET app.bypass_rls = 'true'");
+
+            const result = await db.query(
+                `SELECT id, email, nombre, apellidos, telefono, rol, organizacion_id,
+                        activo, email_verificado, creado_en, actualizado_en
+                 FROM usuarios
+                 WHERE id = $1 AND activo = TRUE`,
+                [decoded.userId]
+            );
+
+            if (result.rows.length === 0) {
+                logger.warn('Usuario no encontrado o inactivo', {
+                    userId: decoded.userId,
+                    ip: req.ip,
+                    path: req.path
+                });
+                return ResponseHelper.error(res, 'Usuario no autorizado', 401);
+            }
+
+            usuario = result.rows[0];
+
+        } catch (dbError) {
+            logger.error('Error consultando usuario en autenticación', {
+                error: dbError.message,
+                userId: decoded.userId,
+                ip: req.ip,
+                path: req.path
+            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
+        } finally {
+            // Restaurar RLS y liberar conexión
+            try {
+                await db.query("SET app.bypass_rls = 'false'");
+            } catch (e) {
+                logger.warn('Error restaurando RLS', { error: e.message });
+            }
+            db.release();
+        }
+
+        // 5. Verificar consistencia entre token y base de datos
+        if (usuario.email !== decoded.email || usuario.rol !== decoded.rol) {
+            logger.warn('Inconsistencia entre token y base de datos', {
+                tokenEmail: decoded.email,
+                dbEmail: usuario.email,
+                tokenRol: decoded.rol,
+                dbRol: usuario.rol,
+                userId: usuario.id,
+                ip: req.ip
+            });
+            return ResponseHelper.error(res, 'Token desactualizado', 401, { code: 'TOKEN_OUTDATED' });
+        }
+
+        // 6. Configurar información del usuario en el request
+        req.user = {
+            id: usuario.id,
+            email: usuario.email,
+            nombre: usuario.nombre,
+            apellidos: usuario.apellidos,
+            telefono: usuario.telefono,
+            rol: usuario.rol,
+            organizacion_id: usuario.organizacion_id,
+            activo: usuario.activo,
+            email_verificado: usuario.email_verificado,
+            creado_en: usuario.creado_en,
+            actualizado_en: usuario.actualizado_en
+        };
+
+        // 7. Log exitoso
+        logger.debug('Usuario autenticado exitosamente', {
+            userId: usuario.id,
+            email: usuario.email,
+            rol: usuario.rol,
+            organizacionId: usuario.organizacion_id,
+            path: req.path,
+            ip: req.ip
+        });
+
+        next();
+
     } catch (error) {
-      logger.warn('Error configurando contexto RLS en middleware', { error: error.message });
+        logger.error('Error inesperado en middleware de autenticación', {
+            error: error.message,
+            stack: error.stack,
+            ip: req.ip,
+            path: req.path
+        });
+        return ResponseHelper.error(res, 'Error interno del servidor', 500);
     }
-
-    logger.debug('Usuario autenticado exitosamente', {
-      userId: usuario.id,
-      email: usuario.email,
-      organizacionId: usuario.organizacion_id,
-      path: req.path
-    });
-
-    next();
-  } catch (error) {
-    logger.error('Error en autenticación', {
-      error: error.message,
-      ip: req.ip,
-      path: req.path
-    });
-
-    // Manejar errores específicos de JWT
-    if (error.name === 'TokenExpiredError') {
-      return ResponseHelper.error(res, 'Token expirado', 401, { code: 'TOKEN_EXPIRED' });
-    } else if (error.name === 'JsonWebTokenError') {
-      return ResponseHelper.error(res, 'Token inválido', 401, { code: 'TOKEN_INVALID' });
-    } else if (error.name === 'NotBeforeError') {
-      return ResponseHelper.error(res, 'Token no válido aún', 401, { code: 'TOKEN_NOT_ACTIVE' });
-    } else {
-      return ResponseHelper.error(res, 'Error de autenticación', 500);
-    }
-  }
 };
 
 /**
- * Middleware para verificar roles específicos
+ * Middleware para requerir roles específicos
  * @param {Array|string} allowedRoles - Roles permitidos
  */
 const requireRole = (allowedRoles) => {
-  return (req, res, next) => {
-    if (!req.user) {
-      logger.error('Middleware requireRole usado sin autenticación previa');
-      return ResponseHelper.error(res, 'Error de configuración', 500);
-    }
+    return (req, res, next) => {
+        if (!req.user) {
+            logger.error('requireRole usado sin autenticación previa');
+            return ResponseHelper.error(res, 'Error de configuración', 500);
+        }
 
-    const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+        const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-    if (!roles.includes(req.user.rol)) {
-      logger.warn('Acceso denegado por rol insuficiente', {
-        userId: req.user.id,
-        userRole: req.user.rol,
-        requiredRoles: roles,
-        path: req.path
-      });
-      return ResponseHelper.error(res, 'Permisos insuficientes', 403);
-    }
+        if (!roles.includes(req.user.rol)) {
+            logger.warn('Acceso denegado por rol insuficiente', {
+                userId: req.user.id,
+                userRol: req.user.rol,
+                rolesRequeridos: roles,
+                path: req.path,
+                ip: req.ip
+            });
+            return ResponseHelper.error(res, 'Acceso denegado', 403, {
+                code: 'INSUFFICIENT_ROLE',
+                userRole: req.user.rol,
+                requiredRoles: roles
+            });
+        }
 
-    logger.debug('Autorización por rol exitosa', {
-      userId: req.user.id,
-      userRole: req.user.rol,
-      path: req.path
-    });
-
-    next();
-  };
+        next();
+    };
 };
 
 /**
- * Middleware para rutas que requieren autenticación de administrador
+ * Middleware para requerir rol de administrador
  */
-const requireAdmin = requireRole(['admin', 'super_admin']);
+const requireAdmin = (req, res, next) => {
+    return requireRole(['super_admin', 'admin', 'organizacion_admin'])(req, res, next);
+};
 
 /**
- * Middleware para rutas que requieren autenticación de propietario o administrador
+ * Middleware para verificar que el usuario puede acceder a la organización
+ * @param {number} organizacionId - ID de la organización a verificar
  */
-const requireOwnerOrAdmin = requireRole(['propietario', 'admin', 'super_admin']);
+const verifyOrganizationAccess = (organizacionId) => {
+    return (req, res, next) => {
+        if (!req.user) {
+            logger.error('verifyOrganizationAccess usado sin autenticación previa');
+            return ResponseHelper.error(res, 'Error de configuración', 500);
+        }
+
+        // Super admin puede acceder a cualquier organización
+        if (req.user.rol === 'super_admin') {
+            return next();
+        }
+
+        // Otros roles solo pueden acceder a su propia organización
+        if (req.user.organizacion_id !== organizacionId) {
+            logger.warn('Intento de acceso a organización no autorizada', {
+                userId: req.user.id,
+                userOrgId: req.user.organizacion_id,
+                requestedOrgId: organizacionId,
+                path: req.path,
+                ip: req.ip
+            });
+            return ResponseHelper.error(res, 'Acceso no autorizado a esta organización', 403);
+        }
+
+        next();
+    };
+};
 
 /**
  * Middleware opcional de autenticación
- * No bloquea si no hay token, pero si hay token lo valida
+ * No falla si no hay token, pero autentica si existe
  */
 const optionalAuth = async (req, res, next) => {
-  try {
     const authHeader = req.headers.authorization;
-    const token = auth.extractTokenFromHeader(authHeader);
 
-    if (!token) {
-      // No hay token, continuar sin autenticación
-      req.user = null;
-      req.tenant = null;
-      return next();
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        // No hay token, continuar sin autenticación
+        return next();
     }
 
     // Hay token, intentar autenticar
     return authenticateToken(req, res, next);
-  } catch (error) {
-    // Si hay error en autenticación opcional, continuar sin autenticación
-    logger.debug('Error en autenticación opcional, continuando sin auth', {
-      error: error.message,
-      path: req.path
-    });
-    req.user = null;
-    req.tenant = null;
-    next();
-  }
-};
-
-/**
- * Middleware para verificar que el usuario pertenece a la organización correcta
- * Útil para endpoints que reciben organizacion_id como parámetro
- */
-const verifyTenantAccess = (req, res, next) => {
-  if (!req.user) {
-    return ResponseHelper.error(res, 'Autenticación requerida', 401);
-  }
-
-  const requestedOrgId = req.params.organizacion_id || req.body.organizacion_id;
-
-  if (requestedOrgId && parseInt(requestedOrgId) !== req.user.organizacion_id) {
-    logger.warn('Intento de acceso a organización no autorizada', {
-      userId: req.user.id,
-      userOrgId: req.user.organizacion_id,
-      requestedOrgId: requestedOrgId,
-      path: req.path
-    });
-    return ResponseHelper.error(res, 'Acceso a organización no autorizado', 403);
-  }
-
-  next();
-};
-
-/**
- * Middleware para refrescar tokens (actualizado para usar UsuarioModel)
- */
-const refreshToken = async (req, res, next) => {
-  try {
-    const refreshTokenValue = req.cookies.refreshToken || req.body.refreshToken;
-
-    if (!refreshTokenValue) {
-      return ResponseHelper.error(res, 'Refresh token requerido', 400);
-    }
-
-    // Usar el método del modelo para refrescar token
-    const resultado = await UsuarioModel.refrescarToken(refreshTokenValue);
-
-    logger.info('Tokens renovados exitosamente via middleware');
-
-    return ResponseHelper.success(res, resultado, 'Tokens renovados exitosamente');
-
-  } catch (error) {
-    logger.error('Error renovando tokens', { error: error.message });
-
-    // Limpiar cookie si el refresh token es inválido
-    res.clearCookie('refreshToken');
-
-    return ResponseHelper.error(res, 'Error renovando tokens', 401);
-  }
 };
 
 module.exports = {
-  authenticateToken,
-  requireRole,
-  requireAdmin,
-  requireOwnerOrAdmin,
-  optionalAuth,
-  verifyTenantAccess,
-  refreshToken
+    authenticateToken,
+    requireRole,
+    requireAdmin,
+    verifyOrganizationAccess,
+    optionalAuth,
+    addToTokenBlacklist,
+    checkTokenBlacklist
 };

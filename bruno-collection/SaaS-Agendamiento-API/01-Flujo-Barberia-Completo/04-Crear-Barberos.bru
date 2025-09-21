@@ -1,0 +1,92 @@
+meta {
+  name: 04 - Crear Barberos
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/v1/profesionales
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{managerBarberiaToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Juan Carlos",
+    "apellidos": "Pérez López",
+    "email": "juan.barbero@barbariaelclasico.com",
+    "telefono": "+573101234567",
+    "tipo_profesional": "barbero",
+    "especialidades": ["corte_clasico", "barba", "bigote", "afeitado_navaja"],
+    "horarios_disponibles": {
+      "lunes": {"inicio": "09:00", "fin": "18:00"},
+      "martes": {"inicio": "09:00", "fin": "18:00"},
+      "miercoles": {"inicio": "09:00", "fin": "18:00"},
+      "jueves": {"inicio": "09:00", "fin": "18:00"},
+      "viernes": {"inicio": "09:00", "fin": "19:00"},
+      "sabado": {"inicio": "08:00", "fin": "16:00"}
+    },
+    "informacion_adicional": {
+      "experiencia_anos": 12,
+      "certificaciones": ["Barbería Clásica", "Técnicas de Afeitado"],
+      "fecha_ingreso": "2023-03-15",
+      "biografia": "Barbero especializado en técnicas clásicas con más de 12 años de experiencia."
+    }
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should create barbero professional", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('tipo_profesional', 'barbero');
+    expect(body.data).to.have.property('nombre', 'Juan Carlos');
+  });
+
+  test("Should belong to barbería organization", function() {
+    const body = res.getBody();
+    expect(body.data.organizacion_id).to.equal(bru.getVar("barbariaOrgId"));
+  });
+
+  test("Should validate barbero compatible with barbería", function() {
+    const body = res.getBody();
+    // barbero es compatible con industria barberia
+    expect(body.data.tipo_profesional).to.equal('barbero');
+  });
+
+  test("Should set barbero variables", function() {
+    const body = res.getBody();
+    if (body.success && body.data.id) {
+      bru.setVar("barberoId", body.data.id);
+      bru.setVar("barberoEmail", body.data.email);
+    }
+  });
+
+  test("Barbero ready for service", function() {
+    const body = res.getBody();
+    console.log("✂️ Barbero creado exitosamente");
+    console.log(`👤 Nombre: ${body.data.nombre} ${body.data.apellidos}`);
+    console.log(`📧 Email: ${body.data.email}`);
+    console.log(`📱 Teléfono: ${body.data.telefono}`);
+    console.log(`🎯 Especialidades: ${body.data.especialidades.join(', ')}`);
+    console.log(`📅 Horarios: Lun-Vie 09:00-18:00, Sáb 08:00-16:00`);
+    console.log(`⭐ Experiencia: ${body.data.informacion_adicional.experiencia_anos} años`);
+    console.log(`🆔 ID Profesional: ${body.data.id}`);
+  });
+}

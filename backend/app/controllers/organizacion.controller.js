@@ -17,6 +17,25 @@ class OrganizacionController {
         try {
             const organizacionData = req.body;
 
+            /**
+             * IMPORTANTE: DOS CAMPOS DIFERENTES DE INDUSTRIA
+             *
+             * 1. tipo_industria (ENUM): Clasificación categórica fija
+             *    - Usado para validaciones y compatibilidad profesional-industria
+             *    - Valor del frontend: req.body.configuracion_industria (por compatibilidad API)
+             *
+             * 2. configuracion_industria (JSONB): Configuraciones operativas
+             *    - Usado para personalizaciones específicas por sector
+             *    - Opcional, puede venir en req.body.configuracion_industria_jsonb
+             */
+
+            // Mapear configuracion_industria del frontend a tipo_industria de BD
+            // TODO: Cambiar frontend para enviar tipo_industria directamente
+            if (organizacionData.configuracion_industria && !organizacionData.tipo_industria) {
+                organizacionData.tipo_industria = organizacionData.configuracion_industria;
+                delete organizacionData.configuracion_industria; // Evitar conflicto con JSONB
+            }
+
             // Verificar si ya existe organización con el mismo email
             if (organizacionData.email_admin) {
                 const existente = await OrganizacionModel.obtenerPorEmail(organizacionData.email_admin);

@@ -273,14 +273,33 @@ router.get('/check-lock/:userId',
  */
 if (process.env.NODE_ENV !== 'production') {
     router.get('/test-auth',
-        middleware.auth.authenticateToken,
         (req, res) => {
-            res.json({
-                success: true,
-                message: 'Autenticación funcionando correctamente',
-                user: req.user,
-                tenant: req.tenant
-            });
+            // Test muy básico de autenticación
+            const authHeader = req.headers.authorization;
+            if (!authHeader || !authHeader.startsWith('Bearer ')) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'Token requerido'
+                });
+            }
+
+            try {
+                const token = authHeader.substring(7);
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+                res.json({
+                    success: true,
+                    message: 'Token válido',
+                    decoded: decoded
+                });
+            } catch (error) {
+                res.status(401).json({
+                    success: false,
+                    message: 'Token inválido',
+                    error: error.message
+                });
+            }
         }
     );
 }

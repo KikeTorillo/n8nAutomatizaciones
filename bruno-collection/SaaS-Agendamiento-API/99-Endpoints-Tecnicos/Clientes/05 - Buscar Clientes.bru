@@ -1,0 +1,62 @@
+meta {
+  name: 05 - Buscar Clientes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/clientes/buscar?q=Carlos&limit=10
+  body: none
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Response should contain search results", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an('array');
+  });
+
+  test("Search results should match query", function() {
+    const body = res.getBody();
+    const clientes = body.data;
+
+    if (clientes.length > 0) {
+      const searchTerm = 'Carlos';
+      clientes.forEach(cliente => {
+        const matchesName = cliente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           cliente.apellidos.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           cliente.email.toLowerCase().includes(searchTerm.toLowerCase());
+        expect(matchesName).to.be.true;
+      });
+    }
+  });
+
+  test("Should respect search limit", function() {
+    const body = res.getBody();
+    expect(body.data.length).to.be.at.most(10);
+  });
+
+  test("Search metadata should be included", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('search_metadata');
+    expect(body.search_metadata).to.have.property('query', 'Carlos');
+    expect(body.search_metadata).to.have.property('total_results');
+  });
+}

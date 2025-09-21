@@ -1,0 +1,69 @@
+meta {
+  name: 04 - Actualizar Cliente
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/{{apiVersion}}/clientes/{{clienteId}}
+  body: json
+  auth: bearer
+}
+
+headers {
+  Content-Type: application/json
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "nombre": "Carlos Andrés",
+    "apellidos": "González Pérez",
+    "telefono": "+573109876543",
+    "preferencias": {
+      "servicios_frecuentes": ["corte_clasico", "barba", "bigote"],
+      "horario_preferido": "mañana",
+      "frecuencia_visitas": "semanal",
+      "notas_especiales": "Cliente VIP - Actualizado a servicio premium"
+    },
+    "informacion_adicional": {
+      "ocupacion": "Ingeniero Senior",
+      "como_conocio": "recomendacion_amigo",
+      "fecha_primer_visita": "2023-03-15",
+      "cliente_desde": "2023-03-15",
+      "tipo_cliente": "VIP"
+    }
+  }
+}
+
+tests {
+  test("Status should be 200", function() {
+    expect(res.getStatus()).to.equal(200);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should update cliente data", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('nombre', 'Carlos Andrés');
+    expect(body.data).to.have.property('telefono', '+573109876543');
+  });
+
+  test("Should update preferencias", function() {
+    const body = res.getBody();
+    expect(body.data.preferencias).to.have.property('horario_preferido', 'mañana');
+    expect(body.data.preferencias).to.have.property('frecuencia_visitas', 'semanal');
+  });
+
+  test("Should update informacion_adicional", function() {
+    const body = res.getBody();
+    expect(body.data.informacion_adicional).to.have.property('tipo_cliente', 'VIP');
+    expect(body.data.informacion_adicional).to.have.property('ocupacion', 'Ingeniero Senior');
+  });
+}

@@ -2,9 +2,8 @@ const express = require('express');
 
 const authRouter = require('./auth');
 const organizacionesRouter = require('./organizaciones');
-
-// Solo en desarrollo: rutas de testing
-const testRouter = process.env.NODE_ENV !== 'production' ? require('./test') : null;
+const profesionalesRouter = require('./profesionales');
+const clientesRouter = require('./clientes');
 
 function routerApi(app) {
     const router = express.Router();
@@ -13,15 +12,9 @@ function routerApi(app) {
 
     // Rutas de autenticación (sin prefijo adicional)
     router.use('/auth', authRouter);
-
-    // Otras rutas
     router.use('/organizaciones', organizacionesRouter);
-  
-
-    // Rutas de testing solo en desarrollo
-    if (testRouter) {
-        router.use('/test', testRouter);
-    }
+    router.use('/profesionales', profesionalesRouter);
+    router.use('/clientes', clientesRouter);
 }
 
 module.exports = routerApi;

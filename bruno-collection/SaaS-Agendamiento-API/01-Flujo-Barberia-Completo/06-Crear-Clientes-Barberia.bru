@@ -1,0 +1,90 @@
+meta {
+  name: 06 - Crear Cliente Regular Barbería
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/clientes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{managerBarberiaToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Andrés",
+    "apellidos": "Gómez Martínez",
+    "email": "andres.gomez@email.com",
+    "telefono": "+573501234567",
+    "fecha_nacimiento": "1985-03-15",
+    "preferencias": {
+      "profesional_preferido": "{{barberoId}}",
+      "servicios_frecuentes": ["corte_clasico", "barba"],
+      "horario_preferido": "tarde",
+      "frecuencia_visitas": "quincenal",
+      "notas_especiales": "Prefiere corte conservador para trabajo en oficina"
+    },
+    "informacion_adicional": {
+      "ocupacion": "Contador",
+      "como_conocio": "recomendacion_amigo",
+      "fecha_primer_visita": "2023-05-10",
+      "cliente_desde": "2023-05-10"
+    }
+  }
+}
+
+tests {
+  test("Status should be 201", function() {
+    expect(res.getStatus()).to.equal(201);
+  });
+
+  test("Response should contain success true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', true);
+  });
+
+  test("Should create cliente", function() {
+    const body = res.getBody();
+    expect(body.data).to.have.property('nombre', 'Andrés');
+    expect(body.data).to.have.property('apellidos', 'Gómez Martínez');
+  });
+
+  test("Should belong to barbería organization", function() {
+    const body = res.getBody();
+    expect(body.data.organizacion_id).to.equal(bru.getVar("barbariaOrgId"));
+  });
+
+  test("Should have barbero as preferred professional", function() {
+    const body = res.getBody();
+    expect(body.data.preferencias.profesional_preferido).to.equal(bru.getVar("barberoId"));
+  });
+
+  test("Should set cliente variables", function() {
+    const body = res.getBody();
+    if (body.success && body.data.id) {
+      bru.setVar("clienteBarberiaId", body.data.id);
+      bru.setVar("clienteBarberiaEmail", body.data.email);
+    }
+  });
+
+  test("Cliente barbería ready", function() {
+    const body = res.getBody();
+    console.log("👨‍💼 Cliente de Barbería creado exitosamente");
+    console.log(`👤 Nombre: ${body.data.nombre} ${body.data.apellidos}`);
+    console.log(`📧 Email: ${body.data.email}`);
+    console.log(`📱 Teléfono: ${body.data.telefono}`);
+    console.log(`⭐ Profesional preferido: ${body.data.preferencias.profesional_preferido}`);
+    console.log(`💇‍♂️ Servicios frecuentes: ${body.data.preferencias.servicios_frecuentes.join(', ')}`);
+    console.log(`⏰ Horario preferido: ${body.data.preferencias.horario_preferido}`);
+    console.log(`📅 Cliente desde: ${body.data.informacion_adicional.cliente_desde}`);
+    console.log(`🆔 ID Cliente: ${body.data.id}`);
+  });
+}

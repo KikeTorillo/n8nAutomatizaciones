@@ -1,0 +1,71 @@
+meta {
+  name: 06 - Test Emails Únicos Por Organización
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/api/v1/clientes
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{managerBarberiaToken}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:json {
+  {
+    "nombre": "Andrés",
+    "apellidos": "Cliente Duplicado",
+    "email": "andres.gomez@email.com",
+    "telefono": "+573509999999",
+    "fecha_nacimiento": "1990-01-01",
+    "preferencias": {
+      "servicios_frecuentes": ["corte_clasico"]
+    }
+  }
+}
+
+tests {
+  test("Should return validation error for duplicate email", function() {
+    expect(res.getStatus()).to.equal(400);
+  });
+
+  test("Response should contain success false", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('success', false);
+  });
+
+  test("Should validate email único por organización", function() {
+    const body = res.getBody();
+    expect(body).to.have.property('error');
+
+    const errorMsg = body.error.toLowerCase();
+    const hasEmailError = errorMsg.includes('email') ||
+                         errorMsg.includes('único') ||
+                         errorMsg.includes('existe') ||
+                         errorMsg.includes('duplicado');
+
+    expect(hasEmailError).to.be.true("Error debe indicar email duplicado");
+  });
+
+  test("Sistema de unicidad por organización funcionando", function() {
+    const body = res.getBody();
+    console.log("📧 VALIDACIÓN EMAILS ÚNICOS POR ORGANIZACIÓN:");
+    console.log("  • Intento: Crear cliente con email existente en barbería");
+    console.log(`  • Email: andres.gomez@email.com`);
+    console.log("  • Resultado: ❌ RECHAZADO correctamente");
+    console.log(`  • Error: ${body.error}`);
+
+    console.log("\n🔒 REGLAS DE UNICIDAD MULTI-TENANT:");
+    console.log("  • ✅ Email debe ser único DENTRO de cada organización");
+    console.log("  • ✅ Mismo email PUEDE existir en diferentes organizaciones");
+    console.log("  • ✅ Teléfono debe ser único DENTRO de cada organización");
+    console.log("  • ✅ Sistema previene duplicados en misma organización");
+  });
+}
