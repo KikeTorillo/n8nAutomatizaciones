@@ -5,9 +5,13 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/api/{{apiVersion}}/clientes/{{clienteId}}/estado
+  url: {{baseUrl}}/api/{{apiVersion}}/clientes/{{clienteId}}/estado?organizacion_id={{organizacionId}}
   body: json
   auth: bearer
+}
+
+params:query {
+  organizacion_id: {{organizacionId}}
 }
 
 headers {

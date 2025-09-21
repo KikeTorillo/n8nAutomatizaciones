@@ -5,9 +5,16 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/{{apiVersion}}/servicios?activo=false&pagina=1&limite=10
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios?activo=false&pagina=1&limite=10&organizacion_id={{organizacionId}}
   body: none
   auth: bearer
+}
+
+params:query {
+  activo: false
+  pagina: 1
+  limite: 10
+  organizacion_id: {{organizacionId}}
 }
 
 auth:bearer {

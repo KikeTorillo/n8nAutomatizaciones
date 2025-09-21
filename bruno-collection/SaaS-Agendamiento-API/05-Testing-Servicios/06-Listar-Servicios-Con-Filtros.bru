@@ -5,9 +5,19 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/{{apiVersion}}/servicios?categoria=corte&activo=true&precio_min=20&precio_max=30&pagina=1&limite=5
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios?categoria=corte&activo=true&precio_min=20&precio_max=30&pagina=1&limite=5&organizacion_id={{organizacionId}}
   body: none
   auth: bearer
+}
+
+params:query {
+  categoria: corte
+  activo: true
+  precio_min: 20
+  precio_max: 30
+  pagina: 1
+  limite: 5
+  organizacion_id: {{organizacionId}}
 }
 
 auth:bearer {

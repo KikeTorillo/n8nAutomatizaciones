@@ -5,13 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/{{apiVersion}}/profesionales?organizacion_id=1&limit=20&offset=0
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales?organizacion_id={{organizacionId}}&limit=20&offset=0
   body: none
   auth: bearer
 }
 
 params:query {
-  organizacion_id: 1
+  organizacion_id: {{organizacionId}}
   limit: 20
   offset: 0
   ~activo: true

@@ -5,9 +5,13 @@ meta {
 }
 
 delete {
-  url: {{baseUrl}}/api/{{apiVersion}}/servicios/{{servicioBarbaId}}
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/{{servicioBarbaId}}?organizacion_id={{organizacionId}}
   body: none
   auth: bearer
+}
+
+params:query {
+  organizacion_id: {{organizacionId}}
 }
 
 auth:bearer {

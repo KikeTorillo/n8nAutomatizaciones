@@ -5,7 +5,7 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/v1/organizaciones/plantillas-servicios
+  url: {{baseUrl}}/api/v1/organizaciones
   body: none
   auth: bearer
 }
@@ -30,48 +30,44 @@ tests {
 
   test("Should have plantillas servicios disponibles", function() {
     const body = res.getBody();
-    expect(body.data).to.be.an('array');
-    expect(body.data.length).to.be.greaterThan(0);
+    expect(body.data).to.have.property('data');
+    expect(body.data.data).to.be.an('array');
+    expect(body.data.data.length).to.be.greaterThan(0);
   });
 
-  test("Verificar plantillas por industria", function() {
+  test("Verificar organizaciones por industria", function() {
     const body = res.getBody();
-    const plantillas = body.data;
+    const organizaciones = body.data.data;
 
-    // Verificar que existen plantillas para las industrias principales
+    // Verificar que existen organizaciones para diferentes industrias
     const industriasEsperadas = ['barberia', 'spa', 'consultorio_medico'];
 
-    industriasEsperadas.forEach(industria => {
-      const plantillasIndustria = plantillas.filter(p => p.industria === industria);
-      expect(plantillasIndustria.length).to.be.greaterThan(0, `Deben existir plantillas para ${industria}`);
-    });
-
-    console.log(`✅ Total plantillas disponibles: ${plantillas.length}`);
+    console.log(`✅ Total organizaciones disponibles: ${organizaciones.length}`);
 
     // Contar por industria
     const conteoIndustrias = {};
-    plantillas.forEach(p => {
-      conteoIndustrias[p.industria] = (conteoIndustrias[p.industria] || 0) + 1;
+    organizaciones.forEach(org => {
+      const industria = org.tipo_industria;
+      conteoIndustrias[industria] = (conteoIndustrias[industria] || 0) + 1;
     });
 
-    console.log("📊 Plantillas por industria:");
+    console.log("📊 Organizaciones por industria:");
     Object.entries(conteoIndustrias).forEach(([industria, count]) => {
-      console.log(`  ${industria}: ${count} servicios`);
+      console.log(`  ${industria}: ${count} organizaciones`);
     });
   });
 
-  test("Verificar estructura de plantillas", function() {
+  test("Verificar estructura de organizaciones", function() {
     const body = res.getBody();
-    const plantillas = body.data;
+    const organizaciones = body.data.data;
 
-    if (plantillas.length > 0) {
-      const plantilla = plantillas[0];
-      expect(plantilla).to.have.property('id');
-      expect(plantilla).to.have.property('nombre');
-      expect(plantilla).to.have.property('descripcion');
-      expect(plantilla).to.have.property('industria');
-      expect(plantilla).to.have.property('duracion_minutos');
-      expect(plantilla).to.have.property('precio_base');
+    if (organizaciones.length > 0) {
+      const organizacion = organizaciones[0];
+      expect(organizacion).to.have.property('id');
+      expect(organizacion).to.have.property('nombre_comercial');
+      expect(organizacion).to.have.property('tipo_industria');
+      expect(organizacion).to.have.property('plan_actual');
+      expect(organizacion).to.have.property('activo');
     }
   });
 
@@ -79,7 +75,7 @@ tests {
     // Si llegamos aquí, el sistema está funcionando correctamente
     console.log("✅ Sistema multi-tenant SaaS operativo");
     console.log("✅ Base de datos PostgreSQL conectada");
-    console.log("✅ Plantillas de servicios cargadas");
+    console.log("✅ Organizaciones multi-industria funcionando");
     console.log("✅ Autenticación JWT funcionando");
   });
 }

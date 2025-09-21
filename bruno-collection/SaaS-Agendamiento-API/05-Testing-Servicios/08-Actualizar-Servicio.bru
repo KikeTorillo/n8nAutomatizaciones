@@ -5,9 +5,13 @@ meta {
 }
 
 put {
-  url: {{baseUrl}}/api/{{apiVersion}}/servicios/{{servicioId}}
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/{{servicioId}}?organizacion_id={{organizacionId}}
   body: json
   auth: bearer
+}
+
+params:query {
+  organizacion_id: {{organizacionId}}
 }
 
 auth:bearer {

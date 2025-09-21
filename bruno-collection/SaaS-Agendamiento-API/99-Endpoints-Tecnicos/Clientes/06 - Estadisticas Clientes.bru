@@ -5,9 +5,13 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/{{apiVersion}}/clientes/estadisticas
+  url: {{baseUrl}}/api/{{apiVersion}}/clientes/estadisticas?organizacion_id={{organizacionId}}
   body: none
   auth: bearer
+}
+
+params:query {
+  organizacion_id: {{organizacionId}}
 }
 
 headers {

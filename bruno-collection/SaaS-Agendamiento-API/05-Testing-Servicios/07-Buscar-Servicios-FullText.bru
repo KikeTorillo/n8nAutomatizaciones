@@ -5,9 +5,16 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/api/{{apiVersion}}/servicios/buscar?termino=corte&limite=5&solo_activos=true
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/buscar?termino=corte&limite=5&solo_activos=true&organizacion_id={{organizacionId}}
   body: none
   auth: bearer
+}
+
+params:query {
+  termino: corte
+  limite: 5
+  solo_activos: true
+  organizacion_id: {{organizacionId}}
 }
 
 auth:bearer {
