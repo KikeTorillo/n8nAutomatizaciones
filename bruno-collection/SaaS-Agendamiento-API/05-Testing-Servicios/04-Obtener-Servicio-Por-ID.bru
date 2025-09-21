@@ -1,0 +1,32 @@
+meta {
+  name: 04-Obtener-Servicio-Por-ID
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/{{servicioId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.id: eq {{servicioId}}
+  res.body.data.nombre: eq "Corte de Cabello Premium"
+  res.body.data.total_profesionales_asignados: isDefined
+}
+
+script:post-response {
+  if (res.body.success) {
+    console.log("✅ Servicio obtenido por ID:", res.body.data.id);
+    console.log("Nombre:", res.body.data.nombre);
+    console.log("Profesionales asignados:", res.body.data.total_profesionales_asignados);
+    console.log("Configuración específica:", JSON.stringify(res.body.data.configuracion_especifica));
+  }
+}

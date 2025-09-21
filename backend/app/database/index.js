@@ -6,10 +6,12 @@
 
 const OrganizacionModel = require('./organizacion.model');
 const PlantillaServicioModel = require('./plantilla-servicio.model');
+const ServicioModel = require('./servicio.model');
 
 
 
 module.exports = {
     OrganizacionModel,
     PlantillaServicioModel,
+    ServicioModel,
 };

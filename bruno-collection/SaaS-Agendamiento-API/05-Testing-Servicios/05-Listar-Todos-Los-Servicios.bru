@@ -1,0 +1,35 @@
+meta {
+  name: 05-Listar-Todos-Los-Servicios
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios?pagina=1&limite=10&orden=nombre&direccion=ASC
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.servicios: isArray
+  res.body.data.paginacion.pagina_actual: eq 1
+  res.body.data.paginacion.elementos_por_pagina: eq 10
+}
+
+script:post-response {
+  if (res.body.success) {
+    console.log("✅ Servicios listados exitosamente");
+    console.log("Total elementos:", res.body.data.paginacion.total_elementos);
+    console.log("Servicios en página:", res.body.data.servicios.length);
+    console.log("Nombres:");
+    res.body.data.servicios.forEach((servicio, index) => {
+      console.log(`  ${index + 1}. ${servicio.nombre} - $${servicio.precio}`);
+    });
+  }
+}

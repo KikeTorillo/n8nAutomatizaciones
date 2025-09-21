@@ -1,0 +1,37 @@
+meta {
+  name: 09-Obtener-Estadisticas-Servicios
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/estadisticas
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.total_servicios: isDefined
+  res.body.data.servicios_activos: isDefined
+  res.body.data.precio_promedio: isDefined
+}
+
+script:post-response {
+  if (res.body.success) {
+    console.log("✅ Estadísticas obtenidas exitosamente");
+    console.log("Total servicios:", res.body.data.total_servicios);
+    console.log("Servicios activos:", res.body.data.servicios_activos);
+    console.log("Servicios inactivos:", res.body.data.servicios_inactivos);
+    console.log("Total categorías:", res.body.data.total_categorias);
+    console.log("Precio promedio: $" + parseFloat(res.body.data.precio_promedio).toFixed(2));
+    console.log("Precio mínimo: $" + parseFloat(res.body.data.precio_minimo).toFixed(2));
+    console.log("Precio máximo: $" + parseFloat(res.body.data.precio_maximo).toFixed(2));
+    console.log("Duración promedio:", parseFloat(res.body.data.duracion_promedio).toFixed(0) + " minutos");
+  }
+}

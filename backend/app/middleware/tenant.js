@@ -41,20 +41,33 @@ const setTenantContext = async (req, res, next) => {
       userRol: req.user.rol,
       organizacionId: req.user.organizacion_id,
       allParams: req.params,
+      queryParams: req.query,
       path: req.path
     });
 
-    if (req.user.rol === 'super_admin' && req.params.id) {
-      logger.debug('Usando ID de URL para super_admin', { paramsId: req.params.id });
-      tenantId = parseInt(req.params.id);
-      if (isNaN(tenantId)) {
-        logger.error('ID de organización inválido en URL', {
+    if (req.user.rol === 'super_admin') {
+      // Para super_admin, buscar tenant ID en params, query o body
+      if (req.params.id) {
+        logger.debug('Usando ID de URL para super_admin', { paramsId: req.params.id });
+        tenantId = parseInt(req.params.id);
+      } else if (req.query.organizacion_id) {
+        logger.debug('Usando organizacion_id de query para super_admin', { queryOrgId: req.query.organizacion_id });
+        tenantId = parseInt(req.query.organizacion_id);
+      } else if (req.body && req.body.organizacion_id) {
+        logger.debug('Usando organizacion_id de body para super_admin', { bodyOrgId: req.body.organizacion_id });
+        tenantId = parseInt(req.body.organizacion_id);
+      }
+      
+      if (isNaN(tenantId) || !tenantId) {
+        logger.error('ID de organización inválido para super_admin', {
           paramsId: req.params.id,
+          queryOrgId: req.query.organizacion_id,
+          bodyOrgId: req.body?.organizacion_id,
           parsedId: tenantId
         });
-        return ResponseHelper.error(res, 'ID de organización inválido', 400);
+        return ResponseHelper.error(res, 'Super admin debe especificar organizacion_id válido en URL, query parameters o body', 400);
       }
-      logger.debug('Tenant ID asignado desde params', { tenantId });
+      logger.debug('Tenant ID asignado para super_admin', { tenantId });
     } else if (req.user.organizacion_id) {
       logger.debug('Usando organizacion_id del usuario', { organizacionId: req.user.organizacion_id });
       tenantId = req.user.organizacion_id;

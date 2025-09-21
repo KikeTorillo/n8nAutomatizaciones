@@ -1,0 +1,49 @@
+meta {
+  name: 10-Crear-Servicio-Desde-Plantilla
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/desde-plantilla
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+body:json {
+  {
+    "plantilla_id": 1,
+    "configuracion_personalizada": {
+      "nombre": "Corte Básico Personalizado",
+      "precio": 20.00,
+      "duracion_minutos": 30,
+      "descripcion": "Servicio creado desde plantilla con personalizaciones específicas",
+      "tags": ["plantilla", "personalizado", "basico"]
+    }
+  }
+}
+
+assert {
+  res.status: eq 201
+  res.body.success: eq true
+  res.body.data.nombre: eq "Corte Básico Personalizado"
+  res.body.data.precio: eq 20
+  res.body.data.plantilla_servicio_id: eq 1
+}
+
+script:post-response {
+  if (res.body.success) {
+    bru.setEnvVar("servicioPlantillaId", res.body.data.id);
+    console.log("✅ Servicio creado desde plantilla exitosamente");
+    console.log("ID:", res.body.data.id);
+    console.log("Nombre:", res.body.data.nombre);
+    console.log("Plantilla ID:", res.body.data.plantilla_servicio_id);
+    console.log("Precio personalizado:", res.body.data.precio);
+  } else {
+    console.log("⚠️ No se pudo crear desde plantilla (puede que no exista plantilla ID 1)");
+  }
+}

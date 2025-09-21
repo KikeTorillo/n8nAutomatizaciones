@@ -1,0 +1,32 @@
+meta {
+  name: 12-Verificar-Servicio-Eliminado
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios?activo=false&pagina=1&limite=10
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{accessToken}}
+}
+
+assert {
+  res.status: eq 200
+  res.body.success: eq true
+  res.body.data.servicios: isArray
+  res.body.data.filtros_aplicados.activo: eq false
+}
+
+script:post-response {
+  if (res.body.success) {
+    console.log("✅ Verificación de servicios eliminados exitosa");
+    console.log("Servicios inactivos encontrados:", res.body.data.servicios.length);
+    res.body.data.servicios.forEach((servicio, index) => {
+      console.log(`  ${index + 1}. ${servicio.nombre} - Activo: ${servicio.activo}`);
+    });
+  }
+}
