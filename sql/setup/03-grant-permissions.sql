@@ -1,7 +1,8 @@
 -- =====================================================================
 -- CONFIGURACIÓN DE PERMISOS ESPECÍFICOS PARA APLICACIÓN SAAS
--- Archivo: 04-permisos-saas.sql
--- Descripción: Configura permisos específicos después de crear tablas
+-- Archivo: setup/03-grant-permissions.sql
+-- Descripción: Configura permisos específicos después de crear el schema
+-- ORDEN: Ejecutar después de aplicar el schema completo
 -- =====================================================================
 
 -- Conectar a la base de datos SaaS principal

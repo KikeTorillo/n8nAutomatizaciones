@@ -24,10 +24,11 @@ services:
     networks:
       - backend_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres && psql -U admin -d postgres -c 'SELECT 1 FROM usuarios LIMIT 1;' > /dev/null 2>&1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
 
   redis:
     image: redis:7
@@ -39,6 +40,11 @@ services:
       - ./data/redis:/data
     networks:
       - backend_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # Servicio n8n con PostgreSQL
   n8n-main:
@@ -49,7 +55,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     ports:
       - "5678:5678"
     environment:
@@ -86,7 +92,7 @@ services:
       postgres:
         condition: service_healthy
       redis:
-        condition: service_started
+        condition: service_healthy
     command: ["worker", "concurrency=20"]
     environment:
       DB_TYPE: postgresdb
@@ -169,7 +175,11 @@ services:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      pgadmin:
         condition: service_started
+    # Agregar comando que espere antes de iniciar
+    command: ["sh", "-c", "sleep 10 && npm run dev"]
     environment:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
