@@ -2190,3 +2190,590 @@ COMMENT ON COLUMN servicios_profesionales.duracion_personalizada IS 'Duración e
 -- Comentarios en funciones
 COMMENT ON FUNCTION actualizar_timestamp_servicios() IS
 'Actualiza automáticamente el campo actualizado_en cuando se modifica un servicio o relación servicio-profesional';
+
+-- ====================================================================
+-- 📅 TABLA: CITAS - SISTEMA DE AGENDAMIENTO MULTI-TENANT
+-- ====================================================================
+-- Propósito: Gestión completa de citas con workflow empresarial
+-- • Multi-tenant con RLS automático por organizacion_id
+-- • Estados workflow: pendiente → confirmada → en_curso → completada
+-- • Auditoría completa y trazabilidad empresarial
+-- • Validaciones automáticas de solapamientos y disponibilidad
+-- ====================================================================
+
+CREATE TABLE citas (
+    -- 🔑 IDENTIFICACIÓN Y RELACIONES PRINCIPALES
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    codigo_cita VARCHAR(50) UNIQUE NOT NULL,
+
+    -- 👥 REFERENCIAS PRINCIPALES (VALIDADAS)
+    cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE RESTRICT,
+    profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE RESTRICT,
+    servicio_id INTEGER NOT NULL REFERENCES servicios(id) ON DELETE RESTRICT,
+
+    -- ⏰ INFORMACIÓN TEMPORAL CRÍTICA
+    fecha_cita DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    zona_horaria VARCHAR(50) DEFAULT 'America/Bogota', -- Para multi-zona
+
+    -- 🔄 WORKFLOW Y ESTADO
+    estado estado_cita DEFAULT 'pendiente',
+    estado_anterior estado_cita, -- Para auditoría de cambios
+    motivo_cancelacion TEXT, -- Obligatorio si estado = 'cancelada'
+
+    -- 💰 INFORMACIÓN COMERCIAL
+    precio_servicio DECIMAL(10,2) NOT NULL,
+    descuento DECIMAL(10,2) DEFAULT 0.00,
+    precio_final DECIMAL(10,2) NOT NULL,
+    metodo_pago VARCHAR(20), -- 'efectivo', 'tarjeta', 'transferencia'
+    pagado BOOLEAN DEFAULT FALSE,
+
+    -- 📝 NOTAS Y COMUNICACIÓN
+    notas_cliente TEXT,
+    notas_profesional TEXT,
+    notas_internas TEXT, -- Para uso interno del negocio
+    origen_cita VARCHAR(50) DEFAULT 'manual', -- 'whatsapp', 'web', 'telefono', 'manual', 'api'
+
+    -- ⭐ CALIFICACIÓN Y FEEDBACK
+    calificacion_cliente INTEGER CHECK (calificacion_cliente >= 1 AND calificacion_cliente <= 5),
+    comentario_cliente TEXT,
+    calificacion_profesional INTEGER CHECK (calificacion_profesional >= 1 AND calificacion_profesional <= 5),
+    comentario_profesional TEXT, -- Feedback del profesional sobre el cliente
+
+    -- ⏱️ CONTROL DE TIEMPO REAL
+    hora_llegada TIMESTAMPTZ,
+    hora_inicio_real TIMESTAMPTZ,
+    hora_fin_real TIMESTAMPTZ,
+    tiempo_espera_minutos INTEGER GENERATED ALWAYS AS (
+        CASE
+            WHEN hora_llegada IS NOT NULL AND hora_inicio_real IS NOT NULL
+            THEN EXTRACT(EPOCH FROM (hora_inicio_real - hora_llegada))/60
+            ELSE NULL
+        END
+    ) STORED,
+
+    -- 🔔 RECORDATORIOS Y NOTIFICACIONES
+    recordatorio_enviado BOOLEAN DEFAULT FALSE,
+    fecha_recordatorio TIMESTAMPTZ,
+    confirmacion_requerida BOOLEAN DEFAULT TRUE,
+    confirmada_por_cliente TIMESTAMPTZ,
+
+    -- 📊 CAMPOS DE AUDITORÍA EMPRESARIAL
+    creado_por INTEGER REFERENCES usuarios(id),
+    actualizado_por INTEGER REFERENCES usuarios(id),
+    version INTEGER DEFAULT 1,
+    ip_origen INET,
+    user_agent TEXT,
+    origen_aplicacion VARCHAR(50) DEFAULT 'web',
+
+    -- ⏰ TIMESTAMPS ESTÁNDAR
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- ✅ CONSTRAINTS EMPRESARIALES
+    CONSTRAINT valid_horario
+        CHECK (hora_inicio < hora_fin),
+    CONSTRAINT valid_precio_final
+        CHECK (precio_final >= 0),
+    CONSTRAINT valid_descuento
+        CHECK (descuento >= 0 AND descuento <= precio_servicio),
+    CONSTRAINT valid_precio_servicio
+        CHECK (precio_servicio > 0),
+    CONSTRAINT valid_fecha_cita
+        CHECK (fecha_cita >= CURRENT_DATE - INTERVAL '1 day'),
+    CONSTRAINT valid_calificaciones
+        CHECK (
+            (calificacion_cliente IS NULL OR (calificacion_cliente >= 1 AND calificacion_cliente <= 5)) AND
+            (calificacion_profesional IS NULL OR (calificacion_profesional >= 1 AND calificacion_profesional <= 5))
+        ),
+    CONSTRAINT valid_tiempo_real
+        CHECK (
+            (hora_inicio_real IS NULL OR hora_fin_real IS NULL OR hora_inicio_real <= hora_fin_real) AND
+            (hora_llegada IS NULL OR hora_inicio_real IS NULL OR hora_llegada <= hora_inicio_real)
+        ),
+    CONSTRAINT valid_estado_pagado
+        CHECK (
+            CASE
+                WHEN estado = 'completada' AND precio_final > 0 THEN pagado = TRUE
+                ELSE TRUE
+            END
+        ),
+    CONSTRAINT valid_motivo_cancelacion
+        CHECK (
+            CASE
+                WHEN estado = 'cancelada' THEN motivo_cancelacion IS NOT NULL
+                ELSE TRUE
+            END
+        ),
+    CONSTRAINT coherencia_organizacion
+        CHECK (
+            -- Validar que cliente, profesional y servicio pertenezcan a la misma organización
+            TRUE -- Se implementa con trigger por rendimiento
+        )
+);
+
+-- 🚀 ÍNDICES ESPECIALIZADOS PARA ALTA PERFORMANCE
+CREATE INDEX idx_citas_organizacion_fecha
+    ON citas (organizacion_id, fecha_cita, hora_inicio)
+    WHERE estado != 'cancelada';
+
+CREATE INDEX idx_citas_profesional_agenda
+    ON citas (profesional_id, fecha_cita, hora_inicio, hora_fin)
+    WHERE estado IN ('confirmada', 'en_curso');
+
+CREATE INDEX idx_citas_cliente_historial
+    ON citas (cliente_id, fecha_cita DESC)
+    WHERE estado != 'cancelada';
+
+CREATE INDEX idx_citas_codigo_lookup
+    ON citas (codigo_cita) WHERE codigo_cita IS NOT NULL;
+
+CREATE INDEX idx_citas_estado_workflow
+    ON citas (organizacion_id, estado, fecha_cita);
+
+CREATE INDEX idx_citas_recordatorios
+    ON citas (fecha_recordatorio)
+    WHERE recordatorio_enviado = FALSE AND estado = 'confirmada';
+
+-- 📊 ÍNDICE GIN PARA BÚSQUEDA FULL-TEXT
+CREATE INDEX idx_citas_search
+    ON citas USING gin(
+        to_tsvector('spanish', COALESCE(notas_cliente, '') || ' ' ||
+                              COALESCE(notas_profesional, '') || ' ' ||
+                              COALESCE(codigo_cita, ''))
+    );
+
+-- 🔒 ROW LEVEL SECURITY
+ALTER TABLE citas ENABLE ROW LEVEL SECURITY;
+
+-- Política principal de aislamiento multi-tenant
+CREATE POLICY citas_tenant_isolation ON citas
+    FOR ALL
+    TO saas_app
+    USING (
+        organizacion_id = COALESCE(
+            current_setting('app.current_tenant_id', true)::integer,
+            CASE WHEN current_setting('app.current_user_role', true) = 'super_admin'
+                 THEN organizacion_id
+                 ELSE -1
+            END
+        )
+    );
+
+-- Política para bypass de sistema (funciones de mantenimiento)
+CREATE POLICY citas_system_bypass ON citas
+    FOR ALL
+    TO saas_app
+    USING (
+        current_setting('app.bypass_rls', true) = 'true'
+    );
+
+-- 🤖 TRIGGER PARA ACTUALIZAR TIMESTAMP Y VERSIÓN
+CREATE OR REPLACE FUNCTION actualizar_timestamp_citas()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.actualizado_en = NOW();
+    NEW.version = OLD.version + 1;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizar_timestamp_citas
+    BEFORE UPDATE ON citas
+    FOR EACH ROW
+    EXECUTE FUNCTION actualizar_timestamp_citas();
+
+-- 🛡️ TRIGGER PARA VALIDACIÓN DE COHERENCIA ORGANIZACIONAL
+CREATE OR REPLACE FUNCTION validar_coherencia_cita()
+RETURNS TRIGGER AS $$
+DECLARE
+    cliente_org INTEGER;
+    profesional_org INTEGER;
+    servicio_org INTEGER;
+BEGIN
+    -- Obtener organizaciones de las entidades relacionadas
+    SELECT organizacion_id INTO cliente_org FROM clientes WHERE id = NEW.cliente_id;
+    SELECT organizacion_id INTO profesional_org FROM profesionales WHERE id = NEW.profesional_id;
+    SELECT organizacion_id INTO servicio_org FROM servicios WHERE id = NEW.servicio_id;
+
+    -- Validar coherencia
+    IF NEW.organizacion_id != cliente_org OR
+       NEW.organizacion_id != profesional_org OR
+       NEW.organizacion_id != servicio_org THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: cliente (%), profesional (%), servicio (%) deben pertenecer a organización (%)',
+            cliente_org, profesional_org, servicio_org, NEW.organizacion_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_validar_coherencia_cita
+    BEFORE INSERT OR UPDATE ON citas
+    FOR EACH ROW
+    EXECUTE FUNCTION validar_coherencia_cita();
+
+-- 📝 COMENTARIOS EMPRESARIALES
+COMMENT ON TABLE citas IS 'Sistema de agendamiento multi-tenant con workflow empresarial, auditoría completa y validaciones automáticas';
+COMMENT ON COLUMN citas.codigo_cita IS 'Código único legible para el cliente (ej: BAR-2024-001234)';
+COMMENT ON COLUMN citas.zona_horaria IS 'Zona horaria para organizaciones multi-zona (América/Bogotá por defecto)';
+COMMENT ON COLUMN citas.tiempo_espera_minutos IS 'Campo calculado automáticamente entre llegada e inicio real';
+COMMENT ON COLUMN citas.estado_anterior IS 'Estado previo para auditoría de transiciones de workflow';
+COMMENT ON COLUMN citas.motivo_cancelacion IS 'Obligatorio cuando estado = cancelada';
+COMMENT ON COLUMN citas.metodo_pago IS 'Método de pago utilizado: efectivo, tarjeta, transferencia';
+COMMENT ON COLUMN citas.pagado IS 'Indica si la cita ha sido pagada completamente';
+COMMENT ON COLUMN citas.notas_internas IS 'Notas para uso interno del negocio, no visibles al cliente';
+COMMENT ON COLUMN citas.calificacion_profesional IS 'Calificación del profesional hacia el cliente (1-5)';
+COMMENT ON COLUMN citas.recordatorio_enviado IS 'Indica si se envió recordatorio de la cita';
+COMMENT ON COLUMN citas.confirmacion_requerida IS 'Si la cita requiere confirmación del cliente';
+COMMENT ON COLUMN citas.version IS 'Número de versión para control de concurrencia optimista';
+COMMENT ON COLUMN citas.ip_origen IS 'IP desde donde se creó la cita para auditoría';
+COMMENT ON COLUMN citas.user_agent IS 'User-Agent del navegador/app para auditoría';
+
+-- Comentarios en funciones
+COMMENT ON FUNCTION actualizar_timestamp_citas() IS 'Actualiza automáticamente timestamp y versión al modificar una cita';
+COMMENT ON FUNCTION validar_coherencia_cita() IS 'Valida que cliente, profesional y servicio pertenezcan a la misma organización';
+
+-- ====================================================================
+-- 🗓️ TABLA: HORARIOS_DISPONIBILIDAD - GESTIÓN GRANULAR DE DISPONIBILIDAD
+-- ====================================================================
+-- Propósito: Control completo de disponibilidad de profesionales con optimizaciones enterprise
+-- • Prevención automática de solapamientos con exclusion constraints
+-- • Soporte para franjas específicas por fecha + horarios recurrentes
+-- • Reserva temporal (carrito de compras) con expiración automática
+-- • Precios dinámicos por demanda y horarios premium
+-- • Integración directa con sistema de citas y servicios
+-- • Auditoría completa y versionado para concurrencia optimista
+-- ====================================================================
+
+CREATE TABLE horarios_disponibilidad (
+    -- 🔑 IDENTIFICACIÓN Y RELACIONES PRINCIPALES
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
+    servicio_id INTEGER REFERENCES servicios(id) ON DELETE SET NULL, -- Para disponibilidad específica de servicio
+    cita_id INTEGER REFERENCES citas(id) ON DELETE SET NULL, -- Link directo cuando está ocupado
+
+    -- 📅 CONFIGURACIÓN TEMPORAL COMPLETA
+    tipo_horario VARCHAR(20) NOT NULL, -- 'regular', 'excepcion', 'bloqueo', 'franja_especifica'
+    fecha DATE NOT NULL, -- Fecha específica para la disponibilidad
+    hora_inicio TIME NOT NULL,
+    hora_fin TIME NOT NULL,
+    zona_horaria VARCHAR(50) DEFAULT 'America/Bogota',
+
+    -- 🔄 HORARIOS RECURRENTES (OPCIONAL)
+    dia_semana INTEGER CHECK (dia_semana >= 0 AND dia_semana <= 6), -- 0=domingo, 6=sábado
+    es_recurrente BOOLEAN DEFAULT FALSE, -- Si se aplica semanalmente
+    fecha_fin_recurrencia DATE, -- Hasta cuándo aplica la recurrencia
+    patron_recurrencia JSONB DEFAULT '{}', -- Configuración avanzada de recurrencia
+
+    -- 🔄 ESTADO Y DISPONIBILIDAD
+    estado estado_franja DEFAULT 'disponible',
+    duracion_slot INTEGER DEFAULT 15, -- Duración de cada slot en minutos
+    capacidad_maxima INTEGER DEFAULT 1, -- Para servicios grupales
+    capacidad_ocupada INTEGER DEFAULT 0, -- Cuántos slots están ocupados
+
+    -- 💰 PRICING DINÁMICO
+    precio_base DECIMAL(10,2), -- Precio base para este horario
+    precio_dinamico DECIMAL(10,2), -- Precio ajustado por demanda/premium
+    es_horario_premium BOOLEAN DEFAULT FALSE, -- Horario de alta demanda
+    descuento_porcentaje DECIMAL(5,2) DEFAULT 0.00, -- Descuento especial
+
+    -- 🤖 AUTOMATIZACIÓN E IA
+    puntuacion_ia INTEGER CHECK (puntuacion_ia >= 0 AND puntuacion_ia <= 100),
+    creado_automaticamente BOOLEAN DEFAULT TRUE,
+    algoritmo_creacion VARCHAR(50) DEFAULT 'sistema', -- 'sistema', 'ia', 'manual'
+
+    -- 🛒 RESERVA TEMPORAL (CARRITO DE COMPRAS)
+    reservado_hasta TIMESTAMPTZ,
+    reservado_por VARCHAR(100), -- Identificador de quien reservó
+    session_id VARCHAR(255), -- Para tracking de sesiones web
+    token_reserva VARCHAR(100), -- Token único para la reserva
+
+    -- 📝 INFORMACIÓN ADICIONAL
+    notas TEXT, -- Motivo del bloqueo o notas especiales
+    notas_internas TEXT, -- Notas para uso interno del negocio
+    configuracion_especial JSONB DEFAULT '{}', -- Configuraciones adicionales
+
+    -- 📊 AUDITORÍA ENTERPRISE
+    creado_por INTEGER REFERENCES usuarios(id),
+    actualizado_por INTEGER REFERENCES usuarios(id),
+    version INTEGER DEFAULT 1, -- Control de concurrencia optimista
+    ip_origen INET,
+    user_agent TEXT,
+
+    -- ⏰ TIMESTAMPS ESTÁNDAR
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- ✅ CONSTRAINTS EMPRESARIALES AVANZADOS
+    CONSTRAINT valid_horario
+        CHECK (hora_inicio < hora_fin),
+    CONSTRAINT valid_duracion_minima
+        CHECK (hora_fin - hora_inicio >= INTERVAL '5 minutes'),
+    CONSTRAINT valid_fecha_coherente
+        CHECK (fecha >= CURRENT_DATE - INTERVAL '1 day'),
+    CONSTRAINT valid_capacidad
+        CHECK (capacidad_maxima > 0 AND capacidad_ocupada >= 0 AND capacidad_ocupada <= capacidad_maxima),
+    CONSTRAINT valid_reserva_futura
+        CHECK (reservado_hasta IS NULL OR reservado_hasta >= NOW()),
+    CONSTRAINT valid_precios
+        CHECK (
+            (precio_base IS NULL OR precio_base >= 0) AND
+            (precio_dinamico IS NULL OR precio_dinamico >= 0) AND
+            (descuento_porcentaje >= 0 AND descuento_porcentaje <= 100)
+        ),
+    CONSTRAINT valid_tipo_configuracion
+        CHECK (
+            CASE tipo_horario
+                WHEN 'regular' THEN dia_semana IS NOT NULL AND es_recurrente = TRUE
+                WHEN 'excepcion' THEN es_recurrente = FALSE
+                WHEN 'bloqueo' THEN es_recurrente = FALSE
+                WHEN 'franja_especifica' THEN es_recurrente = FALSE
+                ELSE FALSE
+            END
+        ),
+    CONSTRAINT valid_estado_coherencia
+        CHECK (
+            CASE
+                WHEN estado = 'ocupado' THEN cita_id IS NOT NULL
+                WHEN estado = 'reservado_temporal' THEN reservado_hasta IS NOT NULL
+                WHEN estado = 'bloqueado' THEN tipo_horario = 'bloqueo'
+                ELSE TRUE
+            END
+        ),
+    CONSTRAINT valid_recurrencia_fechas
+        CHECK (
+            CASE
+                WHEN es_recurrente = TRUE THEN fecha_fin_recurrencia IS NULL OR fecha_fin_recurrencia >= fecha
+                ELSE TRUE
+            END
+        ),
+
+    -- 🚫 EXCLUSION CONSTRAINT - PREVIENE SOLAPAMIENTOS AUTOMÁTICAMENTE
+    EXCLUDE USING gist (
+        profesional_id WITH =,
+        fecha WITH =,
+        tsrange(
+            (fecha + hora_inicio)::timestamp,
+            (fecha + hora_fin)::timestamp,
+            '[)'
+        ) WITH &&
+    ) WHERE (estado != 'bloqueado' AND tipo_horario != 'bloqueo')
+);
+
+-- 🚀 ÍNDICES ESPECIALIZADOS PARA ALTA PERFORMANCE
+CREATE INDEX idx_horarios_organizacion_fecha
+    ON horarios_disponibilidad (organizacion_id, fecha, hora_inicio)
+    WHERE estado IN ('disponible', 'reservado_temporal');
+
+CREATE INDEX idx_horarios_profesional_agenda
+    ON horarios_disponibilidad (profesional_id, fecha, estado, hora_inicio);
+
+CREATE INDEX idx_horarios_disponibles_tiempo_real
+    ON horarios_disponibilidad (organizacion_id, fecha, hora_inicio, capacidad_maxima, capacidad_ocupada)
+    WHERE estado = 'disponible' AND capacidad_ocupada < capacidad_maxima;
+
+CREATE INDEX idx_horarios_reservas_expiradas
+    ON horarios_disponibilidad (reservado_hasta)
+    WHERE reservado_hasta IS NOT NULL AND estado = 'reservado_temporal';
+
+CREATE INDEX idx_horarios_citas_link
+    ON horarios_disponibilidad (cita_id)
+    WHERE cita_id IS NOT NULL;
+
+CREATE INDEX idx_horarios_servicio_especifico
+    ON horarios_disponibilidad (servicio_id, fecha, estado, hora_inicio)
+    WHERE servicio_id IS NOT NULL;
+
+CREATE INDEX idx_horarios_recurrentes
+    ON horarios_disponibilidad (profesional_id, dia_semana, es_recurrente, fecha_fin_recurrencia)
+    WHERE es_recurrente = TRUE;
+
+CREATE INDEX idx_horarios_pricing
+    ON horarios_disponibilidad (organizacion_id, fecha, es_horario_premium, precio_dinamico)
+    WHERE precio_dinamico IS NOT NULL;
+
+-- 📊 ÍNDICE GIN PARA BÚSQUEDA AVANZADA
+CREATE INDEX idx_horarios_search
+    ON horarios_disponibilidad USING gin(
+        to_tsvector('spanish', COALESCE(notas, '') || ' ' ||
+                              COALESCE(notas_internas, '') || ' ' ||
+                              COALESCE(tipo_horario, ''))
+    );
+
+-- 🔒 ROW LEVEL SECURITY
+ALTER TABLE horarios_disponibilidad ENABLE ROW LEVEL SECURITY;
+
+-- Política principal de aislamiento multi-tenant
+CREATE POLICY horarios_tenant_isolation ON horarios_disponibilidad
+    FOR ALL
+    TO saas_app
+    USING (
+        organizacion_id = COALESCE(
+            current_setting('app.current_tenant_id', true)::integer,
+            CASE WHEN current_setting('app.current_user_role', true) = 'super_admin'
+                 THEN organizacion_id
+                 ELSE -1
+            END
+        )
+    );
+
+-- Política para bypass de sistema (funciones de mantenimiento)
+CREATE POLICY horarios_system_bypass ON horarios_disponibilidad
+    FOR ALL
+    TO saas_app
+    USING (
+        current_setting('app.bypass_rls', true) = 'true'
+    );
+
+-- 🤖 TRIGGER PARA ACTUALIZAR TIMESTAMP Y VERSIÓN
+CREATE OR REPLACE FUNCTION actualizar_timestamp_horarios()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.actualizado_en = NOW();
+    NEW.version = OLD.version + 1;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_actualizar_timestamp_horarios
+    BEFORE UPDATE ON horarios_disponibilidad
+    FOR EACH ROW
+    EXECUTE FUNCTION actualizar_timestamp_horarios();
+
+-- 🛡️ TRIGGER PARA VALIDACIÓN DE COHERENCIA ORGANIZACIONAL
+CREATE OR REPLACE FUNCTION validar_coherencia_horario()
+RETURNS TRIGGER AS $$
+DECLARE
+    profesional_org INTEGER;
+    servicio_org INTEGER;
+    cita_org INTEGER;
+BEGIN
+    -- Validar organización del profesional
+    SELECT organizacion_id INTO profesional_org FROM profesionales WHERE id = NEW.profesional_id;
+
+    IF NEW.organizacion_id != profesional_org THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: profesional (%) debe pertenecer a organización (%)',
+            profesional_org, NEW.organizacion_id;
+    END IF;
+
+    -- Validar organización del servicio si está especificado
+    IF NEW.servicio_id IS NOT NULL THEN
+        SELECT organizacion_id INTO servicio_org FROM servicios WHERE id = NEW.servicio_id;
+        IF NEW.organizacion_id != servicio_org THEN
+            RAISE EXCEPTION 'Incoherencia organizacional: servicio (%) debe pertenecer a organización (%)',
+                servicio_org, NEW.organizacion_id;
+        END IF;
+    END IF;
+
+    -- Validar organización de la cita si está especificada
+    IF NEW.cita_id IS NOT NULL THEN
+        SELECT organizacion_id INTO cita_org FROM citas WHERE id = NEW.cita_id;
+        IF NEW.organizacion_id != cita_org THEN
+            RAISE EXCEPTION 'Incoherencia organizacional: cita (%) debe pertenecer a organización (%)',
+                cita_org, NEW.organizacion_id;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_validar_coherencia_horario
+    BEFORE INSERT OR UPDATE ON horarios_disponibilidad
+    FOR EACH ROW
+    EXECUTE FUNCTION validar_coherencia_horario();
+
+-- 🧹 FUNCIÓN DE LIMPIEZA AUTOMÁTICA DE RESERVAS EXPIRADAS
+CREATE OR REPLACE FUNCTION limpiar_reservas_expiradas()
+RETURNS INTEGER AS $$
+DECLARE
+    reservas_limpiadas INTEGER;
+BEGIN
+    UPDATE horarios_disponibilidad
+    SET estado = 'disponible',
+        reservado_hasta = NULL,
+        reservado_por = NULL,
+        session_id = NULL,
+        token_reserva = NULL,
+        capacidad_ocupada = 0
+    WHERE estado = 'reservado_temporal'
+    AND reservado_hasta < NOW();
+
+    GET DIAGNOSTICS reservas_limpiadas = ROW_COUNT;
+    RETURN reservas_limpiadas;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 🔄 FUNCIÓN PARA GENERAR HORARIOS RECURRENTES
+CREATE OR REPLACE FUNCTION generar_horarios_recurrentes(
+    p_profesional_id INTEGER,
+    p_fecha_inicio DATE,
+    p_fecha_fin DATE
+) RETURNS INTEGER AS $$
+DECLARE
+    horario_base RECORD;
+    fecha_actual DATE;
+    horarios_creados INTEGER := 0;
+BEGIN
+    -- Obtener horarios base recurrentes
+    FOR horario_base IN
+        SELECT * FROM horarios_disponibilidad
+        WHERE profesional_id = p_profesional_id
+        AND es_recurrente = TRUE
+        AND tipo_horario = 'regular'
+        AND (fecha_fin_recurrencia IS NULL OR fecha_fin_recurrencia >= p_fecha_inicio)
+    LOOP
+        fecha_actual := p_fecha_inicio;
+
+        WHILE fecha_actual <= p_fecha_fin LOOP
+            -- Verificar si corresponde al día de la semana
+            IF EXTRACT(DOW FROM fecha_actual) = horario_base.dia_semana THEN
+                -- Insertar horario si no existe
+                INSERT INTO horarios_disponibilidad (
+                    organizacion_id, profesional_id, servicio_id,
+                    tipo_horario, fecha, hora_inicio, hora_fin, zona_horaria,
+                    estado, duracion_slot, capacidad_maxima,
+                    precio_base, es_horario_premium,
+                    creado_automaticamente, algoritmo_creacion,
+                    creado_por
+                ) VALUES (
+                    horario_base.organizacion_id, horario_base.profesional_id, horario_base.servicio_id,
+                    'franja_especifica', fecha_actual, horario_base.hora_inicio, horario_base.hora_fin, horario_base.zona_horaria,
+                    'disponible', horario_base.duracion_slot, horario_base.capacidad_maxima,
+                    horario_base.precio_base, horario_base.es_horario_premium,
+                    TRUE, 'sistema_recurrencia',
+                    horario_base.creado_por
+                )
+                ON CONFLICT (profesional_id, fecha, hora_inicio) DO NOTHING;
+
+                horarios_creados := horarios_creados + 1;
+            END IF;
+
+            fecha_actual := fecha_actual + INTERVAL '1 day';
+        END LOOP;
+    END LOOP;
+
+    RETURN horarios_creados;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 📝 COMENTARIOS EMPRESARIALES
+COMMENT ON TABLE horarios_disponibilidad IS 'Sistema completo de gestión de disponibilidad con prevención de solapamientos, pricing dinámico y generación automática';
+COMMENT ON COLUMN horarios_disponibilidad.tipo_horario IS 'Tipo de horario: regular (recurrente), excepcion (una vez), bloqueo (no disponible), franja_especifica (fecha exacta)';
+COMMENT ON COLUMN horarios_disponibilidad.capacidad_maxima IS 'Número máximo de citas simultáneas (útil para clases grupales, talleres)';
+COMMENT ON COLUMN horarios_disponibilidad.precio_dinamico IS 'Precio ajustado automáticamente por demanda, horario premium, eventos especiales';
+COMMENT ON COLUMN horarios_disponibilidad.patron_recurrencia IS 'JSON con configuración avanzada de recurrencia (ej: cada 2 semanas, solo días laborales)';
+COMMENT ON COLUMN horarios_disponibilidad.token_reserva IS 'Token único para validar y gestionar reservas temporales de carrito de compras';
+COMMENT ON COLUMN horarios_disponibilidad.configuracion_especial IS 'JSON con configuraciones adicionales (ej: preparación especial, material requerido)';
+COMMENT ON COLUMN horarios_disponibilidad.algoritmo_creacion IS 'Algoritmo usado para crear el horario: sistema, ia, manual';
+COMMENT ON COLUMN horarios_disponibilidad.es_horario_premium IS 'Horario de alta demanda con precio premium (fines de semana, horarios populares)';
+
+-- Comentarios en funciones
+COMMENT ON FUNCTION actualizar_timestamp_horarios() IS 'Actualiza automáticamente timestamp y versión al modificar un horario';
+COMMENT ON FUNCTION validar_coherencia_horario() IS 'Valida que profesional, servicio y cita pertenezcan a la misma organización';
+COMMENT ON FUNCTION limpiar_reservas_expiradas() IS 'Limpia automáticamente reservas temporales expiradas y libera capacidad';
+COMMENT ON FUNCTION generar_horarios_recurrentes(INTEGER, DATE, DATE) IS 'Genera automáticamente horarios específicos basados en patrones recurrentes';

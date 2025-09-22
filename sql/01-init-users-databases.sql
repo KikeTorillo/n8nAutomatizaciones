@@ -53,6 +53,7 @@ CREATE DATABASE chat_memories_db OWNER n8n_app;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- Para búsquedas fuzzy
 CREATE EXTENSION IF NOT EXISTS "btree_gin"; -- Para índices optimizados
+CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- Para exclusion constraints
 
 -- Extensiones para evolution_db
 \c evolution_db;
@@ -70,6 +71,7 @@ CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 CREATE EXTENSION IF NOT EXISTS "btree_gin";
+CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- Para exclusion constraints
 
 -- =====================================================================
 -- CONFIGURAR PERMISOS ESPECÍFICOS
