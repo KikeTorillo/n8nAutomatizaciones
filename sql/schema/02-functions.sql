@@ -87,11 +87,32 @@ BEGIN
         END IF;
 
         -- ═══════════════════════════════════════════════════════════════════
-        -- FASE 4: LOGGING Y AUDITORÍA (PREPARADO PARA FUTURO)
+        -- FASE 4: LOGGING Y AUDITORÍA EN EVENTOS_SISTEMA
         -- ═══════════════════════════════════════════════════════════════════
-        -- TODO: Implementar inserción en tabla eventos_sistema cuando esté disponible
-        -- INSERT INTO eventos_sistema (tipo, usuario_id, detalles, ip_address, timestamp)
-        -- VALUES ('login_attempt', usuario_id, jsonb_build_object('exitoso', p_exitoso), p_ip_address, NOW());
+        -- Registrar evento de intento de login en la tabla de auditoría
+        INSERT INTO eventos_sistema (
+            organizacion_id, tipo_evento, descripcion, metadata,
+            usuario_id, ip_address, gravedad
+        ) VALUES (
+            org_id,
+            CASE WHEN p_exitoso THEN 'login_success'::tipo_evento_sistema
+                 ELSE 'login_failed'::tipo_evento_sistema END,
+            CASE WHEN p_exitoso THEN 'Login exitoso registrado'
+                 ELSE 'Intento de login fallido registrado' END,
+            jsonb_build_object(
+                'exitoso', p_exitoso,
+                'email', p_email,
+                'intentos_previos', CASE WHEN NOT p_exitoso THEN
+                    (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) + 1
+                    ELSE 0 END,
+                'bloqueado', CASE WHEN NOT p_exitoso THEN
+                    (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) >= 4
+                    ELSE false END
+            ),
+            usuario_id,
+            p_ip_address,
+            CASE WHEN p_exitoso THEN 'info' ELSE 'warning' END
+        );
     END IF;
 
     -- ═══════════════════════════════════════════════════════════════════
@@ -147,11 +168,24 @@ BEGIN
     GET DIAGNOSTICS tokens_limpiados = ROW_COUNT;
 
     -- ═══════════════════════════════════════════════════════════════════
-    -- FASE 4: LOGGING DE MANTENIMIENTO (PREPARADO PARA FUTURO)
+    -- FASE 4: LOGGING DE MANTENIMIENTO EN EVENTOS_SISTEMA
     -- ═══════════════════════════════════════════════════════════════════
-    -- TODO: Implementar log en tabla eventos_sistema cuando esté disponible
-    -- INSERT INTO eventos_sistema (tipo, detalles, timestamp)
-    -- VALUES ('maintenance_cleanup', jsonb_build_object('tokens_limpiados', tokens_limpiados), NOW());
+    -- Registrar evento de limpieza automática (solo si se limpiaron tokens)
+    IF tokens_limpiados > 0 THEN
+        INSERT INTO eventos_sistema (
+            organizacion_id, tipo_evento, descripcion, metadata, gravedad
+        ) VALUES (
+            1, -- Organización del sistema (se puede ajustar según necesidades)
+            'tokens_limpiados'::tipo_evento_sistema,
+            'Limpieza automática de tokens de reset expirados ejecutada',
+            jsonb_build_object(
+                'tokens_limpiados', tokens_limpiados,
+                'ejecutado_automaticamente', true,
+                'funcion', 'limpiar_tokens_reset_expirados'
+            ),
+            'info'
+        );
+    END IF;
 
     -- ═══════════════════════════════════════════════════════════════════
     -- FASE 5: LIMPIAR CONFIGURACIÓN RLS

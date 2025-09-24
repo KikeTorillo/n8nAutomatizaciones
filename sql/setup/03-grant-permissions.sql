@@ -44,6 +44,25 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO integratio
 -- Aquí podemos agregar configuraciones adicionales si es necesario
 
 -- =====================================================================
+-- PERMISOS ESPECÍFICOS PARA TABLA EVENTOS_SISTEMA
+-- =====================================================================
+
+-- Permisos especiales para eventos_sistema (tabla crítica de auditoría)
+GRANT ALL PRIVILEGES ON eventos_sistema TO saas_app;
+GRANT USAGE ON SEQUENCE eventos_sistema_id_seq TO saas_app;
+
+-- Permisos de solo lectura para análisis
+GRANT SELECT ON eventos_sistema TO readonly_user;
+
+-- Permisos limitados para integraciones (solo INSERT para logging externo)
+GRANT SELECT, INSERT ON eventos_sistema TO integration_user;
+GRANT USAGE ON SEQUENCE eventos_sistema_id_seq TO integration_user;
+
+-- Permisos en vistas de eventos
+GRANT SELECT ON eventos_resumen_organizacion TO readonly_user, integration_user;
+GRANT SELECT ON eventos_criticos_recientes TO readonly_user, integration_user;
+
+-- =====================================================================
 -- COMENTARIOS Y DOCUMENTACIÓN
 -- =====================================================================
 

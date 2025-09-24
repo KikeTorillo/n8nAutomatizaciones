@@ -469,8 +469,14 @@ DECLARE
     v_mes_actual DATE;
 BEGIN
     v_org_id := COALESCE(NEW.organizacion_id, OLD.organizacion_id);
+
+    -- Si es NULL (super_admin), no hacer nada
+    IF v_org_id IS NULL THEN
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
     v_mes_actual := DATE_TRUNC('month', CURRENT_DATE);
-    
+
     -- Asegurar que existe registro de métricas
     INSERT INTO metricas_uso_organizacion (organizacion_id, mes_actual)
     VALUES (v_org_id, v_mes_actual)
@@ -690,42 +696,46 @@ RETURNS TRIGGER AS $$
 BEGIN
     -- Actualizar contadores según la tabla que disparó el trigger
     IF TG_TABLE_NAME = 'profesionales' THEN
-        UPDATE subscripciones 
+        UPDATE metricas_uso_organizacion
         SET uso_profesionales = (
-            SELECT COUNT(*) FROM profesionales 
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id) 
+            SELECT COUNT(*) FROM profesionales
+            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
             AND activo = true
-        )
+        ),
+        ultima_actualizacion = NOW()
         WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-        
+
     ELSIF TG_TABLE_NAME = 'clientes' THEN
-        UPDATE subscripciones 
+        UPDATE metricas_uso_organizacion
         SET uso_clientes = (
-            SELECT COUNT(*) FROM clientes 
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id) 
+            SELECT COUNT(*) FROM clientes
+            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
             AND activo = true
-        )
+        ),
+        ultima_actualizacion = NOW()
         WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-        
+
     ELSIF TG_TABLE_NAME = 'servicios' THEN
-        UPDATE subscripciones 
+        UPDATE metricas_uso_organizacion
         SET uso_servicios = (
-            SELECT COUNT(*) FROM servicios 
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id) 
+            SELECT COUNT(*) FROM servicios
+            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
             AND activo = true
-        )
+        ),
+        ultima_actualizacion = NOW()
         WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-        
+
     ELSIF TG_TABLE_NAME = 'usuarios' THEN
-        UPDATE subscripciones 
+        UPDATE metricas_uso_organizacion
         SET uso_usuarios = (
-            SELECT COUNT(*) FROM usuarios 
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id) 
+            SELECT COUNT(*) FROM usuarios
+            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
             AND activo = true
-        )
+        ),
+        ultima_actualizacion = NOW()
         WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
     END IF;
-    
+
     RETURN COALESCE(NEW, OLD);
 END;
 $$ LANGUAGE plpgsql;
@@ -750,32 +760,46 @@ CREATE TRIGGER trigger_actualizar_contador_usuarios
 -- Trigger para registrar cambios importantes en historial
 CREATE OR REPLACE FUNCTION registrar_cambio_subscripcion()
 RETURNS TRIGGER AS $$
+DECLARE
+    plan_codigo_nuevo text;
+    plan_codigo_anterior text;
 BEGIN
     -- Solo registrar cambios significativos
     IF TG_OP = 'INSERT' THEN
+        -- Obtener código del plan nuevo
+        SELECT codigo_plan INTO plan_codigo_nuevo
+        FROM planes_subscripcion WHERE id = NEW.plan_id;
+
         INSERT INTO historial_subscripciones (
-            organizacion_id, subscripcion_id, tipo_evento, 
+            organizacion_id, subscripcion_id, tipo_evento,
             plan_nuevo, precio_nuevo, motivo, iniciado_por
         ) VALUES (
             NEW.organizacion_id, NEW.id, 'creacion',
-            NEW.plan_tipo, NEW.precio_mensual, 'Subscripción inicial', 'sistema'
+            plan_codigo_nuevo::plan_tipo, NEW.precio_actual, 'Subscripción inicial', 'sistema'
         );
-        
+
     ELSIF TG_OP = 'UPDATE' THEN
+        -- Obtener códigos de planes
+        SELECT codigo_plan INTO plan_codigo_anterior
+        FROM planes_subscripcion WHERE id = OLD.plan_id;
+        SELECT codigo_plan INTO plan_codigo_nuevo
+        FROM planes_subscripcion WHERE id = NEW.plan_id;
+
         -- Cambio de plan
-        IF OLD.plan_tipo != NEW.plan_tipo THEN
+        IF OLD.plan_id != NEW.plan_id THEN
             INSERT INTO historial_subscripciones (
                 organizacion_id, subscripcion_id, tipo_evento,
                 plan_anterior, plan_nuevo, precio_anterior, precio_nuevo,
                 motivo, iniciado_por
             ) VALUES (
                 NEW.organizacion_id, NEW.id,
-                CASE WHEN NEW.plan_tipo > OLD.plan_tipo THEN 'upgrade' ELSE 'downgrade' END,
-                OLD.plan_tipo, NEW.plan_tipo, OLD.precio_mensual, NEW.precio_mensual,
+                CASE WHEN NEW.plan_id > OLD.plan_id THEN 'upgrade' ELSE 'downgrade' END,
+                plan_codigo_anterior::plan_tipo, plan_codigo_nuevo::plan_tipo,
+                OLD.precio_actual, NEW.precio_actual,
                 'Cambio de plan', 'usuario'
             );
         END IF;
-        
+
         -- Cancelación
         IF OLD.activa = true AND NEW.activa = false THEN
             INSERT INTO historial_subscripciones (
@@ -783,10 +807,10 @@ BEGIN
                 motivo, iniciado_por
             ) VALUES (
                 NEW.organizacion_id, NEW.id, 'cancelacion',
-                NEW.motivo_cancelacion, 'usuario'
+                COALESCE(NEW.motivo_cancelacion, 'Sin motivo especificado'), 'usuario'
             );
         END IF;
-        
+
         -- Reactivación
         IF OLD.activa = false AND NEW.activa = true THEN
             INSERT INTO historial_subscripciones (

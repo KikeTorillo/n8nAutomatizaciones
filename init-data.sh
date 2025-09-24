@@ -4,7 +4,7 @@ set -e;
 echo "🚀 Inicializando ecosistema completo de bases de datos..."
 echo "📁 Usando estructura modular organizada:"
 echo "   ├── setup/     - Configuración inicial (usuarios, DBs, permisos)"
-echo "   ├── schema/    - Schema modular SaaS (11 archivos)"
+echo "   ├── schema/    - Schema modular SaaS (13 archivos)"
 echo "   └── data/      - Datos iniciales y plantillas"
 
 # Definir directorio de scripts SQL
@@ -52,6 +52,10 @@ echo "    💳 Sistema de subscripciones..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/10-subscriptions-table.sql"
 echo "    🕒 Horarios profesionales..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/11-horarios-profesionales.sql"
+echo "    📊 Sistema de eventos y auditoría..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/12-eventos-sistema.sql"
+echo "    🚫 Sistema de bloqueos de horarios..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/13-bloqueos-horarios.sql"
 
 # 3. Insertar plantillas de servicios
 echo "  4️⃣ Insertando plantillas de servicios por industria..."
@@ -98,7 +102,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as "Tamaño"
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'plantillas_servicios', 'subscripciones', 'historial_subscripciones')
+    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'plantillas_servicios', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios')
     ORDER BY tablename;
 EOSQL
 
@@ -151,12 +155,12 @@ echo "  ├── readonly_user (solo lectura - analytics)"
 echo "  └── integration_user (integraciones cross-DB)"
 echo ""
 echo "🗄️ ESQUEMA SAAS MODULAR:"
-echo "  ├── 🎭 7 ENUMs especializados (tipos de negocio)"
-echo "  ├── ⚡ 15+ funciones PL/pgSQL automáticas"
-echo "  ├── 🏛️ 12 tablas enterprise (core + negocio + operaciones + subscripciones)"
-echo "  ├── 📊 60+ índices especializados para alta performance"
-echo "  ├── 🛡️ 16 políticas RLS multi-tenant"
-echo "  ├── 🔄 15+ triggers automáticos de validación"
+echo "  ├── 🎭 8 ENUMs especializados (tipos de negocio + bloqueos)"
+echo "  ├── ⚡ 18+ funciones PL/pgSQL automáticas"
+echo "  ├── 🏛️ 16 tablas enterprise (core + negocio + operaciones + subscripciones + auditoría + bloqueos)"
+echo "  ├── 📊 75+ índices especializados para alta performance"
+echo "  ├── 🛡️ 18+ políticas RLS multi-tenant"
+echo "  ├── 🔄 18+ triggers automáticos de validación"
 echo "  ├── 💳 Sistema completo de subscripciones y facturación SaaS"
 echo "  └── 📋 370+ plantillas de servicios cargadas"
 echo ""
@@ -171,7 +175,7 @@ echo "⚙️ CONFIGURACIÓN:"
 echo "  └── Tabla 'db_connections_config' creada con configuraciones de conexión"
 echo ""
 echo "📁 ESTRUCTURA MODULAR:"
-echo "  ├── Schema organizado en 11 archivos especializados"
+echo "  ├── Schema organizado en 13 archivos especializados"
 echo "  ├── Máxima mantenibilidad (161-486 líneas por archivo)"
 echo "  ├── Documentación completa en sql/schema/README.md"
 echo "  └── Escalable para 1000+ organizaciones y 10M+ citas/mes"
