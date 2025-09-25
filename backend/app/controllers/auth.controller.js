@@ -637,6 +637,386 @@ class AuthController {
             });
         }
     }
+
+    /**
+     * Registrar usuario automáticamente para organización (super_admin o admin org)
+     * @route POST /api/v1/auth/registrar-usuario-org
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async registrarUsuarioOrganizacion(req, res) {
+        try {
+            // Validar errores de entrada
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Datos de entrada inválidos',
+                    errors: errors.array()
+                });
+            }
+
+            const { organizacion_id, rol, opciones = {} } = req.body;
+            const userData = req.body.usuario_data;
+
+            // Validaciones de permisos
+            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tiene permisos para crear usuarios en organizaciones'
+                });
+            }
+
+            // Si no es super_admin, solo puede crear usuarios en su propia organización
+            if (req.user.rol !== 'super_admin' && req.user.organizacion_id !== organizacion_id) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'Solo puede crear usuarios en su propia organización'
+                });
+            }
+
+            // Crear usuario para organización
+            const resultado = await UsuarioModel.crearUsuarioOrganizacion(
+                organizacion_id,
+                userData,
+                rol,
+                opciones
+            );
+
+            logger.info('Usuario creado para organización via API', {
+                usuario_id: resultado.usuario.id,
+                organizacion_id: organizacion_id,
+                rol: rol,
+                creado_por: req.user.id,
+                admin_email: req.user.email
+            });
+
+            res.status(201).json({
+                success: true,
+                message: 'Usuario creado exitosamente para la organización',
+                data: {
+                    usuario: resultado.usuario,
+                    organizacion: resultado.organizacion,
+                    configuracion_rls: resultado.configuracion_rls,
+                    email_bienvenida: resultado.email_bienvenida
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error creando usuario para organización', {
+                error: error.message,
+                body: req.body,
+                admin_id: req.user?.id
+            });
+
+            let statusCode = 500;
+            let message = 'Error interno del servidor';
+
+            if (error.message.includes('no encontrada')) {
+                statusCode = 404;
+                message = error.message;
+            } else if (error.message.includes('ya está registrado')) {
+                statusCode = 409;
+                message = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                message: message
+            });
+        }
+    }
+
+    /**
+     * Recuperar contraseña por email y organización
+     * @route POST /api/v1/auth/recuperar-password
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async recuperarPassword(req, res) {
+        try {
+            // Validar errores de entrada
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Datos de entrada inválidos',
+                    errors: errors.array()
+                });
+            }
+
+            const { email, organizacion_id } = req.body;
+
+            // Generar token de reset
+            const resultado = await UsuarioModel.resetPassword(email, organizacion_id);
+
+            // Log de auditoría (sin revelar si el usuario existe)
+            logger.info('Solicitud de reset password procesada', {
+                email: email,
+                organizacion_id: organizacion_id,
+                token_enviado: resultado.token_enviado,
+                ip: req.ip
+            });
+
+            // Siempre devolver la misma respuesta por seguridad
+            res.status(200).json({
+                success: true,
+                message: resultado.mensaje,
+                data: {
+                    token_enviado: resultado.token_enviado,
+                    ...(resultado.expires_at && { expires_at: resultado.expires_at }),
+                    // Solo en desarrollo incluir el token
+                    ...(process.env.NODE_ENV !== 'production' && resultado.reset_token && {
+                        reset_token: resultado.reset_token
+                    })
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error en recuperar password', {
+                error: error.message,
+                email: req.body.email,
+                organizacion_id: req.body.organizacion_id
+            });
+
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
+            });
+        }
+    }
+
+    /**
+     * Verificar email con token de verificación
+     * @route GET /api/v1/auth/verificar-email/:token
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async verificarEmail(req, res) {
+        try {
+            const { token } = req.params;
+
+            if (!token) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Token de verificación requerido'
+                });
+            }
+
+            // Verificar email
+            const resultado = await UsuarioModel.verificarEmail(token);
+
+            if (resultado.ya_verificado) {
+                return res.status(200).json({
+                    success: true,
+                    message: resultado.mensaje,
+                    data: {
+                        ya_verificado: true,
+                        usuario: resultado.usuario
+                    }
+                });
+            }
+
+            logger.info('Email verificado exitosamente via API', {
+                usuario_id: resultado.usuario.id,
+                email: resultado.usuario.email
+            });
+
+            res.status(200).json({
+                success: true,
+                message: resultado.mensaje,
+                data: {
+                    verificado: resultado.verificado,
+                    usuario: resultado.usuario
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error en verificación de email', {
+                error: error.message,
+                token: req.params.token ? 'presente' : 'ausente'
+            });
+
+            let statusCode = 400;
+            let message = 'Token de verificación inválido o expirado';
+
+            if (error.message.includes('no encontrado')) {
+                statusCode = 404;
+                message = 'Usuario no encontrado';
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                message: message
+            });
+        }
+    }
+
+    /**
+     * Cambiar rol de usuario (solo administradores)
+     * @route PUT /api/v1/auth/cambiar-rol
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async cambiarRol(req, res) {
+        try {
+            // Validar errores de entrada
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Datos de entrada inválidos',
+                    errors: errors.array()
+                });
+            }
+
+            const { usuario_id, nuevo_rol, organizacion_id } = req.body;
+            const adminId = req.user.id;
+
+            // Validaciones de permisos
+            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tiene permisos para cambiar roles de usuarios'
+                });
+            }
+
+            // Si no es super_admin, solo puede modificar usuarios de su organización
+            if (req.user.rol !== 'super_admin') {
+                const orgIdTarget = organizacion_id || req.user.organizacion_id;
+                if (req.user.organizacion_id !== orgIdTarget) {
+                    return res.status(403).json({
+                        success: false,
+                        message: 'Solo puede modificar usuarios de su propia organización'
+                    });
+                }
+            }
+
+            // Cambiar rol
+            const resultado = await UsuarioModel.cambiarRol(
+                usuario_id,
+                nuevo_rol,
+                organizacion_id || req.user.organizacion_id,
+                adminId
+            );
+
+            logger.info('Rol de usuario cambiado via API', {
+                usuario_modificado: usuario_id,
+                rol_anterior: resultado.cambio.rol_anterior,
+                rol_nuevo: resultado.cambio.rol_nuevo,
+                admin_id: adminId,
+                organizacion_id: organizacion_id
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Rol cambiado exitosamente',
+                data: {
+                    usuario: resultado.usuario,
+                    cambio: resultado.cambio
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error cambiando rol de usuario', {
+                error: error.message,
+                body: req.body,
+                admin_id: req.user?.id
+            });
+
+            let statusCode = 500;
+            let message = 'Error interno del servidor';
+
+            if (error.message.includes('no encontrado')) {
+                statusCode = 404;
+                message = error.message;
+            } else if (error.message.includes('no válido') || error.message.includes('ya tiene este rol')) {
+                statusCode = 400;
+                message = error.message;
+            }
+
+            res.status(statusCode).json({
+                success: false,
+                message: message
+            });
+        }
+    }
+
+    /**
+     * Listar usuarios por organización (administradores)
+     * @route GET /api/v1/auth/usuarios-organizacion
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async listarUsuariosOrganizacion(req, res) {
+        try {
+            // Validaciones de permisos
+            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'No tiene permisos para listar usuarios'
+                });
+            }
+
+            // Determinar organización
+            let organizacionId = req.user.organizacion_id;
+            if (req.user.rol === 'super_admin' && req.query.organizacion_id) {
+                organizacionId = parseInt(req.query.organizacion_id);
+            }
+
+            // Configurar filtros y paginación
+            const filtros = {
+                rol: req.query.rol,
+                activo: req.query.activo ? req.query.activo === 'true' : null,
+                email_verificado: req.query.email_verificado ? req.query.email_verificado === 'true' : null,
+                buscar: req.query.buscar
+            };
+
+            const paginacion = {
+                page: parseInt(req.query.page) || 1,
+                limit: Math.min(parseInt(req.query.limit) || 10, 50),
+                order_by: req.query.order_by || 'creado_en',
+                order_direction: req.query.order_direction || 'DESC'
+            };
+
+            // Listar usuarios
+            const resultado = await UsuarioModel.listarPorOrganizacion(
+                organizacionId,
+                filtros,
+                paginacion
+            );
+
+            logger.info('Lista de usuarios obtenida', {
+                organizacion_id: organizacionId,
+                admin_id: req.user.id,
+                total_usuarios: resultado.pagination.total,
+                filtros: filtros
+            });
+
+            res.status(200).json({
+                success: true,
+                message: 'Lista de usuarios obtenida exitosamente',
+                data: {
+                    usuarios: resultado.data,
+                    pagination: resultado.pagination,
+                    filtros_aplicados: resultado.filtros_aplicados,
+                    resumen: resultado.resumen
+                }
+            });
+
+        } catch (error) {
+            logger.error('Error listando usuarios de organización', {
+                error: error.message,
+                admin_id: req.user?.id,
+                query: req.query
+            });
+
+            res.status(500).json({
+                success: false,
+                message: 'Error interno del servidor'
+            });
+        }
+    }
 }
 
 module.exports = AuthController;

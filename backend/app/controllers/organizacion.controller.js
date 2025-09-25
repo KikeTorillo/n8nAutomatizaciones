@@ -302,6 +302,167 @@ class OrganizacionController {
             ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
+
+    /**
+     * Proceso de onboarding completo para nueva organización
+     * POST /api/v1/organizaciones/onboarding
+     */
+    static async onboarding(req, res) {
+        try {
+            const { organizacion_data, importar_plantillas = true } = req.body;
+
+            if (!organizacion_data || !organizacion_data.nombre_comercial || !organizacion_data.tipo_industria) {
+                return ResponseHelper.error(res, 'Datos de organización incompletos', 400);
+            }
+
+            // 1. Crear organización
+            const nuevaOrganizacion = await OrganizacionModel.crear(organizacion_data);
+
+            let resultadoPlantillas = null;
+
+            // 2. Importar plantillas de servicios automáticamente si se solicita
+            if (importar_plantillas) {
+                try {
+                    resultadoPlantillas = await OrganizacionModel.agregarPlantillasServicios(
+                        nuevaOrganizacion.id,
+                        nuevaOrganizacion.tipo_industria
+                    );
+                } catch (plantillasError) {
+                    logger.warn('Error importando plantillas durante onboarding:', {
+                        organizacion_id: nuevaOrganizacion.id,
+                        error: plantillasError.message
+                    });
+                    // No fallar el onboarding por esto
+                }
+            }
+
+            logger.info('Onboarding de organización completado', {
+                organizacion_id: nuevaOrganizacion.id,
+                nombre_comercial: nuevaOrganizacion.nombre_comercial,
+                tipo_industria: nuevaOrganizacion.tipo_industria,
+                plantillas_importadas: resultadoPlantillas?.servicios_importados || 0,
+                ip: req.ip
+            });
+
+            ResponseHelper.success(res, {
+                organizacion: nuevaOrganizacion,
+                plantillas: resultadoPlantillas,
+                siguiente_paso: 'Crear usuarios y profesionales para la organización'
+            }, 'Onboarding completado exitosamente', 201);
+
+        } catch (error) {
+            logger.error('Error en onboarding de organización:', {
+                error: error.message,
+                body: req.body,
+                ip: req.ip
+            });
+
+            ResponseHelper.error(res, 'Error en proceso de onboarding', 500);
+        }
+    }
+
+    /**
+     * Obtener métricas detalladas de organización para dashboard
+     * GET /api/v1/organizaciones/:id/metricas
+     */
+    static async obtenerMetricas(req, res) {
+        try {
+            const { id } = req.params;
+            const { periodo = 'mes' } = req.query;
+
+            if (!id || isNaN(parseInt(id))) {
+                return ResponseHelper.error(res, 'ID de organización inválido', 400);
+            }
+
+            if (!['mes', 'semana', 'año'].includes(periodo)) {
+                return ResponseHelper.error(res, 'Período debe ser: mes, semana o año', 400);
+            }
+
+            const metricas = await OrganizacionModel.obtenerMetricas(parseInt(id), periodo);
+
+            logger.info('Métricas de organización obtenidas', {
+                organizacion_id: parseInt(id),
+                periodo: periodo,
+                citas_total: metricas.resumen.citas_total,
+                ingresos: metricas.financieras.ingresos_periodo
+            });
+
+            ResponseHelper.success(res, metricas, 'Métricas obtenidas exitosamente');
+
+        } catch (error) {
+            logger.error('Error al obtener métricas de organización:', {
+                error: error.message,
+                organizacion_id: req.params.id,
+                periodo: req.query.periodo,
+                ip: req.ip
+            });
+
+            if (error.message.includes('no encontrada')) {
+                return ResponseHelper.notFound(res, 'Organización no encontrada');
+            }
+
+            ResponseHelper.error(res, 'Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Cambiar plan de subscripción de organización
+     * PUT /api/v1/organizaciones/:id/plan
+     */
+    static async cambiarPlan(req, res) {
+        try {
+            const { id } = req.params;
+            const { nuevo_plan, configuracion_plan } = req.body;
+
+            if (!id || isNaN(parseInt(id))) {
+                return ResponseHelper.error(res, 'ID de organización inválido', 400);
+            }
+
+            if (!nuevo_plan) {
+                return ResponseHelper.error(res, 'nuevo_plan es requerido', 400);
+            }
+
+            const planesValidos = ['trial', 'basico', 'profesional', 'empresarial', 'custom'];
+            if (!planesValidos.includes(nuevo_plan)) {
+                return ResponseHelper.error(res,
+                    `Plan no válido. Opciones: ${planesValidos.join(', ')}`, 400);
+            }
+
+            const resultado = await OrganizacionModel.cambiarPlan(
+                parseInt(id),
+                nuevo_plan,
+                configuracion_plan || {}
+            );
+
+            logger.info('Plan de organización cambiado via API', {
+                organizacion_id: parseInt(id),
+                plan_anterior: resultado.plan_anterior,
+                plan_nuevo: resultado.plan_nuevo,
+                precio_mensual: resultado.limites.precio_mensual,
+                ip: req.ip
+            });
+
+            ResponseHelper.success(res, resultado, 'Plan cambiado exitosamente');
+
+        } catch (error) {
+            logger.error('Error al cambiar plan via API:', {
+                error: error.message,
+                organizacion_id: req.params.id,
+                body: req.body,
+                ip: req.ip
+            });
+
+            if (error.message.includes('no encontrada')) {
+                return ResponseHelper.notFound(res, 'Organización no encontrada');
+            }
+
+            if (error.message.includes('no válido')) {
+                return ResponseHelper.error(res, error.message, 400);
+            }
+
+            ResponseHelper.error(res, 'Error interno del servidor', 500);
+        }
+    }
 }
 
 module.exports = OrganizacionController;

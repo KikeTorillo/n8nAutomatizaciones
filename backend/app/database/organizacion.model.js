@@ -420,6 +420,415 @@ class OrganizacionModel {
             client.release();
         }
     }
+
+    /**
+     * Agregar plantillas de servicios automáticamente durante onboarding
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} tipoIndustria - Tipo de industria de la organización
+     * @returns {Promise<Object>} Resultado de importación de plantillas
+     */
+    static async agregarPlantillasServicios(organizacionId, tipoIndustria) {
+        const client = await getDb();
+
+        try {
+            // Configurar bypass RLS para super admin
+            await client.query("SET app.current_user_role = 'super_admin'");
+            await client.query("SET app.bypass_rls = 'true'");
+
+            // Obtener plantillas de servicios para la industria específica
+            const plantillasQuery = `
+                SELECT id, nombre, descripcion, categoria, subcategoria,
+                       duracion_minutos, precio_sugerido, precio_minimo, precio_maximo,
+                       requiere_preparacion_minutos, tiempo_limpieza_minutos,
+                       max_clientes_simultaneos, tags, configuracion_especifica
+                FROM plantillas_servicios
+                WHERE tipo_industria = $1 AND activo = true
+                ORDER BY popularidad DESC, nombre ASC
+            `;
+
+            const plantillas = await client.query(plantillasQuery, [tipoIndustria]);
+
+            if (plantillas.rows.length === 0) {
+                logger.warn('No se encontraron plantillas para la industria', { tipoIndustria });
+                return {
+                    servicios_importados: 0,
+                    total_plantillas: 0,
+                    mensaje: `No hay plantillas disponibles para industria ${tipoIndustria}`
+                };
+            }
+
+            let serviciosImportados = 0;
+            const serviciosCreados = [];
+
+            for (const plantilla of plantillas.rows) {
+                try {
+                    // Crear servicio basado en plantilla
+                    const insertServiceQuery = `
+                        INSERT INTO servicios (
+                            organizacion_id, plantilla_servicio_id, nombre, descripcion,
+                            categoria, subcategoria, duracion_minutos, precio, precio_minimo,
+                            precio_maximo, requiere_preparacion_minutos, tiempo_limpieza_minutos,
+                            max_clientes_simultaneos, tags, configuracion_especifica, activo
+                        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                        RETURNING id, nombre, precio
+                    `;
+
+                    const servicioResult = await client.query(insertServiceQuery, [
+                        organizacionId,
+                        plantilla.id,
+                        plantilla.nombre,
+                        plantilla.descripcion,
+                        plantilla.categoria,
+                        plantilla.subcategoria,
+                        plantilla.duracion_minutos,
+                        plantilla.precio_sugerido || 100.00, // precio default
+                        plantilla.precio_minimo,
+                        plantilla.precio_maximo,
+                        plantilla.requiere_preparacion_minutos,
+                        plantilla.tiempo_limpieza_minutos,
+                        plantilla.max_clientes_simultaneos,
+                        plantilla.tags,
+                        plantilla.configuracion_especifica,
+                        true // activo por default
+                    ]);
+
+                    serviciosImportados++;
+                    serviciosCreados.push(servicioResult.rows[0]);
+
+                } catch (servicioError) {
+                    logger.warn('Error importando servicio individual', {
+                        plantilla_id: plantilla.id,
+                        nombre: plantilla.nombre,
+                        error: servicioError.message
+                    });
+                    // Continuar con las demás plantillas
+                }
+            }
+
+            logger.info('Plantillas de servicios importadas', {
+                organizacion_id: organizacionId,
+                tipo_industria: tipoIndustria,
+                plantillas_disponibles: plantillas.rows.length,
+                servicios_importados: serviciosImportados
+            });
+
+            return {
+                servicios_importados: serviciosImportados,
+                total_plantillas: plantillas.rows.length,
+                servicios_creados: serviciosCreados,
+                mensaje: `${serviciosImportados} servicios importados exitosamente`
+            };
+
+        } catch (error) {
+            logger.error('Error al agregar plantillas de servicios:', error);
+            throw new Error(`Error al importar plantillas: ${error.message}`);
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Obtener métricas completas de la organización para dashboard
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} periodo - Periodo de métricas ('mes', 'semana', 'año')
+     * @returns {Promise<Object>} Métricas completas de la organización
+     */
+    static async obtenerMetricas(organizacionId, periodo = 'mes') {
+        const client = await getDb();
+
+        try {
+            // Configurar bypass RLS para super admin
+            await client.query("SET app.current_user_role = 'super_admin'");
+            await client.query("SET app.bypass_rls = 'true'");
+
+            // Calcular rangos de fechas según el período
+            let fechaInicio, fechaFin;
+            switch (periodo) {
+                case 'semana':
+                    fechaInicio = "date_trunc('week', CURRENT_DATE)";
+                    fechaFin = "date_trunc('week', CURRENT_DATE) + interval '1 week'";
+                    break;
+                case 'año':
+                    fechaInicio = "date_trunc('year', CURRENT_DATE)";
+                    fechaFin = "date_trunc('year', CURRENT_DATE) + interval '1 year'";
+                    break;
+                default: // 'mes'
+                    fechaInicio = "date_trunc('month', CURRENT_DATE)";
+                    fechaFin = "date_trunc('month', CURRENT_DATE) + interval '1 month'";
+            }
+
+            // Query principal de métricas
+            const metricsQuery = `
+                WITH metricas_organizacion AS (
+                    SELECT
+                        -- Métricas de citas
+                        COUNT(DISTINCT c.id) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                        ) as citas_periodo,
+                        COUNT(DISTINCT c.id) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                            AND c.estado = 'completada'
+                        ) as citas_completadas,
+                        COUNT(DISTINCT c.id) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                            AND c.estado = 'cancelada'
+                        ) as citas_canceladas,
+
+                        -- Métricas financieras
+                        COALESCE(SUM(c.precio_final) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                            AND c.estado = 'completada'
+                        ), 0) as ingresos_periodo,
+                        COALESCE(AVG(c.precio_final) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                            AND c.estado = 'completada'
+                        ), 0) as ticket_promedio,
+
+                        -- Métricas de clientes
+                        COUNT(DISTINCT c.cliente_id) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                        ) as clientes_atendidos,
+                        COUNT(DISTINCT cl.id) FILTER (
+                            WHERE cl.creado_en >= ${fechaInicio}
+                            AND cl.creado_en < ${fechaFin}
+                        ) as clientes_nuevos,
+
+                        -- Métricas operativas
+                        COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_activos,
+                        COUNT(DISTINCT s.id) FILTER (WHERE s.activo = true) as servicios_activos,
+
+                        -- Satisfacción
+                        COALESCE(AVG(c.calificacion_cliente) FILTER (
+                            WHERE c.fecha_cita >= ${fechaInicio}
+                            AND c.fecha_cita < ${fechaFin}
+                            AND c.calificacion_cliente IS NOT NULL
+                        ), 5.0) as satisfaccion_promedio
+
+                    FROM organizaciones o
+                    LEFT JOIN citas c ON o.id = c.organizacion_id
+                    LEFT JOIN clientes cl ON o.id = cl.organizacion_id
+                    LEFT JOIN profesionales p ON o.id = p.organizacion_id
+                    LEFT JOIN servicios s ON o.id = s.organizacion_id
+                    WHERE o.id = $1 AND o.activo = true
+                ),
+                servicios_populares AS (
+                    SELECT
+                        s.nombre as servicio_nombre,
+                        s.precio,
+                        COUNT(c.id) as veces_solicitado,
+                        SUM(c.precio_final) as ingresos_servicio
+                    FROM servicios s
+                    LEFT JOIN citas c ON s.id = c.servicio_id
+                        AND c.fecha_cita >= ${fechaInicio}
+                        AND c.fecha_cita < ${fechaFin}
+                        AND c.estado = 'completada'
+                    WHERE s.organizacion_id = $1 AND s.activo = true
+                    GROUP BY s.id, s.nombre, s.precio
+                    ORDER BY veces_solicitado DESC
+                    LIMIT 5
+                )
+                SELECT
+                    m.*,
+                    COALESCE(
+                        (SELECT json_agg(sp) FROM servicios_populares sp),
+                        '[]'::json
+                    ) as servicios_populares
+                FROM metricas_organizacion m
+            `;
+
+            const result = await client.query(metricsQuery, [organizacionId]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Organización no encontrada');
+            }
+
+            const metricas = result.rows[0];
+
+            // Calcular KPIs derivados
+            const tasaCompletitud = metricas.citas_periodo > 0
+                ? Math.round((parseInt(metricas.citas_completadas) / parseInt(metricas.citas_periodo)) * 100)
+                : 0;
+
+            const tasaCancelacion = metricas.citas_periodo > 0
+                ? Math.round((parseInt(metricas.citas_canceladas) / parseInt(metricas.citas_periodo)) * 100)
+                : 0;
+
+            return {
+                periodo: periodo,
+                resumen: {
+                    citas_total: parseInt(metricas.citas_periodo),
+                    citas_completadas: parseInt(metricas.citas_completadas),
+                    citas_canceladas: parseInt(metricas.citas_canceladas),
+                    tasa_completitud: tasaCompletitud,
+                    tasa_cancelacion: tasaCancelacion
+                },
+                financieras: {
+                    ingresos_periodo: parseFloat(metricas.ingresos_periodo),
+                    ticket_promedio: parseFloat(metricas.ticket_promedio),
+                    moneda: 'MXN' // TODO: obtener de configuración de organización
+                },
+                clientes: {
+                    clientes_atendidos: parseInt(metricas.clientes_atendidos),
+                    clientes_nuevos: parseInt(metricas.clientes_nuevos),
+                    satisfaccion_promedio: parseFloat(metricas.satisfaccion_promedio)
+                },
+                operativas: {
+                    profesionales_activos: parseInt(metricas.profesionales_activos),
+                    servicios_activos: parseInt(metricas.servicios_activos)
+                },
+                servicios_populares: metricas.servicios_populares || []
+            };
+
+        } catch (error) {
+            logger.error('Error al obtener métricas de organización:', error);
+            throw new Error(`Error al obtener métricas: ${error.message}`);
+        } finally {
+            client.release();
+        }
+    }
+
+    /**
+     * Cambiar plan de subscripción de una organización
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} nuevoPlan - Nuevo plan ('trial', 'basico', 'profesional', 'empresarial', 'custom')
+     * @param {Object} configuracionPlan - Configuración específica del plan
+     * @returns {Promise<Object>} Resultado del cambio de plan
+     */
+    static async cambiarPlan(organizacionId, nuevoPlan, configuracionPlan = {}) {
+        const client = await getDb();
+
+        try {
+            await client.query('BEGIN');
+
+            // Configurar bypass RLS para super admin
+            await client.query("SET app.current_user_role = 'super_admin'");
+            await client.query("SET app.bypass_rls = 'true'");
+
+            // Verificar que la organización existe
+            const orgQuery = `
+                SELECT id, nombre_comercial, plan_actual, fecha_activacion
+                FROM organizaciones
+                WHERE id = $1 AND activo = true
+            `;
+            const orgResult = await client.query(orgQuery, [organizacionId]);
+
+            if (orgResult.rows.length === 0) {
+                throw new Error('Organización no encontrada');
+            }
+
+            const organizacion = orgResult.rows[0];
+            const planAnterior = organizacion.plan_actual;
+
+            // Definir límites por plan
+            const limitesPorPlan = {
+                trial: {
+                    limite_citas_mes: 50,
+                    limite_profesionales: 2,
+                    limite_servicios: 10,
+                    precio_mensual: 0
+                },
+                basico: {
+                    limite_citas_mes: 200,
+                    limite_profesionales: 5,
+                    limite_servicios: 25,
+                    precio_mensual: 299
+                },
+                profesional: {
+                    limite_citas_mes: 1000,
+                    limite_profesionales: 15,
+                    limite_servicios: 100,
+                    precio_mensual: 599
+                },
+                empresarial: {
+                    limite_citas_mes: 5000,
+                    limite_profesionales: 50,
+                    limite_servicios: 500,
+                    precio_mensual: 1299
+                },
+                custom: {
+                    limite_citas_mes: configuracionPlan.limite_citas_mes || 10000,
+                    limite_profesionales: configuracionPlan.limite_profesionales || 100,
+                    limite_servicios: configuracionPlan.limite_servicios || 1000,
+                    precio_mensual: configuracionPlan.precio_mensual || 2500
+                }
+            };
+
+            const nuevosLimites = limitesPorPlan[nuevoPlan];
+            if (!nuevosLimites) {
+                throw new Error(`Plan no válido: ${nuevoPlan}`);
+            }
+
+            // Actualizar la organización con el nuevo plan
+            const updateQuery = `
+                UPDATE organizaciones
+                SET
+                    plan_actual = $1,
+                    fecha_activacion = CASE
+                        WHEN plan_actual = 'trial' AND $1 != 'trial' THEN NOW()
+                        ELSE fecha_activacion
+                    END,
+                    actualizado_en = NOW()
+                WHERE id = $2
+                RETURNING id, nombre_comercial, plan_actual, fecha_activacion
+            `;
+
+            const updateResult = await client.query(updateQuery, [nuevoPlan, organizacionId]);
+
+            // Registrar el cambio en historial de subscripciones (si existe la tabla)
+            try {
+                const historialQuery = `
+                    INSERT INTO historial_subscripciones (
+                        organizacion_id, plan_anterior, plan_nuevo,
+                        fecha_cambio, precio_mensual, configuracion_plan, activo
+                    ) VALUES ($1, $2, $3, NOW(), $4, $5, true)
+                `;
+
+                await client.query(historialQuery, [
+                    organizacionId,
+                    planAnterior,
+                    nuevoPlan,
+                    nuevosLimites.precio_mensual,
+                    JSON.stringify({ limites: nuevosLimites, ...configuracionPlan })
+                ]);
+
+            } catch (historialError) {
+                logger.warn('No se pudo registrar en historial_subscripciones:', historialError.message);
+                // No fallar por esto, la tabla podría no existir aún
+            }
+
+            await client.query('COMMIT');
+
+            logger.info('Plan de organización cambiado exitosamente', {
+                organizacion_id: organizacionId,
+                plan_anterior: planAnterior,
+                plan_nuevo: nuevoPlan,
+                limites: nuevosLimites
+            });
+
+            return {
+                organizacion_id: organizacionId,
+                nombre_comercial: organizacion.nombre_comercial,
+                plan_anterior: planAnterior,
+                plan_nuevo: nuevoPlan,
+                fecha_activacion: updateResult.rows[0].fecha_activacion,
+                limites: nuevosLimites,
+                mensaje: `Plan cambiado exitosamente de ${planAnterior} a ${nuevoPlan}`
+            };
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            logger.error('Error al cambiar plan de organización:', error);
+            throw new Error(`Error al cambiar plan: ${error.message}`);
+        } finally {
+            client.release();
+        }
+    }
 }
 
 module.exports = OrganizacionModel;

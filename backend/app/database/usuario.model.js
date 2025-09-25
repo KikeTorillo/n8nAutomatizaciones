@@ -561,6 +561,522 @@ class UsuarioModel {
             db.release();
         }
     }
+
+    /**
+     * Crear usuario automáticamente asignado a organización (CRÍTICO para onboarding)
+     * @param {number} orgId - ID de la organización
+     * @param {Object} userData - Datos del usuario
+     * @param {string} rol - Rol del usuario ('admin', 'propietario', 'empleado')
+     * @param {Object} opciones - Opciones adicionales
+     * @returns {Promise<Object>} Usuario creado + resultado de email de bienvenida
+     */
+    static async crearUsuarioOrganizacion(orgId, userData, rol, opciones = {}) {
+        const db = await getDb();
+
+        try {
+            await db.query('BEGIN');
+
+            // Configurar bypass RLS para creación
+            await db.query("SET app.current_user_role = 'super_admin'");
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Validar que la organización existe
+            const orgQuery = `
+                SELECT id, nombre_comercial, email_admin, tipo_industria, activo
+                FROM organizaciones
+                WHERE id = $1 AND activo = true
+            `;
+            const orgResult = await db.query(orgQuery, [orgId]);
+
+            if (orgResult.rows.length === 0) {
+                throw new Error('Organización no encontrada o inactiva');
+            }
+
+            const organizacion = orgResult.rows[0];
+
+            // Preparar datos de usuario con organización
+            const usuarioData = {
+                ...userData,
+                organizacion_id: orgId,
+                rol: rol,
+                activo: true,
+                email_verificado: opciones.verificar_email_automaticamente || false
+            };
+
+            // Crear usuario usando el método existente
+            const nuevoUsuario = await this.crear(usuarioData);
+
+            // Configurar contexto RLS para el nuevo usuario
+            await this.configurarContextoRLS(db, nuevoUsuario.id, rol, orgId);
+
+            // Registrar evento en auditoría (si tabla eventos_sistema existe)
+            try {
+                const eventoQuery = `
+                    INSERT INTO eventos_sistema (
+                        organizacion_id, evento_tipo, entidad_tipo, entidad_id,
+                        descripcion, metadatos, usuario_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `;
+
+                await db.query(eventoQuery, [
+                    orgId,
+                    'usuario_creado',
+                    'usuario',
+                    nuevoUsuario.id,
+                    `Usuario ${rol} creado automáticamente durante onboarding`,
+                    JSON.stringify({
+                        rol: rol,
+                        email: nuevoUsuario.email,
+                        nombre_completo: `${nuevoUsuario.nombre} ${nuevoUsuario.apellidos || ''}`.trim(),
+                        organizacion_nombre: organizacion.nombre_comercial
+                    }),
+                    nuevoUsuario.id
+                ]);
+            } catch (eventoError) {
+                // No fallar por esto, la tabla podría no existir
+                console.warn('No se pudo registrar evento en auditoría:', eventoError.message);
+            }
+
+            await db.query('COMMIT');
+
+            const logger = require('../utils/logger');
+            logger.info('Usuario de organización creado automáticamente', {
+                usuario_id: nuevoUsuario.id,
+                organizacion_id: orgId,
+                rol: rol,
+                email: nuevoUsuario.email,
+                organizacion_nombre: organizacion.nombre_comercial
+            });
+
+            // TODO: Enviar email de bienvenida (integración futura)
+            let emailResult = null;
+            if (opciones.enviar_email_bienvenida) {
+                emailResult = {
+                    enviado: false,
+                    mensaje: 'Email de bienvenida pendiente de implementación'
+                };
+            }
+
+            return {
+                usuario: nuevoUsuario,
+                organizacion: {
+                    id: organizacion.id,
+                    nombre_comercial: organizacion.nombre_comercial
+                },
+                configuracion_rls: true,
+                email_bienvenida: emailResult
+            };
+
+        } catch (error) {
+            await db.query('ROLLBACK');
+            throw error;
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Listar usuarios de una organización específica con filtros avanzados
+     * @param {number} orgId - ID de la organización
+     * @param {Object} filtros - Filtros de búsqueda
+     * @param {Object} paginacion - Configuración de paginación
+     * @returns {Promise<Object>} Lista de usuarios con metadatos
+     */
+    static async listarPorOrganizacion(orgId, filtros = {}, paginacion = {}) {
+        const db = await getDb();
+
+        try {
+            // Configurar contexto RLS
+            await db.query("SET app.current_user_role = 'super_admin'");
+            await db.query("SET app.bypass_rls = 'true'");
+
+            const {
+                rol = null,
+                activo = null,
+                email_verificado = null,
+                buscar = null // búsqueda por nombre o email
+            } = filtros;
+
+            const {
+                page = 1,
+                limit = 10,
+                order_by = 'creado_en',
+                order_direction = 'DESC'
+            } = paginacion;
+
+            const offset = (page - 1) * limit;
+
+            // Construir WHERE dinámico
+            let whereConditions = ['u.organizacion_id = $1'];
+            let queryParams = [orgId];
+            let paramCounter = 2;
+
+            if (rol) {
+                whereConditions.push(`u.rol = $${paramCounter}`);
+                queryParams.push(rol);
+                paramCounter++;
+            }
+
+            if (activo !== null) {
+                whereConditions.push(`u.activo = $${paramCounter}`);
+                queryParams.push(activo);
+                paramCounter++;
+            }
+
+            if (email_verificado !== null) {
+                whereConditions.push(`u.email_verificado = $${paramCounter}`);
+                queryParams.push(email_verificado);
+                paramCounter++;
+            }
+
+            if (buscar) {
+                whereConditions.push(`(
+                    u.nombre ILIKE $${paramCounter} OR
+                    u.apellidos ILIKE $${paramCounter} OR
+                    u.email ILIKE $${paramCounter}
+                )`);
+                queryParams.push(`%${buscar}%`);
+                paramCounter++;
+            }
+
+            const whereClause = whereConditions.join(' AND ');
+
+            // Query para contar total de registros
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM usuarios u
+                WHERE ${whereClause}
+            `;
+
+            // Query principal con joins a profesionales
+            const dataQuery = `
+                SELECT
+                    u.id, u.email, u.nombre, u.apellidos, u.telefono, u.rol,
+                    u.activo, u.email_verificado, u.ultimo_login, u.intentos_fallidos,
+                    u.bloqueado_hasta, u.creado_en, u.actualizado_en,
+                    p.id as profesional_id,
+                    p.nombre_completo as profesional_nombre,
+                    p.tipo_profesional,
+                    -- Calcular estado de bloqueo
+                    CASE
+                        WHEN u.bloqueado_hasta IS NULL THEN FALSE
+                        WHEN u.bloqueado_hasta > NOW() THEN TRUE
+                        ELSE FALSE
+                    END as esta_bloqueado,
+                    CASE
+                        WHEN u.bloqueado_hasta > NOW() THEN EXTRACT(EPOCH FROM (u.bloqueado_hasta - NOW()))/60
+                        ELSE 0
+                    END as minutos_restantes_bloqueo
+                FROM usuarios u
+                LEFT JOIN profesionales p ON u.profesional_id = p.id
+                WHERE ${whereClause}
+                ORDER BY u.${order_by} ${order_direction}
+                LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
+            `;
+
+            // Ejecutar queries
+            const [countResult, dataResult] = await Promise.all([
+                db.query(countQuery, queryParams),
+                db.query(dataQuery, [...queryParams, limit, offset])
+            ]);
+
+            const total = parseInt(countResult.rows[0].total);
+            const totalPages = Math.ceil(total / limit);
+
+            return {
+                data: dataResult.rows,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    totalPages,
+                    hasNext: page < totalPages,
+                    hasPrev: page > 1
+                },
+                filtros_aplicados: filtros,
+                resumen: {
+                    total_usuarios: total,
+                    usuarios_activos: dataResult.rows.filter(u => u.activo).length,
+                    usuarios_bloqueados: dataResult.rows.filter(u => u.esta_bloqueado).length
+                }
+            };
+
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Cambiar rol de usuario con validaciones de permisos y log de auditoría
+     * @param {number} userId - ID del usuario
+     * @param {string} nuevoRol - Nuevo rol a asignar
+     * @param {number} orgId - ID de la organización
+     * @param {number} adminId - ID del administrador que realiza el cambio
+     * @returns {Promise<Object>} Usuario con rol actualizado
+     */
+    static async cambiarRol(userId, nuevoRol, orgId, adminId) {
+        const db = await getDb();
+
+        try {
+            await db.query('BEGIN');
+
+            // Configurar contexto como super_admin
+            await db.query("SET app.current_user_role = 'super_admin'");
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Validar que el usuario existe y pertenece a la organización
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
+                FROM usuarios
+                WHERE id = $1 AND organizacion_id = $2 AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [userId, orgId]);
+
+            if (usuarioResult.rows.length === 0) {
+                throw new Error('Usuario no encontrado en la organización especificada');
+            }
+
+            const usuario = usuarioResult.rows[0];
+            const rolAnterior = usuario.rol;
+
+            // Validar que el nuevo rol es válido
+            const rolesValidos = ['admin', 'propietario', 'empleado', 'cliente'];
+            if (!rolesValidos.includes(nuevoRol)) {
+                throw new Error(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
+            }
+
+            // Validar que no sea el mismo rol
+            if (rolAnterior === nuevoRol) {
+                throw new Error('El usuario ya tiene este rol asignado');
+            }
+
+            // Actualizar rol del usuario
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    rol = $1,
+                    actualizado_en = NOW()
+                WHERE id = $2 AND organizacion_id = $3
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                         activo, email_verificado, creado_en, actualizado_en
+            `;
+
+            const updateResult = await db.query(updateQuery, [nuevoRol, userId, orgId]);
+
+            // Registrar en auditoría
+            try {
+                const eventoQuery = `
+                    INSERT INTO eventos_sistema (
+                        organizacion_id, evento_tipo, entidad_tipo, entidad_id,
+                        descripcion, metadatos, usuario_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `;
+
+                await db.query(eventoQuery, [
+                    orgId,
+                    'usuario_rol_cambiado',
+                    'usuario',
+                    userId,
+                    `Rol de usuario cambiado de ${rolAnterior} a ${nuevoRol}`,
+                    JSON.stringify({
+                        usuario_email: usuario.email,
+                        rol_anterior: rolAnterior,
+                        rol_nuevo: nuevoRol,
+                        admin_id: adminId,
+                        timestamp: new Date().toISOString()
+                    }),
+                    adminId
+                ]);
+            } catch (eventoError) {
+                console.warn('No se pudo registrar evento de cambio de rol:', eventoError.message);
+            }
+
+            await db.query('COMMIT');
+
+            const logger = require('../utils/logger');
+            logger.info('Rol de usuario cambiado', {
+                usuario_id: userId,
+                organizacion_id: orgId,
+                rol_anterior: rolAnterior,
+                rol_nuevo: nuevoRol,
+                admin_id: adminId
+            });
+
+            return {
+                usuario: updateResult.rows[0],
+                cambio: {
+                    rol_anterior: rolAnterior,
+                    rol_nuevo: nuevoRol,
+                    realizado_por: adminId,
+                    timestamp: new Date().toISOString()
+                }
+            };
+
+        } catch (error) {
+            await db.query('ROLLBACK');
+            throw error;
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Reset password específico por organización (con token temporal)
+     * @param {string} email - Email del usuario
+     * @param {number} orgId - ID de la organización
+     * @returns {Promise<Object>} Información del token de reset
+     */
+    static async resetPassword(email, orgId) {
+        const db = await getDb();
+
+        try {
+            // Configurar contexto para acceso
+            await db.query("SET app.current_user_role = 'super_admin'");
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Buscar usuario por email y organización
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, organizacion_id, activo
+                FROM usuarios
+                WHERE email = $1 AND organizacion_id = $2 AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [email, orgId]);
+
+            if (usuarioResult.rows.length === 0) {
+                // Por seguridad, no revelar si el usuario existe o no
+                return {
+                    mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
+                    token_enviado: false
+                };
+            }
+
+            const usuario = usuarioResult.rows[0];
+
+            // Generar token temporal de reset (válido por 1 hora)
+            const crypto = require('crypto');
+            const resetToken = crypto.randomBytes(32).toString('hex');
+            const resetExpiration = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+            // Actualizar usuario con token de reset
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    token_reset_password = $1,
+                    token_reset_expira = $2,
+                    actualizado_en = NOW()
+                WHERE id = $3
+            `;
+
+            await db.query(updateQuery, [resetToken, resetExpiration, usuario.id]);
+
+            const logger = require('../utils/logger');
+            logger.info('Token de reset password generado', {
+                usuario_id: usuario.id,
+                email: email,
+                organizacion_id: orgId,
+                token_expira: resetExpiration.toISOString()
+            });
+
+            // TODO: Enviar email con token (integración futura)
+            return {
+                mensaje: 'Token de reset generado exitosamente',
+                token_enviado: true,
+                usuario_id: usuario.id,
+                expires_at: resetExpiration.toISOString(),
+                // En desarrollo, incluir token (REMOVER en producción)
+                ...(process.env.NODE_ENV !== 'production' && { reset_token: resetToken })
+            };
+
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Verificar email con token (proceso de verificación de cuenta)
+     * @param {string} token - Token de verificación de email
+     * @returns {Promise<Object>} Resultado de la verificación
+     */
+    static async verificarEmail(token) {
+        const db = await getDb();
+
+        try {
+            // Configurar contexto para verificación
+            await db.query("SET app.current_user_role = 'super_admin'");
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Buscar usuario por token (implementar cuando tabla soporte tokens de verificación)
+            // Por ahora, asumir que el token es un JWT simple con userId
+            let userId;
+            try {
+                const jwt = require('jsonwebtoken');
+                const decoded = jwt.verify(token, process.env.JWT_SECRET);
+                userId = decoded.userId;
+            } catch (jwtError) {
+                throw new Error('Token de verificación inválido o expirado');
+            }
+
+            // Buscar y verificar usuario
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
+                FROM usuarios
+                WHERE id = $1 AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [userId]);
+
+            if (usuarioResult.rows.length === 0) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            const usuario = usuarioResult.rows[0];
+
+            if (usuario.email_verificado) {
+                return {
+                    ya_verificado: true,
+                    mensaje: 'El email ya había sido verificado anteriormente',
+                    usuario: {
+                        id: usuario.id,
+                        email: usuario.email,
+                        nombre: `${usuario.nombre} ${usuario.apellidos || ''}`.trim()
+                    }
+                };
+            }
+
+            // Marcar email como verificado
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    email_verificado = true,
+                    actualizado_en = NOW()
+                WHERE id = $1
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id, email_verificado
+            `;
+
+            const updateResult = await db.query(updateQuery, [userId]);
+
+            const logger = require('../utils/logger');
+            logger.info('Email de usuario verificado', {
+                usuario_id: userId,
+                email: usuario.email,
+                organizacion_id: usuario.organizacion_id
+            });
+
+            return {
+                verificado: true,
+                mensaje: 'Email verificado exitosamente',
+                usuario: {
+                    id: updateResult.rows[0].id,
+                    email: updateResult.rows[0].email,
+                    nombre: `${updateResult.rows[0].nombre} ${updateResult.rows[0].apellidos || ''}`.trim(),
+                    rol: updateResult.rows[0].rol,
+                    email_verificado: updateResult.rows[0].email_verificado
+                }
+            };
+
+        } finally {
+            db.release();
+        }
+    }
 }
 
 module.exports = UsuarioModel;

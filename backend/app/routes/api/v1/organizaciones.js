@@ -203,4 +203,98 @@ router.get('/:id/estadisticas',
     OrganizacionController.obtenerEstadisticas
 );
 
+/**
+ * @route   POST /api/v1/organizaciones/onboarding
+ * @desc    Proceso completo de onboarding para nueva organización
+ * @access  Private (super_admin)
+ */
+router.post('/onboarding',
+    auth.authenticateToken,
+    [
+        body('organizacion_data.nombre_comercial')
+            .isLength({ min: 2, max: 150 })
+            .withMessage('Nombre comercial debe tener entre 2 y 150 caracteres')
+            .trim(),
+        body('organizacion_data.tipo_industria')
+            .isIn(['barberia', 'salon_belleza', 'estetica', 'spa', 'podologia', 'consultorio_medico', 'academia', 'taller_tecnico', 'centro_fitness', 'veterinaria', 'otro'])
+            .withMessage('Tipo de industria no válido'),
+        body('organizacion_data.email_admin')
+            .isEmail()
+            .withMessage('Email del administrador no válido')
+            .normalizeEmail(),
+        body('importar_plantillas')
+            .optional()
+            .isBoolean()
+            .withMessage('importar_plantillas debe ser boolean')
+    ],
+    handleValidation,
+    // Solo super_admin puede hacer onboarding completo
+    (req, res, next) => {
+        if (req.user.rol !== 'super_admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Acceso denegado. Solo super administradores pueden ejecutar onboarding',
+                code: 'INSUFFICIENT_PERMISSIONS'
+            });
+        }
+        next();
+    },
+    OrganizacionController.onboarding
+);
+
+/**
+ * @route   GET /api/v1/organizaciones/:id/metricas
+ * @desc    Obtener métricas detalladas de organización para dashboard
+ * @access  Private (super_admin, admin de la org)
+ */
+router.get('/:id/metricas',
+    auth.authenticateToken,
+    [
+        param('id')
+            .isInt({ min: 1 })
+            .withMessage('ID debe ser un número entero positivo'),
+        query('periodo')
+            .optional()
+            .isIn(['mes', 'semana', 'año'])
+            .withMessage('Período debe ser: mes, semana o año')
+    ],
+    handleValidation,
+    tenant.setTenantContext,
+    OrganizacionController.obtenerMetricas
+);
+
+/**
+ * @route   PUT /api/v1/organizaciones/:id/plan
+ * @desc    Cambiar plan de subscripción de organización
+ * @access  Private (super_admin)
+ */
+router.put('/:id/plan',
+    auth.authenticateToken,
+    [
+        param('id')
+            .isInt({ min: 1 })
+            .withMessage('ID debe ser un número entero positivo'),
+        body('nuevo_plan')
+            .isIn(['trial', 'basico', 'profesional', 'empresarial', 'custom'])
+            .withMessage('Plan debe ser: trial, basico, profesional, empresarial o custom'),
+        body('configuracion_plan')
+            .optional()
+            .isObject()
+            .withMessage('configuracion_plan debe ser un objeto')
+    ],
+    handleValidation,
+    // Solo super_admin puede cambiar planes
+    (req, res, next) => {
+        if (req.user.rol !== 'super_admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Acceso denegado. Solo super administradores pueden cambiar planes',
+                code: 'INSUFFICIENT_PERMISSIONS'
+            });
+        }
+        next();
+    },
+    OrganizacionController.cambiarPlan
+);
+
 module.exports = router;

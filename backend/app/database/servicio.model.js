@@ -675,11 +675,11 @@ class ServicioModel {
 
             // Primero obtener la plantilla
             const queryPlantilla = `
-                SELECT * FROM plantillas_servicios 
+                SELECT * FROM plantillas_servicios
                 WHERE id = $1 AND estado = 'activa'
             `;
             const resultPlantilla = await db.query(queryPlantilla, [plantilla_id]);
-            
+
             if (resultPlantilla.rows.length === 0) {
                 throw new Error('Plantilla de servicio no encontrada o inactiva');
             }
@@ -714,6 +714,337 @@ class ServicioModel {
         } finally {
             db.release();
         }
+    }
+
+    /**
+     * 🤖 CRÍTICO PARA IA: Búsqueda inteligente de servicios con múltiples algoritmos
+     * Esta función es ESENCIAL para que la IA pueda encontrar servicios durante conversaciones
+     * @param {string} termino - Término de búsqueda (puede ser parcial, coloquial, etc.)
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} opciones - Opciones de búsqueda inteligente
+     * @param {number} opciones.profesional_id - ID del profesional específico (filtro)
+     * @param {string} opciones.categoria - Filtro por categoría específica
+     * @param {Array<number>} opciones.rango_precio - [min, max] precio
+     * @param {Array<number>} opciones.rango_duracion - [min, max] minutos
+     * @param {boolean} opciones.incluir_inactivos - Incluir servicios inactivos
+     * @param {number} opciones.limite - Límite de resultados (default: 15)
+     * @param {string} opciones.tipo_busqueda - 'exacta' | 'fuzzy' | 'semantica' | 'automatica'
+     * @returns {Promise<Object>} Servicios encontrados con scoring de relevancia
+     */
+    static async busquedaInteligente(termino, organizacionId, opciones = {}) {
+        const db = await getDb();
+
+        try {
+            // Configurar contexto RLS
+            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
+
+            const {
+                profesional_id = null,
+                categoria = null,
+                rango_precio = null,
+                rango_duracion = null,
+                incluir_inactivos = false,
+                limite = 15,
+                tipo_busqueda = 'automatica'
+            } = opciones;
+
+            const logger = require('../utils/logger');
+            logger.info('[ServicioModel.busquedaInteligente] Iniciando búsqueda', {
+                termino: termino,
+                organizacion_id: organizacionId,
+                tipo_busqueda: tipo_busqueda,
+                opciones: opciones
+            });
+
+            // Normalizar término de búsqueda
+            const terminoNormalizado = termino.toLowerCase().trim();
+            const terminoSinAcentos = this.removerAcentos(terminoNormalizado);
+
+            // Construir query base con múltiples algoritmos de puntuación
+            let query = `
+                WITH busqueda_servicios AS (
+                    SELECT s.*,
+                           ps.nombre as plantilla_nombre,
+                           ps.tags as plantilla_tags,
+                           -- Puntuación por coincidencia exacta (peso más alto)
+                           CASE
+                               WHEN LOWER(s.nombre) = $1 THEN 1.0
+                               WHEN LOWER(s.nombre) LIKE $1 || '%' THEN 0.9
+                               WHEN LOWER(s.nombre) LIKE '%' || $1 || '%' THEN 0.8
+                               ELSE 0.0
+                           END as score_nombre_exacto,
+
+                           -- Puntuación por similaridad fonética/textual
+                           GREATEST(
+                               similarity(LOWER(s.nombre), $1),
+                               similarity(LOWER(COALESCE(s.descripcion, '')), $1),
+                               similarity(LOWER(COALESCE(s.categoria, '')), $1),
+                               similarity(LOWER(COALESCE(s.subcategoria, '')), $1)
+                           ) as score_similaridad,
+
+                           -- Puntuación por full-text search (PostgreSQL nativo)
+                           COALESCE(
+                               ts_rank_cd(
+                                   to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' ||
+                                              COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, '') || ' ' ||
+                                              COALESCE(array_to_string(s.tags, ' '), '')),
+                                   plainto_tsquery('spanish', $1)
+                               ), 0.0
+                           ) as score_fulltext,
+
+                           -- Puntuación por tags y palabras clave
+                           CASE
+                               WHEN s.tags IS NOT NULL AND array_to_string(s.tags, ' ') ILIKE '%' || $1 || '%' THEN 0.7
+                               WHEN ps.tags IS NOT NULL AND array_to_string(ps.tags, ' ') ILIKE '%' || $1 || '%' THEN 0.6
+                               ELSE 0.0
+                           END as score_tags,
+
+                           -- Puntuación por búsquedas semánticas/sinónimos comunes
+                           ${this.generarScoreSinonimos(terminoNormalizado)} as score_sinonimos,
+
+                           -- Información adicional para filtros
+                           CASE WHEN sp.profesional_id IS NOT NULL THEN true ELSE false END as tiene_profesionales_asignados
+
+                    FROM servicios s
+                    LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
+                    LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
+                    WHERE s.organizacion_id = $2
+            `;
+
+            const queryParams = [terminoNormalizado, organizacionId];
+            let paramCounter = 3;
+
+            // Aplicar filtros dinámicos
+            if (!incluir_inactivos) {
+                query += ` AND s.activo = true`;
+            }
+
+            if (profesional_id) {
+                query += ` AND sp.profesional_id = $${paramCounter}`;
+                queryParams.push(profesional_id);
+                paramCounter++;
+            }
+
+            if (categoria) {
+                query += ` AND s.categoria ILIKE $${paramCounter}`;
+                queryParams.push(`%${categoria}%`);
+                paramCounter++;
+            }
+
+            if (rango_precio && rango_precio.length === 2) {
+                query += ` AND s.precio BETWEEN $${paramCounter} AND $${paramCounter + 1}`;
+                queryParams.push(rango_precio[0], rango_precio[1]);
+                paramCounter += 2;
+            }
+
+            if (rango_duracion && rango_duracion.length === 2) {
+                query += ` AND s.duracion_minutos BETWEEN $${paramCounter} AND $${paramCounter + 1}`;
+                queryParams.push(rango_duracion[0], rango_duracion[1]);
+                paramCounter += 2;
+            }
+
+            // Continuar con scoring y agrupación
+            query += `
+                ), scoring_final AS (
+                    SELECT *,
+                           -- Calcular puntuación combinada usando pesos inteligentes
+                           GREATEST(
+                               score_nombre_exacto * 10.0,     -- Peso máximo para coincidencias exactas
+                               score_similaridad * 7.0,        -- Alto peso para similaridad
+                               score_fulltext * 5.0,           -- Peso medio para full-text
+                               score_tags * 4.0,               -- Peso para tags
+                               score_sinonimos * 3.0           -- Peso para sinónimos
+                           ) as puntuacion_final,
+
+                           -- Calcular confianza de la coincidencia
+                           CASE
+                               WHEN score_nombre_exacto >= 0.8 THEN 'muy_alta'
+                               WHEN score_nombre_exacto >= 0.5 OR score_similaridad >= 0.7 THEN 'alta'
+                               WHEN score_similaridad >= 0.4 OR score_fulltext > 0.3 THEN 'media'
+                               WHEN score_tags > 0.0 OR score_sinonimos > 0.0 THEN 'baja'
+                               ELSE 'muy_baja'
+                           END as confianza_match
+
+                    FROM busqueda_servicios
+                    WHERE (
+                        score_nombre_exacto > 0.0 OR
+                        score_similaridad > 0.2 OR
+                        score_fulltext > 0.1 OR
+                        score_tags > 0.0 OR
+                        score_sinonimos > 0.0
+                    )
+                )
+                SELECT
+                    id, organizacion_id, nombre, descripcion, categoria, subcategoria,
+                    duracion_minutos, precio, precio_minimo, precio_maximo,
+                    tags, tipos_profesional_autorizados, activo,
+                    plantilla_nombre, tiene_profesionales_asignados,
+                    puntuacion_final, confianza_match,
+                    score_nombre_exacto, score_similaridad, score_fulltext, score_tags, score_sinonimos,
+                    creado_en, actualizado_en
+                FROM scoring_final
+                WHERE puntuacion_final > 0.5  -- Filtrar resultados con puntuación mínima
+                ORDER BY puntuacion_final DESC, nombre ASC
+                LIMIT $${paramCounter}
+            `;
+
+            queryParams.push(limite);
+
+            // Ejecutar búsqueda principal
+            const result = await db.query(query, queryParams);
+
+            // Enriquecer resultados con metadata adicional
+            const serviciosEncontrados = result.rows.map(servicio => ({
+                ...servicio,
+                puntuacion: parseFloat(servicio.puntuacion_final),
+                match_breakdown: {
+                    nombre_exacto: parseFloat(servicio.score_nombre_exacto),
+                    similaridad: parseFloat(servicio.score_similaridad),
+                    fulltext: parseFloat(servicio.score_fulltext),
+                    tags: parseFloat(servicio.score_tags),
+                    sinonimos: parseFloat(servicio.score_sinonimos)
+                },
+                recomendacion: servicio.confianza_match
+            }));
+
+            // Obtener también sugerencias si hay pocos resultados
+            let sugerencias = [];
+            if (serviciosEncontrados.length < 3) {
+                sugerencias = await this.obtenerSugerenciasServicios(organizacionId, terminoNormalizado, 5);
+            }
+
+            const respuesta = {
+                termino_busqueda: {
+                    original: termino,
+                    normalizado: terminoNormalizado,
+                    sin_acentos: terminoSinAcentos
+                },
+                algoritmo_usado: tipo_busqueda,
+                estadisticas: {
+                    total_encontrados: serviciosEncontrados.length,
+                    con_alta_confianza: serviciosEncontrados.filter(s => ['muy_alta', 'alta'].includes(s.confianza_match)).length,
+                    puntuacion_maxima: serviciosEncontrados.length > 0 ? Math.max(...serviciosEncontrados.map(s => s.puntuacion)) : 0
+                },
+                servicios: serviciosEncontrados,
+                sugerencias: sugerencias,
+                filtros_aplicados: {
+                    profesional_id,
+                    categoria,
+                    rango_precio,
+                    rango_duracion,
+                    incluye_inactivos: incluir_inactivos
+                }
+            };
+
+            logger.info('[ServicioModel.busquedaInteligente] Búsqueda completada', {
+                termino: termino,
+                servicios_encontrados: serviciosEncontrados.length,
+                mejor_puntuacion: respuesta.estadisticas.puntuacion_maxima,
+                con_alta_confianza: respuesta.estadisticas.con_alta_confianza
+            });
+
+            return respuesta;
+
+        } catch (error) {
+            const logger = require('../utils/logger');
+            logger.error('[ServicioModel.busquedaInteligente] Error:', {
+                error: error.message,
+                termino: termino,
+                organizacion_id: organizacionId
+            });
+            throw error;
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Generar scoring para sinónimos y términos semánticamente relacionados
+     * @param {string} termino - Término normalizado
+     * @returns {string} SQL CASE statement para scoring de sinónimos
+     */
+    static generarScoreSinonimos(termino) {
+        // Diccionario de sinónimos común para servicios de belleza/salud
+        const sinonimos = {
+            'corte': ['cortar', 'tijera', 'cabello', 'pelo'],
+            'barba': ['bigote', 'facial', 'afeitado', 'rasurado'],
+            'manicure': ['manicura', 'uñas', 'manos', 'cutícula'],
+            'pedicure': ['pedicura', 'pies', 'uñas pies'],
+            'masaje': ['relajante', 'terapeutico', 'contractura', 'tension'],
+            'facial': ['cara', 'rostro', 'limpieza facial', 'tratamiento facial'],
+            'depilacion': ['depilado', 'cera', 'laser'],
+            'tinte': ['color', 'coloracion', 'mechas', 'rayitos'],
+            'peinado': ['estilo', 'styling', 'brushing'],
+            'cejas': ['delineado cejas', 'microblading', 'henna'],
+            'consulta': ['cita', 'revision', 'evaluacion'],
+            'limpieza': ['higiene', 'profilaxis', 'pulido']
+        };
+
+        let caseClauses = [];
+
+        for (const [palabra, relacionadas] of Object.entries(sinonimos)) {
+            if (termino.includes(palabra)) {
+                const condiciones = relacionadas.map(rel =>
+                    `LOWER(s.nombre || ' ' || COALESCE(s.descripcion, '')) LIKE '%${rel}%'`
+                ).join(' OR ');
+                caseClauses.push(`WHEN (${condiciones}) THEN 0.6`);
+            }
+
+            // También buscar en sentido inverso
+            if (relacionadas.some(rel => termino.includes(rel))) {
+                caseClauses.push(`WHEN LOWER(s.nombre || ' ' || COALESCE(s.descripcion, '')) LIKE '%${palabra}%' THEN 0.6`);
+            }
+        }
+
+        if (caseClauses.length === 0) {
+            return '0.0';
+        }
+
+        return `CASE ${caseClauses.join(' ')} ELSE 0.0 END`;
+    }
+
+    /**
+     * Obtener sugerencias de servicios populares cuando hay pocos resultados
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} termino - Término de búsqueda original
+     * @param {number} limite - Número de sugerencias
+     * @returns {Promise<Array>} Lista de servicios sugeridos
+     */
+    static async obtenerSugerenciasServicios(organizacionId, termino, limite = 5) {
+        const db = await getDb();
+
+        try {
+            const query = `
+                SELECT s.id, s.nombre, s.categoria, s.precio, s.duracion_minutos,
+                       COUNT(sp.profesional_id) as profesionales_disponibles
+                FROM servicios s
+                LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
+                WHERE s.organizacion_id = $1 AND s.activo = true
+                GROUP BY s.id, s.nombre, s.categoria, s.precio, s.duracion_minutos
+                ORDER BY profesionales_disponibles DESC, s.nombre ASC
+                LIMIT $2
+            `;
+
+            const result = await db.query(query, [organizacionId, limite]);
+            return result.rows;
+
+        } catch (error) {
+            return []; // Fallar silenciosamente para sugerencias
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Utilidad para remover acentos de texto
+     * @param {string} texto - Texto con acentos
+     * @returns {string} Texto sin acentos
+     */
+    static removerAcentos(texto) {
+        return texto
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase();
     }
 }
 
