@@ -243,8 +243,25 @@ const commonSchemas = {
   userRole: Joi.string().valid('super_admin', 'admin', 'propietario', 'empleado', 'cliente'),
 
   // Planes de suscripción
-  plan: Joi.string().valid('basico', 'profesional', 'premium', 'enterprise')
+  plan: Joi.string().valid('basico', 'profesional', 'premium', 'enterprise'),
+
+  // Tipos de industria válidos para organizaciones
+  tipoIndustria: Joi.string().valid(
+    'barberia', 'salon_belleza', 'estetica', 'spa', 'podologia',
+    'consultorio_medico', 'academia', 'taller_tecnico',
+    'centro_fitness', 'veterinaria', 'otro'
+  )
 };
+
+/**
+ * Middleware específico para validar ID de organización en params
+ * Reutilizable para todos los endpoints que requieren :id
+ */
+const validateOrganizacionId = validateParams(
+  Joi.object({
+    id: commonSchemas.id
+  })
+);
 
 /**
  * Middleware para validar archivos subidos
@@ -336,6 +353,22 @@ const sanitizeInput = (req, _res, next) => {
   next();
 };
 
+/**
+ * Middleware para procesar validaciones de express-validator
+ * Compatible con validaciones de rutas existentes
+ */
+const { validationResult } = require('express-validator');
+
+const handleValidation = (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return ResponseHelper.error(res, 'Errores de validación', 400, {
+            errors: errors.array()
+        });
+    }
+    next();
+};
+
 module.exports = {
   validate,
   validateBody,
@@ -343,5 +376,7 @@ module.exports = {
   validateQuery,
   validateFile,
   sanitizeInput,
-  commonSchemas
+  handleValidation,
+  commonSchemas,
+  validateOrganizacionId
 };

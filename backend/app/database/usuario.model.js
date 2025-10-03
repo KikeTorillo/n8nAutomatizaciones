@@ -374,35 +374,6 @@ class UsuarioModel {
     }
 
     /**
-     * Listar usuarios por organización (para administradores)
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} [filtros] - Filtros opcionales
-     * @param {number} [filtros.limite] - Límite de resultados
-     * @param {number} [filtros.offset] - Offset para paginación
-     * @returns {Promise<Array>} Lista de usuarios
-     */
-    static async listarPorOrganizacion(organizacionId, filtros = {}) {
-        const db = await getDb();
-
-        const { limite = 50, offset = 0 } = filtros;
-
-        const query = `
-            SELECT u.id, u.email, u.nombre, u.apellidos, u.telefono, u.rol,
-                   u.activo, u.email_verificado, u.ultimo_login,
-                   p.nombre_completo as profesional_nombre, p.tipo_profesional,
-                   u.creado_en, u.actualizado_en
-            FROM usuarios u
-            LEFT JOIN profesionales p ON u.profesional_id = p.id
-            WHERE u.organizacion_id = $1
-            ORDER BY u.creado_en DESC
-            LIMIT $2 OFFSET $3
-        `;
-
-        const result = await db.query(query, [organizacionId, limite, offset]);
-        return result.rows;
-    }
-
-    /**
      * Actualizar perfil de usuario
      * @param {number} userId - ID del usuario
      * @param {Object} datos - Datos a actualizar
@@ -411,37 +382,41 @@ class UsuarioModel {
     static async actualizarPerfil(userId, datos) {
         const db = await getDb();
 
-        const camposPermitidos = ['nombre', 'apellidos', 'telefono', 'zona_horaria', 'idioma', 'configuracion_ui'];
-        const campos = [];
-        const valores = [];
-        let contador = 1;
+        try {
+            const camposPermitidos = ['nombre', 'apellidos', 'telefono', 'zona_horaria', 'idioma', 'configuracion_ui'];
+            const campos = [];
+            const valores = [];
+            let contador = 1;
 
-        // Construir query dinámico solo con campos permitidos
-        for (const [campo, valor] of Object.entries(datos)) {
-            if (camposPermitidos.includes(campo) && valor !== undefined) {
-                campos.push(`${campo} = $${contador}`);
-                valores.push(valor);
-                contador++;
+            // Construir query dinámico solo con campos permitidos
+            for (const [campo, valor] of Object.entries(datos)) {
+                if (camposPermitidos.includes(campo) && valor !== undefined) {
+                    campos.push(`${campo} = $${contador}`);
+                    valores.push(valor);
+                    contador++;
+                }
             }
+
+            if (campos.length === 0) {
+                throw new Error('No hay campos válidos para actualizar');
+            }
+
+            const query = `
+                UPDATE usuarios
+                SET ${campos.join(', ')}, actualizado_en = NOW()
+                WHERE id = $${contador}
+                RETURNING id, email, nombre, apellidos, telefono, rol, organizacion_id,
+                         profesional_id, activo, email_verificado, zona_horaria, idioma,
+                         creado_en, actualizado_en
+            `;
+
+            valores.push(userId);
+
+            const result = await db.query(query, valores);
+            return result.rows[0];
+        } finally {
+            db.release();
         }
-
-        if (campos.length === 0) {
-            throw new Error('No hay campos válidos para actualizar');
-        }
-
-        const query = `
-            UPDATE usuarios
-            SET ${campos.join(', ')}, actualizado_en = NOW()
-            WHERE id = $${contador}
-            RETURNING id, email, nombre, apellidos, telefono, rol, organizacion_id,
-                     profesional_id, activo, email_verificado, zona_horaria, idioma,
-                     creado_en, actualizado_en
-        `;
-
-        valores.push(userId);
-
-        const result = await db.query(query, valores);
-        return result.rows[0];
     }
 
     /**
@@ -741,6 +716,11 @@ class UsuarioModel {
 
             const whereClause = whereConditions.join(' AND ');
 
+            // Validar order_by para evitar SQL injection
+            const orderByPermitidos = ['creado_en', 'nombre', 'email', 'ultimo_login', 'id'];
+            const orderBySeguro = orderByPermitidos.includes(order_by) ? order_by : 'creado_en';
+            const orderDirSeguro = order_direction === 'ASC' ? 'ASC' : 'DESC';
+
             // Query para contar total de registros
             const countQuery = `
                 SELECT COUNT(*) as total
@@ -770,7 +750,7 @@ class UsuarioModel {
                 FROM usuarios u
                 LEFT JOIN profesionales p ON u.profesional_id = p.id
                 WHERE ${whereClause}
-                ORDER BY u.${order_by} ${order_direction}
+                ORDER BY u.${orderBySeguro} ${orderDirSeguro}
                 LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
             `;
 
@@ -1005,27 +985,18 @@ class UsuarioModel {
             await db.query("SET app.current_user_role = 'super_admin'");
             await db.query("SET app.bypass_rls = 'true'");
 
-            // Buscar usuario por token (implementar cuando tabla soporte tokens de verificación)
-            // Por ahora, asumir que el token es un JWT simple con userId
-            let userId;
-            try {
-                const jwt = require('jsonwebtoken');
-                const decoded = jwt.verify(token, process.env.JWT_SECRET);
-                userId = decoded.userId;
-            } catch (jwtError) {
-                throw new Error('Token de verificación inválido o expirado');
-            }
-
-            // Buscar y verificar usuario
+            // Buscar usuario por token de verificación específico
             const usuarioQuery = `
                 SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
                 FROM usuarios
-                WHERE id = $1 AND activo = true
+                WHERE token_verificacion_email = $1
+                  AND token_verificacion_expira > NOW()
+                  AND activo = true
             `;
-            const usuarioResult = await db.query(usuarioQuery, [userId]);
+            const usuarioResult = await db.query(usuarioQuery, [token]);
 
             if (usuarioResult.rows.length === 0) {
-                throw new Error('Usuario no encontrado');
+                throw new Error('Token de verificación inválido o expirado');
             }
 
             const usuario = usuarioResult.rows[0];
@@ -1033,46 +1004,253 @@ class UsuarioModel {
             if (usuario.email_verificado) {
                 return {
                     ya_verificado: true,
-                    mensaje: 'El email ya había sido verificado anteriormente',
-                    usuario: {
-                        id: usuario.id,
-                        email: usuario.email,
-                        nombre: `${usuario.nombre} ${usuario.apellidos || ''}`.trim()
-                    }
+                    mensaje: 'El email ya había sido verificado anteriormente'
                 };
             }
 
-            // Marcar email como verificado
+            // Marcar email como verificado y limpiar token
             const updateQuery = `
                 UPDATE usuarios
                 SET
                     email_verificado = true,
+                    token_verificacion_email = NULL,
+                    token_verificacion_expira = NULL,
                     actualizado_en = NOW()
                 WHERE id = $1
-                RETURNING id, email, nombre, apellidos, rol, organizacion_id, email_verificado
+                RETURNING id, email
             `;
 
-            const updateResult = await db.query(updateQuery, [userId]);
+            const updateResult = await db.query(updateQuery, [usuario.id]);
 
             const logger = require('../utils/logger');
-            logger.info('Email de usuario verificado', {
-                usuario_id: userId,
-                email: usuario.email,
-                organizacion_id: usuario.organizacion_id
+            logger.info('Email verificado', {
+                usuario_id: usuario.id,
+                email: usuario.email
             });
 
             return {
                 verificado: true,
                 mensaje: 'Email verificado exitosamente',
-                usuario: {
-                    id: updateResult.rows[0].id,
-                    email: updateResult.rows[0].email,
-                    nombre: `${updateResult.rows[0].nombre} ${updateResult.rows[0].apellidos || ''}`.trim(),
-                    rol: updateResult.rows[0].rol,
-                    email_verificado: updateResult.rows[0].email_verificado
-                }
+                email: updateResult.rows[0].email
             };
 
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Generar token de verificación de email
+     * @param {number} userId - ID del usuario
+     * @returns {Promise<string>} Token generado
+     */
+    static async generarTokenVerificacion(userId) {
+        const db = await getDb();
+        const crypto = require('crypto');
+
+        try {
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Generar token único de 32 bytes
+            const token = crypto.randomBytes(32).toString('hex');
+
+            // Token expira en 24 horas
+            const expiracion = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            const query = `
+                UPDATE usuarios
+                SET token_verificacion_email = $1,
+                    token_verificacion_expira = $2,
+                    actualizado_en = NOW()
+                WHERE id = $3
+                RETURNING email
+            `;
+
+            const result = await db.query(query, [token, expiracion, userId]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            return token;
+
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Verificar si existen usuarios en el sistema
+     * @returns {Promise<boolean>} True si existen usuarios, false si no
+     */
+    static async existenUsuarios() {
+        const db = await getDb();
+
+        try {
+            // Configurar bypass RLS para contar usuarios
+            await db.query("SET app.bypass_rls = 'true'");
+
+            const query = 'SELECT COUNT(*) as count FROM usuarios';
+            const result = await db.query(query);
+            const usuarioCount = parseInt(result.rows[0].count);
+
+            return usuarioCount > 0;
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Validar token de reset de contraseña
+     * @param {string} token - Token de reset de 64 caracteres
+     * @returns {Promise<Object>} Información del token (válido, usuario_id, email, expira)
+     */
+    static async validarTokenReset(token) {
+        const db = await getDb();
+
+        try {
+            await db.query("SET app.bypass_rls = 'true'");
+
+            const query = `
+                SELECT
+                    id, email, nombre, apellidos, organizacion_id,
+                    token_reset_expira,
+                    CASE
+                        WHEN token_reset_expira > NOW() THEN true
+                        ELSE false
+                    END as token_valido,
+                    CASE
+                        WHEN token_reset_expira > NOW() THEN EXTRACT(EPOCH FROM (token_reset_expira - NOW()))/60
+                        ELSE 0
+                    END as minutos_restantes
+                FROM usuarios
+                WHERE token_reset_password = $1 AND activo = true
+            `;
+
+            const result = await db.query(query, [token]);
+
+            if (result.rows.length === 0) {
+                return {
+                    valido: false,
+                    mensaje: 'Token inválido o usuario no encontrado'
+                };
+            }
+
+            const usuario = result.rows[0];
+
+            if (!usuario.token_valido) {
+                return {
+                    valido: false,
+                    mensaje: 'Token expirado',
+                    expiro_hace_minutos: Math.abs(Math.floor(usuario.minutos_restantes))
+                };
+            }
+
+            return {
+                valido: true,
+                usuario_id: usuario.id,
+                email: usuario.email,
+                organizacion_id: usuario.organizacion_id,
+                expira_en_minutos: Math.floor(usuario.minutos_restantes),
+                expira_en: usuario.token_reset_expira
+            };
+
+        } finally {
+            db.release();
+        }
+    }
+
+    /**
+     * Confirmar reset de contraseña con token
+     * @param {string} token - Token de reset
+     * @param {string} nuevaPassword - Nueva contraseña en texto plano
+     * @returns {Promise<Object>} Resultado del cambio de contraseña
+     */
+    static async confirmarResetPassword(token, nuevaPassword) {
+        const db = await getDb();
+
+        try {
+            await db.query('BEGIN');
+            await db.query("SET app.bypass_rls = 'true'");
+
+            // Validar token primero
+            const validacion = await this.validarTokenReset(token);
+
+            if (!validacion.valido) {
+                throw new Error(validacion.mensaje || 'Token inválido o expirado');
+            }
+
+            // Hash de la nueva contraseña
+            const saltRounds = 12;
+            const nuevoHash = await bcrypt.hash(nuevaPassword, saltRounds);
+
+            // Actualizar contraseña y limpiar token
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    password_hash = $1,
+                    token_reset_password = NULL,
+                    token_reset_expira = NULL,
+                    intentos_fallidos = 0,
+                    bloqueado_hasta = NULL,
+                    actualizado_en = NOW()
+                WHERE token_reset_password = $2 AND activo = true
+                RETURNING id, email, nombre, apellidos, organizacion_id
+            `;
+
+            const result = await db.query(updateQuery, [nuevoHash, token]);
+
+            if (result.rows.length === 0) {
+                throw new Error('No se pudo actualizar la contraseña');
+            }
+
+            const usuario = result.rows[0];
+
+            // Registrar evento de auditoría
+            try {
+                const eventoQuery = `
+                    INSERT INTO eventos_sistema (
+                        organizacion_id, evento_tipo, entidad_tipo, entidad_id,
+                        descripcion, metadatos, usuario_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                `;
+
+                await db.query(eventoQuery, [
+                    usuario.organizacion_id,
+                    'password_reset_confirmado',
+                    'usuario',
+                    usuario.id,
+                    'Contraseña restablecida exitosamente mediante token de recuperación',
+                    JSON.stringify({
+                        email: usuario.email,
+                        timestamp: new Date().toISOString(),
+                        metodo: 'token_reset'
+                    }),
+                    usuario.id
+                ]);
+            } catch (eventoError) {
+                console.warn('No se pudo registrar evento de reset password:', eventoError.message);
+            }
+
+            await db.query('COMMIT');
+
+            const logger = require('../utils/logger');
+            logger.info('Contraseña restablecida exitosamente', {
+                usuario_id: usuario.id,
+                email: usuario.email,
+                organizacion_id: usuario.organizacion_id
+            });
+
+            return {
+                success: true,
+                mensaje: 'Contraseña actualizada exitosamente',
+                usuario_id: usuario.id,
+                email: usuario.email
+            };
+
+        } catch (error) {
+            await db.query('ROLLBACK');
+            throw error;
         } finally {
             db.release();
         }

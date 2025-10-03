@@ -54,6 +54,13 @@ CREATE INDEX idx_usuarios_reset_token
     ON usuarios (token_reset_password, token_reset_expira)
     WHERE token_reset_password IS NOT NULL;
 
+-- ✉️ ÍNDICE 5B: TOKENS DE VERIFICACIÓN DE EMAIL
+-- Propósito: Validar tokens de verificación de email
+-- Uso: WHERE token_verificacion_email = ? AND token_verificacion_expira > NOW()
+CREATE INDEX idx_usuarios_verificacion_email_token
+    ON usuarios (token_verificacion_email, token_verificacion_expira)
+    WHERE token_verificacion_email IS NOT NULL;
+
 -- 📈 ÍNDICE 6: DASHBOARD DE ADMINISTRACIÓN
 -- Propósito: Métricas y listados de usuarios para admins
 -- Uso: Reportes de actividad y últimos accesos
@@ -198,15 +205,25 @@ CREATE INDEX idx_clientes_organizacion_id ON clientes(organizacion_id);
 -- Uso: WHERE email = ? AND email IS NOT NULL
 CREATE INDEX idx_clientes_email ON clientes(email) WHERE email IS NOT NULL;
 
--- 📞 ÍNDICE 3: BÚSQUEDA POR TELÉFONO
--- Propósito: Identificación rápida por teléfono
--- Uso: WHERE telefono = ?
+-- 📞 ÍNDICE 3: BÚSQUEDA POR TELÉFONO (MEJORADO CON TRIGRAMA)
+-- Propósito: Identificación rápida por teléfono + búsqueda fuzzy
+-- Uso: WHERE telefono = ? AND similarity(telefono, ?) > 0.3
 CREATE INDEX idx_clientes_telefono ON clientes(telefono);
 
--- 🔍 ÍNDICE 4: BÚSQUEDA FULL-TEXT POR NOMBRE
--- Propósito: Autocompletar nombres de clientes
--- Uso: Búsqueda por nombre en español
+-- 🔍 ÍNDICE 3B: BÚSQUEDA FUZZY DE TELÉFONOS (TRIGRAMA)
+-- Propósito: Soporte para búsqueda fuzzy de teléfonos en ClienteModel.buscarPorTelefono()
+-- Uso: WHERE telefono % ? (operador similaridad trigrama)
+CREATE INDEX idx_clientes_telefono_trgm ON clientes USING GIN(telefono gin_trgm_ops);
+
+-- 🔍 ÍNDICE 4: BÚSQUEDA FULL-TEXT POR NOMBRE (MEJORADO)
+-- Propósito: Autocompletar nombres de clientes + búsqueda inteligente
+-- Uso: WHERE to_tsvector('spanish', nombre) @@ plainto_tsquery('spanish', ?)
 CREATE INDEX idx_clientes_nombre ON clientes USING GIN(to_tsvector('spanish', nombre));
+
+-- 🔍 ÍNDICE 4B: BÚSQUEDA FUZZY DE NOMBRES (TRIGRAMA)
+-- Propósito: Soporte para ClienteModel.buscarPorNombre() con similarity()
+-- Uso: WHERE similarity(nombre, ?) > 0.2
+CREATE INDEX idx_clientes_nombre_trgm ON clientes USING GIN(nombre gin_trgm_ops);
 
 -- ✅ ÍNDICE 5: CLIENTES ACTIVOS (PARCIAL)
 -- Propósito: Filtrar solo clientes activos (query más común)
@@ -344,6 +361,13 @@ CREATE INDEX idx_citas_search
                               COALESCE(notas_profesional, '') || ' ' ||
                               COALESCE(codigo_cita, ''))
     );
+
+-- 📅 ÍNDICE 8: VÍNCULO CON HORARIOS
+-- Propósito: Relación cita → horario_disponibilidad para sincronización de capacidad
+-- Uso: JOIN con horarios_disponibilidad, trigger sync_capacidad_ocupada
+CREATE INDEX idx_citas_horario_link
+    ON citas (horario_id)
+    WHERE horario_id IS NOT NULL;
 
 -- ====================================================================
 -- ⏰ ÍNDICES PARA TABLA HORARIOS_DISPONIBILIDAD (8 índices avanzados)

@@ -1,93 +1,32 @@
-/**
- * @fileoverview Controller de Clientes para sistema multi-tenant SaaS
- * @description Gestión de operaciones CRUD para clientes con aislamiento multi-tenant
- * @author SaaS Agendamiento
- * @version 1.0.0
- */
+/** Controller de Clientes - Gestión CRUD con aislamiento multi-tenant */
 
 const ClienteModel = require('../database/cliente.model');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
 
-/**
- * Controller de Clientes
- * Gestión de operaciones CRUD para clientes con aislamiento multi-tenant
- * Incluye manejo de errores, validaciones y logging
- */
 class ClienteController {
 
-    /**
-     * Crear nuevo cliente
-     * POST /api/v1/clientes
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Crear nuevo cliente - POST /api/v1/clientes */
     static async crear(req, res) {
         try {
-            const clienteData = req.body;
+            const clienteData = {
+                ...req.body,
+                organizacion_id: req.tenant.organizacionId
+            };
 
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                // Super admin debe especificar organizacion_id en el body
-                organizacionId = clienteData.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id en el cuerpo de la petición',
-                        400
-                    );
-                }
-            } else {
-                // Usuario regular usa su organizacion_id y no puede especificar otra
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-
-                // Sobreescribir cualquier organizacion_id que haya en el body
-                clienteData.organizacion_id = organizacionId;
-            }
-
-            // Ya se asignó organizacionId arriba, no necesario duplicar
-
-            // Validaciones básicas requeridas
-            if (!clienteData.nombre || !clienteData.telefono) {
-                return ResponseHelper.error(res,
-                    'Nombre y teléfono son campos requeridos',
-                    400
-                );
-            }
-
-            // Crear cliente usando el modelo
             const nuevoCliente = await ClienteModel.crear(clienteData);
 
-            logger.info('Cliente creado exitosamente via API', {
-                cliente_id: nuevoCliente.id,
-                organizacion_id: organizacionId,
-                nombre: nuevoCliente.nombre,
-                usuario: req.user.email,
-                ip: req.ip,
-                user_agent: req.get('User-Agent')
+            logger.info('Cliente creado', {
+                id: nuevoCliente.id,
+                org: req.tenant.organizacionId,
+                user: req.user.email
             });
 
             ResponseHelper.success(res, nuevoCliente, 'Cliente creado exitosamente', 201);
 
         } catch (error) {
-            logger.error('Error al crear cliente via API:', {
-                error: error.message,
-                stack: error.stack,
-                body: req.body,
-                usuario: req.user?.email,
-                ip: req.ip
-            });
+            logger.error('Error al crear cliente:', { error: error.message, user: req.user?.email });
 
-            // Manejo específico de errores del modelo
             if (error.message.includes('ya está registrado')) {
                 return ResponseHelper.error(res, error.message, 409);
             }
@@ -100,45 +39,11 @@ class ClienteController {
         }
     }
 
-    /**
-     * Obtener cliente por ID
-     * GET /api/v1/clientes/:id
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Obtener cliente por ID - GET /api/v1/clientes/:id */
     static async obtenerPorId(req, res) {
         try {
             const { id } = req.params;
-
-            // Validar ID
-            if (!id || isNaN(parseInt(id))) {
-                return ResponseHelper.error(res, 'ID de cliente inválido', 400);
-            }
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = req.query.organizacion_id ? parseInt(req.query.organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
-
-            const cliente = await ClienteModel.obtenerPorId(parseInt(id), organizacionId);
+            const cliente = await ClienteModel.obtenerPorId(parseInt(id), req.tenant.organizacionId);
 
             if (!cliente) {
                 return ResponseHelper.notFound(res, 'Cliente no encontrado');
@@ -147,155 +52,77 @@ class ClienteController {
             ResponseHelper.success(res, cliente, 'Cliente obtenido exitosamente');
 
         } catch (error) {
-            logger.error('Error al obtener cliente via API:', {
-                error: error.message,
-                cliente_id: req.params.id,
-                organizacion_id: req.user?.organizacion_id,
-                usuario: req.user?.email,
-                ip: req.ip
-            });
-
+            logger.error('Error al obtener cliente:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
-    /**
-     * Listar clientes con paginación y filtros
-     * GET /api/v1/clientes
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Listar clientes con paginación y filtros - GET /api/v1/clientes */
     static async listar(req, res) {
         try {
             const {
                 page = 1,
                 limit = 20,
                 busqueda,
-                activos,
-                marketing,
+                activo,
+                marketing_permitido,
                 ordenPor,
-                orden,
-                organizacion_id
+                orden
             } = req.query;
 
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = organizacion_id ? parseInt(organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
-
             const options = {
-                organizacionId,
+                organizacionId: req.tenant.organizacionId,
                 page: parseInt(page),
-                limit: Math.min(parseInt(limit), 100), // Máximo 100 elementos por página
+                limit: Math.min(parseInt(limit), 100),
                 busqueda,
-                activos: activos !== undefined ? activos === 'true' : undefined,
-                marketing: marketing !== undefined ? marketing === 'true' : undefined,
+                activos: activo !== undefined ? activo === 'true' : undefined,
+                marketing: marketing_permitido !== undefined ? marketing_permitido === 'true' : undefined,
                 ordenPor,
                 orden
             };
 
             const resultado = await ClienteModel.listar(options);
 
-            ResponseHelper.paginated(res, resultado.clientes, resultado.paginacion, 'Clientes listados exitosamente');
+            ResponseHelper.paginated(
+                res,
+                resultado.clientes,
+                resultado.paginacion,
+                'Clientes listados exitosamente'
+            );
 
         } catch (error) {
-            logger.error('Error al listar clientes via API:', {
-                error: error.message,
-                query: req.query,
-                usuario: req.user?.email
-            });
-
+            logger.error('Error al listar clientes:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno al listar clientes', 500);
         }
     }
 
-    /**
-     * Actualizar cliente existente
-     * PUT /api/v1/clientes/:id
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Actualizar cliente existente - PUT /api/v1/clientes/:id */
     static async actualizar(req, res) {
         try {
             const { id } = req.params;
             const clienteData = req.body;
 
-            // Validar ID
-            if (!id || isNaN(parseInt(id))) {
-                return ResponseHelper.error(res, 'ID de cliente inválido', 400);
-            }
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = req.query.organizacion_id ? parseInt(req.query.organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-
-                // Usuarios regulares no pueden cambiar organizacion_id
-                delete clienteData.organizacion_id;
-            }
-
             const clienteActualizado = await ClienteModel.actualizar(
                 parseInt(id),
                 clienteData,
-                organizacionId
+                req.tenant.organizacionId
             );
 
             if (!clienteActualizado) {
                 return ResponseHelper.notFound(res, 'Cliente no encontrado');
             }
 
-            logger.info('Cliente actualizado exitosamente via API', {
-                cliente_id: clienteActualizado.id,
-                organizacion_id: organizacionId,
-                cambios: Object.keys(clienteData),
-                usuario: req.user.email
+            logger.info('Cliente actualizado', {
+                id: clienteActualizado.id,
+                campos: Object.keys(clienteData),
+                user: req.user.email
             });
 
             ResponseHelper.success(res, clienteActualizado, 'Cliente actualizado exitosamente');
 
         } catch (error) {
-            logger.error('Error al actualizar cliente via API:', {
-                error: error.message,
-                cliente_id: req.params.id,
-                usuario: req.user?.email
-            });
+            logger.error('Error al actualizar cliente:', { error: error.message, user: req.user?.email });
 
-            // Manejo específico de errores del modelo
             if (error.message.includes('ya está registrado')) {
                 return ResponseHelper.error(res, error.message, 409);
             }
@@ -308,240 +135,73 @@ class ClienteController {
         }
     }
 
-    /**
-     * Eliminar cliente (soft delete)
-     * DELETE /api/v1/clientes/:id
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Eliminar cliente (soft delete) - DELETE /api/v1/clientes/:id */
     static async eliminar(req, res) {
         try {
             const { id } = req.params;
-
-            // Validar ID
-            if (!id || isNaN(parseInt(id))) {
-                return ResponseHelper.error(res, 'ID de cliente inválido', 400);
-            }
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = req.query.organizacion_id ? parseInt(req.query.organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
-
-            const eliminado = await ClienteModel.eliminar(parseInt(id), organizacionId);
+            const eliminado = await ClienteModel.eliminar(parseInt(id), req.tenant.organizacionId);
 
             if (!eliminado) {
                 return ResponseHelper.notFound(res, 'Cliente no encontrado');
             }
 
-            logger.info('Cliente eliminado exitosamente via API', {
-                cliente_id: parseInt(id),
-                organizacion_id: organizacionId,
-                usuario: req.user.email,
-                ip: req.ip
-            });
-
+            logger.info('Cliente eliminado', { id: parseInt(id), user: req.user.email });
             ResponseHelper.success(res, null, 'Cliente eliminado exitosamente');
 
         } catch (error) {
-            logger.error('Error al eliminar cliente via API:', {
-                error: error.message,
-                cliente_id: req.params.id,
-                usuario: req.user?.email
-            });
-
+            logger.error('Error al eliminar cliente:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno al eliminar cliente', 500);
         }
     }
 
-    /**
-     * Buscar clientes por término
-     * GET /api/v1/clientes/buscar
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Buscar clientes por término - GET /api/v1/clientes/buscar */
     static async buscar(req, res) {
         try {
-            const { q: termino, limit = 10, organizacion_id } = req.query;
-
-            if (!termino || termino.trim().length < 2) {
-                return ResponseHelper.error(res,
-                    'El término de búsqueda debe tener al menos 2 caracteres',
-                    400
-                );
-            }
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = organizacion_id ? parseInt(organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
+            const { q: termino, limit = 10 } = req.query;
 
             const clientes = await ClienteModel.buscar(
                 termino.trim(),
-                organizacionId,
-                Math.min(parseInt(limit), 50) // Máximo 50 resultados
+                req.tenant.organizacionId,
+                Math.min(parseInt(limit), 50)
             );
 
             ResponseHelper.success(res, clientes, 'Búsqueda completada exitosamente');
 
         } catch (error) {
-            logger.error('Error al buscar clientes via API:', {
-                error: error.message,
-                termino: req.query.q,
-                usuario: req.user?.email
-            });
-
+            logger.error('Error al buscar clientes:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno en la búsqueda', 500);
         }
     }
 
-    /**
-     * Obtener estadísticas de clientes
-     * GET /api/v1/clientes/estadisticas
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Obtener estadísticas de clientes - GET /api/v1/clientes/estadisticas */
     static async obtenerEstadisticas(req, res) {
         try {
-            const { organizacion_id } = req.query;
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = organizacion_id ? parseInt(organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
-
-            const estadisticas = await ClienteModel.obtenerEstadisticas(organizacionId);
-
+            const estadisticas = await ClienteModel.obtenerEstadisticas(req.tenant.organizacionId);
             ResponseHelper.success(res, estadisticas, 'Estadísticas obtenidas exitosamente');
 
         } catch (error) {
-            logger.error('Error al obtener estadísticas via API:', {
-                error: error.message,
-                usuario: req.user?.email
-            });
-
+            logger.error('Error al obtener estadísticas:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno al obtener estadísticas', 500);
         }
     }
 
-    /**
-     * Activar/Desactivar cliente
-     * PATCH /api/v1/clientes/:id/estado
-     * @param {Object} req - Request object
-     * @param {Object} res - Response object
-     */
+    /** Activar/Desactivar cliente - PATCH /api/v1/clientes/:id/estado */
     static async cambiarEstado(req, res) {
         try {
             const { id } = req.params;
             const { activo } = req.body;
 
-            // Validar ID
-            if (!id || isNaN(parseInt(id))) {
-                return ResponseHelper.error(res, 'ID de cliente inválido', 400);
-            }
-
-            // Determinar organizacion_id según el rol del usuario
-            let organizacionId;
-
-            if (req.user.rol === 'super_admin') {
-                organizacionId = req.query.organizacion_id ? parseInt(req.query.organizacion_id) : null;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Super admin debe especificar organizacion_id como query parameter',
-                        400
-                    );
-                }
-            } else {
-                organizacionId = req.user.organizacion_id;
-
-                if (!organizacionId) {
-                    return ResponseHelper.error(res,
-                        'Usuario no tiene organización asignada',
-                        400
-                    );
-                }
-            }
-
-            // Validar parámetro activo
-            if (typeof activo !== 'boolean') {
-                return ResponseHelper.error(res,
-                    'El campo "activo" debe ser un valor booleano',
-                    400
-                );
-            }
-
             const clienteActualizado = await ClienteModel.actualizar(
                 parseInt(id),
                 { activo },
-                organizacionId
+                req.tenant.organizacionId
             );
 
             if (!clienteActualizado) {
                 return ResponseHelper.notFound(res, 'Cliente no encontrado');
             }
 
-            logger.info('Estado de cliente cambiado exitosamente via API', {
-                cliente_id: clienteActualizado.id,
-                nuevo_estado: activo,
-                organizacion_id: organizacionId,
-                usuario: req.user.email
-            });
-
+            logger.info('Estado cliente cambiado', { id: clienteActualizado.id, activo, user: req.user.email });
             ResponseHelper.success(
                 res,
                 clienteActualizado,
@@ -549,13 +209,50 @@ class ClienteController {
             );
 
         } catch (error) {
-            logger.error('Error al cambiar estado cliente via API:', {
-                error: error.message,
-                cliente_id: req.params.id,
-                usuario: req.user?.email
-            });
-
+            logger.error('Error al cambiar estado:', { error: error.message, user: req.user?.email });
             ResponseHelper.error(res, 'Error interno al cambiar estado del cliente', 500);
+        }
+    }
+
+    /** Buscar cliente por teléfono (CRÍTICO IA) - GET /api/v1/clientes/buscar-telefono */
+    static async buscarPorTelefono(req, res) {
+        try {
+            const { telefono, exacto, incluir_inactivos, crear_si_no_existe } = req.query;
+
+            const resultado = await ClienteModel.buscarPorTelefono(
+                telefono,
+                req.tenant.organizacionId,
+                {
+                    exacto: exacto === 'true',
+                    incluir_inactivos: incluir_inactivos === 'true',
+                    crear_si_no_existe: crear_si_no_existe === 'true'
+                }
+            );
+
+            ResponseHelper.success(res, resultado, 'Búsqueda por teléfono completada');
+
+        } catch (error) {
+            logger.error('Error buscar por teléfono:', { error: error.message, user: req.user?.email });
+            ResponseHelper.error(res, 'Error interno en búsqueda por teléfono', 500);
+        }
+    }
+
+    /** Buscar clientes por nombre (COMPLEMENTARIO IA) - GET /api/v1/clientes/buscar-nombre */
+    static async buscarPorNombre(req, res) {
+        try {
+            const { nombre, limit = 10 } = req.query;
+
+            const clientes = await ClienteModel.buscarPorNombre(
+                nombre,
+                req.tenant.organizacionId,
+                parseInt(limit)
+            );
+
+            ResponseHelper.success(res, clientes, 'Búsqueda por nombre completada');
+
+        } catch (error) {
+            logger.error('Error buscar por nombre:', { error: error.message, user: req.user?.email });
+            ResponseHelper.error(res, 'Error interno en búsqueda por nombre', 500);
         }
     }
 }

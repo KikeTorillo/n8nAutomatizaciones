@@ -110,7 +110,13 @@ CREATE TABLE horarios_profesionales (
     CONSTRAINT valid_precio_premium
         CHECK (precio_premium >= 0 AND precio_premium <= 999.99),
     CONSTRAINT valid_capacidad_maxima
-        CHECK (capacidad_maxima > 0 AND capacidad_maxima <= 50),
+        CHECK (
+            -- Breaks y almuerzos pueden tener capacidad 0 (no permiten citas)
+            (tipo_horario IN ('break', 'almuerzo') AND capacidad_maxima >= 0 AND capacidad_maxima <= 50)
+            OR
+            -- Otros tipos de horarios requieren capacidad > 0
+            (tipo_horario NOT IN ('break', 'almuerzo') AND capacidad_maxima > 0 AND capacidad_maxima <= 50)
+        ),
     CONSTRAINT valid_tipo_horario
         CHECK (tipo_horario IN ('regular', 'break', 'almuerzo', 'premium')),
     CONSTRAINT valid_configuracion_permite_citas

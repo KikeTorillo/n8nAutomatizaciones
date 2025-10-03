@@ -1,72 +1,72 @@
-/**
- * Modelo de Organizaciones (Tenants)
- * Entidad principal del sistema multi-tenant
- * Cada organización es un tenant independiente con aislamiento completo de datos
- */
+// Modelo de Organizaciones - Multi-tenant entity
 
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
+const { TIPOS_INDUSTRIA, PLANES, SELECT_FIELDS, CAMPOS_ACTUALIZABLES } = require('../constants/organizacion.constants');
+
 
 class OrganizacionModel {
+    // Constantes sincronizadas con ENUMs de base de datos
+    static TIPOS_INDUSTRIA_VALIDOS = TIPOS_INDUSTRIA;
+    static PLANES_VALIDOS = PLANES;
+    static SELECT_FIELDS_SQL = SELECT_FIELDS.join(', ');
+
     /**
-     * Crear una nueva organización
+     * Helper para configurar bypass RLS
+     * @private
+     */
+    static async _setBypassRLS(client, bypass = true) {
+        await client.query("SET app.current_user_role = 'super_admin'");
+        await client.query(`SET app.bypass_rls = '${bypass}'`);
+    }
+
+    /**
+     * Helper para resetear bypass RLS en finally
+     * @private
+     */
+    static async _resetBypassRLS(client) {
+        try {
+            await client.query("SET app.bypass_rls = 'false'");
+        } catch (resetError) {
+            logger.warn('Error resetting RLS bypass:', resetError.message);
+        }
+    }
+
+    /**
+     * Validar tipo de industria
+     * @param {string} tipoIndustria - Tipo de industria a validar
+     * @returns {boolean} true si es válido
+     */
+    static validarTipoIndustria(tipoIndustria) {
+        return TIPOS_INDUSTRIA.includes(tipoIndustria);
+    }
+
+    /**
+     * Validar tipo de plan
+     * @param {string} tipoPlan - Tipo de plan a validar
+     * @returns {boolean} true si es válido
+     */
+    static validarTipoPlan(tipoPlan) {
+        return PLANES.includes(tipoPlan);
+    }
+    /**
+     * Crear nueva organización
      * @param {Object} organizacionData - Datos de la organización
-     * @param {string} organizacionData.nombre_comercial - Nombre comercial de la organización
-     * @param {string} organizacionData.tipo_industria - ENUM: Clasificación categórica (barberia, spa, consultorio_medico, etc.)
-     * @param {Object} [organizacionData.configuracion_industria] - JSONB: Configuraciones operativas específicas por industria
-     * @param {string} organizacionData.email_admin - Email del administrador
-     * @param {string} [organizacionData.telefono] - Teléfono de contacto
-     *
-     * @description
-     * CAMPOS DE INDUSTRIA (DOS PROPÓSITOS DIFERENTES):
-     * - tipo_industria: ENUM fijo para clasificación y validaciones
-     * - configuracion_industria: JSONB flexible para configuraciones operativas
-     *
-     * @example
-     * // Ejemplo de uso:
-     * {
-     *   "tipo_industria": "barberia",  // ENUM: Clasificación fija
-     *   "configuracion_industria": {   // JSONB: Config personalizada
-     *     "horario_especial": true,
-     *     "servicios_a_domicilio": false
-     *   }
-     * }
-     *
      * @returns {Promise<Object>} Organización creada
      */
     static async crear(organizacionData) {
         const client = await getDb();
 
         try {
-            // TEST: Verificar si podemos hacer SELECT básico
-            const testQuery = await client.query("SELECT current_user, current_database()");
-            logger.info('Usuario BD actual:', testQuery.rows[0]);
+            await this._setBypassRLS(client);
 
-            // Verificar configuraciones RLS antes del bypass
-            const rlsStatus = await client.query("SHOW row_security");
-            logger.info('RLS Status antes:', rlsStatus.rows[0]);
-
-            // Intentar establecer configuraciones para bypass
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
-
-            // Verificar que las configuraciones se aplicaron
-            const checkRole = await client.query("SELECT current_setting('app.current_user_role', true) as role");
-            const checkBypass = await client.query("SELECT current_setting('app.bypass_rls', true) as bypass");
-            logger.info('Configuraciones aplicadas:', {
-                role: checkRole.rows[0].role,
-                bypass: checkBypass.rows[0].bypass
-            });
-
-            // INSERT con ambos campos de industria y telefono opcional
             const query = `
                 INSERT INTO organizaciones (
-                    nombre_comercial, tipo_industria, configuracion_industria,
-                    email_admin, telefono, codigo_tenant, slug
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
-                RETURNING
-                    id, nombre_comercial, tipo_industria, configuracion_industria,
-                    email_admin, telefono, codigo_tenant, slug
+                    nombre_comercial, razon_social, rfc_nif, tipo_industria,
+                    configuracion_industria, email_admin, telefono, codigo_tenant, slug,
+                    sitio_web, logo_url, colores_marca, configuracion_ui
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                RETURNING *
             `;
 
             // Generar código único para el tenant
@@ -78,21 +78,24 @@ class OrganizacionModel {
 
             const values = [
                 organizacionData.nombre_comercial,
-                organizacionData.tipo_industria, // ENUM: Clasificación categórica
-                organizacionData.configuracion_industria || {}, // JSONB: Configuraciones operativas
+                organizacionData.razon_social || null,
+                organizacionData.rfc_nif || null,
+                organizacionData.tipo_industria,
+                organizacionData.configuracion_industria || {},
                 organizacionData.email_admin,
-                organizacionData.telefono || null, // telefono opcional
+                organizacionData.telefono || null,
                 codigoTenant,
-                slug
+                slug,
+                organizacionData.sitio_web || null,
+                organizacionData.logo_url || null,
+                organizacionData.colores_marca || {},
+                organizacionData.configuracion_ui || {}
             ];
 
-            logger.info('Intentando INSERT con valores:', values);
             const result = await client.query(query, values);
 
-            logger.info('Organización creada exitosamente', {
-                organizacion_id: result.rows[0].id,
-                nombre_comercial: result.rows[0].nombre_comercial,
-                tipo_industria: result.rows[0].tipo_industria
+            logger.info('Organización creada', {
+                organizacion_id: result.rows[0].id
             });
 
             return result.rows[0];
@@ -101,14 +104,7 @@ class OrganizacionModel {
             logger.error('Error al crear organización:', error);
             throw new Error(`Error al crear organización: ${error.message}`);
         } finally {
-            // Resetear configuraciones
-            try {
-                await client.query("SET row_security = on");
-                await client.query("SET app.bypass_rls = 'false'");
-            } catch (resetError) {
-                // Log pero no fallar por esto
-                console.warn('Error resetting RLS bypass:', resetError.message);
-            }
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -122,16 +118,10 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             const query = `
-                SELECT
-                    id, codigo_tenant, slug, nombre_comercial,
-                    tipo_industria, configuracion_industria,
-                    email_admin, telefono, plan_actual, activo, suspendido,
-                    fecha_registro, creado_en, actualizado_en
+                SELECT ${this.SELECT_FIELDS_SQL}
                 FROM organizaciones
                 WHERE id = $1 AND activo = TRUE
             `;
@@ -143,6 +133,7 @@ class OrganizacionModel {
             logger.error('Error al obtener organización por ID:', error);
             throw new Error(`Error al obtener organización: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -156,12 +147,12 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
+            await this._setBypassRLS(client);
+
             const query = `
-                SELECT
-                    id, nombre_comercial, tipo_industria, email_admin, telefono,
-                    configuracion_industria, codigo_tenant, slug, fecha_registro
+                SELECT ${this.SELECT_FIELDS_SQL}
                 FROM organizaciones
-                WHERE email_admin = $1
+                WHERE email_admin = $1 AND activo = TRUE
             `;
 
             const result = await client.query(query, [email]);
@@ -171,6 +162,7 @@ class OrganizacionModel {
             logger.error('Error al obtener organización por email:', error);
             throw new Error(`Error al obtener organización: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -188,9 +180,7 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             const { page = 1, limit = 10, tipo_industria, activo = true } = options;
             const offset = (page - 1) * limit;
@@ -216,10 +206,7 @@ class OrganizacionModel {
 
             // Query para obtener los registros paginados
             const dataQuery = `
-                SELECT
-                    id, codigo_tenant, slug, nombre_comercial, tipo_industria,
-                    email_admin, telefono, plan_actual, activo, suspendido,
-                    fecha_registro, creado_en, actualizado_en
+                SELECT ${this.SELECT_FIELDS_SQL}
                 FROM organizaciones
                 WHERE ${whereClause}
                 ORDER BY creado_en DESC
@@ -248,6 +235,7 @@ class OrganizacionModel {
             logger.error('Error al listar organizaciones:', error);
             throw new Error(`Error al listar organizaciones: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -262,18 +250,14 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
-            const allowedFields = ['nombre_comercial', 'tipo_industria', 'email_admin', 'telefono'];
             const updateFields = [];
             const values = [];
             let paramCounter = 1;
 
-            // Construir query dinámicamente basado en campos permitidos
             for (const [key, value] of Object.entries(updateData)) {
-                if (allowedFields.includes(key) && value !== undefined) {
+                if (CAMPOS_ACTUALIZABLES.includes(key) && value !== undefined) {
                     updateFields.push(`${key} = $${paramCounter}`);
                     values.push(value);
                     paramCounter++;
@@ -291,28 +275,17 @@ class OrganizacionModel {
                 UPDATE organizaciones
                 SET ${updateFields.join(', ')}
                 WHERE id = $${paramCounter} AND activo = TRUE
-                RETURNING
-                    id, codigo_tenant, slug, nombre_comercial,
-                    tipo_industria, email_admin, telefono,
-                    plan_actual, activo, suspendido,
-                    fecha_registro, creado_en, actualizado_en
+                RETURNING ${this.SELECT_FIELDS_SQL}
             `;
 
             const result = await client.query(query, values);
-
-            if (result.rows.length > 0) {
-                logger.info('Organización actualizada exitosamente', {
-                    organizacion_id: result.rows[0].id,
-                    campos_actualizados: Object.keys(updateData)
-                });
-            }
-
             return result.rows[0] || null;
 
         } catch (error) {
             logger.error('Error al actualizar organización:', error);
             throw new Error(`Error al actualizar organización: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -326,9 +299,7 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             const query = `
                 UPDATE organizaciones
@@ -352,6 +323,7 @@ class OrganizacionModel {
             logger.error('Error al desactivar organización:', error);
             throw new Error(`Error al desactivar organización: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -367,9 +339,9 @@ class OrganizacionModel {
         try {
             const query = `
                 SELECT
-                    o.limite_citas_mes,
-                    o.limite_profesionales,
-                    o.limite_servicios,
+                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
+                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
+                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
                     COUNT(DISTINCT c.id) FILTER (
                         WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
                         AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
@@ -377,11 +349,13 @@ class OrganizacionModel {
                     COUNT(DISTINCT p.id) as profesionales_activos,
                     COUNT(DISTINCT s.id) as servicios_activos
                 FROM organizaciones o
+                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
+                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
                 LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
-                LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.estado = 'activo'
-                LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.estado = 'activo'
+                LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
+                LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
                 WHERE o.id = $1 AND o.activo = TRUE
-                GROUP BY o.id, o.limite_citas_mes, o.limite_profesionales, o.limite_servicios
+                GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
             `;
 
             const result = await client.query(query, [organizacionId]);
@@ -431,9 +405,7 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             // Obtener plantillas de servicios para la industria específica
             const plantillasQuery = `
@@ -523,6 +495,7 @@ class OrganizacionModel {
             logger.error('Error al agregar plantillas de servicios:', error);
             throw new Error(`Error al importar plantillas: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }
@@ -537,9 +510,7 @@ class OrganizacionModel {
         const client = await getDb();
 
         try {
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             // Calcular rangos de fechas según el período
             let fechaInicio, fechaFin;
@@ -561,6 +532,9 @@ class OrganizacionModel {
             const metricsQuery = `
                 WITH metricas_organizacion AS (
                     SELECT
+                        -- Configuración de organización
+                        o.moneda,
+
                         -- Métricas de citas
                         COUNT(DISTINCT c.id) FILTER (
                             WHERE c.fecha_cita >= ${fechaInicio}
@@ -671,7 +645,7 @@ class OrganizacionModel {
                 financieras: {
                     ingresos_periodo: parseFloat(metricas.ingresos_periodo),
                     ticket_promedio: parseFloat(metricas.ticket_promedio),
-                    moneda: 'MXN' // TODO: obtener de configuración de organización
+                    moneda: metricas.moneda || 'MXN'
                 },
                 clientes: {
                     clientes_atendidos: parseInt(metricas.clientes_atendidos),
@@ -689,6 +663,92 @@ class OrganizacionModel {
             logger.error('Error al obtener métricas de organización:', error);
             throw new Error(`Error al obtener métricas: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
+            client.release();
+        }
+    }
+
+    /**
+     * Obtener estadísticas básicas de organización
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object>} Estadísticas básicas de la organización
+     */
+    static async obtenerEstadisticas(organizacionId) {
+        const limites = await this.verificarLimites(organizacionId);
+        const organizacion = await this.obtenerPorId(organizacionId);
+
+        if (!organizacion) {
+            throw new Error('Organización no encontrada');
+        }
+
+        return {
+            organizacion: {
+                id: organizacion.id,
+                nombre: organizacion.nombre_comercial,
+                tipo_industria: organizacion.tipo_industria,
+                fecha_creacion: organizacion.fecha_registro
+            },
+            uso_actual: limites,
+            resumen: {
+                estado: organizacion.activo ? 'activo' : 'inactivo',
+                configuracion_completa: !!organizacion.configuracion_industria && Object.keys(organizacion.configuracion_industria).length > 0
+            }
+        };
+    }
+
+    /**
+     * Proceso de onboarding completo para nueva organización
+     * @param {Object} organizacionData - Datos de la organización
+     * @param {boolean} [importarPlantillas=true] - Si importar plantillas automáticamente
+     * @returns {Promise<Object>} Resultado del onboarding
+     */
+    static async onboarding(organizacionData, importarPlantillas = true) {
+        const client = await getDb();
+
+        try {
+            await client.query('BEGIN');
+
+            // 1. Crear organización
+            const nuevaOrganizacion = await this.crear(organizacionData);
+
+            let resultadoPlantillas = null;
+
+            // 2. Importar plantillas de servicios automáticamente si se solicita
+            if (importarPlantillas) {
+                try {
+                    resultadoPlantillas = await this.agregarPlantillasServicios(
+                        nuevaOrganizacion.id,
+                        nuevaOrganizacion.tipo_industria
+                    );
+                } catch (plantillasError) {
+                    logger.warn('Error importando plantillas durante onboarding:', {
+                        organizacion_id: nuevaOrganizacion.id,
+                        error: plantillasError.message
+                    });
+                    // No fallar el onboarding por esto
+                }
+            }
+
+            await client.query('COMMIT');
+
+            logger.info('Onboarding de organización completado', {
+                organizacion_id: nuevaOrganizacion.id,
+                nombre_comercial: nuevaOrganizacion.nombre_comercial,
+                tipo_industria: nuevaOrganizacion.tipo_industria,
+                plantillas_importadas: resultadoPlantillas?.servicios_importados || 0
+            });
+
+            return {
+                organizacion: nuevaOrganizacion,
+                plantillas: resultadoPlantillas,
+                siguiente_paso: 'Crear usuarios y profesionales para la organización'
+            };
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            logger.error('Error en onboarding de organización:', error);
+            throw new Error(`Error en proceso de onboarding: ${error.message}`);
+        } finally {
             client.release();
         }
     }
@@ -696,19 +756,16 @@ class OrganizacionModel {
     /**
      * Cambiar plan de subscripción de una organización
      * @param {number} organizacionId - ID de la organización
-     * @param {string} nuevoPlan - Nuevo plan ('trial', 'basico', 'profesional', 'empresarial', 'custom')
-     * @param {Object} configuracionPlan - Configuración específica del plan
+     * @param {string} codigoPlan - Código del plan ('trial', 'basico', 'profesional', 'empresarial', 'custom')
+     * @param {Object} [configuracionPlan={}] - Configuración adicional del plan
      * @returns {Promise<Object>} Resultado del cambio de plan
      */
-    static async cambiarPlan(organizacionId, nuevoPlan, configuracionPlan = {}) {
+    static async cambiarPlan(organizacionId, codigoPlan, configuracionPlan = {}) {
         const client = await getDb();
 
         try {
             await client.query('BEGIN');
-
-            // Configurar bypass RLS para super admin
-            await client.query("SET app.current_user_role = 'super_admin'");
-            await client.query("SET app.bypass_rls = 'true'");
+            await this._setBypassRLS(client);
 
             // Verificar que la organización existe
             const orgQuery = `
@@ -725,47 +782,23 @@ class OrganizacionModel {
             const organizacion = orgResult.rows[0];
             const planAnterior = organizacion.plan_actual;
 
-            // Definir límites por plan
-            const limitesPorPlan = {
-                trial: {
-                    limite_citas_mes: 50,
-                    limite_profesionales: 2,
-                    limite_servicios: 10,
-                    precio_mensual: 0
-                },
-                basico: {
-                    limite_citas_mes: 200,
-                    limite_profesionales: 5,
-                    limite_servicios: 25,
-                    precio_mensual: 299
-                },
-                profesional: {
-                    limite_citas_mes: 1000,
-                    limite_profesionales: 15,
-                    limite_servicios: 100,
-                    precio_mensual: 599
-                },
-                empresarial: {
-                    limite_citas_mes: 5000,
-                    limite_profesionales: 50,
-                    limite_servicios: 500,
-                    precio_mensual: 1299
-                },
-                custom: {
-                    limite_citas_mes: configuracionPlan.limite_citas_mes || 10000,
-                    limite_profesionales: configuracionPlan.limite_profesionales || 100,
-                    limite_servicios: configuracionPlan.limite_servicios || 1000,
-                    precio_mensual: configuracionPlan.precio_mensual || 2500
-                }
-            };
+            // Buscar el plan por código
+            const planQuery = `
+                SELECT id, codigo_plan, nombre_plan, precio_mensual, limite_citas_mes,
+                       limite_profesionales, limite_servicios, limite_usuarios
+                FROM planes_subscripcion
+                WHERE codigo_plan = $1 AND activo = TRUE
+            `;
+            const planResult = await client.query(planQuery, [codigoPlan]);
 
-            const nuevosLimites = limitesPorPlan[nuevoPlan];
-            if (!nuevosLimites) {
-                throw new Error(`Plan no válido: ${nuevoPlan}`);
+            if (planResult.rows.length === 0) {
+                throw new Error(`Plan no encontrado: ${codigoPlan}`);
             }
 
-            // Actualizar la organización con el nuevo plan
-            const updateQuery = `
+            const nuevoPlan = planResult.rows[0];
+
+            // Actualizar el plan_actual en organizaciones
+            const updateOrgQuery = `
                 UPDATE organizaciones
                 SET
                     plan_actual = $1,
@@ -778,47 +811,61 @@ class OrganizacionModel {
                 RETURNING id, nombre_comercial, plan_actual, fecha_activacion
             `;
 
-            const updateResult = await client.query(updateQuery, [nuevoPlan, organizacionId]);
+            const updateOrgResult = await client.query(updateOrgQuery, [codigoPlan, organizacionId]);
 
-            // Registrar el cambio en historial de subscripciones (si existe la tabla)
-            try {
-                const historialQuery = `
-                    INSERT INTO historial_subscripciones (
-                        organizacion_id, plan_anterior, plan_nuevo,
-                        fecha_cambio, precio_mensual, configuracion_plan, activo
-                    ) VALUES ($1, $2, $3, NOW(), $4, $5, true)
-                `;
+            // Actualizar o crear subscripción
+            const subscripcionQuery = `
+                INSERT INTO subscripciones (
+                    organizacion_id, plan_id, precio_actual, fecha_inicio,
+                    fecha_proximo_pago, estado, activa, metadata
+                ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, $4)
+                ON CONFLICT (organizacion_id) DO UPDATE SET
+                    plan_id = EXCLUDED.plan_id,
+                    precio_actual = EXCLUDED.precio_actual,
+                    fecha_proximo_pago = CASE
+                        WHEN subscripciones.estado = 'trial' THEN CURRENT_DATE + INTERVAL '1 month'
+                        ELSE subscripciones.fecha_proximo_pago
+                    END,
+                    estado = EXCLUDED.estado,
+                    activa = EXCLUDED.activa,
+                    metadata = EXCLUDED.metadata,
+                    actualizado_en = NOW()
+                RETURNING id
+            `;
 
-                await client.query(historialQuery, [
-                    organizacionId,
-                    planAnterior,
-                    nuevoPlan,
-                    nuevosLimites.precio_mensual,
-                    JSON.stringify({ limites: nuevosLimites, ...configuracionPlan })
-                ]);
-
-            } catch (historialError) {
-                logger.warn('No se pudo registrar en historial_subscripciones:', historialError.message);
-                // No fallar por esto, la tabla podría no existir aún
-            }
+            await client.query(subscripcionQuery, [
+                organizacionId,
+                nuevoPlan.id,
+                nuevoPlan.precio_mensual,
+                JSON.stringify(configuracionPlan)
+            ]);
 
             await client.query('COMMIT');
 
             logger.info('Plan de organización cambiado exitosamente', {
                 organizacion_id: organizacionId,
                 plan_anterior: planAnterior,
-                plan_nuevo: nuevoPlan,
-                limites: nuevosLimites
+                plan_nuevo: codigoPlan,
+                precio_mensual: nuevoPlan.precio_mensual
             });
 
             return {
                 organizacion_id: organizacionId,
                 nombre_comercial: organizacion.nombre_comercial,
                 plan_anterior: planAnterior,
-                plan_nuevo: nuevoPlan,
-                fecha_activacion: updateResult.rows[0].fecha_activacion,
-                limites: nuevosLimites,
-                mensaje: `Plan cambiado exitosamente de ${planAnterior} a ${nuevoPlan}`
+                plan_nuevo: codigoPlan,
+                nombre_plan: nuevoPlan.nombre_plan,
+                precio_mensual: nuevoPlan.precio_mensual,
+                fecha_activacion: updateOrgResult.rows[0].fecha_activacion,
+                configuracion_plan: configuracionPlan,
+                limites: {
+                    citas_mes: nuevoPlan.limite_citas_mes,
+                    profesionales: nuevoPlan.limite_profesionales,
+                    servicios: nuevoPlan.limite_servicios,
+                    usuarios: nuevoPlan.limite_usuarios,
+                    precio_mensual: nuevoPlan.precio_mensual
+                },
+                mensaje: `Plan cambiado exitosamente de ${planAnterior} a ${codigoPlan}`
             };
 
         } catch (error) {
@@ -826,6 +873,7 @@ class OrganizacionModel {
             logger.error('Error al cambiar plan de organización:', error);
             throw new Error(`Error al cambiar plan: ${error.message}`);
         } finally {
+            await this._resetBypassRLS(client);
             client.release();
         }
     }

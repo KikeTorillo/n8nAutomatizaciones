@@ -5,48 +5,14 @@
  */
 
 const express = require('express');
-const { body, param, query, validationResult } = require('express-validator');
+const { body, param, query } = require('express-validator');
 const ServicioController = require('../../../controllers/servicio.controller');
-const { auth, tenant } = require('../../../middleware');
-
-// Middleware para procesar validaciones de express-validator
-const handleValidation = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            message: 'Errores de validación',
-            errors: errors.array(),
-            timestamp: new Date().toISOString()
-        });
-    }
-    next();
-};
+const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
 
 const router = express.Router();
 
-// Test simple para debugging
-router.post('/test-create',
-    auth.authenticateToken,
-    (req, res) => {
-        res.json({
-            success: true,
-            message: 'Test endpoint de servicios funcionando',
-            user: req.user,
-            data: {
-                organizacion_id: req.user.organizacion_id,
-                body: req.body
-            }
-        });
-    }
-);
-
-/**
- * @route   POST /api/v1/servicios
- * @desc    Crear nuevo servicio
- * @access  Private (admin, propietario, manager)
- */
 router.post('/',
+    rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -108,8 +74,8 @@ router.post('/',
             
         body('color_servicio')
             .optional()
-            .matches(/^#[0-9A-Fa-f]{6}$/)
-            .withMessage('Color debe ser un código hexadecimal válido (#RRGGBB)'),
+            .isString()
+            .withMessage('Color debe ser una cadena válida'),
             
         body('tags')
             .optional()
@@ -127,16 +93,89 @@ router.post('/',
             .isBoolean()
             .withMessage('Activo debe ser un valor booleano')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.crear
 );
 
-/**
- * @route   GET /api/v1/servicios/:id
- * @desc    Obtener servicio por ID
- * @access  Private (todos los roles autenticados)
- */
+router.get('/buscar',
+    rateLimiting.apiRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    [
+        query('termino')
+            .trim()
+            .isLength({ min: 1, max: 100 })
+            .withMessage('Término de búsqueda debe tener entre 1 y 100 caracteres'),
+
+        query('limite')
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage('Límite debe ser entre 1 y 50'),
+
+        query('solo_activos')
+            .optional()
+            .isBoolean()
+            .withMessage('solo_activos debe ser un valor booleano'),
+
+        query('organizacion_id')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('organizacion_id debe ser un número entero válido')
+    ],
+    validation.handleValidation,
+    ServicioController.buscar
+);
+
+router.get('/estadisticas',
+    rateLimiting.heavyOperationRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    [
+        query('organizacion_id')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('organizacion_id debe ser un número entero válido')
+    ],
+    validation.handleValidation,
+    ServicioController.obtenerEstadisticas
+);
+
+router.post('/desde-plantilla',
+    rateLimiting.heavyOperationRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    [
+        body('plantilla_id')
+            .isInt({ min: 1 })
+            .withMessage('plantilla_id debe ser un número entero válido'),
+
+        body('configuracion_personalizada.nombre')
+            .optional()
+            .trim()
+            .isLength({ min: 1, max: 100 })
+            .withMessage('Nombre debe tener entre 1 y 100 caracteres'),
+
+        body('configuracion_personalizada.precio')
+            .optional()
+            .isFloat({ min: 0 })
+            .withMessage('Precio debe ser mayor o igual a 0'),
+
+        body('configuracion_personalizada.duracion_minutos')
+            .optional()
+            .isInt({ min: 1, max: 480 })
+            .withMessage('Duración debe ser entre 1 y 480 minutos'),
+
+        body('configuracion_personalizada.organizacion_id')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('organizacion_id debe ser un número entero válido')
+    ],
+    validation.handleValidation,
+    ServicioController.crearDesdeePlantilla
+);
+
 router.get('/:id',
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -149,16 +188,12 @@ router.get('/:id',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.obtenerPorId
 );
 
-/**
- * @route   GET /api/v1/servicios
- * @desc    Listar servicios con filtros y paginación
- * @access  Private (todos los roles autenticados)
- */
 router.get('/',
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -214,16 +249,12 @@ router.get('/',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.listar
 );
 
-/**
- * @route   PUT /api/v1/servicios/:id
- * @desc    Actualizar servicio
- * @access  Private (admin, propietario, manager)
- */
 router.put('/:id',
+    rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -292,8 +323,8 @@ router.put('/:id',
             
         body('color_servicio')
             .optional()
-            .matches(/^#[0-9A-Fa-f]{6}$/)
-            .withMessage('Color debe ser un código hexadecimal válido (#RRGGBB)'),
+            .isString()
+            .withMessage('Color debe ser una cadena válida'),
             
         body('tags')
             .optional()
@@ -316,38 +347,49 @@ router.put('/:id',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.actualizar
 );
 
-/**
- * @route   DELETE /api/v1/servicios/:id
- * @desc    Eliminar servicio (soft delete)
- * @access  Private (admin, propietario, manager)
- */
 router.delete('/:id',
+    rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
         param('id')
             .isInt({ min: 1 })
             .withMessage('ID debe ser un número entero válido'),
-            
+
         query('organizacion_id')
             .optional()
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.eliminar
 );
 
-/**
- * @route   POST /api/v1/servicios/:id/profesionales
- * @desc    Asignar profesional a servicio
- * @access  Private (admin, propietario, manager)
- */
+router.delete('/:id/permanente',
+    rateLimiting.heavyOperationRateLimit,
+    auth.authenticateToken,
+    auth.requireRole('super_admin'),
+    tenant.setTenantContext,
+    [
+        param('id')
+            .isInt({ min: 1 })
+            .withMessage('ID debe ser un número entero válido'),
+
+        query('organizacion_id')
+            .optional()
+            .isInt({ min: 1 })
+            .withMessage('organizacion_id debe ser un número entero válido')
+    ],
+    validation.handleValidation,
+    ServicioController.eliminarPermanente
+);
+
 router.post('/:id/profesionales',
+    rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -385,16 +427,12 @@ router.post('/:id/profesionales',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.asignarProfesional
 );
 
-/**
- * @route   DELETE /api/v1/servicios/:id/profesionales/:profesional_id
- * @desc    Desasignar profesional de servicio
- * @access  Private (admin, propietario, manager)
- */
 router.delete('/:id/profesionales/:profesional_id',
+    rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -411,16 +449,12 @@ router.delete('/:id/profesionales/:profesional_id',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.desasignarProfesional
 );
 
-/**
- * @route   GET /api/v1/servicios/:id/profesionales
- * @desc    Obtener profesionales asignados a un servicio
- * @access  Private (todos los roles autenticados)
- */
 router.get('/:id/profesionales',
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -438,16 +472,12 @@ router.get('/:id/profesionales',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.obtenerProfesionales
 );
 
-/**
- * @route   GET /api/v1/profesionales/:profesional_id/servicios
- * @desc    Obtener servicios de un profesional
- * @access  Private (todos los roles autenticados)
- */
 router.get('/profesionales/:profesional_id/servicios',
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     [
@@ -465,97 +495,8 @@ router.get('/profesionales/:profesional_id/servicios',
             .isInt({ min: 1 })
             .withMessage('organizacion_id debe ser un número entero válido')
     ],
-    handleValidation,
+    validation.handleValidation,
     ServicioController.obtenerServiciosPorProfesional
-);
-
-/**
- * @route   GET /api/v1/servicios/buscar
- * @desc    Buscar servicios con búsqueda full-text
- * @access  Private (todos los roles autenticados)
- */
-router.get('/buscar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    [
-        query('termino')
-            .trim()
-            .isLength({ min: 1, max: 100 })
-            .withMessage('Término de búsqueda debe tener entre 1 y 100 caracteres'),
-            
-        query('limite')
-            .optional()
-            .isInt({ min: 1, max: 50 })
-            .withMessage('Límite debe ser entre 1 y 50'),
-            
-        query('solo_activos')
-            .optional()
-            .isBoolean()
-            .withMessage('solo_activos debe ser un valor booleano'),
-            
-        query('organizacion_id')
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage('organizacion_id debe ser un número entero válido')
-    ],
-    handleValidation,
-    ServicioController.buscar
-);
-
-/**
- * @route   GET /api/v1/servicios/estadisticas
- * @desc    Obtener estadísticas de servicios
- * @access  Private (admin, propietario, manager)
- */
-router.get('/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    [
-        query('organizacion_id')
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage('organizacion_id debe ser un número entero válido')
-    ],
-    handleValidation,
-    ServicioController.obtenerEstadisticas
-);
-
-/**
- * @route   POST /api/v1/servicios/desde-plantilla
- * @desc    Crear servicio desde plantilla
- * @access  Private (admin, propietario, manager)
- */
-router.post('/desde-plantilla',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    [
-        body('plantilla_id')
-            .isInt({ min: 1 })
-            .withMessage('plantilla_id debe ser un número entero válido'),
-            
-        body('configuracion_personalizada.nombre')
-            .optional()
-            .trim()
-            .isLength({ min: 1, max: 100 })
-            .withMessage('Nombre debe tener entre 1 y 100 caracteres'),
-            
-        body('configuracion_personalizada.precio')
-            .optional()
-            .isFloat({ min: 0 })
-            .withMessage('Precio debe ser mayor o igual a 0'),
-            
-        body('configuracion_personalizada.duracion_minutos')
-            .optional()
-            .isInt({ min: 1, max: 480 })
-            .withMessage('Duración debe ser entre 1 y 480 minutos'),
-            
-        body('configuracion_personalizada.organizacion_id')
-            .optional()
-            .isInt({ min: 1 })
-            .withMessage('organizacion_id debe ser un número entero válido')
-    ],
-    handleValidation,
-    ServicioController.crearDesdeePlantilla
 );
 
 module.exports = router;

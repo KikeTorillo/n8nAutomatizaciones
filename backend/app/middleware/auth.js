@@ -315,10 +315,37 @@ const optionalAuth = async (req, res, next) => {
     return authenticateToken(req, res, next);
 };
 
+/**
+ * Middleware para requerir rol de administrador
+ * Verifica que el usuario tenga rol super_admin, admin u organizacion_admin
+ */
+const requireAdminRole = (req, res, next) => {
+    if (!req.user) {
+        return ResponseHelper.error(res, 'Autenticación requerida', 401);
+    }
+
+    const rolesAdmin = ['super_admin', 'admin', 'organizacion_admin'];
+
+    if (!rolesAdmin.includes(req.user.rol)) {
+        logger.warn('Intento de acceso con rol insuficiente', {
+            userId: req.user.id,
+            userRol: req.user.rol,
+            path: req.path,
+            ip: req.ip
+        });
+        return ResponseHelper.error(res, 'Acceso denegado. Se requieren permisos de administrador', 403, {
+            code: 'INSUFFICIENT_PERMISSIONS'
+        });
+    }
+
+    next();
+};
+
 module.exports = {
     authenticateToken,
     requireRole,
     requireAdmin,
+    requireAdminRole,
     verifyOrganizationAccess,
     optionalAuth,
     addToTokenBlacklist,

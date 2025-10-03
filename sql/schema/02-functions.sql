@@ -17,6 +17,18 @@
 -- ====================================================================
 
 -- ====================================================================
+-- 🔍 EXTENSIONES PARA BÚSQUEDA AVANZADA
+-- ====================================================================
+-- Extensiones necesarias para las funciones de búsqueda fuzzy en modelos
+-- ────────────────────────────────────────────────────────────────────
+
+-- Extensión para búsqueda fuzzy (funciones similarity() y trigrama)
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+
+-- Extensión para normalización de texto sin acentos
+CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- ====================================================================
 -- 🔐 FUNCIÓN 1: REGISTRAR_INTENTO_LOGIN
 -- ====================================================================
 -- Función CRÍTICA para el sistema de autenticación.
@@ -573,3 +585,46 @@ COMMENT ON FUNCTION actualizar_timestamp_horarios() IS 'Actualiza automáticamen
 COMMENT ON FUNCTION validar_coherencia_horario() IS 'Valida que profesional, servicio y cita pertenezcan a la misma organización';
 COMMENT ON FUNCTION limpiar_reservas_expiradas() IS 'Limpia automáticamente reservas temporales expiradas y libera capacidad';
 COMMENT ON FUNCTION generar_horarios_recurrentes(INTEGER, DATE, DATE) IS 'Genera automáticamente horarios específicos basados en patrones recurrentes';
+
+-- ====================================================================
+-- 📞 FUNCIÓN 14: NORMALIZAR_TELEFONO
+-- ====================================================================
+-- Función auxiliar para normalización consistente de números telefónicos.
+-- CRÍTICA para las funciones de búsqueda fuzzy del modelo cliente.
+--
+-- 🎯 PROPÓSITO:
+-- • Remover caracteres no numéricos (espacios, guiones, paréntesis)
+-- • Remover códigos de país comunes (52 México, 1 USA)
+-- • Garantizar consistencia en búsquedas por teléfono
+--
+-- 📋 PARÁMETROS:
+-- • telefono_input: Teléfono en cualquier formato
+--
+-- 📊 RETORNA: Teléfono normalizado (solo números)
+--
+-- 🔧 EJEMPLOS DE USO:
+-- • normalizar_telefono('+52 55 1234-5678') → '525512345678'
+-- • normalizar_telefono('+1 (555) 123-4567') → '15551234567'
+-- • normalizar_telefono('55-1234-5678') → '5512345678'
+-- ────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION normalizar_telefono(telefono_input TEXT)
+RETURNS TEXT AS $$
+BEGIN
+    -- Validar entrada nula
+    IF telefono_input IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- Normalización en dos pasos:
+    -- 1. Remover códigos de país comunes (52 México, 1 USA)
+    -- 2. Remover todos los caracteres no numéricos
+    RETURN regexp_replace(
+        regexp_replace(telefono_input, '^(52|1)', ''),
+        '[^0-9]', '', 'g'
+    );
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+-- 📝 COMENTARIO DE FUNCIÓN EN BD
+COMMENT ON FUNCTION normalizar_telefono(TEXT) IS
+'Normaliza números telefónicos removiendo caracteres especiales y códigos de país. Optimizada para búsquedas fuzzy en modelos de cliente';

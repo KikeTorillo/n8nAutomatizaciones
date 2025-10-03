@@ -14,6 +14,7 @@ module.exports = {
     authenticateToken: auth.authenticateToken,
     requireRole: auth.requireRole,
     requireAdmin: auth.requireAdmin,
+    requireAdminRole: auth.requireAdminRole,
     requireOwnerOrAdmin: auth.requireOwnerOrAdmin,
     optionalAuth: auth.optionalAuth,
     verifyTenantAccess: auth.verifyTenantAccess,
@@ -39,6 +40,7 @@ module.exports = {
     validateQuery: validation.validateQuery,
     validateFile: validation.validateFile,
     sanitizeInput: validation.sanitizeInput,
+    handleValidation: validation.handleValidation,
     commonSchemas: validation.commonSchemas
   },
 

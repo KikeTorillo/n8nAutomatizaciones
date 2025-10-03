@@ -56,6 +56,12 @@ echo "    📊 Sistema de eventos y auditoría..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/12-eventos-sistema.sql"
 echo "    🚫 Sistema de bloqueos de horarios..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/13-bloqueos-horarios.sql"
+echo "    🔄 Trigger de capacidad ocupada..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/14-trigger-capacidad-ocupada.sql"
+echo "    🔧 Correcciones iniciales de auditoría..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/maintenance/01-auditoria-correcciones.sql"
+echo "    ✅ Aplicando mejoras y correcciones recomendadas..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/maintenance/02-correcciones-auditoria-recomendaciones.sql"
 
 # 3. Insertar plantillas de servicios
 echo "  4️⃣ Insertando plantillas de servicios por industria..."

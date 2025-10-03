@@ -360,6 +360,8 @@ CREATE INDEX idx_subscripciones_proximo_pago ON subscripciones(fecha_proximo_pag
 CREATE INDEX idx_subscripciones_canceladas ON subscripciones(fecha_cancelacion, motivo_cancelacion) WHERE NOT activa;
 CREATE INDEX idx_subscripciones_plan ON subscripciones(plan_id);
 CREATE INDEX idx_subscripciones_gateway ON subscripciones(gateway_pago, customer_id_gateway) WHERE gateway_pago IS NOT NULL;
+-- Índice para consultas combinadas de planes y estado (AGREGADO: auditoría 2025-10-02)
+CREATE INDEX idx_subscripciones_org_plan_estado ON subscripciones(organizacion_id, plan_id, estado, activa) WHERE activa = true;
 
 -- Índices para historial_subscripciones
 CREATE INDEX idx_historial_subscripciones_org_fecha ON historial_subscripciones(organizacion_id, ocurrido_en DESC);
@@ -687,75 +689,16 @@ ALTER TABLE historial_subscripciones ENABLE ROW LEVEL SECURITY;
 
 
 -- ====================================================================
--- 🔄 TRIGGERS PARA AUTOMATIZACIÓN
+-- 🔄 NOTA: TRIGGERS YA DEFINIDOS ARRIBA (Líneas 560-578)
 -- ====================================================================
-
--- Trigger para actualizar contadores de uso automáticamente
-CREATE OR REPLACE FUNCTION actualizar_contadores_subscripcion()
-RETURNS TRIGGER AS $$
-BEGIN
-    -- Actualizar contadores según la tabla que disparó el trigger
-    IF TG_TABLE_NAME = 'profesionales' THEN
-        UPDATE metricas_uso_organizacion
-        SET uso_profesionales = (
-            SELECT COUNT(*) FROM profesionales
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
-            AND activo = true
-        ),
-        ultima_actualizacion = NOW()
-        WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-
-    ELSIF TG_TABLE_NAME = 'clientes' THEN
-        UPDATE metricas_uso_organizacion
-        SET uso_clientes = (
-            SELECT COUNT(*) FROM clientes
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
-            AND activo = true
-        ),
-        ultima_actualizacion = NOW()
-        WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-
-    ELSIF TG_TABLE_NAME = 'servicios' THEN
-        UPDATE metricas_uso_organizacion
-        SET uso_servicios = (
-            SELECT COUNT(*) FROM servicios
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
-            AND activo = true
-        ),
-        ultima_actualizacion = NOW()
-        WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-
-    ELSIF TG_TABLE_NAME = 'usuarios' THEN
-        UPDATE metricas_uso_organizacion
-        SET uso_usuarios = (
-            SELECT COUNT(*) FROM usuarios
-            WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id)
-            AND activo = true
-        ),
-        ultima_actualizacion = NOW()
-        WHERE organizacion_id = COALESCE(NEW.organizacion_id, OLD.organizacion_id);
-    END IF;
-
-    RETURN COALESCE(NEW, OLD);
-END;
-$$ LANGUAGE plpgsql;
-
--- Aplicar triggers a las tablas relevantes
-CREATE TRIGGER trigger_actualizar_contador_profesionales
-    AFTER INSERT OR UPDATE OR DELETE ON profesionales
-    FOR EACH ROW EXECUTE FUNCTION actualizar_contadores_subscripcion();
-
-CREATE TRIGGER trigger_actualizar_contador_clientes
-    AFTER INSERT OR UPDATE OR DELETE ON clientes
-    FOR EACH ROW EXECUTE FUNCTION actualizar_contadores_subscripcion();
-
-CREATE TRIGGER trigger_actualizar_contador_servicios
-    AFTER INSERT OR UPDATE OR DELETE ON servicios
-    FOR EACH ROW EXECUTE FUNCTION actualizar_contadores_subscripcion();
-
-CREATE TRIGGER trigger_actualizar_contador_usuarios
-    AFTER INSERT OR UPDATE OR DELETE ON usuarios
-    FOR EACH ROW EXECUTE FUNCTION actualizar_contadores_subscripcion();
+-- Los triggers para actualizar métricas ya están correctamente implementados
+-- arriba usando la función actualizar_metricas_uso() que incluye:
+-- - Manejo de profesionales, clientes, servicios, usuarios
+-- - Manejo de citas con reseteo mensual
+-- - Actualización de max_citas_mes
+--
+-- ❌ ELIMINADOS: Triggers duplicados con función actualizar_contadores_subscripcion()
+-- que NO manejaba citas y causaba doble procesamiento.
 
 -- Trigger para registrar cambios importantes en historial
 CREATE OR REPLACE FUNCTION registrar_cambio_subscripcion()
@@ -828,69 +771,11 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ====================================================================
--- 🎯 FUNCIONES AUXILIARES PARA EL BACKEND
+-- 🎯 NOTA: FUNCIONES AUXILIARES YA DEFINIDAS ARRIBA (Líneas 374-458)
 -- ====================================================================
-
--- Función para verificar si una organización puede agregar más recursos
-CREATE OR REPLACE FUNCTION verificar_limite_plan(
-    p_organizacion_id INTEGER,
-    p_tipo_recurso VARCHAR(50),
-    p_cantidad_adicional INTEGER DEFAULT 1
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-    v_limite INTEGER;
-    v_uso_actual INTEGER;
-BEGIN
-    SELECT 
-        CASE p_tipo_recurso
-            WHEN 'profesionales' THEN limite_profesionales
-            WHEN 'clientes' THEN limite_clientes
-            WHEN 'servicios' THEN limite_servicios
-            WHEN 'usuarios' THEN limite_usuarios
-            ELSE NULL
-        END,
-        CASE p_tipo_recurso
-            WHEN 'profesionales' THEN uso_profesionales
-            WHEN 'clientes' THEN uso_clientes
-            WHEN 'servicios' THEN uso_servicios
-            WHEN 'usuarios' THEN uso_usuarios
-            ELSE 0
-        END
-    INTO v_limite, v_uso_actual
-    FROM subscripciones
-    WHERE organizacion_id = p_organizacion_id AND activa = true;
-    
-    -- Si no hay límite (NULL), permitir
-    IF v_limite IS NULL THEN
-        RETURN TRUE;
-    END IF;
-    
-    -- Verificar si el uso actual + la cantidad adicional excede el límite
-    RETURN (v_uso_actual + p_cantidad_adicional) <= v_limite;
-END;
-$$ LANGUAGE plpgsql;
-
--- Función para obtener características habilitadas
-CREATE OR REPLACE FUNCTION tiene_caracteristica_habilitada(
-    p_organizacion_id INTEGER,
-    p_caracteristica VARCHAR(100)
-)
-RETURNS BOOLEAN AS $$
-DECLARE
-    v_funciones JSONB;
-BEGIN
-    SELECT funciones_habilitadas
-    INTO v_funciones
-    FROM subscripciones
-    WHERE organizacion_id = p_organizacion_id AND activa = true;
-    
-    -- Si no existe la subscripción, negar acceso
-    IF v_funciones IS NULL THEN
-        RETURN FALSE;
-    END IF;
-    
-    -- Verificar si la característica está habilitada
-    RETURN COALESCE((v_funciones ->> p_caracteristica)::BOOLEAN, FALSE);
-END;
-$$ LANGUAGE plpgsql;
+-- Las funciones verificar_limite_plan() y tiene_caracteristica_habilitada()
+-- ya están correctamente implementadas arriba con JOIN a planes_subscripcion
+-- y metricas_uso_organizacion.
+--
+-- ❌ ELIMINADAS: Definiciones duplicadas e incorrectas que buscaban campos
+-- que no existen en la tabla subscripciones.

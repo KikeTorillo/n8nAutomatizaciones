@@ -2,14 +2,14 @@
  * @fileoverview Controlador de Autenticación para API SaaS
  * @description Maneja login, registro, refresh tokens y operaciones de autenticación
  * @author SaaS Agendamiento
- * @version 1.0.0
+ * @version 2.0.0 - Migrado a Joi + ResponseHelper
  */
 
 const UsuarioModel = require('../database/usuario.model');
-const { validationResult } = require('express-validator');
 const logger = require('../utils/logger');
 const jwt = require('jsonwebtoken');
 const { addToTokenBlacklist } = require('../middleware/auth');
+const { ResponseHelper } = require('../utils/helpers');
 
 /**
  * Controlador de Autenticación
@@ -29,16 +29,6 @@ class AuthController {
      */
     static async login(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { email, password } = req.body;
             const ipAddress = req.ip || req.connection.remoteAddress;
 
@@ -73,11 +63,7 @@ class AuthController {
                 responseData.refreshToken = resultado.refreshToken;
             }
 
-            res.status(200).json({
-                success: true,
-                message: 'Login exitoso',
-                data: responseData
-            });
+            return ResponseHelper.success(res, responseData, 'Login exitoso');
 
         } catch (error) {
             logger.error('Error en login', {
@@ -94,10 +80,7 @@ class AuthController {
                 statusCode = 403; // Forbidden
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: error.message
-            });
+            return ResponseHelper.error(res, error.message, statusCode);
         }
     }
 
@@ -118,24 +101,11 @@ class AuthController {
      */
     static async register(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const userData = req.body;
 
             // Validación adicional: si no es super_admin, requiere organizacion_id
             if (userData.rol !== 'super_admin' && !userData.organizacion_id) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'organizacion_id es requerido para este rol'
-                });
+                return ResponseHelper.error(res, 'organizacion_id es requerido para este rol', 400);
             }
 
             // Crear usuario
@@ -150,22 +120,20 @@ class AuthController {
             });
 
             // Respuesta exitosa (sin datos sensibles)
-            res.status(201).json({
-                success: true,
-                message: 'Usuario registrado exitosamente',
-                data: {
-                    usuario: {
-                        id: usuario.id,
-                        email: usuario.email,
-                        nombre: usuario.nombre,
-                        apellidos: usuario.apellidos,
-                        rol: usuario.rol,
-                        organizacion_id: usuario.organizacion_id,
-                        activo: usuario.activo,
-                        creado_en: usuario.creado_en
-                    }
+            const usuarioData = {
+                usuario: {
+                    id: usuario.id,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    apellidos: usuario.apellidos,
+                    rol: usuario.rol,
+                    organizacion_id: usuario.organizacion_id,
+                    activo: usuario.activo,
+                    creado_en: usuario.creado_en
                 }
-            });
+            };
+
+            return ResponseHelper.success(res, usuarioData, 'Usuario registrado exitosamente', 201);
 
         } catch (error) {
             logger.error('Error en registro', {
@@ -178,17 +146,14 @@ class AuthController {
             let message = 'Error interno del servidor';
 
             if (error.message.includes('ya está registrado')) {
-                statusCode = 409; // Conflict
+                statusCode = 409;
                 message = error.message;
-            } else if (error.message.includes('23505')) { // Duplicate key
+            } else if (error.message.includes('23505')) {
                 statusCode = 409;
                 message = 'El email ya está registrado en el sistema';
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, message, statusCode);
         }
     }
 
@@ -205,10 +170,7 @@ class AuthController {
             const refreshToken = req.cookies.refreshToken || req.body.refreshToken;
 
             if (!refreshToken) {
-                return res.status(401).json({
-                    success: false,
-                    message: 'Refresh token requerido'
-                });
+                return ResponseHelper.unauthorized(res, 'Refresh token requerido');
             }
 
             // Refrescar token
@@ -217,14 +179,10 @@ class AuthController {
             // Log exitoso
             logger.info('Token refrescado exitosamente');
 
-            res.status(200).json({
-                success: true,
-                message: 'Token refrescado exitosamente',
-                data: {
-                    accessToken: resultado.accessToken,
-                    expiresIn: resultado.expiresIn
-                }
-            });
+            return ResponseHelper.success(res, {
+                accessToken: resultado.accessToken,
+                expiresIn: resultado.expiresIn
+            }, 'Token refrescado exitosamente');
 
         } catch (error) {
             logger.error('Error al refrescar token', {
@@ -234,10 +192,7 @@ class AuthController {
             // Limpiar cookie si el refresh token es inválido
             res.clearCookie('refreshToken');
 
-            res.status(401).json({
-                success: false,
-                message: 'Token de refresco inválido'
-            });
+            return ResponseHelper.unauthorized(res, 'Token de refresco inválido');
         }
     }
 
@@ -286,20 +241,14 @@ class AuthController {
                 });
             }
 
-            res.status(200).json({
-                success: true,
-                message: 'Logout exitoso'
-            });
+            return ResponseHelper.success(res, null, 'Logout exitoso');
 
         } catch (error) {
             logger.error('Error en logout', {
                 error: error.message
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
@@ -316,28 +265,23 @@ class AuthController {
             const usuario = await UsuarioModel.buscarPorId(req.user.id);
 
             if (!usuario) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Usuario no encontrado'
-                });
+                return ResponseHelper.notFound(res, 'Usuario no encontrado');
             }
 
-            res.status(200).json({
-                success: true,
-                message: 'Información del usuario',
-                data: {
-                    usuario: {
-                        id: usuario.id,
-                        email: usuario.email,
-                        nombre: usuario.nombre,
-                        apellidos: usuario.apellidos,
-                        telefono: usuario.telefono,
-                        rol: usuario.rol,
-                        organizacion_id: usuario.organizacion_id,
-                        email_verificado: usuario.email_verificado
-                    }
+            const usuarioData = {
+                usuario: {
+                    id: usuario.id,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    apellidos: usuario.apellidos,
+                    telefono: usuario.telefono,
+                    rol: usuario.rol,
+                    organizacion_id: usuario.organizacion_id,
+                    email_verificado: usuario.email_verificado
                 }
-            });
+            };
+
+            return ResponseHelper.success(res, usuarioData, 'Información del usuario');
 
         } catch (error) {
             logger.error('Error al obtener información del usuario', {
@@ -345,10 +289,7 @@ class AuthController {
                 userId: req.user?.id
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
@@ -364,16 +305,6 @@ class AuthController {
      */
     static async cambiarPassword(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { passwordAnterior, passwordNueva } = req.body;
             const userId = req.user.id;
 
@@ -386,10 +317,7 @@ class AuthController {
                 email: req.user.email
             });
 
-            res.status(200).json({
-                success: true,
-                message: 'Contraseña cambiada exitosamente'
-            });
+            return ResponseHelper.success(res, null, 'Contraseña cambiada exitosamente');
 
         } catch (error) {
             logger.error('Error al cambiar contraseña', {
@@ -405,10 +333,7 @@ class AuthController {
                 message = error.message;
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, message, statusCode);
         }
     }
 
@@ -422,16 +347,6 @@ class AuthController {
      */
     static async actualizarPerfil(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const userId = req.user.id;
             const datos = req.body;
 
@@ -444,13 +359,7 @@ class AuthController {
                 camposActualizados: Object.keys(datos)
             });
 
-            res.status(200).json({
-                success: true,
-                message: 'Perfil actualizado exitosamente',
-                data: {
-                    usuario: usuarioActualizado
-                }
-            });
+            return ResponseHelper.success(res, { usuario: usuarioActualizado }, 'Perfil actualizado exitosamente');
 
         } catch (error) {
             logger.error('Error al actualizar perfil', {
@@ -458,10 +367,7 @@ class AuthController {
                 userId: req.user?.id
             });
 
-            res.status(500).json({
-                success: false,
-                message: error.message || 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, error.message || 'Error interno del servidor', 500);
         }
     }
 
@@ -476,26 +382,8 @@ class AuthController {
      */
     static async desbloquearUsuario(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { userId } = req.body;
             const adminId = req.user.id;
-
-            // Verificar que el usuario autenticado sea admin o super_admin
-            if (!['admin', 'super_admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para desbloquear usuarios'
-                });
-            }
 
             // Desbloquear usuario
             const usuarioDesbloqueado = await UsuarioModel.desbloquearUsuario(userId, adminId);
@@ -507,13 +395,7 @@ class AuthController {
                 adminEmail: req.user.email
             });
 
-            res.status(200).json({
-                success: true,
-                message: 'Usuario desbloqueado exitosamente',
-                data: {
-                    usuario: usuarioDesbloqueado
-                }
-            });
+            return ResponseHelper.success(res, { usuario: usuarioDesbloqueado }, 'Usuario desbloqueado exitosamente');
 
         } catch (error) {
             logger.error('Error al desbloquear usuario', {
@@ -523,17 +405,11 @@ class AuthController {
             });
 
             let statusCode = 500;
-            let message = 'Error interno del servidor';
-
             if (error.message.includes('no encontrado')) {
                 statusCode = 404;
-                message = error.message;
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, error.message, statusCode);
         }
     }
 
@@ -546,14 +422,6 @@ class AuthController {
      */
     static async obtenerUsuariosBloqueados(req, res) {
         try {
-            // Verificar permisos de administrador
-            if (!['admin', 'super_admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para ver usuarios bloqueados'
-                });
-            }
-
             // Para super_admin, mostrar de todas las organizaciones
             // Para otros roles, solo de su organización
             let organizacionId = req.user.organizacion_id;
@@ -563,14 +431,10 @@ class AuthController {
 
             const usuariosBloqueados = await UsuarioModel.obtenerUsuariosBloqueados(organizacionId);
 
-            res.status(200).json({
-                success: true,
-                message: 'Lista de usuarios bloqueados',
-                data: {
-                    usuarios: usuariosBloqueados,
-                    total: usuariosBloqueados.length
-                }
-            });
+            return ResponseHelper.success(res, {
+                usuarios: usuariosBloqueados,
+                total: usuariosBloqueados.length
+            }, 'Lista de usuarios bloqueados');
 
         } catch (error) {
             logger.error('Error al obtener usuarios bloqueados', {
@@ -578,10 +442,7 @@ class AuthController {
                 adminId: req.user?.id
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
@@ -598,31 +459,21 @@ class AuthController {
 
             // Verificar permisos (solo admin puede ver otros usuarios, o el mismo usuario)
             if (req.user.id !== parseInt(userId) && !['admin', 'super_admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para verificar este usuario'
-                });
+                return ResponseHelper.forbidden(res, 'No tiene permisos para verificar este usuario');
             }
 
             const estadoBloqueo = await UsuarioModel.verificarBloqueo(userId);
 
             if (!estadoBloqueo) {
-                return res.status(404).json({
-                    success: false,
-                    message: 'Usuario no encontrado'
-                });
+                return ResponseHelper.notFound(res, 'Usuario no encontrado');
             }
 
-            res.status(200).json({
-                success: true,
-                message: 'Estado de bloqueo del usuario',
-                data: {
-                    esta_bloqueado: estadoBloqueo.esta_bloqueado,
-                    intentos_fallidos: estadoBloqueo.intentos_fallidos,
-                    minutos_restantes: Math.ceil(estadoBloqueo.minutos_restantes || 0),
-                    bloqueado_hasta: estadoBloqueo.bloqueado_hasta
-                }
-            });
+            return ResponseHelper.success(res, {
+                esta_bloqueado: estadoBloqueo.esta_bloqueado,
+                intentos_fallidos: estadoBloqueo.intentos_fallidos,
+                minutos_restantes: Math.ceil(estadoBloqueo.minutos_restantes || 0),
+                bloqueado_hasta: estadoBloqueo.bloqueado_hasta
+            }, 'Estado de bloqueo del usuario');
 
         } catch (error) {
             logger.error('Error al verificar bloqueo', {
@@ -631,10 +482,7 @@ class AuthController {
                 requesterId: req.user?.id
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
@@ -646,33 +494,12 @@ class AuthController {
      */
     static async registrarUsuarioOrganizacion(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { organizacion_id, rol, opciones = {} } = req.body;
             const userData = req.body.usuario_data;
 
-            // Validaciones de permisos
-            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para crear usuarios en organizaciones'
-                });
-            }
-
             // Si no es super_admin, solo puede crear usuarios en su propia organización
             if (req.user.rol !== 'super_admin' && req.user.organizacion_id !== organizacion_id) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'Solo puede crear usuarios en su propia organización'
-                });
+                return ResponseHelper.forbidden(res, 'Solo puede crear usuarios en su propia organización');
             }
 
             // Crear usuario para organización
@@ -691,16 +518,12 @@ class AuthController {
                 admin_email: req.user.email
             });
 
-            res.status(201).json({
-                success: true,
-                message: 'Usuario creado exitosamente para la organización',
-                data: {
-                    usuario: resultado.usuario,
-                    organizacion: resultado.organizacion,
-                    configuracion_rls: resultado.configuracion_rls,
-                    email_bienvenida: resultado.email_bienvenida
-                }
-            });
+            return ResponseHelper.success(res, {
+                usuario: resultado.usuario,
+                organizacion: resultado.organizacion,
+                configuracion_rls: resultado.configuracion_rls,
+                email_bienvenida: resultado.email_bienvenida
+            }, 'Usuario creado exitosamente para la organización', 201);
 
         } catch (error) {
             logger.error('Error creando usuario para organización', {
@@ -710,20 +533,13 @@ class AuthController {
             });
 
             let statusCode = 500;
-            let message = 'Error interno del servidor';
-
             if (error.message.includes('no encontrada')) {
                 statusCode = 404;
-                message = error.message;
             } else if (error.message.includes('ya está registrado')) {
                 statusCode = 409;
-                message = error.message;
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, error.message, statusCode);
         }
     }
 
@@ -735,16 +551,6 @@ class AuthController {
      */
     static async recuperarPassword(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { email, organizacion_id } = req.body;
 
             // Generar token de reset
@@ -759,18 +565,16 @@ class AuthController {
             });
 
             // Siempre devolver la misma respuesta por seguridad
-            res.status(200).json({
-                success: true,
-                message: resultado.mensaje,
-                data: {
-                    token_enviado: resultado.token_enviado,
-                    ...(resultado.expires_at && { expires_at: resultado.expires_at }),
-                    // Solo en desarrollo incluir el token
-                    ...(process.env.NODE_ENV !== 'production' && resultado.reset_token && {
-                        reset_token: resultado.reset_token
-                    })
-                }
-            });
+            const responseData = {
+                token_enviado: resultado.token_enviado,
+                ...(resultado.expires_at && { expires_at: resultado.expires_at }),
+                // Solo en desarrollo incluir el token
+                ...(process.env.NODE_ENV !== 'production' && resultado.reset_token && {
+                    reset_token: resultado.reset_token
+                })
+            };
+
+            return ResponseHelper.success(res, responseData, resultado.mensaje);
 
         } catch (error) {
             logger.error('Error en recuperar password', {
@@ -779,10 +583,7 @@ class AuthController {
                 organizacion_id: req.body.organizacion_id
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
-            });
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 
@@ -796,59 +597,25 @@ class AuthController {
         try {
             const { token } = req.params;
 
-            if (!token) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Token de verificación requerido'
-                });
-            }
-
-            // Verificar email
             const resultado = await UsuarioModel.verificarEmail(token);
 
-            if (resultado.ya_verificado) {
-                return res.status(200).json({
-                    success: true,
-                    message: resultado.mensaje,
-                    data: {
-                        ya_verificado: true,
-                        usuario: resultado.usuario
-                    }
-                });
-            }
-
-            logger.info('Email verificado exitosamente via API', {
-                usuario_id: resultado.usuario.id,
-                email: resultado.usuario.email
-            });
-
-            res.status(200).json({
-                success: true,
-                message: resultado.mensaje,
-                data: {
-                    verificado: resultado.verificado,
-                    usuario: resultado.usuario
-                }
-            });
+            return ResponseHelper.success(res, {
+                verificado: resultado.verificado || false,
+                ya_verificado: resultado.ya_verificado || false,
+                email: resultado.email
+            }, resultado.mensaje);
 
         } catch (error) {
-            logger.error('Error en verificación de email', {
-                error: error.message,
-                token: req.params.token ? 'presente' : 'ausente'
+            logger.error('Error verificación email', {
+                error: error.message
             });
 
             let statusCode = 400;
-            let message = 'Token de verificación inválido o expirado';
-
             if (error.message.includes('no encontrado')) {
                 statusCode = 404;
-                message = 'Usuario no encontrado';
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, error.message, statusCode);
         }
     }
 
@@ -860,35 +627,14 @@ class AuthController {
      */
     static async cambiarRol(req, res) {
         try {
-            // Validar errores de entrada
-            const errors = validationResult(req);
-            if (!errors.isEmpty()) {
-                return res.status(400).json({
-                    success: false,
-                    message: 'Datos de entrada inválidos',
-                    errors: errors.array()
-                });
-            }
-
             const { usuario_id, nuevo_rol, organizacion_id } = req.body;
             const adminId = req.user.id;
-
-            // Validaciones de permisos
-            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para cambiar roles de usuarios'
-                });
-            }
 
             // Si no es super_admin, solo puede modificar usuarios de su organización
             if (req.user.rol !== 'super_admin') {
                 const orgIdTarget = organizacion_id || req.user.organizacion_id;
                 if (req.user.organizacion_id !== orgIdTarget) {
-                    return res.status(403).json({
-                        success: false,
-                        message: 'Solo puede modificar usuarios de su propia organización'
-                    });
+                    return ResponseHelper.forbidden(res, 'Solo puede modificar usuarios de su propia organización');
                 }
             }
 
@@ -908,14 +654,10 @@ class AuthController {
                 organizacion_id: organizacion_id
             });
 
-            res.status(200).json({
-                success: true,
-                message: 'Rol cambiado exitosamente',
-                data: {
-                    usuario: resultado.usuario,
-                    cambio: resultado.cambio
-                }
-            });
+            return ResponseHelper.success(res, {
+                usuario: resultado.usuario,
+                cambio: resultado.cambio
+            }, 'Rol cambiado exitosamente');
 
         } catch (error) {
             logger.error('Error cambiando rol de usuario', {
@@ -925,20 +667,13 @@ class AuthController {
             });
 
             let statusCode = 500;
-            let message = 'Error interno del servidor';
-
             if (error.message.includes('no encontrado')) {
                 statusCode = 404;
-                message = error.message;
             } else if (error.message.includes('no válido') || error.message.includes('ya tiene este rol')) {
                 statusCode = 400;
-                message = error.message;
             }
 
-            res.status(statusCode).json({
-                success: false,
-                message: message
-            });
+            return ResponseHelper.error(res, error.message, statusCode);
         }
     }
 
@@ -950,14 +685,6 @@ class AuthController {
      */
     static async listarUsuariosOrganizacion(req, res) {
         try {
-            // Validaciones de permisos
-            if (!['super_admin', 'admin', 'propietario'].includes(req.user.rol)) {
-                return res.status(403).json({
-                    success: false,
-                    message: 'No tiene permisos para listar usuarios'
-                });
-            }
-
             // Determinar organización
             let organizacionId = req.user.organizacion_id;
             if (req.user.rol === 'super_admin' && req.query.organizacion_id) {
@@ -993,16 +720,12 @@ class AuthController {
                 filtros: filtros
             });
 
-            res.status(200).json({
-                success: true,
-                message: 'Lista de usuarios obtenida exitosamente',
-                data: {
-                    usuarios: resultado.data,
-                    pagination: resultado.pagination,
-                    filtros_aplicados: resultado.filtros_aplicados,
-                    resumen: resultado.resumen
-                }
-            });
+            return ResponseHelper.success(res, {
+                usuarios: resultado.data,
+                pagination: resultado.pagination,
+                filtros_aplicados: resultado.filtros_aplicados,
+                resumen: resultado.resumen
+            }, 'Lista de usuarios obtenida exitosamente');
 
         } catch (error) {
             logger.error('Error listando usuarios de organización', {
@@ -1011,10 +734,223 @@ class AuthController {
                 query: req.query
             });
 
-            res.status(500).json({
-                success: false,
-                message: 'Error interno del servidor'
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
+        }
+    }
+
+    /**
+     * Crear primer usuario super_admin si no existen usuarios en el sistema
+     * @route POST /api/v1/auth/crear-primer-admin
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async crearPrimerAdmin(req, res) {
+        try {
+            const userData = req.body;
+
+            // Verificar si ya existen usuarios en el sistema
+            const hayUsuarios = await UsuarioModel.existenUsuarios();
+            if (hayUsuarios) {
+                return ResponseHelper.error(res, 'Ya existen usuarios en el sistema. No se puede crear el primer admin.', 400);
+            }
+
+            // Asegurar que el rol sea super_admin
+            userData.rol = 'super_admin';
+
+            // Crear usuario super_admin
+            const usuario = await UsuarioModel.crear(userData);
+
+            // Log exitoso
+            logger.info('Primer usuario super_admin creado exitosamente', {
+                userId: usuario.id,
+                email: usuario.email
             });
+
+            // Respuesta exitosa (sin datos sensibles)
+            return ResponseHelper.success(res, {
+                usuario: {
+                    id: usuario.id,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    apellidos: usuario.apellidos,
+                    rol: usuario.rol,
+                    activo: usuario.activo,
+                    creado_en: usuario.creado_en
+                }
+            }, 'Primer usuario super_admin creado exitosamente', 201);
+
+        } catch (error) {
+            logger.error('Error creando primer usuario admin', {
+                error: error.message,
+                email: req.body.email
+            });
+
+            // Manejar errores específicos
+            let statusCode = 500;
+            if (error.message.includes('ya está registrado') || error.message.includes('23505')) {
+                statusCode = 409;
+            }
+
+            return ResponseHelper.error(res, error.message, statusCode);
+        }
+    }
+
+    /**
+     * Validar token de reset de contraseña
+     * @route GET /api/v1/password/validate-token/:token
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async validarTokenReset(req, res) {
+        try {
+            const { token } = req.params;
+
+            // Validar token
+            const resultado = await UsuarioModel.validarTokenReset(token);
+
+            if (!resultado.valido) {
+                logger.info('Token de reset inválido o expirado', {
+                    mensaje: resultado.mensaje,
+                    ip: req.ip
+                });
+
+                return ResponseHelper.error(res, resultado.mensaje, 400, {
+                    valido: false,
+                    ...(resultado.expiro_hace_minutos && {
+                        expiro_hace_minutos: resultado.expiro_hace_minutos
+                    })
+                });
+            }
+
+            logger.info('Token de reset validado exitosamente', {
+                usuario_id: resultado.usuario_id,
+                email: resultado.email,
+                expira_en_minutos: resultado.expira_en_minutos,
+                ip: req.ip
+            });
+
+            return ResponseHelper.success(res, {
+                valido: true,
+                email: resultado.email,
+                expira_en_minutos: resultado.expira_en_minutos,
+                expira_en: resultado.expira_en
+            }, 'Token válido');
+
+        } catch (error) {
+            logger.error('Error validando token de reset', {
+                error: error.message,
+                token: req.params.token ? 'presente' : 'ausente'
+            });
+
+            return ResponseHelper.error(res, 'Error validando token', 500);
+        }
+    }
+
+    /**
+     * Confirmar reset de contraseña con token
+     * @route POST /api/v1/password/reset/:token
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async confirmarResetPassword(req, res) {
+        try {
+            const { token } = req.params;
+            const { passwordNueva } = req.body;
+
+            // Confirmar reset de contraseña
+            const resultado = await UsuarioModel.confirmarResetPassword(token, passwordNueva);
+
+            logger.info('Contraseña restablecida vía token', {
+                usuario_id: resultado.usuario_id,
+                email: resultado.email,
+                ip: req.ip
+            });
+
+            return ResponseHelper.success(res, {
+                success: true,
+                email: resultado.email,
+                mensaje: resultado.mensaje
+            }, 'Contraseña actualizada exitosamente');
+
+        } catch (error) {
+            logger.error('Error confirmando reset de contraseña', {
+                error: error.message,
+                token: req.params.token ? 'presente' : 'ausente',
+                ip: req.ip
+            });
+
+            let statusCode = 400;
+            if (error.message.includes('Token inválido') || error.message.includes('Token expirado')) {
+                statusCode = 400;
+            } else if (error.message.includes('no encontrado')) {
+                statusCode = 404;
+            } else {
+                statusCode = 500;
+            }
+
+            return ResponseHelper.error(res, error.message, statusCode);
+        }
+    }
+
+    /**
+     * Evaluar fortaleza de contraseña
+     * @route POST /api/v1/password/strength
+     * @param {Object} req - Request object
+     * @param {Object} res - Response object
+     */
+    static async evaluarFortalezaPassword(req, res) {
+        try {
+            const { password } = req.body;
+
+            // Evaluación básica de fortaleza
+            let score = 0;
+            let feedback = [];
+
+            // Longitud
+            if (password.length >= 8) score += 20;
+            else feedback.push('Debe tener al menos 8 caracteres');
+
+            if (password.length >= 12) score += 10;
+
+            // Complejidad
+            if (/[a-z]/.test(password)) score += 15;
+            else feedback.push('Debe incluir letras minúsculas');
+
+            if (/[A-Z]/.test(password)) score += 15;
+            else feedback.push('Debe incluir letras mayúsculas');
+
+            if (/\d/.test(password)) score += 15;
+            else feedback.push('Debe incluir números');
+
+            if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 25;
+            else feedback.push('Debe incluir caracteres especiales');
+
+            // Nivel de fortaleza
+            let nivel;
+            if (score < 40) nivel = 'muy_debil';
+            else if (score < 60) nivel = 'debil';
+            else if (score < 80) nivel = 'moderada';
+            else if (score < 90) nivel = 'fuerte';
+            else nivel = 'muy_fuerte';
+
+            return ResponseHelper.success(res, {
+                score: score,
+                nivel: nivel,
+                cumple_requisitos: score >= 65,
+                feedback: feedback,
+                recomendaciones: score < 65 ? [
+                    'Usa al menos 12 caracteres',
+                    'Combina mayúsculas, minúsculas, números y símbolos',
+                    'Evita patrones obvios o información personal'
+                ] : []
+            }, 'Fortaleza de contraseña evaluada');
+
+        } catch (error) {
+            logger.error('Error al evaluar fortaleza de contraseña', {
+                error: error.message
+            });
+
+            return ResponseHelper.error(res, 'Error interno del servidor', 500);
         }
     }
 }

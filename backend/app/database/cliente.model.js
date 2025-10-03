@@ -1,47 +1,23 @@
-/**
- * @fileoverview Modelo de Cliente para sistema multi-tenant SaaS
- * @description Maneja operaciones CRUD de clientes con RLS automático y validaciones
- * @author SaaS Agendamiento
- * @version 1.0.0
- */
+/** Modelo de Cliente - Operaciones CRUD con RLS multi-tenant */
 
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 
-/**
- * Modelo Cliente - Operaciones de base de datos para clientes
- * Implementa diseño normalizado sin campos calculados para garantizar consistencia
- * @class ClienteModel
- */
 class ClienteModel {
 
     /**
-     * Crear un nuevo cliente con validaciones automáticas
-     * @param {Object} clienteData - Datos del cliente
-     * @param {number} clienteData.organizacion_id - ID de la organización (requerido)
-     * @param {string} clienteData.nombre - Nombre completo del cliente
-     * @param {string} [clienteData.email] - Email del cliente (único por organización)
-     * @param {string} clienteData.telefono - Teléfono de contacto (único por organización)
-     * @param {Date} [clienteData.fecha_nacimiento] - Fecha de nacimiento
-     * @param {number} [clienteData.profesional_preferido_id] - ID del profesional preferido
-     * @param {string} [clienteData.notas_especiales] - Notas especiales del cliente
-     * @param {string} [clienteData.alergias] - Información médica de alergias
-     * @param {string} [clienteData.direccion] - Dirección del cliente
-     * @param {string} [clienteData.como_conocio] - Canal de adquisición
-     * @param {boolean} [clienteData.activo=true] - Si el cliente está activo
-     * @param {boolean} [clienteData.marketing_permitido=true] - Consent para marketing
-     * @returns {Promise<Object>} Cliente creado
-     * @throws {Error} Si hay errores de validación o constraints únicos
+     * Crear cliente
+     * @throws {Error} Constraint violations (email/teléfono duplicado, formato inválido)
      */
     static async crear(clienteData) {
         const client = await getDb();
 
         try {
+            await client.query('BEGIN');
+
             // Configurar contexto RLS multi-tenant
             await client.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', clienteData.organizacion_id.toString()]);
-
-            logger.info(`[ClienteModel.crear] Creando cliente para organización ${clienteData.organizacion_id}`);
 
             const query = `
                 INSERT INTO clientes (
@@ -73,10 +49,11 @@ class ClienteModel {
 
             const result = await client.query(query, values);
 
-            logger.info(`[ClienteModel.crear] Cliente creado exitosamente con ID: ${result.rows[0].id}`);
+            await client.query('COMMIT');
             return result.rows[0];
 
         } catch (error) {
+            await client.query('ROLLBACK');
             logger.error('[ClienteModel.crear] Error al crear cliente:', error);
 
             // Manejo específico de errores de constraints
@@ -108,12 +85,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * Obtener cliente por ID con contexto multi-tenant
-     * @param {number} id - ID del cliente
-     * @param {number} organizacionId - ID de la organización para RLS
-     * @returns {Promise<Object|null>} Cliente encontrado o null
-     */
+    /** Obtener cliente por ID */
     static async obtenerPorId(id, organizacionId) {
         const client = await getDb();
 
@@ -143,19 +115,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * Listar clientes con paginación y filtros
-     * @param {Object} options - Opciones de consulta
-     * @param {number} options.organizacionId - ID de la organización
-     * @param {number} [options.page=1] - Página actual
-     * @param {number} [options.limit=20] - Elementos por página
-     * @param {string} [options.busqueda] - Término de búsqueda (nombre, email, teléfono)
-     * @param {boolean} [options.activos=true] - Solo clientes activos
-     * @param {boolean} [options.marketing] - Filtrar por consent de marketing
-     * @param {string} [options.ordenPor='nombre'] - Campo para ordenar
-     * @param {string} [options.orden='ASC'] - Dirección del orden
-     * @returns {Promise<Object>} Objeto con clientes y metadatos de paginación
-     */
+    /** Listar clientes con paginación y filtros */
     static async listar(options = {}) {
         const client = await getDb();
 
@@ -171,7 +131,6 @@ class ClienteModel {
                 orden = 'ASC'
             } = options;
 
-            // Whitelist de campos válidos para ordenamiento (SEGURIDAD)
             const camposValidos = ['nombre', 'email', 'telefono', 'creado_en', 'actualizado_en'];
             const ordenValido = ['ASC', 'DESC'].includes(orden.toUpperCase()) ? orden.toUpperCase() : 'ASC';
             const campoOrden = camposValidos.includes(ordenPor) ? ordenPor : 'nombre';
@@ -180,7 +139,7 @@ class ClienteModel {
             await client.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Construir WHERE dinámico (SIN organizacion_id - RLS lo maneja automáticamente)
+            // Construir WHERE dinámico
             let whereConditions = [];
             let queryParams = [];
             let paramIndex = 1;
@@ -209,7 +168,7 @@ class ClienteModel {
 
             const whereClause = whereConditions.length > 0 ? 'WHERE ' + whereConditions.join(' AND ') : '';
 
-            // Query principal con paginación (ORDER BY seguro)
+            // Query principal con paginación
             const offset = (page - 1) * limit;
             const query = `
                 SELECT
@@ -234,7 +193,7 @@ class ClienteModel {
 
             const [clientesResult, countResult] = await Promise.all([
                 client.query(query, queryParams),
-                client.query(countQuery, queryParams.slice(0, -2)) // Sin limit y offset para count
+                client.query(countQuery, queryParams.slice(0, -2))
             ]);
 
             const total = parseInt(countResult.rows[0].total);
@@ -261,16 +220,15 @@ class ClienteModel {
     }
 
     /**
-     * Actualizar cliente existente
-     * @param {number} id - ID del cliente
-     * @param {Object} clienteData - Datos a actualizar
-     * @param {number} organizacionId - ID de la organización para RLS
-     * @returns {Promise<Object|null>} Cliente actualizado o null si no existe
+     * Actualizar cliente
+     * @throws {Error} Constraint violations (email/teléfono duplicado)
      */
     static async actualizar(id, clienteData, organizacionId) {
         const client = await getDb();
 
         try {
+            await client.query('BEGIN');
+
             // Configurar contexto RLS
             await client.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
@@ -301,7 +259,6 @@ class ClienteModel {
             // Agregar timestamp de actualización
             setClauses.push(`actualizado_en = CURRENT_TIMESTAMP`);
 
-            // CORREGIDO: WHERE con parámetros seguros (RLS maneja organizacion_id automáticamente)
             const query = `
                 UPDATE clientes
                 SET ${setClauses.join(', ')}
@@ -315,18 +272,13 @@ class ClienteModel {
 
             const result = await client.query(query, queryParams);
 
-            if (result.rows.length === 0) {
-                logger.warn(`[ClienteModel.actualizar] Cliente ${id} no encontrado en organización ${organizacionId}`);
-                return null;
-            }
-
-            logger.info(`[ClienteModel.actualizar] Cliente ${id} actualizado exitosamente`);
-            return result.rows[0];
+            await client.query('COMMIT');
+            return result.rows.length > 0 ? result.rows[0] : null;
 
         } catch (error) {
+            await client.query('ROLLBACK');
             logger.error('[ClienteModel.actualizar] Error:', error);
 
-            // Manejo específico de errores de constraints (mismo que en crear)
             if (error.code === '23505') {
                 if (error.constraint === 'unique_email_por_org') {
                     throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
@@ -342,12 +294,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * Eliminar cliente (soft delete - cambiar activo a false)
-     * @param {number} id - ID del cliente
-     * @param {number} organizacionId - ID de la organización para RLS
-     * @returns {Promise<boolean>} true si se eliminó, false si no existe
-     */
+    /** Eliminar cliente (soft delete) */
     static async eliminar(id, organizacionId) {
         const client = await getDb();
 
@@ -381,13 +328,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * Buscar clientes por término de búsqueda con full-text search
-     * @param {string} termino - Término de búsqueda
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} [limit=10] - Límite de resultados
-     * @returns {Promise<Array>} Lista de clientes encontrados
-     */
+    /** Buscar clientes por término (full-text search) */
     static async buscar(termino, organizacionId, limit = 10) {
         const client = await getDb();
 
@@ -418,11 +359,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * Obtener estadísticas de clientes por organización
-     * @param {number} organizacionId - ID de la organización
-     * @returns {Promise<Object>} Estadísticas de clientes
-     */
+    /** Obtener estadísticas de clientes */
     static async obtenerEstadisticas(organizacionId) {
         const client = await getDb();
 
@@ -453,17 +390,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * 🤖 CRÍTICO PARA IA: Buscar cliente por teléfono con normalización y fuzzy search
-     * Esta función es FUNDAMENTAL para que la IA pueda identificar clientes durante conversaciones
-     * @param {string} telefono - Teléfono del cliente (cualquier formato)
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} opciones - Opciones de búsqueda
-     * @param {boolean} opciones.exacto - Búsqueda exacta o fuzzy (default: false)
-     * @param {boolean} opciones.incluir_inactivos - Incluir clientes inactivos (default: false)
-     * @param {boolean} opciones.crear_si_no_existe - Crear cliente si no existe (default: false)
-     * @returns {Promise<Object>} Cliente encontrado + metadatos de búsqueda
-     */
+    /** 🤖 CRÍTICO IA: Buscar cliente por teléfono (fuzzy search + normalización) */
     static async buscarPorTelefono(telefono, organizacionId, opciones = {}) {
         const client = await getDb();
 
@@ -654,13 +581,7 @@ class ClienteModel {
         }
     }
 
-    /**
-     * 🤖 COMPLEMENTARIO PARA IA: Buscar cliente por nombre con fuzzy search
-     * @param {string} nombre - Nombre del cliente (parcial o completo)
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} limite - Límite de resultados (default: 10)
-     * @returns {Promise<Array>} Lista de clientes con ranking de similaridad
-     */
+    /** 🤖 COMPLEMENTARIO IA: Buscar cliente por nombre (fuzzy search) */
     static async buscarPorNombre(nombre, organizacionId, limite = 10) {
         const client = await getDb();
 

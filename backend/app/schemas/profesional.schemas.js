@@ -1,0 +1,345 @@
+/**
+ * Schemas de Validación Joi para Profesionales
+ * Valida todos los endpoints del módulo de profesionales
+ */
+
+const Joi = require('joi');
+const { commonSchemas } = require('../middleware/validation');
+const { TIPOS_PROFESIONAL, FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
+
+/**
+ * Schema para crear profesional
+ * POST /profesionales
+ */
+const crear = {
+    body: Joi.object({
+        organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
+        nombre_completo: Joi.string()
+            .min(LIMITES.NOMBRE_MIN)
+            .max(LIMITES.NOMBRE_MAX)
+            .required()
+            .trim(),
+        email: Joi.string()
+            .email()
+            .max(LIMITES.NOMBRE_MAX)
+            .optional()
+            .allow(null),
+        telefono: Joi.string()
+            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+            .optional()
+            .allow(null)
+            .messages({ 'string.pattern.base': 'Teléfono no válido' }),
+        fecha_nacimiento: Joi.date()
+            .iso()
+            .max('now')
+            .optional()
+            .allow(null),
+        documento_identidad: Joi.string()
+            .max(LIMITES.DOCUMENTO_MAX)
+            .optional()
+            .allow(null)
+            .trim(),
+        tipo_profesional: Joi.string()
+            .valid(...TIPOS_PROFESIONAL)
+            .required(),
+        especialidades: Joi.array()
+            .items(Joi.string())
+            .optional()
+            .default([]),
+        licencias_profesionales: Joi.object()
+            .optional()
+            .default({}),
+        años_experiencia: Joi.number()
+            .integer()
+            .min(LIMITES.EXPERIENCIA_MIN)
+            .max(LIMITES.EXPERIENCIA_MAX)
+            .optional()
+            .default(0),
+        idiomas: Joi.array()
+            .items(Joi.string())
+            .optional()
+            .default(['es']),
+        color_calendario: Joi.string()
+            .pattern(/^#[0-9A-Fa-f]{6}$/)
+            .optional()
+            .default('#3498db')
+            .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #3498db)' }),
+        biografia: Joi.string()
+            .optional()
+            .allow(null),
+        foto_url: Joi.string()
+            .uri()
+            .optional()
+            .allow(null),
+        configuracion_horarios: Joi.object()
+            .optional()
+            .default({}),
+        configuracion_servicios: Joi.object()
+            .optional()
+            .default({}),
+        comision_porcentaje: Joi.number()
+            .min(LIMITES.COMISION_MIN)
+            .max(LIMITES.COMISION_MAX)
+            .optional()
+            .default(0),
+        salario_base: Joi.number()
+            .min(0)
+            .optional()
+            .allow(null),
+        forma_pago: Joi.string()
+            .valid(...FORMAS_PAGO)
+            .optional()
+            .default('comision'),
+        activo: Joi.boolean()
+            .optional()
+            .default(true),
+        disponible_online: Joi.boolean()
+            .optional()
+            .default(true),
+        fecha_ingreso: Joi.date()
+            .iso()
+            .optional()
+            .allow(null)
+    })
+};
+
+/**
+ * Schema para actualizar profesional
+ * PUT /profesionales/:id
+ */
+const actualizar = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        nombre_completo: Joi.string()
+            .min(LIMITES.NOMBRE_MIN)
+            .max(LIMITES.NOMBRE_MAX)
+            .trim(),
+        email: Joi.string()
+            .email()
+            .max(LIMITES.NOMBRE_MAX)
+            .allow(null),
+        telefono: Joi.string()
+            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+            .allow(null),
+        fecha_nacimiento: Joi.date()
+            .iso()
+            .max('now')
+            .allow(null),
+        documento_identidad: Joi.string()
+            .max(LIMITES.DOCUMENTO_MAX)
+            .trim()
+            .allow(null),
+        tipo_profesional: Joi.string()
+            .valid(...TIPOS_PROFESIONAL),
+        especialidades: Joi.array()
+            .items(Joi.string()),
+        licencias_profesionales: Joi.object(),
+        años_experiencia: Joi.number()
+            .integer()
+            .min(LIMITES.EXPERIENCIA_MIN)
+            .max(LIMITES.EXPERIENCIA_MAX),
+        idiomas: Joi.array()
+            .items(Joi.string()),
+        color_calendario: Joi.string()
+            .pattern(/^#[0-9A-Fa-f]{6}$/),
+        biografia: Joi.string()
+            .allow(null),
+        foto_url: Joi.string()
+            .uri()
+            .allow(null),
+        configuracion_horarios: Joi.object(),
+        configuracion_servicios: Joi.object(),
+        comision_porcentaje: Joi.number()
+            .min(LIMITES.COMISION_MIN)
+            .max(LIMITES.COMISION_MAX),
+        salario_base: Joi.number()
+            .min(0)
+            .allow(null),
+        forma_pago: Joi.string()
+            .valid(...FORMAS_PAGO),
+        activo: Joi.boolean(),
+        disponible_online: Joi.boolean(),
+        fecha_salida: Joi.date()
+            .iso()
+            .allow(null),
+        motivo_inactividad: Joi.string()
+            .max(LIMITES.MOTIVO_MAX)
+            .allow(null)
+    }).min(1), // Al menos un campo debe estar presente
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para listar profesionales
+ * GET /profesionales
+ */
+const listar = {
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        activo: Joi.string()
+            .valid('true', 'false')
+            .optional(),
+        disponible_online: Joi.string()
+            .valid('true', 'false')
+            .optional(),
+        tipo_profesional: Joi.string()
+            .valid(...TIPOS_PROFESIONAL)
+            .optional(),
+        busqueda: Joi.string()
+            .min(2)
+            .max(100)
+            .trim()
+            .optional(),
+        limit: Joi.number()
+            .integer()
+            .min(1)
+            .max(50)
+            .default(20),
+        offset: Joi.number()
+            .integer()
+            .min(0)
+            .default(0)
+    })
+};
+
+/**
+ * Schema para obtener profesional por ID
+ * GET /profesionales/:id
+ */
+const obtenerPorId = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para buscar por tipo
+ * GET /profesionales/tipo/:tipo
+ */
+const buscarPorTipo = {
+    params: Joi.object({
+        tipo: Joi.string()
+            .valid(...TIPOS_PROFESIONAL)
+            .required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        activos: Joi.string()
+            .valid('true', 'false')
+            .default('true')
+    })
+};
+
+/**
+ * Schema para cambiar estado
+ * PATCH /profesionales/:id/estado
+ */
+const cambiarEstado = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        activo: Joi.boolean()
+            .required(),
+        motivo_inactividad: Joi.string()
+            .max(LIMITES.MOTIVO_MAX)
+            .trim()
+            .optional()
+            .allow(null)
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para actualizar métricas
+ * PATCH /profesionales/:id/metricas
+ */
+const actualizarMetricas = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        citas_completadas_incremento: Joi.number()
+            .integer()
+            .min(0)
+            .optional(),
+        nuevos_clientes: Joi.number()
+            .integer()
+            .min(0)
+            .optional(),
+        nueva_calificacion: Joi.number()
+            .min(LIMITES.CALIFICACION_MIN)
+            .max(LIMITES.CALIFICACION_MAX)
+            .optional()
+    }).min(1), // Al menos un campo debe estar presente
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para eliminar profesional
+ * DELETE /profesionales/:id
+ */
+const eliminar = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        motivo: Joi.string()
+            .max(LIMITES.MOTIVO_MAX)
+            .trim()
+            .optional()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para obtener estadísticas
+ * GET /profesionales/estadisticas
+ */
+const obtenerEstadisticas = {
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+/**
+ * Schema para validar email
+ * POST /profesionales/validar-email
+ */
+const validarEmail = {
+    body: Joi.object({
+        email: Joi.string()
+            .email()
+            .required(),
+        excluir_id: commonSchemas.id.optional()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+    })
+};
+
+module.exports = {
+    crear,
+    actualizar,
+    listar,
+    obtenerPorId,
+    buscarPorTipo,
+    cambiarEstado,
+    actualizarMetricas,
+    eliminar,
+    obtenerEstadisticas,
+    validarEmail
+};

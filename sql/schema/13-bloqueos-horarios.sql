@@ -263,8 +263,11 @@ RETURNS TRIGGER AS $$
 DECLARE
     count_solapamientos INTEGER;
     profesional_org_id INTEGER;
+    servicio_org_id INTEGER;
 BEGIN
     -- 1. VALIDAR COHERENCIA ORGANIZACIONAL
+
+    -- 1.A. Validar profesional_id
     IF NEW.profesional_id IS NOT NULL THEN
         SELECT organizacion_id INTO profesional_org_id
         FROM profesionales
@@ -276,6 +279,21 @@ BEGIN
 
         IF profesional_org_id != NEW.organizacion_id THEN
             RAISE EXCEPTION 'El profesional no pertenece a la organización especificada';
+        END IF;
+    END IF;
+
+    -- 1.B. Validar servicio_id
+    IF NEW.servicio_id IS NOT NULL THEN
+        SELECT organizacion_id INTO servicio_org_id
+        FROM servicios
+        WHERE id = NEW.servicio_id;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'El servicio especificado no existe';
+        END IF;
+
+        IF servicio_org_id != NEW.organizacion_id THEN
+            RAISE EXCEPTION 'El servicio no pertenece a la organización especificada';
         END IF;
     END IF;
 

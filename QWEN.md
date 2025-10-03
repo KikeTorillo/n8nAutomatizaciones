@@ -179,3 +179,85 @@ Problemas comunes:
 - Problemas de rendimiento - asegurar que los 69+ índices de base de datos estén creados
 
 Para depuración, verificar registros de servicio usando los comandos `npm run logs:*`.
+
+## Arquitectura Técnica Detallada
+
+### Backend Node.js (Express.js)
+- **Arquitectura modular**: Los controladores están organizados en módulos especializados (citas, clientes, profesionales, etc.)
+- **Middleware de autenticación JWT**: Implementa un sistema robusto con token blacklist
+- **Gestión de sesión RLS**: Configura variables de sesión PostgreSQL para contexto multi-inquilino
+- **Logging estructurado**: Utiliza Winston con formato JSON para logging detallado
+
+### Base de Datos PostgreSQL
+- **Sistema multi-tenant con RLS**: Implementa seguridad a nivel de fila para aislamiento de datos
+- **Pool de conexiones**: Configurado con diferentes pools para cada base de datos del ecosistema
+- **Triggers y funciones PL/pgSQL**: 348+ funciones y triggers para automatización y validación
+- **Índices especializados**: Más de 75 índices optimizados para consultas críticas
+
+### Sistema de Autenticación
+- **Control de acceso basado en roles**: 5 tipos de roles (super_admin, admin, profesional, cliente)
+- **Token JWT con validación**: Implementación robusta con blacklist de tokens
+- **Verificación de organización**: Middleware para verificar acceso a organizaciones específicas
+
+### Servicios Integrados
+- **n8n**: Automatización de flujos de trabajo con workers para procesamiento en cola
+- **Evolution API**: Integración con WhatsApp Business API para mensajería
+- **Redis**: Caché y manejo de colas para n8n
+
+## Building y Running
+
+### Requisitos del Sistema
+- Docker y Docker Compose
+- Node.js >= 18.0.0
+- npm o yarn
+
+### Inicialización del Proyecto
+1. Clonar el repositorio
+2. Crear archivo `.env` con las variables de entorno apropiadas
+3. Ejecutar `npm install` en el directorio raíz y en `backend/app/`
+4. Ejecutar `docker-compose up -d --build` para iniciar todos los servicios
+
+### Flujo de Desarrollo
+1. Ejecutar el sistema en modo desarrollo con `npm run dev`
+2. Realizar cambios en los controladores, modelos o la base de datos
+3. Probar endpoints con la colección de Bruno
+4. Ejecutar pruebas unitarias e integración
+5. Verificar logs con `npm run logs`
+
+## Convenciones de Desarrollo
+
+### Estructura de Backend
+- **Controladores modulares**: Cada entidad tiene su propio directorio de controladores (por ejemplo, `citas/`, `clientes/`, etc.)
+- **Patrón de capas**: Controladores → Servicios → Modelos → Base de datos
+- **Middleware de autenticación**: Siempre usar `authenticateToken` antes de operaciones que requieran autorización
+- **Gestión de errores**: Usar `ResponseHelper` para respuestas estandarizadas
+
+### Base de Datos
+- **Contexto RLS**: Configurar siempre `app.current_tenant_id` para operaciones que involucren datos multi-inquilino
+- **Pool de conexiones**: Usar la función `getDb()` para obtener conexiones y liberarlas adecuadamente
+- **Transacciones**: Para operaciones críticas como creación de citas, usar `transaction()` para garantizar consistencia
+- **Índices**: Crear índices en columnas utilizadas frecuentemente en consultas (JOIN, WHERE, ORDER BY)
+
+### Autenticación y Autorización
+- **JWT**: Usar middleware de autenticación para proteger rutas
+- **Roles**: Implementar `requireRole` para restringir acceso basado en roles
+- **Token Blacklist**: Implementar mecanismo de invalidación de tokens para logout
+- **Control de acceso**: Verificar siempre el acceso a la organización específica (tenant) del usuario
+
+### Logging
+- **Estructurado**: Usar el logger personalizado con metadatos relevantes
+- **Niveles apropiados**: info para eventos normales, warn para problemas potenciales, error para fallos
+- **Contexto**: Incluir información relevante como userId, organizacionId, IP, etc.
+- **Performance**: Registrar métricas de rendimiento para operaciones críticas
+
+### API Design
+- **Versionado**: Usar /api/v1 para la versión actual de la API
+- **Nomenclatura**: Usar nombres descriptivos para endpoints
+- **Respuestas estandarizadas**: Usar `ResponseHelper.success()` y `ResponseHelper.error()`
+- **Documentación**: Mantener actualizada la documentación de endpoints
+
+### Control de Calidad
+- **Validaciones**: Usar express-validator para validación de entradas
+- **Pruebas**: Escribir pruebas unitarias e integración para nuevas funcionalidades
+- **Linter**: Asegurar consistencia de código con ESLint
+- **Seguridad**: Validar y sanitizar todas las entradas de usuario
