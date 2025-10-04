@@ -505,6 +505,22 @@ CREATE TRIGGER trigger_actualizar_metricas_bloqueos
     EXECUTE FUNCTION actualizar_metricas_bloqueos();
 
 -- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
+-- ====================================================================
+-- Comentarios de políticas que se crean en 08-rls-policies.sql
+-- pero se documentan aquí porque la tabla se crea en este archivo
+-- ────────────────────────────────────────────────────────────────────
+
+-- Política de bloqueos horarios
+COMMENT ON POLICY bloqueos_horarios_tenant_isolation ON bloqueos_horarios IS
+'Aislamiento multi-tenant para bloqueos de horarios:
+- Usuario accede solo a bloqueos de su organización
+- Super admin tiene acceso global
+- Bypass para funciones automáticas
+
+Tipos de bloqueo: vacaciones, feriados, capacitación, emergencia, mantenimiento.';
+
+-- ====================================================================
 -- ✅ VALIDACIÓN FINAL
 -- ====================================================================
 

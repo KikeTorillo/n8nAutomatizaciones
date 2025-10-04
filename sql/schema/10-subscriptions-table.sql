@@ -662,10 +662,16 @@ INSERT INTO planes_subscripcion (
  15, 1000, 50, 8, 800,
  '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": false}', 3),
 
--- Plan Enterprise
-('empresarial', 'Plan Empresarial', 'Para empresas grandes', 1299.00, 12990.00,
- NULL, NULL, NULL, 25, NULL,
- '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true}', 4);
+-- Plan Enterprise (actualizado con límites más altos)
+('empresarial', 'Plan Empresarial', 'Para empresas grandes y cadenas', 1299.00, 12990.00,
+ 100, 50000, 500, 25, 10000,
+ '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "multi_branch": true}', 4),
+
+-- Plan Custom (para necesidades específicas)
+('custom', 'Plan Personalizado', 'Plan a medida para organizaciones con necesidades específicas', 0.00, NULL,
+ NULL, NULL, NULL, NULL, NULL,
+ '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "dedicated_support": true, "sla_guarantee": true, "custom_features": true}', 5)
+ON CONFLICT (codigo_plan) DO NOTHING;
 
 -- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
@@ -779,3 +785,44 @@ $$ LANGUAGE plpgsql;
 --
 -- ❌ ELIMINADAS: Definiciones duplicadas e incorrectas que buscaban campos
 -- que no existen en la tabla subscripciones.
+
+-- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
+-- ====================================================================
+-- Comentarios de políticas que se crean en 08-rls-policies.sql
+-- pero se documentan aquí porque las tablas se crean en este archivo
+-- ────────────────────────────────────────────────────────────────────
+
+-- Política de planes de subscripción (lectura)
+COMMENT ON POLICY planes_subscripcion_select ON planes_subscripcion IS
+'Lectura de planes activos para todos los usuarios.
+Permite visualizar catálogo de planes en frontend.
+Solo planes con activo=true son visibles.';
+
+-- Política de planes de subscripción (modificación)
+COMMENT ON POLICY planes_subscripcion_modify ON planes_subscripcion IS
+'Solo super_admin puede crear/modificar/eliminar planes de subscripción.
+Operaciones críticas: Pricing, límites, características de planes.';
+
+-- Política de subscripciones
+COMMENT ON POLICY subscripciones_unified_access ON subscripciones IS
+'Acceso a subscripciones por organización:
+- Usuario accede solo a subscripción de su organización
+- Super admin tiene acceso global
+- Validación de formato numérico en tenant_id (regex: ^[0-9]+$)
+
+Crítico para: Facturación, límites de uso, upgrades/downgrades.';
+
+-- Política de historial subscripciones
+COMMENT ON POLICY historial_subscripciones_access ON historial_subscripciones IS
+'Acceso de solo lectura al historial de subscripciones:
+- Usuario ve historial de su organización
+- Super admin ve todo el historial
+- Usado para auditoría y reportes de facturación';
+
+-- Política de métricas uso
+COMMENT ON POLICY metricas_uso_access ON metricas_uso_organizacion IS
+'Acceso a métricas de uso de organización:
+- Usuario ve métricas de su organización
+- Super admin ve todas las métricas
+- Usado para: Dashboard, límites de plan, alertas de cuota.';

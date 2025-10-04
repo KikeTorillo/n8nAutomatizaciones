@@ -1,60 +1,15 @@
 -- ====================================================================
 -- TABLAS CORE DEL SISTEMA SAAS
 -- ====================================================================
--- usuarios: Autenticación y autorización
--- organizaciones: Multi-tenancy
+-- organizaciones: Multi-tenancy (PRIMERO - sin dependencias)
+-- usuarios: Autenticación y autorización (SEGUNDO - depende de organizaciones)
 -- ====================================================================
-CREATE TABLE usuarios (
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER, -- REFERENCES organizaciones(id)
 
-    -- Autenticación
-    email VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
-    rol rol_usuario NOT NULL DEFAULT 'empleado',
-
-    -- Información personal
-    nombre VARCHAR(150) NOT NULL,
-    apellidos VARCHAR(150),
-    telefono VARCHAR(20),
-
-    -- Relación con profesionales
-    profesional_id INTEGER, -- REFERENCES profesionales(id)
-
-    -- Control de acceso
-    activo BOOLEAN DEFAULT TRUE,
-    email_verificado BOOLEAN DEFAULT FALSE,
-    ultimo_login TIMESTAMPTZ,
-    intentos_fallidos INTEGER DEFAULT 0,
-    bloqueado_hasta TIMESTAMPTZ,
-
-    -- Recuperación de contraseña
-    token_reset_password VARCHAR(255),
-    token_reset_expira TIMESTAMPTZ,
-
-    -- Verificación de email
-    token_verificacion_email VARCHAR(255),
-    token_verificacion_expira TIMESTAMPTZ,
-
-    -- Configuración
-    configuracion_ui JSONB DEFAULT '{}',
-    zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
-    idioma VARCHAR(5) DEFAULT 'es',
-
-    -- Timestamps
-    creado_en TIMESTAMPTZ DEFAULT NOW(),
-    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
-
-    -- Constraints
-    CHECK (char_length(email) >= 5),
-    CHECK (char_length(nombre) >= 2),
-    CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
-    CHECK (
-        (rol = 'super_admin') OR
-        (rol != 'super_admin' AND organizacion_id IS NOT NULL)
-    )
-);
-
+-- ====================================================================
+-- TABLA: organizaciones
+-- ====================================================================
+-- ORDEN: 1/2 - Debe crearse ANTES de usuarios para permitir FK
+-- ====================================================================
 CREATE TABLE organizaciones (
     id SERIAL PRIMARY KEY,
 
@@ -107,4 +62,66 @@ CREATE TABLE organizaciones (
     -- Constraints
     CHECK (char_length(codigo_tenant) >= 3),
     CHECK (char_length(slug) >= 3)
+);
+
+-- ====================================================================
+-- TABLA: usuarios
+-- ====================================================================
+-- ORDEN: 2/2 - Depende de organizaciones y profesionales
+-- NOTA: profesional_id se agregará DESPUÉS de crear tabla profesionales
+-- ====================================================================
+CREATE TABLE usuarios (
+    id SERIAL PRIMARY KEY,
+
+    -- FK a organizaciones (ON DELETE CASCADE - si se elimina org, se eliminan usuarios)
+    organizacion_id INTEGER REFERENCES organizaciones(id)
+        ON DELETE CASCADE
+        ON UPDATE CASCADE,
+
+    -- Autenticación
+    email VARCHAR(150) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    rol rol_usuario NOT NULL DEFAULT 'empleado',
+
+    -- Información personal
+    nombre VARCHAR(150) NOT NULL,
+    apellidos VARCHAR(150),
+    telefono VARCHAR(20),
+
+    -- Relación con profesionales (se agregará FK después de crear tabla profesionales)
+    -- NOTA: Esta FK se agrega en 05-business-tables.sql después de CREATE TABLE profesionales
+    profesional_id INTEGER,
+
+    -- Control de acceso
+    activo BOOLEAN DEFAULT TRUE,
+    email_verificado BOOLEAN DEFAULT FALSE,
+    ultimo_login TIMESTAMPTZ,
+    intentos_fallidos INTEGER DEFAULT 0,
+    bloqueado_hasta TIMESTAMPTZ,
+
+    -- Recuperación de contraseña
+    token_reset_password VARCHAR(255),
+    token_reset_expira TIMESTAMPTZ,
+
+    -- Verificación de email
+    token_verificacion_email VARCHAR(255),
+    token_verificacion_expira TIMESTAMPTZ,
+
+    -- Configuración
+    configuracion_ui JSONB DEFAULT '{}',
+    zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
+    idioma VARCHAR(5) DEFAULT 'es',
+
+    -- Timestamps
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- Constraints
+    CHECK (char_length(email) >= 5),
+    CHECK (char_length(nombre) >= 2),
+    CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
+    CHECK (
+        (rol = 'super_admin') OR
+        (rol != 'super_admin' AND organizacion_id IS NOT NULL)
+    )
 );

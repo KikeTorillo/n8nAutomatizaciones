@@ -260,9 +260,27 @@ CREATE POLICY tenant_isolation_profesionales ON profesionales
 -- Habilitar RLS en clientes
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
 
--- POLÍTICA 1: AISLAMIENTO POR ORGANIZACIÓN
+-- POLÍTICA 1: AISLAMIENTO POR ORGANIZACIÓN (CORREGIDO 2025-10-03)
+-- Validación REGEX para prevenir SQL injection y tenant_id vacío
 CREATE POLICY clientes_isolation ON clientes
-    USING (organizacion_id = current_setting('app.current_tenant_id')::INTEGER);
+    FOR ALL
+    TO saas_app
+    USING (
+        -- Validar que tenant_id sea numérico antes de comparar
+        current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
+        AND organizacion_id = COALESCE(
+            NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
+            0
+        )
+    )
+    WITH CHECK (
+        -- Validar que tenant_id sea numérico para escritura
+        current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
+        AND organizacion_id = COALESCE(
+            NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
+            0
+        )
+    );
 
 -- POLÍTICA 2: ACCESO SUPER ADMIN
 CREATE POLICY clientes_super_admin ON clientes
@@ -391,3 +409,136 @@ CREATE POLICY horarios_system_bypass ON horarios_disponibilidad
     USING (
         current_setting('app.bypass_rls', true) = 'true'
     );
+
+-- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
+-- ====================================================================
+-- Comentarios inline para todas las políticas críticas del sistema
+-- Añadido tras auditoría de reorganización (Octubre 2025)
+-- ────────────────────────────────────────────────────────────────────
+
+-- Política unificada de usuarios
+COMMENT ON POLICY usuarios_unified_access ON usuarios IS
+'Política unificada que maneja 5 casos de acceso a usuarios:
+1. LOGIN_CONTEXT: Permite buscar usuario por email durante autenticación
+2. SUPER_ADMIN: Acceso global a todos los usuarios del sistema
+3. BYPASS_RLS: Funciones PL/pgSQL de sistema (registrar_intento_login, etc)
+4. SELF_ACCESS: Usuario puede ver/editar su propio registro
+5. TENANT_ISOLATION: Usuario solo ve usuarios de su organización
+
+Variables utilizadas:
+- app.current_user_role: Rol del usuario (super_admin, admin, empleado, login_context)
+- app.current_user_id: ID del usuario autenticado
+- app.current_tenant_id: ID de la organización del usuario
+- app.bypass_rls: Bypass para funciones de sistema (true/false)';
+
+-- Política de organizaciones
+COMMENT ON POLICY tenant_isolation_organizaciones ON organizaciones IS
+'Aislamiento multi-tenant para organizaciones:
+- Super admin: Acceso a todas las organizaciones
+- Usuario regular: Solo acceso a su propia organización (id = app.current_tenant_id)
+- Bypass: Funciones de sistema (registro, onboarding)
+
+Escritura (WITH CHECK): Solo super_admin puede crear/modificar organizaciones.';
+
+-- Política de profesionales
+COMMENT ON POLICY tenant_isolation_profesionales ON profesionales IS
+'Aislamiento multi-tenant para profesionales:
+- Permite acceso solo a profesionales de la organización del usuario
+- Super admin tiene acceso global
+- Bypass disponible para funciones de sistema
+
+Aplica a: SELECT, INSERT, UPDATE, DELETE';
+
+-- Política de clientes (isolation)
+COMMENT ON POLICY clientes_isolation ON clientes IS
+'Aislamiento multi-tenant seguro para clientes (CORREGIDO 2025-10-03):
+- Valida formato numérico de tenant_id con REGEX ^[0-9]+$ (previene SQL injection)
+- Usuario solo puede acceder a clientes de su organización
+- Bloquea intentos de injection como "1 OR 1=1" o tenant_id vacío
+- Ver también: clientes_super_admin para acceso global';
+
+-- Política de clientes (super admin)
+COMMENT ON POLICY clientes_super_admin ON clientes IS
+'Acceso global para super_admin a todos los clientes del sistema.
+Permite gestión centralizada de datos para soporte y administración.';
+
+-- Política de servicios
+COMMENT ON POLICY servicios_tenant_isolation ON servicios IS
+'Aislamiento multi-tenant para servicios:
+- Usuario accede solo a servicios de su organización
+- Super admin tiene acceso global
+- Bypass disponible para funciones de sistema
+
+Uso típico: Catálogo de servicios, asignación a profesionales, pricing.';
+
+-- Política de servicios (bypass)
+COMMENT ON POLICY servicios_system_bypass ON servicios IS
+'Bypass RLS para funciones de sistema que requieren acceso directo a servicios.
+Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
+Casos de uso: Triggers, funciones de migración, procesos batch.';
+
+-- Política de citas
+COMMENT ON POLICY citas_tenant_isolation ON citas IS
+'Aislamiento multi-tenant para citas:
+- Usuario accede solo a citas de su organización
+- Super admin tiene acceso global para soporte
+- Bypass para triggers y funciones automáticas
+
+Crítico para: Agenda, reportes, facturación, métricas.';
+
+-- Política de horarios disponibilidad
+COMMENT ON POLICY horarios_tenant_isolation ON horarios_disponibilidad IS
+'Aislamiento multi-tenant para horarios de disponibilidad:
+- Usuario accede solo a horarios de su organización
+- Super admin tiene acceso global
+- Bypass para generación automática de horarios
+
+Optimizado para: Búsqueda de slots disponibles, reservas temporales.';
+
+-- Política de plantillas (lectura pública)
+COMMENT ON POLICY plantillas_public_read ON plantillas_servicios IS
+'Lectura pública de plantillas activas para todos los usuarios.
+Permite a cualquier organización ver el catálogo de servicios sugeridos.
+Solo plantillas con activo=true son visibles.';
+
+-- Política de plantillas (escritura admin)
+COMMENT ON POLICY plantillas_admin_insert ON plantillas_servicios IS
+'Permite INSERT de plantillas sin restricciones de rol.
+NOTA: Combinar con validación a nivel de aplicación para controlar quién puede insertar.';
+
+-- Política de plantillas (actualización admin)
+COMMENT ON POLICY plantillas_admin_update ON plantillas_servicios IS
+'Solo super_admin puede actualizar plantillas de servicios.
+Protege integridad del catálogo oficial de plantillas.';
+
+-- Política de plantillas (eliminación admin)
+COMMENT ON POLICY plantillas_admin_delete ON plantillas_servicios IS
+'Solo super_admin puede eliminar plantillas de servicios.
+RECOMENDACIÓN: Usar soft-delete (activo=false) en lugar de DELETE físico.';
+
+-- Política de plantillas (bypass)
+COMMENT ON POLICY plantillas_system_bypass ON plantillas_servicios IS
+'Bypass RLS para carga masiva de plantillas y scripts de mantenimiento.
+Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);';
+
+-- NOTA: Comentarios de políticas de subscripciones movidos a 10-subscriptions-table.sql
+-- (las tablas planes_subscripcion, subscripciones, historial_subscripciones, metricas_uso_organizacion se crean después)
+
+-- Política de servicios profesionales
+COMMENT ON POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales IS
+'Aislamiento indirecto mediante JOIN con tabla servicios.
+Verifica que el servicio asociado pertenezca a la organización del usuario.
+Previene asignaciones cruzadas entre organizaciones.';
+
+-- NOTA: Comentario de política horarios_profesionales movido a 11-horarios-profesionales.sql
+-- (la tabla horarios_profesionales se crea en ese archivo)
+
+-- NOTA: Comentario de política bloqueos_horarios movido a 13-bloqueos-horarios.sql
+-- (la tabla bloqueos_horarios se crea en ese archivo)
+
+-- NOTA: Comentario de política eventos_sistema movido a 12-eventos-sistema.sql
+-- (la tabla eventos_sistema se crea en ese archivo)
+
+-- NOTA: Comentario de política metricas_uso movido a 10-subscriptions-table.sql
+-- (la tabla metricas_uso_organizacion se crea en ese archivo)

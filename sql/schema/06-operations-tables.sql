@@ -133,6 +133,10 @@ CREATE TABLE horarios_disponibilidad (
             END
         ),
 
+    -- 🔑 UNIQUE CONSTRAINT - PREVIENE SLOTS DUPLICADOS
+    CONSTRAINT unique_horario_slot
+        UNIQUE (profesional_id, fecha, hora_inicio),
+
     -- 🚫 EXCLUSION CONSTRAINT - PREVIENE SOLAPAMIENTOS AUTOMÁTICAMENTE
     EXCLUDE USING gist (
         profesional_id WITH =,

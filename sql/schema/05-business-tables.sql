@@ -324,3 +324,24 @@ CREATE TABLE servicios_profesionales (
     -- 🔒 Constraint de unicidad
     UNIQUE(servicio_id, profesional_id)
 );
+
+-- ====================================================================
+-- 🔗 AGREGAR FOREIGN KEYS DIFERIDAS
+-- ====================================================================
+-- Estas FKs no pudieron agregarse antes porque profesionales aún no existía.
+-- Se agregan aquí después de CREATE TABLE profesionales.
+-- ====================================================================
+
+-- FK: usuarios.profesional_id → profesionales.id
+ALTER TABLE usuarios
+ADD CONSTRAINT fk_usuarios_profesional
+FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
+    ON DELETE SET NULL    -- Si se elimina profesional, SET NULL en usuario
+    ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
+
+-- FK: clientes.profesional_preferido_id → profesionales.id
+ALTER TABLE clientes
+ADD CONSTRAINT fk_clientes_profesional_preferido
+FOREIGN KEY (profesional_preferido_id) REFERENCES profesionales(id)
+    ON DELETE SET NULL    -- Si se elimina profesional, SET NULL en cliente
+    ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada

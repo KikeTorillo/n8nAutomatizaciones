@@ -83,16 +83,39 @@ GRANT ALL PRIVILEGES ON SCHEMA public TO n8n_app;
 GRANT CREATE ON SCHEMA public TO n8n_app;
 
 -- =====================================================================
--- CONFIGURACIÓN DE SEGURIDAD
+-- CONFIGURACIÓN DE SEGURIDAD Y PERFORMANCE
 -- =====================================================================
 
--- Configurar timeouts y límites de conexión
+-- Connection Limits (prevenir agotamiento de pool de conexiones)
+ALTER ROLE saas_app CONNECTION LIMIT 100;
+ALTER ROLE n8n_app CONNECTION LIMIT 50;
+ALTER ROLE evolution_app CONNECTION LIMIT 30;
+ALTER ROLE readonly_user CONNECTION LIMIT 20;
+ALTER ROLE integration_user CONNECTION LIMIT 10;
+
+-- Statement Timeouts (timeout de queries individuales)
 ALTER ROLE saas_app SET statement_timeout = '30s';
 ALTER ROLE n8n_app SET statement_timeout = '60s';
 ALTER ROLE evolution_app SET statement_timeout = '30s';
 ALTER ROLE readonly_user SET statement_timeout = '60s';
-ALTER ROLE readonly_user SET transaction_read_only = on;
 ALTER ROLE integration_user SET statement_timeout = '45s';
+
+-- Idle Transaction Timeouts (evitar transacciones colgadas)
+ALTER ROLE saas_app SET idle_in_transaction_session_timeout = '60s';
+ALTER ROLE n8n_app SET idle_in_transaction_session_timeout = '120s';
+ALTER ROLE evolution_app SET idle_in_transaction_session_timeout = '60s';
+ALTER ROLE readonly_user SET idle_in_transaction_session_timeout = '120s';
+ALTER ROLE integration_user SET idle_in_transaction_session_timeout = '90s';
+
+-- Logging de Queries Lentas (detectar problemas de performance)
+ALTER ROLE saas_app SET log_min_duration_statement = '1000';  -- Log queries > 1s
+ALTER ROLE n8n_app SET log_min_duration_statement = '2000';   -- Log queries > 2s
+ALTER ROLE evolution_app SET log_min_duration_statement = '1000';
+ALTER ROLE readonly_user SET log_min_duration_statement = '5000';  -- Reportes pueden ser lentos
+ALTER ROLE integration_user SET log_min_duration_statement = '2000';
+
+-- Configuración específica de roles
+ALTER ROLE readonly_user SET transaction_read_only = on;
 
 -- =====================================================================
 -- COMENTARIOS Y DOCUMENTACIÓN

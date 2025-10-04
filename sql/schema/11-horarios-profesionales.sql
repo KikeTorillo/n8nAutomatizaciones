@@ -431,6 +431,22 @@ COMMENT ON FUNCTION obtener_horarios_vigentes(INTEGER, DATE) IS
 'Obtiene horarios activos y vigentes de un profesional para una fecha específica';
 
 -- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
+-- ====================================================================
+-- Comentarios de políticas que se crean en 08-rls-policies.sql
+-- pero se documentan aquí porque la tabla se crea en este archivo
+-- ────────────────────────────────────────────────────────────────────
+
+-- Política de horarios profesionales
+COMMENT ON POLICY horarios_profesionales_unified_access ON horarios_profesionales IS
+'Acceso a configuración de horarios de profesionales:
+- Usuario accede solo a horarios de su organización
+- Super admin tiene acceso global
+- Validación de formato numérico en tenant_id
+
+Usado para: Configuración de disponibilidad semanal, breaks, horarios premium.';
+
+-- ====================================================================
 -- 📊 DATOS DE EJEMPLO PARA TESTING
 -- ====================================================================
 

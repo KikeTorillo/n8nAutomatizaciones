@@ -554,6 +554,56 @@ COMMENT ON VIEW eventos_criticos_recientes IS
 'Vista de eventos críticos de los últimos 7 días para monitoreo y alertas';
 
 -- ====================================================================
+-- 📊 ÍNDICE MEJORADO - AUDITORÍA DE EVENTOS
+-- ====================================================================
+-- Este índice se agrega aquí (no en 07-indexes.sql) porque la tabla
+-- eventos_sistema se crea en este archivo.
+-- ────────────────────────────────────────────────────────────────────
+
+-- 📋 ÍNDICE MEJORADO: AUDITORÍA POR USUARIO
+-- Propósito: Búsqueda rápida de eventos de un usuario específico
+-- Uso: WHERE usuario_id = ? AND organizacion_id = ? ORDER BY creado_en DESC
+-- Ventaja: Índice parcial, solo eventos con usuario asignado
+CREATE INDEX IF NOT EXISTS idx_eventos_usuario_org_fecha
+    ON eventos_sistema(usuario_id, organizacion_id, creado_en DESC)
+    WHERE usuario_id IS NOT NULL;
+
+COMMENT ON INDEX idx_eventos_usuario_org_fecha IS
+'Índice parcial para búsqueda de eventos por usuario y organización.
+Solo indexa eventos con usuario asignado (~70% de registros).
+Optimizado para auditoría de acciones de usuarios específicos.';
+
+-- 🧹 ÍNDICE PARA ARCHIVADO: EVENTOS ANTIGUOS
+-- Propósito: Búsqueda rápida de eventos antiguos para archivado
+-- Uso: Función archivar_eventos_antiguos() en 15-maintenance-functions.sql
+-- Nota: Índice simple en creado_en (no parcial) para evitar problemas con NOW() VOLATILE
+CREATE INDEX IF NOT EXISTS idx_eventos_sistema_creado_archivado
+    ON eventos_sistema(creado_en);
+
+COMMENT ON INDEX idx_eventos_sistema_creado_archivado IS
+'Índice simple para función de archivado automático.
+Indexa todos los eventos ordenados por fecha de creación.
+La función archivar_eventos_antiguos() usa este índice para filtrar por fecha.
+Usado por: SELECT * FROM archivar_eventos_antiguos();';
+
+-- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
+-- ====================================================================
+-- Comentarios de políticas que se crean en 08-rls-policies.sql
+-- pero se documentan aquí porque la tabla se crea en este archivo
+-- ────────────────────────────────────────────────────────────────────
+
+-- Política de eventos sistema
+COMMENT ON POLICY eventos_sistema_tenant_access ON eventos_sistema IS
+'Acceso a eventos del sistema con múltiples criterios:
+- Super admin: Acceso global a todos los eventos
+- Usuario de organización: Eventos de su organización
+- Usuario específico: Eventos donde es el actor (usuario_id)
+- Bypass: Funciones de logging y auditoría
+
+Crítico para: Auditoría, seguridad, debugging, compliance.';
+
+-- ====================================================================
 -- ✅ VALIDACIÓN DE INSTALACIÓN
 -- ====================================================================
 

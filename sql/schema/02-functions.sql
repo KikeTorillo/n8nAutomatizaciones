@@ -102,29 +102,36 @@ BEGIN
         -- FASE 4: LOGGING Y AUDITORÍA EN EVENTOS_SISTEMA
         -- ═══════════════════════════════════════════════════════════════════
         -- Registrar evento de intento de login en la tabla de auditoría
-        INSERT INTO eventos_sistema (
-            organizacion_id, tipo_evento, descripcion, metadata,
-            usuario_id, ip_address, gravedad
-        ) VALUES (
-            org_id,
-            CASE WHEN p_exitoso THEN 'login_success'::tipo_evento_sistema
-                 ELSE 'login_failed'::tipo_evento_sistema END,
-            CASE WHEN p_exitoso THEN 'Login exitoso registrado'
-                 ELSE 'Intento de login fallido registrado' END,
-            jsonb_build_object(
-                'exitoso', p_exitoso,
-                'email', p_email,
-                'intentos_previos', CASE WHEN NOT p_exitoso THEN
-                    (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) + 1
-                    ELSE 0 END,
-                'bloqueado', CASE WHEN NOT p_exitoso THEN
-                    (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) >= 4
-                    ELSE false END
-            ),
-            usuario_id,
-            p_ip_address,
-            CASE WHEN p_exitoso THEN 'info' ELSE 'warning' END
-        );
+        -- TRY/CATCH para evitar que errores en logging bloqueen autenticación
+        BEGIN
+            INSERT INTO eventos_sistema (
+                organizacion_id, tipo_evento, descripcion, metadata,
+                usuario_id, ip_address, gravedad
+            ) VALUES (
+                org_id,
+                CASE WHEN p_exitoso THEN 'login_success'::tipo_evento_sistema
+                     ELSE 'login_failed'::tipo_evento_sistema END,
+                CASE WHEN p_exitoso THEN 'Login exitoso registrado'
+                     ELSE 'Intento de login fallido registrado' END,
+                jsonb_build_object(
+                    'exitoso', p_exitoso,
+                    'email', p_email,
+                    'intentos_previos', CASE WHEN NOT p_exitoso THEN
+                        (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) + 1
+                        ELSE 0 END,
+                    'bloqueado', CASE WHEN NOT p_exitoso THEN
+                        (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) >= 4
+                        ELSE false END
+                ),
+                usuario_id,
+                p_ip_address,
+                CASE WHEN p_exitoso THEN 'info' ELSE 'warning' END
+            );
+        EXCEPTION
+            WHEN OTHERS THEN
+                -- Logging falló, pero no interrumpir autenticación (crítica)
+                RAISE WARNING 'Error al registrar evento de login: %', SQLERRM;
+        END;
     END IF;
 
     -- ═══════════════════════════════════════════════════════════════════
@@ -183,11 +190,12 @@ BEGIN
     -- FASE 4: LOGGING DE MANTENIMIENTO EN EVENTOS_SISTEMA
     -- ═══════════════════════════════════════════════════════════════════
     -- Registrar evento de limpieza automática (solo si se limpiaron tokens)
+    -- Evento de sistema (organizacion_id = NULL)
     IF tokens_limpiados > 0 THEN
         INSERT INTO eventos_sistema (
             organizacion_id, tipo_evento, descripcion, metadata, gravedad
         ) VALUES (
-            1, -- Organización del sistema (se puede ajustar según necesidades)
+            NULL, -- Evento de sistema (no pertenece a organización específica)
             'tokens_limpiados'::tipo_evento_sistema,
             'Limpieza automática de tokens de reset expirados ejecutada',
             jsonb_build_object(
@@ -421,17 +429,61 @@ DECLARE
     profesional_org INTEGER;
     servicio_org INTEGER;
 BEGIN
-    -- Obtener organizaciones de las entidades relacionadas
-    SELECT organizacion_id INTO cliente_org FROM clientes WHERE id = NEW.cliente_id;
-    SELECT organizacion_id INTO profesional_org FROM profesionales WHERE id = NEW.profesional_id;
-    SELECT organizacion_id INTO servicio_org FROM servicios WHERE id = NEW.servicio_id;
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR EXISTENCIA Y COHERENCIA DEL CLIENTE
+    -- ═══════════════════════════════════════════════════════════════════
+    SELECT organizacion_id INTO cliente_org
+    FROM clientes
+    WHERE id = NEW.cliente_id;
 
-    -- Validar coherencia
-    IF NEW.organizacion_id != cliente_org OR
-       NEW.organizacion_id != profesional_org OR
-       NEW.organizacion_id != servicio_org THEN
-        RAISE EXCEPTION 'Incoherencia organizacional: cliente (%), profesional (%), servicio (%) deben pertenecer a organización (%)',
-            cliente_org, profesional_org, servicio_org, NEW.organizacion_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Cliente con ID % no existe', NEW.cliente_id
+            USING HINT = 'Verificar que el cliente esté registrado en la base de datos',
+                  ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    IF cliente_org != NEW.organizacion_id THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: cliente % (org:%) no pertenece a organización %',
+            NEW.cliente_id, cliente_org, NEW.organizacion_id
+            USING HINT = 'El cliente debe pertenecer a la misma organización que la cita';
+    END IF;
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR EXISTENCIA Y COHERENCIA DEL PROFESIONAL
+    -- ═══════════════════════════════════════════════════════════════════
+    SELECT organizacion_id INTO profesional_org
+    FROM profesionales
+    WHERE id = NEW.profesional_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Profesional con ID % no existe', NEW.profesional_id
+            USING HINT = 'Verificar que el profesional esté registrado en la base de datos',
+                  ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    IF profesional_org != NEW.organizacion_id THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: profesional % (org:%) no pertenece a organización %',
+            NEW.profesional_id, profesional_org, NEW.organizacion_id
+            USING HINT = 'El profesional debe pertenecer a la misma organización que la cita';
+    END IF;
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR EXISTENCIA Y COHERENCIA DEL SERVICIO
+    -- ═══════════════════════════════════════════════════════════════════
+    SELECT organizacion_id INTO servicio_org
+    FROM servicios
+    WHERE id = NEW.servicio_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Servicio con ID % no existe', NEW.servicio_id
+            USING HINT = 'Verificar que el servicio esté registrado en la base de datos',
+                  ERRCODE = 'foreign_key_violation';
+    END IF;
+
+    IF servicio_org != NEW.organizacion_id THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: servicio % (org:%) no pertenece a organización %',
+            NEW.servicio_id, servicio_org, NEW.organizacion_id
+            USING HINT = 'El servicio debe pertenecer a la misma organización que la cita';
     END IF;
 
     RETURN NEW;
@@ -440,7 +492,7 @@ $$ LANGUAGE plpgsql;
 
 -- Comentarios en funciones
 COMMENT ON FUNCTION actualizar_timestamp_citas() IS 'Actualiza automáticamente timestamp y versión al modificar una cita';
-COMMENT ON FUNCTION validar_coherencia_cita() IS 'Valida que cliente, profesional y servicio pertenezcan a la misma organización';
+COMMENT ON FUNCTION validar_coherencia_cita() IS 'Versión mejorada con validación de existencia de registros. Valida que cliente, profesional y servicio existan y pertenezcan a la misma organización. Incluye mensajes de error descriptivos con HINT y ERRCODE apropiados';
 
 -- ====================================================================
 -- 🗓️ FUNCIÓN 10: ACTUALIZAR_TIMESTAMP_HORARIOS
@@ -468,35 +520,72 @@ DECLARE
     servicio_org INTEGER;
     cita_org INTEGER;
 BEGIN
-    -- Validar organización del profesional
-    SELECT organizacion_id INTO profesional_org FROM profesionales WHERE id = NEW.profesional_id;
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR EXISTENCIA Y COHERENCIA DEL PROFESIONAL
+    -- ═══════════════════════════════════════════════════════════════════
+    SELECT organizacion_id INTO profesional_org
+    FROM profesionales
+    WHERE id = NEW.profesional_id;
 
-    IF NEW.organizacion_id != profesional_org THEN
-        RAISE EXCEPTION 'Incoherencia organizacional: profesional (%) debe pertenecer a organización (%)',
-            profesional_org, NEW.organizacion_id;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'Profesional con ID % no existe', NEW.profesional_id
+            USING HINT = 'Verificar que el profesional esté registrado',
+                  ERRCODE = 'foreign_key_violation';
     END IF;
 
-    -- Validar organización del servicio si está especificado
+    IF NEW.organizacion_id != profesional_org THEN
+        RAISE EXCEPTION 'Incoherencia organizacional: profesional % (org:%) debe pertenecer a organización %',
+            NEW.profesional_id, profesional_org, NEW.organizacion_id
+            USING HINT = 'El profesional debe pertenecer a la organización del horario';
+    END IF;
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR SERVICIO SI ESTÁ ESPECIFICADO
+    -- ═══════════════════════════════════════════════════════════════════
     IF NEW.servicio_id IS NOT NULL THEN
-        SELECT organizacion_id INTO servicio_org FROM servicios WHERE id = NEW.servicio_id;
+        SELECT organizacion_id INTO servicio_org
+        FROM servicios
+        WHERE id = NEW.servicio_id;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Servicio con ID % no existe', NEW.servicio_id
+                USING HINT = 'Verificar que el servicio esté registrado',
+                      ERRCODE = 'foreign_key_violation';
+        END IF;
+
         IF NEW.organizacion_id != servicio_org THEN
-            RAISE EXCEPTION 'Incoherencia organizacional: servicio (%) debe pertenecer a organización (%)',
-                servicio_org, NEW.organizacion_id;
+            RAISE EXCEPTION 'Incoherencia organizacional: servicio % (org:%) debe pertenecer a organización %',
+                NEW.servicio_id, servicio_org, NEW.organizacion_id
+                USING HINT = 'El servicio debe pertenecer a la organización del horario';
         END IF;
     END IF;
 
-    -- Validar organización de la cita si está especificada
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDAR CITA SI ESTÁ ESPECIFICADA
+    -- ═══════════════════════════════════════════════════════════════════
     IF NEW.cita_id IS NOT NULL THEN
-        SELECT organizacion_id INTO cita_org FROM citas WHERE id = NEW.cita_id;
+        SELECT organizacion_id INTO cita_org
+        FROM citas
+        WHERE id = NEW.cita_id;
+
+        IF NOT FOUND THEN
+            RAISE EXCEPTION 'Cita con ID % no existe', NEW.cita_id
+                USING HINT = 'Verificar que la cita esté registrada',
+                      ERRCODE = 'foreign_key_violation';
+        END IF;
+
         IF NEW.organizacion_id != cita_org THEN
-            RAISE EXCEPTION 'Incoherencia organizacional: cita (%) debe pertenecer a organización (%)',
-                cita_org, NEW.organizacion_id;
+            RAISE EXCEPTION 'Incoherencia organizacional: cita % (org:%) debe pertenecer a organización %',
+                NEW.cita_id, cita_org, NEW.organizacion_id
+                USING HINT = 'La cita debe pertenecer a la organización del horario';
         END IF;
     END IF;
 
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION validar_coherencia_horario() IS 'Versión mejorada con validación de existencia de registros. Valida que profesional, servicio y cita existan y pertenezcan a la misma organización. Incluye mensajes de error descriptivos con HINT y ERRCODE apropiados';
 
 -- ====================================================================
 -- 🧹 FUNCIÓN 12: LIMPIAR_RESERVAS_EXPIRADAS
@@ -628,3 +717,82 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 -- 📝 COMENTARIO DE FUNCIÓN EN BD
 COMMENT ON FUNCTION normalizar_telefono(TEXT) IS
 'Normaliza números telefónicos removiendo caracteres especiales y códigos de país. Optimizada para búsquedas fuzzy en modelos de cliente';
+
+-- ====================================================================
+-- 🔢 FUNCIÓN 15: GENERAR_CODIGO_CITA
+-- ====================================================================
+-- Función para generar códigos únicos de cita de forma automática.
+-- CRÍTICA para integridad de datos y trazabilidad de citas.
+--
+-- 🎯 PROPÓSITO:
+-- • Auto-generar codigo_cita si no se proporciona
+-- • Garantizar unicidad con formato estandarizado
+-- • Prevenir errores de duplicate key constraint
+--
+-- 📋 FORMATO:
+-- • ORG{id_3digitos}-{YYYYMMDD}-{secuencia_3digitos}
+-- • Ejemplo: ORG001-20251003-001
+--
+-- 🛡️ SEGURIDAD:
+-- • Loop de validación previene duplicados
+-- • Timestamp fallback si hay colisión
+-- • No requiere bypass RLS (usa NEW row)
+--
+-- 🔧 COMPORTAMIENTO:
+-- • Solo genera si codigo_cita es NULL o vacío
+-- • Respeta códigos manuales si se proporcionan
+-- • Trigger BEFORE INSERT
+--
+-- ⚡ PERFORMANCE: O(1) en caso normal, O(n) solo si hay colisión
+-- ────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION generar_codigo_cita()
+RETURNS TRIGGER AS $$
+DECLARE
+    codigo_generado VARCHAR(50);
+    contador INTEGER;
+    fecha_str VARCHAR(8);
+    org_str VARCHAR(10);
+BEGIN
+    -- Solo generar si el código no viene del cliente
+    IF NEW.codigo_cita IS NULL OR NEW.codigo_cita = '' THEN
+
+        -- Formatear organización con padding (ORG001, ORG002, etc)
+        org_str := 'ORG' || LPAD(NEW.organizacion_id::TEXT, 3, '0');
+
+        -- Formatear fecha (YYYYMMDD)
+        fecha_str := TO_CHAR(NEW.fecha_cita, 'YYYYMMDD');
+
+        -- Obtener contador del día para esta organización
+        SELECT COALESCE(COUNT(*), 0) + 1
+        INTO contador
+        FROM citas
+        WHERE organizacion_id = NEW.organizacion_id
+        AND fecha_cita = NEW.fecha_cita;
+
+        -- Generar código: ORG001-20251003-001
+        codigo_generado := org_str || '-' ||
+                          fecha_str || '-' ||
+                          LPAD(contador::TEXT, 3, '0');
+
+        -- Si por alguna razón el código ya existe, agregar timestamp
+        WHILE EXISTS (SELECT 1 FROM citas WHERE codigo_cita = codigo_generado) LOOP
+            codigo_generado := org_str || '-' ||
+                              fecha_str || '-' ||
+                              LPAD(contador::TEXT, 3, '0') || '-' ||
+                              TO_CHAR(NOW(), 'SSSSS'); -- Segundos del día
+            contador := contador + 1;
+        END LOOP;
+
+        NEW.codigo_cita := codigo_generado;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 📝 COMENTARIO DE FUNCIÓN EN BD
+COMMENT ON FUNCTION generar_codigo_cita() IS
+'Genera código único para cada cita (formato: ORG001-20251003-001).
+Previene duplicados con validación de loop.
+Trigger: BEFORE INSERT en tabla citas.
+Creado: 2025-10-03 - Corrección crítica para integridad de datos';

@@ -8,13 +8,14 @@
 -- 🔧 TRIGGERS IMPLEMENTADOS:
 -- • trigger_validar_email_usuario: Valida unicidad de emails
 -- • trigger_actualizar_usuarios: Timestamps automáticos en usuarios
--- • trigger_actualizar_organizaciones: Timestamps en organizaciones  
+-- • trigger_actualizar_organizaciones: Timestamps en organizaciones
 -- • trigger_actualizar_profesionales: Timestamps en profesionales
 -- • trigger_validar_profesional_industria: Coherencia tipo-industria
 -- • trigger_actualizar_timestamp_servicios: Timestamps en servicios
 -- • trigger_actualizar_timestamp_servicios_profesionales: Timestamps en relaciones
 -- • trigger_actualizar_timestamp_citas: Timestamps en citas
 -- • trigger_validar_coherencia_cita: Coherencia organizacional en citas
+-- • trigger_generar_codigo_cita: Auto-generación de código único ✨ NUEVO
 -- • trigger_actualizar_timestamp_horarios: Timestamps en horarios
 -- • trigger_validar_coherencia_horario: Coherencia organizacional en horarios
 --
@@ -113,6 +114,13 @@ CREATE TRIGGER trigger_validar_coherencia_cita
     FOR EACH ROW
     EXECUTE FUNCTION validar_coherencia_cita();
 
+-- TRIGGER 3: AUTO-GENERACIÓN DE CÓDIGO DE CITA (AGREGADO 2025-10-03)
+-- Genera código único automáticamente si no se proporciona
+CREATE TRIGGER trigger_generar_codigo_cita
+    BEFORE INSERT ON citas
+    FOR EACH ROW
+    EXECUTE FUNCTION generar_codigo_cita();
+
 -- ====================================================================
 -- ⏰ TRIGGERS PARA TABLA HORARIOS_DISPONIBILIDAD
 -- ====================================================================
@@ -163,6 +171,9 @@ COMMENT ON TRIGGER trigger_actualizar_timestamp_citas ON citas IS
 
 COMMENT ON TRIGGER trigger_validar_coherencia_cita ON citas IS
 'Valida que cliente, profesional y servicio pertenezcan a la misma organización usando función validar_coherencia_cita()';
+
+COMMENT ON TRIGGER trigger_generar_codigo_cita ON citas IS
+'Auto-genera codigo_cita único (formato: ORG001-20251003-001) antes de insertar si no se proporciona. Previene errores de duplicate key. Agregado: 2025-10-03';
 
 COMMENT ON TRIGGER trigger_actualizar_timestamp_horarios ON horarios_disponibilidad IS
 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp_horarios()';
