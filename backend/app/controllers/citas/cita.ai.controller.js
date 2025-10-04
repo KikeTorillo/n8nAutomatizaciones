@@ -5,7 +5,7 @@
 
 const CitaModel = require('../../database/citas');
 const logger = require('../../utils/logger');
-const { ResponseHelper } = require('../../utils/helpers');
+const { ResponseHelper, OrganizacionHelper } = require('../../utils/helpers');
 
 class CitaAIController {
 
@@ -47,6 +47,28 @@ class CitaAIController {
             if (isNaN(orgId) || isNaN(servId) || orgId <= 0 || servId <= 0) {
                 return ResponseHelper.error(res, 'IDs de organización y servicio deben ser números válidos', 400);
             }
+
+            // ✅ SEGURIDAD: Validar que la organización existe y está activa
+            // CRÍTICO para endpoints públicos (sin autenticación)
+            const { valida, organizacion } = await OrganizacionHelper.validarOrganizacionActiva(orgId);
+
+            if (!valida) {
+                logger.warn('Intento de creación automática de cita con organización inválida', {
+                    organizacion_id: orgId,
+                    telefono_cliente: telefono_cliente,
+                    ip: req.ip
+                });
+
+                return ResponseHelper.error(res,
+                    'Organización no encontrada o inactiva',
+                    404
+                );
+            }
+
+            // ✅ OPCIONAL: Validar límites del plan (ejemplo)
+            // if (organizacion.plan_actual === 'basico' && ...) {
+            //     return ResponseHelper.error(res, 'Plan insuficiente', 403);
+            // }
 
             const datosIA = {
                 telefono_cliente: telefono_cliente.trim(),
@@ -148,6 +170,19 @@ class CitaAIController {
                 return ResponseHelper.error(res, 'ID de organización debe ser un número válido', 400);
             }
 
+            // ✅ SEGURIDAD: Validar que la organización existe y está activa
+            const { valida } = await OrganizacionHelper.validarOrganizacionActiva(orgId);
+
+            if (!valida) {
+                logger.warn('Intento de búsqueda con organización inválida', {
+                    organizacion_id: orgId,
+                    telefono: telefono,
+                    ip: req.ip
+                });
+
+                return ResponseHelper.error(res, 'Organización no encontrada o inactiva', 404);
+            }
+
             const estadosArray = estados ? estados.split(',') : ['pendiente', 'confirmada'];
             const incluirHistoricas = incluir_historicas === 'true';
 
@@ -204,6 +239,19 @@ class CitaAIController {
             const orgId = parseInt(organizacion_id);
             if (isNaN(orgId) || orgId <= 0) {
                 return ResponseHelper.error(res, 'ID de organización debe ser un número válido', 400);
+            }
+
+            // ✅ SEGURIDAD: Validar que la organización existe y está activa
+            const { valida } = await OrganizacionHelper.validarOrganizacionActiva(orgId);
+
+            if (!valida) {
+                logger.warn('Intento de modificación con organización inválida', {
+                    organizacion_id: orgId,
+                    codigo_cita: codigo,
+                    ip: req.ip
+                });
+
+                return ResponseHelper.error(res, 'Organización no encontrada o inactiva', 404);
             }
 
             // Validar servicio ID si se proporciona
@@ -267,6 +315,19 @@ class CitaAIController {
             const orgId = parseInt(organizacion_id);
             if (isNaN(orgId) || orgId <= 0) {
                 return ResponseHelper.error(res, 'ID de organización debe ser un número válido', 400);
+            }
+
+            // ✅ SEGURIDAD: Validar que la organización existe y está activa
+            const { valida } = await OrganizacionHelper.validarOrganizacionActiva(orgId);
+
+            if (!valida) {
+                logger.warn('Intento de cancelación con organización inválida', {
+                    organizacion_id: orgId,
+                    codigo_cita: codigo,
+                    ip: req.ip
+                });
+
+                return ResponseHelper.error(res, 'Organización no encontrada o inactiva', 404);
             }
 
             const resultado = await CitaModel.cancelarAutomatica(

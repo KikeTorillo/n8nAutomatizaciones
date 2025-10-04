@@ -404,8 +404,8 @@ class CitaOperacionalModel {
                 profesional_id: datosWalkIn.profesional_id
             });
 
-            // Generar código único
-            const codigoCita = await CitaHelpersModel.generarCodigoCita(organizacionId, db);
+            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
+            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
 
             // Obtener información del servicio
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosWalkIn.servicio_id, organizacionId, db);
@@ -458,9 +458,10 @@ class CitaOperacionalModel {
             }
 
             // Crear cita walk-in con patrón enterprise
+            // ✅ NO incluir codigo_cita (auto-generado por trigger)
             const citaInsert = await db.query(`
                 INSERT INTO citas (
-                    organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
+                    organizacion_id, cliente_id, profesional_id, servicio_id,
                     fecha_cita,
                     hora_inicio, hora_fin,              -- NULL (no programado)
                     hora_llegada, hora_inicio_real,     -- Llegada inmediata, servicio inicia ahora
@@ -471,15 +472,15 @@ class CitaOperacionalModel {
                     creado_por, ip_origen, origen_cita, origen_aplicacion,
                     creado_en
                 ) VALUES (
-                    $1, $2, $3, $4, $5,
-                    $6,
+                    $1, $2, $3, $4,
+                    $5,
                     NULL, NULL,                         -- Sin horario programado
                     NOW(), NOW(),                       -- Llegada y atención inmediatas
-                    $7, $8, $9, $10,
-                    $11, $12, $13,
-                    $14, $15,
-                    $16, $17,
-                    $18, $19, $20, $21,
+                    $6, $7, $8, $9,
+                    $10, $11, $12,
+                    $13, $14,
+                    $15, $16,
+                    $17, $18, $19, $20,
                     NOW()
                 ) RETURNING
                     id, organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
@@ -487,7 +488,6 @@ class CitaOperacionalModel {
                     precio_final, estado, origen_cita, creado_en
             `, [
                 organizacionId,
-                codigoCita,
                 datosWalkIn.cliente_id,
                 datosWalkIn.profesional_id,
                 datosWalkIn.servicio_id,

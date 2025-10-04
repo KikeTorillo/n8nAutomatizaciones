@@ -52,13 +52,14 @@ class CitaBaseModel {
                 db
             );
 
-            // Generar código único
-            const codigoCita = await CitaHelpersModel.generarCodigoCita(citaData.organizacion_id, db);
+            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
+            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
+            // Formato: ORG001-20251004-001
 
             // Preparar datos completos para inserción
             const datosCompletos = {
                 organizacion_id: citaData.organizacion_id,
-                codigo_cita: codigoCita,
+                // ✅ NO incluir codigo_cita (auto-generado por trigger)
                 cliente_id: citaData.cliente_id,
                 profesional_id: citaData.profesional_id,
                 servicio_id: citaData.servicio_id,

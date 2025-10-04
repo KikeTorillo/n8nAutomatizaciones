@@ -6,9 +6,10 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "NODE_ENV=test jest --forceExit",
+    "test:clean": "docker exec postgres_db psql -U admin -d postgres -f /docker-entrypoint-initdb.d/__tests__/clean-test-data.sql && NODE_ENV=test jest --forceExit",
+    "test:watch": "NODE_ENV=test jest --watch",
+    "test:coverage": "NODE_ENV=test jest --coverage --forceExit",
     "db:migrate": "node scripts/migrate.js",
     "db:seed": "node scripts/seed.js",
     "docs": "node scripts/generate-docs.js"

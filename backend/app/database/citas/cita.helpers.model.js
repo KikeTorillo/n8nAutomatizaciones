@@ -198,64 +198,56 @@ class CitaHelpersModel {
     }
 
     /**
-     * Generar código único de cita
+     * @deprecated ⚠️ DEPRECATED - NO USAR
+     * La base de datos genera automáticamente codigo_cita mediante trigger
+     * Trigger: trigger_generar_codigo_cita (sql/schema/09-triggers.sql:118)
+     * Formato: ORG001-20251004-001 (secuencial por organización)
+     *
+     * Esta función genera códigos en formato incorrecto y causa conflictos
+     * con el sistema de auto-generación de la BD.
+     *
      * @param {number} organizacionId - ID de la organización
      * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<string>} Código único
+     * @throws {Error} Siempre - Función deprecated
      */
     static async generarCodigoCita(organizacionId, db) {
-        let codigo;
-        let intentos = 0;
-        const maxIntentos = 5;
+        logger.error('[CitaHelpersModel.generarCodigoCita] DEPRECATED: Esta función NO debe usarse', {
+            organizacion_id: organizacionId,
+            mensaje: 'La BD genera codigo_cita automáticamente via trigger',
+            formato_correcto: 'ORG001-20251004-001',
+            trigger: 'trigger_generar_codigo_cita'
+        });
 
-        do {
-            // Generar código alfanumérico de 8 caracteres
-            const fecha = new Date().toISOString().slice(2, 10).replace(/-/g, '');
-            const aleatorio = Math.random().toString(36).substring(2, 6).toUpperCase();
-            codigo = `${fecha}${aleatorio}`;
-
-            // Verificar que no existe
-            const existeCodigo = await db.query(
-                'SELECT id FROM citas WHERE codigo_cita = $1',
-                [codigo]
-            );
-
-            if (existeCodigo.rows.length === 0) {
-                break;
-            }
-
-            intentos++;
-        } while (intentos < maxIntentos);
-
-        if (intentos >= maxIntentos) {
-            throw new Error('No se pudo generar un código único para la cita');
-        }
-
-        return codigo;
+        throw new Error(
+            'DEPRECATED: generarCodigoCita() no debe usarse. ' +
+            'La base de datos genera codigo_cita automáticamente mediante trigger. ' +
+            'NO envíe codigo_cita en el INSERT, use RETURNING * para obtenerlo.'
+        );
     }
 
     /**
      * Insertar cita completa con validaciones
+     * ✅ CORRECCIÓN: NO incluir codigo_cita (auto-generado por trigger)
      * @param {Object} citaData - Datos de la cita
      * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<Object>} Cita creada
+     * @returns {Promise<Object>} Cita creada (incluye codigo_cita generado)
      */
     static async insertarCitaCompleta(citaData, db) {
         const cita = await db.query(`
             INSERT INTO citas (
-                organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
+                organizacion_id, cliente_id, profesional_id, servicio_id,
                 fecha_cita, hora_inicio, hora_fin, zona_horaria, precio_servicio,
                 descuento, precio_final, estado, metodo_pago, pagado,
                 notas_cliente, notas_internas, confirmacion_requerida,
                 confirmada_por_cliente, recordatorio_enviado, creado_por,
                 ip_origen, user_agent, origen_aplicacion, creado_en
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                $11, $12, $13, $14, $15, $16, $17, $18,
-                $19, $20, $21, $22, $23, $24, NOW()
+                $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                $10, $11, $12, $13, $14, $15, $16, $17,
+                $18, $19, $20, $21, $22, $23, NOW()
             ) RETURNING *
         `, [
-            citaData.organizacion_id, citaData.codigo_cita, citaData.cliente_id,
+            citaData.organizacion_id, citaData.cliente_id,
             citaData.profesional_id, citaData.servicio_id, citaData.fecha_cita,
             citaData.hora_inicio, citaData.hora_fin, citaData.zona_horaria,
             citaData.precio_servicio, citaData.descuento, citaData.precio_final,

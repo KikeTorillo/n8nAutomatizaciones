@@ -56,13 +56,13 @@ class CitaAIModel {
                 throw new Error('No hay horarios disponibles para la fecha y condiciones solicitadas');
             }
 
-            // PASO 4: Generar código único de cita
-            const codigoCita = await CitaHelpersModel.generarCodigoCita(datosIA.organizacion_id, db);
+            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
+            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
 
-            // PASO 5: Crear la cita con transacción atómica
+            // PASO 4: Crear la cita con transacción atómica
             const citaCreada = await CitaHelpersModel.insertarCitaCompleta({
                 organizacion_id: datosIA.organizacion_id,
-                codigo_cita: codigoCita,
+                // ✅ NO incluir codigo_cita (auto-generado por trigger)
                 cliente_id: cliente.id,
                 profesional_id: horarioDisponible.profesional_id,
                 servicio_id: datosIA.servicio_id,

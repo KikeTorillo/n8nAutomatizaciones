@@ -217,7 +217,7 @@ const createRateLimit = (options = {}) => {
     max: 100,                                               // 100 requests por defecto
     message: 'Demasiadas solicitudes, intenta más tarde',   // Mensaje de error estándar
     keyGenerator: (req) => req.ip,                          // Usar IP por defecto
-    skip: () => false,                                      // No saltar requests por defecto
+    skip: () => process.env.NODE_ENV === 'test',            // Saltar en entorno de test
     onLimitReached: null,                                   // Sin callback por defecto
     ...options                                              // Sobreescribir con opciones del usuario
   };
@@ -322,7 +322,7 @@ const userRateLimit = createRateLimit({
   max: 200,                                                    // 200 requests (más generoso)
   message: 'Demasiadas solicitudes, intenta en 15 minutos',
   keyGenerator: (req) => req.user ? `user:${req.user.id}` : `ip:${req.ip}`, // Usuario o IP
-  skip: (req) => !req.user                                     // Solo usuarios autenticados
+  skip: (req) => process.env.NODE_ENV === 'test' || !req.user  // Saltar en test o sin usuario
 });
 
 /**
@@ -345,7 +345,7 @@ const organizationRateLimit = createRateLimit({
   max: 1000,                                                           // 1000 requests por org
   message: 'Límite de solicitudes de la organización excedido',
   keyGenerator: (req) => req.user ? `org:${req.user.organizacion_id}` : `ip:${req.ip}`,
-  skip: (req) => !req.user                                             // Requiere autenticación
+  skip: (req) => process.env.NODE_ENV === 'test' || !req.user          // Saltar en test o sin usuario
 });
 
 /**

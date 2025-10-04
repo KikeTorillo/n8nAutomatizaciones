@@ -116,13 +116,32 @@ const setTenantContext = async (req, res, next) => {
     // Obtener conexión del pool principal para configurar contexto
     client = await database.getPool('saas').connect();
 
+    // Validar que tenant_id es numérico (prevenir SQL injection)
+    if (isNaN(tenantId) || tenantId <= 0) {
+      logger.error('tenant_id inválido - debe ser numérico positivo', {
+        tenantId,
+        type: typeof tenantId,
+        userId: req.user?.id
+      });
+      if (client) client.release();
+      return ResponseHelper.error(res, 'Configuración de tenant inválida', 500);
+    }
+
     // Configurar el tenant ID en la sesión de base de datos
     // Esto activa automáticamente las políticas de Row Level Security
-    // Nota: SET no acepta parámetros preparados, usamos interpolación segura
-    await client.query(`SET app.current_tenant_id = '${tenantId}'`);
+    // SEGURIDAD: Usar set_config con prepared statement (NO interpolación directa)
+    await client.query('SELECT set_config($1, $2, false)',
+      ['app.current_tenant_id', tenantId.toString()]
+    );
 
     // Asegurar que RLS esté activo (por defecto debería estar en false)
-    await client.query('SET app.bypass_rls = \'false\'');
+    await client.query('SELECT set_config($1, $2, false)',
+      ['app.bypass_rls', 'false']
+    );
+
+    // ✅ CORRECCIÓN: Liberar conexión inmediatamente después de configurar contexto
+    // Los modelos configurarán RLS en sus propias transacciones
+    client.release();
 
     logger.debug('Contexto de tenant configurado', {
       tenantId: tenantId,
@@ -130,9 +149,6 @@ const setTenantContext = async (req, res, next) => {
       userRol: req.user.rol,
       path: req.path
     });
-
-    // Almacenar la conexión en el request para uso posterior
-    req.dbClient = client;
 
     next();
   } catch (error) {
@@ -356,26 +372,21 @@ const requirePlan = (allowedPlans) => {
 };
 
 /**
- * Middleware para liberar la conexión de base de datos al final del request
- * Debe ser el último middleware en ejecutarse
+ * @deprecated MIDDLEWARE YA NO NECESARIO
+ *
+ * Anteriormente se usaba para liberar conexiones guardadas en req.dbClient.
+ * Ahora las conexiones se liberan inmediatamente en setTenantContext (línea 144).
+ * Los modelos configuran RLS en sus propias transacciones.
+ *
+ * Este middleware se mantiene solo por compatibilidad pero NO hace nada.
  */
 const releaseTenantConnection = (req, res, next) => {
-  // Interceptar el final de la respuesta para liberar la conexión
-  const originalEnd = res.end;
-
-  res.end = function(...args) {
-    // Liberar conexión si existe
-    if (req.dbClient) {
-      req.dbClient.release();
-      logger.debug('Conexión de tenant liberada', {
-        tenantId: req.tenant?.organizacionId,
-        path: req.path
-      });
-    }
-
-    // Llamar al método original
-    originalEnd.apply(this, args);
-  };
+  // ⚠️ DEPRECATED: Ya no se usa req.dbClient
+  // Las conexiones se liberan inmediatamente en setTenantContext
+  logger.debug('releaseTenantConnection llamado pero ya no es necesario', {
+    tenantId: req.tenant?.organizacionId,
+    path: req.path
+  });
 
   next();
 };

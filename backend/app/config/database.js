@@ -19,6 +19,35 @@ class DatabaseConfig {
    * Inicializa pools de conexión para cada base de datos
    */
   initializePools() {
+    // ✅ SEGURIDAD: Validar que se usa el usuario correcto (principio de mínimo privilegio)
+    const expectedUser = 'saas_app'; // Usuario limitado con RLS activo
+    const currentUser = process.env.DB_USER;
+
+    if (currentUser !== expectedUser) {
+      logger.error('🔴 SEGURIDAD: Usuario de BD incorrecto', {
+        currentUser: currentUser,
+        expectedUser: expectedUser,
+        riesgo: 'Usar "admin" permite bypass de RLS y acceso a todos los tenants',
+        ambiente: process.env.NODE_ENV
+      });
+
+      // En producción, fallar inmediatamente
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error(
+          `SEGURIDAD CRÍTICA: DB_USER debe ser '${expectedUser}' en producción. ` +
+          `Actual: '${currentUser}'. El usuario 'admin' puede bypass RLS.`
+        );
+      } else {
+        // En desarrollo, advertir pero permitir (facilita debugging)
+        logger.warn(`⚠️ ADVERTENCIA: Se recomienda usar '${expectedUser}' en desarrollo también`);
+      }
+    } else {
+      logger.info('✅ Usuario de BD validado correctamente', {
+        user: expectedUser,
+        ambiente: process.env.NODE_ENV
+      });
+    }
+
     // Pool principal SaaS
     this.pools.saas = new Pool({
       host: process.env.DB_HOST,

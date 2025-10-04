@@ -423,7 +423,10 @@ $$ LANGUAGE plpgsql;
 -- Función para validar coherencia organizacional en citas
 -- ────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION validar_coherencia_cita()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER  -- Bypasea RLS para poder validar coherencia entre organizaciones
+SET search_path = public
+AS $$
 DECLARE
     cliente_org INTEGER;
     profesional_org INTEGER;
@@ -514,7 +517,10 @@ $$ LANGUAGE plpgsql;
 -- Función para validar coherencia organizacional en horarios
 -- ────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION validar_coherencia_horario()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER
+SECURITY DEFINER  -- Bypasea RLS para poder validar coherencia entre organizaciones
+SET search_path = public
+AS $$
 DECLARE
     profesional_org INTEGER;
     servicio_org INTEGER;

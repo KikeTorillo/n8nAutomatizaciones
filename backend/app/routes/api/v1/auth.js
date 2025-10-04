@@ -7,7 +7,7 @@
 
 const express = require('express');
 const AuthController = require('../../../controllers/auth.controller');
-const { auth, rateLimiting, validation } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
 const authSchemas = require('../../../schemas/auth.schemas');
 
 const router = express.Router();
@@ -74,6 +74,7 @@ router.post('/logout',
  */
 router.get('/me',
     auth.authenticateToken,
+    tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     AuthController.me
 );
@@ -97,6 +98,7 @@ router.post('/change-password',
  */
 router.put('/profile',
     auth.authenticateToken,
+    tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     validation.validate(authSchemas.updateProfile),
     AuthController.actualizarPerfil
@@ -109,6 +111,7 @@ router.put('/profile',
  */
 router.post('/unlock-user',
     auth.authenticateToken,
+    tenant.setTenantContext,
     auth.requireRole(['admin', 'super_admin', 'propietario']),
     rateLimiting.heavyOperationRateLimit,
     validation.validate(authSchemas.unlockUser),
@@ -122,6 +125,7 @@ router.post('/unlock-user',
  */
 router.get('/blocked-users',
     auth.authenticateToken,
+    tenant.setTenantContext,
     auth.requireRole(['admin', 'super_admin', 'propietario']),
     rateLimiting.apiRateLimit,
     validation.validate(authSchemas.getBlockedUsers),
@@ -135,6 +139,7 @@ router.get('/blocked-users',
  */
 router.get('/check-lock/:userId',
     auth.authenticateToken,
+    tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     validation.validate(authSchemas.checkLock),
     AuthController.verificarBloqueo
@@ -147,6 +152,7 @@ router.get('/check-lock/:userId',
  */
 router.post('/registrar-usuario-org',
     auth.authenticateToken,
+    tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin', 'propietario']),
     rateLimiting.heavyOperationRateLimit,
     validation.validate(authSchemas.registrarUsuarioOrg),
@@ -171,6 +177,7 @@ router.get('/verificar-email/:token',
  */
 router.put('/cambiar-rol',
     auth.authenticateToken,
+    tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin', 'propietario']),
     rateLimiting.heavyOperationRateLimit,
     validation.validate(authSchemas.cambiarRol),
@@ -184,6 +191,7 @@ router.put('/cambiar-rol',
  */
 router.get('/usuarios-organizacion',
     auth.authenticateToken,
+    tenant.setTenantContext,
     auth.requireRole(['super_admin', 'admin', 'propietario']),
     rateLimiting.apiRateLimit,
     validation.validate(authSchemas.listarUsuariosOrg),

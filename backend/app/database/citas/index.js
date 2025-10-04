@@ -143,6 +143,10 @@ class CitaModel {
         return CitaHelpersModel.buscarHorarioCompatible(criterios, db);
     }
 
+    /**
+     * @deprecated ⚠️ NO USAR - Genera códigos en formato incorrecto
+     * La BD genera codigo_cita automáticamente via trigger
+     */
     static async generarCodigoCita(organizacionId, db) {
         return CitaHelpersModel.generarCodigoCita(organizacionId, db);
     }
