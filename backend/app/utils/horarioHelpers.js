@@ -121,6 +121,147 @@ class HorarioHelpers {
             mensaje_general: horarios.recomendacion_ia?.mensaje_ia || 'Consulta de disponibilidad procesada'
         };
     }
+
+    /**
+     * Generar recomendación IA basada en disponibilidad de profesionales
+     * @param {Array} profesionales - Array de profesionales con disponibilidad
+     * @returns {Object} Recomendación estructurada para IA
+     */
+    static generarRecomendacionIA(profesionales) {
+        if (profesionales.length === 0) {
+            return {
+                tipo: 'sin_disponibilidad',
+                mensaje: 'No hay horarios disponibles en el rango consultado',
+                sugerencia: 'Ampliar el rango de fechas o considerar otros profesionales'
+            };
+        }
+
+        // Ordenar profesionales por disponibilidad
+        const profesionalesOrdenados = profesionales.sort((a, b) => {
+            // Priorizar por proximidad de disponibilidad, luego por total de slots
+            const diffA = a.proxima_disponibilidad ? new Date(a.proxima_disponibilidad) - new Date() : Infinity;
+            const diffB = b.proxima_disponibilidad ? new Date(b.proxima_disponibilidad) - new Date() : Infinity;
+
+            if (diffA !== diffB) return diffA - diffB;
+            return b.total_slots_libres - a.total_slots_libres;
+        });
+
+        const mejorProfesional = profesionalesOrdenados[0];
+        const horasHastaProxima = mejorProfesional.proxima_disponibilidad ?
+            Math.ceil((new Date(mejorProfesional.proxima_disponibilidad) - new Date()) / (1000 * 60 * 60)) : 0;
+
+        return {
+            tipo: 'recomendacion_disponible',
+            profesional_recomendado: {
+                id: mejorProfesional.profesional_id,
+                nombre: mejorProfesional.nombre,
+                tipo: mejorProfesional.tipo,
+                total_slots_libres: mejorProfesional.total_slots_libres,
+                dias_disponibles: mejorProfesional.dias_disponibles,
+                proxima_disponibilidad: mejorProfesional.proxima_disponibilidad,
+                horas_hasta_proxima: horasHastaProxima
+            },
+            alternativas: profesionalesOrdenados.slice(1, 3).map(prof => ({
+                id: prof.profesional_id,
+                nombre: prof.nombre,
+                slots_libres: prof.total_slots_libres,
+                proxima_disponibilidad: prof.proxima_disponibilidad
+            })),
+            mensaje_ia: horasHastaProxima <= 24 ?
+                `${mejorProfesional.nombre} tiene disponibilidad hoy mismo` :
+                horasHastaProxima <= 72 ?
+                `${mejorProfesional.nombre} tiene disponibilidad en los próximos 3 días` :
+                `${mejorProfesional.nombre} es la mejor opción con ${mejorProfesional.total_slots_libres} horarios disponibles`
+        };
+    }
+
+    /**
+     * Procesar y estructurar respuesta de disponibilidad
+     * @param {Array} rows - Filas de resultado SQL
+     * @param {Object} filtros - Filtros aplicados en la consulta
+     * @param {string} fechaInicioFinal - Fecha inicio procesada
+     * @param {string} fechaFinFinal - Fecha fin procesada
+     * @param {number} duracion_servicio - Duración del servicio
+     * @returns {Object} Respuesta estructurada con estadísticas y recomendaciones
+     */
+    static procesarRespuestaDisponibilidad(rows, filtros, fechaInicioFinal, fechaFinFinal, duracion_servicio) {
+        const horariosPorFecha = {};
+        const resumenProfesionales = {};
+
+        rows.forEach(row => {
+            const fecha = row.fecha.toISOString().split('T')[0];
+
+            if (!horariosPorFecha[fecha]) {
+                horariosPorFecha[fecha] = {
+                    fecha: fecha,
+                    dia_semana: row.dia_semana.trim(),
+                    profesionales: {}
+                };
+            }
+
+            horariosPorFecha[fecha].profesionales[row.profesional_id] = {
+                profesional_id: row.profesional_id,
+                nombre: row.profesional_nombre,
+                tipo: row.tipo_profesional,
+                slots_disponibles: row.slots_disponibles.filter(slot => slot.disponible),
+                total_slots: parseInt(row.total_slots),
+                slots_libres: parseInt(row.slots_libres),
+                primer_slot: row.primer_slot,
+                ultimo_slot: row.ultimo_slot
+            };
+
+            // Resumen por profesional
+            if (!resumenProfesionales[row.profesional_id]) {
+                resumenProfesionales[row.profesional_id] = {
+                    profesional_id: row.profesional_id,
+                    nombre: row.profesional_nombre,
+                    tipo: row.tipo_profesional,
+                    dias_disponibles: 0,
+                    total_slots_libres: 0,
+                    proxima_disponibilidad: null
+                };
+            }
+
+            resumenProfesionales[row.profesional_id].dias_disponibles++;
+            resumenProfesionales[row.profesional_id].total_slots_libres += parseInt(row.slots_libres);
+
+            if (!resumenProfesionales[row.profesional_id].proxima_disponibilidad ||
+                row.primer_slot < resumenProfesionales[row.profesional_id].proxima_disponibilidad) {
+                resumenProfesionales[row.profesional_id].proxima_disponibilidad = row.primer_slot;
+            }
+        });
+
+        // Calcular estadísticas generales
+        const totalDiasConsultados = Object.keys(horariosPorFecha).length;
+        const totalProfesionalesDisponibles = Object.keys(resumenProfesionales).length;
+        const totalSlotsLibres = Object.values(resumenProfesionales)
+            .reduce((sum, prof) => sum + prof.total_slots_libres, 0);
+
+        return {
+            consulta: {
+                organizacion_id: filtros.organizacion_id,
+                fecha_inicio: fechaInicioFinal,
+                fecha_fin: fechaFinFinal,
+                duracion_servicio: duracion_servicio,
+                filtros_aplicados: {
+                    profesional_id: filtros.profesional_id,
+                    servicio_id: filtros.servicio_id,
+                    dias_semana: filtros.dias_semana,
+                    hora_inicio: filtros.hora_inicio,
+                    hora_fin: filtros.hora_fin
+                }
+            },
+            estadisticas: {
+                total_dias_consultados: totalDiasConsultados,
+                total_profesionales_disponibles: totalProfesionalesDisponibles,
+                total_slots_libres: totalSlotsLibres,
+                promedio_slots_por_dia: totalDiasConsultados > 0 ? Math.round(totalSlotsLibres / totalDiasConsultados) : 0
+            },
+            disponibilidad_por_fecha: horariosPorFecha,
+            resumen_profesionales: Object.values(resumenProfesionales),
+            recomendacion_ia: this.generarRecomendacionIA(Object.values(resumenProfesionales))
+        };
+    }
 }
 
 module.exports = HorarioHelpers;

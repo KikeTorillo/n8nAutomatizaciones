@@ -1,20 +1,13 @@
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
+const HorarioHelpers = require('../utils/horarioHelpers');
 
-/**
- * Modelo de Horarios - Multi-tenant con RLS
- * Maneja consulta y gestión de disponibilidad para agendamiento
- */
 class HorarioModel {
 
-    /**
-     * Consultar disponibilidad de horarios (con filtros multi-criterio)
-     */
-    static async consultarDisponibilidad(filtros, auditoria = {}) {
+    static async consultarDisponibilidad(filtros) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', filtros.organizacion_id.toString()]);
 
@@ -30,11 +23,10 @@ class HorarioModel {
                 limite = 50
             } = filtros;
 
-            // Calcular fechas por defecto (próximos 7 días)
             const fechaInicioFinal = fecha_inicio || new Date().toISOString().split('T')[0];
             const fechaFinFinal = fecha_fin || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-            // Construir query principal con filtros dinámicos
+            // Query complejo para disponibilidad con validación de conflictos y duración
             let query = `
                 WITH profesionales_validos AS (
                     SELECT DISTINCT p.id, p.nombre_completo, p.tipo_profesional
@@ -47,14 +39,12 @@ class HorarioModel {
             const queryParams = [filtros.organizacion_id];
             let paramCounter = 2;
 
-            // Filtro por profesional específico
             if (profesional_id) {
                 query += ` AND p.id = $${paramCounter}`;
                 queryParams.push(profesional_id);
                 paramCounter++;
             }
 
-            // Filtro por compatibilidad con servicio (optimizado)
             if (servicio_id) {
                 query += ` AND EXISTS (
                     SELECT 1 FROM servicios_profesionales sp
@@ -72,7 +62,6 @@ class HorarioModel {
                         hd.*,
                         pv.nombre_completo as profesional_nombre,
                         pv.tipo_profesional,
-                        -- Validar duración suficiente (incluyendo tiempo de limpieza si aplica)
                         CASE
                             WHEN $${paramCounter + 3}::INTEGER IS NOT NULL THEN
                                 hd.duracion_slot >= ($${paramCounter}::INTEGER + COALESCE((
@@ -83,7 +72,6 @@ class HorarioModel {
                             ELSE
                                 hd.duracion_slot >= $${paramCounter}::INTEGER
                         END as duracion_suficiente,
-                        -- Verificar disponibilidad (optimizado)
                         CASE
                             WHEN NOT EXISTS (
                                 SELECT 1 FROM citas c
@@ -109,12 +97,9 @@ class HorarioModel {
                       AND hd.fecha <= $${paramCounter + 2}::DATE
             `;
 
-            // Orden correcto: duracion_servicio, fechaInicioFinal, fechaFinFinal, servicio_id
-            // Corresponde a: paramCounter, paramCounter+1, paramCounter+2, paramCounter+3
             queryParams.push(duracion_servicio, fechaInicioFinal, fechaFinFinal, servicio_id);
             paramCounter += 4;
 
-            // Filtros adicionales
             if (dias_semana && dias_semana.length > 0) {
                 const diasPlaceholders = dias_semana.map((_, index) => `$${paramCounter + index}`).join(',');
                 query += ` AND LOWER(to_char(hd.fecha, 'TMDay')) IN (${diasPlaceholders})`;
@@ -136,7 +121,6 @@ class HorarioModel {
                 paramCounter++;
             }
 
-            // Completar query con agrupación y ordenamiento
             query += `
                 )
                 SELECT
@@ -176,94 +160,20 @@ class HorarioModel {
 
             queryParams.push(limite);
 
-            // Ejecutar query principal
             const result = await db.query(query, queryParams);
 
-            // Procesar y estructurar resultados para IA
-            const horariosPorFecha = {};
-            const resumenProfesionales = {};
-
-            result.rows.forEach(row => {
-                const fecha = row.fecha.toISOString().split('T')[0];
-
-                if (!horariosPorFecha[fecha]) {
-                    horariosPorFecha[fecha] = {
-                        fecha: fecha,
-                        dia_semana: row.dia_semana.trim(),
-                        profesionales: {}
-                    };
-                }
-
-                horariosPorFecha[fecha].profesionales[row.profesional_id] = {
-                    profesional_id: row.profesional_id,
-                    nombre: row.profesional_nombre,
-                    tipo: row.tipo_profesional,
-                    slots_disponibles: row.slots_disponibles.filter(slot => slot.disponible),
-                    total_slots: parseInt(row.total_slots),
-                    slots_libres: parseInt(row.slots_libres),
-                    primer_slot: row.primer_slot,
-                    ultimo_slot: row.ultimo_slot
-                };
-
-                // Resumen por profesional
-                if (!resumenProfesionales[row.profesional_id]) {
-                    resumenProfesionales[row.profesional_id] = {
-                        profesional_id: row.profesional_id,
-                        nombre: row.profesional_nombre,
-                        tipo: row.tipo_profesional,
-                        dias_disponibles: 0,
-                        total_slots_libres: 0,
-                        proxima_disponibilidad: null
-                    };
-                }
-
-                resumenProfesionales[row.profesional_id].dias_disponibles++;
-                resumenProfesionales[row.profesional_id].total_slots_libres += parseInt(row.slots_libres);
-
-                if (!resumenProfesionales[row.profesional_id].proxima_disponibilidad ||
-                    row.primer_slot < resumenProfesionales[row.profesional_id].proxima_disponibilidad) {
-                    resumenProfesionales[row.profesional_id].proxima_disponibilidad = row.primer_slot;
-                }
-            });
-
-            // Calcular estadísticas generales
-            const totalDiasConsultados = Object.keys(horariosPorFecha).length;
-            const totalProfesionalesDisponibles = Object.keys(resumenProfesionales).length;
-            const totalSlotsLibres = Object.values(resumenProfesionales)
-                .reduce((sum, prof) => sum + prof.total_slots_libres, 0);
-
-            const respuesta = {
-                consulta: {
-                    organizacion_id: filtros.organizacion_id,
-                    fecha_inicio: fechaInicioFinal,
-                    fecha_fin: fechaFinFinal,
-                    duracion_servicio: duracion_servicio,
-                    filtros_aplicados: { profesional_id, servicio_id, dias_semana, hora_inicio, hora_fin }
-                },
-                estadisticas: {
-                    total_dias_consultados: totalDiasConsultados,
-                    total_profesionales_disponibles: totalProfesionalesDisponibles,
-                    total_slots_libres: totalSlotsLibres,
-                    promedio_slots_por_dia: totalDiasConsultados > 0 ? Math.round(totalSlotsLibres / totalDiasConsultados) : 0
-                },
-                disponibilidad_por_fecha: horariosPorFecha,
-                resumen_profesionales: Object.values(resumenProfesionales),
-                recomendacion_ia: this.generarRecomendacionIA(Object.values(resumenProfesionales))
-            };
-
-            return respuesta;
+            return HorarioHelpers.procesarRespuestaDisponibilidad(
+                result.rows,
+                filtros,
+                fechaInicioFinal,
+                fechaFinFinal,
+                duracion_servicio
+            );
 
         } catch (error) {
-            logger.error('[HorarioModel.consultarDisponibilidad] Error en consulta:', {
+            logger.error('[HorarioModel.consultarDisponibilidad] Error:', {
                 error: error.message,
-                stack: error.stack?.substring(0, 500), // Stack trace limitado
-                filtros: {
-                    organizacion_id: filtros.organizacion_id,
-                    profesional_id: filtros.profesional_id || null,
-                    servicio_id: filtros.servicio_id || null,
-                    fecha_inicio: filtros.fecha_inicio || null,
-                    fecha_fin: filtros.fecha_fin || null
-                }
+                organizacion_id: filtros.organizacion_id
             });
             throw new Error(`Error en consulta de disponibilidad: ${error.message}`);
         } finally {
@@ -271,20 +181,15 @@ class HorarioModel {
         }
     }
 
-    /**
-     * Reservar slot temporalmente (para IA - 15 min default)
-     */
     static async reservarTemporalmente(horarioId, organizacionId, duracionMinutos = 15, motivoReserva = 'Reserva IA', auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Verificar disponibilidad del slot (optimizado)
             const verificarQuery = `
                 SELECT id, profesional_id, fecha, hora_inicio, hora_fin,
                        duracion_slot, estado, reservado_hasta
@@ -305,7 +210,6 @@ class HorarioModel {
             const slot = verificarResult.rows[0];
             const reservadoHasta = new Date(Date.now() + duracionMinutos * 60000);
 
-            // Reservar temporalmente
             const reservarQuery = `
                 UPDATE horarios_disponibilidad
                 SET
@@ -335,12 +239,6 @@ class HorarioModel {
 
             await db.query('COMMIT');
 
-            logger.info('[HorarioModel.reservarTemporalmente] Slot reservado', {
-                horario_id: horarioId,
-                organizacion_id: organizacionId,
-                duracion_minutos: duracionMinutos
-            });
-
             return {
                 reserva_exitosa: true,
                 horario_id: horarioId,
@@ -355,25 +253,17 @@ class HorarioModel {
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[HorarioModel.reservarTemporalmente] Error:', {
-                error: error.message,
-                horario_id: horarioId,
-                organizacion_id: organizacionId
-            });
+            logger.error('[HorarioModel.reservarTemporalmente] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Liberar reserva temporal
-     */
     static async liberarReservaTemporalHorario(horarioId, organizacionId, auditoria = {}) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
@@ -399,94 +289,26 @@ class HorarioModel {
                 auditoria.usuario_id || null,
                 auditoria.ip_origen || null
             ]);
-            const liberado = result.rowCount > 0;
 
-            if (liberado) {
-                logger.info('[HorarioModel.liberarReservaTemporalHorario] Reserva liberada', {
-                    horario_id: horarioId,
-                    organizacion_id: organizacionId
-                });
-            }
-
-            return liberado;
+            return result.rowCount > 0;
 
         } catch (error) {
-            logger.error('[HorarioModel.liberarReservaTemporalHorario] Error:', {
-                error: error.message,
-                horario_id: horarioId,
-                organizacion_id: organizacionId
-            });
+            logger.error('[HorarioModel.liberarReservaTemporalHorario] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Generar recomendación IA basada en disponibilidad
-     */
-    static generarRecomendacionIA(profesionales) {
-        if (profesionales.length === 0) {
-            return {
-                tipo: 'sin_disponibilidad',
-                mensaje: 'No hay horarios disponibles en el rango consultado',
-                sugerencia: 'Ampliar el rango de fechas o considerar otros profesionales'
-            };
-        }
-
-        // Ordenar profesionales por disponibilidad
-        const profesionalesOrdenados = profesionales.sort((a, b) => {
-            // Priorizar por proximidad de disponibilidad, luego por total de slots
-            const diffA = a.proxima_disponibilidad ? new Date(a.proxima_disponibilidad) - new Date() : Infinity;
-            const diffB = b.proxima_disponibilidad ? new Date(b.proxima_disponibilidad) - new Date() : Infinity;
-
-            if (diffA !== diffB) return diffA - diffB;
-            return b.total_slots_libres - a.total_slots_libres;
-        });
-
-        const mejorProfesional = profesionalesOrdenados[0];
-        const horasHastaProxima = mejorProfesional.proxima_disponibilidad ?
-            Math.ceil((new Date(mejorProfesional.proxima_disponibilidad) - new Date()) / (1000 * 60 * 60)) : 0;
-
-        return {
-            tipo: 'recomendacion_disponible',
-            profesional_recomendado: {
-                id: mejorProfesional.profesional_id,
-                nombre: mejorProfesional.nombre,
-                tipo: mejorProfesional.tipo,
-                total_slots_libres: mejorProfesional.total_slots_libres,
-                dias_disponibles: mejorProfesional.dias_disponibles,
-                proxima_disponibilidad: mejorProfesional.proxima_disponibilidad,
-                horas_hasta_proxima: horasHastaProxima
-            },
-            alternativas: profesionalesOrdenados.slice(1, 3).map(prof => ({
-                id: prof.profesional_id,
-                nombre: prof.nombre,
-                slots_libres: prof.total_slots_libres,
-                proxima_disponibilidad: prof.proxima_disponibilidad
-            })),
-            mensaje_ia: horasHastaProxima <= 24 ?
-                `${mejorProfesional.nombre} tiene disponibilidad hoy mismo` :
-                horasHastaProxima <= 72 ?
-                `${mejorProfesional.nombre} tiene disponibilidad en los próximos 3 días` :
-                `${mejorProfesional.nombre} es la mejor opción con ${mejorProfesional.total_slots_libres} horarios disponibles`
-        };
-    }
-
-    /**
-     * Crear horario con validación multi-tenant
-     */
     static async crear(datosHorario, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', datosHorario.organizacion_id.toString()]);
 
-            // Validar que el profesional pertenezca a la organización
             const validarProfesional = await db.query(`
                 SELECT id, nombre_completo, tipo_profesional
                 FROM profesionales
@@ -497,7 +319,6 @@ class HorarioModel {
                 throw new Error('El profesional no existe o no pertenece a esta organización');
             }
 
-            // Verificar solapamientos de horarios (excluir bloqueados = eliminados)
             const verificarSolapamiento = await db.query(`
                 SELECT id, hora_inicio, hora_fin
                 FROM horarios_disponibilidad
@@ -522,7 +343,6 @@ class HorarioModel {
                 throw new Error(`Ya existe un horario en conflicto: ${verificarSolapamiento.rows[0].hora_inicio}-${verificarSolapamiento.rows[0].hora_fin}`);
             }
 
-            // Insertar nuevo horario
             const insertQuery = `
                 INSERT INTO horarios_disponibilidad (
                     organizacion_id, profesional_id, servicio_id, tipo_horario,
@@ -560,7 +380,7 @@ class HorarioModel {
                 datosHorario.capacidad_maxima || 1,
                 datosHorario.precio_base || null,
                 datosHorario.es_horario_premium || false,
-                false, // Creado manualmente
+                false,
                 'manual',
                 auditoria.usuario_id || null,
                 auditoria.ip_origen || null,
@@ -569,53 +389,34 @@ class HorarioModel {
 
             await db.query('COMMIT');
 
-            const horarioCreado = result.rows[0];
-
-            logger.info('[HorarioModel.crear] Horario creado', {
-                id: horarioCreado.id,
-                organizacion_id: horarioCreado.organizacion_id,
-                profesional_id: horarioCreado.profesional_id
-            });
-
             return {
-                ...horarioCreado,
-                profesional_info: validarProfesional.rows[0],
-                mensaje: 'Horario creado exitosamente'
+                ...result.rows[0],
+                profesional_info: validarProfesional.rows[0]
             };
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[HorarioModel.crear] Error creando horario:', {
-                error: error.message,
-                organizacion_id: datosHorario.organizacion_id,
-                profesional_id: datosHorario.profesional_id
-            });
+            logger.error('[HorarioModel.crear] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Obtener horarios con paginación
-     */
     static async obtener(filtros) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', filtros.organizacion_id.toString()]);
 
-            // Aplicar límites de paginación
-            const limite = Math.min(filtros.limite || 50, 100); // Máximo 100
+            const limite = Math.min(filtros.limite || 50, 100);
             const offset = filtros.offset || 0;
 
             let whereClause = 'WHERE hd.organizacion_id = $1';
             const queryParams = [filtros.organizacion_id];
             let paramCounter = 2;
 
-            // Construir filtros dinámicamente
             if (filtros.id) {
                 whereClause += ` AND hd.id = $${paramCounter}`;
                 queryParams.push(filtros.id);
@@ -653,12 +454,10 @@ class HorarioModel {
                     p.nombre_completo as profesional_nombre,
                     p.tipo_profesional,
                     s.nombre as servicio_nombre,
-                    -- Formateo para UI
                     to_char(hd.fecha, 'DD/MM/YYYY') as fecha_formateada,
                     to_char(hd.hora_inicio, 'HH24:MI') as hora_inicio_fmt,
                     to_char(hd.hora_fin, 'HH24:MI') as hora_fin_fmt,
                     to_char(hd.fecha, 'TMDay') as dia_semana_texto,
-                    -- Precio final calculado
                     COALESCE(hd.precio_dinamico, hd.precio_base, 0) *
                     (1 - COALESCE(hd.descuento_porcentaje, 0) / 100) as precio_final
                 FROM horarios_disponibilidad hd
@@ -671,7 +470,6 @@ class HorarioModel {
 
             queryParams.push(limite, offset);
 
-            // Query para contar total
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM horarios_disponibilidad hd
@@ -680,14 +478,13 @@ class HorarioModel {
 
             const [dataResult, countResult] = await Promise.all([
                 db.query(query, queryParams),
-                db.query(countQuery, queryParams.slice(0, -2)) // Sin LIMIT y OFFSET
+                db.query(countQuery, queryParams.slice(0, -2))
             ]);
 
             const total = parseInt(countResult.rows[0].total);
-            const horarios = dataResult.rows;
 
             return {
-                horarios,
+                horarios: dataResult.rows,
                 paginacion: {
                     total,
                     limite,
@@ -705,30 +502,22 @@ class HorarioModel {
             };
 
         } catch (error) {
-            logger.error('[HorarioModel.obtener] Error obteniendo horarios:', {
-                error: error.message,
-                filtros
-            });
+            logger.error('[HorarioModel.obtener] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Actualizar horario con validación de conflictos
-     */
     static async actualizar(horarioId, organizacionId, datosActualizacion, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Verificar que el horario existe y está disponible para actualización
             const horarioExistente = await db.query(`
                 SELECT id, profesional_id, fecha, hora_inicio, hora_fin,
                        estado, version
@@ -743,7 +532,6 @@ class HorarioModel {
 
             const horarioActual = horarioExistente.rows[0];
 
-            // Verificar conflictos si se cambian horarios
             if (datosActualizacion.hora_inicio || datosActualizacion.hora_fin || datosActualizacion.fecha) {
                 const nuevaFecha = datosActualizacion.fecha || horarioActual.fecha;
                 const nuevaHoraInicio = datosActualizacion.hora_inicio || horarioActual.hora_inicio;
@@ -769,7 +557,6 @@ class HorarioModel {
                 }
             }
 
-            // Construir query de actualización dinámicamente
             const camposActualizar = [];
             const valoresActualizar = [horarioId, organizacionId];
             let paramCounter = 3;
@@ -794,7 +581,6 @@ class HorarioModel {
                 throw new Error('No hay campos válidos para actualizar');
             }
 
-            // Agregar campos de auditoría
             camposActualizar.push(
                 `actualizado_por = $${paramCounter}`,
                 `ip_origen = $${paramCounter + 1}`,
@@ -817,49 +603,32 @@ class HorarioModel {
             `;
 
             const result = await db.query(updateQuery, valoresActualizar);
-            const horarioActualizado = result.rows[0];
 
             await db.query('COMMIT');
 
-            logger.info('[HorarioModel.actualizar] Horario actualizado', {
-                id: horarioId,
-                organizacion_id: organizacionId,
-                campos: Object.keys(datosActualizacion).join(',')
-            });
-
             return {
-                ...horarioActualizado,
-                mensaje: 'Horario actualizado exitosamente',
+                ...result.rows[0],
                 cambios_aplicados: Object.keys(datosActualizacion)
             };
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[HorarioModel.actualizar] Error actualizando horario:', {
-                error: error.message,
-                horario_id: horarioId,
-                organizacion_id: organizacionId
-            });
+            logger.error('[HorarioModel.actualizar] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Eliminar horario (lógico: estado='bloqueado')
-     */
     static async eliminar(horarioId, organizacionId, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Verificar que el horario existe y puede eliminarse
             const horarioExistente = await db.query(`
                 SELECT id, profesional_id, fecha, hora_inicio, hora_fin,
                        estado, cita_id
@@ -874,7 +643,6 @@ class HorarioModel {
 
             const horario = horarioExistente.rows[0];
 
-            // Verificar si tiene cita asociada
             if (horario.cita_id) {
                 const citaEstado = await db.query(`
                     SELECT estado FROM citas WHERE id = $1
@@ -886,7 +654,6 @@ class HorarioModel {
                 }
             }
 
-            // Eliminación lógica (cambio de estado a bloqueado)
             const result = await db.query(`
                 UPDATE horarios_disponibilidad
                 SET
@@ -907,40 +674,26 @@ class HorarioModel {
 
             await db.query('COMMIT');
 
-            logger.info('[HorarioModel.eliminar] Horario eliminado', {
-                id: horarioId,
-                organizacion_id: organizacionId
-            });
-
             return {
                 eliminado: true,
                 horario_id: horarioId,
                 fecha: result.rows[0].fecha,
-                horario: `${result.rows[0].hora_inicio}-${result.rows[0].hora_fin}`,
-                mensaje: 'Horario eliminado exitosamente'
+                horario: `${result.rows[0].hora_inicio}-${result.rows[0].hora_fin}`
             };
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[HorarioModel.eliminar] Error eliminando horario:', {
-                error: error.message,
-                horario_id: horarioId,
-                organizacion_id: organizacionId
-            });
+            logger.error('[HorarioModel.eliminar] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();
         }
     }
 
-    /**
-     * Mantenimiento: Limpiar reservas expiradas
-     */
     static async limpiarReservasExpiradas(organizacionId) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
@@ -957,21 +710,10 @@ class HorarioModel {
             `;
 
             const result = await db.query(query, [organizacionId]);
-
-            if (result.rowCount > 0) {
-                logger.info('[HorarioModel.limpiarReservasExpiradas] Limpiadas', {
-                    organizacion_id: organizacionId,
-                    cantidad: result.rowCount
-                });
-            }
-
             return result.rowCount;
 
         } catch (error) {
-            logger.error('[HorarioModel.limpiarReservasExpiradas] Error:', {
-                error: error.message,
-                organizacion_id: organizacionId
-            });
+            logger.error('[HorarioModel.limpiarReservasExpiradas] Error:', { error: error.message });
             throw error;
         } finally {
             db.release();

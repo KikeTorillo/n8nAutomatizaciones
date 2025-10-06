@@ -68,11 +68,12 @@ describe('Middleware Tenant - setTenantContext', () => {
         organizacion_id: org1.id
       },
       method: 'POST',
-      body: {
-        organizacion_id: org2.id // Super admin quiere acceder a org2
-      },
+      body: {},
       query: {},
       params: {},
+      headers: {
+        'x-organization-id': org2.id.toString() // Super admin quiere acceder a org2
+      },
       baseUrl: '/api/v1/clientes',
       path: '/api/v1/clientes',
       ip: '127.0.0.1'
@@ -105,10 +106,11 @@ describe('Middleware Tenant - setTenantContext', () => {
       },
       method: 'GET',
       body: {},
-      query: {
-        organizacion_id: org2.id // Super admin quiere acceder a org2
-      },
+      query: {},
       params: {},
+      headers: {
+        'x-organization-id': org2.id.toString() // Super admin quiere acceder a org2
+      },
       baseUrl: '/api/v1/clientes',
       path: '/api/v1/clientes',
       ip: '127.0.0.1'
@@ -270,9 +272,10 @@ describe('Middleware Tenant - setTenantContext', () => {
         organizacion_id: org1.id
       },
       method: 'POST',
-      body: {}, // Sin organizacion_id
+      body: {},
       query: {},
       params: {},
+      headers: {}, // Sin X-Organization-Id header
       baseUrl: '/api/v1/clientes',
       path: '/api/v1/clientes',
       ip: '127.0.0.1'
@@ -292,7 +295,7 @@ describe('Middleware Tenant - setTenantContext', () => {
     expect(res.json).toHaveBeenCalledWith(
       expect.objectContaining({
         success: false,
-        message: expect.stringContaining('organizacion_id')
+        message: expect.stringContaining('X-Organization-Id')
       })
     );
 
@@ -309,11 +312,12 @@ describe('Middleware Tenant - setTenantContext', () => {
         organizacion_id: org1.id
       },
       method: 'POST',
-      body: {
-        organizacion_id: 'invalid_id' // ID no numérico
-      },
+      body: {},
       query: {},
       params: {},
+      headers: {
+        'x-organization-id': 'invalid_id' // ID no numérico
+      },
       baseUrl: '/api/v1/clientes',
       path: '/api/v1/clientes',
       ip: '127.0.0.1'
@@ -402,11 +406,12 @@ describe('Middleware Tenant - setTenantContext', () => {
         organizacion_id: org1.id
       },
       method: 'POST',
-      body: {
-        organizacion_id: org2.id
-      },
+      body: {},
       query: {},
       params: {},
+      headers: {
+        'x-organization-id': org2.id.toString()
+      },
       baseUrl: '/api/v1/clientes',
       path: '/api/v1/clientes',
       ip: '127.0.0.1'

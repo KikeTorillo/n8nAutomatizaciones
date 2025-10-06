@@ -352,8 +352,7 @@ describe('Endpoints de Autenticación', () => {
   // ============================================================================
 
   describe('POST /api/v1/auth/change-password', () => {
-    test.skip('Cambio de contraseña exitoso', async () => {
-      // Skip por ahora - problema con RLS en metricas_uso_organizacion
+    test('Cambio de contraseña exitoso', async () => {
       const loginResponse = await request(app)
         .post('/api/v1/auth/login')
         .send({
@@ -375,13 +374,13 @@ describe('Endpoints de Autenticación', () => {
       expect(response.body).toHaveProperty('success', true);
     });
 
-    test.skip('Cambio de contraseña falla con contraseña anterior incorrecta', async () => {
-      // Skip por ahora - problema con RLS en metricas_uso_organizacion
+    test('Cambio de contraseña falla con contraseña anterior incorrecta', async () => {
+      // El test anterior cambió la contraseña a 'NewPassword456!'
       const loginResponse = await request(app)
         .post('/api/v1/auth/login')
         .send({
           email: testUsuario.email,
-          password: testPassword
+          password: 'NewPassword456!' // Usar la nueva contraseña
         });
 
       const accessToken = loginResponse.body.data.accessToken;
@@ -391,7 +390,7 @@ describe('Endpoints de Autenticación', () => {
         .set('Authorization', `Bearer ${accessToken}`)
         .send({
           passwordAnterior: 'ContraseñaIncorrecta',
-          passwordNueva: 'NewPassword456!'
+          passwordNueva: 'AnotherPassword789!'
         })
         .expect(400);
 

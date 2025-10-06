@@ -7,8 +7,12 @@ const auth = require('./auth');
 const tenant = require('./tenant');
 const validation = require('./validation');
 const rateLimiting = require('./rateLimiting');
+const asyncHandler = require('./asyncHandler');
 
 module.exports = {
+  // Middleware de manejo de errores async
+  asyncHandler,
+
   // Middleware de autenticación
   auth: {
     authenticateToken: auth.authenticateToken,

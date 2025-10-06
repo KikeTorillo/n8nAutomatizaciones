@@ -1,8 +1,3 @@
-/**
- * Modelo IA de Citas - Operaciones para automatización con IA
- * Creación automática, búsqueda por teléfono, modificación y cancelación IA
- */
-
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
@@ -10,39 +5,21 @@ const CitaBaseModel = require('./cita.base.model');
 
 class CitaAIModel {
 
-    /**
-     * Crear cita automáticamente desde IA/n8n
-     * @param {Object} datosIA - Datos procesados por IA
-     * @returns {Promise<Object>} Cita creada completa
-     */
     static async crearAutomatica(datosIA) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
-
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', datosIA.organizacion_id.toString()]);
 
-            logger.info('[CitaAIModel.crearAutomatica] Iniciando creación automática', {
-                telefono: datosIA.telefono_cliente,
-                organizacion_id: datosIA.organizacion_id,
-                servicio_id: datosIA.servicio_id,
-                fecha_solicitada: datosIA.fecha_solicitada,
-                turno: datosIA.turno_preferido
-            });
-
-            // PASO 1: Buscar o crear cliente
             let cliente = await CitaHelpersModel.buscarOCrearCliente(datosIA);
 
-            // PASO 2: Obtener información del servicio
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosIA.servicio_id, datosIA.organizacion_id, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado o inactivo');
             }
 
-            // PASO 3: Buscar horario compatible disponible
             const horarioDisponible = await CitaHelpersModel.buscarHorarioCompatible({
                 organizacion_id: datosIA.organizacion_id,
                 servicio_id: datosIA.servicio_id,
@@ -56,13 +33,8 @@ class CitaAIModel {
                 throw new Error('No hay horarios disponibles para la fecha y condiciones solicitadas');
             }
 
-            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
-            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
-
-            // PASO 4: Crear la cita con transacción atómica
             const citaCreada = await CitaHelpersModel.insertarCitaCompleta({
                 organizacion_id: datosIA.organizacion_id,
-                // ✅ NO incluir codigo_cita (auto-generado por trigger)
                 cliente_id: cliente.id,
                 profesional_id: horarioDisponible.profesional_id,
                 servicio_id: datosIA.servicio_id,
@@ -87,7 +59,6 @@ class CitaAIModel {
                 origen_aplicacion: datosIA.origen_aplicacion || 'webhook_n8n'
             }, db);
 
-            // PASO 6: Marcar horario como ocupado y vincular a cita
             await CitaHelpersModel.marcarHorarioOcupado(
                 horarioDisponible.horario_id,
                 citaCreada.id,
@@ -95,7 +66,6 @@ class CitaAIModel {
                 db
             );
 
-            // PASO 7: Registrar en auditoría del sistema
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: datosIA.organizacion_id,
                 tipo_evento: 'cita_creada_ia',
@@ -114,7 +84,6 @@ class CitaAIModel {
 
             await db.query('COMMIT');
 
-            // Construir respuesta optimizada para IA
             const respuesta = {
                 cita: {
                     id: citaCreada.id,
@@ -145,18 +114,11 @@ class CitaAIModel {
                 instrucciones_cliente: 'Por favor llegue 5 minutos antes de su cita. Si necesita cancelar, hágalo con al menos 2 horas de anticipación.'
             };
 
-            logger.info('[CitaAIModel.crearAutomatica] Cita creada exitosamente por IA', {
-                cita_id: citaCreada.id,
-                codigo_cita: citaCreada.codigo_cita,
-                cliente_es_nuevo: cliente.es_nuevo,
-                organizacion_id: datosIA.organizacion_id
-            });
-
             return respuesta;
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[CitaAIModel.crearAutomatica] Error en transacción IA:', {
+            logger.error('[CitaAIModel.crearAutomatica] Error:', {
                 error: error.message,
                 stack: error.stack,
                 telefono: datosIA.telefono_cliente,
@@ -166,19 +128,10 @@ class CitaAIModel {
         }
     }
 
-    /**
-     * Buscar citas por teléfono para IA
-     * @param {string} telefono - Teléfono del cliente
-     * @param {number} organizacionId - ID de la organización
-     * @param {Array} estados - Estados de citas a buscar
-     * @param {boolean} incluir_historicas - Incluir citas históricas
-     * @returns {Promise<Array>} Citas encontradas
-     */
     static async buscarPorTelefono(telefono, organizacionId, estados = ['confirmada', 'pendiente'], incluir_historicas = false) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
@@ -205,7 +158,7 @@ class CitaAIModel {
                     c.precio_final,
                     c.notas_cliente,
                     cl.nombre as cliente_nombre,
-                    p.nombre as profesional_nombre,
+                    p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre,
                     s.duracion_minutos,
                     EXTRACT(EPOCH FROM (
@@ -242,14 +195,6 @@ class CitaAIModel {
             `;
 
             const resultado = await db.query(query, params);
-
-            logger.info('[CitaAIModel.buscarPorTelefono] Búsqueda completada', {
-                telefono: telefono,
-                organizacion_id: organizacionId,
-                total_encontradas: resultado.rows.length,
-                estados_buscados: estados
-            });
-
             return resultado.rows;
 
         } catch (error) {
@@ -262,24 +207,14 @@ class CitaAIModel {
         }
     }
 
-    /**
-     * Modificar cita automáticamente desde IA
-     * @param {string} codigoCita - Código de la cita
-     * @param {Object} cambios - Cambios a aplicar
-     * @param {number} organizacionId - ID de la organización
-     * @returns {Promise<Object>} Resultado de modificación
-     */
     static async modificarAutomatica(codigoCita, cambios, organizacionId) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
-
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Obtener cita actual
             const citaActual = await this.obtenerCitaParaModificar(codigoCita, organizacionId, db);
             if (!citaActual) {
                 throw new Error('Cita no encontrada o no se puede modificar');
@@ -287,13 +222,11 @@ class CitaAIModel {
 
             let datosActualizacion = {};
 
-            // Procesar cambios específicos de IA
             if (cambios.nueva_fecha) {
                 datosActualizacion.fecha_cita = cambios.nueva_fecha;
             }
 
             if (cambios.nuevo_servicio_id) {
-                // Validar que el servicio existe
                 const servicio = await CitaHelpersModel.obtenerServicioCompleto(cambios.nuevo_servicio_id, organizacionId, db);
                 if (!servicio) {
                     throw new Error('Nuevo servicio no encontrado');
@@ -307,7 +240,6 @@ class CitaAIModel {
                 datosActualizacion.notas_internas = `Modificado por IA: ${cambios.motivo}`;
             }
 
-            // Buscar nuevo horario si cambió fecha o servicio
             if (cambios.nueva_fecha || cambios.nuevo_turno) {
                 const nuevoHorario = await CitaHelpersModel.buscarHorarioCompatible({
                     organizacion_id: organizacionId,
@@ -327,7 +259,6 @@ class CitaAIModel {
                 datosActualizacion.hora_fin = nuevoHorario.hora_fin;
                 datosActualizacion.profesional_id = nuevoHorario.profesional_id;
 
-                // Liberar horario anterior y marcar nuevo como ocupado
                 await this.liberarHorarioAnterior(citaActual.horario_id, db);
                 await CitaHelpersModel.marcarHorarioOcupado(
                     nuevoHorario.horario_id,
@@ -337,10 +268,8 @@ class CitaAIModel {
                 );
             }
 
-            // Actualizar cita
             const citaActualizada = await this.actualizarCita(citaActual.id, datosActualizacion, db);
 
-            // Registrar auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_modificada_ia',
@@ -379,30 +308,19 @@ class CitaAIModel {
         }
     }
 
-    /**
-     * Cancelar cita automáticamente desde IA
-     * @param {string} codigoCita - Código de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {string} motivo - Motivo de cancelación
-     * @returns {Promise<Object>} Resultado de cancelación
-     */
     static async cancelarAutomatica(codigoCita, organizacionId, motivo = 'Cancelada por cliente') {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
-
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Obtener cita para cancelar
             const cita = await this.obtenerCitaParaCancelar(codigoCita, organizacionId, db);
             if (!cita) {
                 throw new Error('Cita no encontrada o no se puede cancelar');
             }
 
-            // Actualizar estado a cancelada
             await db.query(`
                 UPDATE citas
                 SET estado = 'cancelada',
@@ -411,10 +329,8 @@ class CitaAIModel {
                 WHERE codigo_cita = $2 AND organizacion_id = $3
             `, [motivo, codigoCita, organizacionId]);
 
-            // Liberar horario
             await this.liberarHorarioAnterior(cita.horario_id, db);
 
-            // Registrar auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_cancelada_ia',
@@ -450,7 +366,6 @@ class CitaAIModel {
         }
     }
 
-    // Métodos auxiliares internos
     static async obtenerCitaParaModificar(codigoCita, organizacionId, db) {
         const resultado = await db.query(`
             SELECT c.*, h.id as horario_id, s.duracion_minutos

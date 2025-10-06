@@ -1,12 +1,6 @@
-/**
- * Helpers y Constantes del Modelo de Citas
- * Funciones auxiliares compartidas y configuración del sistema
- */
-
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 
-// Constantes del sistema
 const DEFAULTS = {
     ZONA_HORARIA: 'America/Mexico_City',
     ORIGEN_APLICACION: 'api',
@@ -14,37 +8,23 @@ const DEFAULTS = {
     HORAS_CANCELACION_MINIMA: 2
 };
 
-/**
- * Clase de helpers compartidos para el modelo de citas
- */
 class CitaHelpersModel {
 
-    /**
-     * Buscar o crear cliente para IA
-     * @param {Object} datosIA - Datos de IA
-     * @returns {Promise<Object>} Cliente encontrado o creado
-     */
     static async buscarOCrearCliente(datosIA) {
         const db = await getDb();
 
-        // Buscar cliente existente por teléfono
         const clienteExistente = await db.query(
             'SELECT id, nombre, telefono, email FROM clientes WHERE telefono = $1 AND organizacion_id = $2',
             [datosIA.telefono_cliente, datosIA.organizacion_id]
         );
 
         if (clienteExistente.rows.length > 0) {
-            logger.info('[CitaHelpersModel.buscarOCrearCliente] Cliente existente encontrado', {
-                cliente_id: clienteExistente.rows[0].id,
-                telefono: datosIA.telefono_cliente
-            });
             return {
                 ...clienteExistente.rows[0],
                 es_nuevo: false
             };
         }
 
-        // Crear cliente nuevo si se permite
         if (datosIA.crear_cliente_si_no_existe) {
             const nuevoCliente = await db.query(`
                 INSERT INTO clientes (
@@ -60,12 +40,6 @@ class CitaHelpersModel {
                 'ia_automatica'
             ]);
 
-            logger.info('[CitaHelpersModel.buscarOCrearCliente] Cliente nuevo creado por IA', {
-                cliente_id: nuevoCliente.rows[0].id,
-                telefono: datosIA.telefono_cliente,
-                nombre: nuevoCliente.rows[0].nombre
-            });
-
             return {
                 ...nuevoCliente.rows[0],
                 es_nuevo: true
@@ -75,13 +49,6 @@ class CitaHelpersModel {
         throw new Error('Cliente no encontrado y creación automática deshabilitada');
     }
 
-    /**
-     * Obtener información completa del servicio
-     * @param {number} servicioId - ID del servicio
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<Object>} Servicio completo
-     */
     static async obtenerServicioCompleto(servicioId, organizacionId, db) {
         const servicio = await db.query(`
             SELECT s.*, ps.precio
@@ -101,12 +68,6 @@ class CitaHelpersModel {
         };
     }
 
-    /**
-     * Buscar horario compatible para IA
-     * @param {Object} criterios - Criterios de búsqueda
-     * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<Object>} Horario disponible
-     */
     static async buscarHorarioCompatible(criterios, db) {
         const {
             organizacion_id,
@@ -117,7 +78,6 @@ class CitaHelpersModel {
             duracion_minutos
         } = criterios;
 
-        // Convertir fecha solicitada a fecha específica
         let fechaObjetivo;
         const hoy = new Date();
 
@@ -132,7 +92,6 @@ class CitaHelpersModel {
 
         const fechaFormateada = fechaObjetivo.toISOString().split('T')[0];
 
-        // Definir rango de horas según turno preferido
         let horaInicio, horaFin;
         switch (turno_preferido) {
             case 'mañana':
@@ -152,7 +111,6 @@ class CitaHelpersModel {
                 horaFin = '21:00';
         }
 
-        // Buscar horarios disponibles
         let query = `
             SELECT
                 h.id as horario_id,
@@ -160,7 +118,7 @@ class CitaHelpersModel {
                 h.fecha,
                 h.hora_inicio,
                 h.hora_fin,
-                p.nombre as profesional_nombre
+                p.nombre_completo as profesional_nombre
             FROM horarios_disponibilidad h
             JOIN profesionales p ON h.profesional_id = p.id
             JOIN servicios_profesionales sp ON sp.profesional_id = p.id AND sp.servicio_id = $2
@@ -197,19 +155,6 @@ class CitaHelpersModel {
         return horarios.rows[0];
     }
 
-    /**
-     * @deprecated ⚠️ DEPRECATED - NO USAR
-     * La base de datos genera automáticamente codigo_cita mediante trigger
-     * Trigger: trigger_generar_codigo_cita (sql/schema/09-triggers.sql:118)
-     * Formato: ORG001-20251004-001 (secuencial por organización)
-     *
-     * Esta función genera códigos en formato incorrecto y causa conflictos
-     * con el sistema de auto-generación de la BD.
-     *
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} db - Conexión a la base de datos
-     * @throws {Error} Siempre - Función deprecated
-     */
     static async generarCodigoCita(organizacionId, db) {
         logger.error('[CitaHelpersModel.generarCodigoCita] DEPRECATED: Esta función NO debe usarse', {
             organizacion_id: organizacionId,
@@ -225,13 +170,6 @@ class CitaHelpersModel {
         );
     }
 
-    /**
-     * Insertar cita completa con validaciones
-     * ✅ CORRECCIÓN: NO incluir codigo_cita (auto-generado por trigger)
-     * @param {Object} citaData - Datos de la cita
-     * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<Object>} Cita creada (incluye codigo_cita generado)
-     */
     static async insertarCitaCompleta(citaData, db) {
         const cita = await db.query(`
             INSERT INTO citas (
@@ -261,13 +199,6 @@ class CitaHelpersModel {
         return cita.rows[0];
     }
 
-    /**
-     * Marcar horario como ocupado y vincular a cita
-     * @param {number} horarioId - ID del horario
-     * @param {number} citaId - ID de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} db - Conexión a la base de datos
-     */
     static async marcarHorarioOcupado(horarioId, citaId, organizacionId, db) {
         const resultado = await db.query(`
             UPDATE horarios_disponibilidad
@@ -293,22 +224,9 @@ class CitaHelpersModel {
             throw new Error('El horario no está disponible o no pertenece a la organización');
         }
 
-        logger.info('[CitaHelpersModel.marcarHorarioOcupado] Horario marcado como ocupado', {
-            horario_id: horarioId,
-            cita_id: citaId,
-            profesional_id: resultado.rows[0].profesional_id,
-            fecha: resultado.rows[0].fecha,
-            hora: `${resultado.rows[0].hora_inicio}-${resultado.rows[0].hora_fin}`
-        });
-
         return resultado.rows[0];
     }
 
-    /**
-     * Registrar evento de auditoría
-     * @param {Object} evento - Datos del evento
-     * @param {Object} db - Conexión a la base de datos
-     */
     static async registrarEventoAuditoria(evento, db) {
         try {
             await db.query(`
@@ -325,7 +243,6 @@ class CitaHelpersModel {
                 JSON.stringify(evento.metadatos || {})
             ]);
         } catch (error) {
-            // No fallar si la auditoría falla
             logger.warn('[CitaHelpersModel.registrarEventoAuditoria] Error registrando evento', {
                 error: error.message,
                 evento
@@ -333,17 +250,7 @@ class CitaHelpersModel {
         }
     }
 
-    /**
-     * Validar entidades relacionadas
-     * @param {number} clienteId - ID del cliente
-     * @param {number} profesionalId - ID del profesional
-     * @param {number} servicioId - ID del servicio
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<boolean>} Validación exitosa
-     */
     static async validarEntidadesRelacionadas(clienteId, profesionalId, servicioId, organizacionId, db) {
-        // Validar cliente
         const cliente = await db.query(
             'SELECT id FROM clientes WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [clienteId, organizacionId]
@@ -352,7 +259,6 @@ class CitaHelpersModel {
             throw new Error('Cliente no encontrado o inactivo');
         }
 
-        // Validar profesional
         const profesional = await db.query(
             'SELECT id FROM profesionales WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [profesionalId, organizacionId]
@@ -361,7 +267,6 @@ class CitaHelpersModel {
             throw new Error('Profesional no encontrado o inactivo');
         }
 
-        // Validar servicio
         const servicio = await db.query(
             'SELECT id FROM servicios WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [servicioId, organizacionId]
@@ -370,7 +275,6 @@ class CitaHelpersModel {
             throw new Error('Servicio no encontrado o inactivo');
         }
 
-        // Validar que el profesional puede realizar el servicio
         const servicioprofesional = await db.query(
             'SELECT id FROM servicios_profesionales WHERE profesional_id = $1 AND servicio_id = $2',
             [profesionalId, servicioId]
@@ -382,16 +286,6 @@ class CitaHelpersModel {
         return true;
     }
 
-    /**
-     * Validar conflicto de horario
-     * @param {number} profesionalId - ID del profesional
-     * @param {string} fecha - Fecha de la cita
-     * @param {string} horaInicio - Hora de inicio
-     * @param {string} horaFin - Hora de fin
-     * @param {number} citaIdExcluir - ID de cita a excluir (para updates)
-     * @param {Object} db - Conexión a la base de datos
-     * @returns {Promise<boolean>} Sin conflicto
-     */
     static async validarConflictoHorario(profesionalId, fecha, horaInicio, horaFin, citaIdExcluir, db) {
         let query = `
             SELECT id FROM citas
@@ -422,7 +316,6 @@ class CitaHelpersModel {
     }
 }
 
-// Exportar constantes y clase
 module.exports = {
     DEFAULTS,
     CitaHelpersModel

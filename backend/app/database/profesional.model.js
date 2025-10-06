@@ -1,36 +1,13 @@
-/**
- * @fileoverview Modelo de Profesional para sistema multi-tenant SaaS
- * @description Maneja operaciones CRUD de profesionales con RLS y validaciones automáticas
- * @author SaaS Agendamiento
- * @version 1.0.0
- */
-
 const { getDb } = require('../config/database');
 
-/**
- * Modelo Profesional - Operaciones de base de datos para profesionales
- * @class ProfesionalModel
- */
 class ProfesionalModel {
 
-    /**
-     * Crear un nuevo profesional con validaciones automáticas
-     * @param {Object} profesionalData - Datos del profesional (ver esquema DB para campos completos)
-     * @param {number} profesionalData.organizacion_id - ID de la organización (requerido)
-     * @param {string} profesionalData.nombre_completo - Nombre completo del profesional
-     * @param {string} profesionalData.tipo_profesional - Tipo según industria (ENUM)
-     * @param {string} [profesionalData.email] - Email del profesional (único por organización)
-     * @returns {Promise<Object>} Profesional creado con todos los campos
-     * @throws {Error} Si hay errores de validación o industria incompatible
-     */
     static async crear(profesionalData) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', profesionalData.organizacion_id.toString()]);
 
-            // Validar email único por organización ANTES de crear
             if (profesionalData.email) {
                 const emailDisponible = await this.validarEmailDisponible(
                     profesionalData.email,
@@ -131,17 +108,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Buscar profesional por ID con contexto RLS
-     * @param {number} id - ID del profesional
-     * @param {number} organizacionId - ID de la organización (para RLS)
-     * @returns {Promise<Object|null>} Profesional encontrado o null
-     */
     static async buscarPorId(id, organizacionId) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             const query = `
@@ -168,23 +138,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Listar profesionales por organización con filtros
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} [filtros] - Filtros opcionales
-     * @param {boolean} [filtros.activo] - Solo profesionales activos
-     * @param {boolean} [filtros.disponible_online] - Solo disponibles online
-     * @param {string} [filtros.tipo_profesional] - Filtrar por tipo
-     * @param {string} [filtros.busqueda] - Búsqueda por nombre o email
-     * @param {number} [filtros.limite] - Límite de resultados
-     * @param {number} [filtros.offset] - Offset para paginación
-     * @returns {Promise<Array>} Lista de profesionales
-     */
     static async listarPorOrganizacion(organizacionId, filtros = {}) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             const {
@@ -249,22 +206,12 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Actualizar profesional
-     * @param {number} id - ID del profesional
-     * @param {number} organizacionId - ID de la organización (para RLS)
-     * @param {Object} datos - Datos a actualizar
-     * @returns {Promise<Object>} Profesional actualizado
-     * @throws {Error} Si el profesional no existe o no se puede actualizar
-     */
     static async actualizar(id, organizacionId, datos) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Validar email único si se está actualizando
             if (datos.email) {
                 const emailDisponible = await this.validarEmailDisponible(
                     datos.email,
@@ -332,19 +279,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Activar/Desactivar profesional
-     * @param {number} id - ID del profesional
-     * @param {number} organizacionId - ID de la organización (para RLS)
-     * @param {boolean} activo - Estado activo
-     * @param {string} [motivoInactividad] - Motivo de inactividad si se desactiva
-     * @returns {Promise<Object>} Profesional actualizado
-     */
     static async cambiarEstado(id, organizacionId, activo, motivoInactividad = null) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             const query = `
@@ -370,18 +308,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Buscar profesionales por tipo en una organización
-     * @param {number} organizacionId - ID de la organización
-     * @param {string} tipoProfesional - Tipo de profesional (ENUM)
-     * @param {boolean} [soloActivos] - Solo profesionales activos
-     * @returns {Promise<Array>} Lista de profesionales del tipo especificado
-     */
     static async buscarPorTipo(organizacionId, tipoProfesional, soloActivos = true) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             let query = `
@@ -413,21 +343,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Actualizar métricas de profesional (citas completadas, clientes atendidos)
-     * @param {number} id - ID del profesional
-     * @param {number} organizacionId - ID de la organización (para RLS)
-     * @param {Object} metricas - Métricas a actualizar
-     * @param {number} [metricas.citas_completadas_incremento] - Incremento en citas completadas
-     * @param {number} [metricas.nuevos_clientes] - Incremento en clientes únicos atendidos
-     * @param {number} [metricas.nueva_calificacion] - Nueva calificación promedio
-     * @returns {Promise<Object>} Profesional con métricas actualizadas
-     */
     static async actualizarMetricas(id, organizacionId, metricas) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             const {
@@ -472,16 +391,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Obtener estadísticas de profesionales por organización
-     * @param {number} organizacionId - ID de la organización
-     * @returns {Promise<Object>} Estadísticas de profesionales
-     */
     static async obtenerEstadisticas(organizacionId) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             const query = `
@@ -505,18 +418,10 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Eliminar profesional (soft delete - cambiar a inactivo)
-     * @param {number} id - ID del profesional
-     * @param {number} organizacionId - ID de la organización (para RLS)
-     * @param {string} [motivo] - Motivo de eliminación
-     * @returns {Promise<boolean>} True si se eliminó exitosamente
-     */
     static async eliminar(id, organizacionId, motivo = 'Eliminado por administrador') {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
             // Soft delete: cambiar a inactivo en lugar de eliminar registro
@@ -537,20 +442,11 @@ class ProfesionalModel {
         }
     }
 
-    /**
-     * Validar disponibilidad de email en organización
-     * @param {string} email - Email a validar
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} [excluirId] - ID del profesional a excluir (para actualizaciones)
-     * @param {Object} [dbConnection] - Conexión DB existente (opcional)
-     * @returns {Promise<boolean>} True si el email está disponible
-     */
     static async validarEmailDisponible(email, organizacionId, excluirId = null, dbConnection = null) {
         const db = dbConnection || await getDb();
         const shouldReleaseConnection = !dbConnection;
 
         try {
-            // Solo configurar contexto RLS si no hay conexión externa
             if (!dbConnection) {
                 await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
             }
@@ -575,19 +471,6 @@ class ProfesionalModel {
                 db.release();
             }
         }
-    }
-
-    /**
-     * Generar horarios automáticamente para profesional
-     * Delega al servicio de horarios
-     * @param {number} profesionalId - ID del profesional
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} configuracion - Configuración de horarios
-     * @returns {Promise<Object>} Resumen de horarios generados
-     */
-    static async generarHorarios(profesionalId, organizacionId, configuracion) {
-        const HorarioService = require('../services/horario.service');
-        return HorarioService.generarHorariosProfesional(profesionalId, organizacionId, configuracion);
     }
 
 }

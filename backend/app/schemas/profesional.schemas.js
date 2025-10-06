@@ -1,16 +1,8 @@
-/**
- * Schemas de Validación Joi para Profesionales
- * Valida todos los endpoints del módulo de profesionales
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 const { TIPOS_PROFESIONAL, FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
 
-/**
- * Schema para crear profesional
- * POST /profesionales
- */
+// POST /profesionales
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
@@ -103,10 +95,7 @@ const crear = {
     })
 };
 
-/**
- * Schema para actualizar profesional
- * PUT /profesionales/:id
- */
+// PUT /profesionales/:id
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -173,10 +162,7 @@ const actualizar = {
     })
 };
 
-/**
- * Schema para listar profesionales
- * GET /profesionales
- */
+// GET /profesionales
 const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
@@ -206,10 +192,7 @@ const listar = {
     })
 };
 
-/**
- * Schema para obtener profesional por ID
- * GET /profesionales/:id
- */
+// GET /profesionales/:id
 const obtenerPorId = {
     params: Joi.object({
         id: commonSchemas.id
@@ -219,10 +202,7 @@ const obtenerPorId = {
     })
 };
 
-/**
- * Schema para buscar por tipo
- * GET /profesionales/tipo/:tipo
- */
+// GET /profesionales/tipo/:tipo
 const buscarPorTipo = {
     params: Joi.object({
         tipo: Joi.string()
@@ -237,10 +217,7 @@ const buscarPorTipo = {
     })
 };
 
-/**
- * Schema para cambiar estado
- * PATCH /profesionales/:id/estado
- */
+// PATCH /profesionales/:id/estado
 const cambiarEstado = {
     params: Joi.object({
         id: commonSchemas.id
@@ -259,10 +236,7 @@ const cambiarEstado = {
     })
 };
 
-/**
- * Schema para actualizar métricas
- * PATCH /profesionales/:id/metricas
- */
+// PATCH /profesionales/:id/metricas
 const actualizarMetricas = {
     params: Joi.object({
         id: commonSchemas.id
@@ -286,10 +260,7 @@ const actualizarMetricas = {
     })
 };
 
-/**
- * Schema para eliminar profesional
- * DELETE /profesionales/:id
- */
+// DELETE /profesionales/:id
 const eliminar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -305,20 +276,14 @@ const eliminar = {
     })
 };
 
-/**
- * Schema para obtener estadísticas
- * GET /profesionales/estadisticas
- */
+// GET /profesionales/estadisticas
 const obtenerEstadisticas = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional() // Solo super_admin
     })
 };
 
-/**
- * Schema para validar email
- * POST /profesionales/validar-email
- */
+// POST /profesionales/validar-email
 const validarEmail = {
     body: Joi.object({
         email: Joi.string()

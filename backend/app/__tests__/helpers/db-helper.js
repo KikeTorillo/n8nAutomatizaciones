@@ -245,9 +245,10 @@ async function createTestProfesional(client, organizacionId, data = {}) {
  * @param {Object} client - Cliente de PostgreSQL
  * @param {number} organizacionId - ID de la organización
  * @param {Object} data - Datos del servicio
+ * @param {Array<number>} profesionales_ids - IDs de profesionales a asociar (opcional)
  * @returns {Object} Servicio creado
  */
-async function createTestServicio(client, organizacionId, data = {}) {
+async function createTestServicio(client, organizacionId, data = {}, profesionales_ids = []) {
   await setRLSContext(client, organizacionId);
 
   const result = await client.query(
@@ -265,7 +266,20 @@ async function createTestServicio(client, organizacionId, data = {}) {
     ]
   );
 
-  return result.rows[0];
+  const servicio = result.rows[0];
+
+  // Asociar profesionales al servicio si se proporcionan
+  if (profesionales_ids && profesionales_ids.length > 0) {
+    for (const profesionalId of profesionales_ids) {
+      await client.query(
+        `INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
+         VALUES ($1, $2, true)`,
+        [servicio.id, profesionalId]
+      );
+    }
+  }
+
+  return servicio;
 }
 
 /**

@@ -240,8 +240,7 @@ describe('Endpoints de Organizaciones', () => {
       expect(response.body.data.nombre_comercial).toBe(updateData.nombre_comercial);
     });
 
-    test.skip('Actualizar organización como admin de la organización', async () => {
-      // Skip: El schema de validación puede requerir campos específicos
+    test('Actualizar organización como admin de la organización', async () => {
       const updateData = {
         telefono: '+5215512345678'
       };
@@ -253,6 +252,7 @@ describe('Endpoints de Organizaciones', () => {
         .expect(200);
 
       expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data.telefono).toBe(updateData.telefono);
     });
 
     test('Falla sin autenticación', async () => {

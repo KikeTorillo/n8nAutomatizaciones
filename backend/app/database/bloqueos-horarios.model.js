@@ -1,30 +1,17 @@
-/**
- * Modelo de Bloqueos de Horarios - Multi-tenant con RLS
- * Gestión de vacaciones, permisos, festivos y bloqueos organizacionales
- */
-
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 
 class BloqueosHorariosModel {
 
-    /**
-     * Crear bloqueo de horario
-     * @param {Object} datosBloqueo - Datos del bloqueo
-     * @param {Object} auditoria - Información de auditoría
-     * @returns {Promise<Object>} Bloqueo creado
-     */
     static async crear(datosBloqueo, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', datosBloqueo.organizacion_id.toString()]);
 
-            // Validar que el profesional pertenezca a la organización (si aplica)
             if (datosBloqueo.profesional_id) {
                 const validarProfesional = await db.query(`
                     SELECT id, nombre_completo
@@ -37,7 +24,6 @@ class BloqueosHorariosModel {
                 }
             }
 
-            // Calcular citas afectadas si es inmediato
             let citasAfectadas = 0;
             if (datosBloqueo.calcular_impacto) {
                 const queryImpacto = `
@@ -57,7 +43,6 @@ class BloqueosHorariosModel {
                 citasAfectadas = parseInt(impacto.rows[0].total);
             }
 
-            // Insertar bloqueo
             const insertQuery = `
                 INSERT INTO bloqueos_horarios (
                     organizacion_id, profesional_id, servicio_id,
@@ -116,19 +101,7 @@ class BloqueosHorariosModel {
             ]);
 
             await db.query('COMMIT');
-
-            const bloqueoCreado = result.rows[0];
-
-            logger.info('[BloqueosHorariosModel.crear] Bloqueo creado', {
-                id: bloqueoCreado.id,
-                organizacion_id: bloqueoCreado.organizacion_id,
-                tipo: bloqueoCreado.tipo_bloqueo,
-                fecha_inicio: bloqueoCreado.fecha_inicio,
-                fecha_fin: bloqueoCreado.fecha_fin,
-                citas_afectadas: bloqueoCreado.citas_afectadas
-            });
-
-            return bloqueoCreado;
+            return result.rows[0];
 
         } catch (error) {
             await db.query('ROLLBACK');
@@ -142,16 +115,10 @@ class BloqueosHorariosModel {
         }
     }
 
-    /**
-     * Obtener bloqueos con filtros
-     * @param {Object} filtros - Filtros de búsqueda
-     * @returns {Promise<Object>} Lista de bloqueos con paginación
-     */
     static async obtener(filtros) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', filtros.organizacion_id.toString()]);
 
@@ -162,7 +129,6 @@ class BloqueosHorariosModel {
             const queryParams = [filtros.organizacion_id];
             let paramCounter = 2;
 
-            // Filtros dinámicos
             if (filtros.id) {
                 whereClause += ` AND bh.id = $${paramCounter}`;
                 queryParams.push(filtros.id);
@@ -193,7 +159,6 @@ class BloqueosHorariosModel {
                 paramCounter++;
             }
 
-            // Bloqueos organizacionales (sin profesional)
             if (filtros.solo_organizacionales) {
                 whereClause += ` AND bh.profesional_id IS NULL`;
             }
@@ -213,7 +178,6 @@ class BloqueosHorariosModel {
                     bh.creado_en, bh.actualizado_en,
                     p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre,
-                    -- Formateo para UI
                     to_char(bh.fecha_inicio, 'DD/MM/YYYY') as fecha_inicio_fmt,
                     to_char(bh.fecha_fin, 'DD/MM/YYYY') as fecha_fin_fmt,
                     CASE
@@ -221,7 +185,6 @@ class BloqueosHorariosModel {
                             to_char(bh.hora_inicio, 'HH24:MI') || ' - ' || to_char(bh.hora_fin, 'HH24:MI')
                         ELSE 'Todo el día'
                     END as horario_fmt,
-                    -- Calcular días totales
                     (bh.fecha_fin - bh.fecha_inicio) + 1 as dias_totales
                 FROM bloqueos_horarios bh
                 LEFT JOIN profesionales p ON bh.profesional_id = p.id
@@ -233,7 +196,6 @@ class BloqueosHorariosModel {
 
             queryParams.push(limite, offset);
 
-            // Query para contar total
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM bloqueos_horarios bh
@@ -277,25 +239,15 @@ class BloqueosHorariosModel {
         }
     }
 
-    /**
-     * Actualizar bloqueo
-     * @param {number} bloqueoId - ID del bloqueo
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} datosActualizacion - Datos a actualizar
-     * @param {Object} auditoria - Información de auditoría
-     * @returns {Promise<Object>} Bloqueo actualizado
-     */
     static async actualizar(bloqueoId, organizacionId, datosActualizacion, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Verificar que existe
             const bloqueoExistente = await db.query(`
                 SELECT id, profesional_id, fecha_inicio, fecha_fin
                 FROM bloqueos_horarios
@@ -307,7 +259,6 @@ class BloqueosHorariosModel {
                 throw new Error('Bloqueo no encontrado o sin permisos para actualizar');
             }
 
-            // Construir query de actualización dinámicamente
             const camposActualizar = [];
             const valoresActualizar = [bloqueoId, organizacionId];
             let paramCounter = 3;
@@ -332,7 +283,6 @@ class BloqueosHorariosModel {
                 throw new Error('No hay campos válidos para actualizar');
             }
 
-            // Agregar campos de auditoría
             camposActualizar.push(
                 `actualizado_por = $${paramCounter}`,
                 `actualizado_en = NOW()`
@@ -348,19 +298,11 @@ class BloqueosHorariosModel {
             `;
 
             const result = await db.query(updateQuery, valoresActualizar);
-            const bloqueoActualizado = result.rows[0];
 
             await db.query('COMMIT');
 
-            logger.info('[BloqueosHorariosModel.actualizar] Bloqueo actualizado', {
-                id: bloqueoId,
-                organizacion_id: organizacionId,
-                campos: Object.keys(datosActualizacion).join(',')
-            });
-
             return {
-                ...bloqueoActualizado,
-                mensaje: 'Bloqueo actualizado exitosamente',
+                ...result.rows[0],
                 cambios_aplicados: Object.keys(datosActualizacion)
             };
 
@@ -377,20 +319,12 @@ class BloqueosHorariosModel {
         }
     }
 
-    /**
-     * Eliminar bloqueo (lógico)
-     * @param {number} bloqueoId - ID del bloqueo
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} auditoria - Información de auditoría
-     * @returns {Promise<Object>} Confirmación de eliminación
-     */
     static async eliminar(bloqueoId, organizacionId, auditoria = {}) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
@@ -409,17 +343,11 @@ class BloqueosHorariosModel {
 
             await db.query('COMMIT');
 
-            logger.info('[BloqueosHorariosModel.eliminar] Bloqueo eliminado', {
-                id: bloqueoId,
-                organizacion_id: organizacionId
-            });
-
             return {
                 eliminado: true,
                 bloqueo_id: bloqueoId,
                 titulo: result.rows[0].titulo,
-                periodo: `${result.rows[0].fecha_inicio} - ${result.rows[0].fecha_fin}`,
-                mensaje: 'Bloqueo eliminado exitosamente'
+                periodo: `${result.rows[0].fecha_inicio} - ${result.rows[0].fecha_fin}`
             };
 
         } catch (error) {

@@ -1,19 +1,8 @@
-/**
- * Modelo de Recordatorios de Citas - Sistema de notificaciones y feedback
- * Funcionalidades de recordatorios, calificaciones y seguimiento
- */
-
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 
 class CitaRecordatoriosModel {
 
-    /**
-     * Marcar recordatorio como enviado
-     * @param {string} codigoCita - Código de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @returns {Promise<boolean>} Éxito de la operación
-     */
     static async marcarRecordatorioEnviado(codigoCita, organizacionId) {
         const db = await getDb();
 
@@ -40,12 +29,6 @@ class CitaRecordatoriosModel {
         }
     }
 
-    /**
-     * Obtener citas que requieren recordatorio
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} horasAnticipacion - Horas de anticipación (default 2)
-     * @returns {Promise<Array>} Citas que requieren recordatorio
-     */
     static async obtenerCitasParaRecordatorio(organizacionId, horasAnticipacion = 2) {
         const db = await getDb();
 
@@ -61,7 +44,7 @@ class CitaRecordatoriosModel {
                     c.hora_inicio,
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
-                    p.nombre as profesional_nombre,
+                    p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
@@ -85,13 +68,6 @@ class CitaRecordatoriosModel {
         }
     }
 
-    /**
-     * Calificar cliente (feedback del profesional)
-     * @param {string} codigoCita - Código de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} calificacion - Datos de calificación
-     * @returns {Promise<Object>} Resultado de la calificación
-     */
     static async calificarCliente(codigoCita, organizacionId, calificacion) {
         const db = await getDb();
 

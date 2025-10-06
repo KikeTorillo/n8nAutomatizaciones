@@ -68,9 +68,21 @@ const validate = (schemas, options = {}) => {
   return (req, res, next) => {
     const errors = {};
 
+    // Contexto para validaciones condicionales (ej: validar según rol de usuario)
+    const context = {
+      userRole: req.user?.rol,
+      userId: req.user?.id,
+      organizacionId: req.user?.organizacion_id
+    };
+
+    const validationOptions = {
+      ...defaultOptions,
+      context
+    };
+
     // Validar body
     if (schemas.body) {
-      const { error, value } = schemas.body.validate(req.body, defaultOptions);
+      const { error, value } = schemas.body.validate(req.body, validationOptions);
       if (error) {
         errors.body = error.details.map(detail => ({
           field: detail.path.join('.'),
@@ -84,7 +96,7 @@ const validate = (schemas, options = {}) => {
 
     // Validar params
     if (schemas.params) {
-      const { error, value } = schemas.params.validate(req.params, defaultOptions);
+      const { error, value } = schemas.params.validate(req.params, validationOptions);
       if (error) {
         errors.params = error.details.map(detail => ({
           field: detail.path.join('.'),
@@ -98,7 +110,7 @@ const validate = (schemas, options = {}) => {
 
     // Validar query
     if (schemas.query) {
-      const { error, value } = schemas.query.validate(req.query, defaultOptions);
+      const { error, value } = schemas.query.validate(req.query, validationOptions);
       if (error) {
         errors.query = error.details.map(detail => ({
           field: detail.path.join('.'),
@@ -112,7 +124,7 @@ const validate = (schemas, options = {}) => {
 
     // Validar headers específicos
     if (schemas.headers) {
-      const { error, value } = schemas.headers.validate(req.headers, defaultOptions);
+      const { error, value } = schemas.headers.validate(req.headers, validationOptions);
       if (error) {
         errors.headers = error.details.map(detail => ({
           field: detail.path.join('.'),
@@ -212,15 +224,15 @@ const commonSchemas = {
   // Números
   positiveNumber: Joi.number().positive(),
   positiveInteger: Joi.number().integer().positive(),
-  price: Joi.number().positive().precision(2),
+  price: Joi.number().min(0).precision(2),
 
   // Estados
   status: Joi.string().valid('activo', 'inactivo'),
   citaStatus: Joi.string().valid('pendiente', 'confirmada', 'completada', 'cancelada', 'no_show'),
 
-  // Horarios (formato HH:MM)
-  time: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).messages({
-    'string.pattern.base': 'Debe ser un horario válido (HH:MM)'
+  // Horarios (formato HH:MM o HH:MM:SS)
+  time: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).messages({
+    'string.pattern.base': 'Debe ser un horario válido (HH:MM o HH:MM:SS)'
   }),
 
   // Duración en minutos

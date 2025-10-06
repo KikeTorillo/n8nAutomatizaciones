@@ -1,37 +1,17 @@
-/**
- * Modelo Base de Citas - Operaciones CRUD fundamentales
- * Crear, leer, actualizar, eliminar citas estándar
- */
-
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 
 class CitaBaseModel {
 
-    /**
-     * Crear cita estándar (autenticada)
-     * @param {Object} citaData - Datos de la cita
-     * @param {number} usuarioId - ID del usuario creador
-     * @returns {Promise<Object>} Cita creada
-     */
     static async crearEstandar(citaData, usuarioId) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', citaData.organizacion_id.toString()]);
-
-            logger.info('[CitaBaseModel.crearEstandar] Iniciando creación estándar', {
-                organizacion_id: citaData.organizacion_id,
-                cliente_id: citaData.cliente_id,
-                profesional_id: citaData.profesional_id,
-                servicio_id: citaData.servicio_id,
-                usuario_creador: usuarioId
-            });
 
             // Validar entidades relacionadas
             await CitaHelpersModel.validarEntidadesRelacionadas(
@@ -52,14 +32,9 @@ class CitaBaseModel {
                 db
             );
 
-            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
-            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
-            // Formato: ORG001-20251004-001
-
-            // Preparar datos completos para inserción
+            // Preparar datos completos para inserción (codigo_cita auto-generado por trigger)
             const datosCompletos = {
                 organizacion_id: citaData.organizacion_id,
-                // ✅ NO incluir codigo_cita (auto-generado por trigger)
                 cliente_id: citaData.cliente_id,
                 profesional_id: citaData.profesional_id,
                 servicio_id: citaData.servicio_id,
@@ -85,7 +60,6 @@ class CitaBaseModel {
                 origen_aplicacion: citaData.origen_aplicacion || DEFAULTS.ORIGEN_APLICACION
             };
 
-            // Insertar cita
             const nuevaCita = await CitaHelpersModel.insertarCitaCompleta(datosCompletos, db);
 
             // Registrar evento de auditoría
@@ -104,18 +78,11 @@ class CitaBaseModel {
             }, db);
 
             await db.query('COMMIT');
-
-            logger.info('[CitaBaseModel.crearEstandar] Cita creada exitosamente', {
-                cita_id: nuevaCita.id,
-                codigo_cita: nuevaCita.codigo_cita,
-                organizacion_id: citaData.organizacion_id
-            });
-
             return nuevaCita;
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.crearEstandar] Error en transacción:', {
+            logger.error('[CitaBaseModel.crearEstandar] Error:', {
                 error: error.message,
                 stack: error.stack,
                 organizacion_id: citaData.organizacion_id
@@ -124,18 +91,10 @@ class CitaBaseModel {
         }
     }
 
-    /**
-     * Obtener cita por ID
-     * @param {number} citaId - ID de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} db - Conexión a la base de datos (opcional)
-     * @returns {Promise<Object>} Cita encontrada
-     */
     static async obtenerPorId(citaId, organizacionId, db = null) {
         const connection = db || await getDb();
 
         try {
-            // Configurar contexto RLS
             await connection.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
@@ -145,8 +104,8 @@ class CitaBaseModel {
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
-                    p.nombre as profesional_nombre,
-                    p.especialidad as profesional_especialidad,
+                    p.nombre_completo as profesional_nombre,
+                    p.especialidades as profesional_especialidades,
                     s.nombre as servicio_nombre,
                     s.descripcion as servicio_descripcion,
                     s.duracion_minutos as servicio_duracion
@@ -169,14 +128,6 @@ class CitaBaseModel {
         }
     }
 
-    /**
-     * Actualizar cita estándar
-     * @param {number} citaId - ID de la cita
-     * @param {Object} datosActualizacion - Datos a actualizar
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} usuarioId - ID del usuario que actualiza
-     * @returns {Promise<Object>} Cita actualizada
-     */
     static async actualizarEstandar(citaId, datosActualizacion, organizacionId, usuarioId) {
         const db = await getDb();
 
@@ -271,17 +222,11 @@ class CitaBaseModel {
 
             await db.query('COMMIT');
 
-            logger.info('[CitaBaseModel.actualizarEstandar] Cita actualizada exitosamente', {
-                cita_id: citaId,
-                organizacion_id: organizacionId,
-                campos_actualizados: Object.keys(datosActualizacion)
-            });
-
             return resultado.rows[0];
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.actualizarEstandar] Error en transacción:', {
+            logger.error('[CitaBaseModel.actualizarEstandar] Error:', {
                 error: error.message,
                 cita_id: citaId,
                 organizacion_id: organizacionId
@@ -290,35 +235,25 @@ class CitaBaseModel {
         }
     }
 
-    /**
-     * Eliminar cita estándar (cancelar)
-     * @param {number} citaId - ID de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} usuarioId - ID del usuario que elimina
-     * @returns {Promise<boolean>} Eliminación exitosa
-     */
     static async eliminarEstandar(citaId, organizacionId, usuarioId) {
         const db = await getDb();
 
         try {
             await db.query('BEGIN');
 
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Verificar que la cita existe
             const citaExistente = await this.obtenerPorId(citaId, organizacionId, db);
             if (!citaExistente) {
                 return false;
             }
 
-            // Validar que se puede cancelar
             if (['completada', 'cancelada'].includes(citaExistente.estado)) {
                 throw new Error('No se puede cancelar una cita completada o ya cancelada');
             }
 
-            // Marcar como cancelada en lugar de eliminar físicamente
+            // Marcar como cancelada (soft delete)
             await db.query(`
                 UPDATE citas
                 SET estado = 'cancelada',
@@ -333,14 +268,12 @@ class CitaBaseModel {
                 organizacionId
             ]);
 
-            // Liberar horario si estaba ocupado
             await db.query(`
                 UPDATE horarios_disponibilidad
-                SET disponible = true, cita_id = NULL
+                SET estado = 'disponible', cita_id = NULL
                 WHERE cita_id = $1
             `, [citaId]);
 
-            // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_cancelada',
@@ -355,17 +288,11 @@ class CitaBaseModel {
 
             await db.query('COMMIT');
 
-            logger.info('[CitaBaseModel.eliminarEstandar] Cita cancelada exitosamente', {
-                cita_id: citaId,
-                organizacion_id: organizacionId,
-                estado_anterior: citaExistente.estado
-            });
-
             return true;
 
         } catch (error) {
             await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.eliminarEstandar] Error en transacción:', {
+            logger.error('[CitaBaseModel.eliminarEstandar] Error:', {
                 error: error.message,
                 cita_id: citaId,
                 organizacion_id: organizacionId
@@ -374,13 +301,6 @@ class CitaBaseModel {
         }
     }
 
-    /**
-     * Confirmar asistencia a cita
-     * @param {number} citaId - ID de la cita
-     * @param {number} organizacionId - ID de la organización
-     * @param {number} usuarioId - ID del usuario que confirma
-     * @returns {Promise<Object>} Resultado de confirmación
-     */
     static async confirmarAsistenciaEstandar(citaId, organizacionId, usuarioId) {
         const db = await getDb();
 
@@ -416,7 +336,6 @@ class CitaBaseModel {
                 RETURNING *
             `, [usuarioId, citaId, organizacionId]);
 
-            // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_confirmada',
@@ -430,12 +349,6 @@ class CitaBaseModel {
             }, db);
 
             await db.query('COMMIT');
-
-            logger.info('[CitaBaseModel.confirmarAsistenciaEstandar] Asistencia confirmada', {
-                cita_id: citaId,
-                organizacion_id: organizacionId,
-                estado_anterior: citaExistente.estado
-            });
 
             return {
                 exito: true,
@@ -536,7 +449,7 @@ class CitaBaseModel {
                     c.*,
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
-                    p.nombre as profesional_nombre,
+                    p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id

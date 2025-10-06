@@ -8,7 +8,6 @@ const serviciosRouter = require('./servicios');
 const horariosRouter = require('./horarios');
 const citasRouter = require('./citas');
 const usuariosRouter = require('./usuarios');
-const passwordRouter = require('./password');
 const bloqueosHorariosRouter = require('./bloqueos-horarios');
 
 function routerApi(app) {
@@ -16,8 +15,10 @@ function routerApi(app) {
 
     app.use('/api/v1', router);
 
-    // Rutas de autenticación (sin prefijo adicional)
+    // Rutas de autenticación y gestión de contraseñas
     router.use('/auth', authRouter);
+
+    // Rutas de recursos
     router.use('/organizaciones', organizacionesRouter);
     router.use('/profesionales', profesionalesRouter);
     router.use('/clientes', clientesRouter);
@@ -26,9 +27,8 @@ function routerApi(app) {
     router.use('/bloqueos-horarios', bloqueosHorariosRouter);
     router.use('/citas', citasRouter);
 
-    // Rutas de gestión de usuarios y seguridad
+    // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);
-    router.use('/password', passwordRouter);
 }
 
 module.exports = routerApi;

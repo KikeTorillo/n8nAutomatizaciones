@@ -1,29 +1,13 @@
-/**
- * @fileoverview Modelo de Servicios para sistema multi-tenant SaaS
- * @description Maneja operaciones CRUD de servicios con RLS, validaciones automáticas y relaciones con profesionales
- * @author SaaS Agendamiento
- * @version 1.0.0
- */
+// Modelo de Servicios - CRUD multi-tenant con RLS directo
 
 const { getDb } = require('../config/database');
 
-/**
- * Modelo Servicio - Operaciones de base de datos para servicios
- * @class ServicioModel
- */
 class ServicioModel {
 
-    /**
-     * Crear un nuevo servicio con validaciones automáticas
-     * @param {Object} servicioData - Datos del servicio (organizacion_id, nombre, duracion_minutos, precio requeridos)
-     * @returns {Promise<Object>} Servicio creado
-     * @throws {Error} Si hay errores de validación
-     */
     static async crear(servicioData) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS multi-tenant
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', servicioData.organizacion_id.toString()]);
 
             const query = `
@@ -85,21 +69,14 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Obtener servicio por ID con validación multi-tenant
-     * @param {number} id - ID del servicio
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<Object|null>} Servicio encontrado o null
-     */
     static async obtenerPorId(id, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `
-                SELECT s.*, 
+                SELECT s.*,
                        ps.nombre as plantilla_nombre,
                        ps.categoria as plantilla_categoria,
                        COUNT(sp.profesional_id) as total_profesionales_asignados
@@ -120,21 +97,12 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Listar servicios de una organización con filtros y paginación
-     * @param {number} organizacion_id - ID de la organización
-     * @param {Object} [filtros] - Filtros opcionales (activo, categoria, busqueda, tags, precio_min, precio_max)
-     * @param {Object} [paginacion] - Configuración de paginación (pagina, limite, orden, direccion)
-     * @returns {Promise<Object>} Resultado con servicios y metadatos de paginación
-     */
     static async listar(organizacion_id, filtros = {}, paginacion = {}) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
-            // Configurar paginación
             const pagina = Math.max(1, parseInt(paginacion.pagina) || 1);
             const limite = Math.min(100, Math.max(1, parseInt(paginacion.limite) || 20));
             const offset = (pagina - 1) * limite;
@@ -160,7 +128,7 @@ class ServicioModel {
 
             if (filtros.busqueda) {
                 condiciones.push(`(
-                    s.nombre ILIKE $${parametroIndex} OR 
+                    s.nombre ILIKE $${parametroIndex} OR
                     s.descripcion ILIKE $${parametroIndex} OR
                     s.categoria ILIKE $${parametroIndex} OR
                     s.subcategoria ILIKE $${parametroIndex}
@@ -189,9 +157,8 @@ class ServicioModel {
 
             const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
-            // Query principal con JOIN a plantillas y conteo de profesionales
             const queryServicios = `
-                SELECT s.*, 
+                SELECT s.*,
                        ps.nombre as plantilla_nombre,
                        ps.categoria as plantilla_categoria,
                        COUNT(sp.profesional_id) as total_profesionales_asignados
@@ -206,7 +173,6 @@ class ServicioModel {
 
             valores.push(limite, offset);
 
-            // Query para contar total
             const queryTotal = `
                 SELECT COUNT(DISTINCT s.id) as total
                 FROM servicios s
@@ -215,9 +181,8 @@ class ServicioModel {
                 ${whereClause}
             `;
 
-            const valoresTotal = valores.slice(0, -2); // Remover limite y offset para el conteo
+            const valoresTotal = valores.slice(0, -2);
 
-            // Ejecutar ambas queries
             const [resultServicios, resultTotal] = await Promise.all([
                 db.query(queryServicios, valores),
                 db.query(queryTotal, valoresTotal)
@@ -246,21 +211,12 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Actualizar un servicio existente
-     * @param {number} id - ID del servicio a actualizar
-     * @param {Object} servicioData - Datos a actualizar
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<Object|null>} Servicio actualizado o null si no existe
-     */
     static async actualizar(id, servicioData, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
-            // Construir SET clause dinámicamente
             const camposPermitidos = [
                 'plantilla_servicio_id', 'nombre', 'descripcion', 'categoria', 'subcategoria',
                 'duracion_minutos', 'precio', 'precio_minimo', 'precio_maximo',
@@ -285,7 +241,7 @@ class ServicioModel {
             }
 
             const query = `
-                UPDATE servicios 
+                UPDATE servicios
                 SET ${setClauses.join(', ')}, actualizado_en = NOW()
                 WHERE id = $1
                 RETURNING id, organizacion_id, plantilla_servicio_id, nombre, descripcion, categoria,
@@ -316,21 +272,14 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Eliminar un servicio (soft delete - marcar como inactivo)
-     * @param {number} id - ID del servicio a eliminar
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<boolean>} true si se eliminó correctamente
-     */
     static async eliminar(id, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `
-                UPDATE servicios 
+                UPDATE servicios
                 SET activo = false, actualizado_en = NOW()
                 WHERE id = $1
             `;
@@ -345,17 +294,10 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Eliminar permanentemente un servicio (hard delete)
-     * @param {number} id - ID del servicio a eliminar
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<boolean>} true si se eliminó correctamente
-     */
     static async eliminarPermanente(id, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `DELETE FROM servicios WHERE id = $1`;
@@ -372,28 +314,19 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Asignar un profesional a un servicio
-     * @param {number} servicio_id - ID del servicio
-     * @param {number} profesional_id - ID del profesional
-     * @param {Object} [configuracion] - Configuración personalizada (precio_personalizado, duracion_personalizada, notas_especiales, activo)
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<Object>} Relación servicio-profesional creada
-     */
     static async asignarProfesional(servicio_id, profesional_id, configuracion = {}, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `
                 INSERT INTO servicios_profesionales (
-                    servicio_id, profesional_id, precio_personalizado, 
+                    servicio_id, profesional_id, precio_personalizado,
                     duracion_personalizada, notas_especiales, activo
                 ) VALUES ($1, $2, $3, $4, $5, $6)
-                ON CONFLICT (servicio_id, profesional_id) 
-                DO UPDATE SET 
+                ON CONFLICT (servicio_id, profesional_id)
+                DO UPDATE SET
                     precio_personalizado = EXCLUDED.precio_personalizado,
                     duracion_personalizada = EXCLUDED.duracion_personalizada,
                     notas_especiales = EXCLUDED.notas_especiales,
@@ -430,22 +363,14 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Desasignar un profesional de un servicio
-     * @param {number} servicio_id - ID del servicio
-     * @param {number} profesional_id - ID del profesional
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @returns {Promise<boolean>} true si se desasignó correctamente
-     */
     static async desasignarProfesional(servicio_id, profesional_id, organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `
-                UPDATE servicios_profesionales 
+                UPDATE servicios_profesionales
                 SET activo = false, actualizado_en = NOW()
                 WHERE servicio_id = $1 AND profesional_id = $2
             `;
@@ -460,24 +385,16 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Obtener profesionales asignados a un servicio
-     * @param {number} servicio_id - ID del servicio
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @param {boolean} [solo_activos] - Solo profesionales activos (default: true)
-     * @returns {Promise<Array>} Lista de profesionales con su configuración específica
-     */
     static async obtenerProfesionales(servicio_id, organizacion_id, solo_activos = true) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const condicionActivo = solo_activos ? 'AND sp.activo = true AND p.activo = true' : '';
 
             const query = `
-                SELECT p.*, 
+                SELECT p.*,
                        sp.precio_personalizado,
                        sp.duracion_personalizada,
                        sp.notas_especiales,
@@ -500,24 +417,16 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Obtener servicios de un profesional
-     * @param {number} profesional_id - ID del profesional
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @param {boolean} [solo_activos] - Solo servicios activos (default: true)
-     * @returns {Promise<Array>} Lista de servicios con configuración específica del profesional
-     */
     static async obtenerServiciosPorProfesional(profesional_id, organizacion_id, solo_activos = true) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const condicionActivo = solo_activos ? 'AND sp.activo = true AND s.activo = true' : '';
 
             const query = `
-                SELECT s.*, 
+                SELECT s.*,
                        sp.precio_personalizado,
                        sp.duracion_personalizada,
                        sp.notas_especiales,
@@ -542,33 +451,25 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Buscar servicios con búsqueda full-text
-     * @param {string} termino - Término de búsqueda
-     * @param {number} organizacion_id - ID de la organización para RLS
-     * @param {Object} [opciones] - Opciones adicionales (limite, solo_activos)
-     * @returns {Promise<Array>} Lista de servicios que coinciden con la búsqueda
-     */
     static async buscar(termino, organizacion_id, opciones = {}) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const limite = opciones.limite || 10;
             const condicionActivo = opciones.solo_activos !== false ? 'AND s.activo = true' : '';
 
             const query = `
-                SELECT s.*, 
+                SELECT s.*,
                        ps.nombre as plantilla_nombre,
-                       ts_rank(to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' || 
-                                         COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, '')), 
+                       ts_rank(to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' ||
+                                         COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, '')),
                               plainto_tsquery('spanish', $1)) as relevancia
                 FROM servicios s
                 LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
-                WHERE s.organizacion_id = $2 
-                AND to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' || 
+                WHERE s.organizacion_id = $2
+                AND to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' ||
                                COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, ''))
                     @@ plainto_tsquery('spanish', $1)
                 ${condicionActivo}
@@ -586,29 +487,23 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Obtener estadísticas de servicios para una organización
-     * @param {number} organizacion_id - ID de la organización
-     * @returns {Promise<Object>} Estadísticas de servicios
-     */
     static async obtenerEstadisticas(organizacion_id) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
             const query = `
-                SELECT 
+                SELECT
                     COUNT(*) as total_servicios,
-                    COUNT(*) FILTER (WHERE activo = true) as servicios_activos,
-                    COUNT(*) FILTER (WHERE activo = false) as servicios_inactivos,
-                    COUNT(DISTINCT categoria) FILTER (WHERE categoria IS NOT NULL) as total_categorias,
-                    AVG(precio) as precio_promedio,
-                    MIN(precio) as precio_minimo,
-                    MAX(precio) as precio_maximo,
-                    AVG(duracion_minutos) as duracion_promedio,
-                    COUNT(*) FILTER (WHERE plantilla_servicio_id IS NOT NULL) as servicios_con_plantilla,
+                    COUNT(*) FILTER (WHERE s.activo = true) as servicios_activos,
+                    COUNT(*) FILTER (WHERE s.activo = false) as servicios_inactivos,
+                    COUNT(DISTINCT s.categoria) FILTER (WHERE s.categoria IS NOT NULL) as total_categorias,
+                    AVG(s.precio) as precio_promedio,
+                    MIN(s.precio) as precio_minimo,
+                    MAX(s.precio) as precio_maximo,
+                    AVG(s.duracion_minutos) as duracion_promedio,
+                    COUNT(*) FILTER (WHERE s.plantilla_servicio_id IS NOT NULL) as servicios_con_plantilla,
                     COUNT(DISTINCT sp.profesional_id) as profesionales_con_servicios
                 FROM servicios s
                 LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
@@ -625,21 +520,13 @@ class ServicioModel {
         }
     }
 
-    /**
-     * Crear servicio desde plantilla
-     * @param {number} organizacion_id - ID de la organización
-     * @param {number} plantilla_id - ID de la plantilla de servicio
-     * @param {Object} [configuracion_personalizada] - Configuración específica que sobrescribe la plantilla
-     * @returns {Promise<Object>} Servicio creado desde plantilla
-     */
+    // Combina datos de plantilla con configuración personalizada
     static async crearDesdeePlantilla(organizacion_id, plantilla_id, configuracion_personalizada = {}) {
         const db = await getDb();
 
         try {
-            // Configurar contexto RLS
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
 
-            // Primero obtener la plantilla
             const queryPlantilla = `
                 SELECT * FROM plantillas_servicios
                 WHERE id = $1 AND estado = 'activa'
@@ -652,7 +539,7 @@ class ServicioModel {
 
             const plantilla = resultPlantilla.rows[0];
 
-            // Crear servicio combinando datos de plantilla y configuración personalizada
+            // Combinar datos de plantilla con configuración personalizada
             const servicioData = {
                 organizacion_id,
                 plantilla_servicio_id: plantilla_id,

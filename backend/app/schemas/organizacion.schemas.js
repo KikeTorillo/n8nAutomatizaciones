@@ -1,16 +1,8 @@
-/**
- * Schemas de Validación Joi para Organizaciones
- * Valida todos los endpoints del módulo de organizaciones
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 const { TIPOS_INDUSTRIA, PLANES } = require('../constants/organizacion.constants');
 
-/**
- * Schema para crear organización
- * POST /organizaciones
- */
+// POST /organizaciones
 const crear = {
     body: Joi.object({
         nombre_comercial: Joi.string()
@@ -67,10 +59,7 @@ const crear = {
     })
 };
 
-/**
- * Schema para listar organizaciones
- * GET /organizaciones
- */
+// GET /organizaciones
 const listar = {
     query: Joi.object({
         page: Joi.number()
@@ -91,20 +80,14 @@ const listar = {
     })
 };
 
-/**
- * Schema para obtener organización por ID
- * GET /organizaciones/:id
- */
+// GET /organizaciones/:id
 const obtenerPorId = {
     params: Joi.object({
         id: commonSchemas.id
     })
 };
 
-/**
- * Schema para actualizar organización
- * PUT /organizaciones/:id
- */
+// PUT /organizaciones/:id
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -150,23 +133,17 @@ const actualizar = {
         suspendido: Joi.boolean(),
         motivo_suspension: Joi.string()
             .allow(null)
-    }).min(1) // Al menos un campo debe estar presente
+    }).min(1)
 };
 
-/**
- * Schema para desactivar organización
- * DELETE /organizaciones/:id
- */
+// DELETE /organizaciones/:id
 const desactivar = {
     params: Joi.object({
         id: commonSchemas.id
     })
 };
 
-/**
- * Schema para onboarding de organización
- * POST /organizaciones/onboarding
- */
+// POST /organizaciones/onboarding
 const onboarding = {
     body: Joi.object({
         organizacion_data: Joi.object({
@@ -203,30 +180,21 @@ const onboarding = {
     })
 };
 
-/**
- * Schema para verificar límites
- * GET /organizaciones/:id/limites
- */
+// GET /organizaciones/:id/limites
 const verificarLimites = {
     params: Joi.object({
         id: commonSchemas.id
     })
 };
 
-/**
- * Schema para obtener estadísticas
- * GET /organizaciones/:id/estadisticas
- */
+// GET /organizaciones/:id/estadisticas
 const obtenerEstadisticas = {
     params: Joi.object({
         id: commonSchemas.id
     })
 };
 
-/**
- * Schema para obtener métricas
- * GET /organizaciones/:id/metricas
- */
+// GET /organizaciones/:id/metricas
 const obtenerMetricas = {
     params: Joi.object({
         id: commonSchemas.id
@@ -238,10 +206,7 @@ const obtenerMetricas = {
     })
 };
 
-/**
- * Schema para cambiar plan
- * PUT /organizaciones/:id/plan
- */
+// PUT /organizaciones/:id/plan
 const cambiarPlan = {
     params: Joi.object({
         id: commonSchemas.id
@@ -256,10 +221,7 @@ const cambiarPlan = {
     })
 };
 
-/**
- * Schema para suspender organización
- * PUT /organizaciones/:id/suspender
- */
+// PUT /organizaciones/:id/suspender
 const suspender = {
     params: Joi.object({
         id: commonSchemas.id
@@ -277,10 +239,7 @@ const suspender = {
     })
 };
 
-/**
- * Schema para reactivar organización
- * PUT /organizaciones/:id/reactivar
- */
+// PUT /organizaciones/:id/reactivar
 const reactivar = {
     params: Joi.object({
         id: commonSchemas.id

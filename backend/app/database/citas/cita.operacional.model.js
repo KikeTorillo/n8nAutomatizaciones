@@ -1,17 +1,9 @@
-/**
- * Modelo Operacional de Citas - Funciones críticas del negocio
- * Dashboard, métricas, check-in, workflow estados, walk-ins
- */
-
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 
 class CitaOperacionalModel {
 
-    /**
-     * Check-in de cliente
-     */
     static async checkIn(citaId, datosCheckIn, organizacionId) {
         const db = await getDb();
 
@@ -54,9 +46,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Iniciar servicio
-     */
     static async startService(citaId, datosInicio, organizacionId) {
         const db = await getDb();
 
@@ -89,9 +78,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Completar servicio
-     */
     static async complete(citaId, datosCompletado, organizacionId) {
         const db = await getDb();
 
@@ -129,9 +115,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Reagendar cita
-     */
     static async reagendar(citaId, datosReagenda, organizacionId) {
         const db = await getDb();
 
@@ -139,7 +122,6 @@ class CitaOperacionalModel {
             await db.query('BEGIN');
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Validar conflicto en nueva fecha/hora
             const citaActual = await db.query('SELECT profesional_id FROM citas WHERE id = $1', [citaId]);
             if (citaActual.rows.length === 0) {
                 throw new Error('Cita no encontrada');
@@ -185,9 +167,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Dashboard del día actual
-     */
     static async obtenerDashboardToday(organizacionId, profesionalId = null) {
         const db = await getDb();
 
@@ -207,7 +186,7 @@ class CitaOperacionalModel {
                     c.*,
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
-                    p.nombre as profesional_nombre,
+                    p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre,
                     s.duracion_minutos,
                     CASE
@@ -223,7 +202,6 @@ class CitaOperacionalModel {
                 ORDER BY c.hora_inicio ASC
             `, params);
 
-            // Métricas del día
             const metricas = await db.query(`
                 SELECT
                     COUNT(*) as total_citas,
@@ -251,9 +229,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Cola de espera en tiempo real
-     */
     static async obtenerColaEspera(organizacionId, profesionalId = null) {
         const db = await getDb();
 
@@ -282,7 +257,7 @@ class CitaOperacionalModel {
                     c.hora_llegada,
                     c.estado,
                     cl.nombre as cliente_nombre,
-                    p.nombre as profesional_nombre,
+                    p.nombre_completo as profesional_nombre,
                     s.nombre as servicio_nombre,
                     s.duracion_minutos,
                     EXTRACT(EPOCH FROM (NOW() - c.hora_llegada))/60 as minutos_esperando,
@@ -308,9 +283,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Métricas en tiempo real
-     */
     static async obtenerMetricasTiempoReal(organizacionId) {
         const db = await getDb();
 
@@ -319,23 +291,14 @@ class CitaOperacionalModel {
 
             const metricas = await db.query(`
                 SELECT
-                    -- Métricas del día actual
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE) as citas_hoy,
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'completada') as completadas_hoy,
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'en_curso') as en_progreso_hoy,
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE AND origen_cita = 'walk_in') as walkins_hoy,
-
-                    -- Métricas de esta semana
                     COUNT(*) FILTER (WHERE fecha_cita >= DATE_TRUNC('week', CURRENT_DATE)) as citas_semana,
-
-                    -- Ingresos
                     COALESCE(SUM(precio_final) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'completada' AND pagado = true), 0) as ingresos_hoy,
                     COALESCE(SUM(precio_final) FILTER (WHERE fecha_cita >= DATE_TRUNC('week', CURRENT_DATE) AND estado = 'completada' AND pagado = true), 0) as ingresos_semana,
-
-                    -- Tiempo promedio de espera (últimos 7 días)
                     AVG(tiempo_espera_minutos) FILTER (WHERE fecha_cita >= CURRENT_DATE - INTERVAL '7 days' AND tiempo_espera_minutos IS NOT NULL) as tiempo_espera_promedio,
-
-                    -- Tasa de no-show (últimos 30 días)
                     ROUND(
                         COUNT(*) FILTER (WHERE fecha_cita >= CURRENT_DATE - INTERVAL '30 days' AND estado = 'no_asistio') * 100.0 /
                         NULLIF(COUNT(*) FILTER (WHERE fecha_cita >= CURRENT_DATE - INTERVAL '30 days' AND estado IN ('completada', 'no_asistio')), 0),
@@ -345,7 +308,6 @@ class CitaOperacionalModel {
                 WHERE organizacion_id = $1
             `, [organizacionId]);
 
-            // Distribución por canal de origen (últimos 30 días)
             const canales = await db.query(`
                 SELECT
                     origen_cita,
@@ -358,10 +320,9 @@ class CitaOperacionalModel {
                 ORDER BY total DESC
             `, [organizacionId]);
 
-            // Profesionales más ocupados hoy
             const profesionales = await db.query(`
                 SELECT
-                    p.nombre,
+                    p.nombre_completo as nombre,
                     COUNT(*) as citas_hoy,
                     COUNT(*) FILTER (WHERE c.estado = 'completada') as completadas,
                     COALESCE(SUM(c.precio_final) FILTER (WHERE c.estado = 'completada' AND c.pagado = true), 0) as ingresos
@@ -369,7 +330,7 @@ class CitaOperacionalModel {
                 JOIN profesionales p ON c.profesional_id = p.id
                 WHERE c.organizacion_id = $1
                 AND c.fecha_cita = CURRENT_DATE
-                GROUP BY p.id, p.nombre
+                GROUP BY p.id, p.nombre_completo
                 ORDER BY citas_hoy DESC
                 LIMIT 10
             `, [organizacionId]);
@@ -387,10 +348,6 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Crear cita walk-in (cliente sin cita previa)
-     * Patrón Enterprise: hora_inicio_real rastrea tiempo real de atención
-     */
     static async crearWalkIn(datosWalkIn, organizacionId) {
         const db = await getDb();
 
@@ -398,16 +355,6 @@ class CitaOperacionalModel {
             await db.query('BEGIN');
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
-            logger.info('[CitaOperacionalModel.crearWalkIn] Iniciando creación walk-in', {
-                organizacion_id: organizacionId,
-                servicio_id: datosWalkIn.servicio_id,
-                profesional_id: datosWalkIn.profesional_id
-            });
-
-            // ✅ CORRECCIÓN: NO generar codigo_cita manualmente
-            // El trigger de BD lo genera automáticamente (generar_codigo_cita)
-
-            // Obtener información del servicio
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosWalkIn.servicio_id, organizacionId, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado o inactivo');
@@ -418,7 +365,6 @@ class CitaOperacionalModel {
             const duracionEstimada = servicio.duracion_minutos || 30;
             const horaFinEstimada = new Date(ahora.getTime() + (duracionEstimada * 60000));
 
-            // ✅ VALIDACIÓN CRÍTICA: Verificar solapamiento con hora_inicio_real
             const solapamiento = await db.query(`
                 SELECT
                     c.id,
@@ -434,15 +380,12 @@ class CitaOperacionalModel {
                   AND c.estado IN ('confirmada', 'en_curso')
                   AND c.hora_inicio_real IS NOT NULL
                   AND (
-                    -- Verificar solapamiento: nueva cita inicia durante cita activa
                     (c.hora_inicio_real <= $4::timestamptz AND
                      COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') > $4::timestamptz)
                     OR
-                    -- Nueva cita termina durante cita activa
                     (c.hora_inicio_real < $5::timestamptz AND
                      COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') >= $5::timestamptz)
                     OR
-                    -- Nueva cita envuelve cita activa
                     (c.hora_inicio_real >= $4::timestamptz AND
                      COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') <= $5::timestamptz)
                   )
@@ -457,31 +400,23 @@ class CitaOperacionalModel {
                 );
             }
 
-            // Crear cita walk-in con patrón enterprise
-            // ✅ NO incluir codigo_cita (auto-generado por trigger)
             const citaInsert = await db.query(`
                 INSERT INTO citas (
                     organizacion_id, cliente_id, profesional_id, servicio_id,
-                    fecha_cita,
-                    hora_inicio, hora_fin,              -- NULL (no programado)
-                    hora_llegada, hora_inicio_real,     -- Llegada inmediata, servicio inicia ahora
+                    fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
                     zona_horaria, precio_servicio, descuento, precio_final,
                     estado, metodo_pago, pagado,
                     notas_cliente, notas_internas,
                     confirmacion_requerida, recordatorio_enviado,
-                    creado_por, ip_origen, origen_cita, origen_aplicacion,
-                    creado_en
+                    creado_por, ip_origen, origen_cita, origen_aplicacion, creado_en
                 ) VALUES (
                     $1, $2, $3, $4,
-                    $5,
-                    NULL, NULL,                         -- Sin horario programado
-                    NOW(), NOW(),                       -- Llegada y atención inmediatas
+                    $5, NULL, NULL, NOW(), NOW(),
                     $6, $7, $8, $9,
                     $10, $11, $12,
                     $13, $14,
                     $15, $16,
-                    $17, $18, $19, $20,
-                    NOW()
+                    $17, $18, $19, $20, NOW()
                 ) RETURNING
                     id, organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
                     fecha_cita, hora_llegada, hora_inicio_real,
@@ -494,9 +429,9 @@ class CitaOperacionalModel {
                 fechaHoy,
                 DEFAULTS.ZONA_HORARIA,
                 servicio.precio || 0,
-                0,  // descuento
+                0,
                 servicio.precio || 0,
-                'confirmada',  // ✅ Estado válido del enum
+                'confirmada',
                 null,  // metodo_pago
                 false, // pagado
                 datosWalkIn.notas_walk_in || `Walk-in: ${datosWalkIn.nombre_cliente || 'Cliente'}`,
@@ -529,14 +464,6 @@ class CitaOperacionalModel {
             }, db);
 
             await db.query('COMMIT');
-
-            logger.info('[CitaOperacionalModel.crearWalkIn] Walk-in creado exitosamente', {
-                cita_id: citaCreada.id,
-                codigo_cita: citaCreada.codigo_cita,
-                profesional_id: datosWalkIn.profesional_id,
-                hora_inicio_real: citaCreada.hora_inicio_real
-            });
-
             return citaCreada;
 
         } catch (error) {
@@ -552,16 +479,12 @@ class CitaOperacionalModel {
         }
     }
 
-    /**
-     * Consultar disponibilidad inmediata
-     */
     static async consultarDisponibilidadInmediata(servicioId, profesionalId, organizacionId) {
         const db = await getDb();
 
         try {
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
 
-            // Obtener servicio
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado');
@@ -579,12 +502,11 @@ class CitaOperacionalModel {
                 params.push(profesionalId);
             }
 
-            // Buscar profesionales disponibles ahora
             const profesionales = await db.query(`
                 SELECT
                     p.id,
-                    p.nombre,
-                    p.especialidad,
+                    p.nombre_completo as nombre,
+                    p.especialidades,
                     COUNT(c.id) FILTER (WHERE c.fecha_cita = CURRENT_DATE AND c.estado IN ('en_curso', 'confirmada')) as citas_hoy,
                     CASE
                         WHEN EXISTS (
@@ -608,7 +530,7 @@ class CitaOperacionalModel {
                 JOIN servicios_profesionales sp ON sp.profesional_id = p.id
                 LEFT JOIN citas c ON c.profesional_id = p.id
                 ${whereClause}
-                GROUP BY p.id, p.nombre, p.especialidad
+                GROUP BY p.id, p.nombre_completo, p.especialidades
                 ORDER BY disponible_ahora DESC, citas_hoy ASC
             `, params);
 

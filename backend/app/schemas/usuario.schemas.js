@@ -1,15 +1,6 @@
-/**
- * Schemas de Validación Joi para Usuarios
- * Valida todos los endpoints del módulo de usuarios
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
-/**
- * Schema para crear usuario
- * POST /usuarios
- */
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
@@ -51,10 +42,6 @@ const crear = {
     })
 };
 
-/**
- * Schema para listar usuarios
- * GET /usuarios
- */
 const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
@@ -90,20 +77,12 @@ const listar = {
     })
 };
 
-/**
- * Schema para obtener usuarios bloqueados
- * GET /usuarios/bloqueados
- */
 const obtenerBloqueados = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional() // Solo super_admin
     })
 };
 
-/**
- * Schema para obtener usuario por ID
- * GET /usuarios/:id
- */
 const obtenerPorId = {
     params: Joi.object({
         id: commonSchemas.id
@@ -113,20 +92,12 @@ const obtenerPorId = {
     })
 };
 
-/**
- * Schema para verificar bloqueo
- * GET /usuarios/:id/bloqueo
- */
 const verificarBloqueo = {
     params: Joi.object({
         id: commonSchemas.id
     })
 };
 
-/**
- * Schema para actualizar usuario
- * PUT /usuarios/:id
- */
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -159,10 +130,6 @@ const actualizar = {
     })
 };
 
-/**
- * Schema para cambiar rol
- * PATCH /usuarios/:id/rol
- */
 const cambiarRol = {
     params: Joi.object({
         id: commonSchemas.id
@@ -177,10 +144,6 @@ const cambiarRol = {
     })
 };
 
-/**
- * Schema para desbloquear usuario
- * PATCH /usuarios/:id/desbloquear
- */
 const desbloquear = {
     params: Joi.object({
         id: commonSchemas.id

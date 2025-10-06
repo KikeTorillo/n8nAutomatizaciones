@@ -1,14 +1,6 @@
-/**
- * Schemas de Validación Joi para Clientes
- * Valida todos los endpoints del módulo de clientes
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
-/**
- * Límites y validaciones de clientes
- */
 const LIMITES = {
     NOMBRE_MIN: 2,
     NOMBRE_MAX: 150,
@@ -22,10 +14,6 @@ const LIMITES = {
     EDAD_MAX: 120
 };
 
-/**
- * Schema para crear cliente
- * POST /clientes
- */
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
@@ -117,10 +105,6 @@ const crear = {
     })
 };
 
-/**
- * Schema para actualizar cliente
- * PUT /clientes/:id
- */
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -177,10 +161,6 @@ const actualizar = {
     })
 };
 
-/**
- * Schema para listar clientes
- * GET /clientes
- */
 const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
@@ -213,10 +193,6 @@ const listar = {
     })
 };
 
-/**
- * Schema para obtener cliente por ID
- * GET /clientes/:id
- */
 const obtenerPorId = {
     params: Joi.object({
         id: commonSchemas.id
@@ -226,10 +202,6 @@ const obtenerPorId = {
     })
 };
 
-/**
- * Schema para buscar clientes
- * GET /clientes/buscar
- */
 const buscar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
@@ -250,10 +222,6 @@ const buscar = {
     })
 };
 
-/**
- * Schema para cambiar estado de cliente
- * PATCH /clientes/:id/estado
- */
 const cambiarEstado = {
     params: Joi.object({
         id: commonSchemas.id
@@ -270,10 +238,6 @@ const cambiarEstado = {
     })
 };
 
-/**
- * Schema para eliminar cliente
- * DELETE /clientes/:id
- */
 const eliminar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -283,20 +247,12 @@ const eliminar = {
     })
 };
 
-/**
- * Schema para obtener estadísticas
- * GET /clientes/estadisticas
- */
 const obtenerEstadisticas = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional() // Solo super_admin
     })
 };
 
-/**
- * Schema para buscar por teléfono (CRÍTICO PARA IA)
- * GET /clientes/buscar-telefono
- */
 const buscarPorTelefono = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(),
@@ -315,10 +271,6 @@ const buscarPorTelefono = {
     })
 };
 
-/**
- * Schema para buscar por nombre (COMPLEMENTARIO PARA IA)
- * GET /clientes/buscar-nombre
- */
 const buscarPorNombre = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(),

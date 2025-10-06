@@ -25,13 +25,15 @@ const { ResponseHelper } = require('../utils/helpers');
 /**
  * Middleware para configurar el contexto del tenant en todas las consultas
  * Debe usarse después del middleware de autenticación
- * 
+ *
  * PATRÓN ORGANIZACION_ID:
- * - POST requests: organizacion_id en body (super_admin opcional, usuarios regulares automático)
- * - GET/PUT/DELETE: organizacion_id como query parameter (super_admin obligatorio, usuarios regulares automático)
- * - CASO ESPECIAL: Controller organizaciones usa params.id porque la organización ES el recurso
- * 
- * CORRECCIÓN 2025-09-21: Eliminada búsqueda secuencial confusa, implementada lógica específica por método HTTP
+ *
+ * SUPER_ADMIN:
+ *   - Header X-Organization-Id (OBLIGATORIO - estándar enterprise)
+ *   - Excepción: /organizaciones/:id usa params.id
+ *
+ * USUARIOS REGULARES:
+ *   - Siempre usa organizacion_id del JWT (req.user.organizacion_id)
  */
 const setTenantContext = async (req, res, next) => {
   let client;
@@ -41,66 +43,46 @@ const setTenantContext = async (req, res, next) => {
       return ResponseHelper.error(res, 'Error de configuración', 500);
     }
 
-    // Para super_admin, usar el ID de la URL como contexto tenant
     let tenantId;
 
     logger.debug('Determinando tenant context', {
       userRol: req.user.rol,
       organizacionId: req.user.organizacion_id,
-      allParams: req.params,
-      queryParams: req.query,
+      header: req.headers?.['x-organization-id'],
       path: req.path
     });
 
     if (req.user.rol === 'super_admin') {
-      // CASO ESPECIAL: Controller de organizaciones usa params.id porque la organización ES el recurso
+      // CASO ESPECIAL: Controller organizaciones usa params.id
       if (req.baseUrl && req.baseUrl.includes('/organizaciones') && req.params.id) {
-        logger.debug('Controller organizaciones: usando params.id como organizacion_id', { paramsId: req.params.id });
+        logger.debug('Controller organizaciones: usando params.id', { paramsId: req.params.id });
         tenantId = parseInt(req.params.id);
       } else {
-        // RESTO DE CONTROLLERS: Lógica específica por método HTTP
-        if (req.method === 'POST' && req.body && req.body.organizacion_id) {
-          logger.debug('POST request: usando organizacion_id de body', { bodyOrgId: req.body.organizacion_id });
-          tenantId = parseInt(req.body.organizacion_id);
-        } else if (['GET', 'PUT', 'DELETE'].includes(req.method) && req.query.organizacion_id) {
-          logger.debug('GET/PUT/DELETE request: usando organizacion_id de query', { queryOrgId: req.query.organizacion_id });
-          tenantId = parseInt(req.query.organizacion_id);
+        // Header X-Organization-Id (ÚNICO MÉTODO para super_admin)
+        tenantId = parseInt(req.headers?.['x-organization-id']);
+
+        if (isNaN(tenantId) || !tenantId) {
+          logger.error('Super_admin: X-Organization-Id header no especificado o inválido', {
+            method: req.method,
+            baseUrl: req.baseUrl,
+            header: req.headers['x-organization-id']
+          });
+
+          return ResponseHelper.error(res,
+            'Super_admin debe especificar X-Organization-Id header',
+            400
+          );
         }
+
+        logger.debug('Usando X-Organization-Id header', { tenantId });
       }
-      
-      if (isNaN(tenantId) || !tenantId) {
-        logger.error('ID de organización inválido para super_admin', {
-          method: req.method,
-          baseUrl: req.baseUrl,
-          paramsId: req.params.id,
-          queryOrgId: req.query.organizacion_id,
-          bodyOrgId: req.body?.organizacion_id,
-          parsedId: tenantId
-        });
-        
-        let errorMessage;
-        if (req.baseUrl && req.baseUrl.includes('/organizaciones')) {
-          errorMessage = 'Controller organizaciones: super_admin debe especificar ID válido en URL';
-        } else if (req.method === 'POST') {
-          errorMessage = 'POST request: super_admin debe especificar organizacion_id en body';
-        } else if (['GET', 'PUT', 'DELETE'].includes(req.method)) {
-          errorMessage = 'GET/PUT/DELETE request: super_admin debe especificar organizacion_id como query parameter';
-        } else {
-          errorMessage = 'Super admin debe especificar organizacion_id según el tipo de request';
-        }
-        
-        return ResponseHelper.error(res, errorMessage, 400);
-      }
-      logger.debug('Tenant ID asignado para super_admin', { tenantId });
     } else if (req.user.organizacion_id) {
       logger.debug('Usando organizacion_id del usuario', { organizacionId: req.user.organizacion_id });
       tenantId = req.user.organizacion_id;
     } else {
       logger.error('No se pudo determinar tenant context', {
         userRol: req.user.rol,
-        organizacionId: req.user.organizacion_id,
-        paramsId: req.params.id,
-        allParams: req.params
+        organizacionId: req.user.organizacion_id
       });
       return ResponseHelper.error(res, 'Error de configuración de tenant', 500);
     }

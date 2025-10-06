@@ -452,7 +452,7 @@ class OrganizacionHelper {
 
       // Consultar organización
       const result = await db.query(
-        `SELECT id, nombre, activo, suspendido, plan_actual
+        `SELECT id, nombre_comercial, activo, suspendido, plan_actual
          FROM organizaciones
          WHERE id = $1`,
         [orgId]
@@ -480,7 +480,7 @@ class OrganizacionHelper {
 
       logger.debug('Organización validada correctamente', {
         organizacionId: orgId,
-        nombre: organizacion.nombre,
+        nombre: organizacion.nombre_comercial,
         plan: organizacion.plan_actual
       });
 

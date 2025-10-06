@@ -1,18 +1,9 @@
-/**
- * Schemas de Validación Joi para Horarios
- * Valida todos los endpoints del módulo de horarios
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
-/**
- * Schema para crear horario
- * POST /horarios
- */
 const crear = {
     body: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
+        organizacion_id: commonSchemas.id.optional(),
         profesional_id: commonSchemas.id,
         servicio_id: commonSchemas.id.optional().allow(null),
         tipo_horario: Joi.string()
@@ -46,10 +37,6 @@ const crear = {
     })
 };
 
-/**
- * Schema para actualizar horario
- * PUT /horarios/:id
- */
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -70,9 +57,8 @@ const actualizar = {
         precio_dinamico: commonSchemas.price.allow(null),
         es_horario_premium: Joi.boolean(),
         descuento_porcentaje: Joi.number().min(0).max(100)
-    }).min(1) // Al menos un campo debe estar presente
+    }).min(1)
         .custom((value, helpers) => {
-            // Validar hora_fin > hora_inicio si ambas están presentes
             if (value.hora_inicio && value.hora_fin && value.hora_fin <= value.hora_inicio) {
                 return helpers.error('custom.hora_fin_posterior');
             }
@@ -80,21 +66,16 @@ const actualizar = {
         })
         .messages({ 'custom.hora_fin_posterior': 'hora_fin debe ser posterior a hora_inicio' }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: commonSchemas.id.optional()
     })
 };
 
-/**
- * Schema para obtener horarios con filtros
- * GET /horarios
- * GET /horarios/:id
- */
 const obtener = {
     params: Joi.object({
         id: commonSchemas.id.optional()
     }).optional(),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: commonSchemas.id.optional(),
         id: commonSchemas.id.optional(),
         profesional_id: commonSchemas.id.optional(),
         fecha: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
@@ -104,23 +85,15 @@ const obtener = {
     })
 };
 
-/**
- * Schema para eliminar horario
- * DELETE /horarios/:id
- */
 const eliminar = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: commonSchemas.id.optional()
     })
 };
 
-/**
- * Schema para consultar disponibilidad (endpoint público IA)
- * GET /horarios/disponibles
- */
 const consultarDisponibilidad = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.required(),
@@ -139,10 +112,6 @@ const consultarDisponibilidad = {
     })
 };
 
-/**
- * Schema para disponibilidad inteligente (NLP para IA)
- * GET /horarios/disponibles/inteligente
- */
 const consultarDisponibilidadInteligente = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.required(),
@@ -164,10 +133,6 @@ const consultarDisponibilidadInteligente = {
     })
 };
 
-/**
- * Schema para reserva temporal (endpoint público IA)
- * POST /horarios/reservar-temporal
- */
 const reservarTemporal = {
     body: Joi.object({
         horario_id: commonSchemas.id.required(),
@@ -177,10 +142,6 @@ const reservarTemporal = {
     })
 };
 
-/**
- * Schema para liberar reserva temporal
- * POST /horarios/liberar-reserva
- */
 const liberarReservaTemporal = {
     body: Joi.object({
         horario_id: commonSchemas.id.required(),
@@ -188,10 +149,6 @@ const liberarReservaTemporal = {
     })
 };
 
-/**
- * Schema para limpiar reservas expiradas (mantenimiento)
- * POST /horarios/limpiar-reservas-expiradas
- */
 const limpiarReservasExpiradas = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.required()

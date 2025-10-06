@@ -6,110 +6,115 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
-/**
- * Schema para login
- * POST /auth/login
- */
+// ============================================================
+// CONSTANTES DE VALIDACIÓN
+// ============================================================
+const VALIDATION_CONSTANTS = {
+    NOMBRE_MIN_LENGTH: 2,
+    NOMBRE_MAX_LENGTH: 150,
+    APELLIDOS_MAX_LENGTH: 150,
+    TELEFONO_PATTERN: /^[+]?[0-9\s\-\(\)]{7,20}$/,
+    BUSQUEDA_MAX_LENGTH: 100,
+    PASSWORD_MIN: 8,
+    PASSWORD_MAX: 128,
+    PASSWORD_STRONG_PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+    TOKEN_RESET_LENGTH: 64,
+    ZONA_HORARIA_MAX: 50,
+    IDIOMA_MAX: 5
+};
+
+// ============================================================
+// SCHEMAS REUTILIZABLES DE CONTRASEÑA
+// ============================================================
+const passwordSchemas = {
+    // Validación básica para login (solo mínimo requerido)
+    basic: Joi.string()
+        .min(VALIDATION_CONSTANTS.PASSWORD_MIN)
+        .messages({
+            'string.min': 'Contraseña debe tener al menos 8 caracteres',
+            'any.required': 'Contraseña es requerida'
+        }),
+
+    // Validación fuerte para registro/cambio (incluye requisitos de complejidad)
+    strong: Joi.string()
+        .min(VALIDATION_CONSTANTS.PASSWORD_MIN)
+        .max(VALIDATION_CONSTANTS.PASSWORD_MAX)
+        .pattern(VALIDATION_CONSTANTS.PASSWORD_STRONG_PATTERN)
+        .messages({
+            'string.min': 'Contraseña debe tener al menos 8 caracteres',
+            'string.max': 'Contraseña no puede exceder 128 caracteres',
+            'string.pattern.base': 'Contraseña debe contener al menos una mayúscula, una minúscula y un número',
+            'any.required': 'Contraseña es requerida'
+        })
+};
+
+// ============================================================
+// SCHEMAS REUTILIZABLES DE DATOS PERSONALES
+// ============================================================
+const personSchemas = {
+    nombre: Joi.string()
+        .min(VALIDATION_CONSTANTS.NOMBRE_MIN_LENGTH)
+        .max(VALIDATION_CONSTANTS.NOMBRE_MAX_LENGTH)
+        .trim(),
+
+    apellidos: Joi.string()
+        .max(VALIDATION_CONSTANTS.APELLIDOS_MAX_LENGTH)
+        .allow('')
+        .trim(),
+
+    telefono: Joi.string()
+        .pattern(VALIDATION_CONSTANTS.TELEFONO_PATTERN)
+        .messages({
+            'string.pattern.base': 'Teléfono no válido'
+        })
+};
+
+// ============================================================
+// SCHEMAS DE ENDPOINTS
+// ============================================================
+
 const login = {
     body: Joi.object({
         email: commonSchemas.emailRequired,
-        password: Joi.string()
-            .min(8)
-            .required()
-            .messages({
-                'string.min': 'Contraseña debe tener al menos 8 caracteres',
-                'any.required': 'Contraseña es requerida'
-            })
+        password: passwordSchemas.basic.required()
     })
 };
 
-/**
- * Schema para registro
- * POST /auth/register
- */
 const register = {
     body: Joi.object({
         email: commonSchemas.emailRequired,
-        password: Joi.string()
-            .min(8)
-            .max(128)
-            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .required()
+        password: passwordSchemas.strong.required(),
+        nombre: personSchemas.nombre.required()
             .messages({
-                'string.min': 'Contraseña debe tener al menos 8 caracteres',
-                'string.max': 'Contraseña no puede exceder 128 caracteres',
-                'string.pattern.base': 'Contraseña debe contener al menos una mayúscula, una minúscula y un número',
-                'any.required': 'Contraseña es requerida'
-            }),
-        nombre: Joi.string()
-            .min(2)
-            .max(150)
-            .required()
-            .trim()
-            .messages({
-                'string.min': 'Nombre debe tener al menos 2 caracteres',
-                'string.max': 'Nombre no puede exceder 150 caracteres',
                 'any.required': 'Nombre es requerido'
             }),
-        apellidos: Joi.string()
-            .max(150)
-            .optional()
-            .allow('')
-            .trim(),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-            .optional()
-            .messages({
-                'string.pattern.base': 'Teléfono no válido'
-            }),
+        apellidos: personSchemas.apellidos.optional(),
+        telefono: personSchemas.telefono.optional(),
         rol: Joi.string()
             .valid('super_admin', 'admin', 'propietario', 'empleado', 'cliente')
             .optional()
             .default('empleado'),
-        organizacion_id: commonSchemas.id.optional()
+        organizacion_id: Joi.when('rol', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: commonSchemas.id.required()
+                .messages({
+                    'any.required': 'organizacion_id es requerido para este rol'
+                })
+        })
     })
 };
 
-/**
- * Schema para crear primer admin
- * POST /auth/crear-primer-admin
- */
 const crearPrimerAdmin = {
     body: Joi.object({
         email: commonSchemas.emailRequired,
-        password: Joi.string()
-            .min(8)
-            .max(128)
-            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .required()
-            .messages({
-                'string.min': 'Contraseña debe tener al menos 8 caracteres',
-                'string.max': 'Contraseña no puede exceder 128 caracteres',
-                'string.pattern.base': 'Contraseña debe contener al menos una mayúscula, una minúscula y un número'
-            }),
-        nombre: Joi.string()
-            .min(2)
-            .max(150)
-            .required()
-            .trim(),
-        apellidos: Joi.string()
-            .max(150)
-            .optional()
-            .allow('')
-            .trim(),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-            .optional()
-            .messages({
-                'string.pattern.base': 'Teléfono no válido'
-            })
+        password: passwordSchemas.strong.required(),
+        nombre: personSchemas.nombre.required(),
+        apellidos: personSchemas.apellidos.optional(),
+        telefono: personSchemas.telefono.optional()
     })
 };
 
-/**
- * Schema para refresh token
- * POST /auth/refresh
- */
 const refresh = {
     body: Joi.object({
         refreshToken: Joi.string()
@@ -120,26 +125,10 @@ const refresh = {
     })
 };
 
-/**
- * Schema para logout
- * POST /auth/logout
- */
-const logout = {
-    // No requiere body, solo el token en header
-};
+const logout = {}; // Sin body - autenticación por header
 
-/**
- * Schema para obtener usuario actual
- * GET /auth/me
- */
-const me = {
-    // No requiere parámetros, usa el token JWT
-};
+const me = {}; // Sin parámetros - usa JWT del header
 
-/**
- * Schema para cambiar contraseña
- * POST /auth/change-password
- */
 const changePassword = {
     body: Joi.object({
         passwordAnterior: Joi.string()
@@ -147,56 +136,29 @@ const changePassword = {
             .messages({
                 'any.required': 'Contraseña anterior es requerida'
             }),
-        passwordNueva: Joi.string()
-            .min(8)
-            .max(128)
-            .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .required()
+        passwordNueva: passwordSchemas.strong.required()
             .messages({
-                'string.min': 'Nueva contraseña debe tener al menos 8 caracteres',
-                'string.max': 'Nueva contraseña no puede exceder 128 caracteres',
-                'string.pattern.base': 'Nueva contraseña debe contener al menos una mayúscula, una minúscula y un número'
+                'any.required': 'Nueva contraseña es requerida'
             })
     })
 };
 
-/**
- * Schema para actualizar perfil
- * PUT /auth/profile
- */
 const updateProfile = {
     body: Joi.object({
-        nombre: Joi.string()
-            .min(2)
-            .max(150)
-            .optional()
-            .trim(),
-        apellidos: Joi.string()
-            .max(150)
-            .optional()
-            .allow('')
-            .trim(),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-            .optional()
-            .messages({
-                'string.pattern.base': 'Teléfono no válido'
-            }),
+        nombre: personSchemas.nombre.optional(),
+        apellidos: personSchemas.apellidos.optional(),
+        telefono: personSchemas.telefono.optional(),
         zona_horaria: Joi.string()
-            .max(50)
+            .max(VALIDATION_CONSTANTS.ZONA_HORARIA_MAX)
             .optional(),
         idioma: Joi.string()
-            .max(5)
+            .max(VALIDATION_CONSTANTS.IDIOMA_MAX)
             .optional(),
         configuracion_ui: Joi.object()
             .optional()
     }).min(1) // Al menos un campo debe estar presente
 };
 
-/**
- * Schema para desbloquear usuario
- * POST /auth/unlock-user
- */
 const unlockUser = {
     body: Joi.object({
         userId: commonSchemas.id.required()
@@ -206,30 +168,14 @@ const unlockUser = {
     })
 };
 
-/**
- * Schema para obtener usuarios bloqueados
- * GET /auth/blocked-users
- */
-const getBlockedUsers = {
-    query: Joi.object({
-        organizacion_id: commonSchemas.id.optional()
-    })
-};
+const getBlockedUsers = {}; // organizacion_id viene del middleware tenant
 
-/**
- * Schema para verificar bloqueo
- * GET /auth/check-lock/:userId
- */
 const checkLock = {
     params: Joi.object({
         userId: commonSchemas.id.required()
     })
 };
 
-/**
- * Schema para registrar usuario en organización
- * POST /auth/registrar-usuario-org
- */
 const registrarUsuarioOrg = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.required()
@@ -245,24 +191,10 @@ const registrarUsuarioOrg = {
             }),
         usuario_data: Joi.object({
             email: commonSchemas.emailRequired,
-            password: Joi.string()
-                .min(8)
-                .max(128)
-                .pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-                .required(),
-            nombre: Joi.string()
-                .min(2)
-                .max(150)
-                .required()
-                .trim(),
-            apellidos: Joi.string()
-                .max(150)
-                .optional()
-                .allow('')
-                .trim(),
-            telefono: Joi.string()
-                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-                .optional()
+            password: passwordSchemas.strong.required(),
+            nombre: personSchemas.nombre.required(),
+            apellidos: personSchemas.apellidos.optional(),
+            telefono: personSchemas.telefono.optional()
         }).required(),
         opciones: Joi.object({
             verificar_email_automaticamente: Joi.boolean().optional(),
@@ -271,10 +203,6 @@ const registrarUsuarioOrg = {
     })
 };
 
-/**
- * Schema para verificar email
- * GET /auth/verificar-email/:token
- */
 const verificarEmail = {
     params: Joi.object({
         token: Joi.string()
@@ -285,10 +213,6 @@ const verificarEmail = {
     })
 };
 
-/**
- * Schema para cambiar rol de usuario
- * PUT /auth/cambiar-rol
- */
 const cambiarRol = {
     body: Joi.object({
         usuario_id: commonSchemas.id.required()
@@ -306,13 +230,8 @@ const cambiarRol = {
     })
 };
 
-/**
- * Schema para listar usuarios de organización
- * GET /auth/usuarios-organizacion
- */
 const listarUsuariosOrg = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(),
         rol: Joi.string()
             .valid('admin', 'propietario', 'empleado', 'cliente')
             .optional(),
@@ -323,7 +242,7 @@ const listarUsuariosOrg = {
             .valid('true', 'false')
             .optional(),
         buscar: Joi.string()
-            .max(100)
+            .max(VALIDATION_CONSTANTS.BUSQUEDA_MAX_LENGTH)
             .optional(),
         page: Joi.number()
             .integer()
@@ -347,6 +266,72 @@ const listarUsuariosOrg = {
     })
 };
 
+const recuperarPassword = {
+    body: Joi.object({
+        email: commonSchemas.emailRequired,
+        organizacion_id: commonSchemas.id.required()
+            .messages({
+                'any.required': 'organizacion_id es requerido para recuperar contraseña',
+                'number.base': 'ID de organización debe ser un número',
+                'number.positive': 'ID de organización debe ser positivo'
+            })
+    })
+};
+
+const confirmarResetPassword = {
+    params: Joi.object({
+        token: Joi.string()
+            .alphanum()
+            .length(VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH)
+            .required()
+            .messages({
+                'string.alphanum': 'Token debe contener solo caracteres alfanuméricos',
+                'string.length': `Token debe tener exactamente ${VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH} caracteres`,
+                'any.required': 'Token es requerido'
+            })
+    }),
+    body: Joi.object({
+        passwordNueva: passwordSchemas.strong.required()
+            .messages({
+                'any.required': 'Nueva contraseña es requerida'
+            }),
+        confirmarPassword: Joi.string()
+            .valid(Joi.ref('passwordNueva'))
+            .required()
+            .messages({
+                'any.only': 'La confirmación debe coincidir con la nueva contraseña',
+                'any.required': 'Confirmación de contraseña es requerida'
+            })
+    })
+};
+
+const validarTokenReset = {
+    params: Joi.object({
+        token: Joi.string()
+            .alphanum()
+            .length(VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH)
+            .required()
+            .messages({
+                'string.alphanum': 'Token debe contener solo caracteres alfanuméricos',
+                'string.length': `Token debe tener exactamente ${VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH} caracteres`,
+                'any.required': 'Token es requerido'
+            })
+    })
+};
+
+const evaluarFortalezaPassword = {
+    body: Joi.object({
+        password: Joi.string()
+            .required()
+            .min(1)
+            .max(VALIDATION_CONSTANTS.PASSWORD_MAX)
+            .messages({
+                'any.required': 'Contraseña es requerida para evaluar',
+                'string.max': 'Contraseña demasiado larga para evaluar'
+            })
+    })
+};
+
 module.exports = {
     login,
     register,
@@ -362,5 +347,10 @@ module.exports = {
     registrarUsuarioOrg,
     verificarEmail,
     cambiarRol,
-    listarUsuariosOrg
+    listarUsuariosOrg,
+    // Password management schemas
+    recuperarPassword,
+    confirmarResetPassword,
+    validarTokenReset,
+    evaluarFortalezaPassword
 };

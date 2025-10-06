@@ -1,19 +1,10 @@
-/**
- * Schemas de Validación Joi para Citas
- * Valida todos los endpoints del módulo de citas
- */
-
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
 // ===================================================================
-// 🤖 SCHEMAS IA CONVERSACIONAL (WEBHOOKS)
+// IA CONVERSACIONAL
 // ===================================================================
 
-/**
- * Schema para crear cita automáticamente desde IA
- * POST /citas/automatica
- */
 const crearAutomatica = {
     body: Joi.object({
         telefono_cliente: Joi.string()
@@ -34,26 +25,18 @@ const crearAutomatica = {
     })
 };
 
-/**
- * Schema para buscar citas por teléfono
- * GET /citas/buscar-por-telefono
- */
 const buscarPorTelefono = {
     query: Joi.object({
         telefono: Joi.string()
             .pattern(/^[+]?[\d\s\-()]+$/)
             .required()
             .messages({ 'string.pattern.base': 'Formato de teléfono inválido' }),
-        organizacion_id: commonSchemas.id,
+        organizacion_id: commonSchemas.id.optional(),
         estados: Joi.array().items(Joi.string()).optional(),
         incluir_historicas: Joi.boolean().default(false)
     })
 };
 
-/**
- * Schema para modificar cita automáticamente desde IA
- * PUT /citas/automatica/:codigo
- */
 const modificarAutomatica = {
     params: Joi.object({
         codigo: Joi.string().trim().min(3).max(50).required()
@@ -69,10 +52,6 @@ const modificarAutomatica = {
     })
 };
 
-/**
- * Schema para cancelar cita automáticamente desde IA
- * DELETE /citas/automatica/:codigo
- */
 const cancelarAutomatica = {
     params: Joi.object({
         codigo: Joi.string().trim().min(3).max(50).required()
@@ -86,16 +65,16 @@ const cancelarAutomatica = {
 };
 
 // ===================================================================
-// 🛡️ SCHEMAS CRUD ESTÁNDAR (AUTENTICADOS)
+// CRUD
 // ===================================================================
 
-/**
- * Schema para crear cita estándar
- * POST /citas
- */
 const crear = {
     body: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         cliente_id: commonSchemas.id,
         profesional_id: commonSchemas.id,
         servicio_id: commonSchemas.id,
@@ -130,27 +109,27 @@ const crear = {
         notas_cliente: Joi.string().max(1000).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para obtener cita por ID
- * GET /citas/:id
- */
 const obtener = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para actualizar cita
- * PUT /citas/:id
- */
 const actualizar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -172,45 +151,49 @@ const actualizar = {
             .optional(),
         pagado: Joi.boolean().optional(),
         notas_cliente: Joi.string().max(1000).optional()
-    }).min(1), // Al menos un campo debe estar presente
+    }).min(1),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para eliminar cita
- * DELETE /citas/:id
- */
 const eliminar = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para confirmar asistencia
- * PATCH /citas/:id/confirmar-asistencia
- */
 const confirmarAsistencia = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para listar citas con filtros
- * GET /citas
- */
 const listar = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         fecha_desde: Joi.date().iso().optional(),
         fecha_hasta: Joi.date().iso().optional(),
         profesional_id: commonSchemas.id.optional(),
@@ -228,13 +211,9 @@ const listar = {
 };
 
 // ===================================================================
-// 🏥 SCHEMAS OPERACIONALES CRÍTICOS
+// OPERACIONALES
 // ===================================================================
 
-/**
- * Schema para check-in
- * POST /citas/:id/check-in
- */
 const checkIn = {
     params: Joi.object({
         id: commonSchemas.id
@@ -243,14 +222,14 @@ const checkIn = {
         notas_llegada: Joi.string().max(200).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para iniciar servicio
- * POST /citas/:id/start-service
- */
 const startService = {
     params: Joi.object({
         id: commonSchemas.id
@@ -259,14 +238,14 @@ const startService = {
         notas_inicio: Joi.string().max(500).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para completar servicio
- * POST /citas/:id/complete
- */
 const complete = {
     params: Joi.object({
         id: commonSchemas.id
@@ -282,14 +261,14 @@ const complete = {
         pagado: Joi.boolean().optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para reagendar cita
- * POST /citas/:id/reagendar
- */
 const reagendar = {
     params: Joi.object({
         id: commonSchemas.id
@@ -302,55 +281,54 @@ const reagendar = {
         motivo_reagenda: Joi.string().max(500).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
 // ===================================================================
-// 📊 SCHEMAS DASHBOARD Y MÉTRICAS
+// DASHBOARD Y MÉTRICAS
 // ===================================================================
 
-/**
- * Schema para dashboard del día
- * GET /citas/dashboard/today
- */
 const dashboardToday = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         profesional_id: commonSchemas.id.optional()
     })
 };
 
-/**
- * Schema para cola de espera
- * GET /citas/cola-espera
- */
 const colaEspera = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         profesional_id: commonSchemas.id.optional()
     })
 };
 
-/**
- * Schema para métricas en tiempo real
- * GET /citas/metricas-tiempo-real
- */
 const metricasTiempoReal = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
 // ===================================================================
-// 🚶 SCHEMAS WALK-IN Y DISPONIBILIDAD
+// WALK-IN Y DISPONIBILIDAD
 // ===================================================================
 
-/**
- * Schema para crear cita walk-in (cliente sin cita previa)
- * POST /citas/walk-in
- * Patrón Enterprise: usa hora_inicio_real para tracking real
- */
 const crearWalkIn = {
     body: Joi.object({
         cliente_id: commonSchemas.id.required()
@@ -365,54 +343,54 @@ const crearWalkIn = {
         notas_walk_in: Joi.string().max(500).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para consultar disponibilidad inmediata
- * GET /citas/disponibilidad-inmediata
- */
 const disponibilidadInmediata = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         servicio_id: commonSchemas.id,
         profesional_id: commonSchemas.id.optional()
     })
 };
 
 // ===================================================================
-// 📨 SCHEMAS RECORDATORIOS Y SISTEMAS AUXILIARES
+// RECORDATORIOS
 // ===================================================================
 
-/**
- * Schema para obtener recordatorios
- * GET /citas/recordatorios
- */
 const obtenerRecordatorios = {
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
         horas_anticipacion: Joi.number().integer().min(1).max(48).default(2)
     })
 };
 
-/**
- * Schema para marcar recordatorio enviado
- * PATCH /citas/:codigo/recordatorio-enviado
- */
 const marcarRecordatorioEnviado = {
     params: Joi.object({
         codigo: Joi.string().trim().min(3).max(50).required()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
-/**
- * Schema para calificar cliente
- * PATCH /citas/:codigo/calificar-cliente
- */
 const calificarCliente = {
     params: Joi.object({
         codigo: Joi.string().trim().min(3).max(50).required()
@@ -422,7 +400,11 @@ const calificarCliente = {
         comentario: Joi.string().max(500).optional()
     }),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
