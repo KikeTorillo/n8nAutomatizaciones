@@ -232,7 +232,9 @@ const createRateLimit = (options = {}) => {
   return async (req, res, next) => {
     try {
       // Verificar si debe saltar esta request (ej: IPs whitelistadas, usuarios especiales)
-      if (config.skip(req)) {
+      const shouldSkip = config.skip(req);
+
+      if (shouldSkip) {
         return next();
       }
 
@@ -404,6 +406,12 @@ const apiRateLimit = createRateLimit({
     // Priorizar API key si está disponible, sino usar IP
     const apiKey = req.headers['x-api-key'];
     return apiKey ? `api:${apiKey}` : `ip:${req.ip}`;
+  },
+  skip: (req) => {
+    // Saltar en ambiente de test o si viene de localhost en desarrollo
+    return process.env.NODE_ENV === 'test' ||
+           (process.env.NODE_ENV === 'development' &&
+            (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1'));
   }
 });
 

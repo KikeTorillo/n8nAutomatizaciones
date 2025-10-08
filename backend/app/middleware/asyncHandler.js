@@ -52,18 +52,34 @@ const asyncHandler = (fn) => {
                 else if (error.message.includes('permisos') || error.message.includes('Forbidden')) {
                     statusCode = 403;
                 }
-                // Recursos no encontrados
+                // Recursos no encontrados (PRIORIDAD ALTA - debe ir antes de "no se puede...")
                 else if (error.message.includes('no encontrado') || error.message.includes('no encontrada')) {
                     statusCode = 404;
                 }
+                // Errores de transiciones de estado de citas (máquina de estados)
+                else if (
+                    error.message.toLowerCase().includes('no se puede modificar') ||
+                    error.message.toLowerCase().includes('no se puede pasar de') ||
+                    error.message.toLowerCase().includes('transición') ||
+                    error.message.toLowerCase().includes('estado inválido') ||
+                    error.message.toLowerCase().includes('no se puede cancelar') ||
+                    error.message.toLowerCase().includes('no se puede reagendar') ||
+                    error.message.toLowerCase().includes('no se puede iniciar') ||
+                    error.message.toLowerCase().includes('no se puede completar')
+                ) {
+                    statusCode = 400;
+                }
                 // Conflictos (duplicados, lock conflicts, etc)
                 else if (
-                    error.message.includes('ya existe') ||
-                    error.message.includes('duplicado') ||
+                    error.message.toLowerCase().includes('ya existe') ||
+                    error.message.toLowerCase().includes('duplicado') ||
+                    error.message.toLowerCase().includes('conflicto') ||
+                    error.message.toLowerCase().includes('solapamiento') ||
                     error.message.includes('reservado') ||
                     error.message.includes('en uso por otro') ||
                     error.code === '23505' ||  // Unique violation
-                    error.code === '55P03'     // Lock not available (NOWAIT)
+                    error.code === '55P03' ||  // Lock not available (NOWAIT)
+                    error.code === '23P01'     // Exclusion constraint violation
                 ) {
                     statusCode = 409;
                 }

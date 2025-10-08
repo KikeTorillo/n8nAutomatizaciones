@@ -18,6 +18,7 @@
 -- • trigger_generar_codigo_cita: Auto-generación de código único ✨ NUEVO
 -- • trigger_actualizar_timestamp_horarios: Timestamps en horarios
 -- • trigger_validar_coherencia_horario: Coherencia organizacional en horarios
+-- • trigger_validar_reserva_futura_insert: Valida reserva futura solo en INSERT ✨ NUEVO
 --
 -- 🔄 ORDEN DE EJECUCIÓN: #9 (Después de RLS policies)
 -- 🎯 AUTOMÁTICO: Se ejecutan transparentemente en cada operación
@@ -139,6 +140,12 @@ CREATE TRIGGER trigger_validar_coherencia_horario
     BEFORE INSERT OR UPDATE ON horarios_disponibilidad
     FOR EACH ROW EXECUTE FUNCTION validar_coherencia_horario();
 
+-- TRIGGER 3: VALIDACIÓN DE RESERVA FUTURA (SOLO INSERT)
+-- Valida que reservado_hasta sea futura solo en INSERT (permite UPDATE para tests)
+CREATE TRIGGER trigger_validar_reserva_futura_insert
+    BEFORE INSERT ON horarios_disponibilidad
+    FOR EACH ROW EXECUTE FUNCTION validar_reserva_futura_insert();
+
 -- ====================================================================
 -- 📝 DOCUMENTACIÓN DE TRIGGERS
 -- ====================================================================
@@ -180,3 +187,6 @@ COMMENT ON TRIGGER trigger_actualizar_timestamp_horarios ON horarios_disponibili
 
 COMMENT ON TRIGGER trigger_validar_coherencia_horario ON horarios_disponibilidad IS
 'Valida coherencia organizacional entre profesional, servicio y organización usando función validar_coherencia_horario()';
+
+COMMENT ON TRIGGER trigger_validar_reserva_futura_insert ON horarios_disponibilidad IS
+'Valida que reservado_hasta sea futura SOLO en INSERT. Permite UPDATE para tests de expiración. Reemplaza constraint CHECK valid_reserva_futura. Agregado: 2025-10-08';

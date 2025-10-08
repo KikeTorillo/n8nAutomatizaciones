@@ -137,7 +137,10 @@ class SaaSApplication {
       standardHeaders: true,
 
       // No incluye headers legacy (X-RateLimit-Limit, X-RateLimit-Remaining)
-      legacyHeaders: false
+      legacyHeaders: false,
+
+      // Saltar rate limiting en ambiente de test
+      skip: (req) => process.env.NODE_ENV === 'test'
     });
 
     // Aplica rate limiting solo a rutas de API

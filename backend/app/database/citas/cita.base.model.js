@@ -146,7 +146,7 @@ class CitaBaseModel {
 
             // Validar que se puede modificar
             if (['completada', 'cancelada'].includes(citaExistente.estado)) {
-                throw new Error('No se puede modificar una cita completada o cancelada');
+                throw new Error('Transición de estado inválida: no se puede modificar una cita completada o cancelada');
             }
 
             // Validar conflicto de horario si se cambian fechas/horas

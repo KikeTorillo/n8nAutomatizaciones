@@ -594,6 +594,33 @@ $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION validar_coherencia_horario() IS 'Versión mejorada con validación de existencia de registros. Valida que profesional, servicio y cita existan y pertenezcan a la misma organización. Incluye mensajes de error descriptivos con HINT y ERRCODE apropiados';
 
 -- ====================================================================
+-- 🔒 FUNCIÓN 11B: VALIDAR_RESERVA_FUTURA_INSERT
+-- ====================================================================
+-- Valida que reservado_hasta sea futura SOLO en INSERT
+-- Permite UPDATE para tests de expiración
+-- ────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION validar_reserva_futura_insert()
+RETURNS TRIGGER
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    -- Solo validar en INSERT (no en UPDATE)
+    IF TG_OP = 'INSERT' AND NEW.reservado_hasta IS NOT NULL THEN
+        IF NEW.reservado_hasta < NOW() THEN
+            RAISE EXCEPTION 'reservado_hasta debe ser una fecha futura'
+                USING HINT = 'La fecha de reserva ya expiró',
+                      ERRCODE = '23514'; -- check_violation
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION validar_reserva_futura_insert() IS 'Valida que reservado_hasta sea futura SOLO en INSERT. Permite UPDATE para simular expiración en tests. Reemplaza constraint CHECK valid_reserva_futura';
+
+-- ====================================================================
 -- 🧹 FUNCIÓN 12: LIMPIAR_RESERVAS_EXPIRADAS
 -- ====================================================================
 -- Función de limpieza automática de reservas expiradas

@@ -327,6 +327,19 @@ class HorarioModel {
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', datosHorario.organizacion_id.toString()]);
 
+            // 🔒 LOCK EXCLUSIVO: Prevenir race conditions en creación concurrente
+            // Usar advisory lock para bloquear por profesional+fecha
+            // El lock se libera automáticamente al final de la transacción
+            await db.query(`
+                SELECT pg_advisory_xact_lock(
+                    hashtext($1::text || '-' || $2::text || '-' || $3::text)
+                )
+            `, [
+                datosHorario.organizacion_id,
+                datosHorario.profesional_id,
+                datosHorario.fecha
+            ]);
+
             const validarProfesional = await db.query(`
                 SELECT id, nombre_completo, tipo_profesional
                 FROM profesionales

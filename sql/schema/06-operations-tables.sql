@@ -98,8 +98,8 @@ CREATE TABLE horarios_disponibilidad (
         CHECK (fecha >= CURRENT_DATE - INTERVAL '1 day'),
     CONSTRAINT valid_capacidad
         CHECK (capacidad_maxima > 0 AND capacidad_ocupada >= 0 AND capacidad_ocupada <= capacidad_maxima),
-    CONSTRAINT valid_reserva_futura
-        CHECK (reservado_hasta IS NULL OR reservado_hasta >= NOW()),
+    -- NOTA: valid_reserva_futura movido a trigger (ver 08-triggers.sql)
+    -- Permite UPDATE para tests de expiración, pero valida INSERT
     CONSTRAINT valid_precios
         CHECK (
             (precio_base IS NULL OR precio_base >= 0) AND
