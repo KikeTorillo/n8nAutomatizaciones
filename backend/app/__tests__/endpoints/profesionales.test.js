@@ -23,6 +23,9 @@ describe('Endpoints de Profesionales', () => {
   let userToken;
   let adminToken;
   let testProfesional;
+  let otherOrg;
+  let otherOrgAdmin;
+  let otherOrgToken;
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -74,6 +77,28 @@ describe('Endpoints de Profesionales', () => {
       nombre_completo: 'Profesional Test',
       tipo_profesional: 'barbero',
       telefono: '+5215512345678'
+    });
+
+    // Crear segunda organización para tests RLS
+    otherOrg = await createTestOrganizacion(client, {
+      nombre: 'Other Org RLS Test'
+    });
+
+    // Crear admin de la segunda organización
+    otherOrgAdmin = await createTestUsuario(client, otherOrg.id, {
+      nombre: 'Other Org',
+      apellidos: 'Admin',
+      rol: 'admin',
+      activo: true,
+      email_verificado: true
+    });
+
+    // Generar token para admin de la segunda org
+    otherOrgToken = authConfig.generateToken({
+      userId: otherOrgAdmin.id,
+      email: otherOrgAdmin.email,
+      rol: otherOrgAdmin.rol,
+      organizacionId: otherOrg.id
     });
 
     client.release();
@@ -372,6 +397,56 @@ describe('Endpoints de Profesionales', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Aislamiento RLS Multi-Tenant
+  // ============================================================================
+  describe('Aislamiento RLS Multi-Tenant', () => {
+    test('❌ CRÍTICO: Admin de otra org NO puede ver profesional', async () => {
+      const response = await request(app)
+        .get(`/api/v1/profesionales/${testProfesional.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Admin de otra org NO puede actualizar profesional', async () => {
+      const response = await request(app)
+        .put(`/api/v1/profesionales/${testProfesional.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ nombre_completo: 'Intentando modificar' });
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Listar profesionales NO muestra profesionales de otras orgs', async () => {
+      const response = await request(app)
+        .get('/api/v1/profesionales')
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .expect(200);
+
+      const profesionales = response.body.data.profesionales || [];
+
+      // Verificar que no incluye testProfesional
+      const profesionalDeOtraOrg = profesionales.find(p => p.id === testProfesional.id);
+      expect(profesionalDeOtraOrg).toBeUndefined();
+    });
+
+    test('✅ Admin SÍ puede ver su propio profesional', async () => {
+      const response = await request(app)
+        .get(`/api/v1/profesionales/${testProfesional.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.id).toBe(testProfesional.id);
     });
   });
 });

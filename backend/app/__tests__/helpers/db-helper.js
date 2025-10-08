@@ -149,8 +149,34 @@ async function createTestOrganizacion(client, data = {}) {
     ]
   );
 
-  logger.debug(`✓ Organización creada: ID=${result.rows[0].id}, codigo_tenant=${result.rows[0].codigo_tenant}`);
-  return result.rows[0];
+  const organizacion = result.rows[0];
+
+  // Crear subscripción activa para la organización
+  const planCodigo = data.plan_actual || data.plan || 'trial';
+
+  // Obtener plan ID
+  const planResult = await client.query(
+    `SELECT id, precio_mensual FROM planes_subscripcion WHERE codigo_plan = $1`,
+    [planCodigo]
+  );
+
+  if (planResult.rows.length > 0) {
+    const plan = planResult.rows[0];
+
+    await client.query(
+      `INSERT INTO subscripciones (
+        organizacion_id, plan_id, precio_actual, fecha_inicio,
+        fecha_proximo_pago, estado, activa, metadata
+      ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)`,
+      [organizacion.id, plan.id, plan.precio_mensual]
+    );
+  }
+
+  // CRÍTICO: Limpiar bypass después de crear organización
+  await client.query("SELECT set_config('app.bypass_rls', 'false', false)");
+
+  logger.debug(`✓ Organización creada: ID=${organizacion.id}, codigo_tenant=${organizacion.codigo_tenant}`);
+  return organizacion;
 }
 
 /**
@@ -181,6 +207,9 @@ async function createTestUsuario(client, organizacionId, data = {}) {
       data.email_verificado !== undefined ? data.email_verificado : true
     ]
   );
+
+  // CRÍTICO: Limpiar bypass después de crear usuario
+  await client.query("SELECT set_config('app.bypass_rls', 'false', false)");
 
   return result.rows[0];
 }
@@ -296,8 +325,8 @@ async function createTestCita(client, organizacionId, data) {
   const result = await client.query(
     `INSERT INTO citas (
       organizacion_id, cliente_id, profesional_id, servicio_id,
-      fecha_cita, hora_inicio, hora_fin, precio_servicio, precio_final, estado
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      fecha_cita, hora_inicio, hora_fin, precio_servicio, precio_final, estado, pagado, motivo_cancelacion
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
     RETURNING *`,
     [
       organizacionId,
@@ -309,7 +338,9 @@ async function createTestCita(client, organizacionId, data) {
       data.hora_fin,
       data.precio_servicio,
       data.precio_final,
-      data.estado || 'pendiente'
+      data.estado || 'pendiente',
+      data.pagado !== undefined ? data.pagado : false,
+      data.motivo_cancelacion || null
     ]
   );
 

@@ -28,6 +28,9 @@ describe('Endpoints de Citas', () => {
   let testProfesional;
   let testServicio;
   let testCita;
+  let otherOrg;
+  let otherOrgAdmin;
+  let otherOrgToken;
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -92,6 +95,28 @@ describe('Endpoints de Citas', () => {
       precio_servicio: 150.00,
       precio_final: 150.00,
       estado: 'pendiente'
+    });
+
+    // Crear segunda organización para tests RLS
+    otherOrg = await createTestOrganizacion(client, {
+      nombre: 'Other Org RLS Test'
+    });
+
+    // Crear admin de la segunda organización
+    otherOrgAdmin = await createTestUsuario(client, otherOrg.id, {
+      nombre: 'Other Org',
+      apellidos: 'Admin',
+      rol: 'admin',
+      activo: true,
+      email_verificado: true
+    });
+
+    // Generar token para admin de la segunda org
+    otherOrgToken = authConfig.generateToken({
+      userId: otherOrgAdmin.id,
+      email: otherOrgAdmin.email,
+      rol: otherOrgAdmin.rol,
+      organizacionId: otherOrg.id
     });
 
     client.release();
@@ -574,6 +599,56 @@ describe('Endpoints de Citas', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Aislamiento RLS Multi-Tenant
+  // ============================================================================
+  describe('Aislamiento RLS Multi-Tenant', () => {
+    test('❌ CRÍTICO: Admin de otra org NO puede ver cita', async () => {
+      const response = await request(app)
+        .get(`/api/v1/citas/${testCita.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Admin de otra org NO puede actualizar cita', async () => {
+      const response = await request(app)
+        .put(`/api/v1/citas/${testCita.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ notas: 'Intentando modificar' });
+
+      // RLS debe bloquear con 400, 403 o 404
+      expect([400, 403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Listar citas NO muestra citas de otras orgs', async () => {
+      const response = await request(app)
+        .get('/api/v1/citas')
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .expect(200);
+
+      const citas = response.body.data.citas || response.body.data.data || [];
+
+      // Verificar que no incluye testCita
+      const citaDeOtraOrg = citas.find(c => c.id === testCita.id);
+      expect(citaDeOtraOrg).toBeUndefined();
+    });
+
+    test('✅ Admin SÍ puede ver su propia cita', async () => {
+      const response = await request(app)
+        .get(`/api/v1/citas/${testCita.id}`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.id).toBe(testCita.id);
     });
   });
 });

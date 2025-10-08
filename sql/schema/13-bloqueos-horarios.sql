@@ -183,6 +183,7 @@ WHERE activo = true;
 
 -- Habilitar RLS en la tabla
 ALTER TABLE bloqueos_horarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE bloqueos_horarios FORCE ROW LEVEL SECURITY;
 
 -- Política unificada para aislamiento multi-tenant
 CREATE POLICY bloqueos_horarios_tenant_isolation ON bloqueos_horarios
@@ -487,11 +488,11 @@ BEGIN
     -- Actualizar contador en métricas_uso_organizacion si existe
     IF TG_OP = 'INSERT' THEN
         UPDATE metricas_uso_organizacion
-        SET actualizado_en = NOW()
+        SET ultima_actualizacion = NOW()
         WHERE organizacion_id = NEW.organizacion_id;
     ELSIF TG_OP = 'DELETE' THEN
         UPDATE metricas_uso_organizacion
-        SET actualizado_en = NOW()
+        SET ultima_actualizacion = NOW()
         WHERE organizacion_id = OLD.organizacion_id;
     END IF;
 

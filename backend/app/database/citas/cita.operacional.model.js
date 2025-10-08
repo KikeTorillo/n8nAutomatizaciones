@@ -14,7 +14,6 @@ class CitaOperacionalModel {
             const resultado = await db.query(`
                 UPDATE citas
                 SET hora_llegada = NOW(),
-                    estado = 'en_curso',
                     notas_internas = COALESCE(notas_internas, '') || $1,
                     actualizado_por = $2,
                     actualizado_en = NOW(),
@@ -43,6 +42,8 @@ class CitaOperacionalModel {
         } catch (error) {
             await db.query('ROLLBACK');
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -75,6 +76,8 @@ class CitaOperacionalModel {
         } catch (error) {
             await db.query('ROLLBACK');
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -112,6 +115,8 @@ class CitaOperacionalModel {
         } catch (error) {
             await db.query('ROLLBACK');
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -164,6 +169,8 @@ class CitaOperacionalModel {
         } catch (error) {
             await db.query('ROLLBACK');
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -226,6 +233,8 @@ class CitaOperacionalModel {
         } catch (error) {
             logger.error('[CitaOperacionalModel.obtenerDashboardToday] Error:', error);
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -280,6 +289,8 @@ class CitaOperacionalModel {
         } catch (error) {
             logger.error('[CitaOperacionalModel.obtenerColaEspera] Error:', error);
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -345,6 +356,8 @@ class CitaOperacionalModel {
         } catch (error) {
             logger.error('[CitaOperacionalModel.obtenerMetricasTiempoReal] Error:', error);
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -548,6 +561,8 @@ class CitaOperacionalModel {
         } catch (error) {
             logger.error('[CitaOperacionalModel.consultarDisponibilidadInmediata] Error:', error);
             throw error;
+        } finally {
+            db.release();
         }
     }
 }

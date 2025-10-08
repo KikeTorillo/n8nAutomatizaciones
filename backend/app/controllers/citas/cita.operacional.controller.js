@@ -102,7 +102,7 @@ class CitaOperacionalController {
             return ResponseHelper.error(res, 'Cita no encontrada', 404);
         }
 
-        if (['completada', 'cancelada', 'no_asistio'].includes(citaExistente.estado)) {
+        if (['completada', 'cancelada', 'no_asistio', 'en_curso'].includes(citaExistente.estado)) {
             return ResponseHelper.error(res,
                 `No se puede reagendar. Estado actual: ${citaExistente.estado}`,
                 400

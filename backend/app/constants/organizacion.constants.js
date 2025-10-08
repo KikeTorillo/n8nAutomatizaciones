@@ -78,6 +78,7 @@ const CAMPOS_ACTUALIZABLES = [
     'moneda',
     'metadata',
     'notas_internas',
+    'activo',
     'suspendido',
     'motivo_suspension'
 ];

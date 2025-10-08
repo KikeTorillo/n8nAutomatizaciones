@@ -221,8 +221,11 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query(`SELECT set_config('app.current_user_id', '', false)`);
+            await db.query(`SELECT set_config('app.current_user_role', '', false)`);
+            await db.query(`SELECT set_config('app.current_tenant_id', '${organizacionId}', false)`);
+            await db.query(`SELECT set_config('app.bypass_rls', 'false', false)`);
 
             const query = `
                 SELECT id, email, nombre, apellidos, telefono,
@@ -300,8 +303,13 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
+            await db.query('SELECT set_config($1, $2, false)',
+                ['app.bypass_rls', 'false']);
 
             const camposPermitidos = ['nombre', 'apellidos', 'telefono', 'zona_horaria', 'idioma', 'configuracion_ui'];
             const campos = [];
@@ -338,28 +346,35 @@ class UsuarioModel {
         }
     }
 
-    static async desbloquearUsuario(userId, adminId) {
+    static async desbloquearUsuario(userId, adminId, organizacionId) {
         const db = await getDb();
 
         try {
             return await RLSHelper.withBypass(db, async (db) => {
+                // Validar que el usuario existe y pertenece a la organización
+                const validacionQuery = `
+                    SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
+                    FROM usuarios
+                    WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
+                `;
+                const validacion = await db.query(validacionQuery, [userId, organizacionId]);
+
+                if (validacion.rows.length === 0) {
+                    throw new Error('Usuario no encontrado en la organización especificada');
+                }
+
                 const query = `
                     UPDATE usuarios
                     SET
                         intentos_fallidos = 0,
                         bloqueado_hasta = NULL,
                         actualizado_en = NOW()
-                    WHERE id = $1 AND activo = TRUE
+                    WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
                     RETURNING id, email, nombre, apellidos, rol, organizacion_id,
                              intentos_fallidos, bloqueado_hasta, activo
                 `;
 
-                const result = await db.query(query, [userId]);
-
-                if (result.rows.length === 0) {
-                    throw new Error('Usuario no encontrado o inactivo');
-                }
-
+                const result = await db.query(query, [userId, organizacionId]);
                 return result.rows[0];
             });
 
@@ -511,8 +526,13 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', orgId.toString()]);
+            await db.query('SELECT set_config($1, $2, false)',
+                ['app.bypass_rls', 'false']);
 
             const {
                 rol = null,
@@ -580,7 +600,7 @@ class UsuarioModel {
             // Query principal con joins a profesionales
             const dataQuery = `
                 SELECT
-                    u.id, u.email, u.nombre, u.apellidos, u.telefono, u.rol,
+                    u.id, u.organizacion_id, u.email, u.nombre, u.apellidos, u.telefono, u.rol,
                     u.activo, u.email_verificado, u.ultimo_login, u.intentos_fallidos,
                     u.bloqueado_hasta, u.creado_en, u.actualizado_en,
                     p.id as profesional_id,
@@ -748,6 +768,7 @@ class UsuarioModel {
                     SET
                         token_reset_password = $1,
                         token_reset_expira = $2,
+                        token_reset_usado_en = NULL,
                         actualizado_en = NOW()
                     WHERE id = $3
                 `;
@@ -772,6 +793,26 @@ class UsuarioModel {
 
         try {
             return await RLSHelper.withBypass(db, async (db) => {
+                // Primero buscar si el token fue usado
+                const tokenUsadoQuery = `
+                    SELECT id, email, email_verificado, token_verificacion_usado_en
+                    FROM usuarios
+                    WHERE token_verificacion_email = $1
+                      AND token_verificacion_usado_en IS NOT NULL
+                      AND activo = true
+                `;
+                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
+
+                if (tokenUsadoResult.rows.length > 0) {
+                    return {
+                        verificado: false,
+                        ya_verificado: true,
+                        email: tokenUsadoResult.rows[0].email,
+                        mensaje: 'El email ya había sido verificado anteriormente'
+                    };
+                }
+
+                // Buscar token válido y no expirado
                 const usuarioQuery = `
                     SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
                     FROM usuarios
@@ -782,7 +823,11 @@ class UsuarioModel {
                 const usuarioResult = await db.query(usuarioQuery, [token]);
 
                 if (usuarioResult.rows.length === 0) {
-                    throw new Error('Token de verificación inválido o expirado');
+                    return {
+                        verificado: false,
+                        ya_verificado: false,
+                        mensaje: 'Token de verificación inválido o expirado'
+                    };
                 }
 
                 const usuario = usuarioResult.rows[0];
@@ -790,16 +835,18 @@ class UsuarioModel {
                 if (usuario.email_verificado) {
                     return {
                         ya_verificado: true,
+                        verificado: false,
+                        email: usuario.email,
                         mensaje: 'El email ya había sido verificado anteriormente'
                     };
                 }
 
+                // Marcar token como usado
                 const updateQuery = `
                     UPDATE usuarios
                     SET
                         email_verificado = true,
-                        token_verificacion_email = NULL,
-                        token_verificacion_expira = NULL,
+                        token_verificacion_usado_en = NOW(),
                         actualizado_en = NOW()
                     WHERE id = $1
                     RETURNING id, email
@@ -839,6 +886,24 @@ class UsuarioModel {
 
         try {
             return await RLSHelper.withBypass(db, async (db) => {
+                // Primero verificar si el token ya fue usado
+                const tokenUsadoQuery = `
+                    SELECT id, email, token_reset_usado_en
+                    FROM usuarios
+                    WHERE token_reset_password = $1
+                      AND token_reset_usado_en IS NOT NULL
+                      AND activo = true
+                `;
+                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
+
+                if (tokenUsadoResult.rows.length > 0) {
+                    return {
+                        valido: false,
+                        mensaje: 'Este token de recuperación ya fue utilizado'
+                    };
+                }
+
+                // Buscar token válido
                 const query = `
                     SELECT
                         id, email, nombre, apellidos, organizacion_id,
@@ -892,13 +957,46 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
-            await db.query('BEGIN');
-
             const resultado = await RLSHelper.withBypass(db, async (db) => {
-                const validacion = await this.validarTokenReset(token);
+                // Iniciar transacción DENTRO del bypass
+                await db.query('BEGIN');
+                // Primero verificar si el token ya fue usado
+                const tokenUsadoQuery = `
+                    SELECT id, email, token_reset_usado_en
+                    FROM usuarios
+                    WHERE token_reset_password = $1
+                      AND token_reset_usado_en IS NOT NULL
+                      AND activo = true
+                `;
+                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
 
-                if (!validacion.valido) {
-                    throw new Error(validacion.mensaje || 'Token inválido o expirado');
+                if (tokenUsadoResult.rows.length > 0) {
+                    throw new Error('Este token de recuperación ya fue utilizado');
+                }
+
+                // Validar token inline (usar misma conexión de transacción)
+                const validacionQuery = `
+                    SELECT
+                        id, email, nombre, apellidos, organizacion_id,
+                        token_reset_expira,
+                        CASE
+                            WHEN token_reset_expira > NOW() THEN true
+                            ELSE false
+                        END as token_valido
+                    FROM usuarios
+                    WHERE token_reset_password = $1 AND activo = true
+                `;
+
+                const validacionResult = await db.query(validacionQuery, [token]);
+
+                if (validacionResult.rows.length === 0) {
+                    throw new Error('Código de recuperación inválido o usuario no encontrado');
+                }
+
+                const usuarioValidacion = validacionResult.rows[0];
+
+                if (!usuarioValidacion.token_valido) {
+                    throw new Error('Código de recuperación expirado');
                 }
 
                 const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
@@ -907,8 +1005,7 @@ class UsuarioModel {
                     UPDATE usuarios
                     SET
                         password_hash = $1,
-                        token_reset_password = NULL,
-                        token_reset_expira = NULL,
+                        token_reset_usado_en = NOW(),
                         intentos_fallidos = 0,
                         bloqueado_hasta = NULL,
                         actualizado_en = NOW()
@@ -924,34 +1021,48 @@ class UsuarioModel {
 
                 const usuario = result.rows[0];
 
-                await RLSHelper.registrarEvento(db, {
-                    organizacion_id: usuario.organizacion_id,
-                    evento_tipo: 'password_reset_confirmado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: usuario.id,
-                    descripcion: 'Contraseña restablecida exitosamente mediante token de recuperación',
-                    metadatos: {
-                        email: usuario.email,
-                        timestamp: new Date().toISOString(),
-                        metodo: 'token_reset',
-                        ip: ipAddress
-                    },
-                    usuario_id: usuario.id
-                });
+                // COMMIT dentro del bypass ANTES del evento (el evento irá después)
+                await db.query('COMMIT');
 
                 return {
                     success: true,
                     mensaje: 'Contraseña actualizada exitosamente',
                     usuario_id: usuario.id,
-                    email: usuario.email
+                    email: usuario.email,
+                    organizacion_id: usuario.organizacion_id
                 };
             });
 
-            await db.query('COMMIT');
+            // Registrar evento DESPUÉS del COMMIT (fuera de la transacción)
+            try {
+                await RLSHelper.registrarEvento(db, {
+                    organizacion_id: resultado.organizacion_id,
+                    evento_tipo: 'password_reset_confirmado',
+                    entidad_tipo: 'usuario',
+                    entidad_id: resultado.usuario_id,
+                    descripcion: 'Contraseña restablecida exitosamente mediante token de recuperación',
+                    metadatos: {
+                        email: resultado.email,
+                        timestamp: new Date().toISOString(),
+                        metodo: 'token_reset',
+                        ip: ipAddress
+                    },
+                    usuario_id: resultado.usuario_id
+                });
+            } catch (eventoError) {
+                // No lanzar el error, ya se hizo commit
+            }
+
             return resultado;
 
         } catch (error) {
-            await db.query('ROLLBACK');
+            // Intentar ROLLBACK si la transacción está abierta
+            try {
+                await db.query('ROLLBACK');
+            } catch (rollbackError) {
+                // Ignorar error de ROLLBACK
+            }
+
             throw error;
         } finally {
             db.release();

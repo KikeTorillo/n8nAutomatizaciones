@@ -317,14 +317,14 @@ const optionalAuth = async (req, res, next) => {
 
 /**
  * Middleware para requerir rol de administrador
- * Verifica que el usuario tenga rol super_admin, admin u organizacion_admin
+ * Verifica que el usuario tenga rol super_admin, admin, propietario u organizacion_admin
  */
 const requireAdminRole = (req, res, next) => {
     if (!req.user) {
         return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
-    const rolesAdmin = ['super_admin', 'admin', 'organizacion_admin'];
+    const rolesAdmin = ['super_admin', 'admin', 'propietario', 'organizacion_admin'];
 
     if (!rolesAdmin.includes(req.user.rol)) {
         logger.warn('Intento de acceso con rol insuficiente', {

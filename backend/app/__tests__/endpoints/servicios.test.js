@@ -23,6 +23,9 @@ describe('Endpoints de Servicios', () => {
   let userToken;
   let testServicio;
   let testProfesional;
+  let otherOrg;
+  let otherOrgAdmin;
+  let otherOrgToken;
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -36,11 +39,11 @@ describe('Endpoints de Servicios', () => {
       nombre: 'Test Org Servicios'
     });
 
-    // Crear usuario de la organización
+    // Crear usuario admin de la organización
     testUsuario = await createTestUsuario(client, testOrg.id, {
       nombre: 'Usuario',
       apellidos: 'Test',
-      rol: 'empleado',
+      rol: 'admin',
       activo: true,
       email_verificado: true
     });
@@ -64,6 +67,28 @@ describe('Endpoints de Servicios', () => {
     testProfesional = await createTestProfesional(client, testOrg.id, {
       nombre_completo: 'Profesional Test',
       tipo_profesional: 'barbero'
+    });
+
+    // Crear segunda organización para tests RLS
+    otherOrg = await createTestOrganizacion(client, {
+      nombre: 'Other Org RLS Test'
+    });
+
+    // Crear admin de la segunda organización
+    otherOrgAdmin = await createTestUsuario(client, otherOrg.id, {
+      nombre: 'Other Org',
+      apellidos: 'Admin',
+      rol: 'admin',
+      activo: true,
+      email_verificado: true
+    });
+
+    // Generar token para admin de la segunda org
+    otherOrgToken = authConfig.generateToken({
+      userId: otherOrgAdmin.id,
+      email: otherOrgAdmin.email,
+      rol: otherOrgAdmin.rol,
+      organizacionId: otherOrg.id
     });
 
     client.release();
@@ -436,6 +461,56 @@ describe('Endpoints de Servicios', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Aislamiento RLS Multi-Tenant
+  // ============================================================================
+  describe('Aislamiento RLS Multi-Tenant', () => {
+    test('❌ CRÍTICO: Admin de otra org NO puede ver servicio', async () => {
+      const response = await request(app)
+        .get(`/api/v1/servicios/${testServicio.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Admin de otra org NO puede actualizar servicio', async () => {
+      const response = await request(app)
+        .put(`/api/v1/servicios/${testServicio.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ nombre: 'Intentando modificar' });
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Listar servicios NO muestra servicios de otras orgs', async () => {
+      const response = await request(app)
+        .get('/api/v1/servicios')
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .expect(200);
+
+      const servicios = response.body.data.servicios || [];
+
+      // Verificar que no incluye testServicio
+      const servicioDeOtraOrg = servicios.find(s => s.id === testServicio.id);
+      expect(servicioDeOtraOrg).toBeUndefined();
+    });
+
+    test('✅ Admin SÍ puede ver su propio servicio', async () => {
+      const response = await request(app)
+        .get(`/api/v1/servicios/${testServicio.id}`)
+        .set('Authorization', `Bearer ${userToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.id).toBe(testServicio.id);
     });
   });
 });

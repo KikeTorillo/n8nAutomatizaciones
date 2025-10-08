@@ -112,7 +112,11 @@ class ProfesionalModel {
         const db = await getDb();
 
         try {
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
+            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
 
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
@@ -142,7 +146,11 @@ class ProfesionalModel {
         const db = await getDb();
 
         try {
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
+            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
 
             const {
                 activo = null,
@@ -210,7 +218,11 @@ class ProfesionalModel {
         const db = await getDb();
 
         try {
+            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
+            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
 
             if (datos.email) {
                 const emailDisponible = await this.validarEmailDisponible(

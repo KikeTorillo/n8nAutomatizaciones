@@ -23,6 +23,9 @@ describe('Endpoints de Horarios', () => {
   let userToken;
   let adminToken;
   let testProfesional;
+  let otherOrg;
+  let otherOrgAdmin;
+  let otherOrgToken;
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -73,6 +76,28 @@ describe('Endpoints de Horarios', () => {
     testProfesional = await createTestProfesional(client, testOrg.id, {
       nombre_completo: 'Profesional Test',
       tipo_profesional: 'barbero'
+    });
+
+    // Crear segunda organización para tests RLS
+    otherOrg = await createTestOrganizacion(client, {
+      nombre: 'Other Org RLS Test'
+    });
+
+    // Crear admin de la segunda organización
+    otherOrgAdmin = await createTestUsuario(client, otherOrg.id, {
+      nombre: 'Other Org',
+      apellidos: 'Admin',
+      rol: 'admin',
+      activo: true,
+      email_verificado: true
+    });
+
+    // Generar token para admin de la segunda org
+    otherOrgToken = authConfig.generateToken({
+      userId: otherOrgAdmin.id,
+      email: otherOrgAdmin.email,
+      rol: otherOrgAdmin.rol,
+      organizacionId: otherOrg.id
     });
 
     client.release();
@@ -534,6 +559,85 @@ describe('Endpoints de Horarios', () => {
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Aislamiento RLS Multi-Tenant
+  // ============================================================================
+  describe('Aislamiento RLS Multi-Tenant', () => {
+    let testHorario;
+
+    beforeAll(async () => {
+      const tempClient = await global.testPool.connect();
+      const { setRLSContext } = require('../helpers/db-helper');
+
+      // Generar fecha futura (7 días desde hoy)
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 7);
+      const fecha = futureDate.toISOString().split('T')[0];
+
+      await setRLSContext(tempClient, testOrg.id);
+
+      // Crear horario de disponibilidad para testProfesional
+      const result = await tempClient.query(`
+        INSERT INTO horarios_disponibilidad (
+          organizacion_id, profesional_id, fecha, hora_inicio, hora_fin, estado, tipo_horario
+        ) VALUES ($1, $2, $3, '09:00:00', '17:00:00', 'disponible', 'franja_especifica')
+        RETURNING *
+      `, [testOrg.id, testProfesional.id, fecha]);
+
+      testHorario = result.rows[0];
+      tempClient.release();
+    });
+
+    test('❌ CRÍTICO: Admin de otra org NO puede ver horario', async () => {
+      const response = await request(app)
+        .get(`/api/v1/horarios/${testHorario.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .expect(200);
+
+      // RLS debe bloquear retornando array vacío
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.horarios).toBeDefined();
+      expect(response.body.data.horarios.length).toBe(0);
+    });
+
+    test('❌ CRÍTICO: Admin de otra org NO puede actualizar horario', async () => {
+      const response = await request(app)
+        .put(`/api/v1/horarios/${testHorario.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ hora_inicio: '10:00' });
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Listar horarios NO muestra horarios de otras orgs', async () => {
+      const response = await request(app)
+        .get(`/api/v1/horarios/profesional/${testProfesional.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear (puede retornar array vacío o error)
+      if (response.status === 200) {
+        const horarios = response.body.data || [];
+        expect(horarios.length).toBe(0);
+      } else {
+        expect([403, 404]).toContain(response.status);
+      }
+    });
+
+    test('✅ Admin SÍ puede ver su propio horario', async () => {
+      const response = await request(app)
+        .get(`/api/v1/horarios/${testHorario.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.horarios).toBeDefined();
+      expect(response.body.data.horarios.length).toBe(1);
+      expect(response.body.data.horarios[0].id).toBe(testHorario.id);
     });
   });
 });

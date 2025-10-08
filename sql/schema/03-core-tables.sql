@@ -102,10 +102,12 @@ CREATE TABLE usuarios (
     -- Recuperación de contraseña
     token_reset_password VARCHAR(255),
     token_reset_expira TIMESTAMPTZ,
+    token_reset_usado_en TIMESTAMPTZ, -- Timestamp cuando se usó el token (NULL si nunca usado)
 
     -- Verificación de email
     token_verificacion_email VARCHAR(255),
     token_verificacion_expira TIMESTAMPTZ,
+    token_verificacion_usado_en TIMESTAMPTZ, -- Timestamp cuando se usó el token (NULL si nunca usado)
 
     -- Configuración
     configuracion_ui JSONB DEFAULT '{}',

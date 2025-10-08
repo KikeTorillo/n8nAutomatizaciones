@@ -71,6 +71,7 @@ router.post('/',
     rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
     validation.validate(servicioSchemas.crear),
     ServicioController.crear
 );
@@ -95,6 +96,7 @@ router.put('/:id',
     rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
     validation.validate(servicioSchemas.actualizar),
     ServicioController.actualizar
 );
@@ -103,6 +105,8 @@ router.delete('/:id',
     rateLimiting.heavyOperationRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
     validation.validate(servicioSchemas.eliminar),
     ServicioController.eliminar
 );

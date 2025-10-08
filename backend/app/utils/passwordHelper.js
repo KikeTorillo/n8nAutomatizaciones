@@ -15,36 +15,46 @@ class PasswordHelper {
         let score = 0;
         let feedback = [];
 
+        // Validar requisitos individuales
+        const requisitos = {
+            longitud_minima: password.length >= 8,
+            mayusculas: /[A-Z]/.test(password),
+            minusculas: /[a-z]/.test(password),
+            numeros: /\d/.test(password),
+            caracteres_especiales: /[!@#$%^&*(),.?":{}|<>]/.test(password)
+        };
+
         // Longitud
-        if (password.length >= 8) score += 20;
+        if (requisitos.longitud_minima) score += 20;
         else feedback.push('Debe tener al menos 8 caracteres');
 
         if (password.length >= 12) score += 10;
 
         // Complejidad
-        if (/[a-z]/.test(password)) score += 15;
+        if (requisitos.minusculas) score += 15;
         else feedback.push('Debe incluir letras minúsculas');
 
-        if (/[A-Z]/.test(password)) score += 15;
+        if (requisitos.mayusculas) score += 15;
         else feedback.push('Debe incluir letras mayúsculas');
 
-        if (/\d/.test(password)) score += 15;
+        if (requisitos.numeros) score += 15;
         else feedback.push('Debe incluir números');
 
-        if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score += 25;
+        if (requisitos.caracteres_especiales) score += 25;
         else feedback.push('Debe incluir caracteres especiales');
 
         // Nivel de fortaleza
         let nivel;
-        if (score < 40) nivel = 'muy_debil';
-        else if (score < 60) nivel = 'debil';
+        if (score < 40) nivel = 'muy débil';
+        else if (score < 60) nivel = 'débil';
         else if (score < 80) nivel = 'moderada';
         else if (score < 90) nivel = 'fuerte';
-        else nivel = 'muy_fuerte';
+        else nivel = 'muy fuerte';
 
         return {
             score: score,
             nivel: nivel,
+            requisitos: requisitos,
             cumple_requisitos: score >= 65,
             feedback: feedback,
             recomendaciones: score < 65 ? [

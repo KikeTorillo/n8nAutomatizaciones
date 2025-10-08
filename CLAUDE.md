@@ -496,21 +496,25 @@ docker exec back npm test -- --watch __tests__/endpoints/auth.test.js
 
 ## 📊 Estado del Proyecto
 
-**Actualizado**: 05 Octubre 2025
+**Actualizado**: 08 Octubre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
 | Base de Datos PostgreSQL | ✅ Production Ready | 26 RLS policies, 34 funciones |
 | Backend API (REST + RLS) | ✅ Operativo | Multi-tenant activo |
-| **Suite de Tests** | ✅ **257/257 (100%)** | 0 skipped, 0 failed |
+| **Suite de Tests (Base)** | ✅ **257/257 (100%)** | Funcionalidad core completa |
+| **Suite de Tests (Total)** | ✅ **438/464 (94.4%)** | +207 tests Sprint 1 |
 | **Módulo Auth** | ✅ **100%** | 19 tests, arquitectura RESTful |
 | **Módulo Usuarios** | ✅ **100%** | 26 tests, endpoints RESTful |
-| **Módulo Organizaciones** | ✅ **100%** | 18 tests |
+| **Módulo Organizaciones** | ✅ **100%** | 18 tests CRUD + 4 métricas |
 | **Módulo Profesionales** | ✅ **100%** | 21 tests |
 | **Módulo Servicios** | ✅ **100%** | 27 tests |
 | **Módulo Citas** | ✅ **100%** | 28 tests |
 | **Módulo Horarios** | ✅ **100%** | 22 tests |
 | **Módulo Clientes** | ✅ **100%** | 17 tests |
+| **Tests RBAC** | ✅ **100%** | 33/33 tests, sistema granular |
+| **Tests Métricas** | ✅ **100%** | 4/4 tests, dashboard completo |
+| **Tests Concurrencia** | ✅ **78%** | 7/9 tests, doble booking fix |
 | Canal IA WhatsApp | ✅ Operativo | n8n + Evolution API |
 
 ### Arquitectura de Módulos

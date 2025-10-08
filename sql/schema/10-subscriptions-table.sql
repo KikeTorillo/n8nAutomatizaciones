@@ -342,6 +342,15 @@ CREATE POLICY historial_subscripciones_access ON historial_subscripciones
         )
     );
 
+-- Política para historial (escritura desde triggers con bypass)
+CREATE POLICY historial_subscripciones_insert ON historial_subscripciones
+    FOR INSERT
+    TO saas_app
+    WITH CHECK (
+        current_setting('app.bypass_rls', true) = 'true'
+        OR current_setting('app.current_user_role', true) = 'super_admin'
+    );
+
 -- ====================================================================
 -- 📊 ÍNDICES ESPECIALIZADOS PARA PERFORMANCE
 -- ====================================================================
@@ -662,7 +671,7 @@ INSERT INTO planes_subscripcion (
  15, 1000, 50, 8, 800,
  '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": false}', 3),
 
--- Plan Enterprise (actualizado con límites más altos)
+-- Plan Enterprise (actualizado con límites altos)
 ('empresarial', 'Plan Empresarial', 'Para empresas grandes y cadenas', 1299.00, 12990.00,
  100, 50000, 500, 25, 10000,
  '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "multi_branch": true}', 4),

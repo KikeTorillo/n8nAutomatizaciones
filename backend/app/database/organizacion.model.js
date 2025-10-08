@@ -18,8 +18,8 @@ class OrganizacionModel {
                     INSERT INTO organizaciones (
                         nombre_comercial, razon_social, rfc_nif, tipo_industria,
                         configuracion_industria, email_admin, telefono, codigo_tenant, slug,
-                        sitio_web, logo_url, colores_marca, configuracion_ui
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                        sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                     RETURNING *
                 `;
 
@@ -35,14 +35,15 @@ class OrganizacionModel {
                     organizacionData.rfc_nif || null,
                     organizacionData.tipo_industria,
                     organizacionData.configuracion_industria || {},
-                    organizacionData.email_admin,
+                    organizacionData.email_admin || `admin-${codigoTenant}@temp.local`,
                     organizacionData.telefono || null,
                     codigoTenant,
                     slug,
                     organizacionData.sitio_web || null,
                     organizacionData.logo_url || null,
                     organizacionData.colores_marca || {},
-                    organizacionData.configuracion_ui || {}
+                    organizacionData.configuracion_ui || {},
+                    organizacionData.plan || organizacionData.plan_actual || 'basico'
                 ];
 
                 const result = await db.query(query, values);
@@ -99,12 +100,19 @@ class OrganizacionModel {
 
         try {
             return await RLSHelper.withBypass(db, async (db) => {
-                const { page = 1, limit = 10, tipo_industria, activo = true } = options;
+                const { page = 1, limit = 10, tipo_industria, incluir_inactivas = false, organizacion_id } = options;
                 const offset = (page - 1) * limit;
 
-                let whereConditions = ['activo = $1'];
-                let values = [activo];
-                let paramCounter = 2;
+                let whereConditions = [];
+                let values = [];
+                let paramCounter = 1;
+
+                // Solo filtrar por activo si NO se incluyen inactivas
+                if (!incluir_inactivas) {
+                    whereConditions.push(`activo = $${paramCounter}`);
+                    values.push(true);
+                    paramCounter++;
+                }
 
                 if (tipo_industria) {
                     whereConditions.push(`tipo_industria = $${paramCounter}`);
@@ -112,7 +120,13 @@ class OrganizacionModel {
                     paramCounter++;
                 }
 
-                const whereClause = whereConditions.join(' AND ');
+                if (organizacion_id) {
+                    whereConditions.push(`id = $${paramCounter}`);
+                    values.push(organizacion_id);
+                    paramCounter++;
+                }
+
+                const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : 'TRUE';
 
                 const countQuery = `
                     SELECT COUNT(*) as total
@@ -129,7 +143,8 @@ class OrganizacionModel {
                 `;
 
                 const countResult = await db.query(countQuery, values);
-                const dataResult = await db.query(dataQuery, [...values, limit, offset]);
+                const dataValues = [...values, limit, offset];
+                const dataResult = await db.query(dataQuery, dataValues);
 
                 const total = parseInt(countResult.rows[0].total);
                 const totalPages = Math.ceil(total / limit);
@@ -179,7 +194,7 @@ class OrganizacionModel {
                 const query = `
                     UPDATE organizaciones
                     SET ${updateFields.join(', ')}
-                    WHERE id = $${paramCounter} AND activo = TRUE
+                    WHERE id = $${paramCounter}
                     RETURNING ${this.SELECT_FIELDS_SQL}
                 `;
 
@@ -358,31 +373,36 @@ class OrganizacionModel {
 
         try {
             return await RLSHelper.withBypass(db, async (db) => {
+                // Calcular rangos de fechas según el período
+                let fechaInicio, fechaFin;
+                switch (periodo) {
+                    case 'semana':
+                        fechaInicio = "date_trunc('week', CURRENT_DATE)";
+                        fechaFin = "date_trunc('week', CURRENT_DATE) + interval '1 week'";
+                        break;
+                    case 'año':
+                        fechaInicio = "date_trunc('year', CURRENT_DATE)";
+                        fechaFin = "date_trunc('year', CURRENT_DATE) + interval '1 year'";
+                        break;
+                    default: // 'mes'
+                        fechaInicio = "date_trunc('month', CURRENT_DATE)";
+                        fechaFin = "date_trunc('month', CURRENT_DATE) + interval '1 month'";
+                }
 
-            // Calcular rangos de fechas según el período
-            let fechaInicio, fechaFin;
-            switch (periodo) {
-                case 'semana':
-                    fechaInicio = "date_trunc('week', CURRENT_DATE)";
-                    fechaFin = "date_trunc('week', CURRENT_DATE) + interval '1 week'";
-                    break;
-                case 'año':
-                    fechaInicio = "date_trunc('year', CURRENT_DATE)";
-                    fechaFin = "date_trunc('year', CURRENT_DATE) + interval '1 year'";
-                    break;
-                default: // 'mes'
-                    fechaInicio = "date_trunc('month', CURRENT_DATE)";
-                    fechaFin = "date_trunc('month', CURRENT_DATE) + interval '1 month'";
-            }
-
-            // Query principal de métricas
-            const metricsQuery = `
-                WITH metricas_organizacion AS (
+                // Query para métricas de uso de recursos y operacionales
+                const metricsQuery = `
                     SELECT
-                        -- Configuración de organización
-                        o.moneda,
+                        -- Límites del plan
+                        COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
+                        COALESCE(ps.limite_servicios, 10) as limite_servicios,
+                        COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
 
-                        -- Métricas de citas
+                        -- Uso actual
+                        COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_usados,
+                        COUNT(DISTINCT s.id) FILTER (WHERE s.activo = true) as servicios_usados,
+                        COUNT(DISTINCT u.id) FILTER (WHERE u.activo = true) as usuarios_usados,
+
+                        -- Métricas operacionales del período
                         COUNT(DISTINCT c.id) FILTER (
                             WHERE c.fecha_cita >= ${fechaInicio}
                             AND c.fecha_cita < ${fechaFin}
@@ -397,71 +417,26 @@ class OrganizacionModel {
                             AND c.fecha_cita < ${fechaFin}
                             AND c.estado = 'cancelada'
                         ) as citas_canceladas,
-
-                        -- Métricas financieras
                         COALESCE(SUM(c.precio_final) FILTER (
                             WHERE c.fecha_cita >= ${fechaInicio}
                             AND c.fecha_cita < ${fechaFin}
                             AND c.estado = 'completada'
                         ), 0) as ingresos_periodo,
-                        COALESCE(AVG(c.precio_final) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                            AND c.estado = 'completada'
-                        ), 0) as ticket_promedio,
 
-                        -- Métricas de clientes
-                        COUNT(DISTINCT c.cliente_id) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                        ) as clientes_atendidos,
-                        COUNT(DISTINCT cl.id) FILTER (
-                            WHERE cl.creado_en >= ${fechaInicio}
-                            AND cl.creado_en < ${fechaFin}
-                        ) as clientes_nuevos,
-
-                        -- Métricas operativas
-                        COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_activos,
-                        COUNT(DISTINCT s.id) FILTER (WHERE s.activo = true) as servicios_activos,
-
-                        -- Satisfacción
-                        COALESCE(AVG(c.calificacion_cliente) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                            AND c.calificacion_cliente IS NOT NULL
-                        ), 5.0) as satisfaccion_promedio
+                        -- Salud del sistema
+                        o.activo as org_activa,
+                        o.suspendido as org_suspendida
 
                     FROM organizaciones o
-                    LEFT JOIN citas c ON o.id = c.organizacion_id
-                    LEFT JOIN clientes cl ON o.id = cl.organizacion_id
+                    LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
+                    LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
                     LEFT JOIN profesionales p ON o.id = p.organizacion_id
                     LEFT JOIN servicios s ON o.id = s.organizacion_id
-                    WHERE o.id = $1 AND o.activo = true
-                ),
-                servicios_populares AS (
-                    SELECT
-                        s.nombre as servicio_nombre,
-                        s.precio,
-                        COUNT(c.id) as veces_solicitado,
-                        SUM(c.precio_final) as ingresos_servicio
-                    FROM servicios s
-                    LEFT JOIN citas c ON s.id = c.servicio_id
-                        AND c.fecha_cita >= ${fechaInicio}
-                        AND c.fecha_cita < ${fechaFin}
-                        AND c.estado = 'completada'
-                    WHERE s.organizacion_id = $1 AND s.activo = true
-                    GROUP BY s.id, s.nombre, s.precio
-                    ORDER BY veces_solicitado DESC
-                    LIMIT 5
-                )
-                SELECT
-                    m.*,
-                    COALESCE(
-                        (SELECT json_agg(sp) FROM servicios_populares sp),
-                        '[]'::json
-                    ) as servicios_populares
-                FROM metricas_organizacion m
-            `;
+                    LEFT JOIN usuarios u ON o.id = u.organizacion_id
+                    LEFT JOIN citas c ON o.id = c.organizacion_id
+                    WHERE o.id = $1
+                    GROUP BY o.id, o.activo, o.suspendido, ps.limite_profesionales, ps.limite_servicios, ps.limite_citas_mes
+                `;
 
                 const result = await db.query(metricsQuery, [organizacionId]);
 
@@ -469,40 +444,58 @@ class OrganizacionModel {
                     throw new Error('Organización no encontrada');
                 }
 
-                const metricas = result.rows[0];
+                const data = result.rows[0];
 
-                const tasaCompletitud = metricas.citas_periodo > 0
-                    ? Math.round((parseInt(metricas.citas_completadas) / parseInt(metricas.citas_periodo)) * 100)
+                // Calcular porcentajes de uso
+                const profesionalesUsados = parseInt(data.profesionales_usados);
+                const serviciosUsados = parseInt(data.servicios_usados);
+                const usuariosUsados = parseInt(data.usuarios_usados);
+
+                const profesionalesPorcentaje = data.limite_profesionales > 0
+                    ? Math.round((profesionalesUsados / data.limite_profesionales) * 100)
                     : 0;
+                const serviciosPorcentaje = data.limite_servicios > 0
+                    ? Math.round((serviciosUsados / data.limite_servicios) * 100)
+                    : 0;
+                const usuariosPorcentaje = 100; // Sin límite definido, asumimos 100%
 
-                const tasaCancelacion = metricas.citas_periodo > 0
-                    ? Math.round((parseInt(metricas.citas_canceladas) / parseInt(metricas.citas_periodo)) * 100)
+                // Calcular tasa de completitud
+                const citasPeriodo = parseInt(data.citas_periodo);
+                const tasaCompletitud = citasPeriodo > 0
+                    ? Math.round((parseInt(data.citas_completadas) / citasPeriodo) * 100)
                     : 0;
 
                 return {
-                    periodo: periodo,
-                    resumen: {
-                        citas_total: parseInt(metricas.citas_periodo),
-                        citas_completadas: parseInt(metricas.citas_completadas),
-                        citas_canceladas: parseInt(metricas.citas_canceladas),
+                    uso_recursos: {
+                        profesionales: {
+                            usados: profesionalesUsados,
+                            limite: data.limite_profesionales,
+                            porcentaje_uso: profesionalesPorcentaje
+                        },
+                        servicios: {
+                            usados: serviciosUsados,
+                            limite: data.limite_servicios,
+                            porcentaje_uso: serviciosPorcentaje
+                        },
+                        usuarios: {
+                            usados: usuariosUsados,
+                            limite: 999, // Sin límite real
+                            porcentaje_uso: usuariosPorcentaje
+                        }
+                    },
+                    estadisticas_operacionales: {
+                        citas_totales: citasPeriodo,
+                        citas_completadas: parseInt(data.citas_completadas),
+                        citas_canceladas: parseInt(data.citas_canceladas),
                         tasa_completitud: tasaCompletitud,
-                        tasa_cancelacion: tasaCancelacion
+                        ingresos: parseFloat(data.ingresos_periodo),
+                        periodo: periodo
                     },
-                    financieras: {
-                        ingresos_periodo: parseFloat(metricas.ingresos_periodo),
-                        ticket_promedio: parseFloat(metricas.ticket_promedio),
-                        moneda: metricas.moneda || 'MXN'
-                    },
-                    clientes: {
-                        clientes_atendidos: parseInt(metricas.clientes_atendidos),
-                        clientes_nuevos: parseInt(metricas.clientes_nuevos),
-                        satisfaccion_promedio: parseFloat(metricas.satisfaccion_promedio)
-                    },
-                    operativas: {
-                        profesionales_activos: parseInt(metricas.profesionales_activos),
-                        servicios_activos: parseInt(metricas.servicios_activos)
-                    },
-                    servicios_populares: metricas.servicios_populares || []
+                    salud_sistema: {
+                        organizacion_activa: data.org_activa,
+                        organizacion_suspendida: data.org_suspendida,
+                        estado_general: data.org_activa && !data.org_suspendida ? 'saludable' : 'degradado'
+                    }
                 };
             });
         } finally {
@@ -611,9 +604,9 @@ class OrganizacionModel {
                 const updateOrgQuery = `
                     UPDATE organizaciones
                     SET
-                        plan_actual = $1,
+                        plan_actual = $1::plan_tipo,
                         fecha_activacion = CASE
-                            WHEN plan_actual = 'trial' AND $1 != 'trial' THEN NOW()
+                            WHEN plan_actual = 'trial' AND $1::plan_tipo != 'trial' THEN NOW()
                             ELSE fecha_activacion
                         END,
                         actualizado_en = NOW()
@@ -650,20 +643,19 @@ class OrganizacionModel {
                 ]);
 
                 return {
-                    organizacion_id: organizacionId,
+                    id: organizacionId,
                     nombre_comercial: organizacion.nombre_comercial,
+                    plan_actual: updateOrgResult.rows[0].plan_actual,
                     plan_anterior: planAnterior,
-                    plan_nuevo: codigoPlan,
                     nombre_plan: nuevoPlan.nombre_plan,
                     precio_mensual: nuevoPlan.precio_mensual,
                     fecha_activacion: updateOrgResult.rows[0].fecha_activacion,
                     configuracion_plan: configuracionPlan,
                     limites: {
-                        citas_mes: nuevoPlan.limite_citas_mes,
-                        profesionales: nuevoPlan.limite_profesionales,
-                        servicios: nuevoPlan.limite_servicios,
-                        usuarios: nuevoPlan.limite_usuarios,
-                        precio_mensual: nuevoPlan.precio_mensual
+                        max_citas_mes: nuevoPlan.limite_citas_mes,
+                        max_profesionales: nuevoPlan.limite_profesionales,
+                        max_servicios: nuevoPlan.limite_servicios,
+                        max_usuarios: nuevoPlan.limite_usuarios
                     },
                     mensaje: `Plan cambiado exitosamente de ${planAnterior} a ${codigoPlan}`
                 };
@@ -675,6 +667,49 @@ class OrganizacionModel {
         } catch (error) {
             await db.query('ROLLBACK');
             throw error;
+        } finally {
+            db.release();
+        }
+    }
+
+    // Crear subscripción activa inicial para nueva organización
+    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial') {
+        const db = await getDb();
+
+        try {
+            return await RLSHelper.withBypass(db, async (db) => {
+                // Obtener información del plan
+                const planQuery = `
+                    SELECT id, codigo_plan, precio_mensual
+                    FROM planes_subscripcion
+                    WHERE codigo_plan = $1
+                `;
+
+                const planResult = await db.query(planQuery, [codigoPlan]);
+
+                if (planResult.rows.length === 0) {
+                    throw new Error(`Plan ${codigoPlan} no encontrado`);
+                }
+
+                const plan = planResult.rows[0];
+
+                // Crear subscripción activa
+                const subscripcionQuery = `
+                    INSERT INTO subscripciones (
+                        organizacion_id, plan_id, precio_actual, fecha_inicio,
+                        fecha_proximo_pago, estado, activa, metadata
+                    ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)
+                    RETURNING id, organizacion_id, plan_id, estado, activa
+                `;
+
+                const result = await db.query(subscripcionQuery, [
+                    organizacionId,
+                    plan.id,
+                    plan.precio_mensual
+                ]);
+
+                return result.rows[0];
+            });
         } finally {
             db.release();
         }

@@ -17,13 +17,13 @@ const crear = {
         servicio_id: commonSchemas.id.optional().allow(null),
         tipo_bloqueo: Joi.string()
             .valid(
-                'vacaciones', 'permiso_medico', 'capacitacion',
-                'festivo', 'mantenimiento', 'evento_especial', 'otro'
+                'vacaciones', 'feriado', 'mantenimiento',
+                'evento_especial', 'emergencia', 'personal', 'organizacional'
             )
             .required()
             .messages({
                 'any.required': 'tipo_bloqueo es requerido',
-                'any.only': 'tipo_bloqueo debe ser: vacaciones, permiso_medico, capacitacion, festivo, mantenimiento, evento_especial, otro'
+                'any.only': 'tipo_bloqueo debe ser: vacaciones, feriado, mantenimiento, evento_especial, emergencia, personal, organizacional'
             }),
         titulo: Joi.string()
             .min(3)
@@ -113,8 +113,8 @@ const actualizar = {
         hora_fin: commonSchemas.time.allow(null),
         zona_horaria: Joi.string().max(50),
         tipo_bloqueo: Joi.string().valid(
-            'vacaciones', 'permiso_medico', 'capacitacion',
-            'festivo', 'mantenimiento', 'evento_especial', 'otro'
+            'vacaciones', 'feriado', 'mantenimiento',
+            'evento_especial', 'emergencia', 'personal', 'organizacional'
         ),
         color_display: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
         icono: Joi.string().max(50),
@@ -158,8 +158,8 @@ const obtener = {
         id: commonSchemas.id.optional(),
         profesional_id: commonSchemas.id.optional(),
         tipo_bloqueo: Joi.string().valid(
-            'vacaciones', 'permiso_medico', 'capacitacion',
-            'festivo', 'mantenimiento', 'evento_especial', 'otro'
+            'vacaciones', 'feriado', 'mantenimiento',
+            'evento_especial', 'emergencia', 'personal', 'organizacional'
         ).optional(),
         fecha_inicio: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
         fecha_fin: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),

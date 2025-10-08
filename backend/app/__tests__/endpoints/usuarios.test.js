@@ -20,6 +20,9 @@ describe('Endpoints de Usuarios', () => {
   let adminUsuario;
   let adminToken;
   let testUsuario;
+  let otherOrg;
+  let otherOrgUser;
+  let otherOrgToken;
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -57,6 +60,28 @@ describe('Endpoints de Usuarios', () => {
       rol: 'empleado',
       activo: true,
       email_verificado: true
+    });
+
+    // Crear segunda organización para tests RLS
+    otherOrg = await createTestOrganizacion(client, {
+      nombre: 'Other Org RLS Test'
+    });
+
+    // Crear usuario de otra organización
+    otherOrgUser = await createTestUsuario(client, otherOrg.id, {
+      nombre: 'Other Org',
+      apellidos: 'User',
+      rol: 'admin',
+      activo: true,
+      email_verificado: true
+    });
+
+    // Generar token para usuario de otra org
+    otherOrgToken = authConfig.generateToken({
+      userId: otherOrgUser.id,
+      email: otherOrgUser.email,
+      rol: otherOrgUser.rol,
+      organizacionId: otherOrg.id
     });
 
     client.release();
@@ -433,6 +458,89 @@ describe('Endpoints de Usuarios', () => {
         .expect(401);
 
       expect(response.body.success).toBe(false);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Aislamiento RLS Multi-Tenant (CRÍTICO)
+  // ============================================================================
+
+  describe('Aislamiento RLS Multi-Tenant', () => {
+    test('❌ CRÍTICO: Usuario de otra org NO puede ver usuario', async () => {
+      const response = await request(app)
+        .get(`/api/v1/usuarios/${testUsuario.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear: 403/404 (error) o 200 con datos vacíos
+      if (response.status === 200) {
+        // Si retorna 200, debe retornar null o datos vacíos
+        expect(response.body.data).toBeNull();
+      } else {
+        // O debe retornar error 403/404
+        expect([403, 404]).toContain(response.status);
+        expect(response.body.success).toBe(false);
+      }
+    });
+
+    test('❌ CRÍTICO: Usuario de otra org NO puede actualizar usuario', async () => {
+      const response = await request(app)
+        .put(`/api/v1/usuarios/${testUsuario.id}`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ nombre: 'Intentando modificar' });
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Usuario de otra org NO puede cambiar rol', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/usuarios/${testUsuario.id}/rol`)
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .send({ rol: 'empleado' });
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ CRÍTICO: Usuario de otra org NO puede desbloquear usuario', async () => {
+      const response = await request(app)
+        .patch(`/api/v1/usuarios/${testUsuario.id}/desbloquear`)
+        .set('Authorization', `Bearer ${otherOrgToken}`);
+
+      // RLS debe bloquear con 403 o 404
+      expect([403, 404]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('✅ Usuario de la misma org SÍ puede ver su usuario', async () => {
+      const response = await request(app)
+        .get(`/api/v1/usuarios/${testUsuario.id}`)
+        .set('Authorization', `Bearer ${adminToken}`)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.id).toBe(testUsuario.id);
+    });
+
+    test('❌ CRÍTICO: Listar usuarios NO muestra usuarios de otras orgs', async () => {
+      const response = await request(app)
+        .get('/api/v1/usuarios')
+        .set('Authorization', `Bearer ${otherOrgToken}`)
+        .expect(200);
+
+      const usuarios = response.body.data.data || response.body.data || [];
+
+      // Verificar que ningún usuario pertenece a testOrg
+      const usuarioDeOtraOrg = usuarios.find(u => u.id === testUsuario.id || u.id === adminUsuario.id);
+      expect(usuarioDeOtraOrg).toBeUndefined();
+
+      // Verificar que solo retorna usuarios de otherOrg
+      usuarios.forEach(usuario => {
+        expect(usuario.organizacion_id).toBe(otherOrg.id);
+      });
     });
   });
 });

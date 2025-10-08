@@ -190,24 +190,32 @@ class HorarioModel {
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', organizacionId.toString()]);
 
-            const verificarQuery = `
+            // Primero adquirir lock (sin filtrar por estado para forzar conflict)
+            const lockQuery = `
                 SELECT id, profesional_id, fecha, hora_inicio, hora_fin,
                        duracion_slot, estado, reservado_hasta
                 FROM horarios_disponibilidad
                 WHERE id = $1
                   AND organizacion_id = $2
-                  AND estado = 'disponible'
-                  AND (reservado_hasta IS NULL OR reservado_hasta < NOW())
                 FOR UPDATE NOWAIT
             `;
 
-            const verificarResult = await db.query(verificarQuery, [horarioId, organizacionId]);
+            const lockResult = await db.query(lockQuery, [horarioId, organizacionId]);
 
-            if (verificarResult.rows.length === 0) {
-                throw new Error('El horario no está disponible para reserva');
+            if (lockResult.rows.length === 0) {
+                throw new Error('Horario no encontrado');
             }
 
-            const slot = verificarResult.rows[0];
+            const slot = lockResult.rows[0];
+
+            // Validar disponibilidad DESPUÉS del lock
+            if (slot.estado !== 'disponible') {
+                throw new Error('El horario ya está reservado');
+            }
+
+            if (slot.reservado_hasta && new Date(slot.reservado_hasta) >= new Date()) {
+                throw new Error('El horario ya está reservado temporalmente');
+            }
             const reservadoHasta = new Date(Date.now() + duracionMinutos * 60000);
 
             const reservarQuery = `
@@ -253,6 +261,16 @@ class HorarioModel {
 
         } catch (error) {
             await db.query('ROLLBACK');
+
+            // Detectar error de lock conflict (otro usuario está reservando el mismo horario)
+            if (error.code === '55P03') {
+                logger.warn('[HorarioModel.reservarTemporalmente] Lock conflict:', {
+                    horario_id: horarioId,
+                    organizacion_id: organizacionId
+                });
+                throw new Error('El horario ya está siendo reservado por otro usuario');
+            }
+
             logger.error('[HorarioModel.reservarTemporalmente] Error:', { error: error.message });
             throw error;
         } finally {

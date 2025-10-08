@@ -249,8 +249,8 @@ class CitaBaseModel {
                 return false;
             }
 
-            if (['completada', 'cancelada'].includes(citaExistente.estado)) {
-                throw new Error('No se puede cancelar una cita completada o ya cancelada');
+            if (['completada', 'cancelada', 'en_curso'].includes(citaExistente.estado)) {
+                throw new Error(`No se puede cancelar una cita ${citaExistente.estado}`);
             }
 
             // Marcar como cancelada (soft delete)
@@ -274,19 +274,24 @@ class CitaBaseModel {
                 WHERE cita_id = $1
             `, [citaId]);
 
-            await CitaHelpersModel.registrarEventoAuditoria({
-                organizacion_id: organizacionId,
-                tipo_evento: 'cita_cancelada',
-                descripcion: 'Cita cancelada via endpoint estándar',
-                cita_id: citaId,
-                usuario_id: usuarioId,
-                metadatos: {
-                    estado_anterior: citaExistente.estado,
-                    motivo: 'Cancelada por administrador'
-                }
-            }, db);
-
             await db.query('COMMIT');
+
+            // Auditoría DESPUÉS del commit
+            try {
+                await CitaHelpersModel.registrarEventoAuditoria({
+                    organizacion_id: organizacionId,
+                    tipo_evento: 'cita_cancelada',
+                    descripcion: 'Cita cancelada via endpoint estándar',
+                    cita_id: citaId,
+                    usuario_id: usuarioId,
+                    metadatos: {
+                        estado_anterior: citaExistente.estado,
+                        motivo: 'Cancelada por administrador'
+                    }
+                }, db);
+            } catch (auditError) {
+                logger.error('[eliminarEstandar] Error en auditoría:', auditError);
+            }
 
             return true;
 
@@ -298,6 +303,8 @@ class CitaBaseModel {
                 organizacion_id: organizacionId
             });
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -336,19 +343,25 @@ class CitaBaseModel {
                 RETURNING *
             `, [usuarioId, citaId, organizacionId]);
 
-            await CitaHelpersModel.registrarEventoAuditoria({
-                organizacion_id: organizacionId,
-                tipo_evento: 'cita_confirmada',
-                descripcion: 'Asistencia confirmada por cliente',
-                cita_id: citaId,
-                usuario_id: usuarioId,
-                metadatos: {
-                    estado_anterior: citaExistente.estado,
-                    confirmada_en: new Date().toISOString()
-                }
-            }, db);
-
             await db.query('COMMIT');
+
+            // Auditoría DESPUÉS del commit (fuera de la transacción)
+            try {
+                await CitaHelpersModel.registrarEventoAuditoria({
+                    organizacion_id: organizacionId,
+                    tipo_evento: 'cita_confirmada',
+                    descripcion: 'Asistencia confirmada por cliente',
+                    cita_id: citaId,
+                    usuario_id: usuarioId,
+                    metadatos: {
+                        estado_anterior: citaExistente.estado,
+                        confirmada_en: new Date().toISOString()
+                    }
+                }, db);
+            } catch (auditError) {
+                logger.error('[confirmarAsistenciaEstandar] Error en auditoría:', auditError);
+                // No lanzar error, la cita ya fue confirmada exitosamente
+            }
 
             return {
                 exito: true,
@@ -364,6 +377,8 @@ class CitaBaseModel {
                 organizacion_id: organizacionId
             });
             throw error;
+        } finally {
+            db.release();
         }
     }
 

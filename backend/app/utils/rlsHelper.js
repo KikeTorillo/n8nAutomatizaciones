@@ -60,12 +60,22 @@ class RLSHelper {
             return await callback(db);
 
         } finally {
-            if (bypass) {
-                try {
+            // CRÍTICO: Limpiar TODAS las variables RLS configuradas para evitar contaminación del pool
+            try {
+                if (bypass) {
                     await db.query("SET app.bypass_rls = 'false'");
-                } catch (resetError) {
-                    logger.warn('Error resetting RLS bypass:', resetError.message);
                 }
+                if (role) {
+                    await db.query("SELECT set_config('app.current_user_role', '', false)");
+                }
+                if (userId) {
+                    await db.query("SELECT set_config('app.current_user_id', '', false)");
+                }
+                if (tenantId) {
+                    await db.query("SELECT set_config('app.current_tenant_id', '', false)");
+                }
+            } catch (resetError) {
+                logger.warn('Error resetting RLS variables:', resetError.message);
             }
         }
     }

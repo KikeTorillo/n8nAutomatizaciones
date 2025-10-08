@@ -281,11 +281,11 @@ const recuperarPassword = {
 const confirmarResetPassword = {
     params: Joi.object({
         token: Joi.string()
-            .alphanum()
+            .hex()
             .length(VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH)
             .required()
             .messages({
-                'string.alphanum': 'Token debe contener solo caracteres alfanuméricos',
+                'string.hex': 'Token debe contener solo caracteres hexadecimales',
                 'string.length': `Token debe tener exactamente ${VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH} caracteres`,
                 'any.required': 'Token es requerido'
             })
@@ -297,10 +297,9 @@ const confirmarResetPassword = {
             }),
         confirmarPassword: Joi.string()
             .valid(Joi.ref('passwordNueva'))
-            .required()
+            .optional()
             .messages({
-                'any.only': 'La confirmación debe coincidir con la nueva contraseña',
-                'any.required': 'Confirmación de contraseña es requerida'
+                'any.only': 'La confirmación debe coincidir con la nueva contraseña'
             })
     })
 };
@@ -308,11 +307,11 @@ const confirmarResetPassword = {
 const validarTokenReset = {
     params: Joi.object({
         token: Joi.string()
-            .alphanum()
+            .hex()
             .length(VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH)
             .required()
             .messages({
-                'string.alphanum': 'Token debe contener solo caracteres alfanuméricos',
+                'string.hex': 'Token debe contener solo caracteres hexadecimales',
                 'string.length': `Token debe tener exactamente ${VALIDATION_CONSTANTS.TOKEN_RESET_LENGTH} caracteres`,
                 'any.required': 'Token es requerido'
             })
@@ -323,7 +322,7 @@ const evaluarFortalezaPassword = {
     body: Joi.object({
         password: Joi.string()
             .required()
-            .min(1)
+            .allow('')
             .max(VALIDATION_CONSTANTS.PASSWORD_MAX)
             .messages({
                 'any.required': 'Contraseña es requerida para evaluar',

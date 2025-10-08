@@ -24,15 +24,19 @@ class ResponseHelper {
   /**
    * Respuesta de error
    */
-  static error(res, message = 'Error interno del servidor', statusCode = 500, errors = null) {
+  static error(res, message = 'Error interno del servidor', statusCode = 500, dataOrErrors = null) {
     const response = {
       success: false,
       message,
       timestamp: new Date().toISOString()
     };
 
-    if (errors) {
-      response.errors = errors;
+    if (dataOrErrors) {
+      if (dataOrErrors.valido !== undefined || dataOrErrors.token_enviado !== undefined) {
+        response.data = dataOrErrors;
+      } else {
+        response.errors = dataOrErrors;
+      }
     }
 
     return res.status(statusCode).json(response);

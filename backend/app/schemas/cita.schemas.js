@@ -31,9 +31,16 @@ const buscarPorTelefono = {
             .pattern(/^[+]?[\d\s\-()]+$/)
             .required()
             .messages({ 'string.pattern.base': 'Formato de teléfono inválido' }),
-        organizacion_id: commonSchemas.id.optional(),
-        estados: Joi.array().items(Joi.string()).optional(),
-        incluir_historicas: Joi.boolean().default(false)
+        organizacion_id: commonSchemas.id.required()
+            .messages({ 'any.required': 'organizacion_id es requerido' }),
+        estados: Joi.alternatives().try(
+            Joi.array().items(Joi.string()),
+            Joi.string()
+        ).optional(),
+        incluir_historicas: Joi.alternatives().try(
+            Joi.boolean(),
+            Joi.string().valid('true', 'false')
+        ).default(false)
     })
 };
 
@@ -43,10 +50,10 @@ const modificarAutomatica = {
     }),
     body: Joi.object({
         organizacion_id: commonSchemas.id,
-        fecha_nueva: Joi.date().iso().optional(),
-        servicio_nuevo_id: commonSchemas.id.optional(),
+        nueva_fecha: Joi.string().optional(), // Formato flexible para IA ("mañana", "2025-10-10", etc)
+        nuevo_servicio_id: commonSchemas.id.optional(),
         nuevo_turno: Joi.string()
-            .valid('mañana', 'tarde', 'noche')
+            .valid('mañana', 'tarde', 'noche', 'cualquiera')
             .optional(),
         motivo: Joi.string().max(500).optional()
     })
@@ -56,10 +63,8 @@ const cancelarAutomatica = {
     params: Joi.object({
         codigo: Joi.string().trim().min(3).max(50).required()
     }),
-    query: Joi.object({
-        organizacion_id: commonSchemas.id
-    }),
     body: Joi.object({
+        organizacion_id: commonSchemas.id,
         motivo: Joi.string().max(500).optional()
     })
 };

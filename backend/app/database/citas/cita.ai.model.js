@@ -13,7 +13,7 @@ class CitaAIModel {
             await db.query('SELECT set_config($1, $2, false)',
                 ['app.current_tenant_id', datosIA.organizacion_id.toString()]);
 
-            let cliente = await CitaHelpersModel.buscarOCrearCliente(datosIA);
+            let cliente = await CitaHelpersModel.buscarOCrearCliente(datosIA, db);
 
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosIA.servicio_id, datosIA.organizacion_id, db);
             if (!servicio) {

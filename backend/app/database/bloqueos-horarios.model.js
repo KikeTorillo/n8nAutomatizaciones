@@ -55,14 +55,14 @@ class BloqueosHorariosModel {
                     notificar_afectados, dias_aviso_previo, mensaje_clientes,
                     citas_afectadas, ingresos_perdidos,
                     metadata, notas_internas,
-                    creado_por, ip_origen, creado_en
+                    creado_por, creado_en
                 )
                 VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8,
                     $9, $10, $11, $12, $13, $14,
                     $15, $16, $17, $18, $19,
                     $20, $21, $22, $23, $24,
-                    $25, $26, $27, $28, NOW()
+                    $25, $26, $27, NOW()
                 )
                 RETURNING id, organizacion_id, profesional_id, tipo_bloqueo,
                          titulo, fecha_inicio, fecha_fin, hora_inicio, hora_fin,
@@ -96,8 +96,7 @@ class BloqueosHorariosModel {
                 datosBloqueo.ingresos_perdidos || 0.00,
                 datosBloqueo.metadata || {},
                 datosBloqueo.notas_internas || null,
-                auditoria.usuario_id || null,
-                auditoria.ip_origen || null
+                auditoria.usuario_id || null
             ]);
 
             await db.query('COMMIT');

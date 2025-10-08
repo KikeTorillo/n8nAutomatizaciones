@@ -9,6 +9,7 @@ const router = express.Router();
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
+    auth.requireAdminRole,
     rateLimiting.heavyOperationRateLimit,
     validation.validate(usuarioSchemas.crear),
     UsuarioController.crear

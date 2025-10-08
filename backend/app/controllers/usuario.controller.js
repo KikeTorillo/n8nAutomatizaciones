@@ -99,7 +99,8 @@ class UsuarioController {
 
         const usuarioDesbloqueado = await UsuarioModel.desbloquearUsuario(
             parseInt(id),
-            req.user.userId
+            req.user.userId,
+            req.tenant.organizacionId
         );
 
         return ResponseHelper.success(res, usuarioDesbloqueado, 'Usuario desbloqueado exitosamente');

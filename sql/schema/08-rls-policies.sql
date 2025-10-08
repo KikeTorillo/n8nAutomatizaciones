@@ -30,6 +30,7 @@
 -- Una vez habilitado, TODAS las consultas a usuarios serán filtradas
 -- automáticamente por las políticas definidas a continuación.
 ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE usuarios FORCE ROW LEVEL SECURITY;
 
 -- ====================================================================
 -- 🎯 POLÍTICA UNIFICADA: USUARIOS_UNIFIED_ACCESS
@@ -107,6 +108,7 @@ COMMENT ON POLICY usuarios_unified_access ON usuarios IS
 
 -- Habilitar RLS en organizaciones
 ALTER TABLE organizaciones ENABLE ROW LEVEL SECURITY;
+ALTER TABLE organizaciones FORCE ROW LEVEL SECURITY;
 
 -- ====================================================================
 -- 🎯 POLÍTICA: TENANT_ISOLATION_ORGANIZACIONES
@@ -163,6 +165,7 @@ COMMENT ON POLICY tenant_isolation_organizaciones ON organizaciones IS
 
 -- Habilitar RLS en plantillas_servicios
 ALTER TABLE plantillas_servicios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE plantillas_servicios FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: LECTURA PÚBLICA
 -- Todos los usuarios autenticados pueden leer plantillas activas
@@ -237,6 +240,7 @@ COMMENT ON POLICY plantillas_admin_update ON plantillas_servicios IS
 
 -- Habilitar RLS en profesionales
 ALTER TABLE profesionales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profesionales FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA: AISLAMIENTO POR TENANT
 CREATE POLICY tenant_isolation_profesionales ON profesionales
@@ -259,6 +263,7 @@ CREATE POLICY tenant_isolation_profesionales ON profesionales
 
 -- Habilitar RLS en clientes
 ALTER TABLE clientes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE clientes FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR ORGANIZACIÓN (CORREGIDO 2025-10-03)
 -- Validación REGEX para prevenir SQL injection y tenant_id vacío
@@ -302,6 +307,7 @@ CREATE POLICY clientes_super_admin ON clientes
 
 -- Habilitar RLS en servicios
 ALTER TABLE servicios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE servicios FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR TENANT
 CREATE POLICY servicios_tenant_isolation ON servicios
@@ -332,6 +338,7 @@ CREATE POLICY servicios_system_bypass ON servicios
 
 -- Habilitar RLS en servicios_profesionales
 ALTER TABLE servicios_profesionales ENABLE ROW LEVEL SECURITY;
+ALTER TABLE servicios_profesionales FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA: AISLAMIENTO VIA JOINS
 CREATE POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales
@@ -358,6 +365,7 @@ CREATE POLICY servicios_profesionales_tenant_isolation ON servicios_profesionale
 
 -- Habilitar RLS en citas
 ALTER TABLE citas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE citas FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR TENANT
 CREATE POLICY citas_tenant_isolation ON citas
@@ -388,6 +396,7 @@ CREATE POLICY citas_system_bypass ON citas
 
 -- Habilitar RLS en horarios_disponibilidad
 ALTER TABLE horarios_disponibilidad ENABLE ROW LEVEL SECURITY;
+ALTER TABLE horarios_disponibilidad FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR TENANT
 CREATE POLICY horarios_tenant_isolation ON horarios_disponibilidad

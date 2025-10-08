@@ -9,6 +9,7 @@ const router = express.Router();
 
 router.post('/',
     auth.authenticateToken,
+    auth.requireRole(['super_admin']),
     rateLimiting.apiRateLimit,
     validation.validate(organizacionSchemas.crear),
     OrganizacionController.crear
@@ -32,6 +33,7 @@ router.post('/onboarding',
 
 router.get('/:id',
     auth.authenticateToken,
+    tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     validation.validate(organizacionSchemas.obtenerPorId),
     OrganizacionController.obtenerPorId
@@ -39,6 +41,7 @@ router.get('/:id',
 
 router.put('/:id',
     auth.authenticateToken,
+    tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     validation.validate(organizacionSchemas.actualizar),
     OrganizacionController.actualizar
@@ -64,6 +67,7 @@ router.get('/:id/limites',
 router.get('/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
+    auth.requireAdminRole,
     validation.validate(organizacionSchemas.obtenerEstadisticas),
     OrganizacionController.obtenerEstadisticas
 );

@@ -33,7 +33,9 @@ const asyncHandler = (fn) => {
                 if (error.name === 'ValidationError' ||
                     error.message.includes('Contraseña anterior incorrecta') ||
                     error.message.includes('contraseña débil') ||
-                    error.message.includes('contraseña debe')
+                    error.message.includes('contraseña debe') ||
+                    error.message.includes('token de recuperación') ||
+                    error.message.includes('Código de recuperación')
                 ) {
                     statusCode = 400;
                 }
@@ -51,11 +53,18 @@ const asyncHandler = (fn) => {
                     statusCode = 403;
                 }
                 // Recursos no encontrados
-                else if (error.message.includes('no encontrado')) {
+                else if (error.message.includes('no encontrado') || error.message.includes('no encontrada')) {
                     statusCode = 404;
                 }
-                // Conflictos (duplicados, etc)
-                else if (error.message.includes('ya existe') || error.message.includes('duplicado') || error.code === '23505') {
+                // Conflictos (duplicados, lock conflicts, etc)
+                else if (
+                    error.message.includes('ya existe') ||
+                    error.message.includes('duplicado') ||
+                    error.message.includes('reservado') ||
+                    error.message.includes('en uso por otro') ||
+                    error.code === '23505' ||  // Unique violation
+                    error.code === '55P03'     // Lock not available (NOWAIT)
+                ) {
                     statusCode = 409;
                 }
                 // Usuario bloqueado

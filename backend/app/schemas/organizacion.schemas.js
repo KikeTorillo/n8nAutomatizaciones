@@ -26,7 +26,10 @@ const crear = {
         configuracion_industria: Joi.object()
             .optional()
             .default({}),
-        email_admin: commonSchemas.emailRequired,
+        email_admin: Joi.string()
+            .email()
+            .optional()
+            .allow(null),
         telefono: Joi.string()
             .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
             .optional()
@@ -55,7 +58,10 @@ const crear = {
         moneda: Joi.string()
             .length(3)
             .uppercase()
-            .default('MXN')
+            .default('MXN'),
+        plan: Joi.string()
+            .valid(...PLANES)
+            .default('basico')
     })
 };
 
@@ -74,9 +80,9 @@ const listar = {
         tipo_industria: Joi.string()
             .valid(...TIPOS_INDUSTRIA)
             .optional(),
-        activo: Joi.string()
-            .valid('true', 'false')
+        incluir_inactivas: Joi.boolean()
             .optional()
+            .default(false)
     })
 };
 
@@ -146,7 +152,7 @@ const desactivar = {
 // POST /organizaciones/onboarding
 const onboarding = {
     body: Joi.object({
-        organizacion_data: Joi.object({
+        organizacion: Joi.object({
             nombre_comercial: Joi.string()
                 .min(2)
                 .max(150)
@@ -155,28 +161,51 @@ const onboarding = {
             tipo_industria: Joi.string()
                 .valid(...TIPOS_INDUSTRIA)
                 .required(),
-            email_admin: commonSchemas.emailRequired,
-            telefono: Joi.string()
-                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-                .optional()
-                .allow(null),
+            plan: Joi.string()
+                .valid(...PLANES)
+                .default('basico'),
             razon_social: Joi.string()
                 .max(200)
                 .optional()
                 .allow(null)
                 .trim(),
-            rfc_nif: Joi.string()
+            rfc: Joi.string()
                 .max(20)
                 .optional()
                 .allow(null)
                 .trim(),
-            sitio_web: Joi.string()
-                .uri()
+            telefono_principal: Joi.string()
+                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+                .optional()
+                .allow(null),
+            email_contacto: commonSchemas.email
                 .optional()
                 .allow(null)
         }).required(),
-        importar_plantillas: Joi.boolean()
-            .default(true)
+        admin: Joi.object({
+            nombre: Joi.string()
+                .min(2)
+                .max(100)
+                .required()
+                .trim(),
+            apellidos: Joi.string()
+                .min(2)
+                .max(100)
+                .required()
+                .trim(),
+            email: commonSchemas.emailRequired,
+            password: Joi.string()
+                .min(8)
+                .required(),
+            telefono: Joi.string()
+                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+                .optional()
+                .allow(null)
+        }).required(),
+        aplicar_plantilla_servicios: Joi.boolean()
+            .default(true),
+        enviar_email_bienvenida: Joi.boolean()
+            .default(false)
     })
 };
 

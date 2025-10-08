@@ -10,9 +10,7 @@ const DEFAULTS = {
 
 class CitaHelpersModel {
 
-    static async buscarOCrearCliente(datosIA) {
-        const db = await getDb();
-
+    static async buscarOCrearCliente(datosIA, db) {
         const clienteExistente = await db.query(
             'SELECT id, nombre, telefono, email FROM clientes WHERE telefono = $1 AND organizacion_id = $2',
             [datosIA.telefono_cliente, datosIA.organizacion_id]
@@ -29,15 +27,14 @@ class CitaHelpersModel {
             const nuevoCliente = await db.query(`
                 INSERT INTO clientes (
                     organizacion_id, nombre, telefono, email,
-                    origen_cliente, activo, creado_en
-                ) VALUES ($1, $2, $3, $4, $5, true, NOW())
+                    activo, creado_en
+                ) VALUES ($1, $2, $3, $4, true, NOW())
                 RETURNING id, nombre, telefono, email
             `, [
                 datosIA.organizacion_id,
                 datosIA.nombre_cliente_nuevo || `Cliente ${datosIA.telefono_cliente}`,
                 datosIA.telefono_cliente,
-                datosIA.email_cliente_nuevo || null,
-                'ia_automatica'
+                datosIA.email_cliente_nuevo || null
             ]);
 
             return {
@@ -51,10 +48,9 @@ class CitaHelpersModel {
 
     static async obtenerServicioCompleto(servicioId, organizacionId, db) {
         const servicio = await db.query(`
-            SELECT s.*, ps.precio
-            FROM servicios s
-            LEFT JOIN plantillas_servicios ps ON s.plantilla_id = ps.id
-            WHERE s.id = $1 AND s.organizacion_id = $2 AND s.activo = true
+            SELECT *
+            FROM servicios
+            WHERE id = $1 AND organizacion_id = $2 AND activo = true
         `, [servicioId, organizacionId]);
 
         if (servicio.rows.length === 0) {
@@ -86,6 +82,9 @@ class CitaHelpersModel {
         } else if (fecha_solicitada === 'mañana') {
             fechaObjetivo = new Date(hoy);
             fechaObjetivo.setDate(hoy.getDate() + 1);
+        } else if (fecha_solicitada === 'pasado mañana' || fecha_solicitada === 'pasado_mañana') {
+            fechaObjetivo = new Date(hoy);
+            fechaObjetivo.setDate(hoy.getDate() + 2);
         } else {
             fechaObjetivo = new Date(fecha_solicitada);
         }
@@ -124,7 +123,7 @@ class CitaHelpersModel {
             JOIN servicios_profesionales sp ON sp.profesional_id = p.id AND sp.servicio_id = $2
             WHERE h.organizacion_id = $1
                 AND h.fecha = $3
-                AND h.disponible = true
+                AND h.estado = 'disponible'
                 AND h.cita_id IS NULL
                 AND h.hora_inicio >= $4::time
                 AND h.hora_fin <= $5::time

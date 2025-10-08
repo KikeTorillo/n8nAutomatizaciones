@@ -147,6 +147,13 @@ class AuthController {
 
         const resultado = await UsuarioModel.verificarEmail(token);
 
+        if (!resultado.verificado && !resultado.ya_verificado) {
+            return ResponseHelper.error(res, resultado.mensaje, 400, {
+                verificado: false,
+                ya_verificado: false
+            });
+        }
+
         return ResponseHelper.success(res, {
             verificado: resultado.verificado || false,
             ya_verificado: resultado.ya_verificado || false,
