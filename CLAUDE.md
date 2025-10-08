@@ -1,298 +1,457 @@
 # CLAUDE.md
 
-**IMPORTANTE**: Toda la comunicaci√≥n debe ser en espa√±ol.
+**IMPORTANTE**: Toda la comunicaciÛn debe ser en espaÒol.
 
-## üéØ Visi√≥n del Proyecto
+## <Ø VisiÛn del Proyecto
 
-**Plataforma SaaS Multi-Tenant** para automatizaci√≥n de agendamiento empresarial con **IA Conversacional**.
-
-### Stack T√©cnico
-
-- **Backend**: Node.js + Express + JWT + RLS Multi-Tenant
-- **Base de Datos**: PostgreSQL 17 con 26 pol√≠ticas RLS
-- **IA**: n8n Workflows + Evolution API (WhatsApp)
-- **Tests**: Jest + Supertest
-
-### Caracter√≠sticas Core
-
-- ‚úÖ Multi-tenant con Row Level Security (RLS)
-- ‚úÖ Auto-generaci√≥n de c√≥digos √∫nicos: `ORG001-20251004-001`
-- ‚úÖ 10 industrias con 59 plantillas de servicios
-- ‚úÖ Canal IA WhatsApp operativo
+**Plataforma SaaS Multi-Tenant** para automatizaciÛn de agendamiento empresarial con **IA Conversacional** (WhatsApp).
 
 ---
 
-## üìù Comandos Esenciales
+## =  Estado Actual del Proyecto
+
+**Actualizado**: 08 Octubre 2025
+
+| Componente | Estado | MÈtricas |
+|------------|--------|----------|
+| **Backend API** |  **100%** | 2,040 LoC controllers, RLS activo |
+| **Base de Datos** |  **100%** | 17 tablas, 17 RLS policies, 40 funciones |
+| **Suite Tests** |  **464/464 (100%)** | 21 test suites, ~53s ejecuciÛn |
+| **Tests SQL** |  **5/5 (100%)** | Setup, RLS, Performance |
+| **Sistema IA** |  **Operativo** | n8n + Evolution API (WhatsApp) |
+| **Docker** |  **Running** | 7 contenedores (back, postgres, n8n, redis) |
+
+---
+
+## =‡ Stack TÈcnico
+
+### Backend
+- **Runtime**: Node.js + Express.js
+- **Auth**: JWT con refresh tokens
+- **ValidaciÛn**: Joi schemas modulares
+- **Testing**: Jest + Supertest
+- **Logs**: Winston (JSON structured)
+
+### Base de Datos
+- **PostgreSQL 17 Alpine**
+- **Multi-Tenant**: Row Level Security (RLS)
+- **Performance**: 152 Ìndices (covering, GIN, GIST)
+- **Auto-generaciÛn**: CÛdigos ˙nicos `ORG001-20251008-001`
+
+### IA Conversacional
+- **OrquestaciÛn**: n8n (stable) + Redis Queue
+- **WhatsApp**: Evolution API
+- **NLP**: Claude/GPT vÌa n8n workflows
+
+---
+
+## =› Comandos Esenciales
+
+### Tests Backend
 
 ```bash
-# Tests Backend (IMPORTANTE: Usar SIEMPRE "npm test")
-docker exec back npm test                                    # Suite completa ‚úÖ
-docker exec back npm test -- __tests__/endpoints/auth.test.js  # Test espec√≠fico ‚úÖ
+# Suite completa (SIEMPRE usar "npm test")
+docker exec back npm test                                    # 464 tests 
 
-# ‚ùå NO USAR: docker exec back npx jest ...
-# Raz√≥n: No establece NODE_ENV=test y causa timeout
+# Test especÌfico
+docker exec back npm test -- __tests__/endpoints/auth.test.js
 
-# Docker
-npm run start            # Iniciar servicios
-npm run stop             # Detener servicios
-npm run logs:backend     # Ver logs
+# Con watch mode
+docker exec back npm test -- --watch
 
-# Base de Datos
-./sql/tests/run-all-tests.sh                                # Tests SQL
-docker exec -it postgres_db psql -U admin -d postgres       # Consola SQL
+# L NO USAR: docker exec back npx jest ...
+# RazÛn: No establece NODE_ENV=test correctamente
+```
+
+### Tests SQL
+
+```bash
+# Suite completa de base de datos
+./sql/tests/run-all-tests.sh                                # 5/5 tests 
+
+# Resultado esperado:  Tests pasados: 5/5
+```
+
+### Docker
+
+```bash
+# Iniciar servicios
+npm run start            # docker compose up -d
+
+# Detener servicios
+npm run stop             # docker compose down
+
+# Reiniciar
+npm run restart
+
+# Ver logs
+docker logs -f back
+docker logs -f postgres_db
+docker logs -f n8n-main
+
+# Estado de contenedores
+docker ps | grep -E "(back|postgres|n8n)"
+```
+
+### Base de Datos
+
+```bash
+# Consola PostgreSQL
+docker exec postgres_db psql -U admin -d postgres
+
+# Ver tablas
+docker exec postgres_db psql -U admin -d postgres -c "\dt"
+
+# Ver polÌticas RLS de una tabla
+docker exec postgres_db psql -U admin -d postgres -c "\d clientes"
+
+# Ejecutar query
+docker exec postgres_db psql -U admin -d postgres -c "SELECT * FROM organizaciones LIMIT 5;"
 ```
 
 ---
 
-## üß™ Suite de Tests Backend
+## <◊ Arquitectura del Sistema
 
-**Estado Actual**: **257/257 pasando (100%)** ‚úÖ
+### MÛdulos Backend
 
-### Fase 1: Integraci√≥n BD (64 tests) ‚úÖ
+| MÛdulo | Routes | Controller | Model | Schemas | Total LoC | PatrÛn RLS |
+|--------|--------|------------|-------|---------|-----------|------------|
+| **Auth** | 42 | 230 | 1,072* | 355 | 1,699 | RLSHelper |
+| **Usuarios** | 73 | 144 | 1,072* | 162 | 1,451 | RLSHelper |
+| **Organizaciones** | 107 | 261 | 718 | 291 | 1,377 | RLSHelper |
+| **Profesionales** | 101 | 168 | 489 | 310 | 1,068 | RLS Directo |
+| **Servicios** | 123 | 199 | 574 | 204 | 1,100 | RLS Directo |
+| **Clientes** | 91 | 158 | 525 | 305 | 1,079 | RLS Directo |
+| **Horarios** | 92 | 148 | 754 | 168 | 1,162 | RLS Directo |
+| **Citas** | 213 | 529 | 1,916  | 450 | 3,108 | RLS Directo |
+| **Bloqueos** | 16 | 74 | 366 | 190 | 646 | RLS Directo |
 
-- RLS Multi-Tenant (21) - Aislamiento de datos por organizaci√≥n
-- Auto-generaci√≥n (11) - C√≥digos √∫nicos de citas
-- Triggers (12) - Validaciones autom√°ticas
-- Modelos CRUD (20) - Operaciones b√°sicas de BD
+*Comparten `usuario.model.js`
+ Incluye: base, operacional, ai, recordatorios, helpers
 
-### Fase 2: Middleware (15 tests) ‚úÖ
+**Total**: ~12,690 lÌneas de cÛdigo backend
 
-- Auth JWT (6) - Autenticaci√≥n con tokens
-- Tenant Context (9) - Configuraci√≥n RLS multi-tenant
+**Patrones Implementados**:
+-  100% controllers usan `asyncHandler` (manejo autom·tico de errores)
+-  100% endpoints usan schemas Joi modulares
+-  100% responses usan `ResponseHelper` (formato consistente)
+-  MÛdulos de entidades usan RLS directo (m·s simple)
+-  MÛdulos con lÛgica compleja usan `RLSHelper` (Auth, Usuarios, Organizaciones)
 
-### Fase 3: Endpoints REST (178 tests) ‚úÖ
+### Middleware
 
-| Endpoint | Tests | Estado |
-|----------|-------|--------|
-| **Auth** | **19** | ‚úÖ **100%** |
-| **Usuarios** | **26** | ‚úÖ **100%** |
-| **Organizaciones** | **18** | ‚úÖ **100%** |
-| **Profesionales** | **21** | ‚úÖ **100%** |
-| **Servicios** | **27** | ‚úÖ **100%** |
-| **Citas** | **28** | ‚úÖ **100%** |
-| **Horarios** | **22** | ‚úÖ **100%** |
-| **Clientes** | **17** | ‚úÖ **100%** |
+| Middleware | LoC | FunciÛn |
+|------------|-----|---------|
+| `asyncHandler.js` | 96 | Manejo autom·tico de errores async |
+| `auth.js` | 352 | JWT authentication + refresh tokens |
+| `tenant.js` | 407 | ConfiguraciÛn RLS multi-tenant |
+| `rateLimiting.js` | 529 | Rate limiting por IP + endpoint |
+| `validation.js` | 393 | ValidaciÛn Joi con contexto de usuario |
+
+### Helpers/Utils
+
+| Helper | LoC | FunciÛn |
+|--------|-----|---------|
+| `helpers.js` | 520 | ResponseHelper, OrganizacionHelper |
+| `rlsHelper.js` | 151 | Contextos RLS reutilizables |
+| `passwordHelper.js` | 108 | Hash y validaciÛn de contraseÒas |
+| `horarioHelpers.js` | 266 | LÛgica de horarios y slots |
+| `logger.js` | 273 | Winston structured logging |
+
+### Base de Datos PostgreSQL
+
+**17 Tablas Principales**:
+```
+Core (3):           organizaciones, usuarios, planes_subscripcion
+Cat·logo (2):       plantillas_servicios, profesionales
+Negocio (4):        servicios, clientes, horarios_profesionales, horarios_disponibilidad
+Operaciones (3):    citas, bloqueos_horarios, servicios_profesionales
+Subscripciones (3): subscripciones, historial_subscripciones, metricas_uso_organizacion
+Sistema (2):        eventos_sistema, eventos_sistema_archivo
+```
+
+**Seguridad y Performance**:
+- **17 PolÌticas RLS** (multi-tenant + anti SQL-injection con REGEX `^[0-9]+$`)
+- **27 Triggers** (auto-generaciÛn de cÛdigos, capacidad, timestamps)
+- **40 Funciones PL/pgSQL** (validaciones, generaciÛn autom·tica)
+- **152 Õndices** (covering, GIN full-text, GIST temporal)
+
+**ENUMs de Dominio (7)**:
+```sql
+rol_usuario:         super_admin, propietario, administrador, usuario, solo_lectura
+estado_cita:         pendiente, confirmada, en_curso, completada, cancelada, no_asistio
+industria_tipo:      barberia, salon_belleza, estetica, spa, consultorio_medico, etc.
+tipo_profesional:    barbero, estilista, esteticista, masajista, doctor_general, etc.
+plan_type:           trial, basico, profesional, empresarial, personalizado
+estado_horario:      disponible, reservado, bloqueado
+estado_subscripcion: activa, cancelada, suspendida, expirada
+```
+
+### Sistema IA Conversacional
+
+**Arquitectura**:
+```
+WhatsApp (Usuario)
+    ì
+Evolution API
+    ì
+n8n Workflow (Claude/GPT)
+    ì
+Backend API (/api/v1/citas/automatica)
+    ì
+PostgreSQL (RLS multi-tenant)
+```
+
+**Endpoints IA** (sin auth - validaciÛn por organizacion_id):
+- `POST /api/v1/citas/automatica` - Crear cita vÌa WhatsApp
+- `GET /api/v1/citas/buscar-por-telefono` - Buscar citas de cliente
+- `PUT /api/v1/citas/automatica/:codigo` - Modificar cita
+- `DELETE /api/v1/citas/automatica/:codigo` - Cancelar cita
+
+**Servicios Docker**:
+- `n8n-main` (puerto 5678) - Interfaz web y workflows
+- `n8n-worker` - Procesamiento asÌncrono
+- `n8n-redis` - Queue de jobs
 
 ---
 
-## üõ°Ô∏è Reglas Cr√≠ticas de Desarrollo
+## = Seguridad Multi-Tenant
 
-### Orden de Middleware en Rutas (OBLIGATORIO)
+### Row Level Security (RLS)
+
+**PatrÛn Middleware** (OBLIGATORIO en todas las rutas protegidas):
 
 ```javascript
 router.post('/endpoint',
     auth.authenticateToken,      // 1. JWT
-    tenant.setTenantContext,     // 2. RLS ‚ö†Ô∏è CR√çTICO
+    tenant.setTenantContext,     // 2. RLS † CRÕTICO
     rateLimiting.apiRateLimit,   // 3. Rate limit
-    validation.validate(schema), // 4. Validaci√≥n
+    validation.validate(schema), // 4. ValidaciÛn
     Controller.metodo            // 5. Controller
 );
 ```
 
-### Arquitectura Multi-Tenant
+**ConfiguraciÛn RLS en Model**:
 
-1. **Controllers conf√≠an en RLS** - NO usar `WHERE organizacion_id` manual
-2. **Modelos configuran RLS** - Usar `set_config('app.current_tenant_id', ...)`
-3. **Backend NO env√≠a `codigo_cita`** - Auto-generado por trigger
+```javascript
+// PatrÛn 1: RLS Directo (mÛdulos de entidades)
+const db = await getDb();
+try {
+    await db.query('SELECT set_config($1, $2, false)',
+        ['app.current_tenant_id', organizacion_id.toString()]);
 
-### Patr√≥n organizacion_id (Header Enterprise + Validaci√≥n Condicional)
+    const query = `INSERT INTO profesionales (...) VALUES (...) RETURNING *`;
+    const result = await db.query(query, values);
+    return result.rows[0];
+} finally {
+    db.release();
+}
 
-**Migraci√≥n**: 2025-10-06 - Header `X-Organization-Id` como est√°ndar enterprise
+// PatrÛn 2: RLSHelper (mÛdulos con lÛgica compleja)
+const RLSHelper = require('../utils/rlsHelper');
+
+// Bypass RLS (solo super_admin)
+return await RLSHelper.withBypass(db, async (db) => {
+    return await db.query('SELECT * FROM usuarios');
+});
+
+// Contexto de login (sin tenant)
+return await RLSHelper.withRole(db, 'login_context', async (db) => {
+    return await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+});
+
+// Self-access (usuario accediendo sus propios datos)
+return await RLSHelper.withSelfAccess(db, userId, async (db) => {
+    return await db.query('UPDATE usuarios SET nombre = $1 WHERE id = $2', [nombre, userId]);
+});
+```
+
+**PolÌticas RLS Activas**:
+-  Anti SQL-injection (REGEX `^[0-9]+$` valida tenant_id)
+-  Aislamiento total de datos por organizaciÛn
+-  System bypass para super_admin
+-  Login context (sin tenant para autenticaciÛn)
+
+### RBAC (Control de Acceso por Roles)
+
+**Matriz de Permisos**:
+
+| Recurso | super_admin | propietario | administrador | usuario | solo_lectura |
+|---------|-------------|-------------|---------------|---------|--------------|
+| Organizaciones | READ/WRITE (todas) | READ/WRITE (su org) | READ (su org) | - | - |
+| Usuarios | ALL | CREATE/READ/UPDATE | READ | - | - |
+| Profesionales | ALL | ALL | CREATE/READ/UPDATE | READ | READ |
+| Servicios | ALL | ALL | CREATE/READ/UPDATE | READ | READ |
+| Clientes | ALL | ALL | ALL | ALL | READ |
+| Citas | ALL | ALL | ALL | ALL | READ |
+| Horarios | ALL | ALL | ALL | READ | READ |
+
+**Tests RBAC**: 33/33 pasando (100%)
+
+---
+
+## >Í Testing
+
+### Estado de Tests
+
+**Backend (Jest + Supertest)**: 464/464 tests pasando (100%)
+
+| Suite | Tests | DescripciÛn |
+|-------|-------|-------------|
+| **Endpoints** | 216 | Tests de API REST (auth, usuarios, org, prof, serv, citas, etc.) |
+| **Integration** | 64 | RLS, auto-generaciÛn, triggers, CRUD |
+| **Middleware** | 15 | Auth JWT, Tenant Context |
+| **RBAC** | 33 | Control de acceso granular |
+| **Business Logic** | 9 | MÈtricas organizaciones |
+| **Concurrency** | 7 | PrevenciÛn double-booking |
+| **E2E** | 120 | Flujos completos de negocio |
+
+**SQL (PostgreSQL)**: 5/5 tests pasando (100%)
+
+1.  ConfiguraciÛn inicial (setup, funciones, triggers)
+2.  Onboarding (crear org, usuarios, servicios)
+3.  Agendamiento (auto-generaciÛn de cÛdigos)
+4.  Seguridad RLS (anti SQL-injection)
+5.  Performance (<100ms queries)
+
+### Ejecutar Tests
+
+```bash
+# Backend completo (~53s)
+docker exec back npm test
+
+# Suite especÌfica
+docker exec back npm test -- __tests__/endpoints/auth.test.js
+
+# SQL completo (~3s)
+./sql/tests/run-all-tests.sh
+```
+
+### Helpers de Testing
+
+**Archivo**: `backend/app/__tests__/helpers/db-helper.js`
+
+```javascript
+const {
+    createTestOrganizacion,    // Crea org con RLS bypass
+    createTestUsuario,          // Genera token JWT autom·tico
+    createTestProfesional,
+    createTestServicio,         // Asocia con profesionales autom·ticamente
+    createTestCita,             // NO enviar codigo_cita (auto-generado)
+    cleanAllTables              // Limpia en orden correcto (evita FK violations)
+} = require('../helpers/db-helper');
+
+// Setup tÌpico
+beforeAll(async () => {
+    client = await global.testPool.connect();
+    await cleanAllTables(client);
+
+    testOrg = await createTestOrganizacion(client);
+    testUsuario = await createTestUsuario(client, testOrg.id, { rol: 'propietario' });
+    testProfesional = await createTestProfesional(client, testOrg.id);
+    testServicio = await createTestServicio(client, testOrg.id, {
+        nombre: 'Test',
+        precio: 100.00
+    }, [testProfesional.id]);
+});
+```
+
+---
+
+## =· Reglas CrÌticas de Desarrollo
+
+### 1. Arquitectura Multi-Tenant
+
+**Controllers confÌan en RLS** - NO usar `WHERE organizacion_id` manual:
+
+```javascript
+//  CORRECTO (RLS filtra autom·ticamente)
+const query = `SELECT * FROM profesionales WHERE activo = true`;
+
+// L INCORRECTO (redundante, RLS ya filtra)
+const query = `SELECT * FROM profesionales WHERE organizacion_id = $1 AND activo = true`;
+```
+
+**Backend NO envÌa `codigo_cita`** - Auto-generado por trigger:
+
+```javascript
+//  CORRECTO
+const cita = await CitaModel.crear({
+    cliente_id: 1,
+    profesional_id: 2,
+    servicio_id: 3,
+    fecha_cita: '2025-10-10',
+    // NO enviar codigo_cita
+});
+// cita.codigo_cita = "ORG001-20251010-001" (auto-generado)
+
+// L INCORRECTO
+const cita = await CitaModel.crear({
+    codigo_cita: 'manual',  // L Error: trigger sobreescribe
+    cliente_id: 1,
+    ...
+});
+```
+
+### 2. PatrÛn organizacion_id (Header Enterprise)
+
+**MigraciÛn**: 2025-10-06 - Header `X-Organization-Id` como est·ndar
 
 **SUPER_ADMIN** (Prioridad descendente):
-1. **Header X-Organization-Id** (‚úÖ RECOMENDADO - est√°ndar enterprise)
-2. Query param `organizacion_id` (‚ö†Ô∏è DEPRECATED - mantener por compatibilidad)
-3. Body `organizacion_id` (‚ö†Ô∏è DEPRECATED - solo POST/PUT)
+1. **Header X-Organization-Id** ( RECOMENDADO)
+2. Query param `organizacion_id` († DEPRECATED)
+3. Body `organizacion_id` († DEPRECATED)
 
 **USUARIOS REGULARES**:
 - Siempre usa `req.tenant.organizacionId` del JWT
-- Schemas **proh√≠ben** pasar `organizacion_id` (validaci√≥n condicional Joi)
+- Schemas **prohÌben** pasar `organizacion_id` (validaciÛn condicional)
 
-**Uso en Controllers**:
-```javascript
-// ‚úÖ Todos los roles (middleware configura autom√°ticamente)
-const organizacionId = req.tenant.organizacionId;
-```
-
-**Uso en Clientes API (Super_admin)**:
 ```bash
-# ‚úÖ RECOMENDADO - Header
+#  RECOMENDADO (super_admin)
 curl -H "Authorization: Bearer TOKEN" \
      -H "X-Organization-Id: 123" \
      GET /api/v1/citas
 
-# ‚ö†Ô∏è DEPRECATED - Query param
+# † DEPRECATED (mantener por compatibilidad)
 curl -H "Authorization: Bearer TOKEN" \
      GET /api/v1/citas?organizacion_id=123
 ```
 
-**Schemas Joi (Validaci√≥n Condicional)**:
-```javascript
-// organizacion_id con validaci√≥n por rol
-query: Joi.object({
-    organizacion_id: Joi.when('$userRole', {
-        is: 'super_admin',
-        then: commonSchemas.id.optional(),  // Super_admin puede pasarlo
-        otherwise: Joi.forbidden()           // Usuarios normales NO pueden
-    })
-})
-```
+### 3. Schemas de BD vs CÛdigo (Consistencia)
 
-**Middleware validation.js** pasa contexto autom√°tico:
-```javascript
-const context = {
-    userRole: req.user?.rol,
-    userId: req.user?.id,
-    organizacionId: req.user?.organizacion_id
-};
-```
-
-**Ventajas del Header**:
-- ‚úÖ Est√°ndar enterprise (AWS, Stripe, Twilio)
-- ‚úÖ URLs limpias ‚Üí mejor caching
-- ‚úÖ F√°cil filtrado en firewalls/proxies
-- ‚úÖ M√°s seguro (validaci√≥n condicional previene ataques)
-
-### Schemas de BD vs C√≥digo
-
-**CR√çTICO**: Mantener consistencia entre columnas de BD y queries:
-- Tabla `organizaciones`: usar `nombre_comercial` (NO `nombre`)
-- Tabla `profesionales`: usar `nombre_completo` (NO `nombre`) y `especialidades` (NO `especialidad`)
-- Tabla `horarios_disponibilidad`: usar `estado` ENUM (NO `disponible` boolean)
-- Estados de cita: `'en_curso'` (NO `'en_proceso'`)
-
-### Testing
-
-**Helpers**: `require('../helpers/db-helper')`
-
-Funciones principales:
-- `createTestOrganizacion(client, data)` - Crea org con RLS bypass
-- `createTestUsuario(client, orgId, data)` - Genera token JWT autom√°tico
-- `createTestProfesional(client, orgId, data)`
-- `createTestServicio(client, orgId, data, profesionales_ids)` - Asocia autom√°ticamente con profesionales
-- `createTestCita(client, orgId, data)` - NO enviar `codigo_cita` (auto-generado)
-- `cleanAllTables(client)` - Limpia en orden correcto (evita FK violations)
-
-**Setup b√°sico**:
-```javascript
-beforeAll(async () => {
-  client = await global.testPool.connect();
-  await cleanAllTables(client);
-
-  testOrg = await createTestOrganizacion(client);
-  testUsuario = await createTestUsuario(client, testOrg.id, { rol: 'propietario' });
-  testProfesional = await createTestProfesional(client, testOrg.id);
-
-  testServicio = await createTestServicio(client, testOrg.id, {
-    nombre: 'Test',
-    precio: 100.00
-  }, [testProfesional.id]);
-});
-```
-
----
-
-## üèóÔ∏è Patrones de Arquitectura
-
-### Helpers Reutilizables
-
-#### 1. AsyncHandler - Manejo Autom√°tico de Errores
-
-**Archivo**: `backend/app/middleware/asyncHandler.js`
-
-Elimina la necesidad de try/catch en cada controller:
+**CRÕTICO**: Nombres de columnas deben coincidir:
 
 ```javascript
-const { asyncHandler } = require('../middleware');
+//  CORRECTO (nombres exactos de BD)
+SELECT nombre_comercial FROM organizaciones;
+SELECT nombre_completo, especialidades FROM profesionales;
+UPDATE horarios_disponibilidad SET estado = 'disponible';
+UPDATE citas SET estado = 'en_curso';
 
-// ‚ùå ANTES (con try/catch manual)
-static async metodo(req, res) {
-    try {
-        const result = await Model.operacion(req.body);
-        return ResponseHelper.success(res, result);
-    } catch (error) {
-        logger.error('Error', { error: error.message });
-        return ResponseHelper.error(res, error.message, 500);
-    }
-}
-
-// ‚úÖ AHORA (con asyncHandler)
-static metodo = asyncHandler(async (req, res) => {
-    const result = await Model.operacion(req.body);
-    return ResponseHelper.success(res, result);
-});
+// L INCORRECTO
+SELECT nombre FROM organizaciones;              // L No existe
+SELECT nombre, especialidad FROM profesionales;  // L No existe
+UPDATE horarios SET disponible = true;          // L columna incorrecta
+UPDATE citas SET estado = 'en_proceso';         // L ENUM inv·lido
 ```
 
-**Caracter√≠sticas**:
-- Mapeo autom√°tico de errores a c√≥digos HTTP (401, 403, 404, 409, 423, 500)
-- Logging centralizado de errores
-- Detecta patrones en mensajes de error
+### 4. Validaciones con Joi Schemas
 
-#### 2. RLSHelper - Contexto Multi-Tenant Reutilizable
+**Schemas Modulares** (ubicaciÛn: `backend/app/schemas/`):
 
-**Archivo**: `backend/app/utils/rlsHelper.js`
-
-Centraliza la l√≥gica RLS multi-tenant:
-
-```javascript
-const RLSHelper = require('../utils/rlsHelper');
-
-// Configurar contexto RLS
-await RLSHelper.configurarContexto(db, userId, role, orgId);
-
-// Ejecutar con bypass (super_admin)
-await RLSHelper.withBypass(db, async (db) => {
-    return await db.query('SELECT * FROM usuarios');
-});
-
-// Ejecutar con rol espec√≠fico
-await RLSHelper.withRole(db, 'login_context', async (db) => {
-    return await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
-});
-
-// Registrar evento de auditor√≠a
-await RLSHelper.registrarEvento(db, {
-    organizacion_id: orgId,
-    evento_tipo: 'usuario_creado',
-    entidad_tipo: 'usuario',
-    entidad_id: userId,
-    descripcion: 'Usuario creado exitosamente',
-    metadatos: { email, rol },
-    usuario_id: adminId
-});
-```
-
-**Funciones disponibles**:
-- `configurarContexto(db, userId, role, orgId)` - Configurar contexto RLS
-- `withContext(db, context, callback)` - Ejecutar con contexto espec√≠fico
-- `withBypass(db, callback)` - Ejecutar con bypass RLS
-- `withRole(db, role, callback)` - Ejecutar con rol espec√≠fico
-- `withSelfAccess(db, userId, callback)` - Ejecutar con acceso propio
-- `registrarEvento(db, eventoData)` - Registrar evento de auditor√≠a
-
----
-
-## üéØ Patrones de Implementaci√≥n
-
-### Validaciones con Joi Schemas
-
-**Endpoints que usan schemas Joi modulares**:
-- ‚úÖ `auth` ‚Üí `schemas/auth.schemas.js`
-- ‚úÖ `usuarios` ‚Üí `schemas/usuario.schemas.js`
-- ‚úÖ `citas` ‚Üí `schemas/cita.schemas.js`
-- ‚úÖ `servicios` ‚Üí `schemas/servicio.schemas.js`
-- ‚úÖ `profesionales` ‚Üí `schemas/profesional.schemas.js`
-- ‚úÖ `organizaciones` ‚Üí `schemas/organizacion.schemas.js`
-- ‚úÖ `horarios` ‚Üí `schemas/horario.schemas.js`
-- ‚úÖ `clientes` ‚Üí `schemas/cliente.schemas.js`
-
-**Ejemplo de uso**:
 ```javascript
 // schemas/servicio.schemas.js
 const crear = {
     body: Joi.object({
         nombre: Joi.string().trim().min(1).max(100).required(),
-        precio: commonSchemas.price.required()
+        precio: commonSchemas.price.required(),
+        // organizacion_id con validaciÛn condicional
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
     })
 };
 
@@ -300,116 +459,48 @@ const crear = {
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
-    validation.validate(servicioSchemas.crear),
+    validation.validate(servicioSchemas.crear),  // ê Schema modular
     ServicioController.crear
 );
 ```
 
-### RLS: Cu√°ndo usar RLSHelper vs Directo
-
-**üîê RLSHelper (M√≥dulos con l√≥gica compleja)**
-
-Usar en m√≥dulos como **Auth/Usuarios** que requieren m√∫ltiples contextos:
-
+**Middleware pasa contexto autom·ticamente**:
 ```javascript
-const RLSHelper = require('../utils/rlsHelper');
-
-// Bypass para operaciones de sistema
-static async buscarPorEmail(email) {
-    const db = await getDb();
-    try {
-        return await RLSHelper.withRole(db, 'login_context', async (db) => {
-            const query = `SELECT * FROM usuarios WHERE email = $1`;
-            const result = await db.query(query, [email]);
-            return result.rows[0];
-        });
-    } finally {
-        db.release();
-    }
-}
-
-// Self-access para operaciones del propio usuario
-static async actualizarPerfil(userId, datos) {
-    const db = await getDb();
-    try {
-        return await RLSHelper.withSelfAccess(db, userId, async (db) => {
-            const query = `UPDATE usuarios SET nombre = $1 WHERE id = $2`;
-            const result = await db.query(query, [datos.nombre, userId]);
-            return result.rows[0];
-        });
-    } finally {
-        db.release();
-    }
-}
+// middleware/validation.js
+const context = {
+    userRole: req.user?.rol,
+    userId: req.user?.id,
+    organizacionId: req.user?.organizacion_id
+};
 ```
-
-**Cu√°ndo usar cada contexto de RLSHelper**:
-- `withBypass()` - Operaciones de sistema (refresh tokens, validaciones globales)
-- `withRole()` - Operaciones con rol espec√≠fico (login, registro)
-- `withSelfAccess()` - Usuario accediendo sus propios datos
-
-**‚ö° RLS Directo (M√≥dulos simple multi-tenant)**
-
-Usar en m√≥dulos como **Organizaciones/Profesionales/Servicios/Citas/Horarios/Clientes** que solo necesitan tenant context:
-
-```javascript
-// ‚úÖ PATR√ìN SIMPLE - RLS directo
-static async crear(data) {
-    const db = await getDb();
-    try {
-        await db.query('SELECT set_config($1, $2, false)',
-            ['app.current_tenant_id', data.organizacion_id.toString()]);
-
-        const query = `INSERT INTO profesionales (...) VALUES (...) RETURNING *`;
-        const result = await db.query(query, values);
-        return result.rows[0];
-    } finally {
-        db.release();
-    }
-}
-```
-
-**Ventajas RLS Directo**:
-- ‚úÖ M√°s simple y directo
-- ‚úÖ Menos dependencias
-- ‚úÖ Mejor para operaciones CRUD est√°ndar
-- ‚úÖ Mismo nivel de seguridad
-
-**Regla general**:
-- üìã **RLS Directo**: M√≥dulos de entidades (Profesionales, Servicios, Citas, Horarios, Clientes, Organizaciones)
-- üîê **RLSHelper**: M√≥dulos con l√≥gica de autenticaci√≥n/autorizaci√≥n compleja (Auth, Usuarios)
 
 ---
 
-## üöÄ Checklist para Nuevos M√≥dulos
+## =Ä Checklist para Nuevos MÛdulos
 
-Al crear/refactorizar un m√≥dulo, verificar:
+Al crear/refactorizar un mÛdulo:
 
 **Routes** (`routes/api/v1/[modulo].js`):
-- [ ] 1 l√≠nea por endpoint
-- [ ] Middleware en orden correcto: auth ‚Üí tenant ‚Üí rateLimit ‚Üí validation ‚Üí controller
-- [ ] Agrupaci√≥n l√≥gica (p√∫blicas vs privadas)
-- [ ] Sin comentarios JSDoc redundantes
+- [ ] 1 lÌnea por endpoint (sin comentarios JSDoc redundantes)
+- [ ] Middleware en orden: auth í tenant í rateLimit í validation í controller
+- [ ] AgrupaciÛn lÛgica (p˙blicas vs privadas)
 
 **Controller** (`controllers/[modulo].controller.js`):
-- [ ] Todos los m√©todos usan `asyncHandler`
-- [ ] Sin try/catch manual
-- [ ] Sin logs de √©xito (solo errores cr√≠ticos)
+- [ ] Todos los mÈtodos usan `asyncHandler`
+- [ ] Sin try/catch manual (asyncHandler lo maneja)
 - [ ] Usa `ResponseHelper` para respuestas
+- [ ] Sin logs de Èxito (solo errores crÌticos)
 
 **Model** (`database/[modulo].model.js`):
-- [ ] Usa RLS apropiado seg√∫n complejidad:
-  - **RLS directo** para m√≥dulos de entidades (Profesionales, Servicios)
-  - **RLSHelper** para m√≥dulos con l√≥gica compleja (Auth)
-- [ ] Contexto apropiado seg√∫n operaci√≥n
+- [ ] Usa RLS apropiado seg˙n complejidad:
+  - RLS directo para entidades (Profesionales, Servicios, Citas)
+  - RLSHelper para lÛgica compleja (Auth, Usuarios)
 - [ ] `db.release()` en bloque finally
-- [ ] Comentarios solo en l√≥gica compleja
 
 **Schemas** (`schemas/[modulo].schemas.js`):
-- [ ] Constantes de validaci√≥n centralizadas
-- [ ] Schemas reutilizables (composici√≥n)
-- [ ] Usa `commonSchemas` cuando sea posible
-- [ ] Sin comentarios JSDoc por schema
+- [ ] Constantes de validaciÛn centralizadas
+- [ ] Reutiliza `commonSchemas` cuando sea posible
+- [ ] ValidaciÛn condicional para `organizacion_id`
 
 **Tests** (`__tests__/endpoints/[modulo].test.js`):
 - [ ] Usa helpers de `db-helper`
@@ -419,167 +510,97 @@ Al crear/refactorizar un m√≥dulo, verificar:
 
 ---
 
-## üìö Archivos Clave
-
-- `sql/README.md` - Documentaci√≥n de BD
-- `sql/schema/*.sql` - 26 pol√≠ticas RLS, 26 triggers, 34 funciones
-- `backend/TESTING_PLAN.md` - Plan de testing completo
-- `backend/app/schemas/*.schemas.js` - Validaciones Joi reutilizables
-- `backend/app/middleware/asyncHandler.js` - Manejo autom√°tico de errores
-- `backend/app/utils/rlsHelper.js` - Helper RLS reutilizable
-- `backend/app/utils/passwordHelper.js` - Helper de contrase√±as (hash, validaci√≥n)
-- `backend/app/__tests__/helpers/db-helper.js` - Helpers de testing
-- `PROMPT_AGENTE_N8N.md` - Workflows IA
-
----
-
-## üîß Problemas Comunes Resueltos
-
-### Error: "column does not exist"
-```javascript
-// ‚ùå INCORRECTO
-SELECT nombre FROM organizaciones
-SELECT p.nombre, p.especialidad FROM profesionales
-UPDATE horarios SET disponible = true
-
-// ‚úÖ CORRECTO
-SELECT nombre_comercial FROM organizaciones
-SELECT p.nombre_completo, p.especialidades FROM profesionales
-UPDATE horarios SET estado = 'disponible'
-```
-
-### Error: "El profesional no est√° autorizado para realizar este servicio"
-**Causa**: Falta asociaci√≥n en `servicios_profesionales`
-**Soluci√≥n**: Usar `createTestServicio(client, orgId, data, [profesionalId])`
-
-### Error: "column reference 'activo' is ambiguous"
-**Causa**: Query de estad√≠sticas tiene JOIN con columnas duplicadas
-**Soluci√≥n**: Usar alias de tabla expl√≠citos `s.activo` en lugar de `activo`
-```sql
--- ‚úÖ CORRECTO
-SELECT COUNT(*) FILTER (WHERE s.activo = true) as servicios_activos
-FROM servicios s
-LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id
-```
+## =' Troubleshooting
 
 ### Error: Tests con timeout o "NODE_ENV debe ser test"
-**S√≠ntomas**:
+
+**SÌntomas**:
 ```
 Error: Command timed out after 1m 0s
-‚ùå NODE_ENV debe ser "test" para ejecutar tests
-TypeError: Cannot read properties of undefined (reading 'connect')
+L NODE_ENV debe ser "test" para ejecutar tests
 ```
 
-**‚ùå NO USAR**:
+** SOLUCI”N - Usar SIEMPRE `npm test`**:
 ```bash
-docker exec back npx jest __tests__/endpoints/auth.test.js
+docker exec back npm test                                    # 
+docker exec back npm test -- __tests__/endpoints/auth.test.js  # 
+
+# L NO USAR: docker exec back npx jest ...
 ```
 
-**‚úÖ SOLUCI√ìN - Usar SIEMPRE `npm test`**:
-```bash
-# Suite completa
-docker exec back npm test
+**Por quÈ**: El script `npm test` establece `NODE_ENV=test` y configura el pool correctamente.
 
-# Test espec√≠fico
-docker exec back npm test -- __tests__/endpoints/auth.test.js
+### Error: "column does not exist"
 
-# Con watch mode (desarrollo)
-docker exec back npm test -- --watch __tests__/endpoints/auth.test.js
+```javascript
+// L INCORRECTO
+SELECT nombre FROM organizaciones               // Error: column "nombre" does not exist
+SELECT p.nombre, p.especialidad FROM profesionales  // Error: column "especialidad" does not exist
+
+//  CORRECTO
+SELECT nombre_comercial FROM organizaciones
+SELECT p.nombre_completo, p.especialidades FROM profesionales
 ```
 
-**Por qu√© funciona**:
-- El script `npm test` en `package.json` establece `NODE_ENV=test`
-- Incluye `--forceExit` para evitar que Jest se quede colgado
-- Configura correctamente el pool de conexiones de prueba
+### Error: "El profesional no est· autorizado para realizar este servicio"
+
+**Causa**: Falta asociaciÛn en `servicios_profesionales`
+
+**SoluciÛn**: Usar helper que asocia autom·ticamente
+```javascript
+testServicio = await createTestServicio(client, testOrg.id, {
+    nombre: 'Test',
+    precio: 100.00
+}, [profesionalId]);  // ê Array de profesionales autorizados
+```
 
 ---
 
-## üìä Estado del Proyecto
+## =⁄ Archivos Clave
 
-**Actualizado**: 08 Octubre 2025
+| Archivo | DescripciÛn |
+|---------|-------------|
+| `/CLAUDE.md` | Esta guÌa del proyecto |
+| `/sql/README.md` | DocumentaciÛn de base de datos (RLS, triggers, funciones) |
+| `/backend/app/__tests__/README.md` | Plan de testing completo |
+| `/backend/TESTING_PLAN.md` | Estrategia de testing detallada |
+| `/PROMPT_AGENTE_N8N.md` | ConfiguraciÛn de agente IA para n8n |
+| `/sql/schema/*.sql` | Schema de BD (17 polÌticas RLS, 27 triggers, 40 funciones) |
+| `/backend/app/schemas/*.schemas.js` | Validaciones Joi reutilizables |
+| `/backend/app/middleware/asyncHandler.js` | Manejo autom·tico de errores |
+| `/backend/app/utils/rlsHelper.js` | Helper RLS multi-tenant |
+| `/backend/app/__tests__/helpers/db-helper.js` | Helpers de testing |
 
-| Componente | Estado | M√©tricas |
-|------------|--------|----------|
-| Base de Datos PostgreSQL | ‚úÖ Production Ready | 26 RLS policies, 34 funciones |
-| Backend API (REST + RLS) | ‚úÖ Operativo | Multi-tenant activo |
-| **Suite de Tests (Base)** | ‚úÖ **257/257 (100%)** | Funcionalidad core completa |
-| **Suite de Tests (Total)** | ‚úÖ **438/464 (94.4%)** | +207 tests Sprint 1 |
-| **M√≥dulo Auth** | ‚úÖ **100%** | 19 tests, arquitectura RESTful |
-| **M√≥dulo Usuarios** | ‚úÖ **100%** | 26 tests, endpoints RESTful |
-| **M√≥dulo Organizaciones** | ‚úÖ **100%** | 18 tests CRUD + 4 m√©tricas |
-| **M√≥dulo Profesionales** | ‚úÖ **100%** | 21 tests |
-| **M√≥dulo Servicios** | ‚úÖ **100%** | 27 tests |
-| **M√≥dulo Citas** | ‚úÖ **100%** | 28 tests |
-| **M√≥dulo Horarios** | ‚úÖ **100%** | 22 tests |
-| **M√≥dulo Clientes** | ‚úÖ **100%** | 17 tests |
-| **Tests RBAC** | ‚úÖ **100%** | 33/33 tests, sistema granular |
-| **Tests M√©tricas** | ‚úÖ **100%** | 4/4 tests, dashboard completo |
-| **Tests Concurrencia** | ‚úÖ **78%** | 7/9 tests, doble booking fix |
-| Canal IA WhatsApp | ‚úÖ Operativo | n8n + Evolution API |
+---
 
-### Arquitectura de M√≥dulos
-
-**Separaci√≥n de Concerns (RESTful)**:
-- `/auth` - Manejo de sesiones (login, logout, refresh, cambio contrase√±a)
-- `/usuarios` - CRUD de usuarios (crear, listar, actualizar, desbloquear, cambiar rol)
-
-**Patr√≥n Establecido**:
-- **M√≥dulos de entidades** ‚Üí RLS directo (Organizaciones, Profesionales, Servicios, Citas, Horarios, Clientes)
-- **M√≥dulos con l√≥gica compleja** ‚Üí RLSHelper (Auth, Usuarios)
+## =» Roadmap y Mejoras Recientes
 
 ### Optimizaciones Completadas (Oct 2025)
 
-**M√≥dulos Optimizados**:
-- ‚úÖ Auth: Migraci√≥n a asyncHandler, RLSHelper, schemas Joi (-187 l√≠neas totales)
-- ‚úÖ Usuarios: Eliminaci√≥n de logs redundantes, simplificaci√≥n JSDoc (-38 l√≠neas)
-- ‚úÖ Organizaciones: Validaci√≥n de consistencia con BD, simplificaci√≥n JSDoc (-14 l√≠neas)
-- ‚úÖ Profesionales: Migraci√≥n a asyncHandler, RLS directo (-387 l√≠neas, -26.9%)
-- ‚úÖ Servicios: Migraci√≥n a schemas Joi (-370 l√≠neas)
-- ‚úÖ Separaci√≥n Auth/Usuarios: Arquitectura RESTful (-124 l√≠neas en Auth)
-- ‚úÖ **Citas (Completo)**: Optimizaci√≥n integral (-465 l√≠neas, -14.6%)
+**MÛdulos Optimizados**:
+-  Auth: MigraciÛn a asyncHandler, RLSHelper, schemas Joi (-187 LoC)
+-  Usuarios: SeparaciÛn arquitectÛnica de Auth (-124 LoC)
+-  Organizaciones: ValidaciÛn de consistencia con BD (-14 LoC)
+-  Profesionales: MigraciÛn a asyncHandler, RLS directo (-387 LoC, -26.9%)
+-  Servicios: MigraciÛn a schemas Joi (-370 LoC)
+-  Citas: OptimizaciÛn integral (-465 LoC, -14.6%)
 
-**M√©tricas Actuales por M√≥dulo** (l√≠neas de c√≥digo):
+**Mejoras de Base de Datos** (Oct 2025):
+-  Auto-generaciÛn de `codigo_cita` con trigger (formato: `ORG001-20251008-001`)
+-  Seguridad RLS anti SQL-injection (REGEX `^[0-9]+$`)
+-  152 Ìndices optimizados (covering, GIN, GIST)
+-  5/5 tests SQL pasando
 
-| M√≥dulo | Routes | Controller | Model | Schemas | Total |
-|--------|--------|------------|-------|---------|-------|
-| Auth | 42 | 223 | 961* | 356 | 1,582 |
-| Usuarios | 72 | 143 | 961* | 162 | 1,338 |
-| Organizaciones | 103 | 120 | 683 | 262 | 1,168 |
-| Profesionales | 98 | 168 | 477 | 310 | 1,053 |
-| Servicios | 119 | 199 | 574 | 204 | 1,096 |
-| Clientes | 91 | 158 | 652 | 305 | 1,206 |
-| Horarios | 152 | 283 | 866 | 211 | 1,512 |
-| **Citas** | **232** | **529** | **1,895** | **463** | **3,119** |
+### PrÛximos Pasos
 
-*Comparten `usuario.model.js`
+1. **MÛdulo Clientes**: Aplicar patrÛn asyncHandler + RLS directo
+2. **MÛdulo Horarios**: Optimizar controller (148 LoC actualmente)
+3. **Consolidar helpers**: Unificar helpers comunes entre mÛdulos
+4. **DocumentaciÛn API**: Generar OpenAPI/Swagger autom·tico
 
-**Desglose M√≥dulo Citas** (optimizado):
-- Controllers: 529 l√≠neas (base: 111, operacional: 193, ai: 175, recordatorios: 50)
-- Models: 1,895 l√≠neas (base: 479, operacional: 562, ai: 421, recordatorios: 112, helpers: 321)
-- Reducci√≥n total: -465 l√≠neas (-14.6%)
+---
 
-### Detalles de Optimizaci√≥n M√≥dulo Citas
-
-**Patr√≥n aplicado**: Eliminaci√≥n de comentarios JSDoc redundantes, logs informativos, comentarios obvios
-
-**Controllers optimizados** (-148 l√≠neas):
-- `cita.base.controller.js`: CRUD est√°ndar (111 l√≠neas)
-- `cita.operacional.controller.js`: Check-in, workflow (193 l√≠neas)
-- `cita.ai.controller.js`: Webhooks IA/n8n (175 l√≠neas)
-- `cita.recordatorios.controller.js`: Notificaciones (50 l√≠neas)
-
-**Models optimizados** (-317 l√≠neas):
-- `cita.base.model.js`: -31 l√≠neas (-6.1%)
-- `cita.operacional.model.js`: -70 l√≠neas (-11.1%)
-- `cita.ai.model.js`: -85 l√≠neas (-16.8%)
-- `cita.recordatorios.model.js`: -24 l√≠neas (-17.6%)
-- `cita.helpers.model.js`: -107 l√≠neas (-25.0%)
-
-**Tests**: 28/28 pasando (100%)
-
-### Pr√≥ximos Pasos
-
-**Candidatos para Mejora**:
-1. M√≥dulo Clientes - Aplicar patr√≥n asyncHandler + RLS directo
-2. M√≥dulo Horarios - Optimizar controller (283 l√≠neas)
-3. Consolidar helpers comunes entre m√≥dulos
+**VersiÛn**: 1.0
+**⁄ltima actualizaciÛn**: 08 Octubre 2025
+**Estado**:  Production Ready | 464/464 tests pasando
+**Mantenido por**: Equipo de Desarrollo
