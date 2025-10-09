@@ -1,0 +1,92 @@
+meta {
+  name: Cancelar Cita WhatsApp
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{baseUrl}}/api/{{apiVersion}}/citas/automatica/{{codigoCita}}?organizacion_id={{organizacionId}}&motivo=Cliente canceló vía WhatsApp
+  body: none
+  auth: none
+}
+
+tests {
+  test("Status 200 - Cita cancelada exitosamente", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Respuesta confirma cancelación", function() {
+    expect(res.body).to.have.property('success');
+    expect(res.body.success).to.equal(true);
+    expect(res.body.message).to.include('cancelada');
+  });
+
+  test("Incluye código de cita cancelada", function() {
+    expect(res.body.data).to.have.property('codigo_cita');
+    expect(res.body.data).to.have.property('estado');
+    expect(res.body.data.estado).to.equal('cancelada');
+  });
+}
+
+docs {
+  # Cancelar Cita vía WhatsApp
+
+  Permite que el cliente cancele una cita existente a través de conversación de WhatsApp.
+
+  ## Path Parameters:
+  - `codigoCita` (string, required) - Código único de la cita
+
+  ## Query Parameters:
+  - `organizacion_id` (integer, required) - ID de la organización
+  - `motivo` (string, optional) - Motivo de la cancelación
+
+  ## IMPORTANTE:
+  - **SIN AUTENTICACIÓN JWT** - Este endpoint NO requiere token
+  - Validación por `organizacion_id` en query params
+  - Endpoint diferente al manual: `/api/v1/citas/automatica/:codigo`
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "message": "Cita ORG001-20251015-001 cancelada exitosamente",
+    "data": {
+      "codigo_cita": "ORG001-20251015-001",
+      "estado": "cancelada",
+      "motivo_cancelacion": "Cliente canceló vía WhatsApp",
+      "cancelada_en": "2025-10-08T16:30:00Z",
+      "cliente": {
+        "nombre": "María González",
+        "telefono": "+5491198765432"
+      },
+      "fecha_original": "2025-10-15T10:00:00-03:00"
+    }
+  }
+  ```
+
+  ## Flujo en n8n:
+  1. Cliente: "Necesito cancelar mi turno"
+  2. IA busca citas activas del cliente
+  3. IA: "Tienes estos turnos: 1) 15/10 a las 10:00 (ORG001-20251015-001). ¿Cuál quieres cancelar?"
+  4. Cliente: "El del 15 de octubre"
+  5. n8n identifica el código de cita
+  6. Llama a este endpoint
+  7. IA responde: "Tu turno del 15/10 a las 10:00 ha sido cancelado. Si necesitas agendar nuevamente, avísame."
+
+  ## Comportamiento:
+  - Cambia el estado a `cancelada`
+  - Libera el slot de tiempo
+  - Registra motivo de cancelación
+  - NO elimina el registro (mantiene historial)
+
+  ## Validaciones:
+  - La cita debe existir
+  - Debe pertenecer a la organización especificada
+  - Solo se pueden cancelar citas en estado `pendiente`, `confirmada` o `en_curso`
+  - No se pueden cancelar citas ya `completadas` o ya `canceladas`
+
+  ## Casos de Uso:
+  - Cliente no puede asistir
+  - Cliente quiere reagendar (cancelar + crear nueva)
+  - Cambio de planes del cliente
+}

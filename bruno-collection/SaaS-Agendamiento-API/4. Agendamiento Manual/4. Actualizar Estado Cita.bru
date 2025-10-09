@@ -1,0 +1,92 @@
+meta {
+  name: Actualizar Estado Cita
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/api/{{apiVersion}}/citas/{{citaId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "estado": "confirmada"
+  }
+}
+
+tests {
+  test("Status 200 - Estado actualizado exitosamente", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Estado actualizado correctamente", function() {
+    expect(res.body.data).to.have.property('estado');
+    expect(res.body.data.estado).to.equal('confirmada');
+  });
+
+  test("Respuesta contiene datos completos de la cita", function() {
+    expect(res.body.data).to.have.property('codigo_cita');
+    expect(res.body.data).to.have.property('cliente');
+    expect(res.body.data).to.have.property('profesional');
+  });
+}
+
+docs {
+  # Actualizar Estado de Cita
+
+  Cambia el estado de una cita existente según el flujo del servicio.
+
+  ## Path Parameters:
+  - `citaId` (integer, required) - ID numérico de la cita
+
+  ## Body Parameters:
+  - `estado` (string, required) - Nuevo estado de la cita
+
+  ## Estados Válidos:
+  - `pendiente` - Cita creada, pendiente de confirmación
+  - `confirmada` - Cliente confirmó asistencia
+  - `en_curso` - Servicio en progreso
+  - `completada` - Servicio finalizado exitosamente
+  - `cancelada` - Cita cancelada
+  - `no_asistio` - Cliente no se presentó
+
+  ## Flujo Típico:
+  1. `pendiente` → `confirmada` (cliente confirma)
+  2. `confirmada` → `en_curso` (profesional inicia servicio)
+  3. `en_curso` → `completada` (servicio finalizado)
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "codigo_cita": "ORG001-20251015-001",
+      "cliente": {
+        "nombre": "Juan Pérez",
+        "telefono": "+5491112345678"
+      },
+      "profesional": {
+        "nombre_completo": "Carlos Martínez"
+      },
+      "servicio": {
+        "nombre": "Corte de Cabello Premium"
+      },
+      "fecha_cita": "2025-10-15T10:00:00-03:00",
+      "estado": "confirmada",
+      "updated_at": "2025-10-08T14:30:00Z"
+    }
+  }
+  ```
+
+  ## Validaciones:
+  - La cita debe existir y pertenecer a la organización
+  - El estado debe ser un valor válido del ENUM
+  - No se puede cambiar el estado de una cita completada o cancelada (business rule)
+}

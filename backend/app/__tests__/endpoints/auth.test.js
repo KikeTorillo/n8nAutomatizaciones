@@ -133,11 +133,11 @@ describe('Endpoints de Autenticación', () => {
   });
 
   // ============================================================================
-  // Tests de Register
+  // 👤 Tests de REGISTRO de Usuarios en Organizaciones Existentes
   // ============================================================================
 
-  describe('POST /api/v1/auth/register', () => {
-    test('Registro exitoso de nuevo usuario', async () => {
+  describe('POST /api/v1/auth/register - 👤 REGISTRO de Usuarios', () => {
+    test('✅ Registro de usuario en organización existente', async () => {
       const uniqueId = getUniqueTestId();
       const newUserData = {
         email: `newuser-${uniqueId}@test.com`,
@@ -167,7 +167,7 @@ describe('Endpoints de Autenticación', () => {
       expect(response.body.data.usuario).not.toHaveProperty('password_hash');
     });
 
-    test('Registro falla con email duplicado', async () => {
+    test('❌ Registro de usuario falla con email duplicado', async () => {
       const response = await request(app)
         .post('/api/v1/auth/register')
         .send({
@@ -184,7 +184,7 @@ describe('Endpoints de Autenticación', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    test('Registro falla sin organizacion_id para roles no super_admin', async () => {
+    test('❌ Registro de usuario falla sin organizacion_id', async () => {
       const uniqueId = getUniqueTestId();
 
       const response = await request(app)
@@ -202,7 +202,7 @@ describe('Endpoints de Autenticación', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    test('Registro falla con contraseña débil', async () => {
+    test('❌ Registro de usuario falla con contraseña débil', async () => {
       const uniqueId = getUniqueTestId();
 
       const response = await request(app)

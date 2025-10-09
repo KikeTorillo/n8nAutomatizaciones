@@ -1,0 +1,87 @@
+meta {
+  name: Crear Servicio
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Corte de Cabello Premium",
+    "descripcion": "Corte de cabello con lavado y secado incluido",
+    "precio": 2500.00,
+    "duracion_minutos": 45,
+    "activo": true,
+    "profesionales_ids": [{{profesionalId}}]
+  }
+}
+
+tests {
+  test("Status 201 - Servicio creado exitosamente", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Respuesta contiene ID del servicio", function() {
+    expect(res.body.data).to.have.property('id');
+    expect(res.body.data).to.have.property('nombre');
+    expect(res.body.data).to.have.property('precio');
+  });
+
+  test("Servicio asociado a profesionales", function() {
+    expect(res.body.data).to.have.property('profesionales');
+    expect(res.body.data.profesionales).to.be.an('array');
+  });
+
+  // Guardar servicioId en variable de entorno
+  if (res.status === 201) {
+    bru.setEnvVar("servicioId", res.body.data.id);
+  }
+}
+
+docs {
+  # Crear Servicio
+
+  Crea un nuevo servicio y lo asocia automáticamente a uno o más profesionales.
+
+  ## Body Parameters:
+  - `nombre` (string, required) - Nombre del servicio
+  - `descripcion` (string, optional) - Descripción detallada
+  - `precio` (decimal, required) - Precio del servicio (ej: 2500.00)
+  - `duracion_minutos` (integer, required) - Duración en minutos
+  - `activo` (boolean, optional) - Estado del servicio (default: true)
+  - `profesionales_ids` (array, required) - IDs de profesionales autorizados
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "nombre": "Corte de Cabello Premium",
+      "descripcion": "Corte de cabello con lavado y secado incluido",
+      "precio": 2500.00,
+      "duracion_minutos": 45,
+      "activo": true,
+      "organizacion_id": 1,
+      "profesionales": [
+        {
+          "id": 1,
+          "nombre_completo": "Carlos Martínez"
+        }
+      ]
+    }
+  }
+  ```
+
+  ## Nota:
+  La asociación con profesionales se crea automáticamente en la tabla `servicios_profesionales`.
+}

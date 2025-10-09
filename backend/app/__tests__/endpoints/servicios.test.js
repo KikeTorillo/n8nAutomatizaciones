@@ -171,6 +171,110 @@ describe('Endpoints de Servicios', () => {
 
       expect(response.body).toHaveProperty('success', false);
     });
+
+    test('✅ Crear servicio con profesionales_ids en el body', async () => {
+      const uniqueId = getUniqueTestId();
+      const servicioData = {
+        nombre: `Servicio con Profesionales ${uniqueId}`,
+        descripcion: 'Servicio con asignación automática de profesionales',
+        duracion_minutos: 45,
+        precio: 250.00,
+        profesionales_ids: [testProfesional.id]
+      };
+
+      const response = await request(app)
+        .post('/api/v1/servicios')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send(servicioData)
+        .expect(201);
+
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toBeDefined();
+      expect(response.body.data.nombre).toBe(servicioData.nombre);
+
+      // Validar que los profesionales fueron asociados
+      expect(response.body.data).toHaveProperty('profesionales');
+      expect(response.body.data.profesionales).toBeInstanceOf(Array);
+      expect(response.body.data.profesionales.length).toBe(1);
+      expect(response.body.data.profesionales[0].id).toBe(testProfesional.id);
+    });
+
+    test('❌ Falla al crear servicio con profesional_id inexistente', async () => {
+      const uniqueId = getUniqueTestId();
+
+      const response = await request(app)
+        .post('/api/v1/servicios')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre: `Servicio Test ${uniqueId}`,
+          precio: 100.00,
+          duracion_minutos: 30,
+          profesionales_ids: [99999] // ID inexistente
+        });
+
+      // Puede ser 400 (validación) o 404 (profesional no encontrado)
+      expect([400, 404, 500]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('✅ Crear servicio con múltiples profesionales', async () => {
+      const uniqueId = getUniqueTestId();
+
+      // Crear segundo profesional para este test
+      const tempClient = await global.testPool.connect();
+      const profesional2 = await createTestProfesional(tempClient, testOrg.id, {
+        nombre_completo: `Profesional 2 ${uniqueId}`,
+        tipo_profesional: 'estilista'
+      });
+      tempClient.release();
+
+      const response = await request(app)
+        .post('/api/v1/servicios')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre: `Servicio Compartido ${uniqueId}`,
+          descripcion: 'Servicio ofrecido por múltiples profesionales',
+          precio: 300.00,
+          duracion_minutos: 60,
+          profesionales_ids: [testProfesional.id, profesional2.id]
+        })
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.profesionales).toBeDefined();
+      expect(response.body.data.profesionales.length).toBe(2);
+
+      // Verificar que ambos profesionales están en la respuesta
+      const profesionalesIds = response.body.data.profesionales.map(p => p.id);
+      expect(profesionalesIds).toContain(testProfesional.id);
+      expect(profesionalesIds).toContain(profesional2.id);
+    });
+
+    test('❌ Falla con profesionales_ids de otra organización', async () => {
+      const uniqueId = getUniqueTestId();
+
+      // Crear profesional en otra organización
+      const tempClient = await global.testPool.connect();
+      const otherOrgProfesional = await createTestProfesional(tempClient, otherOrg.id, {
+        nombre_completo: `Profesional Otra Org ${uniqueId}`,
+        tipo_profesional: 'barbero'
+      });
+      tempClient.release();
+
+      const response = await request(app)
+        .post('/api/v1/servicios')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre: `Servicio Test ${uniqueId}`,
+          precio: 150.00,
+          duracion_minutos: 30,
+          profesionales_ids: [otherOrgProfesional.id] // Profesional de otra org
+        });
+
+      // RLS debe bloquear la asignación
+      expect([400, 403, 404, 500]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+    });
   });
 
   // ============================================================================

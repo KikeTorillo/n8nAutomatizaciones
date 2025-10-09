@@ -8,8 +8,10 @@ class ServicioModel {
         const db = await getDb();
 
         try {
+            await db.query('BEGIN');
             await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', servicioData.organizacion_id.toString()]);
 
+            // 1. Crear el servicio
             const query = `
                 INSERT INTO servicios (
                     organizacion_id, plantilla_servicio_id, nombre, descripcion, categoria,
@@ -46,9 +48,54 @@ class ServicioModel {
             ];
 
             const result = await db.query(query, values);
-            return result.rows[0];
+            const servicio = result.rows[0];
+
+            // 2. Asociar profesionales si se proporcionan
+            if (servicioData.profesionales_ids && Array.isArray(servicioData.profesionales_ids) && servicioData.profesionales_ids.length > 0) {
+                // Validar que los profesionales existen y pertenecen a la organización
+                const validarProfesionalesQuery = `
+                    SELECT id FROM profesionales
+                    WHERE id = ANY($1::int[])
+                      AND organizacion_id = $2
+                      AND activo = true
+                `;
+                const profesionalesValidos = await db.query(validarProfesionalesQuery, [
+                    servicioData.profesionales_ids,
+                    servicioData.organizacion_id
+                ]);
+
+                if (profesionalesValidos.rows.length !== servicioData.profesionales_ids.length) {
+                    throw new Error('Uno o más profesionales no existen o no pertenecen a esta organización');
+                }
+
+                // Asociar cada profesional al servicio
+                const asociarQuery = `
+                    INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
+                    VALUES ($1, $2, true)
+                `;
+
+                for (const profesionalId of servicioData.profesionales_ids) {
+                    await db.query(asociarQuery, [servicio.id, profesionalId]);
+                }
+
+                // Obtener profesionales asociados para la respuesta
+                const profesionalesQuery = `
+                    SELECT p.id, p.nombre_completo, p.email, p.tipo_profesional, p.especialidades
+                    FROM profesionales p
+                    JOIN servicios_profesionales sp ON p.id = sp.profesional_id
+                    WHERE sp.servicio_id = $1 AND sp.activo = true
+                    ORDER BY p.nombre_completo
+                `;
+                const profesionalesResult = await db.query(profesionalesQuery, [servicio.id]);
+                servicio.profesionales = profesionalesResult.rows;
+            }
+
+            await db.query('COMMIT');
+            return servicio;
 
         } catch (error) {
+            await db.query('ROLLBACK');
+
             if (error.code === '23505') {
                 throw new Error('Ya existe un servicio con ese nombre en la organización');
             }

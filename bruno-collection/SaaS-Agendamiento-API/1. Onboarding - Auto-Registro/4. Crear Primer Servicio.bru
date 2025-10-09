@@ -1,0 +1,57 @@
+meta {
+  name: 4. Crear Primer Servicio
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Corte de Cabello",
+    "descripcion": "Corte clásico de cabello con máquina y tijera",
+    "precio": 500.00,
+    "duracion_minutos": 30,
+    "activo": true,
+    "profesionales_ids": ["{{profesionalId}}"]
+  }
+}
+
+tests {
+  test("Status 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Response contiene servicio", function() {
+    expect(res.body.data).to.have.property("id");
+    expect(res.body.data).to.have.property("nombre");
+  });
+
+  if (res.status === 201) {
+    bru.setEnvVar("servicioId", res.body.data.id);
+  }
+}
+
+docs {
+  # Paso 4: Crear Primer Servicio
+
+  Define el primer servicio que se ofrecerá (corte, barba, etc.).
+
+  ## Array profesionales_ids:
+  Asocia automáticamente el servicio con los profesionales especificados.
+  Esto crea registros en la tabla `servicios_profesionales`.
+
+  ## Precio:
+  Decimal con 2 decimales (500.00 = $500 pesos)
+
+  ## Duración:
+  En minutos (30 = media hora)
+}

@@ -1,0 +1,70 @@
+meta {
+  name: Crear Profesional
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/profesionales
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre_completo": "Carlos Martínez",
+    "email": "carlos.martinez@example.com",
+    "telefono": "+5491187654321",
+    "especialidades": ["corte_cabello", "barba", "coloracion"],
+    "activo": true
+  }
+}
+
+tests {
+  test("Status 201 - Profesional creado exitosamente", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Respuesta contiene ID del profesional", function() {
+    expect(res.body.data).to.have.property('id');
+    expect(res.body.data).to.have.property('nombre_completo');
+  });
+
+  // Guardar profesionalId en variable de entorno
+  if (res.status === 201) {
+    bru.setEnvVar("profesionalId", res.body.data.id);
+  }
+}
+
+docs {
+  # Crear Profesional
+
+  Registra un nuevo profesional en la organización (barbero, estilista, médico, etc.).
+
+  ## Body Parameters:
+  - `nombre_completo` (string, required) - Nombre completo del profesional
+  - `email` (string, required) - Email único del profesional
+  - `telefono` (string, required) - Teléfono de contacto
+  - `especialidades` (array, required) - Especialidades (ej: ["corte_cabello", "barba"])
+  - `activo` (boolean, optional) - Estado del profesional (default: true)
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "nombre_completo": "Carlos Martínez",
+      "email": "carlos.martinez@example.com",
+      "telefono": "+5491187654321",
+      "especialidades": ["corte_cabello", "barba", "coloracion"],
+      "activo": true,
+      "organizacion_id": 1
+    }
+  }
+  ```
+}

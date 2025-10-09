@@ -1,0 +1,74 @@
+meta {
+  name: Ver Servicios de Profesional
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios/profesionales/{{profesionalId}}/servicios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status 200 - Servicios del profesional obtenidos", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Respuesta contiene servicios del profesional", function() {
+    expect(res.body.data).to.be.an('array');
+  });
+
+  test("Cada servicio tiene información completa", function() {
+    if (res.body.data.length > 0) {
+      res.body.data.forEach(servicio => {
+        expect(servicio).to.have.property('id');
+        expect(servicio).to.have.property('nombre');
+        expect(servicio).to.have.property('precio');
+        expect(servicio).to.have.property('duracion_minutos');
+      });
+    }
+  });
+}
+
+docs {
+  # Ver Servicios de Profesional
+
+  Consulta todos los servicios que ofrece un profesional específico.
+
+  ## Path Parameters:
+  - `profesionalId` (integer, required) - ID del profesional
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": 1,
+        "nombre": "Corte de Cabello Premium",
+        "descripcion": "Corte de cabello con lavado y secado incluido",
+        "precio": 2500.00,
+        "duracion_minutos": 45,
+        "activo": true
+      },
+      {
+        "id": 2,
+        "nombre": "Afeitado y Arreglo de Barba",
+        "precio": 1500.00,
+        "duracion_minutos": 30,
+        "activo": true
+      }
+    ]
+  }
+  ```
+
+  ## Casos de Uso:
+  - Mostrar servicios disponibles al seleccionar un profesional
+  - Validar si un profesional puede realizar un servicio antes de agendar
+  - Dashboard de profesionales con sus servicios
+}

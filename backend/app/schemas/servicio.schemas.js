@@ -43,6 +43,10 @@ const crear = {
         ).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
         tipos_profesional_autorizados: Joi.array().optional().allow(null),
+        profesionales_ids: Joi.array().items(
+            commonSchemas.id
+        ).optional().allow(null)
+            .messages({'array.base': 'profesionales_ids debe ser un array de IDs'}),
         activo: Joi.boolean().optional().default(true)
     })
 };

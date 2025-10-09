@@ -1,0 +1,87 @@
+meta {
+  name: Verificar Disponibilidad
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/citas/disponibilidad-inmediata?profesional_id={{profesionalId}}&servicio_id={{servicioId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status 200 - Disponibilidad obtenida exitosamente", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Respuesta contiene slots disponibles", function() {
+    expect(res.body.data).to.have.property('slots_disponibles');
+    expect(res.body.data.slots_disponibles).to.be.an('array');
+  });
+
+  test("Cada slot tiene hora de inicio y fin", function() {
+    if (res.body.data.slots_disponibles.length > 0) {
+      const slot = res.body.data.slots_disponibles[0];
+      expect(slot).to.have.property('hora_inicio');
+      expect(slot).to.have.property('hora_fin');
+    }
+  });
+}
+
+docs {
+  # Verificar Disponibilidad Inmediata
+
+  Consulta la disponibilidad inmediata (hoy) para un profesional y servicio específico.
+
+  ## Query Parameters:
+  - `profesional_id` (integer, optional) - ID del profesional (si no se envía, busca cualquier profesional)
+  - `servicio_id` (integer, required) - ID del servicio
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "fecha": "2025-10-08",
+      "profesional": {
+        "id": 1,
+        "nombre_completo": "Carlos Martínez"
+      },
+      "servicio": {
+        "id": 1,
+        "nombre": "Corte de Cabello Premium",
+        "duracion_minutos": 45
+      },
+      "slots_disponibles": [
+        {
+          "hora_inicio": "09:00",
+          "hora_fin": "09:45"
+        },
+        {
+          "hora_inicio": "10:00",
+          "hora_fin": "10:45"
+        },
+        {
+          "hora_inicio": "11:00",
+          "hora_fin": "11:45"
+        }
+      ]
+    }
+  }
+  ```
+
+  ## Lógica:
+  - Consulta disponibilidad para el día actual
+  - Excluye bloques de horario bloqueados
+  - Excluye citas ya agendadas
+  - Considera la duración del servicio solicitado
+  - Respeta el intervalo entre citas (si está configurado)
+
+  ## Nota:
+  Este endpoint es útil para walk-ins (clientes sin cita que llegan al local)
+}

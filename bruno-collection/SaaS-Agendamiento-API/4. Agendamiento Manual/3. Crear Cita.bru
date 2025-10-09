@@ -1,0 +1,103 @@
+meta {
+  name: Crear Cita
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/citas
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "cliente_id": {{clienteId}},
+    "profesional_id": {{profesionalId}},
+    "servicio_id": {{servicioId}},
+    "fecha_cita": "2025-10-15T10:00:00-03:00",
+    "notas": "Primera cita del cliente"
+  }
+}
+
+tests {
+  test("Status 201 - Cita creada exitosamente", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Cita tiene código auto-generado", function() {
+    expect(res.body.data).to.have.property('codigo_cita');
+    expect(res.body.data.codigo_cita).to.match(/^ORG\d+-\d{8}-\d{3}$/);
+  });
+
+  test("Respuesta contiene datos completos", function() {
+    expect(res.body.data).to.have.property('id');
+    expect(res.body.data).to.have.property('cliente');
+    expect(res.body.data).to.have.property('profesional');
+    expect(res.body.data).to.have.property('servicio');
+    expect(res.body.data).to.have.property('estado');
+  });
+
+  // Guardar variables importantes
+  if (res.status === 201) {
+    bru.setEnvVar("citaId", res.body.data.id);
+    bru.setEnvVar("codigoCita", res.body.data.codigo_cita);
+  }
+}
+
+docs {
+  # Crear Cita
+
+  Agenda una nueva cita para un cliente. El código de cita se genera automáticamente.
+
+  ## Body Parameters:
+  - `cliente_id` (integer, required) - ID del cliente
+  - `profesional_id` (integer, required) - ID del profesional
+  - `servicio_id` (integer, required) - ID del servicio
+  - `fecha_cita` (string, required) - Fecha y hora en formato ISO 8601
+  - `notas` (string, optional) - Notas sobre la cita
+
+  ## IMPORTANTE:
+  **NO enviar `codigo_cita`** - Se genera automáticamente con formato: `ORG001-20251008-001`
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "codigo_cita": "ORG001-20251015-001",
+      "cliente": {
+        "id": 1,
+        "nombre": "Juan Pérez",
+        "telefono": "+5491112345678"
+      },
+      "profesional": {
+        "id": 1,
+        "nombre_completo": "Carlos Martínez"
+      },
+      "servicio": {
+        "id": 1,
+        "nombre": "Corte de Cabello Premium",
+        "precio": 2500.00,
+        "duracion_minutos": 45
+      },
+      "fecha_cita": "2025-10-15T10:00:00-03:00",
+      "fecha_fin_estimada": "2025-10-15T10:45:00-03:00",
+      "estado": "pendiente",
+      "notas": "Primera cita del cliente",
+      "organizacion_id": 1
+    }
+  }
+  ```
+
+  ## Validaciones:
+  - Verificación de disponibilidad del slot
+  - Prevención de double-booking
+  - Validación de que el profesional pueda realizar el servicio
+  - RLS: cita asociada automáticamente a la organización del usuario
+}

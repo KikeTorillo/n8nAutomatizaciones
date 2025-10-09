@@ -1,0 +1,96 @@
+meta {
+  name: Modificar Cita WhatsApp
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/api/{{apiVersion}}/citas/automatica/{{codigoCita}}
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fecha_cita": "2025-10-16T14:00:00-03:00",
+    "organizacion_id": {{organizacionId}},
+    "motivo": "Cliente solicitó cambio de horario vía WhatsApp"
+  }
+}
+
+tests {
+  test("Status 200 - Cita modificada exitosamente", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Fecha actualizada correctamente", function() {
+    expect(res.body.data).to.have.property('fecha_cita');
+    expect(res.body.data.fecha_cita).to.include('2025-10-16');
+  });
+
+  test("Código de cita permanece igual", function() {
+    expect(res.body.data).to.have.property('codigo_cita');
+    expect(res.body.data.codigo_cita).to.equal(bru.getEnvVar("codigoCita"));
+  });
+}
+
+docs {
+  # Modificar Cita vía WhatsApp
+
+  Permite que el cliente modifique la fecha/hora de una cita existente a través de conversación de WhatsApp.
+
+  ## Path Parameters:
+  - `codigoCita` (string, required) - Código único de la cita (ej: ORG001-20251015-001)
+
+  ## Body Parameters:
+  - `fecha_cita` (string, required) - Nueva fecha y hora en formato ISO 8601
+  - `organizacion_id` (integer, required) - ID de la organización
+  - `profesional_id` (integer, optional) - Cambiar profesional si se desea
+  - `servicio_id` (integer, optional) - Cambiar servicio si se desea
+  - `motivo` (string, optional) - Motivo del cambio
+
+  ## IMPORTANTE:
+  - **SIN AUTENTICACIÓN JWT** - Este endpoint NO requiere token
+  - Validación por `organizacion_id` incluido en body
+  - Endpoint diferente al manual: `/api/v1/citas/automatica/:codigo`
+  - El código de cita NO cambia, solo los detalles
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "id": 1,
+      "codigo_cita": "ORG001-20251015-001",
+      "cliente": {
+        "nombre": "María González",
+        "telefono": "+5491198765432"
+      },
+      "profesional": {
+        "nombre_completo": "Carlos Martínez"
+      },
+      "servicio": {
+        "nombre": "Corte de Cabello Premium"
+      },
+      "fecha_cita": "2025-10-16T14:00:00-03:00",
+      "fecha_fin_estimada": "2025-10-16T14:45:00-03:00",
+      "estado": "pendiente",
+      "updated_at": "2025-10-08T16:00:00Z"
+    }
+  }
+  ```
+
+  ## Flujo en n8n:
+  1. Cliente: "Necesito cambiar mi turno del martes"
+  2. IA busca citas del cliente: "Tienes un turno el 15/10 a las 10:00 (código ORG001-20251015-001)"
+  3. Cliente: "Sí, ese. ¿Puedo cambiarlo para el miércoles 16 a las 2 de la tarde?"
+  4. IA verifica disponibilidad en la nueva fecha
+  5. Si hay disponibilidad, llama a este endpoint
+  6. IA responde: "¡Listo! Tu turno se movió al 16/10 a las 14:00. El código sigue siendo ORG001-20251015-001"
+
+  ## Validaciones:
+  - La cita debe existir
+  - Debe pertenecer a la organización especificada
+  - Nuevo slot debe estar disponible
+  - No se puede modificar una cita ya completada o cancelada
+}

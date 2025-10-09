@@ -88,6 +88,8 @@ class CitaBaseModel {
                 organizacion_id: citaData.organizacion_id
             });
             throw error;
+        } finally {
+            db.release();
         }
     }
 
@@ -232,6 +234,8 @@ class CitaBaseModel {
                 organizacion_id: organizacionId
             });
             throw error;
+        } finally {
+            db.release();
         }
     }
 

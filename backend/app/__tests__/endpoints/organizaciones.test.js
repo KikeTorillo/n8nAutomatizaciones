@@ -411,4 +411,244 @@ describe('Endpoints de Organizaciones', () => {
       expect(response.body.data.id).toBe(testOrg.id);
     });
   });
+
+  // ============================================================================
+  // 🎯 Tests de ONBOARDING de Nuevas Organizaciones (Patrón SaaS)
+  // ============================================================================
+  describe('POST /api/v1/organizaciones/register - 🎯 ONBOARDING de Nuevas Organizaciones', () => {
+    test('✅ Onboarding completo con plantillas de servicios', async () => {
+      const uniqueId = getUniqueTestId();
+      const registroData = {
+        organizacion: {
+          nombre_comercial: `Barbería Auto-Registro ${uniqueId}`,
+          razon_social: `Barbería Auto-Registro S.A. ${uniqueId}`,
+          rfc: `RFC${uniqueId.slice(-10)}`,
+          tipo_industria: 'barberia',
+          plan: 'basico',
+          telefono_principal: `+521${uniqueId.slice(-10)}`,
+          email_contacto: `contacto-${uniqueId}@autoregistro.com`
+        },
+        admin: {
+          nombre: 'Admin',
+          apellidos: 'Auto-Registro',
+          email: `admin-${uniqueId}@autoregistro.com`,
+          password: 'Password123!',
+          telefono: `+521${uniqueId.slice(-10)}`
+        },
+        aplicar_plantilla_servicios: true,
+        enviar_email_bienvenida: false
+      };
+
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        // ❌ SIN autenticación (endpoint público)
+        .send(registroData)
+        .expect(201);
+
+      // Validar estructura de respuesta
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('organizacion');
+      expect(response.body.data).toHaveProperty('admin');
+      expect(response.body.data).toHaveProperty('servicios_creados');
+
+      // Validar organización creada
+      expect(response.body.data.organizacion.nombre_comercial).toBe(registroData.organizacion.nombre_comercial);
+      expect(response.body.data.organizacion.tipo_industria).toBe(registroData.organizacion.tipo_industria);
+      expect(response.body.data.organizacion.plan_actual).toBe('basico');
+      expect(response.body.data.organizacion.activo).toBe(true);
+
+      // Validar admin creado con token (auto-login)
+      expect(response.body.data.admin.email).toBe(registroData.admin.email);
+      expect(response.body.data.admin.rol).toBe('admin');
+      expect(response.body.data.admin).toHaveProperty('token');
+      expect(response.body.data.admin.token).toBeTruthy();
+
+      // Validar que se aplicaron plantillas de servicios
+      expect(response.body.data.servicios_creados).toBeGreaterThan(0);
+
+      // Validar que el token funciona para operaciones posteriores
+      const tokenTest = await request(app)
+        .get(`/api/v1/organizaciones/${response.body.data.organizacion.id}`)
+        .set('Authorization', `Bearer ${response.body.data.admin.token}`)
+        .expect(200);
+
+      expect(tokenTest.body.success).toBe(true);
+    });
+
+    test('✅ Onboarding sin plantillas de servicios', async () => {
+      const uniqueId = getUniqueTestId();
+      const registroData = {
+        organizacion: {
+          nombre_comercial: `Org Sin Plantilla ${uniqueId}`,
+          tipo_industria: 'spa',
+          plan: 'basico'
+        },
+        admin: {
+          nombre: 'Admin',
+          apellidos: 'Sin Plantilla',
+          email: `admin-noplant-${uniqueId}@test.com`,
+          password: 'Password123!'
+        },
+        aplicar_plantilla_servicios: false
+      };
+
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send(registroData)
+        .expect(201);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.servicios_creados).toBe(0);
+    });
+
+    test('❌ Onboarding falla con email de admin duplicado', async () => {
+      const uniqueId = getUniqueTestId();
+
+      // Primer registro exitoso
+      const primerRegistro = {
+        organizacion: {
+          nombre_comercial: `Org 1 ${uniqueId}`,
+          tipo_industria: 'barberia',
+          plan: 'basico'
+        },
+        admin: {
+          nombre: 'Admin',
+          apellidos: 'Primero',
+          email: `duplicado-${uniqueId}@test.com`,
+          password: 'Password123!'
+        },
+        aplicar_plantilla_servicios: false
+      };
+
+      await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send(primerRegistro)
+        .expect(201);
+
+      // Segundo registro con email duplicado debe fallar
+      const segundoRegistro = {
+        organizacion: {
+          nombre_comercial: `Org 2 ${uniqueId}`,
+          tipo_industria: 'barberia',
+          plan: 'basico'
+        },
+        admin: {
+          nombre: 'Admin',
+          apellidos: 'Segundo',
+          email: `duplicado-${uniqueId}@test.com`, // Email duplicado
+          password: 'Password123!'
+        },
+        aplicar_plantilla_servicios: false
+      };
+
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send(segundoRegistro)
+        .expect(409);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message.toLowerCase()).toContain('email');
+    });
+
+    test('❌ Onboarding falla con contraseña débil', async () => {
+      const uniqueId = getUniqueTestId();
+      const registroData = {
+        organizacion: {
+          nombre_comercial: `Org Pass Débil ${uniqueId}`,
+          tipo_industria: 'barberia',
+          plan: 'basico'
+        },
+        admin: {
+          nombre: 'Admin',
+          apellidos: 'Test',
+          email: `admin-${uniqueId}@test.com`,
+          password: '123' // Contraseña débil
+        }
+      };
+
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send(registroData)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ Onboarding falla sin datos de organización', async () => {
+      const uniqueId = getUniqueTestId();
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send({
+          admin: {
+            nombre: 'Admin',
+            apellidos: 'Test',
+            email: `admin-${uniqueId}@test.com`,
+            password: 'Password123!'
+          }
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ Onboarding falla sin datos de admin', async () => {
+      const uniqueId = getUniqueTestId();
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send({
+          organizacion: {
+            nombre_comercial: `Org ${uniqueId}`,
+            tipo_industria: 'barberia',
+            plan: 'basico'
+          }
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ Onboarding falla con tipo de industria inválido', async () => {
+      const uniqueId = getUniqueTestId();
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send({
+          organizacion: {
+            nombre_comercial: `Org ${uniqueId}`,
+            tipo_industria: 'industria_inexistente',
+            plan: 'basico'
+          },
+          admin: {
+            nombre: 'Admin',
+            apellidos: 'Test',
+            email: `admin-${uniqueId}@test.com`,
+            password: 'Password123!'
+          }
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    test('❌ Onboarding falla con plan inválido', async () => {
+      const uniqueId = getUniqueTestId();
+      const response = await request(app)
+        .post('/api/v1/organizaciones/register')
+        .send({
+          organizacion: {
+            nombre_comercial: `Org ${uniqueId}`,
+            tipo_industria: 'barberia',
+            plan: 'plan_inexistente'
+          },
+          admin: {
+            nombre: 'Admin',
+            apellidos: 'Test',
+            email: `admin-${uniqueId}@test.com`,
+            password: 'Password123!'
+          }
+        })
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+    });
+  });
 });

@@ -1,0 +1,73 @@
+meta {
+  name: Listar Servicios
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status 200 - Servicios obtenidos exitosamente", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Respuesta contiene array de servicios", function() {
+    expect(res.body.data).to.be.an('array');
+  });
+
+  test("Servicios tienen estructura correcta", function() {
+    if (res.body.data.length > 0) {
+      const servicio = res.body.data[0];
+      expect(servicio).to.have.property('id');
+      expect(servicio).to.have.property('nombre');
+      expect(servicio).to.have.property('precio');
+      expect(servicio).to.have.property('duracion_minutos');
+    }
+  });
+}
+
+docs {
+  # Listar Servicios
+
+  Obtiene todos los servicios activos de la organización con sus profesionales asociados.
+
+  ## Query Parameters (opcional):
+  - `activo` (boolean) - Filtrar por estado
+  - `profesional_id` (integer) - Filtrar por profesional específico
+
+  ## Respuesta Exitosa:
+  ```json
+  {
+    "success": true,
+    "data": [
+      {
+        "id": 1,
+        "nombre": "Corte de Cabello Premium",
+        "descripcion": "Corte de cabello con lavado y secado incluido",
+        "precio": 2500.00,
+        "duracion_minutos": 45,
+        "activo": true,
+        "organizacion_id": 1,
+        "profesionales": [
+          {
+            "id": 1,
+            "nombre_completo": "Carlos Martínez",
+            "especialidades": ["corte_cabello", "barba"]
+          }
+        ]
+      }
+    ]
+  }
+  ```
+
+  ## Nota:
+  RLS filtra automáticamente los servicios por organización. Los profesionales se incluyen mediante JOIN.
+}

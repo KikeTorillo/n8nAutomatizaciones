@@ -5,7 +5,16 @@ const organizacionSchemas = require('../../../schemas/organizacion.schemas');
 
 const router = express.Router();
 
-// ========== Rutas CRUD Básicas ==========
+// ========== Auto-Registro Público (Patrón SaaS) ==========
+
+// Self-service signup - Clientes nuevos se registran automáticamente
+router.post('/register',
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(organizacionSchemas.onboarding),
+    OrganizacionController.onboarding
+);
+
+// ========== Rutas CRUD Básicas (Super Admin) ==========
 
 router.post('/',
     auth.authenticateToken,
@@ -20,15 +29,6 @@ router.get('/',
     rateLimiting.apiRateLimit,
     validation.validate(organizacionSchemas.listar),
     OrganizacionController.listar
-);
-
-// NOTA: /onboarding DEBE ir antes de /:id para evitar conflicto de rutas
-router.post('/onboarding',
-    auth.authenticateToken,
-    auth.requireRole(['super_admin']),
-    rateLimiting.heavyOperationRateLimit,
-    validation.validate(organizacionSchemas.onboarding),
-    OrganizacionController.onboarding
 );
 
 router.get('/:id',

@@ -1,0 +1,45 @@
+meta {
+  name: 6. Verificar Setup Completo
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/api/{{apiVersion}}/organizaciones/{{organizacionId}}
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+tests {
+  test("Status 200 OK", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("Organización existe", function() {
+    expect(res.body.data).to.have.property("id");
+    expect(res.body.data).to.have.property("codigo_organizacion");
+  });
+}
+
+docs {
+  # Paso 6: Verificar Setup
+
+  Consulta el estado de la organización para verificar que todo esté configurado.
+
+  ## Onboarding Completo ✅
+
+  Si este request devuelve 200 OK, la organización está lista para:
+  - Recibir clientes
+  - Agendar citas
+  - Procesar pagos (cuando esté implementado)
+
+  ## Próximos pasos:
+  - Crear más profesionales (si aplica)
+  - Crear más servicios
+  - Configurar horarios para más días
+  - Comenzar a agendar citas
+}

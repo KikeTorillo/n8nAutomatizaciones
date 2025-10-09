@@ -1,0 +1,80 @@
+meta {
+  name: 4. Agregar Nuevo Servicio
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/api/{{apiVersion}}/servicios
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "nombre": "Barba y Bigote",
+    "descripcion": "Recorte y perfilado de barba y bigote con máquina y tijera",
+    "precio": 150.00,
+    "duracion_minutos": 30,
+    "activo": true,
+    "profesionales_ids": [{{profesionalId}}]
+  }
+}
+
+tests {
+  test("Status 201 Created", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("Servicio creado correctamente", function() {
+    expect(res.body.data).to.have.property("id");
+    expect(res.body.data.nombre).to.equal("Barba y Bigote");
+  });
+
+  test("Servicio asociado al profesional", function() {
+    expect(res.body.data).to.have.property("profesionales");
+    expect(res.body.data.profesionales).to.be.an("array");
+  });
+
+  // Guardar nuevo servicio
+  if (res.status === 201) {
+    bru.setEnvVar("nuevoServicioId", res.body.data.id);
+  }
+}
+
+docs {
+  # Paso 4: Agregar Nuevo Servicio
+
+  Además de los servicios de plantilla, puedes crear servicios personalizados para tu negocio.
+
+  ## Campos requeridos:
+  - `nombre`: Nombre del servicio (único por organización)
+  - `precio`: Precio del servicio
+  - `duracion_minutos`: Duración estimada
+  - `activo`: true para publicar, false para ocultar
+  - `profesionales_ids`: Array de IDs de profesionales autorizados
+
+  ## ¿Por qué profesionales_ids?
+
+  Este campo define **qué profesionales pueden ofrecer este servicio**. Esto es útil para:
+  - 🔹 Servicios especializados (solo algunos profesionales los ofrecen)
+  - 🔹 Control de calidad (certificar profesionales)
+  - 🔹 Sistema de agendamiento (mostrar solo profesionales disponibles para ese servicio)
+
+  ## Ejemplo:
+  Si tienes 3 barberos pero solo 2 hacen tinte de barba:
+  ```json
+  {
+    "nombre": "Tinte de Barba",
+    "profesionales_ids": [1, 3]
+  }
+  ```
+
+  ## Nota:
+  - El sistema valida automáticamente que los profesionales existan
+  - Se crea automáticamente la relación en `servicios_profesionales`
+}
