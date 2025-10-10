@@ -48,7 +48,8 @@ class RLSHelper {
                 await db.query('SELECT set_config($1, $2, false)', ['app.current_user_role', role]);
             }
             if (bypass) {
-                await db.query("SET app.bypass_rls = 'true'");
+                // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
+                await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
             }
             if (userId) {
                 await db.query('SELECT set_config($1, $2, false)', ['app.current_user_id', userId.toString()]);
@@ -63,7 +64,8 @@ class RLSHelper {
             // CRÍTICO: Limpiar TODAS las variables RLS configuradas para evitar contaminación del pool
             try {
                 if (bypass) {
-                    await db.query("SET app.bypass_rls = 'false'");
+                    // ✅ FIX: Usar set_config en lugar de SET (aunque ya no es necesario porque set_config es local)
+                    await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
                 }
                 if (role) {
                     await db.query("SELECT set_config('app.current_user_role', '', false)");
@@ -97,7 +99,7 @@ class RLSHelper {
             const query = `
                 INSERT INTO eventos_sistema (
                     organizacion_id, evento_tipo, entidad_tipo, entidad_id,
-                    descripcion, metadatos, usuario_id
+                    descripcion, metadata, usuario_id
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 

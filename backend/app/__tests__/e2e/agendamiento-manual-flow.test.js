@@ -395,7 +395,5 @@ describe('🎯 E2E: Flujo Completo de AGENDAMIENTO MANUAL', () => {
     console.log('✅ Transición: en_curso → completada');
 
     console.log('✅ Flujo de estados completado exitosamente');
-
-    tempClient.release();
   });
 });

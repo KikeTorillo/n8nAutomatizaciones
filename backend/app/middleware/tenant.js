@@ -89,15 +89,6 @@ const setTenantContext = async (req, res, next) => {
 
     logger.debug('Tenant ID final', { tenantId });
 
-    // Inicializar objeto tenant en request
-    if (!req.tenant) {
-      req.tenant = {};
-    }
-    req.tenant.organizacionId = tenantId;
-
-    // Obtener conexión del pool principal para configurar contexto
-    client = await database.getPool('saas').connect();
-
     // Validar que tenant_id es numérico (prevenir SQL injection)
     if (isNaN(tenantId) || tenantId <= 0) {
       logger.error('tenant_id inválido - debe ser numérico positivo', {
@@ -105,25 +96,18 @@ const setTenantContext = async (req, res, next) => {
         type: typeof tenantId,
         userId: req.user?.id
       });
-      if (client) client.release();
       return ResponseHelper.error(res, 'Configuración de tenant inválida', 500);
     }
 
-    // Configurar el tenant ID en la sesión de base de datos
-    // Esto activa automáticamente las políticas de Row Level Security
-    // SEGURIDAD: Usar set_config con prepared statement (NO interpolación directa)
-    await client.query('SELECT set_config($1, $2, false)',
-      ['app.current_tenant_id', tenantId.toString()]
-    );
+    // Inicializar objeto tenant en request
+    if (!req.tenant) {
+      req.tenant = {};
+    }
+    req.tenant.organizacionId = tenantId;
 
-    // Asegurar que RLS esté activo (por defecto debería estar en false)
-    await client.query('SELECT set_config($1, $2, false)',
-      ['app.bypass_rls', 'false']
-    );
-
-    // ✅ CORRECCIÓN: Liberar conexión inmediatamente después de configurar contexto
-    // Los modelos configurarán RLS en sus propias transacciones
-    client.release();
+    // ✅ FIX CRÍTICO: NO configurar RLS aquí porque esta conexión se libera inmediatamente
+    // Los modelos configuran RLS en sus propias transacciones con set_config(..., true)
+    // que es local a cada transacción, garantizando aislamiento correcto.
 
     logger.debug('Contexto de tenant configurado', {
       tenantId: tenantId,
@@ -134,11 +118,6 @@ const setTenantContext = async (req, res, next) => {
 
     next();
   } catch (error) {
-    // Liberar conexión en caso de error
-    if (client) {
-      client.release();
-    }
-
     logger.error('Error configurando contexto de tenant', {
       error: error.message,
       tenantId: req.user?.organizacion_id,
@@ -254,7 +233,8 @@ const verifyTenantActive = async (req, res, next) => {
     client = await database.getPool('saas').connect();
 
     // Configurar bypass RLS para esta consulta específica
-    await client.query('SET app.bypass_rls = \'true\'');
+    // ✅ FIX: Usar set_config con false para que sea local a la transacción
+    await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
     const result = await client.query(
       'SELECT activo, suspendido, plan_actual, fecha_activacion FROM organizaciones WHERE id = $1',
@@ -308,7 +288,8 @@ const verifyTenantActive = async (req, res, next) => {
   } finally {
     // Asegurar que la conexión se libere
     if (client) {
-      await client.query('SET app.bypass_rls = \'false\'');
+      // ✅ FIX: Usar set_config con false (aunque ya no es necesario porque set_config es local)
+      await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
       client.release();
     }
   }

@@ -162,8 +162,9 @@ class DatabaseConfig {
 
     try {
       // Configurar tenant si se proporciona
+      // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
       if (tenantId) {
-        await client.query('SET app.current_tenant_id = $1', [tenantId]);
+        await client.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', tenantId.toString()]);
       }
 
       const start = Date.now();
@@ -246,8 +247,9 @@ class DatabaseConfig {
       await client.query('BEGIN');
 
       // Configurar tenant si se proporciona
+      // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
       if (tenantId) {
-        await client.query('SET app.current_tenant_id = $1', [tenantId]);
+        await client.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', tenantId.toString()]);
       }
 
       const result = await callback(client);

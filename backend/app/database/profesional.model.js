@@ -1,13 +1,9 @@
-const { getDb } = require('../config/database');
+const RLSContextManager = require('../utils/rlsContextManager');
 
 class ProfesionalModel {
 
     static async crear(profesionalData) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', profesionalData.organizacion_id.toString()]);
-
+        return await RLSContextManager.query(profesionalData.organizacion_id, async (db) => {
             if (profesionalData.email) {
                 const emailDisponible = await this.validarEmailDisponible(
                     profesionalData.email,
@@ -62,62 +58,53 @@ class ProfesionalModel {
                 profesionalData.fecha_ingreso
             ];
 
-            const result = await db.query(query, values);
-            return result.rows[0];
-
-        } catch (error) {
-            if (error.code === '23505') { // Duplicate key violation
-                if (error.constraint && error.constraint.includes('email')) {
-                    throw new Error('Ya existe un profesional con ese email en la organización');
+            try {
+                const result = await db.query(query, values);
+                return result.rows[0];
+            } catch (error) {
+                if (error.code === '23505') {
+                    if (error.constraint && error.constraint.includes('email')) {
+                        throw new Error('Ya existe un profesional con ese email en la organización');
+                    }
+                    if (error.constraint && error.constraint.includes('telefono')) {
+                        throw new Error('Ya existe un profesional con ese teléfono en la organización');
+                    }
+                    throw new Error('El profesional ya existe con esos datos únicos');
                 }
-                if (error.constraint && error.constraint.includes('telefono')) {
-                    throw new Error('Ya existe un profesional con ese teléfono en la organización');
+                if (error.code === '23514') {
+                    if (error.constraint && error.constraint.includes('tipo_profesional')) {
+                        throw new Error('Tipo de profesional incompatible con la industria de la organización');
+                    }
+                    if (error.constraint && error.constraint.includes('fecha_nacimiento')) {
+                        throw new Error('El profesional debe ser mayor de 18 años');
+                    }
+                    if (error.constraint && error.constraint.includes('años_experiencia')) {
+                        throw new Error('Los años de experiencia deben estar entre 0 y 70');
+                    }
+                    if (error.constraint && error.constraint.includes('calificacion_promedio')) {
+                        throw new Error('La calificación debe estar entre 1.00 y 5.00');
+                    }
+                    if (error.constraint && error.constraint.includes('comision_porcentaje')) {
+                        throw new Error('La comisión debe estar entre 0% y 100%');
+                    }
+                    if (error.constraint && error.constraint.includes('color_calendario')) {
+                        throw new Error('El color debe ser un código hexadecimal válido');
+                    }
+                    throw new Error('Los datos del profesional no cumplen las validaciones requeridas');
                 }
-                throw new Error('El profesional ya existe con esos datos únicos');
+                if (error.code === '23503') {
+                    if (error.constraint && error.constraint.includes('organizacion')) {
+                        throw new Error('La organización especificada no existe');
+                    }
+                    throw new Error('Error de referencia en los datos del profesional');
+                }
+                throw error;
             }
-            if (error.code === '23514') { // Check constraint violation
-                if (error.constraint && error.constraint.includes('tipo_profesional')) {
-                    throw new Error('Tipo de profesional incompatible con la industria de la organización');
-                }
-                if (error.constraint && error.constraint.includes('fecha_nacimiento')) {
-                    throw new Error('El profesional debe ser mayor de 18 años');
-                }
-                if (error.constraint && error.constraint.includes('años_experiencia')) {
-                    throw new Error('Los años de experiencia deben estar entre 0 y 70');
-                }
-                if (error.constraint && error.constraint.includes('calificacion_promedio')) {
-                    throw new Error('La calificación debe estar entre 1.00 y 5.00');
-                }
-                if (error.constraint && error.constraint.includes('comision_porcentaje')) {
-                    throw new Error('La comisión debe estar entre 0% y 100%');
-                }
-                if (error.constraint && error.constraint.includes('color_calendario')) {
-                    throw new Error('El color debe ser un código hexadecimal válido');
-                }
-                throw new Error('Los datos del profesional no cumplen las validaciones requeridas');
-            }
-            if (error.code === '23503') { // Foreign key violation
-                if (error.constraint && error.constraint.includes('organizacion')) {
-                    throw new Error('La organización especificada no existe');
-                }
-                throw new Error('Error de referencia en los datos del profesional');
-            }
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async buscarPorId(id, organizacionId) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query("SELECT set_config('app.current_user_id', '', false)");
-            await db.query("SELECT set_config('app.current_user_role', '', false)");
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
@@ -137,21 +124,11 @@ class ProfesionalModel {
 
             const result = await db.query(query, [id, organizacionId]);
             return result.rows[0] || null;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async listarPorOrganizacion(organizacionId, filtros = {}) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query("SELECT set_config('app.current_user_id', '', false)");
-            await db.query("SELECT set_config('app.current_user_role', '', false)");
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 activo = null,
                 disponible_online = null,
@@ -179,7 +156,6 @@ class ProfesionalModel {
             const values = [organizacionId];
             let contador = 2;
 
-            // Aplicar filtros dinámicos
             if (activo !== null) {
                 query += ` AND p.activo = $${contador}`;
                 values.push(activo);
@@ -209,21 +185,11 @@ class ProfesionalModel {
 
             const result = await db.query(query, values);
             return result.rows;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async actualizar(id, organizacionId, datos) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query("SELECT set_config('app.current_user_id', '', false)");
-            await db.query("SELECT set_config('app.current_user_role', '', false)");
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             if (datos.email) {
                 const emailDisponible = await this.validarEmailDisponible(
                     datos.email,
@@ -249,7 +215,6 @@ class ProfesionalModel {
             const valores = [];
             let contador = 1;
 
-            // Construir query dinámico solo con campos permitidos
             for (const [campo, valor] of Object.entries(datos)) {
                 if (camposPermitidos.includes(campo) && valor !== undefined) {
                     campos.push(`${campo} = $${contador}`);
@@ -286,17 +251,11 @@ class ProfesionalModel {
             }
 
             return result.rows[0];
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async cambiarEstado(id, organizacionId, activo, motivoInactividad = null) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE profesionales
                 SET activo = $1,
@@ -315,17 +274,11 @@ class ProfesionalModel {
             }
 
             return result.rows[0];
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async buscarPorTipo(organizacionId, tipoProfesional, soloActivos = true) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             let query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
@@ -350,17 +303,11 @@ class ProfesionalModel {
 
             const result = await db.query(query, values);
             return result.rows;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async actualizarMetricas(id, organizacionId, metricas) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 citas_completadas_incremento = 0,
                 nuevos_clientes = 0,
@@ -398,17 +345,11 @@ class ProfesionalModel {
             }
 
             return result.rows[0];
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerEstadisticas(organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
                     COUNT(*) as total_profesionales,
@@ -425,18 +366,11 @@ class ProfesionalModel {
 
             const result = await db.query(query, [organizacionId]);
             return result.rows[0];
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async eliminar(id, organizacionId, motivo = 'Eliminado por administrador') {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
-            // Soft delete: cambiar a inactivo en lugar de eliminar registro
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE profesionales
                 SET activo = FALSE,
@@ -449,20 +383,31 @@ class ProfesionalModel {
 
             const result = await db.query(query, [motivo, id, organizacionId]);
             return result.rowCount > 0;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async validarEmailDisponible(email, organizacionId, excluirId = null, dbConnection = null) {
-        const db = dbConnection || await getDb();
-        const shouldReleaseConnection = !dbConnection;
+        // Si se proporciona dbConnection, usarla directamente (ya está en contexto RLS)
+        if (dbConnection) {
+            let query = `
+                SELECT COUNT(*) as count
+                FROM profesionales
+                WHERE email = $1 AND organizacion_id = $2 AND activo = TRUE
+            `;
 
-        try {
-            if (!dbConnection) {
-                await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
+            const values = [email, organizacionId];
+
+            if (excluirId) {
+                query += ' AND id != $3';
+                values.push(excluirId);
             }
 
+            const result = await dbConnection.query(query, values);
+            return parseInt(result.rows[0].count) === 0;
+        }
+
+        // Si no hay dbConnection, crear una nueva con RLS
+        return await RLSContextManager.query(organizacionId, async (db) => {
             let query = `
                 SELECT COUNT(*) as count
                 FROM profesionales
@@ -478,11 +423,7 @@ class ProfesionalModel {
 
             const result = await db.query(query, values);
             return parseInt(result.rows[0].count) === 0;
-        } finally {
-            if (shouldReleaseConnection) {
-                db.release();
-            }
-        }
+        });
     }
 
 }

@@ -227,60 +227,62 @@ class OrganizacionModel {
         }
     }
 
-    // Verificar límites de la organización
+    // Verificar límites de la organización (bypass RLS - operación de consulta)
     static async verificarLimites(organizacionId) {
         const db = await getDb();
 
         try {
-            const query = `
-                SELECT
-                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
-                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
-                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
-                    COUNT(DISTINCT c.id) FILTER (
-                        WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
-                        AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
-                    ) as citas_mes_actual,
-                    COUNT(DISTINCT p.id) as profesionales_activos,
-                    COUNT(DISTINCT s.id) as servicios_activos
-                FROM organizaciones o
-                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
-                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
-                LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
-                LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
-                LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
-                WHERE o.id = $1 AND o.activo = TRUE
-                GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
-            `;
+            return await RLSHelper.withBypass(db, async (db) => {
+                const query = `
+                    SELECT
+                        COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
+                        COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
+                        COALESCE(ps.limite_servicios, 10) as limite_servicios,
+                        COUNT(DISTINCT c.id) FILTER (
+                            WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
+                            AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
+                        ) as citas_mes_actual,
+                        COUNT(DISTINCT p.id) as profesionales_activos,
+                        COUNT(DISTINCT s.id) as servicios_activos
+                    FROM organizaciones o
+                    LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
+                    LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
+                    LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
+                    LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
+                    LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
+                    WHERE o.id = $1 AND o.activo = TRUE
+                    GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
+                `;
 
-            const result = await db.query(query, [organizacionId]);
+                const result = await db.query(query, [organizacionId]);
 
-            if (result.rows.length === 0) {
-                throw new Error('Organización no encontrada');
-            }
-
-            const limites = result.rows[0];
-
-            return {
-                citas: {
-                    limite: limites.limite_citas_mes,
-                    usado: parseInt(limites.citas_mes_actual),
-                    disponible: limites.limite_citas_mes - parseInt(limites.citas_mes_actual),
-                    porcentaje_uso: Math.round((parseInt(limites.citas_mes_actual) / limites.limite_citas_mes) * 100)
-                },
-                profesionales: {
-                    limite: limites.limite_profesionales,
-                    usado: parseInt(limites.profesionales_activos),
-                    disponible: limites.limite_profesionales - parseInt(limites.profesionales_activos),
-                    porcentaje_uso: Math.round((parseInt(limites.profesionales_activos) / limites.limite_profesionales) * 100)
-                },
-                servicios: {
-                    limite: limites.limite_servicios,
-                    usado: parseInt(limites.servicios_activos),
-                    disponible: limites.limite_servicios - parseInt(limites.servicios_activos),
-                    porcentaje_uso: Math.round((parseInt(limites.servicios_activos) / limites.limite_servicios) * 100)
+                if (result.rows.length === 0) {
+                    throw new Error('Organización no encontrada');
                 }
-            };
+
+                const limites = result.rows[0];
+
+                return {
+                    citas: {
+                        limite: limites.limite_citas_mes,
+                        usado: parseInt(limites.citas_mes_actual),
+                        disponible: limites.limite_citas_mes - parseInt(limites.citas_mes_actual),
+                        porcentaje_uso: Math.round((parseInt(limites.citas_mes_actual) / limites.limite_citas_mes) * 100)
+                    },
+                    profesionales: {
+                        limite: limites.limite_profesionales,
+                        usado: parseInt(limites.profesionales_activos),
+                        disponible: limites.limite_profesionales - parseInt(limites.profesionales_activos),
+                        porcentaje_uso: Math.round((parseInt(limites.profesionales_activos) / limites.limite_profesionales) * 100)
+                    },
+                    servicios: {
+                        limite: limites.limite_servicios,
+                        usado: parseInt(limites.servicios_activos),
+                        disponible: limites.limite_servicios - parseInt(limites.servicios_activos),
+                        porcentaje_uso: Math.round((parseInt(limites.servicios_activos) / limites.limite_servicios) * 100)
+                    }
+                };
+            });
         } finally {
             db.release();
         }

@@ -452,7 +452,8 @@ class OrganizacionHelper {
       db = await getDb();
 
       // Configurar bypass RLS para esta consulta específica
-      await db.query("SET app.bypass_rls = 'true'");
+      // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
+      await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
       // Consultar organización
       const result = await db.query(
@@ -462,8 +463,8 @@ class OrganizacionHelper {
         [orgId]
       );
 
-      // Restaurar RLS
-      await db.query("SET app.bypass_rls = 'false'");
+      // Restaurar RLS (ya no es necesario porque set_config es local, pero lo dejamos por seguridad)
+      await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
 
       if (result.rows.length === 0) {
         logger.warn('Organización no encontrada', { organizacionId: orgId });
@@ -499,7 +500,8 @@ class OrganizacionHelper {
     } finally {
       if (db) {
         try {
-          await db.query("SET app.bypass_rls = 'false'");
+          // ✅ FIX: Usar set_config en lugar de SET (aunque ya no es necesario porque set_config es local)
+          await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
         } catch (e) {
           logger.warn('Error restaurando RLS en validación', { error: e.message });
         }

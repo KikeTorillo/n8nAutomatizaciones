@@ -2,74 +2,6 @@ const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
 
 // ===================================================================
-// IA CONVERSACIONAL
-// ===================================================================
-
-const crearAutomatica = {
-    body: Joi.object({
-        telefono_cliente: Joi.string()
-            .pattern(/^[+]?[\d\s\-()]+$/)
-            .required()
-            .messages({ 'string.pattern.base': 'Formato de teléfono inválido' }),
-        organizacion_id: commonSchemas.id,
-        servicio_id: commonSchemas.id,
-        fecha_solicitada: Joi.string().default('mañana'),
-        turno_preferido: Joi.string()
-            .valid('mañana', 'tarde', 'noche', 'cualquiera')
-            .optional(),
-        profesional_preferido: commonSchemas.id.optional().allow(null),
-        crear_cliente_si_no_existe: Joi.boolean().default(true),
-        nombre_cliente_nuevo: Joi.string().trim().max(100).optional(),
-        email_cliente_nuevo: Joi.string().email().lowercase().optional(),
-        metadata: Joi.object().optional()
-    })
-};
-
-const buscarPorTelefono = {
-    query: Joi.object({
-        telefono: Joi.string()
-            .pattern(/^[+]?[\d\s\-()]+$/)
-            .required()
-            .messages({ 'string.pattern.base': 'Formato de teléfono inválido' }),
-        organizacion_id: commonSchemas.id.required()
-            .messages({ 'any.required': 'organizacion_id es requerido' }),
-        estados: Joi.alternatives().try(
-            Joi.array().items(Joi.string()),
-            Joi.string()
-        ).optional(),
-        incluir_historicas: Joi.alternatives().try(
-            Joi.boolean(),
-            Joi.string().valid('true', 'false')
-        ).default(false)
-    })
-};
-
-const modificarAutomatica = {
-    params: Joi.object({
-        codigo: Joi.string().trim().min(3).max(50).required()
-    }),
-    body: Joi.object({
-        organizacion_id: commonSchemas.id,
-        nueva_fecha: Joi.string().optional(), // Formato flexible para IA ("mañana", "2025-10-10", etc)
-        nuevo_servicio_id: commonSchemas.id.optional(),
-        nuevo_turno: Joi.string()
-            .valid('mañana', 'tarde', 'noche', 'cualquiera')
-            .optional(),
-        motivo: Joi.string().max(500).optional()
-    })
-};
-
-const cancelarAutomatica = {
-    params: Joi.object({
-        codigo: Joi.string().trim().min(3).max(50).required()
-    }),
-    body: Joi.object({
-        organizacion_id: commonSchemas.id,
-        motivo: Joi.string().max(500).optional()
-    })
-};
-
-// ===================================================================
 // CRUD
 // ===================================================================
 
@@ -94,19 +26,29 @@ const crear = {
                 return value;
             })
             .messages({ 'custom.hora_fin_posterior': 'hora_fin debe ser posterior a hora_inicio' }),
-        precio_servicio: commonSchemas.price,
+        precio_servicio: commonSchemas.price.optional()
+            .messages({
+                'any.optional': 'Si no se proporciona, se calculará automáticamente desde el servicio'
+            }),
         descuento: commonSchemas.price.default(0.00),
-        precio_final: commonSchemas.price
+        precio_final: commonSchemas.price.optional()
             .custom((value, helpers) => {
-                const precio_servicio = helpers.state.ancestors[0].precio_servicio || 0;
+                const precio_servicio = helpers.state.ancestors[0].precio_servicio;
                 const descuento = helpers.state.ancestors[0].descuento || 0;
-                const esperado = precio_servicio - descuento;
-                if (Math.abs(value - esperado) > 0.01) {
-                    return helpers.error('custom.precio_final_invalido');
+
+                // Si hay precio_servicio y precio_final, validar que sean consistentes
+                if (precio_servicio && value) {
+                    const esperado = precio_servicio - descuento;
+                    if (Math.abs(value - esperado) > 0.01) {
+                        return helpers.error('custom.precio_final_invalido');
+                    }
                 }
                 return value;
             })
-            .messages({ 'custom.precio_final_invalido': 'precio_final no coincide con precio_servicio - descuento' }),
+            .messages({
+                'custom.precio_final_invalido': 'precio_final no coincide con precio_servicio - descuento',
+                'any.optional': 'Si no se proporciona, se calculará automáticamente desde el servicio'
+            }),
         metodo_pago: Joi.string()
             .valid('efectivo', 'tarjeta', 'transferencia')
             .optional()
@@ -414,12 +356,6 @@ const calificarCliente = {
 };
 
 module.exports = {
-    // IA
-    crearAutomatica,
-    buscarPorTelefono,
-    modificarAutomatica,
-    cancelarAutomatica,
-
     // CRUD
     crear,
     obtener,

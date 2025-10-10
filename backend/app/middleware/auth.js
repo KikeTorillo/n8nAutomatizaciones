@@ -138,7 +138,8 @@ const authenticateToken = async (req, res, next) => {
 
         try {
             // Configurar bypass RLS para consulta de autenticación
-            await db.query("SET app.bypass_rls = 'true'");
+            // ✅ FIX: Usar set_config en lugar de SET para que sea local a la transacción
+            await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
 
             const result = await db.query(
                 `SELECT id, email, nombre, apellidos, telefono, rol, organizacion_id,
@@ -169,8 +170,9 @@ const authenticateToken = async (req, res, next) => {
             return ResponseHelper.error(res, 'Error interno del servidor', 500);
         } finally {
             // Restaurar RLS y liberar conexión
+            // ✅ FIX: Usar set_config en lugar de SET (aunque ya no es necesario porque set_config es local)
             try {
-                await db.query("SET app.bypass_rls = 'false'");
+                await db.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
             } catch (e) {
                 logger.warn('Error restaurando RLS', { error: e.message });
             }

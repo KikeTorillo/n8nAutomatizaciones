@@ -19,8 +19,10 @@ body:json {
     "cliente_id": {{clienteId}},
     "profesional_id": {{profesionalId}},
     "servicio_id": {{servicioId}},
-    "fecha_cita": "2025-10-15T10:00:00-03:00",
-    "notas": "Primera cita del cliente"
+    "fecha_cita": "2025-10-15",
+    "hora_inicio": "10:00:00",
+    "hora_fin": "10:45:00",
+    "notas_cliente": "Primera cita del cliente"
   }
 }
 
@@ -58,11 +60,17 @@ docs {
   - `cliente_id` (integer, required) - ID del cliente
   - `profesional_id` (integer, required) - ID del profesional
   - `servicio_id` (integer, required) - ID del servicio
-  - `fecha_cita` (string, required) - Fecha y hora en formato ISO 8601
-  - `notas` (string, optional) - Notas sobre la cita
+  - `fecha_cita` (string, required) - Fecha en formato YYYY-MM-DD
+  - `hora_inicio` (string, required) - Hora de inicio en formato HH:MM:SS
+  - `hora_fin` (string, required) - Hora de fin en formato HH:MM:SS
+  - `precio_servicio` (decimal, optional) - Precio del servicio. Si no se envía, se obtiene automáticamente del servicio
+  - `precio_final` (decimal, optional) - Precio final. Si no se envía, se calcula como precio_servicio - descuento
+  - `descuento` (decimal, optional) - Descuento a aplicar. Default: 0.00
+  - `notas_cliente` (string, optional) - Notas sobre la cita
 
   ## IMPORTANTE:
-  **NO enviar `codigo_cita`** - Se genera automáticamente con formato: `ORG001-20251008-001`
+  - **NO enviar `codigo_cita`** - Se genera automáticamente con formato: `ORG001-20251008-001`
+  - **Precios opcionales**: Si no envías `precio_servicio` y `precio_final`, el sistema los calculará automáticamente desde el servicio
 
   ## Respuesta Exitosa:
   ```json

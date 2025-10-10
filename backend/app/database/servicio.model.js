@@ -1,16 +1,11 @@
-// Modelo de Servicios - CRUD multi-tenant con RLS directo
+// Modelo de Servicios - CRUD multi-tenant con RLS
 
-const { getDb } = require('../config/database');
+const RLSContextManager = require('../utils/rlsContextManager');
 
 class ServicioModel {
 
     static async crear(servicioData) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', servicioData.organizacion_id.toString()]);
-
+        return await RLSContextManager.transaction(servicioData.organizacion_id, async (db) => {
             // 1. Crear el servicio
             const query = `
                 INSERT INTO servicios (
@@ -47,81 +42,74 @@ class ServicioModel {
                 servicioData.activo !== undefined ? servicioData.activo : true
             ];
 
-            const result = await db.query(query, values);
-            const servicio = result.rows[0];
+            try {
+                const result = await db.query(query, values);
+                const servicio = result.rows[0];
 
-            // 2. Asociar profesionales si se proporcionan
-            if (servicioData.profesionales_ids && Array.isArray(servicioData.profesionales_ids) && servicioData.profesionales_ids.length > 0) {
-                // Validar que los profesionales existen y pertenecen a la organización
-                const validarProfesionalesQuery = `
-                    SELECT id FROM profesionales
-                    WHERE id = ANY($1::int[])
-                      AND organizacion_id = $2
-                      AND activo = true
-                `;
-                const profesionalesValidos = await db.query(validarProfesionalesQuery, [
-                    servicioData.profesionales_ids,
-                    servicioData.organizacion_id
-                ]);
+                // 2. Asociar profesionales si se proporcionan
+                if (servicioData.profesionales_ids && Array.isArray(servicioData.profesionales_ids) && servicioData.profesionales_ids.length > 0) {
+                    // Validar que los profesionales existen y pertenecen a la organización
+                    const validarProfesionalesQuery = `
+                        SELECT id FROM profesionales
+                        WHERE id = ANY($1::int[])
+                          AND organizacion_id = $2
+                          AND activo = true
+                    `;
+                    const profesionalesValidos = await db.query(validarProfesionalesQuery, [
+                        servicioData.profesionales_ids,
+                        servicioData.organizacion_id
+                    ]);
 
-                if (profesionalesValidos.rows.length !== servicioData.profesionales_ids.length) {
-                    throw new Error('Uno o más profesionales no existen o no pertenecen a esta organización');
+                    if (profesionalesValidos.rows.length !== servicioData.profesionales_ids.length) {
+                        throw new Error('Uno o más profesionales no existen o no pertenecen a esta organización');
+                    }
+
+                    // Asociar cada profesional al servicio
+                    const asociarQuery = `
+                        INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
+                        VALUES ($1, $2, true)
+                    `;
+
+                    for (const profesionalId of servicioData.profesionales_ids) {
+                        await db.query(asociarQuery, [servicio.id, profesionalId]);
+                    }
+
+                    // Obtener profesionales asociados para la respuesta
+                    const profesionalesQuery = `
+                        SELECT p.id, p.nombre_completo, p.email, p.tipo_profesional, p.especialidades
+                        FROM profesionales p
+                        JOIN servicios_profesionales sp ON p.id = sp.profesional_id
+                        WHERE sp.servicio_id = $1 AND sp.activo = true
+                        ORDER BY p.nombre_completo
+                    `;
+                    const profesionalesResult = await db.query(profesionalesQuery, [servicio.id]);
+                    servicio.profesionales = profesionalesResult.rows;
                 }
 
-                // Asociar cada profesional al servicio
-                const asociarQuery = `
-                    INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
-                    VALUES ($1, $2, true)
-                `;
+                return servicio;
 
-                for (const profesionalId of servicioData.profesionales_ids) {
-                    await db.query(asociarQuery, [servicio.id, profesionalId]);
+            } catch (error) {
+                if (error.code === '23505') {
+                    throw new Error('Ya existe un servicio con ese nombre en la organización');
                 }
-
-                // Obtener profesionales asociados para la respuesta
-                const profesionalesQuery = `
-                    SELECT p.id, p.nombre_completo, p.email, p.tipo_profesional, p.especialidades
-                    FROM profesionales p
-                    JOIN servicios_profesionales sp ON p.id = sp.profesional_id
-                    WHERE sp.servicio_id = $1 AND sp.activo = true
-                    ORDER BY p.nombre_completo
-                `;
-                const profesionalesResult = await db.query(profesionalesQuery, [servicio.id]);
-                servicio.profesionales = profesionalesResult.rows;
-            }
-
-            await db.query('COMMIT');
-            return servicio;
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-
-            if (error.code === '23505') {
-                throw new Error('Ya existe un servicio con ese nombre en la organización');
-            }
-            if (error.code === '23514') {
-                throw new Error('Error de validación en los datos del servicio');
-            }
-            if (error.code === '23503') {
-                if (error.detail.includes('organizacion_id')) {
-                    throw new Error('La organización especificada no existe');
+                if (error.code === '23514') {
+                    throw new Error('Error de validación en los datos del servicio');
                 }
-                if (error.detail.includes('plantilla_servicio_id')) {
-                    throw new Error('La plantilla de servicio especificada no existe');
+                if (error.code === '23503') {
+                    if (error.detail.includes('organizacion_id')) {
+                        throw new Error('La organización especificada no existe');
+                    }
+                    if (error.detail.includes('plantilla_servicio_id')) {
+                        throw new Error('La plantilla de servicio especificada no existe');
+                    }
                 }
+                throw error;
             }
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerPorId(id, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 SELECT s.*,
                        ps.nombre as plantilla_nombre,
@@ -136,20 +124,11 @@ class ServicioModel {
 
             const result = await db.query(query, [id]);
             return result.rows[0] || null;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async listar(organizacion_id, filtros = {}, paginacion = {}) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const pagina = Math.max(1, parseInt(paginacion.pagina) || 1);
             const limite = Math.min(100, Math.max(1, parseInt(paginacion.limite) || 20));
             const offset = (pagina - 1) * limite;
@@ -250,20 +229,11 @@ class ServicioModel {
                 },
                 filtros_aplicados: filtros
             };
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async actualizar(id, servicioData, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const camposPermitidos = [
                 'plantilla_servicio_id', 'nombre', 'descripcion', 'categoria', 'subcategoria',
                 'duracion_minutos', 'precio', 'precio_minimo', 'precio_maximo',
@@ -298,33 +268,28 @@ class ServicioModel {
                          activo, creado_en, actualizado_en
             `;
 
-            const result = await db.query(query, valores);
-            return result.rows[0] || null;
-
-        } catch (error) {
-            if (error.code === '23505') {
-                throw new Error('Ya existe un servicio con ese nombre en la organización');
-            }
-            if (error.code === '23514') {
-                throw new Error('Error de validación en los datos del servicio');
-            }
-            if (error.code === '23503') {
-                if (error.detail.includes('plantilla_servicio_id')) {
-                    throw new Error('La plantilla de servicio especificada no existe');
+            try {
+                const result = await db.query(query, valores);
+                return result.rows[0] || null;
+            } catch (error) {
+                if (error.code === '23505') {
+                    throw new Error('Ya existe un servicio con ese nombre en la organización');
                 }
+                if (error.code === '23514') {
+                    throw new Error('Error de validación en los datos del servicio');
+                }
+                if (error.code === '23503') {
+                    if (error.detail.includes('plantilla_servicio_id')) {
+                        throw new Error('La plantilla de servicio especificada no existe');
+                    }
+                }
+                throw error;
             }
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async eliminar(id, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 UPDATE servicios
                 SET activo = false, actualizado_en = NOW()
@@ -333,40 +298,27 @@ class ServicioModel {
 
             const result = await db.query(query, [id]);
             return result.rowCount > 0;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async eliminarPermanente(id, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `DELETE FROM servicios WHERE id = $1`;
-            const result = await db.query(query, [id]);
-            return result.rowCount > 0;
 
-        } catch (error) {
-            if (error.code === '23503') {
-                throw new Error('No se puede eliminar el servicio porque tiene citas asociadas');
+            try {
+                const result = await db.query(query, [id]);
+                return result.rowCount > 0;
+            } catch (error) {
+                if (error.code === '23503') {
+                    throw new Error('No se puede eliminar el servicio porque tiene citas asociadas');
+                }
+                throw error;
             }
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async asignarProfesional(servicio_id, profesional_id, configuracion = {}, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 INSERT INTO servicios_profesionales (
                     servicio_id, profesional_id, precio_personalizado,
@@ -392,30 +344,25 @@ class ServicioModel {
                 configuracion.activo !== undefined ? configuracion.activo : true
             ];
 
-            const result = await db.query(query, values);
-            return result.rows[0];
-
-        } catch (error) {
-            if (error.code === '23503') {
-                if (error.detail.includes('servicio_id')) {
-                    throw new Error('El servicio especificado no existe');
+            try {
+                const result = await db.query(query, values);
+                return result.rows[0];
+            } catch (error) {
+                if (error.code === '23503') {
+                    if (error.detail.includes('servicio_id')) {
+                        throw new Error('El servicio especificado no existe');
+                    }
+                    if (error.detail.includes('profesional_id')) {
+                        throw new Error('El profesional especificado no existe');
+                    }
                 }
-                if (error.detail.includes('profesional_id')) {
-                    throw new Error('El profesional especificado no existe');
-                }
+                throw error;
             }
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async desasignarProfesional(servicio_id, profesional_id, organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 UPDATE servicios_profesionales
                 SET activo = false, actualizado_en = NOW()
@@ -424,20 +371,11 @@ class ServicioModel {
 
             const result = await db.query(query, [servicio_id, profesional_id]);
             return result.rowCount > 0;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerProfesionales(servicio_id, organizacion_id, solo_activos = true) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const condicionActivo = solo_activos ? 'AND sp.activo = true AND p.activo = true' : '';
 
             const query = `
@@ -456,20 +394,11 @@ class ServicioModel {
 
             const result = await db.query(query, [servicio_id]);
             return result.rows;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerServiciosPorProfesional(profesional_id, organizacion_id, solo_activos = true) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const condicionActivo = solo_activos ? 'AND sp.activo = true AND s.activo = true' : '';
 
             const query = `
@@ -490,20 +419,11 @@ class ServicioModel {
 
             const result = await db.query(query, [profesional_id]);
             return result.rows;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async buscar(termino, organizacion_id, opciones = {}) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const limite = opciones.limite || 10;
             const condicionActivo = opciones.solo_activos !== false ? 'AND s.activo = true' : '';
 
@@ -526,20 +446,11 @@ class ServicioModel {
 
             const result = await db.query(query, [termino, organizacion_id, limite]);
             return result.rows;
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerEstadisticas(organizacion_id) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 SELECT
                     COUNT(*) as total_servicios,
@@ -559,21 +470,12 @@ class ServicioModel {
 
             const result = await db.query(query, [organizacion_id]);
             return result.rows[0];
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     // Combina datos de plantilla con configuración personalizada
     static async crearDesdeePlantilla(organizacion_id, plantilla_id, configuracion_personalizada = {}) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacion_id.toString()]);
-
+        return await RLSContextManager.query(organizacion_id, async (db) => {
             const queryPlantilla = `
                 SELECT * FROM plantillas_servicios
                 WHERE id = $1 AND estado = 'activa'
@@ -608,12 +510,7 @@ class ServicioModel {
             };
 
             return await this.crear(servicioData);
-
-        } catch (error) {
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
 }

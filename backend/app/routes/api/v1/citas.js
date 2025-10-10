@@ -7,34 +7,6 @@ const router = express.Router();
 const validate = validation.validate;
 
 // ===================================================================
-// IA CONVERSACIONAL
-// ===================================================================
-
-router.post('/automatica',
-    rateLimiting.heavyOperationRateLimit,
-    validate(citaSchemas.crearAutomatica),
-    CitaController.crearAutomatica
-);
-
-router.get('/buscar-por-telefono',
-    rateLimiting.apiRateLimit,
-    validate(citaSchemas.buscarPorTelefono),
-    CitaController.buscarPorTelefono
-);
-
-router.put('/automatica/:codigo',
-    rateLimiting.heavyOperationRateLimit,
-    validate(citaSchemas.modificarAutomatica),
-    CitaController.modificarAutomatica
-);
-
-router.delete('/automatica/:codigo',
-    rateLimiting.heavyOperationRateLimit,
-    validate(citaSchemas.cancelarAutomatica),
-    CitaController.cancelarAutomatica
-);
-
-// ===================================================================
 // DASHBOARD Y MÉTRICAS
 // ===================================================================
 

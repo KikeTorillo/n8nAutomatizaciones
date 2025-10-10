@@ -1,16 +1,11 @@
 /** Modelo de Cliente - Operaciones CRUD con RLS multi-tenant */
 
-const { getDb } = require('../config/database');
+const RLSContextManager = require('../utils/rlsContextManager');
 
 class ClienteModel {
 
     static async crear(clienteData) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', clienteData.organizacion_id.toString()]);
-
+        return await RLSContextManager.query(clienteData.organizacion_id, async (db) => {
             const query = `
                 INSERT INTO clientes (
                     organizacion_id, nombre, email, telefono, fecha_nacimiento,
@@ -39,44 +34,38 @@ class ClienteModel {
                 clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true
             ];
 
-            const result = await db.query(query, values);
-            return result.rows[0];
+            try {
+                const result = await db.query(query, values);
+                return result.rows[0];
+            } catch (error) {
+                if (error.code === '23505') {
+                    if (error.constraint === 'unique_email_por_org') {
+                        throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
+                    }
+                    if (error.constraint === 'unique_telefono_por_org') {
+                        throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                    }
+                }
 
-        } catch (error) {
-            if (error.code === '23505') {
-                if (error.constraint === 'unique_email_por_org') {
-                    throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
+                if (error.code === '23514') {
+                    if (error.constraint === 'valid_email') {
+                        throw new Error('El formato del email no es válido');
+                    }
+                    if (error.constraint === 'valid_telefono') {
+                        throw new Error('El formato del teléfono no es válido');
+                    }
+                    if (error.constraint === 'valid_fecha_nacimiento') {
+                        throw new Error('La fecha de nacimiento no es válida (debe ser mayor a 5 años)');
+                    }
                 }
-                if (error.constraint === 'unique_telefono_por_org') {
-                    throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
-                }
+
+                throw error;
             }
-
-            if (error.code === '23514') {
-                if (error.constraint === 'valid_email') {
-                    throw new Error('El formato del email no es válido');
-                }
-                if (error.constraint === 'valid_telefono') {
-                    throw new Error('El formato del teléfono no es válido');
-                }
-                if (error.constraint === 'valid_fecha_nacimiento') {
-                    throw new Error('La fecha de nacimiento no es válida (debe ser mayor a 5 años)');
-                }
-            }
-
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerPorId(id, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
@@ -89,33 +78,25 @@ class ClienteModel {
 
             const result = await db.query(query, [id]);
             return result.rows[0] || null;
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async listar(options = {}) {
-        const db = await getDb();
+        const {
+            organizacionId,
+            page = 1,
+            limit = 20,
+            busqueda,
+            activos = true,
+            marketing,
+            ordenPor = 'nombre',
+            orden = 'ASC'
+        } = options;
 
-        try {
-            const {
-                organizacionId,
-                page = 1,
-                limit = 20,
-                busqueda,
-                activos = true,
-                marketing,
-                ordenPor = 'nombre',
-                orden = 'ASC'
-            } = options;
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const camposValidos = ['nombre', 'email', 'telefono', 'creado_en', 'actualizado_en'];
             const ordenValido = ['ASC', 'DESC'].includes(orden.toUpperCase()) ? orden.toUpperCase() : 'ASC';
             const campoOrden = camposValidos.includes(ordenPor) ? ordenPor : 'nombre';
-
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
 
             let whereConditions = [];
             let queryParams = [];
@@ -185,19 +166,11 @@ class ClienteModel {
                     tieneSiguiente: page < totalPages
                 }
             };
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async actualizar(id, clienteData, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const camposActualizables = [
                 'nombre', 'email', 'telefono', 'fecha_nacimiento',
                 'profesional_preferido_id', 'notas_especiales', 'alergias',
@@ -233,32 +206,26 @@ class ClienteModel {
                     creado_en, actualizado_en
             `;
 
-            const result = await db.query(query, queryParams);
-            return result.rows.length > 0 ? result.rows[0] : null;
+            try {
+                const result = await db.query(query, queryParams);
+                return result.rows.length > 0 ? result.rows[0] : null;
+            } catch (error) {
+                if (error.code === '23505') {
+                    if (error.constraint === 'unique_email_por_org') {
+                        throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
+                    }
+                    if (error.constraint === 'unique_telefono_por_org') {
+                        throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                    }
+                }
 
-        } catch (error) {
-            if (error.code === '23505') {
-                if (error.constraint === 'unique_email_por_org') {
-                    throw new Error(`El email ${clienteData.email} ya está registrado en esta organización`);
-                }
-                if (error.constraint === 'unique_telefono_por_org') {
-                    throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
-                }
+                throw error;
             }
-
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async eliminar(id, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE clientes
                 SET activo = false, actualizado_en = CURRENT_TIMESTAMP
@@ -268,19 +235,11 @@ class ClienteModel {
 
             const result = await db.query(query, [id]);
             return result.rows.length > 0;
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async buscar(termino, organizacionId, limit = 10) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
                     id, nombre, email, telefono,
@@ -294,19 +253,11 @@ class ClienteModel {
 
             const result = await db.query(query, [termino, limit]);
             return result.rows;
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerEstadisticas(organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
                     COUNT(*) as total_clientes,
@@ -320,20 +271,12 @@ class ClienteModel {
 
             const result = await db.query(query);
             return result.rows[0];
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     /** 🤖 IA: Buscar cliente por teléfono (fuzzy search + normalización) */
     static async buscarPorTelefono(telefono, organizacionId, opciones = {}) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const {
                 exacto = false,
                 incluir_inactivos = false,
@@ -432,6 +375,7 @@ class ClienteModel {
 
             } else if (crear_si_no_existe) {
                 try {
+                    // ✅ Llamar a this.crear() - cada método maneja su propia conexión
                     const clienteNuevo = await this.crear({
                         organizacion_id: organizacionId,
                         nombre: `Cliente ${telefonoNormalizado}`,
@@ -464,20 +408,12 @@ class ClienteModel {
             }
 
             return respuesta;
-
-        } finally {
-            db.release();
-        }
+        });
     }
 
     /** 🤖 IA: Buscar cliente por nombre (fuzzy search) */
     static async buscarPorNombre(nombre, organizacionId, limite = 10) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const nombreNormalizado = nombre.trim().toLowerCase();
 
             const query = `
@@ -516,10 +452,7 @@ class ClienteModel {
                           cliente.similaridad_nombre >= 0.4 ? 'media' : 'baja',
                 similaridad: parseFloat(cliente.similaridad_nombre)
             }));
-
-        } finally {
-            db.release();
-        }
+        });
     }
 }
 

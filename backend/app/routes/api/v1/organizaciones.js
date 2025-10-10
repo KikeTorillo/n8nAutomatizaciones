@@ -31,6 +31,33 @@ router.get('/',
     OrganizacionController.listar
 );
 
+// ========== Rutas de Consulta/Métricas (ANTES de /:id) ==========
+// IMPORTANTE: Estas rutas deben estar ANTES de /:id para que Express las matchee correctamente
+
+router.get('/:id/limites',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    validation.validate(organizacionSchemas.verificarLimites),
+    (req, res, next) => OrganizacionController.verificarLimites(req, res, next)
+);
+
+router.get('/:id/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    auth.requireAdminRole,
+    validation.validate(organizacionSchemas.obtenerEstadisticas),
+    (req, res, next) => OrganizacionController.obtenerEstadisticas(req, res, next)
+);
+
+router.get('/:id/metricas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    validation.validate(organizacionSchemas.obtenerMetricas),
+    OrganizacionController.obtenerMetricas
+);
+
+// ========== Rutas CRUD Básicas con /:id ==========
+
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
@@ -53,30 +80,6 @@ router.delete('/:id',
     rateLimiting.heavyOperationRateLimit,
     validation.validate(organizacionSchemas.desactivar),
     OrganizacionController.desactivar
-);
-
-// ========== Rutas de Consulta/Métricas ==========
-
-router.get('/:id/limites',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    validation.validate(organizacionSchemas.verificarLimites),
-    OrganizacionController.verificarLimites
-);
-
-router.get('/:id/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    auth.requireAdminRole,
-    validation.validate(organizacionSchemas.obtenerEstadisticas),
-    OrganizacionController.obtenerEstadisticas
-);
-
-router.get('/:id/metricas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    validation.validate(organizacionSchemas.obtenerMetricas),
-    OrganizacionController.obtenerMetricas
 );
 
 // ========== Rutas Administrativas ==========

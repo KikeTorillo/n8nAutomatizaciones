@@ -1,15 +1,9 @@
-const { getDb } = require('../../config/database');
-const logger = require('../../utils/logger');
+const RLSContextManager = require('../../utils/rlsContextManager');
 
 class CitaRecordatoriosModel {
 
     static async marcarRecordatorioEnviado(codigoCita, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const resultado = await db.query(`
                 UPDATE citas
                 SET recordatorio_enviado = true,
@@ -20,22 +14,11 @@ class CitaRecordatoriosModel {
             `, [codigoCita, organizacionId]);
 
             return resultado.rows.length > 0;
-
-        } catch (error) {
-            logger.error('[CitaRecordatoriosModel.marcarRecordatorioEnviado] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerCitasParaRecordatorio(organizacionId, horasAnticipacion = 2) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const citas = await db.query(`
                 SELECT
                     c.id,
@@ -59,22 +42,11 @@ class CitaRecordatoriosModel {
             `, [organizacionId]);
 
             return citas.rows;
-
-        } catch (error) {
-            logger.error('[CitaRecordatoriosModel.obtenerCitasParaRecordatorio] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async calificarCliente(codigoCita, organizacionId, calificacion) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const resultado = await db.query(`
                 UPDATE citas
                 SET calificacion_profesional = $1,
@@ -99,13 +71,7 @@ class CitaRecordatoriosModel {
                 mensaje: 'Calificación registrada exitosamente',
                 cita: resultado.rows[0]
             };
-
-        } catch (error) {
-            logger.error('[CitaRecordatoriosModel.calificarCliente] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 }
 

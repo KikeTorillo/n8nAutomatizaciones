@@ -1,4 +1,3 @@
-const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 
 const DEFAULTS = {
@@ -231,7 +230,7 @@ class CitaHelpersModel {
             await db.query(`
                 INSERT INTO eventos_sistema (
                     organizacion_id, tipo_evento, descripcion,
-                    cita_id, usuario_id, metadatos, creado_en
+                    cita_id, usuario_id, metadata, creado_en
                 ) VALUES ($1, $2, $3, $4, $5, $6, NOW())
             `, [
                 evento.organizacion_id,

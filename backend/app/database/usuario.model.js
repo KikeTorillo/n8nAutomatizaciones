@@ -266,25 +266,27 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
-            return await RLSHelper.withSelfAccess(db, userId, async (db) => {
-                // Obtener usuario con hash actual
-                const query = `SELECT password_hash FROM usuarios WHERE id = $1 AND activo = TRUE`;
+            // Primero obtener usuario con organizacion_id usando bypass
+            let usuario;
+            await RLSHelper.withBypass(db, async (db) => {
+                const query = `SELECT id, password_hash, organizacion_id FROM usuarios WHERE id = $1 AND activo = TRUE`;
                 const result = await db.query(query, [userId]);
-
                 if (!result.rows[0]) {
                     throw new Error('Usuario no encontrado');
                 }
+                usuario = result.rows[0];
+            });
 
-                // Verificar contraseña anterior
-                const passwordValida = await this.verificarPassword(passwordAnterior, result.rows[0].password_hash);
+            // Verificar contraseña anterior
+            const passwordValida = await this.verificarPassword(passwordAnterior, usuario.password_hash);
+            if (!passwordValida) {
+                throw new Error('Contraseña anterior incorrecta');
+            }
 
-                if (!passwordValida) {
-                    throw new Error('Contraseña anterior incorrecta');
-                }
-
+            // Actualizar contraseña con contexto completo (userId + tenantId)
+            return await RLSHelper.withContext(db, { userId, tenantId: usuario.organizacion_id }, async (db) => {
                 const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
-                // Actualizar contraseña
                 const updateQuery = `
                     UPDATE usuarios
                     SET password_hash = $1, actualizado_en = NOW()

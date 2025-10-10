@@ -1,16 +1,12 @@
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
+const RLSContextManager = require('../../utils/rlsContextManager');
 
 class CitaOperacionalModel {
 
     static async checkIn(citaId, datosCheckIn, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const resultado = await db.query(`
                 UPDATE citas
                 SET hora_llegada = NOW(),
@@ -30,30 +26,18 @@ class CitaOperacionalModel {
 
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
-                tipo_evento: 'cita_checkin',
+                tipo_evento: 'cita_confirmada',
                 descripcion: 'Cliente realizó check-in',
                 cita_id: citaId,
                 usuario_id: datosCheckIn.usuario_id
             }, db);
 
-            await db.query('COMMIT');
             return resultado.rows[0];
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async startService(citaId, datosInicio, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const resultado = await db.query(`
                 UPDATE citas
                 SET hora_inicio_real = NOW(),
@@ -70,24 +54,12 @@ class CitaOperacionalModel {
                 organizacionId
             ]);
 
-            await db.query('COMMIT');
             return resultado.rows[0];
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async complete(citaId, datosCompletado, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const resultado = await db.query(`
                 UPDATE citas
                 SET hora_fin_real = NOW(),
@@ -109,24 +81,12 @@ class CitaOperacionalModel {
                 organizacionId
             ]);
 
-            await db.query('COMMIT');
             return resultado.rows[0];
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async reagendar(citaId, datosReagenda, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const citaActual = await db.query('SELECT profesional_id FROM citas WHERE id = $1', [citaId]);
             if (citaActual.rows.length === 0) {
                 throw new Error('Cita no encontrada');
@@ -163,23 +123,12 @@ class CitaOperacionalModel {
                 organizacionId
             ]);
 
-            await db.query('COMMIT');
             return resultado.rows[0];
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerDashboardToday(organizacionId, profesionalId = null) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             let whereClause = 'WHERE c.organizacion_id = $1 AND c.fecha_cita = CURRENT_DATE';
             let params = [organizacionId];
 
@@ -229,21 +178,11 @@ class CitaOperacionalModel {
                 metricas: metricas.rows[0],
                 profesional_filtro: profesionalId
             };
-
-        } catch (error) {
-            logger.error('[CitaOperacionalModel.obtenerDashboardToday] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerColaEspera(organizacionId, profesionalId = null) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             let whereClause = `
                 WHERE c.organizacion_id = $1
                 AND c.fecha_cita = CURRENT_DATE
@@ -285,21 +224,11 @@ class CitaOperacionalModel {
                 tiempo_espera_promedio: cola.rows.length > 0 ?
                     cola.rows.reduce((sum, c) => sum + parseFloat(c.minutos_esperando), 0) / cola.rows.length : 0
             };
-
-        } catch (error) {
-            logger.error('[CitaOperacionalModel.obtenerColaEspera] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async obtenerMetricasTiempoReal(organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const metricas = await db.query(`
                 SELECT
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE) as citas_hoy,
@@ -352,22 +281,11 @@ class CitaOperacionalModel {
                 profesionales_hoy: profesionales.rows,
                 timestamp: new Date().toISOString()
             };
-
-        } catch (error) {
-            logger.error('[CitaOperacionalModel.obtenerMetricasTiempoReal] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async crearWalkIn(datosWalkIn, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosWalkIn.servicio_id, organizacionId, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado o inactivo');
@@ -462,7 +380,7 @@ class CitaOperacionalModel {
             // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
-                tipo_evento: 'cita_walk_in_creada',
+                tipo_evento: 'cita_creada',
                 descripcion: 'Cita walk-in creada desde punto de venta (sin cita previa)',
                 cita_id: citaCreada.id,
                 usuario_id: datosWalkIn.usuario_creador_id,
@@ -476,28 +394,12 @@ class CitaOperacionalModel {
                 }
             }, db);
 
-            await db.query('COMMIT');
             return citaCreada;
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            logger.error('[CitaOperacionalModel.crearWalkIn] Error:', {
-                error: error.message,
-                organizacion_id: organizacionId,
-                datos: datosWalkIn
-            });
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async consultarDisponibilidadInmediata(servicioId, profesionalId, organizacionId) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', organizacionId.toString()]);
-
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado');
@@ -557,13 +459,7 @@ class CitaOperacionalModel {
                 profesionales_disponibles: profesionales.rows,
                 timestamp: new Date().toISOString()
             };
-
-        } catch (error) {
-            logger.error('[CitaOperacionalModel.consultarDisponibilidadInmediata] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 }
 

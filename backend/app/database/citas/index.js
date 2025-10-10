@@ -4,7 +4,6 @@
  */
 
 const CitaBaseModel = require('./cita.base.model');
-const CitaAIModel = require('./cita.ai.model');
 const CitaOperacionalModel = require('./cita.operacional.model');
 const CitaRecordatoriosModel = require('./cita.recordatorios.model');
 const { CitaHelpersModel } = require('./cita.helpers.model');
@@ -14,26 +13,6 @@ const { CitaHelpersModel } = require('./cita.helpers.model');
  * Actúa como proxy puro sin lógica de negocio directa
  */
 class CitaModel {
-
-    // ===================================================================
-    // 🤖 MÉTODOS IA CONVERSACIONAL
-    // ===================================================================
-
-    static async crearAutomatica(datosIA) {
-        return CitaAIModel.crearAutomatica(datosIA);
-    }
-
-    static async buscarPorTelefono(telefono, organizacionId, estados = ['confirmada', 'pendiente'], incluir_historicas = false) {
-        return CitaAIModel.buscarPorTelefono(telefono, organizacionId, estados, incluir_historicas);
-    }
-
-    static async modificarAutomatica(codigoCita, cambios, organizacionId) {
-        return CitaAIModel.modificarAutomatica(codigoCita, cambios, organizacionId);
-    }
-
-    static async cancelarAutomatica(codigoCita, organizacionId, motivo = 'Cancelada por cliente') {
-        return CitaAIModel.cancelarAutomatica(codigoCita, organizacionId, motivo);
-    }
 
     // ===================================================================
     // 🛡️ MÉTODOS CRUD ESTÁNDAR

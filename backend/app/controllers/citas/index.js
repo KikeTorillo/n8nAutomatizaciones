@@ -3,7 +3,6 @@
  * Mantiene la misma interfaz que el controller monolítico original
  */
 
-const CitaAIController = require('./cita.ai.controller');
 const CitaBaseController = require('./cita.base.controller');
 const CitaOperacionalController = require('./cita.operacional.controller');
 const CitaRecordatoriosController = require('./cita.recordatorios.controller');
@@ -13,26 +12,6 @@ const CitaRecordatoriosController = require('./cita.recordatorios.controller');
  * Mantiene exactamente la misma interfaz pública que el controller original
  */
 class CitaController {
-
-    // ===================================================================
-    // 🤖 ENDPOINTS IA CONVERSACIONAL (WEBHOOKS)
-    // ===================================================================
-
-    static async crearAutomatica(req, res) {
-        return CitaAIController.crearAutomatica(req, res);
-    }
-
-    static async buscarPorTelefono(req, res) {
-        return CitaAIController.buscarPorTelefono(req, res);
-    }
-
-    static async modificarAutomatica(req, res) {
-        return CitaAIController.modificarAutomatica(req, res);
-    }
-
-    static async cancelarAutomatica(req, res) {
-        return CitaAIController.cancelarAutomatica(req, res);
-    }
 
     // ===================================================================
     // 🛡️ ENDPOINTS CRUD ESTÁNDAR (AUTENTICADOS)

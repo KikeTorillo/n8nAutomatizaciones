@@ -1,17 +1,19 @@
 const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
+const RLSContextManager = require('../../utils/rlsContextManager');
 
 class CitaBaseModel {
 
     static async crearEstandar(citaData, usuarioId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', citaData.organizacion_id.toString()]);
+        return await RLSContextManager.transaction(citaData.organizacion_id, async (db) => {
+            logger.info('[CitaBaseModel.crearEstandar] 🔍🔍🔍 INICIO CREATE', {
+                organizacion_id: citaData.organizacion_id,
+                cliente_id: citaData.cliente_id,
+                usuario_id: usuarioId,
+                db_processId: db.processID,
+                allCitaData: citaData
+            });
 
             // Validar entidades relacionadas
             await CitaHelpersModel.validarEntidadesRelacionadas(
@@ -32,6 +34,32 @@ class CitaBaseModel {
                 db
             );
 
+            // Auto-calcular precio si no se proporciona
+            let precioServicio = citaData.precio_servicio;
+            let precioFinal = citaData.precio_final;
+
+            // Si no se proporcionó precio, obtenerlo automáticamente del servicio
+            if (!precioServicio || !precioFinal) {
+                const servicio = await CitaHelpersModel.obtenerServicioCompleto(
+                    citaData.servicio_id,
+                    citaData.organizacion_id,
+                    db
+                );
+
+                if (servicio) {
+                    precioServicio = precioServicio || servicio.precio || 0.00;
+                    const descuento = citaData.descuento || 0.00;
+                    precioFinal = precioFinal || (precioServicio - descuento);
+
+                    logger.info('[CitaBaseModel.crearEstandar] 💰 Precio auto-calculado', {
+                        servicio_id: citaData.servicio_id,
+                        precio_servicio: precioServicio,
+                        descuento: descuento,
+                        precio_final: precioFinal
+                    });
+                }
+            }
+
             // Preparar datos completos para inserción (codigo_cita auto-generado por trigger)
             const datosCompletos = {
                 organizacion_id: citaData.organizacion_id,
@@ -42,9 +70,9 @@ class CitaBaseModel {
                 hora_inicio: citaData.hora_inicio,
                 hora_fin: citaData.hora_fin,
                 zona_horaria: citaData.zona_horaria || DEFAULTS.ZONA_HORARIA,
-                precio_servicio: citaData.precio_servicio,
+                precio_servicio: precioServicio,
                 descuento: citaData.descuento || 0.00,
-                precio_final: citaData.precio_final,
+                precio_final: precioFinal,
                 estado: citaData.estado || 'pendiente',
                 metodo_pago: citaData.metodo_pago || null,
                 pagado: citaData.pagado || false,
@@ -65,7 +93,7 @@ class CitaBaseModel {
             // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: citaData.organizacion_id,
-                tipo_evento: 'cita_creada_estandar',
+                tipo_evento: 'cita_creada',
                 descripcion: 'Cita creada via endpoint estándar autenticado',
                 cita_id: nuevaCita.id,
                 usuario_id: usuarioId,
@@ -77,30 +105,55 @@ class CitaBaseModel {
                 }
             }, db);
 
-            await db.query('COMMIT');
-            return nuevaCita;
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.crearEstandar] Error:', {
-                error: error.message,
-                stack: error.stack,
-                organizacion_id: citaData.organizacion_id
+            logger.info('[CitaBaseModel.crearEstandar] 🔍 COMMIT EXITOSO', {
+                cita_id: nuevaCita.id,
+                organizacion_id: nuevaCita.organizacion_id,
+                codigo_cita: nuevaCita.codigo_cita,
+                db_processId: db.processID
             });
-            throw error;
-        } finally {
-            db.release();
-        }
+
+            return nuevaCita;
+        });
     }
 
+    /**
+     * Verificar existencia de cita (sin JOINs) - Optimizado para validaciones internas
+     * @param {number} citaId - ID de la cita
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} db - Conexión de base de datos (requerida, debe venir de transacción)
+     * @returns {Promise<Object|null>} Datos básicos de la cita o null
+     */
+    static async verificarExistencia(citaId, organizacionId, db) {
+        logger.info('[CitaBaseModel.verificarExistencia] 🔍 Verificando', {
+            cita_id: citaId,
+            organizacion_id: organizacionId,
+            db_processId: db.processID
+        });
+
+        const resultado = await db.query(`
+            SELECT * FROM citas WHERE id = $1 AND organizacion_id = $2
+        `, [citaId, organizacionId]);
+
+        logger.info('[CitaBaseModel.verificarExistencia] 🔍 Resultado', {
+            cita_id: citaId,
+            organizacion_id: organizacionId,
+            encontrada: resultado.rows.length > 0,
+            rowCount: resultado.rows.length,
+            datos: resultado.rows[0] || 'NO ENCONTRADA'
+        });
+
+        return resultado.rows.length > 0 ? resultado.rows[0] : null;
+    }
+
+    /**
+     * Obtener cita por ID con datos completos (incluye JOINs)
+     * Usar solo cuando se necesiten los datos relacionados (cliente, profesional, servicio)
+     * Para validaciones internas, usar verificarExistencia() en su lugar
+     */
     static async obtenerPorId(citaId, organizacionId, db = null) {
-        const connection = db || await getDb();
-
-        try {
-            await connection.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
-            const cita = await connection.query(`
+        // Si recibimos una conexión externa (desde transacción), usarla directamente
+        if (db) {
+            const cita = await db.query(`
                 SELECT
                     c.*,
                     cl.nombre as cliente_nombre,
@@ -119,29 +172,52 @@ class CitaBaseModel {
             `, [citaId, organizacionId]);
 
             return cita.rows.length > 0 ? cita.rows[0] : null;
-
-        } catch (error) {
-            logger.error('[CitaBaseModel.obtenerPorId] Error:', {
-                error: error.message,
-                cita_id: citaId,
-                organizacion_id: organizacionId
-            });
-            throw error;
         }
+
+        // Si no hay conexión externa, usar RLSContextManager
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const cita = await db.query(`
+                SELECT
+                    c.*,
+                    cl.nombre as cliente_nombre,
+                    cl.telefono as cliente_telefono,
+                    cl.email as cliente_email,
+                    p.nombre_completo as profesional_nombre,
+                    p.especialidades as profesional_especialidades,
+                    s.nombre as servicio_nombre,
+                    s.descripcion as servicio_descripcion,
+                    s.duracion_minutos as servicio_duracion
+                FROM citas c
+                JOIN clientes cl ON c.cliente_id = cl.id
+                JOIN profesionales p ON c.profesional_id = p.id
+                JOIN servicios s ON c.servicio_id = s.id
+                WHERE c.id = $1 AND c.organizacion_id = $2
+            `, [citaId, organizacionId]);
+
+            return cita.rows.length > 0 ? cita.rows[0] : null;
+        });
     }
 
     static async actualizarEstandar(citaId, datosActualizacion, organizacionId, usuarioId) {
-        const db = await getDb();
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[CitaBaseModel.actualizarEstandar] 🔍🔍🔍 INICIO UPDATE', {
+                cita_id: citaId,
+                organizacion_id: organizacionId,
+                usuario_id: usuarioId,
+                db_processId: db.processID,
+                datosActualizacion
+            });
 
-        try {
-            await db.query('BEGIN');
+            // Verificar que la cita existe (sin JOINs para mejor rendimiento)
+            const citaExistente = await this.verificarExistencia(citaId, organizacionId, db);
 
-            // Configurar contexto RLS
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
+            logger.info('[CitaBaseModel.actualizarEstandar] 🔍🔍🔍 POST-VERIFICAR', {
+                encontrada: !!citaExistente,
+                cita_id: citaId,
+                organizacion_id_buscado: organizacionId,
+                organizacion_id_encontrado: citaExistente?.organizacion_id
+            });
 
-            // Verificar que la cita existe
-            const citaExistente = await this.obtenerPorId(citaId, organizacionId, db);
             if (!citaExistente) {
                 throw new Error('Cita no encontrada');
             }
@@ -165,6 +241,17 @@ class CitaBaseModel {
                     citaId,
                     db
                 );
+            }
+
+            // Lógica de negocio: Si se marca como completada y tiene precio > 0, debe estar pagada
+            if (datosActualizacion.estado === 'completada' && citaExistente.precio_final > 0) {
+                if (!datosActualizacion.hasOwnProperty('pagado')) {
+                    datosActualizacion.pagado = true;
+                    logger.info('[CitaBaseModel.actualizarEstandar] Auto-marcando como pagada', {
+                        cita_id: citaId,
+                        precio_final: citaExistente.precio_final
+                    });
+                }
             }
 
             // Construir query de actualización dinámicamente
@@ -211,7 +298,7 @@ class CitaBaseModel {
             // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
-                tipo_evento: 'cita_actualizada',
+                tipo_evento: 'cita_modificada',
                 descripcion: 'Cita actualizada via endpoint estándar',
                 cita_id: citaId,
                 usuario_id: usuarioId,
@@ -222,33 +309,14 @@ class CitaBaseModel {
                 }
             }, db);
 
-            await db.query('COMMIT');
-
             return resultado.rows[0];
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.actualizarEstandar] Error:', {
-                error: error.message,
-                cita_id: citaId,
-                organizacion_id: organizacionId
-            });
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async eliminarEstandar(citaId, organizacionId, usuarioId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
-            const citaExistente = await this.obtenerPorId(citaId, organizacionId, db);
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Verificar que la cita existe (sin JOINs para mejor rendimiento)
+            const citaExistente = await this.verificarExistencia(citaId, organizacionId, db);
             if (!citaExistente) {
                 return false;
             }
@@ -278,52 +346,27 @@ class CitaBaseModel {
                 WHERE cita_id = $1
             `, [citaId]);
 
-            await db.query('COMMIT');
-
-            // Auditoría DESPUÉS del commit
-            try {
-                await CitaHelpersModel.registrarEventoAuditoria({
-                    organizacion_id: organizacionId,
-                    tipo_evento: 'cita_cancelada',
-                    descripcion: 'Cita cancelada via endpoint estándar',
-                    cita_id: citaId,
-                    usuario_id: usuarioId,
-                    metadatos: {
-                        estado_anterior: citaExistente.estado,
-                        motivo: 'Cancelada por administrador'
-                    }
-                }, db);
-            } catch (auditError) {
-                logger.error('[eliminarEstandar] Error en auditoría:', auditError);
-            }
+            // Auditoría dentro de la transacción
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: organizacionId,
+                tipo_evento: 'cita_cancelada',
+                descripcion: 'Cita cancelada via endpoint estándar',
+                cita_id: citaId,
+                usuario_id: usuarioId,
+                metadatos: {
+                    estado_anterior: citaExistente.estado,
+                    motivo: 'Cancelada por administrador'
+                }
+            }, db);
 
             return true;
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.eliminarEstandar] Error:', {
-                error: error.message,
-                cita_id: citaId,
-                organizacion_id: organizacionId
-            });
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async confirmarAsistenciaEstandar(citaId, organizacionId, usuarioId) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-
-            // Configurar contexto RLS
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-
-            // Verificar que la cita existe
-            const citaExistente = await this.obtenerPorId(citaId, organizacionId, db);
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Verificar que la cita existe (sin JOINs para mejor rendimiento)
+            const citaExistente = await this.verificarExistencia(citaId, organizacionId, db);
             if (!citaExistente) {
                 return { exito: false, mensaje: 'Cita no encontrada' };
             }
@@ -347,43 +390,25 @@ class CitaBaseModel {
                 RETURNING *
             `, [usuarioId, citaId, organizacionId]);
 
-            await db.query('COMMIT');
-
-            // Auditoría DESPUÉS del commit (fuera de la transacción)
-            try {
-                await CitaHelpersModel.registrarEventoAuditoria({
-                    organizacion_id: organizacionId,
-                    tipo_evento: 'cita_confirmada',
-                    descripcion: 'Asistencia confirmada por cliente',
-                    cita_id: citaId,
-                    usuario_id: usuarioId,
-                    metadatos: {
-                        estado_anterior: citaExistente.estado,
-                        confirmada_en: new Date().toISOString()
-                    }
-                }, db);
-            } catch (auditError) {
-                logger.error('[confirmarAsistenciaEstandar] Error en auditoría:', auditError);
-                // No lanzar error, la cita ya fue confirmada exitosamente
-            }
+            // Auditoría dentro de la transacción
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: organizacionId,
+                tipo_evento: 'cita_confirmada',
+                descripcion: 'Asistencia confirmada por cliente',
+                cita_id: citaId,
+                usuario_id: usuarioId,
+                metadatos: {
+                    estado_anterior: citaExistente.estado,
+                    confirmada_en: new Date().toISOString()
+                }
+            }, db);
 
             return {
                 exito: true,
                 mensaje: 'Asistencia confirmada exitosamente',
                 cita: resultado.rows[0]
             };
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            logger.error('[CitaBaseModel.confirmarAsistenciaEstandar] Error:', {
-                error: error.message,
-                cita_id: citaId,
-                organizacion_id: organizacionId
-            });
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     /**
@@ -392,12 +417,7 @@ class CitaBaseModel {
      * @returns {Promise<Object>} Citas y total
      */
     static async listarConFiltros(filtros) {
-        const db = await getDb();
-
-        try {
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', filtros.organizacion_id.toString()]);
-
+        return await RLSContextManager.query(filtros.organizacion_id, async (db) => {
             let whereConditions = ['c.organizacion_id = $1'];
             let params = [filtros.organizacion_id];
             let paramCount = 1;
@@ -486,13 +506,7 @@ class CitaBaseModel {
                 citas: dataResult.rows,
                 total: total
             };
-
-        } catch (error) {
-            logger.error('[CitaBaseModel.listarConFiltros] Error:', error);
-            throw error;
-        } finally {
-            db.release();
-        }
+        });
     }
 }
 

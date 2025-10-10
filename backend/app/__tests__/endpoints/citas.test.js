@@ -320,33 +320,6 @@ describe('Endpoints de Citas', () => {
   });
 
   // ============================================================================
-  // Tests de Buscar Citas por Teléfono (Endpoint IA)
-  // ============================================================================
-
-  describe('GET /api/v1/citas/buscar-por-telefono', () => {
-    test('Buscar citas por teléfono del cliente', async () => {
-      const response = await request(app)
-        .get('/api/v1/citas/buscar-por-telefono')
-        .query({
-          telefono: testCliente.telefono,
-          organizacion_id: testOrg.id
-        })
-        .expect(200);
-
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body.data).toBeDefined();
-    });
-
-    test('Falla sin parámetro telefono', async () => {
-      const response = await request(app)
-        .get('/api/v1/citas/buscar-por-telefono')
-        .expect(400);
-
-      expect(response.body).toHaveProperty('success', false);
-    });
-  });
-
-  // ============================================================================
   // Tests de Confirmar Asistencia
   // ============================================================================
 
