@@ -1,0 +1,165 @@
+import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { planesApi } from '@/services/api/endpoints';
+import useOnboardingStore from '@/store/onboardingStore';
+import Button from '@/components/ui/Button';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { formatCurrency } from '@/lib/utils';
+import { CreditCard, Check } from 'lucide-react';
+
+/**
+ * Paso 2: Selección de Plan
+ */
+function Step2_PlanSelection() {
+  const { formData, updateFormData, nextStep, prevStep } = useOnboardingStore();
+  const [selectedPlan, setSelectedPlan] = useState(formData.plan.plan_id);
+
+  // Fetch planes desde el backend
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['planes'],
+    queryFn: async () => {
+      const response = await planesApi.listar();
+      return response.data.data;
+    },
+  });
+
+  const handleSelectPlan = (plan) => {
+    setSelectedPlan(plan.id);
+    updateFormData('plan', {
+      plan_id: plan.id,
+      plan_codigo: plan.codigo_plan,    // ✅ Guardar código del plan (trial, basico, etc.)
+      plan_nombre: plan.nombre,         // Guardar nombre para mostrar
+      plan_precio: plan.precio_mensual,
+    });
+  };
+
+  const handleContinue = () => {
+    if (!selectedPlan) {
+      alert('Por favor selecciona un plan');
+      return;
+    }
+    nextStep();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="py-12">
+        <LoadingSpinner size="lg" text="Cargando planes disponibles..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-red-600 mb-4">Error al cargar los planes</p>
+        <Button onClick={() => window.location.reload()}>
+          Reintentar
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="text-center">
+        <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
+          <CreditCard className="w-8 h-8 text-primary-600" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          Selecciona tu Plan
+        </h2>
+        <p className="text-gray-600">
+          Elige el plan que mejor se adapte a tu negocio
+        </p>
+      </div>
+
+      {/* Planes */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {data?.map((plan) => (
+          <div
+            key={plan.id}
+            onClick={() => handleSelectPlan(plan)}
+            className={`
+              relative border-2 rounded-lg p-6 cursor-pointer transition-all
+              ${selectedPlan === plan.id
+                ? 'border-primary-600 bg-primary-50'
+                : 'border-gray-200 hover:border-primary-300'
+              }
+            `}
+          >
+            {/* Check badge */}
+            {selectedPlan === plan.id && (
+              <div className="absolute top-4 right-4">
+                <div className="bg-primary-600 text-white rounded-full p-1">
+                  <Check className="w-4 h-4" />
+                </div>
+              </div>
+            )}
+
+            {/* Nombre del plan */}
+            <h3 className="text-xl font-bold text-gray-900 mb-2">
+              {plan.nombre}
+            </h3>
+
+            {/* Precio */}
+            <div className="mb-4">
+              <span className="text-3xl font-bold text-gray-900">
+                {formatCurrency(plan.precio_mensual)}
+              </span>
+              <span className="text-gray-600">/mes</span>
+            </div>
+
+            {/* Descripción */}
+            {plan.descripcion && (
+              <p className="text-sm text-gray-600 mb-4">
+                {plan.descripcion}
+              </p>
+            )}
+
+            {/* Features */}
+            <ul className="space-y-2">
+              <li className="flex items-start text-sm text-gray-700">
+                <Check className="w-4 h-4 text-primary-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>Hasta {plan.max_profesionales} profesionales</span>
+              </li>
+              <li className="flex items-start text-sm text-gray-700">
+                <Check className="w-4 h-4 text-primary-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>Hasta {plan.max_citas_mes} citas/mes</span>
+              </li>
+              <li className="flex items-start text-sm text-gray-700">
+                <Check className="w-4 h-4 text-primary-600 mr-2 mt-0.5 flex-shrink-0" />
+                <span>Hasta {plan.max_usuarios} usuarios</span>
+              </li>
+              {plan.incluye_whatsapp && (
+                <li className="flex items-start text-sm text-gray-700">
+                  <Check className="w-4 h-4 text-primary-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Integración WhatsApp</span>
+                </li>
+              )}
+              {plan.incluye_recordatorios && (
+                <li className="flex items-start text-sm text-gray-700">
+                  <Check className="w-4 h-4 text-primary-600 mr-2 mt-0.5 flex-shrink-0" />
+                  <span>Recordatorios automáticos</span>
+                </li>
+              )}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      {/* Botones */}
+      <div className="flex justify-between pt-4">
+        <Button variant="outline" onClick={prevStep}>
+          Anterior
+        </Button>
+        <Button onClick={handleContinue} disabled={!selectedPlan}>
+          Continuar
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+export default Step2_PlanSelection;

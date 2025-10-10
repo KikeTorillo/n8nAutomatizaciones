@@ -276,7 +276,7 @@ flowchart LR
         C2[Citas de Org 456]
     end
 
-    subgraph DB[(PostgreSQL RLS)]
+    subgraph DB[PostgreSQL RLS]
         RLS[Row Level Security]
         Q1[Query con org_id = 123]
         Q2[Query con org_id = 456]

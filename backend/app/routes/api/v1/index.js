@@ -9,6 +9,7 @@ const horariosRouter = require('./horarios');
 const citasRouter = require('./citas');
 const usuariosRouter = require('./usuarios');
 const bloqueosHorariosRouter = require('./bloqueos-horarios');
+const planesRouter = require('./planes');
 
 function routerApi(app) {
     const router = express.Router();
@@ -17,6 +18,9 @@ function routerApi(app) {
 
     // Rutas de autenticación y gestión de contraseñas
     router.use('/auth', authRouter);
+
+    // Rutas públicas
+    router.use('/planes', planesRouter);
 
     // Rutas de recursos
     router.use('/organizaciones', organizacionesRouter);

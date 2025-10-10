@@ -56,18 +56,18 @@ describe('Endpoints de Servicios', () => {
       organizacionId: testOrg.id
     });
 
-    // Crear servicio de prueba
-    testServicio = await createTestServicio(client, testOrg.id, {
-      nombre: 'Servicio Test',
-      duracion_minutos: 30,
-      precio: 150.00
-    });
-
-    // Crear profesional de prueba para asignación
+    // ✅ IMPORTANTE: Crear profesional ANTES del servicio
     testProfesional = await createTestProfesional(client, testOrg.id, {
       nombre_completo: 'Profesional Test',
       tipo_profesional: 'barbero'
     });
+
+    // ✅ Crear servicio de prueba con profesional asignado
+    testServicio = await createTestServicio(client, testOrg.id, {
+      nombre: 'Servicio Test',
+      duracion_minutos: 30,
+      precio: 150.00
+    }, [testProfesional.id]);  // ✅ Asignar profesional al servicio
 
     // Crear segunda organización para tests RLS
     otherOrg = await createTestOrganizacion(client, {
@@ -112,7 +112,8 @@ describe('Endpoints de Servicios', () => {
         descripcion: 'Servicio de prueba',
         duracion_minutos: 45,
         precio: 200.00,
-        categoria: 'Cabello'
+        categoria: 'Cabello',
+        profesionales_ids: [testProfesional.id]  // ✅ Requerido desde validación actualizada
       };
 
       const response = await request(app)
@@ -126,6 +127,12 @@ describe('Endpoints de Servicios', () => {
       expect(response.body.data.nombre).toBe(servicioData.nombre);
       expect(response.body.data.duracion_minutos).toBe(servicioData.duracion_minutos);
       expect(parseFloat(response.body.data.precio)).toBe(servicioData.precio);
+
+      // ✅ Validar que el profesional fue asociado
+      expect(response.body.data).toHaveProperty('profesionales');
+      expect(response.body.data.profesionales).toBeInstanceOf(Array);
+      expect(response.body.data.profesionales.length).toBe(1);
+      expect(response.body.data.profesionales[0].id).toBe(testProfesional.id);
     });
 
     test('Falla sin autenticación', async () => {
@@ -170,6 +177,25 @@ describe('Endpoints de Servicios', () => {
         .expect(400);
 
       expect(response.body).toHaveProperty('success', false);
+    });
+
+    test('❌ Falla sin profesionales_ids requerido', async () => {
+      const uniqueId = getUniqueTestId();
+
+      const response = await request(app)
+        .post('/api/v1/servicios')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre: `Servicio ${uniqueId}`,
+          duracion_minutos: 30,
+          precio: 100.00
+          // ❌ Falta profesionales_ids (requerido)
+        })
+        .expect(400);
+
+      expect(response.body).toHaveProperty('success', false);
+      // Validar que es error de validación (puede ser mensaje genérico o específico)
+      expect(response.body.message).toMatch(/validación|profesionales_ids|requerido/i);
     });
 
     test('✅ Crear servicio con profesionales_ids en el body', async () => {
