@@ -42,14 +42,17 @@ function Step3_AccountSetup() {
       const apellidos = nombrePartes.slice(1).join(' ') || 'Sin Apellido';
 
       // Preparar datos según formato del backend
+      // Sanitizar campos opcionales (convertir "" a undefined para omitir del payload)
+      const nombre_fiscal_sanitized = formData.businessInfo.nombre_fiscal?.trim();
+
       const registroData = {
         organizacion: {
           nombre_comercial: formData.businessInfo.nombre_comercial,
-          razon_social: formData.businessInfo.nombre_fiscal || formData.businessInfo.nombre_comercial,
-          rfc: formData.businessInfo.rfc_nif || null,
+          razon_social: nombre_fiscal_sanitized || formData.businessInfo.nombre_comercial,
+          // rfc removido - no existe en Step1
           tipo_industria: formData.businessInfo.industria || 'otro',
           plan: formData.plan.plan_codigo || 'basico',  // ✅ Usar código del plan directamente
-          telefono_principal: formData.businessInfo.telefono_principal || null,
+          telefono_principal: formData.businessInfo.telefono_principal,
           email_contacto: data.email,
         },
         admin: {
@@ -57,7 +60,7 @@ function Step3_AccountSetup() {
           apellidos,
           email: data.email,
           password: data.password,
-          telefono: formData.businessInfo.telefono_principal || null,
+          telefono: formData.businessInfo.telefono_principal || undefined,
         },
         aplicar_plantilla_servicios: true,
         enviar_email_bienvenida: false,

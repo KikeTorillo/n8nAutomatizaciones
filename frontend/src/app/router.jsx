@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import App from './App';
+import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
 // Lazy loading de páginas
 import { lazy, Suspense } from 'react';
@@ -16,6 +17,11 @@ const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
 const OnboardingFlow = lazy(() => import('@/pages/onboarding/OnboardingFlow'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
+
+// Páginas de Clientes
+const ClientesPage = lazy(() => import('@/pages/clientes/ClientesPage'));
+const ClienteFormPage = lazy(() => import('@/pages/clientes/ClienteFormPage'));
+const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'));
 
 // Wrapper para lazy loading
 const withSuspense = (Component) => {
@@ -45,8 +51,54 @@ export const router = createBrowserRouter([
       },
       {
         path: 'dashboard',
-        element: withSuspense(Dashboard),
+        element: (
+          <ProtectedRoute>
+            {withSuspense(Dashboard)}
+          </ProtectedRoute>
+        ),
       },
+      // Rutas de Clientes
+      {
+        path: 'clientes',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ClientesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'clientes/nuevo',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ClienteFormPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'clientes/:id',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ClienteDetailPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'clientes/:id/editar',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ClienteFormPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Agregar más rutas protegidas aquí
+      // {
+      //   path: 'settings',
+      //   element: (
+      //     <ProtectedRoute requiredRole={['admin', 'propietario']}>
+      //       {withSuspense(SettingsPage)}
+      //     </ProtectedRoute>
+      //   ),
+      // },
     ],
   },
 ]);

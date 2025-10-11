@@ -1,118 +1,127 @@
 import axios from 'axios';
-import { API_URL } from '@/lib/constants';
+import useAuthStore from '@/store/authStore';
 
-/**
- * Cliente Axios configurado con interceptors para JWT
- */
 const apiClient = axios.create({
-  baseURL: API_URL,
+  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 segundos
 });
 
-/**
- * Request Interceptor
- * - Agrega token JWT automáticamente
- * - Agrega X-Organization-Id para super_admin
- */
+// Variable para controlar el refresh en progreso
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
+// ========== INTERCEPTOR DE REQUEST ==========
+// Agregar token a todas las peticiones
 apiClient.interceptors.request.use(
   (config) => {
-    // Obtener tokens del localStorage
-    const authData = localStorage.getItem('auth-storage');
+    const { accessToken } = useAuthStore.getState();
 
-    if (authData) {
-      try {
-        const { state } = JSON.parse(authData);
-        const { accessToken, user } = state;
-
-        // Agregar Authorization header
-        if (accessToken) {
-          config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-
-        // Si es super_admin y hay organizacion_id en params, moverlo a header
-        if (user?.rol === 'super_admin' && config.params?.organizacion_id) {
-          config.headers['X-Organization-Id'] = config.params.organizacion_id;
-          delete config.params.organizacion_id;
-        }
-      } catch (error) {
-        console.error('Error parsing auth data:', error);
-      }
+    if (accessToken) {
+      config.headers['Authorization'] = `Bearer ${accessToken}`;
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-/**
- * Response Interceptor
- * - Auto-refresh token en 401
- * - Manejo de errores centralizado
- */
+// ========== INTERCEPTOR DE RESPONSE ==========
+// Manejo de errores y auto-refresh de token
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Si es 401 y no es un retry
+    // Si el error es 401 y no hemos intentado refresh aún
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // Si ya hay un refresh en progreso, agregar esta petición a la cola
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers['Authorization'] = `Bearer ${token}`;
+            return apiClient(originalRequest);
+          })
+          .catch((err) => {
+            return Promise.reject(err);
+          });
+      }
+
       originalRequest._retry = true;
+      isRefreshing = true;
+
+      const { refreshToken, accessToken } = useAuthStore.getState();
+
+      // Si NO hay refreshToken pero SÍ hay accessToken (onboarding),
+      // el token de onboarding dura 7 días y no necesita refresh.
+      // El 401 indica que el token es inválido/expirado, hacer logout.
+      if (!refreshToken) {
+        console.log('⚠️ Sin refreshToken - Token de onboarding expirado/inválido');
+        useAuthStore.getState().logout();
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
 
       try {
-        // Obtener refresh token
-        const authData = localStorage.getItem('auth-storage');
-        if (!authData) {
-          throw new Error('No auth data');
-        }
+        console.log('🔄 Token expirado, intentando refresh...');
 
-        const { state } = JSON.parse(authData);
-        const { refreshToken } = state;
+        // Hacer refresh sin el interceptor (para evitar loop)
+        const response = await axios.post(
+          `${apiClient.defaults.baseURL}/auth/refresh`,
+          { refreshToken }
+        );
 
-        if (!refreshToken) {
-          throw new Error('No refresh token');
-        }
+        const { accessToken, refreshToken: newRefreshToken } = response.data.data;
 
-        // Intentar refresh
-        const response = await axios.post(`${API_URL}/auth/refresh`, {
-          refreshToken,
+        console.log('✅ Tokens refrescados exitosamente');
+
+        // Actualizar tokens en el store
+        useAuthStore.getState().setTokens({
+          accessToken,
+          refreshToken: newRefreshToken,
         });
 
-        const { accessToken: newAccessToken, refreshToken: newRefreshToken } =
-          response.data.data;
+        // Actualizar el header de la petición original
+        originalRequest.headers['Authorization'] = `Bearer ${accessToken}`;
 
-        // Actualizar tokens en localStorage
-        const updatedAuthData = {
-          ...JSON.parse(authData),
-          state: {
-            ...state,
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken,
-          },
-        };
-        localStorage.setItem('auth-storage', JSON.stringify(updatedAuthData));
+        // Procesar la cola de peticiones fallidas
+        processQueue(null, accessToken);
 
-        // Reintentar request original con nuevo token
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        isRefreshing = false;
+
+        // Reintentar la petición original
         return apiClient(originalRequest);
       } catch (refreshError) {
-        // Si falla el refresh, limpiar auth y redirigir a login
-        localStorage.removeItem('auth-storage');
+        console.error('❌ Error al refrescar token:', refreshError);
+        processQueue(refreshError, null);
+        isRefreshing = false;
+
+        // Si falla el refresh, hacer logout
+        useAuthStore.getState().logout();
         window.location.href = '/login';
+
         return Promise.reject(refreshError);
       }
     }
 
-    // Manejo de errores
-    const errorMessage = error.response?.data?.error || error.message || 'Error desconocido';
-
-    return Promise.reject({
-      message: errorMessage,
-      status: error.response?.status,
-      data: error.response?.data,
-    });
+    return Promise.reject(error);
   }
 );
 

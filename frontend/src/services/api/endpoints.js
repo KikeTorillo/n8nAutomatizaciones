@@ -183,10 +183,11 @@ export const clientesApi = {
   crear: (data) => apiClient.post('/clientes', data),
 
   /**
-   * Listar clientes
-   * @returns {Promise<Object>}
+   * Listar clientes con paginación
+   * @param {Object} params - { page, limit, busqueda, activo, marketing_permitido, ordenPor, orden }
+   * @returns {Promise<Object>} { data, pagination }
    */
-  listar: () => apiClient.get('/clientes'),
+  listar: (params = {}) => apiClient.get('/clientes', { params }),
 
   /**
    * Obtener cliente por ID
@@ -202,6 +203,48 @@ export const clientesApi = {
    * @returns {Promise<Object>}
    */
   actualizar: (id, data) => apiClient.put(`/clientes/${id}`, data),
+
+  /**
+   * Eliminar cliente (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/clientes/${id}`),
+
+  /**
+   * Búsqueda rápida de clientes
+   * @param {Object} params - { q, limit }
+   * @returns {Promise<Object>}
+   */
+  buscar: (params) => apiClient.get('/clientes/buscar', { params }),
+
+  /**
+   * Buscar cliente por teléfono (útil para walk-in)
+   * @param {Object} params - { telefono, exacto, incluir_inactivos, crear_si_no_existe }
+   * @returns {Promise<Object>}
+   */
+  buscarPorTelefono: (params) => apiClient.get('/clientes/buscar-telefono', { params }),
+
+  /**
+   * Buscar cliente por nombre
+   * @param {Object} params - { nombre, limit }
+   * @returns {Promise<Object>}
+   */
+  buscarPorNombre: (params) => apiClient.get('/clientes/buscar-nombre', { params }),
+
+  /**
+   * Obtener estadísticas de clientes
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticas: () => apiClient.get('/clientes/estadisticas'),
+
+  /**
+   * Cambiar estado de cliente (activo/inactivo)
+   * @param {number} id
+   * @param {boolean} activo
+   * @returns {Promise<Object>}
+   */
+  cambiarEstado: (id, activo) => apiClient.patch(`/clientes/${id}/estado`, { activo }),
 };
 
 // ==================== CITAS ====================
@@ -241,6 +284,20 @@ export const citasApi = {
    * @returns {Promise<Object>}
    */
   cancelar: (id) => apiClient.patch(`/citas/${id}/cancelar`),
+
+  /**
+   * Crear cita walk-in (cliente sin cita previa)
+   * @param {Object} data - { cliente_id, nombre_cliente, profesional_id, servicio_id, tiempo_espera_aceptado, notas_walk_in }
+   * @returns {Promise<Object>}
+   */
+  crearWalkIn: (data) => apiClient.post('/citas/walk-in', data),
+
+  /**
+   * Consultar disponibilidad inmediata para walk-in
+   * @param {Object} params - { servicio_id, profesional_id }
+   * @returns {Promise<Object>}
+   */
+  disponibilidadInmediata: (params) => apiClient.get('/citas/disponibilidad-inmediata', { params }),
 };
 
 // ==================== PLANES ====================

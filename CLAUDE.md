@@ -10,13 +10,14 @@
 
 ## 📊 Estado Actual del Proyecto
 
-**Actualizado**: 09 Octubre 2025
+**Actualizado**: 10 Octubre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
 | **Backend API** | ✅ **100%** | 9 módulos, RLS activo |
+| **Frontend React** | ✅ **100%** | Onboarding E2E validado |
 | **Base de Datos** | ✅ **100%** | 17 tablas, 17 RLS policies, 152 índices |
-| **Suite Tests** | ✅ **481/482 (99.8%)** | 25 suites, ~41s ejecución |
+| **Suite Tests Backend** | ✅ **481/482 (99.8%)** | 25 suites, ~41s ejecución |
 | **Tests SQL** | ✅ **5/5 (100%)** | Setup, RLS, Performance |
 | **Sistema IA** | ✅ **Operativo** | n8n + Evolution API (WhatsApp) |
 | **Docker** | ✅ **Running** | 7 contenedores |
@@ -25,9 +26,18 @@
 
 ## 🛠 Stack Técnico
 
+### Frontend
+- **Framework**: React 19.1.1 + Vite 7.1.7
+- **Routing**: React Router DOM 7.9.4
+- **State Management**: Zustand 5.0.8 (client) + TanStack React Query 5.90.2 (server)
+- **Forms**: React Hook Form 7.64.0 + Zod 4.1.12 (validación)
+- **HTTP Client**: Axios 1.12.2 (con interceptores JWT)
+- **UI**: Tailwind CSS 3.4.18 + Lucide Icons + Framer Motion 12.23.22
+- **Code Quality**: ESLint 9.37.0 + Prettier 3.6.2
+
 ### Backend
 - **Runtime**: Node.js + Express.js
-- **Auth**: JWT con refresh tokens
+- **Auth**: JWT (7d access + 30d refresh tokens)
 - **Validación**: Joi schemas modulares
 - **Testing**: Jest + Supertest
 - **Logs**: Winston (JSON structured)
@@ -88,6 +98,29 @@ docker exec postgres_db psql -U admin -d postgres -c "\dt"
 docker exec postgres_db psql -U admin -d postgres -c "\d organizaciones"
 ```
 
+### Frontend
+
+```bash
+cd frontend
+
+# Desarrollo (http://localhost:3001)
+npm run dev
+
+# Build de producción
+npm run build
+
+# Preview del build
+npm run preview
+
+# Linting
+npm run lint        # Verificar
+npm run lint:fix    # Auto-fix
+
+# Formateo
+npm run format       # Aplicar Prettier
+npm run format:check # Solo verificar
+```
+
 ---
 
 ## 🏗 Arquitectura del Sistema
@@ -129,6 +162,40 @@ Sistema:        eventos_sistema, eventos_sistema_archivo
 - 17 Políticas RLS (multi-tenant + anti SQL-injection REGEX `^[0-9]+$`)
 - 27 Triggers (auto-generación, capacidad, timestamps)
 - 40 Funciones PL/pgSQL
+
+### Arquitectura Frontend
+
+**Estructura de Carpetas**:
+```
+src/
+├── app/              # Configuración de app y router
+├── components/       # Componentes reutilizables
+│   ├── auth/         # Formularios de login/registro
+│   ├── clientes/     # Componentes de gestión de clientes
+│   ├── dashboard/    # Widgets del dashboard
+│   ├── forms/        # Form components (FormField, etc)
+│   └── ui/           # UI primitives (Button, Input, Modal, etc)
+├── hooks/            # Custom React hooks
+├── lib/              # Utilidades y validaciones
+├── pages/            # Páginas/Vistas principales
+│   ├── auth/         # Login
+│   ├── clientes/     # Gestión de clientes
+│   ├── dashboard/    # Dashboard principal
+│   ├── landing/      # Landing page pública
+│   └── onboarding/   # Wizard de onboarding (6 pasos)
+├── services/         # Servicios externos
+│   └── api/          # Cliente Axios + endpoints
+├── store/            # Estado global Zustand
+└── styles/           # Estilos globales
+```
+
+**Patrones Implementados**:
+- ✅ Atomic Design en componentes UI
+- ✅ Custom hooks para lógica reutilizable
+- ✅ React Query para cache y sincronización con backend
+- ✅ Zustand con persistencia en localStorage
+- ✅ Axios interceptor para refresh automático de tokens
+- ✅ Validación con Zod schemas (consistente con backend Joi)
 
 ---
 
@@ -198,8 +265,13 @@ try {
 - Endpoints: 216 tests
 - Integration: 64 tests
 - RBAC: 33 tests
-- E2E: 120 tests
+- E2E: 120 tests (incluye onboarding completo)
 - Otros: 48 tests
+
+**Frontend**: E2E validado manualmente
+- Onboarding flow (6 pasos) ✅ Completado exitosamente
+- Dashboard con datos reales ✅ Funcionando
+- Integración API completa ✅ Validada
 
 **SQL**: 5/5 tests pasando (100%)
 
@@ -327,7 +399,97 @@ curl -H "Authorization: Bearer TOKEN" \
 
 ---
 
+## ⚡ Reglas Críticas Frontend
+
+### 1. Sanitización de Campos Opcionales
+
+**⚠️ CRÍTICO**: Backend Joi rechaza strings vacíos (`""`) en campos opcionales. Convertir a `undefined` antes de enviar.
+
+```javascript
+// ✅ CORRECTO - Sanitizar antes de mutation
+const createMutation = useMutation({
+  mutationFn: async (data) => {
+    const sanitizedData = {
+      ...data,
+      email: data.email?.trim() || undefined,
+      telefono: data.telefono?.trim() || undefined,
+      descripcion: data.descripcion?.trim() || undefined,
+    };
+    return api.crear(sanitizedData);
+  }
+});
+
+// ❌ INCORRECTO - Enviar strings vacíos
+const data = { email: "", telefono: "" };  // Backend retorna 400
+```
+
+### 2. Axios Interceptor y Token Refresh
+
+```javascript
+// El interceptor en client.js maneja automáticamente:
+// - Agregar Bearer token a todas las requests
+// - Auto-refresh cuando token expira (401)
+// - Logout si refresh falla
+
+// ✅ NO necesitas manejar tokens manualmente en componentes
+const response = await api.crear(data); // Token se agrega automáticamente
+
+// ❌ NO hagas esto
+axios.post(url, data, {
+  headers: { Authorization: `Bearer ${token}` }  // Redundante
+});
+```
+
+### 3. React Query + Zustand
+
+```javascript
+// ✅ CORRECTO - Datos del servidor en React Query
+const { data: profesionales } = useQuery({
+  queryKey: ['profesionales'],
+  queryFn: profesionalesApi.listar,
+});
+
+// ✅ CORRECTO - Estado UI local en Zustand
+const { user, setAuth, logout } = useAuthStore();
+
+// ❌ INCORRECTO - Mezclar responsabilidades
+const [profesionales, setProfesionales] = useState([]); // Usar React Query
+```
+
+### 4. Validación con Zod
+
+```javascript
+// ✅ Schemas Zod deben coincidir con validaciones backend Joi
+
+// Frontend (Zod)
+const schema = z.object({
+  email: z.string().email().optional().or(z.literal('')),  // Permite ""
+  telefono: z.string().optional().or(z.literal('')),       // Sanitizar después
+});
+
+// Backend (Joi)
+email: Joi.string().email().allow(null),  // NO permite ""
+```
+
+### 5. Invalidación de Cache
+
+```javascript
+// ✅ Invalidar cache después de mutations para refrescar datos
+const createMutation = useMutation({
+  mutationFn: api.crear,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['profesionales'] });
+  }
+});
+
+// Step4_Professionals.jsx:63 - Ejemplo real
+```
+
+---
+
 ## 📋 Checklist para Nuevos Módulos
+
+### Backend
 
 **Routes** (`routes/api/v1/[modulo].js`):
 - [ ] Middleware en orden: auth → tenant → rateLimit → validation → controller
@@ -351,6 +513,28 @@ curl -H "Authorization: Bearer TOKEN" \
 - [ ] Usa helpers de `db-helper`
 - [ ] Limpieza en beforeAll/afterAll
 - [ ] Cobertura: happy path + edge cases
+
+### Frontend
+
+**Página/Vista** (`pages/[modulo]/[Componente].jsx`):
+- [ ] Usa React Query para datos del servidor
+- [ ] Usa Zustand solo para estado UI local
+- [ ] Manejo de estados: loading, error, success
+
+**Componentes** (`components/[categoria]/[Componente].jsx`):
+- [ ] Props tipadas con PropTypes o comentarios JSDoc
+- [ ] Componentes pequeños y reutilizables
+- [ ] Separación de lógica en custom hooks cuando sea necesario
+
+**Formularios**:
+- [ ] React Hook Form + Zod para validación
+- [ ] Sanitización de campos opcionales antes de mutation
+- [ ] Mensajes de error claros y en español
+
+**API Integration** (`services/api/endpoints.js`):
+- [ ] Métodos exportados desde endpoints centralizados
+- [ ] NO crear instancias axios nuevas (usar apiClient)
+- [ ] Invalidar cache de React Query después de mutations
 
 ---
 
@@ -386,6 +570,38 @@ static async obtenerEstadisticas(organizacionId) {
 }
 ```
 
+### Error: Backend 400 "field is not allowed to be empty"
+
+**Causa**: Frontend envía `""` (string vacío) en campos opcionales, backend Joi los rechaza
+
+**Solución**: Sanitizar campos opcionales convirtiendo `""` a `undefined`
+
+```javascript
+// ✅ En mutation function
+const sanitizedData = {
+  ...data,
+  email: data.email?.trim() || undefined,
+  telefono: data.telefono?.trim() || undefined,
+};
+```
+
+**Archivos corregidos**: `Step3_AccountSetup.jsx:46`, `Step4_Professionals.jsx:49`, `Step5_Services.jsx:65`
+
+### Error: React Query no actualiza datos después de mutation
+
+**Causa**: Falta invalidar el cache después de crear/actualizar/eliminar
+
+**Solución**: Usar `invalidateQueries` en `onSuccess`
+
+```javascript
+const createMutation = useMutation({
+  mutationFn: api.crear,
+  onSuccess: () => {
+    queryClient.invalidateQueries({ queryKey: ['recursos'] });
+  }
+});
+```
+
 ---
 
 ## 📚 Archivos Clave
@@ -393,32 +609,48 @@ static async obtenerEstadisticas(organizacionId) {
 | Archivo | Descripción |
 |---------|-------------|
 | `/CLAUDE.md` | Esta guía del proyecto |
-| `/sql/README.md` | Documentación de BD (RLS, triggers, funciones) |
-| `/backend/app/__tests__/README.md` | Plan de testing |
-| `/sql/schema/*.sql` | Schema completo de BD |
-| `/backend/app/schemas/*.schemas.js` | Validaciones Joi |
+| **Backend** | |
+| `/backend/app/config/auth.js` | Configuración JWT (7d access, 30d refresh) |
+| `/backend/app/schemas/*.schemas.js` | Validaciones Joi modulares |
 | `/backend/app/utils/rlsHelper.js` | Helper RLS multi-tenant |
 | `/backend/app/__tests__/helpers/db-helper.js` | Helpers de testing |
+| `/backend/app/__tests__/README.md` | Plan de testing backend |
+| **Frontend** | |
+| `/frontend/src/services/api/client.js` | Axios con interceptor JWT |
+| `/frontend/src/services/api/endpoints.js` | Endpoints API centralizados |
+| `/frontend/src/store/authStore.js` | Zustand store de autenticación |
+| `/frontend/src/lib/validations.js` | Schemas Zod de validación |
+| `/frontend/src/pages/onboarding/` | Wizard de 6 pasos |
+| **Base de Datos** | |
+| `/sql/README.md` | Documentación de BD (RLS, triggers, funciones) |
+| `/sql/schema/*.sql` | Schema completo de BD |
 
 ---
 
 ## 🚀 Mejoras Recientes (Oct 2025)
 
-**Optimizaciones Backend**:
+**Frontend (10 Oct 2025)**:
+- ✅ **Flujo Onboarding E2E validado** (6 pasos funcionando completamente)
+- ✅ **Fix**: Sanitización de campos opcionales en Steps 3, 4 y 5 (3 bugs corregidos)
+- ✅ **Fix**: Removido campo inexistente `rfc_nif` en Step3_AccountSetup
+- ✅ Dashboard con datos reales del backend funcionando
+- ✅ Integración completa con API: profesionales, servicios, clientes, citas
+
+**Backend**:
 - ✅ Migración completa a `asyncHandler` en todos los controllers
 - ✅ Schemas Joi modulares en todos los endpoints
 - ✅ Separación arquitectónica Auth/Usuarios
 - ✅ Fix: RLSHelper.withBypass en queries multi-tabla (organizaciones)
 - ✅ Wrapping de métodos controller en rutas
 
-**Mejoras Base de Datos**:
+**Base de Datos**:
 - ✅ Auto-generación de `codigo_cita` con triggers
 - ✅ 152 índices optimizados (covering, GIN, GIST)
 - ✅ Políticas RLS anti SQL-injection (REGEX `^[0-9]+$`)
 
 ---
 
-**Versión**: 2.0
-**Última actualización**: 09 Octubre 2025
-**Estado**: ✅ Production Ready | 481/482 tests pasando (99.8%)
+**Versión**: 2.1
+**Última actualización**: 10 Octubre 2025
+**Estado**: ✅ Production Ready | Backend 481/482 (99.8%) | Frontend E2E validado
 **Mantenido por**: Equipo de Desarrollo

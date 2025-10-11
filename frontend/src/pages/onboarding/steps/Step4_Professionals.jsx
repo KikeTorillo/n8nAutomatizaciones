@@ -44,7 +44,15 @@ function Step4_Professionals() {
   const createProfessionalsMutation = useMutation({
     mutationFn: async (professionals) => {
       console.log('📤 Creando profesionales:', professionals);
-      const promises = professionals.map((prof) => profesionalesApi.crear(prof));
+      // Sanitizar campos opcionales vacíos (convertir "" a undefined para omitir del payload)
+      const promises = professionals.map((prof) => {
+        const sanitizedProf = {
+          ...prof,
+          telefono: prof.telefono?.trim() || undefined,
+          email: prof.email?.trim() || undefined,
+        };
+        return profesionalesApi.crear(sanitizedProf);
+      });
       const results = await Promise.all(promises);
       console.log('✅ Profesionales creados:', results);
       return results;

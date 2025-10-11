@@ -58,9 +58,11 @@ function Step5_Services() {
     mutationFn: async (services) => {
       const promises = services.map((service) => {
         // Convertir profesionales[] a profesionales_ids[] para el backend
+        // Sanitizar campos opcionales vacíos (convertir "" a undefined para omitir del payload)
         const serviceData = {
           ...service,
           profesionales_ids: service.profesionales,
+          descripcion: service.descripcion?.trim() || undefined,
         };
         delete serviceData.profesionales; // Remover el campo antiguo
         return serviciosApi.crear(serviceData);
