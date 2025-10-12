@@ -24,15 +24,45 @@ class CitaBaseModel {
                 db
             );
 
-            // Validar conflicto de horario
-            await CitaHelpersModel.validarConflictoHorario(
+            // Normalizar fecha_cita a formato YYYY-MM-DD ANTES de validar (soporta ISO completo, Date object o solo fecha)
+            let fechaCitaNormalizada;
+            if (citaData.fecha_cita instanceof Date) {
+                fechaCitaNormalizada = citaData.fecha_cita.toISOString().split('T')[0];
+            } else if (typeof citaData.fecha_cita === 'string' && citaData.fecha_cita.includes('T')) {
+                fechaCitaNormalizada = citaData.fecha_cita.split('T')[0];
+            } else {
+                fechaCitaNormalizada = citaData.fecha_cita;
+            }
+
+            // Validar horario permitido (horarios_profesionales, bloqueos, conflictos)
+            const validacion = await CitaHelpersModel.validarHorarioPermitido(
                 citaData.profesional_id,
-                citaData.fecha_cita,
+                fechaCitaNormalizada,  // ✅ Usar fecha normalizada
                 citaData.hora_inicio,
                 citaData.hora_fin,
-                null,
-                db
+                citaData.organizacion_id,
+                db,
+                null, // no excluir cita
+                { esWalkIn: false, permitirFueraHorario: false }
             );
+
+            if (!validacion.valido) {
+                const mensajesError = validacion.errores.map(e => e.mensaje).join('; ');
+                logger.error('[CitaBaseModel.crearEstandar] Validación de horario fallida', {
+                    profesional_id: citaData.profesional_id,
+                    fecha: citaData.fecha_cita,
+                    horario: `${citaData.hora_inicio}-${citaData.hora_fin}`,
+                    errores: validacion.errores
+                });
+                throw new Error(`No se puede crear la cita: ${mensajesError}`);
+            }
+
+            // Log de advertencias si las hay
+            if (validacion.advertencias.length > 0) {
+                logger.warn('[CitaBaseModel.crearEstandar] Advertencias en validación de horario', {
+                    advertencias: validacion.advertencias
+                });
+            }
 
             // Auto-calcular precio si no se proporciona
             let precioServicio = citaData.precio_servicio;
@@ -66,7 +96,7 @@ class CitaBaseModel {
                 cliente_id: citaData.cliente_id,
                 profesional_id: citaData.profesional_id,
                 servicio_id: citaData.servicio_id,
-                fecha_cita: citaData.fecha_cita,
+                fecha_cita: fechaCitaNormalizada,
                 hora_inicio: citaData.hora_inicio,
                 hora_fin: citaData.hora_fin,
                 zona_horaria: citaData.zona_horaria || DEFAULTS.ZONA_HORARIA,
@@ -87,6 +117,9 @@ class CitaBaseModel {
                 user_agent: citaData.user_agent || null,
                 origen_aplicacion: citaData.origen_aplicacion || DEFAULTS.ORIGEN_APLICACION
             };
+
+            // Validar que no cruce medianoche (constraint BD)
+            CitaHelpersModel.validarNoMidnightCrossing(citaData.hora_inicio, citaData.hora_fin);
 
             const nuevaCita = await CitaHelpersModel.insertarCitaCompleta(datosCompletos, db);
 
@@ -227,20 +260,50 @@ class CitaBaseModel {
                 throw new Error('Transición de estado inválida: no se puede modificar una cita completada o cancelada');
             }
 
-            // Validar conflicto de horario si se cambian fechas/horas
-            if (datosActualizacion.fecha_cita || datosActualizacion.hora_inicio || datosActualizacion.hora_fin) {
+            // Validar horario permitido si se cambian fechas/horas o profesional
+            if (datosActualizacion.fecha_cita || datosActualizacion.hora_inicio ||
+                datosActualizacion.hora_fin || datosActualizacion.profesional_id) {
+
+                // Determinar profesional final (nuevo o existente)
+                const profesionalFinal = datosActualizacion.profesional_id || citaExistente.profesional_id;
                 const nuevaFecha = datosActualizacion.fecha_cita || citaExistente.fecha_cita;
                 const nuevaHoraInicio = datosActualizacion.hora_inicio || citaExistente.hora_inicio;
                 const nuevaHoraFin = datosActualizacion.hora_fin || citaExistente.hora_fin;
 
-                await CitaHelpersModel.validarConflictoHorario(
-                    citaExistente.profesional_id,
+                // Validar que no cruce medianoche (constraint BD)
+                CitaHelpersModel.validarNoMidnightCrossing(nuevaHoraInicio, nuevaHoraFin);
+
+                const validacion = await CitaHelpersModel.validarHorarioPermitido(
+                    profesionalFinal,  // ✅ Usar profesional final (no siempre el existente)
                     nuevaFecha,
                     nuevaHoraInicio,
                     nuevaHoraFin,
-                    citaId,
-                    db
+                    organizacionId,
+                    db,
+                    citaId, // excluir esta cita de la validación de conflictos
+                    { esWalkIn: false, permitirFueraHorario: false }
                 );
+
+                if (!validacion.valido) {
+                    const mensajesError = validacion.errores.map(e => e.mensaje).join('; ');
+                    logger.error('[CitaBaseModel.actualizarEstandar] Validación de horario fallida', {
+                        cita_id: citaId,
+                        profesional_id: profesionalFinal,
+                        profesional_cambio: !!datosActualizacion.profesional_id,
+                        fecha: nuevaFecha,
+                        horario: `${nuevaHoraInicio}-${nuevaHoraFin}`,
+                        errores: validacion.errores
+                    });
+                    throw new Error(`No se puede actualizar la cita: ${mensajesError}`);
+                }
+
+                // Log de advertencias si las hay
+                if (validacion.advertencias.length > 0) {
+                    logger.warn('[CitaBaseModel.actualizarEstandar] Advertencias en validación de horario', {
+                        cita_id: citaId,
+                        advertencias: validacion.advertencias
+                    });
+                }
             }
 
             // Lógica de negocio: Si se marca como completada y tiene precio > 0, debe estar pagada

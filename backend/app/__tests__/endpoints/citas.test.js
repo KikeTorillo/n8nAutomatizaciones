@@ -80,6 +80,30 @@ describe('Endpoints de Citas', () => {
       precio: 150.00
     }, [testProfesional.id]);
 
+    // ⚠️ CRÍTICO: Crear horarios profesionales (Domingo-Sábado 9:00-18:00)
+    // Sin esto, validarHorarioPermitido() fallará
+    for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
+      await client.query(`
+        INSERT INTO horarios_profesionales (
+          organizacion_id, profesional_id, dia_semana,
+          hora_inicio, hora_fin, tipo_horario,
+          nombre_horario, permite_citas, activo,
+          fecha_inicio
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
+        testOrg.id,
+        testProfesional.id,
+        dia,
+        '09:00:00',
+        '18:00:00',
+        'regular',
+        'Horario Laboral',
+        true,
+        true,
+        '2025-01-01'
+      ]);
+    }
+
     // Crear cita de prueba
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
@@ -622,6 +646,234 @@ describe('Endpoints de Citas', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.id).toBe(testCita.id);
+    });
+  });
+
+  // ============================================================================
+  // Tests de Walk-In con Auto-Asignación
+  // ============================================================================
+  describe('POST /api/v1/citas/walk-in - Auto-Asignación', () => {
+    let testProfesional2;
+
+    beforeAll(async () => {
+      // Crear segundo profesional para tests de auto-asignación
+      const tempClient = await global.testPool.connect();
+      testProfesional2 = await createTestProfesional(tempClient, testOrg.id, {
+        nombre_completo: 'Profesional 2 Test',
+        tipo_profesional: 'estilista'
+      });
+
+      // Asociar servicio con ambos profesionales
+      await tempClient.query(`
+        INSERT INTO servicios_profesionales (servicio_id, profesional_id)
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+      `, [testServicio.id, testProfesional2.id]);
+
+      // ⚠️ CRÍTICO: Crear horarios profesionales para testProfesional2
+      for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
+        await tempClient.query(`
+          INSERT INTO horarios_profesionales (
+            organizacion_id, profesional_id, dia_semana,
+            hora_inicio, hora_fin, tipo_horario,
+            nombre_horario, permite_citas, activo,
+            fecha_inicio
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        `, [
+          testOrg.id,
+          testProfesional2.id,
+          dia,
+          '09:00:00',
+          '18:00:00',
+          'regular',
+          'Horario Laboral',
+          true,
+          true,
+          '2025-01-01'
+        ]);
+      }
+
+      tempClient.release();
+    });
+
+    test('Debe crear cita walk-in con cliente existente y auto-asignar profesional', async () => {
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: testCliente.id,
+          // NO enviar profesional_id
+          servicio_id: testServicio.id,
+          tiempo_espera_aceptado: 5,
+          notas_walk_in: 'Test auto-asignación profesional'
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('codigo_cita');
+      expect(response.body.data.codigo_cita).toMatch(/^[A-Z0-9]+-\d{8}-\d{3}$/);
+      expect(response.body.data.cliente_id).toBe(testCliente.id);
+      expect(response.body.data.profesional_id).toBeGreaterThan(0); // Auto-asignado
+      expect(response.body.data.estado).toBe('en_curso'); // Profesional disponible = empieza inmediatamente
+      expect(response.body.data.origen_cita).toBe('presencial');
+    });
+
+    test('Debe crear cliente nuevo Y auto-asignar profesional', async () => {
+      const telefonoNuevo = '+573111111111';
+      const nombreNuevo = 'Juan Walk-in Test';
+
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          // NO enviar cliente_id
+          nombre_cliente: nombreNuevo,
+          telefono: telefonoNuevo,
+          // NO enviar profesional_id
+          servicio_id: testServicio.id,
+          tiempo_espera_aceptado: 10,
+          notas_walk_in: 'Test cliente nuevo + auto-asignación'
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('codigo_cita');
+      expect(response.body.data.cliente_id).toBeGreaterThan(0); // Cliente creado
+      expect(response.body.data.profesional_id).toBeGreaterThan(0); // Profesional auto-asignado
+      expect(response.body.data.estado).toBe('en_curso'); // Profesional disponible = empieza inmediatamente
+
+      // Verificar que el cliente se creó correctamente
+      const tempClient = await global.testPool.connect();
+      const clienteCreado = await tempClient.query(
+        'SELECT * FROM clientes WHERE telefono = $1 AND organizacion_id = $2',
+        [telefonoNuevo, testOrg.id]
+      );
+      tempClient.release();
+
+      expect(clienteCreado.rows.length).toBe(1);
+      expect(clienteCreado.rows[0].nombre).toBe(nombreNuevo);
+      expect(clienteCreado.rows[0].como_conocio).toBe('walk_in_pos');
+    });
+
+    test('Debe respetar profesional específico si se envía', async () => {
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: testCliente.id,
+          profesional_id: testProfesional2.id, // Específico
+          servicio_id: testServicio.id,
+          tiempo_espera_aceptado: 0
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.data.profesional_id).toBe(testProfesional2.id); // Mismo que se envió
+    });
+
+    test('Debe fallar si no envía cliente_id NI nombre_cliente', async () => {
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          // NO enviar cliente_id
+          // NO enviar nombre_cliente
+          servicio_id: testServicio.id
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('Debe fallar si envía cliente_id Y nombre_cliente simultáneamente', async () => {
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: testCliente.id,
+          nombre_cliente: 'Juan Test',
+          telefono: '+573222222222',
+          servicio_id: testServicio.id
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+    });
+
+    test('Debe fallar si no hay profesionales disponibles para el servicio', async () => {
+      const tempClient = await global.testPool.connect();
+
+      // Desactivar todos los profesionales
+      await tempClient.query(
+        'UPDATE profesionales SET activo = false WHERE organizacion_id = $1',
+        [testOrg.id]
+      );
+
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: testCliente.id,
+          servicio_id: testServicio.id
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('profesionales disponibles');
+
+      // Reactivar profesionales
+      await tempClient.query(
+        'UPDATE profesionales SET activo = true WHERE organizacion_id = $1',
+        [testOrg.id]
+      );
+
+      tempClient.release();
+    });
+
+    test('Debe crear walk-in con cliente nuevo SIN teléfono (opcional)', async () => {
+      const nombreSinTel = 'Cliente Sin Teléfono Test';
+
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre_cliente: nombreSinTel,
+          // NO enviar telefono (es opcional ahora)
+          servicio_id: testServicio.id,
+          notas_walk_in: 'Cliente walk-in sin teléfono'
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('codigo_cita');
+      expect(response.body.data.cliente_id).toBeGreaterThan(0);
+      expect(response.body.data.profesional_id).toBeGreaterThan(0);
+
+      // Verificar que el cliente se creó SIN teléfono
+      const tempClient = await global.testPool.connect();
+      const clienteCreado = await tempClient.query(
+        'SELECT * FROM clientes WHERE id = $1 AND organizacion_id = $2',
+        [response.body.data.cliente_id, testOrg.id]
+      );
+      tempClient.release();
+
+      expect(clienteCreado.rows.length).toBe(1);
+      expect(clienteCreado.rows[0].nombre).toBe(nombreSinTel);
+      expect(clienteCreado.rows[0].telefono).toBeNull(); // Sin teléfono
+      expect(clienteCreado.rows[0].como_conocio).toBe('walk_in_pos');
+    });
+
+    test('Debe validar formato de teléfono si se proporciona', async () => {
+      const response = await request(app)
+        .post('/api/v1/citas/walk-in')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          nombre_cliente: 'Test Teléfono Inválido',
+          telefono: 'INVALIDO123', // Formato inválido
+          servicio_id: testServicio.id
+        });
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
     });
   });
 });

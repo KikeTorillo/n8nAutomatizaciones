@@ -92,14 +92,53 @@ class CitaOperacionalModel {
                 throw new Error('Cita no encontrada');
             }
 
-            await CitaHelpersModel.validarConflictoHorario(
+            // Validar horario permitido (horarios_profesionales, bloqueos, conflictos)
+            const validacion = await CitaHelpersModel.validarHorarioPermitido(
                 citaActual.rows[0].profesional_id,
                 datosReagenda.nueva_fecha,
                 datosReagenda.nueva_hora_inicio,
                 datosReagenda.nueva_hora_fin,
-                citaId,
-                db
+                organizacionId,
+                db,
+                citaId, // excluir esta cita de la validación de conflictos
+                { esWalkIn: false, permitirFueraHorario: false }
             );
+
+            if (!validacion.valido) {
+                const mensajesError = validacion.errores.map(e => e.mensaje).join('; ');
+                logger.error('[reagendar] Validación de horario fallida', {
+                    cita_id: citaId,
+                    profesional_id: citaActual.rows[0].profesional_id,
+                    nueva_fecha: datosReagenda.nueva_fecha,
+                    horario: `${datosReagenda.nueva_hora_inicio}-${datosReagenda.nueva_hora_fin}`,
+                    errores: validacion.errores
+                });
+                throw new Error(`No se puede reagendar la cita: ${mensajesError}`);
+            }
+
+            // Log de advertencias si las hay
+            if (validacion.advertencias.length > 0) {
+                logger.warn('[reagendar] Advertencias en validación de horario', {
+                    cita_id: citaId,
+                    advertencias: validacion.advertencias
+                });
+            }
+
+            // Validar que no cruce medianoche (constraint BD)
+            CitaHelpersModel.validarNoMidnightCrossing(
+                datosReagenda.nueva_hora_inicio,
+                datosReagenda.nueva_hora_fin
+            );
+
+            // Normalizar fecha a formato YYYY-MM-DD (soporta ISO completo, Date object o solo fecha)
+            let fechaNormalizada;
+            if (datosReagenda.nueva_fecha instanceof Date) {
+                fechaNormalizada = datosReagenda.nueva_fecha.toISOString().split('T')[0];
+            } else if (typeof datosReagenda.nueva_fecha === 'string' && datosReagenda.nueva_fecha.includes('T')) {
+                fechaNormalizada = datosReagenda.nueva_fecha.split('T')[0];
+            } else {
+                fechaNormalizada = datosReagenda.nueva_fecha;
+            }
 
             const resultado = await db.query(`
                 UPDATE citas
@@ -114,7 +153,7 @@ class CitaOperacionalModel {
                 WHERE id = $6 AND organizacion_id = $7
                 RETURNING *
             `, [
-                datosReagenda.nueva_fecha,
+                fechaNormalizada,
                 datosReagenda.nueva_hora_inicio,
                 datosReagenda.nueva_hora_fin,
                 `\nReagendada: ${datosReagenda.motivo_reagenda || 'Sin motivo especificado'}`,
@@ -286,51 +325,180 @@ class CitaOperacionalModel {
 
     static async crearWalkIn(datosWalkIn, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // 1. Validar servicio
             const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosWalkIn.servicio_id, organizacionId, db);
             if (!servicio) {
                 throw new Error('Servicio no encontrado o inactivo');
             }
 
+            // 2. Resolver cliente (existente o crear nuevo)
+            let clienteId = datosWalkIn.cliente_id;
+
+            if (!clienteId && datosWalkIn.nombre_cliente) {
+                // Cliente nuevo: crear directamente en la misma transacción
+                // Teléfono es OPCIONAL - puede ser null, string vacío o teléfono válido
+                const telefonoValido = datosWalkIn.telefono?.trim() || null;
+
+                const clienteInsert = await db.query(`
+                    INSERT INTO clientes (
+                        organizacion_id, nombre, email, telefono,
+                        notas_especiales, como_conocio, activo, marketing_permitido
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                    RETURNING id, nombre, telefono
+                `, [
+                    organizacionId,
+                    datosWalkIn.nombre_cliente,
+                    null, // email
+                    telefonoValido, // puede ser null si no proporcionó teléfono
+                    'Cliente walk-in. Creado automáticamente desde POS.',
+                    'walk_in_pos',
+                    true, // activo
+                    false // marketing_permitido
+                ]);
+
+                clienteId = clienteInsert.rows[0].id;
+                logger.info(`Cliente walk-in creado automáticamente: ${clienteId} - ${datosWalkIn.nombre_cliente}${telefonoValido ? ` (tel: ${telefonoValido})` : ' (sin teléfono)'}`);
+            }
+
+            if (!clienteId) {
+                throw new Error('No se pudo resolver cliente_id');
+            }
+
+            // 3. Resolver profesional (existente o auto-asignar)
+            let profesionalId = datosWalkIn.profesional_id;
+
+            if (!profesionalId) {
+                // Auto-asignar profesional usando disponibilidad inmediata
+                const disponibilidad = await this.consultarDisponibilidadInmediata(
+                    datosWalkIn.servicio_id,
+                    null, // sin filtro de profesional
+                    organizacionId
+                );
+
+                if (!disponibilidad.profesionales_disponibles ||
+                    disponibilidad.profesionales_disponibles.length === 0) {
+                    throw new Error('No hay profesionales disponibles para el servicio seleccionado');
+                }
+
+                // Tomar el primer profesional disponible (ya vienen ordenados por disponibilidad)
+                const profesionalAsignado = disponibilidad.profesionales_disponibles[0];
+                profesionalId = profesionalAsignado.id;
+
+                logger.info(`Profesional auto-asignado para walk-in: ${profesionalId} - ${profesionalAsignado.nombre}`);
+            }
+
+            // 4. Determinar disponibilidad del profesional y calcular horarios
             const ahora = new Date();
             const fechaHoy = ahora.toISOString().split('T')[0];
             const duracionEstimada = servicio.duracion_minutos || 30;
-            const horaFinEstimada = new Date(ahora.getTime() + (duracionEstimada * 60000));
 
-            const solapamiento = await db.query(`
+            // Buscar si el profesional tiene una cita en curso (sin terminar)
+            // Solo consideramos 'en_curso' porque es el único estado donde el profesional está REALMENTE ocupado
+            const citaActual = await db.query(`
                 SELECT
                     c.id,
                     c.codigo_cita,
+                    c.estado,
                     c.hora_inicio_real,
                     c.hora_fin_real,
-                    COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') as fin_estimado
+                    c.hora_inicio,
+                    COALESCE(
+                        c.hora_fin_real,
+                        c.hora_inicio_real + (COALESCE(s.duracion_minutos, 30)) * INTERVAL '1 minute',
+                        CURRENT_TIMESTAMP + (COALESCE(s.duracion_minutos, 30)) * INTERVAL '1 minute'
+                    ) as fin_estimado
                 FROM citas c
                 JOIN servicios s ON c.servicio_id = s.id
                 WHERE c.profesional_id = $1
                   AND c.organizacion_id = $2
                   AND c.fecha_cita = $3
-                  AND c.estado IN ('confirmada', 'en_curso')
-                  AND c.hora_inicio_real IS NOT NULL
-                  AND (
-                    (c.hora_inicio_real <= $4::timestamptz AND
-                     COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') > $4::timestamptz)
-                    OR
-                    (c.hora_inicio_real < $5::timestamptz AND
-                     COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') >= $5::timestamptz)
-                    OR
-                    (c.hora_inicio_real >= $4::timestamptz AND
-                     COALESCE(c.hora_fin_real, c.hora_inicio_real + (s.duracion_minutos || 30) * INTERVAL '1 minute') <= $5::timestamptz)
-                  )
+                  AND c.estado = 'en_curso'  -- Solo citas que están siendo atendidas AHORA
+                  AND c.hora_fin_real IS NULL  -- Aún NO ha terminado
+                ORDER BY c.hora_inicio_real DESC NULLS LAST, c.hora_inicio DESC
                 LIMIT 1
-            `, [datosWalkIn.profesional_id, organizacionId, fechaHoy, ahora.toISOString(), horaFinEstimada.toISOString()]);
+            `, [profesionalId, organizacionId, fechaHoy]);
 
-            if (solapamiento.rows.length > 0) {
-                const citaConflicto = solapamiento.rows[0];
-                throw new Error(
-                    `Profesional ocupado con cita ${citaConflicto.codigo_cita} hasta ${citaConflicto.fin_estimado}. ` +
-                    `Tiempo de espera estimado: ${Math.ceil((new Date(citaConflicto.fin_estimado) - ahora) / 60000)} minutos`
-                );
+            let horaInicio, horaFin, horaInicioReal, estado;
+
+            // Función auxiliar para convertir Date a formato time "HH:MM:00"
+            const formatearHora = (fecha) => {
+                const horas = fecha.getHours().toString().padStart(2, '0');
+                const minutos = fecha.getMinutes().toString().padStart(2, '0');
+                return `${horas}:${minutos}:00`;
+            };
+
+            if (citaActual.rows.length === 0) {
+                // ✅ ESCENARIO 1: Profesional DISPONIBLE - Empieza INMEDIATAMENTE
+                const finEstimado = new Date(ahora.getTime() + duracionEstimada * 60000);
+
+                horaInicio = formatearHora(ahora);
+                horaFin = formatearHora(finEstimado);
+
+                // Validar que no cruce medianoche (constraint: hora_inicio < hora_fin)
+                if (horaFin <= horaInicio) {
+                    // Si cruza medianoche, ajustar hora_fin a 23:59:00 del mismo día
+                    horaFin = '23:59:00';
+                    logger.warn(`⚠️  Walk-in cruzaría medianoche. Ajustando hora_fin a ${horaFin}`);
+                }
+
+                horaInicioReal = ahora;  // Empieza AHORA
+                estado = 'en_curso';  // Ya está siendo atendido
+
+                logger.info(`✅ Walk-in INMEDIATO - Profesional ${profesionalId} disponible. Cliente atendido al instante (${horaInicio} - ${horaFin}).`);
+            } else {
+                // ⏳ ESCENARIO 2: Profesional OCUPADO - Cliente pasa a COLA DE ESPERA
+                const citaConflicto = citaActual.rows[0];
+                const finCitaActual = new Date(citaConflicto.fin_estimado);
+                const finEstimado = new Date(finCitaActual.getTime() + duracionEstimada * 60000);
+
+                horaInicio = formatearHora(finCitaActual);
+                horaFin = formatearHora(finEstimado);
+
+                // Validar que no cruce medianoche
+                if (horaFin <= horaInicio) {
+                    horaFin = '23:59:00';
+                    logger.warn(`⚠️  Walk-in en cola cruzaría medianoche. Ajustando hora_fin a ${horaFin}`);
+                }
+
+                horaInicioReal = null;  // AÚN NO empieza
+                estado = 'confirmada';  // Esperando su turno
+
+                const tiempoEsperaMinutos = Math.ceil((finCitaActual - ahora) / 60000);
+                logger.info(`⏳ Walk-in en COLA DE ESPERA - Profesional ${profesionalId} ocupado hasta ${finCitaActual.toLocaleTimeString()}. Tiempo estimado: ${tiempoEsperaMinutos} min (${horaInicio} - ${horaFin}).`);
             }
 
+            // 5. Validar horario permitido (horarios_profesionales, bloqueos, conflictos)
+            // IMPORTANTE: Walk-in usa permitirFueraHorario: true porque el cliente YA está presente
+            const validacion = await CitaHelpersModel.validarHorarioPermitido(
+                profesionalId,
+                fechaHoy,
+                horaInicio,
+                horaFin,
+                organizacionId,
+                db,
+                null, // no excluir cita
+                { esWalkIn: true, permitirFueraHorario: true }
+            );
+
+            if (!validacion.valido) {
+                const mensajesError = validacion.errores.map(e => e.mensaje).join('; ');
+                logger.error('[crearWalkIn] Validación de horario fallida', {
+                    profesional_id: profesionalId,
+                    fecha: fechaHoy,
+                    horario: `${horaInicio}-${horaFin}`,
+                    errores: validacion.errores
+                });
+                throw new Error(`No se puede crear el walk-in: ${mensajesError}`);
+            }
+
+            // Log de advertencias si las hay
+            if (validacion.advertencias.length > 0) {
+                logger.warn('[crearWalkIn] Advertencias en validación de horario', {
+                    advertencias: validacion.advertencias
+                });
+            }
+
+            // 6. Crear cita con horarios calculados según disponibilidad
             const citaInsert = await db.query(`
                 INSERT INTO citas (
                     organizacion_id, cliente_id, profesional_id, servicio_id,
@@ -342,31 +510,34 @@ class CitaOperacionalModel {
                     creado_por, ip_origen, origen_cita, origen_aplicacion, creado_en
                 ) VALUES (
                     $1, $2, $3, $4,
-                    $5, NULL, NULL, NOW(), NOW(),
-                    $6, $7, $8, $9,
-                    $10, $11, $12,
-                    $13, $14,
-                    $15, $16,
-                    $17, $18, $19, $20, NOW()
+                    $5, $6::time, $7::time, NOW(), $8,
+                    $9, $10, $11, $12,
+                    $13, $14, $15,
+                    $16, $17,
+                    $18, $19,
+                    $20, $21, $22, $23, NOW()
                 ) RETURNING
                     id, organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
-                    fecha_cita, hora_llegada, hora_inicio_real,
+                    fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
                     precio_final, estado, origen_cita, creado_en
             `, [
                 organizacionId,
-                datosWalkIn.cliente_id,
-                datosWalkIn.profesional_id,
+                clienteId,
+                profesionalId,
                 datosWalkIn.servicio_id,
                 fechaHoy,
+                horaInicio,        // Calculada según disponibilidad
+                horaFin,           // Calculada según disponibilidad
+                horaInicioReal,    // NOW() si disponible, NULL si en cola
                 DEFAULTS.ZONA_HORARIA,
                 servicio.precio || 0,
                 0,
                 servicio.precio || 0,
-                'confirmada',
+                estado,            // 'en_curso' o 'confirmada' según disponibilidad
                 null,  // metodo_pago
                 false, // pagado
                 datosWalkIn.notas_walk_in || `Walk-in: ${datosWalkIn.nombre_cliente || 'Cliente'}`,
-                `Tiempo espera aceptado: ${datosWalkIn.tiempo_espera_aceptado || 0} min. Atención inmediata.`,
+                `Tiempo espera aceptado: ${datosWalkIn.tiempo_espera_aceptado || 0} min. ${datosWalkIn.profesional_id ? 'Profesional solicitado' : 'Profesional auto-asignado'}.`,
                 false, // confirmacion_requerida
                 false, // recordatorio_enviado
                 datosWalkIn.usuario_creador_id || null,
@@ -381,16 +552,18 @@ class CitaOperacionalModel {
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_creada',
-                descripcion: 'Cita walk-in creada desde punto de venta (sin cita previa)',
+                descripcion: `Cita walk-in creada. ${datosWalkIn.profesional_id ? 'Profesional especificado' : 'Profesional auto-asignado'}.`,
                 cita_id: citaCreada.id,
                 usuario_id: datosWalkIn.usuario_creador_id,
                 metadatos: {
-                    profesional_id: datosWalkIn.profesional_id,
+                    profesional_id: profesionalId,
+                    profesional_auto_asignado: !datosWalkIn.profesional_id,
+                    cliente_id: clienteId,
+                    cliente_creado: !datosWalkIn.cliente_id,
                     servicio_id: datosWalkIn.servicio_id,
                     hora_llegada: citaCreada.hora_llegada,
                     hora_inicio_real: citaCreada.hora_inicio_real,
-                    origen: 'walk_in',
-                    validacion_solapamiento: 'aprobado'
+                    origen: 'walk_in'
                 }
             }, db);
 

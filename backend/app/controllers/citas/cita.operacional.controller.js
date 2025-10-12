@@ -157,23 +157,43 @@ class CitaOperacionalController {
             profesional_id,
             servicio_id,
             nombre_cliente,
+            telefono,
             tiempo_espera_aceptado,
             notas_walk_in
         } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
-        const cita = await CitaModel.crearWalkIn({
-            cliente_id,
-            profesional_id,
-            servicio_id,
-            nombre_cliente,
-            tiempo_espera_aceptado,
-            notas_walk_in,
-            usuario_creador_id: req.user.id,
-            ip_origen: req.ip
-        }, organizacionId);
+        try {
+            const cita = await CitaModel.crearWalkIn({
+                cliente_id,
+                profesional_id,
+                servicio_id,
+                nombre_cliente,
+                telefono,
+                tiempo_espera_aceptado,
+                notas_walk_in,
+                usuario_creador_id: req.user.id,
+                ip_origen: req.ip
+            }, organizacionId);
 
-        return ResponseHelper.success(res, cita, 'Cita walk-in creada exitosamente', 201);
+            return ResponseHelper.success(res, cita, 'Cita walk-in creada exitosamente', 201);
+        } catch (error) {
+            // Errores de negocio que deben retornar 400 (Bad Request)
+            const erroresNegocio = [
+                'No hay profesionales disponibles',
+                'Servicio no encontrado',
+                'No se pudo resolver cliente_id',
+                'Profesional ocupado con cita'
+            ];
+
+            // Si es un error de negocio, retornar 400
+            if (erroresNegocio.some(msg => error.message.includes(msg))) {
+                return ResponseHelper.error(res, error.message, 400);
+            }
+
+            // Si no es un error de negocio conocido, propagar el error (será 500)
+            throw error;
+        }
     });
 
     static disponibilidadInmediata = asyncHandler(async (req, res) => {

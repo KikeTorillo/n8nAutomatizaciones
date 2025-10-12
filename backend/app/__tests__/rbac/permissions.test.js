@@ -119,6 +119,30 @@ describe('RBAC - Control de Permisos por Rol', () => {
       tipo_profesional: 'barbero'
     });
 
+    // ⚠️ CRÍTICO: Crear horarios profesionales (Domingo-Sábado 9:00-18:00)
+    // Sin esto, validarHorarioPermitido() fallará
+    for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
+      await client.query(`
+        INSERT INTO horarios_profesionales (
+          organizacion_id, profesional_id, dia_semana,
+          hora_inicio, hora_fin, tipo_horario,
+          nombre_horario, permite_citas, activo,
+          fecha_inicio
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
+        testOrg.id,
+        testProfesional.id,
+        dia,
+        '09:00:00',
+        '18:00:00',
+        'regular',
+        'Horario Laboral',
+        true,
+        true,
+        '2025-01-01'
+      ]);
+    }
+
     testServicio = await createTestServicio(client, testOrg.id, {
       nombre: 'Servicio RBAC Test',
       precio: 100.00,

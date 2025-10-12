@@ -146,7 +146,7 @@ CREATE TABLE clientes (
     -- 👤 Información personal básica
     nombre VARCHAR(150) NOT NULL,
     email VARCHAR(150),
-    telefono VARCHAR(20) NOT NULL,
+    telefono VARCHAR(20),                      -- OPCIONAL: Walk-in puede no proporcionar teléfono
     fecha_nacimiento DATE,
 
     -- 🏥 Información médica y preferencias
@@ -170,15 +170,15 @@ CREATE TABLE clientes (
     CONSTRAINT valid_email
         CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     CONSTRAINT valid_telefono
-        CHECK (telefono ~ '^[+]?[0-9\s\-\(\)]{7,20}$'),
+        CHECK (telefono IS NULL OR telefono ~ '^[+]?[0-9\s\-\(\)]{7,20}$'),
     CONSTRAINT valid_fecha_nacimiento
         CHECK (fecha_nacimiento IS NULL OR fecha_nacimiento <= CURRENT_DATE - INTERVAL '5 years'),
 
     -- 🔒 Constraints de unicidad por organización
     CONSTRAINT unique_email_por_org
-        UNIQUE(organizacion_id, email) DEFERRABLE,
-    CONSTRAINT unique_telefono_por_org
-        UNIQUE(organizacion_id, telefono)
+        UNIQUE(organizacion_id, email) DEFERRABLE
+    -- NOTA: unique_telefono_por_org se implementa como índice único parcial en 07-indexes.sql
+    -- para permitir múltiples clientes con telefono=NULL en la misma organización
 );
 
 -- ====================================================================

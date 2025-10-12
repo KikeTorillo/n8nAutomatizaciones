@@ -42,6 +42,31 @@ describe('✨ Auto-generación de codigo_cita', () => {
     usuario1 = await createTestUsuario(client, org1.id);
     cliente1 = await createTestCliente(client, org1.id);
     profesional1 = await createTestProfesional(client, org1.id);
+
+    // ⚠️ CRÍTICO: Crear horarios profesionales para profesional1 (Domingo-Sábado 9:00-18:00)
+    // Sin esto, validarHorarioPermitido() fallará
+    for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
+      await client.query(`
+        INSERT INTO horarios_profesionales (
+          organizacion_id, profesional_id, dia_semana,
+          hora_inicio, hora_fin, tipo_horario,
+          nombre_horario, permite_citas, activo,
+          fecha_inicio
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
+        org1.id,
+        profesional1.id,
+        dia,
+        '09:00:00',
+        '18:00:00',
+        'regular',
+        'Horario Laboral',
+        true,
+        true,
+        '2025-01-01'
+      ]);
+    }
+
     servicio1 = await createTestServicio(client, org1.id);
 
     // Vincular profesional1 con servicio1
@@ -54,6 +79,31 @@ describe('✨ Auto-generación de codigo_cita', () => {
     // Setup datos org2
     cliente2 = await createTestCliente(client, org2.id);
     profesional2 = await createTestProfesional(client, org2.id);
+
+    // ⚠️ CRÍTICO: Crear horarios profesionales para profesional2 (Domingo-Sábado 9:00-18:00)
+    // Sin esto, validarHorarioPermitido() fallará
+    for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
+      await client.query(`
+        INSERT INTO horarios_profesionales (
+          organizacion_id, profesional_id, dia_semana,
+          hora_inicio, hora_fin, tipo_horario,
+          nombre_horario, permite_citas, activo,
+          fecha_inicio
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      `, [
+        org2.id,
+        profesional2.id,
+        dia,
+        '09:00:00',
+        '18:00:00',
+        'regular',
+        'Horario Laboral',
+        true,
+        true,
+        '2025-01-01'
+      ]);
+    }
+
     servicio2 = await createTestServicio(client, org2.id);
 
     // Vincular profesional2 con servicio2

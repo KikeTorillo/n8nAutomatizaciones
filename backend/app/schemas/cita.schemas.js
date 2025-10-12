@@ -278,17 +278,42 @@ const metricasTiempoReal = {
 
 const crearWalkIn = {
     body: Joi.object({
-        cliente_id: commonSchemas.id.required()
-            .messages({'any.required': 'cliente_id es requerido'}),
-        profesional_id: commonSchemas.id.required()
-            .messages({'any.required': 'profesional_id es requerido para walk-in'}),
+        // Cliente: PUEDE ser existente (cliente_id) O nuevo (nombre_cliente, telefono opcional)
+        cliente_id: commonSchemas.id.optional(),
+        nombre_cliente: Joi.string().min(2).max(150).trim().optional(),
+        telefono: Joi.string().pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/).optional().allow(null, ''),
+
+        // Profesional: OPCIONAL (se auto-asigna si no se especifica)
+        profesional_id: commonSchemas.id.optional().allow(null),
+
+        // Servicio: SIEMPRE requerido
         servicio_id: commonSchemas.id.required()
             .messages({'any.required': 'servicio_id es requerido'}),
-        nombre_cliente: Joi.string().max(100).optional(),
+
         tiempo_espera_aceptado: Joi.number().integer().min(0).max(120).optional()
             .messages({'number.max': 'Tiempo de espera no puede exceder 120 minutos'}),
         notas_walk_in: Joi.string().max(500).optional()
+    })
+    .custom((value, helpers) => {
+        // Validación 1: Debe tener cliente_id O nombre_cliente (telefono es opcional)
+        const tieneClienteExistente = !!value.cliente_id;
+        const tieneClienteNuevo = !!value.nombre_cliente;
+
+        if (!tieneClienteExistente && !tieneClienteNuevo) {
+            return helpers.error('custom.cliente_requerido');
+        }
+
+        if (tieneClienteExistente && tieneClienteNuevo) {
+            return helpers.error('custom.cliente_duplicado');
+        }
+
+        return value;
+    })
+    .messages({
+        'custom.cliente_requerido': 'Debe proporcionar cliente_id (existente) O nombre_cliente (nuevo). Teléfono opcional.',
+        'custom.cliente_duplicado': 'No puede enviar cliente_id Y nombre_cliente simultáneamente'
     }),
+
     query: Joi.object({
         organizacion_id: Joi.when('$userRole', {
             is: 'super_admin',

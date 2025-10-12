@@ -210,6 +210,15 @@ CREATE INDEX idx_clientes_email ON clientes(email) WHERE email IS NOT NULL;
 -- Uso: WHERE telefono = ? AND similarity(telefono, ?) > 0.3
 CREATE INDEX idx_clientes_telefono ON clientes(telefono);
 
+-- 📞 ÍNDICE 3C: UNICIDAD DE TELÉFONO POR ORGANIZACIÓN (PARCIAL)
+-- Propósito: Garantizar teléfonos únicos POR ORGANIZACIÓN (solo cuando NO es NULL)
+-- Uso: Validación de unicidad que permite múltiples clientes walk-in sin teléfono
+-- Ventaja: Índice parcial que solo indexa registros con teléfono != NULL
+-- CRÍTICO: Permite múltiples clientes con telefono=NULL en la misma org (walk-ins)
+CREATE UNIQUE INDEX idx_clientes_unique_telefono_por_org
+    ON clientes (organizacion_id, telefono)
+    WHERE telefono IS NOT NULL;
+
 -- 🔍 ÍNDICE 3B: BÚSQUEDA FUZZY DE TELÉFONOS (TRIGRAMA)
 -- Propósito: Soporte para búsqueda fuzzy de teléfonos en ClienteModel.buscarPorTelefono()
 -- Uso: WHERE telefono % ? (operador similaridad trigrama)
