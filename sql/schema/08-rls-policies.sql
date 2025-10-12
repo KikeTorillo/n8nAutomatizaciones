@@ -14,7 +14,6 @@
 -- • servicios: Aislamiento por organización con bypass
 -- • servicios_profesionales: Aislamiento indirecto vía joins
 -- • citas: Aislamiento por organización con bypass
--- • horarios_disponibilidad: Aislamiento por organización con bypass
 --
 -- 🔄 ORDEN DE EJECUCIÓN: #8 (Después de indexes)
 -- 🎯 SEGURIDAD: Aislamiento automático por organizacion_id
@@ -389,37 +388,6 @@ CREATE POLICY citas_system_bypass ON citas
     );
 
 -- ====================================================================
--- ⏰ RLS PARA TABLA HORARIOS_DISPONIBILIDAD
--- ====================================================================
--- Aislamiento por organización para gestión de disponibilidad
--- ────────────────────────────────────────────────────────────────────
-
--- Habilitar RLS en horarios_disponibilidad
-ALTER TABLE horarios_disponibilidad ENABLE ROW LEVEL SECURITY;
-ALTER TABLE horarios_disponibilidad FORCE ROW LEVEL SECURITY;
-
--- POLÍTICA 1: AISLAMIENTO POR TENANT
-CREATE POLICY horarios_tenant_isolation ON horarios_disponibilidad
-    FOR ALL
-    TO saas_app
-    USING (
-        -- Super admin acceso global
-        current_setting('app.current_user_role', true) = 'super_admin'
-        -- O acceso a horarios de propia organización
-        OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-        -- O bypass para funciones de sistema
-        OR current_setting('app.bypass_rls', true) = 'true'
-    );
-
--- POLÍTICA 2: BYPASS PARA FUNCIONES DE SISTEMA
-CREATE POLICY horarios_system_bypass ON horarios_disponibilidad
-    FOR ALL
-    TO saas_app
-    USING (
-        current_setting('app.bypass_rls', true) = 'true'
-    );
-
--- ====================================================================
 -- 📝 DOCUMENTACIÓN DE POLÍTICAS RLS
 -- ====================================================================
 -- Comentarios inline para todas las políticas críticas del sistema
@@ -495,15 +463,6 @@ COMMENT ON POLICY citas_tenant_isolation ON citas IS
 - Bypass para triggers y funciones automáticas
 
 Crítico para: Agenda, reportes, facturación, métricas.';
-
--- Política de horarios disponibilidad
-COMMENT ON POLICY horarios_tenant_isolation ON horarios_disponibilidad IS
-'Aislamiento multi-tenant para horarios de disponibilidad:
-- Usuario accede solo a horarios de su organización
-- Super admin tiene acceso global
-- Bypass para generación automática de horarios
-
-Optimizado para: Búsqueda de slots disponibles, reservas temporales.';
 
 -- Política de plantillas (lectura pública)
 COMMENT ON POLICY plantillas_public_read ON plantillas_servicios IS

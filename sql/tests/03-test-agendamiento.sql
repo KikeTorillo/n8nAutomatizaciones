@@ -90,55 +90,19 @@ RETURNING id, nombre, telefono, email;
 \echo '   ✅ Cliente registrado:' :cliente1_nombre
 \echo ''
 
--- ────────────────────────────────────────────────────────────────────
--- PASO 1.2: Buscar disponibilidad para mañana
--- ────────────────────────────────────────────────────────────────────
-
-\echo '🔍 Paso 1.2: Buscando disponibilidad para mañana...'
-
-SELECT
-    '   → ' || TO_CHAR(hd.fecha, 'DD/MM/YYYY') as fecha,
-    TO_CHAR(hd.hora_inicio, 'HH24:MI') || ' - ' || TO_CHAR(hd.hora_fin, 'HH24:MI') as horario,
-    p.nombre_completo as profesional,
-    hd.estado,
-    hd.capacidad_maxima - hd.capacidad_ocupada as cupos_disponibles
-FROM horarios_disponibilidad hd
-JOIN profesionales p ON hd.profesional_id = p.id
-WHERE hd.organizacion_id = :org_id
-  AND hd.fecha = CURRENT_DATE + INTERVAL '1 day'
-  AND hd.estado = 'disponible'
-  AND hd.capacidad_ocupada < hd.capacidad_maxima
-  AND hd.hora_inicio >= '09:00'
-  AND hd.hora_inicio < '12:00'
-ORDER BY hd.hora_inicio
-LIMIT 5;
-
-\echo ''
-
--- Seleccionar primer slot disponible de Carlos para mañana a las 10:00
-SELECT id FROM horarios_disponibilidad
-WHERE organizacion_id = :org_id
-  AND profesional_id = :prof1_id
-  AND fecha = CURRENT_DATE + INTERVAL '1 day'
-  AND hora_inicio = '09:00'  -- Cambiado de 10:00 a 09:00 (horario que SÍ existe para Carlos)
-  AND estado = 'disponible'
-LIMIT 1 \gset horario1_
-
-\echo '   ✅ Horario seleccionado: Mañana 10:00 con Carlos'
 \echo ''
 
 -- ────────────────────────────────────────────────────────────────────
 -- PASO 1.3: Crear cita
 -- ────────────────────────────────────────────────────────────────────
 
-\echo '📅 Paso 1.3: Creando cita...'
+\echo '📅 Paso 1.2: Creando cita...'
 
 INSERT INTO citas (
     organizacion_id,
     cliente_id,
     profesional_id,
     servicio_id,
-    horario_id,
     fecha_cita,
     hora_inicio,
     hora_fin,
@@ -152,7 +116,6 @@ INSERT INTO citas (
     :cliente1_id,
     :prof1_id,
     :serv1_id,
-    :horario1_id,
     CURRENT_DATE + INTERVAL '1 day',
     '10:00',
     '10:30',
@@ -174,21 +137,11 @@ INSERT INTO citas (
 \echo '   ✅ Cita creada - ID:' :cita1_id 'Código:' :cita1_codigo_cita 'Fecha:' :cita1_fecha 'Hora:' :cita1_hora
 \echo ''
 
--- Verificar que capacidad_ocupada se incrementó
-SELECT
-    '   📊 Capacidad actualizada:',
-    capacidad_ocupada || '/' || capacidad_maxima as ocupacion,
-    CASE WHEN capacidad_ocupada < capacidad_maxima THEN '✅ Cupo disponible' ELSE '⚠️  Lleno' END as estado
-FROM horarios_disponibilidad
-WHERE id = :horario1_id;
-
-\echo ''
-
 -- ────────────────────────────────────────────────────────────────────
--- PASO 1.4: Confirmar cita
+-- PASO 1.3: Confirmar cita
 -- ────────────────────────────────────────────────────────────────────
 
-\echo '✅ Paso 1.4: Confirmando cita...'
+\echo '✅ Paso 1.3: Confirmando cita...'
 
 UPDATE citas
 SET
@@ -308,21 +261,12 @@ INSERT INTO citas (
 
 \echo '      → Cita de hoy (14:00): 🔄 En curso'
 
--- Cita 3: En 7 días - Confirmada
-SELECT id FROM horarios_disponibilidad
-WHERE organizacion_id = :org_id
-  AND profesional_id = :prof1_id
-  AND fecha = CURRENT_DATE + INTERVAL '7 days'
-  AND hora_inicio = '14:00'  -- Cambiado de 15:00 a 14:00 (horario que SÍ existe para Carlos)
-  AND estado = 'disponible'
-LIMIT 1 \gset horario2_
 
 INSERT INTO citas (
     organizacion_id,
     cliente_id,
     profesional_id,
     servicio_id,
-    horario_id,
     fecha_cita,
     hora_inicio,
     hora_fin,
@@ -335,7 +279,6 @@ INSERT INTO citas (
     :cliente2_id,
     :prof1_id,
     :serv2_id,
-    :horario2_id,
     CURRENT_DATE + INTERVAL '7 days',
     '14:00',
     '15:00',
@@ -391,31 +334,12 @@ RETURNING
 
 \echo ''
 
--- Verificar que capacidad_ocupada se decrementó
-SELECT
-    '   📊 Capacidad liberada:',
-    capacidad_ocupada || '/' || capacidad_maxima as ocupacion,
-    CASE WHEN capacidad_ocupada < capacidad_maxima THEN '✅ Cupo disponible' ELSE 'Lleno' END as estado
-FROM horarios_disponibilidad
-WHERE id = :cita4_horario_id;
-
-\echo ''
-
 -- ────────────────────────────────────────────────────────────────────
 -- PASO 3.2: Reprogramar para nueva fecha
 -- ────────────────────────────────────────────────────────────────────
 
 \echo '🔄 Paso 3.2: Reprogramando para nueva fecha...'
 
--- Buscar nuevo horario en 10 días
-SELECT id FROM horarios_disponibilidad
-WHERE organizacion_id = :org_id
-  AND profesional_id = :prof1_id
-  AND fecha = CURRENT_DATE + INTERVAL '10 days'
-  AND hora_inicio = '14:00'  -- Cambiado de 16:00 a 14:00 (horario que SÍ existe para Carlos)
-  AND estado = 'disponible'
-  AND capacidad_ocupada < capacidad_maxima
-LIMIT 1 \gset horario3_
 
 -- Crear nueva cita (reprogramación)
 INSERT INTO citas (
@@ -423,7 +347,6 @@ INSERT INTO citas (
     cliente_id,
     profesional_id,
     servicio_id,
-    horario_id,
     fecha_cita,
     hora_inicio,
     hora_fin,
@@ -436,7 +359,6 @@ INSERT INTO citas (
     :cliente2_id,
     :prof1_id,
     :serv2_id,
-    :horario3_id,
     CURRENT_DATE + INTERVAL '10 days',
     '14:00',
     '15:00',
@@ -556,7 +478,7 @@ RETURNING id, estado, TO_CHAR(fecha_cita, 'DD/MM/YYYY') as fecha;
 -- \echo '   ✅ Servicio grupal configurado (capacidad se define en el horario)'
 -- 
 -- -- Crear horario grupal con capacidad múltiple
--- INSERT INTO horarios_disponibilidad (
+-- INSERT INTO -- ELIMINADO: horarios_disponibilidad (
 --     organizacion_id,
 --     profesional_id,
 --     tipo_horario,
@@ -603,7 +525,6 @@ RETURNING id, estado, TO_CHAR(fecha_cita, 'DD/MM/YYYY') as fecha;
 --             cliente_id,
 --             profesional_id,
 --             servicio_id,
---             horario_id,
 --             fecha_cita,
 --             hora_inicio,
 --             hora_fin,
@@ -636,7 +557,7 @@ RETURNING id, estado, TO_CHAR(fecha_cita, 'DD/MM/YYYY') as fecha;
 --     '   📊 Ocupación de clase grupal:' as info,
 --     capacidad_ocupada || '/' || capacidad_maxima as cupos,
 --     capacidad_maxima - capacidad_ocupada || ' disponibles' as restantes
--- FROM horarios_disponibilidad
+-- FROM -- ELIMINADO: horarios_disponibilidad
 -- WHERE id = :horario_grupal_id;
 -- 
 -- \echo ''
@@ -706,22 +627,6 @@ FROM citas c
 JOIN organizaciones o ON c.organizacion_id = o.id
 WHERE o.nombre_comercial LIKE 'TEST_%'
   AND c.estado = 'cancelada';
-
-\echo ''
-
--- Métricas de capacidad
-\echo '📊 Uso de capacidad:'
-SELECT
-    o.nombre_comercial,
-    COUNT(hd.id) as slots_totales,
-    SUM(hd.capacidad_ocupada) as cupos_ocupados,
-    SUM(hd.capacidad_maxima) as cupos_totales,
-    ROUND(SUM(hd.capacidad_ocupada)::NUMERIC / NULLIF(SUM(hd.capacidad_maxima), 0) * 100, 1) || '%' as ocupacion
-FROM horarios_disponibilidad hd
-JOIN organizaciones o ON hd.organizacion_id = o.id
-WHERE o.nombre_comercial LIKE 'TEST_%'
-  AND hd.fecha >= CURRENT_DATE
-GROUP BY o.nombre_comercial;
 
 \echo ''
 

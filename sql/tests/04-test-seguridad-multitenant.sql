@@ -551,14 +551,6 @@ BEGIN
         v_tests_passed := v_tests_passed + 1;
     END IF;
 
-    -- Test: horarios_disponibilidad
-    v_tests_total := v_tests_total + 1;
-    SELECT COUNT(*) INTO v_count FROM horarios_disponibilidad;
-    IF v_count >= 0 THEN
-        RAISE NOTICE '   ✅ horarios_disponibilidad - RLS activo';
-        v_tests_passed := v_tests_passed + 1;
-    END IF;
-
     -- Test: eventos_sistema
     v_tests_total := v_tests_total + 1;
     SELECT COUNT(*) INTO v_count FROM eventos_sistema;
@@ -612,7 +604,7 @@ BEGIN
     RAISE NOTICE '   → SQL injection bloqueado';
     RAISE NOTICE '   → Tenant vacío bloqueado';
     RAISE NOTICE '';
-    RAISE NOTICE '7. ✅ Políticas RLS activas en 7/7 tablas críticas';
+    RAISE NOTICE '7. ✅ Políticas RLS activas en 6/6 tablas críticas';
     RAISE NOTICE '';
     RAISE NOTICE '🎉 SISTEMA MULTI-TENANT: SEGURO';
     RAISE NOTICE '✅ Aislamiento entre organizaciones funciona correctamente';

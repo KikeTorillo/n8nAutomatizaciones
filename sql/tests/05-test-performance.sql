@@ -74,25 +74,6 @@ ORDER BY p.calificacion_promedio DESC;
 
 \echo ''
 
--- Query 3: Disponibilidad de próximos 7 días
-\echo '🧪 Query 3: Disponibilidad próximos 7 días...'
-EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
-SELECT
-    hd.id,
-    hd.fecha,
-    hd.hora_inicio,
-    hd.hora_fin,
-    p.nombre_completo,
-    hd.capacidad_maxima - hd.capacidad_ocupada as cupos_disponibles
-FROM horarios_disponibilidad hd
-JOIN profesionales p ON hd.profesional_id = p.id
-WHERE hd.organizacion_id = :org_id
-  AND hd.fecha BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7 days'
-  AND hd.estado = 'disponible'
-  AND hd.capacidad_ocupada < hd.capacidad_maxima
-ORDER BY hd.fecha, hd.hora_inicio
-LIMIT 50;
-
 \echo ''
 
 -- ====================================================================

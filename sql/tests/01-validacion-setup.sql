@@ -73,18 +73,18 @@ ORDER BY rolname;
 
 SELECT
     CASE
-        WHEN COUNT(*) >= 16 THEN '✅ PASS'
+        WHEN COUNT(*) >= 15 THEN '✅ PASS'
         ELSE '❌ FAIL'
     END as status,
     'Tablas operativas creadas' as test,
-    COUNT(*)::TEXT || '/16' as resultado
+    COUNT(*)::TEXT || '/15' as resultado
 FROM information_schema.tables
 WHERE table_schema = 'public'
   AND table_type = 'BASE TABLE'
   AND table_name IN (
       'usuarios', 'organizaciones', 'profesionales', 'clientes',
       'servicios', 'servicios_profesionales', 'citas',
-      'horarios_disponibilidad', 'horarios_profesionales',
+      'horarios_profesionales',
       'plantillas_servicios', 'planes_subscripcion', 'subscripciones',
       'historial_subscripciones', 'metricas_uso_organizacion',
       'eventos_sistema', 'bloqueos_horarios'
@@ -166,8 +166,6 @@ WHERE n.nspname = 'public'
   AND proname IN (
       'registrar_intento_login',
       'validar_coherencia_cita',
-      'validar_coherencia_horario',
-      'generar_disponibilidad_desde_horarios_base',
       'archivar_eventos_antiguos',
       'archivar_citas_antiguas'
   )
@@ -288,7 +286,7 @@ FROM pg_trigger t
 JOIN pg_class c ON t.tgrelid = c.oid
 WHERE NOT t.tgisinternal
   AND relname IN (
-      'citas', 'horarios_disponibilidad', 'eventos_sistema',
+      'citas', 'eventos_sistema',
       'horarios_profesionales', 'bloqueos_horarios'
   )
 ORDER BY relname, tgname;
@@ -470,7 +468,7 @@ BEGIN
 
     IF v_bases >= 4 THEN v_passed_checks := v_passed_checks + 1; END IF;
     IF v_usuarios >= 5 THEN v_passed_checks := v_passed_checks + 1; END IF;
-    IF v_tablas >= 16 THEN v_passed_checks := v_passed_checks + 1; END IF;
+    IF v_tablas >= 15 THEN v_passed_checks := v_passed_checks + 1; END IF;
     IF v_enums >= 7 THEN v_passed_checks := v_passed_checks + 1; END IF;
     IF v_funciones >= 20 THEN v_passed_checks := v_passed_checks + 1; END IF;
     IF v_indices >= 80 THEN v_passed_checks := v_passed_checks + 1; END IF;

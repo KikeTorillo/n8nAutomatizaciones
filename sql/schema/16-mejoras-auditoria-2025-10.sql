@@ -76,17 +76,6 @@ ALTER TABLE citas
     ON DELETE CASCADE
     ON UPDATE CASCADE;
 
--- 1.5 horarios_disponibilidad.organizacion_id
-ALTER TABLE horarios_disponibilidad
-    DROP CONSTRAINT IF EXISTS horarios_disponibilidad_organizacion_id_fkey CASCADE;
-
-ALTER TABLE horarios_disponibilidad
-    ADD CONSTRAINT horarios_disponibilidad_organizacion_id_fkey
-    FOREIGN KEY (organizacion_id)
-    REFERENCES organizaciones(id)
-    ON DELETE CASCADE
-    ON UPDATE CASCADE;
-
 -- 1.6 eventos_sistema.organizacion_id
 ALTER TABLE eventos_sistema
     DROP CONSTRAINT IF EXISTS eventos_sistema_organizacion_id_fkey CASCADE;
@@ -208,16 +197,7 @@ COMMENT ON POLICY citas_tenant_isolation ON citas IS
 
 Datos protegidos: Información de cliente, historial médico/servicios.';
 
--- 2.7 Política de horarios disponibilidad
-COMMENT ON POLICY horarios_tenant_isolation ON horarios_disponibilidad IS
-'Acceso a disponibilidad de horarios:
-- Usuario accede solo a horarios de su organización
-- Super admin gestiona horarios globalmente
-- Bypass para generación automática de slots
-
-Crítico para: Sistema de agendamiento, calendario público.';
-
--- 2.8 Política de métricas uso
+-- 2.7 Política de métricas uso
 COMMENT ON POLICY metricas_uso_access ON metricas_uso_organizacion IS
 'Acceso a métricas de uso de organización:
 - Usuario ve métricas de su organización

@@ -391,33 +391,6 @@ VALUES
 
 \echo ''
 
--- ────────────────────────────────────────────────────────────────────
--- PASO 1.7: Generar disponibilidad automática
--- ────────────────────────────────────────────────────────────────────
-
-\echo '📅 Paso 1.7: Generando disponibilidad automática...'
-
--- Generar disponibilidad para Carlos (próximos 30 días)
-SELECT generar_disponibilidad_desde_horarios_base(
-    :prof1_id,
-    CURRENT_DATE,
-    (CURRENT_DATE + INTERVAL '30 days')::date,
-    false
-);
-
-\echo '   ✅ Disponibilidad generada para' :prof1_nombre_completo
-
--- Generar disponibilidad para Miguel (próximos 30 días)
-SELECT generar_disponibilidad_desde_horarios_base(
-    :prof2_id,
-    CURRENT_DATE,
-    (CURRENT_DATE + INTERVAL '30 days')::date,
-    false
-);
-
-\echo '   ✅ Disponibilidad generada para' :prof2_nombre_completo
-
-\echo ''
 
 -- ====================================================================
 -- 💅 ESCENARIO 2: ONBOARDING DE SALÓN DE BELLEZA
@@ -609,20 +582,6 @@ ORDER BY o.id, s.id;
 
 \echo ''
 
-\echo '📅 Disponibilidad generada:'
-SELECT
-    '   → ' || p.nombre_completo as profesional,
-    COUNT(DISTINCT hd.fecha) as dias_disponibles,
-    COUNT(*) as slots_totales
-FROM horarios_disponibilidad hd
-JOIN profesionales p ON hd.profesional_id = p.id
-JOIN organizaciones o ON p.organizacion_id = o.id
-WHERE o.codigo_tenant LIKE 'TEST-%'
-GROUP BY p.id, p.nombre_completo
-ORDER BY p.id;
-
-\echo ''
-
 \echo '🔗 Asignaciones servicio-profesional:'
 SELECT
     '   → ' || p.nombre_completo as profesional,
@@ -647,7 +606,6 @@ DECLARE
     v_profs INTEGER;
     v_servs INTEGER;
     v_horarios INTEGER;
-    v_slots INTEGER;
     v_asignaciones INTEGER;
 BEGIN
     -- Contar elementos creados
@@ -662,9 +620,6 @@ BEGIN
         SELECT id FROM organizaciones WHERE codigo_tenant LIKE 'TEST-%'
     );
     SELECT COUNT(*) INTO v_horarios FROM horarios_profesionales WHERE organizacion_id IN (
-        SELECT id FROM organizaciones WHERE codigo_tenant LIKE 'TEST-%'
-    );
-    SELECT COUNT(*) INTO v_slots FROM horarios_disponibilidad WHERE organizacion_id IN (
         SELECT id FROM organizaciones WHERE codigo_tenant LIKE 'TEST-%'
     );
     SELECT COUNT(*) INTO v_asignaciones FROM servicios_profesionales WHERE profesional_id IN (
@@ -682,7 +637,6 @@ BEGIN
     RAISE NOTICE '✅ Profesionales registrados: %', v_profs;
     RAISE NOTICE '✅ Servicios configurados: %', v_servs;
     RAISE NOTICE '✅ Horarios base definidos: %', v_horarios;
-    RAISE NOTICE '✅ Slots de disponibilidad: %', v_slots;
     RAISE NOTICE '✅ Asignaciones servicio-profesional: %', v_asignaciones;
     RAISE NOTICE '';
 
