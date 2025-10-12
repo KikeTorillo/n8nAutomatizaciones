@@ -5,7 +5,6 @@ const organizacionesRouter = require('./organizaciones');
 const profesionalesRouter = require('./profesionales');
 const clientesRouter = require('./clientes');
 const serviciosRouter = require('./servicios');
-const horariosRouter = require('./horarios');
 const citasRouter = require('./citas');
 const usuariosRouter = require('./usuarios');
 const bloqueosHorariosRouter = require('./bloqueos-horarios');
@@ -27,7 +26,6 @@ function routerApi(app) {
     router.use('/profesionales', profesionalesRouter);
     router.use('/clientes', clientesRouter);
     router.use('/servicios', serviciosRouter);
-    router.use('/horarios', horariosRouter);
     router.use('/bloqueos-horarios', bloqueosHorariosRouter);
     router.use('/citas', citasRouter);
 

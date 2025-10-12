@@ -310,7 +310,6 @@ http://localhost:3000/api/v1
 | **Profesionales** | `/profesionales` | Personal que atiende |
 | **Clientes** | `/clientes` | Base de clientes |
 | **Servicios** | `/servicios` | Catálogo de servicios |
-| **Horarios** | `/horarios` | Disponibilidad y horarios |
 | **Citas** | `/citas` | Sistema de agendamiento |
 | **Bloqueos** | `/bloqueos-horarios` | Vacaciones, feriados |
 
@@ -392,13 +391,12 @@ sequenceDiagram
     B-->>F: {servicio}
 
     Note over F,DB: 5. CONFIGURAR HORARIOS
-    F->>B: POST /api/v1/horarios<br/>{profesional_id, dia_semana, hora_inicio}
+    F->>B: POST /api/v1/profesionales/:id/horarios<br/>{dia_semana, hora_inicio, hora_fin}
     B->>DB: INSERT horarios_profesionales
-    DB-->>B: horario creado
-    F->>B: POST /api/v1/horarios/generar-disponibilidad<br/>{fecha_inicio, fecha_fin}
-    B->>DB: CALL generar_disponibilidad_desde_horarios_base()
-    DB-->>B: 86 slots generados
-    B-->>F: {slots_generados: 86}
+    DB-->>B: horarios base creados
+    B-->>F: {horarios_profesionales}
+
+    Note: Disponibilidad se calcula dinámicamente<br/>desde horarios_profesionales al consultar citas
 ```
 
 ### 2. Flujo de Agendamiento Manual
@@ -423,19 +421,19 @@ sequenceDiagram
     end
 
     Note over F,DB: 2. CONSULTAR DISPONIBILIDAD
-    F->>B: GET /api/v1/horarios/disponibilidad<br/>?profesional_id=1&fecha=2025-10-15
-    B->>DB: SELECT * FROM horarios_disponibilidad<br/>WHERE estado = 'disponible'
-    DB-->>B: slots disponibles
+    F->>B: GET /api/v1/citas/disponibilidad<br/>?profesional_id=1&fecha=2025-10-15&servicio_id=2
+    B->>DB: Validar horarios_profesionales<br/>+ bloqueos_horarios + citas existentes
+    DB-->>B: slots calculados en tiempo real
     B-->>F: [{hora_inicio: "09:00", hora_fin: "09:30"}, ...]
 
     Note over F,DB: 3. CREAR CITA
     F->>B: POST /api/v1/citas<br/>{cliente_id, profesional_id, servicio_id, fecha, hora}
     B->>DB: BEGIN TRANSACTION
     B->>DB: Validar entidades relacionadas
-    B->>DB: Validar conflicto de horario
+    B->>DB: Validar horario permitido (horarios_profesionales)
+    B->>DB: Validar conflicto de citas
     B->>DB: INSERT citas
     DB->>DB: Trigger auto-genera codigo_cita<br/>(ORG001-20251015-001)
-    B->>DB: UPDATE horarios_disponibilidad<br/>SET estado = 'ocupado'
     B->>DB: COMMIT
     DB-->>B: cita creada
     B-->>F: {cita con codigo_cita}

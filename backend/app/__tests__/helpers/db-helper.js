@@ -75,7 +75,6 @@ async function cleanAllTables(client) {
     const tables = [
       'citas',
       'servicios_profesionales',
-      'horarios_disponibilidad',
       'bloqueos_horarios',
       'servicios',
       'profesionales',
@@ -100,7 +99,6 @@ async function cleanAllTables(client) {
     const tables = [
       'citas',
       'servicios_profesionales',
-      'horarios_disponibilidad',
       'bloqueos_horarios',
       'servicios',
       'profesionales',

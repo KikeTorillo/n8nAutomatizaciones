@@ -530,104 +530,6 @@ describe('RBAC - Control de Permisos por Rol', () => {
   });
 
   // ============================================================================
-  // RBAC - MÓDULO HORARIOS
-  // ============================================================================
-
-  describe('RBAC - Horarios', () => {
-    test('✅ Empleado SÍ puede crear horario', async () => {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      const fecha = tomorrow.toISOString().split('T')[0];
-
-      const response = await request(app)
-        .post('/api/v1/horarios')
-        .set('Authorization', `Bearer ${empleadoToken}`)
-        .send({
-          profesional_id: testProfesional.id,
-          fecha: fecha,
-          hora_inicio: '09:00:00',
-          hora_fin: '10:00:00',
-          dia_semana: tomorrow.getDay()
-        })
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-    });
-
-    test('❌ Empleado NO puede eliminar horario', async () => {
-      const tempClient = await global.testPool.connect();
-      const { setRLSContext } = require('../helpers/db-helper');
-      await setRLSContext(tempClient, testOrg.id);
-
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 2);
-      const fecha = tomorrow.toISOString().split('T')[0];
-
-      const result = await tempClient.query(
-        `INSERT INTO horarios_disponibilidad (
-          organizacion_id, profesional_id, fecha, hora_inicio, hora_fin, dia_semana, estado, tipo_horario
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [testOrg.id, testProfesional.id, fecha, '11:00:00', '12:00:00', tomorrow.getDay(), 'disponible', 'franja_especifica']
-      );
-      const horarioId = result.rows[0].id;
-      tempClient.release();
-
-      const response = await request(app)
-        .delete(`/api/v1/horarios/${horarioId}`)
-        .set('Authorization', `Bearer ${empleadoToken}`);
-
-      // Solo admin/propietario pueden eliminar
-      expect([403]).toContain(response.status);
-    });
-
-    test('✅ Admin SÍ puede eliminar horario', async () => {
-      const tempClient = await global.testPool.connect();
-      const { setRLSContext } = require('../helpers/db-helper');
-      await setRLSContext(tempClient, testOrg.id);
-
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 3);
-      const fecha = tomorrow.toISOString().split('T')[0];
-
-      const result = await tempClient.query(
-        `INSERT INTO horarios_disponibilidad (
-          organizacion_id, profesional_id, fecha, hora_inicio, hora_fin, dia_semana, estado, tipo_horario
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-        [testOrg.id, testProfesional.id, fecha, '13:00:00', '14:00:00', tomorrow.getDay(), 'disponible', 'franja_especifica']
-      );
-      const horarioId = result.rows[0].id;
-      tempClient.release();
-
-      const response = await request(app)
-        .delete(`/api/v1/horarios/${horarioId}`)
-        .set('Authorization', `Bearer ${adminToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-    });
-
-    test('❌ Empleado NO puede limpiar reservas expiradas', async () => {
-      const response = await request(app)
-        .post('/api/v1/horarios/limpiar-reservas-expiradas')
-        .set('Authorization', `Bearer ${empleadoToken}`)
-        .send({ organizacion_id: testOrg.id });
-
-      // Solo admin/super_admin
-      expect([403]).toContain(response.status);
-    });
-
-    test('✅ Admin SÍ puede limpiar reservas expiradas', async () => {
-      const response = await request(app)
-        .post('/api/v1/horarios/limpiar-reservas-expiradas')
-        .set('Authorization', `Bearer ${adminToken}`)
-        .send({ organizacion_id: testOrg.id })
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-    });
-  });
-
-  // ============================================================================
   // RBAC - RESUMEN DE PERMISOS
   // ============================================================================
 
@@ -670,19 +572,12 @@ describe('RBAC - Control de Permisos por Rol', () => {
           suspender: ['super_admin'],
           cambiar_plan: ['super_admin'],
           estadisticas: ['super_admin', 'admin', 'propietario']
-        },
-        horarios: {
-          crear: ['super_admin', 'admin', 'propietario', 'empleado'],
-          ver: ['super_admin', 'admin', 'propietario', 'empleado'],
-          actualizar: ['super_admin', 'admin', 'propietario'],
-          eliminar: ['super_admin', 'admin', 'propietario'],
-          limpiar_expiradas: ['super_admin', 'admin']
         }
       };
 
       // Este test documenta la matriz esperada
       expect(matrizPermisos).toBeDefined();
-      expect(Object.keys(matrizPermisos)).toHaveLength(6);
+      expect(Object.keys(matrizPermisos)).toHaveLength(5);
     });
   });
 });

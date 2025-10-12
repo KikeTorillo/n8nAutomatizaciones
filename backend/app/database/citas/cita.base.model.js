@@ -403,12 +403,6 @@ class CitaBaseModel {
                 organizacionId
             ]);
 
-            await db.query(`
-                UPDATE horarios_disponibilidad
-                SET estado = 'disponible', cita_id = NULL
-                WHERE cita_id = $1
-            `, [citaId]);
-
             // Auditoría dentro de la transacción
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,

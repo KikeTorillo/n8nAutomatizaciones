@@ -63,95 +63,6 @@ class CitaHelpersModel {
         };
     }
 
-    static async buscarHorarioCompatible(criterios, db) {
-        const {
-            organizacion_id,
-            servicio_id,
-            fecha_solicitada,
-            turno_preferido,
-            profesional_preferido,
-            duracion_minutos
-        } = criterios;
-
-        let fechaObjetivo;
-        const hoy = new Date();
-
-        if (fecha_solicitada === 'hoy') {
-            fechaObjetivo = hoy;
-        } else if (fecha_solicitada === 'mañana') {
-            fechaObjetivo = new Date(hoy);
-            fechaObjetivo.setDate(hoy.getDate() + 1);
-        } else if (fecha_solicitada === 'pasado mañana' || fecha_solicitada === 'pasado_mañana') {
-            fechaObjetivo = new Date(hoy);
-            fechaObjetivo.setDate(hoy.getDate() + 2);
-        } else {
-            fechaObjetivo = new Date(fecha_solicitada);
-        }
-
-        const fechaFormateada = fechaObjetivo.toISOString().split('T')[0];
-
-        let horaInicio, horaFin;
-        switch (turno_preferido) {
-            case 'mañana':
-                horaInicio = '08:00';
-                horaFin = '12:00';
-                break;
-            case 'tarde':
-                horaInicio = '14:00';
-                horaFin = '18:00';
-                break;
-            case 'noche':
-                horaInicio = '18:00';
-                horaFin = '21:00';
-                break;
-            default:
-                horaInicio = '08:00';
-                horaFin = '21:00';
-        }
-
-        let query = `
-            SELECT
-                h.id as horario_id,
-                h.profesional_id,
-                h.fecha,
-                h.hora_inicio,
-                h.hora_fin,
-                p.nombre_completo as profesional_nombre
-            FROM horarios_disponibilidad h
-            JOIN profesionales p ON h.profesional_id = p.id
-            JOIN servicios_profesionales sp ON sp.profesional_id = p.id AND sp.servicio_id = $2
-            WHERE h.organizacion_id = $1
-                AND h.fecha = $3
-                AND h.estado = 'disponible'
-                AND h.cita_id IS NULL
-                AND h.hora_inicio >= $4::time
-                AND h.hora_fin <= $5::time
-                AND p.activo = true
-        `;
-
-        const params = [organizacion_id, servicio_id, fechaFormateada, horaInicio, horaFin];
-
-        if (profesional_preferido) {
-            query += ' AND h.profesional_id = $6';
-            params.push(profesional_preferido);
-        }
-
-        query += ' ORDER BY h.hora_inicio ASC LIMIT 1';
-
-        const horarios = await db.query(query, params);
-
-        if (horarios.rows.length === 0) {
-            logger.warn('[CitaHelpersModel.buscarHorarioCompatible] No hay horarios disponibles', {
-                organizacion_id,
-                fecha: fechaFormateada,
-                turno: turno_preferido,
-                profesional_preferido
-            });
-            return null;
-        }
-
-        return horarios.rows[0];
-    }
 
     static async generarCodigoCita(organizacionId, db) {
         logger.error('[CitaHelpersModel.generarCodigoCita] DEPRECATED: Esta función NO debe usarse', {
@@ -197,33 +108,6 @@ class CitaHelpersModel {
         return cita.rows[0];
     }
 
-    static async marcarHorarioOcupado(horarioId, citaId, organizacionId, db) {
-        const resultado = await db.query(`
-            UPDATE horarios_disponibilidad
-            SET estado = 'ocupado',
-                cita_id = $1,
-                reservado_hasta = NULL,
-                session_id = NULL,
-                reservado_por = NULL,
-                actualizado_en = NOW(),
-                version = version + 1
-            WHERE id = $2
-              AND organizacion_id = $3
-              AND estado IN ('disponible', 'reservado_temporal')
-            RETURNING id, profesional_id, fecha, hora_inicio, hora_fin, estado
-        `, [citaId, horarioId, organizacionId]);
-
-        if (resultado.rows.length === 0) {
-            logger.warn('[CitaHelpersModel.marcarHorarioOcupado] Horario no disponible o no existe', {
-                horario_id: horarioId,
-                cita_id: citaId,
-                organizacion_id: organizacionId
-            });
-            throw new Error('El horario no está disponible o no pertenece a la organización');
-        }
-
-        return resultado.rows[0];
-    }
 
     static async registrarEventoAuditoria(evento, db) {
         try {

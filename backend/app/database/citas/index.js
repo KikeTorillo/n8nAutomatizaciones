@@ -118,9 +118,6 @@ class CitaModel {
         return CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
     }
 
-    static async buscarHorarioCompatible(criterios, db) {
-        return CitaHelpersModel.buscarHorarioCompatible(criterios, db);
-    }
 
     /**
      * @deprecated ⚠️ NO USAR - Genera códigos en formato incorrecto
@@ -134,9 +131,6 @@ class CitaModel {
         return CitaHelpersModel.insertarCitaCompleta(citaData, db);
     }
 
-    static async marcarHorarioOcupado(horarioId, citaId, organizacionId, db) {
-        return CitaHelpersModel.marcarHorarioOcupado(horarioId, citaId, organizacionId, db);
-    }
 
     static async registrarEventoAuditoria(evento, db) {
         return CitaHelpersModel.registrarEventoAuditoria(evento, db);
