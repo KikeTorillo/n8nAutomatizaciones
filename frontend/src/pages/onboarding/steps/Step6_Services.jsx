@@ -5,6 +5,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { serviceSchema } from '@/lib/validations';
 import { serviciosApi, profesionalesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
+import { useToast } from '@/hooks/useToast';
 import { formatCurrency } from '@/lib/utils';
 import FormField from '@/components/forms/FormField';
 import Input from '@/components/ui/Input';
@@ -17,6 +18,7 @@ import { Scissors, X, Plus } from 'lucide-react';
  */
 function Step5_Services() {
   const { formData, addService, removeService, nextStep, prevStep } = useOnboardingStore();
+  const toast = useToast();
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
 
   // Fetch profesionales
@@ -73,7 +75,7 @@ function Step5_Services() {
       nextStep();
     },
     onError: (error) => {
-      alert(`Error al crear servicios: ${error.message}`);
+      toast.error(`Error al crear servicios: ${error.message}`);
     },
   });
 
@@ -88,7 +90,7 @@ function Step5_Services() {
 
   const onSubmit = (data) => {
     if (data.profesionales.length === 0) {
-      alert('Debes seleccionar al menos un profesional');
+      toast.warning('Debes seleccionar al menos un profesional');
       return;
     }
 
@@ -99,7 +101,7 @@ function Step5_Services() {
 
   const handleContinue = () => {
     if (formData.services.length === 0) {
-      alert('Debes agregar al menos un servicio');
+      toast.warning('Debes agregar al menos un servicio');
       return;
     }
 

@@ -70,14 +70,45 @@ function Dashboard() {
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div>
-              <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-              {estadisticas?.organizacion && (
-                <p className="text-sm text-gray-600">
-                  {estadisticas.organizacion.nombre}
-                </p>
-              )}
+            <div className="flex items-center gap-8">
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
+                {estadisticas?.organizacion && (
+                  <p className="text-sm text-gray-600">
+                    {estadisticas.organizacion.nombre}
+                  </p>
+                )}
+              </div>
+
+              {/* Navigation Links */}
+              <div className="hidden md:flex items-center gap-6">
+                <button
+                  onClick={() => navigate('/clientes')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Clientes
+                </button>
+                <button
+                  onClick={() => navigate('/citas')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Citas
+                </button>
+                <button
+                  onClick={() => navigate('/profesionales')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Profesionales
+                </button>
+                <button
+                  onClick={() => navigate('/servicios')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Servicios
+                </button>
+              </div>
             </div>
+
             <div className="flex items-center gap-4">
               <span className="text-sm text-gray-600">
                 {user?.nombre} {user?.apellidos}

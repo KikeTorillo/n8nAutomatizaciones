@@ -4,6 +4,7 @@ import { planesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { useToast } from '@/hooks/useToast';
 import { formatCurrency } from '@/lib/utils';
 import { CreditCard, Check } from 'lucide-react';
 
@@ -12,6 +13,7 @@ import { CreditCard, Check } from 'lucide-react';
  */
 function Step2_PlanSelection() {
   const { formData, updateFormData, nextStep, prevStep } = useOnboardingStore();
+  const toast = useToast();
   const [selectedPlan, setSelectedPlan] = useState(formData.plan.plan_id);
 
   // Fetch planes desde el backend
@@ -35,7 +37,7 @@ function Step2_PlanSelection() {
 
   const handleContinue = () => {
     if (!selectedPlan) {
-      alert('Por favor selecciona un plan');
+      toast.warning('Por favor selecciona un plan');
       return;
     }
     nextStep();

@@ -214,6 +214,98 @@ export const loginSchema = z.object({
     .min(1, 'La contraseña es requerida'),
 });
 
+// ==================== CLIENTES ====================
+export const clienteSchema = z.object({
+  nombre: z
+    .string()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(150, 'El nombre no puede superar 150 caracteres')
+    .trim(),
+
+  telefono: z
+    .string()
+    .regex(phoneRegex, 'El teléfono debe tener un formato válido (ej: +573001234567)')
+    .min(10, 'El teléfono debe tener al menos 10 dígitos')
+    .max(20, 'El teléfono no puede superar 20 caracteres'),
+
+  email: z
+    .string()
+    .email('El email debe tener un formato válido')
+    .max(150, 'El email no puede superar 150 caracteres')
+    .optional()
+    .or(z.literal('')),
+
+  fecha_nacimiento: z
+    .string()
+    .optional()
+    .or(z.literal(''))
+    .refine((val) => {
+      if (!val || val === '') return true;
+      const fecha = new Date(val);
+      const hoy = new Date();
+      const edad = hoy.getFullYear() - fecha.getFullYear();
+      return edad >= 5 && edad <= 120;
+    }, 'La edad debe estar entre 5 y 120 años'),
+
+  direccion: z
+    .string()
+    .max(500, 'La dirección no puede superar 500 caracteres')
+    .optional()
+    .or(z.literal('')),
+
+  notas_especiales: z
+    .string()
+    .max(1000, 'Las notas no pueden superar 1000 caracteres')
+    .optional()
+    .or(z.literal('')),
+
+  alergias: z
+    .string()
+    .max(1000, 'Las alergias no pueden superar 1000 caracteres')
+    .optional()
+    .or(z.literal('')),
+
+  como_conocio: z
+    .string()
+    .max(100, 'Este campo no puede superar 100 caracteres')
+    .optional()
+    .or(z.literal('')),
+
+  marketing_permitido: z
+    .boolean()
+    .default(true),
+
+  profesional_preferido_id: z
+    .number()
+    .int()
+    .positive()
+    .optional(),
+
+  activo: z
+    .boolean()
+    .default(true),
+});
+
+// Schema simplificado para walk-in (cliente rápido)
+export const clienteRapidoSchema = z.object({
+  nombre: z
+    .string()
+    .min(2, 'El nombre debe tener al menos 2 caracteres')
+    .max(150, 'El nombre no puede superar 150 caracteres')
+    .trim(),
+
+  telefono: z
+    .string()
+    .regex(phoneRegex, 'El teléfono debe tener un formato válido')
+    .min(10, 'El teléfono debe tener al menos 10 dígitos'),
+
+  email: z
+    .string()
+    .email('El email debe tener un formato válido')
+    .optional()
+    .or(z.literal('')),
+});
+
 // ==================== HELPERS VALIDACIÓN ====================
 
 /**

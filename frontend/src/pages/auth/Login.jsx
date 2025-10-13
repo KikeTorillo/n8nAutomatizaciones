@@ -8,11 +8,13 @@ import useAuthStore from '@/store/authStore';
 import { loginSchema } from '@/lib/validations';
 import FormField from '@/components/forms/FormField';
 import Button from '@/components/ui/Button';
+import { useToast } from '@/hooks/useToast';
 import { Eye, EyeOff } from 'lucide-react';
 
 function Login() {
   const navigate = useNavigate();
   const { setAuth } = useAuthStore();
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
@@ -48,7 +50,7 @@ function Login() {
     onError: (error) => {
       console.error('❌ Error en login:', error);
       const message = error.response?.data?.message || 'Error al iniciar sesión';
-      alert(message); // Puedes cambiarlo por un toast
+      toast.error(message);
     },
   });
 

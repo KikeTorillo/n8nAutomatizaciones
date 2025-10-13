@@ -4,6 +4,7 @@ import { Plus, UserPlus, Search } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useClientes } from '@/hooks/useClientes';
+import { useToast } from '@/hooks/useToast';
 import WalkInModal from '@/components/clientes/WalkInModal';
 import ClientesList from '@/components/clientes/ClientesList';
 
@@ -12,6 +13,7 @@ import ClientesList from '@/components/clientes/ClientesList';
  */
 function ClientesPage() {
   const navigate = useNavigate();
+  const toast = useToast();
   const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
   const [walkInOpen, setWalkInOpen] = useState(false);
@@ -24,7 +26,7 @@ function ClientesPage() {
 
   const handleWalkInSuccess = (cita) => {
     // Mostrar notificación de éxito
-    alert(`✅ Cita walk-in creada exitosamente: ${cita.codigo_cita}`);
+    toast.success(`Cita walk-in creada exitosamente: ${cita.codigo_cita || 'sin código'}`);
     setWalkInOpen(false);
     // Podría navegar a la vista de la cita o refrescar la lista
   };

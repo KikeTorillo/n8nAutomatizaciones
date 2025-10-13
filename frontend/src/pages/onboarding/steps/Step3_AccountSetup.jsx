@@ -6,6 +6,7 @@ import { accountSetupSchema } from '@/lib/validations';
 import { organizacionesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
 import useAuthStore from '@/store/authStore';
+import { useToast } from '@/hooks/useToast';
 import FormField from '@/components/forms/FormField';
 import Button from '@/components/ui/Button';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
@@ -16,6 +17,7 @@ import { UserPlus, Eye, EyeOff } from 'lucide-react';
 function Step3_AccountSetup() {
   const { formData, updateFormData, setIds, nextStep, prevStep } = useOnboardingStore();
   const { setAuth } = useAuthStore();
+  const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
@@ -125,11 +127,11 @@ function Step3_AccountSetup() {
       // Si es error de validación 400
       else if (error.status === 400) {
         console.error('📋 Detalles del error de validación:', errorData);
-        alert(`Error de validación: ${errorMsg}\n\nRevisa la consola para más detalles.`);
+        toast.error(`Error de validación: ${errorMsg}. Revisa la consola para más detalles.`);
       }
       // Otros errores
       else {
-        alert(`Error: ${errorMsg}`);
+        toast.error(`Error: ${errorMsg}`);
       }
     },
   });

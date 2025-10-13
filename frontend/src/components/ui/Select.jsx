@@ -15,6 +15,7 @@ const Select = forwardRef(
       helper,
       placeholder = 'Selecciona una opción',
       required = false,
+      children,
       ...props
     },
     ref
@@ -40,12 +41,18 @@ const Select = forwardRef(
             className={cn(baseStyles, stateStyles, className)}
             {...props}
           >
-            <option value="">{placeholder}</option>
-            {options.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
+            {children ? (
+              children
+            ) : (
+              <>
+                <option value="">{placeholder}</option>
+                {options.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </>
+            )}
           </select>
 
           {/* Flecha personalizada */}

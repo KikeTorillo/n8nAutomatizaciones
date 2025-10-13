@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ClienteForm from '@/components/clientes/ClienteForm';
 import { useCliente, useCrearCliente, useActualizarCliente } from '@/hooks/useClientes';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Página para crear o editar un cliente
@@ -12,6 +13,7 @@ function ClienteFormPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const isEditing = !!id;
+  const toast = useToast();
 
   // Obtener cliente si estamos editando
   const { data: cliente, isLoading: loadingCliente } = useCliente(id);
@@ -29,12 +31,12 @@ function ClienteFormPage() {
         { id, data },
         {
           onSuccess: () => {
-            alert('✅ Cliente actualizado exitosamente');
+            toast.success('Cliente actualizado exitosamente');
             navigate(`/clientes/${id}`);
           },
           onError: (error) => {
             console.error('Error al actualizar cliente:', error);
-            alert(
+            toast.error(
               error.response?.data?.error ||
               'Error al actualizar el cliente. Por favor intenta nuevamente.'
             );
@@ -45,12 +47,12 @@ function ClienteFormPage() {
       // Crear nuevo cliente
       crearMutation.mutate(data, {
         onSuccess: (nuevoCliente) => {
-          alert('✅ Cliente creado exitosamente');
+          toast.success('Cliente creado exitosamente');
           navigate(`/clientes/${nuevoCliente.id}`);
         },
         onError: (error) => {
           console.error('Error al crear cliente:', error);
-          alert(
+          toast.error(
             error.response?.data?.error ||
             'Error al crear el cliente. Por favor intenta nuevamente.'
           );

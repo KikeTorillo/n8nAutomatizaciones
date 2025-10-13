@@ -3,6 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { horariosApi, profesionalesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
+import { useToast } from '@/hooks/useToast';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -14,6 +15,7 @@ import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
  */
 function Step5_Schedules() {
   const { nextStep, prevStep } = useOnboardingStore();
+  const toast = useToast();
   const [profesionalesConHorarios, setProfesionalesConHorarios] = useState([]);
   const [errorProfesionales, setErrorProfesionales] = useState([]);
 
@@ -76,7 +78,7 @@ function Step5_Schedules() {
   // Crear horarios para todos los profesionales
   const handleCreateSchedules = async (scheduleData) => {
     if (!profesionales || profesionales.length === 0) {
-      alert('No hay profesionales disponibles');
+      toast.warning('No hay profesionales disponibles');
       return;
     }
 

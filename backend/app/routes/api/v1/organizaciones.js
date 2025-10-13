@@ -9,7 +9,7 @@ const router = express.Router();
 
 // Self-service signup - Clientes nuevos se registran automáticamente
 router.post('/register',
-    rateLimiting.heavyOperationRateLimit,
+    rateLimiting.apiRateLimit,
     validation.validate(organizacionSchemas.onboarding),
     OrganizacionController.onboarding
 );

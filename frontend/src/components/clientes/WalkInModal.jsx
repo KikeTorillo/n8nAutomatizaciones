@@ -6,12 +6,14 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/useClientes';
 import { useServicios, useProfesionales } from '@/hooks/useDashboard';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Modal para atender clientes walk-in (sin cita previa)
  * Flujo optimizado para recepción rápida en 3 pasos
  */
 function WalkInModal({ isOpen, onClose, onSuccess }) {
+  const toast = useToast();
   const [step, setStep] = useState(1); // 1: Buscar, 2: Servicio, 3: Confirmar
   const [telefono, setTelefono] = useState('');
   const [buscarEnabled, setBuscarEnabled] = useState(false);
@@ -22,8 +24,16 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
   const [tiempoEspera, setTiempoEspera] = useState(0);
 
   // Queries
-  const { data: servicios, isLoading: loadingServicios } = useServicios();
-  const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
+  const { data: servicios, isLoading: loadingServicios, refetch: refetchServicios } = useServicios();
+  const { data: profesionales, isLoading: loadingProfesionales, refetch: refetchProfesionales } = useProfesionales();
+
+  // Refetch servicios y profesionales cuando se abre el modal
+  useEffect(() => {
+    if (isOpen) {
+      refetchServicios();
+      refetchProfesionales();
+    }
+  }, [isOpen, refetchServicios, refetchProfesionales]);
   const { data: clienteBuscado, isLoading: buscandoCliente } = useBuscarPorTelefono(
     telefono,
     buscarEnabled
@@ -39,7 +49,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
   useEffect(() => {
     if (clienteBuscado?.encontrado) {
       setClienteSeleccionado(clienteBuscado.cliente);
-      setNombreCliente(clienteBuscado.cliente.nombre_completo);
+      setNombreCliente(clienteBuscado.cliente.nombre);
     }
   }, [clienteBuscado]);
 
@@ -83,7 +93,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
       },
       onError: (error) => {
         console.error('Error al crear walk-in:', error);
-        alert(
+        toast.error(
           error.response?.data?.error ||
           'Error al crear la cita walk-in. Por favor intenta nuevamente.'
         );
@@ -164,7 +174,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
                       Cliente encontrado
                     </p>
                     <p className="text-sm text-green-700 mt-1">
-                      {clienteBuscado.cliente.nombre_completo}
+                      {clienteBuscado.cliente.nombre}
                     </p>
                     {clienteBuscado.cliente.email && (
                       <p className="text-sm text-green-600 mt-1">

@@ -6,6 +6,7 @@ import { professionalSchema } from '@/lib/validations';
 import { TIPOS_PROFESIONAL } from '@/lib/constants';
 import { profesionalesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
+import { useToast } from '@/hooks/useToast';
 import FormField from '@/components/forms/FormField';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -18,6 +19,7 @@ import { Users, X, Plus } from 'lucide-react';
 function Step4_Professionals() {
   const queryClient = useQueryClient();
   const { formData, addProfessional, removeProfessional, nextStep, prevStep } = useOnboardingStore();
+  const toast = useToast();
   const [especialidadInput, setEspecialidadInput] = useState('');
   const [currentEspecialidades, setCurrentEspecialidades] = useState([]);
 
@@ -65,7 +67,7 @@ function Step4_Professionals() {
     },
     onError: (error) => {
       console.error('❌ Error creando profesionales:', error);
-      alert(`Error al crear profesionales: ${error.message}`);
+      toast.error(`Error al crear profesionales: ${error.message}`);
     },
   });
 
@@ -92,7 +94,7 @@ function Step4_Professionals() {
 
   const handleContinue = () => {
     if (formData.professionals.length === 0) {
-      alert('Debes agregar al menos un profesional');
+      toast.warning('Debes agregar al menos un profesional');
       return;
     }
 

@@ -67,7 +67,8 @@ export function useServicios() {
       // Backend retorna: { data: { servicios: [...], ... } }
       return response.data.data.servicios || [];
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: 0, // Sin cache - siempre fresco
+    refetchOnMount: 'always', // Refetch al montar componente
   });
 }
 

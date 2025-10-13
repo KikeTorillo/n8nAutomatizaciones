@@ -68,7 +68,7 @@ router.delete('/:id/profesionales/:profesional_id',
 
 // ========== Rutas CRUD Estándar ==========
 router.post('/',
-    rateLimiting.heavyOperationRateLimit,
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
