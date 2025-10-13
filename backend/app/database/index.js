@@ -7,7 +7,6 @@
 const ClienteModel = require('./cliente.model');
 const CitaModel = require('./citas');
 const OrganizacionModel = require('./organizacion.model');
-const PlantillaServicioModel = require('./plantilla-servicio.model');
 const ProfesionalModel = require('./profesional.model');
 const ServicioModel = require('./servicio.model');
 const UsuarioModel = require('./usuario.model');
@@ -16,7 +15,6 @@ module.exports = {
     ClienteModel,
     CitaModel,
     OrganizacionModel,
-    PlantillaServicioModel,
     ProfesionalModel,
     ServicioModel,
     UsuarioModel,

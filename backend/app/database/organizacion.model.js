@@ -2,6 +2,7 @@
 
 const { getDb } = require('../config/database');
 const RLSHelper = require('../utils/rlsHelper');
+const RLSContextManager = require('../utils/rlsContextManager');
 const { SELECT_FIELDS, CAMPOS_ACTUALIZABLES } = require('../constants/organizacion.constants');
 
 
@@ -10,221 +11,191 @@ class OrganizacionModel {
 
     // Crear nueva organización (bypass RLS - operación de super_admin)
     static async crear(organizacionData) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                INSERT INTO organizaciones (
+                    nombre_comercial, razon_social, rfc_nif, tipo_industria,
+                    configuracion_industria, email_admin, telefono, codigo_tenant, slug,
+                    sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                RETURNING *
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    INSERT INTO organizaciones (
-                        nombre_comercial, razon_social, rfc_nif, tipo_industria,
-                        configuracion_industria, email_admin, telefono, codigo_tenant, slug,
-                        sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-                    RETURNING *
-                `;
+            const codigoTenant = `org_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+            const slug = organizacionData.nombre_comercial.toLowerCase()
+                .replace(/[^a-z0-9]/g, '-')
+                .replace(/-+/g, '-')
+                .substring(0, 50);
 
-                const codigoTenant = `org_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-                const slug = organizacionData.nombre_comercial.toLowerCase()
-                    .replace(/[^a-z0-9]/g, '-')
-                    .replace(/-+/g, '-')
-                    .substring(0, 50);
+            const values = [
+                organizacionData.nombre_comercial,
+                organizacionData.razon_social || null,
+                organizacionData.rfc_nif || null,
+                organizacionData.tipo_industria,
+                organizacionData.configuracion_industria || {},
+                organizacionData.email_admin || `admin-${codigoTenant}@temp.local`,
+                organizacionData.telefono || null,
+                codigoTenant,
+                slug,
+                organizacionData.sitio_web || null,
+                organizacionData.logo_url || null,
+                organizacionData.colores_marca || {},
+                organizacionData.configuracion_ui || {},
+                organizacionData.plan || organizacionData.plan_actual || 'basico'
+            ];
 
-                const values = [
-                    organizacionData.nombre_comercial,
-                    organizacionData.razon_social || null,
-                    organizacionData.rfc_nif || null,
-                    organizacionData.tipo_industria,
-                    organizacionData.configuracion_industria || {},
-                    organizacionData.email_admin || `admin-${codigoTenant}@temp.local`,
-                    organizacionData.telefono || null,
-                    codigoTenant,
-                    slug,
-                    organizacionData.sitio_web || null,
-                    organizacionData.logo_url || null,
-                    organizacionData.colores_marca || {},
-                    organizacionData.configuracion_ui || {},
-                    organizacionData.plan || organizacionData.plan_actual || 'basico'
-                ];
-
-                const result = await db.query(query, values);
-                return result.rows[0];
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, values);
+            return result.rows[0];
+        });
     }
 
     // Obtener organización por ID (bypass RLS - acceso super_admin/admin)
     static async obtenerPorId(id) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT ${this.SELECT_FIELDS_SQL}
+                FROM organizaciones
+                WHERE id = $1 AND activo = TRUE
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    SELECT ${this.SELECT_FIELDS_SQL}
-                    FROM organizaciones
-                    WHERE id = $1 AND activo = TRUE
-                `;
-
-                const result = await db.query(query, [id]);
-                return result.rows[0] || null;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [id]);
+            return result.rows[0] || null;
+        });
     }
 
     // Obtener organización por email (bypass RLS - operaciones de sistema)
     static async obtenerPorEmail(email) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT ${this.SELECT_FIELDS_SQL}
+                FROM organizaciones
+                WHERE email_admin = $1 AND activo = TRUE
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    SELECT ${this.SELECT_FIELDS_SQL}
-                    FROM organizaciones
-                    WHERE email_admin = $1 AND activo = TRUE
-                `;
-
-                const result = await db.query(query, [email]);
-                return result.rows[0] || null;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [email]);
+            return result.rows[0] || null;
+        });
     }
 
     // Listar todas las organizaciones con paginación (bypass RLS - solo super_admin)
     static async listar(options = {}) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const { page = 1, limit = 10, tipo_industria, incluir_inactivas = false, organizacion_id } = options;
+            const offset = (page - 1) * limit;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const { page = 1, limit = 10, tipo_industria, incluir_inactivas = false, organizacion_id } = options;
-                const offset = (page - 1) * limit;
+            let whereConditions = [];
+            let values = [];
+            let paramCounter = 1;
 
-                let whereConditions = [];
-                let values = [];
-                let paramCounter = 1;
+            // Solo filtrar por activo si NO se incluyen inactivas
+            if (!incluir_inactivas) {
+                whereConditions.push(`activo = $${paramCounter}`);
+                values.push(true);
+                paramCounter++;
+            }
 
-                // Solo filtrar por activo si NO se incluyen inactivas
-                if (!incluir_inactivas) {
-                    whereConditions.push(`activo = $${paramCounter}`);
-                    values.push(true);
-                    paramCounter++;
+            if (tipo_industria) {
+                whereConditions.push(`tipo_industria = $${paramCounter}`);
+                values.push(tipo_industria);
+                paramCounter++;
+            }
+
+            if (organizacion_id) {
+                whereConditions.push(`id = $${paramCounter}`);
+                values.push(organizacion_id);
+                paramCounter++;
+            }
+
+            const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : 'TRUE';
+
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM organizaciones
+                WHERE ${whereClause}
+            `;
+
+            const dataQuery = `
+                SELECT ${this.SELECT_FIELDS_SQL}
+                FROM organizaciones
+                WHERE ${whereClause}
+                ORDER BY creado_en DESC
+                LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
+            `;
+
+            const countResult = await db.query(countQuery, values);
+            const dataValues = [...values, limit, offset];
+            const dataResult = await db.query(dataQuery, dataValues);
+
+            const total = parseInt(countResult.rows[0].total);
+            const totalPages = Math.ceil(total / limit);
+
+            return {
+                data: dataResult.rows,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    totalPages,
+                    hasNext: page < totalPages,
+                    hasPrev: page > 1
                 }
-
-                if (tipo_industria) {
-                    whereConditions.push(`tipo_industria = $${paramCounter}`);
-                    values.push(tipo_industria);
-                    paramCounter++;
-                }
-
-                if (organizacion_id) {
-                    whereConditions.push(`id = $${paramCounter}`);
-                    values.push(organizacion_id);
-                    paramCounter++;
-                }
-
-                const whereClause = whereConditions.length > 0 ? whereConditions.join(' AND ') : 'TRUE';
-
-                const countQuery = `
-                    SELECT COUNT(*) as total
-                    FROM organizaciones
-                    WHERE ${whereClause}
-                `;
-
-                const dataQuery = `
-                    SELECT ${this.SELECT_FIELDS_SQL}
-                    FROM organizaciones
-                    WHERE ${whereClause}
-                    ORDER BY creado_en DESC
-                    LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
-                `;
-
-                const countResult = await db.query(countQuery, values);
-                const dataValues = [...values, limit, offset];
-                const dataResult = await db.query(dataQuery, dataValues);
-
-                const total = parseInt(countResult.rows[0].total);
-                const totalPages = Math.ceil(total / limit);
-
-                return {
-                    data: dataResult.rows,
-                    pagination: {
-                        page: parseInt(page),
-                        limit: parseInt(limit),
-                        total,
-                        totalPages,
-                        hasNext: page < totalPages,
-                        hasPrev: page > 1
-                    }
-                };
-            });
-        } finally {
-            db.release();
-        }
+            };
+        });
     }
 
     // Actualizar organización (bypass RLS - super_admin/admin)
     static async actualizar(id, updateData) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const updateFields = [];
+            const values = [];
+            let paramCounter = 1;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const updateFields = [];
-                const values = [];
-                let paramCounter = 1;
-
-                for (const [key, value] of Object.entries(updateData)) {
-                    if (CAMPOS_ACTUALIZABLES.includes(key) && value !== undefined) {
-                        updateFields.push(`${key} = $${paramCounter}`);
-                        values.push(value);
-                        paramCounter++;
-                    }
+            for (const [key, value] of Object.entries(updateData)) {
+                if (CAMPOS_ACTUALIZABLES.includes(key) && value !== undefined) {
+                    updateFields.push(`${key} = $${paramCounter}`);
+                    values.push(value);
+                    paramCounter++;
                 }
+            }
 
-                if (updateFields.length === 0) {
-                    throw new Error('No hay campos válidos para actualizar');
-                }
+            if (updateFields.length === 0) {
+                throw new Error('No hay campos válidos para actualizar');
+            }
 
-                updateFields.push(`actualizado_en = NOW()`);
-                values.push(id);
+            updateFields.push(`actualizado_en = NOW()`);
+            values.push(id);
 
-                const query = `
-                    UPDATE organizaciones
-                    SET ${updateFields.join(', ')}
-                    WHERE id = $${paramCounter}
-                    RETURNING ${this.SELECT_FIELDS_SQL}
-                `;
+            const query = `
+                UPDATE organizaciones
+                SET ${updateFields.join(', ')}
+                WHERE id = $${paramCounter}
+                RETURNING ${this.SELECT_FIELDS_SQL}
+            `;
 
-                const result = await db.query(query, values);
-                return result.rows[0] || null;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, values);
+            return result.rows[0] || null;
+        });
     }
 
     // Desactivar organización - soft delete (solo super_admin)
     static async desactivar(id) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                UPDATE organizaciones
+                SET activo = FALSE, actualizado_en = NOW()
+                WHERE id = $1 AND activo = TRUE
+                RETURNING id
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    UPDATE organizaciones
-                    SET activo = FALSE, actualizado_en = NOW()
-                    WHERE id = $1 AND activo = TRUE
-                    RETURNING id
-                `;
-
-                const result = await db.query(query, [id]);
-                return result.rows.length > 0;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [id]);
+            return result.rows.length > 0;
+        });
     }
 
     // Verificar límites de la organización (bypass RLS - operación de consulta)
@@ -288,86 +259,6 @@ class OrganizacionModel {
         }
     }
 
-    // Agregar plantillas de servicios durante onboarding (bypass RLS - operación de sistema)
-    static async agregarPlantillasServicios(organizacionId, tipoIndustria) {
-        const db = await getDb();
-
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-
-            // Obtener plantillas de servicios para la industria específica
-            const plantillasQuery = `
-                SELECT id, nombre, descripcion, categoria, subcategoria,
-                       duracion_minutos, precio_sugerido, precio_minimo, precio_maximo,
-                       requiere_preparacion_minutos, tiempo_limpieza_minutos,
-                       max_clientes_simultaneos, tags, configuracion_especifica
-                FROM plantillas_servicios
-                WHERE tipo_industria = $1 AND activo = true
-                ORDER BY popularidad DESC, nombre ASC
-            `;
-
-                const plantillas = await db.query(plantillasQuery, [tipoIndustria]);
-
-                if (plantillas.rows.length === 0) {
-                    return {
-                        servicios_importados: 0,
-                        total_plantillas: 0,
-                        mensaje: `No hay plantillas disponibles para industria ${tipoIndustria}`
-                    };
-                }
-
-                let serviciosImportados = 0;
-                const serviciosCreados = [];
-
-                for (const plantilla of plantillas.rows) {
-                    try {
-                        const insertServiceQuery = `
-                            INSERT INTO servicios (
-                                organizacion_id, plantilla_servicio_id, nombre, descripcion,
-                                categoria, subcategoria, duracion_minutos, precio, precio_minimo,
-                                precio_maximo, requiere_preparacion_minutos, tiempo_limpieza_minutos,
-                                max_clientes_simultaneos, tags, configuracion_especifica, activo
-                            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
-                            RETURNING id, nombre, precio
-                        `;
-
-                        const servicioResult = await db.query(insertServiceQuery, [
-                            organizacionId,
-                            plantilla.id,
-                            plantilla.nombre,
-                            plantilla.descripcion,
-                            plantilla.categoria,
-                            plantilla.subcategoria,
-                            plantilla.duracion_minutos,
-                            plantilla.precio_sugerido || 100.00,
-                            plantilla.precio_minimo,
-                            plantilla.precio_maximo,
-                            plantilla.requiere_preparacion_minutos,
-                            plantilla.tiempo_limpieza_minutos,
-                            plantilla.max_clientes_simultaneos,
-                            plantilla.tags,
-                            plantilla.configuracion_especifica,
-                            true
-                        ]);
-
-                        serviciosImportados++;
-                        serviciosCreados.push(servicioResult.rows[0]);
-                    } catch (servicioError) {
-                        // Continuar con las demás plantillas
-                    }
-                }
-
-                return {
-                    servicios_importados: serviciosImportados,
-                    total_plantillas: plantillas.rows.length,
-                    servicios_creados: serviciosCreados,
-                    mensaje: `${serviciosImportados} servicios importados exitosamente`
-                };
-            });
-        } finally {
-            db.release();
-        }
-    }
 
     // Obtener métricas completas de la organización para dashboard
     static async obtenerMetricas(organizacionId, periodo = 'mes') {
@@ -529,42 +420,6 @@ class OrganizacionModel {
         };
     }
 
-    // Proceso de onboarding completo para nueva organización
-    static async onboarding(organizacionData, importarPlantillas = true) {
-        const db = await getDb();
-
-        try {
-            await db.query('BEGIN');
-
-            const nuevaOrganizacion = await this.crear(organizacionData);
-            let resultadoPlantillas = null;
-
-            if (importarPlantillas) {
-                try {
-                    resultadoPlantillas = await this.agregarPlantillasServicios(
-                        nuevaOrganizacion.id,
-                        nuevaOrganizacion.tipo_industria
-                    );
-                } catch (plantillasError) {
-                    // No fallar el onboarding por error en plantillas
-                }
-            }
-
-            await db.query('COMMIT');
-
-            return {
-                organizacion: nuevaOrganizacion,
-                plantillas: resultadoPlantillas,
-                siguiente_paso: 'Crear usuarios y profesionales para la organización'
-            };
-
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
-    }
 
     // Cambiar plan de subscripción de una organización
     static async cambiarPlan(organizacionId, codigoPlan, configuracionPlan = {}) {
@@ -676,45 +531,40 @@ class OrganizacionModel {
 
     // Crear subscripción activa inicial para nueva organización
     static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial') {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            // Obtener información del plan
+            const planQuery = `
+                SELECT id, codigo_plan, precio_mensual
+                FROM planes_subscripcion
+                WHERE codigo_plan = $1
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                // Obtener información del plan
-                const planQuery = `
-                    SELECT id, codigo_plan, precio_mensual
-                    FROM planes_subscripcion
-                    WHERE codigo_plan = $1
-                `;
+            const planResult = await db.query(planQuery, [codigoPlan]);
 
-                const planResult = await db.query(planQuery, [codigoPlan]);
+            if (planResult.rows.length === 0) {
+                throw new Error(`Plan ${codigoPlan} no encontrado`);
+            }
 
-                if (planResult.rows.length === 0) {
-                    throw new Error(`Plan ${codigoPlan} no encontrado`);
-                }
+            const plan = planResult.rows[0];
 
-                const plan = planResult.rows[0];
+            // Crear subscripción activa
+            const subscripcionQuery = `
+                INSERT INTO subscripciones (
+                    organizacion_id, plan_id, precio_actual, fecha_inicio,
+                    fecha_proximo_pago, estado, activa, metadata
+                ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)
+                RETURNING id, organizacion_id, plan_id, estado, activa
+            `;
 
-                // Crear subscripción activa
-                const subscripcionQuery = `
-                    INSERT INTO subscripciones (
-                        organizacion_id, plan_id, precio_actual, fecha_inicio,
-                        fecha_proximo_pago, estado, activa, metadata
-                    ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)
-                    RETURNING id, organizacion_id, plan_id, estado, activa
-                `;
+            const result = await db.query(subscripcionQuery, [
+                organizacionId,
+                plan.id,
+                plan.precio_mensual
+            ]);
 
-                const result = await db.query(subscripcionQuery, [
-                    organizacionId,
-                    plan.id,
-                    plan.precio_mensual
-                ]);
-
-                return result.rows[0];
-            });
-        } finally {
-            db.release();
-        }
+            return result.rows[0];
+        });
     }
 }
 

@@ -53,7 +53,7 @@ router.get('/:id/metricas',
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(organizacionSchemas.obtenerMetricas),
-    OrganizacionController.obtenerMetricas
+    (req, res, next) => OrganizacionController.obtenerMetricas(req, res, next)
 );
 
 // ========== Rutas CRUD Básicas con /:id ==========
@@ -89,7 +89,7 @@ router.put('/:id/suspender',
     auth.requireRole(['super_admin']),
     rateLimiting.heavyOperationRateLimit,
     validation.validate(organizacionSchemas.suspender),
-    OrganizacionController.suspender
+    (req, res, next) => OrganizacionController.suspender(req, res, next)
 );
 
 router.put('/:id/reactivar',
@@ -97,7 +97,7 @@ router.put('/:id/reactivar',
     auth.requireRole(['super_admin']),
     rateLimiting.heavyOperationRateLimit,
     validation.validate(organizacionSchemas.reactivar),
-    OrganizacionController.reactivar
+    (req, res, next) => OrganizacionController.reactivar(req, res, next)
 );
 
 router.put('/:id/plan',

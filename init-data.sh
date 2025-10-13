@@ -36,8 +36,8 @@ echo "    ⚡ Funciones PL/pgSQL..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/02-functions.sql"
 echo "    🏛️ Tablas core..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/03-core-tables.sql"
-echo "    📋 Catálogo global..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/04-catalog-tables.sql"
+# echo "    📋 Catálogo global..."
+# psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/04-catalog-tables.sql" # ELIMINADO - sistema de plantillas removido
 echo "    🏢 Tablas de negocio..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/05-business-tables.sql"
 echo "    ⚡ Tablas operacionales..."
@@ -61,9 +61,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "
 echo "    🔧 Aplicando mejoras post-auditoría (Oct 2025)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/16-mejoras-auditoria-2025-10.sql"
 
-# 3. Insertar plantillas de servicios
-echo "  4️⃣ Insertando plantillas de servicios por industria..."
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/data/plantillas-servicios.sql"
+# 3. Insertar plantillas de servicios - ELIMINADO (sistema de plantillas removido)
+# echo "  4️⃣ Insertando plantillas de servicios por industria..."
+# psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/data/plantillas-servicios.sql"
 
 # 4. Configurar permisos específicos del SaaS (después de crear tablas)
 echo "  5️⃣ Configurando permisos finales en tablas..."
@@ -106,7 +106,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as "Tamaño"
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'plantillas_servicios', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios')
+    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios')
     ORDER BY tablename;
 EOSQL
 
@@ -132,15 +132,15 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     ORDER BY tablename;
 EOSQL
 
-# Verificar cantidad de plantillas de servicios insertadas
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
-    SELECT
-        tipo_industria,
-        COUNT(*) as "Servicios Template"
-    FROM plantillas_servicios
-    GROUP BY tipo_industria
-    ORDER BY tipo_industria;
-EOSQL
+# Verificar cantidad de plantillas de servicios insertadas - ELIMINADO (sistema de plantillas removido)
+# psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-EOSQL
+#     SELECT
+#         tipo_industria,
+#         COUNT(*) as "Servicios Template"
+#     FROM plantillas_servicios
+#     GROUP BY tipo_industria
+#     ORDER BY tipo_industria;
+# EOSQL
 
 echo ""
 echo "✅ Configuración de bases de datos completada exitosamente:"
@@ -161,14 +161,13 @@ echo ""
 echo "🗄️ ESQUEMA SAAS MODULAR:"
 echo "  ├── 🎭 8 ENUMs especializados (tipos de negocio + bloqueos)"
 echo "  ├── ⚡ 22+ funciones PL/pgSQL automáticas (incl. archivado y validación)"
-echo "  ├── 🏛️ 17 tablas enterprise (core + negocio + operaciones + subscripciones + auditoría + bloqueos + archivo)"
+echo "  ├── 🏛️ 16 tablas enterprise (core + negocio + operaciones + subscripciones + auditoría + bloqueos + archivo)"
 echo "  ├── 📊 95+ índices optimizados (covering + GIN compuestos + parciales) - Oct 2025"
 echo "  ├── 🛡️ 26+ políticas RLS multi-tenant 100% documentadas"
 echo "  ├── 🔄 18+ triggers automáticos de validación"
 echo "  ├── 💳 Sistema completo de subscripciones y facturación SaaS (5 planes incl. custom)"
 echo "  ├── 🧹 Sistema de archivado automático (eventos + citas)"
-echo "  ├── 🔧 Mejoras post-auditoría aplicadas: FKs CASCADE + covering indexes"
-echo "  └── 📋 370+ plantillas de servicios cargadas"
+echo "  └── 🔧 Mejoras post-auditoría aplicadas: FKs CASCADE + covering indexes"
 echo ""
 echo "🔐 SEGURIDAD:"
 echo "  ├── Cada aplicación tiene su propio usuario"

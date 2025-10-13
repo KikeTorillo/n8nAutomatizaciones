@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 const RLSHelper = require('../utils/rlsHelper');
+const RLSContextManager = require('../utils/rlsContextManager');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -198,35 +199,24 @@ class UsuarioModel {
 
     // Usa bypass RLS para operaciones de sistema (refresh tokens, validaciones)
     static async buscarPorId(id) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT id, email, nombre, apellidos, telefono,
+                       rol, organizacion_id, activo, email_verificado
+                FROM usuarios
+                WHERE id = $1 AND activo = TRUE
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    SELECT id, email, nombre, apellidos, telefono,
-                           rol, organizacion_id, activo, email_verificado
-                    FROM usuarios
-                    WHERE id = $1 AND activo = TRUE
-                `;
-
-                const result = await db.query(query, [id]);
-                return result.rows[0] || null;
-            });
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [id]);
+            return result.rows[0] || null;
+        });
     }
 
     static async buscarPorIdConRLS(id, organizacionId) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query(`SELECT set_config('app.current_user_id', '', false)`);
-            await db.query(`SELECT set_config('app.current_user_role', '', false)`);
-            await db.query(`SELECT set_config('app.current_tenant_id', '${organizacionId}', false)`);
-            await db.query(`SELECT set_config('app.bypass_rls', 'false', false)`);
-
+        // ✅ Usar RLSContextManager para configuración automática de RLS
+        // Las políticas PostgreSQL filtran automáticamente por organizacion_id
+        return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT id, email, nombre, apellidos, telefono,
                        rol, organizacion_id, profesional_id, activo, email_verificado,
@@ -237,9 +227,7 @@ class UsuarioModel {
 
             const result = await db.query(query, [id]);
             return result.rows[0] || null;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async registrarIntentoLogin(email, exitoso, ipAddress = null) {
@@ -302,17 +290,9 @@ class UsuarioModel {
     }
 
     static async actualizarPerfil(userId, datos, organizacionId, currentUserId) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query("SELECT set_config('app.current_user_id', '', false)");
-            await db.query("SELECT set_config('app.current_user_role', '', false)");
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', organizacionId.toString()]);
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.bypass_rls', 'false']);
-
+        // ✅ Usar RLSContextManager.transaction() para operación con aislamiento automático
+        // Las políticas PostgreSQL filtran automáticamente por organizacion_id
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
             const camposPermitidos = ['nombre', 'apellidos', 'telefono', 'zona_horaria', 'idioma', 'configuracion_ui'];
             const campos = [];
             const valores = [];
@@ -330,6 +310,7 @@ class UsuarioModel {
                 throw new Error('No hay campos válidos para actualizar');
             }
 
+            // ✅ Sin filtro manual de organizacion_id - RLS lo maneja automáticamente
             const query = `
                 UPDATE usuarios
                 SET ${campos.join(', ')}, actualizado_en = NOW()
@@ -343,71 +324,57 @@ class UsuarioModel {
 
             const result = await db.query(query, valores);
             return result.rows[0] || null;
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async desbloquearUsuario(userId, adminId, organizacionId) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            // Validar que el usuario existe y pertenece a la organización
+            const validacionQuery = `
+                SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
+                FROM usuarios
+                WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
+            `;
+            const validacion = await db.query(validacionQuery, [userId, organizacionId]);
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                // Validar que el usuario existe y pertenece a la organización
-                const validacionQuery = `
-                    SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
-                    FROM usuarios
-                    WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
-                `;
-                const validacion = await db.query(validacionQuery, [userId, organizacionId]);
+            if (validacion.rows.length === 0) {
+                throw new Error('Usuario no encontrado en la organización especificada');
+            }
 
-                if (validacion.rows.length === 0) {
-                    throw new Error('Usuario no encontrado en la organización especificada');
-                }
+            const query = `
+                UPDATE usuarios
+                SET
+                    intentos_fallidos = 0,
+                    bloqueado_hasta = NULL,
+                    actualizado_en = NOW()
+                WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                         intentos_fallidos, bloqueado_hasta, activo
+            `;
 
-                const query = `
-                    UPDATE usuarios
-                    SET
-                        intentos_fallidos = 0,
-                        bloqueado_hasta = NULL,
-                        actualizado_en = NOW()
-                    WHERE id = $1 AND organizacion_id = $2 AND activo = TRUE
-                    RETURNING id, email, nombre, apellidos, rol, organizacion_id,
-                             intentos_fallidos, bloqueado_hasta, activo
-                `;
-
-                const result = await db.query(query, [userId, organizacionId]);
-                return result.rows[0];
-            });
-
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [userId, organizacionId]);
+            return result.rows[0];
+        });
     }
 
     static async obtenerUsuariosBloqueados(organizacionId) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT id, email, nombre, apellidos, rol, intentos_fallidos,
+                       bloqueado_hasta, ultimo_login, creado_en
+                FROM usuarios
+                WHERE organizacion_id = $1
+                  AND bloqueado_hasta IS NOT NULL
+                  AND bloqueado_hasta > NOW()
+                  AND activo = TRUE
+                ORDER BY bloqueado_hasta DESC
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    SELECT id, email, nombre, apellidos, rol, intentos_fallidos,
-                           bloqueado_hasta, ultimo_login, creado_en
-                    FROM usuarios
-                    WHERE organizacion_id = $1
-                      AND bloqueado_hasta IS NOT NULL
-                      AND bloqueado_hasta > NOW()
-                      AND activo = TRUE
-                    ORDER BY bloqueado_hasta DESC
-                `;
-
-                const result = await db.query(query, [organizacionId]);
-                return result.rows;
-            });
-
-        } finally {
-            db.release();
-        }
+            const result = await db.query(query, [organizacionId]);
+            return result.rows;
+        });
     }
 
     static async verificarBloqueo(userId, contextRole = 'super_admin') {
@@ -525,17 +492,9 @@ class UsuarioModel {
     }
 
     static async listarPorOrganizacion(orgId, filtros = {}, paginacion = {}) {
-        const db = await getDb();
-
-        try {
-            // CRÍTICO: Limpiar TODAS las variables RLS para evitar contaminación del pool
-            await db.query("SELECT set_config('app.current_user_id', '', false)");
-            await db.query("SELECT set_config('app.current_user_role', '', false)");
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.current_tenant_id', orgId.toString()]);
-            await db.query('SELECT set_config($1, $2, false)',
-                ['app.bypass_rls', 'false']);
-
+        // ✅ Usar RLSContextManager.query() para configuración automática de RLS
+        // Las políticas PostgreSQL filtran automáticamente por organizacion_id
+        return await RLSContextManager.query(orgId, async (db) => {
             const {
                 rol = null,
                 activo = null,
@@ -552,10 +511,10 @@ class UsuarioModel {
 
             const offset = (page - 1) * limit;
 
-            // Construir WHERE dinámico
-            let whereConditions = ['u.organizacion_id = $1'];
-            let queryParams = [orgId];
-            let paramCounter = 2;
+            // Construir WHERE dinámico (sin filtro manual de organizacion_id - RLS lo maneja)
+            let whereConditions = [];
+            let queryParams = [];
+            let paramCounter = 1;
 
             if (rol) {
                 whereConditions.push(`u.rol = $${paramCounter}`);
@@ -585,7 +544,10 @@ class UsuarioModel {
                 paramCounter++;
             }
 
-            const whereClause = whereConditions.join(' AND ');
+            // Si no hay condiciones, usar TRUE para evitar WHERE vacío
+            const whereClause = whereConditions.length > 0
+                ? whereConditions.join(' AND ')
+                : 'TRUE';
 
             // Validar order_by para evitar SQL injection
             const orderByPermitidos = ['creado_en', 'nombre', 'email', 'ultimo_login', 'id'];
@@ -651,9 +613,7 @@ class UsuarioModel {
                     usuarios_bloqueados: dataResult.rows.filter(u => u.esta_bloqueado).length
                 }
             };
-        } finally {
-            db.release();
-        }
+        });
     }
 
     static async cambiarRol(userId, nuevoRol, orgId, adminId) {
@@ -741,218 +701,198 @@ class UsuarioModel {
     }
 
     static async resetPassword(email, orgId, ipAddress = null) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, organizacion_id, activo
+                FROM usuarios
+                WHERE email = $1 AND organizacion_id = $2 AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [email, orgId]);
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const usuarioQuery = `
-                    SELECT id, email, nombre, apellidos, organizacion_id, activo
-                    FROM usuarios
-                    WHERE email = $1 AND organizacion_id = $2 AND activo = true
-                `;
-                const usuarioResult = await db.query(usuarioQuery, [email, orgId]);
-
-                if (usuarioResult.rows.length === 0) {
-                    return {
-                        mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
-                        token_enviado: false
-                    };
-                }
-
-                const usuario = usuarioResult.rows[0];
-
-                const crypto = require('crypto');
-                const resetToken = crypto.randomBytes(AUTH_CONFIG.RESET_TOKEN_LENGTH).toString('hex');
-                const resetExpiration = new Date(Date.now() + AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS * 60 * 60 * 1000);
-
-                const updateQuery = `
-                    UPDATE usuarios
-                    SET
-                        token_reset_password = $1,
-                        token_reset_expira = $2,
-                        token_reset_usado_en = NULL,
-                        actualizado_en = NOW()
-                    WHERE id = $3
-                `;
-
-                await db.query(updateQuery, [resetToken, resetExpiration, usuario.id]);
-
+            if (usuarioResult.rows.length === 0) {
                 return {
-                    mensaje: 'Token de reset generado exitosamente',
-                    token_enviado: true,
-                    usuario_id: usuario.id,
-                    expires_at: resetExpiration.toISOString(),
-                    ...(process.env.NODE_ENV !== 'production' && { reset_token: resetToken })
+                    mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
+                    token_enviado: false
                 };
-            });
-        } finally {
-            db.release();
-        }
+            }
+
+            const usuario = usuarioResult.rows[0];
+
+            const crypto = require('crypto');
+            const resetToken = crypto.randomBytes(AUTH_CONFIG.RESET_TOKEN_LENGTH).toString('hex');
+            const resetExpiration = new Date(Date.now() + AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS * 60 * 60 * 1000);
+
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    token_reset_password = $1,
+                    token_reset_expira = $2,
+                    token_reset_usado_en = NULL,
+                    actualizado_en = NOW()
+                WHERE id = $3
+            `;
+
+            await db.query(updateQuery, [resetToken, resetExpiration, usuario.id]);
+
+            return {
+                mensaje: 'Token de reset generado exitosamente',
+                token_enviado: true,
+                usuario_id: usuario.id,
+                expires_at: resetExpiration.toISOString(),
+                ...(process.env.NODE_ENV !== 'production' && { reset_token: resetToken })
+            };
+        });
     }
 
     static async verificarEmail(token) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            // Primero buscar si el token fue usado
+            const tokenUsadoQuery = `
+                SELECT id, email, email_verificado, token_verificacion_usado_en
+                FROM usuarios
+                WHERE token_verificacion_email = $1
+                  AND token_verificacion_usado_en IS NOT NULL
+                  AND activo = true
+            `;
+            const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                // Primero buscar si el token fue usado
-                const tokenUsadoQuery = `
-                    SELECT id, email, email_verificado, token_verificacion_usado_en
-                    FROM usuarios
-                    WHERE token_verificacion_email = $1
-                      AND token_verificacion_usado_en IS NOT NULL
-                      AND activo = true
-                `;
-                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
-
-                if (tokenUsadoResult.rows.length > 0) {
-                    return {
-                        verificado: false,
-                        ya_verificado: true,
-                        email: tokenUsadoResult.rows[0].email,
-                        mensaje: 'El email ya había sido verificado anteriormente'
-                    };
-                }
-
-                // Buscar token válido y no expirado
-                const usuarioQuery = `
-                    SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
-                    FROM usuarios
-                    WHERE token_verificacion_email = $1
-                      AND token_verificacion_expira > NOW()
-                      AND activo = true
-                `;
-                const usuarioResult = await db.query(usuarioQuery, [token]);
-
-                if (usuarioResult.rows.length === 0) {
-                    return {
-                        verificado: false,
-                        ya_verificado: false,
-                        mensaje: 'Token de verificación inválido o expirado'
-                    };
-                }
-
-                const usuario = usuarioResult.rows[0];
-
-                if (usuario.email_verificado) {
-                    return {
-                        ya_verificado: true,
-                        verificado: false,
-                        email: usuario.email,
-                        mensaje: 'El email ya había sido verificado anteriormente'
-                    };
-                }
-
-                // Marcar token como usado
-                const updateQuery = `
-                    UPDATE usuarios
-                    SET
-                        email_verificado = true,
-                        token_verificacion_usado_en = NOW(),
-                        actualizado_en = NOW()
-                    WHERE id = $1
-                    RETURNING id, email
-                `;
-
-                const updateResult = await db.query(updateQuery, [usuario.id]);
-
+            if (tokenUsadoResult.rows.length > 0) {
                 return {
-                    verificado: true,
-                    mensaje: 'Email verificado exitosamente',
-                    email: updateResult.rows[0].email
+                    verificado: false,
+                    ya_verificado: true,
+                    email: tokenUsadoResult.rows[0].email,
+                    mensaje: 'El email ya había sido verificado anteriormente'
                 };
-            });
-        } finally {
-            db.release();
-        }
+            }
+
+            // Buscar token válido y no expirado
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, rol, organizacion_id, email_verificado
+                FROM usuarios
+                WHERE token_verificacion_email = $1
+                  AND token_verificacion_expira > NOW()
+                  AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [token]);
+
+            if (usuarioResult.rows.length === 0) {
+                return {
+                    verificado: false,
+                    ya_verificado: false,
+                    mensaje: 'Token de verificación inválido o expirado'
+                };
+            }
+
+            const usuario = usuarioResult.rows[0];
+
+            if (usuario.email_verificado) {
+                return {
+                    ya_verificado: true,
+                    verificado: false,
+                    email: usuario.email,
+                    mensaje: 'El email ya había sido verificado anteriormente'
+                };
+            }
+
+            // Marcar token como usado
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    email_verificado = true,
+                    token_verificacion_usado_en = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = $1
+                RETURNING id, email
+            `;
+
+            const updateResult = await db.query(updateQuery, [usuario.id]);
+
+            return {
+                verificado: true,
+                mensaje: 'Email verificado exitosamente',
+                email: updateResult.rows[0].email
+            };
+        });
     }
 
     static async existenUsuarios() {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = 'SELECT COUNT(*) as count FROM usuarios';
+            const result = await db.query(query);
+            const usuarioCount = parseInt(result.rows[0].count);
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = 'SELECT COUNT(*) as count FROM usuarios';
-                const result = await db.query(query);
-                const usuarioCount = parseInt(result.rows[0].count);
-
-                return usuarioCount > 0;
-            });
-        } finally {
-            db.release();
-        }
+            return usuarioCount > 0;
+        });
     }
 
     static async validarTokenReset(token) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            // Primero verificar si el token ya fue usado
+            const tokenUsadoQuery = `
+                SELECT id, email, token_reset_usado_en
+                FROM usuarios
+                WHERE token_reset_password = $1
+                  AND token_reset_usado_en IS NOT NULL
+                  AND activo = true
+            `;
+            const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                // Primero verificar si el token ya fue usado
-                const tokenUsadoQuery = `
-                    SELECT id, email, token_reset_usado_en
-                    FROM usuarios
-                    WHERE token_reset_password = $1
-                      AND token_reset_usado_en IS NOT NULL
-                      AND activo = true
-                `;
-                const tokenUsadoResult = await db.query(tokenUsadoQuery, [token]);
-
-                if (tokenUsadoResult.rows.length > 0) {
-                    return {
-                        valido: false,
-                        mensaje: 'Este token de recuperación ya fue utilizado'
-                    };
-                }
-
-                // Buscar token válido
-                const query = `
-                    SELECT
-                        id, email, nombre, apellidos, organizacion_id,
-                        token_reset_expira,
-                        CASE
-                            WHEN token_reset_expira > NOW() THEN true
-                            ELSE false
-                        END as token_valido,
-                        CASE
-                            WHEN token_reset_expira > NOW() THEN EXTRACT(EPOCH FROM (token_reset_expira - NOW()))/60
-                            ELSE 0
-                        END as minutos_restantes
-                    FROM usuarios
-                    WHERE token_reset_password = $1 AND activo = true
-                `;
-
-                const result = await db.query(query, [token]);
-
-                if (result.rows.length === 0) {
-                    return {
-                        valido: false,
-                        mensaje: 'Token inválido o usuario no encontrado'
-                    };
-                }
-
-                const usuario = result.rows[0];
-
-                if (!usuario.token_valido) {
-                    return {
-                        valido: false,
-                        mensaje: 'Token expirado',
-                        expiro_hace_minutos: Math.abs(Math.floor(usuario.minutos_restantes))
-                    };
-                }
-
+            if (tokenUsadoResult.rows.length > 0) {
                 return {
-                    valido: true,
-                    usuario_id: usuario.id,
-                    email: usuario.email,
-                    organizacion_id: usuario.organizacion_id,
-                    expira_en_minutos: Math.floor(usuario.minutos_restantes),
-                    expira_en: usuario.token_reset_expira
+                    valido: false,
+                    mensaje: 'Este token de recuperación ya fue utilizado'
                 };
-            });
-        } finally {
-            db.release();
-        }
+            }
+
+            // Buscar token válido
+            const query = `
+                SELECT
+                    id, email, nombre, apellidos, organizacion_id,
+                    token_reset_expira,
+                    CASE
+                        WHEN token_reset_expira > NOW() THEN true
+                        ELSE false
+                    END as token_valido,
+                    CASE
+                        WHEN token_reset_expira > NOW() THEN EXTRACT(EPOCH FROM (token_reset_expira - NOW()))/60
+                        ELSE 0
+                    END as minutos_restantes
+                FROM usuarios
+                WHERE token_reset_password = $1 AND activo = true
+            `;
+
+            const result = await db.query(query, [token]);
+
+            if (result.rows.length === 0) {
+                return {
+                    valido: false,
+                    mensaje: 'Token inválido o usuario no encontrado'
+                };
+            }
+
+            const usuario = result.rows[0];
+
+            if (!usuario.token_valido) {
+                return {
+                    valido: false,
+                    mensaje: 'Token expirado',
+                    expiro_hace_minutos: Math.abs(Math.floor(usuario.minutos_restantes))
+                };
+            }
+
+            return {
+                valido: true,
+                usuario_id: usuario.id,
+                email: usuario.email,
+                organizacion_id: usuario.organizacion_id,
+                expira_en_minutos: Math.floor(usuario.minutos_restantes),
+                expira_en: usuario.token_reset_expira
+            };
+        });
     }
 
     static async confirmarResetPassword(token, passwordNueva, ipAddress = null) {

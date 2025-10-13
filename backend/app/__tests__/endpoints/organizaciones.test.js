@@ -416,7 +416,7 @@ describe('Endpoints de Organizaciones', () => {
   // 🎯 Tests de ONBOARDING de Nuevas Organizaciones (Patrón SaaS)
   // ============================================================================
   describe('POST /api/v1/organizaciones/register - 🎯 ONBOARDING de Nuevas Organizaciones', () => {
-    test('✅ Onboarding completo con plantillas de servicios', async () => {
+    test('✅ Onboarding exitoso con datos completos', async () => {
       const uniqueId = getUniqueTestId();
       const registroData = {
         organizacion: {
@@ -435,7 +435,6 @@ describe('Endpoints de Organizaciones', () => {
           password: 'Password123!',
           telefono: `+521${uniqueId.slice(-10)}`
         },
-        aplicar_plantilla_servicios: true,
         enviar_email_bienvenida: false
       };
 
@@ -449,7 +448,6 @@ describe('Endpoints de Organizaciones', () => {
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.data).toHaveProperty('organizacion');
       expect(response.body.data).toHaveProperty('admin');
-      expect(response.body.data).toHaveProperty('servicios_creados');
 
       // Validar organización creada
       expect(response.body.data.organizacion.nombre_comercial).toBe(registroData.organizacion.nombre_comercial);
@@ -463,9 +461,6 @@ describe('Endpoints de Organizaciones', () => {
       expect(response.body.data.admin).toHaveProperty('token');
       expect(response.body.data.admin.token).toBeTruthy();
 
-      // Validar que se aplicaron plantillas de servicios
-      expect(response.body.data.servicios_creados).toBeGreaterThan(0);
-
       // Validar que el token funciona para operaciones posteriores
       const tokenTest = await request(app)
         .get(`/api/v1/organizaciones/${response.body.data.organizacion.id}`)
@@ -473,32 +468,6 @@ describe('Endpoints de Organizaciones', () => {
         .expect(200);
 
       expect(tokenTest.body.success).toBe(true);
-    });
-
-    test('✅ Onboarding sin plantillas de servicios', async () => {
-      const uniqueId = getUniqueTestId();
-      const registroData = {
-        organizacion: {
-          nombre_comercial: `Org Sin Plantilla ${uniqueId}`,
-          tipo_industria: 'spa',
-          plan: 'basico'
-        },
-        admin: {
-          nombre: 'Admin',
-          apellidos: 'Sin Plantilla',
-          email: `admin-noplant-${uniqueId}@test.com`,
-          password: 'Password123!'
-        },
-        aplicar_plantilla_servicios: false
-      };
-
-      const response = await request(app)
-        .post('/api/v1/organizaciones/register')
-        .send(registroData)
-        .expect(201);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.servicios_creados).toBe(0);
     });
 
     test('❌ Onboarding falla con email de admin duplicado', async () => {
@@ -516,8 +485,7 @@ describe('Endpoints de Organizaciones', () => {
           apellidos: 'Primero',
           email: `duplicado-${uniqueId}@test.com`,
           password: 'Password123!'
-        },
-        aplicar_plantilla_servicios: false
+        }
       };
 
       await request(app)
@@ -537,8 +505,7 @@ describe('Endpoints de Organizaciones', () => {
           apellidos: 'Segundo',
           email: `duplicado-${uniqueId}@test.com`, // Email duplicado
           password: 'Password123!'
-        },
-        aplicar_plantilla_servicios: false
+        }
       };
 
       const response = await request(app)

@@ -391,6 +391,29 @@ class CitaOperacionalModel {
             const ahora = new Date();
             const fechaHoy = ahora.toISOString().split('T')[0];
             const duracionEstimada = servicio.duracion_minutos || 30;
+            const horaActual = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
+            const diaSemanaActual = ahora.getDay(); // 0 = domingo, 6 = sábado
+
+            // ✅ VALIDACIÓN CRÍTICA: Verificar si el profesional tiene horario laboral AHORA
+            // Esto previene walk-ins en horas donde no hay nadie trabajando (ej: 3am)
+            const horariosActivos = await db.query(`
+                SELECT
+                    hp.id,
+                    hp.hora_inicio,
+                    hp.hora_fin,
+                    hp.tipo_horario,
+                    hp.nombre_horario
+                FROM horarios_profesionales hp
+                WHERE hp.profesional_id = $1
+                  AND hp.organizacion_id = $2
+                  AND hp.dia_semana = $3
+                  AND hp.activo = true
+                  AND hp.permite_citas = true
+                  AND hp.fecha_inicio <= $4
+                  AND (hp.fecha_fin IS NULL OR hp.fecha_fin >= $4)
+                  AND $5 >= hp.hora_inicio
+                  AND $5 < hp.hora_fin
+            `, [profesionalId, organizacionId, diaSemanaActual, fechaHoy, horaActual]);
 
             // Buscar si el profesional tiene una cita en curso (sin terminar)
             // Solo consideramos 'en_curso' porque es el único estado donde el profesional está REALMENTE ocupado
@@ -418,6 +441,15 @@ class CitaOperacionalModel {
                 LIMIT 1
             `, [profesionalId, organizacionId, fechaHoy]);
 
+            // ✅ VALIDACIÓN: Si NO tiene cita en curso Y NO tiene horario laboral ahora → RECHAZAR
+            if (citaActual.rows.length === 0 && horariosActivos.rows.length === 0) {
+                const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                throw new Error(
+                    `No se puede atender el walk-in: El profesional no está disponible en este horario. ` +
+                    `(Hoy es ${diasSemana[diaSemanaActual]}, hora actual: ${horaActual.substring(0, 5)})`
+                );
+            }
+
             let horaInicio, horaFin, horaInicioReal, estado;
 
             // Función auxiliar para convertir Date a formato time "HH:MM:00"
@@ -429,6 +461,7 @@ class CitaOperacionalModel {
 
             if (citaActual.rows.length === 0) {
                 // ✅ ESCENARIO 1: Profesional DISPONIBLE - Empieza INMEDIATAMENTE
+                // (Ya validamos que tiene horario laboral activo AHORA)
                 const finEstimado = new Date(ahora.getTime() + duracionEstimada * 60000);
 
                 horaInicio = formatearHora(ahora);
@@ -444,9 +477,10 @@ class CitaOperacionalModel {
                 horaInicioReal = ahora;  // Empieza AHORA
                 estado = 'en_curso';  // Ya está siendo atendido
 
-                logger.info(`✅ Walk-in INMEDIATO - Profesional ${profesionalId} disponible. Cliente atendido al instante (${horaInicio} - ${horaFin}).`);
+                logger.info(`✅ Walk-in INMEDIATO - Profesional ${profesionalId} disponible y en horario laboral. Cliente atendido al instante (${horaInicio} - ${horaFin}).`);
             } else {
                 // ⏳ ESCENARIO 2: Profesional OCUPADO - Cliente pasa a COLA DE ESPERA
+                // (Profesional YA está trabajando, puede exceder su horario laboral para atender)
                 const citaConflicto = citaActual.rows[0];
                 const finCitaActual = new Date(citaConflicto.fin_estimado);
                 const finEstimado = new Date(finCitaActual.getTime() + duracionEstimada * 60000);
@@ -464,11 +498,15 @@ class CitaOperacionalModel {
                 estado = 'confirmada';  // Esperando su turno
 
                 const tiempoEsperaMinutos = Math.ceil((finCitaActual - ahora) / 60000);
-                logger.info(`⏳ Walk-in en COLA DE ESPERA - Profesional ${profesionalId} ocupado hasta ${finCitaActual.toLocaleTimeString()}. Tiempo estimado: ${tiempoEsperaMinutos} min (${horaInicio} - ${horaFin}).`);
+                logger.info(`⏳ Walk-in en COLA DE ESPERA - Profesional ${profesionalId} ocupado (YA está trabajando). Tiempo estimado: ${tiempoEsperaMinutos} min. Será atendido después (${horaInicio} - ${horaFin}).`);
             }
 
             // 5. Validar horario permitido (horarios_profesionales, bloqueos, conflictos)
-            // IMPORTANTE: Walk-in usa permitirFueraHorario: true porque el cliente YA está presente
+            // LÓGICA DINÁMICA para permitirFueraHorario:
+            // - Si profesional tiene cita en curso → permitirFueraHorario: true (ya está trabajando, puede atender uno más)
+            // - Si profesional NO tiene cita en curso → permitirFueraHorario: false (debe estar en horario laboral)
+            const profesionalEstaTrabajando = citaActual.rows.length > 0;
+
             const validacion = await CitaHelpersModel.validarHorarioPermitido(
                 profesionalId,
                 fechaHoy,
@@ -477,7 +515,10 @@ class CitaOperacionalModel {
                 organizacionId,
                 db,
                 null, // no excluir cita
-                { esWalkIn: true, permitirFueraHorario: true }
+                {
+                    esWalkIn: true,
+                    permitirFueraHorario: profesionalEstaTrabajando  // ✅ Dinámico según si está trabajando
+                }
             );
 
             if (!validacion.valido) {

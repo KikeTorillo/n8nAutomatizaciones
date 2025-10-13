@@ -80,8 +80,8 @@ describe('Endpoints de Citas', () => {
       precio: 150.00
     }, [testProfesional.id]);
 
-    // ⚠️ CRÍTICO: Crear horarios profesionales (Domingo-Sábado 9:00-18:00)
-    // Sin esto, validarHorarioPermitido() fallará
+    // ⚠️ CRÍTICO: Crear horarios profesionales (Domingo-Sábado 00:00-23:59)
+    // Horario 24/7 para evitar tests flaky que dependen de hora de ejecución
     for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
       await client.query(`
         INSERT INTO horarios_profesionales (
@@ -94,10 +94,10 @@ describe('Endpoints de Citas', () => {
         testOrg.id,
         testProfesional.id,
         dia,
-        '09:00:00',
-        '18:00:00',
+        '00:00:00',
+        '23:59:59',
         'regular',
-        'Horario Laboral',
+        'Horario Tests 24/7',
         true,
         true,
         '2025-01-01'
@@ -670,7 +670,8 @@ describe('Endpoints de Citas', () => {
         ON CONFLICT DO NOTHING
       `, [testServicio.id, testProfesional2.id]);
 
-      // ⚠️ CRÍTICO: Crear horarios profesionales para testProfesional2
+      // ⚠️ CRÍTICO: Crear horarios profesionales para testProfesional2 (00:00-23:59)
+      // Horario 24/7 para evitar tests flaky que dependen de hora de ejecución
       for (let dia = 0; dia <= 6; dia++) { // Domingo (0) a Sábado (6)
         await tempClient.query(`
           INSERT INTO horarios_profesionales (
@@ -683,10 +684,10 @@ describe('Endpoints de Citas', () => {
           testOrg.id,
           testProfesional2.id,
           dia,
-          '09:00:00',
-          '18:00:00',
+          '00:00:00',
+          '23:59:59',
           'regular',
-          'Horario Laboral',
+          'Horario Tests 24/7',
           true,
           true,
           '2025-01-01'

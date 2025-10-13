@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate } from 'react-router-dom';
 import { whatsappApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';
 import Button from '@/components/ui/Button';
@@ -8,11 +7,10 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { MessageCircle, CheckCircle2, XCircle } from 'lucide-react';
 
 /**
- * Paso 6: Integración WhatsApp
+ * Paso 7: Integración WhatsApp
  */
-function Step6_WhatsAppIntegration() {
-  const navigate = useNavigate();
-  const { resetOnboarding, prevStep } = useOnboardingStore();
+function Step7_WhatsAppIntegration() {
+  const { nextStep, prevStep } = useOnboardingStore();
   const [isConnected, setIsConnected] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
@@ -46,16 +44,13 @@ function Step6_WhatsAppIntegration() {
   }, [statusData]);
 
   const handleFinish = () => {
-    // Limpiar onboarding store
-    resetOnboarding();
-
-    // Redirigir al dashboard
-    navigate('/dashboard');
+    // Avanzar al siguiente paso (Step 8: Review)
+    nextStep();
   };
 
   const handleSkip = () => {
-    resetOnboarding();
-    navigate('/dashboard');
+    // Avanzar al siguiente paso (Step 8: Review)
+    nextStep();
   };
 
   return (
@@ -182,7 +177,7 @@ function Step6_WhatsAppIntegration() {
             onClick={handleFinish}
             disabled={!isConnected && !qrError}
           >
-            {isConnected ? 'Ir al Dashboard' : 'Finalizar más tarde'}
+            {isConnected ? 'Continuar' : 'Finalizar más tarde'}
           </Button>
         </div>
       </div>
@@ -190,4 +185,4 @@ function Step6_WhatsAppIntegration() {
   );
 }
 
-export default Step6_WhatsAppIntegration;
+export default Step7_WhatsAppIntegration;

@@ -1,14 +1,36 @@
 /**
- * @fileoverview RLS Context Manager - Helper Centralizado para Row Level Security
- * @description Maneja automáticamente la configuración de RLS, transacciones y pool de conexiones
+ * @fileoverview RLS Context Manager - Gestión Completa de Row Level Security
+ * @description Maneja automáticamente RLS, transacciones, conexiones y multi-tenancy
  * @version 2.0.0
  * @author Backend Team
  *
+ * ⚠️ IMPORTANTE: SEPARACIÓN DE RESPONSABILIDADES
+ *
+ * Este manager es para GESTIÓN COMPLETA de operaciones con RLS:
+ * - Adquiere/libera conexiones automáticamente del pool
+ * - Maneja transacciones (BEGIN/COMMIT/ROLLBACK)
+ * - Configura current_tenant_id (multi-tenancy básico)
+ * - Limpia variables RLS antes/después
+ * - Garantiza cleanup en TODOS los casos (incluso errores)
+ *
+ * ✅ USAR RLSContextManager PARA:
+ * - Operaciones CRUD típicas de modelos (80% de casos)
+ * - Queries con aislamiento por organizacion_id
+ * - Bypass RLS con gestión automática de conexiones
+ * - Patrón limpio sin manejo manual de conexiones
+ *
+ * ❌ NO USAR RLSContextManager PARA:
+ * - Configurar current_user_id o current_user_role → Usar RLSHelper
+ * - Login/autenticación → Usar RLSHelper.withRole('login_context')
+ * - Registrar eventos de auditoría → Usar RLSHelper.registrarEvento()
+ * - Transacciones muy complejas con múltiples contextos → Usar RLSHelper.withContext()
+ *
  * ARQUITECTURA:
- * - Adquiere/libera conexiones automáticamente
- * - Configura set_config apropiadamente (true para transacciones, false para queries simples)
- * - Maneja BEGIN/COMMIT/ROLLBACK automáticamente
- * - Garantiza liberación de conexiones en TODOS los casos
+ * - set_config(..., true) para transacciones (local)
+ * - set_config(..., false) para queries simples (sesión)
+ * - Limpia variables antes de configurar (previene contaminación del pool)
+ *
+ * 📖 Ver también: RLSHelper (control manual fino para casos específicos)
  */
 
 const { getDb } = require('../config/database');
@@ -72,7 +94,14 @@ class RLSContextManager {
                 });
             }
 
-            // 3. Configurar contexto RLS
+            // 3. Limpiar TODAS las variables RLS para evitar contaminación del pool
+            // CRÍTICO: Esto garantiza que conexiones reutilizadas empiecen limpias
+            await db.query("SELECT set_config('app.current_user_id', '', false)");
+            await db.query("SELECT set_config('app.current_user_role', '', false)");
+            await db.query("SELECT set_config('app.bypass_rls', 'false', false)");
+            await db.query("SELECT set_config('app.current_tenant_id', '', false)");
+
+            // 4. Configurar contexto RLS específico
             if (bypass) {
                 // Bypass RLS para operaciones administrativas
                 await db.query('SELECT set_config($1, $2, $3)',
@@ -94,10 +123,10 @@ class RLSContextManager {
                 });
             }
 
-            // 4. Ejecutar callback del usuario
+            // 5. Ejecutar callback del usuario
             const result = await callback(db);
 
-            // 5. Commit SI hay transacción
+            // 6. Commit SI hay transacción
             if (transactionStarted) {
                 await db.query('COMMIT');
                 transactionStarted = false; // Marcar como completada
@@ -111,7 +140,7 @@ class RLSContextManager {
             return result;
 
         } catch (error) {
-            // 6. Rollback SI hay transacción activa
+            // 7. Rollback SI hay transacción activa
             if (transactionStarted && db) {
                 try {
                     await db.query('ROLLBACK');
@@ -134,7 +163,7 @@ class RLSContextManager {
             throw error;
 
         } finally {
-            // 7. Liberar conexión SIEMPRE (incluso si hay error)
+            // 8. Liberar conexión SIEMPRE (incluso si hay error)
             if (db) {
                 // Si NO usamos transacción y NO hay bypass, limpiar tenant_id de sesión
                 // para evitar contaminación del pool

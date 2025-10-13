@@ -119,7 +119,7 @@ class OrganizacionController {
     });
 
     static onboarding = asyncHandler(async (req, res) => {
-        const { organizacion, admin, aplicar_plantilla_servicios = true } = req.body;
+        const { organizacion, admin } = req.body;
 
         // Preparar datos de la organización
         const organizacionData = {
@@ -169,22 +169,6 @@ class OrganizacionController {
             organizacionId: nuevaOrganizacion.id
         });
 
-        // Aplicar plantillas de servicios si se solicita
-        let servicios_creados = 0;
-        if (aplicar_plantilla_servicios) {
-            try {
-                const resultado = await OrganizacionModel.agregarPlantillasServicios(
-                    nuevaOrganizacion.id,
-                    nuevaOrganizacion.tipo_industria
-                );
-                // El resultado es un objeto con servicios_importados
-                servicios_creados = resultado?.servicios_importados || 0;
-            } catch (error) {
-                // No fallar el onboarding por error en plantillas
-                servicios_creados = 0;
-            }
-        }
-
         // Preparar respuesta
         const resultado = {
             organizacion: nuevaOrganizacion,
@@ -195,8 +179,7 @@ class OrganizacionController {
                 email: nuevoAdmin.email,
                 rol: nuevoAdmin.rol,
                 token
-            },
-            servicios_creados
+            }
         };
 
         return ResponseHelper.success(res, resultado, 'Onboarding completado exitosamente', 201);

@@ -107,38 +107,6 @@ CREATE INDEX idx_organizaciones_tipo_industria
 --     ON organizaciones (plan_actual, estado_subscripcion, activo) WHERE activo = TRUE;
 
 -- ====================================================================
--- 🛍️ ÍNDICES PARA TABLA PLANTILLAS_SERVICIOS (4 índices globales)
--- ====================================================================
--- Optimización para catálogo global compartido entre organizaciones
--- ────────────────────────────────────────────────────────────────────
-
--- 🏭 ÍNDICE 1: CONSULTAS POR INDUSTRIA
--- Propósito: Filtrar plantillas por sector (consulta más frecuente)
--- Uso: WHERE tipo_industria = ? AND activo = TRUE
-CREATE INDEX idx_plantillas_industria_activo
-    ON plantillas_servicios (tipo_industria, activo) WHERE activo = TRUE;
-
--- 📂 ÍNDICE 2: BÚSQUEDAS POR CATEGORÍA
--- Propósito: Navegación jerárquica de servicios
--- Uso: WHERE categoria = ? AND activo = TRUE
-CREATE INDEX idx_plantillas_categoria_activo
-    ON plantillas_servicios (categoria, activo) WHERE activo = TRUE AND categoria IS NOT NULL;
-
--- 🔍 ÍNDICE 3: BÚSQUEDA FULL-TEXT
--- Propósito: Búsqueda de servicios por nombre, descripción y categoría
--- Uso: Autocompletar y búsqueda inteligente en español
-CREATE INDEX idx_plantillas_busqueda_gin
-    ON plantillas_servicios USING gin(to_tsvector('spanish',
-        nombre || ' ' || COALESCE(descripcion, '') || ' ' || COALESCE(categoria, '')))
-    WHERE activo = TRUE;
-
--- ⭐ ÍNDICE 4: RANKING POR POPULARIDAD
--- Propósito: Ordenar recomendaciones por popularidad
--- Uso: ORDER BY popularidad DESC dentro de cada industria
-CREATE INDEX idx_plantillas_popularidad
-    ON plantillas_servicios (tipo_industria, popularidad DESC, activo) WHERE activo = TRUE;
-
--- ====================================================================
 -- 👨‍💼 ÍNDICES PARA TABLA PROFESIONALES (7 índices especializados)
 -- ====================================================================
 -- Optimización para gestión de personal y asignación de citas
@@ -286,10 +254,6 @@ CREATE INDEX idx_servicios_precio
     ON servicios (organizacion_id, precio, activo) WHERE activo = TRUE;
 
 -- 🧬 ÍNDICE 5: HERENCIA DE PLANTILLAS
--- Propósito: Rastrear servicios creados desde plantillas globales
--- Uso: WHERE plantilla_servicio_id = ?
-CREATE INDEX idx_servicios_plantilla
-    ON servicios (plantilla_servicio_id) WHERE plantilla_servicio_id IS NOT NULL;
 
 -- 🏷️ ÍNDICE 6: BÚSQUEDA POR TAGS
 -- Propósito: Filtrado avanzado por etiquetas

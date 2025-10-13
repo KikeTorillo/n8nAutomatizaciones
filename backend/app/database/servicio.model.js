@@ -9,12 +9,12 @@ class ServicioModel {
             // 1. Crear el servicio
             const query = `
                 INSERT INTO servicios (
-                    organizacion_id, plantilla_servicio_id, nombre, descripcion, categoria,
+                    organizacion_id, nombre, descripcion, categoria,
                     subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                     requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
                     color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-                RETURNING id, organizacion_id, plantilla_servicio_id, nombre, descripcion, categoria,
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                RETURNING id, organizacion_id, nombre, descripcion, categoria,
                          subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                          requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
                          color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados,
@@ -23,7 +23,6 @@ class ServicioModel {
 
             const values = [
                 servicioData.organizacion_id,
-                servicioData.plantilla_servicio_id || null,
                 servicioData.nombre,
                 servicioData.descripcion || null,
                 servicioData.categoria || null,
@@ -99,9 +98,6 @@ class ServicioModel {
                     if (error.detail.includes('organizacion_id')) {
                         throw new Error('La organización especificada no existe');
                     }
-                    if (error.detail.includes('plantilla_servicio_id')) {
-                        throw new Error('La plantilla de servicio especificada no existe');
-                    }
                 }
                 throw error;
             }
@@ -112,14 +108,11 @@ class ServicioModel {
         return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `
                 SELECT s.*,
-                       ps.nombre as plantilla_nombre,
-                       ps.categoria as plantilla_categoria,
                        COUNT(sp.profesional_id) as total_profesionales_asignados
                 FROM servicios s
-                LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
                 LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
                 WHERE s.id = $1
-                GROUP BY s.id, ps.nombre, ps.categoria
+                GROUP BY s.id
             `;
 
             const result = await db.query(query, [id]);
@@ -185,14 +178,11 @@ class ServicioModel {
 
             const queryServicios = `
                 SELECT s.*,
-                       ps.nombre as plantilla_nombre,
-                       ps.categoria as plantilla_categoria,
                        COUNT(sp.profesional_id) as total_profesionales_asignados
                 FROM servicios s
-                LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
                 LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
                 ${whereClause}
-                GROUP BY s.id, ps.nombre, ps.categoria
+                GROUP BY s.id
                 ORDER BY s.${orden} ${direccion}
                 LIMIT $${parametroIndex} OFFSET $${parametroIndex + 1}
             `;
@@ -202,7 +192,6 @@ class ServicioModel {
             const queryTotal = `
                 SELECT COUNT(DISTINCT s.id) as total
                 FROM servicios s
-                LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
                 LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
                 ${whereClause}
             `;
@@ -235,7 +224,7 @@ class ServicioModel {
     static async actualizar(id, servicioData, organizacion_id) {
         return await RLSContextManager.query(organizacion_id, async (db) => {
             const camposPermitidos = [
-                'plantilla_servicio_id', 'nombre', 'descripcion', 'categoria', 'subcategoria',
+                'nombre', 'descripcion', 'categoria', 'subcategoria',
                 'duracion_minutos', 'precio', 'precio_minimo', 'precio_maximo',
                 'requiere_preparacion_minutos', 'tiempo_limpieza_minutos', 'max_clientes_simultaneos',
                 'color_servicio', 'configuracion_especifica', 'tags', 'tipos_profesional_autorizados', 'activo'
@@ -261,7 +250,7 @@ class ServicioModel {
                 UPDATE servicios
                 SET ${setClauses.join(', ')}, actualizado_en = NOW()
                 WHERE id = $1
-                RETURNING id, organizacion_id, plantilla_servicio_id, nombre, descripcion, categoria,
+                RETURNING id, organizacion_id, nombre, descripcion, categoria,
                          subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                          requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
                          color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados,
@@ -279,9 +268,7 @@ class ServicioModel {
                     throw new Error('Error de validación en los datos del servicio');
                 }
                 if (error.code === '23503') {
-                    if (error.detail.includes('plantilla_servicio_id')) {
-                        throw new Error('La plantilla de servicio especificada no existe');
-                    }
+                    // Foreign key violation
                 }
                 throw error;
             }
@@ -408,11 +395,9 @@ class ServicioModel {
                        sp.notas_especiales,
                        sp.activo as asignacion_activa,
                        COALESCE(sp.precio_personalizado, s.precio) as precio_efectivo,
-                       COALESCE(sp.duracion_personalizada, s.duracion_minutos) as duracion_efectiva,
-                       ps.nombre as plantilla_nombre
+                       COALESCE(sp.duracion_personalizada, s.duracion_minutos) as duracion_efectiva
                 FROM servicios s
                 JOIN servicios_profesionales sp ON s.id = sp.servicio_id
-                LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
                 WHERE sp.profesional_id = $1 ${condicionActivo}
                 ORDER BY s.categoria, s.nombre
             `;
@@ -429,12 +414,10 @@ class ServicioModel {
 
             const query = `
                 SELECT s.*,
-                       ps.nombre as plantilla_nombre,
                        ts_rank(to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' ||
                                          COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, '')),
                               plainto_tsquery('spanish', $1)) as relevancia
                 FROM servicios s
-                LEFT JOIN plantillas_servicios ps ON s.plantilla_servicio_id = ps.id
                 WHERE s.organizacion_id = $2
                 AND to_tsvector('spanish', s.nombre || ' ' || COALESCE(s.descripcion, '') || ' ' ||
                                COALESCE(s.categoria, '') || ' ' || COALESCE(s.subcategoria, ''))
@@ -461,7 +444,6 @@ class ServicioModel {
                     MIN(s.precio) as precio_minimo,
                     MAX(s.precio) as precio_maximo,
                     AVG(s.duracion_minutos) as duracion_promedio,
-                    COUNT(*) FILTER (WHERE s.plantilla_servicio_id IS NOT NULL) as servicios_con_plantilla,
                     COUNT(DISTINCT sp.profesional_id) as profesionales_con_servicios
                 FROM servicios s
                 LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
@@ -473,46 +455,7 @@ class ServicioModel {
         });
     }
 
-    // Combina datos de plantilla con configuración personalizada
-    static async crearDesdeePlantilla(organizacion_id, plantilla_id, configuracion_personalizada = {}) {
-        return await RLSContextManager.query(organizacion_id, async (db) => {
-            const queryPlantilla = `
-                SELECT * FROM plantillas_servicios
-                WHERE id = $1 AND estado = 'activa'
-            `;
-            const resultPlantilla = await db.query(queryPlantilla, [plantilla_id]);
-
-            if (resultPlantilla.rows.length === 0) {
-                throw new Error('Plantilla de servicio no encontrada o inactiva');
-            }
-
-            const plantilla = resultPlantilla.rows[0];
-
-            // Combinar datos de plantilla con configuración personalizada
-            const servicioData = {
-                organizacion_id,
-                plantilla_servicio_id: plantilla_id,
-                nombre: configuracion_personalizada.nombre || plantilla.nombre,
-                descripcion: configuracion_personalizada.descripcion || plantilla.descripcion,
-                categoria: configuracion_personalizada.categoria || plantilla.categoria,
-                subcategoria: configuracion_personalizada.subcategoria || plantilla.subcategoria,
-                duracion_minutos: configuracion_personalizada.duracion_minutos || plantilla.duracion_estimada_minutos,
-                precio: configuracion_personalizada.precio || plantilla.precio_sugerido,
-                precio_minimo: configuracion_personalizada.precio_minimo || plantilla.precio_minimo,
-                precio_maximo: configuracion_personalizada.precio_maximo || plantilla.precio_maximo,
-                configuracion_especifica: {
-                    ...plantilla.configuracion_adicional,
-                    ...configuracion_personalizada.configuracion_especifica
-                },
-                tags: configuracion_personalizada.tags || plantilla.tags || [],
-                tipos_profesional_autorizados: configuracion_personalizada.tipos_profesional_autorizados || plantilla.tipos_profesional_compatibles,
-                ...configuracion_personalizada
-            };
-
-            return await this.crear(servicioData);
-        });
-    }
-
 }
+
 
 module.exports = ServicioModel;

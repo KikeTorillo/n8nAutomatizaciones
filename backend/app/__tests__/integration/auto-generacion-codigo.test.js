@@ -25,6 +25,13 @@ describe('✨ Auto-generación de codigo_cita', () => {
   let profesional1, profesional2;
   let servicio1, servicio2;
 
+  // Fechas dinámicas para evitar constraint violations
+  const getFechaManana = () => {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 1);
+    return fecha.toISOString().split('T')[0];
+  };
+
   beforeAll(async () => {
     client = await global.testPool.connect();
     await cleanAllTables(client);
@@ -125,7 +132,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-10-10',
+        fecha_cita: getFechaManana(),
         hora_inicio: '10:00',
         hora_fin: '11:00',
         precio_servicio: 100.00,
@@ -142,7 +149,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-10-10',
+        fecha_cita: getFechaManana(),
         hora_inicio: '11:00',
         hora_fin: '12:00',
         precio_servicio: 100.00,
@@ -159,7 +166,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-10-10',
+        fecha_cita: getFechaManana(),
         hora_inicio: '12:00',
         hora_fin: '13:00',
         precio_servicio: 100.00,
@@ -174,7 +181,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
     });
 
     test('codigo_cita contiene fecha correcta', async () => {
-      const fechaCita = '2025-10-15';
+      const fechaCita = getFechaManana();
 
       const cita = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
@@ -187,16 +194,17 @@ describe('✨ Auto-generación de codigo_cita', () => {
         precio_final: 100.00
       });
 
-      // Extraer parte de fecha (20251015)
+      // Extraer parte de fecha y comparar con fecha enviada
       const fechaPart = cita.codigo_cita.split('-')[1];
+      const fechaEsperada = fechaCita.replace(/-/g, ''); // Convertir '2025-10-13' a '20251013'
 
-      expect(fechaPart).toBe('20251015');
+      expect(fechaPart).toBe(fechaEsperada);
     });
   });
 
   describe('Unicidad de codigo_cita', () => {
     test('Códigos son únicos para misma organización y fecha', async () => {
-      const fechaCita = '2025-10-20';
+      const fechaCita = getFechaManana();
 
       // Crear 3 citas en la misma fecha y org
       const cita1 = await createTestCita(client, org1.id, {
@@ -247,7 +255,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
     });
 
     test('Códigos son independientes entre organizaciones', async () => {
-      const fechaCita = '2025-10-25';
+      const fechaCita = getFechaManana();
 
       // Crear cita en org1
       const citaOrg1 = await createTestCita(client, org1.id, {
@@ -284,12 +292,21 @@ describe('✨ Auto-generación de codigo_cita', () => {
     });
 
     test('Secuencia reinicia para diferentes fechas', async () => {
+      // Crear fechas dinámicas diferentes
+      const fecha1 = new Date();
+      fecha1.setDate(fecha1.getDate() + 5);
+      const fechaCita1 = fecha1.toISOString().split('T')[0];
+
+      const fecha2 = new Date();
+      fecha2.setDate(fecha2.getDate() + 6);
+      const fechaCita2 = fecha2.toISOString().split('T')[0];
+
       // Crear cita en fecha 1
       const cita1 = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-11-01',
+        fecha_cita: fechaCita1,
         hora_inicio: '09:00',
         hora_fin: '10:00',
         precio_servicio: 100.00,
@@ -301,7 +318,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-11-02',
+        fecha_cita: fechaCita2,
         hora_inicio: '09:00',
         hora_fin: '10:00',
         precio_servicio: 100.00,
@@ -318,12 +335,14 @@ describe('✨ Auto-generación de codigo_cita', () => {
     test('NO se puede insertar cita con codigo_cita duplicado (si se fuerza)', async () => {
       await setRLSContext(client, org1.id);
 
+      const fechaCita = getFechaManana();
+
       // Crear primera cita
       const cita1 = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-11-05',
+        fecha_cita: fechaCita,
         hora_inicio: '10:00',
         hora_fin: '11:00',
         precio_servicio: 100.00,
@@ -340,7 +359,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         `, [
           org1.id, cliente1.id, profesional1.id, servicio1.id,
-          '2025-11-05', '11:00', '12:00', 100.00, 100.00,
+          fechaCita, '11:00', '12:00', 100.00, 100.00,
           cita1.codigo_cita  // ❌ Forzar duplicado
         ]);
 
@@ -362,7 +381,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-11-10',
+        fecha_cita: getFechaManana(),
         hora_inicio: '15:00',
         hora_fin: '16:00',
         precio_servicio: 100.00,
@@ -383,7 +402,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
         servicio_id: servicio1.id,
-        fecha_cita: '2025-11-15',
+        fecha_cita: getFechaManana(),
         hora_inicio: '16:00',
         hora_fin: '17:00',
         precio_servicio: 100.00,

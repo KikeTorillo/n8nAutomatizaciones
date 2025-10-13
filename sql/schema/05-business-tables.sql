@@ -188,7 +188,6 @@ CREATE TABLE clientes (
 -- avanzada, compatibilidad con profesionales y control granular.
 --
 -- 🔧 CARACTERÍSTICAS TÉCNICAS:
--- • Herencia opcional de plantillas globales
 -- • Configuración JSONB flexible por servicio
 -- • Control de tipos de profesionales autorizados
 -- • Validaciones de precios y tiempos
@@ -199,7 +198,6 @@ CREATE TABLE servicios (
     -- 🔑 Identificación y relaciones
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-    plantilla_servicio_id INTEGER REFERENCES plantillas_servicios(id) ON DELETE SET NULL,
 
     -- ====================================================================
     -- 📋 SECCIÓN: INFORMACIÓN BÁSICA DEL SERVICIO

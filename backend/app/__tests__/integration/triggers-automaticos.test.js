@@ -23,6 +23,13 @@ describe('⚡ Triggers Automáticos de BD', () => {
   let org;
   let cliente, profesional, servicio;
 
+  // Fecha dinámica para evitar constraint violations
+  const getFechaManana = () => {
+    const fecha = new Date();
+    fecha.setDate(fecha.getDate() + 1);
+    return fecha.toISOString().split('T')[0];
+  };
+
   beforeAll(async () => {
     client = await global.testPool.connect();
     await cleanAllTables(client);
@@ -44,7 +51,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
         cliente_id: cliente.id,
         profesional_id: profesional.id,
         servicio_id: servicio.id,
-        fecha_cita: '2025-10-10',
+        fecha_cita: getFechaManana(),
         hora_inicio: '10:00',
         hora_fin: '11:00',
         precio_servicio: 100.00,
@@ -60,7 +67,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
         cliente_id: cliente.id,
         profesional_id: profesional.id,
         servicio_id: servicio.id,
-        fecha_cita: '2025-10-11',
+        fecha_cita: getFechaManana(),
         hora_inicio: '10:00',
         hora_fin: '11:00',
         precio_servicio: 100.00,
@@ -95,7 +102,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
         cliente_id: cliente.id,
         profesional_id: profesional.id,
         servicio_id: servicio.id,
-        fecha_cita: '2025-10-12',
+        fecha_cita: getFechaManana(),
         hora_inicio: '10:00',
         hora_fin: '11:00',
         precio_servicio: 100.00,
@@ -142,7 +149,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           clienteOrg2.id, // ❌ Cliente de org2
           profesional.id,
           servicio.id,
-          '2025-10-15',
+          getFechaManana(),
           '10:00',
           '11:00',
           100.00,
@@ -175,7 +182,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesionalOrg2.id, // ❌ Profesional de org2
           servicio.id,
-          '2025-10-15',
+          getFechaManana(),
           '11:00',
           '12:00',
           100.00,
@@ -207,7 +214,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicioOrg2.id, // ❌ Servicio de org2
-          '2025-10-15',
+          getFechaManana(),
           '12:00',
           '13:00',
           100.00,
@@ -236,7 +243,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicio.id,
-          '2025-10-16',
+          getFechaManana(),
           '14:00',
           '13:00', // ❌ hora_fin antes de hora_inicio
           100.00,
@@ -292,7 +299,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicio.id,
-          '2025-10-17',
+          getFechaManana(),
           '10:00',
           '11:00',
           -10.00, // ❌ Precio negativo
@@ -319,7 +326,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicio.id,
-          '2025-10-18',
+          getFechaManana(),
           '10:00',
           '11:00',
           100.00,
@@ -349,7 +356,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicio.id,
-          '2025-10-19',
+          getFechaManana(),
           '10:00',
           '11:00',
           100.00,
@@ -377,7 +384,7 @@ describe('⚡ Triggers Automáticos de BD', () => {
           cliente.id,
           profesional.id,
           servicio.id,
-          '2025-10-20',
+          getFechaManana(),
           `${10 + estadosPermitidos.indexOf(estado)}:00`,
           `${11 + estadosPermitidos.indexOf(estado)}:00`,
           100.00,

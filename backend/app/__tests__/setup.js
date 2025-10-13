@@ -24,6 +24,8 @@ beforeAll(async () => {
   logger.warn('💡 Ejecuta "npm run clean:data" antes de los tests para limpiar datos');
 
   // Crear pool de conexión de test (usa la BD principal)
+  // IMPORTANTE: Usar mismo usuario que la app (saas_app) para tests
+  // Este usuario NO es superuser (más seguro) pero puede usar bypass RLS
   testPool = new Pool({
     host: process.env.DB_HOST || 'localhost',
     port: parseInt(process.env.DB_PORT) || 5432,

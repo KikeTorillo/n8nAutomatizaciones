@@ -252,7 +252,8 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .send({
           nombre: `Servicio Admin ${uniqueId}`,
           precio: 150.00,
-          duracion_minutos: 45
+          duracion_minutos: 45,
+          profesionales_ids: [testProfesional.id]
         })
         .expect(201);
 

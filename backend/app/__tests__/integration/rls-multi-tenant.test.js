@@ -54,11 +54,16 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
       precio: 100.00
     });
 
+    // Usar fecha dinámica (mañana) para evitar constraint violations
+    const fechaCita = new Date();
+    fechaCita.setDate(fechaCita.getDate() + 1);
+    const fechaCitaStr = fechaCita.toISOString().split('T')[0];
+
     cita1 = await createTestCita(client, org1.id, {
       cliente_id: cliente1.id,
       profesional_id: profesional1.id,
       servicio_id: servicio1.id,
-      fecha_cita: '2025-10-10',
+      fecha_cita: fechaCitaStr,
       hora_inicio: '10:00',
       hora_fin: '11:00',
       precio_servicio: 100.00,
@@ -84,7 +89,7 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
       cliente_id: cliente2.id,
       profesional_id: profesional2.id,
       servicio_id: servicio2.id,
-      fecha_cita: '2025-10-10',
+      fecha_cita: fechaCitaStr,
       hora_inicio: '14:00',
       hora_fin: '15:00',
       precio_servicio: 200.00,

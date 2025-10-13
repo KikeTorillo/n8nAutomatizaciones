@@ -1,7 +1,29 @@
 /**
- * @fileoverview Helper para Row Level Security (RLS) Multi-Tenant
- * @description Funciones reutilizables para configurar contexto RLS en PostgreSQL
- * @version 1.0.0
+ * @fileoverview Helper para Row Level Security (RLS) - Casos Específicos
+ * @description Funciones de BAJO NIVEL para configurar contexto RLS específico
+ * @version 2.0.0
+ *
+ * ⚠️ IMPORTANTE: SEPARACIÓN DE RESPONSABILIDADES
+ *
+ * Este helper es para CASOS ESPECÍFICOS donde necesitas:
+ * - Configurar current_user_id o current_user_role
+ * - Operaciones de login/autenticación (withRole('login_context'))
+ * - Acceso propio del usuario (withSelfAccess)
+ * - Registrar eventos de auditoría (registrarEvento)
+ * - Control manual fino de variables RLS
+ *
+ * ✅ USAR RLSHelper CUANDO:
+ * - Necesitas configurar current_user_id o current_user_role
+ * - Login/autenticación con withRole('login_context')
+ * - Ya tienes una conexión db y transacción manual compleja
+ * - Necesitas registrar eventos de auditoría
+ *
+ * ❌ NO USAR RLSHelper PARA:
+ * - Operaciones CRUD típicas de modelos → Usar RLSContextManager
+ * - Queries simples con aislamiento por organizacion_id → Usar RLSContextManager
+ * - Bypass RLS con gestión automática → Usar RLSContextManager.withBypass()
+ *
+ * 📖 Ver también: RLSContextManager (gestión completa de conexiones + transacciones)
  */
 
 const logger = require('./logger');
@@ -119,11 +141,37 @@ class RLSHelper {
 
     /**
      * Ejecutar operación con bypass RLS temporal
-     * @param {Object} db - Cliente de base de datos
+     *
+     * ⚠️ DEPRECATED: Usar RLSContextManager.withBypass() en su lugar
+     *
+     * RLSContextManager maneja conexiones y transacciones automáticamente,
+     * mientras que este método requiere conexión ya adquirida.
+     *
+     * @deprecated Usar RLSContextManager.withBypass() para nuevos casos
+     * @param {Object} db - Cliente de base de datos (ya adquirido)
      * @param {Function} callback - Función a ejecutar con bypass activo
      * @returns {Promise} Resultado del callback
+     *
+     * @example
+     * // ❌ Patrón viejo (usar solo si ya tienes db y transacción manual)
+     * const db = await getDb();
+     * try {
+     *     await db.query('BEGIN');
+     *     const result = await RLSHelper.withBypass(db, async (db) => {
+     *         return await db.query('SELECT ...');
+     *     });
+     *     await db.query('COMMIT');
+     * } finally {
+     *     db.release();
+     * }
+     *
+     * // ✅ Patrón nuevo (preferido)
+     * const result = await RLSContextManager.withBypass(async (db) => {
+     *     return await db.query('SELECT ...');
+     * }, { useTransaction: true });
      */
     static async withBypass(db, callback) {
+        console.warn('[RLSHelper] withBypass() está deprecated. Considerar usar RLSContextManager.withBypass()');
         return this.withContext(db, { bypass: true }, callback);
     }
 

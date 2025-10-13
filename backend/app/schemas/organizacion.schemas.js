@@ -202,8 +202,6 @@ const onboarding = {
                 .optional()
                 .allow(null)
         }).required(),
-        aplicar_plantilla_servicios: Joi.boolean()
-            .default(true),
         enviar_email_bienvenida: Joi.boolean()
             .default(false)
     })

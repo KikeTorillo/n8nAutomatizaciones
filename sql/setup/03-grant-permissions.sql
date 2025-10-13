@@ -17,10 +17,21 @@ GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO saas_app;
 GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO saas_app;
 GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO saas_app;
 
+-- Permiso específico para deshabilitar/habilitar triggers (necesario para tests)
+-- Permite a saas_app ejecutar ALTER TABLE ... DISABLE/ENABLE TRIGGER durante limpieza de tests
+GRANT TRIGGER ON ALL TABLES IN SCHEMA public TO saas_app;
+
+-- Cambiar ownership de tablas críticas a saas_app para permitir DISABLE TRIGGER ALL
+-- Esto es necesario para limpieza de tests sin conflictos de triggers
+ALTER TABLE usuarios OWNER TO saas_app;
+ALTER TABLE organizaciones OWNER TO saas_app;
+ALTER TABLE metricas_uso_organizacion OWNER TO saas_app;
+
 -- Permisos por defecto para nuevos objetos
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO saas_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO saas_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO saas_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT TRIGGER ON TABLES TO saas_app;
 
 -- =====================================================================
 -- ACTUALIZAR PERMISOS PARA USUARIOS EXISTENTES

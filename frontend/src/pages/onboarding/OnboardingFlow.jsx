@@ -1,15 +1,18 @@
 import { Link } from 'react-router-dom';
 import useOnboardingStore from '@/store/onboardingStore';
 import { cn } from '@/lib/utils';
-import { Building2, CreditCard, UserPlus, Users, Scissors, MessageCircle } from 'lucide-react';
+import { Building2, CreditCard, UserPlus, Users, Clock, Scissors, MessageCircle, CheckCircle, Sparkles } from 'lucide-react';
 
 // Importar los pasos
 import Step1_BusinessInfo from './steps/Step1_BusinessInfo';
 import Step2_PlanSelection from './steps/Step2_PlanSelection';
 import Step3_AccountSetup from './steps/Step3_AccountSetup';
 import Step4_Professionals from './steps/Step4_Professionals';
-import Step5_Services from './steps/Step5_Services';
-import Step6_WhatsAppIntegration from './steps/Step6_WhatsAppIntegration';
+import Step5_Schedules from './steps/Step5_Schedules';
+import Step6_Services from './steps/Step6_Services';
+import Step7_WhatsAppIntegration from './steps/Step7_WhatsAppIntegration';
+import Step8_Review from './steps/Step8_Review';
+import Step9_Welcome from './steps/Step9_Welcome';
 
 /**
  * Flujo de Onboarding - Componente Principal
@@ -45,15 +48,33 @@ function OnboardingFlow() {
     },
     {
       number: 5,
-      title: 'Servicios',
-      icon: Scissors,
-      component: Step5_Services,
+      title: 'Horarios',
+      icon: Clock,
+      component: Step5_Schedules,
     },
     {
       number: 6,
+      title: 'Servicios',
+      icon: Scissors,
+      component: Step6_Services,
+    },
+    {
+      number: 7,
       title: 'WhatsApp',
       icon: MessageCircle,
-      component: Step6_WhatsAppIntegration,
+      component: Step7_WhatsAppIntegration,
+    },
+    {
+      number: 8,
+      title: 'Resumen',
+      icon: CheckCircle,
+      component: Step8_Review,
+    },
+    {
+      number: 9,
+      title: 'Bienvenida',
+      icon: Sparkles,
+      component: Step9_Welcome,
     },
   ];
 
@@ -69,7 +90,7 @@ function OnboardingFlow() {
               ¡Bienvenido a SaaS Agendamiento!
             </h1>
             <p className="text-xl text-gray-600">
-              Configura tu cuenta en solo 6 pasos
+              Configura tu cuenta en solo 9 pasos
             </p>
           </div>
 
