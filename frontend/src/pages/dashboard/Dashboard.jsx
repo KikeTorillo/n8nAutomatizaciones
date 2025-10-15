@@ -10,7 +10,7 @@ import {
   useEstadisticasOrganizacion,
   useCitasDelDia,
   useProfesionales,
-  useServicios,
+  useServiciosDashboard,
   useClientes,
 } from '@/hooks/useDashboard';
 import {
@@ -34,7 +34,7 @@ function Dashboard() {
     useEstadisticasOrganizacion();
   const { data: citasDelDia, isLoading: loadingCitas } = useCitasDelDia();
   const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
-  const { data: servicios, isLoading: loadingServicios } = useServicios();
+  const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
   const { data: clientes, isLoading: loadingClientes } = useClientes();
 
   // Mutation de logout

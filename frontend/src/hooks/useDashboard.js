@@ -57,11 +57,12 @@ export function useProfesionales() {
 }
 
 /**
- * Hook para obtener servicios
+ * Hook para obtener servicios (Dashboard)
+ * Renombrado para evitar conflicto con useServicios de hooks/useServicios.js
  */
-export function useServicios() {
+export function useServiciosDashboard() {
   return useQuery({
-    queryKey: ['servicios'],
+    queryKey: ['servicios-dashboard'],
     queryFn: async () => {
       const response = await serviciosApi.listar();
       // Backend retorna: { data: { servicios: [...], ... } }

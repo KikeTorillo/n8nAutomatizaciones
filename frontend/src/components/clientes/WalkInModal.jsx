@@ -5,7 +5,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/useClientes';
-import { useServicios, useProfesionales } from '@/hooks/useDashboard';
+import { useServiciosDashboard, useProfesionales } from '@/hooks/useDashboard';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -24,7 +24,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
   const [tiempoEspera, setTiempoEspera] = useState(0);
 
   // Queries
-  const { data: servicios, isLoading: loadingServicios, refetch: refetchServicios } = useServicios();
+  const { data: servicios, isLoading: loadingServicios, refetch: refetchServicios } = useServiciosDashboard();
   const { data: profesionales, isLoading: loadingProfesionales, refetch: refetchProfesionales } = useProfesionales();
 
   // Refetch servicios y profesionales cuando se abre el modal

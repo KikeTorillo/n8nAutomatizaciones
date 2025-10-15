@@ -120,7 +120,14 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                     {cliente.ultima_cita ? (
                       <div className="flex items-center text-sm text-gray-600">
                         <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                        {new Date(cliente.ultima_cita).toLocaleDateString('es-ES')}
+                        {(() => {
+                          // Extraer solo la parte de fecha (YYYY-MM-DD) ignorando la hora/timezone
+                          const fechaSolo = String(cliente.ultima_cita).split('T')[0];
+                          const [year, month, day] = fechaSolo.split('-');
+                          // Crear fecha en timezone local evitando conversiones UTC
+                          const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+                          return fecha.toLocaleDateString('es-ES');
+                        })()}
                       </div>
                     ) : (
                       <span className="text-sm text-gray-400">Sin citas</span>

@@ -2,6 +2,7 @@ const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 const RLSContextManager = require('../../utils/rlsContextManager');
+const { DateTime } = require('luxon');
 
 class CitaOperacionalModel {
 
@@ -388,11 +389,16 @@ class CitaOperacionalModel {
             }
 
             // 4. Determinar disponibilidad del profesional y calcular horarios
-            const ahora = new Date();
-            const fechaHoy = ahora.toISOString().split('T')[0];
+            // ✅ TIMEZONE FIX: Usar zona horaria de la organización en lugar de UTC
+            const zonaHoraria = datosWalkIn.zona_horaria || DEFAULTS.ZONA_HORARIA;
+            const ahoraLocal = DateTime.now().setZone(zonaHoraria);
+            const ahora = ahoraLocal.toJSDate(); // Para compatibilidad con código existente
+            const fechaHoy = ahoraLocal.toFormat('yyyy-MM-dd');
             const duracionEstimada = servicio.duracion_minutos || 30;
-            const horaActual = ahora.toTimeString().split(' ')[0]; // HH:MM:SS
-            const diaSemanaActual = ahora.getDay(); // 0 = domingo, 6 = sábado
+            const horaActual = ahoraLocal.toFormat('HH:mm:ss'); // Hora local
+            const diaSemanaActual = ahoraLocal.weekday === 7 ? 0 : ahoraLocal.weekday; // Luxon: 1=lunes...7=domingo, JS: 0=domingo...6=sábado
+
+            logger.info(`[crearWalkIn] Timezone aplicado: ${zonaHoraria}. Hora UTC: ${DateTime.now().toISO()}, Hora local: ${ahoraLocal.toISO()}, Día semana: ${diaSemanaActual}`);
 
             // ✅ VALIDACIÓN CRÍTICA: Verificar si el profesional tiene horario laboral AHORA
             // Esto previene walk-ins en horas donde no hay nadie trabajando (ej: 3am)
@@ -444,9 +450,10 @@ class CitaOperacionalModel {
             // ✅ VALIDACIÓN: Si NO tiene cita en curso Y NO tiene horario laboral ahora → RECHAZAR
             if (citaActual.rows.length === 0 && horariosActivos.rows.length === 0) {
                 const diasSemana = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+                logger.warn(`[crearWalkIn] Walk-in rechazado: Profesional ${profesionalId} no disponible. Día: ${diasSemana[diaSemanaActual]}, Hora local (${zonaHoraria}): ${horaActual.substring(0, 5)}`);
                 throw new Error(
                     `No se puede atender el walk-in: El profesional no está disponible en este horario. ` +
-                    `(Hoy es ${diasSemana[diaSemanaActual]}, hora actual: ${horaActual.substring(0, 5)})`
+                    `(Hoy es ${diasSemana[diaSemanaActual]}, hora actual: ${horaActual.substring(0, 5)}, zona: ${zonaHoraria})`
                 );
             }
 
@@ -570,7 +577,7 @@ class CitaOperacionalModel {
                 horaInicio,        // Calculada según disponibilidad
                 horaFin,           // Calculada según disponibilidad
                 horaInicioReal,    // NOW() si disponible, NULL si en cola
-                DEFAULTS.ZONA_HORARIA,
+                zonaHoraria,       // Zona horaria de la organización
                 servicio.precio || 0,
                 0,
                 servicio.precio || 0,

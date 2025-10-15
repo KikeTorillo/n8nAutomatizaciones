@@ -129,12 +129,19 @@ class ClienteModel {
 
             const query = `
                 SELECT
-                    id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
-                    profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido,
-                    creado_en, actualizado_en
-                FROM clientes
+                    c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
+                    c.profesional_preferido_id, c.notas_especiales, c.alergias,
+                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido,
+                    c.creado_en, c.actualizado_en,
+                    COUNT(citas.id) as total_citas,
+                    MAX(citas.fecha_cita) as ultima_cita
+                FROM clientes c
+                LEFT JOIN citas ON c.id = citas.cliente_id
                 ${whereClause}
+                GROUP BY c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
+                    c.profesional_preferido_id, c.notas_especiales, c.alergias,
+                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido,
+                    c.creado_en, c.actualizado_en
                 ORDER BY ${campoOrden} ${ordenValido}
                 LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
             `;

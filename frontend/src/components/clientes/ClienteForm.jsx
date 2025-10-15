@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useProfesionales, useServicios } from '@/hooks/useDashboard';
+import { useProfesionales, useServiciosDashboard } from '@/hooks/useDashboard';
 
 /**
  * Formulario reutilizable para crear/editar clientes
@@ -27,7 +27,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
 
   // Cargar datos de profesionales y servicios para preferencias
   const { data: profesionales = [] } = useProfesionales();
-  const { data: servicios = [] } = useServicios();
+  const { data: servicios = [] } = useServiciosDashboard();
 
   // Si hay un cliente, cargar sus datos
   // ⚠️ IMPORTANTE: Mapear campos del backend a frontend

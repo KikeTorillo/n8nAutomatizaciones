@@ -107,10 +107,11 @@ export const profesionalesApi = {
   crear: (data) => apiClient.post('/profesionales', data),
 
   /**
-   * Listar profesionales
+   * Listar profesionales con filtros
+   * @param {Object} params - Filtros opcionales
    * @returns {Promise<Object>}
    */
-  listar: () => apiClient.get('/profesionales'),
+  listar: (params = {}) => apiClient.get('/profesionales', { params }),
 
   /**
    * Obtener profesional por ID
@@ -145,10 +146,11 @@ export const serviciosApi = {
   crear: (data) => apiClient.post('/servicios', data),
 
   /**
-   * Listar servicios
+   * Listar servicios con filtros y paginación
+   * @param {Object} params - { pagina, limite, busqueda, activo, categoria, precio_min, precio_max }
    * @returns {Promise<Object>}
    */
-  listar: () => apiClient.get('/servicios'),
+  listar: (params = {}) => apiClient.get('/servicios', { params }),
 
   /**
    * Obtener servicio por ID
@@ -166,11 +168,41 @@ export const serviciosApi = {
   actualizar: (id, data) => apiClient.put(`/servicios/${id}`, data),
 
   /**
-   * Eliminar servicio
+   * Eliminar servicio (soft delete)
    * @param {number} id
    * @returns {Promise<Object>}
    */
   eliminar: (id) => apiClient.delete(`/servicios/${id}`),
+
+  /**
+   * Buscar servicios (búsqueda rápida)
+   * @param {Object} params - { termino, limite }
+   * @returns {Promise<Object>}
+   */
+  buscar: (params) => apiClient.get('/servicios/buscar', { params }),
+
+  /**
+   * Obtener profesionales asignados al servicio
+   * @param {number} id - ID del servicio
+   * @returns {Promise<Object>}
+   */
+  obtenerProfesionales: (id) => apiClient.get(`/servicios/${id}/profesionales`),
+
+  /**
+   * Asignar profesional al servicio
+   * @param {number} id - ID del servicio
+   * @param {Object} data - { profesional_id, configuracion }
+   * @returns {Promise<Object>}
+   */
+  asignarProfesional: (id, data) => apiClient.post(`/servicios/${id}/profesionales`, data),
+
+  /**
+   * Desasignar profesional del servicio
+   * @param {number} id - ID del servicio
+   * @param {number} profId - ID del profesional
+   * @returns {Promise<Object>}
+   */
+  desasignarProfesional: (id, profId) => apiClient.delete(`/servicios/${id}/profesionales/${profId}`),
 };
 
 // ==================== HORARIOS PROFESIONALES ====================

@@ -164,6 +164,23 @@ class CitaOperacionalController {
         const organizacionId = req.tenant.organizacionId;
 
         try {
+            // Obtener zona horaria de la organización desde la BD
+            const { getDb } = require('../../config/database');
+            const db = await getDb();
+            let zonaHoraria = 'America/Mexico_City'; // Default
+
+            try {
+                const orgResult = await db.query(
+                    'SELECT zona_horaria FROM organizaciones WHERE id = $1',
+                    [organizacionId]
+                );
+                if (orgResult.rows.length > 0 && orgResult.rows[0].zona_horaria) {
+                    zonaHoraria = orgResult.rows[0].zona_horaria;
+                }
+            } finally {
+                db.release();
+            }
+
             const cita = await CitaModel.crearWalkIn({
                 cliente_id,
                 profesional_id,
@@ -173,7 +190,8 @@ class CitaOperacionalController {
                 tiempo_espera_aceptado,
                 notas_walk_in,
                 usuario_creador_id: req.user.id,
-                ip_origen: req.ip
+                ip_origen: req.ip,
+                zona_horaria: zonaHoraria  // Pasar zona horaria al modelo
             }, organizacionId);
 
             return ResponseHelper.success(res, cita, 'Cita walk-in creada exitosamente', 201);

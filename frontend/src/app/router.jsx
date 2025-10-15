@@ -23,6 +23,9 @@ const ClientesPage = lazy(() => import('@/pages/clientes/ClientesPage'));
 const ClienteFormPage = lazy(() => import('@/pages/clientes/ClienteFormPage'));
 const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'));
 
+// Páginas de Servicios
+const ServiciosPage = lazy(() => import('@/pages/servicios/ServiciosPage'));
+
 // Wrapper para lazy loading
 const withSuspense = (Component) => {
   return (
@@ -87,6 +90,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ClienteFormPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Servicios
+      {
+        path: 'servicios',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ServiciosPage)}
           </ProtectedRoute>
         ),
       },
