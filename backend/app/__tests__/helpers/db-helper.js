@@ -376,8 +376,8 @@ async function createTestHorarioProfesional(client, profesionalId, organizacionI
       organizacion_id, profesional_id, dia_semana,
       hora_inicio, hora_fin, tipo_horario,
       nombre_horario, permite_citas, activo,
-      fecha_inicio, duracion_slot_minutos
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+      fecha_inicio
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
     RETURNING *`,
     [
       organizacionId,
@@ -389,8 +389,7 @@ async function createTestHorarioProfesional(client, profesionalId, organizacionI
       data.nombre_horario || 'Horario Estándar',
       data.permite_citas !== undefined ? data.permite_citas : true,
       data.activo !== undefined ? data.activo : true,
-      data.fecha_inicio || '2025-01-01',
-      data.duracion_slot_minutos || 30
+      data.fecha_inicio || '2025-01-01'
     ]
   );
 

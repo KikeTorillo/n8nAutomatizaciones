@@ -34,7 +34,7 @@ class HorarioProfesionalModel {
                         organizacion_id, profesional_id, dia_semana,
                         hora_inicio, hora_fin, zona_horaria,
                         tipo_horario, nombre_horario, descripcion,
-                        permite_citas, duracion_slot_minutos,
+                        permite_citas,
                         precio_premium, permite_descuentos,
                         fecha_inicio, fecha_fin, motivo_vigencia,
                         capacidad_maxima, configuracion_especial,
@@ -43,12 +43,12 @@ class HorarioProfesionalModel {
                     )
                     VALUES (
                         $1, $2, $3, $4, $5, $6, $7, $8, $9,
-                        $10, $11, $12, $13, $14, $15, $16,
-                        $17, $18, $19, $20, $21, $22, NOW()
+                        $10, $11, $12, $13, $14, $15,
+                        $16, $17, $18, $19, $20, $21, NOW()
                     )
                     RETURNING id, organizacion_id, profesional_id, dia_semana,
                              hora_inicio, hora_fin, tipo_horario, nombre_horario,
-                             permite_citas, duracion_slot_minutos, activo,
+                             permite_citas, activo,
                              fecha_inicio, fecha_fin, creado_en
                 `;
 
@@ -63,7 +63,6 @@ class HorarioProfesionalModel {
                     datosHorario.nombre_horario || null,
                     datosHorario.descripcion || null,
                     datosHorario.permite_citas !== false,
-                    datosHorario.duracion_slot_minutos || 30,
                     datosHorario.precio_premium || 0.00,
                     datosHorario.permite_descuentos !== false,
                     datosHorario.fecha_inicio || new Date().toISOString().split('T')[0],
@@ -97,9 +96,6 @@ class HorarioProfesionalModel {
                     }
                     if (error.message.includes('valid_vigencia_temporal')) {
                         throw new Error('La fecha de fin debe ser mayor o igual a la fecha de inicio');
-                    }
-                    if (error.message.includes('valid_duracion_slot')) {
-                        throw new Error('La duración del slot debe estar entre 1 y 240 minutos');
                     }
                     if (error.message.includes('valid_tipo_horario')) {
                         throw new Error('Tipo de horario inválido. Valores permitidos: regular, break, almuerzo, premium');
@@ -181,7 +177,7 @@ class HorarioProfesionalModel {
                         hp.id, hp.organizacion_id, hp.profesional_id,
                         hp.dia_semana, hp.hora_inicio, hp.hora_fin, hp.zona_horaria,
                         hp.tipo_horario, hp.nombre_horario, hp.descripcion,
-                        hp.permite_citas, hp.duracion_slot_minutos,
+                        hp.permite_citas,
                         hp.precio_premium, hp.permite_descuentos,
                         hp.fecha_inicio, hp.fecha_fin, hp.motivo_vigencia,
                         hp.capacidad_maxima, hp.configuracion_especial,
@@ -265,7 +261,7 @@ class HorarioProfesionalModel {
                         hp.id, hp.organizacion_id, hp.profesional_id,
                         hp.dia_semana, hp.hora_inicio, hp.hora_fin, hp.zona_horaria,
                         hp.tipo_horario, hp.nombre_horario, hp.descripcion,
-                        hp.permite_citas, hp.duracion_slot_minutos,
+                        hp.permite_citas,
                         hp.precio_premium, hp.permite_descuentos,
                         hp.fecha_inicio, hp.fecha_fin, hp.motivo_vigencia,
                         hp.capacidad_maxima, hp.configuracion_especial,
@@ -339,7 +335,7 @@ class HorarioProfesionalModel {
                 const camposPermitidos = [
                     'dia_semana', 'hora_inicio', 'hora_fin', 'zona_horaria',
                     'tipo_horario', 'nombre_horario', 'descripcion',
-                    'permite_citas', 'duracion_slot_minutos',
+                    'permite_citas',
                     'precio_premium', 'permite_descuentos',
                     'fecha_inicio', 'fecha_fin', 'motivo_vigencia',
                     'capacidad_maxima', 'configuracion_especial',
@@ -555,7 +551,6 @@ class HorarioProfesionalModel {
             hora_fin = '18:00:00',
             tipo_horario = 'regular',
             nombre_horario = 'Horario Laboral',
-            duracion_slot_minutos = 30,
             fecha_inicio = new Date().toISOString().split('T')[0]
         } = configuracion;
 
@@ -571,7 +566,6 @@ class HorarioProfesionalModel {
                     hora_fin,
                     tipo_horario,
                     nombre_horario,
-                    duracion_slot_minutos,
                     permite_citas: true,
                     fecha_inicio,
                     activo: true

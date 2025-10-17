@@ -64,12 +64,6 @@ const horarioProfesionalSchemas = {
                     'boolean.base': 'El campo permite_citas debe ser verdadero o falso'
                 }),
 
-            duracion_slot_minutos: Joi.number().integer().min(1).max(240).default(30)
-                .messages({
-                    'number.min': 'La duración del slot debe ser al menos 1 minuto',
-                    'number.max': 'La duración del slot no puede exceder 240 minutos (4 horas)'
-                }),
-
             precio_premium: Joi.number().min(0).max(999.99).precision(2).default(0.00)
                 .messages({
                     'number.min': 'El precio premium no puede ser negativo',
@@ -155,12 +149,6 @@ const horarioProfesionalSchemas = {
             nombre_horario: Joi.string().max(50).default('Horario Laboral')
                 .messages({
                     'string.max': 'El nombre del horario no puede exceder 50 caracteres'
-                }),
-
-            duracion_slot_minutos: Joi.number().integer().min(1).max(240).default(30)
-                .messages({
-                    'number.min': 'La duración del slot debe ser al menos 1 minuto',
-                    'number.max': 'La duración del slot no puede exceder 240 minutos'
                 }),
 
             fecha_inicio: Joi.date().iso().default(() => new Date().toISOString().split('T')[0])
@@ -280,12 +268,6 @@ const horarioProfesionalSchemas = {
             permite_citas: Joi.boolean()
                 .messages({
                     'boolean.base': 'El campo permite_citas debe ser verdadero o falso'
-                }),
-
-            duracion_slot_minutos: Joi.number().integer().min(1).max(240)
-                .messages({
-                    'number.min': 'La duración del slot debe ser al menos 1 minuto',
-                    'number.max': 'La duración del slot no puede exceder 240 minutos'
                 }),
 
             precio_premium: Joi.number().min(0).max(999.99).precision(2)

@@ -39,9 +39,18 @@ function FormField({
         }
 
         // Sino, renderizar Input
+        // Para type="number", convertir el valor a número
+        const fieldValue = type === 'number' && field.value ? Number(field.value) : field.value;
+
         return (
           <Input
             {...field}
+            value={fieldValue}
+            onChange={(e) => {
+              // Convertir a número si es type="number"
+              const value = type === 'number' ? (e.target.value === '' ? 0 : Number(e.target.value)) : e.target.value;
+              field.onChange(value);
+            }}
             type={type}
             label={label}
             placeholder={placeholder}

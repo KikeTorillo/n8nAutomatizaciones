@@ -14,7 +14,7 @@ import { Clock, CheckCircle2, AlertCircle } from 'lucide-react';
  * Permite configurar horarios semanales para los profesionales creados
  */
 function Step5_Schedules() {
-  const { nextStep, prevStep } = useOnboardingStore();
+  const { nextStep } = useOnboardingStore();
   const toast = useToast();
   const [profesionalesConHorarios, setProfesionalesConHorarios] = useState([]);
   const [errorProfesionales, setErrorProfesionales] = useState([]);
@@ -41,7 +41,6 @@ function Step5_Schedules() {
       dias: [1, 2, 3, 4, 5], // Lun-Vie por defecto
       hora_inicio: '09:00',
       hora_fin: '18:00',
-      duracion_slot_minutos: 30,
       tipo_horario: 'regular',
       nombre_horario: 'Horario Laboral',
     },
@@ -57,7 +56,6 @@ function Step5_Schedules() {
         dias: scheduleData.dias,
         hora_inicio: scheduleData.hora_inicio,
         hora_fin: scheduleData.hora_fin,
-        duracion_slot_minutos: parseInt(scheduleData.duracion_slot_minutos),
         tipo_horario: scheduleData.tipo_horario,
         nombre_horario: scheduleData.nombre_horario,
       };
@@ -270,34 +268,6 @@ function Step5_Schedules() {
           />
         </div>
 
-        {/* Duración de slots */}
-        <Controller
-          name="duracion_slot_minutos"
-          control={control}
-          rules={{ required: 'La duración es requerida', min: 1, max: 240 }}
-          render={({ field }) => (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Duración de Slots (minutos) <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...field}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-              >
-                <option value="15">15 minutos</option>
-                <option value="30">30 minutos</option>
-                <option value="45">45 minutos</option>
-                <option value="60">60 minutos</option>
-                <option value="90">90 minutos</option>
-                <option value="120">120 minutos</option>
-              </select>
-              {errors.duracion_slot_minutos && (
-                <p className="mt-1 text-sm text-red-600">{errors.duracion_slot_minutos.message}</p>
-              )}
-            </div>
-          )}
-        />
-
         {/* Progreso */}
         {createSchedulesMutation.isPending && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -337,15 +307,7 @@ function Step5_Schedules() {
         )}
 
         {/* Botones de navegación */}
-        <div className="flex justify-between pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={prevStep}
-            disabled={createSchedulesMutation.isPending}
-          >
-            Anterior
-          </Button>
+        <div className="flex justify-end pt-4 border-t">
           <div className="flex gap-2">
             <Button
               type="button"

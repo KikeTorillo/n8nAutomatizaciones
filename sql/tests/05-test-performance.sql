@@ -62,7 +62,6 @@ EXPLAIN (ANALYZE, BUFFERS, FORMAT TEXT)
 SELECT
     p.id,
     p.nombre_completo,
-    p.especialidades,
     p.calificacion_promedio,
     p.telefono,
     p.email

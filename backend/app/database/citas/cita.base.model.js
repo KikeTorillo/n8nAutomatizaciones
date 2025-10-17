@@ -193,7 +193,6 @@ class CitaBaseModel {
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
                     p.nombre_completo as profesional_nombre,
-                    p.especialidades as profesional_especialidades,
                     s.nombre as servicio_nombre,
                     s.descripcion as servicio_descripcion,
                     s.duracion_minutos as servicio_duracion
@@ -216,7 +215,6 @@ class CitaBaseModel {
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
                     p.nombre_completo as profesional_nombre,
-                    p.especialidades as profesional_especialidades,
                     s.nombre as servicio_nombre,
                     s.descripcion as servicio_descripcion,
                     s.duracion_minutos as servicio_duracion

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Plus, Search, Filter, X, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, X, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -15,6 +16,7 @@ import { useToast } from '@/hooks/useToast';
  * Implementa CRUD completo con búsqueda, filtros y paginación
  */
 function ServiciosPage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
@@ -132,6 +134,19 @@ function ServiciosPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Breadcrumb */}
+          <div className="mb-4">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate('/dashboard')}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <ArrowLeft className="w-4 h-4 mr-1" />
+              Volver al Dashboard
+            </Button>
+          </div>
+
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">Servicios</h1>

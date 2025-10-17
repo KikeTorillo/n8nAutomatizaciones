@@ -203,13 +203,22 @@ export const serviciosApi = {
    * @returns {Promise<Object>}
    */
   desasignarProfesional: (id, profId) => apiClient.delete(`/servicios/${id}/profesionales/${profId}`),
+
+  /**
+   * Obtener servicios de un profesional
+   * @param {number} profesionalId - ID del profesional
+   * @param {Object} params - { solo_activos }
+   * @returns {Promise<Object>}
+   */
+  obtenerServiciosPorProfesional: (profesionalId, params = {}) =>
+    apiClient.get(`/servicios/profesionales/${profesionalId}/servicios`, { params }),
 };
 
 // ==================== HORARIOS PROFESIONALES ====================
 export const horariosApi = {
   /**
    * Crear horarios semanales estándar (batch para Lun-Vie)
-   * @param {Object} data - { profesional_id, dias, hora_inicio, hora_fin, tipo_horario, nombre_horario, duracion_slot_minutos, fecha_inicio }
+   * @param {Object} data - { profesional_id, dias, hora_inicio, hora_fin, tipo_horario, nombre_horario, fecha_inicio }
    * @returns {Promise<Object>} { horarios_creados, horarios: [...] }
    */
   crearSemanalesEstandar: (data) => apiClient.post('/horarios-profesionales/semanales-estandar', data),
@@ -366,9 +375,56 @@ export const citasApi = {
   /**
    * Cancelar cita
    * @param {number} id
+   * @param {Object} data - { motivo_cancelacion }
    * @returns {Promise<Object>}
    */
-  cancelar: (id) => apiClient.patch(`/citas/${id}/cancelar`),
+  cancelar: (id, data = {}) => apiClient.put(`/citas/${id}/cancelar`, data),
+
+  /**
+   * Confirmar cita
+   * @param {number} id
+   * @param {Object} data - Datos opcionales
+   * @returns {Promise<Object>}
+   */
+  confirmar: (id, data = {}) => apiClient.put(`/citas/${id}/confirmar`, data),
+
+  /**
+   * Iniciar cita (cambiar a estado en_curso)
+   * @param {number} id
+   * @param {Object} data - Datos opcionales
+   * @returns {Promise<Object>}
+   */
+  iniciar: (id, data = {}) => apiClient.put(`/citas/${id}/iniciar`, data),
+
+  /**
+   * Completar cita
+   * @param {number} id
+   * @param {Object} data - { calificacion_cliente, comentario_cliente, notas_profesional }
+   * @returns {Promise<Object>}
+   */
+  completar: (id, data = {}) => apiClient.put(`/citas/${id}/completar`, data),
+
+  /**
+   * Marcar cita como no show (cliente no llegó)
+   * @param {number} id
+   * @param {Object} data - { motivo }
+   * @returns {Promise<Object>}
+   */
+  noShow: (id, data = {}) => apiClient.put(`/citas/${id}/no-show`, data),
+
+  /**
+   * Enviar recordatorio de cita por WhatsApp
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  enviarRecordatorio: (id) => apiClient.post(`/citas/${id}/enviar-recordatorio`),
+
+  /**
+   * Obtener historial de recordatorios de una cita
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerRecordatorios: (id) => apiClient.get(`/citas/${id}/recordatorios`),
 
   /**
    * Crear cita walk-in (cliente sin cita previa)
@@ -399,6 +455,74 @@ export const planesApi = {
    * @returns {Promise<Object>}
    */
   obtener: (id) => apiClient.get(`/planes/${id}`),
+};
+
+// ==================== BLOQUEOS DE HORARIOS ====================
+export const bloqueosApi = {
+  /**
+   * Crear bloqueo de horario
+   * @param {Object} data - { profesional_id, tipo_bloqueo, titulo, descripcion, fecha_inicio, fecha_fin, hora_inicio, hora_fin, ... }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) => apiClient.post('/bloqueos-horarios', data),
+
+  /**
+   * Listar bloqueos con filtros
+   * @param {Object} params - { profesional_id, tipo_bloqueo, fecha_inicio, fecha_fin, solo_organizacionales, limite, offset }
+   * @returns {Promise<Object>}
+   */
+  listar: (params = {}) => apiClient.get('/bloqueos-horarios', { params }),
+
+  /**
+   * Obtener bloqueo por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/bloqueos-horarios/${id}`),
+
+  /**
+   * Actualizar bloqueo
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (id, data) => apiClient.put(`/bloqueos-horarios/${id}`, data),
+
+  /**
+   * Eliminar bloqueo
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/bloqueos-horarios/${id}`),
+
+  /**
+   * Obtener bloqueos de un profesional específico
+   * @param {number} profesionalId
+   * @param {Object} params - { fecha_inicio, fecha_fin }
+   * @returns {Promise<Object>}
+   */
+  obtenerPorProfesional: (profesionalId, params = {}) =>
+    apiClient.get('/bloqueos-horarios', { params: { ...params, profesional_id: profesionalId } }),
+
+  /**
+   * Obtener bloqueos organizacionales (sin profesional específico)
+   * @param {Object} params - { fecha_inicio, fecha_fin, tipo_bloqueo }
+   * @returns {Promise<Object>}
+   */
+  obtenerOrganizacionales: (params = {}) =>
+    apiClient.get('/bloqueos-horarios', { params: { ...params, solo_organizacionales: true } }),
+
+  /**
+   * Obtener bloqueos por rango de fechas
+   * @param {string} fechaInicio - Formato YYYY-MM-DD
+   * @param {string} fechaFin - Formato YYYY-MM-DD
+   * @param {Object} params - Filtros adicionales
+   * @returns {Promise<Object>}
+   */
+  obtenerPorRangoFechas: (fechaInicio, fechaFin, params = {}) =>
+    apiClient.get('/bloqueos-horarios', {
+      params: { ...params, fecha_inicio: fechaInicio, fecha_fin: fechaFin },
+    }),
 };
 
 // ==================== WHATSAPP ====================
@@ -433,5 +557,6 @@ export default {
   clientes: clientesApi,
   citas: citasApi,
   planes: planesApi,
+  bloqueos: bloqueosApi,
   whatsapp: whatsappApi,
 };

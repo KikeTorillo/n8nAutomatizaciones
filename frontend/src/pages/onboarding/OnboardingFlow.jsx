@@ -82,8 +82,8 @@ function OnboardingFlow() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="container-custom py-12">
-        <div className="max-w-4xl mx-auto">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-gray-900 mb-2">
@@ -113,9 +113,9 @@ function OnboardingFlow() {
           </div>
 
           {/* Stepper */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-8">
-            <div className="flex justify-between items-center">
-              {steps.map((step, index) => {
+          <div className="bg-white rounded-lg shadow-sm p-6 mb-8 overflow-hidden">
+            <div className="flex justify-between items-center relative">
+              {steps.map((step) => {
                 const isActive = currentStep === step.number;
                 const isCompleted = completedSteps.includes(step.number);
                 const Icon = step.icon;
@@ -123,27 +123,24 @@ function OnboardingFlow() {
                 return (
                   <div
                     key={step.number}
-                    className={cn(
-                      'flex flex-col items-center gap-2',
-                      index < steps.length - 1 && 'flex-1'
-                    )}
+                    className="flex flex-col items-center gap-2 relative z-10"
                   >
                     {/* Círculo del paso */}
                     <div
                       className={cn(
-                        'w-12 h-12 rounded-full flex items-center justify-center transition-all',
+                        'w-10 h-10 md:w-12 md:h-12 rounded-full flex items-center justify-center transition-all',
                         isActive && 'bg-primary-600 text-white ring-4 ring-primary-100',
                         isCompleted && !isActive && 'bg-green-500 text-white',
                         !isActive && !isCompleted && 'bg-gray-200 text-gray-500'
                       )}
                     >
-                      <Icon className="w-6 h-6" />
+                      <Icon className="w-4 h-4 md:w-6 md:h-6" />
                     </div>
 
                     {/* Título del paso */}
                     <span
                       className={cn(
-                        'text-xs font-medium text-center transition-all',
+                        'text-[10px] md:text-xs font-medium text-center transition-all max-w-[60px] md:max-w-none',
                         isActive && 'text-primary-700',
                         isCompleted && !isActive && 'text-green-600',
                         !isActive && !isCompleted && 'text-gray-500'
@@ -151,11 +148,6 @@ function OnboardingFlow() {
                     >
                       {step.title}
                     </span>
-
-                    {/* Línea conectora */}
-                    {index < steps.length - 1 && (
-                      <div className="hidden md:block absolute h-0.5 bg-gray-200 w-full top-6 -z-10" />
-                    )}
                   </div>
                 );
               })}

@@ -59,7 +59,6 @@ CREATE TABLE horarios_profesionales (
     -- ⚙️ SECCIÓN: CONFIGURACIÓN OPERATIVA
     -- ====================================================================
     permite_citas BOOLEAN NOT NULL DEFAULT TRUE,        -- FALSE para breaks/almuerzos
-    duracion_slot_minutos INTEGER DEFAULT 30,           -- Duración base de cada slot
 
     -- ====================================================================
     -- 💰 SECCIÓN: CONFIGURACIÓN COMERCIAL
@@ -105,8 +104,6 @@ CREATE TABLE horarios_profesionales (
         CHECK (hora_fin - hora_inicio >= INTERVAL '15 minutes'),
     CONSTRAINT valid_vigencia_temporal
         CHECK (fecha_fin IS NULL OR fecha_fin >= fecha_inicio),
-    CONSTRAINT valid_duracion_slot
-        CHECK (duracion_slot_minutos > 0 AND duracion_slot_minutos <= 240),
     CONSTRAINT valid_precio_premium
         CHECK (precio_premium >= 0 AND precio_premium <= 999.99),
     CONSTRAINT valid_capacidad_maxima
@@ -273,9 +270,6 @@ COMMENT ON COLUMN horarios_profesionales.tipo_horario IS
 COMMENT ON COLUMN horarios_profesionales.permite_citas IS
 'FALSE para breaks y almuerzos donde no se pueden agendar citas';
 
-COMMENT ON COLUMN horarios_profesionales.duracion_slot_minutos IS
-'Duración base de cada slot generado automáticamente para este horario';
-
 COMMENT ON COLUMN horarios_profesionales.fecha_inicio IS
 'Fecha desde la cual este horario es válido (útil para cambios estacionales)';
 
@@ -307,13 +301,13 @@ Usado para: Configuración de disponibilidad semanal, breaks, horarios premium.'
 -- Ejemplo: Barbero con horario regular Lunes-Viernes
 INSERT INTO horarios_profesionales (
     organizacion_id, profesional_id, dia_semana, hora_inicio, hora_fin,
-    tipo_horario, nombre_horario, duracion_slot_minutos
+    tipo_horario, nombre_horario
 ) VALUES
 -- Lunes a Viernes 9:00-18:00 con almuerzo 13:00-14:00
-(1, 1, 1, '09:00', '13:00', 'regular', 'Horario Matutino', 30),
-(1, 1, 1, '13:00', '14:00', 'almuerzo', 'Hora de Almuerzo', 60),
-(1, 1, 1, '14:00', '18:00', 'regular', 'Horario Vespertino', 30),
-(1, 1, 2, '09:00', '13:00', 'regular', 'Horario Matutino', 30),
-(1, 1, 2, '13:00', '14:00', 'almuerzo', 'Hora de Almuerzo', 60),
-(1, 1, 2, '14:00', '18:00', 'regular', 'Horario Vespertino', 30);
+(1, 1, 1, '09:00', '13:00', 'regular', 'Horario Matutino'),
+(1, 1, 1, '13:00', '14:00', 'almuerzo', 'Hora de Almuerzo'),
+(1, 1, 1, '14:00', '18:00', 'regular', 'Horario Vespertino'),
+(1, 1, 2, '09:00', '13:00', 'regular', 'Horario Matutino'),
+(1, 1, 2, '13:00', '14:00', 'almuerzo', 'Hora de Almuerzo'),
+(1, 1, 2, '14:00', '18:00', 'regular', 'Horario Vespertino');
 */

@@ -642,7 +642,6 @@ class CitaOperacionalModel {
                 SELECT
                     p.id,
                     p.nombre_completo as nombre,
-                    p.especialidades,
                     COUNT(c.id) FILTER (WHERE c.fecha_cita = CURRENT_DATE AND c.estado IN ('en_curso', 'confirmada')) as citas_hoy,
                     CASE
                         WHEN EXISTS (
@@ -666,7 +665,7 @@ class CitaOperacionalModel {
                 JOIN servicios_profesionales sp ON sp.profesional_id = p.id
                 LEFT JOIN citas c ON c.profesional_id = p.id
                 ${whereClause}
-                GROUP BY p.id, p.nombre_completo, p.especialidades
+                GROUP BY p.id, p.nombre_completo
                 ORDER BY disponible_ahora DESC, citas_hoy ASC
             `, params);
 

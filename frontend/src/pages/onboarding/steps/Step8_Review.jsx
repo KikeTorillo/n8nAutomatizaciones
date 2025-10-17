@@ -12,7 +12,7 @@ import { CheckCircle2, AlertCircle, Building2, User, Clock, Scissors, MessageCir
  * Muestra un resumen completo de todos los pasos completados
  */
 function Step8_Review() {
-  const { formData, nextStep, prevStep } = useOnboardingStore();
+  const { formData, nextStep } = useOnboardingStore();
   const { user } = useAuthStore();
 
   // Fetch profesionales desde el backend
@@ -313,10 +313,7 @@ function Step8_Review() {
       </div>
 
       {/* Botones de navegación */}
-      <div className="flex justify-between pt-4 border-t">
-        <Button type="button" variant="outline" onClick={prevStep}>
-          Anterior
-        </Button>
+      <div className="flex justify-end pt-4 border-t">
         <Button type="button" onClick={nextStep}>
           Finalizar Configuración
         </Button>

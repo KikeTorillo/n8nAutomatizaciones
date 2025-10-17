@@ -131,26 +131,20 @@ CREATE UNIQUE INDEX idx_profesionales_email_org
     ON profesionales (organizacion_id, email)
     WHERE email IS NOT NULL AND activo = TRUE;
 
--- 🔍 ÍNDICE 4: BÚSQUEDA FULL-TEXT EN ESPECIALIDADES
--- Propósito: Buscar profesionales por especialidades específicas
--- Uso: WHERE especialidades && ARRAY['corte_clasico', 'barba']
-CREATE INDEX idx_profesionales_especialidades_gin
-    ON profesionales USING gin(especialidades) WHERE activo = TRUE;
-
--- 📋 ÍNDICE 5: BÚSQUEDA EN LICENCIAS Y CERTIFICACIONES
+-- 📋 ÍNDICE 4: BÚSQUEDA EN LICENCIAS Y CERTIFICACIONES
 -- Propósito: Filtrar por licencias específicas (útil para médicos, etc.)
 -- Uso: WHERE licencias_profesionales ? 'cedula_profesional'
 CREATE INDEX idx_profesionales_licencias_gin
     ON profesionales USING gin(licencias_profesionales) WHERE activo = TRUE;
 
--- 🌟 ÍNDICE 6: RANKING Y DISPONIBILIDAD
+-- 🌟 ÍNDICE 5: RANKING Y DISPONIBILIDAD
 -- Propósito: Ordenar profesionales por calificación y disponibilidad
 -- Uso: ORDER BY calificacion_promedio DESC, disponible_online DESC
 CREATE INDEX idx_profesionales_ranking
     ON profesionales (organizacion_id, disponible_online, calificacion_promedio DESC, activo)
     WHERE activo = TRUE;
 
--- 📝 ÍNDICE 7: BÚSQUEDA FULL-TEXT EN NOMBRES
+-- 📝 ÍNDICE 6: BÚSQUEDA FULL-TEXT EN NOMBRES
 -- Propósito: Autocompletar nombres de profesionales en interfaces
 -- Uso: Búsqueda por nombre completo en español
 CREATE INDEX idx_profesionales_nombre_gin
@@ -387,7 +381,7 @@ sin acceder al heap (performance +40% en queries de calendario).';
 -- Ventaja: INCLUDE para mostrar datos sin heap access
 CREATE INDEX IF NOT EXISTS idx_profesionales_disponibles
     ON profesionales (organizacion_id, activo, disponible_online, tipo_profesional)
-    INCLUDE (nombre_completo, calificacion_promedio, especialidades)
+    INCLUDE (nombre_completo, calificacion_promedio)
     WHERE activo = TRUE AND disponible_online = TRUE;
 
 COMMENT ON INDEX idx_profesionales_disponibles IS

@@ -19,13 +19,13 @@ class ProfesionalModel {
             const query = `
                 INSERT INTO profesionales (
                     organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                    documento_identidad, tipo_profesional, especialidades, licencias_profesionales,
+                    documento_identidad, tipo_profesional, licencias_profesionales,
                     años_experiencia, idiomas, color_calendario, biografia, foto_url,
                     configuracion_horarios, configuracion_servicios, comision_porcentaje,
                     salario_base, forma_pago, activo, disponible_online, fecha_ingreso
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                         documento_identidad, tipo_profesional, especialidades, licencias_profesionales,
+                         documento_identidad, tipo_profesional, licencias_profesionales,
                          años_experiencia, idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios, comision_porcentaje,
                          salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
@@ -41,7 +41,6 @@ class ProfesionalModel {
                 profesionalData.fecha_nacimiento || null,
                 profesionalData.documento_identidad || null,
                 profesionalData.tipo_profesional,
-                profesionalData.especialidades || [],
                 profesionalData.licencias_profesionales || {},
                 profesionalData.años_experiencia || 0,
                 profesionalData.idiomas || ['es'],
@@ -108,7 +107,7 @@ class ProfesionalModel {
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
-                       p.especialidades, p.licencias_profesionales, p.años_experiencia,
+                       p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
                        p.comision_porcentaje, p.salario_base, p.forma_pago,
@@ -141,7 +140,7 @@ class ProfesionalModel {
             let query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
-                       p.especialidades, p.licencias_profesionales, p.años_experiencia,
+                       p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
                        p.comision_porcentaje, p.salario_base, p.forma_pago,
@@ -204,7 +203,7 @@ class ProfesionalModel {
 
             const camposPermitidos = [
                 'nombre_completo', 'email', 'telefono', 'fecha_nacimiento',
-                'documento_identidad', 'tipo_profesional', 'especialidades', 'licencias_profesionales',
+                'documento_identidad', 'tipo_profesional', 'licencias_profesionales',
                 'años_experiencia', 'idiomas', 'color_calendario', 'biografia',
                 'foto_url', 'configuracion_horarios', 'configuracion_servicios',
                 'comision_porcentaje', 'salario_base', 'forma_pago', 'activo',
@@ -233,7 +232,7 @@ class ProfesionalModel {
                 WHERE id = $${contador} AND organizacion_id = $${contador + 1}
                 RETURNING id, organizacion_id, nombre_completo, email, telefono,
                          fecha_nacimiento, documento_identidad, tipo_profesional,
-                         especialidades, licencias_profesionales, años_experiencia,
+                         licencias_profesionales, años_experiencia,
                          idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios,
                          comision_porcentaje, salario_base, forma_pago,
@@ -282,7 +281,7 @@ class ProfesionalModel {
             let query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
-                       p.especialidades, p.licencias_profesionales, p.años_experiencia,
+                       p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
                        p.comision_porcentaje, p.salario_base, p.forma_pago,

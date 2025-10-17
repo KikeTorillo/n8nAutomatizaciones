@@ -219,16 +219,16 @@ END $$;
 -- ────────────────────────────────────────────────────────────────────
 
 -- 3.1 Índice covering para profesionales disponibles (búsqueda frecuente)
--- Uso: Selector de profesionales en UI, filtro por especialidad
+-- Uso: Selector de profesionales en UI, filtros
 CREATE INDEX IF NOT EXISTS idx_profesionales_disponibles_covering
 ON profesionales (organizacion_id, activo, disponible_online)
-INCLUDE (nombre_completo, calificacion_promedio, especialidades, telefono, email)
+INCLUDE (nombre_completo, calificacion_promedio, telefono, email)
 WHERE activo = TRUE AND disponible_online = TRUE;
 
 COMMENT ON INDEX idx_profesionales_disponibles_covering IS
 'Índice covering para búsqueda rápida de profesionales disponibles.
 INCLUDE evita acceso al heap (+40% performance).
-Query típico: SELECT nombre, calificacion, especialidades
+Query típico: SELECT nombre, calificacion, telefono, email
              FROM profesionales
              WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE;';
 

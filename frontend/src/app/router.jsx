@@ -26,6 +26,15 @@ const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'
 // Páginas de Servicios
 const ServiciosPage = lazy(() => import('@/pages/servicios/ServiciosPage'));
 
+// Páginas de Profesionales
+const ProfesionalesPage = lazy(() => import('@/pages/profesionales/ProfesionalesPage'));
+
+// Páginas de Citas
+const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
+
+// Páginas de Bloqueos
+const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
+
 // Wrapper para lazy loading
 const withSuspense = (Component) => {
   return (
@@ -99,6 +108,33 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ServiciosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Profesionales
+      {
+        path: 'profesionales',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfesionalesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Citas
+      {
+        path: 'citas',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(CitasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Bloqueos
+      {
+        path: 'bloqueos',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(BloqueosPage)}
           </ProtectedRoute>
         ),
       },

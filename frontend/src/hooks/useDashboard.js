@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { organizacionesApi, citasApi, profesionalesApi, serviciosApi, clientesApi } from '@/services/api/endpoints';
+import { organizacionesApi, citasApi, profesionalesApi, serviciosApi, clientesApi, bloqueosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 
 /**
@@ -15,8 +15,8 @@ export function useEstadisticasOrganizacion() {
       return response.data.data;
     },
     enabled: !!user?.organizacion_id,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-    refetchOnWindowFocus: false,
+    staleTime: 0, // Sin cache - siempre fresco
+    refetchOnMount: 'always', // Refetch al montar componente
   });
 }
 
@@ -52,7 +52,8 @@ export function useProfesionales() {
       // Backend retorna: { data: { profesionales: [...], filtros_aplicados: {...}, total: N } }
       return response.data.data.profesionales || [];
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: 0, // Sin cache - siempre fresco
+    refetchOnMount: 'always', // Refetch al montar componente
   });
 }
 
@@ -86,6 +87,31 @@ export function useClientes() {
       // Si data es array, retornarlo, sino buscar en data.clientes
       return Array.isArray(data) ? data : (data.clientes || []);
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos
+    staleTime: 0, // Sin cache - siempre fresco
+    refetchOnMount: 'always', // Refetch al montar componente
+  });
+}
+
+/**
+ * Hook para obtener bloqueos activos
+ */
+export function useBloqueosDashboard() {
+  const hoy = new Date().toISOString().split('T')[0];
+  const treintaDiasAdelante = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split('T')[0];
+
+  return useQuery({
+    queryKey: ['bloqueos-dashboard', hoy, treintaDiasAdelante],
+    queryFn: async () => {
+      const response = await bloqueosApi.listar({
+        fecha_inicio: hoy,
+        fecha_fin: treintaDiasAdelante,
+      });
+      // Backend retorna: { data: { bloqueos: [...], paginacion: {...} } }
+      return response.data.data?.bloqueos || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    refetchOnMount: 'always', // Refetch al montar componente
   });
 }

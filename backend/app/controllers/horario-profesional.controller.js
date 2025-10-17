@@ -19,7 +19,6 @@ class HorarioProfesionalController {
             nombre_horario,
             descripcion,
             permite_citas,
-            duracion_slot_minutos,
             precio_premium,
             permite_descuentos,
             fecha_inicio,
@@ -43,7 +42,6 @@ class HorarioProfesionalController {
             nombre_horario,
             descripcion,
             permite_citas,
-            duracion_slot_minutos,
             precio_premium,
             permite_descuentos,
             fecha_inicio,
@@ -71,7 +69,6 @@ class HorarioProfesionalController {
             hora_fin,
             tipo_horario,
             nombre_horario,
-            duracion_slot_minutos,
             fecha_inicio
         } = req.body;
 
@@ -86,7 +83,6 @@ class HorarioProfesionalController {
                 hora_fin,
                 tipo_horario,
                 nombre_horario,
-                duracion_slot_minutos,
                 fecha_inicio
             },
             {
@@ -171,7 +167,6 @@ class HorarioProfesionalController {
             nombre_horario,
             descripcion,
             permite_citas,
-            duracion_slot_minutos,
             precio_premium,
             permite_descuentos,
             fecha_inicio,
@@ -195,7 +190,6 @@ class HorarioProfesionalController {
                 nombre_horario,
                 descripcion,
                 permite_citas,
-                duracion_slot_minutos,
                 precio_premium,
                 permite_descuentos,
                 fecha_inicio,

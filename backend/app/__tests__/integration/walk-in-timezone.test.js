@@ -58,8 +58,7 @@ describe('Walk-in con Timezone - Integración', () => {
         });
 
         testProfesional = await createTestProfesional(client, testOrg.id, {
-            nombre_completo: 'Dr. Timezone Test',
-            especialidades: ['corte', 'barba']
+            nombre_completo: 'Dr. Timezone Test'
         });
 
         testServicio = await createTestServicio(client, testOrg.id, {

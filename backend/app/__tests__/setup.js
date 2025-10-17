@@ -21,7 +21,7 @@ beforeAll(async () => {
   }
 
   logger.info('⚠️  Usando BD principal para tests (desarrollo iterativo)');
-  logger.warn('💡 Ejecuta "npm run clean:data" antes de los tests para limpiar datos');
+  logger.warn('💡 Si hay errores de datos duplicados, ejecuta: docker exec postgres_db psql -U admin -d postgres -c "DELETE FROM citas; DELETE FROM servicios_profesionales; DELETE FROM bloqueos_horarios; DELETE FROM horarios_profesionales; DELETE FROM servicios; DELETE FROM profesionales; DELETE FROM clientes; DELETE FROM usuarios; DELETE FROM historial_subscripciones; DELETE FROM subscripciones; DELETE FROM organizaciones; DELETE FROM metricas_uso_organizacion;"');
 
   // Crear pool de conexión de test (usa la BD principal)
   // IMPORTANTE: Usar mismo usuario que la app (saas_app) para tests
@@ -56,13 +56,11 @@ beforeAll(async () => {
 });
 
 // Cleanup después de todos los tests
+// NOTA: La limpieza final de BD se hace en teardown.js (globalTeardown)
+// para asegurar que se ejecute UNA SOLA VEZ al final de todos los tests
 afterAll(async () => {
-  logger.info('🧹 Limpiando recursos de tests...');
-
-  if (testPool) {
-    await testPool.end();
-    logger.info('✅ Pool de conexiones cerrado');
-  }
+  // No hacemos nada aquí - el pool se cierra en teardown.js
+  // Este afterAll se ejecuta por cada test suite
 });
 
 // Cleanup entre tests (opcional, puede ser lento)

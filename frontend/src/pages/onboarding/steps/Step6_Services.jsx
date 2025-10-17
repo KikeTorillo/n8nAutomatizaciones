@@ -17,7 +17,7 @@ import { Scissors, X, Plus } from 'lucide-react';
  * Paso 5: Crear Servicios
  */
 function Step5_Services() {
-  const { formData, addService, removeService, nextStep, prevStep } = useOnboardingStore();
+  const { formData, addService, removeService, nextStep } = useOnboardingStore();
   const toast = useToast();
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
 
@@ -292,15 +292,7 @@ function Step5_Services() {
       </form>
 
       {/* Botones de navegación */}
-      <div className="flex justify-between pt-4 border-t">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-          disabled={createServicesMutation.isPending}
-        >
-          Anterior
-        </Button>
+      <div className="flex justify-end pt-4 border-t">
         <div className="flex gap-2">
           <Button
             type="button"

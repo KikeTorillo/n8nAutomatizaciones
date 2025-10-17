@@ -118,8 +118,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                     hora_inicio: '09:00',
                     hora_fin: '18:00',
                     tipo_horario: 'regular',
-                    nombre_horario: 'Horario Laboral',
-                    duracion_slot_minutos: 30
+                    nombre_horario: 'Horario Laboral'
                 });
 
             expect(response.status).toBe(201);
@@ -364,8 +363,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                     dias: [1, 2, 3], // Solo Lun, Mar, Mie
                     hora_inicio: '10:00',
                     hora_fin: '17:00',
-                    tipo_horario: 'regular',
-                    duracion_slot_minutos: 60
+                    tipo_horario: 'regular'
                 });
 
             expect(response.status).toBe(201);

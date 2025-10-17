@@ -133,7 +133,6 @@ INSERT INTO profesionales (
     tipo_profesional,
     email,
     telefono,
-    especialidades,
     biografia,
     años_experiencia,
     activo,
@@ -146,7 +145,6 @@ INSERT INTO profesionales (
     'barbero',
     'carlos@elegante.mx',
     '+525512345679',
-    ARRAY['cortes_clasicos', 'barbas', 'afeitado_navaja'],
     'Maestro barbero con 15 años de experiencia.',
     15,
     true,
@@ -165,7 +163,6 @@ INSERT INTO profesionales (
     tipo_profesional,
     email,
     telefono,
-    especialidades,
     biografia,
     años_experiencia,
     activo,
@@ -178,7 +175,6 @@ INSERT INTO profesionales (
     'barbero',
     'miguel@elegante.mx',
     '+525512345680',
-    ARRAY['cortes_modernos', 'degradados', 'fade'],
     'Barbero especializado en estilos modernos.',
     5,
     true,
@@ -328,32 +324,31 @@ INSERT INTO horarios_profesionales (
     tipo_horario,
     nombre_horario,
     permite_citas,
-    duracion_slot_minutos,
     activo
 )
 VALUES
     -- Lunes
-    (:org1_id, :prof1_id, 1, '09:00', '13:00', 'regular', 'Mañana', true, 30, true),
-    (:org1_id, :prof1_id, 1, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, 60, true),
-    (:org1_id, :prof1_id, 1, '14:00', '18:00', 'regular', 'Tarde', true, 30, true),
+    (:org1_id, :prof1_id, 1, '09:00', '13:00', 'regular', 'Mañana', true, true),
+    (:org1_id, :prof1_id, 1, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, true),
+    (:org1_id, :prof1_id, 1, '14:00', '18:00', 'regular', 'Tarde', true, true),
     -- Martes
-    (:org1_id, :prof1_id, 2, '09:00', '13:00', 'regular', 'Mañana', true, 30, true),
-    (:org1_id, :prof1_id, 2, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, 60, true),
-    (:org1_id, :prof1_id, 2, '14:00', '18:00', 'regular', 'Tarde', true, 30, true),
+    (:org1_id, :prof1_id, 2, '09:00', '13:00', 'regular', 'Mañana', true, true),
+    (:org1_id, :prof1_id, 2, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, true),
+    (:org1_id, :prof1_id, 2, '14:00', '18:00', 'regular', 'Tarde', true, true),
     -- Miércoles
-    (:org1_id, :prof1_id, 3, '09:00', '13:00', 'regular', 'Mañana', true, 30, true),
-    (:org1_id, :prof1_id, 3, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, 60, true),
-    (:org1_id, :prof1_id, 3, '14:00', '18:00', 'regular', 'Tarde', true, 30, true),
+    (:org1_id, :prof1_id, 3, '09:00', '13:00', 'regular', 'Mañana', true, true),
+    (:org1_id, :prof1_id, 3, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, true),
+    (:org1_id, :prof1_id, 3, '14:00', '18:00', 'regular', 'Tarde', true, true),
     -- Jueves
-    (:org1_id, :prof1_id, 4, '09:00', '13:00', 'regular', 'Mañana', true, 30, true),
-    (:org1_id, :prof1_id, 4, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, 60, true),
-    (:org1_id, :prof1_id, 4, '14:00', '18:00', 'regular', 'Tarde', true, 30, true),
+    (:org1_id, :prof1_id, 4, '09:00', '13:00', 'regular', 'Mañana', true, true),
+    (:org1_id, :prof1_id, 4, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, true),
+    (:org1_id, :prof1_id, 4, '14:00', '18:00', 'regular', 'Tarde', true, true),
     -- Viernes
-    (:org1_id, :prof1_id, 5, '09:00', '13:00', 'regular', 'Mañana', true, 30, true),
-    (:org1_id, :prof1_id, 5, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, 60, true),
-    (:org1_id, :prof1_id, 5, '14:00', '18:00', 'regular', 'Tarde', true, 30, true),
+    (:org1_id, :prof1_id, 5, '09:00', '13:00', 'regular', 'Mañana', true, true),
+    (:org1_id, :prof1_id, 5, '13:00', '14:00', 'almuerzo', 'Almuerzo', false, true),
+    (:org1_id, :prof1_id, 5, '14:00', '18:00', 'regular', 'Tarde', true, true),
     -- Sábado (medio día)
-    (:org1_id, :prof1_id, 6, '09:00', '14:00', 'regular', 'Mañana', true, 30, true);
+    (:org1_id, :prof1_id, 6, '09:00', '14:00', 'regular', 'Mañana', true, true);
 
 \echo '   ✅ Horarios de' :prof1_nombre_completo 'configurados (L-V 9-18, S 9-14)'
 

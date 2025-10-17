@@ -223,11 +223,6 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {prof.nombre_completo}
                         </p>
-                        {prof.especialidad && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {prof.especialidad}
-                          </p>
-                        )}
                       </div>
                     </div>
                   ))}

@@ -10,7 +10,7 @@ import { MessageCircle, CheckCircle2, XCircle } from 'lucide-react';
  * Paso 7: Integración WhatsApp
  */
 function Step7_WhatsAppIntegration() {
-  const { nextStep, prevStep } = useOnboardingStore();
+  const { nextStep } = useOnboardingStore();
   const [isConnected, setIsConnected] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
@@ -153,15 +153,7 @@ function Step7_WhatsAppIntegration() {
       </div>
 
       {/* Botones de navegación */}
-      <div className="flex justify-between pt-4">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={prevStep}
-          disabled={isConnected}
-        >
-          Anterior
-        </Button>
+      <div className="flex justify-end pt-4">
         <div className="flex gap-2">
           {!isConnected && (
             <Button

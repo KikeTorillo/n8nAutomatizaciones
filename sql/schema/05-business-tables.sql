@@ -24,7 +24,6 @@
 -- 🔧 CARACTERÍSTICAS TÉCNICAS:
 -- • Validación automática tipo_profesional vs industria_organización
 -- • Email único por organización (no global)
--- • Arrays PostgreSQL para especialidades múltiples
 -- • JSONB flexible para licencias y configuraciones específicas
 -- • Color personalizado para calendario visual
 -- ────────────────────────────────────────────────────────────────────
@@ -49,8 +48,6 @@ CREATE TABLE profesionales (
     -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL
     -- ====================================================================
     tipo_profesional tipo_profesional NOT NULL, -- Tipo específico según industria
-    especialidades TEXT[] DEFAULT ARRAY[]::TEXT[], -- Array de especialidades
-                                               -- Ej: ['corte_clasico', 'barba_tradicional', 'afeitado']
 
     licencias_profesionales JSONB DEFAULT '{}', -- Licencias y certificaciones
                                                -- Ej: {"cedula_profesional": "12345", "certificado_barberia": "ABC123"}

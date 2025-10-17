@@ -34,10 +34,6 @@ const crear = {
         tipo_profesional: Joi.string()
             .valid(...TIPOS_PROFESIONAL)
             .required(),
-        especialidades: Joi.array()
-            .items(Joi.string())
-            .optional()
-            .default([]),
         licencias_profesionales: Joi.object()
             .optional()
             .default({}),
@@ -122,8 +118,6 @@ const actualizar = {
             .allow(null),
         tipo_profesional: Joi.string()
             .valid(...TIPOS_PROFESIONAL),
-        especialidades: Joi.array()
-            .items(Joi.string()),
         licencias_profesionales: Joi.object(),
         años_experiencia: Joi.number()
             .integer()

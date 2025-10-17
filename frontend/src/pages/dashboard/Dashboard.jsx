@@ -12,6 +12,7 @@ import {
   useProfesionales,
   useServiciosDashboard,
   useClientes,
+  useBloqueosDashboard,
 } from '@/hooks/useDashboard';
 import {
   LogOut,
@@ -20,6 +21,7 @@ import {
   Briefcase,
   UserCheck,
   AlertCircle,
+  Lock,
 } from 'lucide-react';
 
 /**
@@ -36,6 +38,7 @@ function Dashboard() {
   const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
   const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
   const { data: clientes, isLoading: loadingClientes } = useClientes();
+  const { data: bloqueos, isLoading: loadingBloqueos } = useBloqueosDashboard();
 
   // Mutation de logout
   const logoutMutation = useMutation({
@@ -63,6 +66,7 @@ function Dashboard() {
   const totalProfesionales = profesionales?.filter((p) => p.activo).length || 0;
   const totalServicios = servicios?.filter((s) => s.activo).length || 0;
   const totalClientes = clientes?.length || 0;
+  const totalBloqueosProximos = bloqueos?.filter((b) => b.activo).length || 0;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -106,6 +110,12 @@ function Dashboard() {
                 >
                   Servicios
                 </button>
+                <button
+                  onClick={() => navigate('/bloqueos')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Bloqueos
+                </button>
               </div>
             </div>
 
@@ -144,7 +154,7 @@ function Dashboard() {
         )}
 
         {/* Cards de Métricas Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
           <StatCard
             title="Citas Hoy"
             value={totalCitasHoy}
@@ -152,6 +162,7 @@ function Dashboard() {
             icon={Calendar}
             color="blue"
             isLoading={loadingCitas}
+            onClick={() => navigate('/citas')}
           />
 
           <StatCard
@@ -161,6 +172,7 @@ function Dashboard() {
             icon={Users}
             color="green"
             isLoading={loadingProfesionales}
+            onClick={() => navigate('/profesionales')}
           />
 
           <StatCard
@@ -170,6 +182,7 @@ function Dashboard() {
             icon={Briefcase}
             color="purple"
             isLoading={loadingServicios}
+            onClick={() => navigate('/servicios')}
           />
 
           <StatCard
@@ -180,6 +193,16 @@ function Dashboard() {
             color="orange"
             isLoading={loadingClientes}
             onClick={() => navigate('/clientes')}
+          />
+
+          <StatCard
+            title="Bloqueos"
+            value={totalBloqueosProximos}
+            subtitle="Próximos 30 días"
+            icon={Lock}
+            color="red"
+            isLoading={loadingBloqueos}
+            onClick={() => navigate('/bloqueos')}
           />
         </div>
 

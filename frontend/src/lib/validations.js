@@ -111,11 +111,6 @@ export const professionalSchema = z.object({
     .string()
     .min(1, 'Debes seleccionar un tipo de profesional'),
 
-  especialidades: z
-    .array(z.string())
-    .min(1, 'Debes agregar al menos una especialidad')
-    .max(10, 'No puedes agregar más de 10 especialidades'),
-
   telefono: z
     .string()
     .regex(phoneRegex, 'El teléfono debe tener un formato válido')
