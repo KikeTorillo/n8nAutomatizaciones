@@ -44,8 +44,9 @@ export const businessInfoSchema = z.object({
 
   telefono_principal: z
     .string()
-    .regex(phoneRegex, 'El teléfono debe tener un formato válido (ej: +573001234567)')
-    .min(10, 'El teléfono debe tener al menos 10 dígitos'),
+    .regex(phoneRegex, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)')
+    .min(10, 'El teléfono debe tener 10 dígitos')
+    .max(10, 'El teléfono debe tener 10 dígitos'),
 });
 
 // ==================== PASO 2: SELECCIÓN DE PLAN ====================
@@ -113,7 +114,8 @@ export const professionalSchema = z.object({
 
   telefono: z
     .string()
-    .regex(phoneRegex, 'El teléfono debe tener un formato válido')
+    .regex(phoneRegex, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)')
+    .length(10, 'El teléfono debe tener exactamente 10 dígitos')
     .optional()
     .or(z.literal('')),
 
@@ -219,9 +221,8 @@ export const clienteSchema = z.object({
 
   telefono: z
     .string()
-    .regex(phoneRegex, 'El teléfono debe tener un formato válido (ej: +573001234567)')
-    .min(10, 'El teléfono debe tener al menos 10 dígitos')
-    .max(20, 'El teléfono no puede superar 20 caracteres'),
+    .regex(phoneRegex, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)')
+    .length(10, 'El teléfono debe tener exactamente 10 dígitos'),
 
   email: z
     .string()
@@ -291,8 +292,8 @@ export const clienteRapidoSchema = z.object({
 
   telefono: z
     .string()
-    .regex(phoneRegex, 'El teléfono debe tener un formato válido')
-    .min(10, 'El teléfono debe tener al menos 10 dígitos'),
+    .regex(phoneRegex, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)')
+    .length(10, 'El teléfono debe tener exactamente 10 dígitos'),
 
   email: z
     .string()

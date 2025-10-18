@@ -42,7 +42,7 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
     // Crear datos para org1
     cliente1 = await createTestCliente(client, org1.id, {
       nombre: 'Cliente Org1',
-      telefono: '+525512345678'
+      telefono: '5512345678'
     });
 
     profesional1 = await createTestProfesional(client, org1.id, {
@@ -73,7 +73,7 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
     // Crear datos para org2
     cliente2 = await createTestCliente(client, org2.id, {
       nombre: 'Cliente Org2',
-      telefono: '+525587654321'
+      telefono: '5587654321'
     });
 
     profesional2 = await createTestProfesional(client, org2.id, {

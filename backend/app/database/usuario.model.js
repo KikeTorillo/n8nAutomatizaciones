@@ -17,10 +17,9 @@ const AUTH_CONFIG = {
 class UsuarioModel {
 
     static async crear(userData) {
-        const db = await getDb();
-
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         try {
-            return await RLSHelper.withBypass(db, async (db) => {
+            return await RLSContextManager.withBypass(async (db) => {
                 const password_hash = await bcrypt.hash(userData.password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
 
                 const query = `
@@ -54,8 +53,6 @@ class UsuarioModel {
                 throw new Error('El email ya está registrado en el sistema');
             }
             throw error;
-        } finally {
-            db.release();
         }
     }
 
@@ -251,42 +248,36 @@ class UsuarioModel {
     }
 
     static async cambiarPassword(userId, passwordAnterior, passwordNueva) {
-        const db = await getDb();
-
-        try {
-            // Primero obtener usuario con organizacion_id usando bypass
-            let usuario;
-            await RLSHelper.withBypass(db, async (db) => {
-                const query = `SELECT id, password_hash, organizacion_id FROM usuarios WHERE id = $1 AND activo = TRUE`;
-                const result = await db.query(query, [userId]);
-                if (!result.rows[0]) {
-                    throw new Error('Usuario no encontrado');
-                }
-                usuario = result.rows[0];
-            });
-
-            // Verificar contraseña anterior
-            const passwordValida = await this.verificarPassword(passwordAnterior, usuario.password_hash);
-            if (!passwordValida) {
-                throw new Error('Contraseña anterior incorrecta');
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        // Primero obtener usuario con organizacion_id usando bypass
+        const usuario = await RLSContextManager.withBypass(async (db) => {
+            const query = `SELECT id, password_hash, organizacion_id FROM usuarios WHERE id = $1 AND activo = TRUE`;
+            const result = await db.query(query, [userId]);
+            if (!result.rows[0]) {
+                throw new Error('Usuario no encontrado');
             }
+            return result.rows[0];
+        });
 
-            // Actualizar contraseña con contexto completo (userId + tenantId)
-            return await RLSHelper.withContext(db, { userId, tenantId: usuario.organizacion_id }, async (db) => {
-                const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
-
-                const updateQuery = `
-                    UPDATE usuarios
-                    SET password_hash = $1, actualizado_en = NOW()
-                    WHERE id = $2
-                `;
-
-                await db.query(updateQuery, [nuevoHash, userId]);
-                return true;
-            });
-        } finally {
-            db.release();
+        // Verificar contraseña anterior
+        const passwordValida = await this.verificarPassword(passwordAnterior, usuario.password_hash);
+        if (!passwordValida) {
+            throw new Error('Contraseña anterior incorrecta');
         }
+
+        // Actualizar contraseña con contexto RLS
+        return await RLSContextManager.transaction(usuario.organizacion_id, async (db) => {
+            const nuevoHash = await bcrypt.hash(passwordNueva, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
+
+            const updateQuery = `
+                UPDATE usuarios
+                SET password_hash = $1, actualizado_en = NOW()
+                WHERE id = $2
+            `;
+
+            await db.query(updateQuery, [nuevoHash, userId]);
+            return true;
+        });
     }
 
     static async actualizarPerfil(userId, datos, organizacionId, currentUserId) {
@@ -411,12 +402,11 @@ class UsuarioModel {
     }
 
     static async crearUsuarioOrganizacion(orgId, userData, rol, opciones = {}) {
-        const db = await getDb();
-
-        try {
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
             await db.query('BEGIN');
 
-            const resultado = await RLSHelper.withBypass(db, async (db) => {
+            try {
                 // Validar que la organización existe
                 const orgQuery = `
                     SELECT id, nombre_comercial, email_admin, tipo_industria, activo
@@ -469,7 +459,7 @@ class UsuarioModel {
                     };
                 }
 
-                return {
+                const resultado = {
                     usuario: nuevoUsuario,
                     organizacion: {
                         id: organizacion.id,
@@ -478,17 +468,15 @@ class UsuarioModel {
                     configuracion_rls: true,
                     email_bienvenida: emailResult
                 };
-            });
 
-            await db.query('COMMIT');
-            return resultado;
+                await db.query('COMMIT');
+                return resultado;
 
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
     }
 
     static async listarPorOrganizacion(orgId, filtros = {}, paginacion = {}) {
@@ -617,12 +605,11 @@ class UsuarioModel {
     }
 
     static async cambiarRol(userId, nuevoRol, orgId, adminId) {
-        const db = await getDb();
-
-        try {
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
             await db.query('BEGIN');
 
-            const resultado = await RLSHelper.withBypass(db, async (db) => {
+            try {
                 // Validar que el usuario existe y pertenece a la organización
                 const usuarioQuery = `
                     SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
@@ -678,7 +665,7 @@ class UsuarioModel {
                     usuario_id: adminId
                 });
 
-                return {
+                const resultado = {
                     usuario: updateResult.rows[0],
                     cambio: {
                         rol_anterior: rolAnterior,
@@ -687,17 +674,15 @@ class UsuarioModel {
                         timestamp: new Date().toISOString()
                     }
                 };
-            });
 
-            await db.query('COMMIT');
-            return resultado;
+                await db.query('COMMIT');
+                return resultado;
 
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
     }
 
     static async resetPassword(email, orgId, ipAddress = null) {
@@ -896,12 +881,11 @@ class UsuarioModel {
     }
 
     static async confirmarResetPassword(token, passwordNueva, ipAddress = null) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        const resultado = await RLSContextManager.withBypass(async (db) => {
+            await db.query('BEGIN');
 
-        try {
-            const resultado = await RLSHelper.withBypass(db, async (db) => {
-                // Iniciar transacción DENTRO del bypass
-                await db.query('BEGIN');
+            try {
                 // Primero verificar si el token ya fue usado
                 const tokenUsadoQuery = `
                     SELECT id, email, token_reset_usado_en
@@ -963,7 +947,6 @@ class UsuarioModel {
 
                 const usuario = result.rows[0];
 
-                // COMMIT dentro del bypass ANTES del evento (el evento irá después)
                 await db.query('COMMIT');
 
                 return {
@@ -973,9 +956,16 @@ class UsuarioModel {
                     email: usuario.email,
                     organizacion_id: usuario.organizacion_id
                 };
-            });
 
-            // Registrar evento DESPUÉS del COMMIT (fuera de la transacción)
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
+
+        // Registrar evento DESPUÉS del COMMIT (fuera de la transacción con bypass)
+        try {
+            const db = await getDb();
             try {
                 await RLSHelper.registrarEvento(db, {
                     organizacion_id: resultado.organizacion_id,
@@ -991,24 +981,15 @@ class UsuarioModel {
                     },
                     usuario_id: resultado.usuario_id
                 });
-            } catch (eventoError) {
-                // No lanzar el error, ya se hizo commit
+            } finally {
+                db.release();
             }
-
-            return resultado;
-
-        } catch (error) {
-            // Intentar ROLLBACK si la transacción está abierta
-            try {
-                await db.query('ROLLBACK');
-            } catch (rollbackError) {
-                // Ignorar error de ROLLBACK
-            }
-
-            throw error;
-        } finally {
-            db.release();
+        } catch (eventoError) {
+            // No lanzar el error, ya se hizo commit
+            logger.warn('Error al registrar evento de password reset:', eventoError.message);
         }
+
+        return resultado;
     }
 }
 

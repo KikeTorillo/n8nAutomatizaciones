@@ -151,7 +151,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
 
     testCliente = await createTestCliente(client, testOrg.id, {
       nombre: 'Cliente RBAC Test',
-      telefono: '+5215512345678'
+      telefono: '5512345678'
     });
 
     client.release();
@@ -176,7 +176,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .send({
           nombre_completo: `Prof Admin ${uniqueId}`,
           tipo_profesional: 'barbero',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         })
         .expect(201);
 
@@ -191,7 +191,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .send({
           nombre_completo: `Prof Propietario ${uniqueId}`,
           tipo_profesional: 'barbero',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         })
         .expect(201);
 
@@ -206,7 +206,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .send({
           nombre_completo: `Prof Empleado ${uniqueId}`,
           tipo_profesional: 'barbero',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         });
 
       // Debe fallar con 403 (Forbidden)
@@ -386,7 +386,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .set('Authorization', `Bearer ${empleadoToken}`)
         .send({
           nombre: `Cliente Empleado ${uniqueId}`,
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         })
         .expect(201);
 
@@ -433,7 +433,7 @@ describe('RBAC - Control de Permisos por Rol', () => {
       const tempClient = await global.testPool.connect();
       const tempCliente = await createTestCliente(tempClient, testOrg.id, {
         nombre: 'Cliente Temp',
-        telefono: '+5219999999999'
+        telefono: '9999999999'
       });
       tempClient.release();
 

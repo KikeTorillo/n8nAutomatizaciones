@@ -166,8 +166,6 @@ CREATE TABLE clientes (
     -- ✅ Validaciones de integridad
     CONSTRAINT valid_email
         CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT valid_telefono
-        CHECK (telefono IS NULL OR telefono ~ '^[+]?[0-9\s\-\(\)]{7,20}$'),
     CONSTRAINT valid_fecha_nacimiento
         CHECK (fecha_nacimiento IS NULL OR fecha_nacimiento <= CURRENT_DATE - INTERVAL '5 years'),
 

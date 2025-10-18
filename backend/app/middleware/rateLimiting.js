@@ -172,6 +172,37 @@ class RateLimitingService {
       return 0;
     }
   }
+
+  /**
+   * Cierra la conexión a Redis y limpia recursos
+   *
+   * Debe llamarse al finalizar la aplicación o tests para evitar
+   * que el proceso se quede colgado esperando conexiones abiertas.
+   *
+   * @async
+   * @example
+   * // En shutdown de la app
+   * await rateLimitService.close();
+   *
+   * @example
+   * // En teardown de tests
+   * afterAll(async () => {
+   *   await rateLimitService.close();
+   * });
+   */
+  async close() {
+    try {
+      if (this.redisClient && this.redisClient.isReady) {
+        await this.redisClient.quit();
+        logger.info('Cliente Redis de rate limiting cerrado');
+      }
+      this.fallbackStore.clear();
+    } catch (error) {
+      logger.warn('Error cerrando cliente Redis de rate limiting', {
+        error: error.message
+      });
+    }
+  }
 }
 
 // Instancia singleton del servicio de rate limiting
@@ -526,5 +557,6 @@ module.exports = {
 
   // Utilidades
   createRateLimit,                // Factory para crear rate limits personalizados
-  clearRateLimit                  // Función para limpiar contadores (testing)
+  clearRateLimit,                 // Función para limpiar contadores (testing)
+  rateLimitService                // Servicio de rate limiting (para cerrar conexiones)
 };

@@ -23,10 +23,16 @@ class OrganizacionModel {
             `;
 
             const codigoTenant = `org_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-            const slug = organizacionData.nombre_comercial.toLowerCase()
+
+            // Generar slug único con timestamp
+            const baseSlug = organizacionData.nombre_comercial.toLowerCase()
                 .replace(/[^a-z0-9]/g, '-')
                 .replace(/-+/g, '-')
-                .substring(0, 50);
+                .replace(/^-+|-+$/g, '') // Eliminar guiones al inicio/final
+                .substring(0, 40); // Reducir a 40 para dejar espacio al sufijo
+
+            const uniqueSuffix = Date.now().toString().slice(-8); // Últimos 8 dígitos del timestamp
+            const slug = `${baseSlug}-${uniqueSuffix}`.substring(0, 50);
 
             const values = [
                 organizacionData.nombre_comercial,
@@ -200,200 +206,190 @@ class OrganizacionModel {
 
     // Verificar límites de la organización (bypass RLS - operación de consulta)
     static async verificarLimites(organizacionId) {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
+                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
+                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
+                    COUNT(DISTINCT c.id) FILTER (
+                        WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
+                        AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
+                    ) as citas_mes_actual,
+                    COUNT(DISTINCT p.id) as profesionales_activos,
+                    COUNT(DISTINCT s.id) as servicios_activos
+                FROM organizaciones o
+                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
+                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
+                LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
+                LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
+                LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
+                WHERE o.id = $1 AND o.activo = TRUE
+                GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
+            `;
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                const query = `
-                    SELECT
-                        COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
-                        COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
-                        COALESCE(ps.limite_servicios, 10) as limite_servicios,
-                        COUNT(DISTINCT c.id) FILTER (
-                            WHERE c.fecha_cita >= date_trunc('month', CURRENT_DATE)
-                            AND c.fecha_cita < date_trunc('month', CURRENT_DATE) + interval '1 month'
-                        ) as citas_mes_actual,
-                        COUNT(DISTINCT p.id) as profesionales_activos,
-                        COUNT(DISTINCT s.id) as servicios_activos
-                    FROM organizaciones o
-                    LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
-                    LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
-                    LEFT JOIN citas c ON o.id = c.organizacion_id AND c.estado != 'cancelada'
-                    LEFT JOIN profesionales p ON o.id = p.organizacion_id AND p.activo = TRUE
-                    LEFT JOIN servicios s ON o.id = s.organizacion_id AND s.activo = TRUE
-                    WHERE o.id = $1 AND o.activo = TRUE
-                    GROUP BY o.id, ps.limite_citas_mes, ps.limite_profesionales, ps.limite_servicios
-                `;
+            const result = await db.query(query, [organizacionId]);
 
-                const result = await db.query(query, [organizacionId]);
+            if (result.rows.length === 0) {
+                throw new Error('Organización no encontrada');
+            }
 
-                if (result.rows.length === 0) {
-                    throw new Error('Organización no encontrada');
+            const limites = result.rows[0];
+
+            return {
+                citas: {
+                    limite: limites.limite_citas_mes,
+                    usado: parseInt(limites.citas_mes_actual),
+                    disponible: limites.limite_citas_mes - parseInt(limites.citas_mes_actual),
+                    porcentaje_uso: Math.round((parseInt(limites.citas_mes_actual) / limites.limite_citas_mes) * 100)
+                },
+                profesionales: {
+                    limite: limites.limite_profesionales,
+                    usado: parseInt(limites.profesionales_activos),
+                    disponible: limites.limite_profesionales - parseInt(limites.profesionales_activos),
+                    porcentaje_uso: Math.round((parseInt(limites.profesionales_activos) / limites.limite_profesionales) * 100)
+                },
+                servicios: {
+                    limite: limites.limite_servicios,
+                    usado: parseInt(limites.servicios_activos),
+                    disponible: limites.limite_servicios - parseInt(limites.servicios_activos),
+                    porcentaje_uso: Math.round((parseInt(limites.servicios_activos) / limites.limite_servicios) * 100)
                 }
-
-                const limites = result.rows[0];
-
-                return {
-                    citas: {
-                        limite: limites.limite_citas_mes,
-                        usado: parseInt(limites.citas_mes_actual),
-                        disponible: limites.limite_citas_mes - parseInt(limites.citas_mes_actual),
-                        porcentaje_uso: Math.round((parseInt(limites.citas_mes_actual) / limites.limite_citas_mes) * 100)
-                    },
-                    profesionales: {
-                        limite: limites.limite_profesionales,
-                        usado: parseInt(limites.profesionales_activos),
-                        disponible: limites.limite_profesionales - parseInt(limites.profesionales_activos),
-                        porcentaje_uso: Math.round((parseInt(limites.profesionales_activos) / limites.limite_profesionales) * 100)
-                    },
-                    servicios: {
-                        limite: limites.limite_servicios,
-                        usado: parseInt(limites.servicios_activos),
-                        disponible: limites.limite_servicios - parseInt(limites.servicios_activos),
-                        porcentaje_uso: Math.round((parseInt(limites.servicios_activos) / limites.limite_servicios) * 100)
-                    }
-                };
-            });
-        } finally {
-            db.release();
-        }
+            };
+        });
     }
 
 
     // Obtener métricas completas de la organización para dashboard
     static async obtenerMetricas(organizacionId, periodo = 'mes') {
-        const db = await getDb();
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
+            // Calcular rangos de fechas según el período
+            let fechaInicio, fechaFin;
+            switch (periodo) {
+                case 'semana':
+                    fechaInicio = "date_trunc('week', CURRENT_DATE)";
+                    fechaFin = "date_trunc('week', CURRENT_DATE) + interval '1 week'";
+                    break;
+                case 'año':
+                    fechaInicio = "date_trunc('year', CURRENT_DATE)";
+                    fechaFin = "date_trunc('year', CURRENT_DATE) + interval '1 year'";
+                    break;
+                default: // 'mes'
+                    fechaInicio = "date_trunc('month', CURRENT_DATE)";
+                    fechaFin = "date_trunc('month', CURRENT_DATE) + interval '1 month'";
+            }
 
-        try {
-            return await RLSHelper.withBypass(db, async (db) => {
-                // Calcular rangos de fechas según el período
-                let fechaInicio, fechaFin;
-                switch (periodo) {
-                    case 'semana':
-                        fechaInicio = "date_trunc('week', CURRENT_DATE)";
-                        fechaFin = "date_trunc('week', CURRENT_DATE) + interval '1 week'";
-                        break;
-                    case 'año':
-                        fechaInicio = "date_trunc('year', CURRENT_DATE)";
-                        fechaFin = "date_trunc('year', CURRENT_DATE) + interval '1 year'";
-                        break;
-                    default: // 'mes'
-                        fechaInicio = "date_trunc('month', CURRENT_DATE)";
-                        fechaFin = "date_trunc('month', CURRENT_DATE) + interval '1 month'";
-                }
+            // Query para métricas de uso de recursos y operacionales
+            const metricsQuery = `
+                SELECT
+                    -- Límites del plan
+                    COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
+                    COALESCE(ps.limite_servicios, 10) as limite_servicios,
+                    COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
 
-                // Query para métricas de uso de recursos y operacionales
-                const metricsQuery = `
-                    SELECT
-                        -- Límites del plan
-                        COALESCE(ps.limite_profesionales, 2) as limite_profesionales,
-                        COALESCE(ps.limite_servicios, 10) as limite_servicios,
-                        COALESCE(ps.limite_citas_mes, 50) as limite_citas_mes,
+                    -- Uso actual
+                    COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_usados,
+                    COUNT(DISTINCT s.id) FILTER (WHERE s.activo = true) as servicios_usados,
+                    COUNT(DISTINCT u.id) FILTER (WHERE u.activo = true) as usuarios_usados,
 
-                        -- Uso actual
-                        COUNT(DISTINCT p.id) FILTER (WHERE p.activo = true) as profesionales_usados,
-                        COUNT(DISTINCT s.id) FILTER (WHERE s.activo = true) as servicios_usados,
-                        COUNT(DISTINCT u.id) FILTER (WHERE u.activo = true) as usuarios_usados,
+                    -- Métricas operacionales del período
+                    COUNT(DISTINCT c.id) FILTER (
+                        WHERE c.fecha_cita >= ${fechaInicio}
+                        AND c.fecha_cita < ${fechaFin}
+                    ) as citas_periodo,
+                    COUNT(DISTINCT c.id) FILTER (
+                        WHERE c.fecha_cita >= ${fechaInicio}
+                        AND c.fecha_cita < ${fechaFin}
+                        AND c.estado = 'completada'
+                    ) as citas_completadas,
+                    COUNT(DISTINCT c.id) FILTER (
+                        WHERE c.fecha_cita >= ${fechaInicio}
+                        AND c.fecha_cita < ${fechaFin}
+                        AND c.estado = 'cancelada'
+                    ) as citas_canceladas,
+                    COALESCE(SUM(c.precio_final) FILTER (
+                        WHERE c.fecha_cita >= ${fechaInicio}
+                        AND c.fecha_cita < ${fechaFin}
+                        AND c.estado = 'completada'
+                    ), 0) as ingresos_periodo,
 
-                        -- Métricas operacionales del período
-                        COUNT(DISTINCT c.id) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                        ) as citas_periodo,
-                        COUNT(DISTINCT c.id) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                            AND c.estado = 'completada'
-                        ) as citas_completadas,
-                        COUNT(DISTINCT c.id) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                            AND c.estado = 'cancelada'
-                        ) as citas_canceladas,
-                        COALESCE(SUM(c.precio_final) FILTER (
-                            WHERE c.fecha_cita >= ${fechaInicio}
-                            AND c.fecha_cita < ${fechaFin}
-                            AND c.estado = 'completada'
-                        ), 0) as ingresos_periodo,
+                    -- Salud del sistema
+                    o.activo as org_activa,
+                    o.suspendido as org_suspendida
 
-                        -- Salud del sistema
-                        o.activo as org_activa,
-                        o.suspendido as org_suspendida
+                FROM organizaciones o
+                LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
+                LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
+                LEFT JOIN profesionales p ON o.id = p.organizacion_id
+                LEFT JOIN servicios s ON o.id = s.organizacion_id
+                LEFT JOIN usuarios u ON o.id = u.organizacion_id
+                LEFT JOIN citas c ON o.id = c.organizacion_id
+                WHERE o.id = $1
+                GROUP BY o.id, o.activo, o.suspendido, ps.limite_profesionales, ps.limite_servicios, ps.limite_citas_mes
+            `;
 
-                    FROM organizaciones o
-                    LEFT JOIN subscripciones sub ON o.id = sub.organizacion_id AND sub.activa = TRUE
-                    LEFT JOIN planes_subscripcion ps ON sub.plan_id = ps.id
-                    LEFT JOIN profesionales p ON o.id = p.organizacion_id
-                    LEFT JOIN servicios s ON o.id = s.organizacion_id
-                    LEFT JOIN usuarios u ON o.id = u.organizacion_id
-                    LEFT JOIN citas c ON o.id = c.organizacion_id
-                    WHERE o.id = $1
-                    GROUP BY o.id, o.activo, o.suspendido, ps.limite_profesionales, ps.limite_servicios, ps.limite_citas_mes
-                `;
+            const result = await db.query(metricsQuery, [organizacionId]);
 
-                const result = await db.query(metricsQuery, [organizacionId]);
+            if (result.rows.length === 0) {
+                throw new Error('Organización no encontrada');
+            }
 
-                if (result.rows.length === 0) {
-                    throw new Error('Organización no encontrada');
-                }
+            const data = result.rows[0];
 
-                const data = result.rows[0];
+            // Calcular porcentajes de uso
+            const profesionalesUsados = parseInt(data.profesionales_usados);
+            const serviciosUsados = parseInt(data.servicios_usados);
+            const usuariosUsados = parseInt(data.usuarios_usados);
 
-                // Calcular porcentajes de uso
-                const profesionalesUsados = parseInt(data.profesionales_usados);
-                const serviciosUsados = parseInt(data.servicios_usados);
-                const usuariosUsados = parseInt(data.usuarios_usados);
+            const profesionalesPorcentaje = data.limite_profesionales > 0
+                ? Math.round((profesionalesUsados / data.limite_profesionales) * 100)
+                : 0;
+            const serviciosPorcentaje = data.limite_servicios > 0
+                ? Math.round((serviciosUsados / data.limite_servicios) * 100)
+                : 0;
+            const usuariosPorcentaje = 100; // Sin límite definido, asumimos 100%
 
-                const profesionalesPorcentaje = data.limite_profesionales > 0
-                    ? Math.round((profesionalesUsados / data.limite_profesionales) * 100)
-                    : 0;
-                const serviciosPorcentaje = data.limite_servicios > 0
-                    ? Math.round((serviciosUsados / data.limite_servicios) * 100)
-                    : 0;
-                const usuariosPorcentaje = 100; // Sin límite definido, asumimos 100%
+            // Calcular tasa de completitud
+            const citasPeriodo = parseInt(data.citas_periodo);
+            const tasaCompletitud = citasPeriodo > 0
+                ? Math.round((parseInt(data.citas_completadas) / citasPeriodo) * 100)
+                : 0;
 
-                // Calcular tasa de completitud
-                const citasPeriodo = parseInt(data.citas_periodo);
-                const tasaCompletitud = citasPeriodo > 0
-                    ? Math.round((parseInt(data.citas_completadas) / citasPeriodo) * 100)
-                    : 0;
-
-                return {
-                    uso_recursos: {
-                        profesionales: {
-                            usados: profesionalesUsados,
-                            limite: data.limite_profesionales,
-                            porcentaje_uso: profesionalesPorcentaje
-                        },
-                        servicios: {
-                            usados: serviciosUsados,
-                            limite: data.limite_servicios,
-                            porcentaje_uso: serviciosPorcentaje
-                        },
-                        usuarios: {
-                            usados: usuariosUsados,
-                            limite: 999, // Sin límite real
-                            porcentaje_uso: usuariosPorcentaje
-                        }
+            return {
+                uso_recursos: {
+                    profesionales: {
+                        usados: profesionalesUsados,
+                        limite: data.limite_profesionales,
+                        porcentaje_uso: profesionalesPorcentaje
                     },
-                    estadisticas_operacionales: {
-                        citas_totales: citasPeriodo,
-                        citas_completadas: parseInt(data.citas_completadas),
-                        citas_canceladas: parseInt(data.citas_canceladas),
-                        tasa_completitud: tasaCompletitud,
-                        ingresos: parseFloat(data.ingresos_periodo),
-                        periodo: periodo
+                    servicios: {
+                        usados: serviciosUsados,
+                        limite: data.limite_servicios,
+                        porcentaje_uso: serviciosPorcentaje
                     },
-                    salud_sistema: {
-                        organizacion_activa: data.org_activa,
-                        organizacion_suspendida: data.org_suspendida,
-                        estado_general: data.org_activa && !data.org_suspendida ? 'saludable' : 'degradado'
+                    usuarios: {
+                        usados: usuariosUsados,
+                        limite: 999, // Sin límite real
+                        porcentaje_uso: usuariosPorcentaje
                     }
-                };
-            });
-        } finally {
-            db.release();
-        }
+                },
+                estadisticas_operacionales: {
+                    citas_totales: citasPeriodo,
+                    citas_completadas: parseInt(data.citas_completadas),
+                    citas_canceladas: parseInt(data.citas_canceladas),
+                    tasa_completitud: tasaCompletitud,
+                    ingresos: parseFloat(data.ingresos_periodo),
+                    periodo: periodo
+                },
+                salud_sistema: {
+                    organizacion_activa: data.org_activa,
+                    organizacion_suspendida: data.org_suspendida,
+                    estado_general: data.org_activa && !data.org_suspendida ? 'saludable' : 'degradado'
+                }
+            };
+        });
     }
 
     // Obtener estadísticas básicas (wrapper de límites + info general)
@@ -423,13 +419,11 @@ class OrganizacionModel {
 
     // Cambiar plan de subscripción de una organización
     static async cambiarPlan(organizacionId, codigoPlan, configuracionPlan = {}) {
-        const db = await getDb();
-
-        try {
+        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
+        return await RLSContextManager.withBypass(async (db) => {
             await db.query('BEGIN');
 
-            const resultado = await RLSHelper.withBypass(db, async (db) => {
-
+            try {
                 const orgQuery = `
                     SELECT id, nombre_comercial, plan_actual, fecha_activacion
                     FROM organizaciones
@@ -499,7 +493,7 @@ class OrganizacionModel {
                     JSON.stringify(configuracionPlan)
                 ]);
 
-                return {
+                const resultado = {
                     id: organizacionId,
                     nombre_comercial: organizacion.nombre_comercial,
                     plan_actual: updateOrgResult.rows[0].plan_actual,
@@ -516,17 +510,15 @@ class OrganizacionModel {
                     },
                     mensaje: `Plan cambiado exitosamente de ${planAnterior} a ${codigoPlan}`
                 };
-            });
 
-            await db.query('COMMIT');
-            return resultado;
+                await db.query('COMMIT');
+                return resultado;
 
-        } catch (error) {
-            await db.query('ROLLBACK');
-            throw error;
-        } finally {
-            db.release();
-        }
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
     }
 
     // Crear subscripción activa inicial para nueva organización

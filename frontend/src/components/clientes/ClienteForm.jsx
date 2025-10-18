@@ -98,8 +98,8 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
 
     if (!formData.telefono.trim()) {
       newErrors.telefono = 'El teléfono es requerido';
-    } else if (formData.telefono.length < 10) {
-      newErrors.telefono = 'El teléfono debe tener al menos 10 dígitos';
+    } else if (formData.telefono.length !== 10) {
+      newErrors.telefono = 'El teléfono debe tener exactamente 10 dígitos';
     }
 
     // Email (opcional, pero si se proporciona debe ser válido)
@@ -174,7 +174,8 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               name="telefono"
               value={formData.telefono}
               onChange={handleChange}
-              placeholder="+573001234567"
+              placeholder="5512345678"
+              maxLength={10}
               error={errors.telefono}
             />
             {errors.telefono && (

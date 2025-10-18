@@ -195,7 +195,8 @@ function Step4_Professionals() {
             control={control}
             type="tel"
             label="Teléfono (Opcional)"
-            placeholder="+573001234567"
+            placeholder="5512345678"
+            maxLength={10}
           />
 
           <FormField

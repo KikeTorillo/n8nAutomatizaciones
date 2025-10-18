@@ -55,7 +55,7 @@ describe('Validación de Estados de Transición - Citas', () => {
 
     testCliente = await createTestCliente(client, testOrg.id, {
       nombre: 'Cliente Estados Test',
-      telefono: '+5215512345678'
+      telefono: '5512345678'
     });
 
     testProfesional = await createTestProfesional(client, testOrg.id, {

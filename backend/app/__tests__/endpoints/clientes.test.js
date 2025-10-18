@@ -57,7 +57,7 @@ describe('Endpoints de Clientes', () => {
     // Crear cliente de prueba
     testCliente = await createTestCliente(client, testOrg.id, {
       nombre: 'Cliente Test',
-      telefono: '+5215512345678'
+      telefono: '5512345678'
     });
 
     // Crear segunda organización para tests RLS
@@ -100,7 +100,7 @@ describe('Endpoints de Clientes', () => {
       const uniqueId = getUniqueTestId();
       const clienteData = {
         nombre: `Nuevo Cliente ${uniqueId}`,
-        telefono: `+521${uniqueId.slice(-10)}`,
+        telefono: `${uniqueId.slice(-10)}`,
         email: `cliente-${uniqueId}@test.com`,
         organizacion_id: testOrg.id
       };
@@ -124,7 +124,7 @@ describe('Endpoints de Clientes', () => {
         .post('/api/v1/clientes')
         .send({
           nombre: `Cliente ${uniqueId}`,
-          telefono: `+521${uniqueId.slice(-10)}`,
+          telefono: `${uniqueId.slice(-10)}`,
           organizacion_id: testOrg.id
         })
         .expect(401);
@@ -139,7 +139,7 @@ describe('Endpoints de Clientes', () => {
         .post('/api/v1/clientes')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
-          telefono: `+521${uniqueId.slice(-10)}`,
+          telefono: `${uniqueId.slice(-10)}`,
           organizacion_id: testOrg.id
         })
         .expect(400);

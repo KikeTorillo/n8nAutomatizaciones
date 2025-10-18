@@ -200,9 +200,9 @@ const commonSchemas = {
   futureDate: Joi.date().iso().min('now'),
   futureDateRequired: Joi.date().iso().min('now').required(),
 
-  // Teléfonos mexicanos
-  mexicanPhone: Joi.string().pattern(/^(\+52|52)?[1-9]\d{9}$/).messages({
-    'string.pattern.base': 'Debe ser un teléfono mexicano válido'
+  // Teléfonos mexicanos (10 dígitos exactos)
+  mexicanPhone: Joi.string().pattern(/^[1-9]\d{9}$/).messages({
+    'string.pattern.base': 'Debe ser un teléfono válido de 10 dígitos (ej: 5512345678)'
   }),
 
   // Email

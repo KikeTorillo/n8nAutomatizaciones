@@ -281,7 +281,7 @@ const crearWalkIn = {
         // Cliente: PUEDE ser existente (cliente_id) O nuevo (nombre_cliente, telefono opcional)
         cliente_id: commonSchemas.id.optional(),
         nombre_cliente: Joi.string().min(2).max(150).trim().optional(),
-        telefono: Joi.string().pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/).optional().allow(null, ''),
+        telefono: commonSchemas.mexicanPhone.optional().allow(null, ''),
 
         // Profesional: OPCIONAL (se auto-asigna si no se especifica)
         profesional_id: commonSchemas.id.optional().allow(null),

@@ -13,7 +13,6 @@ const VALIDATION_CONSTANTS = {
     NOMBRE_MIN_LENGTH: 2,
     NOMBRE_MAX_LENGTH: 150,
     APELLIDOS_MAX_LENGTH: 150,
-    TELEFONO_PATTERN: /^[+]?[0-9\s\-\(\)]{7,20}$/,
     BUSQUEDA_MAX_LENGTH: 100,
     PASSWORD_MIN: 8,
     PASSWORD_MAX: 128,
@@ -62,11 +61,7 @@ const personSchemas = {
         .allow('')
         .trim(),
 
-    telefono: Joi.string()
-        .pattern(VALIDATION_CONSTANTS.TELEFONO_PATTERN)
-        .messages({
-            'string.pattern.base': 'Teléfono no válido'
-        })
+    telefono: commonSchemas.mexicanPhone
 };
 
 // ============================================================

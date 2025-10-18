@@ -150,13 +150,14 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
                   type="tel"
                   value={telefono}
                   onChange={(e) => setTelefono(e.target.value)}
-                  placeholder="+573001234567"
+                  placeholder="5512345678"
+                  maxLength={10}
                   className="flex-1"
                   disabled={buscandoCliente}
                 />
                 <Button
                   onClick={handleBuscarCliente}
-                  disabled={telefono.length < 10 || buscandoCliente}
+                  disabled={telefono.length !== 10 || buscandoCliente}
                   isLoading={buscandoCliente}
                 >
                   <Search className="w-4 h-4 mr-2" />

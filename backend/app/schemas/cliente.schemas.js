@@ -36,11 +36,9 @@ const crear = {
             .messages({
                 'string.email': 'Email no válido'
             }),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+        telefono: commonSchemas.mexicanPhone
             .required()
             .messages({
-                'string.pattern.base': 'Teléfono debe ser un número válido (7-20 dígitos, formato: +123 456-789)',
                 'any.required': 'Teléfono es requerido'
             }),
         fecha_nacimiento: Joi.date()
@@ -119,8 +117,7 @@ const actualizar = {
             .max(LIMITES.NOMBRE_MAX)
             .lowercase()
             .allow(null),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/),
+        telefono: commonSchemas.mexicanPhone,
         fecha_nacimiento: Joi.date()
             .iso()
             .max('now')

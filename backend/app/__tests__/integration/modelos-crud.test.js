@@ -137,7 +137,7 @@ describe('📦 Modelos CRUD Básicos', () => {
       cliente1 = await ClienteModel.crear({
         organizacion_id: org1.id,
         nombre: 'Cliente Test',
-        telefono: '+5215512345678',
+        telefono: '5512345678',
         email: `cliente-${Date.now()}@test.com`
       });
 
@@ -163,12 +163,12 @@ describe('📦 Modelos CRUD Básicos', () => {
     });
 
     test('buscarPorTelefono() encuentra clientes', async () => {
-      const resultado = await ClienteModel.buscarPorTelefono('+5215512345678', org1.id);
+      const resultado = await ClienteModel.buscarPorTelefono('5512345678', org1.id);
 
       expect(resultado).toBeDefined();
       expect(resultado.encontrado).toBe(true);
       expect(resultado.cliente).toBeDefined();
-      expect(resultado.cliente.telefono).toBe('+5215512345678');
+      expect(resultado.cliente.telefono).toBe('5512345678');
     });
 
     test('actualizar() modifica cliente', async () => {
@@ -200,7 +200,7 @@ describe('📦 Modelos CRUD Básicos', () => {
         organizacion_id: org1.id,
         nombre_completo: 'Barbero Test',
         tipo_profesional: 'barbero',
-        telefono: '+5215587654321'
+        telefono: '5587654321'
       });
 
       expect(profesional1).toBeDefined();

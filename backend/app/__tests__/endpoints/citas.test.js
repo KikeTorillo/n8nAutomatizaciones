@@ -64,7 +64,7 @@ describe('Endpoints de Citas', () => {
     // Crear cliente de prueba
     testCliente = await createTestCliente(client, testOrg.id, {
       nombre: 'Cliente Test',
-      telefono: '+5215512345678'
+      telefono: '5512345678'
     });
 
     // Crear profesional de prueba
@@ -720,7 +720,7 @@ describe('Endpoints de Citas', () => {
     });
 
     test('Debe crear cliente nuevo Y auto-asignar profesional', async () => {
-      const telefonoNuevo = '+573111111111';
+      const telefonoNuevo = '3111111111';
       const nombreNuevo = 'Juan Walk-in Test';
 
       const response = await request(app)
@@ -792,7 +792,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: testCliente.id,
           nombre_cliente: 'Juan Test',
-          telefono: '+573222222222',
+          telefono: '3222222222',
           servicio_id: testServicio.id
         });
 

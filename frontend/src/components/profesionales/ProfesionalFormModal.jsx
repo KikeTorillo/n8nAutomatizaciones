@@ -36,7 +36,7 @@ const profesionalCreateSchema = z.object({
   apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
   tipo_profesional: z.string().max(50, 'Máximo 50 caracteres').optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
-  telefono: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/, 'Formato de teléfono inválido').optional().or(z.literal('')),
+  telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#3b82f6'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
   activo: z.boolean().default(true),
@@ -50,7 +50,7 @@ const profesionalEditSchema = z.object({
   apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres').optional(),
   tipo_profesional: z.string().max(50, 'Máximo 50 caracteres').optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
-  telefono: z.string().regex(/^\+?[0-9\s\-()]{7,20}$/, 'Formato de teléfono inválido').optional().or(z.literal('')),
+  telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').optional(),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
   activo: z.boolean().optional(),
@@ -278,8 +278,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 <FormField
                   name="telefono"
                   control={control}
+                  type="tel"
                   label="Teléfono (Opcional)"
-                  placeholder="+57 300 123 4567"
+                  placeholder="5512345678"
+                  maxLength={10}
                 />
               </div>
 

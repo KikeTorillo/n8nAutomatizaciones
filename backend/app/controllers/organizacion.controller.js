@@ -121,7 +121,14 @@ class OrganizacionController {
     static onboarding = asyncHandler(async (req, res) => {
         const { organizacion, admin } = req.body;
 
-        // Preparar datos de la organización
+        // PASO 1: Validar email duplicado ANTES de crear la organización
+        // Esto evita dejar organizaciones huérfanas sin admin
+        const emailExistente = await UsuarioModel.buscarPorEmail(admin.email);
+        if (emailExistente) {
+            return ResponseHelper.error(res, 'El email del administrador ya está registrado en el sistema', 409);
+        }
+
+        // PASO 2: Preparar datos de la organización
         const organizacionData = {
             nombre_comercial: organizacion.nombre_comercial,
             razon_social: organizacion.razon_social,
@@ -132,16 +139,16 @@ class OrganizacionController {
             email_admin: admin.email
         };
 
-        // Crear organización
+        // PASO 3: Crear organización
         const nuevaOrganizacion = await OrganizacionModel.crear(organizacionData);
 
-        // Crear subscripción activa para la organización
+        // PASO 4: Crear subscripción activa para la organización
         await OrganizacionModel.crearSubscripcionActiva(
             nuevaOrganizacion.id,
             organizacionData.plan_actual
         );
 
-        // Crear usuario admin
+        // PASO 5: Crear usuario admin
         const adminData = {
             ...admin,
             organizacion_id: nuevaOrganizacion.id,
@@ -150,16 +157,7 @@ class OrganizacionController {
             email_verificado: true
         };
 
-        let nuevoAdmin;
-        try {
-            nuevoAdmin = await UsuarioModel.crear(adminData);
-        } catch (error) {
-            // Si el email está duplicado, retornar 409 (la org quedará sin admin y será inaccesible)
-            if (error.message && error.message.includes('email ya está registrado')) {
-                return ResponseHelper.error(res, 'El email del administrador ya está registrado en el sistema', 409);
-            }
-            throw error;
-        }
+        const nuevoAdmin = await UsuarioModel.crear(adminData);
 
         // Generar token JWT para el admin
         const token = authConfig.generateToken({

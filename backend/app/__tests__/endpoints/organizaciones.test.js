@@ -267,7 +267,7 @@ describe('Endpoints de Organizaciones', () => {
 
     test('Actualizar organización como admin de la organización', async () => {
       const updateData = {
-        telefono: '+5215512345678'
+        telefono: '5512345678'
       };
 
       const response = await request(app)
@@ -425,7 +425,7 @@ describe('Endpoints de Organizaciones', () => {
           rfc: `RFC${uniqueId.slice(-10)}`,
           tipo_industria: 'barberia',
           plan: 'basico',
-          telefono_principal: `+521${uniqueId.slice(-10)}`,
+          telefono_principal: `${uniqueId.slice(-10)}`,
           email_contacto: `contacto-${uniqueId}@autoregistro.com`
         },
         admin: {
@@ -433,7 +433,7 @@ describe('Endpoints de Organizaciones', () => {
           apellidos: 'Auto-Registro',
           email: `admin-${uniqueId}@autoregistro.com`,
           password: 'Password123!',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         },
         enviar_email_bienvenida: false
       };

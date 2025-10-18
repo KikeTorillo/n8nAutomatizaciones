@@ -124,8 +124,8 @@ class ValidationHelper {
    * Valida formato de teléfono mexicano
    */
   static isValidMexicanPhone(phone) {
-    // Acepta formatos: +52XXXXXXXXXX, 52XXXXXXXXXX, XXXXXXXXXX
-    const phoneRegex = /^(\+52|52)?[1-9]\d{9}$/;
+    // Acepta formato: XXXXXXXXXX (exactamente 10 dígitos, primer dígito 1-9)
+    const phoneRegex = /^[1-9]\d{9}$/;
     return phoneRegex.test(phone.replace(/\s|-/g, ''));
   }
 

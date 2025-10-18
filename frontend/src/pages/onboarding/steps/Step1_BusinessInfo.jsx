@@ -93,9 +93,10 @@ function Step1_BusinessInfo() {
           control={control}
           type="tel"
           label="Teléfono Principal"
-          placeholder="Ej: +573001234567"
+          placeholder="Ej: 5512345678"
+          maxLength={10}
           required
-          helper="Incluye código de país (ej: +57 para Colombia)"
+          helper="10 dígitos (ej: 5512345678)"
         />
 
         {/* Botones */}

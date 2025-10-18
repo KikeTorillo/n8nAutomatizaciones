@@ -76,7 +76,7 @@ describe('Endpoints de Profesionales', () => {
     testProfesional = await createTestProfesional(client, testOrg.id, {
       nombre_completo: 'Profesional Test',
       tipo_profesional: 'barbero',
-      telefono: '+5215512345678'
+      telefono: '5512345678'
     });
 
     // Crear segunda organización para tests RLS
@@ -120,7 +120,7 @@ describe('Endpoints de Profesionales', () => {
       const profesionalData = {
         nombre_completo: `Nuevo Profesional ${uniqueId}`,
         tipo_profesional: 'estilista',
-        telefono: `+521${uniqueId.slice(-10)}`,
+        telefono: `${uniqueId.slice(-10)}`,
         email: `profesional-${uniqueId}@test.com`
       };
 
@@ -144,7 +144,7 @@ describe('Endpoints de Profesionales', () => {
         .send({
           nombre_completo: `Profesional ${uniqueId}`,
           tipo_profesional: 'barbero',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         })
         .expect(401);
 
@@ -159,7 +159,7 @@ describe('Endpoints de Profesionales', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           tipo_profesional: 'barbero',
-          telefono: `+521${uniqueId.slice(-10)}`
+          telefono: `${uniqueId.slice(-10)}`
         })
         .expect(400);
 

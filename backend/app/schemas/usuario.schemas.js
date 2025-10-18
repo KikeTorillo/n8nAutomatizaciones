@@ -24,10 +24,7 @@ const crear = {
             .max(150)
             .optional()
             .trim(),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-            .optional()
-            .messages({ 'string.pattern.base': 'Teléfono no válido' }),
+        telefono: commonSchemas.mexicanPhone.optional(),
         rol: Joi.string()
             .valid('admin', 'propietario', 'empleado', 'cliente')
             .optional()
@@ -112,9 +109,7 @@ const actualizar = {
             .max(150)
             .trim()
             .optional(),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
-            .optional(),
+        telefono: commonSchemas.mexicanPhone.optional(),
         zona_horaria: Joi.string()
             .min(3)
             .max(50)

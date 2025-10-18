@@ -4,6 +4,7 @@
  */
 
 const logger = require('../utils/logger');
+const { rateLimitService } = require('../middleware/rateLimiting');
 
 module.exports = async () => {
   logger.info('🧹 Limpiando recursos de tests...');
@@ -27,6 +28,14 @@ module.exports = async () => {
     // Cerrar pool de conexiones global
     await global.testPool.end();
     logger.info('✅ Pool de conexiones cerrado');
+  }
+
+  // Cerrar cliente Redis de rate limiting
+  try {
+    await rateLimitService.close();
+    logger.info('✅ Cliente Redis de rate limiting cerrado');
+  } catch (error) {
+    logger.warn('⚠️ Error cerrando Redis de rate limiting:', error.message);
   }
 
   logger.info('🏁 Teardown global de tests completado');

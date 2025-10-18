@@ -30,11 +30,9 @@ const crear = {
             .email()
             .optional()
             .allow(null),
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+        telefono: commonSchemas.mexicanPhone
             .optional()
-            .allow(null)
-            .messages({ 'string.pattern.base': 'Teléfono no válido' }),
+            .allow(null),
         sitio_web: Joi.string()
             .uri()
             .optional()
@@ -115,8 +113,7 @@ const actualizar = {
             .valid(...TIPOS_INDUSTRIA),
         configuracion_industria: Joi.object(),
         email_admin: commonSchemas.email,
-        telefono: Joi.string()
-            .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+        telefono: commonSchemas.mexicanPhone
             .allow(null),
         sitio_web: Joi.string()
             .uri()
@@ -174,8 +171,7 @@ const onboarding = {
                 .optional()
                 .allow(null)
                 .trim(),
-            telefono_principal: Joi.string()
-                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+            telefono_principal: commonSchemas.mexicanPhone
                 .optional()
                 .allow(null),
             email_contacto: commonSchemas.email
@@ -197,8 +193,7 @@ const onboarding = {
             password: Joi.string()
                 .min(8)
                 .required(),
-            telefono: Joi.string()
-                .pattern(/^[+]?[0-9\s\-\(\)]{7,20}$/)
+            telefono: commonSchemas.mexicanPhone
                 .optional()
                 .allow(null)
         }).required(),

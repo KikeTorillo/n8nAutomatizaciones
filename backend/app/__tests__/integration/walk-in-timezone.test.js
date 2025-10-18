@@ -95,7 +95,7 @@ describe('Walk-in con Timezone - Integración', () => {
             INSERT INTO clientes (organizacion_id, nombre, telefono, activo)
             VALUES ($1, $2, $3, true)
             RETURNING id, nombre, telefono
-        `, [testOrg.id, 'Cliente Timezone Test', '+523001234567']);
+        `, [testOrg.id, 'Cliente Timezone Test', '3001234567']);
         testCliente = clienteResult.rows[0];
 
         client.release();
