@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, X, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -285,6 +285,72 @@ function ServiciosPage() {
           </div>
         </div>
       </div>
+
+      {/* Alerta Global: Servicios sin Profesionales */}
+      {useMemo(() => {
+        const serviciosSinProfesional = data?.servicios?.filter(
+          s => s.total_profesionales_asignados === 0 && s.activo
+        ) || [];
+
+        if (serviciosSinProfesional.length === 0) return null;
+
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 mt-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Atención: {serviciosSinProfesional.length} servicio{serviciosSinProfesional.length !== 1 ? 's' : ''} sin profesionales asignados
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      Los siguientes servicios activos no tienen profesionales asignados.
+                      Asigna al menos un profesional a cada servicio para poder crear citas:
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      {serviciosSinProfesional.map(servicio => (
+                        <li key={servicio.id}>
+                          <a
+                            href={`#servicio-${servicio.id}`}
+                            className="font-medium underline hover:text-yellow-900"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById(`servicio-${servicio.id}`)?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                              });
+                            }}
+                          >
+                            {servicio.nombre}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const primerServicio = serviciosSinProfesional[0];
+                        if (primerServicio) {
+                          handleGestionarProfesionales(primerServicio);
+                        }
+                      }}
+                      className="bg-white hover:bg-yellow-50 text-yellow-800 border-yellow-300"
+                    >
+                      Asignar profesionales al primer servicio
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }, [data?.servicios])}
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

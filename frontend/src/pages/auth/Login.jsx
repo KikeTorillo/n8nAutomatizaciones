@@ -102,6 +102,15 @@ function Login() {
             </button>
           </div>
 
+          <div className="text-right">
+            <Link
+              to="/auth/forgot-password"
+              className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          </div>
+
           <Button
             type="submit"
             className="w-full"

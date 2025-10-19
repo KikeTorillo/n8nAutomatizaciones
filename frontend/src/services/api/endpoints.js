@@ -25,6 +25,35 @@ export const authApi = {
    * @returns {Promise<Object>}
    */
   logout: () => apiClient.post('/auth/logout'),
+
+  /**
+   * Solicitar token de recuperación de contraseña
+   * @param {Object} data - { email, organizacion_id }
+   * @returns {Promise<Object>} { token_enviado, expires_at, reset_token (dev only) }
+   */
+  recuperarPassword: (data) => apiClient.post('/auth/reset-password', data),
+
+  /**
+   * Validar token de reset
+   * @param {string} token - Token de reset
+   * @returns {Promise<Object>} { valido, email, expira_en_minutos, expira_en }
+   */
+  validarTokenReset: (token) => apiClient.get(`/auth/validate-reset-token/${token}`),
+
+  /**
+   * Confirmar reset de contraseña
+   * @param {string} token - Token de reset
+   * @param {Object} data - { passwordNueva }
+   * @returns {Promise<Object>} { success, email, mensaje }
+   */
+  confirmarResetPassword: (token, data) => apiClient.post(`/auth/reset-password/${token}`, data),
+
+  /**
+   * Evaluar fortaleza de contraseña
+   * @param {Object} data - { password }
+   * @returns {Promise<Object>} { puntuacion, nivel, cumple_requisitos, requisitos, sugerencias }
+   */
+  evaluarFortaleza: (data) => apiClient.post('/auth/password-strength', data),
 };
 
 // ==================== ORGANIZACIONES ====================
@@ -212,6 +241,13 @@ export const serviciosApi = {
    */
   obtenerServiciosPorProfesional: (profesionalId, params = {}) =>
     apiClient.get(`/servicios/profesionales/${profesionalId}/servicios`, { params }),
+
+  /**
+   * Obtener estadísticas de asignaciones servicio-profesional
+   * @returns {Promise<Object>} { total_servicios, servicios_activos, servicios_sin_profesional, total_profesionales, profesionales_activos, profesionales_sin_servicio, total_asignaciones_activas }
+   */
+  obtenerEstadisticasAsignaciones: () =>
+    apiClient.get('/servicios/estadisticas/asignaciones'),
 };
 
 // ==================== HORARIOS PROFESIONALES ====================

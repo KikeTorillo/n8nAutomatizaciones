@@ -121,8 +121,8 @@ function CalendarioDia({
           {numeroDia}
         </span>
 
-        {/* Botón para crear cita (visible al hover) */}
-        {esDelMesActual && (
+        {/* Botón para crear cita (solo visible cuando NO hay citas) */}
+        {esDelMesActual && citas.length === 0 && (
           <button
             onClick={onCrearCita}
             className="
@@ -221,6 +221,25 @@ function CalendarioDia({
           </>
         )}
       </div>
+
+      {/* Botón para agregar más citas cuando ya hay citas (aparece al hover en la parte inferior) */}
+      {!isLoading && citas.length > 0 && esDelMesActual && (
+        <button
+          onClick={onCrearCita}
+          className="
+            w-full mt-1 py-1 rounded
+            text-xs font-medium text-primary-600
+            opacity-0 group-hover:opacity-100
+            transition-all
+            hover:bg-primary-50
+            flex items-center justify-center gap-1
+          "
+          title="Agregar otra cita"
+        >
+          <Plus className="w-3 h-3" />
+          <span>Agregar cita</span>
+        </button>
+      )}
 
       {/* Empty state para días sin citas */}
       {!isLoading && citas.length === 0 && esDelMesActual && (

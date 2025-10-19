@@ -129,7 +129,7 @@ export function useCitasPendientes() {
  */
 export function useCrearCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (citaData) => {
@@ -144,15 +144,44 @@ export function useCrearCita() {
       const response = await citasApi.crear(sanitizedData);
       return response.data;
     },
-    onSuccess: (data) => {
-      // Invalidar queries de citas
+    onSuccess: () => {
+      // Invalidar queries y mostrar mensaje de éxito
       queryClient.invalidateQueries({ queryKey: ['citas'] });
-
-      success('Cita creada exitosamente');
+      toast.success('Cita creada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al crear la cita';
-      showError(mensaje);
+      const errorMessage = error.response?.data?.message || 'Error al crear la cita';
+
+      // Mensajes coordinados con backend (Fase 1.1)
+      if (errorMessage.includes('no tiene asignado el servicio')) {
+        toast.error(
+          errorMessage + '\n\nVe a la página de Servicios y asigna el servicio al profesional.',
+          { duration: 8000 }
+        );
+      } else if (errorMessage.includes('está inactiva')) {
+        toast.error(
+          errorMessage + '\n\nVe a la página de Servicios y reactiva la asignación.',
+          { duration: 7000 }
+        );
+      } else if (errorMessage.includes('Conflicto de horario') || errorMessage.includes('solapamiento')) {
+        toast.error(
+          errorMessage + '\n\nSelecciona otro horario disponible.',
+          { duration: 7000 }
+        );
+      } else if (errorMessage.includes('no trabaja') || errorMessage.includes('horario')) {
+        toast.error(
+          errorMessage + '\n\nVerifica el horario del profesional.',
+          { duration: 6000 }
+        );
+      } else if (errorMessage.includes('bloqueado')) {
+        toast.error(
+          errorMessage + '\n\nSelecciona otro horario o verifica los bloqueos.',
+          { duration: 6000 }
+        );
+      } else {
+        // Error genérico
+        toast.error(errorMessage, { duration: 5000 });
+      }
     },
   });
 }
@@ -173,7 +202,6 @@ export function useCrearCita() {
  */
 export function useActualizarCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...citaData }) => {
@@ -189,16 +217,11 @@ export function useActualizarCita() {
       return response.data;
     },
     onSuccess: (data, variables) => {
-      // Invalidar queries
+      // Solo invalidar queries - El componente maneja el feedback al usuario
       queryClient.invalidateQueries({ queryKey: ['citas'] });
       queryClient.invalidateQueries({ queryKey: ['citas', variables.id] });
-
-      success('Cita actualizada exitosamente');
     },
-    onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al actualizar la cita';
-      showError(mensaje);
-    },
+    // No onError - El componente maneja errores de manera contextual
   });
 }
 

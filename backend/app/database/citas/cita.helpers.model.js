@@ -157,12 +157,40 @@ class CitaHelpersModel {
             throw new Error('Servicio no encontrado o inactivo');
         }
 
+        // Validación mejorada con verificación de estado activo y nombres
         const servicioprofesional = await db.query(
-            'SELECT id FROM servicios_profesionales WHERE profesional_id = $1 AND servicio_id = $2',
+            `SELECT sp.id, sp.activo,
+                    s.nombre as servicio_nombre,
+                    p.nombre_completo as profesional_nombre
+             FROM servicios_profesionales sp
+             JOIN servicios s ON sp.servicio_id = s.id
+             JOIN profesionales p ON sp.profesional_id = p.id
+             WHERE sp.profesional_id = $1 AND sp.servicio_id = $2`,
             [profesionalId, servicioId]
         );
+
         if (servicioprofesional.rows.length === 0) {
-            throw new Error('El profesional no está autorizado para realizar este servicio');
+            // Obtener nombres para mensaje más claro
+            const [profesional, servicio] = await Promise.all([
+                db.query('SELECT nombre_completo FROM profesionales WHERE id = $1', [profesionalId]),
+                db.query('SELECT nombre FROM servicios WHERE id = $1', [servicioId])
+            ]);
+
+            const nombreProfesional = profesional.rows[0]?.nombre_completo || 'Desconocido';
+            const nombreServicio = servicio.rows[0]?.nombre || 'Desconocido';
+
+            throw new Error(
+                `El profesional "${nombreProfesional}" no tiene asignado el servicio "${nombreServicio}". ` +
+                `Por favor asigna el servicio al profesional desde la página de Servicios antes de crear la cita.`
+            );
+        }
+
+        if (!servicioprofesional.rows[0].activo) {
+            throw new Error(
+                `La asignación del servicio "${servicioprofesional.rows[0].servicio_nombre}" ` +
+                `al profesional "${servicioprofesional.rows[0].profesional_nombre}" está inactiva. ` +
+                `Por favor reactívala desde la página de Servicios antes de crear la cita.`
+            );
         }
 
         return true;
@@ -180,7 +208,7 @@ class CitaHelpersModel {
         }
 
         let query = `
-            SELECT id FROM citas
+            SELECT id, fecha_cita, hora_inicio, hora_fin, codigo_cita FROM citas
             WHERE profesional_id = $1
                 AND fecha_cita = $2
                 AND estado NOT IN ('cancelada', 'no_asistio')
@@ -201,7 +229,20 @@ class CitaHelpersModel {
         const conflictos = await db.query(query, params);
 
         if (conflictos.rows.length > 0) {
-            throw new Error('Conflicto de horario: el profesional ya tiene una cita en ese horario');
+            const citaConflictiva = conflictos.rows[0];
+            const horaConflicto = `${citaConflictiva.hora_inicio.substring(0, 5)} - ${citaConflictiva.hora_fin.substring(0, 5)}`;
+
+            // Formatear fecha correctamente (convertir a string por si viene como Date object)
+            const fechaStr = citaConflictiva.fecha_cita instanceof Date
+                ? citaConflictiva.fecha_cita.toISOString().split('T')[0]
+                : String(citaConflictiva.fecha_cita);
+            const [year, month, day] = fechaStr.split('-');
+            const fechaFormateada = `${day}/${month}/${year}`;
+
+            throw new Error(
+                `Conflicto de horario: El profesional ya tiene la cita ${citaConflictiva.codigo_cita} programada el ${fechaFormateada} de ${horaConflicto}. ` +
+                `Por favor, selecciona otro horario disponible.`
+            );
         }
 
         return true;

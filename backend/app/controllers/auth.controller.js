@@ -126,10 +126,10 @@ class AuthController {
     });
 
     static recuperarPassword = asyncHandler(async (req, res) => {
-        const { email, organizacion_id } = req.body;
+        const { email } = req.body;
         const ipAddress = req.ip || req.connection.remoteAddress;
 
-        const resultado = await UsuarioModel.resetPassword(email, organizacion_id, ipAddress);
+        const resultado = await UsuarioModel.resetPassword(email, ipAddress);
 
         const responseData = {
             token_enviado: resultado.token_enviado,

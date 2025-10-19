@@ -15,6 +15,8 @@ const LoadingFallback = () => (
 // Lazy load de páginas
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
+const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPassword'));
+const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPassword'));
 const OnboardingFlow = lazy(() => import('@/pages/onboarding/OnboardingFlow'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 
@@ -53,6 +55,20 @@ export const router = createBrowserRouter([
         index: true,
         element: withSuspense(LandingPage),
       },
+      // Rutas de autenticación
+      {
+        path: 'auth/login',
+        element: withSuspense(LoginPage),
+      },
+      {
+        path: 'auth/forgot-password',
+        element: withSuspense(ForgotPasswordPage),
+      },
+      {
+        path: 'auth/reset-password/:token',
+        element: withSuspense(ResetPasswordPage),
+      },
+      // Mantener ruta legacy de login sin /auth/ para compatibilidad
       {
         path: 'login',
         element: withSuspense(LoginPage),

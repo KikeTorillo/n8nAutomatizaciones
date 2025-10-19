@@ -7,9 +7,9 @@ import { Building2, CreditCard, UserPlus, Users, Clock, Scissors, MessageCircle,
 import Step1_BusinessInfo from './steps/Step1_BusinessInfo';
 import Step2_PlanSelection from './steps/Step2_PlanSelection';
 import Step3_AccountSetup from './steps/Step3_AccountSetup';
-import Step4_Professionals from './steps/Step4_Professionals';
-import Step5_Schedules from './steps/Step5_Schedules';
-import Step6_Services from './steps/Step6_Services';
+import Step4_Services from './steps/Step6_Services'; // Servicios ahora van primero
+import Step5_Professionals from './steps/Step4_Professionals'; // Profesionales después de servicios
+import Step6_Schedules from './steps/Step5_Schedules';
 import Step7_WhatsAppIntegration from './steps/Step7_WhatsAppIntegration';
 import Step8_Review from './steps/Step8_Review';
 import Step9_Welcome from './steps/Step9_Welcome';
@@ -42,21 +42,21 @@ function OnboardingFlow() {
     },
     {
       number: 4,
-      title: 'Profesionales',
-      icon: Users,
-      component: Step4_Professionals,
+      title: 'Servicios',
+      icon: Scissors,
+      component: Step4_Services, // Servicios ahora van primero
     },
     {
       number: 5,
-      title: 'Horarios',
-      icon: Clock,
-      component: Step5_Schedules,
+      title: 'Profesionales',
+      icon: Users,
+      component: Step5_Professionals, // Profesionales después de servicios
     },
     {
       number: 6,
-      title: 'Servicios',
-      icon: Scissors,
-      component: Step6_Services,
+      title: 'Horarios',
+      icon: Clock,
+      component: Step6_Schedules,
     },
     {
       number: 7,

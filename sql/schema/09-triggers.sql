@@ -6,7 +6,7 @@
 -- actualizaciones de timestamps y mantenimiento de integridad.
 --
 -- 🔧 TRIGGERS IMPLEMENTADOS:
--- • trigger_validar_email_usuario: Valida unicidad de emails
+-- • trigger_validar_email_usuario: Valida unicidad global de emails
 -- • trigger_actualizar_usuarios: Timestamps automáticos en usuarios
 -- • trigger_actualizar_organizaciones: Timestamps en organizaciones
 -- • trigger_actualizar_profesionales: Timestamps en profesionales
@@ -126,7 +126,7 @@ CREATE TRIGGER trigger_generar_codigo_cita
 -- ────────────────────────────────────────────────────────────────────
 
 COMMENT ON TRIGGER trigger_validar_email_usuario ON usuarios IS
-'Valida unicidad de email usando función validar_email_usuario() antes de INSERT/UPDATE';
+'Valida unicidad global de email usando función validar_email_usuario() antes de INSERT/UPDATE. Complementa el CONSTRAINT usuarios_email_key.';
 
 COMMENT ON TRIGGER trigger_actualizar_usuarios ON usuarios IS
 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';

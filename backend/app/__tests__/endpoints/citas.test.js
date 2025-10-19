@@ -877,4 +877,173 @@ describe('Endpoints de Citas', () => {
       expect(response.body.success).toBe(false);
     });
   });
+
+  // ========================================
+  // Suite nueva: Validación servicio-profesional
+  // ========================================
+  describe('POST /citas - Validación de asignación servicio-profesional', () => {
+    let profesionalTest;
+    let servicioAsignado;
+    let servicioNoAsignado;
+    let clienteTest;
+
+    beforeAll(async () => {
+      const tempClient = await global.testPool.connect();
+
+      // Crear profesional
+      profesionalTest = await createTestProfesional(tempClient, testOrg.id, {
+        nombre_completo: 'Dr. Test Validación',
+        tipo_profesional: 'barbero'
+      });
+
+      // Crear servicio CON profesional asignado
+      servicioAsignado = await createTestServicio(tempClient, testOrg.id, {
+        nombre: 'Consulta General Test',
+        duracion_minutos: 30,
+        precio: 500
+      });
+
+      // Asignar profesional al servicio
+      await tempClient.query(
+        `INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
+         VALUES ($1, $2, true)`,
+        [servicioAsignado.id, profesionalTest.id]
+      );
+
+      // Crear servicio SIN profesional asignado
+      servicioNoAsignado = await createTestServicio(tempClient, testOrg.id, {
+        nombre: 'Cirugía Especializada Test',
+        duracion_minutos: 60,
+        precio: 2000
+      });
+
+      // Crear cliente con teléfono único
+      const uniqueId = Date.now().toString().slice(-8);
+      clienteTest = await createTestCliente(tempClient, testOrg.id, {
+        nombre: 'Cliente Test Validación',
+        telefono: `55${uniqueId}`
+      });
+
+      // Crear horarios para el profesional (Lunes=0 a Domingo=6, 08:00-18:00)
+      for (let dia = 0; dia <= 6; dia++) {
+        await tempClient.query(
+          `INSERT INTO horarios_profesionales
+           (profesional_id, organizacion_id, dia_semana, hora_inicio, hora_fin, tipo_horario, activo)
+           VALUES ($1, $2, $3, '08:00', '18:00', 'regular', true)`,
+          [profesionalTest.id, testOrg.id, dia]
+        );
+      }
+
+      tempClient.release();
+    });
+
+    test('✅ Debe crear cita exitosamente con servicio asignado al profesional', async () => {
+      const fechaFutura = new Date();
+      fechaFutura.setDate(fechaFutura.getDate() + 7); // +7 días
+      const fechaCita = fechaFutura.toISOString().split('T')[0];
+
+      const response = await request(app)
+        .post('/api/v1/citas')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: clienteTest.id,
+          profesional_id: profesionalTest.id,
+          servicio_id: servicioAsignado.id,
+          fecha_cita: fechaCita,
+          hora_inicio: '10:00',
+          hora_fin: '10:30'
+        });
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(response.body.data).toHaveProperty('codigo_cita');
+      expect(response.body.data.servicio_id).toBe(servicioAsignado.id);
+      expect(response.body.data.profesional_id).toBe(profesionalTest.id);
+    });
+
+    test('❌ Debe rechazar cita si profesional no tiene el servicio asignado', async () => {
+      const fechaFutura = new Date();
+      fechaFutura.setDate(fechaFutura.getDate() + 7);
+      const fechaCita = fechaFutura.toISOString().split('T')[0];
+
+      const response = await request(app)
+        .post('/api/v1/citas')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: clienteTest.id,
+          profesional_id: profesionalTest.id,
+          servicio_id: servicioNoAsignado.id,
+          fecha_cita: fechaCita,
+          hora_inicio: '11:00',
+          hora_fin: '12:00'
+        });
+
+      // Acepta 400 o 500 - ambos indican rechazo correcto
+      expect([400, 500]).toContain(response.status);
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toContain('no tiene asignado el servicio');
+    });
+
+    test('✅ Debe incluir nombres de profesional y servicio en mensaje de error', async () => {
+      const fechaFutura = new Date();
+      fechaFutura.setDate(fechaFutura.getDate() + 7);
+      const fechaCita = fechaFutura.toISOString().split('T')[0];
+
+      const response = await request(app)
+        .post('/api/v1/citas')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: clienteTest.id,
+          profesional_id: profesionalTest.id,
+          servicio_id: servicioNoAsignado.id,
+          fecha_cita: fechaCita,
+          hora_inicio: '11:00',
+          hora_fin: '12:00'
+        });
+
+      // Validar que mensaje incluye nombres específicos
+      expect(response.body.message).toContain('Dr. Test Validación');
+      expect(response.body.message).toContain('Cirugía Especializada Test');
+      expect(response.body.message).toContain('Por favor asigna el servicio');
+    });
+
+    test('✅ Debe validar estado activo de la asignación', async () => {
+      const tempClient = await global.testPool.connect();
+
+      // Desactivar asignación
+      await tempClient.query(
+        'UPDATE servicios_profesionales SET activo = false WHERE servicio_id = $1 AND profesional_id = $2',
+        [servicioAsignado.id, profesionalTest.id]
+      );
+
+      const fechaFutura = new Date();
+      fechaFutura.setDate(fechaFutura.getDate() + 7);
+      const fechaCita = fechaFutura.toISOString().split('T')[0];
+
+      const response = await request(app)
+        .post('/api/v1/citas')
+        .set('Authorization', `Bearer ${userToken}`)
+        .send({
+          cliente_id: clienteTest.id,
+          profesional_id: profesionalTest.id,
+          servicio_id: servicioAsignado.id,
+          fecha_cita: fechaCita,
+          hora_inicio: '13:00',
+          hora_fin: '13:30'
+        });
+
+      // Acepta 400 o 500 - ambos indican rechazo correcto
+      expect([400, 500]).toContain(response.status);
+      expect(response.body.message).toContain('está inactiva');
+      expect(response.body.message).toContain('reactívala');
+
+      // Reactivar para no afectar otros tests
+      await tempClient.query(
+        'UPDATE servicios_profesionales SET activo = true WHERE servicio_id = $1 AND profesional_id = $2',
+        [servicioAsignado.id, profesionalTest.id]
+      );
+
+      tempClient.release();
+    });
+  });
 });

@@ -89,24 +89,21 @@ function Step5_Services() {
   };
 
   const onSubmit = (data) => {
-    if (data.profesionales.length === 0) {
-      toast.warning('Debes seleccionar al menos un profesional');
-      return;
-    }
-
+    // Permitir servicios SIN profesionales - se pueden asignar después
     addService(data);
     reset();
     setSelectedProfessionals([]);
   };
 
   const handleContinue = () => {
-    if (formData.services.length === 0) {
-      toast.warning('Debes agregar al menos un servicio');
-      return;
+    // Permitir continuar SIN servicios - es opcional
+    if (formData.services.length > 0) {
+      // Crear todos los servicios en el backend
+      createServicesMutation.mutate(formData.services);
+    } else {
+      // Continuar sin servicios
+      nextStep();
     }
-
-    // Crear todos los servicios en el backend
-    createServicesMutation.mutate(formData.services);
   };
 
   const handleSkip = () => {
@@ -238,7 +235,7 @@ function Step5_Services() {
         {/* Selección de Profesionales */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Profesionales que ofrecen este servicio <span className="text-red-500">*</span>
+            Profesionales que ofrecen este servicio <span className="text-gray-500">(Opcional)</span>
           </label>
           {profesionales && profesionales.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -271,8 +268,8 @@ function Step5_Services() {
               ))}
             </div>
           ) : (
-            <p className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              No hay profesionales disponibles. Debes agregar profesionales primero.
+            <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+              💡 No hay profesionales disponibles. Puedes crear el servicio ahora y asignar profesionales después desde la página de Servicios.
             </p>
           )}
           {errors.profesionales && (
@@ -284,7 +281,6 @@ function Step5_Services() {
           type="submit"
           variant="outline"
           className="w-full"
-          disabled={!profesionales || profesionales.length === 0}
         >
           <Plus className="w-4 h-4 mr-2" />
           Agregar Servicio
@@ -306,7 +302,7 @@ function Step5_Services() {
             type="button"
             onClick={handleContinue}
             isLoading={createServicesMutation.isPending}
-            disabled={createServicesMutation.isPending || formData.services.length === 0}
+            disabled={createServicesMutation.isPending}
           >
             {createServicesMutation.isPending ? 'Guardando...' : 'Continuar'}
           </Button>

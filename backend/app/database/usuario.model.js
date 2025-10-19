@@ -685,15 +685,16 @@ class UsuarioModel {
         });
     }
 
-    static async resetPassword(email, orgId, ipAddress = null) {
+    static async resetPassword(email, ipAddress = null) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             const usuarioQuery = `
                 SELECT id, email, nombre, apellidos, organizacion_id, activo
                 FROM usuarios
-                WHERE email = $1 AND organizacion_id = $2 AND activo = true
+                WHERE email = $1 AND activo = true
+                LIMIT 1
             `;
-            const usuarioResult = await db.query(usuarioQuery, [email, orgId]);
+            const usuarioResult = await db.query(usuarioQuery, [email]);
 
             if (usuarioResult.rows.length === 0) {
                 return {

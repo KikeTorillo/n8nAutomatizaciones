@@ -1,6 +1,6 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { authApi } from '@/services/api/endpoints';
+import { authApi, serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import Button from '@/components/ui/Button';
 import StatCard from '@/components/dashboard/StatCard';
@@ -22,6 +22,8 @@ import {
   UserCheck,
   AlertCircle,
   Lock,
+  AlertTriangle,
+  CheckCircle,
 } from 'lucide-react';
 
 /**
@@ -39,6 +41,14 @@ function Dashboard() {
   const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
   const { data: clientes, isLoading: loadingClientes } = useClientes();
   const { data: bloqueos, isLoading: loadingBloqueos } = useBloqueosDashboard();
+
+  // Hook para estadísticas de asignaciones servicio-profesional
+  const { data: statsAsignaciones, isLoading: loadingStats } = useQuery({
+    queryKey: ['estadisticas-asignaciones'],
+    queryFn: () => serviciosApi.obtenerEstadisticasAsignaciones(),
+    select: (response) => response.data.data,
+    staleTime: 5 * 60 * 1000, // Cache de 5 minutos
+  });
 
   // Mutation de logout
   const logoutMutation = useMutation({
@@ -274,6 +284,132 @@ function Dashboard() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Tarjeta de Asignaciones Servicio-Profesional */}
+        <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Asignaciones Servicio-Profesional
+            </h2>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate('/servicios')}
+            >
+              Ver Servicios
+            </Button>
+          </div>
+
+          {loadingStats ? (
+            <div className="animate-pulse space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          ) : statsAsignaciones ? (
+            <div className="space-y-4">
+              {/* Alerta si hay servicios sin profesionales */}
+              {statsAsignaciones.servicios_sin_profesional > 0 && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-yellow-800">
+                        Atención: {statsAsignaciones.servicios_sin_profesional} servicio{statsAsignaciones.servicios_sin_profesional !== 1 ? 's' : ''} sin profesionales asignados
+                      </h3>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        Asigna profesionales a estos servicios para poder crear citas con ellos.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate('/servicios')}
+                        className="mt-3 bg-white hover:bg-yellow-50 text-yellow-800 border-yellow-300"
+                      >
+                        Ir a Servicios
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Alerta si hay profesionales sin servicios */}
+              {statsAsignaciones.profesionales_sin_servicio > 0 && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="text-sm font-medium text-blue-800">
+                        {statsAsignaciones.profesionales_sin_servicio} profesional{statsAsignaciones.profesionales_sin_servicio !== 1 ? 'es' : ''} sin servicios asignados
+                      </h3>
+                      <p className="text-sm text-blue-700 mt-1">
+                        Asigna servicios a estos profesionales para que puedan atender citas.
+                      </p>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => navigate('/servicios')}
+                        className="mt-3 bg-white hover:bg-blue-50 text-blue-800 border-blue-300"
+                      >
+                        Asignar Servicios
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Todo en orden */}
+              {statsAsignaciones.servicios_sin_profesional === 0 &&
+               statsAsignaciones.profesionales_sin_servicio === 0 && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="text-sm font-medium text-green-800">
+                        Todas las asignaciones están completas
+                      </h3>
+                      <p className="text-sm text-green-700 mt-1">
+                        Todos los servicios y profesionales activos tienen asignaciones correctas.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Resumen de estadísticas */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {statsAsignaciones.servicios_activos || 0}
+                  </p>
+                  <p className="text-sm text-gray-600">Servicios activos</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {statsAsignaciones.profesionales_activos || 0}
+                  </p>
+                  <p className="text-sm text-gray-600">Profesionales activos</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {statsAsignaciones.total_asignaciones_activas || 0}
+                  </p>
+                  <p className="text-sm text-gray-600">Asignaciones activas</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-gray-900">
+                    {((statsAsignaciones.total_asignaciones_activas || 0) /
+                      Math.max(1, (statsAsignaciones.servicios_activos || 0))).toFixed(1)}
+                  </p>
+                  <p className="text-sm text-gray-600">Promedio prof./servicio</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-500 text-center py-4">
+              No hay datos de asignaciones disponibles
+            </p>
+          )}
         </div>
 
         {/* Información de la Cuenta */}

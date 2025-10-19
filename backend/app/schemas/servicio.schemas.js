@@ -44,12 +44,10 @@ const crear = {
         configuracion_especifica: Joi.object().optional().allow(null),
         tipos_profesional_autorizados: Joi.array().optional().allow(null),
         profesionales_ids: Joi.array().items(
-            commonSchemas.id
-        ).min(1).required()
+            Joi.number().integer().positive() // Sin .required() para permitir array vacío
+        ).optional().default([])
             .messages({
-                'array.base': 'profesionales_ids debe ser un array de IDs',
-                'array.min': 'Debes asignar al menos un profesional al servicio',
-                'any.required': 'profesionales_ids es requerido'
+                'array.base': 'profesionales_ids debe ser un array de IDs'
             }),
         activo: Joi.boolean().optional().default(true)
     })

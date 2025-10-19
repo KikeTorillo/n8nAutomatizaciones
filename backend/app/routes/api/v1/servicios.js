@@ -24,6 +24,13 @@ router.get('/estadisticas',
     ServicioController.obtenerEstadisticas
 );
 
+router.get('/estadisticas/asignaciones',
+    rateLimiting.apiRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    (req, res, next) => ServicioController.obtenerEstadisticasAsignaciones(req, res, next)
+);
+
 // ========== Rutas de Plantillas ==========
 router.post('/desde-plantilla',
     rateLimiting.heavyOperationRateLimit,

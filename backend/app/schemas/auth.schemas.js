@@ -263,13 +263,7 @@ const listarUsuariosOrg = {
 
 const recuperarPassword = {
     body: Joi.object({
-        email: commonSchemas.emailRequired,
-        organizacion_id: commonSchemas.id.required()
-            .messages({
-                'any.required': 'organizacion_id es requerido para recuperar contraseña',
-                'number.base': 'ID de organización debe ser un número',
-                'number.positive': 'ID de organización debe ser positivo'
-            })
+        email: commonSchemas.emailRequired
     })
 };
 

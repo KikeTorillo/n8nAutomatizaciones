@@ -194,6 +194,22 @@ class ServicioController {
 
         return ResponseHelper.success(res, null, 'Servicio eliminado permanentemente');
     });
+
+    /**
+     * Obtiene estadísticas de asignaciones servicio-profesional
+     * @route GET /api/servicios/estadisticas/asignaciones
+     */
+    static obtenerEstadisticasAsignaciones = asyncHandler(async (req, res) => {
+        const stats = await ServicioModel.obtenerEstadisticasAsignaciones(
+            req.tenant.organizacionId
+        );
+
+        return ResponseHelper.success(
+            res,
+            stats,
+            'Estadísticas de asignaciones obtenidas exitosamente'
+        );
+    });
 }
 
 module.exports = ServicioController;

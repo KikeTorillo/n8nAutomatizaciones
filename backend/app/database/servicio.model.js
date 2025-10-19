@@ -455,6 +455,75 @@ class ServicioModel {
         });
     }
 
+    /**
+     * Obtiene estadísticas de asignaciones servicio-profesional
+     * Calcula métricas de servicios sin profesionales y viceversa
+     *
+     * @param {number} organizacion_id - ID de la organización
+     * @returns {Promise<object>} - Estadísticas de asignaciones
+     *
+     * ⚠️ NOTA DE PERFORMANCE:
+     * - Query usa CTEs para legibilidad
+     * - Optimizado con COUNT FILTER en lugar de múltiples queries
+     * - Para organizaciones con >1000 registros, considerar cache
+     */
+    static async obtenerEstadisticasAsignaciones(organizacion_id) {
+        return await RLSContextManager.query(organizacion_id, async (db) => {
+            const query = `
+                WITH servicios_stats AS (
+                    SELECT
+                        s.id as servicio_id,
+                        s.activo as servicio_activo,
+                        COUNT(sp.id) FILTER (WHERE sp.activo = true) as profesionales_asignados
+                    FROM servicios s
+                    LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id
+                    WHERE s.organizacion_id = $1
+                    GROUP BY s.id, s.activo
+                ),
+                profesionales_stats AS (
+                    SELECT
+                        p.id as profesional_id,
+                        p.activo as profesional_activo,
+                        COUNT(sp.id) FILTER (WHERE sp.activo = true) as servicios_asignados
+                    FROM profesionales p
+                    LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id
+                    WHERE p.organizacion_id = $1
+                    GROUP BY p.id, p.activo
+                )
+                SELECT
+                    -- Servicios
+                    (SELECT COUNT(*) FROM servicios_stats) as total_servicios,
+                    (SELECT COUNT(*) FROM servicios_stats WHERE servicio_activo = true) as servicios_activos,
+                    (SELECT COUNT(*) FROM servicios_stats
+                     WHERE servicio_activo = true AND profesionales_asignados = 0) as servicios_sin_profesional,
+
+                    -- Profesionales
+                    (SELECT COUNT(*) FROM profesionales_stats) as total_profesionales,
+                    (SELECT COUNT(*) FROM profesionales_stats WHERE profesional_activo = true) as profesionales_activos,
+                    (SELECT COUNT(*) FROM profesionales_stats
+                     WHERE profesional_activo = true AND servicios_asignados = 0) as profesionales_sin_servicio,
+
+                    -- Asignaciones
+                    (SELECT COUNT(*) FROM servicios_profesionales
+                     WHERE activo = true) as total_asignaciones_activas
+            `;
+
+            const result = await db.query(query, [organizacion_id]);
+
+            // Convertir BigInt a Number para JSON serialization
+            const stats = result.rows[0];
+            return {
+                total_servicios: parseInt(stats.total_servicios),
+                servicios_activos: parseInt(stats.servicios_activos),
+                servicios_sin_profesional: parseInt(stats.servicios_sin_profesional),
+                total_profesionales: parseInt(stats.total_profesionales),
+                profesionales_activos: parseInt(stats.profesionales_activos),
+                profesionales_sin_servicio: parseInt(stats.profesionales_sin_servicio),
+                total_asignaciones_activas: parseInt(stats.total_asignaciones_activas)
+            };
+        });
+    }
+
 }
 
 

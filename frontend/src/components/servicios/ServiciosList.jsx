@@ -1,4 +1,4 @@
-import { Scissors, Users, Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Scissors, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils';
 import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
@@ -86,6 +86,7 @@ function ServiciosList({
                 return (
                   <tr
                     key={servicio.id}
+                    id={`servicio-${servicio.id}`}
                     className="hover:bg-gray-50 transition-colors"
                   >
                     {/* Servicio */}
@@ -130,16 +131,23 @@ function ServiciosList({
 
                     {/* Profesionales */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onGestionarProfesionales(servicio);
-                        }}
-                        className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
-                      >
-                        <Users className="w-3 h-3" />
-                        {totalProfs}
-                      </button>
+                      {totalProfs === 0 ? (
+                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-100 text-yellow-800 rounded-md text-xs font-medium">
+                          <AlertTriangle className="w-3 h-3" />
+                          Sin profesionales asignados
+                        </div>
+                      ) : (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onGestionarProfesionales(servicio);
+                          }}
+                          className="inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800 hover:bg-green-200 transition-colors cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          {totalProfs} profesional{totalProfs !== 1 ? 'es' : ''}
+                        </button>
+                      )}
                     </td>
 
                     {/* Estado */}
@@ -160,6 +168,32 @@ function ServiciosList({
                     {/* Acciones */}
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
+                        {/* Botón de Acción Rápida - Prioridad según estado */}
+                        {totalProfs === 0 ? (
+                          <Button
+                            size="sm"
+                            variant="warning"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onGestionarProfesionales(servicio);
+                            }}
+                          >
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            Asignar profesionales
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onGestionarProfesionales(servicio);
+                            }}
+                          >
+                            Gestionar profesionales
+                          </Button>
+                        )}
+
                         <Button
                           variant="outline"
                           size="sm"

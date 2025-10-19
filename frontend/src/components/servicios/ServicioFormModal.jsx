@@ -22,7 +22,7 @@ const servicioCreateSchema = z.object({
   categoria: z.string().min(1, 'Categoría requerida').max(50, 'Máximo 50 caracteres'),
   duracion_minutos: z.number().int('Debe ser un número entero').min(1, 'Mínimo 1 minuto').max(480, 'Máximo 8 horas'),
   precio: z.number().min(0, 'El precio no puede ser negativo').max(10000000, 'Precio máximo excedido'),
-  profesionales_ids: z.array(z.number()).min(1, 'Selecciona al menos un profesional'),
+  profesionales_ids: z.array(z.number()).optional().default([]), // Profesionales opcionales - asignar desde Profesional
   activo: z.boolean().default(true),
 });
 
@@ -263,7 +263,7 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                 <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Profesionales que ofrecen este servicio{' '}
-              <span className="text-red-500">*</span>
+              <span className="text-gray-500">(Opcional)</span>
             </label>
 
             {loadingProfesionales ? (
@@ -302,8 +302,8 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                 ))}
               </div>
             ) : (
-              <div className="text-sm text-gray-600 bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                No hay profesionales disponibles. Debes agregar profesionales primero.
+              <div className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
+                💡 No hay profesionales disponibles. Puedes crear el servicio ahora y asignar profesionales después desde la página de <strong>Profesionales → Servicios</strong>.
               </div>
             )}
 

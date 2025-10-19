@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -98,8 +98,9 @@ const citaEditSchema = z
  * Modal de formulario para crear y editar citas
  * @param {string} mode - 'create' o 'edit'
  * @param {object|null} cita - Datos de la cita a editar (solo en modo edit)
+ * @param {string|null} fechaPreseleccionada - Fecha preseleccionada desde el calendario (formato ISO YYYY-MM-DD)
  */
-function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
+function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPreseleccionada = null }) {
   const toast = useToast();
   const isEditMode = mode === 'edit';
   const citaId = cita?.id;
@@ -140,7 +141,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
           cliente_id: '',
           profesional_id: '',
           servicio_id: '',
-          fecha_cita: '',
+          fecha_cita: fechaPreseleccionada || '',
           hora_inicio: '',
           duracion_minutos: 30,
           precio_servicio: 0,
@@ -183,6 +184,26 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
     cargarServiciosProfesional();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchProfesional]);
+
+  // Servicios con estado de disponibilidad (filtrado dual)
+  const serviciosDisponiblesConEstado = useMemo(() => {
+    // Si NO hay profesional seleccionado: mostrar TODOS los servicios con estado
+    if (!watchProfesional || watchProfesional === '') {
+      return servicios?.servicios?.map(s => ({
+        ...s,
+        disponible: s.total_profesionales_asignados > 0,
+        razon_no_disponible: s.total_profesionales_asignados === 0
+          ? 'Sin profesionales asignados' : null
+      })) || [];
+    }
+
+    // Si HAY profesional seleccionado: solo mostrar servicios del profesional (todos disponibles)
+    return serviciosDisponibles.map(s => ({
+      ...s,
+      disponible: true,
+      razon_no_disponible: null
+    }));
+  }, [servicios, serviciosDisponibles, watchProfesional]);
 
   // Auto-completar datos del servicio seleccionado
   useEffect(() => {
@@ -250,6 +271,14 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, citaData, isOpen]);
 
+  // Pre-rellenar fecha cuando se abre el modal con fecha preseleccionada
+  useEffect(() => {
+    if (isOpen && !isEditMode && fechaPreseleccionada) {
+      setValue('fecha_cita', fechaPreseleccionada);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, fechaPreseleccionada, isEditMode]);
+
   // Reset form cuando cierra el modal
   useEffect(() => {
     if (!isOpen) {
@@ -300,9 +329,22 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
       onClose();
       reset();
     } catch (error) {
-      toast.error(
-        error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} la cita`
-      );
+      // Extraer el mensaje de error del response del backend
+      let mensajeError = `Error al ${isEditMode ? 'actualizar' : 'crear'} la cita`;
+
+      if (error.response?.data?.message) {
+        // El backend envía el error en response.data.message
+        mensajeError = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        // Fallback a response.data.error
+        mensajeError = error.response.data.error;
+      } else if (error.message) {
+        // Fallback a error.message si no hay response
+        mensajeError = error.message;
+      }
+
+      // Mostrar el error con un toast más descriptivo
+      toast.error(mensajeError);
     }
   };
 
@@ -328,9 +370,12 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
 
   const serviciosOpciones = [
     { value: '', label: cargandoServicios ? 'Cargando servicios...' : 'Selecciona un servicio' },
-    ...serviciosDisponibles.map((s) => ({
+    ...serviciosDisponiblesConEstado.map((s) => ({
       value: s.id.toString(),
-      label: `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min`,
+      label: s.disponible
+        ? `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min`
+        : `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min (${s.razon_no_disponible})`,
+      disabled: !s.disponible, // Deshabilitar opciones no disponibles
     })),
   ];
 
@@ -411,6 +456,11 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null }) {
                 </div>
                 {errors.profesional_id && (
                   <p className="mt-1 text-sm text-red-600">{errors.profesional_id.message}</p>
+                )}
+                {!errors.profesional_id && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    💡 Selecciona un profesional para ver solo sus servicios, o deja vacío para ver todos los servicios disponibles
+                  </p>
                 )}
               </div>
 

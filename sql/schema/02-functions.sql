@@ -258,32 +258,21 @@ $$ LANGUAGE plpgsql;
 -- ====================================================================
 -- 📧 FUNCIÓN 4: VALIDAR_EMAIL_USUARIO
 -- ====================================================================
--- Función para validar email único por organización
+-- Función para validar email único globalmente
+-- Complementa el CONSTRAINT usuarios_email_key con mensajes más claros
 -- ────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION validar_email_usuario()
 RETURNS TRIGGER AS $$
 BEGIN
-    -- Para super_admin, email debe ser único globalmente
-    IF NEW.rol = 'super_admin' THEN
-        IF EXISTS (
-            SELECT 1 FROM usuarios
-            WHERE email = NEW.email
-            AND id != COALESCE(NEW.id, 0)
-            AND activo = TRUE
-        ) THEN
-            RAISE EXCEPTION 'Email ya existe en el sistema';
-        END IF;
-    ELSE
-        -- Para otros roles, email único por organización
-        IF EXISTS (
-            SELECT 1 FROM usuarios
-            WHERE email = NEW.email
-            AND organizacion_id = NEW.organizacion_id
-            AND id != COALESCE(NEW.id, 0)
-            AND activo = TRUE
-        ) THEN
-            RAISE EXCEPTION 'Email ya existe en esta organización';
-        END IF;
+    -- Email debe ser único globalmente (complementa el CONSTRAINT usuarios_email_key)
+    -- Esta función provee mensajes de error más claros que el constraint
+    IF EXISTS (
+        SELECT 1 FROM usuarios
+        WHERE email = NEW.email
+        AND id != COALESCE(NEW.id, 0)
+        AND activo = TRUE
+    ) THEN
+        RAISE EXCEPTION 'El email % ya está registrado en el sistema', NEW.email;
     END IF;
 
     RETURN NEW;

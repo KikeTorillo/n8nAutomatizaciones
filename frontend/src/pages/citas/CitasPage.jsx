@@ -51,6 +51,7 @@ function CitasPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
   const [citaParaEditar, setCitaParaEditar] = useState(null);
+  const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
   const [modalCompletarAbierto, setModalCompletarAbierto] = useState(false);
   const [modalNoShowAbierto, setModalNoShowAbierto] = useState(false);
 
@@ -146,14 +147,15 @@ function CitasPage() {
     );
   };
 
-  const handleNuevaCita = (fechaPreseleccionada) => {
+  const handleNuevaCita = (fechaDesdeCalendario) => {
     setModalMode('create');
     setCitaParaEditar(null);
 
-    // Si se proporciona una fecha desde el calendario, pre-llenarla
-    if (fechaPreseleccionada) {
-      // Aquí podrías usar un estado adicional para pasar la fecha al modal
-      // Por ahora, solo abrimos el modal
+    // Si se proporciona una fecha desde el calendario, guardarla para pre-llenar el formulario
+    if (fechaDesdeCalendario) {
+      setFechaPreseleccionada(fechaDesdeCalendario);
+    } else {
+      setFechaPreseleccionada(null);
     }
 
     setIsFormModalOpen(true);
@@ -342,9 +344,11 @@ function CitasPage() {
           setIsFormModalOpen(false);
           setModalMode('create');
           setCitaParaEditar(null);
+          setFechaPreseleccionada(null);
         }}
         mode={modalMode}
         cita={citaParaEditar}
+        fechaPreseleccionada={fechaPreseleccionada}
       />
 
       {/* Modal de Completar Cita */}

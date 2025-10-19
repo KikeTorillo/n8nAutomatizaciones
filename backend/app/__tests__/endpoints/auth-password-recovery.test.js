@@ -115,15 +115,18 @@ describe('Endpoints de Recuperación de Contraseña', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    test('Falla sin organizacion_id', async () => {
+    test('✅ Permite recuperación solo con email (sin organizacion_id)', async () => {
+      // El sistema ahora permite recuperación solo con email
+      // para mejor UX (usuario puede no recordar su org)
       const response = await request(app)
         .post('/api/v1/auth/reset-password')
         .send({
           email: testUsuario.email
         })
-        .expect(400);
+        .expect(200);
 
-      expect(response.body).toHaveProperty('success', false);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('token_enviado', true);
     });
 
     test('Falla con email en formato inválido', async () => {
