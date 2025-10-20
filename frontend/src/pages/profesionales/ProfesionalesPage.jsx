@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Plus, Search, Filter, X, ArrowLeft, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -230,6 +230,72 @@ function ProfesionalesPage() {
           </div>
         </div>
       </div>
+
+      {/* Alerta Global: Profesionales sin Servicios */}
+      {useMemo(() => {
+        const profesionalesSinServicios = profesionales?.filter(
+          p => (p.total_servicios_asignados === 0 || p.total_servicios_asignados === '0') && p.activo
+        ) || [];
+
+        if (profesionalesSinServicios.length === 0) return null;
+
+        return (
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 mt-6">
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                </div>
+                <div className="ml-3 flex-1">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Atención: {profesionalesSinServicios.length} profesional{profesionalesSinServicios.length !== 1 ? 'es' : ''} sin servicios asignados
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      Los siguientes profesionales activos no tienen servicios asignados.
+                      Asigna al menos un servicio a cada profesional para que puedan recibir citas:
+                    </p>
+                    <ul className="list-disc list-inside mt-2 space-y-1">
+                      {profesionalesSinServicios.map(profesional => (
+                        <li key={profesional.id}>
+                          <a
+                            href={`#profesional-${profesional.id}`}
+                            className="font-medium underline hover:text-yellow-900"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              document.getElementById(`profesional-${profesional.id}`)?.scrollIntoView({
+                                behavior: 'smooth',
+                                block: 'center'
+                              });
+                            }}
+                          >
+                            {profesional.nombre_completo}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const primerProfesional = profesionalesSinServicios[0];
+                        if (primerProfesional) {
+                          handleGestionarServicios(primerProfesional);
+                        }
+                      }}
+                      className="bg-white hover:bg-yellow-50 text-yellow-800 border-yellow-300"
+                    >
+                      Asignar servicios al primer profesional
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }, [profesionales])}
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

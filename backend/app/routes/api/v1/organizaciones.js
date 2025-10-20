@@ -44,6 +44,7 @@ router.get('/:id/limites',
 router.get('/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
     auth.requireAdminRole,
     validation.validate(organizacionSchemas.obtenerEstadisticas),
     (req, res, next) => OrganizacionController.obtenerEstadisticas(req, res, next)

@@ -193,7 +193,7 @@ export function useProfesionalesServicio(servicioId) {
       return response.data.data;
     },
     enabled: !!servicioId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: 0, // Sin cache - siempre refetch cuando está stale
   });
 }
 
@@ -212,9 +212,29 @@ export function useAsignarProfesional() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['servicio-profesionales', variables.servicioId]);
-      queryClient.invalidateQueries(['servicios']);
-      queryClient.invalidateQueries(['servicios-dashboard']);
+      // ✅ Invalidar cache del lado de servicios
+      queryClient.invalidateQueries({
+        queryKey: ['servicio-profesionales', variables.servicioId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['servicios']  // Sin exact:true para invalidar TODAS las variantes
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['servicios-dashboard']
+      });
+
+      // ✅ CRÍTICO: Invalidar cache del lado de profesionales (bidireccional)
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-servicios', variables.profesionalId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['profesionales']  // Sin exact:true para invalidar TODAS las variantes
+      });
+
+      // ✅ Invalidar estadísticas de asignaciones
+      queryClient.invalidateQueries({
+        queryKey: ['estadisticas-asignaciones']
+      });
     },
     onError: (error) => {
       const message = error.response?.data?.error || 'Error al asignar profesional';
@@ -235,9 +255,29 @@ export function useDesasignarProfesional() {
       return { servicioId, profesionalId };
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['servicio-profesionales', data.servicioId]);
-      queryClient.invalidateQueries(['servicios']);
-      queryClient.invalidateQueries(['servicios-dashboard']);
+      // ✅ Invalidar cache del lado de servicios
+      queryClient.invalidateQueries({
+        queryKey: ['servicio-profesionales', data.servicioId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['servicios']  // Sin exact:true para invalidar TODAS las variantes
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['servicios-dashboard']
+      });
+
+      // ✅ CRÍTICO: Invalidar cache del lado de profesionales (bidireccional)
+      queryClient.invalidateQueries({
+        queryKey: ['profesional-servicios', data.profesionalId]
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['profesionales']  // Sin exact:true para invalidar TODAS las variantes
+      });
+
+      // ✅ Invalidar estadísticas de asignaciones
+      queryClient.invalidateQueries({
+        queryKey: ['estadisticas-asignaciones']
+      });
     },
     onError: (error) => {
       const message = error.response?.data?.error || 'Error al desasignar profesional';

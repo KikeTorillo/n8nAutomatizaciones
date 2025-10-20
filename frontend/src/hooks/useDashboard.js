@@ -15,8 +15,7 @@ export function useEstadisticasOrganizacion() {
       return response.data.data;
     },
     enabled: !!user?.organizacion_id,
-    staleTime: 0, // Sin cache - siempre fresco
-    refetchOnMount: 'always', // Refetch al montar componente
+    staleTime: 1000 * 60, // 1 minuto de cache
   });
 }
 
@@ -52,8 +51,7 @@ export function useProfesionales() {
       // Backend retorna: { data: { profesionales: [...], filtros_aplicados: {...}, total: N } }
       return response.data.data.profesionales || [];
     },
-    staleTime: 0, // Sin cache - siempre fresco
-    refetchOnMount: 'always', // Refetch al montar componente
+    staleTime: 1000 * 60 * 2, // 2 minutos de cache
   });
 }
 
@@ -69,8 +67,7 @@ export function useServiciosDashboard() {
       // Backend retorna: { data: { servicios: [...], ... } }
       return response.data.data.servicios || [];
     },
-    staleTime: 0, // Sin cache - siempre fresco
-    refetchOnMount: 'always', // Refetch al montar componente
+    staleTime: 1000 * 60 * 2, // 2 minutos de cache
   });
 }
 
@@ -87,8 +84,7 @@ export function useClientes() {
       // Si data es array, retornarlo, sino buscar en data.clientes
       return Array.isArray(data) ? data : (data.clientes || []);
     },
-    staleTime: 0, // Sin cache - siempre fresco
-    refetchOnMount: 'always', // Refetch al montar componente
+    staleTime: 1000 * 60 * 3, // 3 minutos de cache
   });
 }
 
@@ -112,6 +108,5 @@ export function useBloqueosDashboard() {
       return response.data.data?.bloqueos || [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
-    refetchOnMount: 'always', // Refetch al montar componente
   });
 }

@@ -431,8 +431,8 @@ const authRateLimit = createRateLimit({
  */
 const apiRateLimit = createRateLimit({
   windowMs: 60 * 1000,                                           // 1 minuto
-  max: 60,                                                     // 60 requests por minuto
-  message: 'Límite de API excedido, máximo 60 requests por minuto',
+  max: 1000,                                                    // 1000 requests por minuto (temporal para diagnóstico)
+  message: 'Límite de API excedido, máximo 1000 requests por minuto',
   keyGenerator: (req) => {
     // Priorizar API key si está disponible, sino usar IP
     const apiKey = req.headers['x-api-key'];

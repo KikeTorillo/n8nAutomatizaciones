@@ -30,7 +30,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
       return response.data.data || [];
     },
     enabled: isOpen && !!profesionalId,
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: 0, // Sin cache - siempre refetch cuando está stale
   });
 
   // Fetch todos los servicios disponibles
@@ -193,9 +193,9 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
                     seleccionados
                   </p>
                   {selectedServicios.length === 0 && (
-                    <div className="flex items-center gap-1 text-amber-600 text-xs">
+                    <div className="flex items-center gap-1 text-blue-600 text-xs">
                       <AlertCircle className="w-3 h-3" />
-                      <span>Selecciona al menos 1 servicio</span>
+                      <span>Profesional sin servicios asignados</span>
                     </div>
                   )}
                 </div>
@@ -263,7 +263,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
             type="button"
             onClick={handleGuardar}
             isLoading={isSubmitting}
-            disabled={isSubmitting || selectedServicios.length === 0 || isLoading}
+            disabled={isSubmitting || isLoading}
           >
             {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
           </Button>

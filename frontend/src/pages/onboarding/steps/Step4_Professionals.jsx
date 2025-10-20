@@ -89,14 +89,39 @@ function Step4_Professionals() {
         if (prof.servicios_asignados && prof.servicios_asignados.length > 0) {
           console.log(`📎 Asignando ${prof.servicios_asignados.length} servicios al profesional ${profesionalCreado.id}`);
 
-          for (const servicioId of prof.servicios_asignados) {
+          // ✅ FIX: Obtener servicios del backend para mapear nombres → IDs
+          let servicioNombreToId = {};
+          try {
+            const serviciosResponse = await serviciosApi.listar({ limite: 100 });
+            const serviciosCreados = serviciosResponse.data.data.servicios;
+
+            // Crear mapa de nombre → ID
+            serviciosCreados.forEach(s => {
+              servicioNombreToId[s.nombre] = s.id;
+            });
+            console.log('🗺️ Mapa de servicios creado:', servicioNombreToId);
+          } catch (error) {
+            console.error('❌ Error obteniendo servicios para mapeo:', error);
+            // Continuar sin asignaciones si falla el mapeo
+            servicioNombreToId = {};
+          }
+
+          for (const servicioNombreOId of prof.servicios_asignados) {
             try {
+              // ✅ FIX: Usar ID numérico si es nombre, o usar directamente si ya es ID
+              const servicioId = servicioNombreToId[servicioNombreOId] || servicioNombreOId;
+
+              if (!servicioId || typeof servicioId !== 'number') {
+                console.warn(`⚠️ Servicio "${servicioNombreOId}" no encontrado en BD o ID inválido`);
+                continue;
+              }
+
               await serviciosApi.asignarProfesional(servicioId, {
                 profesional_id: profesionalCreado.id,
               });
-              console.log(`✅ Servicio ${servicioId} asignado al profesional ${profesionalCreado.id}`);
+              console.log(`✅ Servicio "${servicioNombreOId}" (ID: ${servicioId}) asignado al profesional ${profesionalCreado.id}`);
             } catch (error) {
-              console.error(`❌ Error asignando servicio ${servicioId}:`, error);
+              console.error(`❌ Error asignando servicio "${servicioNombreOId}":`, error);
               // Continuar con los demás servicios aunque uno falle
             }
           }

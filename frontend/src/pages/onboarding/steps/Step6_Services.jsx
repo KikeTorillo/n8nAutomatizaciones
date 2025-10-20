@@ -232,51 +232,6 @@ function Step5_Services() {
           />
         </div>
 
-        {/* Selección de Profesionales */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Profesionales que ofrecen este servicio <span className="text-gray-500">(Opcional)</span>
-          </label>
-          {profesionales && profesionales.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {profesionales.map((prof) => (
-                <div
-                  key={prof.id}
-                  onClick={() => toggleProfessional(prof.id)}
-                  className={`
-                    flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all
-                    ${selectedProfessionals.includes(prof.id)
-                      ? 'border-primary-600 bg-primary-50'
-                      : 'border-gray-200 hover:border-primary-300'
-                    }
-                  `}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedProfessionals.includes(prof.id)}
-                    onChange={() => {}}
-                    className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                  />
-                  <div
-                    className="w-8 h-8 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: prof.color_calendario }}
-                  />
-                  <span className="text-sm font-medium text-gray-900">
-                    {prof.nombre_completo}
-                  </span>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-gray-600 bg-blue-50 border border-blue-200 rounded-lg p-3">
-              💡 No hay profesionales disponibles. Puedes crear el servicio ahora y asignar profesionales después desde la página de Servicios.
-            </p>
-          )}
-          {errors.profesionales && (
-            <p className="mt-1 text-sm text-red-600">{errors.profesionales.message}</p>
-          )}
-        </div>
-
         <Button
           type="submit"
           variant="outline"

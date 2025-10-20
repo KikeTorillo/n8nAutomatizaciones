@@ -179,23 +179,25 @@ describe('Endpoints de Servicios', () => {
       expect(response.body).toHaveProperty('success', false);
     });
 
-    test('❌ Falla sin profesionales_ids requerido', async () => {
+    test('✅ Crear servicio SIN profesionales_ids (independiente)', async () => {
       const uniqueId = getUniqueTestId();
 
       const response = await request(app)
         .post('/api/v1/servicios')
         .set('Authorization', `Bearer ${userToken}`)
         .send({
-          nombre: `Servicio ${uniqueId}`,
+          nombre: `Servicio Independiente ${uniqueId}`,
           duracion_minutos: 30,
           precio: 100.00
-          // ❌ Falta profesionales_ids (requerido)
+          // ✅ profesionales_ids es opcional - se puede asignar después
         })
-        .expect(400);
+        .expect(201);
 
-      expect(response.body).toHaveProperty('success', false);
-      // Validar que es error de validación (puede ser mensaje genérico o específico)
-      expect(response.body.message).toMatch(/validación|profesionales_ids|requerido/i);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('id');
+      expect(response.body.data.nombre).toContain('Servicio Independiente');
+      // Verificar que se creó sin profesionales asignados
+      expect(response.body.message).toMatch(/creado exitosamente/i);
     });
 
     test('✅ Crear servicio con profesionales_ids en el body', async () => {

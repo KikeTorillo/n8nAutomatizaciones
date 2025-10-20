@@ -115,14 +115,24 @@ class ProfesionalModel {
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.creado_en, p.actualizado_en,
-                       o.nombre_comercial as organizacion_nombre, o.tipo_industria as industria
+                       o.nombre_comercial as organizacion_nombre, o.tipo_industria as industria,
+                       COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 JOIN organizaciones o ON p.organizacion_id = o.id
+                LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
+                GROUP BY p.id, o.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
-            return result.rows[0] || null;
+            const profesional = result.rows[0];
+
+            if (profesional) {
+                // Convertir total_servicios_asignados de string a number
+                profesional.total_servicios_asignados = parseInt(profesional.total_servicios_asignados, 10) || 0;
+            }
+
+            return profesional || null;
         });
     }
 
@@ -147,8 +157,10 @@ class ProfesionalModel {
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
-                       p.creado_en, p.actualizado_en
+                       p.creado_en, p.actualizado_en,
+                       COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
+                LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.organizacion_id = $1
             `;
 
@@ -179,11 +191,16 @@ class ProfesionalModel {
                 contador++;
             }
 
-            query += ` ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
+            query += ` GROUP BY p.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
             values.push(limite, offset);
 
             const result = await db.query(query, values);
-            return result.rows;
+
+            // Convertir total_servicios_asignados de string a number
+            return result.rows.map(row => ({
+                ...row,
+                total_servicios_asignados: parseInt(row.total_servicios_asignados, 10) || 0
+            }));
         });
     }
 

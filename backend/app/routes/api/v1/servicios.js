@@ -17,7 +17,7 @@ router.get('/buscar',
 );
 
 router.get('/estadisticas',
-    rateLimiting.heavyOperationRateLimit,
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.obtenerEstadisticas),
@@ -50,7 +50,7 @@ router.get('/profesionales/:profesional_id/servicios',
 );
 
 router.post('/:id/profesionales',
-    rateLimiting.heavyOperationRateLimit,
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.asignarProfesional),
@@ -66,7 +66,7 @@ router.get('/:id/profesionales',
 );
 
 router.delete('/:id/profesionales/:profesional_id',
-    rateLimiting.heavyOperationRateLimit,
+    rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     validation.validate(servicioSchemas.desasignarProfesional),

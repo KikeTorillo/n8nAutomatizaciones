@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, AlertCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
@@ -20,6 +20,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
   const toast = useToast();
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const hasInitialized = useRef(false);
 
   const servicioId = servicio?.id;
 
@@ -47,20 +48,25 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
   const desasignarMutation = useDesasignarProfesional();
 
   // Pre-cargar profesionales asignados cuando se obtienen los datos
+  // Usar ref para evitar loop infinito al cambiar la referencia del array
   useEffect(() => {
-    if (profesionalesAsignados && profesionalesAsignados.length > 0) {
-      const ids = profesionalesAsignados.map((prof) => prof.id);
-      setSelectedProfessionals(ids);
-    } else if (profesionalesAsignados && profesionalesAsignados.length === 0) {
-      setSelectedProfessionals([]);
+    if (isOpen && !loadingAsignados && !hasInitialized.current) {
+      if (profesionalesAsignados && profesionalesAsignados.length > 0) {
+        const ids = profesionalesAsignados.map((prof) => prof.id);
+        setSelectedProfessionals(ids);
+      } else {
+        setSelectedProfessionals([]);
+      }
+      hasInitialized.current = true;
     }
-  }, [profesionalesAsignados]);
+  }, [isOpen, loadingAsignados, profesionalesAsignados]);
 
   // Reset cuando cierra el modal
   useEffect(() => {
     if (!isOpen) {
       setSelectedProfessionals([]);
       setIsSubmitting(false);
+      hasInitialized.current = false; // Resetear flag de inicialización
     }
   }, [isOpen]);
 
@@ -185,9 +191,9 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                     profesionales seleccionados
                   </p>
                   {selectedProfessionals.length === 0 && (
-                    <div className="flex items-center gap-1 text-amber-600 text-xs">
+                    <div className="flex items-center gap-1 text-blue-600 text-xs">
                       <AlertCircle className="w-3 h-3" />
-                      <span>Al menos 1 profesional es requerido</span>
+                      <span>Servicio sin profesionales asignados</span>
                     </div>
                   )}
                 </div>
@@ -256,11 +262,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
             type="button"
             onClick={handleGuardar}
             isLoading={isSubmitting}
-            disabled={
-              isSubmitting ||
-              selectedProfessionals.length === 0 ||
-              isLoading
-            }
+            disabled={isSubmitting || isLoading}
           >
             {isSubmitting ? 'Guardando...' : 'Guardar Cambios'}
           </Button>

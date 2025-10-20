@@ -17,6 +17,7 @@ describe('Endpoints de Planes de Subscripción', () => {
   let planBasicoId;
   let planProfesionalId;
   let planEmpresarialId;
+  let testSuffix; // ✅ Guardar sufijo para limpieza posterior
 
   beforeAll(async () => {
     app = saasApp.getExpressApp();
@@ -25,18 +26,17 @@ describe('Endpoints de Planes de Subscripción', () => {
     // Limpiar BD
     await cleanAllTables(client);
 
-    // Crear planes de prueba con códigos únicos para evitar conflictos
-    // Los planes son compartidos por todas las organizaciones
-    // Usar sufijo corto para no exceder VARCHAR(20)
-    const suffix = Date.now().toString().slice(-6);
+    // ✅ Crear planes de prueba con CÓDIGOS y NOMBRES únicos
+    // Esto evita duplicados en el frontend y facilita la limpieza
+    testSuffix = Date.now().toString().slice(-6);
     const planBasico = await client.query(`
       INSERT INTO planes_subscripcion (
         codigo_plan, nombre_plan, descripcion, precio_mensual, precio_anual,
         limite_usuarios, limite_profesionales, limite_citas_mes,
         funciones_habilitadas, activo, orden_display
       ) VALUES (
-        'TEST_BASIC_${suffix}',
-        'Plan Básico',
+        'TEST_BASIC_${testSuffix}',
+        'Plan Básico Test ${testSuffix}',
         'Ideal para pequeños negocios',
         29.99,
         299.99,
@@ -56,8 +56,8 @@ describe('Endpoints de Planes de Subscripción', () => {
         limite_usuarios, limite_profesionales, limite_citas_mes,
         funciones_habilitadas, activo, orden_display
       ) VALUES (
-        'TEST_PRO_${suffix}',
-        'Plan Profesional',
+        'TEST_PRO_${testSuffix}',
+        'Plan Profesional Test ${testSuffix}',
         'Para negocios en crecimiento',
         59.99,
         599.99,
@@ -77,8 +77,8 @@ describe('Endpoints de Planes de Subscripción', () => {
         limite_usuarios, limite_profesionales, limite_citas_mes,
         funciones_habilitadas, activo, orden_display
       ) VALUES (
-        'TEST_ENT_${suffix}',
-        'Plan Empresarial',
+        'TEST_ENT_${testSuffix}',
+        'Plan Empresarial Test ${testSuffix}',
         'Solución completa para empresas',
         99.99,
         999.99,
@@ -97,6 +97,23 @@ describe('Endpoints de Planes de Subscripción', () => {
 
   afterAll(async () => {
     const cleanupClient = await global.testPool.connect();
+
+    // ✅ Eliminar SOLO los planes creados en este test (usando el sufijo único)
+    // Esto evita eliminar planes de producción o de otros tests concurrentes
+    try {
+      const result = await cleanupClient.query(`
+        DELETE FROM planes_subscripcion
+        WHERE codigo_plan IN (
+          'TEST_BASIC_${testSuffix}',
+          'TEST_PRO_${testSuffix}',
+          'TEST_ENT_${testSuffix}'
+        )
+      `);
+      console.log(`✓ Limpieza: ${result.rowCount} planes de testing eliminados`);
+    } catch (err) {
+      console.error('⚠️ Error eliminando planes de testing:', err.message);
+    }
+
     await cleanAllTables(cleanupClient);
     cleanupClient.release();
   });
@@ -151,7 +168,7 @@ describe('Endpoints de Planes de Subscripción', () => {
     });
 
     test('Solo retorna planes activos', async () => {
-      // Crear un plan inactivo con código único
+      // Crear un plan inactivo con código Y nombre únicos
       const tempClient = await global.testPool.connect();
       const suffix = Date.now().toString().slice(-6);
       await tempClient.query(`
@@ -161,7 +178,7 @@ describe('Endpoints de Planes de Subscripción', () => {
           funciones_habilitadas, activo, orden_display
         ) VALUES (
           'TEST_INA_${suffix}',
-          'Plan Inactivo',
+          'Plan Inactivo Test ${suffix}',
           'Este plan está desactivado',
           19.99,
           199.99,
@@ -205,7 +222,7 @@ describe('Endpoints de Planes de Subscripción', () => {
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.id).toBe(planBasicoId);
-      expect(response.body.data.nombre).toBe('Plan Básico');
+      expect(response.body.data.nombre).toContain('Plan Básico Test');
     });
 
     test('Obtener plan profesional por ID', async () => {
@@ -214,7 +231,7 @@ describe('Endpoints de Planes de Subscripción', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.nombre).toBe('Plan Profesional');
+      expect(response.body.data.nombre).toContain('Plan Profesional Test');
     });
 
     test('Obtener plan empresarial por ID', async () => {
@@ -223,7 +240,7 @@ describe('Endpoints de Planes de Subscripción', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.nombre).toBe('Plan Empresarial');
+      expect(response.body.data.nombre).toContain('Plan Empresarial Test');
       expect(response.body.data.max_usuarios).toBe(999);
     });
 
@@ -245,7 +262,7 @@ describe('Endpoints de Planes de Subscripción', () => {
     });
 
     test('No retorna planes inactivos por ID', async () => {
-      // Crear plan inactivo con código único
+      // Crear plan inactivo con código Y nombre únicos
       const tempClient = await global.testPool.connect();
       const suffix = Date.now().toString().slice(-6);
       const result = await tempClient.query(`
@@ -255,7 +272,7 @@ describe('Endpoints de Planes de Subscripción', () => {
           funciones_habilitadas, activo, orden_display
         ) VALUES (
           'TEST_DES_${suffix}',
-          'Plan Desactivado Test',
+          'Plan Desactivado Test ${suffix}',
           'Test',
           9.99,
           99.99,
