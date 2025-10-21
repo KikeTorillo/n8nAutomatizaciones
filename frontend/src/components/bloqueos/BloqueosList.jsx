@@ -46,8 +46,8 @@ const obtenerIconoComponente = (tipo) => {
 function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo);
-  const IconoComponente = obtenerIconoComponente(bloqueo.tipo_bloqueo);
+  const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo_codigo);
+  const IconoComponente = obtenerIconoComponente(bloqueo.tipo_bloqueo_codigo);
   const dias = calcularDiasBloqueo(bloqueo.fecha_inicio, bloqueo.fecha_fin);
   const rangoFormateado = formatearRangoBloqueo(
     bloqueo.fecha_inicio,
@@ -76,7 +76,7 @@ function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
               <h3 className="text-lg font-semibold text-gray-900 truncate">{bloqueo.titulo}</h3>
               <div className="flex items-center gap-2 mt-1">
                 <span className={`px-2 py-1 text-xs font-medium rounded ${colores.bg} ${colores.text}`}>
-                  {obtenerLabelTipoBloqueo(bloqueo.tipo_bloqueo)}
+                  {obtenerLabelTipoBloqueo(bloqueo.tipo_bloqueo_codigo)}
                 </span>
                 {!bloqueo.activo && (
                   <span className="px-2 py-1 text-xs font-medium rounded bg-gray-200 text-gray-700">

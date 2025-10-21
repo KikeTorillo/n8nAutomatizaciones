@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
-import { useState } from 'react';
-import { LABELS_TIPO_BLOQUEO } from '@/utils/bloqueoHelpers';
+import { useState, useMemo } from 'react';
+import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 
@@ -17,17 +17,22 @@ function BloqueoFilters({
 }) {
   const [mostrarAvanzados, setMostrarAvanzados] = useState(false);
 
-  // Tipos de bloqueo disponibles
-  const tiposBloqueo = [
-    { value: '', label: 'Todos los tipos' },
-    { value: 'vacaciones', label: LABELS_TIPO_BLOQUEO.vacaciones },
-    { value: 'feriado', label: LABELS_TIPO_BLOQUEO.feriado },
-    { value: 'mantenimiento', label: LABELS_TIPO_BLOQUEO.mantenimiento },
-    { value: 'evento_especial', label: LABELS_TIPO_BLOQUEO.evento_especial },
-    { value: 'emergencia', label: LABELS_TIPO_BLOQUEO.emergencia },
-    { value: 'personal', label: LABELS_TIPO_BLOQUEO.personal },
-    { value: 'organizacional', label: LABELS_TIPO_BLOQUEO.organizacional },
-  ];
+  // Cargar tipos de bloqueo dinámicamente
+  const { data: tiposData, isLoading: isLoadingTipos } = useTiposBloqueo();
+
+  // Tipos de bloqueo disponibles (dinámicos)
+  const tiposBloqueo = useMemo(() => {
+    if (!tiposData?.tipos) return [{ value: '', label: 'Todos los tipos' }];
+
+    return [
+      { value: '', label: 'Todos los tipos' },
+      ...tiposData.tipos.map(tipo => ({
+        value: tipo.id,
+        label: tipo.nombre,
+        codigo: tipo.codigo,
+      })),
+    ];
+  }, [tiposData]);
 
   // Opciones de profesionales
   const opcionesProfesionales = [
@@ -42,7 +47,7 @@ function BloqueoFilters({
   const contarFiltrosActivos = () => {
     let count = 0;
     if (filtros.busqueda) count++;
-    if (filtros.tipo_bloqueo) count++;
+    if (filtros.tipo_bloqueo_id) count++;
     if (filtros.profesional_id) count++;
     if (filtros.fecha_desde) count++;
     if (filtros.fecha_hasta) count++;
@@ -51,6 +56,13 @@ function BloqueoFilters({
   };
 
   const filtrosActivos = contarFiltrosActivos();
+
+  // Helper para obtener el nombre del tipo seleccionado
+  const obtenerNombreTipo = (tipoId) => {
+    if (!tipoId || !tiposData?.tipos) return '';
+    const tipo = tiposData.tipos.find(t => t.id === parseInt(tipoId));
+    return tipo ? tipo.nombre : '';
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
@@ -78,14 +90,15 @@ function BloqueoFilters({
         {/* Tipo de bloqueo */}
         <div>
           <Select
-            value={filtros.tipo_bloqueo || ''}
+            value={filtros.tipo_bloqueo_id || ''}
             onChange={(e) =>
               onFiltrosChange({
                 ...filtros,
-                tipo_bloqueo: e.target.value,
+                tipo_bloqueo_id: e.target.value,
               })
             }
             options={tiposBloqueo}
+            disabled={isLoadingTipos}
           />
         </div>
       </div>
@@ -215,11 +228,11 @@ function BloqueoFilters({
             </span>
           )}
 
-          {filtros.tipo_bloqueo && (
+          {filtros.tipo_bloqueo_id && (
             <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-              Tipo: {LABELS_TIPO_BLOQUEO[filtros.tipo_bloqueo]}
+              Tipo: {obtenerNombreTipo(filtros.tipo_bloqueo_id)}
               <button
-                onClick={() => onFiltrosChange({ ...filtros, tipo_bloqueo: '' })}
+                onClick={() => onFiltrosChange({ ...filtros, tipo_bloqueo_id: '' })}
                 className="hover:text-gray-900"
               >
                 <X className="h-3 w-3" />

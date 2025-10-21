@@ -14,20 +14,13 @@ export const bloqueoFormSchema = z
       .max(200, 'El título no puede superar los 200 caracteres')
       .trim(),
 
-    tipo_bloqueo: z.enum(
-      [
-        'vacaciones',
-        'feriado',
-        'mantenimiento',
-        'evento_especial',
-        'emergencia',
-        'personal',
-        'organizacional',
-      ],
-      {
-        errorMap: () => ({ message: 'Debe seleccionar un tipo de bloqueo válido' }),
-      }
-    ),
+    tipo_bloqueo_id: z
+      .number({
+        required_error: 'Debe seleccionar un tipo de bloqueo',
+        invalid_type_error: 'El tipo de bloqueo debe ser un número',
+      })
+      .int('El tipo de bloqueo debe ser un número entero')
+      .positive('Debe seleccionar un tipo de bloqueo válido'),
 
     fecha_inicio: z
       .string()
@@ -156,7 +149,7 @@ export const validarSolapamientoSchema = z.object({
 export const bloqueoFormDefaults = {
   titulo: '',
   descripcion: '',
-  tipo_bloqueo: 'personal',
+  tipo_bloqueo_id: null, // Se establece dinámicamente según tipos disponibles
   fecha_inicio: '',
   fecha_fin: '',
   hora_inicio: '',
@@ -173,7 +166,7 @@ export const bloqueoFormDefaults = {
 export const sanitizarDatosBloqueo = (data) => {
   const sanitized = {
     titulo: data.titulo.trim(),
-    tipo_bloqueo: data.tipo_bloqueo,
+    tipo_bloqueo_id: parseInt(data.tipo_bloqueo_id),
     fecha_inicio: data.fecha_inicio,
     fecha_fin: data.fecha_fin,
     activo: data.activo ?? true,
@@ -212,7 +205,7 @@ export const prepararDatosParaEdicion = (bloqueo) => {
     id: bloqueo.id,
     titulo: bloqueo.titulo || '',
     descripcion: bloqueo.descripcion || '',
-    tipo_bloqueo: bloqueo.tipo_bloqueo || 'personal',
+    tipo_bloqueo_id: bloqueo.tipo_bloqueo_id || null,
     fecha_inicio: bloqueo.fecha_inicio || '',
     fecha_fin: bloqueo.fecha_fin || '',
     hora_inicio: bloqueo.hora_inicio || '',

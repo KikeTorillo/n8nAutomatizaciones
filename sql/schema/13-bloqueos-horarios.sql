@@ -21,19 +21,6 @@
 -- ====================================================================
 
 -- ====================================================================
--- 📋 ENUM TIPO_BLOQUEO - CATEGORIZACIÓN DE BLOQUEOS
--- ====================================================================
-CREATE TYPE tipo_bloqueo AS ENUM (
-    'vacaciones',         -- Vacaciones programadas del profesional
-    'feriado',           -- Días feriados nacionales/locales
-    'mantenimiento',     -- Mantenimiento de equipos/instalaciones
-    'evento_especial',   -- Eventos especiales (capacitaciones, etc.)
-    'emergencia',        -- Bloqueos de emergencia
-    'personal',          -- Motivos personales del profesional
-    'organizacional'     -- Decisión administrativa de la organización
-);
-
--- ====================================================================
 -- 📊 TABLA PRINCIPAL: BLOQUEOS_HORARIOS
 -- ====================================================================
 CREATE TABLE bloqueos_horarios (
@@ -46,7 +33,7 @@ CREATE TABLE bloqueos_horarios (
     servicio_id INTEGER,                 -- NULL = afecta todos los servicios
 
     -- 📅 INFORMACIÓN DEL BLOQUEO
-    tipo_bloqueo tipo_bloqueo NOT NULL,
+    tipo_bloqueo_id INTEGER NOT NULL REFERENCES tipos_bloqueo(id),
     titulo VARCHAR(200) NOT NULL,        -- Título descriptivo del bloqueo
     descripcion TEXT,                    -- Descripción detallada opcional
 
@@ -144,12 +131,12 @@ WHERE profesional_id IS NOT NULL AND activo = true;
 
 -- Índice para bloqueos organizacionales (sin profesional específico)
 CREATE INDEX idx_bloqueos_organizacionales
-ON bloqueos_horarios (organizacion_id, tipo_bloqueo, fecha_inicio)
+ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, fecha_inicio)
 WHERE profesional_id IS NULL AND activo = true;
 
 -- Índice para búsquedas por tipo de bloqueo
 CREATE INDEX idx_bloqueos_tipo_fechas
-ON bloqueos_horarios (organizacion_id, tipo_bloqueo, fecha_inicio, fecha_fin)
+ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, fecha_inicio, fecha_fin)
 WHERE activo = true;
 
 -- Índice para bloqueos recurrentes
@@ -174,7 +161,7 @@ ON bloqueos_horarios USING gin(
 
 -- Índice para métricas y reportes
 CREATE INDEX idx_bloqueos_metricas
-ON bloqueos_horarios (organizacion_id, tipo_bloqueo, creado_en, citas_afectadas, ingresos_perdidos)
+ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, creado_en, citas_afectadas, ingresos_perdidos)
 WHERE activo = true;
 
 -- ====================================================================
@@ -339,6 +326,8 @@ CREATE TRIGGER trigger_validar_bloqueos_horarios
 -- ====================================================================
 
 -- Vista para bloqueos activos con información extendida
+DROP VIEW IF EXISTS v_bloqueos_activos;
+
 CREATE VIEW v_bloqueos_activos AS
 SELECT
     b.id,
@@ -346,7 +335,14 @@ SELECT
     o.nombre_comercial as organizacion_nombre,
     b.profesional_id,
     p.nombre_completo as profesional_nombre,
-    b.tipo_bloqueo,
+
+    -- ✅ NUEVOS CAMPOS: Información del tipo de bloqueo
+    b.tipo_bloqueo_id,
+    tb.codigo as tipo_bloqueo_codigo,
+    tb.nombre as tipo_bloqueo_nombre,
+    tb.descripcion as tipo_bloqueo_descripcion,
+
+    -- Campos existentes
     b.titulo,
     b.descripcion,
     b.fecha_inicio,
@@ -377,23 +373,32 @@ SELECT
 FROM bloqueos_horarios b
 JOIN organizaciones o ON b.organizacion_id = o.id
 LEFT JOIN profesionales p ON b.profesional_id = p.id
+JOIN tipos_bloqueo tb ON b.tipo_bloqueo_id = tb.id
 WHERE b.activo = true;
 
 -- Vista para métricas de bloqueos por organización
+DROP VIEW IF EXISTS v_metricas_bloqueos;
+
 CREATE VIEW v_metricas_bloqueos AS
 SELECT
-    organizacion_id,
+    bh.organizacion_id,
     COUNT(*) as total_bloqueos,
-    COUNT(*) FILTER (WHERE tipo_bloqueo = 'vacaciones') as total_vacaciones,
-    COUNT(*) FILTER (WHERE tipo_bloqueo = 'feriado') as total_feriados,
+
+    -- ✅ CAMBIO: Usar JOIN en lugar de comparación directa con ENUM
+    COUNT(*) FILTER (WHERE tb.codigo = 'vacaciones') as total_vacaciones,
+    COUNT(*) FILTER (WHERE tb.codigo = 'feriado') as total_feriados,
+    COUNT(*) FILTER (WHERE tb.codigo = 'hora_comida') as total_hora_comida,
+    COUNT(*) FILTER (WHERE tb.codigo = 'descanso') as total_descansos,
+
     COUNT(*) FILTER (WHERE fecha_inicio > CURRENT_DATE) as bloqueos_futuros,
     COUNT(*) FILTER (WHERE fecha_inicio <= CURRENT_DATE AND fecha_fin >= CURRENT_DATE) as bloqueos_activos,
     SUM(citas_afectadas) as total_citas_afectadas,
     SUM(ingresos_perdidos) as total_ingresos_perdidos,
     AVG(fecha_fin - fecha_inicio + 1) as duracion_promedio_dias
-FROM bloqueos_horarios
-WHERE activo = true
-GROUP BY organizacion_id;
+FROM bloqueos_horarios bh
+JOIN tipos_bloqueo tb ON bh.tipo_bloqueo_id = tb.id
+WHERE bh.activo = true
+GROUP BY bh.organizacion_id;
 
 -- ====================================================================
 -- 🎯 FUNCIONES DE UTILIDAD
@@ -445,7 +450,9 @@ CREATE OR REPLACE FUNCTION obtener_bloqueos_periodo(
 )
 RETURNS TABLE(
     bloqueo_id INTEGER,
-    tipo_bloqueo tipo_bloqueo,
+    tipo_bloqueo_id INTEGER,           -- ✅ CAMBIO: Ahora retorna ID
+    tipo_bloqueo_codigo VARCHAR(50),   -- ✅ NUEVO: Código del tipo
+    tipo_bloqueo_nombre VARCHAR(100),  -- ✅ NUEVO: Nombre del tipo
     titulo VARCHAR(200),
     fecha_inicio DATE,
     fecha_fin DATE,
@@ -457,7 +464,9 @@ BEGIN
     RETURN QUERY
     SELECT
         b.id,
-        b.tipo_bloqueo,
+        b.tipo_bloqueo_id,
+        tb.codigo,
+        tb.nombre,
         b.titulo,
         b.fecha_inicio,
         b.fecha_fin,
@@ -465,6 +474,7 @@ BEGIN
         b.hora_fin,
         (b.hora_inicio IS NULL AND b.hora_fin IS NULL) as es_todo_el_dia
     FROM bloqueos_horarios b
+    JOIN tipos_bloqueo tb ON b.tipo_bloqueo_id = tb.id
     WHERE b.organizacion_id = p_organizacion_id
       AND b.activo = true
       AND (b.fecha_inicio <= p_fecha_fin AND b.fecha_fin >= p_fecha_inicio)

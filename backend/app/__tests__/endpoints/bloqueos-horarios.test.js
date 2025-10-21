@@ -128,7 +128,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const bloqueoData = {
         profesional_id: testProfesional.id,
-        tipo_bloqueo: 'vacaciones',
+        tipo_bloqueo_id: 1, // vacaciones
         titulo: 'Vacaciones de verano',
         descripcion: 'Periodo vacacional programado',
         fecha_inicio: tomorrow.toISOString().split('T')[0],
@@ -147,7 +147,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.profesional_id).toBe(testProfesional.id);
-      expect(response.body.data.tipo_bloqueo).toBe('vacaciones');
+      expect(response.body.data.tipo_bloqueo_id).toBe(1); // vacaciones
       expect(response.body.data.titulo).toBe(bloqueoData.titulo);
     });
 
@@ -157,7 +157,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const bloqueoData = {
         // Sin profesional_id para bloqueo organizacional
-        tipo_bloqueo: 'feriado',
+        tipo_bloqueo_id: 2, // feriado
         titulo: 'Día festivo nacional',
         descripcion: 'Cerrado por día festivo',
         fecha_inicio: tomorrow.toISOString().split('T')[0],
@@ -174,7 +174,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       expect(response.body.success).toBe(true);
       expect(response.body.data.profesional_id).toBeNull();
-      expect(response.body.data.tipo_bloqueo).toBe('feriado');
+      expect(response.body.data.tipo_bloqueo_id).toBe(2); // feriado
     });
 
     test('Crear bloqueo con horario específico', async () => {
@@ -183,7 +183,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const bloqueoData = {
         profesional_id: testProfesional.id,
-        tipo_bloqueo: 'evento_especial',
+        tipo_bloqueo_id: 4, // evento_especial
         titulo: 'Capacitación técnica',
         fecha_inicio: tomorrow.toISOString().split('T')[0],
         fecha_fin: tomorrow.toISOString().split('T')[0],
@@ -209,7 +209,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
       const response = await request(app)
         .post('/api/v1/bloqueos-horarios')
         .send({
-          tipo_bloqueo: 'vacaciones',
+          tipo_bloqueo_id: 1, // vacaciones
           titulo: 'Test',
           fecha_inicio: tomorrow.toISOString().split('T')[0],
           fecha_fin: tomorrow.toISOString().split('T')[0]
@@ -244,12 +244,12 @@ describe('Endpoints de Bloqueos de Horarios', () => {
         .post('/api/v1/bloqueos-horarios')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          tipo_bloqueo: 'tipo_invalido',
+          tipo_bloqueo_id: 999, // tipo inválido para test
           titulo: 'Test',
           fecha_inicio: tomorrow.toISOString().split('T')[0],
           fecha_fin: tomorrow.toISOString().split('T')[0]
         })
-        .expect(400);
+        .expect(500); // Ahora se valida en el modelo (no en schema)
 
       expect(response.body).toHaveProperty('success', false);
     });
@@ -264,7 +264,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
         .post('/api/v1/bloqueos-horarios')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          tipo_bloqueo: 'vacaciones',
+          tipo_bloqueo_id: 1, // vacaciones
           titulo: 'Test',
           fecha_inicio: tomorrow.toISOString().split('T')[0],
           fecha_fin: yesterday.toISOString().split('T')[0]
@@ -282,7 +282,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
         .post('/api/v1/bloqueos-horarios')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          tipo_bloqueo: 'evento_especial',
+          tipo_bloqueo_id: 4, // evento_especial
           titulo: 'Test',
           fecha_inicio: tomorrow.toISOString().split('T')[0],
           fecha_fin: tomorrow.toISOString().split('T')[0],
@@ -324,7 +324,7 @@ describe('Endpoints de Bloqueos de Horarios', () => {
     test('Listar bloqueos con filtro por tipo', async () => {
       const response = await request(app)
         .get('/api/v1/bloqueos-horarios')
-        .query({ tipo_bloqueo: 'vacaciones' })
+        .query({ tipo_bloqueo_id: 1 }) // vacaciones
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(200);
 
@@ -384,14 +384,14 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const result = await tempClient.query(
         `INSERT INTO bloqueos_horarios (
-          organizacion_id, profesional_id, tipo_bloqueo, titulo,
+          organizacion_id, profesional_id, tipo_bloqueo_id, titulo,
           fecha_inicio, fecha_fin, activo
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id`,
         [
           testOrg.id,
           testProfesional.id,
-          'personal',
+          6, // personal
           'Permiso médico',
           tomorrow.toISOString().split('T')[0],
           tomorrow.toISOString().split('T')[0],
@@ -449,14 +449,14 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const result = await tempClient.query(
         `INSERT INTO bloqueos_horarios (
-          organizacion_id, profesional_id, tipo_bloqueo, titulo,
+          organizacion_id, profesional_id, tipo_bloqueo_id, titulo,
           fecha_inicio, fecha_fin, activo
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id`,
         [
           testOrg.id,
           testProfesional.id,
-          'evento_especial',
+          4, // evento_especial
           'Capacitación inicial',
           tomorrow.toISOString().split('T')[0],
           tomorrow.toISOString().split('T')[0],
@@ -508,14 +508,14 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const result = await tempClient.query(
         `INSERT INTO bloqueos_horarios (
-          organizacion_id, profesional_id, tipo_bloqueo, titulo,
+          organizacion_id, profesional_id, tipo_bloqueo_id, titulo,
           fecha_inicio, fecha_fin, activo
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id`,
         [
           testOrg.id,
           testProfesional.id,
-          'personal',
+          6, // personal
           'Bloqueo temporal',
           tomorrow.toISOString().split('T')[0],
           tomorrow.toISOString().split('T')[0],
@@ -558,14 +558,14 @@ describe('Endpoints de Bloqueos de Horarios', () => {
 
       const result = await tempClient.query(
         `INSERT INTO bloqueos_horarios (
-          organizacion_id, profesional_id, tipo_bloqueo, titulo,
+          organizacion_id, profesional_id, tipo_bloqueo_id, titulo,
           fecha_inicio, fecha_fin, activo
         ) VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING id`,
         [
           testOrg.id,
           testProfesional.id,
-          'vacaciones',
+          1, // vacaciones
           'Bloqueo privado Org1',
           tomorrow.toISOString().split('T')[0],
           tomorrow.toISOString().split('T')[0],

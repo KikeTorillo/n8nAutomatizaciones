@@ -407,7 +407,9 @@ class CitaHelpersModel {
         const bloqueos = await db.query(`
             SELECT
                 b.id,
-                b.tipo_bloqueo,
+                b.tipo_bloqueo_id,
+                tb.codigo AS tipo_bloqueo,
+                tb.nombre AS tipo_bloqueo_nombre,
                 b.titulo,
                 b.fecha_inicio,
                 b.fecha_fin,
@@ -415,6 +417,7 @@ class CitaHelpersModel {
                 b.hora_fin,
                 b.profesional_id
             FROM bloqueos_horarios b
+            LEFT JOIN tipos_bloqueo tb ON b.tipo_bloqueo_id = tb.id
             WHERE b.organizacion_id = $1
               AND b.activo = true
               AND $2 BETWEEN b.fecha_inicio AND b.fecha_fin

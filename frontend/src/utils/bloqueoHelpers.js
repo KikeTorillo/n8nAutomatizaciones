@@ -54,6 +54,21 @@ export const COLORES_TIPO_BLOQUEO = {
     badge: 'bg-gray-500',
     hex: '#6B7280',
   },
+  // 🆕 NUEVOS TIPOS
+  hora_comida: {
+    bg: 'bg-orange-100',
+    text: 'text-orange-800',
+    border: 'border-orange-500',
+    badge: 'bg-orange-500',
+    hex: '#FB923C',
+  },
+  descanso: {
+    bg: 'bg-cyan-100',
+    text: 'text-cyan-800',
+    border: 'border-cyan-500',
+    badge: 'bg-cyan-500',
+    hex: '#06B6D4',
+  },
 };
 
 /**
@@ -67,6 +82,9 @@ export const ICONOS_TIPO_BLOQUEO = {
   emergencia: 'AlertTriangle',
   personal: 'User',
   organizacional: 'Building',
+  // 🆕 NUEVOS TIPOS
+  hora_comida: 'Utensils',
+  descanso: 'Coffee',
 };
 
 /**
@@ -80,6 +98,9 @@ export const LABELS_TIPO_BLOQUEO = {
   emergencia: 'Emergencia',
   personal: 'Personal',
   organizacional: 'Organizacional',
+  // 🆕 NUEVOS TIPOS
+  hora_comida: 'Hora de Comida',
+  descanso: 'Descanso',
 };
 
 /**

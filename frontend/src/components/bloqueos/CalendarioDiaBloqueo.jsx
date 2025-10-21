@@ -67,7 +67,7 @@ function CalendarioDiaBloqueo({
         ) : (
           <>
             {bloqueosVisibles.map((bloqueo) => {
-              const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo);
+              const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo_codigo);
               const esDiaCompleto = esBloqueoDiaCompleto(bloqueo);
               const esOrganizacional = !bloqueo.profesional_id;
 

@@ -10,13 +10,19 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useCrearBloqueo, useActualizarBloqueo } from '@/hooks/useBloqueos';
+import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
 import {
   bloqueoFormSchema,
   bloqueoFormDefaults,
   sanitizarDatosBloqueo,
   prepararDatosParaEdicion,
 } from '@/utils/bloqueoValidators';
-import { LABELS_TIPO_BLOQUEO, calcularDiasBloqueo } from '@/utils/bloqueoHelpers';
+import {
+  LABELS_TIPO_BLOQUEO,
+  COLORES_TIPO_BLOQUEO,
+  ICONOS_TIPO_BLOQUEO,
+  calcularDiasBloqueo
+} from '@/utils/bloqueoHelpers';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -30,6 +36,8 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
   const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
     activo: true,
   });
+
+  const { data: tiposData, isLoading: isLoadingTipos } = useTiposBloqueo();
 
   // Mutations
   const crearMutation = useCrearBloqueo();
@@ -50,17 +58,25 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
   });
 
   // Watch para cambios en el formulario
-  const tipoBloqueo = watch('tipo_bloqueo');
+  const tipoBloqueoId = watch('tipo_bloqueo_id');
   const profesionalId = watch('profesional_id');
   const fechaInicio = watch('fecha_inicio');
   const fechaFin = watch('fecha_fin');
   const horaInicio = watch('hora_inicio');
   const horaFin = watch('hora_fin');
 
-  // Determinar si es organizacional basado en el tipo
+  // Encontrar el tipo seleccionado para determinar si es organizacional
+  const tipoSeleccionado = useMemo(() => {
+    if (!tipoBloqueoId || !tiposData?.tipos) return null;
+    return tiposData.tipos.find(t => t.id === tipoBloqueoId);
+  }, [tipoBloqueoId, tiposData]);
+
+  // Determinar si es organizacional basado en el código del tipo
   const esOrganizacional = useMemo(() => {
-    return tipoBloqueo === 'organizacional' || tipoBloqueo === 'feriado' || tipoBloqueo === 'mantenimiento';
-  }, [tipoBloqueo]);
+    if (!tipoSeleccionado) return false;
+    const codigosOrganizacionales = ['organizacional', 'feriado', 'mantenimiento'];
+    return codigosOrganizacionales.includes(tipoSeleccionado.codigo);
+  }, [tipoSeleccionado]);
 
   // Auto-limpiar profesional_id si es organizacional
   useEffect(() => {
@@ -114,16 +130,18 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
     }
   };
 
-  // Opciones de tipos de bloqueo
-  const opcionesTipos = [
-    { value: 'vacaciones', label: LABELS_TIPO_BLOQUEO.vacaciones },
-    { value: 'feriado', label: LABELS_TIPO_BLOQUEO.feriado },
-    { value: 'mantenimiento', label: LABELS_TIPO_BLOQUEO.mantenimiento },
-    { value: 'evento_especial', label: LABELS_TIPO_BLOQUEO.evento_especial },
-    { value: 'emergencia', label: LABELS_TIPO_BLOQUEO.emergencia },
-    { value: 'personal', label: LABELS_TIPO_BLOQUEO.personal },
-    { value: 'organizacional', label: LABELS_TIPO_BLOQUEO.organizacional },
-  ];
+  // Opciones de tipos de bloqueo (dinámicas desde API)
+  const opcionesTipos = useMemo(() => {
+    if (!tiposData?.tipos) return [];
+
+    return tiposData.tipos.map(tipo => ({
+      value: tipo.id,
+      label: tipo.nombre,
+      // Metadata adicional para UI (opcional)
+      codigo: tipo.codigo,
+      esSystema: tipo.es_sistema,
+    }));
+  }, [tiposData]);
 
   // Opciones de profesionales
   const opcionesProfesionales = [
@@ -162,12 +180,34 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
           />
 
           {/* Tipo de bloqueo */}
-          <FormField
-            name="tipo_bloqueo"
+          <Controller
+            name="tipo_bloqueo_id"
             control={control}
-            label="Tipo de bloqueo"
-            options={opcionesTipos}
-            required
+            render={({ field: { value, onChange, ...field }, fieldState: { error } }) => (
+              <div>
+                <label htmlFor="tipo_bloqueo_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de bloqueo <span className="text-red-500">*</span>
+                </label>
+                <Select
+                  {...field}
+                  id="tipo_bloqueo_id"
+                  value={value?.toString() || ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    onChange(val ? parseInt(val) : null);
+                  }}
+                  options={opcionesTipos}
+                  disabled={isLoadingTipos}
+                  error={error?.message}
+                />
+                {isLoadingTipos && (
+                  <p className="text-xs text-gray-500 mt-1">Cargando tipos de bloqueo...</p>
+                )}
+                {error && (
+                  <p className="mt-1 text-sm text-red-600">{error.message}</p>
+                )}
+              </div>
+            )}
           />
 
           {/* Descripción */}

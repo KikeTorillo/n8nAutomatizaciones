@@ -15,15 +15,10 @@ const crear = {
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
         profesional_id: commonSchemas.id.optional().allow(null),
         servicio_id: commonSchemas.id.optional().allow(null),
-        tipo_bloqueo: Joi.string()
-            .valid(
-                'vacaciones', 'feriado', 'mantenimiento',
-                'evento_especial', 'emergencia', 'personal', 'organizacional'
-            )
-            .required()
+        tipo_bloqueo_id: commonSchemas.id.required()
             .messages({
-                'any.required': 'tipo_bloqueo es requerido',
-                'any.only': 'tipo_bloqueo debe ser: vacaciones, feriado, mantenimiento, evento_especial, emergencia, personal, organizacional'
+                'any.required': 'tipo_bloqueo_id es requerido',
+                'number.base': 'tipo_bloqueo_id debe ser un número entero válido'
             }),
         titulo: Joi.string()
             .min(3)
@@ -112,10 +107,7 @@ const actualizar = {
         hora_inicio: commonSchemas.time.allow(null),
         hora_fin: commonSchemas.time.allow(null),
         zona_horaria: Joi.string().max(50),
-        tipo_bloqueo: Joi.string().valid(
-            'vacaciones', 'feriado', 'mantenimiento',
-            'evento_especial', 'emergencia', 'personal', 'organizacional'
-        ),
+        tipo_bloqueo_id: commonSchemas.id.optional(),
         color_display: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
         icono: Joi.string().max(50),
         notificar_afectados: Joi.boolean(),
@@ -157,10 +149,7 @@ const obtener = {
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
         id: commonSchemas.id.optional(),
         profesional_id: commonSchemas.id.optional(),
-        tipo_bloqueo: Joi.string().valid(
-            'vacaciones', 'feriado', 'mantenimiento',
-            'evento_especial', 'emergencia', 'personal', 'organizacional'
-        ).optional(),
+        tipo_bloqueo_id: commonSchemas.id.optional(),
         fecha_inicio: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
         fecha_fin: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).optional(),
         solo_organizacionales: Joi.boolean().optional(),

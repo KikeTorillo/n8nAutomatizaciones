@@ -18,6 +18,20 @@ class BloqueosHorariosModel {
                     }
                 }
 
+                // Validar que el tipo_bloqueo_id sea válido y accesible
+                if (datosBloqueo.tipo_bloqueo_id) {
+                    const tipoValido = await db.query(`
+                        SELECT id FROM tipos_bloqueo
+                        WHERE id = $1
+                        AND (organizacion_id IS NULL OR organizacion_id = $2)
+                        AND activo = true
+                    `, [datosBloqueo.tipo_bloqueo_id, datosBloqueo.organizacion_id]);
+
+                    if (tipoValido.rows.length === 0) {
+                        throw new Error('Tipo de bloqueo inválido o no disponible para esta organización');
+                    }
+                }
+
                 let citasAfectadas = 0;
                 if (datosBloqueo.calcular_impacto) {
                     const queryImpacto = `
@@ -40,7 +54,7 @@ class BloqueosHorariosModel {
                 const insertQuery = `
                     INSERT INTO bloqueos_horarios (
                         organizacion_id, profesional_id, servicio_id,
-                        tipo_bloqueo, titulo, descripcion,
+                        tipo_bloqueo_id, titulo, descripcion,
                         fecha_inicio, fecha_fin,
                         hora_inicio, hora_fin, zona_horaria,
                         es_recurrente, patron_recurrencia, fecha_fin_recurrencia,
@@ -58,7 +72,7 @@ class BloqueosHorariosModel {
                         $20, $21, $22, $23, $24,
                         $25, $26, $27, NOW()
                     )
-                    RETURNING id, organizacion_id, profesional_id, tipo_bloqueo,
+                    RETURNING id, organizacion_id, profesional_id, tipo_bloqueo_id,
                              titulo, fecha_inicio, fecha_fin, hora_inicio, hora_fin,
                              citas_afectadas, activo, creado_en
                 `;
@@ -67,7 +81,7 @@ class BloqueosHorariosModel {
                     datosBloqueo.organizacion_id,
                     datosBloqueo.profesional_id || null,
                     datosBloqueo.servicio_id || null,
-                    datosBloqueo.tipo_bloqueo,
+                    datosBloqueo.tipo_bloqueo_id,
                     datosBloqueo.titulo,
                     datosBloqueo.descripcion || null,
                     datosBloqueo.fecha_inicio,
@@ -127,9 +141,9 @@ class BloqueosHorariosModel {
                     paramCounter++;
                 }
 
-                if (filtros.tipo_bloqueo) {
-                    whereClause += ` AND bh.tipo_bloqueo = $${paramCounter}`;
-                    queryParams.push(filtros.tipo_bloqueo);
+                if (filtros.tipo_bloqueo_id) {
+                    whereClause += ` AND bh.tipo_bloqueo_id = $${paramCounter}`;
+                    queryParams.push(filtros.tipo_bloqueo_id);
                     paramCounter++;
                 }
 
@@ -152,7 +166,10 @@ class BloqueosHorariosModel {
                 const query = `
                     SELECT
                         bh.id, bh.organizacion_id, bh.profesional_id, bh.servicio_id,
-                        bh.tipo_bloqueo, bh.titulo, bh.descripcion,
+                        bh.tipo_bloqueo_id,
+                        tb.codigo as tipo_bloqueo_codigo,
+                        tb.nombre as tipo_bloqueo_nombre,
+                        bh.titulo, bh.descripcion,
                         bh.fecha_inicio, bh.fecha_fin,
                         bh.hora_inicio, bh.hora_fin, bh.zona_horaria,
                         bh.es_recurrente, bh.patron_recurrencia, bh.fecha_fin_recurrencia,
@@ -175,6 +192,7 @@ class BloqueosHorariosModel {
                     FROM bloqueos_horarios bh
                     LEFT JOIN profesionales p ON bh.profesional_id = p.id
                     LEFT JOIN servicios s ON bh.servicio_id = s.id
+                    JOIN tipos_bloqueo tb ON bh.tipo_bloqueo_id = tb.id
                     ${whereClause}
                     ORDER BY bh.fecha_inicio DESC, bh.creado_en DESC
                     LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
@@ -208,7 +226,7 @@ class BloqueosHorariosModel {
                     filtros_aplicados: {
                         organizacion_id: filtros.organizacion_id,
                         profesional_id: filtros.profesional_id,
-                        tipo_bloqueo: filtros.tipo_bloqueo,
+                        tipo_bloqueo_id: filtros.tipo_bloqueo_id,
                         fecha_inicio: filtros.fecha_inicio,
                         fecha_fin: filtros.fecha_fin
                     }
@@ -245,7 +263,7 @@ class BloqueosHorariosModel {
                 const camposPermitidos = [
                     'titulo', 'descripcion', 'fecha_inicio', 'fecha_fin',
                     'hora_inicio', 'hora_fin', 'zona_horaria',
-                    'tipo_bloqueo', 'color_display', 'icono',
+                    'tipo_bloqueo_id', 'color_display', 'icono',
                     'notificar_afectados', 'dias_aviso_previo', 'mensaje_clientes',
                     'metadata', 'notas_internas'
                 ];
@@ -272,7 +290,7 @@ class BloqueosHorariosModel {
                     UPDATE bloqueos_horarios
                     SET ${camposActualizar.join(', ')}
                     WHERE id = $1 AND organizacion_id = $2
-                    RETURNING id, organizacion_id, profesional_id, tipo_bloqueo,
+                    RETURNING id, organizacion_id, profesional_id, tipo_bloqueo_id,
                              titulo, fecha_inicio, fecha_fin, actualizado_en
                 `;
 

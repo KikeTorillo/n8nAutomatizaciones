@@ -25,7 +25,7 @@ class BloqueosHorariosController {
             organizacion_id: req.tenant.organizacionId,
             id: req.params.id || req.query.id || null,
             profesional_id: req.query.profesional_id || null,
-            tipo_bloqueo: req.query.tipo_bloqueo || null,
+            tipo_bloqueo_id: req.query.tipo_bloqueo_id || null,
             fecha_inicio: req.query.fecha_inicio || null,
             fecha_fin: req.query.fecha_fin || null,
             solo_organizacionales: req.query.solo_organizacionales === 'true',

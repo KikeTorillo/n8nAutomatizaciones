@@ -30,7 +30,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
       return response.data.data || [];
     },
     enabled: isOpen && !!profesionalId,
-    staleTime: 0, // Sin cache - siempre refetch cuando está stale
+    staleTime: 1000 * 60, // 1 minuto de cache para evitar refetches excesivos
   });
 
   // Fetch todos los servicios disponibles

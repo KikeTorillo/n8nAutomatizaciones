@@ -193,7 +193,7 @@ export function useProfesionalesServicio(servicioId) {
       return response.data.data;
     },
     enabled: !!servicioId,
-    staleTime: 0, // Sin cache - siempre refetch cuando está stale
+    staleTime: 1000 * 60, // 1 minuto de cache para evitar refetches excesivos
   });
 }
 
@@ -212,28 +212,34 @@ export function useAsignarProfesional() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      // ✅ Invalidar cache del lado de servicios
+      // ✅ Invalidar cache del lado de servicios (específico)
       queryClient.invalidateQueries({
-        queryKey: ['servicio-profesionales', variables.servicioId]
+        queryKey: ['servicio-profesionales', variables.servicioId],
+        exact: true
       });
       queryClient.invalidateQueries({
-        queryKey: ['servicios']  // Sin exact:true para invalidar TODAS las variantes
+        queryKey: ['servicios']  // Sin exact:true para invalidar ['servicios', {...params}]
       });
       queryClient.invalidateQueries({
-        queryKey: ['servicios-dashboard']
+        queryKey: ['servicios-dashboard'],
+        exact: true
       });
 
-      // ✅ CRÍTICO: Invalidar cache del lado de profesionales (bidireccional)
-      queryClient.invalidateQueries({
-        queryKey: ['profesional-servicios', variables.profesionalId]
+      // ✅ CRÍTICO: Resetear cache del lado de profesionales (bidireccional)
+      // Usar resetQueries en lugar de invalidateQueries para eliminar el cache
+      // y forzar refetch cuando se acceda (incluso si está dentro de staleTime)
+      queryClient.resetQueries({
+        queryKey: ['profesional-servicios', variables.profesionalId],
+        exact: true
       });
       queryClient.invalidateQueries({
-        queryKey: ['profesionales']  // Sin exact:true para invalidar TODAS las variantes
+        queryKey: ['profesionales']  // Sin exact:true para invalidar ['profesionales', {...params}]
       });
 
       // ✅ Invalidar estadísticas de asignaciones
       queryClient.invalidateQueries({
-        queryKey: ['estadisticas-asignaciones']
+        queryKey: ['estadisticas-asignaciones'],
+        exact: true
       });
     },
     onError: (error) => {
@@ -255,28 +261,34 @@ export function useDesasignarProfesional() {
       return { servicioId, profesionalId };
     },
     onSuccess: (data) => {
-      // ✅ Invalidar cache del lado de servicios
+      // ✅ Invalidar cache del lado de servicios (específico)
       queryClient.invalidateQueries({
-        queryKey: ['servicio-profesionales', data.servicioId]
+        queryKey: ['servicio-profesionales', data.servicioId],
+        exact: true
       });
       queryClient.invalidateQueries({
-        queryKey: ['servicios']  // Sin exact:true para invalidar TODAS las variantes
+        queryKey: ['servicios']  // Sin exact:true para invalidar ['servicios', {...params}]
       });
       queryClient.invalidateQueries({
-        queryKey: ['servicios-dashboard']
+        queryKey: ['servicios-dashboard'],
+        exact: true
       });
 
-      // ✅ CRÍTICO: Invalidar cache del lado de profesionales (bidireccional)
-      queryClient.invalidateQueries({
-        queryKey: ['profesional-servicios', data.profesionalId]
+      // ✅ CRÍTICO: Resetear cache del lado de profesionales (bidireccional)
+      // Usar resetQueries en lugar de invalidateQueries para eliminar el cache
+      // y forzar refetch cuando se acceda (incluso si está dentro de staleTime)
+      queryClient.resetQueries({
+        queryKey: ['profesional-servicios', data.profesionalId],
+        exact: true
       });
       queryClient.invalidateQueries({
-        queryKey: ['profesionales']  // Sin exact:true para invalidar TODAS las variantes
+        queryKey: ['profesionales']  // Sin exact:true para invalidar ['profesionales', {...params}]
       });
 
       // ✅ Invalidar estadísticas de asignaciones
       queryClient.invalidateQueries({
-        queryKey: ['estadisticas-asignaciones']
+        queryKey: ['estadisticas-asignaciones'],
+        exact: true
       });
     },
     onError: (error) => {

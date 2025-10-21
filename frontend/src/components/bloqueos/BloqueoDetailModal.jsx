@@ -33,7 +33,7 @@ import { formatCurrency } from '@/lib/utils';
 function BloqueoDetailModal({ isOpen, onClose, bloqueo, onEditar, onEliminar }) {
   if (!bloqueo) return null;
 
-  const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo);
+  const colores = obtenerColorTipoBloqueo(bloqueo.tipo_bloqueo_codigo);
   const diasBloqueo = calcularDiasBloqueo(bloqueo.fecha_inicio, bloqueo.fecha_fin);
   const rangoFormateado = formatearRangoBloqueo(
     bloqueo.fecha_inicio,
@@ -72,7 +72,7 @@ function BloqueoDetailModal({ isOpen, onClose, bloqueo, onEditar, onEliminar }) 
           </div>
           <div className="flex flex-col items-end gap-2">
             <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${colores.bg} ${colores.text}`}>
-              {obtenerLabelTipoBloqueo(bloqueo.tipo_bloqueo)}
+              {obtenerLabelTipoBloqueo(bloqueo.tipo_bloqueo_codigo)}
             </span>
             {bloqueo.activo ? (
               <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
