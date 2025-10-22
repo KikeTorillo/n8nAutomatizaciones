@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { professionalSchema } from '@/lib/validations';
-import { TIPOS_PROFESIONAL } from '@/lib/constants';
 import { profesionalesApi, serviciosApi } from '@/services/api/endpoints';
+import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import useOnboardingStore from '@/store/onboardingStore';
 import { useToast } from '@/hooks/useToast';
 import FormField from '@/components/forms/FormField';
@@ -43,6 +43,9 @@ function Step4_Professionals() {
   // Obtener servicios del store (agregados en paso anterior)
   const serviciosDisponibles = formData.services || [];
 
+  // Obtener tipos de profesional dinámicos desde DB
+  const { data: tiposProfesional = [], isLoading: loadingTipos } = useTiposProfesional({ activo: true });
+
   const {
     control,
     handleSubmit,
@@ -53,7 +56,7 @@ function Step4_Professionals() {
     resolver: zodResolver(professionalSchema),
     defaultValues: {
       nombre_completo: '',
-      tipo_profesional: '',
+      tipo_profesional_id: undefined, // Integer ID
       telefono: '',
       email: '',
       color_calendario: '#3B82F6',
@@ -73,7 +76,7 @@ function Step4_Professionals() {
         // Sanitizar campos opcionales vacíos
         const sanitizedProf = {
           nombre_completo: prof.nombre_completo,
-          tipo_profesional: prof.tipo_profesional,
+          tipo_profesional_id: prof.tipo_profesional_id, // Integer ID
           color_calendario: prof.color_calendario,
           permite_walk_in: prof.permite_walk_in,
           telefono: prof.telefono?.trim() || undefined,
@@ -233,7 +236,7 @@ function Step4_Professionals() {
                     <div>
                       <p className="font-medium text-gray-900">{prof.nombre_completo}</p>
                       <p className="text-sm text-gray-600">
-                        {TIPOS_PROFESIONAL.find(t => t.value === prof.tipo_profesional)?.label}
+                        {tiposProfesional.find(t => t.id === prof.tipo_profesional_id)?.nombre || 'Tipo no especificado'}
                       </p>
                     </div>
                   </div>
@@ -282,13 +285,39 @@ function Step4_Professionals() {
           required
         />
 
-        <FormField
-          name="tipo_profesional"
+        {/* Tipo de Profesional - Select dinámico */}
+        <Controller
+          name="tipo_profesional_id"
           control={control}
-          label="Tipo de Profesional"
-          placeholder="Selecciona el tipo"
-          options={TIPOS_PROFESIONAL}
-          required
+          render={({ field }) => (
+            <div>
+              <label htmlFor="tipo_profesional_id" className="block text-sm font-medium text-gray-700 mb-1">
+                Tipo de Profesional <span className="text-red-500">*</span>
+              </label>
+              <select
+                {...field}
+                id="tipo_profesional_id"
+                value={field.value || ''}
+                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                disabled={loadingTipos}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {loadingTipos ? 'Cargando tipos...' : 'Selecciona un tipo'}
+                </option>
+                {tiposProfesional.map((tipo) => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.nombre} {tipo.es_sistema ? '' : '(Personalizado)'}
+                  </option>
+                ))}
+              </select>
+              {errors.tipo_profesional_id && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.tipo_profesional_id.message}
+                </p>
+              )}
+            </div>
+          )}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -38,7 +38,7 @@ class ProfesionalController {
         const filtros = {
             activo: req.query.activo !== undefined ? req.query.activo === 'true' : null,
             disponible_online: req.query.disponible_online !== undefined ? req.query.disponible_online === 'true' : null,
-            tipo_profesional: req.query.tipo_profesional || null,
+            tipo_profesional_id: req.query.tipo_profesional_id ? parseInt(req.query.tipo_profesional_id) : null,
             busqueda: req.query.busqueda || null,
             limite: Math.min(parseInt(req.query.limit) || 20, 50),
             offset: Math.max(parseInt(req.query.offset) || 0, 0)
@@ -109,17 +109,18 @@ class ProfesionalController {
     });
 
     static buscarPorTipo = asyncHandler(async (req, res) => {
-        const { tipo } = req.params;
+        const { tipoId } = req.params;
+        const tipoProfesionalId = parseInt(tipoId);
         const soloActivos = req.query.activos !== 'false';
 
         const profesionales = await ProfesionalModel.buscarPorTipo(
             req.tenant.organizacionId,
-            tipo,
+            tipoProfesionalId,
             soloActivos
         );
 
         return ResponseHelper.success(res, {
-            tipo_profesional: tipo,
+            tipo_profesional_id: tipoProfesionalId,
             solo_activos: soloActivos,
             profesionales,
             total: profesionales.length

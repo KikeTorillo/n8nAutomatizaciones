@@ -157,7 +157,7 @@ function Step5_Schedules() {
                     />
                     <div>
                       <p className="font-medium text-gray-900">{prof.nombre_completo}</p>
-                      <p className="text-sm text-gray-600">{prof.tipo_profesional}</p>
+                      <p className="text-sm text-gray-600">{prof.tipo_nombre || 'Profesional'}</p>
                     </div>
                   </div>
                   {tieneHorarios && (

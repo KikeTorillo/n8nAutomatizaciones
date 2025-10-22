@@ -229,7 +229,7 @@ describe('Endpoints Administrativos de Organizaciones', () => {
         .set('Authorization', `Bearer ${tokenReactivado}`)
         .send({
           nombre_completo: 'Prof Reactivado',
-          tipo_profesional: 'barbero'
+          tipo_profesional_id: 1 // barbero
         })
         .expect(201);
 

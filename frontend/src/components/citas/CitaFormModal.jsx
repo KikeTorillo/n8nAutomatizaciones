@@ -364,7 +364,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     { value: '', label: 'Selecciona un profesional' },
     ...(profesionales || []).map((p) => ({
       value: p.id.toString(),
-      label: `${p.nombre_completo} - ${p.tipo_profesional || 'Profesional'}`,
+      label: `${p.nombre_completo} - ${p.tipo_nombre || 'Profesional'}`,
     })),
   ];
 

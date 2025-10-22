@@ -85,7 +85,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .send({
                     nombre_completo: 'Carlos Rodríguez',
-                    tipo_profesional: 'barbero',
+                    tipo_profesional_id: 1, // barbero
                     email: 'carlos.e2e@test.com',
                     telefono: '5512345678',
                     activo: true
@@ -102,7 +102,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
             expect(response.body.data).toMatchObject({
                 organizacion_id: organizacionId, // RLS asignó automáticamente
                 nombre_completo: 'Carlos Rodríguez',
-                tipo_profesional: 'barbero',
+                tipo_profesional_id: 1, // barbero
                 email: 'carlos.e2e@test.com',
                 activo: true
             });
@@ -341,9 +341,11 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                 .set('Authorization', `Bearer ${token}`)
                 .send({
                     nombre_completo: 'Masajista E2E',
-                    tipo_profesional: 'masajista',
+                    tipo_profesional_id: 10, // masajista (compatible con spa)
+                    telefono: '5587654321', // Teléfono válido
                     activo: true
-                });
+                })
+                .expect(201);
 
             profesionalId = profResponse.body.data.id;
 
@@ -409,7 +411,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                 .post('/api/v1/profesionales')
                 .send({
                     nombre_completo: 'Test',
-                    tipo_profesional: 'barbero'
+                    tipo_profesional_id: 1 // barbero
                 });
 
             expect(response.status).toBe(401);
@@ -421,7 +423,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                 .set('Authorization', 'Bearer token_falso_12345')
                 .send({
                     nombre_completo: 'Test',
-                    tipo_profesional: 'barbero'
+                    tipo_profesional_id: 1 // barbero
                 });
 
             expect(response.status).toBe(401);

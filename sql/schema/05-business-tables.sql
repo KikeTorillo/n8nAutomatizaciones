@@ -47,7 +47,7 @@ CREATE TABLE profesionales (
     -- ====================================================================
     -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL
     -- ====================================================================
-    tipo_profesional tipo_profesional NOT NULL, -- Tipo específico según industria
+    tipo_profesional_id INTEGER NOT NULL REFERENCES tipos_profesional(id), -- Tipo específico según industria (FK a tipos_profesional)
 
     licencias_profesionales JSONB DEFAULT '{}', -- Licencias y certificaciones
                                                -- Ej: {"cedula_profesional": "12345", "certificado_barberia": "ABC123"}
@@ -229,8 +229,8 @@ CREATE TABLE servicios (
     -- ====================================================================
     -- 🎯 SECCIÓN: COMPATIBILIDAD CON PROFESIONALES
     -- ====================================================================
-    tipos_profesional_autorizados tipo_profesional[] DEFAULT NULL,  -- Tipos de profesional que pueden brindar este servicio
-                                                                    -- NULL = todos los profesionales de la organización
+    tipos_profesional_autorizados INTEGER[] DEFAULT NULL,  -- IDs de tipos de profesional que pueden brindar este servicio (FK a tipos_profesional.id)
+                                                           -- NULL = todos los profesionales de la organización
 
     -- ====================================================================
     -- ⚙️ SECCIÓN: CONTROL Y ESTADO

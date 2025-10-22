@@ -66,7 +66,7 @@ router.delete('/:id',
 
 // ========== Rutas Autenticadas ==========
 
-router.get('/tipo/:tipo',
+router.get('/tipo/:tipoId',
     auth.authenticateToken,
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,

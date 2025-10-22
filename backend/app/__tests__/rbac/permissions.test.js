@@ -175,8 +175,8 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
           nombre_completo: `Prof Admin ${uniqueId}`,
-          tipo_profesional: 'barbero',
-          telefono: `${uniqueId.slice(-10)}`
+          tipo_profesional_id: 1, // barbero
+          telefono: `55${uniqueId.slice(-8)}`
         })
         .expect(201);
 
@@ -190,8 +190,8 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .set('Authorization', `Bearer ${propietarioToken}`)
         .send({
           nombre_completo: `Prof Propietario ${uniqueId}`,
-          tipo_profesional: 'barbero',
-          telefono: `${uniqueId.slice(-10)}`
+          tipo_profesional_id: 1, // barbero
+          telefono: `55${uniqueId.slice(-8)}`
         })
         .expect(201);
 
@@ -205,8 +205,8 @@ describe('RBAC - Control de Permisos por Rol', () => {
         .set('Authorization', `Bearer ${empleadoToken}`)
         .send({
           nombre_completo: `Prof Empleado ${uniqueId}`,
-          tipo_profesional: 'barbero',
-          telefono: `${uniqueId.slice(-10)}`
+          tipo_profesional_id: 1, // barbero
+          telefono: `55${uniqueId.slice(-8)}`
         });
 
       // Debe fallar con 403 (Forbidden)

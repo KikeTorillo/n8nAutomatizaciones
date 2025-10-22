@@ -10,14 +10,14 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 16 Octubre 2025
+**Actualizado**: 21 Octubre 2025
 
 | Componente | Estado | Métricas Reales |
 |------------|--------|-----------------|
-| **Backend API** | ✅ Operativo | 10 módulos, 83 archivos, 6 middlewares |
-| **Frontend React** | ✅ Operativo | 40 componentes, 20 páginas, 9 hooks |
-| **Base de Datos** | ✅ Operativo | 15 tablas, 20 RLS policies, 99 índices, 23 triggers |
-| **Tests Backend** | ✅ **475/475 (100%)** | 22 suites, ~47s |
+| **Backend API** | ✅ Operativo | 12 módulos, 72 archivos, 33 funciones middleware |
+| **Frontend React** | ✅ Operativo | 45 componentes, 22 páginas, 11 hooks |
+| **Base de Datos** | ✅ Operativo | 17 tablas, 22 RLS policies, 106 índices, 27 triggers |
+| **Tests Backend** | ✅ **546 casos (100%)** | 22 archivos, 157 suites, ~47s |
 | **Sistema IA** | ✅ Operativo | n8n + Evolution API |
 | **Docker** | ✅ Running | 7 contenedores |
 
@@ -28,24 +28,24 @@
 ### Frontend
 - **Framework**: React 19.1.1 + Vite 7.1.7
 - **Routing**: React Router DOM 7.9.4
-- **State**: Zustand 5.0.8 + TanStack React Query 5.90.2
+- **State**: Zustand 5.0.8 (UI) + TanStack React Query 5.90.2 (server)
 - **Forms**: React Hook Form 7.64.0 + Zod 4.1.12
-- **HTTP**: Axios 1.12.2 (interceptores JWT)
+- **HTTP**: Axios 1.12.2 (interceptores JWT auto-refresh)
 - **UI**: Tailwind CSS 3.4.18 + Lucide Icons + Framer Motion 12.23.22
 
 ### Backend
 - **Runtime**: Node.js + Express.js
 - **Auth**: JWT (7d access + 30d refresh)
 - **Validación**: Joi schemas modulares
-- **Testing**: Jest + Supertest
+- **Testing**: Jest + Supertest (546 casos)
 - **Logs**: Winston (JSON structured)
 
 ### Base de Datos
 - **PostgreSQL 17 Alpine**
-- **Multi-Tenant**: Row Level Security (RLS)
-- **Índices**: 99 (covering, GIN, trigram, UNIQUE parciales)
-- **Triggers**: 23 (auto-generación, timestamps, validaciones)
-- **Funciones**: 32 funciones PL/pgSQL
+- **Multi-Tenant**: Row Level Security (RLS) - 22 políticas
+- **Índices**: 106 (covering, GIN, trigram, UNIQUE parciales)
+- **Triggers**: 27 (auto-generación, timestamps, validaciones)
+- **Funciones**: 36 funciones PL/pgSQL
 
 ### IA Conversacional
 - **Orquestación**: n8n + Redis Queue
@@ -98,89 +98,110 @@ npm run format       # Aplicar Prettier
 
 ## 🏗 Arquitectura del Sistema
 
-### Módulos Backend (10)
+### Módulos Backend (12)
 
 **Controllers/Models/Routes/Schemas:**
-- `auth` - Autenticación y tokens JWT
-- `usuarios` - Gestión de usuarios
-- `organizaciones` - Multi-tenancy
-- `profesionales` - Prestadores de servicios
-- `servicios` - Catálogo de servicios
-- `clientes` - Base de clientes
-- `horarios-profesionales` - Disponibilidad
-- `citas` - Operaciones de agendamiento (modular: base, operacional, recordatorios)
-- `bloqueos-horarios` - Bloqueos de disponibilidad
-- `planes` - Planes y suscripciones
+1. `auth` - Autenticación JWT + password recovery
+2. `usuarios` - Gestión de usuarios + RBAC
+3. `organizaciones` - Multi-tenancy
+4. `tipos-profesional` - Tipos dinámicos (33 sistema + personalizados) con filtrado por industria
+5. `tipos-bloqueo` - Tipos de bloqueo dinámicos
+6. `profesionales` - Prestadores de servicios
+7. `servicios` - Catálogo de servicios
+8. `clientes` - Base de clientes con búsqueda fuzzy
+9. `horarios-profesionales` - Disponibilidad semanal
+10. `citas` - Agendamiento modular (base, operacional, recordatorios, helpers)
+11. `bloqueos-horarios` - Gestión de bloqueos temporales
+12. `planes` - Planes y suscripciones
 
-**Middlewares (6 middlewares):**
-- asyncHandler, auth (8 funciones), tenant (7 funciones)
-- validation (8 funciones), rateLimiting (9 funciones)
+**Middlewares (6 archivos, 33 funciones):**
+- `asyncHandler` (1) - Error handling wrapper
+- `auth` (8) - JWT + roles + blacklist
+- `tenant` (7) - RLS context + multi-tenant
+- `validation` (8) - Joi validation + sanitization
+- `rateLimiting` (9) - Rate limits por IP/usuario/org/plan
 
 **Helpers Críticos:**
-- RLSContextManager (v2.0): Gestión automática de RLS con transacciones
-- RLSHelper: Control manual fino de RLS
-- ResponseHelper, ValidationHelper, DateHelper, CodeGenerator
+- `RLSContextManager` (v2.0) - Gestión automática RLS con transacciones
+- `RLSHelper` (v1.0 legacy) - Control manual RLS
+- `helpers.js` - 8 clases (Response, Validation, Date, CodeGenerator, Sanitize, Pagination, Error, Organizacion)
 
-**Patrones Implementados:**
-- ✅ 100% controllers usan `asyncHandler`
-- ✅ 100% endpoints usan schemas Joi modulares
-- ✅ RLS directo en entidades simples
-- ✅ `RLSContextManager` o `RLSHelper.withBypass()` en queries multi-tabla
-
-### Base de Datos (15 Tablas)
+### Base de Datos (17 Tablas)
 
 ```
-Core:           organizaciones, usuarios, planes_subscripcion
-Negocio:        profesionales, servicios, clientes, horarios_profesionales
-Operaciones:    citas, bloqueos_horarios, servicios_profesionales
-Subscripciones: subscripciones, historial_subscripciones, metricas_uso_organizacion
-Sistema:        eventos_sistema, eventos_sistema_archivo
+Core (3):           organizaciones, usuarios, planes_subscripcion
+Catálogos (2):      tipos_profesional, tipos_bloqueo
+Negocio (4):        profesionales, servicios, clientes, servicios_profesionales
+Operaciones (2):    citas, horarios_profesionales, bloqueos_horarios
+Subscripciones (3): subscripciones, historial_subscripciones, metricas_uso_organizacion
+Sistema (2):        eventos_sistema, eventos_sistema_archivo
 ```
 
 **Seguridad:**
-- 20 Políticas RLS (multi-tenant + anti SQL-injection REGEX `^[0-9]+$`)
-- 23 Triggers (auto-generación códigos `ORG001-20251013-001`)
-- 99 Índices optimizados (GIN full-text, trigram fuzzy search, covering)
+- 22 Políticas RLS (multi-tenant + bypass para super_admin/funciones)
+- 27 Triggers (auto-generación códigos, timestamps, validaciones, protección tipos sistema)
+- 106 Índices (GIN full-text, trigram fuzzy search, covering, parciales)
+- 36 Funciones PL/pgSQL (validaciones, mantenimiento, auditoría)
+- 8 ENUMs (171 valores: roles, industrias, estados, tipos)
 
-### Arquitectura Frontend
+### Frontend (45 componentes, 22 páginas, 11 hooks)
 
-**Componentes por Módulo (40 componentes):**
+**Componentes por Módulo:**
 ```
-components/
-├── auth/             # 1: ProtectedRoute
-├── bloqueos/         # 6: Calendar, List, Form, Filters, Detail
-├── citas/            # 10: Calendar (Día/Mensual), List, Form, Confirmar, Completar, NoShow
-├── clientes/         # 5: Card, Form, List, WalkIn
-├── common/           # 2: LoadingSpinner, ToastContainer
-├── dashboard/        # 4: CitasDelDia, LimitProgressBar, StatCard
-├── forms/            # 1: FormField (React Hook Form wrapper)
-├── profesionales/    # 5: List, Form, Stats, Horarios, Servicios
-├── servicios/        # 3: List, Form, Profesionales
-└── ui/               # 6: Button, Input, Modal, Select, Toast
+auth (2)           - ProtectedRoute, PasswordStrengthIndicator
+citas (10)         - Calendar (Día/Mensual), Forms, Modales acciones
+clientes (4)       - Card, Form, List, WalkInModal
+profesionales (5)  - List, Form, Stats, Horarios, Servicios
+servicios (3)      - List, Form, Profesionales asignados
+bloqueos (6)       - Calendar, Forms, Filters, Detail, List
+dashboard (4)      - CitasDelDia, LimitProgressBar, StatCard
+common (2)         - LoadingSpinner, ToastContainer
+forms (1)          - FormField (React Hook Form wrapper)
+ui (6)             - Button, Input, Modal, Select, Toast
 ```
 
-**Hooks Personalizados (9 hooks):**
-- useAuth, useBloqueos, useCitas, useClientes, useDashboard
-- useHorarios, useProfesionales, useServicios, useToast
+**Hooks Personalizados (11):**
+- `useAuth` - Login/logout
+- `useCitas` - CRUD + estados + recordatorios (19 funciones)
+- `useClientes` - CRUD + búsquedas (9 funciones)
+- `useBloqueos` - CRUD + filtros avanzados (11 funciones)
+- `useProfesionales` - CRUD (6 funciones)
+- `useServicios` - CRUD + asignaciones (9 funciones)
+- `useHorarios` - CRUD + configuración (7 funciones)
+- `useDashboard` - Stats + datos (6 funciones) ⚠️ Tiene duplicados
+- `useTiposProfesional` - CRUD tipos dinámicos con filtrado automático por industria
+- `useTiposBloqueo` - CRUD tipos de bloqueo
+- `useToast` - Notificaciones
 
-**Páginas (20 páginas):**
-- auth/Login, bloqueos/BloqueosPage, citas/CitasPage
-- clientes/ (3 páginas: List, Form, Detail)
-- dashboard/Dashboard, landing/LandingPage
-- onboarding/ (9 pasos + flow), profesionales/ProfesionalesPage
-- servicios/ServiciosPage
+**Páginas (22):**
+- Auth (3): Login, ForgotPassword, ResetPassword
+- Dashboard (1)
+- Clientes (3): List, Form, Detail
+- Profesionales (1), Servicios (1), Citas (1), Bloqueos (1)
+- Onboarding (10): Flow + 9 pasos
+- Landing (1)
 
-**Utilidades:**
-- lib/: constants, utils, validations (Zod schemas)
-- utils/: bloqueoHelpers, bloqueoValidators, citaValidators
-- utils/: dateHelpers, formatters, arrayDiff
+**Servicios API (82 métodos en 12 módulos):**
+- authApi, usuariosApi, organizacionesApi
+- tiposProfesionalApi, tiposBloqueoApi
+- profesionalesApi, serviciosApi, horariosApi
+- clientesApi, citasApi, bloqueosApi
+- planesApi, whatsappApi
 
-**Patrones:**
-- ✅ React Query para datos del servidor
-- ✅ Zustand para estado UI local
-- ✅ Axios interceptor para auto-refresh JWT
-- ✅ Zod schemas consistentes con Joi backend
-- ✅ Atomic Design implícito (ui → forms → components → pages)
+**Stores Zustand (2):**
+- `authStore` - User, tokens, roles
+- `onboardingStore` - Flujo multi-paso
+
+**Utilidades (9 archivos, 2,301 líneas):**
+- `lib/constants.js` - Roles, estados, industrias (⚠️ TIPOS_PROFESIONAL deprecated)
+- `lib/validations.js` - Schemas Zod (379 líneas)
+- `lib/utils.js` - Utilidades generales
+- `utils/dateHelpers.js` - 20+ funciones fechas (528 líneas)
+- `utils/citaValidators.js` - Validadores citas (549 líneas)
+- `utils/bloqueoHelpers.js` - Validadores bloqueos (390 líneas)
+- `utils/bloqueoValidators.js` - Schemas Zod bloqueos (226 líneas)
+- `utils/formatters.js` - Formateo dinero, números, teléfono
+- `utils/arrayDiff.js` - Diferencias de arrays
 
 ---
 
@@ -188,7 +209,7 @@ components/
 
 ### Row Level Security (RLS)
 
-**Middleware obligatorio:**
+**Middleware obligatorio en rutas:**
 ```javascript
 router.post('/endpoint',
     auth.authenticateToken,      // 1. JWT
@@ -199,41 +220,75 @@ router.post('/endpoint',
 );
 ```
 
-**Patrón RLS en Models:**
+**Patrón RLS en Models (usar RLSContextManager v2.0):**
 ```javascript
-// Patrón recomendado: RLSContextManager (v2.0)
-const cliente = await RLSContextManager.query(orgId, async (db) => {
-    const result = await db.query('SELECT * FROM clientes WHERE id = $1', [id]);
-    return result.rows[0];
+// Query simple
+const data = await RLSContextManager.query(orgId, async (db) => {
+    return await db.query('SELECT * FROM clientes WHERE id = $1', [id]);
 });
 
-// Transacciones con RLS
+// Transacción
 await RLSContextManager.transaction(orgId, async (db) => {
     await db.query('INSERT INTO clientes ...');
     await db.query('INSERT INTO citas ...');
 });
 
-// Bypass RLS (queries multi-tabla)
+// Bypass (JOINs multi-tabla)
 const data = await RLSContextManager.withBypass(async (db) => {
-    const query = 'SELECT * FROM org o LEFT JOIN sub s ON o.id = s.org_id';
-    return await db.query(query);
+    return await db.query('SELECT * FROM org o LEFT JOIN sub s ...');
 });
 ```
 
-**⚠️ CRÍTICO**:
-- Usar `RLSContextManager` en nuevos desarrollos (gestión automática)
-- Queries con JOINs DEBEN usar `withBypass()`
-
 ### RBAC (Roles)
 
-| Recurso | super_admin | propietario/admin | empleado | solo_lectura |
-|---------|-------------|-------------------|----------|--------------|
-| Organizaciones | ALL (todas) | ALL (su org) | READ | READ |
+| Recurso | super_admin | admin/propietario | empleado | cliente |
+|---------|-------------|-------------------|----------|---------|
+| Organizaciones | ALL | SU ORG | READ | - |
 | Usuarios | ALL | CREATE/UPDATE | - | - |
-| Profesionales | ALL | ALL | READ | READ |
-| Servicios | ALL | ALL | READ | READ |
-| Clientes | ALL | ALL | ALL | READ |
-| Citas | ALL | ALL | ALL | READ |
+| Profesionales | ALL | ALL | READ | - |
+| Servicios | ALL | ALL | READ | - |
+| Clientes | ALL | ALL | ALL | READ (propio) |
+| Citas | ALL | ALL | ALL | READ (propias) |
+
+---
+
+## 🎯 Características Clave
+
+### 1. Tipos Dinámicos (Profesionales + Bloqueos)
+
+**Sistema híbrido:**
+- Tipos del Sistema: 33 profesionales + 5 bloqueos (no editables)
+- Tipos Personalizados: Cada org crea los suyos
+- Filtrado Automático: Por industria (frontend) y búsquedas
+
+**Filtrado por Industria:**
+```javascript
+// Hook con filtrado automático
+const { data: tipos } = useTiposProfesional({ activo: true });
+// Automáticamente filtra por tipo_industria de la org actual
+```
+
+**Resultado:** Barbería → muestra solo: Barbero, Estilista Masculino, Otro (3 de 33)
+
+### 2. Auto-generación de Códigos
+
+**Códigos únicos automáticos (trigger):**
+```javascript
+// ✅ CORRECTO - NO enviar codigo_cita
+const cita = await CitaModel.crear({
+    cliente_id: 1,
+    profesional_id: 2,
+    fecha_cita: '2025-10-13'
+});
+// cita.codigo_cita = "ORG001-20251013-001" (auto-generado)
+```
+
+### 3. Búsqueda Fuzzy (Clientes)
+
+**Trigram + normalización de teléfonos:**
+- Índices GIN para búsqueda full-text
+- Función `normalizar_telefono()` para búsquedas flexibles
+- Búsqueda por similitud en nombre con trigram
 
 ---
 
@@ -243,30 +298,19 @@ const data = await RLSContextManager.withBypass(async (db) => {
 
 **1. Controllers confían en RLS**
 ```javascript
-// ✅ CORRECTO (RLS filtra automáticamente)
+// ✅ CORRECTO - RLS filtra automáticamente
 const query = `SELECT * FROM profesionales WHERE activo = true`;
 
-// ❌ INCORRECTO (redundante)
+// ❌ INCORRECTO - redundante
 const query = `SELECT * FROM profesionales WHERE organizacion_id = $1 AND activo = true`;
 ```
 
-**2. Códigos auto-generados**
-```javascript
-// ✅ CORRECTO - NO enviar codigo_cita
-const cita = await CitaModel.crear({
-    cliente_id: 1,
-    profesional_id: 2,
-    fecha_cita: '2025-10-13'
-});
-// cita.codigo_cita = "ORG001-20251013-001" (auto-generado por trigger)
-```
+**2. NO enviar códigos auto-generados** (codigo_cita, codigo_bloqueo, etc.)
 
-**3. Wrapping de métodos en rutas**
+**3. Wrapping en rutas**
 ```javascript
 // ✅ CORRECTO - Wrap con arrow function si usa `this`
-router.get('/:id/estadisticas',
-    auth.authenticateToken,
-    tenant.setTenantContext,
+router.get('/:id/stats', auth.authenticateToken, tenant.setTenantContext,
     (req, res, next) => Controller.obtenerEstadisticas(req, res, next)
 );
 ```
@@ -275,47 +319,28 @@ router.get('/:id/estadisticas',
 
 **1. Sanitización de campos opcionales**
 ```javascript
-// ✅ CORRECTO - Backend Joi rechaza ""
-const createMutation = useMutation({
-  mutationFn: async (data) => {
-    const sanitizedData = {
-      ...data,
-      email: data.email?.trim() || undefined,
-      telefono: data.telefono?.trim() || undefined,
-    };
-    return api.crear(sanitizedData);
-  }
-});
+// ✅ Backend Joi rechaza "" - Sanitizar a undefined
+const sanitizedData = {
+  ...data,
+  email: data.email?.trim() || undefined,
+  telefono: data.telefono?.trim() || undefined,
+};
 ```
 
-**2. Invalidación de cache**
+**2. Invalidación de cache React Query**
 ```javascript
-// ✅ CORRECTO - Refrescar datos después de mutation
-const createMutation = useMutation({
-  mutationFn: api.crear,
-  onSuccess: () => {
-    queryClient.invalidateQueries({ queryKey: ['recursos'] });
-  }
-});
+onSuccess: () => {
+  queryClient.invalidateQueries({ queryKey: ['recursos'] });
+}
 ```
 
-**3. Validación con Zod**
+**3. Usar hooks específicos**
 ```javascript
-// ✅ CORRECTO - Usar schemas Zod consistentes
-import { citaFormSchema } from '@/lib/validations';
+// ✅ CORRECTO - Hook con filtrado automático
+const { data: tipos } = useTiposProfesional({ activo: true });
 
-const form = useForm({
-  resolver: zodResolver(citaFormSchema),
-  defaultValues: {...}
-});
-```
-
-**4. Helpers de utilidades**
-```javascript
-// ✅ Usar helpers específicos de módulo
-import { validarSolapamientoBloqueos } from '@/utils/bloqueoHelpers';
-import { formatearFecha, calcularDuracionMinutos } from '@/utils/dateHelpers';
-import { validarTransicionEstado } from '@/utils/citaValidators';
+// ❌ DEPRECATED - No usar constante
+import { TIPOS_PROFESIONAL } from '@/lib/constants'; // DEPRECATED
 ```
 
 ---
@@ -324,108 +349,131 @@ import { validarTransicionEstado } from '@/utils/citaValidators';
 
 ### Backend
 - [ ] **Routes**: Middleware correcto (auth → tenant → rateLimit → validation)
-- [ ] **Controller**: Usa `asyncHandler` y `ResponseHelper`
-- [ ] **Model**: RLS directo o `RLSHelper.withBypass()` según caso
-- [ ] **Schema**: Joi modular con `commonSchemas`
-- [ ] **Tests**: Happy path + edge cases con `db-helper`
+- [ ] **Controller**: Usa `asyncHandler` + `ResponseHelper`
+- [ ] **Model**: `RLSContextManager` (queries) o `.withBypass()` (JOINs)
+- [ ] **Schema**: Joi modular con validaciones específicas
+- [ ] **Tests**: Happy path + edge cases + multi-tenant
 
 ### Frontend
 - [ ] **Página**: React Query + estados (loading, error, success)
-- [ ] **Componentes**: Pequeños, reutilizables, props tipadas
+- [ ] **Componentes**: Pequeños, reutilizables, props claras
 - [ ] **Forms**: React Hook Form + Zod + sanitización
-- [ ] **API**: Métodos en `endpoints.js` + invalidación cache
+- [ ] **Hook**: Custom hook con React Query
+- [ ] **API**: Endpoints en `services/api/endpoints.js`
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Error: Tests con timeout
+### Tests con timeout
 ```bash
 # ✅ Usar npm test (configura NODE_ENV=test)
 docker exec back npm test
-
-# ❌ NO usar npx jest directamente
 ```
 
-### Error: "Organización no encontrada" en queries multi-tabla
+### "Organización no encontrada" en queries multi-tabla
 ```javascript
-// ✅ Solución: Usar RLSHelper.withBypass()
-return await RLSHelper.withBypass(db, async (db) => {
-    const query = `SELECT ... FROM org o LEFT JOIN sub s ON ...`;
-    return await db.query(query, [id]);
+// ✅ Usar withBypass() para JOINs
+return await RLSContextManager.withBypass(async (db) => {
+    return await db.query('SELECT ... FROM org o LEFT JOIN sub s ...');
 });
 ```
 
-### Error: Backend 400 "field is not allowed to be empty"
+### Backend 400 "field is not allowed to be empty"
 ```javascript
-// ✅ Solución: Sanitizar "" a undefined antes de enviar
-const sanitized = {
-  ...data,
-  email: data.email?.trim() || undefined
-};
+// ✅ Sanitizar "" a undefined antes de enviar
+email: data.email?.trim() || undefined
 ```
+
+---
+
+## 🐛 Problemas Conocidos
+
+### Frontend
+
+**1. Duplicados en useDashboard.js** ⚠️ CRÍTICO
+- `useCitasDelDia()` - Duplicado de useCitas.js (diferentes queryKeys)
+- `useProfesionales()` - Duplicado de useProfesionales.js
+- `useClientes()` - Duplicado de useClientes.js
+- **Acción**: Eliminar de useDashboard.js, importar de hooks originales
+
+**2. TIPOS_PROFESIONAL deprecated en constants.js**
+- Array hard-coded (6 tipos) vs 33+ tipos dinámicos
+- **Acción**: Usar hook `useTiposProfesional()` o `useTiposSistema()`
+
+### Backend
+
+**1. Inconsistencia de nomenclatura**
+- `TiposProfesionalController.js` (PascalCase)
+- vs `auth.controller.js` (kebab-case)
+- **Acción**: Renombrar a `tipos-profesional.controller.js`
+
+**2. TiposBloqueoModel duplicado**
+- `/backend/app/models/TiposBloqueoModel.js` (216 líneas)
+- vs `/backend/app/database/tipos-bloqueo.model.js`
+- **Acción**: Mover a `/database/` y actualizar import en controller
 
 ---
 
 ## 📚 Archivos Clave
 
 ### Backend
-| Ruta | Descripción |
-|------|-------------|
-| `/backend/app/utils/rlsContextManager.js` | RLS Manager v2.0 (recomendado) |
-| `/backend/app/utils/rlsHelper.js` | RLS Helper v1.0 (legacy) |
-| `/backend/app/utils/helpers.js` | 8 helper classes (Response, Validation, Date, etc.) |
-| `/backend/app/middleware/` | 6 middlewares (auth, tenant, validation, etc.) |
-| `/backend/app/__tests__/helpers/db-helper.js` | Helpers de testing |
-| `/backend/RLS-HELPERS-GUIDE.md` | Guía completa RLS (10,857 líneas) |
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| RLS Manager | `backend/app/utils/rlsContextManager.js` | v2.0 - Recomendado |
+| Helpers | `backend/app/utils/helpers.js` | 8 clases helper |
+| Middleware Index | `backend/app/middleware/index.js` | Orquestador central |
+| DB Helper Test | `backend/app/__tests__/helpers/db-helper.js` | Utilidades testing |
 
 ### Frontend
-| Ruta | Descripción |
-|------|-------------|
-| `/frontend/src/services/api/client.js` | Axios + interceptor JWT auto-refresh |
-| `/frontend/src/lib/validations.js` | Schemas Zod (onboarding, login, cliente) |
-| `/frontend/src/utils/citaValidators.js` | Validaciones de citas (550 líneas) |
-| `/frontend/src/utils/bloqueoValidators.js` | Validaciones de bloqueos (234 líneas) |
-| `/frontend/src/utils/dateHelpers.js` | Helpers de fechas (529 líneas) |
-| `/frontend/src/pages/onboarding/OnboardingFlow.jsx` | Flujo de 9 pasos |
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| API Client | `frontend/src/services/api/client.js` | Axios + auto-refresh JWT |
+| Validations | `frontend/src/lib/validations.js` | Schemas Zod |
+| Date Helpers | `frontend/src/utils/dateHelpers.js` | 20+ funciones fechas |
+| Auth Store | `frontend/src/stores/authStore.js` | Zustand auth state |
 
 ### Base de Datos
-| Ruta | Descripción |
-|------|-------------|
-| `/sql/schema/` | 14 archivos SQL (tablas, índices, triggers, RLS) |
-| `/sql/schema/02-functions.sql` | 32 funciones PL/pgSQL |
-| `/sql/schema/07-indexes.sql` | 99 índices optimizados |
-| `/sql/schema/08-rls-policies.sql` | 20 políticas RLS |
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| Functions | `sql/schema/02-functions.sql` | 36 funciones PL/pgSQL |
+| Indexes | `sql/schema/07-indexes.sql` | 106 índices optimizados |
+| RLS Policies | `sql/schema/08-rls-policies.sql` | 22 políticas RLS |
+| Triggers | `sql/schema/09-triggers.sql` | 27 triggers |
 
 ---
 
----
-
-## 📈 Métricas del Proyecto
+## 📈 Métricas Consolidadas
 
 ### Backend
-- **Archivos**: 83 archivos funcionales
-- **Controllers**: 13 archivos (10 módulos + 3 sub-controllers de citas)
-- **Models**: 14 archivos (10 módulos + 4 sub-models de citas)
-- **Middlewares**: 6 middlewares con 32 funciones totales
-- **Tests**: 475 tests en 22 suites (100% pass)
+- **Archivos funcionales**: 72 (sin tests/logs)
+- **Controllers**: 15 (12 módulos + 3 sub-citas)
+- **Models**: 15 (13 modelos + 2 indexes)
+- **Routes**: 13 archivos
+- **Schemas**: 11 archivos (2,736 líneas)
+- **Middlewares**: 6 archivos, 33 funciones
+- **Utils**: 5 archivos (1,371 líneas)
+- **Tests**: 22 archivos, 546 casos, 157 suites
 
 ### Frontend
-- **Componentes**: 40 componentes organizados en 10 módulos
-- **Páginas**: 20 páginas (auth, dashboard, CRUD de 6 módulos, onboarding 9 pasos)
-- **Hooks**: 9 hooks personalizados con React Query
-- **Utilidades**: 6 archivos (1,750 líneas de helpers y validadores)
+- **Componentes**: 45 en 10 módulos
+- **Páginas**: 22 (auth 3, onboarding 10, CRUD 8, landing 1)
+- **Hooks**: 11 hooks, 83 funciones totales
+- **API Endpoints**: 82 métodos en 12 módulos
+- **Stores**: 2 (auth, onboarding)
+- **Utilidades**: 9 archivos (2,301 líneas)
 
 ### Base de Datos
-- **Tablas**: 15 tablas principales
-- **ENUMs**: 9 tipos enumerados
-- **RLS Policies**: 20 políticas activas en 13 tablas
-- **Triggers**: 23 triggers (validación + auto-generación + métricas)
-- **Funciones**: 32 funciones PL/pgSQL
-- **Índices**: 99 índices (GIN full-text, trigram, covering, UNIQUE parciales)
+- **Tablas**: 17
+- **ENUMs**: 8 (171 valores)
+- **Funciones**: 36 PL/pgSQL
+- **Triggers**: 27
+- **Índices**: 106
+- **RLS Policies**: 22
+- **Archivos SQL**: 15
 
 ---
 
-**Versión**: 4.0
-**Última actualización**: 16 Octubre 2025
-**Estado**: ✅ Production Ready | 475/475 tests (100%)
+**Versión**: 5.0
+**Última actualización**: 21 Octubre 2025
+**Estado**: ✅ Production Ready | 546/546 tests (100%)

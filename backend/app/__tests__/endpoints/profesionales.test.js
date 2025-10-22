@@ -75,7 +75,7 @@ describe('Endpoints de Profesionales', () => {
     // Crear profesional de prueba
     testProfesional = await createTestProfesional(client, testOrg.id, {
       nombre_completo: 'Profesional Test',
-      tipo_profesional: 'barbero',
+      tipo_profesional_id: 1, // barbero
       telefono: '5512345678'
     });
 
@@ -119,8 +119,8 @@ describe('Endpoints de Profesionales', () => {
       const uniqueId = getUniqueTestId();
       const profesionalData = {
         nombre_completo: `Nuevo Profesional ${uniqueId}`,
-        tipo_profesional: 'estilista',
-        telefono: `${uniqueId.slice(-10)}`,
+        tipo_profesional_id: 2, // estilista
+        telefono: `55${uniqueId.slice(-8)}`, // Asegurar que empiece con 55 (celular válido)
         email: `profesional-${uniqueId}@test.com`
       };
 
@@ -133,7 +133,7 @@ describe('Endpoints de Profesionales', () => {
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.data).toBeDefined();
       expect(response.body.data.nombre_completo).toBe(profesionalData.nombre_completo);
-      expect(response.body.data.tipo_profesional).toBe(profesionalData.tipo_profesional);
+      expect(response.body.data.tipo_profesional_id).toBe(profesionalData.tipo_profesional_id);
     });
 
     test('Falla sin autenticación', async () => {
@@ -143,7 +143,7 @@ describe('Endpoints de Profesionales', () => {
         .post('/api/v1/profesionales')
         .send({
           nombre_completo: `Profesional ${uniqueId}`,
-          tipo_profesional: 'barbero',
+          tipo_profesional_id: 1, // barbero
           telefono: `${uniqueId.slice(-10)}`
         })
         .expect(401);
@@ -158,7 +158,7 @@ describe('Endpoints de Profesionales', () => {
         .post('/api/v1/profesionales')
         .set('Authorization', `Bearer ${adminToken}`)
         .send({
-          tipo_profesional: 'barbero',
+          tipo_profesional_id: 1, // barbero
           telefono: `${uniqueId.slice(-10)}`
         })
         .expect(400);
@@ -244,7 +244,7 @@ describe('Endpoints de Profesionales', () => {
     test('Actualizar profesional exitosamente con rol admin', async () => {
       const updateData = {
         nombre_completo: 'Profesional Actualizado',
-        tipo_profesional: 'estilista'
+        tipo_profesional_id: 2 // estilista
       };
 
       const response = await request(app)
@@ -271,10 +271,10 @@ describe('Endpoints de Profesionales', () => {
   // Tests de Buscar por Tipo
   // ============================================================================
 
-  describe('GET /api/v1/profesionales/tipo/:tipo', () => {
+  describe('GET /api/v1/profesionales/tipo/:tipoId', () => {
     test('Buscar profesionales por tipo', async () => {
       const response = await request(app)
-        .get('/api/v1/profesionales/tipo/barbero')
+        .get('/api/v1/profesionales/tipo/1') // 1 = barbero
         .set('Authorization', `Bearer ${userToken}`)
         .expect(200);
 
@@ -284,7 +284,7 @@ describe('Endpoints de Profesionales', () => {
 
     test('Falla sin autenticación', async () => {
       const response = await request(app)
-        .get('/api/v1/profesionales/tipo/barbero')
+        .get('/api/v1/profesionales/tipo/1') // 1 = barbero
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
@@ -328,7 +328,7 @@ describe('Endpoints de Profesionales', () => {
       const tempClient = await global.testPool.connect();
       const tempProfesional = await createTestProfesional(tempClient, testOrg.id, {
         nombre_completo: `Temp Profesional ${uniqueId}`,
-        tipo_profesional: 'barbero'
+        tipo_profesional_id: 1 // barbero
       });
       tempClient.release();
 

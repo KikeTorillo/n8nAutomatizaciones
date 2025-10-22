@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import FormField from '@/components/forms/FormField';
 import { useCrearProfesional, useActualizarProfesional, useProfesional } from '@/hooks/useProfesionales';
+import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -30,11 +31,15 @@ const COLORES_CALENDARIO = [
 
 /**
  * Schema de validación Zod para CREAR profesional
+ * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
  */
 const profesionalCreateSchema = z.object({
   nombre: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
   apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
-  tipo_profesional: z.string().max(50, 'Máximo 50 caracteres').optional(),
+  tipo_profesional_id: z.number({
+    required_error: 'Debes seleccionar un tipo de profesional',
+    invalid_type_error: 'Tipo inválido',
+  }).int().positive('Debes seleccionar un tipo de profesional'),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#3b82f6'),
@@ -44,11 +49,12 @@ const profesionalCreateSchema = z.object({
 
 /**
  * Schema de validación Zod para EDITAR profesional
+ * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
  */
 const profesionalEditSchema = z.object({
   nombre: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres').optional(),
   apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres').optional(),
-  tipo_profesional: z.string().max(50, 'Máximo 50 caracteres').optional(),
+  tipo_profesional_id: z.number().int().positive().optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').optional(),
@@ -73,6 +79,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
 
+  // Fetch tipos de profesional (dinámicos desde DB)
+  const { data: tiposProfesional = [], isLoading: loadingTipos } = useTiposProfesional({ activo: true });
+
   // Fetch datos del profesional en modo edición
   const { data: profesionalData, isLoading: loadingProfesional } = useProfesional(profesionalId);
 
@@ -94,7 +103,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       : {
           nombre: '',
           apellidos: '',
-          tipo_profesional: '',
+          tipo_profesional_id: undefined, // Integer ID (requerido en create)
           email: '',
           telefono: '',
           color_calendario: COLORES_CALENDARIO[0],
@@ -111,7 +120,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         reset({
           nombre: '',
           apellidos: '',
-          tipo_profesional: '',
+          tipo_profesional_id: undefined,
           email: '',
           telefono: '',
           color_calendario: COLORES_CALENDARIO[0],
@@ -135,7 +144,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       reset({
         nombre,
         apellidos,
-        tipo_profesional: profesionalData.tipo_profesional || '',
+        tipo_profesional_id: profesionalData.tipo_profesional_id || undefined, // Integer ID
         email: profesionalData.email || '',
         telefono: profesionalData.telefono || '',
         color_calendario: profesionalData.color_calendario || COLORES_CALENDARIO[0],
@@ -171,7 +180,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       // Sanitizar campos opcionales vacíos
       const sanitized = {
         nombre_completo,
-        tipo_profesional: data.tipo_profesional?.trim() || undefined,
+        tipo_profesional_id: data.tipo_profesional_id, // Integer ID (requerido)
         email: data.email?.trim() || undefined,
         telefono: data.telefono?.trim() || undefined,
         color_calendario: data.color_calendario,
@@ -258,12 +267,39 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 />
               </div>
 
-              {/* Tipo de Profesional */}
-              <FormField
-                name="tipo_profesional"
+              {/* Tipo de Profesional - Select dinámico desde DB */}
+              <Controller
+                name="tipo_profesional_id"
                 control={control}
-                label="Tipo de Profesional (Opcional)"
-                placeholder="Ej: Barbero, Estilista"
+                render={({ field }) => (
+                  <div>
+                    <label htmlFor="tipo_profesional_id" className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo de Profesional <span className="text-red-500">*</span>
+                    </label>
+                    <select
+                      {...field}
+                      id="tipo_profesional_id"
+                      value={field.value || ''}
+                      onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                      disabled={loadingTipos}
+                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="">
+                        {loadingTipos ? 'Cargando tipos...' : 'Selecciona un tipo'}
+                      </option>
+                      {tiposProfesional.map((tipo) => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nombre} {tipo.es_sistema ? '' : '(Personalizado)'}
+                        </option>
+                      ))}
+                    </select>
+                    {errors.tipo_profesional_id && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.tipo_profesional_id.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               />
 
               {/* Email y Teléfono */}

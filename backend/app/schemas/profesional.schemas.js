@@ -1,6 +1,6 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
-const { TIPOS_PROFESIONAL, FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
+const { FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
 
 // POST /profesionales
 const crear = {
@@ -29,8 +29,9 @@ const crear = {
             .optional()
             .allow(null)
             .trim(),
-        tipo_profesional: Joi.string()
-            .valid(...TIPOS_PROFESIONAL)
+        tipo_profesional_id: Joi.number()
+            .integer()
+            .positive()
             .required(),
         licencias_profesionales: Joi.object()
             .optional()
@@ -113,8 +114,9 @@ const actualizar = {
             .max(LIMITES.DOCUMENTO_MAX)
             .trim()
             .allow(null),
-        tipo_profesional: Joi.string()
-            .valid(...TIPOS_PROFESIONAL),
+        tipo_profesional_id: Joi.number()
+            .integer()
+            .positive(),
         licencias_profesionales: Joi.object(),
         años_experiencia: Joi.number()
             .integer()
@@ -163,8 +165,9 @@ const listar = {
         disponible_online: Joi.string()
             .valid('true', 'false')
             .optional(),
-        tipo_profesional: Joi.string()
-            .valid(...TIPOS_PROFESIONAL)
+        tipo_profesional_id: Joi.number()
+            .integer()
+            .positive()
             .optional(),
         busqueda: Joi.string()
             .min(2)
@@ -193,11 +196,12 @@ const obtenerPorId = {
     })
 };
 
-// GET /profesionales/tipo/:tipo
+// GET /profesionales/tipo/:tipoId
 const buscarPorTipo = {
     params: Joi.object({
-        tipo: Joi.string()
-            .valid(...TIPOS_PROFESIONAL)
+        tipoId: Joi.number()
+            .integer()
+            .positive()
             .required()
     }),
     query: Joi.object({

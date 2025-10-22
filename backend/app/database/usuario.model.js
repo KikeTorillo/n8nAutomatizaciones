@@ -199,10 +199,15 @@ class UsuarioModel {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             const query = `
-                SELECT id, email, nombre, apellidos, telefono,
-                       rol, organizacion_id, activo, email_verificado
-                FROM usuarios
-                WHERE id = $1 AND activo = TRUE
+                SELECT
+                    u.id, u.email, u.nombre, u.apellidos, u.telefono,
+                    u.rol, u.organizacion_id, u.activo, u.email_verificado,
+                    o.tipo_industria,
+                    o.nombre_comercial,
+                    o.plan_actual
+                FROM usuarios u
+                LEFT JOIN organizaciones o ON u.organizacion_id = o.id
+                WHERE u.id = $1 AND u.activo = TRUE
             `;
 
             const result = await db.query(query, [id]);
@@ -557,7 +562,7 @@ class UsuarioModel {
                     u.bloqueado_hasta, u.creado_en, u.actualizado_en,
                     p.id as profesional_id,
                     p.nombre_completo as profesional_nombre,
-                    p.tipo_profesional,
+                    p.tipo_profesional_id,
                     -- Calcular estado de bloqueo
                     CASE
                         WHEN u.bloqueado_hasta IS NULL THEN FALSE

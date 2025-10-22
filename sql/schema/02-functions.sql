@@ -293,79 +293,72 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- ====================================================================
--- 🏭 FUNCIÓN 6: VALIDAR_PROFESIONAL_INDUSTRIA
+-- 🏭 FUNCIÓN 6: VALIDAR_PROFESIONAL_INDUSTRIA (VERSIÓN 2.0)
 -- ====================================================================
--- Función para validar compatibilidad tipo profesional con industria
+-- Valida que el tipo_profesional_id sea compatible con la industria
+-- de la organización usando la tabla tipos_profesional.
+--
+-- 🎯 CAMBIOS vs VERSIÓN 1.0:
+-- • Consulta tabla tipos_profesional en lugar de ENUM
+-- • Valida array industrias_compatibles
+-- • Soporta tipos personalizados por organización
+-- • Mensajes de error más descriptivos
+--
+-- 🔄 USO: Trigger BEFORE INSERT/UPDATE en tabla profesionales
 -- ────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION validar_profesional_industria()
 RETURNS TRIGGER AS $$
 DECLARE
     industria_org industria_tipo;
+    tipo_info RECORD;
+    tipo_compatible BOOLEAN;
 BEGIN
-    -- Obtener la industria de la organización
+    -- 1. Obtener la industria de la organización
     SELECT tipo_industria INTO industria_org
     FROM organizaciones
     WHERE id = NEW.organizacion_id;
 
-    -- Validar compatibilidad según industria
-    CASE industria_org
-        WHEN 'barberia' THEN
-            IF NEW.tipo_profesional NOT IN ('barbero', 'estilista_masculino', 'estilista') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria barberia', NEW.tipo_profesional;
-            END IF;
+    IF industria_org IS NULL THEN
+        RAISE EXCEPTION 'No se encontró la organización con ID %', NEW.organizacion_id;
+    END IF;
 
-        WHEN 'salon_belleza' THEN
-            IF NEW.tipo_profesional NOT IN ('estilista', 'colorista', 'manicurista', 'peinados_eventos') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria salon_belleza', NEW.tipo_profesional;
-            END IF;
+    -- 2. Obtener información del tipo de profesional
+    SELECT
+        tp.id,
+        tp.codigo,
+        tp.nombre,
+        tp.activo,
+        tp.organizacion_id,
+        tp.industrias_compatibles
+    INTO tipo_info
+    FROM tipos_profesional tp
+    WHERE tp.id = NEW.tipo_profesional_id;
 
-        WHEN 'estetica' THEN
-            IF NEW.tipo_profesional NOT IN ('esteticista', 'cosmetologo', 'depilacion_laser') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria estetica', NEW.tipo_profesional;
-            END IF;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El tipo de profesional con ID % no existe', NEW.tipo_profesional_id;
+    END IF;
 
-        WHEN 'spa' THEN
-            IF NEW.tipo_profesional NOT IN ('masajista', 'terapeuta_spa', 'aromaterapeuta', 'reflexologo') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria spa', NEW.tipo_profesional;
-            END IF;
+    -- 3. Verificar que el tipo está activo
+    IF NOT tipo_info.activo THEN
+        RAISE EXCEPTION 'El tipo de profesional "%" está inactivo y no puede ser asignado', tipo_info.nombre;
+    END IF;
 
-        WHEN 'podologia' THEN
-            IF NEW.tipo_profesional NOT IN ('podologo', 'asistente_podologia') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria podologia', NEW.tipo_profesional;
-            END IF;
+    -- 4. Verificar acceso al tipo (RLS a nivel de función)
+    IF tipo_info.organizacion_id IS NOT NULL AND tipo_info.organizacion_id != NEW.organizacion_id THEN
+        RAISE EXCEPTION 'El tipo de profesional "%" no pertenece a esta organización', tipo_info.nombre;
+    END IF;
 
-        WHEN 'consultorio_medico' THEN
-            IF NEW.tipo_profesional NOT IN ('doctor_general', 'enfermero', 'recepcionista_medica') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria consultorio_medico', NEW.tipo_profesional;
-            END IF;
+    -- 5. Verificar compatibilidad con la industria (cast ENUM to TEXT)
+    tipo_compatible := industria_org::text = ANY(tipo_info.industrias_compatibles);
 
-        WHEN 'academia' THEN
-            IF NEW.tipo_profesional NOT IN ('instructor', 'profesor', 'tutor') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria academia', NEW.tipo_profesional;
-            END IF;
-
-        WHEN 'taller_tecnico' THEN
-            IF NEW.tipo_profesional NOT IN ('tecnico_auto', 'tecnico_electronico', 'mecanico', 'soldador') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria taller_tecnico', NEW.tipo_profesional;
-            END IF;
-
-        WHEN 'centro_fitness' THEN
-            IF NEW.tipo_profesional NOT IN ('entrenador_personal', 'instructor_yoga', 'instructor_pilates', 'nutricionista') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria centro_fitness', NEW.tipo_profesional;
-            END IF;
-
-        WHEN 'veterinaria' THEN
-            IF NEW.tipo_profesional NOT IN ('veterinario', 'asistente_veterinario', 'groomer') THEN
-                RAISE EXCEPTION 'Tipo profesional % no compatible con industria veterinaria', NEW.tipo_profesional;
-            END IF;
-
-        WHEN 'otro' THEN
-            -- Para industria "otro", permitir cualquier tipo profesional incluido "otro"
-            NULL;
-
-        ELSE
-            RAISE EXCEPTION 'Industria % no reconocida', industria_org;
-    END CASE;
+    IF NOT tipo_compatible THEN
+        RAISE EXCEPTION
+            'El tipo de profesional "%" (código: %) no es compatible con la industria "%" de la organización. Industrias compatibles: %',
+            tipo_info.nombre,
+            tipo_info.codigo,
+            industria_org,
+            array_to_string(tipo_info.industrias_compatibles, ', ');
+    END IF;
 
     RETURN NEW;
 END;
@@ -373,7 +366,7 @@ $$ LANGUAGE plpgsql;
 
 -- Comentario de la función
 COMMENT ON FUNCTION validar_profesional_industria() IS
-'Valida automáticamente que el tipo_profesional sea compatible con la industria de la organización. Previene asignaciones incorrectas';
+'Valida automáticamente que el tipo_profesional_id sea compatible con la industria de la organización consultando la tabla tipos_profesional. Versión 2.0: Soporta catálogo dinámico en lugar de ENUM.';
 
 -- ====================================================================
 -- 🛍️ FUNCIÓN 7: ACTUALIZAR_TIMESTAMP_SERVICIOS

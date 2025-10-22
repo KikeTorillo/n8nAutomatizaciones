@@ -19,13 +19,13 @@ class ProfesionalModel {
             const query = `
                 INSERT INTO profesionales (
                     organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                    documento_identidad, tipo_profesional, licencias_profesionales,
+                    documento_identidad, tipo_profesional_id, licencias_profesionales,
                     años_experiencia, idiomas, color_calendario, biografia, foto_url,
                     configuracion_horarios, configuracion_servicios, comision_porcentaje,
                     salario_base, forma_pago, activo, disponible_online, fecha_ingreso
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                         documento_identidad, tipo_profesional, licencias_profesionales,
+                         documento_identidad, tipo_profesional_id, licencias_profesionales,
                          años_experiencia, idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios, comision_porcentaje,
                          salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
@@ -40,7 +40,7 @@ class ProfesionalModel {
                 profesionalData.telefono || null,
                 profesionalData.fecha_nacimiento || null,
                 profesionalData.documento_identidad || null,
-                profesionalData.tipo_profesional,
+                profesionalData.tipo_profesional_id,
                 profesionalData.licencias_profesionales || {},
                 profesionalData.años_experiencia || 0,
                 profesionalData.idiomas || ['es'],
@@ -106,7 +106,7 @@ class ProfesionalModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
-                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
+                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional_id,
                        p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
@@ -115,13 +115,15 @@ class ProfesionalModel {
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.creado_en, p.actualizado_en,
+                       tp.codigo as tipo_codigo, tp.nombre as tipo_nombre, tp.color as tipo_color,
                        o.nombre_comercial as organizacion_nombre, o.tipo_industria as industria,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
                 JOIN organizaciones o ON p.organizacion_id = o.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
-                GROUP BY p.id, o.id
+                GROUP BY p.id, tp.id, o.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
@@ -141,7 +143,7 @@ class ProfesionalModel {
             const {
                 activo = null,
                 disponible_online = null,
-                tipo_profesional = null,
+                tipo_profesional_id = null,
                 busqueda = null,
                 limite = 50,
                 offset = 0
@@ -149,7 +151,7 @@ class ProfesionalModel {
 
             let query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
-                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
+                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional_id,
                        p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
@@ -158,8 +160,10 @@ class ProfesionalModel {
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.creado_en, p.actualizado_en,
+                       tp.codigo as tipo_codigo, tp.nombre as tipo_nombre, tp.color as tipo_color,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.organizacion_id = $1
             `;
@@ -179,9 +183,9 @@ class ProfesionalModel {
                 contador++;
             }
 
-            if (tipo_profesional) {
-                query += ` AND p.tipo_profesional = $${contador}`;
-                values.push(tipo_profesional);
+            if (tipo_profesional_id) {
+                query += ` AND p.tipo_profesional_id = $${contador}`;
+                values.push(tipo_profesional_id);
                 contador++;
             }
 
@@ -191,7 +195,7 @@ class ProfesionalModel {
                 contador++;
             }
 
-            query += ` GROUP BY p.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
+            query += ` GROUP BY p.id, tp.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
             values.push(limite, offset);
 
             const result = await db.query(query, values);
@@ -220,7 +224,7 @@ class ProfesionalModel {
 
             const camposPermitidos = [
                 'nombre_completo', 'email', 'telefono', 'fecha_nacimiento',
-                'documento_identidad', 'tipo_profesional', 'licencias_profesionales',
+                'documento_identidad', 'tipo_profesional_id', 'licencias_profesionales',
                 'años_experiencia', 'idiomas', 'color_calendario', 'biografia',
                 'foto_url', 'configuracion_horarios', 'configuracion_servicios',
                 'comision_porcentaje', 'salario_base', 'forma_pago', 'activo',
@@ -248,7 +252,7 @@ class ProfesionalModel {
                 SET ${campos.join(', ')}, actualizado_en = NOW()
                 WHERE id = $${contador} AND organizacion_id = $${contador + 1}
                 RETURNING id, organizacion_id, nombre_completo, email, telefono,
-                         fecha_nacimiento, documento_identidad, tipo_profesional,
+                         fecha_nacimiento, documento_identidad, tipo_profesional_id,
                          licencias_profesionales, años_experiencia,
                          idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios,
@@ -293,23 +297,25 @@ class ProfesionalModel {
         });
     }
 
-    static async buscarPorTipo(organizacionId, tipoProfesional, soloActivos = true) {
+    static async buscarPorTipo(organizacionId, tipoProfesionalId, soloActivos = true) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             let query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
-                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional,
+                       p.fecha_nacimiento, p.documento_identidad, p.tipo_profesional_id,
                        p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
                        p.comision_porcentaje, p.salario_base, p.forma_pago,
                        p.activo, p.disponible_online, p.fecha_ingreso,
                        p.calificacion_promedio, p.total_citas_completadas,
-                       p.total_clientes_atendidos, p.creado_en, p.actualizado_en
+                       p.total_clientes_atendidos, p.creado_en, p.actualizado_en,
+                       tp.codigo as tipo_codigo, tp.nombre as tipo_nombre
                 FROM profesionales p
-                WHERE p.organizacion_id = $1 AND p.tipo_profesional = $2
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                WHERE p.organizacion_id = $1 AND p.tipo_profesional_id = $2
             `;
 
-            const values = [organizacionId, tipoProfesional];
+            const values = [organizacionId, tipoProfesionalId];
 
             if (soloActivos) {
                 query += ' AND p.activo = TRUE';
@@ -374,7 +380,7 @@ class ProfesionalModel {
                     AVG(calificacion_promedio) FILTER (WHERE activo = TRUE) as calificacion_promedio_general,
                     SUM(total_citas_completadas) as total_citas_organizacion,
                     SUM(total_clientes_atendidos) as total_clientes_organizacion,
-                    COUNT(DISTINCT tipo_profesional) as tipos_profesionales_diferentes,
+                    COUNT(DISTINCT tipo_profesional_id) as tipos_profesionales_diferentes,
                     AVG(años_experiencia) FILTER (WHERE activo = TRUE) as experiencia_promedio
                 FROM profesionales
                 WHERE organizacion_id = $1

@@ -75,7 +75,7 @@ class ServicioModel {
 
                     // Obtener profesionales asociados para la respuesta
                     const profesionalesQuery = `
-                        SELECT p.id, p.nombre_completo, p.email, p.tipo_profesional
+                        SELECT p.id, p.nombre_completo, p.email, p.tipo_profesional_id
                         FROM profesionales p
                         JOIN servicios_profesionales sp ON p.id = sp.profesional_id
                         WHERE sp.servicio_id = $1 AND sp.activo = true

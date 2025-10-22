@@ -10,6 +10,7 @@ import ProfesionalFormModal from '@/components/profesionales/ProfesionalFormModa
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import { useProfesionales, useEliminarProfesional } from '@/hooks/useProfesionales';
+import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -25,8 +26,11 @@ function ProfesionalesPage() {
   // Filtros
   const [filtros, setFiltros] = useState({
     activo: '',
-    tipo_profesional: '',
+    tipo_profesional_id: '', // Integer ID para filtrar
   });
+
+  // Fetch tipos de profesional para filtros
+  const { data: tiposProfesional = [] } = useTiposProfesional({ activo: true });
 
   // Estados para modales
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -43,7 +47,7 @@ function ProfesionalesPage() {
   const { data: profesionales, isLoading } = useProfesionales({
     busqueda,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
-    tipo_profesional: filtros.tipo_profesional || undefined,
+    tipo_profesional_id: filtros.tipo_profesional_id ? parseInt(filtros.tipo_profesional_id, 10) : undefined,
   });
 
   // Hook de eliminación
@@ -53,7 +57,7 @@ function ProfesionalesPage() {
   const handleLimpiarFiltros = () => {
     setFiltros({
       activo: '',
-      tipo_profesional: '',
+      tipo_profesional_id: '',
     });
     setBusqueda('');
   };
@@ -106,7 +110,7 @@ function ProfesionalesPage() {
   // Verificar si hay filtros activos
   const hasFiltrosActivos =
     filtros.activo !== '' ||
-    filtros.tipo_profesional !== '' ||
+    filtros.tipo_profesional_id !== '' ||
     busqueda !== '';
 
   return (
@@ -198,17 +202,22 @@ function ProfesionalesPage() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Tipo de Profesional
                     </label>
-                    <Input
-                      type="text"
-                      placeholder="Ej: Barbero, Estilista..."
-                      value={filtros.tipo_profesional}
+                    <Select
+                      value={filtros.tipo_profesional_id}
                       onChange={(e) =>
                         setFiltros({
                           ...filtros,
-                          tipo_profesional: e.target.value,
+                          tipo_profesional_id: e.target.value,
                         })
                       }
-                    />
+                    >
+                      <option value="">Todos los tipos</option>
+                      {tiposProfesional.map((tipo) => (
+                        <option key={tipo.id} value={tipo.id}>
+                          {tipo.nombre} {tipo.es_sistema ? '' : '(Personalizado)'}
+                        </option>
+                      ))}
+                    </Select>
                   </div>
                 </div>
 
@@ -386,7 +395,7 @@ function ProfesionalesPage() {
                     {profesionalAEliminar.nombre_completo}
                   </p>
                   <p className="text-sm text-gray-600">
-                    {profesionalAEliminar.tipo_profesional}
+                    {profesionalAEliminar.tipo_nombre || 'Tipo no especificado'}
                   </p>
                 </div>
               </div>

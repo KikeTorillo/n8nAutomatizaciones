@@ -9,6 +9,7 @@ const citasRouter = require('./citas');
 const usuariosRouter = require('./usuarios');
 const bloqueosHorariosRouter = require('./bloqueos-horarios');
 const tiposBloqueoRouter = require('./tipos-bloqueo');
+const tiposProfesionalRouter = require('./tipos-profesional');
 const horariosProfesionalesRouter = require('./horarios-profesionales');
 const planesRouter = require('./planes');
 
@@ -31,6 +32,7 @@ function routerApi(app) {
     router.use('/horarios-profesionales', horariosProfesionalesRouter);
     router.use('/bloqueos-horarios', bloqueosHorariosRouter);
     router.use('/tipos-bloqueo', tiposBloqueoRouter);
+    router.use('/tipos-profesional', tiposProfesionalRouter);
     router.use('/citas', citasRouter);
 
     // Rutas de gestión de usuarios

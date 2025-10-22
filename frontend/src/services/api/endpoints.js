@@ -27,6 +27,12 @@ export const authApi = {
   logout: () => apiClient.post('/auth/logout'),
 
   /**
+   * Obtener información del usuario autenticado (perfil + datos de org)
+   * @returns {Promise<Object>} { usuario: { ...datos, tipo_industria, nombre_comercial, plan_actual } }
+   */
+  me: () => apiClient.get('/auth/me'),
+
+  /**
    * Solicitar token de recuperación de contraseña
    * @param {Object} data - { email, organizacion_id }
    * @returns {Promise<Object>} { token_enviado, expires_at, reset_token (dev only) }
@@ -163,6 +169,45 @@ export const profesionalesApi = {
    * @returns {Promise<Object>}
    */
   eliminar: (id) => apiClient.delete(`/profesionales/${id}`),
+};
+
+// ==================== TIPOS PROFESIONAL ====================
+export const tiposProfesionalApi = {
+  /**
+   * Listar tipos de profesional (sistema + personalizados de la org)
+   * @param {Object} params - { solo_sistema, solo_personalizados, tipo_industria, activo }
+   * @returns {Promise<Object>} { tipos, total, filtros_aplicados }
+   */
+  listar: (params = {}) => apiClient.get('/tipos-profesional', { params }),
+
+  /**
+   * Obtener tipo de profesional por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/tipos-profesional/${id}`),
+
+  /**
+   * Crear tipo personalizado
+   * @param {Object} data - { codigo, nombre, descripcion, categoria, industrias_compatibles, etc. }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) => apiClient.post('/tipos-profesional', data),
+
+  /**
+   * Actualizar tipo personalizado
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (id, data) => apiClient.put(`/tipos-profesional/${id}`, data),
+
+  /**
+   * Eliminar tipo personalizado (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/tipos-profesional/${id}`),
 };
 
 // ==================== SERVICIOS ====================
@@ -634,5 +679,6 @@ export default {
   planes: planesApi,
   bloqueos: bloqueosApi,
   tiposBloqueo: tiposBloqueoApi,
+  tiposProfesional: tiposProfesionalApi,
   whatsapp: whatsappApi,
 };

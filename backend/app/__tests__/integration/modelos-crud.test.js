@@ -199,13 +199,13 @@ describe('📦 Modelos CRUD Básicos', () => {
       profesional1 = await ProfesionalModel.crear({
         organizacion_id: org1.id,
         nombre_completo: 'Barbero Test',
-        tipo_profesional: 'barbero',
+        tipo_profesional_id: 1, // barbero
         telefono: '5587654321'
       });
 
       expect(profesional1).toBeDefined();
       expect(profesional1.nombre_completo).toBe('Barbero Test');
-      expect(profesional1.tipo_profesional).toBe('barbero');
+      expect(profesional1.tipo_profesional_id).toBe(1);
     });
 
     test('listarPorOrganizacion() respeta RLS', async () => {

@@ -39,7 +39,24 @@ export const INDUSTRIAS = [
   { value: 'otro', label: 'Otro' },
 ];
 
-// Tipos de Profesionales
+// ⚠️ DEPRECATED: Tipos de Profesionales (Ahora dinámicos desde DB)
+// ================================================================
+// 🔄 MIGRACIÓN EN PROGRESO:
+// - Este array está DEPRECADO y será removido próximamente
+// - Usar hook `useTiposProfesional()` o `useTiposSistema()` en su lugar
+// - Los tipos ahora se obtienen dinámicamente desde la tabla tipos_profesional
+// - Soporta tipos del sistema + tipos personalizados por organización
+//
+// ✅ USO CORRECTO:
+//   import { useTiposProfesional } from '@/hooks/useTiposProfesional';
+//   const { data: tipos } = useTiposProfesional({ activo: true });
+//
+// 📦 Backend API: GET /tipos-profesional
+// 📖 Documentación: backend/app/routes/tipos-profesional.routes.js
+// ================================================================
+/**
+ * @deprecated Usar useTiposProfesional() hook en su lugar
+ */
 export const TIPOS_PROFESIONAL = [
   { value: 'barbero', label: 'Barbero' },
   { value: 'estilista', label: 'Estilista' },

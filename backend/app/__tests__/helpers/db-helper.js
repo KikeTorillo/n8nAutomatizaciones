@@ -266,13 +266,13 @@ async function createTestProfesional(client, organizacionId, data = {}) {
 
   const result = await client.query(
     `INSERT INTO profesionales (
-      organizacion_id, nombre_completo, tipo_profesional, telefono, email, activo
+      organizacion_id, nombre_completo, tipo_profesional_id, telefono, email, activo
     ) VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *`,
     [
       organizacionId,
       data.nombre_completo || 'Profesional Test',
-      data.tipo_profesional || 'barbero',
+      data.tipo_profesional_id || 1, // 1 = 'barbero' en tipos_profesional
       data.telefono || `+52${Date.now().toString().slice(-10)}`,
       data.email || null,
       data.activo !== undefined ? data.activo : true

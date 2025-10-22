@@ -120,9 +120,9 @@ CREATE INDEX idx_profesionales_org_activo
 
 -- 🎭 ÍNDICE 2: BÚSQUEDA POR TIPO PROFESIONAL
 -- Propósito: Filtrar profesionales por especialidad en organización
--- Uso: WHERE organizacion_id = ? AND tipo_profesional = ? AND activo = TRUE
+-- Uso: WHERE organizacion_id = ? AND tipo_profesional_id = ? AND activo = TRUE
 CREATE INDEX idx_profesionales_tipo_org
-    ON profesionales (organizacion_id, tipo_profesional, activo) WHERE activo = TRUE;
+    ON profesionales (organizacion_id, tipo_profesional_id, activo) WHERE activo = TRUE;
 
 -- 📧 ÍNDICE 3: EMAIL ÚNICO POR ORGANIZACIÓN
 -- Propósito: Validar email único dentro de cada organización
@@ -380,7 +380,7 @@ sin acceder al heap (performance +40% en queries de calendario).';
 -- Uso: WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE
 -- Ventaja: INCLUDE para mostrar datos sin heap access
 CREATE INDEX IF NOT EXISTS idx_profesionales_disponibles
-    ON profesionales (organizacion_id, activo, disponible_online, tipo_profesional)
+    ON profesionales (organizacion_id, activo, disponible_online, tipo_profesional_id)
     INCLUDE (nombre_completo, calificacion_promedio)
     WHERE activo = TRUE AND disponible_online = TRUE;
 
