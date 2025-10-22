@@ -18,7 +18,7 @@ export function useHorariosProfesional(profesionalId, options = {}) {
       const params = {
         profesional_id: profesionalId,
         ...Object.fromEntries(
-          Object.entries(options).filter(([_, value]) => value !== '' && value !== null && value !== undefined)
+          Object.entries(options).filter(([, value]) => value !== '' && value !== null && value !== undefined)
         ),
       };
 

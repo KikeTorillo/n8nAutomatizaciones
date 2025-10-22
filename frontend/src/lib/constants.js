@@ -39,32 +39,23 @@ export const INDUSTRIAS = [
   { value: 'otro', label: 'Otro' },
 ];
 
-// ⚠️ DEPRECATED: Tipos de Profesionales (Ahora dinámicos desde DB)
+// ✅ Tipos de Profesionales - MIGRADO A SISTEMA DINÁMICO
 // ================================================================
-// 🔄 MIGRACIÓN EN PROGRESO:
-// - Este array está DEPRECADO y será removido próximamente
-// - Usar hook `useTiposProfesional()` o `useTiposSistema()` en su lugar
-// - Los tipos ahora se obtienen dinámicamente desde la tabla tipos_profesional
-// - Soporta tipos del sistema + tipos personalizados por organización
+// Los tipos profesionales ahora son dinámicos y se gestionan desde la base de datos.
 //
 // ✅ USO CORRECTO:
 //   import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 //   const { data: tipos } = useTiposProfesional({ activo: true });
 //
-// 📦 Backend API: GET /tipos-profesional
-// 📖 Documentación: backend/app/routes/tipos-profesional.routes.js
+// CARACTERÍSTICAS:
+// - 33 tipos del sistema (no editables)
+// - Tipos personalizados por organización
+// - Filtrado automático por industria
+// - Búsqueda y filtros avanzados
+//
+// 📦 Backend API: GET /api/v1/tipos-profesional
+// 📖 Hook: @/hooks/useTiposProfesional
 // ================================================================
-/**
- * @deprecated Usar useTiposProfesional() hook en su lugar
- */
-export const TIPOS_PROFESIONAL = [
-  { value: 'barbero', label: 'Barbero' },
-  { value: 'estilista', label: 'Estilista' },
-  { value: 'esteticista', label: 'Esteticista' },
-  { value: 'masajista', label: 'Masajista' },
-  { value: 'doctor_general', label: 'Doctor General' },
-  { value: 'otro', label: 'Otro' },
-];
 
 // Tamaños de Negocio
 export const TAMANOS_NEGOCIO = [

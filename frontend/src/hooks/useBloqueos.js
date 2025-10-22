@@ -309,7 +309,7 @@ export const useBatchCrearBloqueos = () => {
       }
       return data;
     },
-    onError: (error) => {
+    onError: () => {
       toast.error('Error al crear los bloqueos en batch');
     },
   });

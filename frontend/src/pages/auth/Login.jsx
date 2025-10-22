@@ -20,7 +20,6 @@ function Login() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
   } = useForm({
     resolver: zodResolver(loginSchema),
     defaultValues: {

@@ -241,7 +241,7 @@ export function useActualizarCita() {
  */
 export function useCancelarCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, motivo_cancelacion }) => {
@@ -274,7 +274,7 @@ export function useCancelarCita() {
  */
 export function useConfirmarCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id }) => {
@@ -307,7 +307,7 @@ export function useConfirmarCita() {
  */
 export function useIniciarCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id }) => {
@@ -343,7 +343,7 @@ export function useIniciarCita() {
  */
 export function useCompletarCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, ...data }) => {
@@ -385,7 +385,7 @@ export function useCompletarCita() {
  */
 export function useNoShowCita() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { warning, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id, motivo }) => {
@@ -426,7 +426,7 @@ export function useNoShowCita() {
  */
 export function useCrearCitaWalkIn() {
   const queryClient = useQueryClient();
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async (citaData) => {
@@ -479,7 +479,7 @@ export function useDisponibilidadInmediata(params) {
  * };
  */
 export function useEnviarRecordatorio() {
-  const { success, error: showError, warning } = useToast();
+  const { success, error: showError } = useToast();
 
   return useMutation({
     mutationFn: async ({ id }) => {

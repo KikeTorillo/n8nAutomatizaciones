@@ -141,7 +141,7 @@ export const calcularDiasBloqueo = (fechaInicio, fechaFin) => {
     const inicio = typeof fechaInicio === 'string' ? parseISO(fechaInicio) : fechaInicio;
     const fin = typeof fechaFin === 'string' ? parseISO(fechaFin) : fechaFin;
     return differenceInDays(fin, inicio) + 1; // +1 para incluir ambos días
-  } catch (error) {
+  } catch {
     return 0;
   }
 };
@@ -224,7 +224,7 @@ export const formatearRangoBloqueo = (fechaInicio, fechaFin, horaInicio, horaFin
     }
 
     return rangoStr;
-  } catch (error) {
+  } catch {
     return 'Rango inválido';
   }
 };
@@ -266,7 +266,7 @@ export const obtenerFechasBloqueo = (fechaInicio, fechaFin) => {
     }
 
     return fechas;
-  } catch (error) {
+  } catch {
     return [];
   }
 };

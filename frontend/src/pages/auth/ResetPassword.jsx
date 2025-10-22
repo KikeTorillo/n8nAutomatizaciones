@@ -29,7 +29,6 @@ function ResetPassword() {
     control,
     handleSubmit,
     watch,
-    formState: { errors },
   } = useForm({
     resolver: zodResolver(resetPasswordSchema),
     defaultValues: {
@@ -80,7 +79,7 @@ function ResetPassword() {
       console.log('✅ Contraseña actualizada:', response.data);
       return response.data.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       console.log('🎉 Contraseña actualizada exitosamente');
       toast.success('Contraseña actualizada correctamente');
 

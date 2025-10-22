@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { planesApi } from '@/services/api/endpoints';
 import useOnboardingStore from '@/store/onboardingStore';

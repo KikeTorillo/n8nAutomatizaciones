@@ -62,7 +62,7 @@ export const useCrearTipoBloqueo = () => {
       const response = await tiposBloqueoApi.crear(data);
       return response.data.data; // Extraer el objeto data interno
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: tiposBloqueoKeys.lists() });
       success('Tipo de bloqueo creado exitosamente');
     },

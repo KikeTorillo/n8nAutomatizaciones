@@ -10,7 +10,6 @@ import BloqueoFormModal from '@/components/bloqueos/BloqueoFormModal';
 import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import useToast from '@/hooks/useToast';
 import {
   calcularEstadisticasBloqueos,
   filtrarBloqueos,
@@ -22,7 +21,6 @@ import { formatCurrency } from '@/lib/utils';
  */
 function BloqueosPage() {
   const navigate = useNavigate();
-  const toast = useToast();
 
   // Estados
   const [vistaActiva, setVistaActiva] = useState('todos'); // 'todos' | 'profesionales' | 'organizacionales'

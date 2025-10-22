@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/useToast';
 import { Mail, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
 
 function ForgotPassword() {
-  const navigate = useNavigate();
   const toast = useToast();
 
   const [emailEnviado, setEmailEnviado] = useState(false);
@@ -21,7 +20,6 @@ function ForgotPassword() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
     getValues,
   } = useForm({
     resolver: zodResolver(forgotPasswordSchema),
@@ -37,7 +35,7 @@ function ForgotPassword() {
       console.log('✅ Recuperación solicitada:', response.data);
       return response.data.data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       console.log('✉️ Email de recuperación enviado');
       setEmailEnviado(true);
       setEmailDestino(getValues('email'));

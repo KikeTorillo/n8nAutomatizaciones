@@ -9,7 +9,8 @@
  * @param {boolean} props.isLoading - Estado de carga
  * @param {function} props.onClick - Callback al hacer clic en la card (opcional)
  */
-function StatCard({ title, value, subtitle, icon: Icon, color = 'blue', isLoading = false, onClick }) {
+function StatCard({ title, value, subtitle, icon, color = 'blue', isLoading = false, onClick }) {
+  const Icon = icon;
   const colorClasses = {
     blue: 'bg-blue-50 text-blue-600',
     green: 'bg-green-50 text-green-600',

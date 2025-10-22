@@ -41,7 +41,7 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
       setComentarioCliente('');
       setCalificacion(0);
       onClose();
-    } catch (error) {
+    } catch {
       // El error ya se maneja en el hook
     }
   };

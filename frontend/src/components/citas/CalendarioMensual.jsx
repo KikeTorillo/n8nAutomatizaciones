@@ -5,12 +5,9 @@ import {
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
-  format,
   isSameMonth,
-  isSameDay,
   isToday,
 } from 'date-fns';
-import { es } from 'date-fns/locale';
 import CalendarioHeader from './CalendarioHeader';
 import CalendarioDia from './CalendarioDia';
 import ConfirmarReagendarModal from './ConfirmarReagendarModal';
@@ -23,7 +20,7 @@ import { useToast } from '@/hooks/useToast';
  * Componente principal del calendario mensual con funcionalidad de drag & drop
  * Muestra las citas en formato de calendario con navegación entre meses
  */
-function CalendarioMensual({ onVerCita, onCrearCita, onEditarCita }) {
+function CalendarioMensual({ onVerCita, onCrearCita }) {
   const { showToast } = useToast();
   const [mesActual, setMesActual] = useState(new Date());
 

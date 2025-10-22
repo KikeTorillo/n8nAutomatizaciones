@@ -8,12 +8,12 @@ import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import {
   useEstadisticasOrganizacion,
-  useCitasDelDia,
-  useProfesionales,
   useServiciosDashboard,
-  useClientes,
   useBloqueosDashboard,
-} from '@/hooks/useDashboard';
+} from '@/hooks/useEstadisticas';
+import { useCitasDelDia } from '@/hooks/useCitas';
+import { useProfesionales } from '@/hooks/useProfesionales';
+import { useClientes } from '@/hooks/useClientes';
 import {
   LogOut,
   Calendar,
@@ -39,8 +39,11 @@ function Dashboard() {
   const { data: citasDelDia, isLoading: loadingCitas } = useCitasDelDia();
   const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
   const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
-  const { data: clientes, isLoading: loadingClientes } = useClientes();
+  const { data: clientesData, isLoading: loadingClientes } = useClientes();
   const { data: bloqueos, isLoading: loadingBloqueos } = useBloqueosDashboard();
+
+  // Extraer array de clientes (useClientes retorna { clientes, pagination })
+  const clientes = clientesData?.clientes || [];
 
   // Hook para estadísticas de asignaciones servicio-profesional
   const { data: statsAsignaciones, isLoading: loadingStats } = useQuery({

@@ -67,7 +67,7 @@ apiClient.interceptors.response.use(
       originalRequest._retry = true;
       isRefreshing = true;
 
-      const { refreshToken, accessToken } = useAuthStore.getState();
+      const { refreshToken } = useAuthStore.getState();
 
       // Si NO hay refreshToken pero SÍ hay accessToken (onboarding),
       // el token de onboarding dura 7 días y no necesita refresh.

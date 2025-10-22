@@ -17,8 +17,6 @@ import {
   useCancelarCita,
   useConfirmarCita,
   useIniciarCita,
-  useCompletarCita,
-  useNoShowCita,
 } from '@/hooks/useCitas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
@@ -66,8 +64,6 @@ function CitasPage() {
   const cancelarMutation = useCancelarCita();
   const confirmarMutation = useConfirmarCita();
   const iniciarMutation = useIniciarCita();
-  const completarMutation = useCompletarCita();
-  const noShowMutation = useNoShowCita();
 
   // Handlers de filtros
   const handleFiltrosChange = (nuevosFiltros) => {

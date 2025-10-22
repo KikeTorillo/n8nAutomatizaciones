@@ -33,7 +33,7 @@ function NoShowModal({ isOpen, onClose, cita }) {
       // Reset y cerrar
       setMotivo('');
       onClose();
-    } catch (error) {
+    } catch {
       // El error ya se maneja en el hook
     }
   };

@@ -9,6 +9,7 @@ import useOnboardingStore from '@/store/onboardingStore';
 import { useToast } from '@/hooks/useToast';
 import FormField from '@/components/forms/FormField';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
 import { Users, X, Palette, Plus, Scissors } from 'lucide-react';
 
 /**
@@ -289,34 +290,21 @@ function Step4_Professionals() {
         <Controller
           name="tipo_profesional_id"
           control={control}
-          render={({ field }) => (
-            <div>
-              <label htmlFor="tipo_profesional_id" className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Profesional <span className="text-red-500">*</span>
-              </label>
-              <select
-                {...field}
-                id="tipo_profesional_id"
-                value={field.value || ''}
-                onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
-                disabled={loadingTipos}
-                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
-              >
-                <option value="">
-                  {loadingTipos ? 'Cargando tipos...' : 'Selecciona un tipo'}
-                </option>
-                {tiposProfesional.map((tipo) => (
-                  <option key={tipo.id} value={tipo.id}>
-                    {tipo.nombre} {tipo.es_sistema ? '' : '(Personalizado)'}
-                  </option>
-                ))}
-              </select>
-              {errors.tipo_profesional_id && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.tipo_profesional_id.message}
-                </p>
-              )}
-            </div>
+          render={({ field: { value, onChange, ...field } }) => (
+            <Select
+              {...field}
+              label="Tipo de Profesional"
+              value={value?.toString() || ''}
+              onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+              options={tiposProfesional.map((tipo) => ({
+                value: tipo.id.toString(),
+                label: `${tipo.nombre}${tipo.es_sistema ? '' : ' (Personalizado)'}`,
+              }))}
+              placeholder={loadingTipos ? 'Cargando tipos...' : 'Selecciona un tipo de profesional'}
+              disabled={loadingTipos}
+              required
+              error={errors.tipo_profesional_id?.message}
+            />
           )}
         />
 

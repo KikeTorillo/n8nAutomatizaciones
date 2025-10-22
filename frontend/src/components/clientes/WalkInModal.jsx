@@ -5,7 +5,8 @@ import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/useClientes';
-import { useServiciosDashboard, useProfesionales } from '@/hooks/useDashboard';
+import { useServiciosDashboard } from '@/hooks/useEstadisticas';
+import { useProfesionales } from '@/hooks/useProfesionales';
 import { useToast } from '@/hooks/useToast';
 
 /**

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { AlertCircle, Calendar, Clock, User, Building, Info } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
@@ -24,13 +24,11 @@ import {
   calcularDiasBloqueo
 } from '@/utils/bloqueoHelpers';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 
 /**
  * BloqueoFormModal - Modal con formulario para crear/editar bloqueos
  */
 function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
-  const [previewImpacto, setPreviewImpacto] = useState(null);
 
   // Queries
   const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
@@ -62,8 +60,6 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
   const profesionalId = watch('profesional_id');
   const fechaInicio = watch('fecha_inicio');
   const fechaFin = watch('fecha_fin');
-  const horaInicio = watch('hora_inicio');
-  const horaFin = watch('hora_fin');
 
   // Encontrar el tipo seleccionado para determinar si es organizacional
   const tipoSeleccionado = useMemo(() => {
@@ -106,7 +102,6 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
   // Reset al cerrar
   const handleClose = () => {
     reset(bloqueoFormDefaults);
-    setPreviewImpacto(null);
     onClose();
   };
 
@@ -144,13 +139,11 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
   }, [tiposData]);
 
   // Opciones de profesionales
-  const opcionesProfesionales = [
-    { value: '', label: 'Seleccionar profesional' },
-    ...(profesionales || []).map((prof) => ({
-      value: prof.id.toString(),
-      label: prof.nombre_completo || `${prof.nombres} ${prof.apellidos}`,
-    })),
-  ];
+  // NOTA: No incluimos opción placeholder vacía porque el componente Select ya la agrega automáticamente
+  const opcionesProfesionales = (profesionales || []).map((prof) => ({
+    value: prof.id.toString(),
+    label: prof.nombre_completo || `${prof.nombres} ${prof.apellidos}`,
+  }));
 
   // Fecha de hoy para min en inputs
   const hoy = format(new Date(), 'yyyy-MM-dd');
@@ -197,6 +190,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
                     onChange(val ? parseInt(val) : null);
                   }}
                   options={opcionesTipos}
+                  placeholder="Selecciona un tipo de bloqueo"
                   disabled={isLoadingTipos}
                   error={error?.message}
                 />
@@ -270,6 +264,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
                       onChange(val ? parseInt(val) : null);
                     }}
                     options={opcionesProfesionales}
+                    placeholder="Selecciona un profesional"
                     disabled={isLoadingProfesionales}
                     error={!!errors.profesional_id}
                   />

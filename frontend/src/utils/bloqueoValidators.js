@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { parseISO, isBefore, isAfter, isEqual } from 'date-fns';
+import { parseISO, isBefore, isEqual } from 'date-fns';
 
 /**
  * Schema de validación para formulario de bloqueos
@@ -126,7 +126,7 @@ export const bloqueoFormSchema = z
           path: ['fecha_inicio'],
         });
       }
-    } catch (error) {
+    } catch {
       // Error de parsing de fechas ya manejado por el schema base
     }
   });

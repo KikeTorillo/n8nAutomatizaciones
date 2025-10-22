@@ -1,10 +1,7 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
 import { Plus, Move } from 'lucide-react';
-import { formatearHora } from '@/utils/dateHelpers';
-import { obtenerColorEstado } from '@/utils/citaValidators';
-import { aFormatoISO } from '@/utils/dateHelpers';
+import { formatearHora, aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Obtiene el color de fondo según el estado de la cita

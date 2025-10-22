@@ -13,7 +13,6 @@ import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
-import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Schema de validación Zod para CREAR cita
@@ -106,7 +105,6 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   const citaId = cita?.id;
 
   // Estados locales
-  const [profesionalSeleccionado, setProfesionalSeleccionado] = useState('');
   const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
   const [cargandoServicios, setCargandoServicios] = useState(false);
   const [precioCalculado, setPrecioCalculado] = useState(0);
@@ -266,7 +264,6 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
         notas_cliente: citaData.notas_cliente || '',
         notas_internas: citaData.notas_internas || '',
       });
-      setProfesionalSeleccionado(citaData.profesional_id?.toString() || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, citaData, isOpen]);
@@ -283,7 +280,6 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   useEffect(() => {
     if (!isOpen) {
       reset();
-      setProfesionalSeleccionado('');
       setServiciosDisponibles([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -352,32 +348,24 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   const isLoadingData = isEditMode && loadingCita;
 
   // Opciones de selects
-  const clientesOpciones = [
-    { value: '', label: 'Selecciona un cliente' },
-    ...(clientesData?.clientes || []).map((c) => ({
-      value: c.id.toString(),
-      label: `${c.nombre} ${c.apellidos || ''} - ${c.telefono || 'Sin teléfono'}`,
-    })),
-  ];
+  // NOTA: No incluimos opción placeholder vacía porque el componente Select ya la agrega automáticamente
+  const clientesOpciones = (clientesData?.clientes || []).map((c) => ({
+    value: c.id.toString(),
+    label: `${c.nombre} ${c.apellidos || ''} - ${c.telefono || 'Sin teléfono'}`,
+  }));
 
-  const profesionalesOpciones = [
-    { value: '', label: 'Selecciona un profesional' },
-    ...(profesionales || []).map((p) => ({
-      value: p.id.toString(),
-      label: `${p.nombre_completo} - ${p.tipo_nombre || 'Profesional'}`,
-    })),
-  ];
+  const profesionalesOpciones = (profesionales || []).map((p) => ({
+    value: p.id.toString(),
+    label: `${p.nombre_completo} - ${p.tipo_nombre || 'Profesional'}`,
+  }));
 
-  const serviciosOpciones = [
-    { value: '', label: cargandoServicios ? 'Cargando servicios...' : 'Selecciona un servicio' },
-    ...serviciosDisponiblesConEstado.map((s) => ({
-      value: s.id.toString(),
-      label: s.disponible
-        ? `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min`
-        : `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min (${s.razon_no_disponible})`,
-      disabled: !s.disponible, // Deshabilitar opciones no disponibles
-    })),
-  ];
+  const serviciosOpciones = serviciosDisponiblesConEstado.map((s) => ({
+    value: s.id.toString(),
+    label: s.disponible
+      ? `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min`
+      : `${s.nombre} - $${s.precio?.toLocaleString('es-CO')} - ${s.duracion_minutos}min (${s.razon_no_disponible})`,
+    disabled: !s.disponible, // Deshabilitar opciones no disponibles
+  }));
 
   return (
     <Modal
@@ -428,6 +416,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                       <Select
                         {...field}
                         options={clientesOpciones}
+                        placeholder="Selecciona un cliente"
                         className="flex-1"
                         disabled={isEditMode}
                       />
@@ -450,7 +439,12 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                     name="profesional_id"
                     control={control}
                     render={({ field }) => (
-                      <Select {...field} options={profesionalesOpciones} className="flex-1" />
+                      <Select
+                        {...field}
+                        options={profesionalesOpciones}
+                        placeholder="Selecciona un profesional"
+                        className="flex-1"
+                      />
                     )}
                   />
                 </div>
@@ -478,6 +472,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                       <Select
                         {...field}
                         options={serviciosOpciones}
+                        placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona un servicio'}
                         className="flex-1"
                         disabled={!watchProfesional || cargandoServicios}
                       />

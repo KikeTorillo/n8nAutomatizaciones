@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useOnboardingStore from '@/store/onboardingStore';
 import useAuthStore from '@/store/authStore';
@@ -16,6 +16,14 @@ function Step9_Welcome() {
   const [countdown, setCountdown] = useState(5);
   const [autoRedirect, setAutoRedirect] = useState(true);
 
+  const handleFinish = useCallback(() => {
+    // Limpiar onboarding store
+    resetOnboarding();
+
+    // Redirigir al dashboard
+    navigate('/dashboard');
+  }, [navigate, resetOnboarding]);
+
   useEffect(() => {
     if (!autoRedirect) return;
 
@@ -32,15 +40,7 @@ function Step9_Welcome() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [autoRedirect]);
-
-  const handleFinish = () => {
-    // Limpiar onboarding store
-    resetOnboarding();
-
-    // Redirigir al dashboard
-    navigate('/dashboard');
-  };
+  }, [autoRedirect, handleFinish]);
 
   const handleCancelAutoRedirect = () => {
     setAutoRedirect(false);

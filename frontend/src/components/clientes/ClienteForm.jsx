@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import { useProfesionales, useServiciosDashboard } from '@/hooks/useDashboard';
+import { useServiciosDashboard } from '@/hooks/useEstadisticas';
+import { useProfesionales } from '@/hooks/useProfesionales';
 
 /**
  * Formulario reutilizable para crear/editar clientes

@@ -5,13 +5,6 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 // Lazy loading de páginas
 import { lazy, Suspense } from 'react';
 
-// Loading fallback
-const LoadingFallback = () => (
-  <div className="flex items-center justify-center min-h-screen">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-  </div>
-);
-
 // Lazy load de páginas
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
@@ -37,14 +30,20 @@ const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
 // Páginas de Bloqueos
 const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 
+// Loading fallback
+const loadingFallback = (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+  </div>
+);
+
 // Wrapper para lazy loading
-const withSuspense = (Component) => {
-  return (
-    <Suspense fallback={<LoadingFallback />}>
-      <Component />
-    </Suspense>
-  );
-};
+// eslint-disable-next-line no-unused-vars
+const withSuspense = (Component) => (
+  <Suspense fallback={loadingFallback}>
+    <Component />
+  </Suspense>
+);
 
 export const router = createBrowserRouter([
   {

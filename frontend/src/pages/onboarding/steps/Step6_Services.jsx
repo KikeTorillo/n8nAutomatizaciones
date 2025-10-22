@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery } from '@tanstack/react-query';
@@ -19,10 +18,9 @@ import { Scissors, X, Plus } from 'lucide-react';
 function Step5_Services() {
   const { formData, addService, removeService, nextStep } = useOnboardingStore();
   const toast = useToast();
-  const [selectedProfessionals, setSelectedProfessionals] = useState([]);
 
   // Fetch profesionales
-  const { data: profesionales, isLoading, error: queryError } = useQuery({
+  const { isLoading, error: queryError } = useQuery({
     queryKey: ['profesionales'],
     queryFn: async () => {
       console.log('🔍 Step5: Obteniendo profesionales del backend...');
@@ -39,7 +37,6 @@ function Step5_Services() {
     control,
     handleSubmit,
     reset,
-    setValue,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(serviceSchema),
@@ -79,20 +76,10 @@ function Step5_Services() {
     },
   });
 
-  const toggleProfessional = (profId) => {
-    const newSelected = selectedProfessionals.includes(profId)
-      ? selectedProfessionals.filter((id) => id !== profId)
-      : [...selectedProfessionals, profId];
-
-    setSelectedProfessionals(newSelected);
-    setValue('profesionales', newSelected);
-  };
-
   const onSubmit = (data) => {
     // Permitir servicios SIN profesionales - se pueden asignar después
     addService(data);
     reset();
-    setSelectedProfessionals([]);
   };
 
   const handleContinue = () => {

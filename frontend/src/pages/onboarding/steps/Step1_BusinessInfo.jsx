@@ -16,7 +16,6 @@ function Step1_BusinessInfo() {
   const {
     control,
     handleSubmit,
-    formState: { errors },
   } = useForm({
     resolver: zodResolver(businessInfoSchema),
     defaultValues: formData.businessInfo,
