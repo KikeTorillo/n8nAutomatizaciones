@@ -45,11 +45,22 @@ const useOnboardingStore = create(
         // Paso 5: Servicios
         services: [],
 
-        // Paso 6: WhatsApp
+        // Paso 6: WhatsApp (Legacy - Deprecado)
         whatsapp: {
           connected: false,
           phone_number: '',
           session_id: '',
+        },
+
+        // Paso 7: Chatbot de Telegram
+        telegram: {
+          configurado: false,
+          bot_token: '',
+          nombre_bot: '',
+          username_bot: '',
+          chatbot_id: null,
+          workflow_id: null,
+          omitido: false,
         },
       },
 
@@ -252,6 +263,15 @@ const useOnboardingStore = create(
               connected: false,
               phone_number: '',
               session_id: '',
+            },
+            telegram: {
+              configurado: false,
+              bot_token: '',
+              nombre_bot: '',
+              username_bot: '',
+              chatbot_id: null,
+              workflow_id: null,
+              omitido: false,
             },
           },
           organizacion_id: null,

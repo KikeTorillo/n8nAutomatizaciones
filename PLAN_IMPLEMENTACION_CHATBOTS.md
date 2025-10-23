@@ -1,499 +1,493 @@
 # 📋 PLAN DE IMPLEMENTACIÓN - Sistema Multi-Plataforma de Chatbots con IA
 
-**Versión:** 4.0
-**Fecha:** 22 Octubre 2025
-**Estado:** Fase 3 Completada ✅
-
----
-
-## 🎯 OBJETIVO
-
-Desarrollar un sistema **agnóstico de plataforma** que permita a cada organización conectar chatbots de IA en cualquier canal de mensajería (Telegram, WhatsApp, Instagram, Facebook Messenger, etc.).
+**Versión:** 7.0
+**Fecha:** 23 Octubre 2025
+**Estado:** Fase 5 Completada ✅ | Fase 6 En Planificación 📝
 
 ---
 
 ## 📊 PROGRESO GENERAL
 
-| Fase | Estado | Progreso | Validación |
-|------|--------|----------|------------|
-| **0. Setup Inicial** | ✅ | 100% | ✅ `npm run dev` automatizado |
-| **1. Base de Datos** | ✅ | 100% | ✅ Usuario bot auto-creado, RLS validado |
-| **2. Integración n8n** | ✅ | 100% | ✅ Workflows con webhook creados vía API |
-| **3. Backend CRUD** | ✅ | 100% | ✅ 18/18 tests pasando, UI validada en n8n |
-| **4. MCP Server** | ⏳ | 0% | Pendiente |
-| **5. Workflow Templates** | ⏳ | 0% | Pendiente |
-| **6. Testing Final** | ⏳ | 0% | Pendiente |
+| Fase | Estado | Descripción |
+|------|--------|-------------|
+| **0. Setup Inicial** | ✅ | Docker, n8n, PostgreSQL, Redis configurados |
+| **1. Base de Datos** | ✅ | Tablas, ENUMs, RLS, triggers, índices |
+| **2. Integración n8n** | ✅ | Servicios API workflows/credentials |
+| **3. Backend CRUD** | ✅ | Model, Controller, Routes, Schemas, Tests (18/18 ✅) |
+| **4. Template Engine** | ✅ | plantilla.json con 15 nodos + credentials globales |
+| **5. Frontend Onboarding** | ✅ | Step 7 + hooks React Query |
+| **6. MCP Server** | 📝 | Herramientas para AI Agent (En Planificación) |
 
 ---
 
-## 🏗️ ARQUITECTURA
+## 🎯 LOGROS PRINCIPALES
+
+### ✅ Creación End-to-End de Chatbot Telegram
+
+**Flujo Completo Implementado:**
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│  CANALES → N8N WORKFLOWS → MCP SERVER → BACKEND → DB   │
-│  [Telegram/WhatsApp] → [AI Agent] → [Tools] → [API]    │
-└─────────────────────────────────────────────────────────┘
+Usuario → Formulario Telegram
+         ↓
+    Backend API (/chatbots/configurar)
+    ├─ Validar token con Telegram API
+    ├─ Crear credential en n8n
+    ├─ Generar workflow desde plantilla.json
+    ├─ Activar workflow automáticamente
+    └─ Guardar en BD (chatbot_config)
+         ↓
+    Bot Activo en Telegram
+    (IA: DeepSeek + Chat Memory + Redis Anti-flood)
 ```
 
-**Decisiones clave:**
-- 1 usuario bot automático por organización (trigger SQL)
-- 1 workflow por plataforma por organización
-- Credentials en n8n, referenciadas en `chatbot_config`
-- MCP Server independiente para tools del AI Agent
-- Chat Memory en PostgreSQL de n8n
+**Componentes del Workflow (15 nodos):**
+- Telegram Trigger → Edit Fields → Redis Queue (anti-flood)
+- Wait 20s (debouncing) → Redis Get → If (nuevos mensajes?)
+- AI Agent (DeepSeek + PostgreSQL Memory + 3 MCP Clients)
+- Send Message → No Operation
 
 ---
 
-## ✅ FASE 0: Setup Inicial (COMPLETADO)
+## 🔧 PROBLEMAS CRÍTICOS RESUELTOS
 
-**Comando:** `npm run dev`
-
-**Auto-genera:**
-- ✅ n8n owner account
-- ✅ n8n API Key (con actualización de .env)
-- ✅ Backend inicia con API Key correcta
-
-**Tiempo:** 3-5 minutos
+| # | Problema | Solución Aplicada | Archivo |
+|---|----------|-------------------|---------|
+| 1 | Schema PostgreSQL n8n rechaza credential | Agregar campos SSH vacíos | `n8nGlobalCredentialsService.js` |
+| 2 | Regex token Telegram muy estricto | Cambiar a `/^\d{8,10}:[A-Za-z0-9_-]{35,}$/` | `Step7_WhatsAppIntegration.jsx` |
+| 3 | n8n rechaza campos auto-generados | Eliminar `id`, `versionId`, `meta`, `pinData`, `tags`, `webhookId`, etc. | `chatbot.controller.js:502-529` |
+| 4 | System prompt < 100 chars (constraint BD) | Backend genera prompt de 647 chars, frontend NO envía | `useChatbots.js:53-55` |
 
 ---
 
-## ✅ FASE 1: Base de Datos (COMPLETADO)
+## 📝 COMPONENTES IMPLEMENTADOS
 
-### Implementado:
+### Backend (8 archivos)
+```
+controllers/
+  └─ chatbot.controller.js        (8 endpoints, rollback strategy)
+database/
+  └─ chatbot-config.model.js      (13 métodos CRUD con RLS)
+routes/api/v1/
+  └─ chatbots.js                  (7 rutas + middleware stack)
+schemas/
+  └─ chatbotSchema.js             (8 schemas Joi con validación dinámica)
+services/
+  ├─ n8nService.js                (11 métodos API workflows)
+  ├─ n8nCredentialService.js      (CRUD credentials por plataforma)
+  ├─ n8nGlobalCredentialsService.js (DeepSeek, PostgreSQL, Redis)
+  └─ platformValidators/
+      └─ telegramValidator.js     (Validación con Telegram API)
+```
 
-**ENUMs:**
+### Frontend (4 archivos)
+```
+pages/onboarding/steps/
+  └─ Step7_WhatsAppIntegration.jsx  (Form + validación Zod)
+hooks/
+  └─ useChatbots.js                 (7 hooks React Query)
+services/api/
+  └─ endpoints.js                   (API chatbots + configurarTelegram)
+store/
+  └─ onboardingStore.js             (Estado Telegram)
+```
+
+### Base de Datos
 ```sql
-CREATE TYPE rol_usuario AS ENUM (..., 'bot');
-CREATE TYPE plataforma_chatbot AS ENUM ('telegram', 'whatsapp', ...);
-CREATE TYPE estado_chatbot AS ENUM ('configurando', 'activo', ...);
+-- ENUMs
+plataforma_chatbot (7 valores)
+estado_chatbot (5 valores)
+
+-- Tablas
+chatbot_config (20 columnas)
+  - Constraint UNIQUE: (organizacion_id, plataforma)
+  - JSONB: config_plataforma
+  - Métricas: total_mensajes_procesados, total_citas_creadas
+
+chatbot_credentials (auditoría)
+  - Tracking de credentials n8n
+
+-- RLS Policies (2)
+-- Índices (8 optimizados)
+-- Triggers (timestamps automáticos)
 ```
 
-**Tablas:**
-- `chatbot_config` (20 columnas, JSONB config, métricas)
-- `chatbot_credentials` (8 columnas, auditoría)
-
-**Triggers:**
-- `trigger_crear_usuario_bot` → Crea usuario bot al insertar organización
-
-**Functions:**
-- `crear_usuario_bot_organizacion()` → Genera email `bot@org{id}.internal`
-- `obtener_usuario_bot(org_id)` → Security definer para obtener bot
-
-**RLS Policies:**
-- Tenant isolation para `chatbot_config` y `chatbot_credentials`
-- Super_admin bypass
-
-**Índices:**
-- 10 índices (incluyendo GIN en JSONB)
-
-**Validación:**
-```bash
-# Verificar trigger funciona:
-docker exec postgres_db psql -U admin -d postgres -c "
-  SELECT u.email, u.rol, o.nombre_comercial
-  FROM usuarios u
-  JOIN organizaciones o ON u.organizacion_id = o.id
-  WHERE u.rol = 'bot';
-"
+### Template n8n
+```
+flows/plantilla/plantilla.json
+  - 15 nodos configurados
+  - Credentials dinámicas (Telegram + globales)
+  - System prompt personalizable
+  - Anti-flood con Redis (20s debouncing)
+  - Chat Memory persistente (PostgreSQL)
+  - 3 MCP Client placeholders (Fase 6)
 ```
 
 ---
 
-## ✅ FASE 2: Integración n8n (COMPLETADO)
+## 🔑 CONFIGURACIÓN REQUERIDA
 
-### Servicios Implementados:
-
-#### 1. `n8nService.js`
-
-**Métodos:**
-- `listarWorkflows(filters)`
-- `obtenerWorkflow(workflowId)`
-- `crearWorkflow(workflowData)`
-- `actualizarWorkflow(workflowId, updates)`
-- `activarWorkflow(workflowId)` → `POST /activate`
-- `desactivarWorkflow(workflowId)` → `POST /deactivate`
-- `eliminarWorkflow(workflowId)`
-- `verificarEstado(workflowId)`
-
-**Cliente:**
-```javascript
-const n8nClient = axios.create({
-    baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-    headers: {
-        'X-N8N-API-KEY': process.env.N8N_API_KEY,
-        'Content-Type': 'application/json'
-    }
-});
-```
-
-**Archivos:** `/backend/app/services/n8nService.js`
-
-#### 2. `n8nCredentialService.js`
-
-**Métodos:**
-- `listarCredentials()` → Retorna [] (n8n no expone endpoint)
-- `obtenerCredential(credentialId)`
-- `crearCredentialTelegram({ name, bot_token, organizacion_id })`
-- `crearCredentialWhatsApp({ name, api_key, organizacion_id })`
-- `crearCredential({ plataforma, nombre, config, organizacion_id })`
-- `actualizarCredential(credentialId, updates)`
-- `eliminarCredential(credentialId)`
-- `existeCredential(credentialId)`
-
-**Mapeo:**
-```javascript
-const CREDENTIAL_TYPES = {
-    telegram: 'telegramApi',
-    whatsapp: 'httpHeaderAuth',
-    instagram: 'facebookGraphApi',
-    // ...
-};
-```
-
-**Archivos:** `/backend/app/services/n8nCredentialService.js`
-
-#### 3. `telegramValidator.js`
-
-**Métodos:**
-- `validar(botToken)` → Llama a Telegram API `/getMe`
-- `validarFormato(botToken)` → Regex `/^\d{8,10}:[A-Za-z0-9_-]{35}$/`
-- `obtenerInfoBot(botToken)` → GET `https://api.telegram.org/bot{token}/getMe`
-- `extraerBotId(botToken)` → Extrae ID del token
-- `validarConfiguracion(config)` → Valida config completa
-
-**Archivos:** `/backend/app/services/platformValidators/telegramValidator.js`
-
-### Endpoints n8n Descubiertos:
-
-**Workflows:**
-- ✅ `GET /api/v1/workflows` - Listar
-- ✅ `POST /api/v1/workflows` - Crear
-- ✅ `GET /api/v1/workflows/{id}` - Obtener
-- ✅ `PUT /api/v1/workflows/{id}` - Actualizar (requiere todos campos)
-- ✅ `POST /api/v1/workflows/{id}/activate` - **Activar**
-- ✅ `POST /api/v1/workflows/{id}/deactivate` - **Desactivar**
-- ✅ `DELETE /api/v1/workflows/{id}` - Eliminar
-
-**Credentials:**
-- ✅ `POST /api/v1/credentials` - Crear
-- ✅ `GET /api/v1/credentials/{id}` - Obtener
-- ✅ `PATCH /api/v1/credentials/{id}` - Actualizar
-- ✅ `DELETE /api/v1/credentials/{id}` - Eliminar
-- ❌ No existe endpoint para listar todas (por seguridad)
-
-### Restricciones Importantes:
-
-1. **Campo `active` es read-only** en PUT → Usar `/activate` y `/deactivate`
-2. **PATCH no soportado** en workflows → Solo PUT
-3. **Workflows requieren trigger** → Webhook/Poller/Telegram para activar
-4. **PUT requiere campos completos** → name, nodes, connections, settings
-
-### Tests:
-
-**Archivo:** `/backend/app/test-n8n-services.js`
-
-**Ejecutar:**
-```bash
-docker exec back node test-n8n-services.js
-```
-
-**Resultado esperado:**
-```
-✅ TODOS LOS TESTS PASARON
-
-✓ N8nService.listarWorkflows()
-✓ N8nService.crearWorkflow()
-✓ N8nService.obtenerWorkflow()
-✓ N8nService.activarWorkflow()
-✓ N8nService.desactivarWorkflow()
-✓ N8nService.eliminarWorkflow()
-✓ N8nCredentialService.listarCredentials()
-```
-
-**Workflow de prueba creado:**
-```javascript
-{
-    name: 'Test Workflow - Auto',
-    nodes: [
-        { /* Webhook trigger */ },
-        { /* Respond to Webhook */ }
-    ],
-    connections: { /* ... */ },
-    settings: { saveManualExecutions: true }
-}
-```
-
-**Validación en UI:** El workflow aparece en http://localhost:5678/home/workflows con 2 nodos visibles
-
----
-
-## ✅ FASE 3: Backend CRUD (COMPLETADO)
-
-### Implementado:
-
-#### Models (`/backend/app/database/`)
-
-**chatbot-config.model.js:**
-- ✅ `crear(data)` → INSERT con RLS (organizacion_id en data)
-- ✅ `obtenerPorId(id, organizacionId)` → SELECT con validación
-- ✅ `obtenerPorPlataforma(plataforma, organizacionId)` → Búsqueda específica
-- ✅ `listarPorOrganizacion(organizacionId, filtros, paginacion)` → Con paginación
-- ✅ `actualizar(id, data, organizacionId)` → UPDATE parcial
-- ✅ `actualizarEstado(id, estado, organizacionId)` → Cambio de estado
-- ✅ `eliminar(id, organizacionId)` → Soft delete (activo = false)
-- ✅ `obtenerEstadisticas(organizacionId)` → Métricas agregadas
-
-**Patrón RLS:**
-```javascript
-const data = await RLSContextManager.query(organizacionId, async (db) => {
-    return await db.query('SELECT * FROM chatbot_config WHERE id = $1', [id]);
-});
-```
-
-#### Schemas (`/backend/app/schemas/`)
-
-**chatbotSchema.js:**
-```javascript
-// ✅ Implementado con soporte multi-plataforma
-const configurarChatbotSchema = Joi.object({
-    nombre: Joi.string().min(3).max(255).required(),
-    plataforma: Joi.string().valid(
-        'telegram', 'whatsapp', 'instagram',
-        'facebook_messenger', 'slack', 'discord', 'otro'
-    ).required(),
-    config_plataforma: Joi.object().required(),
-    ai_model: Joi.string().max(100).default('deepseek-chat'),
-    ai_temperature: Joi.number().min(0).max(2).default(0.7),
-    system_prompt: Joi.string().min(100).optional()
-});
-
-// Schema específico para Telegram con validación de token
-const configurarTelegramSchema = Joi.object({
-    nombre: Joi.string().min(3).max(255).required(),
-    plataforma: Joi.string().valid('telegram').required(),
-    config_plataforma: Joi.object({
-        bot_token: Joi.string().pattern(/^\d{8,10}:[A-Za-z0-9_-]{35}$/).required()
-    }).required(),
-    ai_model: Joi.string().max(100).optional(),
-    ai_temperature: Joi.number().min(0).max(2).optional(),
-    system_prompt: Joi.string().min(100).optional()
-});
-```
-
-#### Controllers (`/backend/app/controllers/`)
-
-**chatbotController.js:**
-```javascript
-// ✅ Implementado con flujo completo de configuración
-class ChatbotController {
-    static configurar = asyncHandler(async (req, res) => {
-        // 1. ✅ Verificar chatbot no existe para la plataforma
-        // 2. ✅ Validar credenciales con platformValidator (Telegram)
-        // 3. ✅ Crear credential en n8n
-        // 4. ✅ Generar system prompt personalizado
-        // 5. ✅ Crear workflow con template básico
-        // 6. ✅ Activar workflow
-        // 7. ✅ Guardar en chatbot_config
-        // 8. ✅ Rollback automático en caso de error
-    });
-
-    static listar = asyncHandler(async (req, res) => {
-        // ✅ Filtros: plataforma, estado, activo, workflow_activo
-        // ✅ Paginación: pagina, limite
-    });
-
-    static obtener = asyncHandler(async (req, res) => {
-        // ✅ Por ID con validación multi-tenant
-    });
-
-    static actualizar = asyncHandler(async (req, res) => {
-        // ✅ Actualización parcial
-    });
-
-    static eliminar = asyncHandler(async (req, res) => {
-        // ✅ Cascade: workflow + credential + BD
-    });
-
-    static obtenerEstadisticas = asyncHandler(async (req, res) => {
-        // ✅ Métricas: total, por estado, mensajes, citas
-    });
-
-    static actualizarEstado = asyncHandler(async (req, res) => {
-        // ✅ Cambio de estado
-    });
-}
-```
-
-#### Routes (`/backend/app/routes/api/v1/`)
-
-**chatbots.js:**
-```javascript
-// ✅ 7 endpoints implementados con stack completo de middleware
-const router = Router();
-
-// POST /api/v1/chatbots/configurar
-router.post('/configurar',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
-    validation.validate(schemas.configurarChatbotSchema),
-    ChatbotController.configurar
-);
-
-// GET /api/v1/chatbots
-router.get('/', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit, ChatbotController.listar);
-
-// GET /api/v1/chatbots/estadisticas
-router.get('/estadisticas', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit, ChatbotController.obtenerEstadisticas);
-
-// GET /api/v1/chatbots/:id
-router.get('/:id', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit, ChatbotController.obtener);
-
-// PUT /api/v1/chatbots/:id
-router.put('/:id', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
-    validation.validate(schemas.actualizarChatbotSchema),
-    ChatbotController.actualizar);
-
-// PATCH /api/v1/chatbots/:id/estado
-router.patch('/:id/estado', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
-    validation.validate(schemas.actualizarEstadoChatbotSchema),
-    ChatbotController.actualizarEstado);
-
-// DELETE /api/v1/chatbots/:id
-router.delete('/:id', auth.authenticateToken, tenant.setTenantContext,
-    rateLimiting.apiRateLimit, ChatbotController.eliminar);
-```
-
-#### Tests
-
-**chatbots.test.js:** ✅ **18/18 tests pasando**
-
-**Suite de Tests:**
-```bash
-PASS  __tests__/endpoints/chatbots.test.js (11.874 s)
-  Chatbot Controller API - Integración n8n
-    POST /api/v1/chatbots/configurar
-      ✓ debería crear chatbot Telegram exitosamente (3492 ms)
-      ✓ debería retornar 409 si ya existe chatbot para la plataforma (1147 ms)
-      ✓ debería retornar 400 si falta nombre (158 ms)
-      ✓ debería retornar 400 si falta plataforma (174 ms)
-      ✓ debería retornar 400 si falta config_plataforma (155 ms)
-      ✓ debería retornar 400 si bot_token tiene formato inválido (176 ms)
-      ✓ debería retornar 400 si Telegram API rechaza el token (299 ms)
-    GET /api/v1/chatbots
-      ✓ debería listar chatbots de la organización (2161 ms)
-      ✓ debería retornar array vacío si no hay chatbots (109 ms)
-      ✓ debería filtrar por plataforma (2009 ms)
-      ✓ debería filtrar por estado (2034 ms)
-    GET /api/v1/chatbots/:id
-      ✓ debería obtener un chatbot por ID (2060 ms)
-      ✓ debería retornar 404 si chatbot no existe (1143 ms)
-    PUT /api/v1/chatbots/:id
-      ✓ debería actualizar un chatbot (2076 ms)
-    DELETE /api/v1/chatbots/:id
-      ✓ debería eliminar chatbot, workflow y credential (2060 ms)
-      ✓ debería retornar 404 si chatbot no existe (1121 ms)
-    GET /api/v1/chatbots/estadisticas
-      ✓ debería obtener estadísticas de chatbots (2074 ms)
-    PATCH /api/v1/chatbots/:id/estado
-      ✓ debería actualizar el estado de un chatbot (2087 ms)
-
-Test Suites: 1 passed, 1 total
-Tests:       18 passed, 18 total
-```
-
-**Validaciones Cubiertas:**
-- ✅ Creación completa de chatbot con credential y workflow en n8n
-- ✅ Validación de token con Telegram API
-- ✅ Prevención de duplicados (409 Conflict)
-- ✅ Validaciones de esquema Joi
-- ✅ Multi-tenant isolation
-- ✅ Cascade delete (workflow + credential + BD)
-- ✅ Filtros y paginación
-- ✅ Estadísticas agregadas
-- ✅ Actualización de estado
-
-**Validación en UI n8n:**
-- ✅ Workflow visible en http://localhost:5678
-- ✅ 2 nodos conectados (Telegram Trigger → Send Message)
-- ✅ Credential vinculada correctamente
-
----
-
-## ⏳ FASES 4-6 (PENDIENTES)
-
-Ver documento completo para detalles de:
-- **Fase 4:** MCP Server (auth, tools, API client)
-- **Fase 5:** Workflow Templates (builder, promptBuilder)
-- **Fase 6:** Testing E2E completo
-
----
-
-## 📋 CHECKLIST PRE-IMPLEMENTACIÓN FASE 3
-
-**Backend:**
-- [ ] Leer `CLAUDE.md` - Patrón RLSContextManager
-- [ ] Revisar estructura de models existentes en `/backend/app/database/`
-- [ ] Entender stack de middleware (auth → tenant → validation)
-- [ ] Revisar helpers: ResponseHelper, ValidationHelper
-
-**Testing:**
-- [ ] Tener bot de prueba en Telegram (@BotFather)
-- [ ] Configurar Postman/Thunder Client
-- [ ] Script para limpiar workflows de prueba en n8n
-
----
-
-## 📚 ARCHIVOS CLAVE
-
-| Archivo | Estado | Ubicación |
-|---------|--------|-----------|
-| ENUMs | ✅ | `sql/schema/01-types-and-enums.sql` |
-| Tablas | ✅ | `sql/schema/06-operations-tables.sql` |
-| Triggers | ✅ | `sql/schema/09-triggers.sql` |
-| Functions | ✅ | `sql/schema/02-functions.sql` |
-| RLS Policies | ✅ | `sql/schema/08-rls-policies.sql` |
-| Índices | ✅ | `sql/schema/07-indexes.sql` |
-| n8nService | ✅ | `backend/app/services/n8nService.js` |
-| n8nCredentialService | ✅ | `backend/app/services/n8nCredentialService.js` |
-| telegramValidator | ✅ | `backend/app/services/platformValidators/telegramValidator.js` |
-| Test n8n | ✅ | `backend/app/test-n8n-services.js` |
-| chatbot-config.model | ✅ | `backend/app/database/chatbot-config.model.js` |
-| chatbot.controller | ✅ | `backend/app/controllers/chatbot.controller.js` |
-| chatbotSchema | ✅ | `backend/app/schemas/chatbotSchema.js` |
-| routes/chatbots | ✅ | `backend/app/routes/api/v1/chatbots.js` |
-| chatbots.test | ✅ | `backend/app/__tests__/endpoints/chatbots.test.js` |
-
----
-
-## 🎯 PRÓXIMOS PASOS
-
-1. ✅ Levantar proyecto desde cero: `docker compose down -v && npm run dev`
-2. ✅ Validar Fase 1 y 2 completadas
-3. ✅ Implementar Fase 3: Backend CRUD
-4. 🔄 Implementar Fase 4: MCP Server
-5. ⏳ Implementar Fase 5: Workflow Templates
-6. ⏳ Testing E2E final
-
-### Comandos para Ejecutar Tests
+### Variables .env Mínimas
 
 ```bash
-# Ejecutar todos los tests de chatbots
+# n8n (auto-generadas por setup)
+N8N_API_KEY=<generada-automaticamente>
+N8N_API_URL=http://n8n-main:5678
+
+# Modelos IA
+DEEPSEEKAPIKEY=sk-xxx
+
+# PostgreSQL Chat Memory
+CHAT_DB_HOST=postgres
+CHAT_DB_NAME=chat_memories_db
+CHAT_DB_USER=n8n_app
+CHAT_DB_PASSWORD=<password-seguro>
+
+# Redis
+REDIS_HOST=redis
+REDIS_PORT=6379
+
+# Opcional: IDs de credentials globales (para evitar recrear)
+N8N_DEEPSEEK_CREDENTIAL_ID=<id>
+N8N_POSTGRES_CREDENTIAL_ID=<id>
+N8N_REDIS_CREDENTIAL_ID=<id>
+```
+
+---
+
+## 🚀 COMANDOS ESENCIALES
+
+```bash
+# Desarrollo
+npm run dev                      # Levantar stack completo
+docker logs -f back              # Ver logs backend
 docker exec back npm test -- __tests__/endpoints/chatbots.test.js
 
-# Ver workflows creados en n8n
+# Debugging
+docker exec postgres_db psql -U admin -d postgres -c \
+  "SELECT id, nombre, plataforma, estado, workflow_activo FROM chatbot_config;"
+
+# Acceso n8n UI
 # http://localhost:5678
-# Credenciales: admin@saas-agendamiento.local / OVoy0WDEVjRtAyQwffFK7Q5KkXvjBzFO
+# Credenciales en .env (N8N_OWNER_EMAIL / N8N_OWNER_PASSWORD)
 ```
 
 ---
 
-**Última actualización:** 22 Octubre 2025
-**Estado:** Fase 3 completada (18/18 tests ✅), listo para Fase 4: MCP Server
+## 📋 FASE 6: MCP SERVER (En Planificación)
 
-> 💡 **Consultar:** `ANEXO_CODIGO_CHATBOTS.md` para implementación detallada de código
+### 🎯 Objetivo
+
+Dotar al AI Agent de herramientas (tools) para interactuar con el backend y realizar acciones reales:
+- Crear citas
+- Verificar disponibilidad de profesionales
+- Listar servicios disponibles
+- Buscar clientes existentes
+
+### 🏗️ Arquitectura Propuesta
+
+```
+Telegram User → n8n Workflow → AI Agent
+                                  ↓
+                           MCP Client Tools (x3)
+                                  ↓
+                            MCP Server (Node.js)
+                                  ↓
+                           Backend API REST
+                                  ↓
+                          PostgreSQL (SaaS DB)
+```
+
+### 📦 Componentes a Implementar
+
+#### 6.1 MCP Server (Node.js)
+
+**Ubicación:** `backend/mcp-server/`
+
+```
+backend/mcp-server/
+├── index.js                  # Servidor MCP principal
+├── package.json              # Dependencies: @modelcontextprotocol/sdk
+├── tools/
+│   ├── crearCita.js         # Tool: Crear nueva cita
+│   ├── verificarDisponibilidad.js  # Tool: Consultar horarios libres
+│   ├── listarServicios.js   # Tool: Obtener catálogo de servicios
+│   └── buscarCliente.js     # Tool: Buscar cliente por teléfono/nombre
+├── config/
+│   └── auth.js              # Autenticación con Backend API
+└── utils/
+    └── apiClient.js         # Axios client para Backend
+```
+
+**Tecnologías:**
+- Runtime: Node.js 20+
+- MCP SDK: `@modelcontextprotocol/sdk`
+- HTTP Client: Axios
+- Auth: JWT tokens del Backend
+- Puerto: `3100` (configurable)
+
+#### 6.2 Tools (Herramientas MCP)
+
+##### Tool 1: `crearCita`
+
+**Descripción:** Crea una nueva cita en el sistema de agendamiento
+
+**Inputs:**
+```typescript
+{
+  fecha: string;           // "DD/MM/YYYY"
+  hora: string;            // "HH:MM" formato 24hrs
+  profesional_id: number;  // ID del barbero/estilista
+  servicio_id: number;     // ID del servicio (corte, barba, etc)
+  cliente: {
+    nombre: string;
+    telefono: string;
+    email?: string;
+  };
+  notas?: string;
+}
+```
+
+**Output:**
+```typescript
+{
+  success: boolean;
+  cita_id?: number;
+  codigo_cita?: string;    // ej: "ORG001-20251023-001"
+  mensaje: string;
+  error?: string;
+}
+```
+
+**Backend Endpoint:** `POST /api/v1/citas`
+
+---
+
+##### Tool 2: `verificarDisponibilidad`
+
+**Descripción:** Verifica horarios disponibles de un profesional en una fecha
+
+**Inputs:**
+```typescript
+{
+  profesional_id: number;
+  fecha: string;           // "DD/MM/YYYY"
+  duracion?: number;       // minutos (default: 30)
+}
+```
+
+**Output:**
+```typescript
+{
+  fecha: string;
+  profesional: {
+    id: number;
+    nombre: string;
+  };
+  horarios_disponibles: [
+    { hora: "09:00", disponible: true },
+    { hora: "09:30", disponible: false },
+    // ...
+  ];
+  total_disponibles: number;
+}
+```
+
+**Backend Endpoint:** `GET /api/v1/citas/disponibilidad`
+
+---
+
+##### Tool 3: `listarServicios`
+
+**Descripción:** Lista servicios activos de la organización
+
+**Inputs:**
+```typescript
+{
+  activo?: boolean;        // Filtrar solo activos (default: true)
+}
+```
+
+**Output:**
+```typescript
+{
+  servicios: [
+    {
+      id: number;
+      nombre: string;
+      duracion_minutos: number;
+      precio: number;
+      descripcion: string;
+      profesionales_ids: number[];  // IDs de profesionales que ofrecen este servicio
+    }
+  ];
+  total: number;
+}
+```
+
+**Backend Endpoint:** `GET /api/v1/servicios`
+
+---
+
+##### Tool 4: `buscarCliente`
+
+**Descripción:** Busca un cliente existente por teléfono o nombre
+
+**Inputs:**
+```typescript
+{
+  busqueda: string;        // Teléfono o nombre
+  tipo?: 'telefono' | 'nombre';  // Auto-detect si no se especifica
+}
+```
+
+**Output:**
+```typescript
+{
+  encontrado: boolean;
+  cliente?: {
+    id: number;
+    nombre: string;
+    telefono: string;
+    email: string;
+    ultima_cita?: string;  // Fecha última cita
+  };
+  mensaje: string;
+}
+```
+
+**Backend Endpoint:** `GET /api/v1/clientes/buscar`
+
+---
+
+#### 6.3 Autenticación MCP Server → Backend
+
+**Estrategia:** JWT Service Account
+
+1. Crear usuario `mcp-service` con rol especial `mcp_bot`
+2. Generar JWT de larga duración (180 días, renovable)
+3. MCP Server usa JWT en header `Authorization: Bearer <token>`
+4. Backend valida JWT y extrae `organizacion_id` del context
+
+**Variables .env MCP Server:**
+```bash
+MCP_PORT=3100
+BACKEND_API_URL=http://back:3000
+MCP_JWT_TOKEN=<token-servicio>
+```
+
+**Generación de token:**
+```bash
+# Script de setup
+docker exec back node scripts/generate-mcp-token.js
+```
+
+#### 6.4 Configuración en n8n Workflow
+
+**Actualizar plantilla.json:**
+
+```json
+{
+  "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+  "name": "MCP Client - Crear Cita",
+  "parameters": {
+    "serverUrl": "http://mcp-server:3100",
+    "tool": "crearCita",
+    "options": {}
+  }
+}
+```
+
+**3 Nodos MCP Client:**
+1. `MCP Client` → `crearCita`
+2. `MCP Client1` → `verificarDisponibilidad`
+3. `MCP Client2` → `listarServicios` + `buscarCliente`
+
+---
+
+#### 6.5 Testing MCP Server
+
+**Archivo:** `backend/mcp-server/__tests__/tools.test.js`
+
+```bash
+# Tests unitarios de cada tool
+npm test
+
+# Test E2E con Backend mock
+npm run test:e2e
+
+# Test integración con n8n workflow
+docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
+```
+
+---
+
+### 📅 Plan de Implementación Fase 6
+
+#### Sprint 1: Setup MCP Server (5 días)
+- [ ] Crear estructura `backend/mcp-server/`
+- [ ] Instalar `@modelcontextprotocol/sdk`
+- [ ] Implementar servidor básico con health check
+- [ ] Configurar autenticación JWT con Backend
+- [ ] Tests: health check + autenticación
+
+#### Sprint 2: Implementar Tools (8 días)
+- [ ] Tool: `crearCita` + tests
+- [ ] Tool: `verificarDisponibilidad` + tests
+- [ ] Tool: `listarServicios` + tests
+- [ ] Tool: `buscarCliente` + tests
+- [ ] Validaciones Joi para inputs de cada tool
+- [ ] Error handling y logging
+
+#### Sprint 3: Integración n8n (5 días)
+- [ ] Actualizar `plantilla.json` con URLs MCP Server
+- [ ] Configurar 3 nodos MCP Client en workflow
+- [ ] Testing E2E: Telegram → AI Agent → MCP Tools → Backend
+- [ ] Documentación de uso para AI Agent
+- [ ] Deployment MCP Server en Docker
+
+#### Sprint 4: Validación y Monitoreo (3 días)
+- [ ] Pruebas de usuario con bot real
+- [ ] Monitoreo de latencia MCP Server → Backend
+- [ ] Logs estructurados (Winston)
+- [ ] Alertas de errores (webhooks a Slack/Discord)
+- [ ] Documentación final
+
+**Total:** ~21 días (1 mes)
+
+---
+
+### 🎯 Criterios de Éxito Fase 6
+
+- [ ] MCP Server responde en < 500ms
+- [ ] AI Agent puede crear citas exitosamente via Telegram
+- [ ] Tests E2E pasando (min 20 tests)
+- [ ] Logs estructurados en JSON
+- [ ] Documentación completa de tools
+- [ ] Zero downtime deployment (Docker)
+
+---
+
+### 🔒 Consideraciones de Seguridad
+
+1. **Rate Limiting:** MCP Server debe tener rate limits por organización
+2. **JWT Rotation:** Tokens MCP deben rotar cada 180 días
+3. **Input Validation:** Validar TODOS los inputs con Joi antes de llamar Backend
+4. **Audit Log:** Registrar todas las acciones de tools (quién, cuándo, qué)
+5. **Timeout:** Todas las llamadas a Backend con timeout 10s
+
+---
+
+## 📚 REFERENCIAS
+
+- **CLAUDE.md:** Arquitectura general del proyecto
+- **ANEXO_CODIGO_CHATBOTS.md:** Código detallado de implementación
+- **Tests Backend:** `backend/app/__tests__/endpoints/chatbots.test.js`
+- **n8n API Docs:** https://docs.n8n.io/api/
+- **Telegram Bot API:** https://core.telegram.org/bots/api
+- **MCP Protocol:** https://modelcontextprotocol.io/
+
+---
+
+**Última actualización:** 23 Octubre 2025
+**Estado:** ✅ Fase 5 Producción | 📝 Fase 6 En Planificación
+**Próximo Hito:** Iniciar Sprint 1 de MCP Server

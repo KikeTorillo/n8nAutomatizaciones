@@ -25,10 +25,39 @@ echo "  Nombre: $N8N_OWNER_FIRST_NAME $N8N_OWNER_LAST_NAME"
 echo ""
 
 # Verificar si n8n ya tiene owner
-echo "🔍 Verificando estado de n8n..."
+echo "🔍 Esperando a que n8n esté listo..."
+
+# Esperar a que n8n esté completamente iniciado (máximo 60 segundos)
+MAX_RETRIES=30
+RETRY_COUNT=0
+while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+  HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:5678 2>/dev/null || echo "000")
+
+  if [ "$HTTP_STATUS" = "200" ] || [ "$HTTP_STATUS" = "302" ]; then
+    echo "✅ n8n está listo (HTTP $HTTP_STATUS)"
+    break
+  fi
+
+  echo "⏳ Esperando n8n... ($((RETRY_COUNT + 1))/$MAX_RETRIES)"
+  sleep 2
+  RETRY_COUNT=$((RETRY_COUNT + 1))
+done
+
+if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+  echo "❌ Timeout esperando a que n8n inicie"
+  echo "ℹ️  Verifica los logs: docker logs n8n-main"
+  exit 1
+fi
+
+echo ""
+echo "🔍 Verificando si n8n ya tiene owner..."
 
 OWNER_EXISTS=$(docker exec postgres_db psql -U n8n_app -d n8n_db -t -c \
-  "SELECT COUNT(*) FROM \"user\" WHERE \"roleSlug\" = 'global:owner' AND email IS NOT NULL AND email != '';" 2>/dev/null | tr -d ' ')
+  "SELECT COUNT(*) FROM \"user\" WHERE \"roleSlug\" = 'global:owner' AND email IS NOT NULL AND email != '';" 2>/dev/null | tr -d ' ' || echo "0")
+
+if [ -z "$OWNER_EXISTS" ]; then
+  OWNER_EXISTS=0
+fi
 
 if [ "$OWNER_EXISTS" -gt 0 ]; then
   echo "✅ n8n ya tiene un owner configurado"

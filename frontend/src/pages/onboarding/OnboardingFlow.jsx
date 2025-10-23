@@ -60,7 +60,7 @@ function OnboardingFlow() {
     },
     {
       number: 7,
-      title: 'WhatsApp',
+      title: 'Telegram',
       icon: MessageCircle,
       component: Step7_WhatsAppIntegration,
     },

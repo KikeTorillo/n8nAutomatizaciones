@@ -77,23 +77,6 @@ const CREDENTIAL_TYPES = {
 class N8nCredentialService {
     /**
      * ====================================================================
-     * 📋 LISTAR CREDENTIALS
-     * ====================================================================
-     * NOTA: n8n NO expone endpoint público para listar todas las credentials
-     * por razones de seguridad. Solo se pueden obtener credentials específicas
-     * por ID si conoces el ID.
-     *
-     * Esta función retorna array vacío para mantener compatibilidad.
-     *
-     * @returns {Promise<Array>} Array vacío (feature no soportada por n8n)
-     */
-    static async listarCredentials() {
-        logger.warn('n8n no permite listar credentials vía API pública');
-        return [];
-    }
-
-    /**
-     * ====================================================================
      * 🔍 OBTENER CREDENTIAL POR ID
      * ====================================================================
      * Obtiene detalles de una credential específica

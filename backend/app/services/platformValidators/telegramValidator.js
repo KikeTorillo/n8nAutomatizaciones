@@ -66,6 +66,28 @@ class TelegramValidator {
             }
 
             // ════════════════════════════════════════════════════════════════
+            // SKIP VALIDACIÓN EN DESARROLLO (si está configurado)
+            // ════════════════════════════════════════════════════════════════
+            if (process.env.SKIP_TELEGRAM_VALIDATION === 'true') {
+                logger.warn('⚠️ SKIP_TELEGRAM_VALIDATION activado - No se validó con Telegram API');
+
+                // Extraer bot_id del token para simular respuesta
+                const botId = this.extraerBotId(botToken);
+
+                return {
+                    valido: true,
+                    bot_info: {
+                        id: botId,
+                        username: 'dev_bot_not_validated',
+                        first_name: 'Development Bot',
+                        can_join_groups: true,
+                        can_read_all_group_messages: true,
+                        supports_inline_queries: false
+                    }
+                };
+            }
+
+            // ════════════════════════════════════════════════════════════════
             // PASO 2: VALIDAR TOKEN CON TELEGRAM API
             // ════════════════════════════════════════════════════════════════
             const botInfo = await this.obtenerInfoBot(botToken);

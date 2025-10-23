@@ -15,10 +15,13 @@
 const ChatbotConfigModel = require('../database/chatbot-config.model');
 const N8nService = require('../services/n8nService');
 const N8nCredentialService = require('../services/n8nCredentialService');
+const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
 const TelegramValidator = require('../services/platformValidators/telegramValidator');
 const { asyncHandler } = require('../middleware');
 const { ResponseHelper } = require('../utils/helpers');
 const logger = require('../utils/logger');
+const fs = require('fs');
+const path = require('path');
 
 class ChatbotController {
 
@@ -102,7 +105,7 @@ class ChatbotController {
 
             logger.info(`[ChatbotController] Credential creada en n8n: ${credentialCreada.id}`);
         } catch (error) {
-            logger.error('[ChatbotController] Error creando credential en n8n:', error);
+            logger.error('[ChatbotController] Error creando credential en n8n:', error.message);
             return ResponseHelper.error(
                 res,
                 `Error al crear credenciales en n8n: ${error.message}`,
@@ -116,7 +119,7 @@ class ChatbotController {
         // ========== 5. Crear workflow en n8n con template ==========
         let workflowCreado;
         try {
-            const workflowTemplate = this._generarWorkflowTemplate({
+            const workflowTemplate = await this._generarWorkflowTemplate({
                 nombre,
                 plataforma,
                 credentialId: credentialCreada.id,
@@ -129,14 +132,14 @@ class ChatbotController {
             workflowCreado = await N8nService.crearWorkflow(workflowTemplate);
             logger.info(`[ChatbotController] Workflow creado en n8n: ${workflowCreado.id}`);
         } catch (error) {
-            logger.error('[ChatbotController] Error creando workflow en n8n:', error);
+            logger.error('[ChatbotController] Error creando workflow en n8n:', error.message);
 
             // Rollback: eliminar credential creada
             try {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
                 logger.info(`[ChatbotController] Rollback: credential ${credentialCreada.id} eliminada`);
             } catch (rollbackError) {
-                logger.error('[ChatbotController] Error en rollback de credential:', rollbackError);
+                logger.error('[ChatbotController] Error en rollback de credential:', rollbackError.message);
             }
 
             return ResponseHelper.error(
@@ -187,7 +190,13 @@ class ChatbotController {
                 201
             );
         } catch (error) {
-            logger.error('[ChatbotController] Error guardando chatbot en BD:', error);
+            logger.error('[ChatbotController] Error guardando chatbot en BD:', {
+                message: error.message,
+                detail: error.detail,
+                code: error.code,
+                constraint: error.constraint,
+                stack: error.stack
+            });
 
             // Rollback: eliminar workflow y credential
             try {
@@ -195,12 +204,12 @@ class ChatbotController {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
                 logger.info(`[ChatbotController] Rollback completo ejecutado`);
             } catch (rollbackError) {
-                logger.error('[ChatbotController] Error en rollback completo:', rollbackError);
+                logger.error('[ChatbotController] Error en rollback completo:', rollbackError.message);
             }
 
             return ResponseHelper.error(
                 res,
-                `Error al guardar configuración del chatbot: ${error.message}`,
+                `Error al guardar configuración del chatbot: ${error.message || error.detail || 'Error desconocido'}`,
                 500
             );
         }
@@ -404,68 +413,129 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
     }
 
     /**
-     * Genera el template del workflow de n8n para la plataforma especificada
+     * Genera el template del workflow de n8n desde plantilla.json
      *
-     * IMPORTANTE: Este es un template básico. En Fase 5 se implementará
-     * el WorkflowTemplateEngine completo con todos los nodos del AI Agent.
+     * Lee flows/plantilla/plantilla.json y reemplaza dinámicamente:
+     * - Nombre del workflow
+     * - Credentials de Telegram
+     * - Credentials globales (DeepSeek, PostgreSQL, Redis)
+     * - System prompt personalizado
+     * - Configuración de MCP tools (cuando estén disponibles)
      */
-    static _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId }) {
-        // Template básico con nodo Telegram Trigger + AI Agent (placeholder)
-        // TODO: Expandir en Fase 5 con nodos de:
-        // - AI Agent (con herramientas MCP)
-        // - Chat Memory (PostgreSQL)
-        // - Error Handling
-        // - Logging
+    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId }) {
+        try {
+            // 1. Leer plantilla base desde archivo
+            const plantillaPath = path.join(__dirname, '../flows/plantilla/plantilla.json');
 
-        const workflowTemplate = {
-            name: `${nombre} - ${plataforma}`,
-            nodes: [
-                // Nodo 1: Trigger de Telegram
-                {
-                    parameters: {
-                        updates: ['message']
-                    },
-                    id: 'telegram-trigger',
-                    name: 'Telegram Trigger',
-                    type: 'n8n-nodes-base.telegramTrigger',
-                    typeVersion: 1.1,
-                    position: [250, 300],
-                    credentials: {
-                        telegramApi: {
-                            id: credentialId,
-                            name: `${nombre} - Credential`
-                        }
-                    }
-                },
-                // Nodo 2: Placeholder para AI Agent (implementar en Fase 5)
-                {
-                    parameters: {
-                        text: `Echo: {{ $json.message.text }}\n\n(AI Agent en desarrollo - Fase 5)`,
-                        chatId: '={{ $json.message.chat.id }}',
-                        additionalFields: {}
-                    },
-                    id: 'telegram-response',
-                    name: 'Send Message',
-                    type: 'n8n-nodes-base.telegram',
-                    typeVersion: 1.1,
-                    position: [450, 300],
-                    credentials: {
-                        telegramApi: {
-                            id: credentialId,
-                            name: `${nombre} - Credential`
-                        }
+            if (!fs.existsSync(plantillaPath)) {
+                throw new Error(`Plantilla no encontrada en: ${plantillaPath}`);
+            }
+
+            const plantillaRaw = fs.readFileSync(plantillaPath, 'utf8');
+            const plantilla = JSON.parse(plantillaRaw);
+
+            logger.debug(`[ChatbotController] Plantilla cargada: ${plantilla.nodes.length} nodos`);
+
+            // 2. Obtener credentials globales (DeepSeek, PostgreSQL, Redis)
+            const globalCreds = await N8nGlobalCredentialsService.obtenerTodasLasCredentials();
+
+            logger.debug(`[ChatbotController] Credentials globales obtenidas:`, {
+                deepseek: globalCreds.deepseek?.id || 'N/A',
+                postgres: globalCreds.postgres?.id || 'N/A',
+                redis: globalCreds.redis?.id || 'N/A'
+            });
+
+            // 3. Actualizar nombre del workflow
+            plantilla.name = `${nombre} - Telegram Bot`;
+
+            // 4. Recorrer nodos y reemplazar credentials y configuraciones
+            plantilla.nodes.forEach(node => {
+                // 4.1 Reemplazar credentials de Telegram (Trigger + Send Message)
+                if (node.type === 'n8n-nodes-base.telegramTrigger' ||
+                    node.type === 'n8n-nodes-base.telegram') {
+                    if (node.credentials && node.credentials.telegramApi) {
+                        node.credentials.telegramApi.id = credentialId;
+                        node.credentials.telegramApi.name = `${nombre} - Telegram`;
                     }
                 }
-            ],
-            connections: {
-                'Telegram Trigger': {
-                    main: [[{ node: 'Send Message', type: 'main', index: 0 }]]
-                }
-            },
-            settings: {}
-        };
 
-        return workflowTemplate;
+                // 4.2 Reemplazar credential de DeepSeek
+                if (node.type === '@n8n/n8n-nodes-langchain.lmChatDeepSeek') {
+                    if (node.credentials && node.credentials.deepSeekApi) {
+                        node.credentials.deepSeekApi.id = globalCreds.deepseek.id;
+                        node.credentials.deepSeekApi.name = globalCreds.deepseek.name;
+                    }
+                }
+
+                // 4.3 Reemplazar credential de PostgreSQL (Chat Memory)
+                if (node.type === '@n8n/n8n-nodes-langchain.memoryPostgresChat') {
+                    if (node.credentials && node.credentials.postgres) {
+                        node.credentials.postgres.id = globalCreds.postgres.id;
+                        node.credentials.postgres.name = globalCreds.postgres.name;
+                    }
+                }
+
+                // 4.4 Reemplazar credentials de Redis
+                if (node.type === 'n8n-nodes-base.redis') {
+                    if (node.credentials && node.credentials.redis) {
+                        node.credentials.redis.id = globalCreds.redis.id;
+                        node.credentials.redis.name = globalCreds.redis.name;
+                    }
+                }
+
+                // 4.5 Actualizar System Prompt en AI Agent
+                if (node.type === '@n8n/n8n-nodes-langchain.agent') {
+                    if (node.parameters && node.parameters.options) {
+                        node.parameters.options.systemMessage = systemPrompt;
+                    }
+                }
+
+                // 4.6 Configurar MCP Client Tools (placeholder para Fase 6)
+                if (node.type === '@n8n/n8n-nodes-langchain.mcpClientTool') {
+                    // TODO: Configurar cuando MCP Server esté implementado
+                    // Por ahora dejamos vacíos (el AI Agent funcionará sin tools)
+                    logger.debug(`[ChatbotController] Nodo MCP Client encontrado: ${node.name} (sin configurar aún)`);
+                }
+            });
+
+            // 5. Limpiar IDs y campos read-only (n8n los regenerará)
+            delete plantilla.id;
+            delete plantilla.versionId;
+            delete plantilla.pinData;  // Eliminar pinData (datos de prueba)
+            delete plantilla.tags;     // Eliminar tags (aunque esté vacío)
+            delete plantilla.meta;     // Eliminar meta completo (no solo instanceId)
+            delete plantilla.active;   // Campo read-only, n8n lo gestiona
+
+            // 6. Limpiar IDs y campos auto-generados de nodos (n8n los regenerará)
+            plantilla.nodes.forEach(node => {
+                delete node.id;  // n8n genera IDs automáticamente al crear
+                if (node.webhookId) {
+                    delete node.webhookId;
+                }
+
+                // 6.1 Limpiar IDs dentro de assignments (Edit Fields node)
+                if (node.parameters?.assignments?.assignments) {
+                    node.parameters.assignments.assignments.forEach(assignment => {
+                        delete assignment.id;
+                    });
+                }
+
+                // 6.2 Limpiar IDs dentro de conditions (If node)
+                if (node.parameters?.conditions?.conditions) {
+                    node.parameters.conditions.conditions.forEach(condition => {
+                        delete condition.id;
+                    });
+                }
+            });
+
+            logger.info(`[ChatbotController] Workflow template generado exitosamente`);
+
+            return plantilla;
+
+        } catch (error) {
+            logger.error('[ChatbotController] Error generando workflow template:', error.message);
+            throw new Error(`Error generando workflow: ${error.message}`);
+        }
     }
 }
 
