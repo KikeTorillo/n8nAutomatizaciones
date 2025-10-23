@@ -97,7 +97,7 @@ function Modal({
               )}
 
               {/* Content */}
-              <div className="overflow-y-auto flex-1">
+              <div className="overflow-y-auto flex-1 p-6">
                 {children}
               </div>
             </motion.div>

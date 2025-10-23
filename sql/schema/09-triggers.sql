@@ -154,3 +154,46 @@ COMMENT ON TRIGGER trigger_validar_coherencia_cita ON citas IS
 
 COMMENT ON TRIGGER trigger_generar_codigo_cita ON citas IS
 'Auto-genera codigo_cita único (formato: ORG001-20251003-001) antes de insertar si no se proporciona. Previene errores de duplicate key. Agregado: 2025-10-03';
+
+-- ====================================================================
+-- 🏢 TRIGGERS PARA TABLA ORGANIZACIONES
+-- ====================================================================
+-- Auto-creación de usuario bot al crear organización
+-- ────────────────────────────────────────────────────────────────────
+
+-- TRIGGER: AUTO-CREACIÓN DE USUARIO BOT
+-- Crea automáticamente un usuario con rol 'bot' después de insertar una organización
+-- Este usuario será usado por los chatbots de IA para autenticarse vía MCP Server
+CREATE TRIGGER trigger_crear_usuario_bot
+    AFTER INSERT ON organizaciones
+    FOR EACH ROW
+    EXECUTE FUNCTION crear_usuario_bot_organizacion();
+
+-- ====================================================================
+-- 🤖 TRIGGERS PARA TABLA CHATBOT_CONFIG
+-- ====================================================================
+-- Actualización automática de timestamps en configuración de chatbots
+-- ────────────────────────────────────────────────────────────────────
+
+-- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- Actualiza campo updated_at automáticamente
+CREATE TRIGGER trigger_actualizar_timestamp_chatbot_config
+    BEFORE UPDATE ON chatbot_config
+    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+
+-- ====================================================================
+-- 📝 DOCUMENTACIÓN DE TRIGGERS - CHATBOTS
+-- ====================================================================
+-- Comentarios explicativos para triggers de chatbots
+-- ────────────────────────────────────────────────────────────────────
+
+COMMENT ON TRIGGER trigger_crear_usuario_bot ON organizaciones IS
+'Crea automáticamente un usuario con rol bot después de insertar una organización.
+Este usuario es usado por chatbots de IA para autenticación vía MCP Server.
+Email formato: bot@org{id}.internal
+Función: crear_usuario_bot_organizacion()
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+COMMENT ON TRIGGER trigger_actualizar_timestamp_chatbot_config ON chatbot_config IS
+'Actualiza automáticamente el campo actualizado_en en chatbot_config usando función actualizar_timestamp().
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';

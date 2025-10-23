@@ -6,7 +6,7 @@
 -- y enumeraciones utilizadas en el sistema SaaS de agendamiento.
 --
 -- 📊 CONTENIDO:
--- • 7 ENUMs especializados para dominio de negocio
+-- • 9 ENUMs especializados para dominio de negocio
 -- • Tipos personalizados reutilizables
 -- • Documentación completa de valores y casos de uso
 --
@@ -16,7 +16,7 @@
 -- ====================================================================
 -- 👥 ENUM ROL_USUARIO - JERARQUÍA DE PERMISOS
 -- ====================================================================
--- Define los 5 niveles de acceso del sistema SaaS con jerarquía clara.
+-- Define los 6 niveles de acceso del sistema SaaS con jerarquía clara.
 -- Cada rol tiene permisos específicos y restricciones definidas.
 --
 -- 🔑 JERARQUÍA DE ROLES (de mayor a menor privilegio):
@@ -48,10 +48,17 @@ CREATE TYPE rol_usuario AS ENUM (
                       -- • Sin acceso a configuraciones administrativas
 
     -- 🔵 NIVEL 5: CLIENTE FINAL
-    'cliente'         -- • Acceso muy limitado, principalmente lectura
+    'cliente',        -- • Acceso muy limitado, principalmente lectura
                       -- • Puede ver sus propias citas y servicios
                       -- • Sin acceso a datos de otros clientes
                       -- • Interfaz simplificada para autoservicio
+
+    -- 🤖 NIVEL 6: USUARIO BOT (SISTEMA)
+    'bot'             -- • Usuario automático para chatbots de IA
+                      -- • Creado automáticamente al crear una organización
+                      -- • Acceso limitado a endpoints específicos para chatbots
+                      -- • Solo operaciones de lectura y creación de citas/clientes
+                      -- • No puede acceder a configuraciones administrativas
 );
 
 -- 📝 NOTAS IMPORTANTES SOBRE ROLES:
@@ -216,3 +223,42 @@ CREATE TYPE tipo_profesional AS ENUM (
     -- 🔄 GENÉRICO
     'otro'                        -- Otros tipos no categorizados
 );
+
+-- ====================================================================
+-- 🤖 ENUM PLATAFORMA_CHATBOT - PLATAFORMAS DE MENSAJERÍA SOPORTADAS
+-- ====================================================================
+-- Define las plataformas de mensajería donde se pueden desplegar
+-- chatbots de IA para cada organización.
+--
+-- 📱 PLATAFORMAS ACTUALES: 7 canales principales
+-- 🔮 EXPANSIÓN: Diseñado para agregar nuevas plataformas fácilmente
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE plataforma_chatbot AS ENUM (
+    'telegram',           -- Telegram Bot API (bot_token)
+    'whatsapp',           -- WhatsApp via Evolution API
+    'instagram',          -- Instagram Direct Messages via Graph API
+    'facebook_messenger', -- Facebook Messenger via Graph API
+    'slack',              -- Slack Bot API
+    'discord',            -- Discord Bot
+    'otro'                -- Otras plataformas personalizadas
+);
+
+COMMENT ON TYPE plataforma_chatbot IS 'Plataformas de mensajería soportadas para chatbots de IA';
+
+-- ====================================================================
+-- 🟢 ENUM ESTADO_CHATBOT - CICLO DE VIDA DE CHATBOTS
+-- ====================================================================
+-- Define los estados del ciclo de vida de un chatbot desde su
+-- configuración inicial hasta su desactivación.
+--
+-- 🔄 WORKFLOW: configurando → activo → pausado/error → desactivado
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE estado_chatbot AS ENUM (
+    'configurando',    -- En proceso de configuración inicial (credential + workflow)
+    'activo',          -- Funcionando correctamente y procesando mensajes
+    'error',           -- Error en workflow, credential inválida o API caída
+    'pausado',         -- Pausado temporalmente por el usuario
+    'desactivado'      -- Desactivado permanentemente (credential eliminada)
+);
+
+COMMENT ON TYPE estado_chatbot IS 'Estados del ciclo de vida de un chatbot de IA';

@@ -17,9 +17,9 @@
 -- ====================================================================
 
 -- ====================================================================
--- 🔍 EXTENSIONES PARA BÚSQUEDA AVANZADA
+-- 🔍 EXTENSIONES REQUERIDAS
 -- ====================================================================
--- Extensiones necesarias para las funciones de búsqueda fuzzy en modelos
+-- Extensiones necesarias para las funciones del sistema
 -- ────────────────────────────────────────────────────────────────────
 
 -- Extensión para búsqueda fuzzy (funciones similarity() y trigrama)
@@ -27,6 +27,10 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Extensión para normalización de texto sin acentos
 CREATE EXTENSION IF NOT EXISTS unaccent;
+
+-- Extensión para funciones criptográficas (gen_random_bytes, crypt, gen_salt)
+-- Requerida para: crear_usuario_bot_organizacion()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ====================================================================
 -- 🔐 FUNCIÓN 1: REGISTRAR_INTENTO_LOGIN
@@ -600,3 +604,145 @@ COMMENT ON FUNCTION generar_codigo_cita() IS
 Previene duplicados con validación de loop.
 Trigger: BEFORE INSERT en tabla citas.
 Creado: 2025-10-03 - Corrección crítica para integridad de datos';
+
+-- ====================================================================
+-- 🤖 FUNCIÓN: CREAR_USUARIO_BOT_ORGANIZACION
+-- ====================================================================
+-- Crea automáticamente un usuario con rol 'bot' cuando se crea una
+-- nueva organización. Este usuario será usado por los chatbots de IA
+-- para autenticarse y realizar operaciones vía MCP Server.
+--
+-- 🎯 OBJETIVO: Automatizar creación de usuario bot (cero intervención manual)
+-- 🔒 SEGURIDAD: Password aleatorio de 32 bytes (bcrypt)
+-- 📧 EMAIL: bot@org{id}.internal (único por organización)
+-- ⚡ TRIGGER: AFTER INSERT en tabla organizaciones
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION crear_usuario_bot_organizacion()
+RETURNS TRIGGER AS $$
+DECLARE
+    bot_email VARCHAR(150);
+    bot_nombre VARCHAR(255);
+    random_password TEXT;
+BEGIN
+    -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 1: GENERAR EMAIL Y NOMBRE DEL BOT
+    -- ═══════════════════════════════════════════════════════════════════
+    -- Email único: bot@org1.internal, bot@org2.internal, etc.
+    bot_email := 'bot@org' || NEW.id || '.internal';
+
+    -- Nombre descriptivo: "Bot IA - Mi Barbería"
+    bot_nombre := 'Bot IA - ' || NEW.nombre_comercial;
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 2: GENERAR PASSWORD ALEATORIO
+    -- ═══════════════════════════════════════════════════════════════════
+    -- Password de 32 bytes aleatorios (256 bits)
+    -- Nota: Este password NO se usa (autenticación vía JWT automático)
+    -- pero debe existir por constraint NOT NULL en tabla usuarios
+    random_password := encode(gen_random_bytes(32), 'hex');
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 3: CREAR USUARIO BOT
+    -- ═══════════════════════════════════════════════════════════════════
+    INSERT INTO usuarios (
+        email,
+        password_hash,
+        nombre,
+        rol,
+        organizacion_id,
+        activo,
+        email_verificado,
+        creado_en,
+        actualizado_en
+    ) VALUES (
+        bot_email,
+        crypt(random_password, gen_salt('bf')),  -- bcrypt hash
+        bot_nombre,
+        'bot',
+        NEW.id,
+        true,   -- Auto-activado (listo para usar)
+        true,   -- Email pre-verificado (usuario de sistema)
+        NOW(),
+        NOW()
+    );
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- FASE 4: LOG INFORMATIVO (OPCIONAL)
+    -- ═══════════════════════════════════════════════════════════════════
+    RAISE NOTICE 'Usuario bot creado automáticamente: % para organización %',
+        bot_email, NEW.nombre_comercial;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- 📝 COMENTARIO DE FUNCIÓN EN BD
+COMMENT ON FUNCTION crear_usuario_bot_organizacion() IS
+'Crea automáticamente un usuario con rol bot al insertar una organización.
+Este usuario es usado por chatbots de IA para autenticación vía MCP Server.
+Email formato: bot@org{id}.internal
+Password: 32 bytes aleatorios (bcrypt)
+Trigger: AFTER INSERT en tabla organizaciones
+Creado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+-- ====================================================================
+-- 🔍 FUNCIÓN: OBTENER_USUARIO_BOT
+-- ====================================================================
+-- Función auxiliar para obtener el usuario bot de una organización.
+-- Retorna el ID y email del usuario bot activo.
+--
+-- 🎯 USO: Backend al generar JWT para MCP Server
+-- ⚡ PERFORMANCE: Optimizado con índice idx_usuarios_rol_org
+-- 🔒 SEGURIDAD: Usa bypass RLS para búsqueda de sistema
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION obtener_usuario_bot(p_organizacion_id INTEGER)
+RETURNS TABLE (
+    usuario_id INTEGER,
+    email VARCHAR(150),
+    nombre VARCHAR(255)
+) AS $$
+BEGIN
+    -- ═══════════════════════════════════════════════════════════════════
+    -- CONFIGURAR BYPASS RLS
+    -- ═══════════════════════════════════════════════════════════════════
+    -- Necesario para que la función pueda buscar usuarios sin
+    -- restricciones de tenant (función de sistema)
+    PERFORM set_config('app.bypass_rls', 'true', true);
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- BUSCAR USUARIO BOT
+    -- ═══════════════════════════════════════════════════════════════════
+    -- Performance: Usa índice idx_usuarios_rol_org (parcial)
+    -- Expectativa: Exactamente 1 registro por organización
+    RETURN QUERY
+    SELECT
+        u.id,
+        u.email,
+        u.nombre
+    FROM usuarios u
+    WHERE u.rol = 'bot'
+      AND u.organizacion_id = p_organizacion_id
+      AND u.activo = true
+    LIMIT 1;
+
+    -- ═══════════════════════════════════════════════════════════════════
+    -- VALIDACIÓN (OPCIONAL)
+    -- ═══════════════════════════════════════════════════════════════════
+    -- Si no se encuentra usuario bot, podría indicar problema de datos
+    IF NOT FOUND THEN
+        RAISE WARNING 'No se encontró usuario bot para organización %', p_organizacion_id;
+    END IF;
+
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 📝 COMENTARIO DE FUNCIÓN EN BD
+COMMENT ON FUNCTION obtener_usuario_bot(INTEGER) IS
+'Obtiene el usuario bot activo de una organización.
+Usado por backend al generar JWT para autenticación de MCP Server.
+Performance: O(1) gracias a índice idx_usuarios_rol_org.
+Security: SECURITY DEFINER permite bypass RLS controlado.
+Retorna: (usuario_id, email, nombre) o NULL si no existe.
+Creado: 2025-10-22 - Sistema de chatbots multi-plataforma';

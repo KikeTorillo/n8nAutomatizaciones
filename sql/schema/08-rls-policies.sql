@@ -396,3 +396,115 @@ Previene asignaciones cruzadas entre organizaciones.';
 
 -- NOTA: Comentario de política metricas_uso movido a 10-subscriptions-table.sql
 -- (la tabla metricas_uso_organizacion se crea en ese archivo)
+
+-- ====================================================================
+-- 🤖 POLÍTICAS RLS PARA TABLA CHATBOT_CONFIG
+-- ====================================================================
+-- Aislamiento multi-tenant para configuración de chatbots
+-- ────────────────────────────────────────────────────────────────────
+
+-- Habilitar RLS en la tabla
+ALTER TABLE chatbot_config ENABLE ROW LEVEL SECURITY;
+
+-- POLÍTICA 1: AISLAMIENTO MULTI-TENANT ESTÁNDAR
+-- Permite acceso solo a chatbots de la organización del usuario
+CREATE POLICY chatbot_config_tenant_isolation ON chatbot_config
+    USING (
+        CASE
+            -- 🔓 BYPASS: Funciones de sistema pueden ver todo
+            WHEN current_setting('app.bypass_rls', TRUE) = 'true' THEN
+                TRUE
+
+            -- 👑 SUPER ADMIN: Acceso global para soporte
+            WHEN EXISTS (
+                SELECT 1 FROM usuarios
+                WHERE id = NULLIF(current_setting('app.current_user_id', TRUE), '')::INTEGER
+                AND rol = 'super_admin'
+            ) THEN
+                TRUE
+
+            -- 🏢 TENANT ISOLATION: Solo org del usuario
+            ELSE
+                organizacion_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
+        END
+    );
+
+-- POLÍTICA 2: BYPASS EXPLÍCITO PARA FUNCIONES DE SISTEMA
+-- Permite acceso completo cuando bypass_rls está activado
+CREATE POLICY chatbot_config_system_bypass ON chatbot_config
+    FOR ALL
+    USING (current_setting('app.bypass_rls', TRUE) = 'true');
+
+-- ====================================================================
+-- 🔐 POLÍTICAS RLS PARA TABLA CHATBOT_CREDENTIALS
+-- ====================================================================
+-- Aislamiento indirecto vía chatbot_config
+-- ────────────────────────────────────────────────────────────────────
+
+-- Habilitar RLS en la tabla
+ALTER TABLE chatbot_credentials ENABLE ROW LEVEL SECURITY;
+
+-- POLÍTICA 1: AISLAMIENTO INDIRECTO VÍA CHATBOT_CONFIG
+-- Verifica que el chatbot asociado pertenezca a la organización del usuario
+CREATE POLICY chatbot_credentials_tenant_isolation ON chatbot_credentials
+    USING (
+        CASE
+            -- 🔓 BYPASS: Funciones de sistema
+            WHEN current_setting('app.bypass_rls', TRUE) = 'true' THEN
+                TRUE
+
+            -- 👑 SUPER ADMIN: Acceso global
+            WHEN EXISTS (
+                SELECT 1 FROM usuarios
+                WHERE id = NULLIF(current_setting('app.current_user_id', TRUE), '')::INTEGER
+                AND rol = 'super_admin'
+            ) THEN
+                TRUE
+
+            -- 🔗 TENANT ISOLATION INDIRECTO: Via JOIN con chatbot_config
+            ELSE
+                EXISTS (
+                    SELECT 1
+                    FROM chatbot_config cc
+                    WHERE cc.id = chatbot_credentials.chatbot_config_id
+                      AND cc.organizacion_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
+                )
+        END
+    );
+
+-- POLÍTICA 2: BYPASS EXPLÍCITO
+CREATE POLICY chatbot_credentials_system_bypass ON chatbot_credentials
+    FOR ALL
+    USING (current_setting('app.bypass_rls', TRUE) = 'true');
+
+-- ====================================================================
+-- 📝 DOCUMENTACIÓN DE POLÍTICAS - CHATBOTS
+-- ====================================================================
+-- Comentarios explicativos para políticas de chatbots
+-- ────────────────────────────────────────────────────────────────────
+
+COMMENT ON POLICY chatbot_config_tenant_isolation ON chatbot_config IS
+'Aislamiento multi-tenant para configuración de chatbots:
+- Usuario accede solo a chatbots de su organización
+- Super admin tiene acceso global para soporte
+- Bypass disponible para funciones de sistema
+
+Uso típico: Listado de chatbots, edición de configuración, métricas.
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+COMMENT ON POLICY chatbot_config_system_bypass ON chatbot_config IS
+'Bypass RLS para funciones de sistema que requieren acceso directo a chatbot_config.
+Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
+Casos de uso: Triggers, migraciones, webhooks de n8n.
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+COMMENT ON POLICY chatbot_credentials_tenant_isolation ON chatbot_credentials IS
+'Aislamiento indirecto mediante JOIN con tabla chatbot_config.
+Verifica que el chatbot asociado pertenezca a la organización del usuario.
+Previene acceso a credentials de otras organizaciones.
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+COMMENT ON POLICY chatbot_credentials_system_bypass ON chatbot_credentials IS
+'Bypass RLS para funciones de sistema.
+Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
+Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';

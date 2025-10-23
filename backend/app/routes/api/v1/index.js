@@ -12,6 +12,7 @@ const tiposBloqueoRouter = require('./tipos-bloqueo');
 const tiposProfesionalRouter = require('./tipos-profesional');
 const horariosProfesionalesRouter = require('./horarios-profesionales');
 const planesRouter = require('./planes');
+const chatbotsRouter = require('./chatbots');
 
 function routerApi(app) {
     const router = express.Router();
@@ -34,6 +35,9 @@ function routerApi(app) {
     router.use('/tipos-bloqueo', tiposBloqueoRouter);
     router.use('/tipos-profesional', tiposProfesionalRouter);
     router.use('/citas', citasRouter);
+
+    // Rutas de chatbots de IA
+    router.use('/chatbots', chatbotsRouter);
 
     // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);

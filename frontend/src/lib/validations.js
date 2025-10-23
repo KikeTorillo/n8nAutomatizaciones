@@ -175,9 +175,18 @@ export const serviceSchema = z.object({
     .max(480, 'La duración máxima es 480 minutos (8 horas)'),
 
   precio: z
-    .number()
-    .min(0, 'El precio no puede ser negativo')
-    .max(1000000000, 'El precio es demasiado alto'),
+    .union([z.number(), z.string()])
+    .transform((val) => {
+      // Convertir string vacío a 0, y strings numéricos a números
+      if (val === '' || val === null || val === undefined) return 0;
+      const num = typeof val === 'string' ? parseFloat(val) : val;
+      return isNaN(num) ? 0 : num;
+    })
+    .pipe(
+      z.number()
+        .min(0, 'El precio no puede ser negativo')
+        .max(1000000000, 'El precio es demasiado alto')
+    ),
 
   profesionales: z
     .array(z.number().int().positive())

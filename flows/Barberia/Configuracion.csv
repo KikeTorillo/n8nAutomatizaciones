@@ -1,9 +1,0 @@
-Parámetro,Valor,Descripción
-Barbero1_Nombre,Luis Enrique Arellanes,Nombre completo barbero 1
-Barbero2_Nombre,Diego Torillo,Nombre completo barbero 2
-Horario_Inicio,09:00,Hora de apertura
-Horario_Fin,18:00,Hora de cierre
-Duracion_Corte,30,Minutos para corte básico
-Duracion_Corte_Barba,45,Minutos para corte + barba
-Dias_Trabajo,L,M,M,J,V,S,Días laborales
-Tiempo_Buffer,15,Minutos entre citas

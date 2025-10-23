@@ -137,3 +137,138 @@ CREATE TABLE citas (
             TRUE -- Se implementa con trigger por rendimiento
         )
 );
+
+-- ====================================================================
+-- 🤖 TABLA CHATBOT_CONFIG - CONFIGURACIÓN DE CHATBOTS IA
+-- ====================================================================
+-- Tabla que gestiona la configuración de chatbots de IA multi-plataforma
+-- por organización. Cada organización puede tener múltiples chatbots
+-- (uno por cada plataforma).
+--
+-- 🔧 CARACTERÍSTICAS PRINCIPALES:
+-- • Agnóstico de plataforma (Telegram, WhatsApp, Instagram, etc.)
+-- • Configuración JSON flexible por plataforma
+-- • Integración con n8n workflows
+-- • Métricas de uso y monitoreo
+-- • System prompts personalizables
+-- ====================================================================
+
+CREATE TABLE chatbot_config (
+    -- 🔑 IDENTIFICACIÓN Y RELACIONES
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+
+    -- 📱 IDENTIFICACIÓN DEL CHATBOT
+    nombre VARCHAR(255) NOT NULL,
+    plataforma plataforma_chatbot NOT NULL,
+
+    -- ⚙️ CONFIGURACIÓN ESPECÍFICA DE LA PLATAFORMA
+    -- JSON flexible que varía según la plataforma:
+    --
+    -- Telegram:
+    -- {
+    --     "bot_token": "123456789:ABC...",
+    --     "bot_username": "mibarberia_bot",
+    --     "bot_id": 123456789
+    -- }
+    --
+    -- WhatsApp (Evolution API):
+    -- {
+    --     "phone_number": "+5215512345678",
+    --     "instance_id": "instance-uuid",
+    --     "api_key": "evolution-api-key"
+    -- }
+    --
+    -- Instagram:
+    -- {
+    --     "access_token": "instagram-access-token",
+    --     "page_id": "123456789",
+    --     "username": "@mibarberia"
+    -- }
+    config_plataforma JSONB NOT NULL,
+
+    -- 🔗 INTEGRACIÓN CON N8N
+    n8n_workflow_id VARCHAR(100) UNIQUE,
+    n8n_workflow_name VARCHAR(255),
+    n8n_credential_id VARCHAR(100),
+    workflow_activo BOOLEAN DEFAULT false,
+
+    -- 🧠 CONFIGURACIÓN DEL AGENTE IA
+    ai_model VARCHAR(100) DEFAULT 'deepseek-chat',
+    ai_temperature DECIMAL(3,2) DEFAULT 0.7 CHECK (ai_temperature >= 0 AND ai_temperature <= 2),
+    system_prompt TEXT,
+
+    -- 🔄 ESTADO Y MÉTRICAS
+    estado estado_chatbot DEFAULT 'configurando',
+    activo BOOLEAN DEFAULT true,
+    ultimo_mensaje_recibido TIMESTAMPTZ,
+    total_mensajes_procesados INTEGER DEFAULT 0 CHECK (total_mensajes_procesados >= 0),
+    total_citas_creadas INTEGER DEFAULT 0 CHECK (total_citas_creadas >= 0),
+
+    -- ⚙️ CONFIGURACIÓN AVANZADA (OPCIONAL)
+    -- Ejemplos:
+    -- {
+    --     "max_tokens": 2000,
+    --     "context_window": 10,
+    --     "allow_group_chats": false,
+    --     "custom_commands": ["/ayuda", "/horarios"]
+    -- }
+    config_avanzada JSONB DEFAULT '{}'::jsonb,
+
+    -- ⏰ TIMESTAMPS
+    creado_en TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    actualizado_en TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+
+    -- ✅ CONSTRAINTS
+    CONSTRAINT uq_chatbot_org_plataforma
+        UNIQUE (organizacion_id, plataforma),
+
+    CONSTRAINT chk_nombre_not_empty
+        CHECK (LENGTH(TRIM(nombre)) > 0),
+
+    CONSTRAINT chk_system_prompt_length
+        CHECK (system_prompt IS NULL OR LENGTH(system_prompt) >= 100)
+);
+
+-- 📝 COMENTARIOS DE DOCUMENTACIÓN
+COMMENT ON TABLE chatbot_config IS 'Configuración de chatbots de IA multi-plataforma por organización';
+COMMENT ON COLUMN chatbot_config.config_plataforma IS 'Configuración específica de cada plataforma en formato JSON flexible';
+COMMENT ON COLUMN chatbot_config.system_prompt IS 'Prompt del sistema personalizado con datos de la organización';
+COMMENT ON COLUMN chatbot_config.n8n_workflow_id IS 'ID del workflow en n8n (UUID generado por n8n)';
+COMMENT ON COLUMN chatbot_config.n8n_credential_id IS 'ID de la credential en n8n para autenticación con la plataforma';
+COMMENT ON COLUMN chatbot_config.total_mensajes_procesados IS 'Contador de mensajes procesados por el chatbot';
+COMMENT ON COLUMN chatbot_config.total_citas_creadas IS 'Contador de citas creadas exitosamente vía chatbot';
+
+-- ====================================================================
+-- 🔐 TABLA CHATBOT_CREDENTIALS - AUDITORÍA DE CREDENTIALS N8N
+-- ====================================================================
+-- Tabla OPCIONAL para auditoría de credentials creadas en n8n.
+-- Permite rastrear qué credentials están asociadas a qué chatbots
+-- y validar su estado.
+-- ====================================================================
+
+CREATE TABLE chatbot_credentials (
+    -- 🔑 IDENTIFICACIÓN
+    id SERIAL PRIMARY KEY,
+    chatbot_config_id INTEGER NOT NULL REFERENCES chatbot_config(id) ON DELETE CASCADE,
+
+    -- 🔗 REFERENCIA A N8N
+    n8n_credential_id VARCHAR(100) NOT NULL UNIQUE,
+    credential_type VARCHAR(100) NOT NULL,
+    credential_name VARCHAR(255) NOT NULL,
+
+    -- 📊 METADATA Y ESTADO
+    creado_en TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    last_used TIMESTAMPTZ,
+    is_valid BOOLEAN DEFAULT true,
+
+    -- ✅ CONSTRAINTS
+    CONSTRAINT chk_credential_type_not_empty
+        CHECK (LENGTH(TRIM(credential_type)) > 0)
+);
+
+-- 📝 COMENTARIOS DE DOCUMENTACIÓN
+COMMENT ON TABLE chatbot_credentials IS 'Auditoría de credenciales creadas en n8n para chatbots';
+COMMENT ON COLUMN chatbot_credentials.n8n_credential_id IS 'ID de la credential en n8n';
+COMMENT ON COLUMN chatbot_credentials.credential_type IS 'Tipo de credential en n8n (telegramApi, httpHeaderAuth, etc)';
+COMMENT ON COLUMN chatbot_credentials.is_valid IS 'Indica si la credential sigue siendo válida en n8n';

@@ -1,0 +1,89 @@
+#!/bin/bash
+set -e
+
+echo "🚀 Script de Setup Automático de n8n Owner"
+echo "=========================================="
+echo ""
+
+# Cargar variables de entorno
+if [ -f .env ]; then
+  source .env
+else
+  echo "❌ Archivo .env no encontrado"
+  exit 1
+fi
+
+# Configuración por defecto
+N8N_OWNER_EMAIL=${N8N_OWNER_EMAIL:-"admin@saas-agendamiento.local"}
+N8N_OWNER_FIRST_NAME=${N8N_OWNER_FIRST_NAME:-"Admin"}
+N8N_OWNER_LAST_NAME=${N8N_OWNER_LAST_NAME:-"Sistema"}
+N8N_OWNER_PASSWORD=${N8N_OWNER_PASSWORD:-$N8N_BASIC_AUTH_PASSWORD}
+
+echo "📋 Configuración:"
+echo "  Email: $N8N_OWNER_EMAIL"
+echo "  Nombre: $N8N_OWNER_FIRST_NAME $N8N_OWNER_LAST_NAME"
+echo ""
+
+# Verificar si n8n ya tiene owner
+echo "🔍 Verificando estado de n8n..."
+
+OWNER_EXISTS=$(docker exec postgres_db psql -U n8n_app -d n8n_db -t -c \
+  "SELECT COUNT(*) FROM \"user\" WHERE \"roleSlug\" = 'global:owner' AND email IS NOT NULL AND email != '';" 2>/dev/null | tr -d ' ')
+
+if [ "$OWNER_EXISTS" -gt 0 ]; then
+  echo "✅ n8n ya tiene un owner configurado"
+  echo ""
+  docker exec postgres_db psql -U n8n_app -d n8n_db -c \
+    "SELECT email, \"firstName\", \"lastName\", \"roleSlug\", settings->>'userActivated' as activated FROM \"user\" WHERE \"roleSlug\" = 'global:owner';"
+  echo ""
+  echo "ℹ️  Si necesitas reset, elimina el volumen: rm -rf data/n8n/*"
+  exit 0
+fi
+
+echo "⚠️  n8n requiere configuración del owner"
+echo ""
+
+# Método 1: Usar la API de n8n (recomendado)
+echo "📡 Intentando setup via API de n8n..."
+
+SETUP_RESPONSE=$(curl -s -X POST http://localhost:5678/rest/owner/setup \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"email\": \"$N8N_OWNER_EMAIL\",
+    \"firstName\": \"$N8N_OWNER_FIRST_NAME\",
+    \"lastName\": \"$N8N_OWNER_LAST_NAME\",
+    \"password\": \"$N8N_OWNER_PASSWORD\"
+  }" 2>&1)
+
+# Verificar si funcionó
+if echo "$SETUP_RESPONSE" | grep -q "id"; then
+  echo "✅ Owner creado exitosamente via API!"
+  echo ""
+  echo "📊 Datos del owner:"
+  echo "$SETUP_RESPONSE" | jq '.' 2>/dev/null || echo "$SETUP_RESPONSE"
+  echo ""
+  echo "🎯 Próximos pasos:"
+  echo "  1. Acceder a n8n: http://localhost:5678"
+  echo "  2. Login con: $N8N_OWNER_EMAIL / <tu password>"
+  echo "  3. Generar API Key: Settings → API → Generate API Key"
+  echo "  4. Actualizar .env con: N8N_API_KEY=<key-generada>"
+  exit 0
+else
+  echo "⚠️  API setup falló, intentando método alternativo..."
+  echo "Respuesta: $SETUP_RESPONSE"
+  echo ""
+fi
+
+# Método 2: SQL directo (fallback - requiere hash bcrypt)
+echo "🔧 Método SQL directo no implementado aún"
+echo ""
+echo "📝 Setup Manual Requerido:"
+echo "  1. Abrir: http://localhost:5678/setup"
+echo "  2. Usar credenciales:"
+echo "     Email: $N8N_OWNER_EMAIL"
+echo "     Nombre: $N8N_OWNER_FIRST_NAME"
+echo "     Apellido: $N8N_OWNER_LAST_NAME"
+echo "     Password: <usa N8N_BASIC_AUTH_PASSWORD del .env>"
+echo ""
+
+exit 1

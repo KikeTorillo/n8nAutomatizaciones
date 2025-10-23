@@ -45,7 +45,7 @@ function Step5_Services() {
       descripcion: '',
       categoria: '',
       duracion_minutos: 30,
-      precio: 0,
+      precio: '',
       profesionales: [],
       permite_walk_in: true,
       activo: true,
@@ -185,22 +185,122 @@ function Step5_Services() {
           required
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Duración - Horas y Minutos */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-gray-700">
+            Duración <span className="text-red-500">*</span>
+          </label>
+
+          {/* Botones preset */}
+          <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+            {[
+              { label: '15 min', minutos: 15 },
+              { label: '30 min', minutos: 30 },
+              { label: '45 min', minutos: 45 },
+              { label: '1 hora', minutos: 60 },
+              { label: '1h 30m', minutos: 90 },
+              { label: '2 horas', minutos: 120 },
+            ].map((preset) => (
+              <Controller
+                key={preset.minutos}
+                name="duracion_minutos"
+                control={control}
+                render={({ field }) => (
+                  <button
+                    type="button"
+                    onClick={() => field.onChange(preset.minutos)}
+                    className={`
+                      px-3 py-2 text-sm font-medium rounded-lg border-2 transition-all
+                      ${field.value === preset.minutos
+                        ? 'border-primary-600 bg-primary-50 text-primary-700'
+                        : 'border-gray-200 bg-white text-gray-700 hover:border-primary-300'
+                      }
+                    `}
+                  >
+                    {preset.label}
+                  </button>
+                )}
+              />
+            ))}
+          </div>
+
+          {/* Inputs personalizados - Horas y Minutos */}
+          <div className="grid grid-cols-2 gap-4">
+            <Controller
+              name="duracion_minutos"
+              control={control}
+              render={({ field }) => {
+                const horas = Math.floor(field.value / 60);
+                const minutos = field.value % 60;
+
+                return (
+                  <Input
+                    type="number"
+                    label="Horas"
+                    placeholder="0"
+                    min="0"
+                    max="8"
+                    value={horas === 0 ? '' : horas}
+                    onKeyDown={(e) => {
+                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const newHoras = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 8);
+                      field.onChange(newHoras * 60 + minutos);
+                    }}
+                  />
+                );
+              }}
+            />
+
+            <Controller
+              name="duracion_minutos"
+              control={control}
+              render={({ field }) => {
+                const horas = Math.floor(field.value / 60);
+                const minutos = field.value % 60;
+
+                return (
+                  <Input
+                    type="number"
+                    label="Minutos"
+                    placeholder="0"
+                    min="0"
+                    max="59"
+                    value={minutos === 0 ? '' : minutos}
+                    onKeyDown={(e) => {
+                      if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                        e.preventDefault();
+                      }
+                    }}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const newMinutos = value === '' ? 0 : Math.min(Math.max(parseInt(value), 0), 59);
+                      field.onChange(horas * 60 + newMinutos);
+                    }}
+                    error={errors.duracion_minutos?.message}
+                  />
+                );
+              }}
+            />
+          </div>
+
+          {/* Mostrar total */}
           <Controller
             name="duracion_minutos"
             control={control}
             render={({ field }) => (
-              <Input
-                {...field}
-                type="number"
-                label="Duración (minutos)"
-                placeholder="30"
-                required
-                onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                error={errors.duracion_minutos?.message}
-              />
+              <p className="text-sm text-gray-600">
+                Total: <span className="font-semibold text-gray-900">{field.value} minutos</span>
+              </p>
             )}
           />
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
 
           <Controller
             name="precio"
@@ -210,9 +310,27 @@ function Step5_Services() {
                 {...field}
                 type="number"
                 label="Precio"
-                placeholder="50000"
+                placeholder="Ej: 50000"
                 required
-                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                min="0"
+                step="1000"
+                onKeyDown={(e) => {
+                  // Prevenir entrada de caracteres no permitidos en números positivos
+                  if (['-', '+', 'e', 'E'].includes(e.key)) {
+                    e.preventDefault();
+                  }
+                }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Si está vacío, mantener vacío para que se vea el placeholder
+                  // Si tiene valor, convertir a número y asegurar que sea positivo
+                  if (value === '') {
+                    field.onChange('');
+                  } else {
+                    const num = parseFloat(value) || 0;
+                    field.onChange(Math.abs(num)); // Math.abs asegura valor positivo
+                  }
+                }}
                 error={errors.precio?.message}
               />
             )}
