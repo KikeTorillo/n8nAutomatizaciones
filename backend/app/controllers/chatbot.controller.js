@@ -17,6 +17,7 @@ const N8nService = require('../services/n8nService');
 const N8nCredentialService = require('../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
 const TelegramValidator = require('../services/platformValidators/telegramValidator');
+const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
 const { asyncHandler } = require('../middleware');
 const { ResponseHelper } = require('../utils/helpers');
 const logger = require('../utils/logger');
@@ -113,10 +114,21 @@ class ChatbotController {
             );
         }
 
-        // ========== 4. Generar system prompt personalizado (si no se proporcionó) ==========
+        // ========== 4. Generar token JWT para MCP Server (MULTI-TENANT) ==========
+        let mcpToken;
+        try {
+            mcpToken = await generarTokenMCP(organizacionId);
+            logger.info(`[ChatbotController] Token MCP generado para org ${organizacionId}`);
+        } catch (tokenError) {
+            logger.error('[ChatbotController] Error generando token MCP:', tokenError);
+            // No hacer rollback, el chatbot puede funcionar sin MCP tools temporalmente
+            mcpToken = null;
+        }
+
+        // ========== 5. Generar system prompt personalizado (si no se proporcionó) ==========
         const systemPromptFinal = system_prompt || this._generarSystemPrompt(plataforma, botInfo, organizacionId);
 
-        // ========== 5. Crear workflow en n8n con template ==========
+        // ========== 6. Crear workflow en n8n con template ==========
         let workflowCreado;
         try {
             const workflowTemplate = await this._generarWorkflowTemplate({
@@ -126,7 +138,8 @@ class ChatbotController {
                 systemPrompt: systemPromptFinal,
                 aiModel: ai_model || 'deepseek-chat',
                 aiTemperature: ai_temperature || 0.7,
-                organizacionId
+                organizacionId,
+                mcpToken // Pasar token para configurar MCP Client Tools
             });
 
             workflowCreado = await N8nService.crearWorkflow(workflowTemplate);
@@ -174,6 +187,7 @@ class ChatbotController {
                 ai_model: ai_model || 'deepseek-chat',
                 ai_temperature: ai_temperature || 0.7,
                 system_prompt: systemPromptFinal,
+                mcp_jwt_token: mcpToken, // Token único por chatbot para MCP Server
                 estado: workflowActivado ? 'activo' : 'error',
                 activo: true
             });
@@ -422,7 +436,7 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
      * - System prompt personalizado
      * - Configuración de MCP tools (cuando estén disponibles)
      */
-    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId }) {
+    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpToken }) {
         try {
             // 1. Leer plantilla base desde archivo
             const plantillaPath = path.join(__dirname, '../flows/plantilla/plantilla.json');
@@ -490,11 +504,23 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
                     }
                 }
 
-                // 4.6 Configurar MCP Client Tools (placeholder para Fase 6)
+                // 4.6 Configurar MCP Client Tools con token JWT
                 if (node.type === '@n8n/n8n-nodes-langchain.mcpClientTool') {
-                    // TODO: Configurar cuando MCP Server esté implementado
-                    // Por ahora dejamos vacíos (el AI Agent funcionará sin tools)
-                    logger.debug(`[ChatbotController] Nodo MCP Client encontrado: ${node.name} (sin configurar aún)`);
+                    if (mcpToken) {
+                        // Configurar token JWT para autenticación multi-tenant
+                        if (!node.parameters.options) {
+                            node.parameters.options = {};
+                        }
+                        if (!node.parameters.options.headers) {
+                            node.parameters.options.headers = {};
+                        }
+                        // Agregar header Authorization con el token
+                        node.parameters.options.headers.Authorization = `Bearer ${mcpToken}`;
+
+                        logger.debug(`[ChatbotController] Nodo MCP Client configurado: ${node.name} (con token JWT)`);
+                    } else {
+                        logger.warn(`[ChatbotController] Nodo MCP Client sin token: ${node.name} (MCP tools no funcionarán)`);
+                    }
                 }
             });
 

@@ -235,6 +235,46 @@ services:
     ports:
       - "3000:3000"
 
+  # ========================================
+  # MCP SERVER - Herramientas para AI Agent
+  # ========================================
+  mcp-server:
+    build:
+      context: ./backend/mcp-server
+      dockerfile: Dockerfile
+    container_name: mcp-server
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    ports:
+      - "3100:3100"
+    environment:
+      # Configuración del servidor
+      - NODE_ENV=production
+      - MCP_PORT=3100
+
+      # Conexión con Backend API
+      - BACKEND_API_URL=http://back:3000
+      - BACKEND_TIMEOUT=10000
+      - MCP_JWT_TOKEN=${MCP_JWT_TOKEN}
+
+      # Logging
+      - LOG_LEVEL=info
+    networks:
+      - backend_network
+    volumes:
+      - ./backend/mcp-server:/app
+      - /app/node_modules
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 # Configuración de redes
 networks:
   backend_network:

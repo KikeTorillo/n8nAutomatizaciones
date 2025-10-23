@@ -261,6 +261,8 @@
     },
     {
       "parameters": {
+        "serverUrl": "http://mcp-server:3100",
+        "tool": "crearCita",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
@@ -270,10 +272,12 @@
         776
       ],
       "id": "20320aa8-3d42-4cbf-8407-8f58a170fcd5",
-      "name": "MCP Client"
+      "name": "MCP Client - Crear Cita"
     },
     {
       "parameters": {
+        "serverUrl": "http://mcp-server:3100",
+        "tool": "verificarDisponibilidad",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
@@ -283,10 +287,12 @@
         776
       ],
       "id": "c1065732-9edc-4302-a713-1fd35fc80125",
-      "name": "MCP Client1"
+      "name": "MCP Client - Verificar Disponibilidad"
     },
     {
       "parameters": {
+        "serverUrl": "http://mcp-server:3100",
+        "tool": "listarServicios",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
@@ -296,7 +302,7 @@
         776
       ],
       "id": "8f3227b1-8654-4ab8-a18b-35a1e5e5dfbc",
-      "name": "MCP Client2"
+      "name": "MCP Client - Listar Servicios"
     }
   ],
   "pinData": {},

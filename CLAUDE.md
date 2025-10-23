@@ -6,21 +6,20 @@
 
 ## 🎯 Visión del Proyecto
 
-**Plataforma SaaS Multi-Tenant** para automatización de agendamiento empresarial con **IA Conversacional** (WhatsApp).
+**Plataforma SaaS Multi-Tenant** para automatización de agendamiento empresarial con **IA Conversacional** (Telegram, WhatsApp).
 
 ---
 
 ## 📊 Estado Actual
 
-**Actualizado**: 21 Octubre 2025
+**Actualizado**: 23 Octubre 2025
 
-| Componente | Estado | Métricas Actuales |
-|------------|--------|-------------------|
-| **Backend API** | ✅ Operativo | 89 archivos, 12 módulos, 34 funciones middleware |
-| **Frontend React** | ✅ Operativo | 41 componentes, 22 páginas, 11 hooks |
-| **Base de Datos** | ✅ Operativo | 17 tablas, 22 RLS policies, 106 índices, 27 triggers |
-| **Tests Backend** | ✅ **477 tests (100%)** | 22 archivos, ~37s ejecución |
-| **Sistema IA** | ✅ Operativo | n8n + Evolution API + Redis Queue |
+| Componente | Estado | Métricas |
+|------------|--------|----------|
+| **Backend API** | ✅ Operativo | 13 módulos, 97 archivos, 495 tests (100%) |
+| **Frontend React** | ✅ Operativo | 45 componentes, 22 páginas, 12 hooks |
+| **Base de Datos** | ✅ Operativo | 19 tablas, 24 RLS policies, 114 índices |
+| **Sistema IA** | ✅ Operativo | n8n + Telegram + DeepSeek + Redis |
 | **Docker** | ✅ Running | 7 contenedores activos |
 
 ---
@@ -29,7 +28,6 @@
 
 ### Frontend
 - **Framework**: React 19.1.1 + Vite 7.1.7
-- **Routing**: React Router DOM 7.9.4
 - **State**: Zustand 5.0.8 + TanStack React Query 5.90.2
 - **Forms**: React Hook Form 7.64.0 + Zod 4.1.12
 - **HTTP**: Axios 1.12.2 (auto-refresh JWT)
@@ -39,54 +37,52 @@
 - **Runtime**: Node.js + Express.js
 - **Auth**: JWT (7d access + 30d refresh)
 - **Validación**: Joi schemas modulares
-- **Testing**: Jest + Supertest
+- **Testing**: Jest + Supertest (495 tests)
 - **Logs**: Winston (JSON structured)
 
 ### Base de Datos
 - **PostgreSQL 17 Alpine**
-- **Multi-Tenant**: Row Level Security (22 políticas)
-- **Índices**: 106 optimizados (GIN, trigram, covering)
-- **Triggers**: 27 automáticos
-- **Funciones**: 36 PL/pgSQL
+- **Multi-Tenant**: Row Level Security (24 políticas)
+- **Índices**: 114 optimizados (GIN, trigram, covering)
+- **Triggers**: 29 automáticos
+- **Funciones**: 38 PL/pgSQL
 
 ### IA Conversacional
 - **Orquestación**: n8n workflows
-- **WhatsApp**: Evolution API
-- **Cache**: Redis Queue
+- **Plataformas**: Telegram Bot API (activo), WhatsApp (planificado)
+- **Modelo**: DeepSeek (económico + potente)
+- **Memory**: PostgreSQL Chat Memory
+- **Anti-flood**: Redis Queue (20s debouncing)
 
 ---
 
 ## 📝 Comandos Esenciales
 
 ```bash
-# Backend Tests
-docker exec back npm test                    # Suite completa
-docker exec back npm test -- __tests__/endpoints/auth.test.js  # Test específico
+# Desarrollo
+npm run dev                      # Levantar stack completo
+docker logs -f back              # Ver logs backend
+docker logs -f n8n-main          # Ver logs n8n
 
-# Docker
-npm run start                               # docker compose up -d
-npm run stop                                # docker compose down
-docker logs -f back                         # Ver logs backend
-docker logs -f postgres_db                  # Ver logs DB
+# Tests
+docker exec back npm test                                   # Suite completa (495 tests)
+docker exec back npm test -- __tests__/endpoints/chatbots.test.js  # Módulo específico
 
 # Base de Datos
-docker exec postgres_db psql -U admin -d postgres              # Consola PostgreSQL
-docker exec postgres_db psql -U admin -d postgres -c "\dt"     # Listar tablas
+docker exec postgres_db psql -U admin -d postgres -c "SELECT id, nombre, plataforma, estado FROM chatbot_config;"
 
-# Frontend
-cd frontend
-npm run dev                                 # http://localhost:3001
-npm run build                               # Build producción
-npm run lint:fix                            # ESLint auto-fix
+# n8n UI
+# http://localhost:5678
+# Credenciales en .env (N8N_OWNER_EMAIL / N8N_OWNER_PASSWORD)
 ```
 
 ---
 
 ## 🏗 Arquitectura del Sistema
 
-### Backend (89 archivos)
+### Backend (97 archivos)
 
-**Módulos de Negocio (12):**
+**Módulos de Negocio (13):**
 1. `auth` - Autenticación JWT + password recovery
 2. `usuarios` - Gestión usuarios + RBAC
 3. `organizaciones` - Multi-tenancy
@@ -99,112 +95,116 @@ npm run lint:fix                            # ESLint auto-fix
 10. `citas` - Agendamiento (base, operacional, recordatorios)
 11. `bloqueos-horarios` - Bloqueos temporales
 12. `planes` - Planes y suscripciones
+13. **`chatbots`** ⭐ **Nuevo** - Chatbots IA multi-plataforma (Telegram, WhatsApp)
 
-**Estructura de Archivos:**
-- **Controllers**: 15 archivos (`/backend/app/controllers/`)
-- **Models**: 16 archivos (`/backend/app/database/`) - ⚠️ `/models/` está vacío (deprecated)
-- **Routes**: 13 archivos (`/backend/app/routes/api/v1/`)
-- **Schemas**: 11 archivos Joi (`/backend/app/schemas/`)
-- **Middleware**: 6 archivos, 34 funciones (`/backend/app/middleware/`)
-- **Utils**: 5 archivos, 12 clases (`/backend/app/utils/`)
-- **Tests**: 22 archivos (`/backend/app/__tests__/`)
-
-**Middlewares Críticos (34 funciones):**
-- `asyncHandler` (1) - Error handling wrapper
-- `auth` (8) - JWT + roles + blacklist
-- `tenant` (7) - RLS context + multi-tenant
-- `validation` (9) - Joi validation + sanitization
-- `rateLimiting` (10) - Rate limits (IP/usuario/org/plan)
+**Estructura:**
+- **Controllers**: 16 archivos
+- **Models**: 17 archivos (RLS 100%)
+- **Routes**: 14 archivos
+- **Schemas**: 12 archivos Joi
+- **Services**: 11 archivos (n8n, validators, etc.)
+- **Middleware**: 6 archivos (34 funciones)
+- **Tests**: 23 archivos (495 tests)
 
 **Helpers Esenciales:**
 - `RLSContextManager` (v2.0) ⭐ **Usar siempre** - Gestión automática RLS
-- `RLSHelper` (v1.0) - Legacy, evitar en nuevo código
 - `helpers.js` - 8 clases (Response, Validation, Date, CodeGenerator, etc.)
 
-### Frontend (95 archivos)
+### Frontend (45 componentes, 12 hooks)
 
-**Componentes (41):** Organizados en 10 módulos
-```
-auth (2)          - ProtectedRoute, PasswordStrengthIndicator
-citas (10)        - Calendarios, Forms, Modales
-clientes (4)      - Card, Form, List, WalkInModal
-profesionales (5) - List, Form, Stats, Horarios, Servicios
-servicios (3)     - List, Form, Profesionales asignados
-bloqueos (6)      - Calendar, Forms, Filters, Detail
-dashboard (3)     - CitasDelDia, LimitProgressBar, StatCard
-common (2)        - LoadingSpinner, ToastContainer
-forms (1)         - FormField wrapper
-ui (5)            - Button, Input, Modal, Select, Toast
-```
+**Componentes:** Organizados en 11 módulos
+- auth, citas, clientes, profesionales, servicios, bloqueos
+- dashboard, common, forms, ui
+- **chatbots** ⭐ **Nuevo** - Step 7 onboarding Telegram
 
-**Hooks Personalizados (11):**
-- `useAuth` - Login/logout
-- `useCitas` - CRUD + estados + recordatorios
-- `useClientes` - CRUD + búsquedas
-- `useBloqueos` - CRUD + filtros avanzados
-- `useProfesionales` - CRUD profesionales
-- `useServicios` - CRUD + asignaciones
-- `useHorarios` - CRUD + configuración
-- `useEstadisticas` ⭐ **Nuevo** - Stats dashboard (reemplaza useDashboard)
-- `useTiposProfesional` - Tipos dinámicos con filtrado por industria
-- `useTiposBloqueo` - Tipos bloqueo
-- `useToast` - Notificaciones
+**Hooks Personalizados (12):**
+- `useAuth`, `useCitas`, `useClientes`, `useBloqueos`
+- `useProfesionales`, `useServicios`, `useHorarios`
+- `useEstadisticas`, `useTiposProfesional`, `useTiposBloqueo`
+- **`useChatbots`** ⭐ **Nuevo** - CRUD chatbots (7 hooks)
+- `useToast`
 
-**Páginas (22):**
-- Auth (3): Login, ForgotPassword, ResetPassword
-- Dashboard (1)
-- Clientes (3): List, Form, Detail
-- Profesionales (1), Servicios (1), Citas (1), Bloqueos (1)
-- Onboarding (11): Flow + 10 steps
-- Landing (1)
-
-**API Endpoints (13 módulos):**
+**API Endpoints (14 módulos):**
 - `authApi`, `usuariosApi`, `organizacionesApi`
 - `tiposProfesionalApi`, `tiposBloqueoApi`
 - `profesionalesApi`, `serviciosApi`, `horariosApi`
 - `clientesApi`, `citasApi`, `bloqueosApi`
-- `planesApi`, `whatsappApi`
+- `planesApi`
+- **`chatbotsApi`** ⭐ **Nuevo** - Configuración chatbots
 
-**Stores Zustand (2):**
-- `authStore` - User, tokens, roles (`/frontend/src/store/`)
-- `onboardingStore` - Flujo onboarding
-
-**Utilidades (9 archivos):**
-- `lib/constants.js` - Roles, estados, industrias
-- `lib/validations.js` - Schemas Zod
-- `lib/utils.js` - Utilidades generales
-- `utils/dateHelpers.js` - 20+ funciones fechas
-- `utils/citaValidators.js` - Validadores citas
-- `utils/bloqueoHelpers.js` - Helpers bloqueos
-- `utils/bloqueoValidators.js` - Validadores bloqueos
-- `utils/formatters.js` - Formateo (dinero, teléfono, etc.)
-- `utils/arrayDiff.js` - Diferencias arrays
-
-### Base de Datos (17 Tablas)
+### Base de Datos (19 Tablas)
 
 ```
 Core (3):           organizaciones, usuarios, planes_subscripcion
 Catálogos (2):      tipos_profesional, tipos_bloqueo
-Negocio (5):        profesionales, servicios, clientes, servicios_profesionales, horarios_profesionales
+Negocio (5):        profesionales, servicios, clientes,
+                    servicios_profesionales, horarios_profesionales
 Operaciones (2):    citas, bloqueos_horarios
-Subscripciones (3): subscripciones, historial_subscripciones, metricas_uso_organizacion
+Chatbots (2):       chatbot_config, chatbot_credentials ⭐ NUEVO
+Subscripciones (3): subscripciones, historial_subscripciones,
+                    metricas_uso_organizacion
 Sistema (2):        eventos_sistema, eventos_sistema_archivo
 ```
 
-**ENUMs (8 tipos, 35+ valores):**
-- `rol_usuario` (5): super_admin, admin, propietario, empleado, cliente
+**ENUMs (10 tipos):**
+- `rol_usuario` (6): super_admin, admin, propietario, empleado, cliente, **bot** ⭐
 - `industria_tipo` (11): barberia, salon_belleza, estetica, spa, etc.
 - `plan_tipo` (5): trial, basico, profesional, empresarial, custom
 - `estado_subscripcion` (5): activa, suspendida, cancelada, trial, morosa
 - `estado_cita` (6): pendiente, confirmada, en_curso, completada, cancelada, no_asistio
 - `estado_franja` (4): disponible, reservado_temporal, ocupado, bloqueado
-- `tipo_profesional` (33+): barbero, estilista, doctor_general, veterinario, etc.
+- **`plataforma_chatbot` (7)** ⭐: telegram, whatsapp, instagram, facebook_messenger, slack, discord, otro
+- **`estado_chatbot` (5)** ⭐: configurando, activo, error, pausado, desactivado
 
-**Seguridad:**
-- 22 Políticas RLS (multi-tenant + bypass super_admin)
-- 27 Triggers (auto-generación, timestamps, validaciones)
-- 106 Índices optimizados (GIN full-text, trigram fuzzy)
-- 36 Funciones PL/pgSQL
+---
+
+## 🤖 Sistema de Chatbots IA
+
+### Arquitectura
+
+```
+Usuario Telegram → n8n Workflow → AI Agent (DeepSeek)
+                                      ↓
+                               PostgreSQL Memory
+                                      ↓
+                            Redis Anti-flood (20s)
+                                      ↓
+                              Backend API (futuro)
+                                      ↓
+                            Crear Citas (MCP Tools)
+```
+
+### Componentes Clave
+
+**Backend:**
+- `chatbot.controller.js` - Orquestación E2E (validar → n8n → BD)
+- `chatbot-config.model.js` - Model con RLS
+- `n8nService.js` - API workflows
+- `n8nCredentialService.js` - CRUD credentials
+- `n8nGlobalCredentialsService.js` - Credentials compartidas (DeepSeek, PostgreSQL, Redis)
+- `telegramValidator.js` - Validación Telegram Bot API
+
+**Template n8n:**
+- `flows/plantilla/plantilla.json` - 15 nodos configurados
+  - Trigger + Edit Fields + Redis Queue
+  - AI Agent + DeepSeek + Chat Memory
+  - 3 MCP Client Tools (placeholders para Fase 6)
+
+**Frontend:**
+- `Step7_WhatsAppIntegration.jsx` - Form onboarding Telegram
+- `useChatbots.js` - 7 hooks React Query
+
+**Features:**
+- ✅ Creación automática de workflow desde template
+- ✅ Credentials dinámicas (Telegram + globales)
+- ✅ System prompt personalizado por organización (647 chars)
+- ✅ Rollback automático en errores
+- ✅ Validación con Telegram API
+- ✅ Anti-flood con Redis (20s debouncing)
+- ✅ Chat Memory persistente (PostgreSQL)
+- ⏳ MCP Tools para crear citas (Fase 6 - Planificada)
+
+**Ver más:** `PLAN_IMPLEMENTACION_CHATBOTS.md` + `ANEXO_CODIGO_CHATBOTS.md`
 
 ---
 
@@ -225,18 +225,18 @@ router.post('/endpoint',
 ### Patrón RLS en Models (RLSContextManager v2.0)
 
 ```javascript
-// Query simple (lectura/escritura)
+// Query simple
 const data = await RLSContextManager.query(orgId, async (db) => {
     return await db.query('SELECT * FROM clientes WHERE id = $1', [id]);
 });
 
-// Transacción (múltiples operaciones atómicas)
+// Transacción
 await RLSContextManager.transaction(orgId, async (db) => {
     await db.query('INSERT INTO clientes ...');
     await db.query('INSERT INTO citas ...');
 });
 
-// Bypass (JOINs multi-tabla sin filtro org)
+// Bypass (JOINs multi-tabla)
 const data = await RLSContextManager.withBypass(async (db) => {
     return await db.query('SELECT * FROM org o LEFT JOIN sub s ...');
 });
@@ -244,14 +244,15 @@ const data = await RLSContextManager.withBypass(async (db) => {
 
 ### RBAC (Jerarquía de Roles)
 
-| Recurso | super_admin | admin/propietario | empleado | cliente |
-|---------|-------------|-------------------|----------|---------|
-| Organizaciones | ALL | SU ORG | READ | - |
-| Usuarios | ALL | CRUD (su org) | - | - |
-| Profesionales | ALL | ALL | READ | - |
-| Servicios | ALL | ALL | READ | - |
-| Clientes | ALL | ALL | ALL | READ (propio) |
-| Citas | ALL | ALL | ALL | READ (propias) |
+| Recurso | super_admin | admin/propietario | empleado | cliente | bot |
+|---------|-------------|-------------------|----------|---------|-----|
+| Organizaciones | ALL | SU ORG | READ | - | - |
+| Usuarios | ALL | CRUD (su org) | - | - | - |
+| Profesionales | ALL | ALL | READ | - | READ |
+| Servicios | ALL | ALL | READ | - | READ |
+| Clientes | ALL | ALL | ALL | READ (propio) | READ |
+| Citas | ALL | ALL | ALL | READ (propias) | CRUD |
+| Chatbots | ALL | ALL | - | - | - |
 
 ---
 
@@ -289,6 +290,18 @@ const cita = await CitaModel.crear({
 - Función `normalizar_telefono()` quita espacios/guiones
 - Búsqueda por similitud en nombre (threshold 0.3)
 
+### 4. Chatbots IA Multi-Plataforma ⭐ NUEVO
+
+**Workflow Completo:**
+1. Usuario completa onboarding → Configura bot Telegram
+2. Backend valida token con Telegram API
+3. Sistema crea credential en n8n
+4. Sistema genera workflow desde template (15 nodos)
+5. Workflow se activa automáticamente
+6. Chatbot queda operativo con IA conversacional
+
+**Constraint:** 1 chatbot por plataforma por organización
+
 ---
 
 ## ⚡ Reglas Críticas de Desarrollo
@@ -300,7 +313,7 @@ const cita = await CitaModel.crear({
 // ✅ CORRECTO - RLS filtra automáticamente por organizacion_id
 const query = `SELECT * FROM profesionales WHERE activo = true`;
 
-// ❌ INCORRECTO - Redundante y error-prone
+// ❌ INCORRECTO - Redundante
 const query = `SELECT * FROM profesionales WHERE organizacion_id = $1 AND activo = true`;
 ```
 
@@ -309,17 +322,13 @@ const query = `SELECT * FROM profesionales WHERE organizacion_id = $1 AND activo
 - `created_at`, `updated_at` → Automáticos
 - `organizacion_id` → Inyectado por tenant middleware
 
-#### 3. Wrapping de controllers en rutas
+#### 3. Usar asyncHandler para async/await
 ```javascript
-// ✅ CORRECTO - Wrap con arrow function si usa `this`
-router.get('/:id', auth.authenticateToken, tenant.setTenantContext,
-    (req, res, next) => Controller.obtener(req, res, next)
-);
+// ✅ CORRECTO
+router.get('/:id', asyncHandler(Controller.obtener));
 
-// ✅ ALTERNATIVA - asyncHandler wrapper
-router.get('/:id', auth.authenticateToken, tenant.setTenantContext,
-    asyncHandler(Controller.obtener.bind(Controller))
-);
+// ❌ INCORRECTO - Sin error handling
+router.get('/:id', async (req, res) => { ... });
 ```
 
 ### Frontend
@@ -331,7 +340,6 @@ const sanitizedData = {
   ...data,
   email: data.email?.trim() || undefined,
   telefono: data.telefono?.trim() || undefined,
-  notas: data.notas?.trim() || undefined,
 };
 ```
 
@@ -346,10 +354,10 @@ onSuccess: () => {
 
 #### 3. Hooks sobre constantes hard-coded
 ```javascript
-// ✅ CORRECTO - Hook dinámico con filtrado automático
+// ✅ CORRECTO - Hook dinámico
 const { data: tipos } = useTiposProfesional({ activo: true });
 
-// ❌ DEPRECATED - Constante estática (6 tipos vs 33+ dinámicos)
+// ❌ DEPRECATED - Constante estática
 import { TIPOS_PROFESIONAL } from '@/lib/constants';
 ```
 
@@ -360,9 +368,9 @@ import { TIPOS_PROFESIONAL } from '@/lib/constants';
 ### Backend
 - [ ] Routes: Stack middleware correcto (auth → tenant → rateLimit → validation)
 - [ ] Controller: `asyncHandler` wrapper + `ResponseHelper`
-- [ ] Model: `RLSContextManager.query()` o `.withBypass()` (JOINs)
+- [ ] Model: `RLSContextManager.query()` (o `.withBypass()` para JOINs)
 - [ ] Schema: Joi modular con validaciones específicas
-- [ ] Tests: Unit + Integration + Multi-tenant
+- [ ] Tests: Unit + Integration + Multi-tenant (min 10 tests)
 
 ### Frontend
 - [ ] Página: React Query (loading/error/success states)
@@ -374,17 +382,6 @@ import { TIPOS_PROFESIONAL } from '@/lib/constants';
 ---
 
 ## 🔧 Troubleshooting Común
-
-### Tests Backend
-```bash
-# ✅ Suite completa (limpieza automática de BD)
-docker exec back npm test
-
-# ⚙️ Test específico
-docker exec back npm test -- __tests__/endpoints/auth.test.js
-
-# 📊 Resultado esperado: 477/477 tests passing (~37s)
-```
 
 ### "Organización no encontrada" en queries
 ```javascript
@@ -409,11 +406,22 @@ const payload = {
 };
 ```
 
+### n8n rechaza workflow creation (Additional Properties)
+```javascript
+// ✅ Eliminar campos auto-generados antes de POST
+delete plantilla.id;
+delete plantilla.versionId;
+delete plantilla.meta;
+delete plantilla.pinData;
+delete plantilla.tags;
+delete plantilla.active;
+```
+
 ---
 
 ## 📚 Archivos Clave
 
-### Backend
+### Backend Core
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
 | RLS Manager | `backend/app/utils/rlsContextManager.js` | ⭐ v2.0 - Usar siempre |
@@ -421,43 +429,68 @@ const payload = {
 | Middleware Index | `backend/app/middleware/index.js` | Exports centralizados |
 | DB Test Helper | `backend/app/__tests__/helpers/db-helper.js` | Utils testing |
 
+### Chatbots
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| Chatbot Controller | `backend/app/controllers/chatbot.controller.js` | Orquestación E2E |
+| Chatbot Model | `backend/app/database/chatbot-config.model.js` | Model con RLS |
+| n8n Service | `backend/app/services/n8nService.js` | API workflows |
+| Global Credentials | `backend/app/services/n8nGlobalCredentialsService.js` | DeepSeek, PostgreSQL, Redis |
+| Workflow Template | `backend/app/flows/plantilla/plantilla.json` | 15 nodos configurados |
+
 ### Frontend
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
 | API Client | `frontend/src/services/api/client.js` | Axios + auto-refresh JWT |
-| Endpoints | `frontend/src/services/api/endpoints.js` | 13 módulos API |
+| Endpoints | `frontend/src/services/api/endpoints.js` | 14 módulos API |
 | Validations | `frontend/src/lib/validations.js` | Schemas Zod |
-| Date Helpers | `frontend/src/utils/dateHelpers.js` | 20+ funciones fechas |
 | Auth Store | `frontend/src/store/authStore.js` | Zustand state |
 
 ### Base de Datos
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
-| ENUMs | `sql/schema/01-types-and-enums.sql` | 8 ENUMs (35+ valores) |
-| Functions | `sql/schema/02-functions.sql` | 36 funciones PL/pgSQL |
-| Indexes | `sql/schema/07-indexes.sql` | 106 índices |
-| RLS Policies | `sql/schema/08-rls-policies.sql` | 22 políticas |
-| Triggers | `sql/schema/09-triggers.sql` | 27 triggers |
+| ENUMs | `sql/schema/01-types-and-enums.sql` | 10 ENUMs |
+| Functions | `sql/schema/02-functions.sql` | 38 funciones PL/pgSQL |
+| Indexes | `sql/schema/07-indexes.sql` | 114 índices |
+| RLS Policies | `sql/schema/08-rls-policies.sql` | 24 políticas |
+| Triggers | `sql/schema/09-triggers.sql` | 29 triggers |
 
 ---
 
 ## 📈 Métricas Consolidadas
 
-### Backend (89 archivos)
-- Controllers: 15 | Models: 16 | Routes: 13 | Schemas: 11
-- Middleware: 6 archivos (34 funciones) | Utils: 5 archivos (12 clases)
-- Tests: 22 archivos (477 tests, 100% passing)
+### Backend
+- **Archivos**: 97 total (16 controllers, 17 models, 14 routes, 12 schemas)
+- **Tests**: 495 tests (100% passing, ~40s ejecución)
+- **Middleware**: 34 funciones
+- **Services**: 11 archivos (n8n, validators, etc.)
 
-### Frontend (95 archivos)
-- Componentes: 41 (10 módulos) | Páginas: 22 | Hooks: 11
-- API Endpoints: 13 módulos | Stores: 2 | Utils: 9
+### Frontend
+- **Archivos**: 103 total (45 componentes, 22 páginas, 12 hooks)
+- **API**: 14 módulos endpoints
+- **Stores**: 2 Zustand
+- **Utils**: 9 archivos
 
 ### Base de Datos
-- Tablas: 17 | ENUMs: 8 | Funciones: 36 | Triggers: 27
-- Índices: 106 | RLS Policies: 22 | Archivos SQL: 15
+- **Tablas**: 19
+- **ENUMs**: 10 tipos
+- **Funciones**: 38 PL/pgSQL
+- **Triggers**: 29 automáticos
+- **Índices**: 114 optimizados
+- **RLS Policies**: 24
+- **Archivos SQL**: 15
 
 ---
 
-**Versión**: 6.0
-**Última actualización**: 21 Octubre 2025
-**Estado**: ✅ Production Ready | 477/477 tests passing (100%)
+## 📖 Documentación Adicional
+
+- **`PLAN_IMPLEMENTACION_CHATBOTS.md`** - Plan detallado Fase 6 (MCP Server)
+- **`ANEXO_CODIGO_CHATBOTS.md`** - Referencia técnica chatbots
+- **Tests**: `backend/app/__tests__/endpoints/` (23 archivos)
+
+---
+
+**Versión**: 7.0
+**Última actualización**: 23 Octubre 2025
+**Estado**: ✅ Production Ready | 495/495 tests passing (100%)
+**Nuevo**: Sistema de Chatbots IA operativo (Telegram)

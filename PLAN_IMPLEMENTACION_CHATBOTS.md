@@ -1,8 +1,8 @@
 # 📋 PLAN DE IMPLEMENTACIÓN - Sistema Multi-Plataforma de Chatbots con IA
 
-**Versión:** 7.0
+**Versión:** 7.1
 **Fecha:** 23 Octubre 2025
-**Estado:** Fase 5 Completada ✅ | Fase 6 En Planificación 📝
+**Estado:** Fase 5 Completada ✅ | Fase 6 En Progreso 🚧 (85% completado)
 
 ---
 
@@ -16,7 +16,7 @@
 | **3. Backend CRUD** | ✅ | Model, Controller, Routes, Schemas, Tests (18/18 ✅) |
 | **4. Template Engine** | ✅ | plantilla.json con 15 nodos + credentials globales |
 | **5. Frontend Onboarding** | ✅ | Step 7 + hooks React Query |
-| **6. MCP Server** | 📝 | Herramientas para AI Agent (En Planificación) |
+| **6. MCP Server** | 🚧 | MCP Server operativo, falta configuración credentials (85%) |
 
 ---
 
@@ -173,7 +173,56 @@ docker exec postgres_db psql -U admin -d postgres -c \
 
 ---
 
-## 📋 FASE 6: MCP SERVER (En Planificación)
+## 📋 FASE 6: MCP SERVER (En Progreso - 85% ✅)
+
+### 📍 ESTADO ACTUAL (23 Octubre 2025)
+
+#### ✅ Completado
+
+**MCP Server Operativo:**
+- ✅ Estructura `backend/mcp-server/` creada
+- ✅ Servidor MCP levantado en puerto 3100
+- ✅ Health check endpoint funcionando (`/health`, `/mcp/tools`)
+- ✅ Autenticación JWT multi-tenant implementada
+  - Token único por chatbot generado en backend
+  - Validación con middleware `authMiddleware.js`
+  - RLS aplicado según `organizacion_id` del token
+- ✅ 4 Tools MCP implementados y operativos:
+  1. `crearCita` - Crea citas validando disponibilidad
+  2. `verificarDisponibilidad` - Consulta horarios libres
+  3. `listarServicios` - Obtiene catálogo con precios
+  4. `buscarCliente` - Búsqueda fuzzy por teléfono/nombre
+- ✅ Integración con Backend API REST vía `apiClient.js`
+- ✅ Dockerfile y docker-compose configurados
+- ✅ Conexiones MCP Client → AI Agent en `plantilla.json`
+
+**Testing Realizado:**
+- ✅ MCP Server responde correctamente con JWT válido
+- ✅ Endpoint `/mcp/tools` retorna 4 tools con schemas completos
+- ✅ Validación de token JWT con `aud: "mcp-server"` e `iss: "saas-backend"`
+- ✅ Workflow de Telegram se ejecuta exitosamente
+
+#### ⚠️ Pendiente (Issue Identificado)
+
+**Problema:** Nodos MCP Client en n8n muestran warnings en la UI.
+
+**Causa Raíz:**
+- El backend inyecta el token JWT correctamente en `parameters.options.headers.Authorization`
+- El token **SÍ funciona** (probado con curl directo al MCP Server)
+- Sin embargo, n8n espera que se use el campo oficial `authentication` con valor `"headerAuth"`
+- `headerAuth` requiere crear un **credential** de tipo `httpHeaderAuth` (no solo un header directo)
+
+**Impacto:**
+- 🔴 Los MCP Client nodes muestran "Authentication: None" en la UI
+- 🟡 Los nodos tienen triángulo rojo de advertencia
+- 🟢 El header Authorization **SÍ está en el JSON** del workflow
+- 🟢 La funcionalidad **debería** funcionar (header presente en requests)
+- 🔴 No confirmado E2E porque AI Agent no ejecuta los tools sin autenticación visible
+
+**Solución Propuesta (Opción B):**
+Crear credentials dinámicas `httpHeaderAuth` para cada chatbot al generar el workflow.
+
+---
 
 ### 🎯 Objetivo
 
@@ -423,27 +472,103 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 
 ### 📅 Plan de Implementación Fase 6
 
-#### Sprint 1: Setup MCP Server (5 días)
-- [ ] Crear estructura `backend/mcp-server/`
-- [ ] Instalar `@modelcontextprotocol/sdk`
-- [ ] Implementar servidor básico con health check
-- [ ] Configurar autenticación JWT con Backend
-- [ ] Tests: health check + autenticación
+#### Sprint 1: Setup MCP Server ✅ COMPLETADO
+- [x] Crear estructura `backend/mcp-server/`
+- [x] Instalar `@modelcontextprotocol/sdk`
+- [x] Implementar servidor básico con health check
+- [x] Configurar autenticación JWT con Backend
+- [x] Tests: health check + autenticación
 
-#### Sprint 2: Implementar Tools (8 días)
-- [ ] Tool: `crearCita` + tests
-- [ ] Tool: `verificarDisponibilidad` + tests
-- [ ] Tool: `listarServicios` + tests
-- [ ] Tool: `buscarCliente` + tests
-- [ ] Validaciones Joi para inputs de cada tool
-- [ ] Error handling y logging
+#### Sprint 2: Implementar Tools ✅ COMPLETADO
+- [x] Tool: `crearCita` + tests
+- [x] Tool: `verificarDisponibilidad` + tests
+- [x] Tool: `listarServicios` + tests
+- [x] Tool: `buscarCliente` + tests
+- [x] Validaciones Joi para inputs de cada tool
+- [x] Error handling y logging
 
-#### Sprint 3: Integración n8n (5 días)
-- [ ] Actualizar `plantilla.json` con URLs MCP Server
-- [ ] Configurar 3 nodos MCP Client en workflow
+#### Sprint 3: Integración n8n ⚠️ PARCIAL (85%)
+- [x] Actualizar `plantilla.json` con URLs MCP Server
+- [x] Configurar 3 nodos MCP Client en workflow
+- [ ] **PENDIENTE:** Crear credentials `httpHeaderAuth` dinámicas
 - [ ] Testing E2E: Telegram → AI Agent → MCP Tools → Backend
-- [ ] Documentación de uso para AI Agent
-- [ ] Deployment MCP Server en Docker
+- [x] Documentación de uso para AI Agent
+- [x] Deployment MCP Server en Docker
+
+#### 🆕 Sprint 0 (Siguiente Sesión): Fix Authentication Credentials
+
+**Objetivo:** Implementar creación dinámica de credentials `httpHeaderAuth` para MCP Client nodes.
+
+**Tareas:**
+
+1. **Investigar API de Credentials n8n** (1-2 horas)
+   - [ ] Estudiar estructura de credential tipo `httpHeaderAuth`
+   - [ ] Analizar endpoints de n8n API para CRUD credentials
+   - [ ] Identificar campos requeridos para `httpHeaderAuth`
+   - [ ] Documentar diferencias vs credentials Telegram/PostgreSQL/Redis existentes
+
+2. **Crear Servicio de Credentials MCP** (2-3 horas)
+   - [ ] Archivo: `backend/app/services/n8nMcpCredentialsService.js`
+   - [ ] Método: `crearCredentialHeaderAuth(nombre, token)`
+     - Nombre: `"MCP Auth - {nombre_chatbot}"`
+     - Tipo: `httpHeaderAuth`
+     - Data: `{ name: "Authorization", value: "Bearer {mcpToken}" }`
+   - [ ] Tests unitarios (min 3 casos)
+   - [ ] Error handling y rollback
+
+3. **Actualizar Chatbot Controller** (1-2 horas)
+   - [ ] Modificar `_generarWorkflowTemplate()` en `chatbot.controller.js`
+   - [ ] Crear credential MCP antes de generar workflow
+   - [ ] Guardar `mcp_credential_id` en tabla `chatbot_config`
+   - [ ] Actualizar nodos MCP Client con:
+     ```javascript
+     {
+       authentication: "headerAuth",
+       credentials: {
+         httpHeaderAuth: {
+           id: mcpCredentialId,
+           name: "MCP Auth - Bot Final Test"
+         }
+       }
+     }
+     ```
+   - [ ] Implementar rollback de credential MCP en caso de error
+
+4. **Actualizar Schema de Base de Datos** (30 min)
+   - [ ] Agregar columna `mcp_credential_id VARCHAR(50)` a `chatbot_config`
+   - [ ] Migración SQL para columna nueva (nullable inicialmente)
+   - [ ] Actualizar model con nuevo campo
+
+5. **Testing E2E** (2-3 horas)
+   - [ ] Crear nuevo chatbot desde onboarding
+   - [ ] Verificar que credential MCP se crea correctamente
+   - [ ] Validar que nodos MCP Client muestran "Header Auth" configurado
+   - [ ] Enviar mensaje a Telegram solicitando servicio
+   - [ ] Confirmar que AI Agent ejecuta MCP tools
+   - [ ] Verificar logs de MCP Server con requests reales
+   - [ ] Validar que se crea cita en base de datos
+
+6. **Cleanup y Documentación** (1 hora)
+   - [ ] Eliminar lógica obsoleta de `parameters.options.headers`
+   - [ ] Actualizar `ANEXO_CODIGO_CHATBOTS.md`
+   - [ ] Actualizar este documento con resultados
+   - [ ] Capturar screenshots del workflow funcionando
+
+**Estimación Total:** 8-12 horas (~1-2 días)
+
+**Criterios de Éxito:**
+- ✅ Nodos MCP Client muestran "Header Auth" en UI de n8n
+- ✅ Sin triángulos rojos de advertencia
+- ✅ AI Agent ejecuta tools MCP correctamente
+- ✅ MCP Server recibe requests con token JWT
+- ✅ Citas se crean exitosamente desde Telegram
+- ✅ Tests E2E pasando
+
+**Recursos de Referencia:**
+- n8n Credentials API: https://docs.n8n.io/api/credentials/
+- Código existente: `n8nCredentialService.js` (Telegram)
+- Código existente: `n8nGlobalCredentialsService.js` (Header Auth genérico)
+- Discusiones n8n Community sobre Header Auth
 
 #### Sprint 4: Validación y Monitoreo (3 días)
 - [ ] Pruebas de usuario con bot real
@@ -488,6 +613,7 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 
 ---
 
-**Última actualización:** 23 Octubre 2025
-**Estado:** ✅ Fase 5 Producción | 📝 Fase 6 En Planificación
-**Próximo Hito:** Iniciar Sprint 1 de MCP Server
+**Última actualización:** 23 Octubre 2025 - 22:35
+**Estado:** ✅ Fase 5 Producción | 🚧 Fase 6 En Progreso (85%)
+**Próximo Hito:** Sprint 0 - Implementar credentials `httpHeaderAuth` para MCP Client nodes
+**Estimación:** 8-12 horas (~1-2 días)
