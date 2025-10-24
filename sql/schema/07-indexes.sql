@@ -417,6 +417,19 @@ COMMENT ON INDEX idx_chatbot_workflow IS
 Solo indexa registros con workflow_id presente (chatbots completamente configurados).
 Usado para webhooks de n8n que reportan errores o métricas.';
 
+-- 🔐 ÍNDICE: MCP CREDENTIAL ID
+-- Propósito: Búsqueda de chatbots que comparten la misma credential MCP
+-- Uso: WHERE mcp_credential_id = ?
+-- Estrategia: 1 credential por organización (compartida entre chatbots)
+CREATE INDEX IF NOT EXISTS idx_chatbot_mcp_credential
+    ON chatbot_config(mcp_credential_id)
+    WHERE mcp_credential_id IS NOT NULL;
+
+COMMENT ON INDEX idx_chatbot_mcp_credential IS
+'Índice parcial para búsqueda de chatbots por credential MCP compartida.
+Útil para identificar todos los chatbots de una org que usan la misma credential
+al renovar tokens o debugging de autenticación con MCP Server.';
+
 -- 📊 ÍNDICE COMPUESTO: ESTADO Y ACTIVO
 -- Propósito: Filtros por estado (activo, error, pausado) y flag activo
 -- Uso: WHERE estado = ? AND activo = ?

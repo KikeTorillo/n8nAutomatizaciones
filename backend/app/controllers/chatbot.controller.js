@@ -16,6 +16,7 @@ const ChatbotConfigModel = require('../database/chatbot-config.model');
 const N8nService = require('../services/n8nService');
 const N8nCredentialService = require('../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
+const N8nMcpCredentialsService = require('../services/n8nMcpCredentialsService');
 const TelegramValidator = require('../services/platformValidators/telegramValidator');
 const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
 const { asyncHandler } = require('../middleware');
@@ -114,15 +115,34 @@ class ChatbotController {
             );
         }
 
-        // ========== 4. Generar token JWT para MCP Server (MULTI-TENANT) ==========
-        let mcpToken;
+        // ========== 4. Crear/Obtener credential MCP para autenticación del AI Agent ==========
+        let mcpCredential = null;
         try {
-            mcpToken = await generarTokenMCP(organizacionId);
-            logger.info(`[ChatbotController] Token MCP generado para org ${organizacionId}`);
-        } catch (tokenError) {
-            logger.error('[ChatbotController] Error generando token MCP:', tokenError);
-            // No hacer rollback, el chatbot puede funcionar sin MCP tools temporalmente
-            mcpToken = null;
+            // Estrategia: 1 credential por organización (compartida entre chatbots)
+            // Esto reduce clutter en n8n y facilita rotación de tokens
+            mcpCredential = await N8nMcpCredentialsService.obtenerOCrearPorOrganizacion(organizacionId);
+
+            if (mcpCredential.reutilizada) {
+                logger.info(`[ChatbotController] Credential MCP reutilizada para org ${organizacionId}: ${mcpCredential.id}`);
+            } else {
+                logger.info(`[ChatbotController] Credential MCP creada para org ${organizacionId}: ${mcpCredential.id}`);
+            }
+        } catch (mcpError) {
+            logger.error('[ChatbotController] Error obteniendo/creando credential MCP:', mcpError);
+
+            // Rollback: eliminar credential Telegram
+            try {
+                await N8nCredentialService.eliminarCredential(credentialCreada.id);
+                logger.info(`[ChatbotController] Rollback: credential Telegram ${credentialCreada.id} eliminada`);
+            } catch (rollbackError) {
+                logger.error('[ChatbotController] Error en rollback de credential Telegram:', rollbackError.message);
+            }
+
+            return ResponseHelper.error(
+                res,
+                `Error al crear credential de autenticación MCP: ${mcpError.message}`,
+                500
+            );
         }
 
         // ========== 5. Generar system prompt personalizado (si no se proporcionó) ==========
@@ -139,7 +159,7 @@ class ChatbotController {
                 aiModel: ai_model || 'deepseek-chat',
                 aiTemperature: ai_temperature || 0.7,
                 organizacionId,
-                mcpToken // Pasar token para configurar MCP Client Tools
+                mcpCredential // Pasar credential MCP completa (id, name, type)
             });
 
             workflowCreado = await N8nService.crearWorkflow(workflowTemplate);
@@ -147,12 +167,16 @@ class ChatbotController {
         } catch (error) {
             logger.error('[ChatbotController] Error creando workflow en n8n:', error.message);
 
-            // Rollback: eliminar credential creada
+            // Rollback: eliminar credentials creadas
             try {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
-                logger.info(`[ChatbotController] Rollback: credential ${credentialCreada.id} eliminada`);
+                logger.info(`[ChatbotController] Rollback: credential Telegram ${credentialCreada.id} eliminada`);
+
+                // NOTA: No eliminamos mcpCredential aquí porque puede estar siendo usada
+                // por otros chatbots de la misma organización (1 credential por org)
+                logger.info(`[ChatbotController] Credential MCP ${mcpCredential.id} se mantiene (compartida por org)`);
             } catch (rollbackError) {
-                logger.error('[ChatbotController] Error en rollback de credential:', rollbackError.message);
+                logger.error('[ChatbotController] Error en rollback de credentials:', rollbackError.message);
             }
 
             return ResponseHelper.error(
@@ -183,11 +207,12 @@ class ChatbotController {
                 config_plataforma,
                 n8n_workflow_id: workflowCreado.id,
                 n8n_credential_id: credentialCreada.id,
+                mcp_credential_id: mcpCredential?.id || null, // Credential MCP compartida por org
                 workflow_activo: workflowActivado,
                 ai_model: ai_model || 'deepseek-chat',
                 ai_temperature: ai_temperature || 0.7,
                 system_prompt: systemPromptFinal,
-                mcp_jwt_token: mcpToken, // Token único por chatbot para MCP Server
+                mcp_jwt_token: mcpCredential?.token || null, // Token JWT para auditoría
                 estado: workflowActivado ? 'activo' : 'error',
                 activo: true
             });
@@ -212,11 +237,15 @@ class ChatbotController {
                 stack: error.stack
             });
 
-            // Rollback: eliminar workflow y credential
+            // Rollback: eliminar workflow y credential Telegram
             try {
                 await N8nService.eliminarWorkflow(workflowCreado.id);
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
-                logger.info(`[ChatbotController] Rollback completo ejecutado`);
+                logger.info(`[ChatbotController] Rollback: workflow y credential Telegram eliminados`);
+
+                // NOTA: No eliminamos mcpCredential porque puede estar siendo usada
+                // por otros chatbots de la misma organización (1 credential por org)
+                logger.info(`[ChatbotController] Credential MCP ${mcpCredential?.id} se mantiene (compartida por org)`);
             } catch (rollbackError) {
                 logger.error('[ChatbotController] Error en rollback completo:', rollbackError.message);
             }
@@ -436,7 +465,7 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
      * - System prompt personalizado
      * - Configuración de MCP tools (cuando estén disponibles)
      */
-    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpToken }) {
+    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpCredential }) {
         try {
             // 1. Leer plantilla base desde archivo
             const plantillaPath = path.join(__dirname, '../flows/plantilla/plantilla.json');
@@ -504,22 +533,41 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
                     }
                 }
 
-                // 4.6 Configurar MCP Client Tools con token JWT
+                // 4.6 Configurar MCP Client Tools con credential httpHeaderAuth
                 if (node.type === '@n8n/n8n-nodes-langchain.mcpClientTool') {
-                    if (mcpToken) {
-                        // Configurar token JWT para autenticación multi-tenant
-                        if (!node.parameters.options) {
-                            node.parameters.options = {};
-                        }
-                        if (!node.parameters.options.headers) {
-                            node.parameters.options.headers = {};
-                        }
-                        // Agregar header Authorization con el token
-                        node.parameters.options.headers.Authorization = `Bearer ${mcpToken}`;
+                    // Migrar serverUrl (v1.1) a endpointUrl (v1.2+)
+                    if (node.parameters.serverUrl && !node.parameters.endpointUrl) {
+                        node.parameters.endpointUrl = node.parameters.serverUrl;
+                        delete node.parameters.serverUrl;
+                        logger.debug(`[ChatbotController] Migrado serverUrl → endpointUrl: ${node.parameters.endpointUrl}`);
+                    }
 
-                        logger.debug(`[ChatbotController] Nodo MCP Client configurado: ${node.name} (con token JWT)`);
+                    // Actualizar typeVersion si es necesario
+                    if (node.typeVersion && node.typeVersion < 1.2) {
+                        node.typeVersion = 1.2;
+                    }
+
+                    if (mcpCredential) {
+                        // ✅ Usar autenticación oficial de n8n con credential httpHeaderAuth
+                        // La propiedad 'authentication' va en parameters, NO al nivel del nodo
+                        node.parameters.authentication = 'headerAuth';
+
+                        // La propiedad 'credentials' SÍ va al nivel del nodo
+                        node.credentials = {
+                            httpHeaderAuth: {
+                                id: mcpCredential.id,
+                                name: mcpCredential.name
+                            }
+                        };
+
+                        // Limpiar el campo options si existe (ya no es necesario)
+                        if (node.parameters && node.parameters.options) {
+                            delete node.parameters.options;
+                        }
+
+                        logger.debug(`[ChatbotController] Nodo MCP Client configurado: ${node.name} (credential: ${mcpCredential.id})`);
                     } else {
-                        logger.warn(`[ChatbotController] Nodo MCP Client sin token: ${node.name} (MCP tools no funcionarán)`);
+                        logger.warn(`[ChatbotController] Nodo MCP Client sin credential: ${node.name} (MCP tools no funcionarán)`);
                     }
                 }
             });

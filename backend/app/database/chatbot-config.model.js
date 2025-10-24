@@ -21,6 +21,7 @@ class ChatbotConfigModel {
      * @param {Object} chatbotData.config_plataforma - Configuración específica de la plataforma (JSONB)
      * @param {string} [chatbotData.n8n_workflow_id] - ID del workflow en n8n
      * @param {string} [chatbotData.n8n_credential_id] - ID de la credential en n8n
+     * @param {string} [chatbotData.mcp_credential_id] - ID de la credential MCP en n8n (compartida por org)
      * @param {boolean} [chatbotData.workflow_activo] - Si el workflow está activo
      * @param {string} [chatbotData.ai_model] - Modelo de IA (default: deepseek-chat)
      * @param {number} [chatbotData.ai_temperature] - Temperatura del modelo (0.0-2.0, default: 0.7)
@@ -35,13 +36,13 @@ class ChatbotConfigModel {
             const query = `
                 INSERT INTO chatbot_config (
                     organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -55,6 +56,7 @@ class ChatbotConfigModel {
                 chatbotData.config_plataforma || {},
                 chatbotData.n8n_workflow_id || null,
                 chatbotData.n8n_credential_id || null,
+                chatbotData.mcp_credential_id || null,
                 chatbotData.workflow_activo !== undefined ? chatbotData.workflow_activo : false,
                 chatbotData.ai_model || 'deepseek-chat',
                 chatbotData.ai_temperature !== undefined ? chatbotData.ai_temperature : 0.7,
@@ -109,7 +111,7 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -135,7 +137,7 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -203,7 +205,7 @@ class ChatbotConfigModel {
             const queryChatbots = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -285,7 +287,7 @@ class ChatbotConfigModel {
                 WHERE id = $1
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -327,7 +329,7 @@ class ChatbotConfigModel {
                 WHERE id = $1
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -350,6 +352,7 @@ class ChatbotConfigModel {
      * @param {number} [chatbotData.ai_temperature] - Temperatura del modelo
      * @param {string} [chatbotData.system_prompt] - Prompt del sistema
      * @param {string} [chatbotData.mcp_jwt_token] - Token JWT para MCP Server
+     * @param {string} [chatbotData.mcp_credential_id] - ID de la credential MCP en n8n
      * @param {boolean} [chatbotData.activo] - Si el chatbot está activo
      * @param {number} organizacionId - ID de la organización
      * @returns {Promise<Object|null>} Chatbot actualizado o null
@@ -358,7 +361,7 @@ class ChatbotConfigModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const camposActualizables = [
                 'nombre', 'config_plataforma', 'ai_model', 'ai_temperature',
-                'system_prompt', 'mcp_jwt_token', 'activo'
+                'system_prompt', 'mcp_jwt_token', 'mcp_credential_id', 'activo'
             ];
 
             const setClauses = [];
@@ -385,7 +388,7 @@ class ChatbotConfigModel {
                 WHERE id = $1
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
@@ -536,7 +539,7 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
                     estado, activo, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,

@@ -188,6 +188,17 @@ class SaaSApplication {
   initializeRoutes() {
     routerApi(this.app);
 
+    // Health check endpoint (usado por MCP Server y monitoring)
+    this.app.get('/health', (req, res) => {
+      res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        service: 'saas-backend',
+        environment: this.environment
+      });
+    });
+
     // Ruta básica de prueba
     this.app.get('/', (req, res) => {
       res.json({

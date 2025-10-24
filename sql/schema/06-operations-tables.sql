@@ -199,6 +199,11 @@ CREATE TABLE chatbot_config (
     -- Cada chatbot tiene su propio token con su organizacion_id embebido.
     mcp_jwt_token TEXT,
 
+    -- ID de la credential httpHeaderAuth en n8n para autenticación MCP
+    -- ESTRATEGIA: 1 credential por organización (compartida entre chatbots)
+    -- Esto reduce clutter en n8n y facilita rotación de tokens
+    mcp_credential_id VARCHAR(50),
+
     -- 🧠 CONFIGURACIÓN DEL AGENTE IA
     ai_model VARCHAR(100) DEFAULT 'deepseek-chat',
     ai_temperature DECIMAL(3,2) DEFAULT 0.7 CHECK (ai_temperature >= 0 AND ai_temperature <= 2),
@@ -242,6 +247,7 @@ COMMENT ON COLUMN chatbot_config.config_plataforma IS 'Configuración específic
 COMMENT ON COLUMN chatbot_config.system_prompt IS 'Prompt del sistema personalizado con datos de la organización';
 COMMENT ON COLUMN chatbot_config.n8n_workflow_id IS 'ID del workflow en n8n (UUID generado por n8n)';
 COMMENT ON COLUMN chatbot_config.n8n_credential_id IS 'ID de la credential en n8n para autenticación con la plataforma';
+COMMENT ON COLUMN chatbot_config.mcp_credential_id IS 'ID de la credential httpHeaderAuth en n8n compartida por organización para autenticación del AI Agent con MCP Server';
 COMMENT ON COLUMN chatbot_config.mcp_jwt_token IS 'Token JWT único por chatbot para autenticación multi-tenant del MCP Server con el backend';
 COMMENT ON COLUMN chatbot_config.total_mensajes_procesados IS 'Contador de mensajes procesados por el chatbot';
 COMMENT ON COLUMN chatbot_config.total_citas_creadas IS 'Contador de citas creadas exitosamente vía chatbot';
