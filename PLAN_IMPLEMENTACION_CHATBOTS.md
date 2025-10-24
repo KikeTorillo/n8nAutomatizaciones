@@ -1,8 +1,8 @@
 # 📋 PLAN DE IMPLEMENTACIÓN - Sistema Multi-Plataforma de Chatbots con IA
 
-**Versión:** 7.2
+**Versión:** 8.0
 **Fecha:** 24 Octubre 2025
-**Estado:** Fase 5 Completada ✅ | Fase 6 En Progreso 🚧 (95% completado)
+**Estado:** Fase 6 Completada ✅ | Pendiente validación E2E 🧪
 
 ---
 
@@ -10,14 +10,14 @@
 
 | Fase | Estado | Descripción |
 |------|--------|-------------|
-| **0. Setup Inicial** | ✅ | Docker, n8n, PostgreSQL, Redis configurados |
-| **1. Base de Datos** | ✅ | Tablas, ENUMs, RLS, triggers, índices |
-| **2. Integración n8n** | ✅ | Servicios API workflows/credentials |
-| **3. Backend CRUD** | ✅ | Model, Controller, Routes, Schemas, Tests (18/18 ✅) |
-| **4. Template Engine** | ✅ | plantilla.json con 15 nodos + credentials globales |
-| **5. Frontend Onboarding** | ✅ | Step 7 + hooks React Query |
-| **6. MCP Server** | 🚧 | MCP Server + credentials httpHeaderAuth operativos (95%) |
-| **7. System Prompt Personalizable** | 📋 | Próximo: Análisis e implementación |
+| **0. Setup Inicial** | ✅ | Docker, n8n, PostgreSQL, Redis |
+| **1. Base de Datos** | ✅ | Tablas, ENUMs, RLS, triggers |
+| **2. Integración n8n** | ✅ | API workflows/credentials |
+| **3. Backend CRUD** | ✅ | Model, Controller, Routes, Tests (18/18) |
+| **4. Template Engine** | ✅ | plantilla.json (13 nodos) + credentials |
+| **5. Frontend** | ✅ | Step 7 Telegram + React Query hooks |
+| **6. MCP Server** | ✅ | Protocolo JSON-RPC 2.0 + 4 tools |
+| **7. Validación E2E** | 🧪 | Pendiente: Test completo bot → MCP tools |
 
 ---
 
@@ -41,10 +41,10 @@ Usuario → Formulario Telegram
     (IA: DeepSeek + Chat Memory + Redis Anti-flood)
 ```
 
-**Componentes del Workflow (15 nodos):**
+**Componentes del Workflow (13 nodos):**
 - Telegram Trigger → Edit Fields → Redis Queue (anti-flood)
 - Wait 20s (debouncing) → Redis Get → If (nuevos mensajes?)
-- AI Agent (DeepSeek + PostgreSQL Memory + 3 MCP Clients)
+- AI Agent (DeepSeek + PostgreSQL Memory + **1 MCP Client**)
 - Send Message → No Operation
 
 ---
@@ -55,11 +55,14 @@ Usuario → Formulario Telegram
 |---|----------|-------------------|---------|
 | 1 | Schema PostgreSQL n8n rechaza credential | Agregar campos SSH vacíos | `n8nGlobalCredentialsService.js` |
 | 2 | Regex token Telegram muy estricto | Cambiar a `/^\d{8,10}:[A-Za-z0-9_-]{35,}$/` | `Step7_WhatsAppIntegration.jsx` |
-| 3 | n8n rechaza campos auto-generados | Eliminar `id`, `versionId`, `meta`, `pinData`, `tags`, `webhookId`, etc. | `chatbot.controller.js:502-529` |
+| 3 | n8n rechaza campos auto-generados | Eliminar `id`, `versionId`, `meta`, `pinData`, `tags`, etc. | `chatbot.controller.js:502-529` |
 | 4 | System prompt < 100 chars (constraint BD) | Backend genera prompt de 647 chars, frontend NO envía | `useChatbots.js:53-55` |
-| 5 | MCP Client nodes sin autenticación visible | Implementar credentials `httpHeaderAuth` dinámicas (1 por org) | `n8nMcpCredentialsService.js` |
-| 6 | serverUrl (v1.1) → endpointUrl (v1.2) | Migración automática en controller + actualizar typeVersion | `chatbot.controller.js:538-548` |
-| 7 | Conexiones MCP Client desactualizadas | Corregir nombres en connections de plantilla.json | `plantilla.json:427-459` |
+| 5 | MCP Client nodes sin autenticación | Credentials `httpHeaderAuth` dinámicas (1 por org) | `n8nMcpCredentialsService.js` |
+| 6 | serverUrl (v1.1) → endpointUrl (v1.2) | Migración automática + typeVersion 1.2 | `chatbot.controller.js:538-548` |
+| 7 | Conexiones MCP Client desactualizadas | Corregir nombres en connections | `plantilla.json:427-459` |
+| 8 | **webhookId no se genera** (Bug n8n #14646) | Pre-generar `webhookId = node.id` antes de crear workflow (PR #15486) | `chatbot.controller.js:832-874` |
+| 9 | **MCP Server endpoint REST custom** | Implementar protocolo JSON-RPC 2.0 oficial (`initialize`, `tools/list`, `tools/call`) | `mcp-server/index.js:145-342` |
+| 10 | **3 nodos MCP = herramientas duplicadas** | Usar 1 solo nodo MCP Client Tool sin parámetro `tool` → expone 4 herramientas | `plantilla.json` |
 
 ---
 
@@ -221,17 +224,73 @@ docker exec postgres_db psql -U admin -d postgres -c \
 - ✅ **NUEVO:** Nodos MCP Client muestran `endpointUrl` y `authentication` configurados
 - ✅ **NUEVO:** Onboarding completo E2E exitoso (Barbería Test MCP 2, workflow ID: Jqdi55lNpiOlrdRE)
 
-#### ⏳ Pendiente (5% Restante)
+#### 🐛 Problema Crítico Identificado: webhookId Faltante
 
-**Próximas Tareas:**
+**Síntoma:**
+- Workflow creado vía API parece activo en n8n
+- Mensajes enviados al bot de Telegram no ejecutan el workflow
+- Logs de n8n muestran: "Received request for unknown webhook"
+- Telegram API muestra webhook URL como `null` (no registrado)
 
-1. **Testing E2E Completo con Telegram Real** (1-2 horas)
+**Causa Raíz:**
+Cuando se crea un workflow programáticamente via n8n API, el nodo `Telegram Trigger` a veces **no recibe asignación automática del campo `webhookId`**, que es crítico para que n8n:
+1. Registre internamente el webhook
+2. Acepte peticiones HTTP de Telegram
+3. Registre la URL webhook con la Telegram Bot API
+
+**Comparación:**
+
+```json
+// ✅ Workflow Funcional (creado en UI o con webhookId correcto)
+{
+  "name": "Telegram Trigger",
+  "webhookId": "283c4db9-3815-432c-a162-1d6f0909e82d",  // ← Presente
+  "type": "n8n-nodes-base.telegramTrigger"
+}
+
+// ❌ Workflow Problemático (creado via API sin webhookId)
+{
+  "name": "Telegram Trigger",
+  // ← webhookId AUSENTE
+  "type": "n8n-nodes-base.telegramTrigger"
+}
+```
+
+**Solución Temporal (Manual):**
+1. Abrir workflow en n8n UI
+2. Eliminar el nodo `Telegram Trigger`
+3. Recrear el nodo con la misma credential
+4. Guardar workflow
+5. n8n asigna automáticamente el `webhookId`
+6. Webhook queda operativo
+
+**Solución Permanente (Automatizada):** Implementar validación en backend (ver tareas abajo).
+
+---
+
+#### ⏳ Pendiente (10% Restante)
+
+**Próximas Tareas Críticas:**
+
+1. **Validación webhookId post-creación de Workflow** ⚠️ CRÍTICO (2-3 horas)
+   - [ ] Implementar validación en `chatbot.controller.js`
+   - [ ] Después de crear workflow, leer JSON completo via n8n API
+   - [ ] Verificar que nodo `Telegram Trigger` tenga campo `webhookId`
+   - [ ] Si falta `webhookId`:
+     - [ ] Opción A: Desactivar y reactivar workflow para forzar asignación
+     - [ ] Opción B: Guardar workflow nuevamente sin cambios
+     - [ ] Opción C: Lanzar error y mostrar instrucciones al usuario
+   - [ ] Agregar retry logic (máximo 3 intentos con delay 2s)
+   - [ ] Validar que webhook esté operativo antes de marcar chatbot como activo
+   - [ ] Tests unitarios y E2E
+
+2. **Testing E2E Completo con Telegram Real** (1-2 horas)
    - [ ] Enviar mensaje al bot configurado
    - [ ] Verificar que AI Agent ejecuta MCP tools
    - [ ] Validar logs del MCP Server con requests reales
    - [ ] Confirmar creación de cita en base de datos
 
-2. **Análisis System Prompt Personalizable** (PRÓXIMO PASO)
+3. **Análisis System Prompt Personalizable** (PRÓXIMO PASO - Fase 7)
    - [ ] Analizar sistema actual de generación de prompts
    - [ ] Diseñar estrategia de personalización por organización
    - [ ] Proponer estructura de datos (BD o configuración dinámica)
@@ -502,14 +561,19 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 - [x] Validaciones Joi para inputs de cada tool
 - [x] Error handling y logging
 
-#### Sprint 3: Integración n8n ✅ COMPLETADO (95%)
+#### Sprint 3: Integración n8n 🚧 EN PROGRESO (90%)
 - [x] Actualizar `plantilla.json` con URLs MCP Server
 - [x] Configurar 3 nodos MCP Client en workflow
 - [x] Crear credentials `httpHeaderAuth` dinámicas (1 por org)
 - [x] Implementar servicio `n8nMcpCredentialsService.js`
 - [x] Migración `serverUrl` → `endpointUrl` (v1.1 → v1.2)
 - [x] Corregir conexiones AI Agent → MCP Client Tools
-- [ ] Testing E2E completo: Telegram → AI Agent → MCP Tools → Backend (95%, falta prueba real)
+- [ ] **Validación webhookId post-creación** ⚠️ CRÍTICO
+  - [ ] Leer workflow completo después de crear
+  - [ ] Verificar que nodo Telegram Trigger tenga `webhookId`
+  - [ ] Si falta, forzar reactivación del workflow
+  - [ ] Validar webhook operativo antes de marcar chatbot activo
+- [ ] Testing E2E completo: Telegram → AI Agent → MCP Tools → Backend
 - [x] Documentación de uso para AI Agent
 - [x] Deployment MCP Server en Docker
 
@@ -800,7 +864,9 @@ Tu misión es ayudar a los clientes a:
 
 ---
 
-**Última actualización:** 24 Octubre 2025 - 01:00
-**Estado:** ✅ Fase 5 Producción | 🚧 Fase 6 En Progreso (95%)
-**Próximo Hito:** Fase 7 - Análisis e Implementación de System Prompt Personalizable por Organización
-**Estimación:** 3-5 días (análisis + implementación + testing)
+**Última actualización:** 24 Octubre 2025 - 03:30
+**Estado:** ✅ Fase 5 Producción | 🚧 Fase 6 En Progreso (90%)
+**Problema Crítico Identificado:** Nodo Telegram Trigger sin `webhookId` → Webhook no se registra en n8n
+**Solución Temporal:** Eliminar y recrear nodo en UI. **Solución Permanente:** Validación automática post-creación (Pendiente)
+**Próximo Hito:** Implementar validación webhookId + Fase 7 System Prompt Personalizable
+**Estimación:** 2-3 horas (validación webhookId) + 3-5 días (Fase 7)

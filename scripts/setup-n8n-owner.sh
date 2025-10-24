@@ -49,6 +49,10 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
   exit 1
 fi
 
+# Dar tiempo adicional para que n8n termine las migraciones de BD
+echo "⏳ Esperando a que n8n termine las migraciones..."
+sleep 10
+
 echo ""
 echo "🔍 Verificando si n8n ya tiene owner..."
 
@@ -106,7 +110,7 @@ fi
 # Método 2: SQL directo (fallback - requiere hash bcrypt)
 echo "🔧 Método SQL directo no implementado aún"
 echo ""
-echo "📝 Setup Manual Requerido:"
+echo "📝 Setup Manual Requerido (si n8n no tiene owner):"
 echo "  1. Abrir: http://localhost:5678/setup"
 echo "  2. Usar credenciales:"
 echo "     Email: $N8N_OWNER_EMAIL"
@@ -114,5 +118,8 @@ echo "     Nombre: $N8N_OWNER_FIRST_NAME"
 echo "     Apellido: $N8N_OWNER_LAST_NAME"
 echo "     Password: <usa N8N_BASIC_AUTH_PASSWORD del .env>"
 echo ""
+echo "ℹ️  Continuando con el levantamiento del backend..."
 
-exit 1
+# No fallar el script si el setup de owner no se pudo hacer automáticamente
+# El usuario puede configurarlo manualmente después o ya existía
+exit 0

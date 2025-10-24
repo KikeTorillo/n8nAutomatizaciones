@@ -32,14 +32,12 @@ const logger = winston.createLogger({
   ],
 });
 
-// Si no estamos en producción, log también a consola
-if (config.nodeEnv !== 'production') {
-  logger.add(new winston.transports.Console({
-    format: winston.format.combine(
-      winston.format.colorize(),
-      winston.format.simple()
-    ),
-  }));
-}
+// SIEMPRE log a consola (para Docker logs)
+logger.add(new winston.transports.Console({
+  format: winston.format.combine(
+    winston.format.colorize(),
+    winston.format.simple()
+  ),
+}));
 
 module.exports = logger;

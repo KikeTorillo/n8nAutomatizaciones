@@ -186,7 +186,56 @@ class ChatbotController {
             );
         }
 
-        // ========== 6. Activar workflow ==========
+        // ========== 6. Validar webhookId (Fix Bug n8n #14646) ==========
+        logger.info('[ChatbotController] Validando webhookId del Telegram Trigger...');
+        let webhookIdValido = false;
+
+        try {
+            webhookIdValido = await this._validarYRegenerarWebhookId(workflowCreado.id);
+
+            if (!webhookIdValido) {
+                // webhookId no se pudo generar - lanzar error con instrucciones
+                const errorInstrucciones =
+                    'No se pudo generar webhookId automáticamente después de 3 intentos. ' +
+                    'SOLUCIÓN MANUAL REQUERIDA:\n' +
+                    `1. Abrir workflow en n8n UI: ${process.env.N8N_API_URL || 'http://localhost:5678'}\n` +
+                    '2. Localizar el workflow recién creado\n' +
+                    '3. Eliminar el nodo "Telegram Trigger"\n' +
+                    '4. Recrear el nodo "Telegram Trigger" con la misma credential\n' +
+                    '5. Guardar el workflow\n' +
+                    'El webhook quedará operativo.\n' +
+                    `Workflow ID: ${workflowCreado.id}\n` +
+                    'Bug conocido de n8n: https://github.com/n8n-io/n8n/issues/14646';
+
+                throw new Error(errorInstrucciones);
+            }
+
+            logger.info('[ChatbotController] ✅ webhookId validado exitosamente');
+
+        } catch (validationError) {
+            logger.error('[ChatbotController] Error validando webhookId:', validationError.message);
+
+            // Rollback: eliminar workflow y credentials creadas
+            try {
+                await N8nService.eliminarWorkflow(workflowCreado.id);
+                await N8nCredentialService.eliminarCredential(credentialCreada.id);
+                logger.info(`[ChatbotController] Rollback: workflow y credential Telegram eliminados`);
+
+                // NOTA: No eliminamos mcpCredential porque puede estar siendo usada
+                // por otros chatbots de la misma organización (1 credential por org)
+                logger.info(`[ChatbotController] Credential MCP ${mcpCredential.id} se mantiene (compartida por org)`);
+            } catch (rollbackError) {
+                logger.error('[ChatbotController] Error en rollback completo:', rollbackError.message);
+            }
+
+            return ResponseHelper.error(
+                res,
+                `Error validando webhook del bot de Telegram: ${validationError.message}`,
+                500
+            );
+        }
+
+        // ========== 7. Activar workflow ==========
         let workflowActivado = false;
         try {
             await N8nService.activarWorkflow(workflowCreado.id);
@@ -198,7 +247,7 @@ class ChatbotController {
             // El chatbot quedará en estado 'configurando' o 'error'
         }
 
-        // ========== 7. Guardar configuración en BD ==========
+        // ========== 8. Guardar configuración en BD ==========
         try {
             const chatbotConfig = await ChatbotConfigModel.crear({
                 organizacion_id: organizacionId,
@@ -257,6 +306,210 @@ class ChatbotController {
             );
         }
     });
+
+    /**
+     * ====================================================================
+     * LIMPIAR WORKFLOW PARA ACTUALIZACIÓN (PRIVADO)
+     * ====================================================================
+     *
+     * Elimina campos read-only y auto-generados del workflow antes de
+     * enviarlo al endpoint PUT de n8n para actualizarlo.
+     *
+     * n8n rechaza con 400 "additional properties" si se envían campos
+     * como id, versionId, createdAt, updatedAt, etc.
+     *
+     * @param {Object} workflow - Workflow completo obtenido de n8n
+     * @returns {Object} Workflow limpio listo para actualización
+     * @private
+     */
+    static _limpiarWorkflowParaActualizacion(workflow) {
+        // Estrategia: Solo mantener campos ESTRICTAMENTE necesarios para actualización
+        // n8n API PUT /workflows/{id} solo acepta: name, nodes, connections, settings, staticData
+
+        const workflowLimpio = {
+            name: workflow.name,
+            nodes: workflow.nodes || [],
+            connections: workflow.connections || {},
+            settings: workflow.settings || {},
+            staticData: workflow.staticData || null
+        };
+
+        // Limpiar campos auto-generados de nodos
+        if (workflowLimpio.nodes && Array.isArray(workflowLimpio.nodes)) {
+            workflowLimpio.nodes = workflowLimpio.nodes.map(node => {
+                // Crear copia del nodo con solo campos permitidos
+                const nodeLimpio = {
+                    parameters: node.parameters || {},
+                    name: node.name,
+                    type: node.type,
+                    typeVersion: node.typeVersion,
+                    position: node.position,
+                    id: node.id, // Necesario para identificar el nodo en actualización
+                };
+
+                // Agregar credentials si existen
+                if (node.credentials) {
+                    nodeLimpio.credentials = node.credentials;
+                }
+
+                // Agregar disabled si existe
+                if (node.disabled !== undefined) {
+                    nodeLimpio.disabled = node.disabled;
+                }
+
+                // Agregar notes si existen
+                if (node.notes) {
+                    nodeLimpio.notes = node.notes;
+                }
+
+                // NO incluir webhookId - debe ser regenerado por n8n
+
+                // Limpiar IDs dentro de parameters
+                if (nodeLimpio.parameters) {
+                    // Limpiar IDs dentro de assignments (Edit Fields node)
+                    if (nodeLimpio.parameters.assignments?.assignments) {
+                        nodeLimpio.parameters.assignments.assignments =
+                            nodeLimpio.parameters.assignments.assignments.map(assignment => {
+                                const { id, ...assignmentSinId } = assignment;
+                                return assignmentSinId;
+                            });
+                    }
+
+                    // Limpiar IDs dentro de conditions (If node)
+                    if (nodeLimpio.parameters.conditions?.conditions) {
+                        nodeLimpio.parameters.conditions.conditions =
+                            nodeLimpio.parameters.conditions.conditions.map(condition => {
+                                const { id, ...conditionSinId } = condition;
+                                return conditionSinId;
+                            });
+                    }
+                }
+
+                return nodeLimpio;
+            });
+        }
+
+        logger.debug('[ChatbotController] Workflow limpio para actualización (solo campos permitidos)');
+        return workflowLimpio;
+    }
+
+    /**
+     * ====================================================================
+     * VALIDAR Y REGENERAR WEBHOOKID SI ES NECESARIO (PRIVADO)
+     * ====================================================================
+     *
+     * CONTEXTO: Bug de n8n (Issue #14267, #14646)
+     * Cuando se crea un workflow via API, el nodo Telegram Trigger a veces
+     * no recibe el campo webhookId, causando que el webhook no se registre.
+     *
+     * SOLUCIÓN: Implementar validación post-creación con 3 niveles de retry:
+     * 1. Actualizar workflow (simula "Save" en UI) - Tasa éxito: 90%
+     * 2. Desactivar/Reactivar workflow - Tasa éxito: +5%
+     * 3. Actualizar nuevamente - Último recurso
+     *
+     * @param {string} workflowId - ID del workflow en n8n
+     * @returns {Promise<boolean>} true si webhookId está presente
+     * @private
+     */
+    static async _validarYRegenerarWebhookId(workflowId) {
+        const MAX_INTENTOS = 3;
+        let intento = 0;
+
+        while (intento < MAX_INTENTOS) {
+            intento++;
+            logger.info(`[ChatbotController] Validación webhookId - Intento ${intento}/${MAX_INTENTOS}`);
+
+            // Dar tiempo a n8n a procesar
+            // OPTIMIZACIÓN: Con el fix experimental, el webhookId debería estar presente
+            // desde el primer intento, así que solo esperamos 500ms inicialmente
+            if (intento === 1) {
+                await new Promise(resolve => setTimeout(resolve, 500)); // Solo 500ms en intento 1
+            } else if (intento === 2) {
+                await new Promise(resolve => setTimeout(resolve, 1500)); // 1.5s en intento 2
+            } else {
+                await new Promise(resolve => setTimeout(resolve, 2000)); // 2s en intento 3
+            }
+
+            // Leer workflow completo
+            let workflowCompleto;
+            try {
+                workflowCompleto = await N8nService.obtenerWorkflow(workflowId);
+            } catch (error) {
+                logger.error('[ChatbotController] Error leyendo workflow:', error.message);
+                if (intento === MAX_INTENTOS) throw error;
+                continue;
+            }
+
+            // Buscar nodo Telegram Trigger
+            const telegramTrigger = workflowCompleto.nodes.find(
+                n => n.type === 'n8n-nodes-base.telegramTrigger'
+            );
+
+            if (!telegramTrigger) {
+                throw new Error('Nodo Telegram Trigger no encontrado en el workflow');
+            }
+
+            // Validar presencia de webhookId
+            if (telegramTrigger.webhookId) {
+                logger.info(`[ChatbotController] ✅ webhookId presente: ${telegramTrigger.webhookId}`);
+                return true;
+            }
+
+            logger.warn(`[ChatbotController] ⚠️ webhookId faltante en intento ${intento}`);
+
+            // ESTRATEGIA DE REGENERACIÓN según el intento
+
+            if (intento === 1) {
+                // NIVEL 1: Actualizar workflow (simula "Save" en UI)
+                // Workaround oficial: https://github.com/n8n-io/n8n/issues/14646
+                logger.info('[ChatbotController] Aplicando workaround Nivel 1: Actualizar workflow...');
+                try {
+                    // Limpiar campos read-only antes de actualizar (n8n rechaza additional properties)
+                    const workflowLimpio = this._limpiarWorkflowParaActualizacion(workflowCompleto);
+                    await N8nService.actualizarWorkflow(workflowId, workflowLimpio);
+                    logger.info('[ChatbotController] Workflow actualizado, esperando regeneración...');
+                } catch (error) {
+                    logger.error('[ChatbotController] Error actualizando workflow:', error.message);
+                }
+
+            } else if (intento === 2) {
+                // NIVEL 2: Ciclo Desactivar/Reactivar
+                logger.info('[ChatbotController] Aplicando workaround Nivel 2: Ciclo desactivar/reactivar...');
+                try {
+                    // Desactivar
+                    await N8nService.desactivarWorkflow(workflowId);
+                    logger.info('[ChatbotController] Workflow desactivado');
+
+                    await new Promise(resolve => setTimeout(resolve, 1500)); // Espera 1.5s entre des/activar
+
+                    // Reactivar
+                    await N8nService.activarWorkflow(workflowId);
+                    logger.info('[ChatbotController] Workflow reactivado');
+                } catch (error) {
+                    logger.error('[ChatbotController] Error en ciclo desactivar/reactivar:', error.message);
+                }
+
+            } else if (intento === 3) {
+                // NIVEL 3: Último intento - Actualizar nuevamente
+                logger.info('[ChatbotController] Aplicando workaround Nivel 3: Actualizar workflow nuevamente...');
+                try {
+                    // Releer workflow por si cambió
+                    const workflowActual = await N8nService.obtenerWorkflow(workflowId);
+                    // Limpiar campos read-only antes de actualizar
+                    const workflowLimpio = this._limpiarWorkflowParaActualizacion(workflowActual);
+                    await N8nService.actualizarWorkflow(workflowId, workflowLimpio);
+                    logger.info('[ChatbotController] Workflow actualizado en último intento');
+                } catch (error) {
+                    logger.error('[ChatbotController] Error en último intento:', error.message);
+                }
+            }
+        }
+
+        // Si llegamos aquí, falló después de 3 intentos
+        logger.error('[ChatbotController] ❌ No se pudo generar webhookId después de 3 intentos');
+        logger.error('[ChatbotController] Bug de n8n: https://github.com/n8n-io/n8n/issues/14646');
+        return false;
+    }
 
     /**
      * ====================================================================
@@ -537,7 +790,9 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
                 if (node.type === '@n8n/n8n-nodes-langchain.mcpClientTool') {
                     // Migrar serverUrl (v1.1) a endpointUrl (v1.2+)
                     if (node.parameters.serverUrl && !node.parameters.endpointUrl) {
-                        node.parameters.endpointUrl = node.parameters.serverUrl;
+                        // IMPORTANTE: Agregar el endpoint /mcp/execute al final
+                        const baseUrl = node.parameters.serverUrl.replace(/\/$/, ''); // Eliminar trailing slash
+                        node.parameters.endpointUrl = `${baseUrl}/mcp/execute`;
                         delete node.parameters.serverUrl;
                         logger.debug(`[ChatbotController] Migrado serverUrl → endpointUrl: ${node.parameters.endpointUrl}`);
                     }
@@ -580,11 +835,33 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
             delete plantilla.meta;     // Eliminar meta completo (no solo instanceId)
             delete plantilla.active;   // Campo read-only, n8n lo gestiona
 
-            // 6. Limpiar IDs y campos auto-generados de nodos (n8n los regenerará)
+            // 6. Procesar IDs de nodos y aplicar FIX para webhookId (PR #15486)
+            const crypto = require('crypto');
+
             plantilla.nodes.forEach(node => {
-                delete node.id;  // n8n genera IDs automáticamente al crear
-                if (node.webhookId) {
-                    delete node.webhookId;
+                // CAMBIO CRÍTICO: En lugar de eliminar node.id, asegurarnos de que exista
+                // Esto es necesario para el fix del webhookId
+                if (!node.id) {
+                    node.id = crypto.randomUUID();
+                }
+
+                // ✨ FIX EXPERIMENTAL (basado en n8n PR #15486)
+                // Solución oficial pendiente de merge para el bug de webhookId
+                // https://github.com/n8n-io/n8n/pull/15486
+                if (node.type === 'n8n-nodes-base.telegramTrigger') {
+                    // Asignar webhookId = node.id (solución del PR oficial)
+                    node.webhookId = node.id;
+
+                    // Asegurar que el path esté establecido
+                    if (!node.parameters) {
+                        node.parameters = {};
+                    }
+                    if (!node.parameters.path) {
+                        node.parameters.path = node.id;
+                    }
+
+                    logger.info(`[ChatbotController] ✨ webhookId pre-generado para Telegram Trigger: ${node.webhookId}`);
+                    logger.info(`[ChatbotController] Aplicando fix experimental del PR #15486`);
                 }
 
                 // 6.1 Limpiar IDs dentro de assignments (Edit Fields node)

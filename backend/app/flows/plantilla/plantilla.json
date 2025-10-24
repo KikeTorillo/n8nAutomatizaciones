@@ -262,7 +262,6 @@
     {
       "parameters": {
         "serverUrl": "http://mcp-server:3100",
-        "tool": "crearCita",
         "options": {}
       },
       "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
@@ -272,37 +271,7 @@
         776
       ],
       "id": "20320aa8-3d42-4cbf-8407-8f58a170fcd5",
-      "name": "MCP Client - Crear Cita"
-    },
-    {
-      "parameters": {
-        "serverUrl": "http://mcp-server:3100",
-        "tool": "verificarDisponibilidad",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
-      "typeVersion": 1.1,
-      "position": [
-        1952,
-        776
-      ],
-      "id": "c1065732-9edc-4302-a713-1fd35fc80125",
-      "name": "MCP Client - Verificar Disponibilidad"
-    },
-    {
-      "parameters": {
-        "serverUrl": "http://mcp-server:3100",
-        "tool": "listarServicios",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
-      "typeVersion": 1.1,
-      "position": [
-        2080,
-        776
-      ],
-      "id": "8f3227b1-8654-4ab8-a18b-35a1e5e5dfbc",
-      "name": "MCP Client - Listar Servicios"
+      "name": "MCP Client - All Tools"
     }
   ],
   "pinData": {},
@@ -335,6 +304,15 @@
           {
             "node": "Send a text message",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ],
+      "ai_tool": [
+        [
+          {
+            "node": "MCP Client - All Tools",
+            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -419,39 +397,6 @@
           {
             "node": "AI Agent",
             "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "MCP Client - Crear Cita": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "MCP Client - Verificar Disponibilidad": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "MCP Client - Listar Servicios": {
-      "ai_tool": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_tool",
             "index": 0
           }
         ]

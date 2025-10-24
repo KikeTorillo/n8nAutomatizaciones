@@ -133,14 +133,66 @@ app.get('/mcp/tools/:toolName', (req, res) => {
 });
 
 /**
- * Ejecuta una herramienta
+ * Endpoint JSON-RPC 2.0 para MCP (Model Context Protocol)
  * POST /mcp/execute
  * Headers: Authorization: Bearer <jwt-token>
- * Body: { tool: string, arguments: object }
+ *
+ * Implementa el protocolo oficial MCP basado en JSON-RPC 2.0:
+ * - initialize: Handshake inicial
+ * - tools/list: Listar herramientas disponibles
+ * - tools/call: Ejecutar una herramienta
  */
 app.post('/mcp/execute', async (req, res) => {
   const startTime = Date.now();
-  const { tool: toolName, arguments: toolArgs } = req.body;
+  const { jsonrpc, id, method, params } = req.body;
+
+  // ====================================================================
+  // LOGGING DETALLADO DE LA REQUEST
+  // ====================================================================
+  logger.info('📥 MCP Request recibida', {
+    method,
+    jsonrpc,
+    id,
+    hasParams: !!params,
+    hasAuth: !!req.headers.authorization,
+    headers: {
+      'content-type': req.headers['content-type'],
+      'authorization': req.headers.authorization ? '***REDACTED***' : undefined,
+    },
+    body: {
+      jsonrpc,
+      id,
+      method,
+      params: params ? JSON.stringify(params).substring(0, 100) : undefined
+    }
+  });
+
+  // ====================================================================
+  // VALIDAR FORMATO JSON-RPC 2.0
+  // ====================================================================
+  if (jsonrpc !== '2.0') {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      id: id || null,
+      error: {
+        code: -32600,
+        message: 'Invalid Request',
+        data: 'jsonrpc debe ser "2.0"'
+      }
+    });
+  }
+
+  if (!method) {
+    return res.status(400).json({
+      jsonrpc: '2.0',
+      id: id || null,
+      error: {
+        code: -32600,
+        message: 'Invalid Request',
+        data: 'method es requerido'
+      }
+    });
+  }
 
   // ====================================================================
   // EXTRAER TOKEN JWT DEL HEADER (MULTI-TENANT)
@@ -150,70 +202,181 @@ app.post('/mcp/execute', async (req, res) => {
     ? authHeader.substring(7)
     : null;
 
-  // Validar que se proporcionó el token
-  if (!jwtToken) {
-    return res.status(401).json({
-      error: 'Unauthorized',
-      message: 'Token JWT no proporcionado. Header Authorization: Bearer <token> es requerido.',
-    });
-  }
-
-  // Validar que se proporcionó el nombre de la herramienta
-  if (!toolName) {
-    return res.status(400).json({
-      error: 'Missing tool name',
-      message: 'El campo "tool" es requerido',
-    });
-  }
-
-  // Validar que la herramienta existe
-  const tool = tools[toolName];
-  if (!tool) {
-    return res.status(404).json({
-      error: 'Tool not found',
-      message: `La herramienta "${toolName}" no existe`,
-      availableTools: Object.keys(tools),
-    });
-  }
+  // ====================================================================
+  // ROUTER DE MÉTODOS JSON-RPC
+  // ====================================================================
 
   try {
-    logger.info(`Ejecutando tool: ${toolName}`, {
-      arguments: toolArgs,
-      hasToken: !!jwtToken
-    });
+    // Método: initialize (handshake inicial)
+    if (method === 'initialize') {
+      logger.info('✅ MCP initialize request - enviando capabilities');
+      const response = {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          protocolVersion: '2024-11-05',
+          capabilities: {
+            tools: {},
+          },
+          serverInfo: {
+            name: 'SaaS Agendamiento MCP Server',
+            version: '1.0.0',
+          }
+        }
+      };
+      logger.info('📤 Response initialize:', { response });
+      return res.json(response);
+    }
 
-    // Ejecutar la herramienta con el token JWT
-    const result = await tool.execute(toolArgs, jwtToken);
+    // Método: tools/list (listar herramientas)
+    if (method === 'tools/list') {
+      logger.info('✅ MCP tools/list request - listando herramientas');
 
-    const duration = Date.now() - startTime;
+      const toolsList = Object.keys(tools).map(toolName => ({
+        name: toolName,
+        description: tools[toolName].description,
+        inputSchema: tools[toolName].inputSchema,
+      }));
 
-    logger.info(`Tool ${toolName} ejecutado exitosamente`, {
-      duration: `${duration}ms`,
-      success: result.success,
-    });
+      logger.info('📤 Response tools/list:', { count: toolsList.length, tools: toolsList.map(t => t.name) });
 
-    res.json({
-      tool: toolName,
-      success: result.success,
-      data: result.data,
-      message: result.message,
-      duration: `${duration}ms`,
+      return res.json({
+        jsonrpc: '2.0',
+        id,
+        result: {
+          tools: toolsList
+        }
+      });
+    }
+
+    // Método: notifications/initialized (notificación post-handshake)
+    if (method === 'notifications/initialized') {
+      logger.info('✅ MCP notifications/initialized - handshake completado');
+      // Las notificaciones no requieren respuesta JSON-RPC
+      return res.status(204).end();
+    }
+
+    // Método: tools/call (ejecutar herramienta)
+    if (method === 'tools/call') {
+      // Validar JWT token para ejecución
+      if (!jwtToken) {
+        return res.status(401).json({
+          jsonrpc: '2.0',
+          id,
+          error: {
+            code: -32000,
+            message: 'Unauthorized',
+            data: 'Token JWT no proporcionado. Header Authorization: Bearer <token> es requerido.'
+          }
+        });
+      }
+
+      const { name: toolName, arguments: toolArgs = {} } = params || {};
+
+      if (!toolName) {
+        return res.status(400).json({
+          jsonrpc: '2.0',
+          id,
+          error: {
+            code: -32602,
+            message: 'Invalid params',
+            data: 'params.name es requerido'
+          }
+        });
+      }
+
+      const tool = tools[toolName];
+      if (!tool) {
+        return res.status(404).json({
+          jsonrpc: '2.0',
+          id,
+          error: {
+            code: -32601,
+            message: 'Method not found',
+            data: {
+              message: `La herramienta "${toolName}" no existe`,
+              availableTools: Object.keys(tools)
+            }
+          }
+        });
+      }
+
+      logger.info(`✅ Ejecutando tool: ${toolName}`, {
+        arguments: toolArgs,
+        hasToken: !!jwtToken
+      });
+
+      // Ejecutar la herramienta
+      const result = await tool.execute(toolArgs, jwtToken);
+      const duration = Date.now() - startTime;
+
+      logger.info(`✅ Tool ${toolName} ejecutado exitosamente`, {
+        duration: `${duration}ms`,
+        success: result.success,
+      });
+
+      // Respuesta JSON-RPC con formato MCP
+      const response = {
+        jsonrpc: '2.0',
+        id,
+        result: {
+          content: [
+            {
+              type: 'text',
+              text: JSON.stringify({
+                success: result.success,
+                data: result.data,
+                message: result.message,
+                duration: `${duration}ms`
+              })
+            }
+          ]
+        }
+      };
+
+      logger.info('📤 Response tools/call:', {
+        tool: toolName,
+        success: result.success,
+        hasData: !!result.data
+      });
+
+      return res.json(response);
+    }
+
+    // Método no soportado
+    return res.status(404).json({
+      jsonrpc: '2.0',
+      id,
+      error: {
+        code: -32601,
+        message: 'Method not found',
+        data: {
+          method,
+          supportedMethods: ['initialize', 'tools/list', 'tools/call']
+        }
+      }
     });
 
   } catch (error) {
     const duration = Date.now() - startTime;
 
-    logger.error(`Error ejecutando tool ${toolName}:`, {
+    logger.error(`Error en método ${method}:`, {
       error: error.message,
       duration: `${duration}ms`,
-      arguments: toolArgs,
+      params,
     });
 
-    res.status(500).json({
-      tool: toolName,
-      success: false,
-      error: error.message,
-      duration: `${duration}ms`,
+    return res.status(500).json({
+      jsonrpc: '2.0',
+      id,
+      error: {
+        code: -32603,
+        message: 'Internal error',
+        data: {
+          error: error.message,
+          duration: `${duration}ms`
+        }
+      }
     });
   }
 });
