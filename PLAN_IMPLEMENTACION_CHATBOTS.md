@@ -1,8 +1,8 @@
 # 📋 PLAN DE IMPLEMENTACIÓN - Sistema Multi-Plataforma de Chatbots con IA
 
-**Versión:** 7.1
-**Fecha:** 23 Octubre 2025
-**Estado:** Fase 5 Completada ✅ | Fase 6 En Progreso 🚧 (85% completado)
+**Versión:** 7.2
+**Fecha:** 24 Octubre 2025
+**Estado:** Fase 5 Completada ✅ | Fase 6 En Progreso 🚧 (95% completado)
 
 ---
 
@@ -16,7 +16,8 @@
 | **3. Backend CRUD** | ✅ | Model, Controller, Routes, Schemas, Tests (18/18 ✅) |
 | **4. Template Engine** | ✅ | plantilla.json con 15 nodos + credentials globales |
 | **5. Frontend Onboarding** | ✅ | Step 7 + hooks React Query |
-| **6. MCP Server** | 🚧 | MCP Server operativo, falta configuración credentials (85%) |
+| **6. MCP Server** | 🚧 | MCP Server + credentials httpHeaderAuth operativos (95%) |
+| **7. System Prompt Personalizable** | 📋 | Próximo: Análisis e implementación |
 
 ---
 
@@ -56,6 +57,9 @@ Usuario → Formulario Telegram
 | 2 | Regex token Telegram muy estricto | Cambiar a `/^\d{8,10}:[A-Za-z0-9_-]{35,}$/` | `Step7_WhatsAppIntegration.jsx` |
 | 3 | n8n rechaza campos auto-generados | Eliminar `id`, `versionId`, `meta`, `pinData`, `tags`, `webhookId`, etc. | `chatbot.controller.js:502-529` |
 | 4 | System prompt < 100 chars (constraint BD) | Backend genera prompt de 647 chars, frontend NO envía | `useChatbots.js:53-55` |
+| 5 | MCP Client nodes sin autenticación visible | Implementar credentials `httpHeaderAuth` dinámicas (1 por org) | `n8nMcpCredentialsService.js` |
+| 6 | serverUrl (v1.1) → endpointUrl (v1.2) | Migración automática en controller + actualizar typeVersion | `chatbot.controller.js:538-548` |
+| 7 | Conexiones MCP Client desactualizadas | Corregir nombres en connections de plantilla.json | `plantilla.json:427-459` |
 
 ---
 
@@ -173,9 +177,9 @@ docker exec postgres_db psql -U admin -d postgres -c \
 
 ---
 
-## 📋 FASE 6: MCP SERVER (En Progreso - 85% ✅)
+## 📋 FASE 6: MCP SERVER (En Progreso - 95% ✅)
 
-### 📍 ESTADO ACTUAL (23 Octubre 2025)
+### 📍 ESTADO ACTUAL (24 Octubre 2025)
 
 #### ✅ Completado
 
@@ -184,7 +188,8 @@ docker exec postgres_db psql -U admin -d postgres -c \
 - ✅ Servidor MCP levantado en puerto 3100
 - ✅ Health check endpoint funcionando (`/health`, `/mcp/tools`)
 - ✅ Autenticación JWT multi-tenant implementada
-  - Token único por chatbot generado en backend
+  - **ESTRATEGIA:** 1 credential `httpHeaderAuth` por organización (compartida entre chatbots)
+  - Token JWT único por organización con `organizacion_id` embebido
   - Validación con middleware `authMiddleware.js`
   - RLS aplicado según `organizacion_id` del token
 - ✅ 4 Tools MCP implementados y operativos:
@@ -194,33 +199,43 @@ docker exec postgres_db psql -U admin -d postgres -c \
   4. `buscarCliente` - Búsqueda fuzzy por teléfono/nombre
 - ✅ Integración con Backend API REST vía `apiClient.js`
 - ✅ Dockerfile y docker-compose configurados
-- ✅ Conexiones MCP Client → AI Agent en `plantilla.json`
+- ✅ **NUEVO:** Servicio `n8nMcpCredentialsService.js` implementado
+  - Método `obtenerOCrearPorOrganizacion()`
+  - Reutilización inteligente de credentials
+  - Naming convention: `"MCP Auth - Org {organizacion_id}"`
+- ✅ **NUEVO:** Credentials MCP configuradas en nodos MCP Client
+  - Campo `authentication: "headerAuth"` en parameters
+  - Campo `credentials.httpHeaderAuth` con ID y nombre
+  - Migración automática `serverUrl` → `endpointUrl` (v1.1 → v1.2)
+  - TypeVersion actualizado a 1.2
+- ✅ **NUEVO:** Conexiones corregidas en `plantilla.json`
+  - Nombres de nodos MCP Client actualizados en objeto `connections`
+  - AI Agent correctamente vinculado a los 3 tools MCP
 
 **Testing Realizado:**
 - ✅ MCP Server responde correctamente con JWT válido
 - ✅ Endpoint `/mcp/tools` retorna 4 tools con schemas completos
 - ✅ Validación de token JWT con `aud: "mcp-server"` e `iss: "saas-backend"`
 - ✅ Workflow de Telegram se ejecuta exitosamente
+- ✅ **NUEVO:** Credential MCP creada y vinculada correctamente (verificado vía n8n API)
+- ✅ **NUEVO:** Nodos MCP Client muestran `endpointUrl` y `authentication` configurados
+- ✅ **NUEVO:** Onboarding completo E2E exitoso (Barbería Test MCP 2, workflow ID: Jqdi55lNpiOlrdRE)
 
-#### ⚠️ Pendiente (Issue Identificado)
+#### ⏳ Pendiente (5% Restante)
 
-**Problema:** Nodos MCP Client en n8n muestran warnings en la UI.
+**Próximas Tareas:**
 
-**Causa Raíz:**
-- El backend inyecta el token JWT correctamente en `parameters.options.headers.Authorization`
-- El token **SÍ funciona** (probado con curl directo al MCP Server)
-- Sin embargo, n8n espera que se use el campo oficial `authentication` con valor `"headerAuth"`
-- `headerAuth` requiere crear un **credential** de tipo `httpHeaderAuth` (no solo un header directo)
+1. **Testing E2E Completo con Telegram Real** (1-2 horas)
+   - [ ] Enviar mensaje al bot configurado
+   - [ ] Verificar que AI Agent ejecuta MCP tools
+   - [ ] Validar logs del MCP Server con requests reales
+   - [ ] Confirmar creación de cita en base de datos
 
-**Impacto:**
-- 🔴 Los MCP Client nodes muestran "Authentication: None" en la UI
-- 🟡 Los nodos tienen triángulo rojo de advertencia
-- 🟢 El header Authorization **SÍ está en el JSON** del workflow
-- 🟢 La funcionalidad **debería** funcionar (header presente en requests)
-- 🔴 No confirmado E2E porque AI Agent no ejecuta los tools sin autenticación visible
-
-**Solución Propuesta (Opción B):**
-Crear credentials dinámicas `httpHeaderAuth` para cada chatbot al generar el workflow.
+2. **Análisis System Prompt Personalizable** (PRÓXIMO PASO)
+   - [ ] Analizar sistema actual de generación de prompts
+   - [ ] Diseñar estrategia de personalización por organización
+   - [ ] Proponer estructura de datos (BD o configuración dinámica)
+   - [ ] Implementar UI/backend para personalización
 
 ---
 
@@ -487,88 +502,76 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 - [x] Validaciones Joi para inputs de cada tool
 - [x] Error handling y logging
 
-#### Sprint 3: Integración n8n ⚠️ PARCIAL (85%)
+#### Sprint 3: Integración n8n ✅ COMPLETADO (95%)
 - [x] Actualizar `plantilla.json` con URLs MCP Server
 - [x] Configurar 3 nodos MCP Client en workflow
-- [ ] **PENDIENTE:** Crear credentials `httpHeaderAuth` dinámicas
-- [ ] Testing E2E: Telegram → AI Agent → MCP Tools → Backend
+- [x] Crear credentials `httpHeaderAuth` dinámicas (1 por org)
+- [x] Implementar servicio `n8nMcpCredentialsService.js`
+- [x] Migración `serverUrl` → `endpointUrl` (v1.1 → v1.2)
+- [x] Corregir conexiones AI Agent → MCP Client Tools
+- [ ] Testing E2E completo: Telegram → AI Agent → MCP Tools → Backend (95%, falta prueba real)
 - [x] Documentación de uso para AI Agent
 - [x] Deployment MCP Server en Docker
 
-#### 🆕 Sprint 0 (Siguiente Sesión): Fix Authentication Credentials
+#### 🆕 Sprint 0: System Prompt Personalizable (PRÓXIMO - Fase 7)
 
-**Objetivo:** Implementar creación dinámica de credentials `httpHeaderAuth` para MCP Client nodes.
+**Objetivo:** Permitir que cada organización personalice el system prompt de su chatbot según sus necesidades específicas.
 
-**Tareas:**
+**Análisis Actual:**
+- ✅ System prompt se genera dinámicamente en backend (`_generarSystemPrompt()`)
+- ✅ Incluye datos del bot (nombre, username) obtenidos de Telegram API
+- ✅ Incluye `organizacion_id` y `plataforma` automáticamente
+- ⚠️ Contenido del prompt es **estático** (plantilla hardcodeada)
+- ⚠️ No hay forma de personalizar según:
+  - Servicios específicos de la organización
+  - Horarios de atención
+  - Profesionales disponibles
+  - Políticas de cancelación
+  - Tono de comunicación (formal/casual)
+  - Idioma regional
 
-1. **Investigar API de Credentials n8n** (1-2 horas)
-   - [ ] Estudiar estructura de credential tipo `httpHeaderAuth`
-   - [ ] Analizar endpoints de n8n API para CRUD credentials
-   - [ ] Identificar campos requeridos para `httpHeaderAuth`
-   - [ ] Documentar diferencias vs credentials Telegram/PostgreSQL/Redis existentes
+**Tareas de Análisis:**
 
-2. **Crear Servicio de Credentials MCP** (2-3 horas)
-   - [ ] Archivo: `backend/app/services/n8nMcpCredentialsService.js`
-   - [ ] Método: `crearCredentialHeaderAuth(nombre, token)`
-     - Nombre: `"MCP Auth - {nombre_chatbot}"`
-     - Tipo: `httpHeaderAuth`
-     - Data: `{ name: "Authorization", value: "Bearer {mcpToken}" }`
-   - [ ] Tests unitarios (min 3 casos)
-   - [ ] Error handling y rollback
+1. **Diseño de Estrategia de Personalización** (2-3 horas)
+   - [ ] Analizar casos de uso de personalización
+   - [ ] Definir campos personalizables del prompt
+   - [ ] Diseñar estructura de datos (JSON schema)
+   - [ ] Evaluar opciones de almacenamiento:
+     - Opción A: Campo `system_prompt` en `chatbot_config` (editable por usuario)
+     - Opción B: Tabla `prompt_templates` con versionado
+     - Opción C: Variables de template con datos dinámicos de la org
+   - [ ] Evaluar integración con datos de organización (servicios, profesionales, horarios)
 
-3. **Actualizar Chatbot Controller** (1-2 horas)
-   - [ ] Modificar `_generarWorkflowTemplate()` en `chatbot.controller.js`
-   - [ ] Crear credential MCP antes de generar workflow
-   - [ ] Guardar `mcp_credential_id` en tabla `chatbot_config`
-   - [ ] Actualizar nodos MCP Client con:
-     ```javascript
-     {
-       authentication: "headerAuth",
-       credentials: {
-         httpHeaderAuth: {
-           id: mcpCredentialId,
-           name: "MCP Auth - Bot Final Test"
-         }
-       }
-     }
-     ```
-   - [ ] Implementar rollback de credential MCP en caso de error
+2. **Propuesta de Implementación Backend** (Pendiente)
+   - [ ] Modificar schema de BD si necesario
+   - [ ] Implementar método de personalización en controller
+   - [ ] Crear endpoint para actualizar system prompt
+   - [ ] Validación de longitud y contenido
 
-4. **Actualizar Schema de Base de Datos** (30 min)
-   - [ ] Agregar columna `mcp_credential_id VARCHAR(50)` a `chatbot_config`
-   - [ ] Migración SQL para columna nueva (nullable inicialmente)
-   - [ ] Actualizar model con nuevo campo
+3. **Propuesta de Implementación Frontend** (Pendiente)
+   - [ ] Diseñar UI para editor de prompt (textarea avanzado)
+   - [ ] Implementar preview del prompt generado
+   - [ ] Variables dinámicas disponibles para interpolación
+   - [ ] Validación en tiempo real
 
-5. **Testing E2E** (2-3 horas)
-   - [ ] Crear nuevo chatbot desde onboarding
-   - [ ] Verificar que credential MCP se crea correctamente
-   - [ ] Validar que nodos MCP Client muestran "Header Auth" configurado
-   - [ ] Enviar mensaje a Telegram solicitando servicio
-   - [ ] Confirmar que AI Agent ejecuta MCP tools
-   - [ ] Verificar logs de MCP Server con requests reales
-   - [ ] Validar que se crea cita en base de datos
+4. **Variables Dinámicas Sugeridas:**
+   - `{{bot_name}}` - Nombre del bot
+   - `{{organization_name}}` - Nombre de la organización
+   - `{{services}}` - Lista de servicios automática
+   - `{{professionals}}` - Lista de profesionales
+   - `{{schedule}}` - Horarios de atención
+   - `{{policies}}` - Políticas de la empresa
+   - `{{contact}}` - Información de contacto
 
-6. **Cleanup y Documentación** (1 hora)
-   - [ ] Eliminar lógica obsoleta de `parameters.options.headers`
-   - [ ] Actualizar `ANEXO_CODIGO_CHATBOTS.md`
-   - [ ] Actualizar este documento con resultados
-   - [ ] Capturar screenshots del workflow funcionando
-
-**Estimación Total:** 8-12 horas (~1-2 días)
+**Estimación:** 3-5 días (análisis + implementación)
 
 **Criterios de Éxito:**
-- ✅ Nodos MCP Client muestran "Header Auth" en UI de n8n
-- ✅ Sin triángulos rojos de advertencia
-- ✅ AI Agent ejecuta tools MCP correctamente
-- ✅ MCP Server recibe requests con token JWT
-- ✅ Citas se crean exitosamente desde Telegram
-- ✅ Tests E2E pasando
-
-**Recursos de Referencia:**
-- n8n Credentials API: https://docs.n8n.io/api/credentials/
-- Código existente: `n8nCredentialService.js` (Telegram)
-- Código existente: `n8nGlobalCredentialsService.js` (Header Auth genérico)
-- Discusiones n8n Community sobre Header Auth
+- [ ] Cada organización puede personalizar su system prompt
+- [ ] Prompt incluye datos dinámicos de la organización (servicios, profesionales)
+- [ ] UI intuitiva para editar el prompt
+- [ ] Preview del prompt antes de guardar
+- [ ] Validaciones de longitud y coherencia
+- [ ] Tests de actualización de prompt + regeneración de workflow
 
 #### Sprint 4: Validación y Monitoreo (3 días)
 - [ ] Pruebas de usuario con bot real
@@ -602,6 +605,190 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 
 ---
 
+## 📋 FASE 7: SYSTEM PROMPT PERSONALIZABLE (Próxima - 0% 📋)
+
+### 🎯 Objetivo
+
+Implementar un sistema que permita a cada organización personalizar el system prompt de su chatbot según:
+- Servicios específicos ofrecidos
+- Horarios de atención
+- Profesionales disponibles
+- Políticas internas (cancelación, pagos, etc.)
+- Tono de comunicación (formal/casual)
+- Idioma y modismos regionales
+
+### 📊 Situación Actual
+
+**Generación Actual del System Prompt:**
+
+```javascript
+// chatbot.controller.js línea 600-618
+static _generarSystemPrompt(plataforma, botInfo, organizacionId) {
+    const botName = botInfo?.first_name || 'Asistente Virtual';
+    const username = botInfo?.username ? `@${botInfo.username}` : '';
+
+    return `Eres ${botName} ${username}, un asistente virtual inteligente...
+
+Tu misión es ayudar a los clientes a:
+- Agendar nuevas citas
+- Consultar sus citas existentes
+...
+
+IMPORTANTE:
+- Sé amable, profesional y empático
+- Organización ID: ${organizacionId}
+- Plataforma: ${plataforma}
+...`;
+}
+```
+
+**Problemas Identificados:**
+- 🔴 **Contenido estático** - No refleja servicios/profesionales reales de cada negocio
+- 🔴 **No personalizable** - Usuario no puede modificar el prompt
+- 🔴 **Plantilla genérica** - No se adapta a industrias específicas (barbería vs spa vs clínica)
+- 🟡 **Falta contexto de negocio** - No incluye horarios, políticas, precios reales
+
+### 🏗️ Propuestas de Implementación
+
+#### **Opción A: Prompt Editable Simple**
+
+**Ventajas:**
+- ✅ Implementación rápida (1-2 días)
+- ✅ Control total del usuario
+- ✅ Sin complejidad de template engine
+
+**Desventajas:**
+- ❌ Usuario debe escribir todo el prompt manualmente
+- ❌ Sin ayuda para estructura correcta
+- ❌ No integra datos dinámicos de la org
+
+**Implementación:**
+```javascript
+// BD: Usar campo existente system_prompt en chatbot_config
+// Frontend: Textarea grande con contador de caracteres
+// Backend: Validar longitud (100-5000 chars)
+```
+
+---
+
+#### **Opción B: Template con Variables Dinámicas** ⭐ **RECOMENDADA**
+
+**Ventajas:**
+- ✅ Balance entre flexibilidad y estructura
+- ✅ Integra datos reales de la organización automáticamente
+- ✅ Usuario puede personalizar secciones clave
+- ✅ Mantiene calidad del prompt (estructura válida)
+
+**Desventajas:**
+- 🟡 Requiere template engine simple (Handlebars/Mustache)
+- 🟡 Implementación media (3-4 días)
+
+**Ejemplo de Template:**
+```handlebars
+Eres {{bot_name}} {{bot_username}}, asistente virtual de {{organization_name}}.
+
+SERVICIOS DISPONIBLES:
+{{#each services}}
+- {{name}} ({{duration}} min) - ${{price}}
+{{/each}}
+
+PROFESIONALES:
+{{#each professionals}}
+- {{name}} - {{specialty}}
+{{/each}}
+
+HORARIOS DE ATENCIÓN:
+{{schedule}}
+
+POLÍTICAS:
+{{custom_policies}}
+
+Tu misión es ayudar a los clientes a:
+- Agendar citas (verificando disponibilidad real)
+- {{custom_tasks}}
+```
+
+**Variables Disponibles:**
+```javascript
+{
+  bot_name: "Bot Barbería Pro",
+  bot_username: "@barberia_bot",
+  organization_name: "Barbería Suavecito",
+  services: [
+    { name: "Corte", duration: 30, price: 150 },
+    { name: "Barba", duration: 20, price: 100 }
+  ],
+  professionals: [
+    { name: "Luis Enrique", specialty: "Barbero Senior" },
+    { name: "Diego", specialty: "Estilista" }
+  ],
+  schedule: "Lunes a Sábado 9:00 - 18:00",
+  custom_policies: "Cancelaciones con 24hrs de anticipación",
+  custom_tasks: "Resolver dudas sobre productos"
+}
+```
+
+---
+
+#### **Opción C: Tabla de Templates por Industria**
+
+**Ventajas:**
+- ✅ Templates pre-diseñados profesionales
+- ✅ Versionado y A/B testing
+- ✅ Fácil cambiar de template sin reescribir
+
+**Desventajas:**
+- ❌ Complejidad alta (5-7 días)
+- ❌ Requiere mantener múltiples templates
+- ❌ Migración compleja
+
+---
+
+### 📝 Plan de Implementación (Opción B)
+
+#### Sprint 1: Análisis y Diseño (1 día)
+- [ ] Documentar casos de uso de personalización
+- [ ] Diseñar schema de variables dinámicas
+- [ ] Crear 3 templates de ejemplo (barbería, spa, clínica)
+- [ ] Definir límites de personalización
+
+#### Sprint 2: Backend (2 días)
+- [ ] Instalar template engine (Handlebars.js)
+- [ ] Crear servicio `PromptGeneratorService.js`
+  - Método: `generarPrompt(templateStr, organizacionId, botInfo)`
+  - Método: `obtenerVariablesOrganizacion(organizacionId)`
+- [ ] Modificar `_generarSystemPrompt()` para usar template
+- [ ] Crear endpoint `PUT /api/v1/chatbots/:id/system-prompt`
+- [ ] Tests unitarios (min 10 casos)
+
+#### Sprint 3: Frontend (2 días)
+- [ ] Página de configuración del prompt en dashboard
+- [ ] Editor con sintaxis highlighting para variables
+- [ ] Preview en tiempo real del prompt generado
+- [ ] Lista de variables disponibles con documentación
+- [ ] Validaciones (longitud, variables válidas)
+- [ ] Botón "Restaurar template por defecto"
+
+#### Sprint 4: Testing E2E (1 día)
+- [ ] Actualizar prompt desde UI
+- [ ] Verificar regeneración de workflow en n8n
+- [ ] Validar nuevo prompt en AI Agent
+- [ ] Testing conversacional con diferentes prompts
+- [ ] Documentación de usuario
+
+---
+
+### 🎯 Criterios de Éxito
+
+- [ ] Usuario puede personalizar secciones clave del prompt
+- [ ] Variables dinámicas se interpolan automáticamente
+- [ ] Prompt actualizado se refleja en workflow de n8n
+- [ ] Preview muestra prompt final antes de guardar
+- [ ] No rompe funcionalidad del AI Agent
+- [ ] Tests E2E pasando
+
+---
+
 ## 📚 REFERENCIAS
 
 - **CLAUDE.md:** Arquitectura general del proyecto
@@ -613,7 +800,7 @@ docker exec back npm test -- __tests__/integration/mcp-workflow.test.js
 
 ---
 
-**Última actualización:** 23 Octubre 2025 - 22:35
-**Estado:** ✅ Fase 5 Producción | 🚧 Fase 6 En Progreso (85%)
-**Próximo Hito:** Sprint 0 - Implementar credentials `httpHeaderAuth` para MCP Client nodes
-**Estimación:** 8-12 horas (~1-2 días)
+**Última actualización:** 24 Octubre 2025 - 01:00
+**Estado:** ✅ Fase 5 Producción | 🚧 Fase 6 En Progreso (95%)
+**Próximo Hito:** Fase 7 - Análisis e Implementación de System Prompt Personalizable por Organización
+**Estimación:** 3-5 días (análisis + implementación + testing)

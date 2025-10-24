@@ -424,7 +424,7 @@
         ]
       ]
     },
-    "MCP Client": {
+    "MCP Client - Crear Cita": {
       "ai_tool": [
         [
           {
@@ -435,7 +435,7 @@
         ]
       ]
     },
-    "MCP Client1": {
+    "MCP Client - Verificar Disponibilidad": {
       "ai_tool": [
         [
           {
@@ -446,7 +446,7 @@
         ]
       ]
     },
-    "MCP Client2": {
+    "MCP Client - Listar Servicios": {
       "ai_tool": [
         [
           {
