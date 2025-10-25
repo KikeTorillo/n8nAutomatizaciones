@@ -12,15 +12,16 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 23 Octubre 2025
+**Actualizado**: 24 Octubre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
 | **Backend API** | ✅ Operativo | 13 módulos, 97 archivos, 495 tests (100%) |
 | **Frontend React** | ✅ Operativo | 45 componentes, 22 páginas, 12 hooks |
 | **Base de Datos** | ✅ Operativo | 19 tablas, 24 RLS policies, 114 índices |
-| **Sistema IA** | ✅ Operativo | n8n + Telegram + DeepSeek + Redis |
-| **Docker** | ✅ Running | 7 contenedores activos |
+| **Sistema IA** | ✅ Operativo | n8n + Telegram + DeepSeek + Redis + MCP Server |
+| **MCP Server** | ✅ Operativo | 4 tools, JSON-RPC 2.0, JWT multi-tenant |
+| **Docker** | ✅ Running | 8 contenedores activos |
 
 ---
 
@@ -48,11 +49,16 @@
 - **Funciones**: 38 PL/pgSQL
 
 ### IA Conversacional
-- **Orquestación**: n8n workflows
+- **Orquestación**: n8n workflows (15 nodos)
 - **Plataformas**: Telegram Bot API (activo), WhatsApp (planificado)
 - **Modelo**: DeepSeek (económico + potente)
-- **Memory**: PostgreSQL Chat Memory
+- **Memory**: PostgreSQL Chat Memory (RLS por usuario)
 - **Anti-flood**: Redis Queue (20s debouncing)
+- **MCP Server**: JSON-RPC 2.0 con 4 tools operativas
+  - `listarServicios` - Lista servicios activos
+  - `verificarDisponibilidad` - Verifica horarios libres
+  - `buscarCliente` - Busca clientes existentes
+  - `crearCita` - Crea citas validadas
 
 ---
 
@@ -63,6 +69,7 @@
 npm run dev                      # Levantar stack completo
 docker logs -f back              # Ver logs backend
 docker logs -f n8n-main          # Ver logs n8n
+docker logs -f mcp-server        # Ver logs MCP Server
 
 # Tests
 docker exec back npm test                                   # Suite completa (495 tests)
@@ -70,6 +77,10 @@ docker exec back npm test -- __tests__/endpoints/chatbots.test.js  # Módulo esp
 
 # Base de Datos
 docker exec postgres_db psql -U admin -d postgres -c "SELECT id, nombre, plataforma, estado FROM chatbot_config;"
+
+# MCP Server
+curl http://localhost:3100/health              # Health check
+curl http://localhost:3100/mcp/tools           # Listar tools disponibles
 
 # n8n UI
 # http://localhost:5678
@@ -163,48 +174,87 @@ Sistema (2):        eventos_sistema, eventos_sistema_archivo
 ### Arquitectura
 
 ```
-Usuario Telegram → n8n Workflow → AI Agent (DeepSeek)
-                                      ↓
-                               PostgreSQL Memory
-                                      ↓
-                            Redis Anti-flood (20s)
-                                      ↓
-                              Backend API (futuro)
-                                      ↓
-                            Crear Citas (MCP Tools)
+Usuario Telegram → n8n Workflow (15 nodos)
+                         ↓
+    ┌──────────────────┴──────────────────┐
+    ↓                                      ↓
+PostgreSQL Memory              AI Agent (DeepSeek)
+(RLS por usuario)                         ↓
+                                   MCP Server (JSON-RPC 2.0)
+    ↓                                      ↓
+Redis Anti-flood                   Backend API
+(20s debouncing)                   (RLS multi-tenant)
+                                           ↓
+                                  PostgreSQL Database
+                                  (Crear Citas, Listar Servicios)
 ```
 
 ### Componentes Clave
 
 **Backend:**
-- `chatbot.controller.js` - Orquestación E2E (validar → n8n → BD)
-- `chatbot-config.model.js` - Model con RLS
-- `n8nService.js` - API workflows
-- `n8nCredentialService.js` - CRUD credentials
-- `n8nGlobalCredentialsService.js` - Credentials compartidas (DeepSeek, PostgreSQL, Redis)
+- `chatbot.controller.js` - Orquestación E2E (8 endpoints con rollback)
+- `chatbot-config.model.js` - Model con RLS (13 métodos)
+- `n8nService.js` - API workflows (11 métodos)
+- `n8nCredentialService.js` - CRUD credentials por plataforma
+- `n8nMcpCredentialsService.js` - Credentials MCP (1 por org)
+- `n8nGlobalCredentialsService.js` - Credentials globales (DeepSeek, PostgreSQL, Redis)
 - `telegramValidator.js` - Validación Telegram Bot API
+
+**MCP Server:**
+- `mcp-server/index.js` - Servidor JSON-RPC 2.0 (puerto 3100)
+- `mcp-server/tools/` - 4 tools implementados
+  - `listarServicios.js` - Lista servicios activos
+  - `verificarDisponibilidad.js` - Verifica horarios libres
+  - `buscarCliente.js` - Busca clientes existentes
+  - `crearCita.js` - Crea citas validadas
+- `mcp-server/utils/apiClient.js` - Cliente HTTP con JWT
 
 **Template n8n:**
 - `flows/plantilla/plantilla.json` - 15 nodos configurados
-  - Trigger + Edit Fields + Redis Queue
-  - AI Agent + DeepSeek + Chat Memory
-  - 3 MCP Client Tools (placeholders para Fase 6)
+  - Telegram Trigger → Edit Fields → Redis Queue
+  - Wait 20s → Redis Get → If (nuevos msgs?)
+  - AI Agent + DeepSeek + PostgreSQL Memory + **1 MCP Client**
+  - Send Message
 
 **Frontend:**
 - `Step7_WhatsAppIntegration.jsx` - Form onboarding Telegram
 - `useChatbots.js` - 7 hooks React Query
 
-**Features:**
-- ✅ Creación automática de workflow desde template
-- ✅ Credentials dinámicas (Telegram + globales)
+**Features Operativas:**
+- ✅ Creación automática 100% sin intervención manual
+- ✅ Webhooks funcionando automáticamente (fix bug n8n #14646)
+- ✅ Credentials dinámicas (Telegram + globales + MCP)
 - ✅ System prompt personalizado por organización (647 chars)
 - ✅ Rollback automático en errores
-- ✅ Validación con Telegram API
+- ✅ Validación con Telegram Bot API
 - ✅ Anti-flood con Redis (20s debouncing)
-- ✅ Chat Memory persistente (PostgreSQL)
-- ⏳ MCP Tools para crear citas (Fase 6 - Planificada)
+- ✅ Chat Memory persistente (PostgreSQL con RLS)
+- ✅ 4 MCP Tools operativas para agendamiento
+- ✅ Multi-tenant seguro (JWT con `organizacion_id`)
+- ✅ IDs únicos regenerados por workflow (evita conflictos)
 
 **Ver más:** `PLAN_IMPLEMENTACION_CHATBOTS.md` + `ANEXO_CODIGO_CHATBOTS.md`
+
+### Fix Crítico: Webhooks Automáticos ⭐
+
+**Problema:** n8n bug [#14646](https://github.com/n8n-io/n8n/issues/14646) - webhooks no se registran al crear workflows vía API.
+
+**Solución Implementada (chatbot.controller.js:913-944):**
+```javascript
+plantilla.nodes.forEach(node => {
+    // Regenerar IDs únicos para cada workflow (evita conflictos)
+    const oldId = node.id;
+    node.id = crypto.randomUUID();
+
+    // Fix basado en PR #15486 (oficial, pendiente merge)
+    if (node.type === 'n8n-nodes-base.telegramTrigger') {
+        node.webhookId = node.id;        // webhookId = node.id
+        node.parameters.path = node.id;  // path = node.id
+    }
+});
+```
+
+**Resultado:** Cada bot tiene IDs únicos y webhooks funcionan automáticamente. ✅
 
 ---
 
@@ -432,11 +482,22 @@ delete plantilla.active;
 ### Chatbots
 | Archivo | Ubicación | Descripción |
 |---------|-----------|-------------|
-| Chatbot Controller | `backend/app/controllers/chatbot.controller.js` | Orquestación E2E |
-| Chatbot Model | `backend/app/database/chatbot-config.model.js` | Model con RLS |
-| n8n Service | `backend/app/services/n8nService.js` | API workflows |
+| Chatbot Controller | `backend/app/controllers/chatbot.controller.js` | Orquestación E2E (8 endpoints) |
+| Chatbot Model | `backend/app/database/chatbot-config.model.js` | Model con RLS (13 métodos) |
+| n8n Service | `backend/app/services/n8nService.js` | API workflows (11 métodos) |
+| MCP Credentials | `backend/app/services/n8nMcpCredentialsService.js` | Credentials MCP (1 por org) |
 | Global Credentials | `backend/app/services/n8nGlobalCredentialsService.js` | DeepSeek, PostgreSQL, Redis |
 | Workflow Template | `backend/app/flows/plantilla/plantilla.json` | 15 nodos configurados |
+
+### MCP Server
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| MCP Server | `backend/mcp-server/index.js` | Servidor JSON-RPC 2.0 (puerto 3100) |
+| Tool: Listar Servicios | `backend/mcp-server/tools/listarServicios.js` | Lista servicios activos |
+| Tool: Verificar Disp. | `backend/mcp-server/tools/verificarDisponibilidad.js` | Verifica horarios libres |
+| Tool: Buscar Cliente | `backend/mcp-server/tools/buscarCliente.js` | Busca clientes existentes |
+| Tool: Crear Cita | `backend/mcp-server/tools/crearCita.js` | Crea citas validadas |
+| API Client | `backend/mcp-server/utils/apiClient.js` | Cliente HTTP con JWT |
 
 ### Frontend
 | Archivo | Ubicación | Descripción |
@@ -465,6 +526,12 @@ delete plantilla.active;
 - **Middleware**: 34 funciones
 - **Services**: 11 archivos (n8n, validators, etc.)
 
+### MCP Server
+- **Archivos**: 10 total (1 servidor, 4 tools, 5 utils/config)
+- **Tools**: 4 operativas (listarServicios, verificarDisponibilidad, buscarCliente, crearCita)
+- **Protocolo**: JSON-RPC 2.0 oficial
+- **Autenticación**: JWT multi-tenant con RLS
+
 ### Frontend
 - **Archivos**: 103 total (45 componentes, 22 páginas, 12 hooks)
 - **API**: 14 módulos endpoints
@@ -484,13 +551,13 @@ delete plantilla.active;
 
 ## 📖 Documentación Adicional
 
-- **`PLAN_IMPLEMENTACION_CHATBOTS.md`** - Plan detallado Fase 6 (MCP Server)
-- **`ANEXO_CODIGO_CHATBOTS.md`** - Referencia técnica chatbots
-- **Tests**: `backend/app/__tests__/endpoints/` (23 archivos)
+- **`PLAN_IMPLEMENTACION_CHATBOTS.md`** - Documentación completa sistema de chatbots (v9.0)
+- **`ANEXO_CODIGO_CHATBOTS.md`** - Referencia técnica detallada del código
+- **Tests**: `backend/app/__tests__/endpoints/` (23 archivos, 495 tests)
 
 ---
 
-**Versión**: 7.0
-**Última actualización**: 23 Octubre 2025
+**Versión**: 8.0
+**Última actualización**: 24 Octubre 2025
 **Estado**: ✅ Production Ready | 495/495 tests passing (100%)
-**Nuevo**: Sistema de Chatbots IA operativo (Telegram)
+**Chatbots**: ✅ Operativo - Telegram con MCP Server (4 tools) + Webhooks automáticos

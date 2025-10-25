@@ -24,11 +24,6 @@ const inputSchema = {
       description: 'Filtrar solo servicios activos (default: true)',
       default: true,
     },
-    incluir_profesionales: {
-      type: 'boolean',
-      description: 'Incluir lista de profesionales que ofrecen cada servicio (default: true)',
-      default: true,
-    },
   },
 };
 
@@ -37,7 +32,6 @@ const inputSchema = {
  */
 const joiSchema = Joi.object({
   activo: Joi.boolean().optional().default(true),
-  incluir_profesionales: Joi.boolean().optional().default(true),
 });
 
 /**
@@ -69,10 +63,9 @@ async function execute(args = {}, jwtToken) {
     // ========== 2. Preparar parámetros para backend ==========
     const params = {
       activo: value.activo,
-      incluir_profesionales: value.incluir_profesionales,
     };
 
-    logger.info('Listando servicios:', params);
+    logger.info('Listando servicios con filtros:', params);
 
     // ========== 3. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
@@ -80,9 +73,14 @@ async function execute(args = {}, jwtToken) {
     // ========== 4. Llamar al backend API ==========
     const response = await apiClient.get('/api/v1/servicios', { params });
 
-    const servicios = response.data.data;
+    // DEBUG: Ver estructura de response
+    logger.info('Response completa del backend:', JSON.stringify(response.data, null, 2));
 
-    logger.info(`${servicios.length} servicios obtenidos`);
+    // Backend retorna: { success: true, data: { servicios: [...], paginacion: {...} }, message: "..." }
+    // Axios response.data contiene el objeto completo del backend
+    const { servicios, paginacion } = response.data.data || response.data;
+
+    logger.info(`${servicios?.length || 0} servicios obtenidos de ${paginacion?.total_elementos || 0} totales`);
 
     // ========== 4. Formatear resultado ==========
     const serviciosFormateados = servicios.map(servicio => ({
@@ -92,19 +90,22 @@ async function execute(args = {}, jwtToken) {
       duracion_minutos: servicio.duracion_minutos,
       precio: servicio.precio,
       activo: servicio.activo,
-      profesionales: servicio.profesionales?.map(prof => ({
-        id: prof.id,
-        nombre: prof.nombre,
-      })) || [],
-      total_profesionales: servicio.profesionales?.length || 0,
+      categoria: servicio.categoria,
+      subcategoria: servicio.subcategoria,
+      total_profesionales_asignados: parseInt(servicio.total_profesionales_asignados) || 0,
     }));
 
     return {
       success: true,
-      message: `Se encontraron ${serviciosFormateados.length} servicios`,
+      message: `Se encontraron ${serviciosFormateados.length} servicios de ${paginacion.total_elementos} totales`,
       data: {
         servicios: serviciosFormateados,
         total: serviciosFormateados.length,
+        paginacion: {
+          pagina_actual: paginacion.pagina_actual,
+          total_paginas: paginacion.total_paginas,
+          total_elementos: paginacion.total_elementos,
+        },
       },
     };
 

@@ -3,6 +3,7 @@
 const ServicioModel = require('../database/servicio.model');
 const { asyncHandler } = require('../middleware');
 const { ResponseHelper } = require('../utils/helpers');
+const logger = require('../utils/logger');
 
 class ServicioController {
     static crear = asyncHandler(async (req, res) => {
@@ -28,8 +29,11 @@ class ServicioController {
     static listar = asyncHandler(async (req, res) => {
         const filtros = {};
 
+        // ⚠️ IMPORTANTE: Joi schema convierte query params a boolean
+        // req.query.activo puede llegar como boolean true/false (post-validación Joi)
+        // o como string "true"/"false" (si no pasa por validación)
         if (req.query.activo !== undefined) {
-            filtros.activo = req.query.activo === 'true';
+            filtros.activo = req.query.activo === 'true' || req.query.activo === true;
         }
 
         if (req.query.categoria) {
