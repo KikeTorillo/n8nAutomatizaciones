@@ -18,6 +18,7 @@ const logger = require('./utils/logger');
 
 // Importar tools
 const crearCitaTool = require('./tools/crearCita');
+const reagendarCitaTool = require('./tools/reagendarCita');
 const verificarDisponibilidadTool = require('./tools/verificarDisponibilidad');
 const listarServiciosTool = require('./tools/listarServicios');
 const buscarClienteTool = require('./tools/buscarCliente');
@@ -82,6 +83,7 @@ app.get('/health', async (req, res) => {
 
 const tools = {
   crearCita: crearCitaTool,
+  reagendarCita: reagendarCitaTool,
   verificarDisponibilidad: verificarDisponibilidadTool,
   listarServicios: listarServiciosTool,
   buscarCliente: buscarClienteTool,

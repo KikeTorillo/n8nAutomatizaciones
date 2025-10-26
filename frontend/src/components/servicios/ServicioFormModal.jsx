@@ -377,21 +377,21 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                       placeholder="Ej: 50000"
                       required={!isEditMode}
                       min="0"
-                      step="1000"
+                      step="1"
                       onKeyDown={(e) => {
                         // Prevenir entrada de caracteres no permitidos en números positivos
-                        if (['-', '+', 'e', 'E'].includes(e.key)) {
+                        if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
                           e.preventDefault();
                         }
                       }}
                       onChange={(e) => {
                         const value = e.target.value;
                         // Si está vacío, mantener vacío para que se vea el placeholder
-                        // Si tiene valor, convertir a número y asegurar que sea positivo
+                        // Si tiene valor, convertir a número entero y asegurar que sea positivo
                         if (value === '') {
                           field.onChange('');
                         } else {
-                          const num = parseFloat(value) || 0;
+                          const num = parseInt(value) || 0;
                           field.onChange(Math.abs(num)); // Math.abs asegura valor positivo
                         }
                       }}

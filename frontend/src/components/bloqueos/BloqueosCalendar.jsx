@@ -19,7 +19,7 @@ import { LABELS_TIPO_BLOQUEO } from '@/utils/bloqueoHelpers';
  * Componente de calendario mensual para visualizar bloqueos
  * Muestra los bloqueos en formato de calendario con navegación entre meses
  */
-function BloqueosCalendar({ profesionalId = null, onVerBloqueo }) {
+function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }) {
   const [mesActual, setMesActual] = useState(new Date());
 
   // Calcular rango de fechas para el mes actual (incluyendo días de meses adyacentes)
@@ -151,6 +151,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo }) {
                 esDelMesActual={esDelMesActual}
                 esHoy={esHoy}
                 onVerBloqueo={onVerBloqueo}
+                onCrearBloqueo={onCrearBloqueo ? () => onCrearBloqueo(fechaISO) : undefined}
                 isLoading={isLoading}
               />
             );
@@ -229,6 +230,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo }) {
 BloqueosCalendar.propTypes = {
   profesionalId: PropTypes.number,
   onVerBloqueo: PropTypes.func.isRequired,
+  onCrearBloqueo: PropTypes.func,
 };
 
 export default BloqueosCalendar;

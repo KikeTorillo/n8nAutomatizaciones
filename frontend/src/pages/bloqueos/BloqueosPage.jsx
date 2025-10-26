@@ -39,6 +39,7 @@ function BloqueosPage() {
   const [bloqueoParaEliminar, setBloqueoParaEliminar] = useState(null);
   const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
   const [bloqueoParaVer, setBloqueoParaVer] = useState(null);
+  const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
 
   // Queries
   const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
@@ -99,6 +100,14 @@ function BloqueosPage() {
   const handleNuevoBloqueo = () => {
     setModoFormulario('crear');
     setBloqueoSeleccionado(null);
+    setFechaPreseleccionada(null);
+    setModalFormularioAbierto(true);
+  };
+
+  const handleCrearBloqueoDesdeCalendario = (fechaISO) => {
+    setModoFormulario('crear');
+    setBloqueoSeleccionado(null);
+    setFechaPreseleccionada(fechaISO);
     setModalFormularioAbierto(true);
   };
 
@@ -131,6 +140,7 @@ function BloqueosPage() {
   const handleCerrarFormulario = () => {
     setModalFormularioAbierto(false);
     setBloqueoSeleccionado(null);
+    setFechaPreseleccionada(null);
   };
 
   return (
@@ -287,6 +297,7 @@ function BloqueosPage() {
                   : null
               }
               onVerBloqueo={handleVerBloqueo}
+              onCrearBloqueo={handleCrearBloqueoDesdeCalendario}
             />
           </div>
         ) : (
@@ -320,6 +331,7 @@ function BloqueosPage() {
           onClose={handleCerrarFormulario}
           bloqueo={bloqueoSeleccionado}
           modo={modoFormulario}
+          fechaInicial={fechaPreseleccionada}
         />
 
         {/* Modal de detalle (ver información completa) */}

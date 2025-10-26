@@ -671,15 +671,10 @@ INSERT INTO planes_subscripcion (
  15, 1000, 50, 8, 800,
  '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": false}', 3),
 
--- Plan Enterprise (actualizado con límites altos)
-('empresarial', 'Plan Empresarial', 'Para empresas grandes y cadenas', 1299.00, 12990.00,
- 100, 50000, 500, 25, 10000,
- '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "multi_branch": true}', 4),
-
 -- Plan Custom (para necesidades específicas)
 ('custom', 'Plan Personalizado', 'Plan a medida para organizaciones con necesidades específicas', 0.00, NULL,
  NULL, NULL, NULL, NULL, NULL,
- '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "dedicated_support": true, "sla_guarantee": true, "custom_features": true}', 5)
+ '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": true, "priority_support": true, "dedicated_support": true, "sla_guarantee": true, "custom_features": true}', 4)
 ON CONFLICT (codigo_plan) DO NOTHING;
 
 -- ====================================================================

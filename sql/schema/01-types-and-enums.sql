@@ -93,14 +93,13 @@ CREATE TYPE industria_tipo AS ENUM (
 -- ====================================================================
 -- 💰 ENUM PLAN_TIPO - PLANES DE SUBSCRIPCIÓN SAAS
 -- ====================================================================
--- Define los 5 niveles de planes de subscripción con características
+-- Define los 4 niveles de planes de subscripción con características
 -- diferenciadas según el tamaño y necesidades del negocio.
 -- ────────────────────────────────────────────────────────────────────
 CREATE TYPE plan_tipo AS ENUM (
     'trial',              -- Plan de prueba gratuito (30 días típico)
     'basico',             -- Plan básico para negocios pequeños
     'profesional',        -- Plan avanzado para negocios en crecimiento
-    'empresarial',        -- Plan completo para empresas grandes
     'custom'              -- Plan personalizado con características específicas
 );
 

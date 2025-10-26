@@ -21,7 +21,7 @@ import { useToast } from '@/hooks/useToast';
  * Muestra las citas en formato de calendario con navegación entre meses
  */
 function CalendarioMensual({ onVerCita, onCrearCita }) {
-  const { showToast } = useToast();
+  const toast = useToast();
   const [mesActual, setMesActual] = useState(new Date());
 
   // Estado para drag & drop
@@ -126,6 +126,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
 
     // Validar solapamiento
     const citasDelDiaNuevo = citasPorFecha[nuevaFecha] || [];
+
     const validacion = validarSolapamiento(
       {
         ...cita,
@@ -159,15 +160,14 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
         fecha_cita: fechaNuevaReagendar,
       });
 
-      showToast('Cita reagendada exitosamente', 'success');
+      toast.success('Cita reagendada exitosamente');
       setModalReagendarAbierto(false);
       setCitaEnDrag(null);
       setFechaNuevaReagendar(null);
       setAdvertenciasReagendar([]);
     } catch (error) {
-      showToast(
-        error.response?.data?.error || 'Error al reagendar la cita',
-        'error'
+      toast.error(
+        error.response?.data?.error || 'Error al reagendar la cita'
       );
     }
   };

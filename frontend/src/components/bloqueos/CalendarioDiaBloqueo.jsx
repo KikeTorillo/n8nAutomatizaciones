@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { Lock, Clock, Building, User } from 'lucide-react';
+import { Lock, Clock, Building, User, Plus } from 'lucide-react';
 import { obtenerColorTipoBloqueo, esBloqueoDiaCompleto } from '@/utils/bloqueoHelpers';
 
 /**
@@ -12,6 +12,7 @@ function CalendarioDiaBloqueo({
   esDelMesActual,
   esHoy,
   onVerBloqueo,
+  onCrearBloqueo,
   isLoading,
 }) {
   const numeroDia = format(dia, 'd');
@@ -46,12 +47,29 @@ function CalendarioDiaBloqueo({
           {numeroDia}
         </span>
 
-        {/* Badge de bloqueo organizacional */}
-        {tieneBloqueoOrganizacional && esDelMesActual && (
+        {/* Badge de bloqueo organizacional o botón crear */}
+        {tieneBloqueoOrganizacional && esDelMesActual ? (
           <div className="flex items-center gap-1" title="Bloqueo organizacional">
             <Building className="w-3 h-3 text-red-600" />
             <Lock className="w-3 h-3 text-red-600" />
           </div>
+        ) : (
+          /* Botón para crear bloqueo (solo visible cuando NO hay bloqueos) */
+          esDelMesActual && bloqueos.length === 0 && onCrearBloqueo && (
+            <button
+              onClick={onCrearBloqueo}
+              className="
+                opacity-0 group-hover:opacity-100
+                w-5 h-5 rounded-full bg-red-600 text-white
+                flex items-center justify-center
+                transition-opacity
+                hover:bg-red-700
+              "
+              title="Crear bloqueo"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          )
         )}
       </div>
 
@@ -121,6 +139,25 @@ function CalendarioDiaBloqueo({
           </>
         )}
       </div>
+
+      {/* Botón para agregar más bloqueos cuando ya hay bloqueos */}
+      {!isLoading && bloqueos.length > 0 && esDelMesActual && onCrearBloqueo && (
+        <button
+          onClick={onCrearBloqueo}
+          className="
+            w-full mt-1 py-1 rounded
+            text-xs font-medium text-red-600
+            opacity-0 group-hover:opacity-100
+            transition-all
+            hover:bg-red-50
+            flex items-center justify-center gap-1
+          "
+          title="Agregar otro bloqueo"
+        >
+          <Plus className="w-3 h-3" />
+          <span>Agregar bloqueo</span>
+        </button>
+      )}
 
       {/* Empty state para días sin bloqueos */}
       {!isLoading && bloqueos.length === 0 && esDelMesActual && (

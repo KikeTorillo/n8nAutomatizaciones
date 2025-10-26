@@ -258,10 +258,21 @@ export function esMismoDia(fecha1, fecha2) {
   if (!fecha1 || !fecha2) return false;
 
   try {
-    const f1 = typeof fecha1 === 'string' ? parseISO(fecha1) : fecha1;
-    const f2 = typeof fecha2 === 'string' ? parseISO(fecha2) : fecha2;
+    // Normalizar fechas a formato YYYY-MM-DD para evitar problemas de zona horaria
+    const normalizarFecha = (fecha) => {
+      if (typeof fecha === 'string') {
+        // Si ya es string, extraer solo YYYY-MM-DD
+        return fecha.split('T')[0];
+      }
+      // Si es Date, convertir a YYYY-MM-DD
+      return format(fecha, 'yyyy-MM-dd');
+    };
 
-    return isSameDay(f1, f2);
+    const fecha1Normalizada = normalizarFecha(fecha1);
+    const fecha2Normalizada = normalizarFecha(fecha2);
+
+    // Comparar strings directamente (más confiable que comparar objetos Date con zonas horarias)
+    return fecha1Normalizada === fecha2Normalizada;
   } catch (error) {
     console.error('Error al comparar fechas:', error);
     return false;

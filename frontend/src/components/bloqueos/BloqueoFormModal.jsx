@@ -28,7 +28,7 @@ import { format } from 'date-fns';
 /**
  * BloqueoFormModal - Modal con formulario para crear/editar bloqueos
  */
-function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
+function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInicial = null }) {
 
   // Queries
   const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
@@ -89,15 +89,22 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear' }) {
     return 0;
   }, [fechaInicio, fechaFin]);
 
-  // Cargar datos en modo edición
+  // Cargar datos en modo edición o fecha inicial en modo crear
   useEffect(() => {
     if (isOpen && modo === 'editar' && bloqueo) {
       const datosEdicion = prepararDatosParaEdicion(bloqueo);
       reset(datosEdicion);
     } else if (isOpen && modo === 'crear') {
-      reset(bloqueoFormDefaults);
+      const valoresIniciales = {
+        ...bloqueoFormDefaults,
+        ...(fechaInicial && {
+          fecha_inicio: fechaInicial,
+          fecha_fin: fechaInicial,
+        }),
+      };
+      reset(valoresIniciales);
     }
-  }, [isOpen, modo, bloqueo, reset]);
+  }, [isOpen, modo, bloqueo, fechaInicial, reset]);
 
   // Reset al cerrar
   const handleClose = () => {
@@ -415,11 +422,13 @@ BloqueoFormModal.propTypes = {
   onClose: PropTypes.func.isRequired,
   bloqueo: PropTypes.object,
   modo: PropTypes.oneOf(['crear', 'editar']),
+  fechaInicial: PropTypes.string, // Formato YYYY-MM-DD
 };
 
 BloqueoFormModal.defaultProps = {
   bloqueo: null,
   modo: 'crear',
+  fechaInicial: null,
 };
 
 export default BloqueoFormModal;
