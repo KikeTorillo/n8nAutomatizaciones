@@ -4,8 +4,12 @@
  * ====================================================================
  *
  * Herramienta MCP para crear una nueva cita en el sistema de agendamiento.
+ * MEJORA CRÍTICA: Busca/crea cliente automáticamente antes de crear la cita.
  *
- * Llamada al backend: POST /api/v1/citas
+ * Llamada al backend:
+ * 1. GET /api/v1/clientes/buscar-telefono (buscar cliente)
+ * 2. POST /api/v1/clientes (crear cliente si no existe)
+ * 3. POST /api/v1/citas (crear cita con cliente_id)
  */
 
 const Joi = require('joi');
@@ -99,6 +103,7 @@ async function execute(args, jwtToken) {
         data: null,
       };
     }
+
     // ========== 1. Validar inputs ==========
     const { error, value } = joiSchema.validate(args);
 
@@ -111,91 +116,160 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 2. Convertir fecha DD/MM/YYYY a YYYY-MM-DD para backend ==========
-    const [dia, mes, anio] = value.fecha.split('/');
-    const fechaISO = `${anio}-${mes}-${dia}`;
-
-    // ========== 3. Preparar payload para backend ==========
-    const payload = {
-      fecha_cita: fechaISO,
-      hora_cita: value.hora,
-      profesional_id: value.profesional_id,
-      servicio_id: value.servicio_id,
-      cliente: {
-        nombre: value.cliente.nombre,
-        telefono: value.cliente.telefono,
-        email: value.cliente.email || undefined,
-      },
-      notas: value.notas || undefined,
-    };
-
-    logger.info('Creando cita en backend:', payload);
-
-    // ========== 4. Crear cliente API con token del chatbot ==========
+    // ========== 2. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
 
-    // ========== 5. Llamar al backend API ==========
-    const response = await apiClient.post('/api/v1/citas', payload);
+    // ========== 3. BUSCAR CLIENTE POR TELÉFONO ==========
+    let clienteId = null;
 
-    const cita = response.data.data;
+    if (value.cliente.telefono) {
+      logger.info('[crearCita] Buscando cliente por teléfono:', value.cliente.telefono);
 
-    logger.info(`Cita creada exitosamente: ${cita.codigo_cita}`);
+      try {
+        const busqueda = await apiClient.get('/api/v1/clientes/buscar-telefono', {
+          params: { telefono: value.cliente.telefono },
+        });
 
-    // ========== 5. Retornar resultado ==========
-    return {
-      success: true,
-      message: `Cita creada exitosamente con código ${cita.codigo_cita}`,
-      data: {
-        cita_id: cita.id,
-        codigo_cita: cita.codigo_cita,
-        fecha: value.fecha,
-        hora: value.hora,
-        profesional: cita.profesional_nombre,
-        servicio: cita.servicio_nombre,
-        cliente: value.cliente.nombre,
-        estado: cita.estado,
-      },
-    };
-
-  } catch (error) {
-    logger.error('Error al crear cita:', {
-      message: error.message,
-      response: error.response?.data,
-    });
-
-    // Manejar errores del backend
-    if (error.response) {
-      const { status, data } = error.response;
-
-      if (status === 400) {
-        return {
-          success: false,
-          message: `Error de validación: ${data.error || data.message}`,
-          data: null,
-        };
+        if (busqueda.data.data && busqueda.data.data.length > 0) {
+          clienteId = busqueda.data.data[0].id;
+          logger.info(`✅ Cliente existente encontrado: ${clienteId} - ${busqueda.data.data[0].nombre}`);
+        }
+      } catch (error) {
+        logger.warn('[crearCita] Error buscando cliente:', error.response?.data || error.message);
+        // Continuar para crear nuevo cliente
       }
+    }
 
-      if (status === 409) {
+    // ========== 4. SI NO EXISTE, CREAR CLIENTE AUTOMÁTICAMENTE ==========
+    if (!clienteId) {
+      logger.info('[crearCita] Cliente no encontrado. Creando nuevo cliente...');
+
+      try {
+        const nuevoCliente = await apiClient.post('/api/v1/clientes', {
+          nombre: value.cliente.nombre,
+          telefono: value.cliente.telefono || null,
+          email: value.cliente.email || null,
+          notas_especiales: 'Cliente creado automáticamente vía chatbot IA',
+        });
+
+        clienteId = nuevoCliente.data.data.id;
+        logger.info(`✅ Cliente creado automáticamente: ${clienteId} - ${value.cliente.nombre}`);
+      } catch (error) {
+        logger.error('[crearCita] Error creando cliente:', error.response?.data || error.message);
         return {
           success: false,
-          message: `Conflicto: ${data.error || 'El horario ya está ocupado'}`,
-          data: null,
-        };
-      }
-
-      if (status === 404) {
-        return {
-          success: false,
-          message: `No encontrado: ${data.error || 'Profesional o servicio no existe'}`,
+          message: `Error al crear el cliente: ${error.response?.data?.error || error.message}`,
           data: null,
         };
       }
     }
 
-    // Error genérico
+    // ========== 5. Convertir fecha DD/MM/YYYY a YYYY-MM-DD para backend ==========
+    const [dia, mes, anio] = value.fecha.split('/');
+    const fechaISO = `${anio}-${mes}-${dia}`;
+
+    // ========== 6. OBTENER DURACIÓN DEL SERVICIO PARA CALCULAR hora_fin ==========
+    let duracionServicio = 30; // Default: 30 minutos
+
+    try {
+      const servicio = await apiClient.get(`/api/v1/servicios/${value.servicio_id}`);
+      duracionServicio = servicio.data.data.duracion || 30;
+      logger.info(`Duración del servicio ${value.servicio_id}: ${duracionServicio} minutos`);
+    } catch (error) {
+      logger.warn(`No se pudo obtener duración del servicio, usando default: ${duracionServicio}min`);
+    }
+
+    // Calcular hora_fin sumando duración a hora_inicio
+    const [horaNum, minNum] = value.hora.split(':').map(Number);
+    const horaInicio = new Date(2000, 0, 1, horaNum, minNum);
+    const horaFin = new Date(horaInicio.getTime() + duracionServicio * 60000);
+
+    const horaFinStr = `${String(horaFin.getHours()).padStart(2, '0')}:${String(horaFin.getMinutes()).padStart(2, '0')}`;
+
+    logger.info(`Horario calculado: ${value.hora} - ${horaFinStr} (${duracionServicio}min)`);
+
+    // ========== 7. CREAR CITA CON cliente_id OBTENIDO ==========
+    try {
+      const cita = await apiClient.post('/api/v1/citas', {
+        cliente_id: clienteId,  // ✅ Ya tenemos el ID (existente o creado)
+        profesional_id: value.profesional_id,
+        servicio_id: value.servicio_id,
+        fecha_cita: fechaISO,
+        hora_inicio: value.hora,      // ✅ HH:MM format
+        hora_fin: horaFinStr,          // ✅ Calculado con duración del servicio
+        notas_cliente: value.notas || `Cita creada vía chatbot para ${value.cliente.nombre}`,
+      });
+
+      logger.info(`✅ Cita creada exitosamente: ${cita.data.data.codigo_cita}`);
+
+      // ========== 8. Retornar resultado ==========
+      return {
+        success: true,
+        message: `Cita agendada exitosamente. Código de confirmación: ${cita.data.data.codigo_cita}`,
+        data: {
+          cita_id: cita.data.data.id,
+          codigo_cita: cita.data.data.codigo_cita,
+          fecha: value.fecha,
+          hora: value.hora,
+          cliente: value.cliente.nombre,
+          profesional_id: cita.data.data.profesional_id,
+          servicio_id: cita.data.data.servicio_id,
+          estado: cita.data.data.estado,
+        },
+      };
+
+    } catch (error) {
+      logger.error('[crearCita] Error creando cita:', {
+        message: error.message,
+        response: error.response?.data,
+      });
+
+      // Manejar errores del backend
+      if (error.response) {
+        const { status, data } = error.response;
+
+        if (status === 400) {
+          return {
+            success: false,
+            message: `Error de validación: ${data.error || data.message}`,
+            data: null,
+          };
+        }
+
+        if (status === 409) {
+          return {
+            success: false,
+            message: `Conflicto: ${data.error || 'El horario ya está ocupado'}`,
+            data: null,
+          };
+        }
+
+        if (status === 404) {
+          return {
+            success: false,
+            message: `No encontrado: ${data.error || 'Profesional o servicio no existe'}`,
+            data: null,
+          };
+        }
+      }
+
+      // Error genérico
+      return {
+        success: false,
+        message: `Error al crear cita: ${error.message}`,
+        data: null,
+      };
+    }
+
+  } catch (error) {
+    logger.error('[crearCita] Error general:', {
+      message: error.message,
+      stack: error.stack,
+    });
+
     return {
       success: false,
-      message: `Error al crear cita: ${error.message}`,
+      message: `Error inesperado al crear cita: ${error.message}`,
       data: null,
     };
   }
@@ -207,7 +281,7 @@ async function execute(args, jwtToken) {
 
 module.exports = {
   name: 'crearCita',
-  description: 'Crea una nueva cita en el sistema de agendamiento. Valida disponibilidad del profesional y crea el registro.',
+  description: 'Crea una nueva cita en el sistema de agendamiento. Busca el cliente por teléfono automáticamente, y si no existe lo crea. Valida disponibilidad del profesional y crea el registro de cita.',
   inputSchema,
   execute,
 };

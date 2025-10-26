@@ -1,4 +1,5 @@
 const logger = require('../../utils/logger');
+const CitaValidacionUtil = require('../../utils/cita-validacion.util');
 
 const DEFAULTS = {
     ZONA_HORARIA: 'America/Mexico_City',
@@ -196,53 +197,60 @@ class CitaHelpersModel {
         return true;
     }
 
+    /**
+     * Valida conflictos de horario con citas existentes
+     *
+     * ⚠️ REFACTORIZADO: Usa CitaValidacionUtil.citaSolapaConSlot() para lógica compartida
+     *
+     * @param {number} profesionalId - ID del profesional
+     * @param {string|Date} fecha - Fecha de la cita
+     * @param {string} horaInicio - Hora inicio (HH:MM:SS)
+     * @param {string} horaFin - Hora fin (HH:MM:SS)
+     * @param {number|null} citaIdExcluir - ID de cita a excluir (para reagendar)
+     * @param {object} db - Conexión de base de datos
+     * @throws {Error} Si hay conflicto de horario
+     * @returns {boolean} true si no hay conflictos
+     */
     static async validarConflictoHorario(profesionalId, fecha, horaInicio, horaFin, citaIdExcluir, db) {
-        // Normalizar fecha a formato YYYY-MM-DD (soporta ISO completo, Date object o solo fecha)
-        let fechaNormalizada;
-        if (fecha instanceof Date) {
-            fechaNormalizada = fecha.toISOString().split('T')[0];
-        } else if (typeof fecha === 'string' && fecha.includes('T')) {
-            fechaNormalizada = fecha.split('T')[0];
-        } else {
-            fechaNormalizada = fecha;
-        }
+        // ✅ Usar CitaValidacionUtil para normalizar fecha
+        const fechaNormalizada = CitaValidacionUtil.normalizarFecha(fecha);
 
+        // Consultar todas las citas del profesional en la fecha
+        // ✅ IMPORTANTE: Incluir profesional_id y estado para citaSolapaConSlot()
         let query = `
-            SELECT id, fecha_cita, hora_inicio, hora_fin, codigo_cita FROM citas
+            SELECT id, profesional_id, fecha_cita, hora_inicio, hora_fin, estado, codigo_cita
+            FROM citas
             WHERE profesional_id = $1
                 AND fecha_cita = $2
                 AND estado NOT IN ('cancelada', 'no_asistio')
-                AND (
-                    (hora_inicio < $4 AND hora_fin > $3) OR
-                    (hora_inicio < $3 AND hora_fin > $3) OR
-                    (hora_inicio < $4 AND hora_fin > $4)
-                )
         `;
 
-        const params = [profesionalId, fechaNormalizada, horaInicio, horaFin];
+        const params = [profesionalId, fechaNormalizada];
 
         if (citaIdExcluir) {
-            query += ' AND id != $5';
+            query += ' AND id != $3';
             params.push(citaIdExcluir);
         }
 
-        const conflictos = await db.query(query, params);
+        const citasResult = await db.query(query, params);
 
-        if (conflictos.rows.length > 0) {
-            const citaConflictiva = conflictos.rows[0];
-            const horaConflicto = `${citaConflictiva.hora_inicio.substring(0, 5)} - ${citaConflictiva.hora_fin.substring(0, 5)}`;
+        // ✅ Usar CitaValidacionUtil.citaSolapaConSlot() para validar cada cita
+        for (const cita of citasResult.rows) {
+            if (CitaValidacionUtil.citaSolapaConSlot(cita, profesionalId, fecha, horaInicio, horaFin)) {
+                const horaConflicto = `${cita.hora_inicio.substring(0, 5)} - ${cita.hora_fin.substring(0, 5)}`;
 
-            // Formatear fecha correctamente (convertir a string por si viene como Date object)
-            const fechaStr = citaConflictiva.fecha_cita instanceof Date
-                ? citaConflictiva.fecha_cita.toISOString().split('T')[0]
-                : String(citaConflictiva.fecha_cita);
-            const [year, month, day] = fechaStr.split('-');
-            const fechaFormateada = `${day}/${month}/${year}`;
+                // Formatear fecha correctamente
+                const fechaStr = cita.fecha_cita instanceof Date
+                    ? cita.fecha_cita.toISOString().split('T')[0]
+                    : String(cita.fecha_cita);
+                const [year, month, day] = fechaStr.split('-');
+                const fechaFormateada = `${day}/${month}/${year}`;
 
-            throw new Error(
-                `Conflicto de horario: El profesional ya tiene la cita ${citaConflictiva.codigo_cita} programada el ${fechaFormateada} de ${horaConflicto}. ` +
-                `Por favor, selecciona otro horario disponible.`
-            );
+                throw new Error(
+                    `Conflicto de horario: El profesional ya tiene la cita ${cita.codigo_cita} programada el ${fechaFormateada} de ${horaConflicto}. ` +
+                    `Por favor, selecciona otro horario disponible.`
+                );
+            }
         }
 
         return true;
@@ -283,7 +291,23 @@ class CitaHelpersModel {
     }
 
     /**
-     * 🔒 VALIDACIÓN INTEGRAL DE HORARIOS
+     * 🔒 VALIDACIÓN INTEGRAL DE HORARIOS (OPERACIONES DE ESCRITURA)
+     *
+     * ⚠️ IMPORTANTE: Este método valida UN SOLO SLOT antes de operaciones de escritura
+     * (crear, editar, reagendar citas). Hace queries SQL individuales para garantizar
+     * precisión del 100% con datos actualizados.
+     *
+     * Para consultas de disponibilidad masiva (lectura), usar:
+     * - DisponibilidadModel.consultarDisponibilidad() (optimizado con batch queries)
+     *
+     * LÓGICA COMPARTIDA:
+     * - CitaValidacionUtil.haySolapamientoHorario() - Lógica de solapamiento
+     * - CitaValidacionUtil.bloqueoAfectaSlot() - Validación de bloqueos
+     * - CitaValidacionUtil.citaSolapaConSlot() - Validación de conflictos
+     *
+     * Si se modifica la lógica de validación, actualizar también en:
+     * - CitaValidacionUtil (funciones compartidas)
+     * - DisponibilidadModel._verificarDisponibilidadSlotsEnMemoria()
      *
      * Valida que una cita pueda agendarse verificando:
      * 1. ✅ Horario laboral del profesional (horarios_profesionales)
@@ -291,7 +315,7 @@ class CitaHelpersModel {
      * 3. ✅ Conflictos con otras citas (evita double-booking)
      *
      * @param {number} profesionalId - ID del profesional
-     * @param {string} fecha - Fecha de la cita (YYYY-MM-DD)
+     * @param {string|Date} fecha - Fecha de la cita (YYYY-MM-DD, ISO o Date)
      * @param {string} horaInicio - Hora de inicio (HH:MM:SS)
      * @param {string} horaFin - Hora de fin (HH:MM:SS)
      * @param {number} organizacionId - ID de la organización
@@ -299,6 +323,9 @@ class CitaHelpersModel {
      * @param {number|null} citaIdExcluir - ID de cita a excluir (para reagendar)
      * @param {object} opciones - Opciones adicionales { esWalkIn: boolean, permitirFueraHorario: boolean }
      * @returns {Promise<object>} - { valido: boolean, errores: [], advertencias: [] }
+     *
+     * @see backend/app/utils/cita-validacion.util.js
+     * @see backend/app/database/disponibilidad.model.js:328
      */
     static async validarHorarioPermitido(profesionalId, fecha, horaInicio, horaFin, organizacionId, db, citaIdExcluir = null, opciones = {}) {
         const { esWalkIn = false, permitirFueraHorario = false } = opciones;
@@ -306,18 +333,8 @@ class CitaHelpersModel {
         const errores = [];
         const advertencias = [];
 
-        // Normalizar fecha a formato YYYY-MM-DD (soporta ISO completo, Date object o solo fecha)
-        let fechaNormalizada;
-        if (fecha instanceof Date) {
-            // Si es un Date object, convertir a YYYY-MM-DD
-            fechaNormalizada = fecha.toISOString().split('T')[0];
-        } else if (typeof fecha === 'string' && fecha.includes('T')) {
-            // Si es string con timestamp ISO, extraer solo la fecha
-            fechaNormalizada = fecha.split('T')[0];
-        } else {
-            // Si es string en formato YYYY-MM-DD, usar tal cual
-            fechaNormalizada = fecha;
-        }
+        // ✅ Usar CitaValidacionUtil para normalizar fecha
+        const fechaNormalizada = CitaValidacionUtil.normalizarFecha(fecha);
 
         // Obtener día de la semana (0 = domingo, 6 = sábado)
         const fechaObj = new Date(fechaNormalizada + 'T00:00:00');
@@ -404,6 +421,7 @@ class CitaHelpersModel {
         // ====================================================================
         // VALIDACIÓN 2: Bloqueos activos (vacaciones, feriados, etc.)
         // ====================================================================
+        // ✅ Query simplificada - CitaValidacionUtil.bloqueoAfectaSlot() maneja la lógica
         const bloqueos = await db.query(`
             SELECT
                 b.id,
@@ -420,24 +438,17 @@ class CitaHelpersModel {
             LEFT JOIN tipos_bloqueo tb ON b.tipo_bloqueo_id = tb.id
             WHERE b.organizacion_id = $1
               AND b.activo = true
-              AND $2 BETWEEN b.fecha_inicio AND b.fecha_fin
               AND (
                   -- Bloqueo organizacional (afecta a todos)
                   b.profesional_id IS NULL OR
                   -- Bloqueo específico del profesional
-                  b.profesional_id = $3
+                  b.profesional_id = $2
               )
-              AND (
-                  -- Bloqueo de todo el día
-                  (b.hora_inicio IS NULL AND b.hora_fin IS NULL) OR
-                  -- Bloqueo de horario específico que se solapa
-                  (b.hora_inicio IS NOT NULL AND b.hora_fin IS NOT NULL AND
-                   $4 < b.hora_fin AND $5 > b.hora_inicio)
-              )
-        `, [organizacionId, fechaNormalizada, profesionalId, horaInicio, horaFin]);
+        `, [organizacionId, profesionalId]);
 
-        if (bloqueos.rows.length > 0) {
-            for (const bloqueo of bloqueos.rows) {
+        // ✅ Usar CitaValidacionUtil.bloqueoAfectaSlot() para validar cada bloqueo
+        for (const bloqueo of bloqueos.rows) {
+            if (CitaValidacionUtil.bloqueoAfectaSlot(bloqueo, profesionalId, fecha, horaInicio, horaFin)) {
                 const esBloqueoOrganizacional = bloqueo.profesional_id === null;
                 const tipoBloqueo = bloqueo.tipo_bloqueo;
                 const esTodoElDia = bloqueo.hora_inicio === null;
