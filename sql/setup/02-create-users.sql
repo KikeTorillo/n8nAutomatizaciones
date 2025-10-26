@@ -16,10 +16,6 @@ ALTER ROLE saas_app SET search_path TO public;
 CREATE ROLE n8n_app WITH LOGIN PASSWORD '${N8N_APP_PASSWORD}';
 ALTER ROLE n8n_app SET search_path TO public;
 
--- Usuario para Evolution API
-CREATE ROLE evolution_app WITH LOGIN PASSWORD '${EVOLUTION_APP_PASSWORD}';
-ALTER ROLE evolution_app SET search_path TO public;
-
 -- Usuario de solo lectura para reportes y analytics
 CREATE ROLE readonly_user WITH LOGIN PASSWORD '${READONLY_USER_PASSWORD}';
 ALTER ROLE readonly_user SET search_path TO public;
@@ -34,7 +30,6 @@ ALTER ROLE integration_user SET search_path TO public;
 
 -- Asignar ownership de las bases de datos a sus usuarios correspondientes
 ALTER DATABASE n8n_db OWNER TO n8n_app;
-ALTER DATABASE evolution_db OWNER TO evolution_app;
 ALTER DATABASE chat_memories_db OWNER TO n8n_app;
 
 -- =====================================================================
@@ -65,17 +60,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO n8n_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO n8n_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON FUNCTIONS TO n8n_app;
 
--- Permisos para evolution_db
-\c evolution_db;
-GRANT ALL PRIVILEGES ON DATABASE evolution_db TO evolution_app;
-GRANT ALL PRIVILEGES ON SCHEMA public TO evolution_app;
-GRANT CREATE ON SCHEMA public TO evolution_app;
-GRANT USAGE ON SCHEMA public TO evolution_app;
-
--- Configurar permisos por defecto para evolution_db
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO evolution_app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO evolution_app;
-
 -- Permisos para chat_memories_db (manejada por n8n_app)
 \c chat_memories_db;
 GRANT ALL PRIVILEGES ON DATABASE chat_memories_db TO n8n_app;
@@ -89,28 +73,24 @@ GRANT CREATE ON SCHEMA public TO n8n_app;
 -- Connection Limits (prevenir agotamiento de pool de conexiones)
 ALTER ROLE saas_app CONNECTION LIMIT 100;
 ALTER ROLE n8n_app CONNECTION LIMIT 50;
-ALTER ROLE evolution_app CONNECTION LIMIT 30;
 ALTER ROLE readonly_user CONNECTION LIMIT 20;
 ALTER ROLE integration_user CONNECTION LIMIT 10;
 
 -- Statement Timeouts (timeout de queries individuales)
 ALTER ROLE saas_app SET statement_timeout = '30s';
 ALTER ROLE n8n_app SET statement_timeout = '60s';
-ALTER ROLE evolution_app SET statement_timeout = '30s';
 ALTER ROLE readonly_user SET statement_timeout = '60s';
 ALTER ROLE integration_user SET statement_timeout = '45s';
 
 -- Idle Transaction Timeouts (evitar transacciones colgadas)
 ALTER ROLE saas_app SET idle_in_transaction_session_timeout = '60s';
 ALTER ROLE n8n_app SET idle_in_transaction_session_timeout = '120s';
-ALTER ROLE evolution_app SET idle_in_transaction_session_timeout = '60s';
 ALTER ROLE readonly_user SET idle_in_transaction_session_timeout = '120s';
 ALTER ROLE integration_user SET idle_in_transaction_session_timeout = '90s';
 
 -- Logging de Queries Lentas (detectar problemas de performance)
 ALTER ROLE saas_app SET log_min_duration_statement = '1000';  -- Log queries > 1s
 ALTER ROLE n8n_app SET log_min_duration_statement = '2000';   -- Log queries > 2s
-ALTER ROLE evolution_app SET log_min_duration_statement = '1000';
 ALTER ROLE readonly_user SET log_min_duration_statement = '5000';  -- Reportes pueden ser lentos
 ALTER ROLE integration_user SET log_min_duration_statement = '2000';
 
@@ -123,6 +103,5 @@ ALTER ROLE readonly_user SET transaction_read_only = on;
 
 COMMENT ON ROLE saas_app IS 'Usuario principal de la aplicación SaaS con permisos completos';
 COMMENT ON ROLE n8n_app IS 'Usuario para workflows de n8n y automatizaciones';
-COMMENT ON ROLE evolution_app IS 'Usuario para Evolution API (WhatsApp)';
 COMMENT ON ROLE readonly_user IS 'Usuario de solo lectura para reportes y analytics';
 COMMENT ON ROLE integration_user IS 'Usuario para integraciones entre sistemas';

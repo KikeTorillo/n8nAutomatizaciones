@@ -234,7 +234,7 @@ CREATE TYPE tipo_profesional AS ENUM (
 -- ────────────────────────────────────────────────────────────────────
 CREATE TYPE plataforma_chatbot AS ENUM (
     'telegram',           -- Telegram Bot API (bot_token)
-    'whatsapp',           -- WhatsApp via Evolution API
+    'whatsapp_oficial',   -- WhatsApp Business API Oficial (via BSP)
     'instagram',          -- Instagram Direct Messages via Graph API
     'facebook_messenger', -- Facebook Messenger via Graph API
     'slack',              -- Slack Bot API

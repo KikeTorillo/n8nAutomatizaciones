@@ -14,9 +14,6 @@
 -- Base de datos para n8n workflows
 CREATE DATABASE n8n_db;
 
--- Base de datos para Evolution API (WhatsApp)
-CREATE DATABASE evolution_db;
-
 -- Base de datos para Chat Memories (AI Agent)
 CREATE DATABASE chat_memories_db;
 
@@ -30,11 +27,6 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pg_trgm";  -- Para búsquedas fuzzy
 CREATE EXTENSION IF NOT EXISTS "btree_gin"; -- Para índices optimizados
 CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- Para exclusion constraints
-
--- Extensiones para evolution_db
-\c evolution_db;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
 -- Extensiones para chat_memories_db
 \c chat_memories_db;
@@ -54,5 +46,4 @@ CREATE EXTENSION IF NOT EXISTS "btree_gist"; -- Para exclusion constraints
 -- =====================================================================
 
 COMMENT ON DATABASE n8n_db IS 'Base de datos para workflows y automatizaciones de n8n';
-COMMENT ON DATABASE evolution_db IS 'Base de datos para Evolution API (WhatsApp)';
 COMMENT ON DATABASE chat_memories_db IS 'Base de datos para memorias del agente AI';

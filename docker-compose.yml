@@ -12,7 +12,6 @@ services:
       # Variables para contraseñas de usuarios específicos
       SAAS_APP_PASSWORD: ${SAAS_APP_PASSWORD}
       N8N_APP_PASSWORD: ${N8N_APP_PASSWORD}
-      EVOLUTION_APP_PASSWORD: ${EVOLUTION_APP_PASSWORD}
       READONLY_USER_PASSWORD: ${READONLY_USER_PASSWORD}
       INTEGRATION_USER_PASSWORD: ${INTEGRATION_USER_PASSWORD}
     volumes:
@@ -122,30 +121,6 @@ services:
     networks:
       - backend_network
 
-  # Evolution API v2 con PostgreSQL
-  evolution_api:
-    container_name: evolution_api
-    image: atendai/evolution-api
-    restart: always
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8000:8080"
-    environment:
-      DATABASE_ENABLED: "true"
-      DATABASE_PROVIDER: postgresql
-      DATABASE_CONNECTION_URI: "postgresql://evolution_app:${EVOLUTION_APP_PASSWORD}@postgres:5432/evolution_db"
-      AUTHENTICATION_API_KEY: ${AUTHENTICATION_API_KEY}
-      SERVER_URL: ${SERVER_URL}
-      DEL_INSTANCE: "false"
-      CACHE_REDIS_ENABLED: "false"            # Opcional: habilitar Redis si se necesita
-      CONFIG_SESSION_PHONE_VERSION: "${CONFIG_SESSION_PHONE_VERSION}"
-    volumes:
-      - ./data/evolution:/evolution/instances
-    networks:
-      - backend_network
-
   # pgAdmin para administrar PostgreSQL
   pgadmin:
     image: dpage/pgadmin4:latest
@@ -192,12 +167,6 @@ services:
       N8N_DB_NAME: ${N8N_DB_NAME}
       N8N_DB_USER: ${N8N_DB_USER}
       N8N_DB_PASSWORD: ${N8N_DB_PASSWORD}
-
-      EVOLUTION_DB_HOST: ${EVOLUTION_DB_HOST}
-      EVOLUTION_DB_PORT: ${EVOLUTION_DB_PORT}
-      EVOLUTION_DB_NAME: ${EVOLUTION_DB_NAME}
-      EVOLUTION_DB_USER: ${EVOLUTION_DB_USER}
-      EVOLUTION_DB_PASSWORD: ${EVOLUTION_DB_PASSWORD}
 
       CHAT_DB_HOST: ${CHAT_DB_HOST}
       CHAT_DB_PORT: ${CHAT_DB_PORT}
@@ -259,7 +228,6 @@ services:
       # Conexión con Backend API
       - BACKEND_API_URL=http://back:3000
       - BACKEND_TIMEOUT=10000
-      - MCP_JWT_TOKEN=${MCP_JWT_TOKEN}
 
       # Logging
       - LOG_LEVEL=info

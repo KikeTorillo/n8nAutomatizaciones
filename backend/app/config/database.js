@@ -76,20 +76,6 @@ class DatabaseConfig {
       application_name: 'saas_n8n_sync'
     });
 
-    // Pool para Evolution API (WhatsApp)
-    this.pools.evolution = new Pool({
-      host: process.env.EVOLUTION_DB_HOST,
-      port: parseInt(process.env.EVOLUTION_DB_PORT),
-      database: process.env.EVOLUTION_DB_NAME,
-      user: process.env.EVOLUTION_DB_USER,
-      password: String(process.env.EVOLUTION_DB_PASSWORD),
-      max: 8,
-      min: 2,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
-      application_name: 'saas_evolution_sync'
-    });
-
     // Pool para Chat Memories (IA)
     this.pools.chat = new Pool({
       host: process.env.CHAT_DB_HOST,
@@ -137,7 +123,7 @@ class DatabaseConfig {
 
   /**
    * Obtiene el pool de conexiones para una base de datos específica
-   * @param {string} database - Nombre de la base de datos ('saas', 'n8n', 'evolution', 'chat')
+   * @param {string} database - Nombre de la base de datos ('saas', 'n8n', 'chat')
    * @returns {Pool} Pool de conexiones
    */
   getPool(database = 'saas') {

@@ -8,7 +8,7 @@
  * datos de autenticación para plataformas externas.
  *
  * 📋 FUNCIONALIDADES:
- * • Crear credentials para diferentes plataformas (Telegram, WhatsApp, etc)
+ * • Crear credentials para diferentes plataformas (Telegram, etc)
  * • Obtener información de credentials
  * • Actualizar credentials
  * • Eliminar credentials
@@ -67,7 +67,7 @@ n8nClient.interceptors.response.use(
  */
 const CREDENTIAL_TYPES = {
     telegram: 'telegramApi',
-    whatsapp: 'httpHeaderAuth', // Evolution API usa HTTP Header Auth
+    whatsapp_oficial: 'whatsappBusinessApi', // WhatsApp Business API Oficial
     instagram: 'facebookGraphApi',
     facebook_messenger: 'facebookGraphApi',
     slack: 'slackApi',
@@ -141,46 +141,12 @@ class N8nCredentialService {
 
     /**
      * ====================================================================
-     * ➕ CREAR CREDENTIAL PARA WHATSAPP (EVOLUTION API)
-     * ====================================================================
-     * Crea una credential HTTP Header Auth para Evolution API
-     *
-     * @param {Object} data - Datos de la credential
-     * @param {string} data.name - Nombre descriptivo
-     * @param {string} data.api_key - API Key de Evolution
-     * @param {number} data.organizacion_id - ID de la organización
-     * @returns {Promise<Object>} Credential creada
-     */
-    static async crearCredentialWhatsApp({ name, api_key, organizacion_id }) {
-        try {
-            const credentialData = {
-                name: name || `WhatsApp Evolution - Org ${organizacion_id}`,
-                type: 'httpHeaderAuth',
-                data: {
-                    name: 'apikey',
-                    value: api_key
-                }
-            };
-
-            const response = await n8nClient.post('/api/v1/credentials', credentialData);
-
-            logger.info(`Credential WhatsApp creada: ${response.data.id}`);
-
-            return response.data;
-        } catch (error) {
-            logger.error('Error al crear credential WhatsApp:', error.message);
-            throw new Error(`Error al crear credential WhatsApp: ${error.message}`);
-        }
-    }
-
-    /**
-     * ====================================================================
      * ➕ CREAR CREDENTIAL GENÉRICA
      * ====================================================================
      * Crea una credential para cualquier plataforma soportada
      *
      * @param {Object} params - Parámetros de la credential
-     * @param {string} params.plataforma - 'telegram', 'whatsapp', etc.
+     * @param {string} params.plataforma - 'telegram', 'whatsapp_oficial', etc.
      * @param {string} params.nombre - Nombre descriptivo
      * @param {Object} params.config - Configuración específica de plataforma
      * @param {number} params.organizacion_id - ID de organización
@@ -192,13 +158,6 @@ class N8nCredentialService {
                 return await this.crearCredentialTelegram({
                     name: nombre,
                     bot_token: config.bot_token,
-                    organizacion_id
-                });
-
-            case 'whatsapp':
-                return await this.crearCredentialWhatsApp({
-                    name: nombre,
-                    api_key: config.api_key,
                     organizacion_id
                 });
 
@@ -292,7 +251,7 @@ class N8nCredentialService {
      * ====================================================================
      * Retorna el tipo de credential de n8n según la plataforma
      *
-     * @param {string} plataforma - 'telegram', 'whatsapp', etc.
+     * @param {string} plataforma - 'telegram', 'whatsapp_oficial', etc.
      * @returns {string} Tipo de credential de n8n
      */
     static getCredentialType(plataforma) {

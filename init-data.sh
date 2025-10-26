@@ -83,7 +83,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
         datname as "Base de Datos",
         pg_size_pretty(pg_database_size(datname)) as "Tamaño"
     FROM pg_database
-    WHERE datname IN ('${POSTGRES_DB}', 'n8n_db', 'evolution_db', 'chat_memories_db')
+    WHERE datname IN ('${POSTGRES_DB}', 'n8n_db', 'chat_memories_db')
     ORDER BY datname;
 EOSQL
 
@@ -94,7 +94,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "postgres" <<-EOSQL
         rolcanlogin as "Puede Login",
         rolsuper as "Superusuario"
     FROM pg_roles
-    WHERE rolname IN ('saas_app', 'n8n_app', 'evolution_app', 'readonly_user', 'integration_user')
+    WHERE rolname IN ('saas_app', 'n8n_app', 'readonly_user', 'integration_user')
     ORDER BY rolname;
 EOSQL
 
@@ -148,13 +148,11 @@ echo ""
 echo "📊 BASES DE DATOS CREADAS:"
 echo "  ├── ${POSTGRES_DB} (SaaS principal)"
 echo "  ├── n8n_db (workflows n8n)"
-echo "  ├── evolution_db (WhatsApp/Evolution API)"
 echo "  └── chat_memories_db (AI Agent histories)"
 echo ""
 echo "👤 USUARIOS CREADOS:"
 echo "  ├── saas_app (aplicación SaaS principal)"
 echo "  ├── n8n_app (n8n workflows)"
-echo "  ├── evolution_app (Evolution API)"
 echo "  ├── readonly_user (solo lectura - analytics)"
 echo "  └── integration_user (integraciones cross-DB)"
 echo ""
