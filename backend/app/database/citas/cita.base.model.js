@@ -544,7 +544,8 @@ class CitaBaseModel {
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
                     p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre
+                    s.nombre as servicio_nombre,
+                    s.duracion_minutos as duracion_minutos
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id

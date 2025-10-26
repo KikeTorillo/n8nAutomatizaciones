@@ -56,6 +56,10 @@ function CitasPage() {
   // Queries
   const { data: citas = [], isLoading: cargandoCitas } = useCitas(filtros);
   const { data: citasDelDia = [] } = useCitasDelDia();
+
+  // ✅ FIX: Query para todas las citas pendientes (sin filtro de fecha)
+  const { data: todasCitasPendientes = [] } = useCitas({ estado: 'pendiente' });
+
   const { data: profesionales = [] } = useProfesionales({ activo: true });
   const { data: serviciosData } = useServicios({ activo: true });
   const servicios = serviciosData?.servicios || [];
@@ -157,8 +161,10 @@ function CitasPage() {
     setIsFormModalOpen(true);
   };
 
-  // Calcular estadísticas del día
-  const citasPendientes = citasDelDia.filter((c) => c.estado === 'pendiente').length;
+  // Calcular estadísticas
+  // ✅ FIX: Pendientes muestra TODAS las citas pendientes (no solo las de hoy)
+  const citasPendientes = todasCitasPendientes.length;
+  // En Curso y Completadas solo cuentan las de HOY
   const citasEnCurso = citasDelDia.filter((c) => c.estado === 'en_curso').length;
   const citasCompletadas = citasDelDia.filter((c) => c.estado === 'completada').length;
 

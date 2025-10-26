@@ -130,9 +130,10 @@ async function execute(args, jwtToken) {
           params: { telefono: value.cliente.telefono },
         });
 
-        if (busqueda.data.data && busqueda.data.data.length > 0) {
-          clienteId = busqueda.data.data[0].id;
-          logger.info(`✅ Cliente existente encontrado: ${clienteId} - ${busqueda.data.data[0].nombre}`);
+        // ✅ FIX: La respuesta es {data: {encontrado: true, cliente: {...}}}
+        if (busqueda.data.data?.encontrado && busqueda.data.data.cliente) {
+          clienteId = busqueda.data.data.cliente.id;
+          logger.info(`✅ Cliente existente encontrado: ${clienteId} - ${busqueda.data.data.cliente.nombre}`);
         }
       } catch (error) {
         logger.warn('[crearCita] Error buscando cliente:', error.response?.data || error.message);
@@ -140,7 +141,25 @@ async function execute(args, jwtToken) {
       }
     }
 
-    // ========== 4. SI NO EXISTE, CREAR CLIENTE AUTOMÁTICAMENTE ==========
+    // ========== 4. VALIDAR SERVICIO PRIMERO (antes de crear cliente) ==========
+    // ✅ FIX Bug #2: Evita crear clientes huérfanos si el servicio no existe
+    let duracionServicio = 30; // Default: 30 minutos
+
+    try {
+      const servicio = await apiClient.get(`/api/v1/servicios/${value.servicio_id}`);
+      duracionServicio = servicio.data.data.duracion_minutos || 30;
+      logger.info(`✅ Servicio ${value.servicio_id} validado: ${servicio.data.data.nombre} (${duracionServicio}min)`);
+    } catch (error) {
+      logger.error('[crearCita] Servicio no encontrado:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: `Servicio no encontrado o inactivo. Por favor verifica el servicio_id: ${value.servicio_id}`,
+        data: null,
+      };
+    }
+
+    // ========== 5. SI NO EXISTE CLIENTE, CREAR AUTOMÁTICAMENTE ==========
+    // Ahora es seguro crear el cliente porque el servicio existe
     if (!clienteId) {
       logger.info('[crearCita] Cliente no encontrado. Creando nuevo cliente...');
 
@@ -164,20 +183,9 @@ async function execute(args, jwtToken) {
       }
     }
 
-    // ========== 5. Convertir fecha DD/MM/YYYY a YYYY-MM-DD para backend ==========
+    // ========== 6. Convertir fecha DD/MM/YYYY a YYYY-MM-DD para backend ==========
     const [dia, mes, anio] = value.fecha.split('/');
     const fechaISO = `${anio}-${mes}-${dia}`;
-
-    // ========== 6. OBTENER DURACIÓN DEL SERVICIO PARA CALCULAR hora_fin ==========
-    let duracionServicio = 30; // Default: 30 minutos
-
-    try {
-      const servicio = await apiClient.get(`/api/v1/servicios/${value.servicio_id}`);
-      duracionServicio = servicio.data.data.duracion || 30;
-      logger.info(`Duración del servicio ${value.servicio_id}: ${duracionServicio} minutos`);
-    } catch (error) {
-      logger.warn(`No se pudo obtener duración del servicio, usando default: ${duracionServicio}min`);
-    }
 
     // Calcular hora_fin sumando duración a hora_inicio
     const [horaNum, minNum] = value.hora.split(':').map(Number);

@@ -90,12 +90,13 @@ async function execute(args, jwtToken) {
     }
 
     // ========== 3. Preparar parámetros para backend ==========
+    // ✅ FIX Bug #3: El endpoint /api/v1/clientes/buscar espera 'q', no 'busqueda'
     const params = {
-      busqueda: value.busqueda,
-      tipo: tipoBusqueda,
+      q: value.busqueda,
+      limit: 10,
     };
 
-    logger.info('Buscando cliente:', params);
+    logger.info('Buscando cliente:', { query: value.busqueda, tipo: tipoBusqueda });
 
     // ========== 4. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);

@@ -1,4 +1,4 @@
-import { Calendar, Clock, User, Package, ChevronRight, MoreVertical } from 'lucide-react';
+import { Calendar, Clock, User, Package } from 'lucide-react';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { obtenerColorEstado, obtenerLabelEstado } from '@/utils/citaValidators';
 import Button from '@/components/ui/Button';
@@ -10,9 +10,6 @@ function CitasList({
   citas = [],
   isLoading = false,
   onVerDetalles,
-  onCambiarEstado,
-  onEditar,
-  onCancelar,
 }) {
   // Estados de carga (skeleton)
   if (isLoading) {
@@ -26,7 +23,7 @@ function CitasList({
                   Código
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Fecha y Hora
+                  Fecha
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Cliente
@@ -55,10 +52,7 @@ function CitasList({
                     <div className="h-4 bg-gray-200 rounded animate-pulse w-28"></div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-32"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-4 bg-gray-200 rounded animate-pulse w-36"></div>
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-4 bg-gray-200 rounded animate-pulse w-32"></div>
@@ -67,13 +61,16 @@ function CitasList({
                     <div className="h-4 bg-gray-200 rounded animate-pulse w-28"></div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="h-4 bg-gray-200 rounded animate-pulse w-24"></div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-4 bg-gray-200 rounded animate-pulse w-16"></div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-6 bg-gray-200 rounded-full animate-pulse w-20"></div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="h-8 bg-gray-200 rounded animate-pulse w-24 ml-auto"></div>
+                    <div className="h-8 bg-gray-200 rounded animate-pulse w-16 ml-auto"></div>
                   </td>
                 </tr>
               ))}
@@ -110,7 +107,7 @@ function CitasList({
                 Código
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Fecha y Hora
+                Fecha
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cliente
@@ -142,7 +139,7 @@ function CitasList({
                 {/* Código de Cita */}
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center">
-                    <Calendar className="w-4 h-4 text-gray-400 mr-2" />
+                    <Calendar className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
                     <span className="text-sm font-medium text-gray-900">
                       {cita.codigo_cita}
                     </span>
@@ -161,11 +158,11 @@ function CitasList({
                 </td>
 
                 {/* Cliente */}
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <User className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <User className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {cita.cliente_nombre || 'Sin nombre'}
                       </div>
                       {cita.cliente_telefono && (
@@ -176,20 +173,20 @@ function CitasList({
                 </td>
 
                 {/* Profesional */}
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   <div className="flex items-center">
                     <div
-                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-semibold mr-2"
+                      className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold mr-2 flex-shrink-0"
                       style={{ backgroundColor: cita.profesional_color || '#6366f1' }}
                     >
                       {cita.profesional_nombre?.charAt(0).toUpperCase() || 'P'}
                     </div>
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {cita.profesional_nombre || 'Sin asignar'}
                       </div>
                       {cita.profesional_especialidad && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 truncate">
                           {cita.profesional_especialidad}
                         </div>
                       )}
@@ -198,11 +195,11 @@ function CitasList({
                 </td>
 
                 {/* Servicio */}
-                <td className="px-6 py-4 whitespace-nowrap">
+                <td className="px-6 py-4">
                   <div className="flex items-center">
-                    <Package className="w-4 h-4 text-gray-400 mr-2" />
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
+                    <Package className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium text-gray-900 truncate">
                         {cita.servicio_nombre || 'Sin servicio'}
                       </div>
                       {cita.precio_servicio && (
@@ -238,114 +235,16 @@ function CitasList({
                   className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onVerDetalles(cita);
-                      }}
-                    >
-                      Ver
-                    </Button>
-
-                    {/* Menú de acciones según estado */}
-                    <div className="relative group">
-                      <button
-                        className="p-1 hover:bg-gray-100 rounded transition-colors"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <MoreVertical className="w-5 h-5 text-gray-500" />
-                      </button>
-
-                      {/* Dropdown de acciones */}
-                      <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
-                        {cita.estado === 'pendiente' && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCambiarEstado(cita, 'confirmar');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Confirmar
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCambiarEstado(cita, 'iniciar');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Iniciar
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onEditar(cita);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Editar
-                            </button>
-                          </>
-                        )}
-
-                        {cita.estado === 'confirmada' && (
-                          <>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCambiarEstado(cita, 'iniciar');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                            >
-                              Iniciar
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCambiarEstado(cita, 'no_show');
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-orange-700 hover:bg-orange-50 transition-colors"
-                            >
-                              Marcar No Show
-                            </button>
-                          </>
-                        )}
-
-                        {cita.estado === 'en_curso' && (
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onCambiarEstado(cita, 'completar');
-                            }}
-                            className="w-full px-4 py-2 text-left text-sm text-green-700 hover:bg-green-50 transition-colors"
-                          >
-                            Completar
-                          </button>
-                        )}
-
-                        {/* Cancelar disponible para pendiente, confirmada, en_curso */}
-                        {['pendiente', 'confirmada', 'en_curso'].includes(cita.estado) && (
-                          <>
-                            <div className="border-t border-gray-200 my-1"></div>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onCancelar(cita);
-                              }}
-                              className="w-full px-4 py-2 text-left text-sm text-red-700 hover:bg-red-50 transition-colors"
-                            >
-                              Cancelar Cita
-                            </button>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onVerDetalles(cita);
+                    }}
+                  >
+                    Ver
+                  </Button>
                 </td>
               </tr>
             ))}

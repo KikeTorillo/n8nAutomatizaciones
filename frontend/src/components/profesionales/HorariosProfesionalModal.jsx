@@ -105,9 +105,19 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
       };
 
       const resultado = await crearMutation.mutateAsync(data);
-      toast.success(
-        `${resultado.horarios_creados} horario(s) creado(s) exitosamente`
-      );
+
+      // Mensaje descriptivo según el resultado
+      if (resultado.data.horarios_creados === 0) {
+        toast.warning(
+          'No se crearon horarios. Los días seleccionados ya tienen horarios configurados que se solapan con el rango especificado.'
+        );
+      } else if (resultado.data.horarios_creados === 1) {
+        toast.success('1 horario creado exitosamente');
+      } else {
+        toast.success(
+          `${resultado.data.horarios_creados} horarios creados exitosamente`
+        );
+      }
     } catch (error) {
       toast.error(error.message || 'Error al crear horarios');
     }

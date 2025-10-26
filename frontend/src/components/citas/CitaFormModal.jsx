@@ -326,7 +326,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       reset();
     } catch (error) {
       // Extraer el mensaje de error del response del backend
-      let mensajeError = `Error al ${isEditMode ? 'actualizar' : 'crear'} la cita`;
+      let mensajeError = '';
+      const accion = isEditMode ? 'actualizar' : 'crear';
 
       if (error.response?.data?.message) {
         // El backend envía el error en response.data.message
@@ -337,10 +338,19 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       } else if (error.message) {
         // Fallback a error.message si no hay response
         mensajeError = error.message;
+      } else {
+        mensajeError = `Error al ${accion} la cita`;
       }
 
-      // Mostrar el error con un toast más descriptivo
-      toast.error(mensajeError);
+      // Agregar prefijo descriptivo solo si el mensaje no lo tiene ya
+      const mensajeFinal = mensajeError.startsWith('No se puede') ||
+                           mensajeError.startsWith('Error') ||
+                           mensajeError.startsWith('Conflicto')
+        ? mensajeError
+        : `No se puede ${accion} la cita: ${mensajeError}`;
+
+      // Mostrar el error con un toast
+      toast.error(mensajeFinal);
     }
   };
 

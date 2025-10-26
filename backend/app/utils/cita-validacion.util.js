@@ -98,10 +98,40 @@ const logger = require('./logger');
 
 class CitaValidacionUtil {
     /**
+     * Normaliza hora a formato HH:MM:SS para comparaciones
+     *
+     * @param {string} hora - Hora en formato HH:MM o HH:MM:SS
+     * @returns {string} Hora en formato HH:MM:SS
+     *
+     * @example
+     * normalizarHora('09:00') // '09:00:00'
+     * normalizarHora('09:00:00') // '09:00:00'
+     */
+    static normalizarHora(hora) {
+        if (!hora) return null;
+
+        // Si ya tiene segundos, retornar tal cual
+        if (hora.length === 8) {
+            return hora;
+        }
+
+        // Si es HH:MM, agregar :00
+        if (hora.length === 5) {
+            return `${hora}:00`;
+        }
+
+        // Formato inesperado, retornar tal cual
+        return hora;
+    }
+
+    /**
      * Verifica si dos rangos horarios se solapan
      *
      * Algoritmo: Dos rangos [A1, A2] y [B1, B2] se solapan si:
      * A1 < B2 AND A2 > B1
+     *
+     * IMPORTANTE: Normaliza horas a HH:MM:SS antes de comparar para evitar
+     * problemas de comparación lexicográfica entre HH:MM y HH:MM:SS
      *
      * Casos cubiertos:
      * - Solapamiento parcial por inicio
@@ -118,11 +148,18 @@ class CitaValidacionUtil {
      * @example
      * haySolapamientoHorario('09:00:00', '10:00:00', '09:30:00', '10:30:00') // true
      * haySolapamientoHorario('09:00:00', '10:00:00', '10:00:00', '11:00:00') // false (toca pero no solapa)
-     * haySolapamientoHorario('09:00:00', '10:00:00', '11:00:00', '12:00:00') // false
+     * haySolapamientoHorario('09:00', '10:00', '10:00:00', '11:00:00') // false (normaliza formatos)
+     * haySolapamientoHorario('14:00:00', '15:00:00', '15:00', '16:00') // false (bug fix)
      */
     static haySolapamientoHorario(inicio1, fin1, inicio2, fin2) {
+        // ✅ FIX BUG: Normalizar todas las horas a HH:MM:SS antes de comparar
+        const i1 = this.normalizarHora(inicio1);
+        const f1 = this.normalizarHora(fin1);
+        const i2 = this.normalizarHora(inicio2);
+        const f2 = this.normalizarHora(fin2);
+
         // Algoritmo clásico de solapamiento de intervalos
-        return inicio1 < fin2 && fin1 > inicio2;
+        return i1 < f2 && f1 > i2;
     }
 
     /**
@@ -360,32 +397,6 @@ class CitaValidacionUtil {
         return regex.test(hora);
     }
 
-    /**
-     * Normaliza hora a formato HH:MM:SS
-     * Si recibe HH:MM, agrega :00 al final
-     *
-     * @param {string} hora - Hora en formato HH:MM o HH:MM:SS
-     * @returns {string} Hora normalizada HH:MM:SS
-     *
-     * @example
-     * normalizarHora('09:00') // '09:00:00'
-     * normalizarHora('09:00:00') // '09:00:00'
-     */
-    static normalizarHora(hora) {
-        if (!hora) return null;
-
-        // Si ya tiene formato HH:MM:SS, retornar tal cual
-        if (hora.length === 8 && hora.split(':').length === 3) {
-            return hora;
-        }
-
-        // Si tiene formato HH:MM, agregar :00
-        if (hora.length === 5 && hora.split(':').length === 2) {
-            return `${hora}:00`;
-        }
-
-        return hora;
-    }
 }
 
 module.exports = CitaValidacionUtil;
