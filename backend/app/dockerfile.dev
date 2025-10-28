@@ -1,23 +1,38 @@
-# Etapa única para desarrollo
-FROM node
+# =========================================
+# Dockerfile para Backend API + Express
+# Modo: Desarrollo con Nodemon hot reload
+# =========================================
 
-WORKDIR /usr/src/app
+FROM node:22-alpine
 
-#RUN apk add --no-cache ffmpeg
+# Establecer directorio de trabajo (consistente con frontend)
+WORKDIR /app
 
-RUN apt-get update 
-#&& apt-get install -y ffmpeg
+# Instalar dependencias del sistema si se necesitan para módulos nativos
+# RUN apk add --no-cache python3 make g++ ffmpeg
 
-# Instala dependencias y nodemon global
-COPY package*.json ./
+# Crear usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Copiar archivos de dependencias (como nodejs para caching)
+COPY --chown=nodejs:nodejs package*.json ./
 
 # Instalar dependencias (incluyendo devDependencies para desarrollo)
 RUN npm install
 
+# Instalar nodemon globalmente
 RUN npm install -g nodemon
 
+# Cambiar al usuario no-root
+USER nodejs
+
 # No copiamos código aquí porque lo montaremos como volumen
+# Esto permite hot reload cuando cambien los archivos
+
+# Exponer puerto de Express
 EXPOSE 3000
 
-# Escucha cambios en todo el proyecto
+# Comando para iniciar servidor en modo desarrollo
+# Nodemon escucha cambios en todo el proyecto
 CMD ["nodemon", "--watch", ".", "app.js"]

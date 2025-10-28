@@ -18,7 +18,7 @@ export default defineConfig({
     host: '0.0.0.0', // Escuchar en todas las interfaces (necesario para Docker)
     watch: {
       usePolling: true, // Necesario para hot reload en Docker en algunos sistemas
-      interval: 100, // Intervalo de polling en ms
+      interval: 300, // Intervalo optimizado (300ms = balance performance/responsividad)
     },
     hmr: {
       // Configuración de Hot Module Replacement

@@ -1,0 +1,72 @@
+# =========================================
+# Multi-stage Dockerfile para Backend API Express
+# Modo: Producción optimizado
+# Stage 1: Dependencies - Stage 2: Runtime
+# =========================================
+
+# ========== STAGE 1: DEPENDENCIES ==========
+FROM node:22-alpine AS dependencies
+
+WORKDIR /app
+
+# Copiar solo archivos de dependencias
+COPY package*.json ./
+
+# Instalar dependencias de producción (sin devDependencies)
+# --only=production excluye jest, nodemon, eslint, etc.
+RUN npm ci --only=production && \
+    npm cache clean --force
+
+# ========== STAGE 2: RUNTIME ==========
+FROM node:22-alpine AS runtime
+
+# Metadata
+LABEL maintainer="SaaS Agendamiento"
+LABEL version="1.0"
+LABEL description="Backend API Express en producción"
+
+WORKDIR /app
+
+# Instalar dumb-init para manejo correcto de señales
+RUN apk add --no-cache dumb-init
+
+# Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001 && \
+    chown -R nodejs:nodejs /app
+
+# Copiar node_modules desde stage dependencies
+COPY --from=dependencies --chown=nodejs:nodejs /app/node_modules ./node_modules
+
+# Copiar archivos de configuración
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Copiar código fuente (solo lo necesario, sin tests ni docs)
+COPY --chown=nodejs:nodejs app.js ./
+COPY --chown=nodejs:nodejs controllers ./controllers
+COPY --chown=nodejs:nodejs database ./database
+COPY --chown=nodejs:nodejs middleware ./middleware
+COPY --chown=nodejs:nodejs routes ./routes
+COPY --chown=nodejs:nodejs services ./services
+COPY --chown=nodejs:nodejs utils ./utils
+COPY --chown=nodejs:nodejs config ./config
+
+# Cambiar a usuario no-root
+USER nodejs
+
+# Variables de entorno por defecto (se sobrescriben con docker-compose)
+ENV NODE_ENV=production \
+    PORT=3000
+
+# Exponer puerto
+EXPOSE 3000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+
+# Usar dumb-init para manejar señales correctamente
+ENTRYPOINT ["dumb-init", "--"]
+
+# Comando de producción (sin nodemon)
+CMD ["node", "app.js"]

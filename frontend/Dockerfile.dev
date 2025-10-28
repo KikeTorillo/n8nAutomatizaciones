@@ -8,20 +8,41 @@ FROM node:22-alpine
 # Establecer directorio de trabajo
 WORKDIR /app
 
-# Instalar dependencias del sistema (si se necesitan)
-# RUN apk add --no-cache git
+# Instalar su-exec para cambiar usuario en entrypoint (más ligero que gosu)
+RUN apk add --no-cache su-exec
 
-# Copiar archivos de dependencias
-COPY package*.json ./
+# Crear usuario no-root para seguridad
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodejs -u 1001
+
+# Cambiar ownership de /app al usuario nodejs
+RUN chown -R nodejs:nodejs /app
+
+# Copiar archivos de dependencias (como nodejs para caching)
+COPY --chown=nodejs:nodejs package*.json ./
+
+# Cambiar al usuario no-root ANTES de instalar dependencias
+USER nodejs
 
 # Instalar dependencias (incluyendo devDependencies para desarrollo)
+# Ahora node_modules será propiedad de nodejs:nodejs
 RUN npm install
+
+# Volver a root para el entrypoint (necesita permisos para chown)
+USER root
+
+# Copiar y dar permisos al script de entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 
 # No copiamos el código aquí porque lo montaremos como volumen
 # Esto permite hot reload cuando cambien los archivos
 
 # Exponer puerto de Vite
 EXPOSE 3001
+
+# Entrypoint arregla permisos y ejecuta como nodejs
+ENTRYPOINT ["docker-entrypoint.sh"]
 
 # Comando para iniciar Vite en modo desarrollo
 # --host 0.0.0.0 permite acceso desde fuera del contenedor

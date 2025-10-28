@@ -533,6 +533,141 @@ delete plantilla.active;
 
 ---
 
+## 🚀 Deployment y Producción
+
+### Arquitectura de Deployment
+
+**Proveedor:** Hostinger VPS (Ubuntu 24.04 con Docker preinstalado)
+**Dominio:** n8nflowautomat.com
+**Arquitectura:** Subdominios profesionales con SSL wildcard
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    n8nflowautomat.com                       │
+│                  (Certificado SSL Wildcard)                 │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                    ┌────────┴────────┐
+                    │   Nginx (VPS)   │
+                    │   Puerto 443    │
+                    └────────┬────────┘
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+┌───────▼───────┐   ┌────────▼─────────┐   ┌─────▼──────┐
+│   Frontend    │   │   Backend API    │   │    n8n     │
+│               │   │                  │   │            │
+│ n8nflowautomat│   │ api.n8nflowautomat│   │ n8n.n8n... │
+│    .com       │   │     .com         │   │  (privado) │
+│               │   │                  │   │            │
+│ Docker:8080   │   │  Docker:3000     │   │Docker:5678 │
+└───────────────┘   └──────────────────┘   └────────────┘
+```
+
+### URLs de Producción
+
+| Servicio | URL | Estado | Acceso |
+|----------|-----|--------|--------|
+| **Frontend** | https://n8nflowautomat.com | 🔄 Configurando | Público |
+| **Backend API** | https://api.n8nflowautomat.com | 🔄 Configurando | Público |
+| **n8n UI** | https://n8n.n8nflowautomat.com | 🔄 Configurando | Privado (IP restringida) |
+| **Webhooks** | https://n8nflowautomat.com/webhook/* | 🔄 Configurando | Público (Telegram) |
+
+### Docker Multi-Stage Builds
+
+**Optimización de Imágenes:**
+
+| Servicio | Dev | Prod | Reducción |
+|----------|-----|------|-----------|
+| **Frontend** | 564MB | 82.5MB | 85% ⬇️ |
+| **Backend** | 428MB | 298MB | 30% ⬇️ |
+
+**Archivos:**
+- `frontend/Dockerfile.prod` - Build React+Vite → Runtime Nginx
+- `backend/app/Dockerfile.prod` - Dependencies → Runtime Node.js
+- `docker-compose.prod.yml` - Compose de producción
+
+**Scripts NPM:**
+```bash
+npm run prod:build      # Build imágenes optimizadas
+npm run prod:deploy     # Build + Up
+npm run prod:up         # Levantar servicios
+npm run prod:down       # Detener servicios
+npm run prod:logs       # Ver logs
+npm run prod:status     # Estado contenedores
+```
+
+### Configuración VPS (Hostinger)
+
+**DNS Configurado:** ✅
+- Registro A: `@` → 72.60.113.247
+- Registro A: `api` → 72.60.113.247
+- Registro A: `n8n` → 72.60.113.247
+
+**Pendiente:**
+- ⏳ Certificado SSL wildcard (Let's Encrypt)
+- ⏳ Nginx configuración subdominios
+- ⏳ Firewall (hPanel + UFW)
+- ⏳ Stack Docker producción
+- ⏳ Scripts backup automático
+
+**Características Hostinger:**
+- ✅ Docker template preinstalado
+- ✅ Browser Terminal (SSH GUI)
+- ✅ Firewall doble capa (hPanel + UFW)
+- ✅ DNS propagación rápida (15-30 min)
+
+### Documentación Deployment
+
+| Archivo | Ubicación | Descripción |
+|---------|-----------|-------------|
+| **VPS_DEPLOYMENT_GUIDE.md** | `nginx-vps/` | Guía paso a paso deployment (optimizada Hostinger) |
+| **DOCKER_BUILDS.md** | `nginx-vps/` | Referencia técnica multi-stage builds |
+| **HOSTINGER_NOTES.md** | `nginx-vps/` | Notas específicas Hostinger VPS |
+| **production-subdomains.conf** | `nginx-vps/` | Configuración Nginx para VPS |
+| **.env.prod** | `root/` | Variables entorno producción |
+
+### Variables de Entorno Producción
+
+**Diferencias clave vs desarrollo:**
+```env
+# Subdominios
+WEBHOOK_URL=https://n8nflowautomat.com
+N8N_EDITOR_BASE_URL=https://n8n.n8nflowautomat.com
+CORS_ORIGIN=https://n8nflowautomat.com
+
+# Producción
+NODE_ENV=production
+LOG_LEVEL=info
+SKIP_TELEGRAM_VALIDATION=false
+
+# Contenedores
+N8N_API_URL=http://n8n-main-prod:5678
+```
+
+### Seguridad Producción
+
+**Firewall (2 capas):**
+1. **hPanel Firewall:** Configurado desde GUI Hostinger
+   - Permitir: 22 (SSH), 80 (HTTP), 443 (HTTPS)
+   - Bloquear: 3000, 5678, 8080, 5432, 6379
+
+2. **UFW (Linux):** Segunda capa protección
+   - Mismas reglas que hPanel
+   - Actúa como respaldo
+
+**SSL:**
+- Certificado wildcard Let's Encrypt
+- Método manual DNS-01 (registro TXT)
+- Renovación automática vía cron
+
+**n8n Access:**
+- Basic Auth activado (admin + password fuerte)
+- Opción restricción por IP (configurable)
+- Solo accesible vía HTTPS
+
+---
+
 ## 📈 Métricas Consolidadas
 
 ### Backend

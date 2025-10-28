@@ -1,15 +1,22 @@
+# =========================================
+# Docker Compose - Producción
+# Multi-stage builds optimizados
+# =========================================
+
 services:
-  # Base de datos PostgreSQL compartida
+  # ========================================
+  # INFRAESTRUCTURA
+  # ========================================
+
   postgres:
     image: postgres:17-alpine
-    container_name: postgres_db
+    container_name: postgres_db_prod
     restart: always
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       TZ: ${TZ}
-      # Variables para contraseñas de usuarios específicos
       SAAS_APP_PASSWORD: ${SAAS_APP_PASSWORD}
       N8N_APP_PASSWORD: ${N8N_APP_PASSWORD}
       READONLY_USER_PASSWORD: ${READONLY_USER_PASSWORD}
@@ -23,15 +30,15 @@ services:
     networks:
       - backend_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres && psql -U admin -d postgres -c 'SELECT 1 FROM usuarios LIMIT 1;' > /dev/null 2>&1"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
       interval: 15s
       timeout: 10s
       retries: 10
       start_period: 60s
 
   redis:
-    image: redis:7
-    container_name: n8n-redis
+    image: redis:7-alpine
+    container_name: redis_prod
     restart: always
     ports:
       - "6379:6379"
@@ -44,12 +51,16 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+    command: redis-server --appendonly yes
 
-  # Servicio n8n con PostgreSQL
+  # ========================================
+  # N8N AUTOMATION
+  # ========================================
+
   n8n-main:
     image: n8nio/n8n:stable
-    container_name: n8n-main
-    restart: unless-stopped
+    container_name: n8n-main-prod
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -82,11 +93,11 @@ services:
       - ./data/n8n:/home/node/.n8n
     networks:
       - backend_network
-  
+
   n8n-worker:
     image: n8nio/n8n:stable
-    container_name: n8n-worker
-    restart: unless-stopped
+    container_name: n8n-worker-prod
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -109,7 +120,6 @@ services:
       N8N_BASIC_AUTH_PASSWORD: ${N8N_BASIC_AUTH_PASSWORD}
       N8N_RUNNERS_ENABLED: true
       OFFLOAD_MANUAL_EXECUTIONS_TO_WORKERS: true
-      # N8N_SECURE_COOKIE: false
       N8N_HOST: 0.0.0.0
       WEBHOOK_URL: ${WEBHOOK_URL}
       N8N_EDITOR_BASE_URL: ${N8N_EDITOR_BASE_URL}
@@ -121,155 +131,127 @@ services:
     networks:
       - backend_network
 
-  # pgAdmin para administrar PostgreSQL
-  pgadmin:
-    image: dpage/pgadmin4:latest
-    container_name: pgadmin
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "8001:80"
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
-      PGADMIN_CONFIG_SERVER_MODE: "False"
-    volumes:
-      - ./data/pgadmin:/var/lib/pgadmin
-    networks:
-      - backend_network
-  
+  # ========================================
+  # BACKEND API - Multi-stage Production
+  # ========================================
+
   backend:
     build:
       context: ./backend/app
-      dockerfile: dockerfile.dev
-    container_name: back
-    restart: unless-stopped
+      dockerfile: Dockerfile.prod
+      target: runtime
+    image: saas-backend:${VERSION:-latest}
+    container_name: back_prod
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
-      pgadmin:
-        condition: service_started
-    # Agregar comando que espere antes de iniciar
-    command: ["sh", "-c", "sleep 10 && npm run dev"]
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 30s
     environment:
+      # Database
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
 
+      # N8N Database
       N8N_DB_HOST: ${N8N_DB_HOST}
       N8N_DB_PORT: ${N8N_DB_PORT}
       N8N_DB_NAME: ${N8N_DB_NAME}
       N8N_DB_USER: ${N8N_DB_USER}
       N8N_DB_PASSWORD: ${N8N_DB_PASSWORD}
 
+      # Chat Database
       CHAT_DB_HOST: ${CHAT_DB_HOST}
       CHAT_DB_PORT: ${CHAT_DB_PORT}
       CHAT_DB_NAME: ${CHAT_DB_NAME}
       CHAT_DB_USER: ${CHAT_DB_USER}
       CHAT_DB_PASSWORD: ${CHAT_DB_PASSWORD}
 
-      NODE_ENV: ${NODE_ENV}
+      # Application
+      NODE_ENV: production
       PORT: ${PORT}
       LOG_LEVEL: ${LOG_LEVEL}
 
+      # JWT
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN}
 
+      # N8N API
       N8N_API_KEY: ${N8N_API_KEY}
       N8N_API_URL: ${N8N_API_URL}
 
+      # External APIs
       DEEPSEEKAPIKEY: ${DEEPSEEKAPIKEY}
       SKIP_TELEGRAM_VALIDATION: ${SKIP_TELEGRAM_VALIDATION}
 
+      # Security
       CORS_ORIGIN: ${CORS_ORIGIN}
       RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS}
       RATE_LIMIT_MAX_REQUESTS: ${RATE_LIMIT_MAX_REQUESTS}
 
+      # Redis
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
-    volumes:
-      - ./backend/app:/app
-      - /app/node_modules
     networks:
       - backend_network
     ports:
       - "3000:3000"
-    # Límites de recursos para evitar consumo excesivo
     deploy:
       resources:
         limits:
-          cpus: '2.0'       # Máximo 2 CPUs
-          memory: 1G        # Máximo 1GB RAM
+          cpus: '1.0'
+          memory: 512M
         reservations:
-          cpus: '0.5'       # Mínimo garantizado
-          memory: 256M      # RAM mínima garantizada
+          cpus: '0.25'
+          memory: 128M
+    # No volumes en producción (código está en la imagen)
 
   # ========================================
-  # FRONTEND - React + Vite con HMR
+  # FRONTEND - Multi-stage Production (Nginx)
   # ========================================
+
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.dev
-    container_name: front
-    restart: unless-stopped
+      dockerfile: Dockerfile.prod
+      target: runtime
+    image: saas-frontend:${VERSION:-latest}
+    container_name: front_prod
+    restart: always
     depends_on:
       backend:
         condition: service_healthy
-    # No necesitamos VITE_API_URL porque usamos el proxy de Vite
-    # El proxy redirige /api -> http://back:3000/api desde DENTRO del contenedor
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001"]
-      interval: 15s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    volumes:
-      # Montar código fuente para hot reload
-      - ./frontend:/app
-      # Excluir node_modules (usar los del contenedor)
-      - /app/node_modules
     networks:
       - backend_network
     ports:
-      - "3001:3001"
-    # Configuración para mejorar rendimiento de hot reload
-    stdin_open: true
-    tty: true
-    # Límites de recursos para evitar consumo excesivo
+      - "8080:8080"
     deploy:
       resources:
         limits:
-          cpus: '2.0'       # Máximo 2 CPUs (Vite puede usar múltiples cores)
-          memory: 1G        # Máximo 1GB RAM
+          cpus: '0.5'
+          memory: 256M
         reservations:
-          cpus: '0.5'       # Mínimo garantizado
-          memory: 256M      # RAM mínima garantizada
+          cpus: '0.1'
+          memory: 64M
+    # No volumes en producción (archivos estáticos están en la imagen)
 
   # ========================================
-  # MCP SERVER - Herramientas para AI Agent
+  # MCP SERVER
   # ========================================
+
   mcp-server:
     build:
       context: ./backend/mcp-server
       dockerfile: Dockerfile
-    container_name: mcp-server
-    restart: unless-stopped
+    image: saas-mcp-server:${VERSION:-latest}
+    container_name: mcp-server-prod
+    restart: always
     depends_on:
       backend:
         condition: service_started
@@ -278,29 +260,25 @@ services:
     ports:
       - "3100:3100"
     environment:
-      # Configuración del servidor
       - NODE_ENV=production
       - MCP_PORT=3100
-
-      # Conexión con Backend API
-      - BACKEND_API_URL=http://back:3000
+      - BACKEND_API_URL=http://back_prod:3000
       - BACKEND_TIMEOUT=10000
-
-      # Logging
       - LOG_LEVEL=info
     networks:
       - backend_network
-    volumes:
-      - ./backend/mcp-server:/app
-      - /app/node_modules
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3100/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3100/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
-# Configuración de redes
+# ========================================
+# NETWORKS
+# ========================================
+
 networks:
   backend_network:
     driver: bridge
+    name: saas_prod_network
