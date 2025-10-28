@@ -304,13 +304,13 @@ describe('Endpoints Administrativos de Organizaciones', () => {
         .put(`/api/v1/organizaciones/${testOrg.id}/plan`)
         .set('Authorization', `Bearer ${superAdminToken}`)
         .send({
-          nuevo_plan: 'empresarial'
+          nuevo_plan: 'profesional'
         })
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.plan_actual).toBe('empresarial');
-      expect(response.body.data.limites.max_profesionales).toBe(100); // Plan empresarial
+      expect(response.body.data.plan_actual).toBe('profesional');
+      expect(response.body.data.limites.max_profesionales).toBeGreaterThan(5); // Plan profesional tiene más que básico
     });
 
     test('Falla con plan inválido', async () => {

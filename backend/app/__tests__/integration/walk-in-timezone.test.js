@@ -118,7 +118,7 @@ describe('Walk-in con Timezone - Integración', () => {
                 .send({
                     cliente_id: testCliente.id,
                     profesional_id: testProfesional.id,
-                    servicio_id: testServicio.id,
+                    servicios_ids: [testServicio.id], // ✅ Array
                     notas_walk_in: 'Test timezone validation'
                 });
 
@@ -142,7 +142,7 @@ describe('Walk-in con Timezone - Integración', () => {
                 .send({
                     cliente_id: testCliente.id,
                     profesional_id: testProfesional.id,
-                    servicio_id: testServicio.id,
+                    servicios_ids: [testServicio.id], // ✅ Array
                     notas_walk_in: 'Test timezone logging'
                 });
 

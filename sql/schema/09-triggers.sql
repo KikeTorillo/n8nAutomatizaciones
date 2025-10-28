@@ -197,3 +197,20 @@ Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
 COMMENT ON TRIGGER trigger_actualizar_timestamp_chatbot_config ON chatbot_config IS
 'Actualiza automáticamente el campo actualizado_en en chatbot_config usando función actualizar_timestamp().
 Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+-- ====================================================================
+-- 🔗 TRIGGERS PARA TABLA CITAS_SERVICIOS (M:N)
+-- ====================================================================
+-- Actualización automática de timestamps
+-- ────────────────────────────────────────────────────────────────────
+
+-- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- Actualiza campo actualizado_en automáticamente en cada UPDATE
+CREATE TRIGGER trigger_actualizar_timestamp_citas_servicios
+    BEFORE UPDATE ON citas_servicios
+    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+
+COMMENT ON TRIGGER trigger_actualizar_timestamp_citas_servicios ON citas_servicios IS
+'Actualiza automáticamente el campo actualizado_en en citas_servicios.
+Función: actualizar_timestamp() - Reutilizada de otras tablas.
+Agregado: 2025-10-26 - Feature múltiples servicios por cita';

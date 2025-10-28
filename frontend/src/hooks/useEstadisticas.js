@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { organizacionesApi, serviciosApi, bloqueosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
+import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Hooks para obtener estadísticas y datos agregados del dashboard
@@ -57,10 +58,11 @@ export function useServiciosDashboard() {
  * @returns {Object} { data, isLoading, error }
  */
 export function useBloqueosDashboard() {
-  const hoy = new Date().toISOString().split('T')[0];
-  const treintaDiasAdelante = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .split('T')[0];
+  // ✅ FIX: Usar fecha LOCAL en vez de UTC
+  const hoy = aFormatoISO(new Date());
+  const treintaDiasAdelante = aFormatoISO(
+    new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+  );
 
   return useQuery({
     queryKey: ['bloqueos-dashboard', hoy, treintaDiasAdelante],

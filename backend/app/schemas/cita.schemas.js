@@ -14,7 +14,26 @@ const crear = {
         }),
         cliente_id: commonSchemas.id,
         profesional_id: commonSchemas.id,
-        servicio_id: commonSchemas.id,
+        // ✅ FEATURE: Múltiples servicios (backward compatibility con servicio_id)
+        servicios_ids: Joi.array()
+            .items(commonSchemas.id)
+            .min(1)
+            .max(10)
+            .optional()
+            .messages({
+                'array.min': 'Debe proporcionar al menos un servicio',
+                'array.max': 'No puede agregar más de 10 servicios por cita'
+            }),
+        servicio_id: commonSchemas.id.optional(), // Deprecated - usar servicios_ids
+        // ✅ Datos opcionales por servicio (si no se proporcionan, se usan defaults del catálogo)
+        servicios_data: Joi.array()
+            .items(Joi.object({
+                precio_aplicado: commonSchemas.price.optional(),
+                duracion_minutos: Joi.number().integer().min(5).max(480).optional(),
+                descuento: Joi.number().min(0).max(100).default(0),
+                notas: Joi.string().max(500).optional()
+            }))
+            .optional(),
         fecha_cita: Joi.date().iso().required(),
         hora_inicio: commonSchemas.time,
         hora_fin: commonSchemas.time
@@ -26,34 +45,25 @@ const crear = {
                 return value;
             })
             .messages({ 'custom.hora_fin_posterior': 'hora_fin debe ser posterior a hora_inicio' }),
-        precio_servicio: commonSchemas.price.optional()
-            .messages({
-                'any.optional': 'Si no se proporciona, se calculará automáticamente desde el servicio'
-            }),
-        descuento: commonSchemas.price.default(0.00),
-        precio_final: commonSchemas.price.optional()
-            .custom((value, helpers) => {
-                const precio_servicio = helpers.state.ancestors[0].precio_servicio;
-                const descuento = helpers.state.ancestors[0].descuento || 0;
-
-                // Si hay precio_servicio y precio_final, validar que sean consistentes
-                if (precio_servicio && value) {
-                    const esperado = precio_servicio - descuento;
-                    if (Math.abs(value - esperado) > 0.01) {
-                        return helpers.error('custom.precio_final_invalido');
-                    }
-                }
-                return value;
-            })
-            .messages({
-                'custom.precio_final_invalido': 'precio_final no coincide con precio_servicio - descuento',
-                'any.optional': 'Si no se proporciona, se calculará automáticamente desde el servicio'
-            }),
         metodo_pago: Joi.string()
             .valid('efectivo', 'tarjeta', 'transferencia')
             .optional()
             .allow(null),
         notas_cliente: Joi.string().max(1000).optional()
+    })
+    .custom((value, helpers) => {
+        // Validar que proporcione servicios_ids O servicio_id (no ambos)
+        if (value.servicios_ids && value.servicio_id) {
+            return helpers.error('custom.solo_un_tipo_servicio');
+        }
+        if (!value.servicios_ids && !value.servicio_id) {
+            return helpers.error('custom.servicio_requerido');
+        }
+        return value;
+    })
+    .messages({
+        'custom.solo_un_tipo_servicio': 'Use servicios_ids (array) O servicio_id (deprecated), no ambos',
+        'custom.servicio_requerido': 'Debe proporcionar servicios_ids (array) o servicio_id'
     }),
     query: Joi.object({
         organizacion_id: Joi.when('$userRole', {
@@ -83,12 +93,27 @@ const actualizar = {
     }),
     body: Joi.object({
         profesional_id: commonSchemas.id.optional(),
-        servicio_id: commonSchemas.id.optional(),
+        // ✅ FEATURE: Múltiples servicios (reemplaza servicio_id deprecated)
+        servicios_ids: Joi.array()
+            .items(commonSchemas.id)
+            .min(1)
+            .max(10)
+            .optional()
+            .messages({
+                'array.min': 'Debe proporcionar al menos un servicio',
+                'array.max': 'No puede agregar más de 10 servicios por cita'
+            }),
+        servicios_data: Joi.array()
+            .items(Joi.object({
+                precio_aplicado: commonSchemas.price.optional(),
+                duracion_minutos: Joi.number().integer().min(5).max(480).optional(),
+                descuento: Joi.number().min(0).max(100).default(0),
+                notas: Joi.string().max(500).optional()
+            }))
+            .optional(),
         fecha_cita: Joi.date().iso().optional(),
         hora_inicio: commonSchemas.time.optional(),
         hora_fin: commonSchemas.time.optional(),
-        precio_servicio: commonSchemas.price.optional(),
-        descuento: commonSchemas.price.optional(),
         estado: Joi.string()
             .valid('pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio')
             .optional(),
@@ -145,7 +170,14 @@ const listar = {
         fecha_hasta: Joi.date().iso().optional(),
         profesional_id: commonSchemas.id.optional(),
         cliente_id: commonSchemas.id.optional(),
-        servicio_id: commonSchemas.id.optional(),
+        // ✅ FEATURE: Filtro por múltiples servicios (backward compatibility con servicio_id)
+        servicio_id: commonSchemas.id.optional(), // Busca citas que contengan este servicio
+        servicios_ids: Joi.alternatives()
+            .try(
+                commonSchemas.id, // Si viene un solo ID como string
+                Joi.array().items(commonSchemas.id).min(1).max(10) // Si viene array
+            )
+            .optional(),
         estado: Joi.string()
             .valid('pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio')
             .optional(),
@@ -201,7 +233,9 @@ const complete = {
         calificacion_profesional: Joi.number().integer().min(1).max(5).optional(),
         comentario_profesional: Joi.string().max(500).optional(),
         notas_profesional: Joi.string().max(1000).optional(),
-        precio_final_real: commonSchemas.price.optional(),
+        // ✅ precio_final_real → precio_total_real (backward compatibility mantenida)
+        precio_total_real: commonSchemas.price.optional(),
+        precio_final_real: commonSchemas.price.optional(), // Deprecated - usar precio_total_real
         metodo_pago: Joi.string()
             .valid('efectivo', 'tarjeta', 'transferencia')
             .optional(),
@@ -286,9 +320,18 @@ const crearWalkIn = {
         // Profesional: OPCIONAL (se auto-asigna si no se especifica)
         profesional_id: commonSchemas.id.optional().allow(null),
 
-        // Servicio: SIEMPRE requerido
-        servicio_id: commonSchemas.id.required()
-            .messages({'any.required': 'servicio_id es requerido'}),
+        // ✅ FEATURE: Servicios - Acepta servicio_id (único) O servicios_ids (array)
+        // Walk-ins típicamente usan 1 servicio, pero se permite múltiples
+        servicio_id: commonSchemas.id.optional(), // Deprecated - usar servicios_ids
+        servicios_ids: Joi.array()
+            .items(commonSchemas.id)
+            .min(1)
+            .max(10)
+            .optional()
+            .messages({
+                'array.min': 'Debe proporcionar al menos un servicio',
+                'array.max': 'No puede agregar más de 10 servicios por cita'
+            }),
 
         tiempo_espera_aceptado: Joi.number().integer().min(0).max(120).optional()
             .messages({'number.max': 'Tiempo de espera no puede exceder 120 minutos'}),
@@ -307,11 +350,21 @@ const crearWalkIn = {
             return helpers.error('custom.cliente_duplicado');
         }
 
+        // Validación 2: Debe tener servicio_id O servicios_ids (no ambos)
+        if (value.servicios_ids && value.servicio_id) {
+            return helpers.error('custom.solo_un_tipo_servicio');
+        }
+        if (!value.servicios_ids && !value.servicio_id) {
+            return helpers.error('custom.servicio_requerido');
+        }
+
         return value;
     })
     .messages({
         'custom.cliente_requerido': 'Debe proporcionar cliente_id (existente) O nombre_cliente (nuevo). Teléfono opcional.',
-        'custom.cliente_duplicado': 'No puede enviar cliente_id Y nombre_cliente simultáneamente'
+        'custom.cliente_duplicado': 'No puede enviar cliente_id Y nombre_cliente simultáneamente',
+        'custom.solo_un_tipo_servicio': 'Use servicios_ids (array) O servicio_id (deprecated), no ambos',
+        'custom.servicio_requerido': 'Debe proporcionar servicios_ids (array) o servicio_id'
     }),
 
     query: Joi.object({

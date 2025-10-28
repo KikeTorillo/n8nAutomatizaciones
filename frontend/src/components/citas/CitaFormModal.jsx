@@ -6,6 +6,7 @@ import { Calendar, User, Briefcase, Package, Clock, DollarSign } from 'lucide-re
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import MultiSelect from '@/components/ui/MultiSelect';
 import FormField from '@/components/forms/FormField';
 import { useCrearCita, useActualizarCita, useCita } from '@/hooks/useCitas';
 import { useClientes } from '@/hooks/useClientes';
@@ -13,6 +14,7 @@ import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
+import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Schema de validación Zod para CREAR cita
@@ -21,7 +23,7 @@ const citaCreateSchema = z
   .object({
     cliente_id: z.string().min(1, 'Debes seleccionar un cliente'),
     profesional_id: z.string().min(1, 'Debes seleccionar un profesional'),
-    servicio_id: z.string().min(1, 'Debes seleccionar un servicio'),
+    servicios_ids: z.array(z.string()).min(1, 'Debes seleccionar al menos un servicio').max(10, 'Máximo 10 servicios por cita'),
     fecha_cita: z.string().min(1, 'La fecha es requerida'),
     hora_inicio: z
       .string()
@@ -49,10 +51,9 @@ const citaCreateSchema = z
   .refine(
     (data) => {
       // Validar que la fecha no sea en el pasado
-      // Normalizar ambas fechas a formato YYYY-MM-DD para comparación
+      // ✅ FIX: Usar fecha LOCAL en vez de UTC
       const fechaSeleccionada = data.fecha_cita; // Ya viene en formato YYYY-MM-DD del input
-      const hoy = new Date();
-      const hoyStr = hoy.toISOString().split('T')[0]; // Convertir a YYYY-MM-DD
+      const hoyStr = aFormatoISO(new Date()); // Convertir a YYYY-MM-DD (local, no UTC)
       return fechaSeleccionada >= hoyStr;
     },
     {
@@ -68,7 +69,7 @@ const citaEditSchema = z
   .object({
     cliente_id: z.string().optional(),
     profesional_id: z.string().optional(),
-    servicio_id: z.string().optional(),
+    servicios_ids: z.array(z.string()).min(1, 'Debes seleccionar al menos un servicio').max(10, 'Máximo 10 servicios por cita').optional(),
     fecha_cita: z.string().optional(),
     hora_inicio: z
       .string()
@@ -138,7 +139,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       : {
           cliente_id: '',
           profesional_id: '',
-          servicio_id: '',
+          servicios_ids: [],
           fecha_cita: fechaPreseleccionada || '',
           hora_inicio: '',
           duracion_minutos: 30,
@@ -151,7 +152,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
   // Watch fields para cálculos automáticos
   const watchProfesional = watch('profesional_id');
-  const watchServicio = watch('servicio_id');
+  const watchServicios = watch('servicios_ids');
   const watchPrecio = watch('precio_servicio');
   const watchDescuento = watch('descuento');
 
@@ -203,19 +204,31 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     }));
   }, [servicios, serviciosDisponibles, watchProfesional]);
 
-  // Auto-completar datos del servicio seleccionado
+  // Auto-calcular totales de servicios seleccionados
   useEffect(() => {
-    if (watchServicio && watchServicio !== '') {
-      const servicioSeleccionado = serviciosDisponibles.find(
-        (s) => s.id === parseInt(watchServicio)
-      );
+    if (watchServicios && watchServicios.length > 0) {
+      // Calcular totales sumando TODOS los servicios seleccionados
+      let duracionTotal = 0;
+      let precioTotal = 0;
 
-      if (servicioSeleccionado) {
-        setValue('duracion_minutos', servicioSeleccionado.duracion_minutos || 30);
-        setValue('precio_servicio', servicioSeleccionado.precio || 0);
-      }
+      watchServicios.forEach((servicioId) => {
+        const servicio = serviciosDisponibles.find(
+          (s) => s.id === parseInt(servicioId)
+        );
+        if (servicio) {
+          duracionTotal += servicio.duracion_minutos || 0;
+          precioTotal += parseFloat(servicio.precio) || 0;
+        }
+      });
+
+      setValue('duracion_minutos', duracionTotal);
+      setValue('precio_servicio', precioTotal);
+    } else {
+      // Si no hay servicios seleccionados, resetear a 0
+      setValue('duracion_minutos', 0);
+      setValue('precio_servicio', 0);
     }
-  }, [watchServicio, serviciosDisponibles, setValue]);
+  }, [watchServicios, serviciosDisponibles, setValue]);
 
   // Calcular precio total
   useEffect(() => {
@@ -252,14 +265,24 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   // Pre-cargar datos de la cita en modo edición
   useEffect(() => {
     if (isEditMode && citaData && isOpen) {
+      // Convertir servicios a array de IDs si existe el campo servicios
+      let serviciosIds = [];
+      if (citaData.servicios && Array.isArray(citaData.servicios)) {
+        // Si citaData tiene array de servicios (respuesta de listar con JSON_AGG)
+        serviciosIds = citaData.servicios.map(s => s.servicio_id?.toString());
+      } else if (citaData.servicio_id) {
+        // Backward compatibility: si solo tiene servicio_id (respuesta antigua)
+        serviciosIds = [citaData.servicio_id.toString()];
+      }
+
       reset({
         cliente_id: citaData.cliente_id?.toString() || '',
         profesional_id: citaData.profesional_id?.toString() || '',
-        servicio_id: citaData.servicio_id?.toString() || '',
+        servicios_ids: serviciosIds,
         fecha_cita: citaData.fecha_cita || '',
         hora_inicio: citaData.hora_inicio?.substring(0, 5) || '', // "14:30:00" → "14:30"
-        duracion_minutos: citaData.duracion_minutos || 30,
-        precio_servicio: citaData.precio_servicio || 0,
+        duracion_minutos: citaData.duracion_total_minutos || citaData.duracion_minutos || 30,
+        precio_servicio: citaData.precio_total || citaData.precio_servicio || 0,
         descuento: citaData.descuento || 0,
         notas_cliente: citaData.notas_cliente || '',
         notas_internas: citaData.notas_internas || '',
@@ -301,7 +324,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       const sanitized = {
         cliente_id: parseInt(data.cliente_id),
         profesional_id: parseInt(data.profesional_id),
-        servicio_id: parseInt(data.servicio_id),
+        servicios_ids: data.servicios_ids.map(id => parseInt(id)),
         fecha_cita: data.fecha_cita,
         hora_inicio: `${data.hora_inicio}:00`, // Agregar segundos
         hora_fin: horaFin,
@@ -468,23 +491,25 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 )}
               </div>
 
-              {/* Servicio */}
+              {/* Servicios (MultiSelect) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Servicio {!isEditMode && <span className="text-red-500">*</span>}
+                  Servicios {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
-                <div className="flex items-center gap-2">
-                  <Package className="w-5 h-5 text-gray-400" />
+                <div className="flex items-start gap-2">
+                  <Package className="w-5 h-5 text-gray-400 mt-3" />
                   <Controller
-                    name="servicio_id"
+                    name="servicios_ids"
                     control={control}
                     render={({ field }) => (
-                      <Select
+                      <MultiSelect
                         {...field}
                         options={serviciosOpciones}
-                        placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona un servicio'}
+                        placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona uno o más servicios'}
                         className="flex-1"
                         disabled={!watchProfesional || cargandoServicios}
+                        max={10}
+                        helper={!errors.servicios_ids && watchServicios?.length > 0 && `${watchServicios.length} servicio(s) seleccionado(s)`}
                       />
                     )}
                   />
@@ -494,8 +519,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                     Primero selecciona un profesional
                   </p>
                 )}
-                {errors.servicio_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.servicio_id.message}</p>
+                {errors.servicios_ids && (
+                  <p className="mt-1 text-sm text-red-600">{errors.servicios_ids.message}</p>
                 )}
               </div>
 

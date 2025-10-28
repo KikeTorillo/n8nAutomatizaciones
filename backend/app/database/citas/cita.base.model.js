@@ -2,6 +2,8 @@ const { getDb } = require('../../config/database');
 const logger = require('../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 const RLSContextManager = require('../../utils/rlsContextManager');
+// ✅ FIX GAP #5: Importar CitaServicioQueries para evitar N+1 en listarConFiltros
+const CitaServicioQueries = require('./cita-servicio.queries');
 
 class CitaBaseModel {
 
@@ -15,11 +17,31 @@ class CitaBaseModel {
                 allCitaData: citaData
             });
 
-            // Validar entidades relacionadas
+            // ✅ FEATURE: Múltiples Servicios
+            // Aceptar tanto servicio_id (backward compatibility) como servicios_ids (nuevo)
+            let serviciosIds = [];
+            if (citaData.servicios_ids && Array.isArray(citaData.servicios_ids)) {
+                serviciosIds = citaData.servicios_ids;
+            } else if (citaData.servicio_id) {
+                // Backward compatibility: convertir servicio_id a array
+                serviciosIds = [citaData.servicio_id];
+                logger.warn('[CitaBaseModel.crearEstandar] ⚠️ DEPRECATED: servicio_id usado en lugar de servicios_ids', {
+                    servicio_id: citaData.servicio_id
+                });
+            } else {
+                throw new Error('Se requiere servicios_ids (array) o servicio_id (deprecated)');
+            }
+
+            // Validar que haya al menos un servicio
+            if (serviciosIds.length === 0) {
+                throw new Error('Se requiere al menos un servicio');
+            }
+
+            // Validar entidades relacionadas (cliente y profesional)
             await CitaHelpersModel.validarEntidadesRelacionadas(
                 citaData.cliente_id,
                 citaData.profesional_id,
-                citaData.servicio_id,
+                serviciosIds[0], // Backward compatibility: validar al menos el primer servicio
                 citaData.organizacion_id,
                 db
             );
@@ -64,45 +86,63 @@ class CitaBaseModel {
                 });
             }
 
-            // Auto-calcular precio si no se proporciona
-            let precioServicio = citaData.precio_servicio;
-            let precioFinal = citaData.precio_final;
+            // ✅ FEATURE: Obtener información completa de TODOS los servicios
+            const CitaServicioModel = require('./cita-servicio.model');
 
-            // Si no se proporcionó precio, obtenerlo automáticamente del servicio
-            if (!precioServicio || !precioFinal) {
-                const servicio = await CitaHelpersModel.obtenerServicioCompleto(
-                    citaData.servicio_id,
-                    citaData.organizacion_id,
-                    db
-                );
+            // Validar que todos los servicios existen y están activos
+            await CitaServicioModel.validarServiciosOrganizacion(serviciosIds, citaData.organizacion_id);
 
-                if (servicio) {
-                    precioServicio = precioServicio || servicio.precio || 0.00;
-                    const descuento = citaData.descuento || 0.00;
-                    precioFinal = precioFinal || (precioServicio - descuento);
+            // Obtener información completa de cada servicio
+            const serviciosData = await Promise.all(
+                serviciosIds.map(async (servicioId, index) => {
+                    const servicio = await CitaHelpersModel.obtenerServicioCompleto(
+                        servicioId,
+                        citaData.organizacion_id,
+                        db
+                    );
 
-                    logger.info('[CitaBaseModel.crearEstandar] 💰 Precio auto-calculado', {
-                        servicio_id: citaData.servicio_id,
-                        precio_servicio: precioServicio,
-                        descuento: descuento,
-                        precio_final: precioFinal
-                    });
-                }
-            }
+                    if (!servicio) {
+                        throw new Error(`Servicio con ID ${servicioId} no encontrado`);
+                    }
+
+                    // Usar datos proporcionados o defaults del servicio
+                    const servicioData = citaData.servicios_data?.[index] || {};
+
+                    return {
+                        servicio_id: servicioId,
+                        orden_ejecucion: index + 1,
+                        precio_aplicado: servicioData.precio_aplicado || servicio.precio || 0.00,
+                        duracion_minutos: servicioData.duracion_minutos || servicio.duracion_minutos || 0,
+                        descuento: servicioData.descuento || 0.00,
+                        notas: servicioData.notas || null
+                    };
+                })
+            );
+
+            // Calcular totales (precio_total + duracion_total_minutos)
+            const { precio_total, duracion_total_minutos } = CitaServicioModel.calcularTotales(serviciosData);
+
+            logger.info('[CitaBaseModel.crearEstandar] 💰 Totales calculados desde múltiples servicios', {
+                cantidad_servicios: serviciosData.length,
+                servicios_ids: serviciosIds,
+                precio_total,
+                duracion_total_minutos
+            });
 
             // Preparar datos completos para inserción (codigo_cita auto-generado por trigger)
             const datosCompletos = {
                 organizacion_id: citaData.organizacion_id,
                 cliente_id: citaData.cliente_id,
                 profesional_id: citaData.profesional_id,
-                servicio_id: citaData.servicio_id,
+                // ✅ servicio_id ELIMINADO - Ahora se usa citas_servicios (M:N)
                 fecha_cita: fechaCitaNormalizada,
                 hora_inicio: citaData.hora_inicio,
                 hora_fin: citaData.hora_fin,
                 zona_horaria: citaData.zona_horaria || DEFAULTS.ZONA_HORARIA,
-                precio_servicio: precioServicio,
-                descuento: citaData.descuento || 0.00,
-                precio_final: precioFinal,
+                // ✅ precio_servicio, descuento, precio_final ELIMINADOS
+                // ✅ Nuevos campos calculados desde múltiples servicios:
+                precio_total: precio_total,
+                duracion_total_minutos: duracion_total_minutos,
                 estado: citaData.estado || 'pendiente',
                 metodo_pago: citaData.metodo_pago || null,
                 pagado: citaData.pagado || false,
@@ -123,6 +163,57 @@ class CitaBaseModel {
 
             const nuevaCita = await CitaHelpersModel.insertarCitaCompleta(datosCompletos, db);
 
+            // ✅ FEATURE: Insertar servicios en citas_servicios (M:N)
+            logger.info('[CitaBaseModel.crearEstandar] 📝 Insertando servicios en citas_servicios', {
+                cita_id: nuevaCita.id,
+                cantidad_servicios: serviciosData.length
+            });
+
+            // Insertar servicios usando CitaServicioModel (dentro de la misma transacción)
+            // NOTA: No podemos usar CitaServicioModel.crearMultiples porque intenta iniciar otra transacción
+            // Replicamos la lógica de inserción aquí
+            const values = [];
+            const placeholders = [];
+            let paramCount = 1;
+
+            serviciosData.forEach((servicio, index) => {
+                placeholders.push(
+                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+                );
+
+                values.push(
+                    nuevaCita.id,
+                    servicio.servicio_id,
+                    servicio.orden_ejecucion,
+                    servicio.precio_aplicado,
+                    servicio.duracion_minutos,
+                    servicio.descuento,
+                    servicio.notas
+                );
+
+                paramCount += 7;
+            });
+
+            const queryServiciosInsert = `
+                INSERT INTO citas_servicios (
+                    cita_id,
+                    servicio_id,
+                    orden_ejecucion,
+                    precio_aplicado,
+                    duracion_minutos,
+                    descuento,
+                    notas
+                ) VALUES ${placeholders.join(', ')}
+                RETURNING *
+            `;
+
+            const serviciosInsertados = await db.query(queryServiciosInsert, values);
+
+            logger.info('[CitaBaseModel.crearEstandar] ✅ Servicios insertados en citas_servicios', {
+                cita_id: nuevaCita.id,
+                cantidad_insertada: serviciosInsertados.rows.length
+            });
+
             // Registrar evento de auditoría
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: citaData.organizacion_id,
@@ -133,7 +224,10 @@ class CitaBaseModel {
                 metadatos: {
                     cliente_id: citaData.cliente_id,
                     profesional_id: citaData.profesional_id,
-                    servicio_id: citaData.servicio_id,
+                    servicios_ids: serviciosIds, // ✅ Array de servicios en lugar de servicio_id único
+                    cantidad_servicios: serviciosData.length,
+                    precio_total: precio_total,
+                    duracion_total_minutos: duracion_total_minutos,
                     origen: 'crud_estandar'
                 }
             }, db);
@@ -142,8 +236,12 @@ class CitaBaseModel {
                 cita_id: nuevaCita.id,
                 organizacion_id: nuevaCita.organizacion_id,
                 codigo_cita: nuevaCita.codigo_cita,
+                cantidad_servicios: serviciosInsertados.rows.length,
                 db_processId: db.processID
             });
+
+            // ✅ Agregar servicios a la respuesta
+            nuevaCita.servicios = serviciosInsertados.rows;
 
             return nuevaCita;
         });
@@ -179,9 +277,10 @@ class CitaBaseModel {
     }
 
     /**
-     * Obtener cita por ID con datos completos (incluye JOINs)
-     * Usar solo cuando se necesiten los datos relacionados (cliente, profesional, servicio)
+     * Obtener cita por ID con datos completos (incluye JOINs + múltiples servicios)
+     * Usar solo cuando se necesiten los datos relacionados (cliente, profesional, servicios)
      * Para validaciones internas, usar verificarExistencia() en su lugar
+     * ✅ FEATURE: Recupera múltiples servicios usando JSON_AGG (evita N+1 queries)
      */
     static async obtenerPorId(citaId, organizacionId, db = null) {
         // Si recibimos una conexión externa (desde transacción), usarla directamente
@@ -193,14 +292,30 @@ class CitaBaseModel {
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
                     p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre,
-                    s.descripcion as servicio_descripcion,
-                    s.duracion_minutos as servicio_duracion
+                    -- ✅ Servicios como JSON array (evita N+1 queries)
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', cs.id,
+                                'servicio_id', cs.servicio_id,
+                                'servicio_nombre', s.nombre,
+                                'servicio_descripcion', s.descripcion,
+                                'orden_ejecucion', cs.orden_ejecucion,
+                                'precio_aplicado', cs.precio_aplicado,
+                                'duracion_minutos', cs.duracion_minutos,
+                                'descuento', cs.descuento,
+                                'notas', cs.notas
+                            ) ORDER BY cs.orden_ejecucion
+                        ) FILTER (WHERE cs.id IS NOT NULL),
+                        '[]'::json
+                    ) as servicios
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE c.id = $1 AND c.organizacion_id = $2
+                GROUP BY c.id, cl.id, p.id
             `, [citaId, organizacionId]);
 
             return cita.rows.length > 0 ? cita.rows[0] : null;
@@ -215,14 +330,30 @@ class CitaBaseModel {
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
                     p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre,
-                    s.descripcion as servicio_descripcion,
-                    s.duracion_minutos as servicio_duracion
+                    -- ✅ Servicios como JSON array (evita N+1 queries)
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', cs.id,
+                                'servicio_id', cs.servicio_id,
+                                'servicio_nombre', s.nombre,
+                                'servicio_descripcion', s.descripcion,
+                                'orden_ejecucion', cs.orden_ejecucion,
+                                'precio_aplicado', cs.precio_aplicado,
+                                'duracion_minutos', cs.duracion_minutos,
+                                'descuento', cs.descuento,
+                                'notas', cs.notas
+                            ) ORDER BY cs.orden_ejecucion
+                        ) FILTER (WHERE cs.id IS NOT NULL),
+                        '[]'::json
+                    ) as servicios
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE c.id = $1 AND c.organizacion_id = $2
+                GROUP BY c.id, cl.id, p.id
             `, [citaId, organizacionId]);
 
             return cita.rows.length > 0 ? cita.rows[0] : null;
@@ -305,20 +436,108 @@ class CitaBaseModel {
             }
 
             // Lógica de negocio: Si se marca como completada y tiene precio > 0, debe estar pagada
-            if (datosActualizacion.estado === 'completada' && citaExistente.precio_final > 0) {
+            // ✅ Usar precio_total en lugar de precio_final
+            const precioFinal = datosActualizacion.precio_total || citaExistente.precio_total || 0;
+            if (datosActualizacion.estado === 'completada' && precioFinal > 0) {
                 if (!datosActualizacion.hasOwnProperty('pagado')) {
                     datosActualizacion.pagado = true;
                     logger.info('[CitaBaseModel.actualizarEstandar] Auto-marcando como pagada', {
                         cita_id: citaId,
-                        precio_final: citaExistente.precio_final
+                        precio_total: precioFinal
                     });
                 }
             }
 
+            // ✅ FEATURE: Actualizar servicios si se proporciona servicios_ids
+            if (datosActualizacion.servicios_ids && Array.isArray(datosActualizacion.servicios_ids)) {
+                const CitaServicioModel = require('./cita-servicio.model');
+
+                logger.info('[CitaBaseModel.actualizarEstandar] 🔄 Actualizando servicios', {
+                    cita_id: citaId,
+                    cantidad_servicios: datosActualizacion.servicios_ids.length
+                });
+
+                // Validar servicios
+                await CitaServicioModel.validarServiciosOrganizacion(
+                    datosActualizacion.servicios_ids,
+                    organizacionId
+                );
+
+                // Obtener información completa de servicios
+                const serviciosData = await Promise.all(
+                    datosActualizacion.servicios_ids.map(async (servicioId, index) => {
+                        const servicio = await CitaHelpersModel.obtenerServicioCompleto(
+                            servicioId,
+                            organizacionId,
+                            db
+                        );
+
+                        const servicioData = datosActualizacion.servicios_data?.[index] || {};
+
+                        return {
+                            servicio_id: servicioId,
+                            orden_ejecucion: index + 1,
+                            precio_aplicado: servicioData.precio_aplicado || servicio.precio || 0.00,
+                            duracion_minutos: servicioData.duracion_minutos || servicio.duracion_minutos || 0,
+                            descuento: servicioData.descuento || 0.00,
+                            notas: servicioData.notas || null
+                        };
+                    })
+                );
+
+                // Calcular nuevos totales
+                const { precio_total, duracion_total_minutos } = CitaServicioModel.calcularTotales(serviciosData);
+
+                // Agregar totales a datosActualizacion
+                datosActualizacion.precio_total = precio_total;
+                datosActualizacion.duracion_total_minutos = duracion_total_minutos;
+
+                // DELETE servicios actuales
+                await db.query('DELETE FROM citas_servicios WHERE cita_id = $1', [citaId]);
+
+                // INSERT nuevos servicios (replicamos lógica para evitar nested transaction)
+                const values = [];
+                const placeholders = [];
+                let paramCountServ = 1;
+
+                serviciosData.forEach((servicio) => {
+                    placeholders.push(
+                        `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6})`
+                    );
+
+                    values.push(
+                        citaId,
+                        servicio.servicio_id,
+                        servicio.orden_ejecucion,
+                        servicio.precio_aplicado,
+                        servicio.duracion_minutos,
+                        servicio.descuento,
+                        servicio.notas
+                    );
+
+                    paramCountServ += 7;
+                });
+
+                await db.query(`
+                    INSERT INTO citas_servicios (
+                        cita_id, servicio_id, orden_ejecucion,
+                        precio_aplicado, duracion_minutos, descuento, notas
+                    ) VALUES ${placeholders.join(', ')}
+                `, values);
+
+                logger.info('[CitaBaseModel.actualizarEstandar] ✅ Servicios actualizados', {
+                    cita_id: citaId,
+                    cantidad: serviciosData.length
+                });
+            }
+
             // Construir query de actualización dinámicamente
             const camposActualizables = [
-                'profesional_id', 'servicio_id', 'fecha_cita', 'hora_inicio', 'hora_fin',
-                'precio_servicio', 'descuento', 'precio_final', 'estado', 'metodo_pago',
+                'profesional_id', 'fecha_cita', 'hora_inicio', 'hora_fin',
+                // ✅ servicio_id ELIMINADO - Ahora se usa citas_servicios
+                // ✅ precio_servicio, descuento, precio_final ELIMINADOS
+                'precio_total', 'duracion_total_minutos', // ✅ Nuevos campos
+                'estado', 'metodo_pago',
                 'pagado', 'notas_cliente', 'notas_profesional', 'notas_internas',
                 'motivo_cancelacion', 'calificacion_cliente', 'comentario_cliente'
             ];
@@ -470,6 +689,7 @@ class CitaBaseModel {
      * Listar citas con filtros avanzados
      * @param {Object} filtros - Filtros de búsqueda y paginación
      * @returns {Promise<Object>} Citas y total
+     * ✅ FEATURE: Usa JSON_AGG para obtener múltiples servicios (evita N+1 queries)
      */
     static async listarConFiltros(filtros) {
         return await RLSContextManager.query(filtros.organizacion_id, async (db) => {
@@ -507,10 +727,24 @@ class CitaBaseModel {
                 params.push(filtros.profesional_id);
             }
 
+            // ✅ Filtro por servicio_id MODIFICADO - Ahora busca en citas_servicios
             if (filtros.servicio_id) {
                 paramCount++;
-                whereConditions.push(`c.servicio_id = $${paramCount}`);
+                whereConditions.push(`EXISTS (
+                    SELECT 1 FROM citas_servicios cs
+                    WHERE cs.cita_id = c.id AND cs.servicio_id = $${paramCount}
+                )`);
                 params.push(filtros.servicio_id);
+            }
+
+            // ✅ NUEVO: Filtro por múltiples servicios (array)
+            if (filtros.servicios_ids && Array.isArray(filtros.servicios_ids) && filtros.servicios_ids.length > 0) {
+                paramCount++;
+                whereConditions.push(`EXISTS (
+                    SELECT 1 FROM citas_servicios cs
+                    WHERE cs.cita_id = c.id AND cs.servicio_id = ANY($${paramCount}::int[])
+                )`);
+                params.push(filtros.servicios_ids);
             }
 
             if (filtros.busqueda) {
@@ -537,20 +771,34 @@ class CitaBaseModel {
             const totalResult = await db.query(countQuery, params);
             const total = parseInt(totalResult.rows[0].total);
 
-            // Obtener datos paginados
+            // Obtener datos paginados con servicios (JSON_AGG)
             const dataQuery = `
                 SELECT
                     c.*,
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
                     p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre,
-                    s.duracion_minutos as duracion_minutos
+                    -- ✅ Servicios como JSON array (evita N+1 queries)
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', cs.id,
+                                'servicio_id', cs.servicio_id,
+                                'servicio_nombre', s.nombre,
+                                'orden_ejecucion', cs.orden_ejecucion,
+                                'precio_aplicado', cs.precio_aplicado,
+                                'duracion_minutos', cs.duracion_minutos
+                            ) ORDER BY cs.orden_ejecucion
+                        ) FILTER (WHERE cs.id IS NOT NULL),
+                        '[]'::json
+                    ) as servicios
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE ${whereClause}
+                GROUP BY c.id, cl.id, p.id
                 ${orderClause}
                 LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
             `;

@@ -62,7 +62,12 @@ class CitaOperacionalController {
 
     static complete = asyncHandler(async (req, res) => {
         const citaId = parseInt(req.params.id);
-        const { notas_finalizacion, precio_final_real, metodo_pago } = req.body;
+        const {
+            notas_finalizacion,
+            precio_total_real,      // ✅ Nuevo campo
+            precio_final_real,      // ⚠️ Deprecated - backward compatibility
+            metodo_pago
+        } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
         const citaExistente = await CitaModel.obtenerPorId(citaId, organizacionId);
@@ -81,9 +86,12 @@ class CitaOperacionalController {
             return ResponseHelper.error(res, 'No autorizado para esta cita', 403);
         }
 
+        // ✅ Soportar ambos campos (nuevo y deprecated) con fallback a precio_total de la cita
+        const precioFinalReal = precio_total_real || precio_final_real || citaExistente.precio_total;
+
         const resultado = await CitaModel.complete(citaId, {
             notas_finalizacion,
-            precio_final_real: precio_final_real || citaExistente.precio_final,
+            precio_final_real: precioFinalReal,
             metodo_pago,
             usuario_id: req.user.id,
             ip_origen: req.ip
@@ -156,6 +164,7 @@ class CitaOperacionalController {
             cliente_id,
             profesional_id,
             servicio_id,
+            servicios_ids, // ✅ NUEVO: Múltiples servicios
             nombre_cliente,
             telefono,
             tiempo_espera_aceptado,
@@ -185,6 +194,7 @@ class CitaOperacionalController {
                 cliente_id,
                 profesional_id,
                 servicio_id,
+                servicios_ids, // ✅ NUEVO: Múltiples servicios
                 nombre_cliente,
                 telefono,
                 tiempo_espera_aceptado,

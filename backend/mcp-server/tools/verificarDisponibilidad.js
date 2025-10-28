@@ -4,8 +4,12 @@
  * ====================================================================
  *
  * Herramienta MCP para verificar horarios disponibles en una fecha específica.
+ * ✅ FEATURE: Soporta múltiples servicios (1-10 servicios)
+ * ✅ BACKWARD COMPATIBLE: Acepta servicio_id (singular) o servicios_ids (array)
  *
- * Llamada al backend: GET /api/v1/disponibilidad
+ * Llamada al backend:
+ * 1. GET /api/v1/servicios/:id (validar TODOS los servicios)
+ * 2. GET /api/v1/disponibilidad (buscar slots con duración total)
  */
 
 const Joi = require('joi');
@@ -18,9 +22,18 @@ const logger = require('../utils/logger');
 const inputSchema = {
   type: 'object',
   properties: {
+    servicios_ids: {
+      type: 'array',
+      description: 'Array de IDs de servicios a consultar (1-10 servicios)',
+      items: {
+        type: 'number',
+      },
+      minItems: 1,
+      maxItems: 10,
+    },
     servicio_id: {
       type: 'number',
-      description: 'ID del servicio a consultar',
+      description: 'ID del servicio a consultar (DEPRECATED: usar servicios_ids)',
     },
     fecha: {
       type: 'string',
@@ -38,17 +51,28 @@ const inputSchema = {
     },
     duracion: {
       type: 'number',
-      description: 'Duración en minutos del servicio (opcional)',
+      description: 'Duración en minutos (opcional, se calcula automáticamente si se proporcionan servicios_ids)',
     },
   },
-  required: ['servicio_id', 'fecha'],
+  required: ['fecha'],
 };
 
 /**
  * Schema Joi para validación estricta
  */
 const joiSchema = Joi.object({
-  servicio_id: Joi.number().integer().positive().required(),
+  // ✅ Nuevo: Array de servicios (1-10 servicios)
+  servicios_ids: Joi.array()
+    .items(Joi.number().integer().positive())
+    .min(1)
+    .max(10)
+    .optional()
+    .messages({
+      'array.min': 'Debes proporcionar al menos 1 servicio',
+      'array.max': 'No puedes consultar más de 10 servicios',
+    }),
+  // ⚠️ DEPRECATED: Mantener backward compatibility
+  servicio_id: Joi.number().integer().positive().optional(),
   fecha: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).required()
     .messages({
       'string.pattern.base': 'fecha debe tener formato DD/MM/YYYY',
@@ -59,7 +83,12 @@ const joiSchema = Joi.object({
       'string.pattern.base': 'hora debe tener formato HH:MM',
     }),
   duracion: Joi.number().integer().min(10).max(480).optional(),
-});
+})
+  // Validar que al menos uno de los dos campos esté presente
+  .or('servicios_ids', 'servicio_id')
+  .messages({
+    'object.missing': 'Debes proporcionar servicios_ids (recomendado) o servicio_id',
+  });
 
 /**
  * Función principal de ejecución
@@ -88,15 +117,71 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 2. Convertir fecha DD/MM/YYYY a YYYY-MM-DD ==========
+    // ========== 2. Normalizar servicios (backward compatibility) ==========
+    let serviciosIds = [];
+    if (value.servicios_ids && Array.isArray(value.servicios_ids)) {
+      serviciosIds = value.servicios_ids;
+    } else if (value.servicio_id) {
+      // Backward compatibility: convertir servicio_id a array
+      serviciosIds = [value.servicio_id];
+      logger.warn('[verificarDisponibilidad] ⚠️ DEPRECATED: servicio_id usado en lugar de servicios_ids', {
+        servicio_id: value.servicio_id
+      });
+    }
+
+    logger.info('[verificarDisponibilidad] Consultando disponibilidad para múltiples servicios', {
+      cantidad_servicios: serviciosIds.length,
+      servicios_ids: serviciosIds,
+      fecha: value.fecha
+    });
+
+    // ========== 3. Crear cliente API con token del chatbot ==========
+    const apiClient = createApiClient(jwtToken);
+
+    // ========== 4. VALIDAR TODOS LOS SERVICIOS y calcular duración total ==========
+    let duracionTotalMinutos = 0;
+    const serviciosData = [];
+
+    try {
+      // Validar y obtener información de TODOS los servicios
+      for (const servicioId of serviciosIds) {
+        const servicio = await apiClient.get(`/api/v1/servicios/${servicioId}`);
+        const servicioInfo = servicio.data.data;
+
+        duracionTotalMinutos += servicioInfo.duracion_minutos || 0;
+        serviciosData.push({
+          id: servicioInfo.id,
+          nombre: servicioInfo.nombre,
+          duracion_minutos: servicioInfo.duracion_minutos,
+          precio: servicioInfo.precio
+        });
+
+        logger.info(`✅ Servicio ${servicioId} validado: ${servicioInfo.nombre} (${servicioInfo.duracion_minutos}min)`);
+      }
+
+      logger.info(`✅ TODOS los servicios validados. Duración total: ${duracionTotalMinutos} minutos`, {
+        cantidad: serviciosData.length,
+        servicios: serviciosData.map(s => s.nombre).join(', ')
+      });
+    } catch (error) {
+      logger.error('[verificarDisponibilidad] Error validando servicios:', error.response?.data || error.message);
+      return {
+        success: false,
+        message: `Servicio no encontrado o inactivo. Por favor verifica los IDs de servicios proporcionados.`,
+        data: null,
+      };
+    }
+
+    // ========== 5. Convertir fecha DD/MM/YYYY a YYYY-MM-DD ==========
     const [dia, mes, anio] = value.fecha.split('/');
     const fechaISO = `${anio}-${mes}-${dia}`;
 
-    // ========== 3. Preparar parámetros para backend ==========
+    // ========== 6. Preparar parámetros para backend ==========
     const params = {
       fecha: fechaISO,
-      servicio_id: value.servicio_id,
-      solo_disponibles: true, // Solo mostrar slots disponibles
+      servicio_id: serviciosIds[0],      // ✅ Primer servicio (requerido por backend)
+      duracion: value.duracion || duracionTotalMinutos,  // ✅ Duración total o manual
+      solo_disponibles: true,            // Solo mostrar slots disponibles
     };
 
     // Agregar parámetros opcionales si se proporcionan
@@ -108,25 +193,22 @@ async function execute(args, jwtToken) {
       params.hora = value.hora;
     }
 
-    if (value.duracion) {
-      params.duracion = value.duracion;
-    }
+    logger.info('Consultando disponibilidad con duración total:', {
+      ...params,
+      cantidad_servicios: serviciosIds.length,
+      duracion_total_minutos: duracionTotalMinutos
+    });
 
-    logger.info('Consultando disponibilidad:', params);
-
-    // ========== 4. Crear cliente API con token del chatbot ==========
-    const apiClient = createApiClient(jwtToken);
-
-    // ========== 5. Llamar al NUEVO endpoint de disponibilidad ==========
+    // ========== 7. Llamar al endpoint de disponibilidad ==========
     const response = await apiClient.get('/api/v1/disponibilidad', {
       params,
     });
 
     const data = response.data.data;
 
-    logger.info(`Disponibilidad obtenida para servicio ${value.servicio_id}`);
+    logger.info(`Disponibilidad obtenida para ${serviciosIds.length} servicio(s)`);
 
-    // ========== 6. Si se especificó hora, buscar ese slot específico ==========
+    // ========== 8. Si se especificó hora, buscar ese slot específico ==========
     if (value.hora) {
       const slotBuscado = this._buscarSlotEspecifico(
         data,
@@ -134,10 +216,14 @@ async function execute(args, jwtToken) {
         value.profesional_id
       );
 
+      const mensajeServicios = serviciosIds.length > 1
+        ? ` para ${serviciosIds.length} servicios (${duracionTotalMinutos} minutos)`
+        : '';
+
       return {
         success: true,
         message: slotBuscado.disponible
-          ? `Sí, hay disponibilidad el ${value.fecha} a las ${value.hora}${slotBuscado.profesional ? ` con ${slotBuscado.profesional}` : ''}`
+          ? `Sí, hay disponibilidad el ${value.fecha} a las ${value.hora}${mensajeServicios}${slotBuscado.profesional ? ` con ${slotBuscado.profesional}` : ''}`
           : `No disponible: ${slotBuscado.razon}`,
         data: {
           disponible: slotBuscado.disponible,
@@ -145,19 +231,33 @@ async function execute(args, jwtToken) {
           hora: value.hora,
           profesional: slotBuscado.profesional,
           razon: slotBuscado.razon,
+          // ✅ Información de múltiples servicios
+          servicios_ids: serviciosIds,
+          servicios: serviciosData.map(s => s.nombre).join(', '),
+          cantidad_servicios: serviciosIds.length,
+          duracion_total_minutos: duracionTotalMinutos,
         },
       };
     }
 
-    // ========== 7. Si NO se especificó hora, retornar primeros N slots disponibles ==========
+    // ========== 9. Si NO se especificó hora, retornar primeros N slots disponibles ==========
     if (data.disponibilidad_por_fecha.length === 0) {
+      const mensajeServicios = serviciosIds.length > 1
+        ? ` para ${serviciosIds.length} servicios (${duracionTotalMinutos} minutos)`
+        : '';
+
       return {
         success: true,
-        message: `No hay disponibilidad para el ${value.fecha}`,
+        message: `No hay disponibilidad${mensajeServicios} para el ${value.fecha}`,
         data: {
           fecha: value.fecha,
           disponible: false,
           profesionales_disponibles: [],
+          // ✅ Información de múltiples servicios
+          servicios_ids: serviciosIds,
+          servicios: serviciosData.map(s => s.nombre).join(', '),
+          cantidad_servicios: serviciosIds.length,
+          duracion_total_minutos: duracionTotalMinutos,
         },
       };
     }
@@ -170,14 +270,23 @@ async function execute(args, jwtToken) {
       total_disponibles: prof.total_slots_disponibles,
     }));
 
+    const mensajeServicios = serviciosIds.length > 1
+      ? ` para ${serviciosIds.length} servicios (${duracionTotalMinutos} minutos)`
+      : '';
+
     return {
       success: true,
-      message: `Disponibilidad consultada para ${value.fecha}. ${fecha.total_slots_disponibles_dia} slots disponibles.`,
+      message: `Disponibilidad consultada${mensajeServicios} para ${value.fecha}. ${fecha.total_slots_disponibles_dia} slots disponibles.`,
       data: {
         fecha: value.fecha,
         disponible: fecha.total_slots_disponibles_dia > 0,
         profesionales_disponibles: profesionalesConSlots,
         total_slots: fecha.total_slots_disponibles_dia,
+        // ✅ Información de múltiples servicios
+        servicios_ids: serviciosIds,
+        servicios: serviciosData.map(s => s.nombre).join(', '),
+        cantidad_servicios: serviciosIds.length,
+        duracion_total_minutos: duracionTotalMinutos,
       },
     };
 
@@ -192,9 +301,12 @@ async function execute(args, jwtToken) {
       const { status, data } = error.response;
 
       if (status === 404) {
+        const serviciosMensaje = args.servicios_ids
+          ? `uno o más servicios en [${args.servicios_ids.join(', ')}]`
+          : `servicio con ID ${args.servicio_id}`;
         return {
           success: false,
-          message: `Servicio con ID ${args.servicio_id} no encontrado`,
+          message: `${serviciosMensaje} no encontrado`,
           data: null,
         };
       }
@@ -278,7 +390,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
 
 module.exports = {
   name: 'verificarDisponibilidad',
-  description: 'Verifica los horarios disponibles para un servicio en una fecha específica. Retorna lista de profesionales con horarios disponibles. Puedes consultar un horario específico o ver todos los disponibles.',
+  description: 'Verifica los horarios disponibles para uno o múltiples servicios (1-10) en una fecha específica. Calcula automáticamente la duración total y busca slots continuos disponibles. Retorna lista de profesionales con horarios disponibles. Puedes consultar un horario específico o ver todos los disponibles. Soporta backward compatibility con servicio_id único.',
   inputSchema,
   execute,
   _buscarSlotEspecifico,

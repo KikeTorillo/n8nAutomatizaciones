@@ -19,27 +19,11 @@ class CitaRecordatoriosModel {
 
     static async obtenerCitasParaRecordatorio(organizacionId, horasAnticipacion = 2) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const citas = await db.query(`
-                SELECT
-                    c.id,
-                    c.codigo_cita,
-                    c.fecha_cita,
-                    c.hora_inicio,
-                    cl.nombre as cliente_nombre,
-                    cl.telefono as cliente_telefono,
-                    p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre
-                FROM citas c
-                JOIN clientes cl ON c.cliente_id = cl.id
-                JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
-                WHERE c.organizacion_id = $1
-                AND c.estado = 'confirmada'
-                AND c.recordatorio_enviado = false
-                AND (c.fecha_cita + c.hora_inicio)::timestamp <= NOW() + INTERVAL '${horasAnticipacion} hours'
-                AND (c.fecha_cita + c.hora_inicio)::timestamp > NOW()
-                ORDER BY c.fecha_cita, c.hora_inicio
-            `, [organizacionId]);
+            // ✅ FIX GAP #4: Usar CitaServicioQueries para manejar múltiples servicios
+            const CitaServicioQueries = require('./cita-servicio.queries');
+            const query = CitaServicioQueries.buildRecordatoriosConServicios();
+
+            const citas = await db.query(query, [organizacionId, horasAnticipacion]);
 
             return citas.rows;
         });

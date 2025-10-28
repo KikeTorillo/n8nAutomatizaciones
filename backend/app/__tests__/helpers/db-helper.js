@@ -74,7 +74,8 @@ async function cleanAllTables(client) {
   //             fallarán silenciosamente, y luego la limpiamos manualmente
   // ⚠️ NO incluir tablas de datos maestros: planes_subscripcion, plantillas_servicios
   const tables = [
-    'citas',                      // Depende de: clientes, profesionales, servicios
+    'citas_servicios',            // ✅ NUEVO - Depende de: citas, servicios
+    'citas',                      // Depende de: clientes, profesionales (servicio_id eliminado)
     'servicios_profesionales',    // Depende de: servicios, profesionales
     'bloqueos_horarios',          // Depende de: profesionales, organizaciones
     'horarios_profesionales',     // Depende de: profesionales
@@ -326,38 +327,146 @@ async function createTestServicio(client, organizacionId, data = {}, profesional
 
 /**
  * Crear cita de prueba (SIN codigo_cita, se auto-genera)
+ * ✅ FEATURE: Soporta múltiples servicios mediante servicios_ids array
+ *
  * @param {Object} client - Cliente de PostgreSQL
  * @param {number} organizacionId - ID de la organización
  * @param {Object} data - Datos de la cita
- * @returns {Object} Cita creada
+ * @param {number} data.cliente_id - ID del cliente
+ * @param {number} data.profesional_id - ID del profesional
+ * @param {Array<number>|number} data.servicios_ids - Array de IDs de servicios (o servicio_id único para backward compatibility)
+ * @param {Array<Object>} [data.servicios_data] - Datos opcionales por servicio (precio_aplicado, duracion_minutos, descuento, notas)
+ * @param {string} data.fecha_cita - Fecha de la cita
+ * @param {string} data.hora_inicio - Hora de inicio
+ * @param {string} data.hora_fin - Hora de fin
+ * @param {number} [data.precio_total] - Precio total (auto-calculado si no se proporciona)
+ * @param {number} [data.duracion_total_minutos] - Duración total (auto-calculada si no se proporciona)
+ * @param {string} [data.estado='pendiente'] - Estado de la cita
+ * @param {boolean} [data.pagado=false] - Si está pagada
+ * @param {string} [data.motivo_cancelacion] - Motivo de cancelación
+ * @returns {Object} Cita creada con servicios asociados
  */
 async function createTestCita(client, organizacionId, data) {
   await setRLSContext(client, organizacionId);
 
+  // ✅ BACKWARD COMPATIBILITY: Normalizar servicio_id → servicios_ids array
+  let serviciosIds = [];
+  if (data.servicios_ids && Array.isArray(data.servicios_ids)) {
+    serviciosIds = data.servicios_ids;
+  } else if (data.servicio_id) {
+    serviciosIds = [data.servicio_id];
+    logger.debug('[createTestCita] ⚠️ DEPRECATED: servicio_id usado, convertido a servicios_ids array');
+  } else {
+    throw new Error('Se requiere servicios_ids (array) o servicio_id (deprecated)');
+  }
+
+  // Obtener información completa de los servicios para calcular totales
+  const serviciosInfo = await client.query(
+    `SELECT id, nombre, precio, duracion_minutos
+     FROM servicios
+     WHERE id = ANY($1::int[]) AND organizacion_id = $2 AND activo = true`,
+    [serviciosIds, organizacionId]
+  );
+
+  if (serviciosInfo.rows.length !== serviciosIds.length) {
+    throw new Error(`Algunos servicios no existen: ${serviciosIds.join(', ')}`);
+  }
+
+  // Construir serviciosData con precios y duraciones
+  const serviciosData = serviciosInfo.rows.map((servicio, index) => {
+    // Si se proporcionó servicios_data, usarlo; si no, usar valores del catálogo
+    const customData = data.servicios_data && data.servicios_data[index] ? data.servicios_data[index] : {};
+
+    return {
+      servicio_id: servicio.id,
+      orden_ejecucion: index + 1,
+      precio_aplicado: customData.precio_aplicado || servicio.precio || 0.00,
+      duracion_minutos: customData.duracion_minutos || servicio.duracion_minutos || 30,
+      descuento: customData.descuento || 0.00,
+      notas: customData.notas || null
+    };
+  });
+
+  // Calcular totales (aplicando descuentos)
+  let precio_total = 0;
+  let duracion_total_minutos = 0;
+
+  serviciosData.forEach(servicio => {
+    const precioConDescuento = servicio.precio_aplicado - (servicio.precio_aplicado * servicio.descuento / 100);
+    precio_total += precioConDescuento;
+    duracion_total_minutos += servicio.duracion_minutos;
+  });
+
+  // Redondear precio a 2 decimales
+  precio_total = Math.round(precio_total * 100) / 100;
+
+  // Permitir override manual de totales (útil para tests específicos)
+  if (data.precio_total !== undefined) {
+    precio_total = data.precio_total;
+  }
+  if (data.duracion_total_minutos !== undefined) {
+    duracion_total_minutos = data.duracion_total_minutos;
+  }
+
   // ✅ CRÍTICO: NO enviar codigo_cita (auto-generado por trigger)
+  // ✅ NUEVO ESQUEMA: sin servicio_id, sin precio_servicio/precio_final
   const result = await client.query(
     `INSERT INTO citas (
-      organizacion_id, cliente_id, profesional_id, servicio_id,
-      fecha_cita, hora_inicio, hora_fin, precio_servicio, precio_final, estado, pagado, motivo_cancelacion
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+      organizacion_id, cliente_id, profesional_id,
+      fecha_cita, hora_inicio, hora_fin,
+      precio_total, duracion_total_minutos,
+      estado, pagado, motivo_cancelacion
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
     RETURNING *`,
     [
       organizacionId,
       data.cliente_id,
       data.profesional_id,
-      data.servicio_id,
       data.fecha_cita,
       data.hora_inicio,
       data.hora_fin,
-      data.precio_servicio,
-      data.precio_final,
+      precio_total,
+      duracion_total_minutos,
       data.estado || 'pendiente',
       data.pagado !== undefined ? data.pagado : false,
       data.motivo_cancelacion || null
     ]
   );
 
-  return result.rows[0];
+  const cita = result.rows[0];
+
+  // ✅ NUEVO: Insertar servicios en citas_servicios
+  const values = [];
+  const placeholders = [];
+  let paramCount = 1;
+
+  serviciosData.forEach((servicio) => {
+    placeholders.push(
+      `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+    );
+    values.push(
+      cita.id,
+      servicio.servicio_id,
+      servicio.orden_ejecucion,
+      servicio.precio_aplicado,
+      servicio.duracion_minutos,
+      servicio.descuento,
+      servicio.notas
+    );
+    paramCount += 7;
+  });
+
+  await client.query(
+    `INSERT INTO citas_servicios (
+      cita_id, servicio_id, orden_ejecucion,
+      precio_aplicado, duracion_minutos, descuento, notas
+    ) VALUES ${placeholders.join(', ')}`,
+    values
+  );
+
+  logger.debug(`✓ Cita creada con ${serviciosData.length} servicio(s): ID=${cita.id}, precio_total=${precio_total}`);
+
+  return cita;
 }
 
 /**

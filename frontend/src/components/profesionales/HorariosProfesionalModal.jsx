@@ -10,6 +10,7 @@ import {
   useEliminarHorario,
 } from '@/hooks/useHorarios';
 import { useToast } from '@/hooks/useToast';
+import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Días de la semana (0=Domingo, 6=Sábado según ISO)
@@ -101,7 +102,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
         hora_fin: `${horaFin}:00`,
         tipo_horario: tipoHorario,
         nombre_horario: nombreHorario.trim() || 'Horario Laboral',
-        fecha_inicio: new Date().toISOString().split('T')[0],
+        fecha_inicio: aFormatoISO(new Date()), // ✅ FIX: Usar fecha LOCAL
       };
 
       const resultado = await crearMutation.mutateAsync(data);

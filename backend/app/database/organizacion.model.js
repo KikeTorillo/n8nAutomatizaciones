@@ -309,7 +309,7 @@ class OrganizacionModel {
                         AND c.fecha_cita < ${fechaFin}
                         AND c.estado = 'cancelada'
                     ) as citas_canceladas,
-                    COALESCE(SUM(c.precio_final) FILTER (
+                    COALESCE(SUM(c.precio_total) FILTER (
                         WHERE c.fecha_cita >= ${fechaInicio}
                         AND c.fecha_cita < ${fechaFin}
                         AND c.estado = 'completada'

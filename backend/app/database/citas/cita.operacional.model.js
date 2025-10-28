@@ -61,11 +61,12 @@ class CitaOperacionalModel {
 
     static async complete(citaId, datosCompletado, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // ✅ precio_final → precio_total
             const resultado = await db.query(`
                 UPDATE citas
                 SET hora_fin_real = NOW(),
                     estado = 'completada',
-                    precio_final = $1,
+                    precio_total = $1,
                     metodo_pago = $2,
                     pagado = true,
                     notas_profesional = COALESCE(notas_profesional, '') || $3,
@@ -74,7 +75,7 @@ class CitaOperacionalModel {
                 WHERE id = $5 AND organizacion_id = $6
                 RETURNING *
             `, [
-                datosCompletado.precio_final_real,
+                datosCompletado.precio_total_real || datosCompletado.precio_final_real, // ✅ Backward compatibility
                 datosCompletado.metodo_pago,
                 datosCompletado.notas_finalizacion ? `\nCompletado: ${datosCompletado.notas_finalizacion}` : '',
                 datosCompletado.usuario_id,
@@ -169,6 +170,9 @@ class CitaOperacionalModel {
 
     static async obtenerDashboardToday(organizacionId, profesionalId = null) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // ✅ FIX GAP #7: Usar CitaServicioQueries para manejar múltiples servicios
+            const CitaServicioQueries = require('./cita-servicio.queries');
+
             let whereClause = 'WHERE c.organizacion_id = $1 AND c.fecha_cita = CURRENT_DATE';
             let params = [organizacionId];
 
@@ -177,27 +181,10 @@ class CitaOperacionalModel {
                 params.push(profesionalId);
             }
 
-            const citas = await db.query(`
-                SELECT
-                    c.*,
-                    cl.nombre as cliente_nombre,
-                    cl.telefono as cliente_telefono,
-                    p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre,
-                    s.duracion_minutos,
-                    CASE
-                        WHEN c.hora_llegada IS NOT NULL AND c.hora_inicio_real IS NOT NULL
-                        THEN EXTRACT(EPOCH FROM (c.hora_inicio_real - c.hora_llegada))/60
-                        ELSE NULL
-                    END as tiempo_espera_minutos_calculado
-                FROM citas c
-                JOIN clientes cl ON c.cliente_id = cl.id
-                JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
-                ${whereClause}
-                ORDER BY c.hora_inicio ASC
-            `, params);
+            const queryDashboard = CitaServicioQueries.buildDashboardConServicios(whereClause);
+            const citas = await db.query(queryDashboard, params);
 
+            // ✅ precio_final → precio_total
             const metricas = await db.query(`
                 SELECT
                     COUNT(*) as total_citas,
@@ -206,7 +193,7 @@ class CitaOperacionalModel {
                     COUNT(*) FILTER (WHERE estado = 'no_asistio') as no_shows,
                     COUNT(*) FILTER (WHERE estado = 'en_curso') as en_progreso,
                     COUNT(*) FILTER (WHERE origen_cita = 'walk_in') as walk_ins,
-                    COALESCE(SUM(precio_final) FILTER (WHERE estado = 'completada' AND pagado = true), 0) as ingresos_dia
+                    COALESCE(SUM(precio_total) FILTER (WHERE estado = 'completada' AND pagado = true), 0) as ingresos_dia
                 FROM citas
                 WHERE organizacion_id = $1 AND fecha_cita = CURRENT_DATE
                 ${profesionalId ? 'AND profesional_id = $2' : ''}
@@ -237,6 +224,7 @@ class CitaOperacionalModel {
                 params.push(profesionalId);
             }
 
+            // ✅ JOIN con servicios ELIMINADO - Ahora usa duracion_total_minutos de citas
             const cola = await db.query(`
                 SELECT
                     c.id,
@@ -244,17 +232,28 @@ class CitaOperacionalModel {
                     c.hora_inicio,
                     c.hora_llegada,
                     c.estado,
+                    c.duracion_total_minutos,
                     cl.nombre as cliente_nombre,
                     p.nombre_completo as profesional_nombre,
-                    s.nombre as servicio_nombre,
-                    s.duracion_minutos,
+                    -- ✅ Servicios como JSON array (evita N+1 queries)
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'nombre', s.nombre,
+                                'duracion_minutos', cs.duracion_minutos
+                            ) ORDER BY cs.orden_ejecucion
+                        ) FILTER (WHERE cs.id IS NOT NULL),
+                        '[]'::json
+                    ) as servicios,
                     EXTRACT(EPOCH FROM (NOW() - c.hora_llegada))/60 as minutos_esperando,
                     ROW_NUMBER() OVER (PARTITION BY c.profesional_id ORDER BY c.hora_llegada) as posicion_cola
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                JOIN servicios s ON c.servicio_id = s.id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN servicios s ON cs.servicio_id = s.id
                 ${whereClause}
+                GROUP BY c.id, cl.id, p.id
                 ORDER BY c.profesional_id, c.hora_llegada
             `, params);
 
@@ -269,6 +268,7 @@ class CitaOperacionalModel {
 
     static async obtenerMetricasTiempoReal(organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // ✅ precio_final → precio_total
             const metricas = await db.query(`
                 SELECT
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE) as citas_hoy,
@@ -276,8 +276,8 @@ class CitaOperacionalModel {
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'en_curso') as en_progreso_hoy,
                     COUNT(*) FILTER (WHERE fecha_cita = CURRENT_DATE AND origen_cita = 'walk_in') as walkins_hoy,
                     COUNT(*) FILTER (WHERE fecha_cita >= DATE_TRUNC('week', CURRENT_DATE)) as citas_semana,
-                    COALESCE(SUM(precio_final) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'completada' AND pagado = true), 0) as ingresos_hoy,
-                    COALESCE(SUM(precio_final) FILTER (WHERE fecha_cita >= DATE_TRUNC('week', CURRENT_DATE) AND estado = 'completada' AND pagado = true), 0) as ingresos_semana,
+                    COALESCE(SUM(precio_total) FILTER (WHERE fecha_cita = CURRENT_DATE AND estado = 'completada' AND pagado = true), 0) as ingresos_hoy,
+                    COALESCE(SUM(precio_total) FILTER (WHERE fecha_cita >= DATE_TRUNC('week', CURRENT_DATE) AND estado = 'completada' AND pagado = true), 0) as ingresos_semana,
                     AVG(tiempo_espera_minutos) FILTER (WHERE fecha_cita >= CURRENT_DATE - INTERVAL '7 days' AND tiempo_espera_minutos IS NOT NULL) as tiempo_espera_promedio,
                     ROUND(
                         COUNT(*) FILTER (WHERE fecha_cita >= CURRENT_DATE - INTERVAL '30 days' AND estado = 'no_asistio') * 100.0 /
@@ -300,12 +300,13 @@ class CitaOperacionalModel {
                 ORDER BY total DESC
             `, [organizacionId]);
 
+            // ✅ precio_final → precio_total
             const profesionales = await db.query(`
                 SELECT
                     p.nombre_completo as nombre,
                     COUNT(*) as citas_hoy,
                     COUNT(*) FILTER (WHERE c.estado = 'completada') as completadas,
-                    COALESCE(SUM(c.precio_final) FILTER (WHERE c.estado = 'completada' AND c.pagado = true), 0) as ingresos
+                    COALESCE(SUM(c.precio_total) FILTER (WHERE c.estado = 'completada' AND c.pagado = true), 0) as ingresos
                 FROM citas c
                 JOIN profesionales p ON c.profesional_id = p.id
                 WHERE c.organizacion_id = $1
@@ -326,11 +327,49 @@ class CitaOperacionalModel {
 
     static async crearWalkIn(datosWalkIn, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
-            // 1. Validar servicio
-            const servicio = await CitaHelpersModel.obtenerServicioCompleto(datosWalkIn.servicio_id, organizacionId, db);
-            if (!servicio) {
-                throw new Error('Servicio no encontrado o inactivo');
+            // ✅ FEATURE: Soporte para múltiples servicios (pero walk-ins típicamente usan 1 servicio)
+            // Aceptar servicio_id (único) o servicios_ids (array)
+            let serviciosIds = [];
+            if (datosWalkIn.servicios_ids && Array.isArray(datosWalkIn.servicios_ids)) {
+                serviciosIds = datosWalkIn.servicios_ids;
+            } else if (datosWalkIn.servicio_id) {
+                serviciosIds = [datosWalkIn.servicio_id]; // Backward compatibility
+            } else {
+                throw new Error('Se requiere servicio_id o servicios_ids');
             }
+
+            // 1. Validar servicios
+            const CitaServicioModel = require('./cita-servicio.model');
+            await CitaServicioModel.validarServiciosOrganizacion(serviciosIds, organizacionId);
+
+            // Obtener información completa de TODOS los servicios
+            const serviciosInfo = await Promise.all(
+                serviciosIds.map(async (servicioId) => {
+                    const servicio = await CitaHelpersModel.obtenerServicioCompleto(servicioId, organizacionId, db);
+                    if (!servicio) {
+                        throw new Error(`Servicio ${servicioId} no encontrado o inactivo`);
+                    }
+                    return servicio;
+                })
+            );
+
+            // Calcular totales
+            const serviciosData = serviciosInfo.map((servicio, index) => ({
+                servicio_id: servicio.id,
+                orden_ejecucion: index + 1,
+                precio_aplicado: servicio.precio || 0.00,
+                duracion_minutos: servicio.duracion_minutos || 30,
+                descuento: 0.00,
+                notas: null
+            }));
+
+            const { precio_total, duracion_total_minutos } = CitaServicioModel.calcularTotales(serviciosData);
+
+            logger.info('[crearWalkIn] Servicios validados', {
+                cantidad: serviciosIds.length,
+                precio_total,
+                duracion_total_minutos
+            });
 
             // 2. Resolver cliente (existente o crear nuevo)
             let clienteId = datosWalkIn.cliente_id;
@@ -371,7 +410,7 @@ class CitaOperacionalModel {
             if (!profesionalId) {
                 // Auto-asignar profesional usando disponibilidad inmediata
                 const disponibilidad = await this.consultarDisponibilidadInmediata(
-                    datosWalkIn.servicio_id,
+                    serviciosIds[0], // Usar primer servicio para búsqueda
                     null, // sin filtro de profesional
                     organizacionId
                 );
@@ -394,7 +433,8 @@ class CitaOperacionalModel {
             const ahoraLocal = DateTime.now().setZone(zonaHoraria);
             const ahora = ahoraLocal.toJSDate(); // Para compatibilidad con código existente
             const fechaHoy = ahoraLocal.toFormat('yyyy-MM-dd');
-            const duracionEstimada = servicio.duracion_minutos || 30;
+            // ✅ Usar duracion_total_minutos calculado desde múltiples servicios
+            const duracionEstimada = duracion_total_minutos;
             const horaActual = ahoraLocal.toFormat('HH:mm:ss'); // Hora local
             const diaSemanaActual = ahoraLocal.weekday === 7 ? 0 : ahoraLocal.weekday; // Luxon: 1=lunes...7=domingo, JS: 0=domingo...6=sábado
 
@@ -423,6 +463,7 @@ class CitaOperacionalModel {
 
             // Buscar si el profesional tiene una cita en curso (sin terminar)
             // Solo consideramos 'en_curso' porque es el único estado donde el profesional está REALMENTE ocupado
+            // ✅ JOIN con servicios ELIMINADO - Ahora usa duracion_total_minutos de citas
             const citaActual = await db.query(`
                 SELECT
                     c.id,
@@ -431,13 +472,13 @@ class CitaOperacionalModel {
                     c.hora_inicio_real,
                     c.hora_fin_real,
                     c.hora_inicio,
+                    c.duracion_total_minutos,
                     COALESCE(
                         c.hora_fin_real,
-                        c.hora_inicio_real + (COALESCE(s.duracion_minutos, 30)) * INTERVAL '1 minute',
-                        CURRENT_TIMESTAMP + (COALESCE(s.duracion_minutos, 30)) * INTERVAL '1 minute'
+                        c.hora_inicio_real + (COALESCE(c.duracion_total_minutos, 30)) * INTERVAL '1 minute',
+                        CURRENT_TIMESTAMP + (COALESCE(c.duracion_total_minutos, 30)) * INTERVAL '1 minute'
                     ) as fin_estimado
                 FROM citas c
-                JOIN servicios s ON c.servicio_id = s.id
                 WHERE c.profesional_id = $1
                   AND c.organizacion_id = $2
                   AND c.fecha_cita = $3
@@ -547,40 +588,40 @@ class CitaOperacionalModel {
             }
 
             // 6. Crear cita con horarios calculados según disponibilidad
+            // ✅ servicio_id, precio_servicio, descuento, precio_final ELIMINADOS
+            // ✅ precio_total, duracion_total_minutos AGREGADOS
             const citaInsert = await db.query(`
                 INSERT INTO citas (
-                    organizacion_id, cliente_id, profesional_id, servicio_id,
+                    organizacion_id, cliente_id, profesional_id,
                     fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
-                    zona_horaria, precio_servicio, descuento, precio_final,
+                    zona_horaria, precio_total, duracion_total_minutos,
                     estado, metodo_pago, pagado,
                     notas_cliente, notas_internas,
                     confirmacion_requerida, recordatorio_enviado,
                     creado_por, ip_origen, origen_cita, origen_aplicacion, creado_en
                 ) VALUES (
-                    $1, $2, $3, $4,
-                    $5, $6::time, $7::time, NOW(), $8,
-                    $9, $10, $11, $12,
-                    $13, $14, $15,
+                    $1, $2, $3,
+                    $4, $5::time, $6::time, NOW(), $7,
+                    $8, $9, $10,
+                    $11, $12, $13,
+                    $14, $15,
                     $16, $17,
-                    $18, $19,
-                    $20, $21, $22, $23, NOW()
+                    $18, $19, $20, $21, NOW()
                 ) RETURNING
-                    id, organizacion_id, codigo_cita, cliente_id, profesional_id, servicio_id,
+                    id, organizacion_id, codigo_cita, cliente_id, profesional_id,
                     fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
-                    precio_final, estado, origen_cita, creado_en
+                    precio_total, duracion_total_minutos, estado, origen_cita, creado_en
             `, [
                 organizacionId,
                 clienteId,
                 profesionalId,
-                datosWalkIn.servicio_id,
                 fechaHoy,
                 horaInicio,        // Calculada según disponibilidad
                 horaFin,           // Calculada según disponibilidad
                 horaInicioReal,    // NOW() si disponible, NULL si en cola
                 zonaHoraria,       // Zona horaria de la organización
-                servicio.precio || 0,
-                0,
-                servicio.precio || 0,
+                precio_total,      // ✅ Total calculado desde múltiples servicios
+                duracion_total_minutos, // ✅ Duración total calculada
                 estado,            // 'en_curso' o 'confirmada' según disponibilidad
                 null,  // metodo_pago
                 false, // pagado
@@ -596,7 +637,43 @@ class CitaOperacionalModel {
 
             const citaCreada = citaInsert.rows[0];
 
+            // ✅ FEATURE: Insertar servicios en citas_servicios
+            const valuesServicios = [];
+            const placeholdersServicios = [];
+            let paramCountServ = 1;
+
+            serviciosData.forEach((servicio) => {
+                placeholdersServicios.push(
+                    `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6})`
+                );
+
+                valuesServicios.push(
+                    citaCreada.id,
+                    servicio.servicio_id,
+                    servicio.orden_ejecucion,
+                    servicio.precio_aplicado,
+                    servicio.duracion_minutos,
+                    servicio.descuento,
+                    servicio.notas
+                );
+
+                paramCountServ += 7;
+            });
+
+            await db.query(`
+                INSERT INTO citas_servicios (
+                    cita_id, servicio_id, orden_ejecucion,
+                    precio_aplicado, duracion_minutos, descuento, notas
+                ) VALUES ${placeholdersServicios.join(', ')}
+            `, valuesServicios);
+
+            logger.info('[crearWalkIn] Servicios insertados en citas_servicios', {
+                cita_id: citaCreada.id,
+                cantidad: serviciosData.length
+            });
+
             // Registrar evento de auditoría
+            // ✅ servicios_ids en lugar de servicio_id único
             await CitaHelpersModel.registrarEventoAuditoria({
                 organizacion_id: organizacionId,
                 tipo_evento: 'cita_creada',
@@ -608,7 +685,10 @@ class CitaOperacionalModel {
                     profesional_auto_asignado: !datosWalkIn.profesional_id,
                     cliente_id: clienteId,
                     cliente_creado: !datosWalkIn.cliente_id,
-                    servicio_id: datosWalkIn.servicio_id,
+                    servicios_ids: serviciosIds, // ✅ Array de servicios
+                    cantidad_servicios: serviciosIds.length,
+                    precio_total,
+                    duracion_total_minutos,
                     hora_llegada: citaCreada.hora_llegada,
                     hora_inicio_real: citaCreada.hora_inicio_real,
                     origen: 'walk_in'

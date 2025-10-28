@@ -99,12 +99,12 @@ describe('🔁 Consistencia: Command-Query Validation', () => {
       const cita = await createTestCita(client, organizacionId, {
         cliente_id: clienteId,
         profesional_id: profesionalId,
-        servicio_id: servicioId,
+        servicios_ids: [servicioId], // ✅ Array
         fecha_cita: '2025-11-03',
         hora_inicio: '10:00:00',
         hora_fin: '10:30:00',
-        precio_servicio: 150,
-        precio_final: 150,
+        precio_total: 150, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada',
       });
       citaExistenteId = cita.id;
@@ -219,12 +219,12 @@ describe('🔁 Consistencia: Command-Query Validation', () => {
       const citaCancelada = await createTestCita(client, organizacionId, {
         cliente_id: clienteId,
         profesional_id: profesionalId,
-        servicio_id: servicioId,
+        servicios_ids: [servicioId], // ✅ Array
         fecha_cita: '2025-11-03',
         hora_inicio: '12:00:00',
         hora_fin: '12:30:00',
-        precio_servicio: 150,
-        precio_final: 150,
+        precio_total: 150, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'cancelada',
         motivo_cancelacion: 'Test de consistencia',
       });

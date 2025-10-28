@@ -116,12 +116,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const cita = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '10:00:00',
         hora_fin: '10:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'pendiente'
       });
       tempClient.release();
@@ -159,7 +159,7 @@ describe('Validación de Estados de Transición - Citas', () => {
       const completar = await request(app)
         .post(`/api/v1/citas/${cita.id}/complete`)
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ precio_final: 150.00 })
+        .send({ precio_total_real: 150.00 }) // ✅ Nuevo campo
         .expect(200);
 
       expect(completar.body.success).toBe(true);
@@ -188,12 +188,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaCompletada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '11:00:00',
         hora_fin: '11:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'completada',
         pagado: true // Requerido por constraint
       });
@@ -221,12 +221,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaCompletada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '12:00:00',
         hora_fin: '12:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'completada',
         pagado: true
       });
@@ -252,12 +252,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaCancelada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '13:00:00',
         hora_fin: '13:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'cancelada',
         motivo_cancelacion: 'Test cancelación de transición'
       });
@@ -283,12 +283,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaPendiente = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '14:00:00',
         hora_fin: '14:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'pendiente'
       });
       tempClient.release();
@@ -311,12 +311,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaConfirmada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '15:00:00',
         hora_fin: '15:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada'
       });
       tempClient.release();
@@ -325,7 +325,7 @@ describe('Validación de Estados de Transición - Citas', () => {
       const response = await request(app)
         .post(`/api/v1/citas/${citaConfirmada.id}/complete`)
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ precio_final: 150.00 });
+        .send({ precio_total_real: 150.00 }) // ✅ Nuevo campo;
 
       // Debe fallar
       expect([400, 409]).toContain(response.status);
@@ -346,12 +346,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaConfirmada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '16:00:00',
         hora_fin: '16:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada'
       });
       tempClient.release();
@@ -430,12 +430,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaCompletada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '10:00:00',
         hora_fin: '10:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'completada',
         pagado: true
       });
@@ -489,12 +489,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaPendiente = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '10:00:00',
         hora_fin: '10:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'pendiente'
       });
       tempClient.release();
@@ -525,12 +525,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaConfirmada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '11:00:00',
         hora_fin: '11:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada'
       });
       tempClient.release();
@@ -561,12 +561,12 @@ describe('Validación de Estados de Transición - Citas', () => {
       const citaCompletada = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '12:00:00',
         hora_fin: '12:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'completada',
         pagado: true
       });

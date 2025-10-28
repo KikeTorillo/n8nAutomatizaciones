@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from './useToast';
+import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**
  * Hooks personalizados para gestión de citas
@@ -71,7 +72,10 @@ export function useCita(id) {
  * const { data: citasHoy, isLoading } = useCitasDelDia();
  */
 export function useCitasDelDia() {
-  const hoy = new Date().toISOString().split('T')[0];
+  // ✅ FIX: Usar fecha LOCAL en vez de UTC para evitar problemas de zona horaria
+  // ANTES (BUG): new Date().toISOString().split('T')[0] → convierte a UTC
+  // AHORA: aFormatoISO() usa date-fns format() que respeta zona horaria local
+  const hoy = aFormatoISO(new Date());
 
   return useQuery({
     queryKey: ['citas', 'hoy', hoy],

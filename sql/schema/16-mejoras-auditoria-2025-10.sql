@@ -258,15 +258,17 @@ Query: SELECT nombre, precio, duracion FROM servicios
        ORDER BY creado_en;';
 
 -- 3.4 Índice covering para citas del día (dashboard operacional)
+-- ✅ ACTUALIZADO 2025-10-26: Eliminado servicio_id (ahora en citas_servicios M:N)
 CREATE INDEX IF NOT EXISTS idx_citas_dia_covering
 ON citas (organizacion_id, fecha_cita, estado)
-INCLUDE (cliente_id, profesional_id, servicio_id, hora_inicio, hora_fin, notas_cliente, precio_final)
+INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, notas_cliente, precio_total, duracion_total_minutos)
 WHERE estado IN ('confirmada', 'en_curso');
 
 COMMENT ON INDEX idx_citas_dia_covering IS
 'Índice covering para vista de citas del día (dashboard principal).
 Incluye todas las columnas necesarias para mostrar agenda sin JOIN.
-Performance crítica para: Dashboard en tiempo real, vista de calendario.';
+Performance crítica para: Dashboard en tiempo real, vista de calendario.
+NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N). Agregados precio_total y duracion_total_minutos.';
 
 DO $$
 BEGIN
@@ -360,15 +362,17 @@ COMMENT ON INDEX idx_usuarios_email_activo IS
 Índice parcial solo para usuarios activos (reduce tamaño 30%).';
 
 -- 5.2 Índice para historial de citas por cliente
+-- ✅ ACTUALIZADO 2025-10-26: Eliminado servicio_id (M:N), precio_final → precio_total
 CREATE INDEX IF NOT EXISTS idx_citas_cliente_historial
 ON citas (cliente_id, fecha_cita DESC)
-INCLUDE (profesional_id, servicio_id, estado, precio_final)
+INCLUDE (profesional_id, estado, precio_total, duracion_total_minutos)
 WHERE estado IN ('completada', 'cancelada', 'no_asistio');
 
 COMMENT ON INDEX idx_citas_cliente_historial IS
 'Optimiza consulta de historial de citas por cliente.
 Query: SELECT * FROM citas WHERE cliente_id = ? ORDER BY fecha_cita DESC;
-Usado en: Perfil de cliente, análisis de comportamiento.';
+Usado en: Perfil de cliente, análisis de comportamiento.
+NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N).';
 
 -- 5.3 Índice para agenda de profesional
 CREATE INDEX IF NOT EXISTS idx_citas_profesional_agenda

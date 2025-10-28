@@ -131,12 +131,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: getFechaManana(),
         hora_inicio: '10:00',
         hora_fin: '11:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Debe tener codigo_cita generado
@@ -148,12 +148,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: getFechaManana(),
         hora_inicio: '11:00',
         hora_fin: '12:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Formato: ORG001-20251010-001
@@ -165,12 +165,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: getFechaManana(),
         hora_inicio: '12:00',
         hora_fin: '13:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Extraer parte de organización (ORG001 -> 001 -> 1)
@@ -221,12 +221,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita2 = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '10:00',
         hora_fin: '11:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       const cita3 = await createTestCita(client, org1.id, {
@@ -273,12 +273,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const citaOrg2 = await createTestCita(client, org2.id, {
         cliente_id: cliente2.id,
         profesional_id: profesional2.id,
-        servicio_id: servicio2.id,
+        servicios_ids: [servicio2.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '14:00',
         hora_fin: '15:00',
-        precio_servicio: 200.00,
-        precio_final: 200.00
+        precio_total: 200.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Códigos deben ser diferentes
@@ -317,12 +317,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita2 = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: fechaCita2,
         hora_inicio: '09:00',
         hora_fin: '10:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Secuencia de fecha 2 debe empezar en 001
@@ -341,25 +341,25 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita1 = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '10:00',
         hora_fin: '11:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       // Intentar insertar segunda cita con codigo_cita duplicado (forzando)
       try {
         await client.query(`
           INSERT INTO citas (
-            organizacion_id, cliente_id, profesional_id, servicio_id,
-            fecha_cita, hora_inicio, hora_fin, precio_servicio, precio_final,
+            organizacion_id, cliente_id, profesional_id,
+            fecha_cita, hora_inicio, hora_fin, precio_total, duracion_total_minutos,
             codigo_cita
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         `, [
-          org1.id, cliente1.id, profesional1.id, servicio1.id,
-          fechaCita, '11:00', '12:00', 100.00, 100.00,
+          org1.id, cliente1.id, profesional1.id,
+          fechaCita, '11:00', '12:00', 100.00, 60,
           cita1.codigo_cita  // ❌ Forzar duplicado
         ]);
 
@@ -380,12 +380,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
         organizacion_id: org1.id,
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: getFechaManana(),
         hora_inicio: '15:00',
-        hora_fin: '16:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        hora_fin: '16:00'
+        // ✅ precio_servicio, precio_final ya no se envían
+        // El backend calcula precio_total y duracion_total_minutos automáticamente
       };
 
       const nuevaCita = await CitaModel.crearEstandar(citaData, usuario1.id);
@@ -401,12 +401,12 @@ describe('✨ Auto-generación de codigo_cita', () => {
       const cita = await createTestCita(client, org1.id, {
         cliente_id: cliente1.id,
         profesional_id: profesional1.id,
-        servicio_id: servicio1.id,
+        servicios_ids: [servicio1.id], // ✅ Array
         fecha_cita: getFechaManana(),
         hora_inicio: '16:00',
         hora_fin: '17:00',
-        precio_servicio: 100.00,
-        precio_final: 100.00
+        precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 60
       });
 
       await setRLSContext(client, org1.id);

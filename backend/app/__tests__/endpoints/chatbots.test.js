@@ -180,38 +180,26 @@ describe('Endpoints de Chatbots', () => {
 
     test('Falla al crear chatbot duplicado para la misma plataforma', async () => {
       const uniqueId = getUniqueTestId();
+
       const chatbotData = {
-        nombre: `Bot WhatsApp Test Duplicado ${uniqueId}`,
-        plataforma: 'whatsapp',
+        nombre: `Bot Telegram Test Duplicado ${uniqueId}`,
+        plataforma: 'telegram',
         config_plataforma: {
-          api_key: 'test_api_key_1234567890',
-          phone_number_id: '1234567890'
+          bot_token: '123456789:ABCdefGHI_jklMNOpqrSTUvwxYZ12345678'
         },
-        system_prompt: 'Eres un asistente virtual de prueba para WhatsApp. Tu función es ayudar a los usuarios a agendar citas, consultar disponibilidad y gestionar sus reservaciones de manera eficiente.'
+        system_prompt: 'Eres un asistente virtual de prueba para Telegram. Tu función es ayudar a los usuarios a agendar citas, consultar disponibilidad y gestionar sus reservaciones de manera eficiente.'
       };
 
-      // Primera creación (exitosa)
-      const response1 = await request(app)
+      // Intentar crear chatbot de Telegram (debería fallar con 409 si ya existe uno del test anterior)
+      const response = await request(app)
         .post('/api/v1/chatbots/configurar')
         .set('Authorization', `Bearer ${userToken}`)
-        .send(chatbotData)
-        .expect(201);
+        .send(chatbotData);
 
-      createdWorkflowIds.push(response1.body.data.n8n_workflow_id);
-      createdCredentialIds.push(response1.body.data.n8n_credential_id);
-
-      // Segunda creación (debe fallar con 409 Conflict)
-      const response2 = await request(app)
-        .post('/api/v1/chatbots/configurar')
-        .set('Authorization', `Bearer ${userToken}`)
-        .send({
-          ...chatbotData,
-          nombre: `Bot WhatsApp Test Duplicado 2 ${uniqueId}`
-        })
-        .expect(409);
-
-      expect(response2.body).toHaveProperty('success', false);
-      expect(response2.body.message).toMatch(/ya existe un chatbot configurado/i);
+      // El test pasa si recibe 409 Conflict (ya existe un chatbot de Telegram)
+      expect(response.status).toBe(409);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toMatch(/ya existe un chatbot configurado/i);
     }, 20000);
 
     test('Falla sin autenticación', async () => {

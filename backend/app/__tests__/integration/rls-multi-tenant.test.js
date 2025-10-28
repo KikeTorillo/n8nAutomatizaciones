@@ -62,12 +62,12 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
     cita1 = await createTestCita(client, org1.id, {
       cliente_id: cliente1.id,
       profesional_id: profesional1.id,
-      servicio_id: servicio1.id,
+      servicios_ids: [servicio1.id], // ✅ Array
       fecha_cita: fechaCitaStr,
       hora_inicio: '10:00',
       hora_fin: '11:00',
-      precio_servicio: 100.00,
-      precio_final: 100.00
+      precio_total: 100.00, // ✅ Reemplaza precio_servicio + precio_final
+      duracion_total_minutos: 60
     });
 
     // Crear datos para org2
@@ -88,12 +88,12 @@ describe('🔒 RLS Multi-Tenant - Aislamiento de Datos', () => {
     cita2 = await createTestCita(client, org2.id, {
       cliente_id: cliente2.id,
       profesional_id: profesional2.id,
-      servicio_id: servicio2.id,
+      servicios_ids: [servicio2.id], // ✅ Array
       fecha_cita: fechaCitaStr,
       hora_inicio: '14:00',
       hora_fin: '15:00',
-      precio_servicio: 200.00,
-      precio_final: 200.00
+      precio_total: 200.00, // ✅ Reemplaza precio_servicio + precio_final
+      duracion_total_minutos: 60
     });
   });
 

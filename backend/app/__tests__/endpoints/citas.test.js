@@ -112,12 +112,12 @@ describe('Endpoints de Citas', () => {
     testCita = await createTestCita(client, testOrg.id, {
       cliente_id: testCliente.id,
       profesional_id: testProfesional.id,
-      servicio_id: testServicio.id,
+      servicios_ids: [testServicio.id], // ✅ Ahora usa array de servicios
       fecha_cita: fechaCita,
       hora_inicio: '10:00:00',
       hora_fin: '10:30:00',
-      precio_servicio: 150.00,
-      precio_final: 150.00,
+      precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+      duracion_total_minutos: 30,
       estado: 'pendiente'
     });
 
@@ -166,13 +166,12 @@ describe('Endpoints de Citas', () => {
       const citaData = {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Ahora es array
         fecha_cita: fechaCita,
         hora_inicio: '11:00:00',
-        hora_fin: '11:30:00',
-        precio_servicio: 150.00,
-        descuento: 0.00,
-        precio_final: 150.00
+        hora_fin: '11:30:00'
+        // ✅ precio_servicio, descuento, precio_final ya no se envían
+        // El backend calcula precio_total y duracion_total_minutos automáticamente
       };
 
       const response = await request(app)
@@ -191,7 +190,10 @@ describe('Endpoints de Citas', () => {
       expect(response.body.data.estado).toBe('pendiente');
       expect(response.body.data.cliente_id).toBe(testCliente.id);
       expect(response.body.data.profesional_id).toBe(testProfesional.id);
-      expect(response.body.data.servicio_id).toBe(testServicio.id);
+
+      // ✅ NUEVO: Validar totales calculados automáticamente
+      expect(parseFloat(response.body.data.precio_total)).toBe(150.00);
+      expect(response.body.data.duracion_total_minutos).toBe(30);
     });
 
     test('Falla sin autenticación', async () => {
@@ -205,13 +207,10 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: testCliente.id,
           profesional_id: testProfesional.id,
-          servicio_id: testServicio.id,
+          servicios_ids: [testServicio.id], // ✅ Array
           fecha_cita: fechaCita,
           hora_inicio: '12:00:00',
-          hora_fin: '12:30:00',
-          precio_servicio: 150.00,
-          descuento: 0.00,
-          precio_final: 150.00
+          hora_fin: '12:30:00'
         })
         .expect(401);
 
@@ -383,12 +382,12 @@ describe('Endpoints de Citas', () => {
       const citaCheckIn = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '14:00:00',
         hora_fin: '14:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada'
       });
       tempClient.release();
@@ -425,12 +424,12 @@ describe('Endpoints de Citas', () => {
       const citaStart = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '15:00:00',
         hora_fin: '15:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'confirmada'
       });
       tempClient.release();
@@ -467,12 +466,12 @@ describe('Endpoints de Citas', () => {
       const citaComplete = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '16:00:00',
         hora_fin: '16:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'en_curso'
       });
       tempClient.release();
@@ -480,7 +479,7 @@ describe('Endpoints de Citas', () => {
       const response = await request(app)
         .post(`/api/v1/citas/${citaComplete.id}/complete`)
         .set('Authorization', `Bearer ${userToken}`)
-        .send({ precio_final: 150.00 })
+        .send({ precio_total_real: 150.00 }) // ✅ Nuevo campo
         .expect(200);
 
       expect(response.body).toHaveProperty('success', true);
@@ -489,7 +488,7 @@ describe('Endpoints de Citas', () => {
     test('Falla sin autenticación', async () => {
       const response = await request(app)
         .post(`/api/v1/citas/${testCita.id}/complete`)
-        .send({ precio_final: 150.00 })
+        .send({ precio_total_real: 150.00 }) // ✅ Nuevo campo
         .expect(401);
 
       expect(response.body).toHaveProperty('success', false);
@@ -572,12 +571,12 @@ describe('Endpoints de Citas', () => {
       const tempCita = await createTestCita(tempClient, testOrg.id, {
         cliente_id: testCliente.id,
         profesional_id: testProfesional.id,
-        servicio_id: testServicio.id,
+        servicios_ids: [testServicio.id], // ✅ Array
         fecha_cita: fechaCita,
         hora_inicio: '17:00:00',
         hora_fin: '17:30:00',
-        precio_servicio: 150.00,
-        precio_final: 150.00,
+        precio_total: 150.00, // ✅ Reemplaza precio_servicio + precio_final
+        duracion_total_minutos: 30,
         estado: 'pendiente'
       });
       tempClient.release();
@@ -704,7 +703,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: testCliente.id,
           // NO enviar profesional_id
-          servicio_id: testServicio.id,
+          servicios_ids: [testServicio.id], // ✅ Array
           tiempo_espera_aceptado: 5,
           notas_walk_in: 'Test auto-asignación profesional'
         });
@@ -731,7 +730,7 @@ describe('Endpoints de Citas', () => {
           nombre_cliente: nombreNuevo,
           telefono: telefonoNuevo,
           // NO enviar profesional_id
-          servicio_id: testServicio.id,
+          servicios_ids: [testServicio.id], // ✅ Array
           tiempo_espera_aceptado: 10,
           notas_walk_in: 'Test cliente nuevo + auto-asignación'
         });
@@ -763,7 +762,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: testCliente.id,
           profesional_id: testProfesional2.id, // Específico
-          servicio_id: testServicio.id,
+          servicios_ids: [testServicio.id], // ✅ Array
           tiempo_espera_aceptado: 0
         });
 
@@ -778,7 +777,7 @@ describe('Endpoints de Citas', () => {
         .send({
           // NO enviar cliente_id
           // NO enviar nombre_cliente
-          servicio_id: testServicio.id
+          servicios_ids: [testServicio.id] // ✅ Array
         });
 
       expect(response.status).toBe(400);
@@ -793,7 +792,7 @@ describe('Endpoints de Citas', () => {
           cliente_id: testCliente.id,
           nombre_cliente: 'Juan Test',
           telefono: '3222222222',
-          servicio_id: testServicio.id
+          servicios_ids: [testServicio.id] // ✅ Array
         });
 
       expect(response.status).toBe(400);
@@ -814,7 +813,7 @@ describe('Endpoints de Citas', () => {
         .set('Authorization', `Bearer ${userToken}`)
         .send({
           cliente_id: testCliente.id,
-          servicio_id: testServicio.id
+          servicios_ids: [testServicio.id] // ✅ Array
         });
 
       expect(response.status).toBe(400);
@@ -839,7 +838,7 @@ describe('Endpoints de Citas', () => {
         .send({
           nombre_cliente: nombreSinTel,
           // NO enviar telefono (es opcional ahora)
-          servicio_id: testServicio.id,
+          servicios_ids: [testServicio.id], // ✅ Array
           notas_walk_in: 'Cliente walk-in sin teléfono'
         });
 
@@ -870,7 +869,7 @@ describe('Endpoints de Citas', () => {
         .send({
           nombre_cliente: 'Test Teléfono Inválido',
           telefono: 'INVALIDO123', // Formato inválido
-          servicio_id: testServicio.id
+          servicios_ids: [testServicio.id] // ✅ Array
         });
 
       expect(response.status).toBe(400);
@@ -948,7 +947,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: clienteTest.id,
           profesional_id: profesionalTest.id,
-          servicio_id: servicioAsignado.id,
+          servicios_ids: [servicioAsignado.id], // ✅ Array
           fecha_cita: fechaCita,
           hora_inicio: '10:00',
           hora_fin: '10:30'
@@ -957,8 +956,10 @@ describe('Endpoints de Citas', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveProperty('codigo_cita');
-      expect(response.body.data.servicio_id).toBe(servicioAsignado.id);
       expect(response.body.data.profesional_id).toBe(profesionalTest.id);
+      // ✅ Verificar totales calculados
+      expect(parseFloat(response.body.data.precio_total)).toBeGreaterThan(0);
+      expect(response.body.data.duracion_total_minutos).toBeGreaterThan(0);
     });
 
     test('❌ Debe rechazar cita si profesional no tiene el servicio asignado', async () => {
@@ -972,7 +973,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: clienteTest.id,
           profesional_id: profesionalTest.id,
-          servicio_id: servicioNoAsignado.id,
+          servicios_ids: [servicioNoAsignado.id], // ✅ Array
           fecha_cita: fechaCita,
           hora_inicio: '11:00',
           hora_fin: '12:00'
@@ -995,7 +996,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: clienteTest.id,
           profesional_id: profesionalTest.id,
-          servicio_id: servicioNoAsignado.id,
+          servicios_ids: [servicioNoAsignado.id], // ✅ Array
           fecha_cita: fechaCita,
           hora_inicio: '11:00',
           hora_fin: '12:00'
@@ -1026,7 +1027,7 @@ describe('Endpoints de Citas', () => {
         .send({
           cliente_id: clienteTest.id,
           profesional_id: profesionalTest.id,
-          servicio_id: servicioAsignado.id,
+          servicios_ids: [servicioAsignado.id], // ✅ Array
           fecha_cita: fechaCita,
           hora_inicio: '13:00',
           hora_fin: '13:30'

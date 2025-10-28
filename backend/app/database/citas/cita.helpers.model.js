@@ -81,24 +81,28 @@ class CitaHelpersModel {
     }
 
     static async insertarCitaCompleta(citaData, db) {
+        // ✅ FEATURE: Soporte para múltiples servicios
+        // servicio_id, precio_servicio, descuento, precio_final ELIMINADOS
+        // precio_total y duracion_total_minutos AGREGADOS
         const cita = await db.query(`
             INSERT INTO citas (
-                organizacion_id, cliente_id, profesional_id, servicio_id,
-                fecha_cita, hora_inicio, hora_fin, zona_horaria, precio_servicio,
-                descuento, precio_final, estado, metodo_pago, pagado,
+                organizacion_id, cliente_id, profesional_id,
+                fecha_cita, hora_inicio, hora_fin, zona_horaria,
+                precio_total, duracion_total_minutos,
+                estado, metodo_pago, pagado,
                 notas_cliente, notas_internas, confirmacion_requerida,
                 confirmada_por_cliente, recordatorio_enviado, creado_por,
                 ip_origen, user_agent, origen_aplicacion, creado_en
             ) VALUES (
                 $1, $2, $3, $4, $5, $6, $7, $8, $9,
-                $10, $11, $12, $13, $14, $15, $16, $17,
-                $18, $19, $20, $21, $22, $23, NOW()
+                $10, $11, $12, $13, $14, $15,
+                $16, $17, $18, $19, $20, $21, NOW()
             ) RETURNING *
         `, [
             citaData.organizacion_id, citaData.cliente_id,
-            citaData.profesional_id, citaData.servicio_id, citaData.fecha_cita,
+            citaData.profesional_id, citaData.fecha_cita,
             citaData.hora_inicio, citaData.hora_fin, citaData.zona_horaria,
-            citaData.precio_servicio, citaData.descuento, citaData.precio_final,
+            citaData.precio_total, citaData.duracion_total_minutos,
             citaData.estado, citaData.metodo_pago, citaData.pagado,
             citaData.notas_cliente, citaData.notas_internas, citaData.confirmacion_requerida,
             citaData.confirmada_por_cliente, citaData.recordatorio_enviado,
@@ -133,7 +137,21 @@ class CitaHelpersModel {
         }
     }
 
-    static async validarEntidadesRelacionadas(clienteId, profesionalId, servicioId, organizacionId, db) {
+    /**
+     * Validar entidades relacionadas (cliente, profesional, servicios)
+     * ✅ FEATURE: Ahora acepta servicio_id (backward compatibility) o serviciosIds (array)
+     * @param {number} clienteId - ID del cliente
+     * @param {number} profesionalId - ID del profesional
+     * @param {number|Array<number>} servicioIdOArray - ID de servicio único o array de IDs
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} db - Conexión de base de datos
+     * @returns {Promise<boolean>} true si todas las validaciones pasan
+     */
+    static async validarEntidadesRelacionadas(clienteId, profesionalId, servicioIdOArray, organizacionId, db) {
+        // Normalizar a array (backward compatibility)
+        let serviciosIds = Array.isArray(servicioIdOArray) ? servicioIdOArray : [servicioIdOArray];
+
+        // 1. Validar cliente
         const cliente = await db.query(
             'SELECT id FROM clientes WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [clienteId, organizacionId]
@@ -142,55 +160,67 @@ class CitaHelpersModel {
             throw new Error('Cliente no encontrado o inactivo');
         }
 
+        // 2. Validar profesional
         const profesional = await db.query(
-            'SELECT id FROM profesionales WHERE id = $1 AND organizacion_id = $2 AND activo = true',
+            'SELECT id, nombre_completo FROM profesionales WHERE id = $1 AND organizacion_id = $2 AND activo = true',
             [profesionalId, organizacionId]
         );
         if (profesional.rows.length === 0) {
             throw new Error('Profesional no encontrado o inactivo');
         }
 
-        const servicio = await db.query(
-            'SELECT id FROM servicios WHERE id = $1 AND organizacion_id = $2 AND activo = true',
-            [servicioId, organizacionId]
+        const nombreProfesional = profesional.rows[0].nombre_completo;
+
+        // 3. Validar que TODOS los servicios existen y están activos
+        const servicios = await db.query(
+            'SELECT id, nombre FROM servicios WHERE id = ANY($1::int[]) AND organizacion_id = $2 AND activo = true',
+            [serviciosIds, organizacionId]
         );
-        if (servicio.rows.length === 0) {
-            throw new Error('Servicio no encontrado o inactivo');
+
+        if (servicios.rows.length !== serviciosIds.length) {
+            const encontrados = servicios.rows.map(s => s.id);
+            const faltantes = serviciosIds.filter(id => !encontrados.includes(id));
+            throw new Error(`Los siguientes servicios no existen o están inactivos: ${faltantes.join(', ')}`);
         }
 
-        // Validación mejorada con verificación de estado activo y nombres
-        const servicioprofesional = await db.query(
-            `SELECT sp.id, sp.activo,
-                    s.nombre as servicio_nombre,
-                    p.nombre_completo as profesional_nombre
+        // 4. Validar que el profesional tiene TODOS los servicios asignados
+        const serviciosProfesional = await db.query(
+            `SELECT sp.servicio_id, sp.activo,
+                    s.nombre as servicio_nombre
              FROM servicios_profesionales sp
              JOIN servicios s ON sp.servicio_id = s.id
-             JOIN profesionales p ON sp.profesional_id = p.id
-             WHERE sp.profesional_id = $1 AND sp.servicio_id = $2`,
-            [profesionalId, servicioId]
+             WHERE sp.profesional_id = $1 AND sp.servicio_id = ANY($2::int[])`,
+            [profesionalId, serviciosIds]
         );
 
-        if (servicioprofesional.rows.length === 0) {
-            // Obtener nombres para mensaje más claro
-            const [profesional, servicio] = await Promise.all([
-                db.query('SELECT nombre_completo FROM profesionales WHERE id = $1', [profesionalId]),
-                db.query('SELECT nombre FROM servicios WHERE id = $1', [servicioId])
-            ]);
+        // Verificar que encontramos TODAS las asignaciones
+        const serviciosAsignados = serviciosProfesional.rows.map(sp => sp.servicio_id);
+        const serviciosSinAsignar = serviciosIds.filter(id => !serviciosAsignados.includes(id));
 
-            const nombreProfesional = profesional.rows[0]?.nombre_completo || 'Desconocido';
-            const nombreServicio = servicio.rows[0]?.nombre || 'Desconocido';
+        if (serviciosSinAsignar.length > 0) {
+            // Obtener nombres de servicios sin asignar
+            const nombresSinAsignar = servicios.rows
+                .filter(s => serviciosSinAsignar.includes(s.id))
+                .map(s => s.nombre);
 
+            // Mensaje genérico que funciona para singular y plural
+            const servicioTexto = nombresSinAsignar.length === 1 ? 'el servicio' : 'los servicios';
             throw new Error(
-                `El profesional "${nombreProfesional}" no tiene asignado el servicio "${nombreServicio}". ` +
-                `Por favor asigna el servicio al profesional desde la página de Servicios antes de crear la cita.`
+                `El profesional "${nombreProfesional}" no tiene asignado ${servicioTexto}: ${nombresSinAsignar.join(', ')}. ` +
+                `Por favor asigna ${servicioTexto} al profesional desde la página de Servicios antes de crear la cita.`
             );
         }
 
-        if (!servicioprofesional.rows[0].activo) {
+        // Verificar que TODAS las asignaciones están activas
+        const serviciosInactivos = serviciosProfesional.rows.filter(sp => !sp.activo);
+        if (serviciosInactivos.length > 0) {
+            const nombresInactivos = serviciosInactivos.map(sp => sp.servicio_nombre);
+            const estaEstanTexto = nombresInactivos.length === 1 ? 'está inactiva' : 'están inactivas';
+            const reactivalaTexto = nombresInactivos.length === 1 ? 'reactívala' : 'reactívalas';
+
             throw new Error(
-                `La asignación del servicio "${servicioprofesional.rows[0].servicio_nombre}" ` +
-                `al profesional "${servicioprofesional.rows[0].profesional_nombre}" está inactiva. ` +
-                `Por favor reactívala desde la página de Servicios antes de crear la cita.`
+                `La asignación ${estaEstanTexto} para "${nombreProfesional}": ${nombresInactivos.join(', ')}. ` +
+                `Por favor ${reactivalaTexto} desde la página de Servicios antes de crear la cita.`
             );
         }
 

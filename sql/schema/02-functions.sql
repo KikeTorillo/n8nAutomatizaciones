@@ -459,21 +459,28 @@ BEGIN
     -- ═══════════════════════════════════════════════════════════════════
     -- VALIDAR EXISTENCIA Y COHERENCIA DEL SERVICIO
     -- ═══════════════════════════════════════════════════════════════════
-    SELECT organizacion_id INTO servicio_org
-    FROM servicios
-    WHERE id = NEW.servicio_id;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'Servicio con ID % no existe', NEW.servicio_id
-            USING HINT = 'Verificar que el servicio esté registrado en la base de datos',
-                  ERRCODE = 'foreign_key_violation';
-    END IF;
-
-    IF servicio_org != NEW.organizacion_id THEN
-        RAISE EXCEPTION 'Incoherencia organizacional: servicio % (org:%) no pertenece a organización %',
-            NEW.servicio_id, servicio_org, NEW.organizacion_id
-            USING HINT = 'El servicio debe pertenecer a la misma organización que la cita';
-    END IF;
+    -- ⚠️ NOTA: Con el esquema M:N (múltiples servicios por cita),
+    -- los servicios ahora están en la tabla citas_servicios.
+    -- La validación de servicios se realiza en:
+    -- 1. El backend (CitaServicioModel.validarServiciosOrganizacion)
+    -- 2. Trigger en citas_servicios (si existe)
+    --
+    -- Esta validación ya NO aplica porque citas.servicio_id fue ELIMINADO
+    -- SELECT organizacion_id INTO servicio_org
+    -- FROM servicios
+    -- WHERE id = NEW.servicio_id;
+    --
+    -- IF NOT FOUND THEN
+    --     RAISE EXCEPTION 'Servicio con ID % no existe', NEW.servicio_id
+    --         USING HINT = 'Verificar que el servicio esté registrado en la base de datos',
+    --               ERRCODE = 'foreign_key_violation';
+    -- END IF;
+    --
+    -- IF servicio_org != NEW.organizacion_id THEN
+    --     RAISE EXCEPTION 'Incoherencia organizacional: servicio % (org:%) no pertenece a organización %',
+    --         NEW.servicio_id, servicio_org, NEW.organizacion_id
+    --         USING HINT = 'El servicio debe pertenecer a la misma organización que la cita';
+    -- END IF;
 
     RETURN NEW;
 END;

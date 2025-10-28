@@ -29,7 +29,7 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
   if (!cita) return null;
 
   // Calcular precio total
-  const precioTotal = (cita.precio_servicio || 0) - (cita.descuento || 0);
+  const precioTotal = (cita.precio_total || cita.precio_servicio || 0) - (cita.descuento || 0);
 
   // Obtener acciones disponibles según el estado
   const accionesDisponibles = obtenerAccionesDisponibles(cita.estado);
@@ -180,28 +180,78 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
             </div>
           </div>
 
-          {/* Servicio */}
+          {/* Servicios (soporte para múltiples) */}
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex items-center mb-3">
               <Package className="w-5 h-5 text-primary-600 mr-2" />
-              <h4 className="text-sm font-semibold text-gray-900">Servicio</h4>
+              <h4 className="text-sm font-semibold text-gray-900">
+                {cita.servicios && cita.servicios.length > 1 ? 'Servicios' : 'Servicio'}
+                {cita.servicios && cita.servicios.length > 1 && (
+                  <span className="ml-2 text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full">
+                    {cita.servicios.length} servicios
+                  </span>
+                )}
+              </h4>
             </div>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Nombre:</span>
-                <span className="font-medium text-gray-900">
-                  {cita.servicio_nombre || 'Sin servicio'}
-                </span>
-              </div>
-              {cita.servicio_categoria && (
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Categoría:</span>
-                  <span className="font-medium text-gray-900">{cita.servicio_categoria}</span>
-                </div>
-              )}
-              {cita.servicio_descripcion && (
-                <div className="text-sm pt-2 border-t border-gray-200">
-                  <p className="text-gray-600">{cita.servicio_descripcion}</p>
+            <div className="space-y-3">
+              {/* Si tiene array de servicios (nuevo formato) */}
+              {cita.servicios && Array.isArray(cita.servicios) && cita.servicios.length > 0 ? (
+                cita.servicios.map((servicio, idx) => (
+                  <div key={idx} className="bg-white rounded-md p-3 border border-gray-200">
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="font-medium text-gray-900 text-sm">
+                        {servicio.servicio_nombre}
+                      </span>
+                      <span className="text-xs bg-gray-100 text-gray-700 px-2 py-0.5 rounded">
+                        #{servicio.orden_ejecucion || idx + 1}
+                      </span>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <span className="text-gray-500">Precio:</span>
+                        <span className="ml-1 font-medium text-gray-900">
+                          ${parseFloat(servicio.precio_aplicado || 0).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Duración:</span>
+                        <span className="ml-1 font-medium text-gray-900">
+                          {servicio.duracion_minutos || 0} min
+                        </span>
+                      </div>
+                    </div>
+                    {servicio.descuento > 0 && (
+                      <div className="mt-2 text-xs text-green-600">
+                        Descuento: -${parseFloat(servicio.descuento).toLocaleString('es-CO')}
+                      </div>
+                    )}
+                    {servicio.notas && (
+                      <div className="mt-2 text-xs text-gray-600 italic">
+                        {servicio.notas}
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : (
+                /* Backward compatibility: servicio único */
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Nombre:</span>
+                    <span className="font-medium text-gray-900">
+                      {cita.servicio_nombre || 'Sin servicio'}
+                    </span>
+                  </div>
+                  {cita.servicio_categoria && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Categoría:</span>
+                      <span className="font-medium text-gray-900">{cita.servicio_categoria}</span>
+                    </div>
+                  )}
+                  {cita.servicio_descripcion && (
+                    <div className="text-sm pt-2 border-t border-gray-200">
+                      <p className="text-gray-600">{cita.servicio_descripcion}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -216,9 +266,15 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
           </div>
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Precio servicio:</span>
+              <span className="text-gray-600">Precio servicios:</span>
               <span className="font-medium text-gray-900">
-                ${cita.precio_servicio?.toLocaleString('es-CO') || '0'}
+                ${(cita.precio_total || cita.precio_servicio || 0).toLocaleString('es-CO')}
+              </span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-600">Duración total:</span>
+              <span className="font-medium text-gray-900">
+                {cita.duracion_total_minutos || cita.duracion_minutos || 0} min
               </span>
             </div>
             {cita.descuento > 0 && (
@@ -230,7 +286,7 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
               </div>
             )}
             <div className="flex justify-between text-base pt-2 border-t border-blue-300">
-              <span className="font-semibold text-gray-900">Total:</span>
+              <span className="font-semibold text-gray-900">Total a Pagar:</span>
               <span className="font-bold text-primary-600">
                 ${precioTotal.toLocaleString('es-CO')}
               </span>

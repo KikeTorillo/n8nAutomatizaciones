@@ -508,3 +508,45 @@ COMMENT ON POLICY chatbot_credentials_system_bypass ON chatbot_credentials IS
 'Bypass RLS para funciones de sistema.
 Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
 Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
+
+-- ====================================================================
+-- 🔗 RLS PARA TABLA CITAS_SERVICIOS (M:N)
+-- ====================================================================
+-- Aislamiento multi-tenant mediante JOIN con tabla citas
+-- ESTRATEGIA: Filtrado indirecto por organizacion_id de la cita asociada
+-- ────────────────────────────────────────────────────────────────────
+
+-- Habilitar RLS en citas_servicios
+ALTER TABLE citas_servicios ENABLE ROW LEVEL SECURITY;
+ALTER TABLE citas_servicios FORCE ROW LEVEL SECURITY;
+
+-- ====================================================================
+-- 🎯 POLÍTICA: TENANT_ISOLATION_CITAS_SERVICIOS
+-- ====================================================================
+-- Control de acceso a servicios de citas basado en organización
+--
+-- LÓGICA:
+-- - Acceso permitido si el usuario pertenece a la misma organización de la cita
+-- - Bypass disponible para funciones de sistema
+-- - JOIN indirecto: citas_servicios → citas → organizacion_id
+-- ====================================================================
+CREATE POLICY tenant_isolation_citas_servicios ON citas_servicios
+    FOR ALL
+    TO saas_app
+    USING (
+        -- 🔓 BYPASS: Funciones de sistema (triggers, migraciones)
+        current_setting('app.bypass_rls', true) = 'true'
+
+        -- 🏢 TENANT ISOLATION: Acceso solo a servicios de citas de la organización
+        OR EXISTS (
+            SELECT 1 FROM citas c
+            WHERE c.id = citas_servicios.cita_id
+            AND c.organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+        )
+    );
+
+COMMENT ON POLICY tenant_isolation_citas_servicios ON citas_servicios IS
+'Aislamiento multi-tenant mediante JOIN indirecto con tabla citas.
+Verifica que la cita asociada pertenezca a la organización del usuario.
+Performance: Usa índice idx_citas_servicios_cita_id (< 1ms overhead).
+Agregado: 2025-10-26 - Feature múltiples servicios por cita';

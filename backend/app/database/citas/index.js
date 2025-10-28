@@ -143,6 +143,54 @@ class CitaModel {
     static async validarConflictoHorario(profesionalId, fecha, horaInicio, horaFin, citaIdExcluir, db) {
         return CitaHelpersModel.validarConflictoHorario(profesionalId, fecha, horaInicio, horaFin, citaIdExcluir, db);
     }
+
+    // ===================================================================
+    // 🔄 MÉTODOS PROXY PARA CitaServicioModel (M:N)
+    // ===================================================================
+    // ⚠️ NOTA: Estos métodos estarán disponibles DESPUÉS de implementar
+    // la tabla citas_servicios y crear CitaServicioModel
+
+    /**
+     * Crear múltiples servicios para una cita (tabla intermedia)
+     * @param {number} citaId - ID de la cita
+     * @param {Array} serviciosData - Array de servicios con {servicio_id, orden, precio, duracion, descuento}
+     * @param {number} organizacionId - ID de organización
+     */
+    static async crearServiciosCita(citaId, serviciosData, organizacionId) {
+        const CitaServicioModel = require('./cita-servicio.model');
+        return CitaServicioModel.crearMultiples(citaId, serviciosData, organizacionId);
+    }
+
+    /**
+     * Obtener servicios de una cita (con JOIN a tabla servicios)
+     * @param {number} citaId - ID de la cita
+     * @param {number} organizacionId - ID de organización
+     */
+    static async obtenerServiciosCita(citaId, organizacionId) {
+        const CitaServicioModel = require('./cita-servicio.model');
+        return CitaServicioModel.obtenerPorCita(citaId, organizacionId);
+    }
+
+    /**
+     * Actualizar servicios de una cita (delete + insert)
+     * @param {number} citaId - ID de la cita
+     * @param {Array} serviciosData - Array de servicios nuevos
+     * @param {number} organizacionId - ID de organización
+     */
+    static async actualizarServiciosCita(citaId, serviciosData, organizacionId) {
+        const CitaServicioModel = require('./cita-servicio.model');
+        return CitaServicioModel.actualizarPorCita(citaId, serviciosData, organizacionId);
+    }
+
+    /**
+     * Calcular totales (precio + duración) de múltiples servicios
+     * @param {Array} serviciosData - Array con servicios
+     * @returns {Object} {precio_total, duracion_total_minutos}
+     */
+    static calcularTotalesServicios(serviciosData) {
+        const CitaServicioModel = require('./cita-servicio.model');
+        return CitaServicioModel.calcularTotales(serviciosData);
+    }
 }
 
 module.exports = CitaModel;

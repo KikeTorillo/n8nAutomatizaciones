@@ -34,7 +34,7 @@ CREATE TABLE citas (
     -- 👥 REFERENCIAS PRINCIPALES (VALIDADAS)
     cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE RESTRICT,
     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE RESTRICT,
-    servicio_id INTEGER NOT NULL REFERENCES servicios(id) ON DELETE RESTRICT,
+    -- ✅ servicio_id ELIMINADO - Ahora se gestiona en tabla citas_servicios (M:N)
 
     -- ⏰ INFORMACIÓN TEMPORAL CRÍTICA
     fecha_cita DATE NOT NULL,
@@ -47,10 +47,9 @@ CREATE TABLE citas (
     estado_anterior estado_cita, -- Para auditoría de cambios
     motivo_cancelacion TEXT, -- Obligatorio si estado = 'cancelada'
 
-    -- 💰 INFORMACIÓN COMERCIAL
-    precio_servicio DECIMAL(10,2) NOT NULL,
-    descuento DECIMAL(10,2) DEFAULT 0.00,
-    precio_final DECIMAL(10,2) NOT NULL,
+    -- 💰 INFORMACIÓN COMERCIAL (CALCULADOS DESDE citas_servicios)
+    precio_total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    duracion_total_minutos INTEGER NOT NULL DEFAULT 0,
     metodo_pago VARCHAR(20), -- 'efectivo', 'tarjeta', 'transferencia'
     pagado BOOLEAN DEFAULT FALSE,
 
@@ -99,12 +98,10 @@ CREATE TABLE citas (
     -- ✅ CONSTRAINTS EMPRESARIALES
     CONSTRAINT valid_horario
         CHECK (hora_inicio < hora_fin),
-    CONSTRAINT valid_precio_final
-        CHECK (precio_final >= 0),
-    CONSTRAINT valid_descuento
-        CHECK (descuento >= 0 AND descuento <= precio_servicio),
-    CONSTRAINT valid_precio_servicio
-        CHECK (precio_servicio > 0),
+    CONSTRAINT valid_precio_total
+        CHECK (precio_total >= 0),
+    CONSTRAINT valid_duracion_total
+        CHECK (duracion_total_minutos >= 0 AND duracion_total_minutos <= 480),
     CONSTRAINT valid_fecha_cita
         CHECK (fecha_cita >= CURRENT_DATE - INTERVAL '1 day'),
     CONSTRAINT valid_calificaciones
@@ -120,7 +117,7 @@ CREATE TABLE citas (
     CONSTRAINT valid_estado_pagado
         CHECK (
             CASE
-                WHEN estado = 'completada' AND precio_final > 0 THEN pagado = TRUE
+                WHEN estado = 'completada' AND precio_total > 0 THEN pagado = TRUE
                 ELSE TRUE
             END
         ),
@@ -137,6 +134,67 @@ CREATE TABLE citas (
             TRUE -- Se implementa con trigger por rendimiento
         )
 );
+
+-- ====================================================================
+-- 🔗 TABLA CITAS_SERVICIOS - RELACIÓN M:N ENTRE CITAS Y SERVICIOS
+-- ====================================================================
+-- Tabla intermedia que permite asignar MÚLTIPLES servicios a una cita.
+-- Reemplaza la relación 1:N anterior (citas.servicio_id).
+--
+-- 🔧 CARACTERÍSTICAS:
+-- • Relación many-to-many entre citas y servicios
+-- • Orden de ejecución de servicios (orden_ejecucion)
+-- • Precio y duración snapshot (no afectados por cambios futuros)
+-- • Descuento individual por servicio
+-- • RLS habilitado (filtrado por organizacion_id de la cita)
+-- ====================================================================
+
+CREATE TABLE citas_servicios (
+    -- 🔑 IDENTIFICACIÓN
+    id SERIAL PRIMARY KEY,
+
+    -- 🔗 RELACIONES (CASCADE para eliminar servicios al borrar cita)
+    cita_id INTEGER NOT NULL REFERENCES citas(id) ON DELETE CASCADE,
+    servicio_id INTEGER NOT NULL REFERENCES servicios(id) ON DELETE RESTRICT,
+
+    -- 📊 METADATA DEL SERVICIO
+    orden_ejecucion INTEGER NOT NULL DEFAULT 1,
+
+    -- 💰 INFORMACIÓN COMERCIAL (SNAPSHOT - no cambiar si servicio se actualiza)
+    precio_aplicado DECIMAL(10,2) NOT NULL,
+    duracion_minutos INTEGER NOT NULL,
+    descuento DECIMAL(10,2) DEFAULT 0.00,
+
+    -- 📝 NOTAS ESPECÍFICAS DEL SERVICIO EN ESTA CITA
+    notas TEXT,
+
+    -- ⏰ TIMESTAMPS
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- ✅ CONSTRAINTS
+    CONSTRAINT uq_cita_servicio_orden
+        UNIQUE (cita_id, orden_ejecucion),
+
+    CONSTRAINT chk_orden_positivo
+        CHECK (orden_ejecucion > 0),
+
+    CONSTRAINT chk_precio_positivo
+        CHECK (precio_aplicado >= 0),
+
+    CONSTRAINT chk_duracion_positiva
+        CHECK (duracion_minutos > 0 AND duracion_minutos <= 480),
+
+    CONSTRAINT chk_descuento_valido
+        CHECK (descuento >= 0 AND descuento <= 100)
+);
+
+-- 📝 COMENTARIOS DE DOCUMENTACIÓN
+COMMENT ON TABLE citas_servicios IS 'Tabla intermedia M:N entre citas y servicios - permite múltiples servicios por cita';
+COMMENT ON COLUMN citas_servicios.orden_ejecucion IS 'Orden en que se ejecutan los servicios (1, 2, 3...)';
+COMMENT ON COLUMN citas_servicios.precio_aplicado IS 'Precio del servicio al momento de crear la cita (snapshot)';
+COMMENT ON COLUMN citas_servicios.duracion_minutos IS 'Duración del servicio al momento de crear la cita (snapshot)';
+COMMENT ON COLUMN citas_servicios.descuento IS 'Descuento en porcentaje (0-100) aplicado a este servicio';
 
 -- ====================================================================
 -- 🤖 TABLA CHATBOT_CONFIG - CONFIGURACIÓN DE CHATBOTS IA

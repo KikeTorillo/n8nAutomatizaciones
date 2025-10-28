@@ -32,10 +32,10 @@ function CitasList({
                   Profesional
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Servicio
+                  Servicios
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Duración
+                  Total
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Estado
@@ -116,10 +116,10 @@ function CitasList({
                 Profesional
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Servicio
+                Servicios
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Duración
+                Total
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Estado
@@ -194,31 +194,46 @@ function CitasList({
                   </div>
                 </td>
 
-                {/* Servicio */}
+                {/* Servicios (soporte para múltiples servicios) */}
                 <td className="px-6 py-4">
-                  <div className="flex items-center">
-                    <Package className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0" />
-                    <div className="min-w-0">
-                      <div className="text-sm font-medium text-gray-900 truncate">
-                        {cita.servicio_nombre || 'Sin servicio'}
-                      </div>
-                      {cita.precio_servicio && (
-                        <div className="text-xs text-gray-500">
-                          ${cita.precio_servicio.toLocaleString('es-CO')}
-                          {cita.descuento > 0 && (
-                            <span className="text-green-600 ml-1">
-                              (-${cita.descuento.toLocaleString('es-CO')})
-                            </span>
-                          )}
+                  <div className="flex items-start">
+                    <Package className="w-4 h-4 text-gray-400 mr-2 flex-shrink-0 mt-1" />
+                    <div className="min-w-0 flex-1">
+                      {/* Si tiene array de servicios (nuevo formato) */}
+                      {cita.servicios && Array.isArray(cita.servicios) && cita.servicios.length > 0 ? (
+                        <div className="space-y-1">
+                          {cita.servicios.map((servicio, idx) => (
+                            <div key={idx} className="text-sm text-gray-900">
+                              • {servicio.servicio_nombre}
+                              <span className="text-xs text-gray-500 ml-1">
+                                (${parseFloat(servicio.precio_aplicado || 0).toLocaleString('es-CO')})
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        /* Backward compatibility: servicio único */
+                        <div className="text-sm font-medium text-gray-900 truncate">
+                          {cita.servicio_nombre || 'Sin servicio'}
                         </div>
                       )}
                     </div>
                   </div>
                 </td>
 
-                {/* Duración */}
+                {/* Total (Precio + Duración) */}
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="text-sm text-gray-900">{cita.duracion_minutos} min</span>
+                  <div className="text-sm text-gray-900 font-medium">
+                    ${parseFloat(cita.precio_total || cita.precio_servicio || 0).toLocaleString('es-CO')}
+                    {cita.descuento > 0 && (
+                      <span className="text-green-600 text-xs ml-1">
+                        (-${parseFloat(cita.descuento).toLocaleString('es-CO')})
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {cita.duracion_total_minutos || cita.duracion_minutos || 0} min
+                  </div>
                 </td>
 
                 {/* Estado */}
