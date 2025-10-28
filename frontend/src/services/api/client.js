@@ -2,7 +2,10 @@ import axios from 'axios';
 import useAuthStore from '@/store/authStore';
 
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1',
+  // Usar ruta relativa para que el proxy de Vite funcione
+  // En desarrollo: /api/v1 → Vite proxy → http://back:3000/api/v1
+  // En producción: /api/v1 → Nginx/Backend directo
+  baseURL: '/api/v1',
   headers: {
     'Content-Type': 'application/json',
   },

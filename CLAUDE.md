@@ -12,15 +12,15 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 24 Octubre 2025
+**Actualizado**: 27 Octubre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
-| **Backend API** | ✅ Operativo | 13 módulos, 97 archivos, 495 tests (100%) |
-| **Frontend React** | ✅ Operativo | 45 componentes, 22 páginas, 12 hooks |
-| **Base de Datos** | ✅ Operativo | 19 tablas, 24 RLS policies, 114 índices |
+| **Backend API** | ✅ Operativo | 13 módulos, 97 archivos, 545 tests (100%) |
+| **Frontend React** | ✅ Operativo | 42 componentes, 22 páginas, 12 hooks |
+| **Base de Datos** | ✅ Operativo | 20 tablas, 24 RLS policies, 165 índices |
 | **Sistema IA** | ✅ Operativo | n8n + Telegram + DeepSeek + Redis + MCP Server |
-| **MCP Server** | ✅ Operativo | 4 tools, JSON-RPC 2.0, JWT multi-tenant |
+| **MCP Server** | ✅ Operativo | 5 tools, JSON-RPC 2.0, JWT multi-tenant |
 | **Docker** | ✅ Running | 8 contenedores activos |
 
 ---
@@ -38,14 +38,14 @@
 - **Runtime**: Node.js + Express.js
 - **Auth**: JWT (7d access + 30d refresh)
 - **Validación**: Joi schemas modulares
-- **Testing**: Jest + Supertest (495 tests)
+- **Testing**: Jest + Supertest (545 tests)
 - **Logs**: Winston (JSON structured)
 
 ### Base de Datos
 - **PostgreSQL 17 Alpine**
 - **Multi-Tenant**: Row Level Security (24 políticas)
-- **Índices**: 114 optimizados (GIN, trigram, covering)
-- **Triggers**: 29 automáticos
+- **Índices**: 165 optimizados (GIN, trigram, covering)
+- **Triggers**: 30 automáticos
 - **Funciones**: 38 PL/pgSQL
 
 ### IA Conversacional
@@ -54,11 +54,12 @@
 - **Modelo**: DeepSeek (económico + potente)
 - **Memory**: PostgreSQL Chat Memory (RLS por usuario)
 - **Anti-flood**: Redis Queue (20s debouncing)
-- **MCP Server**: JSON-RPC 2.0 con 4 tools operativas
+- **MCP Server**: JSON-RPC 2.0 con 5 tools operativas
   - `listarServicios` - Lista servicios activos
-  - `verificarDisponibilidad` - Verifica horarios libres
+  - `verificarDisponibilidad` - Verifica horarios libres (soporta múltiples servicios)
   - `buscarCliente` - Busca clientes existentes
-  - `crearCita` - Crea citas validadas
+  - `crearCita` - Crea citas validadas (soporta múltiples servicios)
+  - `reagendarCita` - Reagenda citas existentes con validaciones
 
 ---
 
@@ -72,7 +73,7 @@ docker logs -f n8n-main          # Ver logs n8n
 docker logs -f mcp-server        # Ver logs MCP Server
 
 # Tests
-docker exec back npm test                                   # Suite completa (495 tests)
+docker exec back npm test                                   # Suite completa (545 tests)
 docker exec back npm test -- __tests__/endpoints/chatbots.test.js  # Módulo específico
 
 # Base de Datos
@@ -115,13 +116,13 @@ curl http://localhost:3100/mcp/tools           # Listar tools disponibles
 - **Schemas**: 12 archivos Joi
 - **Services**: 11 archivos (n8n, validators, etc.)
 - **Middleware**: 6 archivos (34 funciones)
-- **Tests**: 23 archivos (495 tests)
+- **Tests**: 25 archivos (545 tests)
 
 **Helpers Esenciales:**
 - `RLSContextManager` (v2.0) ⭐ **Usar siempre** - Gestión automática RLS
 - `helpers.js` - 8 clases (Response, Validation, Date, CodeGenerator, etc.)
 
-### Frontend (45 componentes, 12 hooks)
+### Frontend (42 componentes, 12 hooks)
 
 **Componentes:** Organizados en 11 módulos
 - auth, citas, clientes, profesionales, servicios, bloqueos
@@ -143,14 +144,14 @@ curl http://localhost:3100/mcp/tools           # Listar tools disponibles
 - `planesApi`
 - **`chatbotsApi`** ⭐ **Nuevo** - Configuración chatbots
 
-### Base de Datos (19 Tablas)
+### Base de Datos (20 Tablas)
 
 ```
 Core (3):           organizaciones, usuarios, planes_subscripcion
 Catálogos (2):      tipos_profesional, tipos_bloqueo
 Negocio (5):        profesionales, servicios, clientes,
                     servicios_profesionales, horarios_profesionales
-Operaciones (2):    citas, bloqueos_horarios
+Operaciones (3):    citas, citas_servicios ⭐ NUEVO, bloqueos_horarios
 Chatbots (2):       chatbot_config, chatbot_credentials ⭐ NUEVO
 Subscripciones (3): subscripciones, historial_subscripciones,
                     metricas_uso_organizacion
@@ -202,11 +203,12 @@ Redis Anti-flood                   Backend API
 
 **MCP Server:**
 - `mcp-server/index.js` - Servidor JSON-RPC 2.0 (puerto 3100)
-- `mcp-server/tools/` - 4 tools implementados
+- `mcp-server/tools/` - 5 tools implementados
   - `listarServicios.js` - Lista servicios activos
-  - `verificarDisponibilidad.js` - Verifica horarios libres
+  - `verificarDisponibilidad.js` - Verifica horarios libres (múltiples servicios)
   - `buscarCliente.js` - Busca clientes existentes
-  - `crearCita.js` - Crea citas validadas
+  - `crearCita.js` - Crea citas validadas (múltiples servicios)
+  - `reagendarCita.js` - Reagenda citas existentes
 - `mcp-server/utils/apiClient.js` - Cliente HTTP con JWT
 
 **Template n8n:**
@@ -229,11 +231,11 @@ Redis Anti-flood                   Backend API
 - ✅ Validación con Telegram Bot API
 - ✅ Anti-flood con Redis (20s debouncing)
 - ✅ Chat Memory persistente (PostgreSQL con RLS)
-- ✅ 4 MCP Tools operativas para agendamiento
+- ✅ 5 MCP Tools operativas para agendamiento (incluye múltiples servicios)
 - ✅ Multi-tenant seguro (JWT con `organizacion_id`)
 - ✅ IDs únicos regenerados por workflow (evita conflictos)
 
-**Ver más:** `PLAN_IMPLEMENTACION_CHATBOTS.md` + `ANEXO_CODIGO_CHATBOTS.md`
+**Documentación:** Ver secciones "Sistema de Chatbots IA" y "Archivos Clave - Chatbots" en este documento
 
 ### Fix Crítico: Webhooks Automáticos ⭐
 
@@ -340,7 +342,19 @@ const cita = await CitaModel.crear({
 - Función `normalizar_telefono()` quita espacios/guiones
 - Búsqueda por similitud en nombre (threshold 0.3)
 
-### 4. Chatbots IA Multi-Plataforma ⭐ NUEVO
+### 4. Múltiples Servicios por Cita ⭐ NUEVO
+
+**Sistema completo implementado:**
+- ✅ Tabla `citas_servicios` (relación M:N con snapshot pricing)
+- ✅ Backend soporta 1-10 servicios por cita
+- ✅ Frontend con componente `MultiSelect` completo
+- ✅ Auto-cálculo de precio_total y duracion_total
+- ✅ MCP Server actualizado (`crearCita`, `verificarDisponibilidad`)
+- ✅ Prevención de solapamientos con múltiples servicios
+- ✅ Backward compatibility (servicio_id → servicios_ids)
+- ✅ 545/545 tests passing (100%)
+
+### 5. Chatbots IA Multi-Plataforma ⭐
 
 **Workflow Completo:**
 1. Usuario completa onboarding → Configura bot Telegram
@@ -494,9 +508,10 @@ delete plantilla.active;
 |---------|-----------|-------------|
 | MCP Server | `backend/mcp-server/index.js` | Servidor JSON-RPC 2.0 (puerto 3100) |
 | Tool: Listar Servicios | `backend/mcp-server/tools/listarServicios.js` | Lista servicios activos |
-| Tool: Verificar Disp. | `backend/mcp-server/tools/verificarDisponibilidad.js` | Verifica horarios libres |
+| Tool: Verificar Disp. | `backend/mcp-server/tools/verificarDisponibilidad.js` | Verifica horarios libres (múltiples servicios) |
 | Tool: Buscar Cliente | `backend/mcp-server/tools/buscarCliente.js` | Busca clientes existentes |
-| Tool: Crear Cita | `backend/mcp-server/tools/crearCita.js` | Crea citas validadas |
+| Tool: Crear Cita | `backend/mcp-server/tools/crearCita.js` | Crea citas validadas (múltiples servicios) |
+| Tool: Reagendar Cita | `backend/mcp-server/tools/reagendarCita.js` | Reagenda citas existentes |
 | API Client | `backend/mcp-server/utils/apiClient.js` | Cliente HTTP con JWT |
 
 ### Frontend
@@ -512,9 +527,9 @@ delete plantilla.active;
 |---------|-----------|-------------|
 | ENUMs | `sql/schema/01-types-and-enums.sql` | 10 ENUMs |
 | Functions | `sql/schema/02-functions.sql` | 38 funciones PL/pgSQL |
-| Indexes | `sql/schema/07-indexes.sql` | 114 índices |
+| Indexes | `sql/schema/07-indexes.sql` | 165 índices |
 | RLS Policies | `sql/schema/08-rls-policies.sql` | 24 políticas |
-| Triggers | `sql/schema/09-triggers.sql` | 29 triggers |
+| Triggers | `sql/schema/09-triggers.sql` | 30 triggers |
 
 ---
 
@@ -522,42 +537,44 @@ delete plantilla.active;
 
 ### Backend
 - **Archivos**: 97 total (16 controllers, 17 models, 14 routes, 12 schemas)
-- **Tests**: 495 tests (100% passing, ~40s ejecución)
+- **Tests**: 545 tests (100% passing, ~50s ejecución)
 - **Middleware**: 34 funciones
 - **Services**: 11 archivos (n8n, validators, etc.)
 
 ### MCP Server
-- **Archivos**: 10 total (1 servidor, 4 tools, 5 utils/config)
-- **Tools**: 4 operativas (listarServicios, verificarDisponibilidad, buscarCliente, crearCita)
+- **Archivos**: 10 total (1 servidor, 5 tools, 4 utils/config)
+- **Tools**: 5 operativas (listarServicios, verificarDisponibilidad, buscarCliente, crearCita, reagendarCita)
 - **Protocolo**: JSON-RPC 2.0 oficial
 - **Autenticación**: JWT multi-tenant con RLS
 
 ### Frontend
-- **Archivos**: 103 total (45 componentes, 22 páginas, 12 hooks)
+- **Archivos**: 100 total (42 componentes, 22 páginas, 12 hooks)
 - **API**: 14 módulos endpoints
 - **Stores**: 2 Zustand
 - **Utils**: 9 archivos
 
 ### Base de Datos
-- **Tablas**: 19
+- **Tablas**: 20 (incluye citas_servicios para múltiples servicios)
 - **ENUMs**: 10 tipos
 - **Funciones**: 38 PL/pgSQL
-- **Triggers**: 29 automáticos
-- **Índices**: 114 optimizados
+- **Triggers**: 30 automáticos
+- **Índices**: 165 optimizados (incluye covering index para citas_servicios)
 - **RLS Policies**: 24
 - **Archivos SQL**: 15
 
 ---
 
-## 📖 Documentación Adicional
+## 📖 Documentación y Testing
 
-- **`PLAN_IMPLEMENTACION_CHATBOTS.md`** - Documentación completa sistema de chatbots (v9.0)
-- **`ANEXO_CODIGO_CHATBOTS.md`** - Referencia técnica detallada del código
-- **Tests**: `backend/app/__tests__/endpoints/` (23 archivos, 495 tests)
+- **Tests Backend**: `backend/app/__tests__/endpoints/` (25 archivos, 545 tests)
+- **Documentación Completa**: Todo el sistema está documentado en este archivo (CLAUDE.md)
+- **Arquitectura Chatbots**: Ver sección "Sistema de Chatbots IA" arriba
+- **MCP Server**: Ver sección "Archivos Clave - MCP Server" arriba
 
 ---
 
-**Versión**: 8.0
-**Última actualización**: 24 Octubre 2025
-**Estado**: ✅ Production Ready | 495/495 tests passing (100%)
-**Chatbots**: ✅ Operativo - Telegram con MCP Server (4 tools) + Webhooks automáticos
+**Versión**: 9.0
+**Última actualización**: 27 Octubre 2025
+**Estado**: ✅ Production Ready | 545/545 tests passing (100%)
+**Múltiples Servicios**: ✅ Completo - Agendar 1-10 servicios por cita con auto-cálculo
+**Chatbots**: ✅ Operativo - Telegram con MCP Server (5 tools) + Webhooks automáticos

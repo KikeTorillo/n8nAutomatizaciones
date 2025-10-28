@@ -205,6 +205,32 @@ services:
       - "3000:3000"
 
   # ========================================
+  # FRONTEND - React + Vite con HMR
+  # ========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    container_name: front
+    restart: unless-stopped
+    depends_on:
+      - backend
+    # No necesitamos VITE_API_URL porque usamos el proxy de Vite
+    # El proxy redirige /api -> http://back:3000/api desde DENTRO del contenedor
+    volumes:
+      # Montar código fuente para hot reload
+      - ./frontend:/app
+      # Excluir node_modules (usar los del contenedor)
+      - /app/node_modules
+    networks:
+      - backend_network
+    ports:
+      - "3001:3001"
+    # Configuración para mejorar rendimiento de hot reload
+    stdin_open: true
+    tty: true
+
+  # ========================================
   # MCP SERVER - Herramientas para AI Agent
   # ========================================
   mcp-server:

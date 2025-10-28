@@ -15,10 +15,23 @@ export default defineConfig({
   },
   server: {
     port: 3001,
+    host: '0.0.0.0', // Escuchar en todas las interfaces (necesario para Docker)
+    watch: {
+      usePolling: true, // Necesario para hot reload en Docker en algunos sistemas
+      interval: 100, // Intervalo de polling en ms
+    },
+    hmr: {
+      // Configuración de Hot Module Replacement
+      host: 'localhost', // Cambia esto a tu IP si accedes desde otra máquina
+      port: 3001,
+    },
     proxy: {
       '/api': {
-        target: 'http://localhost:3000',
+        // Proxy desde el contenedor frontend al backend
+        // Vite proxy corre DENTRO del contenedor, puede resolver 'back'
+        target: 'http://back:3000',
         changeOrigin: true,
+        secure: false,
       },
     },
   },
