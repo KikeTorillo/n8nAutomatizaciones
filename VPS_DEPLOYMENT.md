@@ -217,6 +217,20 @@ cd /var/www/n8nAutomatizaciones
 bash deploy.sh deploy
 ```
 
+**⚠️ Nota importante sobre permisos de n8n:**
+Si estás haciendo un deployment desde cero después de limpiar datos (`rm -rf ./data/*`), es recomendable crear el directorio de n8n con los permisos correctos **antes** de ejecutar el deployment:
+
+```bash
+# Crear directorio con permisos correctos para n8n (usuario node = UID 1000)
+mkdir -p ./data/n8n
+chown -R 1000:1000 ./data/n8n
+
+# Ahora sí ejecutar deployment
+bash deploy.sh deploy
+```
+
+Si no lo haces, n8n podría reiniciarse constantemente con errores de permisos. Ver sección de [Troubleshooting](#n8n-reinicia-constantemente-con-error-eacces-permission-denied) para más detalles.
+
 El script hará automáticamente:
 1. Copiar `.env.prod` a `.env` (si no existe)
 2. Construir imágenes Docker
@@ -224,6 +238,16 @@ El script hará automáticamente:
 4. Configurar n8n (owner + API key)
 5. Levantar aplicación (backend, mcp-server, frontend)
 6. Verificar health checks
+7. **Mostrar URLs correctas** del dominio configurado en `.env`
+
+**Salida esperada:**
+```
+✅ 🎉 Deployment completado!
+ℹ️  Accede a tu aplicación en:
+  - Frontend: https://n8nflowautomat.com
+  - Backend API: https://api.n8nflowautomat.com
+  - n8n: https://n8n.n8nflowautomat.com
+```
 
 ### Paso 9: Verificar Funcionamiento
 
@@ -234,6 +258,7 @@ bash deploy.sh health
 # Verificar manualmente
 curl -I https://n8nflowautomat.com           # Frontend
 curl https://api.n8nflowautomat.com/health   # Backend
+curl -I https://n8n.n8nflowautomat.com        # n8n
 ```
 
 Acceder a n8n:
@@ -307,6 +332,52 @@ bash deploy.sh help      # Ver todos los comandos
 ---
 
 ## 🔧 Troubleshooting
+
+### n8n reinicia constantemente con error "EACCES: permission denied"
+
+**Síntomas:**
+```bash
+docker ps | grep n8n
+# n8n-main    Restarting (1) 23 seconds ago
+# n8n-worker  Restarting (1) 27 seconds ago
+
+docker logs n8n-main
+# Error: EACCES: permission denied, open '/home/node/.n8n/config'
+```
+
+**Causa:** El directorio `./data/n8n` no tiene los permisos correctos. n8n se ejecuta como usuario `node` (UID 1000) dentro del contenedor y necesita poder escribir en este directorio.
+
+**Solución:**
+```bash
+# Detener contenedores n8n
+docker stop n8n-main n8n-worker
+
+# Corregir permisos (UID 1000 = usuario node en el contenedor)
+chown -R 1000:1000 ./data/n8n
+
+# Reiniciar contenedores
+docker start n8n-main n8n-worker
+
+# Verificar que arranquen correctamente (esperar 15 segundos)
+sleep 15
+docker ps | grep n8n
+# Deben estar "Up" sin "Restarting"
+```
+
+**Prevención:** Al hacer `bash deploy.sh deploy` desde cero después de limpiar datos, aplicar los permisos correctos antes de levantar n8n:
+
+```bash
+# Limpiar todo
+docker compose -f docker-compose.prod.yml down --volumes --remove-orphans
+rm -rf ./data/*
+
+# Crear directorios con permisos correctos
+mkdir -p ./data/n8n
+chown -R 1000:1000 ./data/n8n
+
+# Ahora sí hacer deployment
+bash deploy.sh deploy
+```
 
 ### Frontend devuelve 502 Bad Gateway
 
@@ -442,3 +513,10 @@ Backend (3000): ✅ OK
 n8n (5678): ✅ OK
 MCP Server (3100): ✅ OK
 ```
+
+**Accede a tu aplicación en:**
+- Frontend: https://n8nflowautomat.com
+- Backend API: https://api.n8nflowautomat.com
+- n8n: https://n8n.n8nflowautomat.com
+
+**Nota:** El script `deploy.sh deploy` detecta automáticamente el dominio configurado en `.env` y muestra las URLs correctas.

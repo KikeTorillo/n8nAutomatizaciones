@@ -232,9 +232,30 @@ case "${1:-help}" in
         echo ""
         log_success "🎉 Deployment completado!"
         log_info "Accede a tu aplicación en:"
-        echo "  - Frontend: http://localhost:8080"
-        echo "  - Backend: http://localhost:3000"
-        echo "  - n8n: http://localhost:5678"
+
+        # Leer variables de entorno del .env
+        if [ -f .env ]; then
+            source .env
+            # Extraer dominio base de CORS_ORIGIN (quitar https://)
+            DOMAIN=$(echo "$CORS_ORIGIN" | sed 's|https://||' | sed 's|http://||')
+
+            if [ -n "$DOMAIN" ] && [ "$DOMAIN" != "localhost" ]; then
+                # URLs con dominio de producción
+                echo "  - Frontend: https://$DOMAIN"
+                echo "  - Backend API: https://api.$DOMAIN"
+                echo "  - n8n: https://n8n.$DOMAIN"
+            else
+                # Fallback a localhost si no hay dominio configurado
+                echo "  - Frontend: http://localhost:8080"
+                echo "  - Backend: http://localhost:3000"
+                echo "  - n8n: http://localhost:5678"
+            fi
+        else
+            # Fallback si no existe .env
+            echo "  - Frontend: http://localhost:8080"
+            echo "  - Backend: http://localhost:3000"
+            echo "  - n8n: http://localhost:5678"
+        fi
         ;;
     up)
         deploy_up
