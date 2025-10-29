@@ -11,6 +11,7 @@ logs/
 .env
 .env.dev
 .env.prod
+.env.prod.local
 data
 
 # Docker
