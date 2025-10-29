@@ -86,6 +86,31 @@ apt install -y nginx
 systemctl stop nginx  # Lo configuraremos antes
 ```
 
+**Configurar Rate Limiting Zone:**
+
+```bash
+# Editar nginx.conf para agregar zone de rate limiting
+nano /etc/nginx/nginx.conf
+```
+
+Agregar dentro del bloque `http {`, justo después de `http {`:
+
+```nginx
+http {
+
+	##
+	# Rate Limiting Zones
+	##
+	limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/m;
+
+	##
+	# Basic Settings
+	##
+	...
+```
+
+Guardar y cerrar (Ctrl+X, Y, Enter).
+
 ### Paso 4: Configurar DNS
 
 En Hostinger, crea **3 registros A**:
@@ -103,14 +128,42 @@ dig n8nflowautomat.com
 
 ### Paso 5: Obtener Certificados SSL
 
+⚠️ **IMPORTANTE**: Antes de ejecutar certbot, asegúrate de que los registros DNS hayan propagado correctamente (puede tardar 15-30 minutos).
+
 ```bash
 apt install -y certbot python3-certbot-nginx
 
 # Obtener wildcard certificate
 certbot certonly --manual --preferred-challenges dns \
   -d "*.n8nflowautomat.com" -d "n8nflowautomat.com"
+```
 
-# Configurar renovación automática
+**IMPORTANTE**: Certbot te pedirá que agregues registros TXT en tu DNS. Sigue las instrucciones en pantalla.
+
+**Crear archivos de configuración SSL:**
+
+Al usar `certbot certonly --manual`, no se crean automáticamente los archivos de configuración SSL. Créalos manualmente:
+
+```bash
+# Crear options-ssl-nginx.conf
+cat > /etc/letsencrypt/options-ssl-nginx.conf << 'EOF'
+ssl_session_cache shared:le_nginx_SSL:10m;
+ssl_session_timeout 1440m;
+ssl_session_tickets off;
+
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+
+ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+EOF
+
+# Generar parámetros DH (puede tardar 1-2 minutos)
+openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
+```
+
+**Configurar renovación automática:**
+
+```bash
 systemctl enable certbot.timer
 systemctl start certbot.timer
 ```
