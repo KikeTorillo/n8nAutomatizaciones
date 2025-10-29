@@ -56,28 +56,53 @@ setup_env() {
 deploy_up() {
     log_info "Construyendo y levantando servicios (PROD-LOCAL)..."
 
+    # Paso 0: Preparar directorios con permisos correctos
+    log_info "Paso 0/4: Preparando directorios de datos..."
+    if [ ! -d "data/n8n" ]; then
+        log_info "Creando data/n8n con permisos correctos..."
+        mkdir -p data/n8n
+        chown -R 1000:1000 data/n8n
+        log_success "data/n8n creado con permisos correctos (usuario node:1000)"
+    else
+        log_info "data/n8n ya existe, verificando permisos..."
+        chown -R 1000:1000 data/n8n
+    fi
+
     # Build imágenes
     docker compose -f "$COMPOSE_FILE" build
 
     # Paso 1: Levantar infraestructura (PostgreSQL, Redis, n8n)
-    log_info "Paso 1/3: Levantando infraestructura (PostgreSQL, Redis, n8n)..."
+    log_info "Paso 1/4: Levantando infraestructura (PostgreSQL, Redis, n8n)..."
     docker compose -f "$COMPOSE_FILE" up -d postgres redis n8n-main n8n-worker
 
     log_info "Esperando que la infraestructura esté lista (30s)..."
     sleep 30
 
     # Paso 2: Ejecutar post-docker-setup (crear owner n8n + API key)
-    log_info "Paso 2/3: Configurando n8n (owner + API key)..."
+    log_info "Paso 2/4: Configurando n8n (owner + API key)..."
     if [ -f "scripts/post-docker-setup.sh" ]; then
         bash scripts/post-docker-setup.sh
         log_success "n8n configurado correctamente"
+
+        # Recargar N8N_API_KEY del .env y exportarla
+        if [ -f .env ]; then
+            log_info "Recargando N8N_API_KEY del .env..."
+            export N8N_API_KEY=$(grep "^N8N_API_KEY=" .env | cut -d'=' -f2)
+            log_success "N8N_API_KEY exportada al entorno"
+        fi
     else
         log_warning "scripts/post-docker-setup.sh no encontrado, saltando configuración de n8n"
     fi
 
     # Paso 3: Levantar aplicación (backend, mcp-server, frontend)
-    log_info "Paso 3/3: Levantando aplicación (backend, mcp-server, frontend)..."
+    log_info "Paso 3/4: Levantando aplicación (backend, mcp-server, frontend)..."
     docker compose -f "$COMPOSE_FILE" up -d backend mcp-server frontend
+
+    # Paso 4: Recrear backend para cargar la nueva API key
+    log_info "Paso 4/4: Recargando backend con API key actualizada..."
+    sleep 5
+    docker compose -f "$COMPOSE_FILE" up -d --force-recreate --no-deps backend
+    log_success "Backend recargado con configuración actualizada"
 
     log_success "Servicios levantados exitosamente!"
     echo ""
