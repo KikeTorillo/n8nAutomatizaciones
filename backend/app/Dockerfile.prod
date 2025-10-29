@@ -50,6 +50,9 @@ COPY --chown=nodejs:nodejs routes ./routes
 COPY --chown=nodejs:nodejs services ./services
 COPY --chown=nodejs:nodejs utils ./utils
 COPY --chown=nodejs:nodejs config ./config
+COPY --chown=nodejs:nodejs schemas ./schemas
+COPY --chown=nodejs:nodejs constants ./constants
+COPY --chown=nodejs:nodejs flows ./flows
 
 # Cambiar a usuario no-root
 USER nodejs

@@ -70,6 +70,11 @@ class SaaSApplication {
    * Los middlewares se ejecutan en el orden que se declaran
    */
   initializeMiddlewares() {
+    // TRUST PROXY: Confiar en reverse proxies (Nginx)
+    // Necesario en producción para que Express lea correctamente
+    // los headers X-Forwarded-* enviados por el proxy
+    this.app.set('trust proxy', true);
+
     // HELMET: Configuración de seguridad HTTP
     this.app.use(helmet({
       // Content Security Policy - previene ataques XSS
@@ -140,7 +145,12 @@ class SaaSApplication {
       legacyHeaders: false,
 
       // Saltar rate limiting en ambiente de test
-      skip: (req) => process.env.NODE_ENV === 'test'
+      skip: (req) => process.env.NODE_ENV === 'test',
+
+      // Desactivar validación estricta de trust proxy
+      // En producción, Express está configurado con trust proxy para leer
+      // correctamente los headers X-Forwarded-* de nginx
+      validate: { trustProxy: false }
     });
 
     // Aplica rate limiting solo a rutas de API

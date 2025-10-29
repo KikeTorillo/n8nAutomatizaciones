@@ -31,7 +31,7 @@ services:
 
   redis:
     image: redis:7
-    container_name: n8n-redis
+    container_name: redis
     restart: always
     ports:
       - "6379:6379"
@@ -247,7 +247,7 @@ services:
     networks:
       - backend_network
     ports:
-      - "3001:3001"
+      - "8080:8080"
     # Configuración para mejorar rendimiento de hot reload
     stdin_open: true
     tty: true
@@ -304,3 +304,4 @@ services:
 networks:
   backend_network:
     driver: bridge
+    name: saas_dev_network

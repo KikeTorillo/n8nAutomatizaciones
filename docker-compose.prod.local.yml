@@ -1,6 +1,10 @@
 # =========================================
-# Docker Compose - Producción
+# Docker Compose - Simulación Producción LOCAL
 # Multi-stage builds optimizados
+# Usa: .env.prod.local (renombrar de .env antes de ejecutar)
+# =========================================
+# IMPORTANTE: Renombrar .env.prod.local a .env antes de ejecutar
+#   cp .env.prod.local .env.temp && mv .env .env.backup && mv .env.temp .env
 # =========================================
 
 services:

@@ -38,8 +38,8 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # No copiamos el código aquí porque lo montaremos como volumen
 # Esto permite hot reload cuando cambien los archivos
 
-# Exponer puerto de Vite
-EXPOSE 3001
+# Exponer puerto de Vite (debe coincidir con vite.config.js)
+EXPOSE 8080
 
 # Entrypoint arregla permisos y ejecuta como nodejs
 ENTRYPOINT ["docker-entrypoint.sh"]

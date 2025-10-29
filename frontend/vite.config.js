@@ -14,7 +14,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3001,
+    port: 8080,
     host: '0.0.0.0', // Escuchar en todas las interfaces (necesario para Docker)
     watch: {
       usePolling: true, // Necesario para hot reload en Docker en algunos sistemas
@@ -23,7 +23,7 @@ export default defineConfig({
     hmr: {
       // Configuración de Hot Module Replacement
       host: 'localhost', // Cambia esto a tu IP si accedes desde otra máquina
-      port: 3001,
+      port: 8080,
     },
     proxy: {
       '/api': {
