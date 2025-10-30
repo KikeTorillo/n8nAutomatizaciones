@@ -42,9 +42,11 @@ if wait_for_service "n8n" "http://localhost:5678"; then
     echo "🔑 Verificando API Key de n8n..."
     echo ""
 
-    # Cargar variables de entorno
+    # Cargar variables de entorno de forma segura
     if [ -f .env ]; then
-        export $(grep -v '^#' .env | xargs)
+        set -a  # Habilitar auto-export de variables
+        source .env
+        set +a  # Deshabilitar auto-export
     fi
 
     # Verificar si ya existe API Key y si es válida

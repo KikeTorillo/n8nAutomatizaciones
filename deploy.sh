@@ -88,11 +88,29 @@ deploy_up() {
         bash scripts/post-docker-setup.sh
         log_success "n8n configurado correctamente"
 
+        # Validar que la API key fue generada
+        log_info "Validando N8N_API_KEY..."
+        if [ ! -f /tmp/n8n_api_key_latest.txt ]; then
+            log_error "API Key no fue generada. Verifica los logs de post-docker-setup.sh"
+            exit 1
+        fi
+
         # Recargar N8N_API_KEY del .env y exportarla
         if [ -f .env ]; then
             log_info "Recargando N8N_API_KEY del .env..."
             export N8N_API_KEY=$(grep "^N8N_API_KEY=" .env | cut -d'=' -f2)
-            log_success "N8N_API_KEY exportada al entorno"
+
+            # Validar que la API key es válida contra n8n
+            API_TEST=$(curl -s -o /dev/null -w "%{http_code}" \
+                -X GET "http://localhost:5678/api/v1/workflows" \
+                -H "X-N8N-API-KEY: $N8N_API_KEY" 2>/dev/null || echo "000")
+
+            if [ "$API_TEST" = "200" ]; then
+                log_success "N8N_API_KEY validada contra n8n (HTTP 200)"
+            else
+                log_warning "No se pudo validar API key contra n8n (HTTP $API_TEST)"
+                log_warning "Continuando deployment (la API key podría estar correcta)"
+            fi
         fi
     else
         log_warning "scripts/post-docker-setup.sh no encontrado, saltando configuración de n8n"
@@ -102,11 +120,23 @@ deploy_up() {
     log_info "Paso 3/4: Levantando aplicación (backend, mcp-server, frontend)..."
     docker compose -f docker-compose.prod.yml up -d backend mcp-server frontend
 
-    # Paso 4: Recrear backend para cargar la nueva API key
-    log_info "Paso 4/4: Recargando backend con API key actualizada..."
+    # Paso 4: Verificar que backend cargó la API key correcta
+    log_info "Paso 4/4: Verificando configuración del backend..."
     sleep 5
-    docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps backend
-    log_success "Backend recargado con configuración actualizada"
+
+    # Validar que el backend tiene la API key correcta
+    BACKEND_API_KEY=$(docker exec back printenv N8N_API_KEY 2>/dev/null || echo "")
+    ENV_API_KEY=$(grep "^N8N_API_KEY=" .env 2>/dev/null | cut -d'=' -f2)
+
+    if [ "$BACKEND_API_KEY" = "$ENV_API_KEY" ]; then
+        log_success "Backend cargó N8N_API_KEY correctamente"
+    else
+        log_warning "Backend tiene API key diferente al .env"
+        log_info "Recargando backend con configuración actualizada..."
+        docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps backend
+        sleep 5
+        log_success "Backend recargado con configuración actualizada"
+    fi
 
     log_success "Servicios levantados exitosamente!"
     echo ""

@@ -230,6 +230,7 @@ async function execute(args, jwtToken) {
           fecha: value.fecha,
           hora: value.hora,
           profesional: slotBuscado.profesional,
+          profesional_id: slotBuscado.profesional_id,
           razon: slotBuscado.razon,
           // ✅ Información de múltiples servicios
           servicios_ids: serviciosIds,
@@ -338,6 +339,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
       disponible: false,
       razon: 'No hay disponibilidad para esta fecha',
       profesional: null,
+      profesional_id: null,
     };
   }
 
@@ -353,6 +355,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
         disponible: false,
         razon: 'Profesional no encontrado o no disponible',
         profesional: null,
+        profesional_id: null,
       };
     }
 
@@ -362,6 +365,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
       disponible: slot?.disponible || false,
       razon: slot?.razon_no_disponible || 'Horario no encontrado',
       profesional: prof.nombre,
+      profesional_id: prof.profesional_id,
     };
   }
 
@@ -373,6 +377,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
         disponible: true,
         razon: null,
         profesional: prof.nombre,
+        profesional_id: prof.profesional_id,
       };
     }
   }
@@ -381,6 +386,7 @@ function _buscarSlotEspecifico(disponibilidad, hora, profesionalId) {
     disponible: false,
     razon: 'No hay profesionales disponibles en ese horario',
     profesional: null,
+    profesional_id: null,
   };
 }
 

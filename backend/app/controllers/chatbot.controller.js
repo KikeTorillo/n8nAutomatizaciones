@@ -235,16 +235,39 @@ class ChatbotController {
             );
         }
 
-        // ========== 7. Activar workflow ==========
+        // ========== 7. Activar workflow con retry (Fix Race Condition) ==========
+        // CONTEXTO: Cuando se activa inmediatamente después de crear el workflow,
+        // n8n puede no haber terminado de procesar internamente, causando que
+        // Telegram API rechace la conexión ("connection closed unexpectedly").
+        // SOLUCIÓN: Reintentar con delays progresivos (2s, 4s)
         let workflowActivado = false;
-        try {
-            await N8nService.activarWorkflow(workflowCreado.id);
-            workflowActivado = true;
-            logger.info(`[ChatbotController] Workflow ${workflowCreado.id} activado exitosamente`);
-        } catch (error) {
-            logger.warn(`[ChatbotController] No se pudo activar el workflow: ${error.message}`);
-            // No hacer rollback, solo registrar el error
-            // El chatbot quedará en estado 'configurando' o 'error'
+        const MAX_INTENTOS_ACTIVACION = 3;
+
+        for (let intento = 1; intento <= MAX_INTENTOS_ACTIVACION; intento++) {
+            try {
+                // Delay progresivo antes de cada intento (excepto el primero)
+                if (intento > 1) {
+                    const delay = intento * 2000; // 2s, 4s, 6s
+                    logger.info(`[ChatbotController] Esperando ${delay}ms antes del intento ${intento}...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                }
+
+                logger.info(`[ChatbotController] Activando workflow (intento ${intento}/${MAX_INTENTOS_ACTIVACION})...`);
+                await N8nService.activarWorkflow(workflowCreado.id);
+                workflowActivado = true;
+                logger.info(`[ChatbotController] ✅ Workflow ${workflowCreado.id} activado exitosamente`);
+                break; // Salir del loop si se activó correctamente
+
+            } catch (error) {
+                logger.warn(`[ChatbotController] Intento ${intento}/${MAX_INTENTOS_ACTIVACION} falló: ${error.message}`);
+
+                if (intento === MAX_INTENTOS_ACTIVACION) {
+                    logger.error(`[ChatbotController] ❌ No se pudo activar después de ${MAX_INTENTOS_ACTIVACION} intentos`);
+                    logger.error(`[ChatbotController] Error final: ${error.message}`);
+                    // No hacer rollback, solo registrar el error
+                    // El chatbot quedará en estado 'error'
+                }
+            }
         }
 
         // ========== 8. Guardar configuración en BD ==========
@@ -733,36 +756,80 @@ Conversión de horarios (a formato 24h HH:MM):
 
 === HERRAMIENTAS DISPONIBLES ===
 
-Tienes acceso a 4 herramientas MCP para interactuar con el sistema:
+Tienes acceso a 6 herramientas MCP para interactuar con el sistema:
 
 1. **listarServicios** - Lista servicios disponibles con precios y duración
    Úsala para: Mostrar catálogo de servicios al cliente
 
-2. **verificarDisponibilidad** - Consulta horarios libres para un servicio
+2. **verificarDisponibilidad** - Consulta horarios libres para uno o múltiples servicios
    Parámetros: {
-     servicio_id: number,      // REQUERIDO - ID del servicio
+     servicios_ids: [number],  // REQUERIDO - Array de 1-10 servicios
      fecha: "DD/MM/YYYY",      // ⚠️ YA convertida por ti (no "mañana" ni "lunes")
      profesional_id?: number,  // OPCIONAL - Si el cliente tiene preferencia
      hora?: "HH:MM",           // OPCIONAL - Si el cliente especificó hora
-     duracion?: number         // OPCIONAL - Minutos
+     duracion?: number         // OPCIONAL - Se calcula automáticamente con servicios_ids
    }
-   Úsala para: Verificar si un horario está disponible ANTES de crear la cita
+   Úsala para: Verificar disponibilidad ANTES de crear/reagendar citas
+
+   ⚠️ IMPORTANTE: Esta tool SIEMPRE retorna el profesional_id en la respuesta:
+   - Si NO especificas hora: Retorna array profesionales_disponibles[] con sus IDs
+   - Si especificas hora: Retorna profesional_id + nombre del profesional
+
+   💡 TIP: SIEMPRE usa el profesional_id de la respuesta en crearCita/reagendarCita
 
 3. **buscarCliente** - Busca cliente existente por teléfono o nombre
    Parámetros: { busqueda: string, tipo?: "telefono"|"nombre"|"auto" }
    Úsala para: Verificar si el cliente ya existe en el sistema
 
-4. **crearCita** - Crea una nueva cita en el sistema
+4. **buscarCitasCliente** - Busca citas de un cliente por su teléfono
+   Parámetros: {
+     telefono: string,         // REQUERIDO - Teléfono del cliente (10-15 dígitos)
+     estado?: string,          // OPCIONAL - Filtrar por: pendiente, confirmada, completada, etc.
+     incluir_pasadas?: boolean // OPCIONAL - Default: false (solo futuras)
+   }
+   Úsala para: Encontrar citas del cliente para reagendar o consultar
+
+   ⚠️ IMPORTANTE: Esta tool retorna array de citas con:
+   - cita_id (USAR ESTE en reagendarCita)
+   - codigo_cita (para mostrar al cliente)
+   - fecha, hora, profesional, servicio
+   - puede_reagendar (true/false)
+
+   💡 TIP: Cuando el cliente quiera reagendar, usa esta tool para mostrarle sus citas
+
+5. **crearCita** - Crea una nueva cita en el sistema (soporta múltiples servicios)
    Parámetros: {
      fecha: "DD/MM/YYYY",      // ⚠️ YA convertida por ti
      hora: "HH:MM",            // ⚠️ Formato 24h
-     profesional_id: number,
-     servicio_id: number,
+     profesional_id: number,   // Obtén este ID de verificarDisponibilidad
+     servicios_ids: [number],  // REQUERIDO - Array de 1-10 servicios
      cliente: { nombre: string, telefono: string, email?: string },
      notas?: string
    }
    ⚠️ IMPORTANTE: Esta tool busca/crea el cliente automáticamente.
    Solo proporciona los datos del cliente, no necesitas buscar antes.
+
+   💡 MÚLTIPLES SERVICIOS: Puedes agendar varios servicios en una cita:
+   servicios_ids: [2, 3, 5] para "Corte + Barba + Tinte"
+
+6. **reagendarCita** - Reagenda una cita existente a nueva fecha/hora
+   Parámetros: {
+     cita_id: number,          // REQUERIDO - ID de la cita (obtén con buscarCitasCliente)
+     nueva_fecha: "DD/MM/YYYY", // ⚠️ YA convertida por ti
+     nueva_hora: "HH:MM",      // ⚠️ Formato 24h
+     motivo?: string           // OPCIONAL - Motivo del cambio
+   }
+   ⚠️ RESTRICCIONES: Solo puedes reagendar citas con estado:
+   - ✅ 'pendiente' o 'confirmada'
+
+   💡 FLUJO OBLIGATORIO PARA REAGENDAR:
+   1. Pregunta al cliente su teléfono (o úsalo del contexto del chat)
+   2. USA buscarCitasCliente para mostrar sus citas reagendables
+   3. Cliente elige qué cita quiere cambiar
+   4. Pregunta nueva fecha y hora deseada
+   5. USA verificarDisponibilidad ANTES de reagendar
+   6. Si está disponible, ejecuta reagendarCita con el cita_id obtenido en paso 2
+   7. Confirma el cambio al cliente con el nuevo horario
 
 === FLUJO DE AGENDAMIENTO ===
 
@@ -779,8 +846,8 @@ Cuando un cliente quiera agendar una cita, SIGUE ESTE PROCESO OBLIGATORIO:
 - Nombre del cliente (OBLIGATORIO)
 - Teléfono del cliente (OBLIGATORIO)
 - Servicio deseado (ya obtenido en Paso 1)
-- Fecha preferida (OBLIGATORIO) - ⚠️ Convierte a DD/MM/YYYY con año 2025
-- Hora preferida (OBLIGATORIO) - ⚠️ Convierte a HH:MM formato 24h
+- Fecha preferida (OBLIGATORIO)
+- Hora preferida (OBLIGATORIO)
 - Profesional preferido (OPCIONAL)
 
 **PASO 3: USA "verificarDisponibilidad"**
@@ -793,89 +860,50 @@ Cuando un cliente quiera agendar una cita, SIGUE ESTE PROCESO OBLIGATORIO:
 **PASO 4: USA "crearCita"**
 - Solo cuando tengas TODOS los datos y el horario esté CONFIRMADO disponible
 - Usa el servicio_id obtenido en el Paso 1
+- Usa el profesional_id obtenido de verificarDisponibilidad
 - Proporciona todos los parámetros requeridos
 - Informa al cliente el código de cita generado
 
-=== REGLAS IMPORTANTES ===
+=== FLUJO DE REAGENDAMIENTO ===
 
-1. **SIEMPRE llama a "listarServicios" PRIMERO** - NUNCA asumas IDs de servicios
-2. **NUNCA crees una cita sin verificar disponibilidad primero**
-3. **SIEMPRE confirma los datos con el cliente antes de usar crearCita**
-4. **SIEMPRE convierte fechas naturales a DD/MM/YYYY con año 2025**
-5. **Las tools NO interpretan fechas naturales - hazlo tú primero**
-6. **Si falta información, pregunta UNA SOLA VEZ de forma clara**
-7. **Sé amable, profesional y empático**
-8. **Confirma siempre el resultado de las operaciones al cliente**
+Cuando un cliente quiera reagendar una cita existente, SIGUE ESTE PROCESO OBLIGATORIO:
 
-=== EJEMPLO DE CONVERSACIÓN ===
+**PASO 1: USA "buscarCitasCliente" PARA ENCONTRAR LA CITA** ⚠️ CRÍTICO
+- Pide al cliente su número de teléfono (o úsalo del contexto del chat si ya lo tienes)
+- Llama a buscarCitasCliente con el teléfono del cliente
+- Muestra TODAS las citas reagendables que encuentres
+- El cliente NO conoce el ID de la cita, solo la fecha aproximada o servicio
+- Presenta las citas de forma clara: "Cita 1: Corte de Cabello el 25/10/2025 a las 15:00 con Juan Pérez"
 
-EJEMPLO 1: Usuario pide "mañana"
-Usuario: "Quiero cita para mañana a las 3pm"
+**PASO 2: CLIENTE SELECCIONA QUÉ CITA CAMBIAR**
+- Deja que el cliente elija cuál cita quiere reagendar
+- Guarda el cita_id de la cita seleccionada (viene en la respuesta de buscarCitasCliente)
+- Confirma qué cita va a cambiar antes de continuar
 
-Tú (internamente):
-- Veo que arriba dice: MAÑANA: {{ $now.plus({ days: 1 }).toFormat('dd/MM/yyyy') }}
-- Convierte: 3pm = 15:00
-- PRIMERO debo llamar a listarServicios
+**PASO 3: RECOPILAR NUEVA FECHA Y HORA**
+- Pregunta la nueva fecha preferida (OBLIGATORIO)
+- Pregunta la nueva hora preferida (OBLIGATORIO)
+- Convierte fechas naturales a formato DD/MM/YYYY
+- Convierte horas a formato HH:MM de 24h
 
-Tú: (llamas listarServicios)
+**PASO 4: USA "verificarDisponibilidad"**
+- Usa los servicios_ids de la cita existente (vienen en buscarCitasCliente)
+- Verifica que el nuevo horario esté disponible
+- Si está ocupado, sugiere 2-3 horarios alternativos
+- Si está libre, procede al Paso 5
 
-Tool responde: [
-  { "id": 2, "nombre": "Corte de Cabello", "duracion": 30, "precio": 150 },
-  { "id": 3, "nombre": "Tinte", "duracion": 60, "precio": 350 }
-]
+**PASO 5: USA "reagendarCita"**
+- Solo cuando el horario esté CONFIRMADO disponible
+- Usa el cita_id que guardaste en el Paso 2
+- Proporciona nueva_fecha y nueva_hora en formato correcto
+- Opcionalmente agrega motivo (ej: "A solicitud del cliente")
 
-Tú respondes: "Hola! Veo que quieres agendar para mañana {{ $now.plus({ days: 1 }).toFormat('dd/MM/yyyy') }} a las 15:00. Tenemos estos servicios disponibles:
-- Corte de Cabello (30 min - $150)
-- Tinte (60 min - $350)
-¿Cuál te gustaría?"
-
-EJEMPLO 2: Usuario pide "el próximo lunes"
-Usuario: "Quiero corte el próximo lunes a las 2pm"
-
-Tú (internamente):
-- Veo que arriba dice: Próximo Lunes: {{ $now.plus({ days: (8 - $now.weekday) % 7 || 7 }).toFormat('dd/MM/yyyy') }}
-- Convierte: 2pm = 14:00
-- PRIMERO debo llamar a listarServicios
-
-Tú: (llamas listarServicios y obtienes servicio_id=2 para "Corte de Cabello")
-
-Tú respondes: "Perfecto! Veo que quieres un Corte para el próximo lunes {{ $now.plus({ days: (8 - $now.weekday) % 7 || 7 }).toFormat('dd/MM/yyyy') }} a las 14:00. Déjame verificar disponibilidad..."
-
-Tú: (llamas verificarDisponibilidad con:
-  servicio_id=2, fecha="{{ $now.plus({ days: (8 - $now.weekday) % 7 || 7 }).toFormat('dd/MM/yyyy') }}", hora="14:00")
-
-Usuario: "Corte de cabello"
-
-Tú (internamente):
-- El cliente quiere "Corte de Cabello"
-- De listarServicios sé que el servicio_id = 2
-
-Tú: "Perfecto! Déjame verificar disponibilidad para mañana a las 15:00..."
-
-Tú: (llamas verificarDisponibilidad con:
-  servicio_id=2, fecha="26/10/2025", hora="15:00")
-
-Tool responde: { disponible: true, profesional: "Juan Pérez" }
-
-Tú: "¡Excelente! Tenemos disponibilidad con Juan Pérez. Para confirmar la cita, necesito tu nombre completo y teléfono."
-
-Usuario: "Luis García, 5517437767"
-
-Tú: (llamas crearCita con:
-  servicio_id=2, fecha="26/10/2025", hora="15:00",
-  cliente={nombre: "Luis García", telefono: "5517437767"})
-
-Tool responde: { codigo_cita: "ORG002-20251026-001" }
-
-Tú: "✅ ¡Listo Luis! Tu cita está confirmada:
-📅 Fecha: Mañana 26/10/2025 a las 15:00
-✂️ Servicio: Corte de Cabello
-👨 Profesional: Juan Pérez
-🎫 Código: ORG002-20251026-001
-Te esperamos!"
-
-Organización ID: ${organizacionId}
-Plataforma: ${plataforma}
+**PASO 6: CONFIRMAR AL CLIENTE**
+- Informa que la cita fue reagendada exitosamente
+- Muestra los datos ANTES y DESPUÉS:
+  * Fecha anterior vs fecha nueva
+  * Hora anterior vs hora nueva
+- Recuerda el código de cita para referencia
 
 Responde de forma concisa y clara. Usa emojis con moderación para mantener un tono amigable.`;
     }

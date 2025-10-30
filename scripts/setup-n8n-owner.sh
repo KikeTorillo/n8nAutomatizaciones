@@ -49,9 +49,29 @@ if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
   exit 1
 fi
 
-# Dar tiempo adicional para que n8n termine las migraciones de BD
-echo "⏳ Esperando a que n8n termine las migraciones..."
-sleep 10
+# Verificar que las migraciones de n8n completaron
+echo "⏳ Esperando a que n8n termine las migraciones de BD..."
+MAX_MIGRATION_WAIT=30
+MIGRATION_COUNT=0
+while [ $MIGRATION_COUNT -lt $MAX_MIGRATION_WAIT ]; do
+    # Verificar que la tabla 'user' existe (indica migraciones completadas)
+    TABLE_EXISTS=$(docker exec postgres_db psql -U n8n_app -d n8n_db -t -c \
+        "SELECT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name='user');" 2>/dev/null | tr -d ' ')
+
+    if [ "$TABLE_EXISTS" = "t" ]; then
+        echo "✅ Migraciones de n8n completadas"
+        break
+    fi
+
+    echo "   Esperando migraciones... ($((MIGRATION_COUNT + 1))/$MAX_MIGRATION_WAIT)"
+    sleep 2
+    MIGRATION_COUNT=$((MIGRATION_COUNT + 1))
+done
+
+if [ $MIGRATION_COUNT -eq $MAX_MIGRATION_WAIT ]; then
+    echo "⚠️  Timeout esperando migraciones (60s)"
+    echo "ℹ️  Continuando de todas formas..."
+fi
 
 echo ""
 echo "🔍 Verificando si n8n ya tiene owner..."

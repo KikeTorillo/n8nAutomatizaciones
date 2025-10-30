@@ -1,8 +1,10 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi, serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import StatCard from '@/components/dashboard/StatCard';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
@@ -31,7 +33,9 @@ import {
  */
 function Dashboard() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { logout: clearAuth, user } = useAuthStore();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Queries de datos
   const { data: estadisticas, isLoading: loadingEstadisticas, error: errorEstadisticas } =
@@ -58,20 +62,33 @@ function Dashboard() {
     mutationFn: authApi.logout,
     onSuccess: () => {
       console.log('✅ Logout exitoso');
+
+      // 🧹 CRÍTICO: Limpiar cache de React Query al cerrar sesión
+      // Evita que se muestren datos al iniciar sesión con otra cuenta
+      queryClient.clear();
+      console.log('✅ Cache de React Query limpiado');
+
       clearAuth();
       navigate('/login');
     },
     onError: (error) => {
       console.error('❌ Error en logout:', error);
+
+      // Limpiar cache incluso si hay error
+      queryClient.clear();
+
       clearAuth();
       navigate('/login');
     },
   });
 
   const handleLogout = () => {
-    if (confirm('¿Estás seguro que deseas cerrar sesión?')) {
-      logoutMutation.mutate();
-    }
+    setShowLogoutDialog(true);
+  };
+
+  const confirmLogout = () => {
+    setShowLogoutDialog(false);
+    logoutMutation.mutate();
   };
 
   // Calcular totales
@@ -438,6 +455,19 @@ function Dashboard() {
           </div>
         </div>
       </main>
+
+      {/* Modal de confirmación de logout */}
+      <ConfirmDialog
+        isOpen={showLogoutDialog}
+        onClose={() => setShowLogoutDialog(false)}
+        onConfirm={confirmLogout}
+        title="Cerrar Sesión"
+        message="¿Estás seguro que deseas cerrar sesión? Tendrás que volver a iniciar sesión para acceder."
+        confirmText="Cerrar Sesión"
+        cancelText="Cancelar"
+        variant="warning"
+        isLoading={logoutMutation.isPending}
+      />
     </div>
   );
 }

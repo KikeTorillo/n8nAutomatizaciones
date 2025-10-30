@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import { loginSchema } from '@/lib/validations';
@@ -13,6 +13,7 @@ import { Eye, EyeOff } from 'lucide-react';
 
 function Login() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { setAuth } = useAuthStore();
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -37,6 +38,12 @@ function Login() {
     },
     onSuccess: (data) => {
       console.log('🔐 Guardando auth en store:', data.usuario);
+
+      // 🧹 CRÍTICO: Limpiar cache de React Query al cambiar de organización
+      // Evita que se muestren datos de la sesión anterior
+      queryClient.clear();
+      console.log('✅ Cache de React Query limpiado');
+
       // El backend retorna "usuario" no "user"
       setAuth({
         user: data.usuario,

@@ -113,8 +113,16 @@ if echo "$API_KEY_RESPONSE" | grep -q '"rawApiKey"'; then
 
     # Actualizar .env automáticamente
     echo "📝 Actualizando .env automáticamente..."
-    sed -i "s|^N8N_API_KEY=.*|N8N_API_KEY=$RAW_API_KEY|" .env
-    echo "✅ N8N_API_KEY actualizado en .env"
+
+    # Validar si la línea existe, si no, agregarla
+    if grep -q "^N8N_API_KEY=" .env; then
+        sed -i "s|^N8N_API_KEY=.*|N8N_API_KEY=$RAW_API_KEY|" .env
+        echo "✅ N8N_API_KEY actualizado en .env"
+    else
+        echo "N8N_API_KEY=$RAW_API_KEY" >> .env
+        echo "✅ N8N_API_KEY agregado a .env"
+    fi
+
     echo ""
 
     # Mostrar hint solo si se ejecuta manualmente (no desde post-docker-setup)
