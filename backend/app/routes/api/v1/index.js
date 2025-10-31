@@ -1,6 +1,8 @@
 const express = require('express');
 
 const authRouter = require('./auth');
+const setupRouter = require('./setup');
+const superadminRouter = require('./superadmin');
 const organizacionesRouter = require('./organizaciones');
 const profesionalesRouter = require('./profesionales');
 const clientesRouter = require('./clientes');
@@ -22,6 +24,12 @@ function routerApi(app) {
 
     // Rutas de autenticación y gestión de contraseñas
     router.use('/auth', authRouter);
+
+    // Rutas de setup inicial (creación de super admin)
+    router.use('/setup', setupRouter);
+
+    // Rutas de super administrador (protegidas)
+    router.use('/superadmin', superadminRouter);
 
     // Rutas públicas
     router.use('/planes', planesRouter);

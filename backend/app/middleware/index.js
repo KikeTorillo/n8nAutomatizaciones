@@ -8,6 +8,7 @@ const tenant = require('./tenant');
 const validation = require('./validation');
 const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
+const subscription = require('./subscription');
 
 module.exports = {
   // Middleware de manejo de errores async
@@ -21,7 +22,7 @@ module.exports = {
     requireAdminRole: auth.requireAdminRole,
     requireOwnerOrAdmin: auth.requireOwnerOrAdmin,
     optionalAuth: auth.optionalAuth,
-    verifyTenantAccess: auth.verifyTenantAccess,
+    verifyOrganizationAccess: auth.verifyOrganizationAccess,
     refreshToken: auth.refreshToken
   },
 
@@ -59,6 +60,13 @@ module.exports = {
     planBasedRateLimit: rateLimiting.planBasedRateLimit,
     createRateLimit: rateLimiting.createRateLimit,
     clearRateLimit: rateLimiting.clearRateLimit
+  },
+
+  // Middleware de suscripciones y límites de planes
+  subscription: {
+    checkActiveSubscription: subscription.checkActiveSubscription,
+    checkResourceLimit: subscription.checkResourceLimit,
+    checkResourceWarning: subscription.checkResourceWarning
   }
 };
 

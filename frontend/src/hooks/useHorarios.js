@@ -75,6 +75,12 @@ export function useCrearHorarioSemanal() {
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const status = error.response?.status;
       let message = 'Error al crear horarios semanales';
 
@@ -107,6 +113,12 @@ export function useCrearHorario() {
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const status = error.response?.status;
       let message = 'Error al crear horario';
 
@@ -139,6 +151,12 @@ export function useActualizarHorario() {
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const status = error.response?.status;
       let message = 'Error al actualizar horario';
 
@@ -168,6 +186,12 @@ export function useEliminarHorario() {
       queryClient.invalidateQueries({ queryKey: ['horarios'] });
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const status = error.response?.status;
       let message = 'Error al eliminar horario';
 

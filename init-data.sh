@@ -71,6 +71,11 @@ eval "cat <<EOF
 $(cat $SQL_DIR/setup/03-grant-permissions.sql)
 EOF" | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB"
 
+# 5. Crear super administrador inicial (DESHABILITADO - Ahora se hace via interfaz web)
+# echo "  6️⃣ Creando super administrador inicial..."
+# psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/setup/04-create-superadmin.sql" || echo "⚠️  Super admin no creado (puede crearse después via API)"
+echo "  6️⃣ Super admin se creará via interfaz web en el primer acceso"
+
 # =====================================================================
 # VALIDACIÓN POST-INSTALACIÓN
 # =====================================================================

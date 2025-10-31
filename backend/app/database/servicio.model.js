@@ -104,6 +104,187 @@ class ServicioModel {
         });
     }
 
+    /**
+     * Crea múltiples servicios en una transacción (ALL or NONE)
+     * Pre-valida límite del plan ANTES de crear cualquier registro
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @param {Array<Object>} servicios - Array de servicios a crear
+     * @returns {Promise<Array>} - Servicios creados con profesionales asignados
+     *
+     * @throws {Error} - Si se excede el límite del plan (403)
+     * @throws {Error} - Si hay nombres duplicados (409)
+     * @throws {Error} - Si faltan datos requeridos (400)
+     */
+    static async crearBulk(organizacionId, servicios) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // ========== 1. PRE-VALIDAR LÍMITE DEL PLAN (ANTES DE CREAR) ==========
+            const cantidadACrear = servicios.length;
+
+            const verificarResult = await db.query(
+                `SELECT verificar_limite_plan($1, $2, $3) as puede_crear`,
+                [organizacionId, 'servicios', cantidadACrear]
+            );
+
+            if (!verificarResult.rows[0]?.puede_crear) {
+                // Obtener detalles del plan para mensaje de error
+                const detallesQuery = `
+                    SELECT
+                        ps.limite_servicios as limite,
+                        m.uso_servicios as uso_actual,
+                        ps.nombre_plan
+                    FROM subscripciones s
+                    JOIN planes_subscripcion ps ON s.plan_id = ps.id
+                    LEFT JOIN metricas_uso_organizacion m ON m.organizacion_id = s.organizacion_id
+                    WHERE s.organizacion_id = $1 AND s.activa = true
+                `;
+                const detalles = await db.query(detallesQuery, [organizacionId]);
+                const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
+
+                throw new Error(
+                    `No se pueden crear ${cantidadACrear} servicios. ` +
+                    `Límite del plan ${nombre_plan}: ${limite} (uso actual: ${uso_actual || 0})`
+                );
+            }
+
+            // ========== 2. VALIDAR NOMBRES ÚNICOS DENTRO DEL BATCH ==========
+            const nombresEnBatch = servicios.map(s => s.nombre.toLowerCase().trim());
+            const nombresDuplicadosEnBatch = nombresEnBatch.filter(
+                (nombre, index) => nombresEnBatch.indexOf(nombre) !== index
+            );
+
+            if (nombresDuplicadosEnBatch.length > 0) {
+                throw new Error(
+                    `Nombres duplicados en el lote: ${[...new Set(nombresDuplicadosEnBatch)].join(', ')}`
+                );
+            }
+
+            // ========== 3. VALIDAR NOMBRES ÚNICOS EN LA BD ==========
+            const nombresExistentesQuery = `
+                SELECT nombre
+                FROM servicios
+                WHERE organizacion_id = $1 AND nombre = ANY($2::text[])
+            `;
+            const nombresExistentes = await db.query(nombresExistentesQuery, [
+                organizacionId,
+                servicios.map(s => s.nombre.trim())
+            ]);
+
+            if (nombresExistentes.rows.length > 0) {
+                const duplicados = nombresExistentes.rows.map(r => r.nombre);
+                throw new Error(
+                    `Ya existen servicios con estos nombres: ${duplicados.join(', ')}`
+                );
+            }
+
+            // ========== 4. CREAR TODOS LOS SERVICIOS ==========
+            const serviciosCreados = [];
+
+            for (const servicioData of servicios) {
+                const query = `
+                    INSERT INTO servicios (
+                        organizacion_id, nombre, descripcion, categoria,
+                        subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
+                        requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
+                        color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                    RETURNING id, organizacion_id, nombre, descripcion, categoria,
+                             subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
+                             requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
+                             color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados,
+                             activo, creado_en, actualizado_en
+                `;
+
+                const values = [
+                    organizacionId,
+                    servicioData.nombre.trim(),
+                    servicioData.descripcion?.trim() || null,
+                    servicioData.categoria?.trim() || null,
+                    servicioData.subcategoria?.trim() || null,
+                    servicioData.duracion_minutos,
+                    servicioData.precio,
+                    servicioData.precio_minimo || null,
+                    servicioData.precio_maximo || null,
+                    servicioData.requiere_preparacion_minutos || 0,
+                    servicioData.tiempo_limpieza_minutos || 5,
+                    servicioData.max_clientes_simultaneos || 1,
+                    servicioData.color_servicio || '#e74c3c',
+                    servicioData.configuracion_especifica || {},
+                    servicioData.tags || [],
+                    servicioData.tipos_profesional_autorizados || null,
+                    servicioData.activo !== undefined ? servicioData.activo : true
+                ];
+
+                const result = await db.query(query, values);
+                serviciosCreados.push(result.rows[0]);
+            }
+
+            // ========== 5. ASIGNAR PROFESIONALES SI SE PROPORCIONAN ==========
+            for (let i = 0; i < serviciosCreados.length; i++) {
+                const servicio = serviciosCreados[i];
+                const profesionalesAsignados = servicios[i].profesionales_asignados || [];
+
+                if (profesionalesAsignados.length > 0) {
+                    // Validar que los profesionales existen
+                    const validarProfesionalesQuery = `
+                        SELECT id FROM profesionales
+                        WHERE id = ANY($1::int[])
+                          AND organizacion_id = $2
+                          AND activo = true
+                    `;
+                    const profesionalesValidos = await db.query(validarProfesionalesQuery, [
+                        profesionalesAsignados,
+                        organizacionId
+                    ]);
+
+                    if (profesionalesValidos.rows.length !== profesionalesAsignados.length) {
+                        throw new Error(
+                            `Servicio "${servicio.nombre}": Uno o más profesionales no existen o están inactivos`
+                        );
+                    }
+
+                    // Asociar profesionales
+                    const asociarQuery = `
+                        INSERT INTO servicios_profesionales (servicio_id, profesional_id, activo)
+                        VALUES ($1, $2, true)
+                    `;
+
+                    for (const profesionalId of profesionalesAsignados) {
+                        await db.query(asociarQuery, [servicio.id, profesionalId]);
+                    }
+                }
+            }
+
+            // ========== 6. OBTENER DATOS ENRIQUECIDOS CON JOIN ==========
+            const idsCreados = serviciosCreados.map(s => s.id);
+            const serviciosEnriquecidosQuery = `
+                SELECT
+                    s.*,
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', p.id,
+                                'nombre_completo', p.nombre_completo,
+                                'email', p.email,
+                                'tipo_profesional_id', p.tipo_profesional_id
+                            )
+                        ) FILTER (WHERE p.id IS NOT NULL),
+                        '[]'::json
+                    ) as profesionales_asignados
+                FROM servicios s
+                LEFT JOIN servicios_profesionales sp ON s.id = sp.servicio_id AND sp.activo = true
+                LEFT JOIN profesionales p ON sp.profesional_id = p.id
+                WHERE s.id = ANY($1::int[])
+                GROUP BY s.id
+                ORDER BY s.id
+            `;
+
+            const serviciosEnriquecidos = await db.query(serviciosEnriquecidosQuery, [idsCreados]);
+
+            return serviciosEnriquecidos.rows;
+        });
+    }
+
     static async obtenerPorId(id, organizacion_id) {
         return await RLSContextManager.query(organizacion_id, async (db) => {
             const query = `

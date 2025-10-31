@@ -1,6 +1,7 @@
 const ProfesionalModel = require('../database/profesional.model');
 const { ResponseHelper } = require('../utils/helpers');
 const asyncHandler = require('../middleware/asyncHandler');
+const logger = require('../utils/logger');
 
 class ProfesionalController {
     static crear = asyncHandler(async (req, res) => {
@@ -21,6 +22,57 @@ class ProfesionalController {
 
         const nuevoProfesional = await ProfesionalModel.crear(profesionalData);
         return ResponseHelper.success(res, nuevoProfesional, 'Profesional creado exitosamente', 201);
+    });
+
+    /**
+     * Crear múltiples profesionales en una transacción
+     * POST /profesionales/bulk-create
+     */
+    static bulkCrear = asyncHandler(async (req, res) => {
+        const { profesionales } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        logger.info(`📦 Creación bulk de ${profesionales.length} profesionales para org ${organizacionId}`);
+
+        try {
+            const profesionalesCreados = await ProfesionalModel.crearBulk(
+                organizacionId,
+                profesionales
+            );
+
+            logger.info(`✅ ${profesionalesCreados.length} profesionales creados exitosamente`);
+
+            return ResponseHelper.success(
+                res,
+                {
+                    profesionales: profesionalesCreados,
+                    total_creados: profesionalesCreados.length
+                },
+                `${profesionalesCreados.length} profesionales creados exitosamente`,
+                201
+            );
+
+        } catch (error) {
+            logger.error('❌ Error en creación bulk de profesionales:', error);
+
+            // Distinguir errores de límite de plan vs otros errores
+            if (error.message.includes('límite') || error.message.includes('Límite')) {
+                return ResponseHelper.error(res, error.message, 403, {
+                    codigo_error: 'PLAN_LIMIT_REACHED',
+                    accion_requerida: 'upgrade_plan'
+                });
+            }
+
+            if (error.message.includes('email')) {
+                return ResponseHelper.error(res, error.message, 409);
+            }
+
+            if (error.message.includes('incompatible')) {
+                return ResponseHelper.error(res, error.message, 400);
+            }
+
+            throw error; // asyncHandler maneja otros errores
+        }
     });
 
     static obtenerPorId = asyncHandler(async (req, res) => {

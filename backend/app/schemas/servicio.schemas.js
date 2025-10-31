@@ -189,9 +189,110 @@ const obtenerServiciosPorProfesional = {
     })
 };
 
+// POST /servicios/bulk-create
+const bulkCrear = {
+    body: Joi.object({
+        servicios: Joi.array()
+            .items(
+                Joi.object({
+                    nombre: Joi.string()
+                        .trim()
+                        .min(1)
+                        .max(100)
+                        .required()
+                        .messages({
+                            'string.empty': 'Nombre es requerido',
+                            'string.max': 'Nombre no puede exceder 100 caracteres'
+                        }),
+                    descripcion: Joi.string()
+                        .trim()
+                        .max(1000)
+                        .optional()
+                        .allow(null, ''),
+                    categoria: Joi.string()
+                        .trim()
+                        .max(50)
+                        .optional()
+                        .allow(null, ''),
+                    subcategoria: Joi.string()
+                        .trim()
+                        .max(50)
+                        .optional()
+                        .allow(null, ''),
+                    duracion_minutos: Joi.number()
+                        .integer()
+                        .min(1)
+                        .max(480)
+                        .required()
+                        .messages({
+                            'number.base': 'Duración debe ser un número',
+                            'number.min': 'Duración debe ser entre 1 y 480 minutos',
+                            'number.max': 'Duración debe ser entre 1 y 480 minutos'
+                        }),
+                    precio: commonSchemas.price
+                        .required()
+                        .messages({'any.required': 'Precio es requerido'}),
+                    precio_minimo: commonSchemas.price
+                        .optional()
+                        .allow(null),
+                    precio_maximo: commonSchemas.price
+                        .optional()
+                        .allow(null),
+                    requiere_preparacion_minutos: Joi.number()
+                        .integer()
+                        .min(0)
+                        .max(120)
+                        .optional()
+                        .default(0),
+                    tiempo_limpieza_minutos: Joi.number()
+                        .integer()
+                        .min(0)
+                        .max(60)
+                        .optional()
+                        .default(5),
+                    max_clientes_simultaneos: Joi.number()
+                        .integer()
+                        .min(1)
+                        .max(20)
+                        .optional()
+                        .default(1),
+                    color_servicio: Joi.string()
+                        .pattern(/^#[0-9A-Fa-f]{6}$/)
+                        .optional()
+                        .messages({'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #e74c3c)'}),
+                    tags: Joi.array()
+                        .items(Joi.string().trim().min(1).max(30))
+                        .optional()
+                        .allow(null),
+                    configuracion_especifica: Joi.object()
+                        .optional()
+                        .allow(null),
+                    tipos_profesional_autorizados: Joi.array()
+                        .optional()
+                        .allow(null),
+                    profesionales_asignados: Joi.array()
+                        .items(Joi.number().integer().positive())
+                        .optional()
+                        .default([]),
+                    activo: Joi.boolean()
+                        .optional()
+                        .default(true)
+                })
+            )
+            .min(1)
+            .max(50)
+            .required()
+            .messages({
+                'array.min': 'Debe proporcionar al menos 1 servicio',
+                'array.max': 'No se pueden crear más de 50 servicios a la vez'
+            })
+    })
+};
+
 module.exports = {
     // CRUD
     crear,
+    bulkCrear,
     listar,
     obtenerPorId,
     actualizar,

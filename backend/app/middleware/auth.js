@@ -343,11 +343,20 @@ const requireAdminRole = (req, res, next) => {
     next();
 };
 
+/**
+ * Middleware para requerir rol de propietario o admin
+ * Verifica que el usuario tenga rol super_admin, admin o propietario
+ */
+const requireOwnerOrAdmin = (req, res, next) => {
+    return requireRole(['super_admin', 'admin', 'propietario'])(req, res, next);
+};
+
 module.exports = {
     authenticateToken,
     requireRole,
     requireAdmin,
     requireAdminRole,
+    requireOwnerOrAdmin,
     verifyOrganizationAccess,
     optionalAuth,
     addToTokenBlacklist,

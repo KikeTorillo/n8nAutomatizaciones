@@ -2,7 +2,7 @@
 
 const express = require('express');
 const ServicioController = require('../../../controllers/servicio.controller');
-const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
 const servicioSchemas = require('../../../schemas/servicio.schemas');
 
 const router = express.Router();
@@ -73,12 +73,28 @@ router.delete('/:id/profesionales/:profesional_id',
     ServicioController.desasignarProfesional
 );
 
+// ========== Rutas Bulk ==========
+
+router.post('/bulk-create',
+    rateLimiting.heavyOperationRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,  // ✅ Verificar suscripción activa
+    // NO agregar checkResourceLimit aquí - se valida dentro del método bulkCrear
+    auth.requireAdminRole,
+    validation.validate(servicioSchemas.bulkCrear),
+    ServicioController.bulkCrear
+);
+
 // ========== Rutas CRUD Estándar ==========
 router.post('/',
     rateLimiting.apiRateLimit,
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,         // ✅ Verificar suscripción activa
+    subscription.checkResourceLimit('servicios'), // ✅ Verificar límite de servicios
     validation.validate(servicioSchemas.crear),
     ServicioController.crear
 );

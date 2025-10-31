@@ -224,7 +224,7 @@ export function useCancelarCita() {
       success('Cita cancelada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al cancelar la cita';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al cancelar la cita';
       showError(mensaje);
     },
   });
@@ -257,7 +257,7 @@ export function useConfirmarCita() {
       success('Cita confirmada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al confirmar la cita';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al confirmar la cita';
       showError(mensaje);
     },
   });
@@ -290,7 +290,7 @@ export function useIniciarCita() {
       success('Cita iniciada');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al iniciar la cita';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al iniciar la cita';
       showError(mensaje);
     },
   });
@@ -332,7 +332,7 @@ export function useCompletarCita() {
       success('Cita completada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al completar la cita';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al completar la cita';
       showError(mensaje);
     },
   });
@@ -368,7 +368,7 @@ export function useNoShowCita() {
       warning('Cita marcada como No Show');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al marcar como No Show';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al marcar como No Show';
       showError(mensaje);
     },
   });
@@ -407,7 +407,7 @@ export function useCrearCitaWalkIn() {
       success('Cita walk-in creada exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al crear cita walk-in';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear cita walk-in';
       showError(mensaje);
     },
   });
@@ -459,7 +459,7 @@ export function useEnviarRecordatorio() {
       success('Recordatorio enviado por WhatsApp');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.error || 'Error al enviar recordatorio';
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al enviar recordatorio';
       showError(mensaje);
     },
   });

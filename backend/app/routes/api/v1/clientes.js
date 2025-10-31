@@ -1,6 +1,6 @@
 const express = require('express');
 const ClienteController = require('../../../controllers/cliente.controller');
-const { auth, tenant, validation, rateLimiting } = require('../../../middleware');
+const { auth, tenant, validation, rateLimiting, subscription } = require('../../../middleware');
 const clienteSchemas = require('../../../schemas/cliente.schemas');
 
 const router = express.Router();
@@ -8,6 +8,8 @@ const router = express.Router();
 router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
+    subscription.checkActiveSubscription,       // ✅ Verificar suscripción activa
+    subscription.checkResourceLimit('clientes'), // ✅ Verificar límite de clientes
     rateLimiting.apiRateLimit,
     validation.validate(clienteSchemas.crear),
     ClienteController.crear

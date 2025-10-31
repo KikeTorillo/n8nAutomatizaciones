@@ -88,6 +88,29 @@ export function useCrearCliente() {
       // Invalidar lista de clientes para refrescar
       queryClient.invalidateQueries(['clientes']);
     },
+    onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+
+      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      // Fallback a mensajes genéricos por código de error
+      const errorMessages = {
+        409: 'Ya existe un cliente con ese email o teléfono',
+        400: 'Datos inválidos. Revisa los campos',
+        403: 'No tienes permisos para crear clientes',
+        500: 'Error del servidor. Intenta nuevamente',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error inesperado';
+
+      // Re-throw con mensaje amigable
+      throw new Error(message);
+    },
   });
 }
 
@@ -107,6 +130,25 @@ export function useActualizarCliente() {
       queryClient.invalidateQueries(['cliente', data.id]);
       queryClient.invalidateQueries(['clientes']);
     },
+    onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        404: 'Cliente no encontrado',
+        400: 'Datos inválidos',
+        409: 'Ya existe un cliente con ese email o teléfono',
+        500: 'Error del servidor',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al actualizar';
+
+      throw new Error(message);
+    },
   });
 }
 
@@ -123,6 +165,24 @@ export function useEliminarCliente() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['clientes']);
+    },
+    onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        404: 'Cliente no encontrado',
+        400: 'No se puede eliminar el cliente (puede tener citas asociadas)',
+        500: 'Error del servidor',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || 'Error al eliminar cliente';
+
+      throw new Error(message);
     },
   });
 }

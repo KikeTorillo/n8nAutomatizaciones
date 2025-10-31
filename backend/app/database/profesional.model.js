@@ -102,6 +102,164 @@ class ProfesionalModel {
         });
     }
 
+    /**
+     * Crea múltiples profesionales en una transacción atómica
+     * @param {number} organizacionId - ID de la organización
+     * @param {Array} profesionales - Array de profesionales a crear
+     * @returns {Promise<Array>} Profesionales creados con IDs
+     */
+    static async crearBulk(organizacionId, profesionales) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // 1. Pre-validación: Verificar límite del plan ANTES de crear
+            const cantidadACrear = profesionales.length;
+            const verificarQuery = `SELECT verificar_limite_plan($1, $2, $3) as puede_crear`;
+            const verificarResult = await db.query(verificarQuery, [
+                organizacionId,
+                'profesionales',
+                cantidadACrear
+            ]);
+
+            if (!verificarResult.rows[0]?.puede_crear) {
+                // Obtener detalles del límite para mensaje de error
+                const detallesQuery = `
+                    SELECT
+                        ps.limite_profesionales as limite,
+                        m.uso_profesionales as uso_actual,
+                        ps.nombre_plan
+                    FROM subscripciones s
+                    JOIN planes_subscripcion ps ON s.plan_id = ps.id
+                    LEFT JOIN metricas_uso_organizacion m ON m.organizacion_id = s.organizacion_id
+                    WHERE s.organizacion_id = $1 AND s.activa = true
+                `;
+                const detalles = await db.query(detallesQuery, [organizacionId]);
+                const { limite, uso_actual, nombre_plan } = detalles.rows[0] || {};
+
+                throw new Error(
+                    `No se pueden crear ${cantidadACrear} profesionales. ` +
+                    `Límite del plan ${nombre_plan}: ${limite} (uso actual: ${uso_actual || 0})`
+                );
+            }
+
+            // 2. Pre-validación: Verificar emails únicos (si se proporcionan)
+            const emailsAValidar = profesionales
+                .filter(p => p.email && p.email.trim() !== '')
+                .map(p => p.email.toLowerCase().trim());
+
+            if (emailsAValidar.length > 0) {
+                // Verificar emails duplicados dentro del batch
+                const emailsDuplicados = emailsAValidar.filter((email, index) =>
+                    emailsAValidar.indexOf(email) !== index
+                );
+                if (emailsDuplicados.length > 0) {
+                    throw new Error(`Emails duplicados en la solicitud: ${emailsDuplicados.join(', ')}`);
+                }
+
+                // Verificar emails existentes en BD
+                const emailsQuery = `
+                    SELECT email
+                    FROM profesionales
+                    WHERE organizacion_id = $1
+                        AND email = ANY($2)
+                        AND activo = TRUE
+                `;
+                const emailsExistentes = await db.query(emailsQuery, [
+                    organizacionId,
+                    emailsAValidar
+                ]);
+
+                if (emailsExistentes.rows.length > 0) {
+                    const emails = emailsExistentes.rows.map(r => r.email).join(', ');
+                    throw new Error(`Los siguientes emails ya están en uso: ${emails}`);
+                }
+            }
+
+            // 3. Crear todos los profesionales
+            const profesionalesCreados = [];
+
+            for (const prof of profesionales) {
+                const insertQuery = `
+                    INSERT INTO profesionales (
+                        organizacion_id, nombre_completo, email, telefono,
+                        tipo_profesional_id, color_calendario,
+                        activo, disponible_online, fecha_nacimiento, documento_identidad,
+                        licencias_profesionales, años_experiencia, idiomas, biografia, foto_url
+                    ) VALUES ($1, $2, $3, $4, $5, $6, TRUE, TRUE, $7, $8, $9, $10, $11, $12, $13)
+                    RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
+                             documento_identidad, tipo_profesional_id, color_calendario,
+                             activo, disponible_online, creado_en, actualizado_en
+                `;
+
+                const values = [
+                    organizacionId,
+                    prof.nombre_completo,
+                    prof.email || null,
+                    prof.telefono || null,
+                    prof.tipo_profesional_id,
+                    prof.color_calendario || '#3B82F6',
+                    prof.fecha_nacimiento || null,
+                    prof.documento_identidad || null,
+                    prof.licencias_profesionales || {},
+                    prof.años_experiencia || 0,
+                    prof.idiomas || ['es'],
+                    prof.biografia || null,
+                    prof.foto_url || null
+                ];
+
+                try {
+                    const result = await db.query(insertQuery, values);
+                    const profesionalCreado = result.rows[0];
+
+                    // 4. Asignar servicios si se proporcionan
+                    if (prof.servicios_asignados && prof.servicios_asignados.length > 0) {
+                        for (const servicioId of prof.servicios_asignados) {
+                            const servicioQuery = `
+                                INSERT INTO servicios_profesionales (
+                                    profesional_id, servicio_id, activo
+                                ) VALUES ($1, $2, TRUE)
+                                ON CONFLICT (profesional_id, servicio_id) DO NOTHING
+                            `;
+                            await db.query(servicioQuery, [profesionalCreado.id, servicioId]);
+                        }
+                    }
+
+                    profesionalesCreados.push(profesionalCreado);
+
+                } catch (error) {
+                    // Manejar errores de constraint específicos
+                    if (error.code === '23514') {
+                        if (error.constraint && error.constraint.includes('tipo_profesional')) {
+                            throw new Error(`Tipo de profesional incompatible con la industria de la organización para "${prof.nombre_completo}"`);
+                        }
+                        throw new Error(`Los datos del profesional "${prof.nombre_completo}" no cumplen las validaciones requeridas`);
+                    }
+                    if (error.code === '23503') {
+                        throw new Error(`Error de referencia en los datos del profesional "${prof.nombre_completo}"`);
+                    }
+                    throw error;
+                }
+            }
+
+            // 5. Retornar con JOIN de tipos profesional
+            const idsCreados = profesionalesCreados.map(p => p.id);
+            const queryFinal = `
+                SELECT p.*,
+                       tp.codigo as tipo_codigo,
+                       tp.nombre as tipo_nombre,
+                       tp.color as tipo_color,
+                       COUNT(sp.servicio_id) as total_servicios_asignados
+                FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
+                WHERE p.id = ANY($1)
+                GROUP BY p.id, tp.codigo, tp.nombre, tp.color
+                ORDER BY p.id
+            `;
+
+            const finalResult = await db.query(queryFinal, [idsCreados]);
+            return finalResult.rows;
+        });
+    }
+
     static async buscarPorId(id, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `

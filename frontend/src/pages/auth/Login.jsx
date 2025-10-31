@@ -50,8 +50,23 @@ function Login() {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
       });
-      console.log('➡️ Redirigiendo a dashboard...');
-      navigate('/dashboard');
+
+      // Redirección basada en el rol del usuario
+      const userRole = data.usuario.rol;
+      let redirectPath = '/dashboard'; // Default
+
+      if (userRole === 'super_admin') {
+        redirectPath = '/superadmin';
+        console.log('➡️ Super Admin detectado - Redirigiendo a panel super admin');
+      } else if (userRole === 'empleado') {
+        redirectPath = '/citas';
+        console.log('➡️ Empleado detectado - Redirigiendo a citas');
+      } else {
+        // admin, propietario
+        console.log('➡️ Admin/Propietario detectado - Redirigiendo a dashboard');
+      }
+
+      navigate(redirectPath);
     },
     onError: (error) => {
       console.error('❌ Error en login:', error);

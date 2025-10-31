@@ -65,87 +65,77 @@ function Step4_Professionals() {
     },
   });
 
-  // Mutación para crear profesionales en batch
+  // Mutación NUEVA para crear profesionales en bulk (transaccional)
   const createProfessionalsMutation = useMutation({
     mutationFn: async (professionals) => {
-      console.log('📤 Creando profesionales:', professionals);
+      console.log('📦 Creando profesionales en bulk (transaccional):', professionals);
 
-      const results = [];
+      // 1. Obtener servicios del backend para mapear nombres → IDs
+      let servicioNombreToId = {};
+      try {
+        const serviciosResponse = await serviciosApi.listar({ limite: 100 });
+        const serviciosCreados = serviciosResponse.data.data.servicios;
 
-      // Crear profesionales y asignar servicios uno por uno
-      for (const prof of professionals) {
-        // Sanitizar campos opcionales vacíos
-        const sanitizedProf = {
-          nombre_completo: prof.nombre_completo,
-          tipo_profesional_id: prof.tipo_profesional_id, // Integer ID
-          color_calendario: prof.color_calendario,
-          permite_walk_in: prof.permite_walk_in,
-          telefono: prof.telefono?.trim() || undefined,
-          email: prof.email?.trim() || undefined,
-        };
-
-        // 1. Crear el profesional
-        const profResponse = await profesionalesApi.crear(sanitizedProf);
-        const profesionalCreado = profResponse.data.data;
-        console.log('✅ Profesional creado:', profesionalCreado);
-
-        // 2. Asignar servicios si hay seleccionados
-        if (prof.servicios_asignados && prof.servicios_asignados.length > 0) {
-          console.log(`📎 Asignando ${prof.servicios_asignados.length} servicios al profesional ${profesionalCreado.id}`);
-
-          // ✅ FIX: Obtener servicios del backend para mapear nombres → IDs
-          let servicioNombreToId = {};
-          try {
-            const serviciosResponse = await serviciosApi.listar({ limite: 100 });
-            const serviciosCreados = serviciosResponse.data.data.servicios;
-
-            // Crear mapa de nombre → ID
-            serviciosCreados.forEach(s => {
-              servicioNombreToId[s.nombre] = s.id;
-            });
-            console.log('🗺️ Mapa de servicios creado:', servicioNombreToId);
-          } catch (error) {
-            console.error('❌ Error obteniendo servicios para mapeo:', error);
-            // Continuar sin asignaciones si falla el mapeo
-            servicioNombreToId = {};
-          }
-
-          for (const servicioNombreOId of prof.servicios_asignados) {
-            try {
-              // ✅ FIX: Usar ID numérico si es nombre, o usar directamente si ya es ID
-              const servicioId = servicioNombreToId[servicioNombreOId] || servicioNombreOId;
-
-              if (!servicioId || typeof servicioId !== 'number') {
-                console.warn(`⚠️ Servicio "${servicioNombreOId}" no encontrado en BD o ID inválido`);
-                continue;
-              }
-
-              await serviciosApi.asignarProfesional(servicioId, {
-                profesional_id: profesionalCreado.id,
-              });
-              console.log(`✅ Servicio "${servicioNombreOId}" (ID: ${servicioId}) asignado al profesional ${profesionalCreado.id}`);
-            } catch (error) {
-              console.error(`❌ Error asignando servicio "${servicioNombreOId}":`, error);
-              // Continuar con los demás servicios aunque uno falle
-            }
-          }
-        }
-
-        results.push(profResponse);
+        // Crear mapa de nombre → ID
+        serviciosCreados.forEach(s => {
+          servicioNombreToId[s.nombre] = s.id;
+        });
+        console.log('🗺️ Mapa de servicios creado:', servicioNombreToId);
+      } catch (error) {
+        console.error('❌ Error obteniendo servicios para mapeo:', error);
+        servicioNombreToId = {};
       }
 
-      console.log('✅ Todos los profesionales y asignaciones creados');
-      return results;
+      // 2. Preparar profesionales con servicios mapeados a IDs
+      const profesionalesParaBulk = professionals.map(prof => ({
+        nombre_completo: prof.nombre_completo,
+        tipo_profesional_id: prof.tipo_profesional_id,
+        color_calendario: prof.color_calendario || '#3B82F6',
+        telefono: prof.telefono?.trim() || undefined,
+        email: prof.email?.trim() || undefined,
+        // Mapear nombres de servicios a IDs
+        servicios_asignados: (prof.servicios_asignados || [])
+          .map(servicioNombreOId => servicioNombreToId[servicioNombreOId] || servicioNombreOId)
+          .filter(id => typeof id === 'number'), // Solo IDs válidos
+      }));
+
+      console.log('📤 Enviando creación bulk:', profesionalesParaBulk);
+
+      // 3. Crear en bulk (transaccional - TODO o NADA)
+      const response = await profesionalesApi.crearBulk(profesionalesParaBulk);
+
+      console.log('✅ Profesionales creados exitosamente:', response.data.data);
+      return response.data.data;
     },
-    onSuccess: () => {
-      // ✅ Invalidar cache para que Step 5 obtenga datos frescos
+    onSuccess: (data) => {
+      const totalCreados = data.total_creados || data.profesionales.length;
+      toast.success(`${totalCreados} profesionales creados exitosamente`);
+
+      // Invalidar cache para que Step 5 obtenga datos frescos
       console.log('🔄 Invalidando cache de profesionales');
       queryClient.invalidateQueries({ queryKey: ['profesionales'] });
-      nextStep();
+
+      // Avanzar al siguiente paso
+      setTimeout(() => {
+        nextStep();
+      }, 300);
     },
     onError: (error) => {
-      console.error('❌ Error creando profesionales:', error);
-      toast.error(`Error al crear profesionales: ${error.message}`);
+      console.error('❌ Error en creación bulk:', error);
+
+      const errorMessage = error.response?.data?.message || error.message;
+      const isLimitError = error.response?.status === 403 &&
+                          errorMessage.includes('límite');
+
+      if (isLimitError) {
+        toast.error(errorMessage);
+      } else if (error.response?.status === 409) {
+        toast.error(errorMessage); // Emails duplicados
+      } else if (error.response?.status === 400) {
+        toast.error(errorMessage); // Tipo de profesional incompatible
+      } else {
+        toast.error(`Error al crear profesionales: ${errorMessage}`);
+      }
     },
   });
 

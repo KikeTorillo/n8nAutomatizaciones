@@ -90,6 +90,81 @@ const crear = {
     })
 };
 
+// POST /profesionales/bulk-create
+const bulkCrear = {
+    body: Joi.object({
+        profesionales: Joi.array()
+            .items(
+                Joi.object({
+                    nombre_completo: Joi.string()
+                        .min(LIMITES.NOMBRE_MIN)
+                        .max(LIMITES.NOMBRE_MAX)
+                        .required()
+                        .trim(),
+                    email: Joi.string()
+                        .email()
+                        .max(LIMITES.NOMBRE_MAX)
+                        .optional()
+                        .allow(null, ''),
+                    telefono: commonSchemas.mexicanPhone
+                        .optional()
+                        .allow(null, ''),
+                    tipo_profesional_id: Joi.number()
+                        .integer()
+                        .positive()
+                        .required(),
+                    color_calendario: Joi.string()
+                        .pattern(/^#[0-9A-Fa-f]{6}$/)
+                        .optional()
+                        .default('#3B82F6')
+                        .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #3B82F6)' }),
+                    servicios_asignados: Joi.array()
+                        .items(Joi.number().integer().positive())
+                        .optional()
+                        .default([]),
+                    // Campos opcionales adicionales
+                    fecha_nacimiento: Joi.date()
+                        .iso()
+                        .max('now')
+                        .optional()
+                        .allow(null),
+                    documento_identidad: Joi.string()
+                        .max(LIMITES.DOCUMENTO_MAX)
+                        .optional()
+                        .allow(null)
+                        .trim(),
+                    licencias_profesionales: Joi.object()
+                        .optional()
+                        .default({}),
+                    años_experiencia: Joi.number()
+                        .integer()
+                        .min(LIMITES.EXPERIENCIA_MIN)
+                        .max(LIMITES.EXPERIENCIA_MAX)
+                        .optional()
+                        .default(0),
+                    idiomas: Joi.array()
+                        .items(Joi.string())
+                        .optional()
+                        .default(['es']),
+                    biografia: Joi.string()
+                        .optional()
+                        .allow(null),
+                    foto_url: Joi.string()
+                        .uri()
+                        .optional()
+                        .allow(null)
+                })
+            )
+            .min(1)
+            .max(50)
+            .required()
+            .messages({
+                'array.min': 'Debe proporcionar al menos 1 profesional',
+                'array.max': 'No se pueden crear más de 50 profesionales a la vez'
+            })
+    })
+};
+
 // PUT /profesionales/:id
 const actualizar = {
     params: Joi.object({
@@ -293,6 +368,7 @@ const validarEmail = {
 
 module.exports = {
     crear,
+    bulkCrear,
     actualizar,
     listar,
     obtenerPorId,

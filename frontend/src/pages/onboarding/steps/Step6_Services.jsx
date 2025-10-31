@@ -52,27 +52,55 @@ function Step5_Services() {
     },
   });
 
-  // Mutación para crear servicios en batch
+  // Mutación NUEVA para crear servicios en bulk (transaccional)
   const createServicesMutation = useMutation({
     mutationFn: async (services) => {
-      const promises = services.map((service) => {
-        // Convertir profesionales[] a profesionales_ids[] para el backend
-        // Sanitizar campos opcionales vacíos (convertir "" a undefined para omitir del payload)
-        const serviceData = {
-          ...service,
-          profesionales_ids: service.profesionales,
-          descripcion: service.descripcion?.trim() || undefined,
-        };
-        delete serviceData.profesionales; // Remover el campo antiguo
-        return serviciosApi.crear(serviceData);
-      });
-      return Promise.all(promises);
+      console.log('📦 Creando servicios en bulk (transaccional):', services);
+
+      // Preparar servicios para bulk-create
+      const serviciosParaBulk = services.map(service => ({
+        nombre: service.nombre.trim(),
+        descripcion: service.descripcion?.trim() || undefined,
+        categoria: service.categoria?.trim() || undefined,
+        duracion_minutos: service.duracion_minutos,
+        precio: service.precio,
+        profesionales_asignados: service.profesionales || [], // IDs de profesionales a asignar
+        activo: service.activo !== undefined ? service.activo : true,
+      }));
+
+      console.log('📤 Enviando creación bulk:', serviciosParaBulk);
+
+      // Crear en bulk (transaccional - TODO o NADA)
+      const response = await serviciosApi.crearBulk(serviciosParaBulk);
+
+      console.log('✅ Servicios creados exitosamente:', response.data.data);
+      return response.data.data;
     },
-    onSuccess: () => {
-      nextStep();
+    onSuccess: (data) => {
+      const totalCreados = data.total_creados || data.servicios.length;
+      toast.success(`${totalCreados} servicios creados exitosamente`);
+
+      // Avanzar al siguiente paso
+      setTimeout(() => {
+        nextStep();
+      }, 300);
     },
     onError: (error) => {
-      toast.error(`Error al crear servicios: ${error.message}`);
+      console.error('❌ Error en creación bulk:', error);
+
+      const errorMessage = error.response?.data?.message || error.message;
+      const isLimitError = error.response?.status === 403 &&
+                          errorMessage.includes('límite');
+
+      if (isLimitError) {
+        toast.error(errorMessage);
+      } else if (error.response?.status === 409) {
+        toast.error(errorMessage); // Nombres duplicados
+      } else if (error.response?.status === 400) {
+        toast.error(errorMessage); // Validación fallida
+      } else {
+        toast.error(`Error al crear servicios: ${errorMessage}`);
+      }
     },
   });
 

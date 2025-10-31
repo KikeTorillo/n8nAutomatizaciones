@@ -12,15 +12,17 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 30 Octubre 2025
+**Actualizado**: 31 Octubre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
-| **Backend API** | ✅ Operativo | 13 módulos, 545 tests (100%) |
-| **Frontend React** | ✅ Operativo | 45 componentes, 12 hooks |
+| **Backend API** | ✅ Operativo | 14 módulos, 545 tests (100%) |
+| **Frontend React** | ✅ Operativo | 50 componentes, 13 hooks |
 | **Base de Datos** | ✅ Operativo | 20 tablas, 24 RLS policies |
 | **Sistema IA** | ✅ Operativo | n8n + DeepSeek + MCP Server |
 | **MCP Server** | ✅ Operativo | 6 tools, JSON-RPC 2.0, JWT multi-tenant |
+| **Panel Super Admin** | ✅ Operativo | Dashboard, gestión org/planes, edición planes |
+| **Bulk Operations** | ✅ Operativo | Creación transaccional de Profesionales y Servicios |
 | **Deployment** | ✅ Listo | Scripts bash dev/prod |
 
 ---
@@ -86,7 +88,7 @@ bash deploy.sh backup    # Backup BD
 
 ## 🏗 Arquitectura
 
-### Backend - 13 Módulos
+### Backend - 14 Módulos
 
 1. **auth** - JWT + password recovery
 2. **usuarios** - Gestión usuarios + RBAC
@@ -101,14 +103,15 @@ bash deploy.sh backup    # Backup BD
 11. **bloqueos-horarios** - Bloqueos temporales
 12. **planes** - Planes y suscripciones
 13. **chatbots** - Chatbots IA multi-plataforma
+14. **superadmin** - Panel administración global (métricas, organizaciones, planes)
 
 **Helpers Críticos:**
 - `RLSContextManager` (v2.0) - **USAR SIEMPRE** para queries multi-tenant
 - `helpers.js` - 8 clases helper (ResponseHelper, ValidationHelper, etc.)
 
-### Frontend - 12 Hooks Personalizados
+### Frontend - 13 Hooks Personalizados
 
-`useAuth`, `useCitas`, `useClientes`, `useBloqueos`, `useProfesionales`, `useServicios`, `useHorarios`, `useEstadisticas`, `useTiposProfesional`, `useTiposBloqueo`, `useChatbots`, `useToast`
+`useAuth`, `useCitas`, `useClientes`, `useBloqueos`, `useProfesionales`, `useServicios`, `useHorarios`, `useEstadisticas`, `useTiposProfesional`, `useTiposBloqueo`, `useChatbots`, `useSuperAdmin`, `useToast`
 
 ### Base de Datos - 20 Tablas
 
@@ -136,153 +139,116 @@ bash deploy.sh backup    # Backup BD
 5. **crearCita** - Crea citas validadas (soporta múltiples servicios)
 6. **reagendarCita** - Reagenda citas existentes
 
-### System Prompt Personalizado
+### Características Clave
 
-- **Ubicación**: `chatbot.controller.js` → método `_generarSystemPrompt()`
-- **Generación**: Dinámica por organización
-- **Contenido**: Fechas calculadas (Luxon), 6 tools MCP, flujos agendamiento/reagendamiento
-- **Placeholder**: `plantilla.json` solo tiene placeholder (se reemplaza al crear bot)
+- ✅ **System Prompt Dinámico** - Generado por organización en `_generarSystemPrompt()`
+- ✅ **Creación Automática** - Sin intervención manual + webhooks + rollback en errores
+- ✅ **Multi-tenant Seguro** - JWT + RLS + Chat Memory persistente
+- ✅ **Anti-flood** - Redis debouncing (20s)
+- ✅ **Conversacional** - Múltiples servicios por cita + reagendamiento
 
-### Features
+---
 
-- ✅ Creación automática 100% sin intervención manual
-- ✅ Webhooks automáticos (fix n8n bug #14646)
-- ✅ Credentials dinámicas multi-plataforma
-- ✅ Rollback automático en errores
-- ✅ Anti-flood Redis (20s debouncing)
-- ✅ Chat Memory persistente (PostgreSQL + RLS)
-- ✅ Multi-tenant seguro (JWT)
-- ✅ Múltiples servicios por cita
-- ✅ Reagendamiento conversacional
+## 👑 Panel Super Administrador
+
+**Acceso**: Rol `super_admin` | **URL**: `/superadmin/*` | **Setup**: `POST /api/v1/setup/create-superadmin` (one-time)
+
+### Funcionalidades
+
+- ✅ **Dashboard** - Métricas globales (orgs activas, usuarios, citas, revenue, trials, morosas)
+- ✅ **Gestión Organizaciones** - Suspender, reactivar, cambiar plan, filtros avanzados
+- ✅ **Gestión Planes** - Edición completa (nombre, descripción, precios, límites, estado)
+- ✅ **Visualización Límites** - Tarjetas de planes muestran límites de profesionales, servicios, clientes y citas/mes
+
+### Endpoints
+
+- `GET /api/v1/superadmin/dashboard` - Métricas globales
+- `GET /api/v1/superadmin/organizaciones` - Listar con filtros
+- `GET /api/v1/superadmin/planes` - Listar planes
+- `PUT /api/v1/superadmin/planes/:id` - Actualizar plan
 
 ---
 
 ## 🔒 Seguridad Multi-Tenant (RLS)
 
-### Stack de Middleware Obligatorio
-
-```javascript
-router.post('/endpoint',
-    auth.authenticateToken,       // 1. JWT
-    tenant.setTenantContext,      // 2. RLS ⚠️ CRÍTICO
-    rateLimiting.apiRateLimit,    // 3. Rate limiting
-    validation.validate(schema),  // 4. Joi validation
-    asyncHandler(Controller.fn)   // 5. Business logic
-);
-```
+### Stack de Middleware
+Orden obligatorio: `auth` → `tenant.setTenantContext` → `rateLimiting` → `validation` → `asyncHandler`
 
 ### Patrón RLS en Models
+- **Query simple**: `RLSContextManager.query(orgId, async (db) => {...})`
+- **Transacción**: `RLSContextManager.transaction(orgId, async (db) => {...})`
+- **Bypass** (JOINs multi-tabla): `RLSContextManager.withBypass(async (db) => {...})`
 
-```javascript
-// Query simple
-const data = await RLSContextManager.query(orgId, async (db) => {
-    return await db.query('SELECT * FROM clientes WHERE id = $1', [id]);
-});
+### RBAC - Permisos por Rol
 
-// Transacción
-await RLSContextManager.transaction(orgId, async (db) => {
-    await db.query('INSERT INTO clientes ...');
-    await db.query('INSERT INTO citas ...');
-});
-
-// Bypass (JOINs multi-tabla)
-const data = await RLSContextManager.withBypass(async (db) => {
-    return await db.query('SELECT * FROM org o LEFT JOIN sub s ...');
-});
-```
-
-### RBAC - Matriz de Permisos
-
-| Recurso | super_admin | admin/propietario | empleado | bot |
-|---------|-------------|-------------------|----------|-----|
-| Organizaciones | ALL | SU ORG | READ | - |
-| Usuarios | ALL | CRUD (su org) | - | - |
-| Profesionales | ALL | ALL | READ | READ |
-| Servicios | ALL | ALL | READ | READ |
-| Clientes | ALL | ALL | ALL | READ |
-| Citas | ALL | ALL | ALL | CRUD |
-| Chatbots | ALL | ALL | - | - |
+**super_admin**: Acceso TOTAL + gestión planes/organizaciones
+**admin/propietario**: CRUD completo en su organización
+**empleado**: READ servicios/profesionales, CRUD citas/clientes
+**bot**: READ + CRUD citas
 
 ---
 
 ## ⚡ Reglas Críticas
 
 ### Backend
-
-**1. Controllers confían en RLS (no filtrar manualmente)**
-```javascript
-// ✅ CORRECTO
-const query = `SELECT * FROM profesionales WHERE activo = true`;
-
-// ❌ INCORRECTO (redundante)
-const query = `SELECT * FROM profesionales WHERE organizacion_id = $1 AND activo = true`;
-```
-
-**2. NO enviar campos auto-generados**
-- `codigo_cita`, `codigo_bloqueo` → Triggers
-- `created_at`, `updated_at` → Automáticos
-- `organizacion_id` → Tenant middleware
-
-**3. Usar asyncHandler para async/await**
-```javascript
-// ✅ CORRECTO
-router.get('/:id', asyncHandler(Controller.obtener));
-```
+1. **RLS en Models** - SIEMPRE usar `RLSContextManager.query()` o `.transaction()`
+2. **NO filtrar por organizacion_id** - Controllers confían en RLS
+3. **NO enviar campos auto-generados** - `codigo_cita`, `created_at`, `organizacion_id`
+4. **Usar asyncHandler** - Para async/await en routes
+5. **Bulk Operations** - Pre-validar límites del plan ANTES de crear
 
 ### Frontend
-
-**1. Sanitizar campos opcionales (Joi rechaza "")**
-```javascript
-const sanitizedData = {
-  ...data,
-  email: data.email?.trim() || undefined,
-};
-```
-
-**2. Invalidar cache React Query**
-```javascript
-onSuccess: () => {
-  queryClient.invalidateQueries({ queryKey: ['clientes'] });
-}
-```
-
-**3. Limpiar cache al cambiar organización**
-```javascript
-// Login/Logout: SIEMPRE ejecutar
-queryClient.clear();
-```
+1. **Sanitizar opcionales** - Joi rechaza `""`, usar `undefined`
+2. **Invalidar queries** - Tras mutaciones: `queryClient.invalidateQueries()`
+3. **Limpiar cache** - Login/Logout: `queryClient.clear()`
+4. **Vite HMR** - Si no detecta cambios: `docker restart front`
 
 ---
 
 ## 🎯 Características Clave
 
-### 1. Tipos Dinámicos con Filtrado Automático
-
-Sistema híbrido: 33 tipos sistema + tipos custom por organización.
-Filtrado automático por industria.
+### 1. Tipos Dinámicos
+Sistema híbrido: 33 tipos sistema + custom por organización. Filtrado automático por industria.
 
 ### 2. Auto-generación de Códigos
-
-```javascript
-// NO enviar codigo_cita (auto-generado por trigger)
-const cita = await CitaModel.crear({
-    cliente_id: 1,
-    profesional_id: 2,
-    fecha_cita: '2025-10-21'
-});
-// Resultado: cita.codigo_cita = "ORG001-20251021-001"
-```
+Triggers generan automáticamente: `codigo_cita` ("ORG001-20251021-001"), `codigo_bloqueo`.
+**NO enviar estos campos** en requests.
 
 ### 3. Búsqueda Fuzzy
-
-Clientes: Trigram similarity + normalización telefónica.
-Índices GIN + función `normalizar_telefono()`.
+Clientes: Trigram similarity + normalización telefónica + índices GIN.
 
 ### 4. Múltiples Servicios por Cita
+Tabla `citas_servicios` (M:N). Backend/MCP soportan 1-10 servicios por cita.
 
-Tabla `citas_servicios` (M:N con snapshot pricing).
-Backend soporta 1-10 servicios por cita.
-MCP tools soportan múltiples servicios.
+### 5. Bulk Operations (Transaccional)
+
+**Profesionales y Servicios** soportan creación masiva con garantías ACID:
+
+```javascript
+// POST /api/v1/profesionales/bulk-create
+// POST /api/v1/servicios/bulk-create
+
+{
+  "profesionales": [/* 1-50 items */],  // o
+  "servicios": [/* 1-50 items */]
+}
+```
+
+**Características:**
+- ✅ Pre-validación de límites del plan ANTES de crear
+- ✅ Transaccional (ALL or NONE) - PostgreSQL garantiza atomicidad
+- ✅ Validación de nombres duplicados (batch + DB)
+- ✅ 1 request vs N requests (más rápido y eficiente)
+- ✅ HTTP 403 si excede límite del plan
+- ✅ HTTP 201 con total de registros creados
+
+**Endpoints:**
+- `backend/app/routes/api/v1/profesionales.js:75-85` - Bulk-create profesionales
+- `backend/app/routes/api/v1/servicios.js:78-88` - Bulk-create servicios
+
+**Uso en Onboarding:**
+- `Step5_Professionals.jsx` - Crea profesionales al finalizar paso
+- `Step6_Services.jsx` - Crea servicios al finalizar paso
 
 ---
 
@@ -303,53 +269,47 @@ MCP tools soportan múltiples servicios.
 
 ---
 
-## 📚 Archivos Clave
+## 📚 Archivos Críticos
 
 ### Backend
-- `backend/app/utils/rlsContextManager.js` - RLS Manager v2.0 (**USAR SIEMPRE**)
-- `backend/app/controllers/chatbot.controller.js` - System prompt en `_generarSystemPrompt()`
-- `backend/app/flows/plantilla/plantilla.json` - Template workflow (15 nodos)
-
-### MCP Server
-- `backend/mcp-server/index.js` - Servidor JSON-RPC 2.0
-- `backend/mcp-server/tools/*.js` - 6 tools implementados
+- `utils/rlsContextManager.js` - RLS Manager v2.0 (**USAR SIEMPRE**)
+- `utils/helpers.js` - ResponseHelper, ValidationHelper, etc.
+- `controllers/chatbot.controller.js` - System prompt dinámico
+- `controllers/superadmin.controller.js` - Panel super admin
+- `routes/api/v1/profesionales.js` - Bulk-create profesionales (línea 75)
+- `routes/api/v1/servicios.js` - Bulk-create servicios (línea 78)
+- `database/profesional.model.js` - Método `crearBulk()`
+- `database/servicio.model.js` - Método `crearBulk()`
 
 ### Frontend
-- `frontend/src/services/api/client.js` - Axios + auto-refresh JWT
-- `frontend/src/store/authStore.js` - Zustand state
+- `services/api/client.js` - Axios + auto-refresh JWT
+- `pages/onboarding/steps/Step5_Professionals.jsx` - Onboarding profesionales
+- `pages/onboarding/steps/Step6_Services.jsx` - Onboarding servicios
+- `pages/superadmin/*.jsx` - Panel super admin
 
 ### Base de Datos
 - `sql/schema/08-rls-policies.sql` - 24 políticas RLS
-- `sql/schema/09-triggers.sql` - 30 triggers (códigos, timestamps, etc.)
+- `sql/schema/09-triggers.sql` - Auto-generación códigos
 
 ---
 
 ## 🔧 Troubleshooting
 
 ### "Organización no encontrada" en queries
-```javascript
-// JOINs multi-tabla requieren bypass RLS
-const data = await RLSContextManager.withBypass(async (db) => {
-    return await db.query(`
-        SELECT o.*, s.plan_id
-        FROM organizaciones o
-        LEFT JOIN subscripciones s ON o.id = s.organizacion_id
-        WHERE o.id = $1
-    `, [orgId]);
-});
-```
+**Causa**: JOINs multi-tabla necesitan bypass RLS
+**Solución**: Usar `RLSContextManager.withBypass()`
 
 ### Backend 400 "field is not allowed to be empty"
-```javascript
-// Joi no acepta "" - Sanitizar a undefined
-const payload = {
-  nombre: data.nombre,
-  email: data.email?.trim() || undefined,
-};
-```
+**Causa**: Joi no acepta cadenas vacías `""`
+**Solución**: Sanitizar a `undefined`: `email: data.email?.trim() || undefined`
+
+### Vite HMR no detecta cambios
+**Síntomas**: Modificas archivo pero no se refleja en navegador
+**Solución**: `docker restart front` → esperar 5-10s → hard refresh (Ctrl+Shift+R)
+**Nota**: Más común en `/pages/superadmin/`
 
 ---
 
-**Versión**: 10.0
-**Última actualización**: 30 Octubre 2025
-**Estado**: ✅ Production Ready
+**Versión**: 11.1
+**Última actualización**: 31 Octubre 2025
+**Estado**: ✅ Production Ready + Bulk Operations

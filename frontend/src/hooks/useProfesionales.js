@@ -67,7 +67,15 @@ export function useCrearProfesional() {
       queryClient.invalidateQueries(['estadisticas']);
     },
     onError: (error) => {
-      // Mapear errores del backend a mensajes user-friendly
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+
+      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      // Fallback a mensajes genéricos por código de error
       const errorMessages = {
         409: 'Ya existe un profesional con ese email o teléfono',
         400: 'Datos inválidos. Revisa los campos',
@@ -108,6 +116,12 @@ export function useActualizarProfesional() {
       queryClient.invalidateQueries(['profesionales-dashboard']);
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const errorMessages = {
         404: 'Profesional no encontrado',
         400: 'Datos inválidos',
@@ -140,6 +154,12 @@ export function useEliminarProfesional() {
       queryClient.invalidateQueries(['estadisticas']);
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const errorMessages = {
         404: 'Profesional no encontrado',
         400: 'No se puede eliminar el profesional (puede tener citas asociadas)',

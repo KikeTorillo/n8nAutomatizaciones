@@ -172,7 +172,7 @@ export const useCrearBloqueo = () => {
       return data;
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.mensaje || 'Error al crear el bloqueo';
+      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al crear el bloqueo';
       toast.error(mensaje);
     },
   });
@@ -215,7 +215,7 @@ export const useActualizarBloqueo = () => {
       return data;
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.mensaje || 'Error al actualizar el bloqueo';
+      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al actualizar el bloqueo';
       toast.error(mensaje);
     },
   });
@@ -243,7 +243,7 @@ export const useEliminarBloqueo = () => {
       toast.success('Bloqueo eliminado exitosamente');
     },
     onError: (error) => {
-      const mensaje = error.response?.data?.mensaje || 'Error al eliminar el bloqueo';
+      const mensaje = error.response?.data?.message || error.response?.data?.mensaje || 'Error al eliminar el bloqueo';
       toast.error(mensaje);
     },
   });

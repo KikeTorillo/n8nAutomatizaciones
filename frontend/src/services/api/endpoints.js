@@ -142,6 +142,15 @@ export const profesionalesApi = {
   crear: (data) => apiClient.post('/profesionales', data),
 
   /**
+   * Crear múltiples profesionales en transacción (bulk)
+   * @param {Array} profesionales - Array de profesionales a crear
+   * @returns {Promise<Object>} { profesionales, total_creados }
+   */
+  crearBulk: (profesionales) => apiClient.post('/profesionales/bulk-create', {
+    profesionales
+  }),
+
+  /**
    * Listar profesionales con filtros
    * @param {Object} params - Filtros opcionales
    * @returns {Promise<Object>}
@@ -218,6 +227,15 @@ export const serviciosApi = {
    * @returns {Promise<Object>}
    */
   crear: (data) => apiClient.post('/servicios', data),
+
+  /**
+   * Crear múltiples servicios en transacción (bulk)
+   * @param {Array} servicios - Array de servicios a crear
+   * @returns {Promise<Object>} { servicios, total_creados }
+   */
+  crearBulk: (servicios) => apiClient.post('/servicios/bulk-create', {
+    servicios
+  }),
 
   /**
    * Listar servicios con filtros y paginación

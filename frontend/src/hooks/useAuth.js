@@ -22,7 +22,18 @@ export function useAuth() {
         accessToken: data.accessToken,
         refreshToken: data.refreshToken,
       });
-      navigate('/dashboard');
+
+      // Redirección basada en el rol del usuario
+      const userRole = data.user?.rol || data.usuario?.rol;
+      let redirectPath = '/dashboard'; // Default
+
+      if (userRole === 'super_admin') {
+        redirectPath = '/superadmin';
+      } else if (userRole === 'empleado') {
+        redirectPath = '/citas';
+      }
+
+      navigate(redirectPath);
     },
   });
 

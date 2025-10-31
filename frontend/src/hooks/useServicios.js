@@ -93,7 +93,15 @@ export function useCrearServicio() {
       queryClient.invalidateQueries(['estadisticas']); // Stats
     },
     onError: (error) => {
-      // Mapear errores del backend a mensajes user-friendly
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+
+      // Si el backend envió un mensaje específico (ej: límite de plan), usarlo
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      // Fallback a mensajes genéricos por código de error
       const errorMessages = {
         409: 'Ya existe un servicio con ese nombre',
         400: 'Datos inválidos. Revisa los campos',
@@ -135,6 +143,12 @@ export function useActualizarServicio() {
       queryClient.invalidateQueries(['servicios-dashboard']);
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const errorMessages = {
         404: 'Servicio no encontrado',
         400: 'Datos inválidos',
@@ -167,6 +181,12 @@ export function useEliminarServicio() {
       queryClient.invalidateQueries(['estadisticas']);
     },
     onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
       const errorMessages = {
         404: 'Servicio no encontrado',
         400: 'No se puede eliminar el servicio (puede tener citas asociadas)',

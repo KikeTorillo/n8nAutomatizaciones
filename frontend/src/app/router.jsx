@@ -30,6 +30,15 @@ const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
 // Páginas de Bloqueos
 const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 
+// Páginas de Super Admin
+const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLayout'));
+const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
+const SuperAdminOrganizaciones = lazy(() => import('@/pages/superadmin/Organizaciones'));
+const SuperAdminPlanes = lazy(() => import('@/pages/superadmin/Planes'));
+
+// Página de Setup Inicial
+const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -71,6 +80,11 @@ export const router = createBrowserRouter([
       {
         path: 'login',
         element: withSuspense(LoginPage),
+      },
+      // Ruta de setup inicial (primera vez)
+      {
+        path: 'setup',
+        element: withSuspense(InitialSetup),
       },
       {
         path: 'onboarding',
@@ -152,6 +166,31 @@ export const router = createBrowserRouter([
             {withSuspense(BloqueosPage)}
           </ProtectedRoute>
         ),
+      },
+      // Rutas de Super Admin (requiere rol super_admin)
+      {
+        path: 'superadmin',
+        element: (
+          <ProtectedRoute requiredRole={['super_admin']}>
+            <Suspense fallback={loadingFallback}>
+              <SuperAdminLayout />
+            </Suspense>
+          </ProtectedRoute>
+        ),
+        children: [
+          {
+            index: true,
+            element: withSuspense(SuperAdminDashboard),
+          },
+          {
+            path: 'organizaciones',
+            element: withSuspense(SuperAdminOrganizaciones),
+          },
+          {
+            path: 'planes',
+            element: withSuspense(SuperAdminPlanes),
+          },
+        ],
       },
       // Agregar más rutas protegidas aquí
       // {

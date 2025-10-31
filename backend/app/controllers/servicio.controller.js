@@ -15,6 +15,62 @@ class ServicioController {
         return ResponseHelper.success(res, nuevoServicio, 'Servicio creado exitosamente', 201);
     });
 
+    /**
+     * Crea múltiples servicios en una sola transacción (ALL or NONE)
+     * Valida límites del plan ANTES de crear cualquier registro
+     *
+     * @route POST /api/v1/servicios/bulk-create
+     * @body { servicios: Array<Object> }
+     * @returns 201 - Servicios creados exitosamente
+     * @returns 403 - Límite del plan excedido
+     * @returns 409 - Nombres duplicados
+     * @returns 400 - Validación fallida
+     */
+    static bulkCrear = asyncHandler(async (req, res) => {
+        const { servicios } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        try {
+            const serviciosCreados = await ServicioModel.crearBulk(
+                organizacionId,
+                servicios
+            );
+
+            return ResponseHelper.success(res, {
+                servicios: serviciosCreados,
+                total_creados: serviciosCreados.length
+            }, `${serviciosCreados.length} servicios creados exitosamente`, 201);
+
+        } catch (error) {
+            const errorMsg = error.message.toLowerCase();
+
+            // Error de límite del plan
+            if (errorMsg.includes('límite') || errorMsg.includes('upgrade tu plan')) {
+                return ResponseHelper.error(res, error.message, 403, {
+                    codigo_error: 'PLAN_LIMIT_REACHED',
+                    accion_requerida: 'upgrade_plan'
+                });
+            }
+
+            // Error de nombres duplicados
+            if (errorMsg.includes('ya existen servicios') || errorMsg.includes('nombres duplicados')) {
+                return ResponseHelper.error(res, error.message, 409, {
+                    codigo_error: 'DUPLICATE_SERVICES'
+                });
+            }
+
+            // Error de validación de profesionales
+            if (errorMsg.includes('profesionales no existen')) {
+                return ResponseHelper.error(res, error.message, 400, {
+                    codigo_error: 'INVALID_PROFESSIONALS'
+                });
+            }
+
+            // Otros errores se propagan para manejo global
+            throw error;
+        }
+    });
+
     static obtenerPorId = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const servicio = await ServicioModel.obtenerPorId(parseInt(id), req.tenant.organizacionId);

@@ -467,14 +467,27 @@ class OrganizacionModel {
 
                 const updateOrgResult = await db.query(updateOrgQuery, [codigoPlan, organizacionId]);
 
+                // ✅ CORREGIDO: Determinar estado y fecha_fin según tipo de plan
+                const estadoNuevo = codigoPlan === 'trial' ? 'trial' : 'activa';
+                const isTrial = codigoPlan === 'trial';
+
                 const subscripcionQuery = `
                     INSERT INTO subscripciones (
                         organizacion_id, plan_id, precio_actual, fecha_inicio,
-                        fecha_proximo_pago, estado, activa, metadata
-                    ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, $4)
+                        fecha_fin, fecha_proximo_pago, estado, activa, metadata
+                    ) VALUES (
+                        $1, $2, $3,
+                        CURRENT_DATE,
+                        ${isTrial ? 'CURRENT_DATE + INTERVAL \'30 days\'' : 'NULL'},
+                        CURRENT_DATE + INTERVAL '1 month',
+                        $4,
+                        true,
+                        $5
+                    )
                     ON CONFLICT (organizacion_id) DO UPDATE SET
                         plan_id = EXCLUDED.plan_id,
                         precio_actual = EXCLUDED.precio_actual,
+                        fecha_fin = EXCLUDED.fecha_fin,
                         fecha_proximo_pago = CASE
                             WHEN subscripciones.estado = 'trial' THEN CURRENT_DATE + INTERVAL '1 month'
                             ELSE subscripciones.fecha_proximo_pago
@@ -490,6 +503,7 @@ class OrganizacionModel {
                     organizacionId,
                     nuevoPlan.id,
                     nuevoPlan.precio_mensual,
+                    estadoNuevo,
                     JSON.stringify(configuracionPlan)
                 ]);
 
@@ -540,19 +554,32 @@ class OrganizacionModel {
 
             const plan = planResult.rows[0];
 
+            // ✅ CORREGIDO: Determinar estado y fecha_fin según tipo de plan
+            const estado = codigoPlan === 'trial' ? 'trial' : 'activa';
+            const isTrial = codigoPlan === 'trial';
+
             // Crear subscripción activa
             const subscripcionQuery = `
                 INSERT INTO subscripciones (
                     organizacion_id, plan_id, precio_actual, fecha_inicio,
-                    fecha_proximo_pago, estado, activa, metadata
-                ) VALUES ($1, $2, $3, CURRENT_DATE, CURRENT_DATE + INTERVAL '1 month', 'activa', true, '{}'::jsonb)
-                RETURNING id, organizacion_id, plan_id, estado, activa
+                    fecha_fin, fecha_proximo_pago, estado, activa, metadata
+                ) VALUES (
+                    $1, $2, $3,
+                    CURRENT_DATE,
+                    ${isTrial ? 'CURRENT_DATE + INTERVAL \'30 days\'' : 'NULL'},
+                    CURRENT_DATE + INTERVAL '1 month',
+                    $4,
+                    true,
+                    '{}'::jsonb
+                )
+                RETURNING id, organizacion_id, plan_id, estado, activa, fecha_inicio, fecha_fin
             `;
 
             const result = await db.query(subscripcionQuery, [
                 organizacionId,
                 plan.id,
-                plan.precio_mensual
+                plan.precio_mensual,
+                estado
             ]);
 
             return result.rows[0];

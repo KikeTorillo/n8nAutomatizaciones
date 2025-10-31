@@ -1,6 +1,6 @@
 const express = require('express');
 const CitaController = require('../../../controllers/citas');
-const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
 const citaSchemas = require('../../../schemas/cita.schemas');
 
 const router = express.Router();
@@ -42,6 +42,8 @@ router.post('/walk-in',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,        // ✅ Verificar suscripción activa
+    subscription.checkResourceLimit('citas_mes'), // ✅ Verificar límite de citas/mes
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crearWalkIn),
     CitaController.crearWalkIn
@@ -75,6 +77,8 @@ router.post('/',
     auth.authenticateToken,
     tenant.setTenantContext,
     tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,        // ✅ Verificar suscripción activa
+    subscription.checkResourceLimit('citas_mes'), // ✅ Verificar límite de citas/mes
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crear),
     CitaController.crear
