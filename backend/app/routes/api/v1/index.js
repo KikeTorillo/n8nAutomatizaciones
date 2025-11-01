@@ -16,6 +16,8 @@ const horariosProfesionalesRouter = require('./horarios-profesionales');
 const planesRouter = require('./planes');
 const chatbotsRouter = require('./chatbots');
 const disponibilidadRouter = require('./disponibilidad');
+const pagosRouter = require('./pagos');
+const webhooksRouter = require('./webhooks');
 
 function routerApi(app) {
     const router = express.Router();
@@ -51,6 +53,10 @@ function routerApi(app) {
 
     // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);
+
+    // Rutas de pagos y webhooks (Mercado Pago)
+    router.use('/pagos', pagosRouter);
+    router.use('/webhooks', webhooksRouter);
 }
 
 module.exports = routerApi;

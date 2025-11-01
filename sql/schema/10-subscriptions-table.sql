@@ -48,7 +48,10 @@ CREATE TABLE planes_subscripcion (
     -- Control
     activo BOOLEAN DEFAULT TRUE,
     orden_display INTEGER DEFAULT 0,  -- Para ordenar en UI
-    
+
+    -- Integración Mercado Pago
+    mp_plan_id VARCHAR(100) UNIQUE,  -- ID del preapproval_plan en Mercado Pago
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -358,6 +361,7 @@ CREATE POLICY historial_subscripciones_insert ON historial_subscripciones
 -- Índices para planes_subscripcion
 CREATE INDEX idx_planes_subscripcion_codigo ON planes_subscripcion(codigo_plan) WHERE activo = true;
 CREATE INDEX idx_planes_subscripcion_precio ON planes_subscripcion(precio_mensual, precio_anual);
+CREATE INDEX idx_planes_mp_plan_id ON planes_subscripcion(mp_plan_id) WHERE mp_plan_id IS NOT NULL;
 
 -- Índices para metricas_uso_organizacion
 CREATE INDEX idx_metricas_uso_organizacion ON metricas_uso_organizacion(organizacion_id);

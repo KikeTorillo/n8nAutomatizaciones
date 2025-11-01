@@ -60,6 +60,8 @@ echo "    🧹 Funciones de mantenimiento y archivado..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/15-maintenance-functions.sql"
 echo "    🔧 Aplicando mejoras post-auditoría (Oct 2025)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/16-mejoras-auditoria-2025-10.sql"
+echo "    💳 Sistema de pagos Mercado Pago..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/14-payments-mercadopago.sql"
 
 # 3. Insertar plantillas de servicios - ELIMINADO (sistema de plantillas removido)
 # echo "  4️⃣ Insertando plantillas de servicios por industria..."
@@ -111,7 +113,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as "Tamaño"
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios')
+    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios', 'pagos', 'metodos_pago')
     ORDER BY tablename;
 EOSQL
 
@@ -164,11 +166,12 @@ echo ""
 echo "🗄️ ESQUEMA SAAS MODULAR:"
 echo "  ├── 🎭 8 ENUMs especializados (tipos de negocio + bloqueos)"
 echo "  ├── ⚡ 22+ funciones PL/pgSQL automáticas (incl. archivado y validación)"
-echo "  ├── 🏛️ 16 tablas enterprise (core + negocio + operaciones + subscripciones + auditoría + bloqueos + archivo)"
-echo "  ├── 📊 95+ índices optimizados (covering + GIN compuestos + parciales) - Oct 2025"
-echo "  ├── 🛡️ 26+ políticas RLS multi-tenant 100% documentadas"
+echo "  ├── 🏛️ 18 tablas enterprise (core + negocio + operaciones + subscripciones + auditoría + bloqueos + pagos)"
+echo "  ├── 📊 100+ índices optimizados (covering + GIN compuestos + parciales) - Nov 2025"
+echo "  ├── 🛡️ 30+ políticas RLS multi-tenant 100% documentadas"
 echo "  ├── 🔄 18+ triggers automáticos de validación"
 echo "  ├── 💳 Sistema completo de subscripciones y facturación SaaS (5 planes incl. custom)"
+echo "  ├── 💰 Integración Mercado Pago (pagos + métodos de pago + idempotencia)"
 echo "  ├── 🧹 Sistema de archivado automático (eventos + citas)"
 echo "  └── 🔧 Mejoras post-auditoría aplicadas: FKs CASCADE + covering indexes"
 echo ""
@@ -193,6 +196,7 @@ echo "🎯 PRÓXIMOS PASOS:"
 echo "  ├── El backend Node.js puede conectarse con las credenciales configuradas"
 echo "  ├── Las APIs están listas para crear organizaciones y gestionar subscripciones"
 echo "  ├── Sistema de límites por plan configurado y listo para usar"
+echo "  ├── Tablas de pagos MP listas (ejecutar sync-plans-to-mercadopago.js)"
 echo "  ├── Los modelos de datos pueden ser probados"
-echo "  ├── Integración con gateways de pago (Stripe/PayPal) lista para implementar"
+echo "  ├── Integración Mercado Pago lista en BD (falta backend + webhooks)"
 echo "  └── Consulta sql/schema/README.md para detalles de la arquitectura"
