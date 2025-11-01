@@ -9,10 +9,8 @@ export function useChatbots(params = {}) {
     queryKey: ['chatbots', params],
     queryFn: async () => {
       const response = await chatbotsApi.listar(params);
-      return {
-        chatbots: response.data.data,
-        total: response.data.total,
-      };
+      // El backend devuelve: { chatbots: [...], paginacion: {...}, filtros_aplicados: {...} }
+      return response.data.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
@@ -77,6 +75,58 @@ export function useConfigurarTelegram() {
 
       const statusCode = error.response?.status;
       const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al configurar chatbot';
+
+      throw new Error(message);
+    },
+  });
+}
+
+/**
+ * Hook para configurar chatbot de WhatsApp Business Cloud API
+ */
+export function useConfigurarWhatsApp() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      // Construir payload según schema del backend
+      const payload = {
+        nombre: data.nombre,
+        plataforma: 'whatsapp_oficial',
+        config_plataforma: {
+          api_key: data.api_key,
+          phone_number_id: data.phone_number_id,
+          business_account_id: data.business_account_id || undefined,
+          webhook_verify_token: data.webhook_verify_token || undefined,
+        },
+        ai_model: data.configuracion?.ai_model || 'deepseek-chat',
+        ai_temperature: data.configuracion?.ai_temperature || 0.7,
+        // NO enviar system_prompt - el backend lo generará automáticamente
+      };
+
+      const response = await chatbotsApi.configurarWhatsApp(payload);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidar lista de chatbots
+      queryClient.invalidateQueries({ queryKey: ['chatbots'] });
+    },
+    onError: (error) => {
+      // Priorizar mensaje del backend si existe
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      // Fallback a mensajes genéricos por código de error
+      const errorMessages = {
+        400: 'Datos inválidos. Revisa los campos y credenciales',
+        409: 'Ya existe un chatbot configurado para esta plataforma',
+        500: 'Error del servidor. Intenta nuevamente',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al configurar chatbot de WhatsApp';
 
       throw new Error(message);
     },

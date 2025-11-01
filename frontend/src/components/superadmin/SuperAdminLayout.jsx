@@ -3,15 +3,48 @@
  */
 
 import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { authApi } from '@/services/api/endpoints';
 import useAuthStore from '../../store/authStore';
+import useOnboardingStore from '../../store/onboardingStore';
 
 export default function SuperAdminLayout() {
-    const { user, logout } = useAuthStore();
+    const { user, logout: clearAuth } = useAuthStore();
+    const { resetOnboarding } = useOnboardingStore();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
+
+    // Mutation de logout (igual que Dashboard normal)
+    const logoutMutation = useMutation({
+        mutationFn: authApi.logout,
+        onSuccess: () => {
+            console.log('✅ Logout exitoso desde SuperAdmin');
+
+            // 🧹 CRÍTICO: Limpiar cache de React Query al cerrar sesión
+            queryClient.clear();
+            console.log('✅ Cache de React Query limpiado');
+
+            // 🧹 CRÍTICO: Limpiar onboarding storage
+            resetOnboarding();
+            console.log('✅ Onboarding storage limpiado');
+
+            clearAuth();
+            navigate('/login');
+        },
+        onError: (error) => {
+            console.error('❌ Error en logout:', error);
+
+            // Limpiar cache incluso si hay error
+            queryClient.clear();
+            resetOnboarding();
+
+            clearAuth();
+            navigate('/login');
+        },
+    });
 
     const handleLogout = () => {
-        logout();
-        navigate('/login');
+        logoutMutation.mutate();
     };
 
     return (
@@ -29,9 +62,10 @@ export default function SuperAdminLayout() {
                             </span>
                             <button
                                 onClick={handleLogout}
-                                className="px-4 py-2 bg-red-700 hover:bg-red-800 rounded text-sm font-medium transition-colors"
+                                disabled={logoutMutation.isPending}
+                                className="px-4 py-2 bg-red-700 hover:bg-red-800 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                Cerrar Sesión
+                                {logoutMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}
                             </button>
                         </div>
                     </div>

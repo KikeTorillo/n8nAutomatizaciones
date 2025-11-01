@@ -29,11 +29,10 @@ const setupSchema = z.object({
     .min(2, 'Los apellidos deben tener al menos 2 caracteres')
     .max(50, 'Los apellidos no pueden exceder 50 caracteres'),
   password: z.string()
-    .min(12, 'La contraseña debe tener al menos 12 caracteres')
+    .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
     .regex(/[a-z]/, 'Debe contener al menos una minúscula')
-    .regex(/[0-9]/, 'Debe contener al menos un número')
-    .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Debe contener al menos un carácter especial'),
+    .regex(/[0-9]/, 'Debe contener al menos un número'),
   passwordConfirm: z.string()
     .min(1, 'Debe confirmar la contraseña'),
 }).refine((data) => data.password === data.passwordConfirm, {
@@ -69,11 +68,10 @@ export default function InitialSetup() {
 
   // Validaciones de complejidad del password
   const passwordValidations = {
-    length: password?.length >= 12,
+    length: password?.length >= 8,
     uppercase: /[A-Z]/.test(password || ''),
     lowercase: /[a-z]/.test(password || ''),
     number: /[0-9]/.test(password || ''),
-    special: /[!@#$%^&*(),.?":{}|<>]/.test(password || ''),
   };
 
   const createSuperAdminMutation = useMutation({
@@ -194,7 +192,7 @@ export default function InitialSetup() {
                   control={control}
                   type={showPassword ? 'text' : 'password'}
                   label="Contraseña"
-                  placeholder="Mínimo 12 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   required
                 />
                 <button
@@ -241,7 +239,7 @@ export default function InitialSetup() {
               <div className="space-y-2">
                 <PasswordRequirement
                   met={passwordValidations.length}
-                  text="Mínimo 12 caracteres"
+                  text="Mínimo 8 caracteres"
                 />
                 <PasswordRequirement
                   met={passwordValidations.uppercase}
@@ -254,10 +252,6 @@ export default function InitialSetup() {
                 <PasswordRequirement
                   met={passwordValidations.number}
                   text="Al menos un número (0-9)"
-                />
-                <PasswordRequirement
-                  met={passwordValidations.special}
-                  text="Al menos un carácter especial (!@#$%...)"
                 />
               </div>
             </div>

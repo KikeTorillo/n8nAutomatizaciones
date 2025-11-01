@@ -17,13 +17,13 @@
 | Componente | Estado | Métricas |
 |------------|--------|----------|
 | **Backend API** | ✅ Operativo | 14 módulos, 545 tests (100%) |
-| **Frontend React** | ✅ Operativo | 50 componentes, 13 hooks |
+| **Frontend React** | ✅ Operativo | 52 componentes, 13 hooks |
 | **Base de Datos** | ✅ Operativo | 20 tablas, 24 RLS policies |
-| **Sistema IA** | ✅ Operativo | n8n + DeepSeek + MCP Server |
-| **MCP Server** | ✅ Operativo | 6 tools, JSON-RPC 2.0, JWT multi-tenant |
-| **Panel Super Admin** | ✅ Operativo | Dashboard, gestión org/planes, edición planes |
-| **Bulk Operations** | ✅ Operativo | Creación transaccional de Profesionales y Servicios |
-| **Deployment** | ✅ Listo | Scripts bash dev/prod |
+| **Sistema IA** | ✅ Operativo | Telegram + WhatsApp Business + MCP |
+| **MCP Server** | ✅ Operativo | 6 tools, JWT multi-tenant |
+| **Panel Super Admin** | ✅ Operativo | Gestión org/planes |
+| **Gestión Chatbots** | ✅ Operativo | Dashboard + CRUD multi-plataforma |
+| **Deployment** | ✅ Listo | Scripts dev/prod |
 
 ---
 
@@ -47,12 +47,9 @@
 - 165 índices + 30 triggers + 38 funciones PL/pgSQL
 
 ### IA Conversacional
-- n8n workflows (15 nodos)
-- Telegram Bot API
-- DeepSeek (modelo IA)
-- PostgreSQL Chat Memory (RLS)
-- Redis Anti-flood (20s debouncing)
-- MCP Server (6 tools)
+- n8n workflows (15 nodos) + Telegram Bot API + WhatsApp Business Cloud API
+- DeepSeek Chat + PostgreSQL Chat Memory (RLS) + Redis Anti-flood
+- MCP Server (6 tools) + JWT autenticación multi-tenant
 
 ---
 
@@ -130,42 +127,39 @@ bash deploy.sh backup    # Backup BD
 
 ## 🤖 Sistema de Chatbots IA
 
-### MCP Server - 6 Tools
+### Plataformas Soportadas
+- **Telegram Bot API** - BotFather token-based
+- **WhatsApp Business Cloud API** - Meta Graph API v18.0
 
-1. **listarServicios** - Lista servicios activos con precios
-2. **verificarDisponibilidad** - Verifica horarios libres (soporta múltiples servicios)
-3. **buscarCliente** - Busca clientes por teléfono o nombre
-4. **buscarCitasCliente** - Busca citas de un cliente por teléfono (para reagendamiento)
-5. **crearCita** - Crea citas validadas (soporta múltiples servicios)
-6. **reagendarCita** - Reagenda citas existentes
+### MCP Server - 6 Tools
+1. **listarServicios** - Catálogo con precios
+2. **verificarDisponibilidad** - Horarios libres (1-10 servicios)
+3. **buscarCliente** - Por teléfono o nombre
+4. **buscarCitasCliente** - Historial para reagendamiento
+5. **crearCita** - Creación validada (múltiples servicios)
+6. **reagendarCita** - Modificar citas existentes
+
+### Gestión de Chatbots
+- **Acceso**: Rol `admin` o `propietario` | **URL**: `/chatbots`
+- **Dashboard Widget** - Vista rápida de bots activos
+- **CRUD Completo** - Crear, activar/desactivar, eliminar
+- **Configuración** - Disponible desde onboarding Y dashboard
+- **Multi-plataforma** - Telegram y WhatsApp en misma organización
 
 ### Características Clave
-
-- ✅ **System Prompt Dinámico** - Generado por organización en `_generarSystemPrompt()`
-- ✅ **Creación Automática** - Sin intervención manual + webhooks + rollback en errores
+- ✅ **System Prompt Agnóstico** - Genérico para cualquier industria (no asume tipo de negocio)
+- ✅ **Creación Automática** - n8n workflow + credential + webhook (rollback en errores)
 - ✅ **Multi-tenant Seguro** - JWT + RLS + Chat Memory persistente
 - ✅ **Anti-flood** - Redis debouncing (20s)
-- ✅ **Conversacional** - Múltiples servicios por cita + reagendamiento
+- ✅ **Conversacional** - Múltiples servicios/cita + reagendamiento + nombres exactos de servicios
 
 ---
 
 ## 👑 Panel Super Administrador
 
-**Acceso**: Rol `super_admin` | **URL**: `/superadmin/*` | **Setup**: `POST /api/v1/setup/create-superadmin` (one-time)
+**Acceso**: Rol `super_admin` | **URL**: `/superadmin/*` | **Setup**: `POST /api/v1/setup/create-superadmin`
 
-### Funcionalidades
-
-- ✅ **Dashboard** - Métricas globales (orgs activas, usuarios, citas, revenue, trials, morosas)
-- ✅ **Gestión Organizaciones** - Suspender, reactivar, cambiar plan, filtros avanzados
-- ✅ **Gestión Planes** - Edición completa (nombre, descripción, precios, límites, estado)
-- ✅ **Visualización Límites** - Tarjetas de planes muestran límites de profesionales, servicios, clientes y citas/mes
-
-### Endpoints
-
-- `GET /api/v1/superadmin/dashboard` - Métricas globales
-- `GET /api/v1/superadmin/organizaciones` - Listar con filtros
-- `GET /api/v1/superadmin/planes` - Listar planes
-- `PUT /api/v1/superadmin/planes/:id` - Actualizar plan
+**Funcionalidades**: Dashboard métricas globales, gestión organizaciones (suspender/reactivar/cambiar plan), edición planes (precios/límites/estado)
 
 ---
 
@@ -207,48 +201,29 @@ Orden obligatorio: `auth` → `tenant.setTenantContext` → `rateLimiting` → `
 
 ## 🎯 Características Clave
 
-### 1. Tipos Dinámicos
-Sistema híbrido: 33 tipos sistema + custom por organización. Filtrado automático por industria.
+### 1. Gestión de Chatbots IA
+- Acceso desde Dashboard y Onboarding (puede saltarse)
+- Multi-plataforma: Telegram + WhatsApp Business en misma org
+- System Prompt agnóstico de industria (genérico)
+- Widget en Dashboard con vista rápida de bots activos
 
-### 2. Auto-generación de Códigos
-Triggers generan automáticamente: `codigo_cita` ("ORG001-20251021-001"), `codigo_bloqueo`.
-**NO enviar estos campos** en requests.
+### 2. Tipos Dinámicos
+33 tipos sistema + custom por organización. Filtrado automático por industria.
 
-### 3. Búsqueda Fuzzy
+### 3. Auto-generación de Códigos
+Triggers generan: `codigo_cita`, `codigo_bloqueo`. **NO enviar** en requests.
+
+### 4. Búsqueda Fuzzy
 Clientes: Trigram similarity + normalización telefónica + índices GIN.
 
-### 4. Múltiples Servicios por Cita
-Tabla `citas_servicios` (M:N). Backend/MCP soportan 1-10 servicios por cita.
+### 5. Múltiples Servicios por Cita
+Tabla `citas_servicios` (M:N). Backend/MCP: 1-10 servicios/cita.
 
-### 5. Bulk Operations (Transaccional)
+### 6. Bulk Operations (Transaccional)
+Profesionales y Servicios: creación masiva (1-50 items), ACID garantizado, pre-validación límites plan, 1 request vs N requests.
 
-**Profesionales y Servicios** soportan creación masiva con garantías ACID:
-
-```javascript
-// POST /api/v1/profesionales/bulk-create
-// POST /api/v1/servicios/bulk-create
-
-{
-  "profesionales": [/* 1-50 items */],  // o
-  "servicios": [/* 1-50 items */]
-}
-```
-
-**Características:**
-- ✅ Pre-validación de límites del plan ANTES de crear
-- ✅ Transaccional (ALL or NONE) - PostgreSQL garantiza atomicidad
-- ✅ Validación de nombres duplicados (batch + DB)
-- ✅ 1 request vs N requests (más rápido y eficiente)
-- ✅ HTTP 403 si excede límite del plan
-- ✅ HTTP 201 con total de registros creados
-
-**Endpoints:**
-- `backend/app/routes/api/v1/profesionales.js:75-85` - Bulk-create profesionales
-- `backend/app/routes/api/v1/servicios.js:78-88` - Bulk-create servicios
-
-**Uso en Onboarding:**
-- `Step5_Professionals.jsx` - Crea profesionales al finalizar paso
-- `Step6_Services.jsx` - Crea servicios al finalizar paso
+**Endpoints**: `POST /api/v1/profesionales/bulk-create`, `POST /api/v1/servicios/bulk-create`
+**Uso**: Onboarding Steps 5 y 6 (profesionales y servicios)
 
 ---
 
@@ -273,19 +248,17 @@ Tabla `citas_servicios` (M:N). Backend/MCP soportan 1-10 servicios por cita.
 
 ### Backend
 - `utils/rlsContextManager.js` - RLS Manager v2.0 (**USAR SIEMPRE**)
-- `utils/helpers.js` - ResponseHelper, ValidationHelper, etc.
-- `controllers/chatbot.controller.js` - System prompt dinámico
+- `utils/helpers.js` - ResponseHelper, ValidationHelper
+- `controllers/chatbot.controller.js` - System prompt agnóstico + `_generarSystemPrompt()`
 - `controllers/superadmin.controller.js` - Panel super admin
-- `routes/api/v1/profesionales.js` - Bulk-create profesionales (línea 75)
-- `routes/api/v1/servicios.js` - Bulk-create servicios (línea 78)
-- `database/profesional.model.js` - Método `crearBulk()`
-- `database/servicio.model.js` - Método `crearBulk()`
+- `database/{profesional,servicio}.model.js` - Método `crearBulk()` (bulk operations)
 
 ### Frontend
 - `services/api/client.js` - Axios + auto-refresh JWT
-- `pages/onboarding/steps/Step5_Professionals.jsx` - Onboarding profesionales
-- `pages/onboarding/steps/Step6_Services.jsx` - Onboarding servicios
-- `pages/superadmin/*.jsx` - Panel super admin
+- `hooks/useChatbots.js` - **IMPORTANTE**: devuelve `response.data.data` completo
+- `pages/chatbots/ChatbotsPage.jsx` - CRUD chatbots + widget Dashboard
+- `components/chatbots/ConfigurarChatbotModal.jsx` - Reutiliza componentes onboarding
+- `pages/onboarding/steps/Step{5,6,7}_*.jsx` - Profesionales (bulk), Servicios (bulk), Chatbots (opcional)
 
 ### Base de Datos
 - `sql/schema/08-rls-policies.sql` - 24 políticas RLS
@@ -308,8 +281,13 @@ Tabla `citas_servicios` (M:N). Backend/MCP soportan 1-10 servicios por cita.
 **Solución**: `docker restart front` → esperar 5-10s → hard refresh (Ctrl+Shift+R)
 **Nota**: Más común en `/pages/superadmin/`
 
+### Chatbots no aparecen en Dashboard/Lista
+**Causa**: Hook `useChatbots` retorna estructura incorrecta
+**Solución**: Hook debe devolver `response.data.data` completo (contiene `{ chatbots: [...], paginacion: {...} }`)
+**Evitar**: NO transformar a `{ chatbots: response.data.data }` - ya viene con esa estructura
+
 ---
 
-**Versión**: 11.1
+**Versión**: 11.2
 **Última actualización**: 31 Octubre 2025
-**Estado**: ✅ Production Ready + Bulk Operations
+**Estado**: ✅ Production Ready

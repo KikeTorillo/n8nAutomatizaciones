@@ -694,6 +694,13 @@ export const chatbotsApi = {
   configurarTelegram: (data) => apiClient.post('/chatbots/configurar', data),
 
   /**
+   * Configurar chatbot de WhatsApp Business Cloud API
+   * @param {Object} data - { nombre, plataforma, config_plataforma, ai_model, ai_temperature }
+   * @returns {Promise<Object>} { chatbot, workflow, credential }
+   */
+  configurarWhatsApp: (data) => apiClient.post('/chatbots/configurar', data),
+
+  /**
    * Listar chatbots configurados
    * @param {Object} params - { plataforma, activo }
    * @returns {Promise<Object>} { chatbots, total }

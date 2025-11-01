@@ -1,0 +1,374 @@
+{
+  "name": "Barberia",
+  "nodes": [
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "20a0b009-eb9b-44fc-bda9-4dffd8085f04",
+              "name": "sender",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].from }}",
+              "type": "string"
+            },
+            {
+              "id": "6076cf73-bc7d-41d6-b053-c09611925c31",
+              "name": "conversation",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "35f48ada-3625-40fa-93a4-414fe67cf8c2",
+              "name": "sessionId",
+              "value": "={{ $json.entry[0].changes[0].value.messages[0].from }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1120,
+        96
+      ],
+      "id": "f051c442-d719-4e1a-9100-ce2c09b64ca8",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Redis1').item.json.propertyName.join(\" \") }}",
+        "options": {
+          "systemMessage": "PLACEHOLDER: Este system prompt será reemplazado dinámicamente por chatbot.controller.js método _generarSystemPrompt() con información personalizada de la organización (fechas calculadas, 6 herramientas MCP, flujos de agendamiento y reagendamiento)."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "dee09657-4bd8-44af-bf20-3c0d488a2271",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatDeepSeek",
+      "typeVersion": 1,
+      "position": [
+        224,
+        224
+      ],
+      "id": "4521ed90-b255-4377-9919-cff5695b6d80",
+      "name": "DeepSeek Chat Model"
+    },
+    {
+      "parameters": {
+        "operation": "push",
+        "list": "={{ $json.sender }}",
+        "messageData": "={{ $json.conversation }}",
+        "tail": true
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        96
+      ],
+      "id": "67c4340a-14b7-4c06-b452-cd50f24df664",
+      "name": "Redis"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -672,
+        96
+      ],
+      "id": "d21a4f60-dfd2-4a0c-b119-3d621c9ef567",
+      "name": "Wait",
+      "webhookId": "ff194028-6953-4cea-9cda-4c009d3a687c"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "key": "={{ $('Redis').item.json.sender }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -448,
+        96
+      ],
+      "id": "d5db53d1-1392-459a-8c4f-fb3f607198ec",
+      "name": "Redis1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2d3b75ea-f4d4-4b04-a981-5b6d7ed3c795",
+              "leftValue": "={{ $json.propertyName.last() }}",
+              "rightValue": "={{ $('Redis').item.json.conversation }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -224,
+        96
+      ],
+      "id": "de56bc5b-0141-40a0-a21f-17ec29022552",
+      "name": "If"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        0,
+        192
+      ],
+      "id": "afd47fda-048b-4465-b198-3d5a609bc0ef",
+      "name": "No Operation, do nothing"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "key": "={{ $('Redis').item.json.sender }}"
+      },
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "c56ff21a-0167-4a9b-a227-6bf16676c4cf",
+      "name": "Redis2"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Redis').item.json.sender }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        352,
+        224
+      ],
+      "id": "7b6015e4-75ff-450c-ba57-1e1514f7af5c",
+      "name": "Postgres Chat Memory"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.mcpClientTool",
+      "typeVersion": 1.1,
+      "position": [
+        480,
+        224
+      ],
+      "id": "d70ee383-e72b-4d45-941e-1be378d35356",
+      "name": "MCP Client - All Tools"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1344,
+        96
+      ],
+      "id": "c90e994a-7124-4c1d-b801-cb932d1b72af",
+      "name": "WhatsApp Trigger",
+      "webhookId": "240536c9-7531-485c-860a-6a3ab499cc15"
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "to": "={{ $('Redis').item.json.sender }}",
+        "message": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        0
+      ],
+      "id": "24d5dbe2-236a-4a1a-8fd0-e037af3b5c63",
+      "name": "Send message"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Redis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "DeepSeek Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Redis1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis1": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Redis2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Operation, do nothing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis2": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MCP Client - All Tools": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "",
+  "meta": {
+    "instanceId": "e1ced58e1fd8c7afefe8506d67fc257f88f98993670ec4135680d93bf1535008"
+  },
+  "tags": []
+}

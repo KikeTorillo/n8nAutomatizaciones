@@ -18,6 +18,7 @@ const N8nCredentialService = require('../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
 const N8nMcpCredentialsService = require('../services/n8nMcpCredentialsService');
 const TelegramValidator = require('../services/platformValidators/telegramValidator');
+const WhatsAppValidator = require('../services/platformValidators/whatsAppValidator');
 const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
 const { asyncHandler } = require('../middleware');
 const { ResponseHelper } = require('../utils/helpers');
@@ -71,8 +72,17 @@ class ChatbotController {
                     break;
 
             case 'whatsapp':
-                // TODO: Implementar WhatsAppValidator en Fase futura
-                logger.warn('[ChatbotController] Validación de WhatsApp no implementada aún');
+            case 'whatsapp_oficial':
+                validacionResult = await WhatsAppValidator.validar(config_plataforma);
+                if (!validacionResult.valido) {
+                    return ResponseHelper.error(
+                        res,
+                        `Error validando credenciales de WhatsApp: ${validacionResult.error}`,
+                        400
+                    );
+                }
+                botInfo = validacionResult.bot_info;
+                logger.info(`[ChatbotController] WhatsApp validado: ${botInfo.display_phone_number}`);
                 break;
 
             case 'instagram':
@@ -810,7 +820,7 @@ Tienes acceso a 6 herramientas MCP para interactuar con el sistema:
    Solo proporciona los datos del cliente, no necesitas buscar antes.
 
    💡 MÚLTIPLES SERVICIOS: Puedes agendar varios servicios en una cita:
-   servicios_ids: [2, 3, 5] para "Corte + Barba + Tinte"
+   servicios_ids: [2, 3, 5] para "Servicio A + Servicio B + Servicio C"
 
 6. **reagendarCita** - Reagenda una cita existente a nueva fecha/hora
    Parámetros: {
@@ -841,6 +851,22 @@ Cuando un cliente quiera agendar una cita, SIGUE ESTE PROCESO OBLIGATORIO:
 - NUNCA uses servicio_id sin haberlo obtenido de listarServicios
 - Muestra el catálogo al cliente si no especificó el servicio
 - Identifica el servicio_id correcto de la respuesta
+
+⚠️ IMPORTANTE - CÓMO PRESENTAR SERVICIOS AL CLIENTE:
+Cuando muestres servicios al cliente:
+✅ USA EXACTAMENTE el nombre que retorna listarServicios, sin modificarlo
+✅ Si el servicio se llama "Consulta", di "Consulta" (NO "Consulta Médica" ni "Consulta Inicial")
+✅ Si el servicio se llama "Masaje", di "Masaje" (NO "Masaje Relajante" ni "Masaje Terapéutico")
+✅ Formato correcto: "[Nombre Exacto] - [Duración] minutos - $[Precio]"
+❌ NUNCA agregues palabras extras al nombre del servicio
+❌ NUNCA muestres IDs: "Consulta (ID: 1)"
+
+Ejemplo: Si listarServicios retorna { nombre: "Sesión", duracion_minutos: 60, precio: 150 }
+✅ Correcto: "Sesión - 60 minutos - $150.00"
+❌ Incorrecto: "Sesión de Terapia - 60 minutos - $150.00"
+
+Los nombres de servicios son EXACTOS como los configuró la organización.
+NO los modifiques, expandas, o "mejores" por tu cuenta.
 
 **PASO 2: RECOPILAR INFORMACIÓN FALTANTE**
 - Nombre del cliente (OBLIGATORIO)
@@ -873,7 +899,16 @@ Cuando un cliente quiera reagendar una cita existente, SIGUE ESTE PROCESO OBLIGA
 - Llama a buscarCitasCliente con el teléfono del cliente
 - Muestra TODAS las citas reagendables que encuentres
 - El cliente NO conoce el ID de la cita, solo la fecha aproximada o servicio
-- Presenta las citas de forma clara: "Cita 1: Corte de Cabello el 25/10/2025 a las 15:00 con Juan Pérez"
+
+⚠️ IMPORTANTE - CÓMO PRESENTAR CITAS AL CLIENTE:
+Cuando muestres citas al cliente, usa esta información amigable:
+✅ "Cita #ORG001-20251025-001: [Nombre del Servicio] el 25/10/2025 a las 15:00 con [Nombre del Profesional]"
+✅ Usa el codigo_cita (ej: ORG001-20251025-001) para referencia del cliente
+✅ Usa EXACTAMENTE el nombre del servicio que viene en la respuesta
+❌ NUNCA muestres: "Cita ID: 123" o "cita_id: 123"
+
+El cita_id es para USO INTERNO solamente (para reagendarCita).
+El cliente debe ver el codigo_cita legible, NO el ID numérico interno.
 
 **PASO 2: CLIENTE SELECCIONA QUÉ CITA CAMBIAR**
 - Deja que el cliente elija cuál cita quiere reagendar
@@ -905,7 +940,29 @@ Cuando un cliente quiera reagendar una cita existente, SIGUE ESTE PROCESO OBLIGA
   * Hora anterior vs hora nueva
 - Recuerda el código de cita para referencia
 
-Responde de forma concisa y clara. Usa emojis con moderación para mantener un tono amigable.`;
+=== ESTILO DE COMUNICACIÓN ===
+
+✅ SÍ HACER:
+- Responde de forma concisa, clara y amigable
+- Usa emojis con moderación para mantener un tono cercano
+- Muestra nombres de servicios, precios, horarios y profesionales EXACTAMENTE como vienen de las herramientas
+- USA los nombres LITERALES sin modificarlos (si dice "Consulta", di "Consulta", NO "Consulta Médica")
+- Usa códigos de cita legibles (ej: ORG001-20251025-001)
+- Habla en lenguaje natural y conversacional
+
+❌ NO HACER:
+- NO muestres IDs internos de servicios (ej: "servicio_id: 1")
+- NO muestres IDs internos de citas (ej: "cita_id: 123")
+- NO muestres IDs internos de profesionales (ej: "profesional_id: 5")
+- NO modifiques, expandas o "mejores" los nombres de servicios que te da listarServicios
+- NO agregues palabras que no están en el nombre original (ej: "Masaje" → "Masaje Relajante")
+- NO asumas el tipo de negocio o industria (puede ser salón, clínica, spa, consultoría, etc.)
+- NO uses jerga técnica o términos de base de datos
+- NO expliques al cliente cómo funcionan las herramientas internas
+
+Recuerda: Los IDs numéricos son para USO INTERNO en las herramientas MCP.
+El cliente solo necesita información legible y amigable.`;
+
     }
 
     /**
@@ -920,8 +977,24 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
      */
     static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpCredential }) {
         try {
-            // 1. Leer plantilla base desde archivo
-            const plantillaPath = path.join(__dirname, '../flows/plantilla/plantilla.json');
+            // 1. Determinar qué plantilla usar según la plataforma
+            let plantillaFilename;
+            switch (plataforma) {
+                case 'telegram':
+                    plantillaFilename = 'plantilla.json';
+                    break;
+                case 'whatsapp':
+                case 'whatsapp_oficial':
+                    plantillaFilename = 'plantilla-whatsapp.json';
+                    break;
+                default:
+                    // Por defecto usar template de Telegram
+                    plantillaFilename = 'plantilla.json';
+                    logger.warn(`[ChatbotController] No hay template específico para ${plataforma}, usando plantilla.json`);
+            }
+
+            // 2. Leer plantilla desde archivo
+            const plantillaPath = path.join(__dirname, '../flows/plantilla/', plantillaFilename);
 
             if (!fs.existsSync(plantillaPath)) {
                 throw new Error(`Plantilla no encontrada en: ${plantillaPath}`);
@@ -929,6 +1002,8 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
 
             const plantillaRaw = fs.readFileSync(plantillaPath, 'utf8');
             const plantilla = JSON.parse(plantillaRaw);
+
+            logger.info(`[ChatbotController] Plantilla cargada: ${plantillaFilename} para plataforma: ${plataforma}`);
 
             logger.debug(`[ChatbotController] Plantilla cargada: ${plantilla.nodes.length} nodos`);
 
@@ -941,17 +1016,29 @@ Responde de forma concisa y clara. Usa emojis con moderación para mantener un t
                 redis: globalCreds.redis?.id || 'N/A'
             });
 
-            // 3. Actualizar nombre del workflow
-            plantilla.name = `${nombre} - Telegram Bot`;
+            // 3. Actualizar nombre del workflow según plataforma
+            const plataformaNombre = plataforma.charAt(0).toUpperCase() + plataforma.slice(1);
+            plantilla.name = `${nombre} - ${plataformaNombre} Bot`;
 
             // 4. Recorrer nodos y reemplazar credentials y configuraciones
             plantilla.nodes.forEach(node => {
-                // 4.1 Reemplazar credentials de Telegram (Trigger + Send Message)
+                // 4.1 Reemplazar credentials según plataforma
+
+                // Telegram (Trigger + Send Message)
                 if (node.type === 'n8n-nodes-base.telegramTrigger' ||
                     node.type === 'n8n-nodes-base.telegram') {
                     if (node.credentials && node.credentials.telegramApi) {
                         node.credentials.telegramApi.id = credentialId;
                         node.credentials.telegramApi.name = `${nombre} - Telegram`;
+                    }
+                }
+
+                // WhatsApp (Trigger + Send Message)
+                if (node.type === 'n8n-nodes-base.whatsAppTrigger' ||
+                    node.type === 'n8n-nodes-base.whatsApp') {
+                    if (node.credentials && node.credentials.whatsAppApi) {
+                        node.credentials.whatsAppApi.id = credentialId;
+                        node.credentials.whatsAppApi.name = `${nombre} - WhatsApp`;
                     }
                 }
 

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import useOnboardingStore from '@/store/onboardingStore';
 import { cn } from '@/lib/utils';
-import { Building2, CreditCard, UserPlus, Users, Clock, Scissors, MessageCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { Building2, CreditCard, UserPlus, Users, Clock, Scissors, Bot, CheckCircle, Sparkles } from 'lucide-react';
 
 // Importar los pasos
 import Step1_BusinessInfo from './steps/Step1_BusinessInfo';
@@ -10,7 +10,7 @@ import Step3_AccountSetup from './steps/Step3_AccountSetup';
 import Step4_Services from './steps/Step6_Services'; // Servicios ahora van primero
 import Step5_Professionals from './steps/Step4_Professionals'; // Profesionales después de servicios
 import Step6_Schedules from './steps/Step5_Schedules';
-import Step7_WhatsAppIntegration from './steps/Step7_WhatsAppIntegration';
+import Step7_PlatformSelection from './steps/Step7_PlatformSelection';
 import Step8_Review from './steps/Step8_Review';
 import Step9_Welcome from './steps/Step9_Welcome';
 
@@ -60,9 +60,9 @@ function OnboardingFlow() {
     },
     {
       number: 7,
-      title: 'Telegram',
-      icon: MessageCircle,
-      component: Step7_WhatsAppIntegration,
+      title: 'Chatbot IA',
+      icon: Bot,
+      component: Step7_PlatformSelection,
     },
     {
       number: 8,

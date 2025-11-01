@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi, serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
+import useOnboardingStore from '@/store/onboardingStore';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import StatCard from '@/components/dashboard/StatCard';
@@ -16,6 +17,7 @@ import {
 import { useCitasDelDia } from '@/hooks/useCitas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useClientes } from '@/hooks/useClientes';
+import { useChatbots } from '@/hooks/useChatbots';
 import {
   LogOut,
   Calendar,
@@ -26,6 +28,9 @@ import {
   Lock,
   AlertTriangle,
   CheckCircle,
+  Bot,
+  MessageCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 /**
@@ -35,6 +40,7 @@ function Dashboard() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { logout: clearAuth, user } = useAuthStore();
+  const { resetOnboarding } = useOnboardingStore();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Queries de datos
@@ -45,6 +51,7 @@ function Dashboard() {
   const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
   const { data: clientesData, isLoading: loadingClientes } = useClientes();
   const { data: bloqueos, isLoading: loadingBloqueos } = useBloqueosDashboard();
+  const { data: chatbotsData, isLoading: loadingChatbots } = useChatbots();
 
   // Extraer array de clientes (useClientes retorna { clientes, pagination })
   const clientes = clientesData?.clientes || [];
@@ -68,6 +75,10 @@ function Dashboard() {
       queryClient.clear();
       console.log('✅ Cache de React Query limpiado');
 
+      // 🧹 CRÍTICO: Limpiar onboarding storage
+      resetOnboarding();
+      console.log('✅ Onboarding storage limpiado');
+
       clearAuth();
       navigate('/login');
     },
@@ -76,6 +87,7 @@ function Dashboard() {
 
       // Limpiar cache incluso si hay error
       queryClient.clear();
+      resetOnboarding();
 
       clearAuth();
       navigate('/login');
@@ -139,6 +151,12 @@ function Dashboard() {
                   className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Servicios
+                </button>
+                <button
+                  onClick={() => navigate('/chatbots')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Chatbots
                 </button>
                 <button
                   onClick={() => navigate('/bloqueos')}
@@ -302,6 +320,82 @@ function Dashboard() {
               <p className="text-sm text-gray-500 text-center py-4">
                 No hay datos disponibles
               </p>
+            )}
+          </div>
+
+          {/* Chatbots con IA */}
+          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+                <Bot className="w-5 h-5" />
+                Chatbots IA
+              </h2>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => navigate('/chatbots')}
+              >
+                Gestionar
+              </Button>
+            </div>
+
+            {loadingChatbots ? (
+              <div className="animate-pulse space-y-3">
+                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+              </div>
+            ) : chatbotsData?.chatbots && chatbotsData.chatbots.length > 0 ? (
+              <div className="space-y-3">
+                {chatbotsData.chatbots.map((chatbot) => (
+                  <div
+                    key={chatbot.id}
+                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                    onClick={() => navigate('/chatbots')}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                        chatbot.plataforma === 'telegram' ? 'bg-blue-100' : 'bg-green-100'
+                      }`}>
+                        {chatbot.plataforma === 'telegram' ? (
+                          <MessageCircle className={`w-4 h-4 ${
+                            chatbot.plataforma === 'telegram' ? 'text-blue-600' : 'text-green-600'
+                          }`} />
+                        ) : (
+                          <MessageSquare className="w-4 h-4 text-green-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">{chatbot.nombre}</p>
+                        <p className="text-xs text-gray-500">
+                          {chatbot.plataforma === 'telegram' ? 'Telegram' : 'WhatsApp'}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                      chatbot.activo
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-800'
+                    }`}>
+                      {chatbot.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6">
+                <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
+                  <Bot className="w-6 h-6 text-gray-400" />
+                </div>
+                <p className="text-sm text-gray-600 mb-3">
+                  No tienes chatbots configurados
+                </p>
+                <Button
+                  size="sm"
+                  onClick={() => navigate('/chatbots')}
+                >
+                  Crear Chatbot
+                </Button>
+              </div>
             )}
           </div>
         </div>

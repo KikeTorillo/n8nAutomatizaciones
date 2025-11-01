@@ -5,7 +5,7 @@ import useAuthStore from '@/store/authStore';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
-import { CheckCircle2, AlertCircle, Building2, User, Clock, Scissors, MessageCircle } from 'lucide-react';
+import { CheckCircle2, AlertCircle, Building2, User, Clock, Scissors, MessageCircle, MessageSquare, Bot } from 'lucide-react';
 
 /**
  * Paso 8: Resumen de Configuración
@@ -274,29 +274,77 @@ function Step8_Review() {
           )}
         </div>
 
-        {/* WhatsApp */}
+        {/* Chatbot IA */}
         <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-5 h-5 text-primary-600" />
+              {formData.chatbot?.plataforma === 'telegram' ? (
+                <MessageCircle className="w-5 h-5 text-primary-600" />
+              ) : formData.chatbot?.plataforma === 'whatsapp_oficial' ? (
+                <MessageSquare className="w-5 h-5 text-primary-600" />
+              ) : (
+                <Bot className="w-5 h-5 text-primary-600" />
+              )}
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Integración WhatsApp</h3>
-              <p className="text-sm text-gray-600">IA Conversacional</p>
+              <h3 className="font-semibold text-gray-900">
+                {formData.chatbot?.plataforma === 'telegram'
+                  ? 'Chatbot Telegram'
+                  : formData.chatbot?.plataforma === 'whatsapp_oficial'
+                  ? 'Chatbot WhatsApp'
+                  : 'Chatbot IA'}
+              </h3>
+              <p className="text-sm text-gray-600">Asistente con inteligencia artificial</p>
             </div>
-            {formData.whatsapp?.connected ? (
+            {formData.chatbot?.configurado && !formData.chatbot?.omitido ? (
               <CheckCircle2 className="w-5 h-5 text-green-600 ml-auto" />
             ) : (
               <AlertCircle className="w-5 h-5 text-yellow-600 ml-auto" />
             )}
           </div>
-          {formData.whatsapp?.connected ? (
-            <p className="text-sm text-gray-900">
-              WhatsApp conectado: {formData.whatsapp.phone_number}
-            </p>
+          {formData.chatbot?.configurado && !formData.chatbot?.omitido ? (
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Plataforma:</span>
+                <span className="font-medium text-gray-900 capitalize">
+                  {formData.chatbot.plataforma === 'telegram'
+                    ? 'Telegram'
+                    : formData.chatbot.plataforma === 'whatsapp_oficial'
+                    ? 'WhatsApp Business'
+                    : formData.chatbot.plataforma}
+                </span>
+              </div>
+              {formData.chatbot.nombre_bot && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Nombre:</span>
+                  <span className="font-medium text-gray-900">
+                    {formData.chatbot.nombre_bot}
+                  </span>
+                </div>
+              )}
+              {formData.chatbot.username_bot && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Usuario:</span>
+                  <span className="font-medium text-gray-900">
+                    @{formData.chatbot.username_bot}
+                  </span>
+                </div>
+              )}
+              {formData.chatbot.display_phone_number && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Teléfono:</span>
+                  <span className="font-medium text-gray-900">
+                    {formData.chatbot.display_phone_number}
+                  </span>
+                </div>
+              )}
+              <p className="text-sm text-green-800 bg-green-50 p-3 rounded mt-2">
+                ✅ Chatbot configurado y listo para usar
+              </p>
+            </div>
           ) : (
             <p className="text-sm text-yellow-800 bg-yellow-50 p-3 rounded">
-              ⚠️ WhatsApp no conectado. Puedes configurarlo después desde ajustes.
+              ⚠️ Chatbot no configurado. Puedes configurarlo después desde ajustes.
             </p>
           )}
         </div>

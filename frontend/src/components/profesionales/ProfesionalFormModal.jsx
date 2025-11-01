@@ -35,8 +35,7 @@ const COLORES_CALENDARIO = [
  * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
  */
 const profesionalCreateSchema = z.object({
-  nombre: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
-  apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres'),
+  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres'),
   tipo_profesional_id: z.number({
     required_error: 'Debes seleccionar un tipo de profesional',
     invalid_type_error: 'Tipo inválido',
@@ -53,8 +52,7 @@ const profesionalCreateSchema = z.object({
  * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
  */
 const profesionalEditSchema = z.object({
-  nombre: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres').optional(),
-  apellidos: z.string().min(2, 'Mínimo 2 caracteres').max(50, 'Máximo 50 caracteres').optional(),
+  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres').optional(),
   tipo_profesional_id: z.number().int().positive().optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
@@ -102,8 +100,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
     defaultValues: isEditMode
       ? {}
       : {
-          nombre: '',
-          apellidos: '',
+          nombre_completo: '',
           tipo_profesional_id: undefined, // Integer ID (requerido en create)
           email: '',
           telefono: '',
@@ -119,8 +116,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       if (!isEditMode) {
         // Modo creación: resetear a valores vacíos
         reset({
-          nombre: '',
-          apellidos: '',
+          nombre_completo: '',
           tipo_profesional_id: undefined,
           email: '',
           telefono: '',
@@ -136,15 +132,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Pre-cargar datos del profesional en modo edición
   useEffect(() => {
     if (isEditMode && profesionalData && isOpen) {
-      // Dividir nombre_completo en nombre y apellidos
-      const nombreCompleto = profesionalData.nombre_completo || '';
-      const partes = nombreCompleto.split(' ');
-      const nombre = partes[0] || '';
-      const apellidos = partes.slice(1).join(' ') || '';
-
       reset({
-        nombre,
-        apellidos,
+        nombre_completo: profesionalData.nombre_completo || '',
         tipo_profesional_id: profesionalData.tipo_profesional_id || undefined, // Integer ID
         email: profesionalData.email || '',
         telefono: profesionalData.telefono || '',
@@ -175,12 +164,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Handler de submit
   const onSubmit = async (data) => {
     try {
-      // Combinar nombre y apellidos en nombre_completo (backend usa este campo)
-      const nombre_completo = `${data.nombre || ''} ${data.apellidos || ''}`.trim();
-
       // Sanitizar campos opcionales vacíos
       const sanitized = {
-        nombre_completo,
+        nombre_completo: data.nombre_completo?.trim(),
         tipo_profesional_id: data.tipo_profesional_id, // Integer ID (requerido)
         email: data.email?.trim() || undefined,
         telefono: data.telefono?.trim() || undefined,
@@ -250,23 +236,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           <>
             {/* Campos del formulario */}
             <div className="space-y-4">
-              {/* Nombre y Apellidos */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  name="nombre"
-                  control={control}
-                  label="Nombre"
-                  placeholder="Ej: Juan"
-                  required={!isEditMode}
-                />
-                <FormField
-                  name="apellidos"
-                  control={control}
-                  label="Apellidos"
-                  placeholder="Ej: Pérez"
-                  required={!isEditMode}
-                />
-              </div>
+              {/* Nombre Completo */}
+              <FormField
+                name="nombre_completo"
+                control={control}
+                label="Nombre Completo"
+                placeholder="Ej: María García López"
+                required={!isEditMode}
+              />
 
               {/* Tipo de Profesional - Select dinámico desde DB */}
               <Controller

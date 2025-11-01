@@ -30,6 +30,9 @@ const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
 // Páginas de Bloqueos
 const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 
+// Páginas de Chatbots
+const ChatbotsPage = lazy(() => import('@/pages/chatbots/ChatbotsPage'));
+
 // Páginas de Super Admin
 const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLayout'));
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
@@ -164,6 +167,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(BloqueosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Chatbots
+      {
+        path: 'chatbots',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ChatbotsPage)}
           </ProtectedRoute>
         ),
       },

@@ -84,7 +84,7 @@ router.get('/check',
  * 🔒 SEGURIDAD:
  * - Solo se puede ejecutar SI NO EXISTE ningún super_admin
  * - Requiere secret_key que coincida con SETUP_SECRET_KEY del .env
- * - Password mínimo 12 caracteres
+ * - Password mínimo 8 caracteres
  * - Rate limiting estricto (3 intentos/hora)
  *
  * 📝 BODY:
@@ -132,10 +132,10 @@ router.post('/create-superadmin',
         // ====================================================================
         // 3. VALIDAR PASSWORD
         // ====================================================================
-        if (!password || password.length < 12) {
+        if (!password || password.length < 8) {
             return ResponseHelper.error(
                 res,
-                'La contraseña debe tener al menos 12 caracteres para máxima seguridad',
+                'La contraseña debe tener al menos 8 caracteres',
                 400
             );
         }
@@ -144,12 +144,11 @@ router.post('/create-superadmin',
         const hasUpperCase = /[A-Z]/.test(password);
         const hasLowerCase = /[a-z]/.test(password);
         const hasNumbers = /\d/.test(password);
-        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
 
-        if (!hasUpperCase || !hasLowerCase || !hasNumbers || !hasSpecialChar) {
+        if (!hasUpperCase || !hasLowerCase || !hasNumbers) {
             return ResponseHelper.error(
                 res,
-                'La contraseña debe contener: mayúsculas, minúsculas, números y caracteres especiales',
+                'La contraseña debe contener: mayúsculas, minúsculas y números',
                 400
             );
         }
