@@ -12,7 +12,7 @@ import Button from '@/components/ui/Button';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 
 /**
- * Paso 3: Crear Cuenta (Registro + Autenticación)
+ * Paso 3: Crear Cuenta (Registro + Autenticación con Trial Gratuito)
  */
 function Step3_AccountSetup() {
   const { formData, updateFormData, setIds, nextStep, prevStep } = useOnboardingStore();
@@ -35,6 +35,9 @@ function Step3_AccountSetup() {
     },
   });
 
+  // Obtener información del plan para mostrar
+  const planSeleccionado = formData.plan;
+
   // Mutación para crear organización y usuario mediante endpoint de registro
   const createAccountMutation = useMutation({
     mutationFn: async (data) => {
@@ -51,9 +54,8 @@ function Step3_AccountSetup() {
         organizacion: {
           nombre_comercial: formData.businessInfo.nombre_comercial,
           razon_social: nombre_fiscal_sanitized || formData.businessInfo.nombre_comercial,
-          // rfc removido - no existe en Step1
           tipo_industria: formData.businessInfo.industria || 'otro',
-          plan: formData.plan.plan_codigo || 'basico',  // ✅ Usar código del plan directamente
+          plan: formData.plan.plan_codigo || 'basico',
           telefono_principal: formData.businessInfo.telefono_principal,
           email_contacto: data.email,
         },
@@ -68,23 +70,16 @@ function Step3_AccountSetup() {
         enviar_email_bienvenida: false,
       };
 
-      // DEBUG: Mostrar datos que se van a enviar
-      console.log('📤 Datos a enviar al backend:', registroData);
-      console.log('📋 FormData completo:', formData);
-      console.log('🎯 Plan seleccionado:', {
-        codigo: formData.plan.plan_codigo,
-        nombre: formData.plan.plan_nombre,
-        precio: formData.plan.plan_precio
-      });
+      console.log('📤 Creando cuenta...', { plan: formData.plan.plan_codigo });
 
       // Llamar al endpoint de registro público
       const response = await organizacionesApi.register(registroData);
 
-      console.log('✅ Respuesta del backend:', response.data);
+      console.log('✅ Cuenta creada:', response.data);
 
-      return response.data.data; // { organizacion, admin: { id, nombre, apellidos, email, rol, token }, servicios_creados }
+      return response.data.data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       // Construir objeto de usuario a partir de la respuesta
       const user = {
         id: data.admin.id,
@@ -99,7 +94,7 @@ function Step3_AccountSetup() {
       setAuth({
         user,
         accessToken: data.admin.token,
-        refreshToken: data.admin.token, // El backend retorna un solo token
+        refreshToken: data.admin.token,
       });
 
       // Guardar IDs en onboardingStore
@@ -108,7 +103,18 @@ function Step3_AccountSetup() {
         usuario_id: data.admin.id,
       });
 
-      // Avanzar al siguiente paso
+      // ✅ NUEVO FLUJO: Todos los planes empiezan con trial
+      // La suscripción trial ya fue creada en el backend
+      const esPlanDePago = ['basico', 'profesional'].includes(planSeleccionado?.plan_codigo);
+      const diasTrial = 14;
+
+      if (esPlanDePago) {
+        toast.success(`¡Cuenta creada! Tienes ${diasTrial} días de trial gratis para probar todas las funciones.`);
+      } else {
+        toast.success('¡Cuenta creada exitosamente!');
+      }
+
+      // Continuar al siguiente paso
       nextStep();
     },
     onError: (error) => {
@@ -127,7 +133,7 @@ function Step3_AccountSetup() {
       // Si es error de validación 400
       else if (error.status === 400) {
         console.error('📋 Detalles del error de validación:', errorData);
-        toast.error(`Error de validación: ${errorMsg}. Revisa la consola para más detalles.`);
+        toast.error(`Error de validación: ${errorMsg}`);
       }
       // Otros errores
       else {
@@ -136,12 +142,13 @@ function Step3_AccountSetup() {
     },
   });
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     updateFormData('account', {
       email: data.email,
       nombre_completo: data.nombre_completo,
     });
 
+    // Crear cuenta (todos los planes empiezan con trial)
     createAccountMutation.mutate(data);
   };
 
@@ -157,11 +164,17 @@ function Step3_AccountSetup() {
         </h2>
         <p className="text-gray-600">
           Configura tus credenciales de acceso
+          {planSeleccionado?.plan_codigo && ['basico', 'profesional'].includes(planSeleccionado.plan_codigo) && (
+            <span className="block mt-1 text-sm text-primary-600 font-medium">
+              ✨ Incluye 14 días de prueba gratis
+            </span>
+          )}
         </p>
       </div>
 
       {/* Formulario */}
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {/* Datos de cuenta */}
         <FormField
           name="nombre_completo"
           control={control}
@@ -254,7 +267,9 @@ function Step3_AccountSetup() {
             isLoading={createAccountMutation.isPending}
             disabled={createAccountMutation.isPending}
           >
-            {createAccountMutation.isPending ? 'Creando cuenta...' : 'Crear Cuenta'}
+            {createAccountMutation.isPending
+              ? 'Creando cuenta...'
+              : 'Crear Cuenta'}
           </Button>
         </div>
       </form>

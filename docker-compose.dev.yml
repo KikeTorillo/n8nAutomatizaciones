@@ -211,6 +211,8 @@ services:
       MERCADOPAGO_ACCESS_TOKEN: ${MERCADOPAGO_ACCESS_TOKEN}
       MERCADOPAGO_WEBHOOK_SECRET: ${MERCADOPAGO_WEBHOOK_SECRET}
       FRONTEND_URL: ${FRONTEND_URL}
+
+      AUTO_SYNC_PLANS: ${AUTO_SYNC_PLANS}
     volumes:
       - ./backend/app:/app
       - /app/node_modules
@@ -240,6 +242,8 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+    environment:
+      VITE_MERCADOPAGO_PUBLIC_KEY: ${VITE_MERCADOPAGO_PUBLIC_KEY}
     # No necesitamos VITE_API_URL porque usamos el proxy de Vite
     # El proxy redirige /api -> http://back:3000/api desde DENTRO del contenedor
     healthcheck:

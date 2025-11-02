@@ -535,8 +535,8 @@ class OrganizacionModel {
         });
     }
 
-    // Crear subscripción activa inicial para nueva organización
-    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial') {
+    // Crear subscripción trial inicial para nueva organización
+    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial', diasTrial = 14) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             // Obtener información del plan
@@ -554,32 +554,38 @@ class OrganizacionModel {
 
             const plan = planResult.rows[0];
 
-            // ✅ CORREGIDO: Determinar estado y fecha_fin según tipo de plan
-            const estado = codigoPlan === 'trial' ? 'trial' : 'activa';
-            const isTrial = codigoPlan === 'trial';
+            // ✅ NUEVO: Todos los planes empiezan con trial
+            // - Planes gratuitos (trial, custom): trial sin mercadopago, pueden ser indefinidos
+            // - Planes de pago (basico, profesional): trial de X días, luego requieren pago
+            const esPlanGratuito = ['trial', 'custom'].includes(codigoPlan);
+            const esPlanDePago = ['basico', 'profesional'].includes(codigoPlan);
 
-            // Crear subscripción activa
+            // Crear subscripción con trial
             const subscripcionQuery = `
                 INSERT INTO subscripciones (
-                    organizacion_id, plan_id, precio_actual, fecha_inicio,
-                    fecha_fin, fecha_proximo_pago, estado, activa, metadata
+                    organizacion_id, plan_id, precio_actual,
+                    fecha_inicio, fecha_proximo_pago, estado, activa,
+                    fecha_inicio_trial, fecha_fin_trial, dias_trial,
+                    metadata
                 ) VALUES (
                     $1, $2, $3,
                     CURRENT_DATE,
-                    ${isTrial ? 'CURRENT_DATE + INTERVAL \'30 days\'' : 'NULL'},
                     CURRENT_DATE + INTERVAL '1 month',
-                    $4,
+                    'trial',
                     true,
+                    ${esPlanDePago ? 'NOW()' : 'NULL'},
+                    ${esPlanDePago ? `NOW() + INTERVAL '${diasTrial} days'` : 'NULL'},
+                    ${esPlanDePago ? diasTrial : 'NULL'},
                     '{}'::jsonb
                 )
-                RETURNING id, organizacion_id, plan_id, estado, activa, fecha_inicio, fecha_fin
+                RETURNING id, organizacion_id, plan_id, estado, activa,
+                          fecha_inicio, fecha_inicio_trial, fecha_fin_trial, dias_trial
             `;
 
             const result = await db.query(subscripcionQuery, [
                 organizacionId,
                 plan.id,
-                plan.precio_mensual,
-                estado
+                plan.precio_mensual
             ]);
 
             return result.rows[0];

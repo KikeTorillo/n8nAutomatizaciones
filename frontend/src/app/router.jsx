@@ -33,6 +33,10 @@ const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 // Páginas de Chatbots
 const ChatbotsPage = lazy(() => import('@/pages/chatbots/ChatbotsPage'));
 
+// Páginas de Suscripción
+const ActivarSuscripcion = lazy(() => import('@/pages/subscripcion/ActivarSuscripcion'));
+const SubscripcionResultado = lazy(() => import('@/pages/subscripcion/SubscripcionResultado'));
+
 // Páginas de Super Admin
 const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLayout'));
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
@@ -92,6 +96,19 @@ export const router = createBrowserRouter([
       {
         path: 'onboarding',
         element: withSuspense(OnboardingFlow),
+      },
+      // Rutas de suscripción
+      {
+        path: 'suscripcion',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ActivarSuscripcion)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'subscripcion/resultado',
+        element: withSuspense(SubscripcionResultado),
       },
       {
         path: 'dashboard',

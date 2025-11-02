@@ -9,6 +9,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import StatCard from '@/components/dashboard/StatCard';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
+import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import {
   useEstadisticasOrganizacion,
   useServiciosDashboard,
@@ -186,6 +187,9 @@ function Dashboard() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Widget de Estado de Trial */}
+        <TrialStatusWidget />
+
         {/* Mensaje de Error */}
         {errorEstadisticas && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">

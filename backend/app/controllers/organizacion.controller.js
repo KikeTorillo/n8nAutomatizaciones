@@ -142,10 +142,15 @@ class OrganizacionController {
         // PASO 3: Crear organización
         const nuevaOrganizacion = await OrganizacionModel.crear(organizacionData);
 
-        // PASO 4: Crear subscripción activa para la organización
+        // PASO 4: Crear subscripción trial para TODOS los planes
+        // ✅ NUEVO FLUJO: Todos empiezan con trial (14 días para planes de pago)
+        // - trial/custom: trial indefinido sin pago requerido
+        // - basico/profesional: trial de 14 días, luego activan pago desde dashboard
+        const diasTrial = 14; // Trial de 14 días para planes de pago
         await OrganizacionModel.crearSubscripcionActiva(
             nuevaOrganizacion.id,
-            organizacionData.plan_actual
+            organizacionData.plan_actual,
+            diasTrial
         );
 
         // PASO 5: Crear usuario admin

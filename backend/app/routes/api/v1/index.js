@@ -18,6 +18,8 @@ const chatbotsRouter = require('./chatbots');
 const disponibilidadRouter = require('./disponibilidad');
 const pagosRouter = require('./pagos');
 const webhooksRouter = require('./webhooks');
+const subscripcionesRouter = require('./subscripciones');
+const mercadopagoRouter = require('./mercadopago');
 
 function routerApi(app) {
     const router = express.Router();
@@ -57,6 +59,8 @@ function routerApi(app) {
     // Rutas de pagos y webhooks (Mercado Pago)
     router.use('/pagos', pagosRouter);
     router.use('/webhooks', webhooksRouter);
+    router.use('/subscripciones', subscripcionesRouter);
+    router.use('/mercadopago', mercadopagoRouter);
 }
 
 module.exports = routerApi;

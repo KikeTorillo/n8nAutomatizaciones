@@ -15,6 +15,7 @@ function Step2_PlanSelection() {
   const { formData, updateFormData, nextStep, prevStep } = useOnboardingStore();
   const toast = useToast();
   const [selectedPlan, setSelectedPlan] = useState(formData.plan.plan_id);
+  const [selectedPlanData, setSelectedPlanData] = useState(null);
 
   // Fetch planes desde el backend
   const { data, isLoading, error } = useQuery({
@@ -27,6 +28,7 @@ function Step2_PlanSelection() {
 
   const handleSelectPlan = (plan) => {
     setSelectedPlan(plan.id);
+    setSelectedPlanData(plan);
     updateFormData('plan', {
       plan_id: plan.id,
       plan_codigo: plan.codigo_plan,    // ✅ Guardar código del plan (trial, basico, etc.)
@@ -40,6 +42,9 @@ function Step2_PlanSelection() {
       toast.warning('Por favor selecciona un plan');
       return;
     }
+
+    // Continuar al siguiente paso (Paso 3: Crear cuenta)
+    // La suscripción se creará DESPUÉS de crear la cuenta si es plan de pago
     nextStep();
   };
 
@@ -160,7 +165,10 @@ function Step2_PlanSelection() {
         <Button variant="outline" onClick={prevStep}>
           Anterior
         </Button>
-        <Button onClick={handleContinue} disabled={!selectedPlan}>
+        <Button
+          onClick={handleContinue}
+          disabled={!selectedPlan}
+        >
           Continuar
         </Button>
       </div>

@@ -84,15 +84,26 @@ class MercadoPagoService {
    * @param {number} params.precio - Precio mensual
    * @param {Object} params.frecuencia - {tipo: 'months', valor: 1}
    * @param {string} [params.moneda='MXN'] - Moneda
+   * @param {string} [params.backUrl] - URL de retorno (usa FRONTEND_URL si no se especifica)
    * @returns {Promise<Object>} Plan creado con { id, ...otrosCampos }
    */
-  async crearPlan({ nombre, precio, frecuencia, moneda = 'MXN' }) {
+  async crearPlan({ nombre, precio, frecuencia, moneda = 'MXN', backUrl }) {
     this._ensureInitialized();
     try {
       logger.info('Creando plan en Mercado Pago', { nombre, precio, frecuencia });
 
+      // Si no se proporciona backUrl, usar FRONTEND_URL del .env
+      // Para sandbox/desarrollo, usar URL de ejemplo si FRONTEND_URL es localhost
+      let urlRetorno = backUrl || process.env.FRONTEND_URL || 'https://www.mercadopago.com';
+
+      // Si es localhost, usar URL de ejemplo válida para sandbox
+      if (urlRetorno.includes('localhost') || urlRetorno.includes('127.0.0.1')) {
+        urlRetorno = 'https://www.mercadopago.com/return';
+      }
+
       const planData = {
         reason: nombre,
+        back_url: urlRetorno,
         auto_recurring: {
           frequency: frecuencia.valor,          // 1, 2, 3...
           frequency_type: frecuencia.tipo,      // 'months', 'days', 'years'
@@ -147,17 +158,20 @@ class MercadoPagoService {
    * @param {Object} params - Parámetros de la suscripción
    * @param {string} params.planId - ID del plan en MP
    * @param {string} params.email - Email del pagador
+   * @param {string} [params.cardTokenId] - Token de tarjeta (opcional - si no se envía, MP genera init_point)
    * @param {string} params.returnUrl - URL de retorno
    * @param {string} params.externalReference - Referencia externa (org_X_timestamp)
-   * @returns {Promise<Object>} { id, init_point, status }
+   * @returns {Promise<Object>} { id, status, init_point? }
    */
-  async crearSuscripcion({ planId, email, returnUrl, externalReference }) {
+  async crearSuscripcion({ planId, email, cardTokenId, returnUrl, externalReference }) {
     this._ensureInitialized();
     try {
       logger.info('Creando suscripción en Mercado Pago', {
         planId,
         email,
-        externalReference
+        externalReference,
+        hasCardToken: !!cardTokenId,
+        metodo: cardTokenId ? 'con tarjeta' : 'con init_point'
       });
 
       const subscriptionData = {
@@ -165,30 +179,142 @@ class MercadoPagoService {
         payer_email: email,
         back_url: returnUrl,
         external_reference: externalReference,
-        auto_recurring: {
-          start_date: new Date().toISOString(),
-        }
+        // NO incluir auto_recurring - ya está definido en el plan
       };
 
-      const response = await this.subscriptionClient.create({ body: subscriptionData });
+      // Solo agregar card_token_id si se proporciona
+      if (cardTokenId) {
+        subscriptionData.card_token_id = cardTokenId;
+        subscriptionData.status = 'authorized'; // Activar inmediatamente con tarjeta
+      } else {
+        // Sin card_token_id, MP generará init_point para pago pendiente
+        subscriptionData.status = 'pending';
+      }
+
+      let response;
+
+      // Si no hay cardTokenId, usar axios directamente porque el SDK valida que es requerido
+      if (!cardTokenId) {
+        const axios = require('axios');
+
+        const axiosResponse = await axios.post(
+          'https://api.mercadopago.com/preapproval',
+          subscriptionData,
+          {
+            headers: {
+              'Authorization': `Bearer ${config.accessToken}`,
+              'Content-Type': 'application/json',
+              'X-Idempotency-Key': this._generateIdempotencyKey()
+            },
+            timeout: config.timeout
+          }
+        );
+
+        response = axiosResponse.data;
+      } else {
+        // Con card_token_id, usar el SDK normalmente
+        response = await this.subscriptionClient.create({ body: subscriptionData });
+      }
 
       logger.info('✅ Suscripción creada en Mercado Pago', {
         subscriptionId: response.id,
         email,
         planId,
-        status: response.status
+        status: response.status,
+        hasInitPoint: !!response.init_point
       });
 
       return {
         id: response.id,
-        init_point: response.init_point,
-        status: response.status
+        status: response.status,
+        init_point: response.init_point // URL para que el usuario complete el pago
       };
     } catch (error) {
       logger.error('❌ Error creando suscripción:', {
         error: error.message,
         planId,
-        email
+        email,
+        responseData: error.response?.data
+      });
+      throw new Error(`Error creando suscripción: ${error.message}`);
+    }
+  }
+
+  /**
+   * Crear suscripción SIN plan asociado - Genera init_point para pago pendiente
+   *
+   * Este método crea una suscripción definiendo auto_recurring directamente,
+   * en lugar de usar preapproval_plan_id. Esto permite generar un init_point
+   * sin requerir card_token_id.
+   *
+   * @param {Object} params - Parámetros de la suscripción
+   * @param {string} params.nombre - Nombre/razón de la suscripción
+   * @param {number} params.precio - Precio mensual
+   * @param {string} [params.moneda='MXN'] - Moneda
+   * @param {string} params.email - Email del pagador
+   * @param {string} params.returnUrl - URL de retorno
+   * @param {string} params.externalReference - Referencia externa (org_X_timestamp)
+   * @returns {Promise<Object>} { id, status, init_point }
+   */
+  async crearSuscripcionConInitPoint({ nombre, precio, moneda = 'MXN', email, returnUrl, externalReference }) {
+    this._ensureInitialized();
+    try {
+      logger.info('Creando suscripción con init_point (sin plan asociado)', {
+        nombre,
+        precio,
+        moneda,
+        email,
+        externalReference
+      });
+
+      const axios = require('axios');
+
+      const subscriptionData = {
+        reason: nombre,
+        payer_email: email,
+        back_url: returnUrl,
+        external_reference: externalReference,
+        status: 'pending', // CRÍTICO: pending genera init_point
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: precio,
+          currency_id: moneda
+        }
+      };
+
+      const response = await axios.post(
+        'https://api.mercadopago.com/preapproval',
+        subscriptionData,
+        {
+          headers: {
+            'Authorization': `Bearer ${config.accessToken}`,
+            'Content-Type': 'application/json',
+            'X-Idempotency-Key': this._generateIdempotencyKey()
+          },
+          timeout: config.timeout
+        }
+      );
+
+      logger.info('✅ Suscripción con init_point creada exitosamente', {
+        subscriptionId: response.data.id,
+        email,
+        status: response.data.status,
+        hasInitPoint: !!response.data.init_point
+      });
+
+      return {
+        id: response.data.id,
+        status: response.data.status,
+        init_point: response.data.init_point
+      };
+    } catch (error) {
+      logger.error('❌ Error creando suscripción con init_point:', {
+        error: error.message,
+        nombre,
+        precio,
+        email,
+        responseData: error.response?.data
       });
       throw new Error(`Error creando suscripción: ${error.message}`);
     }

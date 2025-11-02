@@ -141,10 +141,17 @@ CREATE TABLE subscripciones (
     fecha_fin DATE,
     fecha_proximo_pago DATE NOT NULL,
     dia_facturacion INTEGER DEFAULT EXTRACT(DAY FROM CURRENT_DATE),
-    
+
     periodo_facturacion VARCHAR(20) DEFAULT 'mensual',  -- 'mensual', 'anual'
     auto_renovacion BOOLEAN DEFAULT TRUE,
-    
+
+    -- ====================================================================
+    -- 🎁 SECCIÓN: TRIAL / PERÍODO DE PRUEBA
+    -- ====================================================================
+    fecha_inicio_trial TIMESTAMPTZ,                     -- Fecha de inicio del trial
+    fecha_fin_trial TIMESTAMPTZ,                        -- Fecha de fin del trial
+    dias_trial INTEGER DEFAULT 14,                      -- Duración del trial en días
+
     -- ====================================================================
     -- 🎛️ SECCIÓN: ESTADO Y CONTROL
     -- ====================================================================
@@ -208,7 +215,9 @@ CREATE TABLE subscripciones (
             fecha_proximo_pago >= fecha_inicio AND
             (fecha_fin IS NULL OR fecha_fin >= fecha_inicio) AND
             (descuento_expira_en IS NULL OR descuento_expira_en >= fecha_inicio) AND
-            (fecha_limite_reactivacion IS NULL OR fecha_limite_reactivacion >= CURRENT_DATE)
+            (fecha_limite_reactivacion IS NULL OR fecha_limite_reactivacion >= CURRENT_DATE) AND
+            (fecha_fin_trial IS NULL OR fecha_inicio_trial IS NULL OR fecha_fin_trial >= fecha_inicio_trial) AND
+            (dias_trial IS NULL OR dias_trial > 0)
         ),
     CONSTRAINT valid_cancelacion_sub
         CHECK (
