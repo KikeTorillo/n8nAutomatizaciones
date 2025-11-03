@@ -392,41 +392,20 @@ if (require.main === module) {
   saasApp.start();
 
   /**
-   * SINCRONIZACIÓN AUTOMÁTICA DE PLANES CON MERCADO PAGO
+   * SINCRONIZACIÓN AUTOMÁTICA DE PLANES CON MERCADO PAGO - DESHABILITADA
    * =====================================================
-   * Se ejecuta en background 5 segundos después del inicio del servidor
-   * Solo en entornos de desarrollo/producción (no en tests)
-   * Controlado por variable de entorno AUTO_SYNC_PLANS
+   * NOTA: La sincronización automática ha sido reemplazada por sincronización manual
+   * desde el panel de Super Admin. Esto permite:
+   * - Control total sobre cuándo sincronizar
+   * - Detección inteligente de planes existentes en MP
+   * - Prevención de duplicados
+   * - Recuperación fácil si se reinicia la BD
+   *
+   * Para sincronizar planes, usa:
+   * - Panel Super Admin → Gestión de Planes → Sincronizar con Mercado Pago
+   * - Endpoint: POST /api/v1/superadmin/planes/sync-mercadopago
    */
-  if (process.env.AUTO_SYNC_PLANS === 'true' && process.env.NODE_ENV !== 'test') {
-    setTimeout(async () => {
-      try {
-        const { exec } = require('child_process');
-        const path = require('path');
-        const scriptPath = path.join(__dirname, 'scripts', 'sync-plans-to-mercadopago.js');
 
-        logger.info('🔄 Iniciando sincronización automática de planes con Mercado Pago...');
-
-        exec(`node ${scriptPath}`, (error, stdout, stderr) => {
-          if (error) {
-            logger.warn('⚠️  Error en sincronización automática de planes:', {
-              error: error.message,
-              stderr: stderr?.trim()
-            });
-          } else {
-            logger.info('✅ Sincronización automática de planes completada');
-            if (stdout && process.env.LOG_LEVEL === 'debug') {
-              logger.debug('Output de sincronización:', { stdout: stdout.trim() });
-            }
-          }
-        });
-      } catch (error) {
-        logger.warn('⚠️  No se pudo ejecutar sincronización automática de planes:', {
-          error: error.message
-        });
-      }
-    }, 5000); // Esperar 5 segundos para que el servidor esté completamente inicializado
-  }
 }
 
 // EXPORTACIÓN: Permite importar la instancia desde otros archivos

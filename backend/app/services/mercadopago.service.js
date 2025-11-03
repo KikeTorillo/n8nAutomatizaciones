@@ -133,6 +133,8 @@ class MercadoPagoService {
 
   /**
    * Obtener un plan por ID
+   * NOTA: El método get() del SDK de PreApprovalPlan no funciona correctamente,
+   * por lo que usamos search() y filtramos por ID
    *
    * @param {string} planId - ID del plan en Mercado Pago
    * @returns {Promise<Object>} Datos del plan
@@ -140,11 +142,80 @@ class MercadoPagoService {
   async obtenerPlan(planId) {
     this._ensureInitialized();
     try {
-      const response = await this.planClient.get({ id: planId });
-      return response;
+      // WORKAROUND: get() no funciona en PreApprovalPlan SDK, usamos search()
+      const todosLosPlanes = await this.listarPlanes();
+      const planEncontrado = todosLosPlanes.find(plan => plan.id === planId);
+
+      if (!planEncontrado) {
+        throw new Error(`Plan con ID ${planId} no encontrado`);
+      }
+
+      // Verificar que el plan esté activo (cuando borras en MP, status cambia a 'cancelled')
+      if (planEncontrado.status !== 'active') {
+        throw new Error(`Plan con ID ${planId} no está activo (status: ${planEncontrado.status})`);
+      }
+
+      return planEncontrado;
     } catch (error) {
       logger.error('Error obteniendo plan:', { planId, error: error.message });
       throw new Error(`Error obteniendo plan: ${error.message}`);
+    }
+  }
+
+  /**
+   * Listar todos los planes de suscripción
+   *
+   * @returns {Promise<Array>} Lista de planes
+   */
+  async listarPlanes() {
+    this._ensureInitialized();
+    try {
+      const response = await this.planClient.search({
+        options: {
+          limit: 100 // Máximo permitido por MP
+        }
+      });
+      return response.results || [];
+    } catch (error) {
+      logger.error('Error listando planes:', { error: error.message });
+      throw new Error(`Error listando planes: ${error.message}`);
+    }
+  }
+
+  /**
+   * Buscar un plan por nombre (case-insensitive)
+   * Solo busca entre planes activos para evitar asociar planes inactivos
+   *
+   * @param {string} nombrePlan - Nombre del plan a buscar
+   * @returns {Promise<Object|null>} Plan encontrado o null
+   */
+  async buscarPlanPorNombre(nombrePlan) {
+    this._ensureInitialized();
+    try {
+      const todosLosPlanes = await this.listarPlanes();
+
+      // FILTRAR SOLO PLANES ACTIVOS (evita tomar planes viejos/inactivos)
+      const planesActivos = todosLosPlanes.filter(plan => plan.status === 'active');
+
+      logger.info(`🔍 Buscando plan "${nombrePlan}" entre ${planesActivos.length} planes activos (${todosLosPlanes.length} totales)`);
+
+      // Normalizar nombre para búsqueda case-insensitive
+      const nombreNormalizado = nombrePlan.toLowerCase().trim();
+
+      const planEncontrado = planesActivos.find(plan =>
+        plan.reason?.toLowerCase().trim() === nombreNormalizado
+      );
+
+      if (planEncontrado) {
+        logger.info(`✅ Plan activo encontrado: ${planEncontrado.id}`);
+      } else {
+        logger.info(`⚠️  No se encontró plan activo con nombre "${nombrePlan}"`);
+      }
+
+      return planEncontrado || null;
+    } catch (error) {
+      logger.error('Error buscando plan por nombre:', { nombrePlan, error: error.message });
+      throw new Error(`Error buscando plan: ${error.message}`);
     }
   }
 

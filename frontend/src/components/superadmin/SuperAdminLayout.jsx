@@ -94,6 +94,12 @@ export default function SuperAdminLayout() {
                         >
                             💳 Planes
                         </Link>
+                        <Link
+                            to="/superadmin/planes/mercadopago"
+                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                        >
+                            🔄 Sincronización MP
+                        </Link>
                     </div>
                 </div>
             </nav>
