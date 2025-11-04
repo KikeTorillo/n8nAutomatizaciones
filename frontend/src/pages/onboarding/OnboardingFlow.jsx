@@ -1,18 +1,12 @@
 import { Link } from 'react-router-dom';
 import useOnboardingStore from '@/store/onboardingStore';
 import { cn } from '@/lib/utils';
-import { Building2, CreditCard, UserPlus, Users, Clock, Scissors, Bot, CheckCircle, Sparkles } from 'lucide-react';
+import { Building2, CreditCard, UserPlus } from 'lucide-react';
 
 // Importar los pasos
 import Step1_BusinessInfo from './steps/Step1_BusinessInfo';
 import Step2_PlanSelection from './steps/Step2_PlanSelection';
 import Step3_AccountSetup from './steps/Step3_AccountSetup';
-import Step4_Services from './steps/Step6_Services'; // Servicios ahora van primero
-import Step5_Professionals from './steps/Step4_Professionals'; // Profesionales después de servicios
-import Step6_Schedules from './steps/Step5_Schedules';
-import Step7_PlatformSelection from './steps/Step7_PlatformSelection';
-import Step8_Review from './steps/Step8_Review';
-import Step9_Welcome from './steps/Step9_Welcome';
 
 /**
  * Flujo de Onboarding - Componente Principal
@@ -20,7 +14,7 @@ import Step9_Welcome from './steps/Step9_Welcome';
 function OnboardingFlow() {
   const { currentStep, completedSteps, getProgress } = useOnboardingStore();
 
-  // Configuración de pasos
+  // Configuración de pasos - Onboarding simplificado
   const steps = [
     {
       number: 1,
@@ -40,42 +34,6 @@ function OnboardingFlow() {
       icon: UserPlus,
       component: Step3_AccountSetup,
     },
-    {
-      number: 4,
-      title: 'Servicios',
-      icon: Scissors,
-      component: Step4_Services, // Servicios ahora van primero
-    },
-    {
-      number: 5,
-      title: 'Profesionales',
-      icon: Users,
-      component: Step5_Professionals, // Profesionales después de servicios
-    },
-    {
-      number: 6,
-      title: 'Horarios',
-      icon: Clock,
-      component: Step6_Schedules,
-    },
-    {
-      number: 7,
-      title: 'Chatbot IA',
-      icon: Bot,
-      component: Step7_PlatformSelection,
-    },
-    {
-      number: 8,
-      title: 'Resumen',
-      icon: CheckCircle,
-      component: Step8_Review,
-    },
-    {
-      number: 9,
-      title: 'Bienvenida',
-      icon: Sparkles,
-      component: Step9_Welcome,
-    },
   ];
 
   const CurrentStepComponent = steps[currentStep - 1]?.component;
@@ -90,7 +48,7 @@ function OnboardingFlow() {
               ¡Bienvenido a SaaS Agendamiento!
             </h1>
             <p className="text-xl text-gray-600">
-              Configura tu cuenta en solo 9 pasos
+              Crea tu cuenta en solo 3 pasos rápidos
             </p>
           </div>
 

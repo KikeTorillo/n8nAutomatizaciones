@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation } from '@tanstack/react-query';
@@ -15,7 +16,8 @@ import { UserPlus, Eye, EyeOff } from 'lucide-react';
  * Paso 3: Crear Cuenta (Registro + Autenticación con Trial Gratuito)
  */
 function Step3_AccountSetup() {
-  const { formData, updateFormData, setIds, nextStep, prevStep } = useOnboardingStore();
+  const navigate = useNavigate();
+  const { formData, updateFormData, setIds, prevStep } = useOnboardingStore();
   const { setAuth } = useAuthStore();
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -109,13 +111,15 @@ function Step3_AccountSetup() {
       const diasTrial = 14;
 
       if (esPlanDePago) {
-        toast.success(`¡Cuenta creada! Tienes ${diasTrial} días de trial gratis para probar todas las funciones.`);
+        toast.success(`¡Cuenta creada! Tienes ${diasTrial} días de trial gratis. Te redirigimos al dashboard...`);
       } else {
-        toast.success('¡Cuenta creada exitosamente!');
+        toast.success('¡Cuenta creada exitosamente! Te redirigimos al dashboard...');
       }
 
-      // Continuar al siguiente paso
-      nextStep();
+      // Redirigir al dashboard después de un breve delay para que vean el mensaje
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
     },
     onError: (error) => {
       console.error('❌ Error en registro:', error);

@@ -38,30 +38,6 @@ const useOnboardingStore = create(
           password: '',
           nombre_completo: '',
         },
-
-        // Paso 4: Profesionales
-        professionals: [],
-
-        // Paso 5: Servicios
-        services: [],
-
-        // Paso 6: WhatsApp (Legacy - Deprecado)
-        whatsapp: {
-          connected: false,
-          phone_number: '',
-          session_id: '',
-        },
-
-        // Paso 7: Chatbot de Telegram
-        telegram: {
-          configurado: false,
-          bot_token: '',
-          nombre_bot: '',
-          username_bot: '',
-          chatbot_id: null,
-          workflow_id: null,
-          omitido: false,
-        },
       },
 
       // IDs generados durante el proceso
@@ -103,7 +79,7 @@ const useOnboardingStore = create(
 
       /**
        * Actualizar datos del formulario
-       * @param {string} section - businessInfo, plan, account, etc.
+       * @param {string} section - businessInfo, plan, account
        * @param {Object} data
        */
       updateFormData: (section, data) => {
@@ -114,90 +90,6 @@ const useOnboardingStore = create(
               ...state.formData[section],
               ...data,
             },
-          },
-        }));
-      },
-
-      /**
-       * Agregar profesional
-       * @param {Object} professional
-       */
-      addProfessional: (professional) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            professionals: [...state.formData.professionals, professional],
-          },
-        }));
-      },
-
-      /**
-       * Eliminar profesional
-       * @param {number} index
-       */
-      removeProfessional: (index) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            professionals: state.formData.professionals.filter((_, i) => i !== index),
-          },
-        }));
-      },
-
-      /**
-       * Actualizar profesional
-       * @param {number} index
-       * @param {Object} data
-       */
-      updateProfessional: (index, data) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            professionals: state.formData.professionals.map((prof, i) =>
-              i === index ? { ...prof, ...data } : prof
-            ),
-          },
-        }));
-      },
-
-      /**
-       * Agregar servicio
-       * @param {Object} service
-       */
-      addService: (service) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            services: [...state.formData.services, service],
-          },
-        }));
-      },
-
-      /**
-       * Eliminar servicio
-       * @param {number} index
-       */
-      removeService: (index) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            services: state.formData.services.filter((_, i) => i !== index),
-          },
-        }));
-      },
-
-      /**
-       * Actualizar servicio
-       * @param {number} index
-       * @param {Object} data
-       */
-      updateService: (index, data) => {
-        set((state) => ({
-          formData: {
-            ...state.formData,
-            services: state.formData.services.map((service, i) =>
-              i === index ? { ...service, ...data } : service
-            ),
           },
         }));
       },
@@ -257,22 +149,6 @@ const useOnboardingStore = create(
               password: '',
               nombre_completo: '',
             },
-            professionals: [],
-            services: [],
-            whatsapp: {
-              connected: false,
-              phone_number: '',
-              session_id: '',
-            },
-            telegram: {
-              configurado: false,
-              bot_token: '',
-              nombre_bot: '',
-              username_bot: '',
-              chatbot_id: null,
-              workflow_id: null,
-              omitido: false,
-            },
           },
           organizacion_id: null,
           usuario_id: null,
@@ -285,7 +161,7 @@ const useOnboardingStore = create(
        */
       getProgress: () => {
         const { completedSteps } = get();
-        const totalSteps = 9;
+        const totalSteps = 3;
         return Math.round((completedSteps.length / totalSteps) * 100);
       },
     }),
