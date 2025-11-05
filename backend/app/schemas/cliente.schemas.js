@@ -37,9 +37,30 @@ const crear = {
                 'string.email': 'Email no válido'
             }),
         telefono: commonSchemas.mexicanPhone
-            .required()
+            .optional()
+            .allow(null)
             .messages({
-                'any.required': 'Teléfono es requerido'
+                'string.pattern.base': 'Teléfono debe ser válido'
+            }),
+        telegram_chat_id: Joi.string()
+            .min(5)
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim()
+            .messages({
+                'string.min': 'Telegram chat_id debe tener al menos 5 caracteres',
+                'string.max': 'Telegram chat_id no puede exceder 50 caracteres'
+            }),
+        whatsapp_phone: Joi.string()
+            .min(10)
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim()
+            .messages({
+                'string.min': 'WhatsApp phone debe tener al menos 10 caracteres',
+                'string.max': 'WhatsApp phone no puede exceder 50 caracteres'
             }),
         fecha_nacimiento: Joi.date()
             .iso()
@@ -117,7 +138,18 @@ const actualizar = {
             .max(LIMITES.NOMBRE_MAX)
             .lowercase()
             .allow(null),
-        telefono: commonSchemas.mexicanPhone,
+        telefono: commonSchemas.mexicanPhone
+            .allow(null),
+        telegram_chat_id: Joi.string()
+            .min(5)
+            .max(50)
+            .trim()
+            .allow(null),
+        whatsapp_phone: Joi.string()
+            .min(10)
+            .max(50)
+            .trim()
+            .allow(null),
         fecha_nacimiento: Joi.date()
             .iso()
             .max('now')
@@ -210,6 +242,12 @@ const buscar = {
             .messages({
                 'string.min': 'Query de búsqueda debe tener al menos 2 caracteres',
                 'any.required': 'Query de búsqueda es requerido'
+            }),
+        tipo: Joi.string()
+            .valid('nombre', 'telefono', 'email', 'telegram_chat_id', 'whatsapp_phone')
+            .default('nombre')
+            .messages({
+                'any.only': 'Tipo de búsqueda debe ser: nombre, telefono, email, telegram_chat_id o whatsapp_phone'
             }),
         limit: Joi.number()
             .integer()

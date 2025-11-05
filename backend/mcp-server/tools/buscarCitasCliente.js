@@ -23,7 +23,11 @@ const inputSchema = {
   properties: {
     telefono: {
       type: 'string',
-      description: 'Teléfono del cliente (10 dígitos)',
+      description: 'Teléfono del cliente (10 dígitos) - OPCIONAL si se proporciona sender',
+    },
+    sender: {
+      type: 'string',
+      description: 'ID del remitente (telegram_chat_id o whatsapp_phone). Obtenido automáticamente del workflow n8n.',
     },
     estado: {
       type: 'string',
@@ -35,23 +39,44 @@ const inputSchema = {
       description: 'Si es false, solo muestra citas futuras. Default: false',
     },
   },
-  required: ['telefono'],
+  required: [], // Ya no es requerido telefono, puede ser sender
 };
 
 /**
  * Schema Joi para validación estricta
  */
 const joiSchema = Joi.object({
-  telefono: Joi.string().min(10).max(15).required()
+  telefono: Joi.string().min(10).max(15).optional()
     .messages({
       'string.min': 'El teléfono debe tener al menos 10 dígitos',
       'string.max': 'El teléfono no puede tener más de 15 dígitos',
     }),
+  sender: Joi.string().optional(),
   estado: Joi.string()
     .valid('pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio')
     .optional(),
   incluir_pasadas: Joi.boolean().default(false),
-});
+}).or('telefono', 'sender'); // Al menos uno debe estar presente
+
+/**
+ * Detectar plataforma basándose en el formato del sender
+ * @param {string} sender - ID del remitente
+ * @returns {string|null} - 'telegram', 'whatsapp' o null
+ */
+function detectPlatform(sender) {
+  if (!sender || typeof sender !== 'string') return null;
+
+  // Solo dígitos
+  if (!/^\d+$/.test(sender)) return null;
+
+  // Telegram: 9-10 dígitos típicamente
+  if (sender.length <= 10) return 'telegram';
+
+  // WhatsApp: 11-15 dígitos (código país + número)
+  if (sender.length >= 11 && sender.length <= 15) return 'whatsapp';
+
+  return null;
+}
 
 /**
  * Función principal de ejecución
@@ -84,23 +109,49 @@ async function execute(args, jwtToken) {
     // ========== 2. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
 
-    // ========== 3. BUSCAR CLIENTE POR TELÉFONO ==========
+    // ========== 3. BUSCAR CLIENTE (por sender o teléfono) ==========
     let cliente;
+    let tipoBusqueda = 'telefono';
+    let valorBusqueda = value.telefono;
+
+    // Priorizar sender si está disponible
+    if (value.sender) {
+      const platform = detectPlatform(value.sender);
+
+      if (platform === 'telegram') {
+        tipoBusqueda = 'telegram_chat_id';
+        valorBusqueda = value.sender;
+        logger.debug(`🔍 Buscando cliente por Telegram chat_id: ${value.sender}`);
+      } else if (platform === 'whatsapp') {
+        tipoBusqueda = 'whatsapp_phone';
+        valorBusqueda = value.sender;
+        logger.debug(`🔍 Buscando cliente por WhatsApp phone: ${value.sender}`);
+      }
+    } else if (value.telefono) {
+      valorBusqueda = value.telefono.replace(/[\s\-\(\)]/g, '');
+      logger.debug(`🔍 Buscando cliente por teléfono tradicional: ${valorBusqueda}`);
+    }
+
     try {
-      const telefonoNormalizado = value.telefono.replace(/[\s\-\(\)]/g, '');
-      const response = await apiClient.get('/api/v1/clientes/buscar-telefono', {
-        params: { telefono: telefonoNormalizado },
+      const response = await apiClient.get('/api/v1/clientes/buscar', {
+        params: {
+          q: valorBusqueda,
+          tipo: tipoBusqueda,
+          limit: 1,
+        },
       });
 
-      cliente = response.data.data?.cliente || response.data.cliente;
+      const clientes = response.data.data;
 
-      if (!cliente) {
+      if (!clientes || clientes.length === 0) {
         return {
           success: false,
-          message: `No se encontró ningún cliente con el teléfono ${value.telefono}`,
+          message: `No se encontró ningún cliente con el identificador proporcionado`,
           data: null,
         };
       }
+
+      cliente = clientes[0];
 
       logger.info(`✅ Cliente encontrado: ${cliente.nombre} (ID: ${cliente.id})`);
     } catch (error) {
@@ -109,7 +160,7 @@ async function execute(args, jwtToken) {
       if (error.response?.status === 404) {
         return {
           success: false,
-          message: `No se encontró ningún cliente con el teléfono ${value.telefono}`,
+          message: `No se encontró ningún cliente con el identificador proporcionado`,
           data: null,
         };
       }
@@ -260,7 +311,7 @@ async function execute(args, jwtToken) {
 
 module.exports = {
   name: 'buscarCitasCliente',
-  description: 'Busca todas las citas de un cliente por su número de teléfono. Retorna lista de citas con ID, código, fecha, hora, profesional y estado. Útil para reagendar cuando el cliente no conoce el código de su cita. Puede filtrar por estado (pendiente, confirmada, etc.) y excluir citas pasadas.',
+  description: 'Busca todas las citas de un cliente automáticamente usando su identificador de plataforma (Telegram/WhatsApp). NO requiere teléfono si el cliente está escribiendo desde el bot. Retorna lista de citas con ID, código, fecha, hora, profesional y estado. Útil para reagendar cuando el cliente no conoce el código de su cita. Puede filtrar por estado (pendiente, confirmada, etc.) y excluir citas pasadas.',
   inputSchema,
   execute,
 };

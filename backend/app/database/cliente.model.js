@@ -8,13 +8,13 @@ class ClienteModel {
         return await RLSContextManager.query(clienteData.organizacion_id, async (db) => {
             const query = `
                 INSERT INTO clientes (
-                    organizacion_id, nombre, email, telefono, fecha_nacimiento,
-                    profesional_preferido_id, notas_especiales, alergias,
+                    organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
+                    fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
                     direccion, como_conocio, activo, marketing_permitido
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                 RETURNING
-                    id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
-                    profesional_preferido_id, notas_especiales, alergias,
+                    id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
+                    fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
                     direccion, como_conocio, activo, marketing_permitido,
                     creado_en, actualizado_en
             `;
@@ -23,7 +23,9 @@ class ClienteModel {
                 clienteData.organizacion_id,
                 clienteData.nombre,
                 clienteData.email || null,
-                clienteData.telefono,
+                clienteData.telefono || null,
+                clienteData.telegram_chat_id || null,
+                clienteData.whatsapp_phone || null,
                 clienteData.fecha_nacimiento || null,
                 clienteData.profesional_preferido_id || null,
                 clienteData.notas_especiales || null,
@@ -44,6 +46,12 @@ class ClienteModel {
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
                         throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                    }
+                    if (error.constraint === 'unique_telegram_por_org') {
+                        throw new Error(`El Telegram chat ID ${clienteData.telegram_chat_id} ya está registrado en esta organización`);
+                    }
+                    if (error.constraint === 'unique_whatsapp_por_org') {
+                        throw new Error(`El número de WhatsApp ${clienteData.whatsapp_phone} ya está registrado en esta organización`);
                     }
                 }
 
@@ -68,8 +76,8 @@ class ClienteModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
-                    id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
-                    profesional_preferido_id, notas_especiales, alergias,
+                    id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
+                    fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
                     direccion, como_conocio, activo, marketing_permitido,
                     creado_en, actualizado_en
                 FROM clientes
@@ -245,20 +253,66 @@ class ClienteModel {
         });
     }
 
-    static async buscar(termino, organizacionId, limit = 10) {
+    static async buscar(termino, organizacionId, limit = 10, tipo = 'nombre') {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const query = `
-                SELECT
-                    id, nombre, email, telefono,
-                    ts_rank(to_tsvector('spanish', nombre), plainto_tsquery('spanish', $1)) as relevancia
-                FROM clientes
-                WHERE activo = true
-                AND to_tsvector('spanish', nombre) @@ plainto_tsquery('spanish', $1)
-                ORDER BY relevancia DESC, nombre ASC
-                LIMIT $2
-            `;
+            let query;
+            let queryParams;
 
-            const result = await db.query(query, [termino, limit]);
+            switch (tipo) {
+                case 'telegram_chat_id':
+                    query = `
+                        SELECT
+                            id, nombre, email, telefono, telegram_chat_id, whatsapp_phone
+                        FROM clientes
+                        WHERE activo = true
+                        AND telegram_chat_id = $1
+                        LIMIT 1
+                    `;
+                    queryParams = [termino];
+                    break;
+
+                case 'whatsapp_phone':
+                    query = `
+                        SELECT
+                            id, nombre, email, telefono, telegram_chat_id, whatsapp_phone
+                        FROM clientes
+                        WHERE activo = true
+                        AND whatsapp_phone = $1
+                        LIMIT 1
+                    `;
+                    queryParams = [termino];
+                    break;
+
+                case 'telefono':
+                    const telefonoNormalizado = termino.replace(/[\s\-\(\)\+]/g, '');
+                    query = `
+                        SELECT
+                            id, nombre, email, telefono, telegram_chat_id, whatsapp_phone
+                        FROM clientes
+                        WHERE activo = true
+                        AND REPLACE(REPLACE(REPLACE(telefono, ' ', ''), '-', ''), '+', '') LIKE $1
+                        LIMIT $2
+                    `;
+                    queryParams = [`%${telefonoNormalizado}%`, limit];
+                    break;
+
+                case 'nombre':
+                default:
+                    query = `
+                        SELECT
+                            id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
+                            ts_rank(to_tsvector('spanish', nombre), plainto_tsquery('spanish', $1)) as relevancia
+                        FROM clientes
+                        WHERE activo = true
+                        AND to_tsvector('spanish', nombre) @@ plainto_tsquery('spanish', $1)
+                        ORDER BY relevancia DESC, nombre ASC
+                        LIMIT $2
+                    `;
+                    queryParams = [termino, limit];
+                    break;
+            }
+
+            const result = await db.query(query, queryParams);
             return result.rows;
         });
     }

@@ -181,6 +181,22 @@ CREATE UNIQUE INDEX idx_clientes_unique_telefono_por_org
     ON clientes (organizacion_id, telefono)
     WHERE telefono IS NOT NULL;
 
+-- 📱 ÍNDICE 3D: BÚSQUEDA POR TELEGRAM CHAT ID
+-- Propósito: Identificación instantánea de clientes por Telegram (sin pedir teléfono)
+-- Uso: WHERE telegram_chat_id = ? (query MÁS frecuente para bots de Telegram)
+-- Performance: Búsqueda O(1) en tabla con millones de registros
+CREATE INDEX idx_clientes_telegram
+    ON clientes(telegram_chat_id)
+    WHERE telegram_chat_id IS NOT NULL;
+
+-- 📱 ÍNDICE 3E: BÚSQUEDA POR WHATSAPP PHONE
+-- Propósito: Identificación instantánea de clientes por WhatsApp Business
+-- Uso: WHERE whatsapp_phone = ? (query MÁS frecuente para bots de WhatsApp)
+-- Performance: Búsqueda O(1) en tabla con millones de registros
+CREATE INDEX idx_clientes_whatsapp
+    ON clientes(whatsapp_phone)
+    WHERE whatsapp_phone IS NOT NULL;
+
 -- 🔍 ÍNDICE 3B: BÚSQUEDA FUZZY DE TELÉFONOS (TRIGRAMA)
 -- Propósito: Soporte para búsqueda fuzzy de teléfonos en ClienteModel.buscarPorTelefono()
 -- Uso: WHERE telefono % ? (operador similaridad trigrama)

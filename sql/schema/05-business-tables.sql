@@ -143,7 +143,14 @@ CREATE TABLE clientes (
     -- 👤 Información personal básica
     nombre VARCHAR(150) NOT NULL,
     email VARCHAR(150),
-    telefono VARCHAR(20),                      -- OPCIONAL: Walk-in puede no proporcionar teléfono
+    telefono VARCHAR(20),                      -- OPCIONAL: Teléfono tradicional (solo si el negocio necesita llamar)
+
+    -- 📱 Identificadores de plataformas de mensajería
+    telegram_chat_id VARCHAR(50),              -- ID de Telegram (ej: "1700200086")
+                                               -- Obtenido automáticamente del webhook, NO se pide al usuario
+    whatsapp_phone VARCHAR(50),                -- Número WhatsApp internacional (ej: "5215512345678")
+                                               -- Obtenido automáticamente del webhook de WhatsApp Business
+
     fecha_nacimiento DATE,
 
     -- 🏥 Información médica y preferencias
@@ -338,3 +345,31 @@ ADD CONSTRAINT fk_clientes_profesional_preferido
 FOREIGN KEY (profesional_preferido_id) REFERENCES profesionales(id)
     ON DELETE SET NULL    -- Si se elimina profesional, SET NULL en cliente
     ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
+
+-- ====================================================================
+-- 📱 CONSTRAINTS ÚNICOS PARA IDENTIFICADORES DE PLATAFORMAS
+-- ====================================================================
+-- Garantizan que un mismo telegram_chat_id o whatsapp_phone no pueda
+-- registrarse múltiples veces en la misma organización.
+--
+-- IMPORTANTE: Los índices únicos son parciales (WHERE ... IS NOT NULL)
+-- para permitir múltiples clientes con valores NULL (walk-in sin plataforma).
+-- ====================================================================
+
+ALTER TABLE clientes
+ADD CONSTRAINT unique_telegram_por_org
+    UNIQUE (organizacion_id, telegram_chat_id);
+
+ALTER TABLE clientes
+ADD CONSTRAINT unique_whatsapp_por_org
+    UNIQUE (organizacion_id, whatsapp_phone);
+
+-- Índices para búsquedas rápidas (se crean en 07-indexes.sql pero los documentamos aquí)
+COMMENT ON COLUMN clientes.telegram_chat_id IS
+'Chat ID de Telegram del cliente (ej: "1700200086"). Obtenido automáticamente del campo sender del workflow n8n. Permite identificar y contactar al cliente sin necesidad de teléfono tradicional.';
+
+COMMENT ON COLUMN clientes.whatsapp_phone IS
+'Número de teléfono WhatsApp en formato internacional (ej: "5215512345678"). Obtenido automáticamente del campo sender del webhook de WhatsApp Business API.';
+
+COMMENT ON COLUMN clientes.telefono IS
+'Teléfono tradicional (OPCIONAL). Solo se usa si el negocio necesita llamar al cliente por línea convencional. Los clientes que agendan por Telegram/WhatsApp pueden no tener este campo.';

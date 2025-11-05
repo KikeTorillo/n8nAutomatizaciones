@@ -25,9 +25,13 @@ const inputSchema = {
     },
     tipo: {
       type: 'string',
-      description: 'Tipo de búsqueda: telefono o nombre (opcional, auto-detect)',
-      enum: ['telefono', 'nombre', 'auto'],
+      description: 'Tipo de búsqueda: telefono, nombre, telegram_chat_id, whatsapp_phone (opcional, auto-detect)',
+      enum: ['telefono', 'nombre', 'telegram_chat_id', 'whatsapp_phone', 'auto'],
       default: 'auto',
+    },
+    sender: {
+      type: 'string',
+      description: 'ID del remitente del mensaje (telegram_chat_id o whatsapp_phone). Obtenido automáticamente del workflow n8n.',
     },
   },
   required: ['busqueda'],
@@ -41,8 +45,29 @@ const joiSchema = Joi.object({
     .messages({
       'string.min': 'busqueda debe tener al menos 3 caracteres',
     }),
-  tipo: Joi.string().valid('telefono', 'nombre', 'auto').optional().default('auto'),
+  tipo: Joi.string().valid('telefono', 'nombre', 'telegram_chat_id', 'whatsapp_phone', 'auto').optional().default('auto'),
+  sender: Joi.string().optional(),
 });
+
+/**
+ * Detectar plataforma basándose en el formato del sender
+ * @param {string} sender - ID del remitente
+ * @returns {string|null} - 'telegram', 'whatsapp' o null
+ */
+function detectPlatform(sender) {
+  if (!sender || typeof sender !== 'string') return null;
+
+  // Solo dígitos
+  if (!/^\d+$/.test(sender)) return null;
+
+  // Telegram: 9-10 dígitos típicamente
+  if (sender.length <= 10) return 'telegram';
+
+  // WhatsApp: 11-15 dígitos (código país + número)
+  if (sender.length >= 11 && sender.length <= 15) return 'whatsapp';
+
+  return null;
+}
 
 /**
  * Auto-detectar tipo de búsqueda
@@ -82,9 +107,28 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 2. Auto-detectar tipo si es necesario ==========
+    // ========== 2. Detectar plataforma si tenemos sender ==========
     let tipoBusqueda = value.tipo;
-    if (tipoBusqueda === 'auto') {
+    let busquedaValue = value.busqueda;
+
+    if (value.sender && tipoBusqueda === 'auto') {
+      const platform = detectPlatform(value.sender);
+
+      if (platform === 'telegram') {
+        tipoBusqueda = 'telegram_chat_id';
+        busquedaValue = value.sender;
+        logger.debug(`Plataforma detectada: Telegram (sender: ${value.sender})`);
+      } else if (platform === 'whatsapp') {
+        tipoBusqueda = 'whatsapp_phone';
+        busquedaValue = value.sender;
+        logger.debug(`Plataforma detectada: WhatsApp (sender: ${value.sender})`);
+      } else {
+        // Fallback: auto-detectar tipo tradicional
+        tipoBusqueda = detectarTipoBusqueda(value.busqueda);
+        logger.debug(`Tipo de búsqueda auto-detectado (tradicional): ${tipoBusqueda}`);
+      }
+    } else if (tipoBusqueda === 'auto') {
+      // Sin sender: auto-detectar tipo tradicional
       tipoBusqueda = detectarTipoBusqueda(value.busqueda);
       logger.debug(`Tipo de búsqueda auto-detectado: ${tipoBusqueda}`);
     }
@@ -92,11 +136,12 @@ async function execute(args, jwtToken) {
     // ========== 3. Preparar parámetros para backend ==========
     // ✅ FIX Bug #3: El endpoint /api/v1/clientes/buscar espera 'q', no 'busqueda'
     const params = {
-      q: value.busqueda,
+      q: busquedaValue,
+      tipo: tipoBusqueda, // Enviar tipo explícito al backend
       limit: 10,
     };
 
-    logger.info('Buscando cliente:', { query: value.busqueda, tipo: tipoBusqueda });
+    logger.info('Buscando cliente:', { query: busquedaValue, tipo: tipoBusqueda, sender: value.sender || 'N/A' });
 
     // ========== 4. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
@@ -125,6 +170,8 @@ async function execute(args, jwtToken) {
       id: cliente.id,
       nombre: cliente.nombre,
       telefono: cliente.telefono,
+      telegram_chat_id: cliente.telegram_chat_id,
+      whatsapp_phone: cliente.whatsapp_phone,
       email: cliente.email,
       ultima_cita: cliente.ultima_cita ? {
         fecha: cliente.ultima_cita.fecha_cita,

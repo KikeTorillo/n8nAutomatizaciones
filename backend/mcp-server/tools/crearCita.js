@@ -61,14 +61,18 @@ const inputSchema = {
         },
         telefono: {
           type: 'string',
-          description: 'Teléfono del cliente',
+          description: 'Teléfono del cliente (OPCIONAL - no necesario si hay sender)',
         },
         email: {
           type: 'string',
           description: 'Email del cliente (opcional)',
         },
       },
-      required: ['nombre', 'telefono'],
+      required: ['nombre'], // Solo nombre es obligatorio
+    },
+    sender: {
+      type: 'string',
+      description: 'ID del remitente del mensaje (telegram_chat_id o whatsapp_phone). Obtenido automáticamente del workflow n8n.',
     },
     notas: {
       type: 'string',
@@ -105,9 +109,10 @@ const joiSchema = Joi.object({
   servicio_id: Joi.number().integer().positive().optional(),
   cliente: Joi.object({
     nombre: Joi.string().min(3).max(255).required(),
-    telefono: Joi.string().min(7).max(20).required(),
+    telefono: Joi.string().min(7).max(20).optional().allow(null, ''), // OPCIONAL: no necesario si hay sender
     email: Joi.string().email().optional().allow(null, ''),
   }).required(),
+  sender: Joi.string().optional(), // ID de Telegram/WhatsApp
   notas: Joi.string().max(1000).optional().allow(null, ''),
 })
   // Validar que al menos uno de los dos campos esté presente
@@ -115,6 +120,26 @@ const joiSchema = Joi.object({
   .messages({
     'object.missing': 'Debes proporcionar servicios_ids (recomendado) o servicio_id',
   });
+
+/**
+ * Detectar plataforma basándose en el formato del sender
+ * @param {string} sender - ID del remitente
+ * @returns {string|null} - 'telegram', 'whatsapp' o null
+ */
+function detectPlatform(sender) {
+  if (!sender || typeof sender !== 'string') return null;
+
+  // Solo dígitos
+  if (!/^\d+$/.test(sender)) return null;
+
+  // Telegram: 9-10 dígitos típicamente
+  if (sender.length <= 10) return 'telegram';
+
+  // WhatsApp: 11-15 dígitos (código país + número)
+  if (sender.length >= 11 && sender.length <= 15) return 'whatsapp';
+
+  return null;
+}
 
 /**
  * Función principal de ejecución
@@ -164,25 +189,56 @@ async function execute(args, jwtToken) {
     // ========== 3. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
 
-    // ========== 3. BUSCAR CLIENTE POR TELÉFONO ==========
+    // ========== 3. BUSCAR CLIENTE (priorizar sender, fallback a teléfono) ==========
     let clienteId = null;
+    let platform = null;
 
-    if (value.cliente.telefono) {
+    // Detectar plataforma si hay sender
+    if (value.sender) {
+      platform = detectPlatform(value.sender);
+    }
+
+    // Prioridad 1: Buscar por sender (Telegram/WhatsApp)
+    if (value.sender && platform) {
+      const tipoBusqueda = platform === 'telegram' ? 'telegram_chat_id' : 'whatsapp_phone';
+      logger.info(`[crearCita] 🔍 Buscando cliente por ${platform} (${tipoBusqueda}): ${value.sender}`);
+
+      try {
+        const busqueda = await apiClient.get('/api/v1/clientes/buscar', {
+          params: {
+            q: value.sender,
+            tipo: tipoBusqueda,
+            limit: 1,
+          },
+        });
+
+        if (busqueda.data.data && busqueda.data.data.length > 0) {
+          clienteId = busqueda.data.data[0].id;
+          logger.info(`✅ Cliente existente encontrado por ${platform}: ${clienteId} - ${busqueda.data.data[0].nombre}`);
+        }
+      } catch (error) {
+        logger.warn(`[crearCita] Cliente no encontrado por ${platform}, se creará nuevo cliente`);
+      }
+    }
+    // Prioridad 2: Fallback a teléfono tradicional (si no hay sender o no se encontró)
+    else if (!clienteId && value.cliente.telefono) {
       logger.info('[crearCita] Buscando cliente por teléfono:', value.cliente.telefono);
 
       try {
-        const busqueda = await apiClient.get('/api/v1/clientes/buscar-telefono', {
-          params: { telefono: value.cliente.telefono },
+        const busqueda = await apiClient.get('/api/v1/clientes/buscar', {
+          params: {
+            q: value.cliente.telefono.replace(/[\s\-\(\)]/g, ''),
+            tipo: 'telefono',
+            limit: 1,
+          },
         });
 
-        // ✅ FIX: La respuesta es {data: {encontrado: true, cliente: {...}}}
-        if (busqueda.data.data?.encontrado && busqueda.data.data.cliente) {
-          clienteId = busqueda.data.data.cliente.id;
-          logger.info(`✅ Cliente existente encontrado: ${clienteId} - ${busqueda.data.data.cliente.nombre}`);
+        if (busqueda.data.data && busqueda.data.data.length > 0) {
+          clienteId = busqueda.data.data[0].id;
+          logger.info(`✅ Cliente existente encontrado por teléfono: ${clienteId} - ${busqueda.data.data[0].nombre}`);
         }
       } catch (error) {
-        logger.warn('[crearCita] Error buscando cliente:', error.response?.data || error.message);
-        // Continuar para crear nuevo cliente
+        logger.warn('[crearCita] Cliente no encontrado por teléfono, se creará nuevo cliente');
       }
     }
 
@@ -227,15 +283,28 @@ async function execute(args, jwtToken) {
       logger.info('[crearCita] Cliente no encontrado. Creando nuevo cliente...');
 
       try {
-        const nuevoCliente = await apiClient.post('/api/v1/clientes', {
+        const clienteData = {
           nombre: value.cliente.nombre,
           telefono: value.cliente.telefono || null,
           email: value.cliente.email || null,
-          notas_especiales: 'Cliente creado automáticamente vía chatbot IA',
-        });
+          notas_especiales: `Cliente creado automáticamente vía chatbot IA${platform ? ` (${platform})` : ''}`,
+        };
+
+        // 🆕 Registrar identificador de plataforma automáticamente
+        if (value.sender && platform) {
+          if (platform === 'telegram') {
+            clienteData.telegram_chat_id = value.sender;
+            logger.info(`📱 Registrando Telegram chat_id: ${value.sender}`);
+          } else if (platform === 'whatsapp') {
+            clienteData.whatsapp_phone = value.sender;
+            logger.info(`📱 Registrando WhatsApp phone: ${value.sender}`);
+          }
+        }
+
+        const nuevoCliente = await apiClient.post('/api/v1/clientes', clienteData);
 
         clienteId = nuevoCliente.data.data.id;
-        logger.info(`✅ Cliente creado automáticamente: ${clienteId} - ${value.cliente.nombre}`);
+        logger.info(`✅ Cliente creado automáticamente: ${clienteId} - ${value.cliente.nombre} (${platform || 'telefono'})`);
       } catch (error) {
         logger.error('[crearCita] Error creando cliente:', error.response?.data || error.message);
         return {

@@ -89,12 +89,13 @@ class ClienteController {
     });
 
     static buscar = asyncHandler(async (req, res) => {
-        const { q: termino, limit = 10 } = req.query;
+        const { q: termino, tipo = 'nombre', limit = 10 } = req.query;
 
         const clientes = await ClienteModel.buscar(
             termino.trim(),
             req.tenant.organizacionId,
-            Math.min(parseInt(limit), 50)
+            Math.min(parseInt(limit), 50),
+            tipo
         );
 
         return ResponseHelper.success(res, clientes, 'Búsqueda completada exitosamente');

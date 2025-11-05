@@ -134,16 +134,12 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 5. OBTENER DURACIÓN DEL SERVICIO ==========
-    let duracionServicio = 30; // Default: 30 minutos
+    // ========== 5. OBTENER DURACIÓN TOTAL DE LA CITA ==========
+    // Las citas ahora soportan múltiples servicios (relación M:N con citas_servicios)
+    // La duración total ya está calculada y guardada en la tabla citas
+    let duracionServicio = citaExistente.duracion_total_minutos || 30; // Default: 30 minutos
 
-    try {
-      const servicio = await apiClient.get(`/api/v1/servicios/${citaExistente.servicio_id}`);
-      duracionServicio = servicio.data.data?.duracion_minutos || servicio.data.duracion_minutos || 30;
-      logger.info(`✅ Duración del servicio: ${duracionServicio} minutos`);
-    } catch (error) {
-      logger.warn('[reagendarCita] No se pudo obtener duración del servicio, usando default 30min');
-    }
+    logger.info(`✅ Duración total de la cita: ${duracionServicio} minutos`);
 
     // ========== 6. Convertir fecha DD/MM/YYYY a YYYY-MM-DD para backend ==========
     const [dia, mes, anio] = value.nueva_fecha.split('/');
