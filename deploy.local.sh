@@ -59,73 +59,34 @@ deploy_up() {
     # Build imágenes
     docker compose -f "$COMPOSE_FILE" build
 
-    # Paso 1: Levantar infraestructura (PostgreSQL, Redis, n8n)
-    log_info "Paso 1/4: Levantando infraestructura (PostgreSQL, Redis, n8n)..."
-    docker compose -f "$COMPOSE_FILE" up -d postgres redis n8n-main n8n-worker
+    # Levantar todos los servicios
+    log_info "Levantando todos los servicios..."
+    docker compose -f "$COMPOSE_FILE" up -d || true  # Continuar aunque falle por timing
 
-    log_info "Esperando que la infraestructura esté lista (30s)..."
-    sleep 30
+    log_info "Esperando que los servicios estén listos (35s)..."
+    sleep 35
 
-    # Paso 2: Ejecutar post-docker-setup (crear owner n8n + API key)
-    log_info "Paso 2/4: Configurando n8n (owner + API key)..."
-    if [ -f "scripts/post-docker-setup.sh" ]; then
-        bash scripts/post-docker-setup.sh
-        log_success "n8n configurado correctamente"
+    # Verificar que frontend esté corriendo, si no levantarlo manualmente
+    FRONTEND_STATUS=$(docker compose -f "$COMPOSE_FILE" ps frontend --format json 2>/dev/null | grep -o '"State":"[^"]*"' | cut -d'"' -f4)
 
-        # Validar que la API key fue generada
-        log_info "Validando N8N_API_KEY..."
-        if [ ! -f /tmp/n8n_api_key_latest.txt ]; then
-            log_error "API Key no fue generada. Verifica los logs de post-docker-setup.sh"
-            exit 1
-        fi
-
-        # Recargar N8N_API_KEY del .env y exportarla
-        if [ -f .env ]; then
-            log_info "Recargando N8N_API_KEY del .env..."
-            export N8N_API_KEY=$(grep "^N8N_API_KEY=" .env | cut -d'=' -f2)
-
-            # Validar que la API key es válida contra n8n
-            API_TEST=$(curl -s -o /dev/null -w "%{http_code}" \
-                -X GET "http://localhost:5678/api/v1/workflows" \
-                -H "X-N8N-API-KEY: $N8N_API_KEY" 2>/dev/null || echo "000")
-
-            if [ "$API_TEST" = "200" ]; then
-                log_success "N8N_API_KEY validada contra n8n (HTTP 200)"
-            else
-                log_warning "No se pudo validar API key contra n8n (HTTP $API_TEST)"
-                log_warning "Continuando deployment (la API key podría estar correcta)"
-            fi
-        fi
-    else
-        log_warning "scripts/post-docker-setup.sh no encontrado, saltando configuración de n8n"
-    fi
-
-    # Paso 3: Levantar aplicación (backend, mcp-server, frontend)
-    log_info "Paso 3/4: Levantando aplicación (backend, mcp-server, frontend)..."
-    docker compose -f "$COMPOSE_FILE" up -d backend mcp-server frontend
-
-    # Paso 4: Verificar que backend cargó la API key correcta
-    log_info "Paso 4/4: Verificando configuración del backend..."
-    sleep 5
-
-    # Validar que el backend tiene la API key correcta
-    BACKEND_API_KEY=$(docker exec back printenv N8N_API_KEY 2>/dev/null || echo "")
-    ENV_API_KEY=$(grep "^N8N_API_KEY=" .env 2>/dev/null | cut -d'=' -f2)
-
-    if [ "$BACKEND_API_KEY" = "$ENV_API_KEY" ]; then
-        log_success "Backend cargó N8N_API_KEY correctamente"
-    else
-        log_warning "Backend tiene API key diferente al .env"
-        log_info "Recargando backend con configuración actualizada..."
-        docker compose -f "$COMPOSE_FILE" up -d --force-recreate --no-deps backend
+    if [ "$FRONTEND_STATUS" != "running" ]; then
+        log_warning "Frontend no se levantó automáticamente, iniciando manualmente..."
+        docker compose -f "$COMPOSE_FILE" up -d frontend
         sleep 5
-        log_success "Backend recargado con configuración actualizada"
     fi
 
     log_success "Servicios levantados exitosamente!"
     echo ""
-    log_info "Esperando que los servicios estén listos (15s)..."
-    sleep 15
+
+    # Información sobre setup inicial
+    log_info "ℹ️  Setup inicial del sistema (super admin + n8n):"
+    log_info "   1. Accede a: http://localhost:3001/setup"
+    log_info "   2. Completa el formulario de configuración"
+    log_info "   3. El sistema creará automáticamente:"
+    log_info "      - Super administrador"
+    log_info "      - Owner de n8n + API Key"
+    log_info "      - Credentials globales"
+    echo ""
 
     # Verificar status
     echo ""

@@ -15,28 +15,41 @@
 const axios = require('axios');
 const logger = require('../utils/logger');
 const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
+const configService = require('./configService');
 
 class N8nMcpCredentialsService {
-    constructor() {
-        this.baseURL = process.env.N8N_API_URL || 'http://n8n-main:5678';
-        this.apiKey = process.env.N8N_API_KEY;
+    /**
+     * ================================================================
+     * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
+     * ================================================================
+     * Crea instancia axios con API Key leído desde BD (hot-reload).
+     * Se crea una nueva instancia por cada request para garantizar
+     * que siempre usa el API Key más actualizado.
+     *
+     * @returns {Promise<axios.AxiosInstance>}
+     */
+    async createN8nClient() {
+        const apiKey = await configService.getN8nApiKey();
 
-        if (!this.apiKey) {
-            throw new Error('N8N_API_KEY no está configurado en .env');
+        if (!apiKey) {
+            throw new Error(
+                'N8N_API_KEY no configurado. ' +
+                'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
+            );
         }
 
-        this.client = axios.create({
-            baseURL: this.baseURL,
+        const client = axios.create({
+            baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
             headers: {
-                'X-N8N-API-KEY': this.apiKey,
+                'X-N8N-API-KEY': apiKey,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             timeout: 10000
         });
 
-        // Interceptor para logging
-        this.client.interceptors.request.use(
+        // Interceptor para logging de requests
+        client.interceptors.request.use(
             (config) => {
                 logger.debug(`[N8nMcpCreds] ${config.method.toUpperCase()} ${config.url}`);
                 return config;
@@ -47,7 +60,8 @@ class N8nMcpCredentialsService {
             }
         );
 
-        this.client.interceptors.response.use(
+        // Interceptor para logging de responses
+        client.interceptors.response.use(
             (response) => {
                 logger.debug(`[N8nMcpCreds] Response ${response.status}`);
                 return response;
@@ -64,6 +78,8 @@ class N8nMcpCredentialsService {
                 return Promise.reject(error);
             }
         );
+
+        return client;
     }
 
     /**
@@ -83,6 +99,8 @@ class N8nMcpCredentialsService {
      * @returns {Promise<Object>} { id, name, type, token }
      */
     async obtenerOCrearPorOrganizacion(organizacionId) {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             const credentialName = `MCP Auth - Org ${organizacionId}`;
 
@@ -90,7 +108,7 @@ class N8nMcpCredentialsService {
             logger.info(`[N8nMcpCreds] Buscando credential para org ${organizacionId}...`);
 
             try {
-                const credenciales = await this.client.get('/api/v1/credentials');
+                const credenciales = await client.get('/api/v1/credentials');
 
                 const credentialExistente = credenciales.data.data.find(
                     cred => cred.name === credentialName && cred.type === 'httpHeaderAuth'
@@ -117,7 +135,7 @@ class N8nMcpCredentialsService {
             // 3. Crear nueva credential en n8n
             logger.info(`[N8nMcpCreds] Creando nueva credential MCP para org ${organizacionId}...`);
 
-            const newCredential = await this.client.post('/api/v1/credentials', {
+            const newCredential = await client.post('/api/v1/credentials', {
                 name: credentialName,
                 type: 'httpHeaderAuth',
                 data: {
@@ -160,6 +178,8 @@ class N8nMcpCredentialsService {
      * @returns {Promise<Object>} { id, name, type, token }
      */
     async renovarToken(credentialId, organizacionId) {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             logger.info(`[N8nMcpCreds] Renovando token MCP para credential ${credentialId}...`);
 
@@ -167,10 +187,10 @@ class N8nMcpCredentialsService {
             const nuevoToken = await generarTokenMCP(organizacionId);
 
             // 2. Obtener credential actual
-            const credentialActual = await this.client.get(`/api/v1/credentials/${credentialId}`);
+            const credentialActual = await client.get(`/api/v1/credentials/${credentialId}`);
 
             // 3. Actualizar credential con nuevo token
-            const credentialActualizada = await this.client.put(`/api/v1/credentials/${credentialId}`, {
+            const credentialActualizada = await client.put(`/api/v1/credentials/${credentialId}`, {
                 name: credentialActual.data.name,
                 type: credentialActual.data.type,
                 data: {
@@ -208,10 +228,12 @@ class N8nMcpCredentialsService {
      * @returns {Promise<void>}
      */
     async eliminar(credentialId) {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             logger.info(`[N8nMcpCreds] Eliminando credential MCP: ${credentialId}`);
 
-            await this.client.delete(`/api/v1/credentials/${credentialId}`);
+            await client.delete(`/api/v1/credentials/${credentialId}`);
 
             logger.info(`[N8nMcpCreds] Credential MCP eliminada exitosamente: ${credentialId}`);
 
@@ -237,10 +259,12 @@ class N8nMcpCredentialsService {
      * @returns {Promise<Object|null>} Credential o null si no existe
      */
     async verificarExistencia(organizacionId) {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             const credentialName = `MCP Auth - Org ${organizacionId}`;
 
-            const credenciales = await this.client.get('/api/v1/credentials');
+            const credenciales = await client.get('/api/v1/credentials');
 
             const credentialExistente = credenciales.data.data.find(
                 cred => cred.name === credentialName && cred.type === 'httpHeaderAuth'

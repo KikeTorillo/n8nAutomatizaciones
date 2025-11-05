@@ -4,7 +4,7 @@ set -e;
 echo "🚀 Inicializando ecosistema completo de bases de datos..."
 echo "📁 Usando estructura modular organizada:"
 echo "   ├── setup/     - Configuración inicial (usuarios, DBs, permisos)"
-echo "   ├── schema/    - Schema modular SaaS (16 archivos - mejorado Oct 2025)"
+echo "   ├── schema/    - Schema modular SaaS (17 archivos - mejorado Nov 2025)"
 echo "   └── data/      - Datos iniciales y plantillas"
 
 # Definir directorio de scripts SQL
@@ -62,6 +62,8 @@ echo "    🔧 Aplicando mejoras post-auditoría (Oct 2025)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/16-mejoras-auditoria-2025-10.sql"
 echo "    💳 Sistema de pagos Mercado Pago..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/14-payments-mercadopago.sql"
+echo "    ⚙️ Configuración sistema (unified setup)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/17-system-config.sql"
 
 # 3. Insertar plantillas de servicios - ELIMINADO (sistema de plantillas removido)
 # echo "  4️⃣ Insertando plantillas de servicios por industria..."
@@ -186,7 +188,7 @@ echo "⚙️ CONFIGURACIÓN:"
 echo "  └── Tabla 'db_connections_config' creada con configuraciones de conexión"
 echo ""
 echo "📁 ESTRUCTURA MODULAR:"
-echo "  ├── Schema organizado en 16 archivos especializados"
+echo "  ├── Schema organizado en 17 archivos especializados"
 echo "  ├── Máxima mantenibilidad (100-500 líneas por archivo)"
 echo "  ├── Mejoras post-auditoría aplicadas (Oct 2025): Calificación 9.5/10"
 echo "  ├── Documentación completa en sql/schema/README.md"

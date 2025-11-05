@@ -27,40 +27,67 @@
 
 const axios = require('axios');
 const logger = require('../utils/logger');
+const configService = require('./configService');
 
 /**
- * Cliente HTTP configurado para n8n API
+ * ================================================================
+ * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
+ * ================================================================
+ * Crea instancia axios con API Key leído desde BD (hot-reload).
+ * Se crea una nueva instancia por cada request para garantizar
+ * que siempre usa el API Key más actualizado.
+ *
+ * @returns {Promise<axios.AxiosInstance>}
  */
-const n8nClient = axios.create({
-    baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-    headers: {
-        'X-N8N-API-KEY': process.env.N8N_API_KEY,
-        'Content-Type': 'application/json'
-    },
-    timeout: 10000
-});
+async function createN8nClient() {
+    const apiKey = await configService.getN8nApiKey();
 
-// Interceptores (igual que n8nService)
-n8nClient.interceptors.request.use(
-    (config) => {
-        logger.debug(`n8n Credential API Request: ${config.method.toUpperCase()} ${config.url}`);
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
-
-n8nClient.interceptors.response.use(
-    (response) => {
-        logger.debug(`n8n Credential API Response: ${response.status}`);
-        return response;
-    },
-    (error) => {
-        if (error.response) {
-            logger.error(`n8n Credential API Error ${error.response.status}:`, error.response.data);
-        }
-        return Promise.reject(error);
+    if (!apiKey) {
+        throw new Error(
+            'N8N_API_KEY no configurado. ' +
+            'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
+        );
     }
-);
+
+    const client = axios.create({
+        baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
+        headers: {
+            'X-N8N-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        },
+        timeout: 10000
+    });
+
+    // Interceptor para logging de requests
+    client.interceptors.request.use(
+        (config) => {
+            logger.debug(`n8n Credential API Request: ${config.method.toUpperCase()} ${config.url}`);
+            return config;
+        },
+        (error) => {
+            logger.error('n8n Credential API Request Error:', error);
+            return Promise.reject(error);
+        }
+    );
+
+    // Interceptor para logging de responses
+    client.interceptors.response.use(
+        (response) => {
+            logger.debug(`n8n Credential API Response: ${response.status} ${response.config.url}`);
+            return response;
+        },
+        (error) => {
+            if (error.response) {
+                logger.error(`n8n Credential API Error ${error.response.status}:`, error.response.data);
+            } else {
+                logger.error('n8n Credential API Network Error:', error.message);
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return client;
+}
 
 /**
  * Mapeo de plataformas a tipos de credential de n8n
@@ -85,8 +112,10 @@ class N8nCredentialService {
      * @returns {Promise<Object>} Datos de la credential
      */
     static async obtenerCredential(credentialId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
-            const response = await n8nClient.get(`/api/v1/credentials/${credentialId}`);
+            const response = await client.get(`/api/v1/credentials/${credentialId}`);
 
             logger.info(`Credential obtenida: ${credentialId}`);
 
@@ -114,6 +143,8 @@ class N8nCredentialService {
      * @returns {Promise<Object>} Credential creada con su ID
      */
     static async crearCredentialTelegram({ name, bot_token, organizacion_id }) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             const credentialData = {
                 name: name || `Telegram - Org ${organizacion_id}`,
@@ -123,7 +154,7 @@ class N8nCredentialService {
                 }
             };
 
-            const response = await n8nClient.post('/api/v1/credentials', credentialData);
+            const response = await client.post('/api/v1/credentials', credentialData);
 
             logger.info(`Credential Telegram creada: ${response.data.id}`);
 
@@ -178,8 +209,10 @@ class N8nCredentialService {
      * @returns {Promise<Object>} Credential actualizada
      */
     static async actualizarCredential(credentialId, updates) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
-            const response = await n8nClient.patch(
+            const response = await client.patch(
                 `/api/v1/credentials/${credentialId}`,
                 updates
             );
@@ -209,8 +242,10 @@ class N8nCredentialService {
      * @returns {Promise<void>}
      */
     static async eliminarCredential(credentialId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
-            await n8nClient.delete(`/api/v1/credentials/${credentialId}`);
+            await client.delete(`/api/v1/credentials/${credentialId}`);
 
             logger.info(`Credential eliminada: ${credentialId}`);
         } catch (error) {

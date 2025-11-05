@@ -76,11 +76,20 @@ export default function InitialSetup() {
 
   const createSuperAdminMutation = useMutation({
     mutationFn: async (data) => {
-      const response = await apiClient.post('/setup/create-superadmin', {
-        email: data.email,
-        nombre: data.nombre,
-        apellidos: data.apellidos,
-        password: data.password,
+      // Llamar al endpoint unificado que crea super admin + n8n owner
+      const response = await apiClient.post('/setup/unified-setup', {
+        superAdmin: {
+          email: data.email,
+          nombre: data.nombre,
+          apellidos: data.apellidos,
+          password: data.password,
+        },
+        n8nOwner: {
+          email: data.email, // Mismo email que super admin
+          password: data.password, // Mismo password que super admin
+          firstName: data.nombre,
+          lastName: data.apellidos,
+        },
       });
       return response.data;
     },

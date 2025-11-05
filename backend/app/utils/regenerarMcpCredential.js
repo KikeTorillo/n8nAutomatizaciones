@@ -5,6 +5,29 @@
 const { generarTokenMCP } = require('./mcpTokenGenerator');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+const configService = require('../services/configService');
+
+/**
+ * Crear cliente n8n con API Key dinámica desde BD
+ */
+async function createN8nClient() {
+    const apiKey = await configService.getN8nApiKey();
+
+    if (!apiKey) {
+        throw new Error(
+            'N8N_API_KEY no configurado. ' +
+            'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
+        );
+    }
+
+    return axios.create({
+        baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
+        headers: {
+            'X-N8N-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        }
+    });
+}
 
 async function regenerarCredential() {
     try {
@@ -33,14 +56,8 @@ async function regenerarCredential() {
 
         console.log('\n✅ Token contiene todos los campos requeridos (userId, email, rol)');
 
-        // 2. Actualizar credential en n8n
-        const n8nClient = axios.create({
-            baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-            headers: {
-                'X-N8N-API-KEY': process.env.N8N_API_KEY,
-                'Content-Type': 'application/json'
-            }
-        });
+        // 2. Actualizar credential en n8n (usando API Key dinámica)
+        const n8nClient = await createN8nClient();
 
         console.log('\n🔄 Actualizando credential en n8n...');
 

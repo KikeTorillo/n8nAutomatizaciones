@@ -21,46 +21,67 @@
 
 const axios = require('axios');
 const logger = require('../utils/logger');
+const configService = require('./configService');
 
 /**
- * Cliente HTTP configurado para n8n API
+ * ================================================================
+ * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
+ * ================================================================
+ * Crea instancia axios con API Key leído desde BD (hot-reload).
+ * Se crea una nueva instancia por cada request para garantizar
+ * que siempre usa el API Key más actualizado.
+ *
+ * @returns {Promise<axios.AxiosInstance>}
  */
-const n8nClient = axios.create({
-    baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
-    headers: {
-        'X-N8N-API-KEY': process.env.N8N_API_KEY,
-        'Content-Type': 'application/json'
-    },
-    timeout: 10000 // 10 segundos
-});
+async function createN8nClient() {
+    const apiKey = await configService.getN8nApiKey();
 
-// Interceptor para logging de requests
-n8nClient.interceptors.request.use(
-    (config) => {
-        logger.debug(`n8n API Request: ${config.method.toUpperCase()} ${config.url}`);
-        return config;
-    },
-    (error) => {
-        logger.error('n8n API Request Error:', error);
-        return Promise.reject(error);
+    if (!apiKey) {
+        throw new Error(
+            'N8N_API_KEY no configurado. ' +
+            'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
+        );
     }
-);
 
-// Interceptor para logging de responses
-n8nClient.interceptors.response.use(
-    (response) => {
-        logger.debug(`n8n API Response: ${response.status} ${response.config.url}`);
-        return response;
-    },
-    (error) => {
-        if (error.response) {
-            logger.error(`n8n API Error ${error.response.status}:`, error.response.data);
-        } else {
-            logger.error('n8n API Network Error:', error.message);
+    const client = axios.create({
+        baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
+        headers: {
+            'X-N8N-API-KEY': apiKey,
+            'Content-Type': 'application/json'
+        },
+        timeout: 10000 // 10 segundos
+    });
+
+    // Interceptor para logging de requests
+    client.interceptors.request.use(
+        (config) => {
+            logger.debug(`n8n API Request: ${config.method.toUpperCase()} ${config.url}`);
+            return config;
+        },
+        (error) => {
+            logger.error('n8n API Request Error:', error);
+            return Promise.reject(error);
         }
-        return Promise.reject(error);
-    }
-);
+    );
+
+    // Interceptor para logging de responses
+    client.interceptors.response.use(
+        (response) => {
+            logger.debug(`n8n API Response: ${response.status} ${response.config.url}`);
+            return response;
+        },
+        (error) => {
+            if (error.response) {
+                logger.error(`n8n API Error ${error.response.status}:`, error.response.data);
+            } else {
+                logger.error('n8n API Network Error:', error.message);
+            }
+            return Promise.reject(error);
+        }
+    );
+
+    return client;
+}
 
 class N8nService {
     /**
@@ -75,6 +96,8 @@ class N8nService {
      * @returns {Promise<Array>} Lista de workflows
      */
     static async listarWorkflows(filters = {}) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             const params = {};
 
@@ -86,7 +109,7 @@ class N8nService {
                 params.tags = filters.tags.join(',');
             }
 
-            const response = await n8nClient.get('/api/v1/workflows', { params });
+            const response = await client.get('/api/v1/workflows', { params });
 
             logger.info(`Workflows obtenidos: ${response.data.data.length}`);
 
@@ -107,8 +130,10 @@ class N8nService {
      * @returns {Promise<Object>} Datos completos del workflow
      */
     static async obtenerWorkflow(workflowId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
-            const response = await n8nClient.get(`/api/v1/workflows/${workflowId}`);
+            const response = await client.get(`/api/v1/workflows/${workflowId}`);
 
             logger.info(`Workflow obtenido: ${workflowId}`);
 
@@ -138,6 +163,8 @@ class N8nService {
      * @returns {Promise<Object>} Workflow creado con su ID
      */
     static async crearWorkflow(workflowData) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             // Validar campos obligatorios
             if (!workflowData.name) {
@@ -148,7 +175,7 @@ class N8nService {
                 throw new Error('Los nodos del workflow son obligatorios');
             }
 
-            const response = await n8nClient.post('/api/v1/workflows', workflowData);
+            const response = await client.post('/api/v1/workflows', workflowData);
 
             logger.info(`Workflow creado exitosamente: ${response.data.id} - ${response.data.name}`);
 
@@ -175,9 +202,11 @@ class N8nService {
      * @returns {Promise<Object>} Workflow actualizado
      */
     static async actualizarWorkflow(workflowId, updates) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             // n8n usa PUT, no PATCH
-            const response = await n8nClient.put(`/api/v1/workflows/${workflowId}`, updates);
+            const response = await client.put(`/api/v1/workflows/${workflowId}`, updates);
 
             logger.info(`Workflow actualizado: ${workflowId}`);
 
@@ -205,9 +234,11 @@ class N8nService {
      * @returns {Promise<Object>} Workflow activado
      */
     static async activarWorkflow(workflowId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             // n8n usa endpoint específico POST /workflows/{id}/activate
-            const response = await n8nClient.post(`/api/v1/workflows/${workflowId}/activate`);
+            const response = await client.post(`/api/v1/workflows/${workflowId}/activate`);
 
             logger.info(`Workflow activado: ${workflowId}`);
 
@@ -236,9 +267,11 @@ class N8nService {
      * @returns {Promise<Object>} Workflow desactivado
      */
     static async desactivarWorkflow(workflowId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             // n8n usa endpoint específico POST /workflows/{id}/deactivate
-            const response = await n8nClient.post(`/api/v1/workflows/${workflowId}/deactivate`);
+            const response = await client.post(`/api/v1/workflows/${workflowId}/deactivate`);
 
             logger.info(`Workflow desactivado: ${workflowId}`);
 
@@ -259,8 +292,10 @@ class N8nService {
      * @returns {Promise<void>}
      */
     static async eliminarWorkflow(workflowId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
-            await n8nClient.delete(`/api/v1/workflows/${workflowId}`);
+            await client.delete(`/api/v1/workflows/${workflowId}`);
 
             logger.info(`Workflow eliminado: ${workflowId}`);
         } catch (error) {
@@ -284,6 +319,8 @@ class N8nService {
      * @returns {Promise<Object>} Estado del workflow { exists, active, name }
      */
     static async verificarEstado(workflowId) {
+        const client = await createN8nClient(); // ✅ API Key dinámica
+
         try {
             const workflow = await this.obtenerWorkflow(workflowId);
 

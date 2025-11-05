@@ -14,28 +14,41 @@
 
 const axios = require('axios');
 const logger = require('../utils/logger');
+const configService = require('./configService');
 
 class N8nGlobalCredentialsService {
-    constructor() {
-        this.baseURL = process.env.N8N_API_URL || 'http://n8n-main:5678';
-        this.apiKey = process.env.N8N_API_KEY;
+    /**
+     * ================================================================
+     * 🏭 CREAR CLIENTE N8N CON API KEY DINÁMICA
+     * ================================================================
+     * Crea instancia axios con API Key leído desde BD (hot-reload).
+     * Se crea una nueva instancia por cada request para garantizar
+     * que siempre usa el API Key más actualizado.
+     *
+     * @returns {Promise<axios.AxiosInstance>}
+     */
+    async createN8nClient() {
+        const apiKey = await configService.getN8nApiKey();
 
-        if (!this.apiKey) {
-            throw new Error('N8N_API_KEY no está configurado en .env');
+        if (!apiKey) {
+            throw new Error(
+                'N8N_API_KEY no configurado. ' +
+                'Ejecuta setup inicial: POST /api/v1/setup/unified-setup'
+            );
         }
 
-        this.client = axios.create({
-            baseURL: this.baseURL,
+        const client = axios.create({
+            baseURL: process.env.N8N_API_URL || 'http://n8n-main:5678',
             headers: {
-                'X-N8N-API-KEY': this.apiKey,
+                'X-N8N-API-KEY': apiKey,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
             timeout: 10000
         });
 
-        // Interceptor para logging
-        this.client.interceptors.request.use(
+        // Interceptor para logging de requests
+        client.interceptors.request.use(
             (config) => {
                 logger.debug(`[N8nGlobalCreds] ${config.method.toUpperCase()} ${config.url}`);
                 return config;
@@ -46,7 +59,8 @@ class N8nGlobalCredentialsService {
             }
         );
 
-        this.client.interceptors.response.use(
+        // Interceptor para logging de responses
+        client.interceptors.response.use(
             (response) => {
                 logger.debug(`[N8nGlobalCreds] Response ${response.status}`);
                 return response;
@@ -56,6 +70,8 @@ class N8nGlobalCredentialsService {
                 return Promise.reject(error);
             }
         );
+
+        return client;
     }
 
     /**
@@ -69,6 +85,8 @@ class N8nGlobalCredentialsService {
      * @returns {Promise<Object>} { id, name, type }
      */
     async obtenerOCrearDeepSeek() {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             // Verificar si ya tenemos el ID en variable de entorno
             if (process.env.N8N_DEEPSEEK_CREDENTIAL_ID) {
@@ -88,7 +106,7 @@ class N8nGlobalCredentialsService {
                 throw new Error('DEEPSEEKAPIKEY no está configurado en .env');
             }
 
-            const newCredential = await this.client.post('/api/v1/credentials', {
+            const newCredential = await client.post('/api/v1/credentials', {
                 name: 'DeepSeek Global Account',
                 type: 'deepSeekApi',
                 data: {
@@ -121,6 +139,8 @@ class N8nGlobalCredentialsService {
      * @returns {Promise<Object>} { id, name, type }
      */
     async obtenerOCrearPostgres() {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             // Verificar si ya tenemos el ID en variable de entorno
             if (process.env.N8N_POSTGRES_CREDENTIAL_ID) {
@@ -135,7 +155,7 @@ class N8nGlobalCredentialsService {
             // Si no existe, crear nueva credential
             logger.info('[N8nGlobalCreds] Creando nueva credential PostgreSQL...');
 
-            const newCredential = await this.client.post('/api/v1/credentials', {
+            const newCredential = await client.post('/api/v1/credentials', {
                 name: 'Postgres Chat Memory Global',
                 type: 'postgres',
                 data: {
@@ -185,6 +205,8 @@ class N8nGlobalCredentialsService {
      * @returns {Promise<Object>} { id, name, type }
      */
     async obtenerOCrearRedis() {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
         try {
             // Verificar si ya tenemos el ID en variable de entorno
             if (process.env.N8N_REDIS_CREDENTIAL_ID) {
@@ -199,7 +221,7 @@ class N8nGlobalCredentialsService {
             // Si no existe, crear nueva credential
             logger.info('[N8nGlobalCreds] Creando nueva credential Redis...');
 
-            const newCredential = await this.client.post('/api/v1/credentials', {
+            const newCredential = await client.post('/api/v1/credentials', {
                 name: 'Redis Global Account',
                 type: 'redis',
                 data: {
