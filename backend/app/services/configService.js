@@ -202,6 +202,71 @@ class ConfigService {
         const config = await this.getFullConfig();
         return config?.n8n_configured || false;
     }
+
+    /**
+     * ================================================================
+     * 💾 GUARDAR CREDENTIAL ID EN METADATA
+     * ================================================================
+     * Guarda el ID de una credential de n8n en el campo metadata
+     * Crea el registro si no existe (UPSERT)
+     *
+     * @param {string} key - Clave del credential (ej: 'deepseek_credential_id')
+     * @param {string} value - ID del credential en n8n
+     * @returns {Promise<void>}
+     */
+    async setN8nCredentialId(key, value) {
+        await RLSContextManager.withBypass(async (db) => {
+            // UPSERT: Insertar si no existe, actualizar si existe
+            await db.query(`
+                INSERT INTO configuracion_sistema (id, metadata, creado_en, actualizado_en)
+                VALUES (
+                    1,
+                    jsonb_build_object('n8n_credentials', jsonb_build_object($1::text, $2::text)),
+                    CURRENT_TIMESTAMP,
+                    CURRENT_TIMESTAMP
+                )
+                ON CONFLICT (id) DO UPDATE
+                SET metadata = COALESCE(configuracion_sistema.metadata, '{}'::jsonb)
+                    || jsonb_build_object(
+                        'n8n_credentials',
+                        COALESCE(configuracion_sistema.metadata->'n8n_credentials', '{}'::jsonb)
+                            || jsonb_build_object($1::text, $2::text)
+                    ),
+                actualizado_en = CURRENT_TIMESTAMP
+            `, [key, value]);
+        });
+
+        logger.debug(`ConfigService: Credential ID guardado - ${key}: ${value}`);
+    }
+
+    /**
+     * ================================================================
+     * 🔍 OBTENER CREDENTIAL ID DESDE METADATA
+     * ================================================================
+     * Obtiene el ID de una credential de n8n desde el campo metadata
+     *
+     * @param {string} key - Clave del credential (ej: 'deepseek_credential_id')
+     * @returns {Promise<string|null>} ID del credential o null
+     */
+    async getN8nCredentialId(key) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT metadata->'n8n_credentials'->$1 as credential_id
+                FROM configuracion_sistema
+                WHERE id = 1
+            `, [key]);
+
+            if (result.rows.length > 0 && result.rows[0].credential_id) {
+                // Remover comillas del JSON
+                const credentialId = result.rows[0].credential_id;
+                return typeof credentialId === 'string'
+                    ? credentialId.replace(/^"|"$/g, '')
+                    : credentialId;
+            }
+
+            return null;
+        });
+    }
 }
 
 // Singleton: Una sola instancia compartida

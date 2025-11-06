@@ -84,7 +84,7 @@ class CitaServicioQueries {
      * const resultado = await db.query(`
      *   ${query}
      *   WHERE c.organizacion_id = $1
-     *   GROUP BY c.id, cli.id, prof.id
+     *   GROUP BY c.id, c.fecha_cita, cli.id, prof.id
      *   ORDER BY c.fecha_cita DESC
      *   LIMIT 20
      * `, [organizacionId]);
@@ -121,7 +121,7 @@ class CitaServicioQueries {
             FROM citas c
             JOIN clientes cli ON c.cliente_id = cli.id
             JOIN profesionales prof ON c.profesional_id = prof.id
-            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
             LEFT JOIN servicios s ON cs.servicio_id = s.id
         `;
     }
@@ -158,14 +158,14 @@ class CitaServicioQueries {
             FROM citas c
             JOIN clientes cli ON c.cliente_id = cli.id
             JOIN profesionales prof ON c.profesional_id = prof.id
-            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
             LEFT JOIN servicios s ON cs.servicio_id = s.id
             WHERE c.organizacion_id = $1
                 AND c.estado = 'confirmada'
                 AND c.recordatorio_enviado = false
                 AND (c.fecha_cita + c.hora_inicio)::timestamp <= NOW() + INTERVAL '$2 hours'
                 AND (c.fecha_cita + c.hora_inicio)::timestamp > NOW()
-            GROUP BY c.id, cli.id, prof.id
+            GROUP BY c.id, c.fecha_cita, cli.id, prof.id
             ORDER BY c.fecha_cita, c.hora_inicio
         `;
     }
@@ -208,10 +208,10 @@ class CitaServicioQueries {
             FROM citas c
             JOIN clientes cli ON c.cliente_id = cli.id
             JOIN profesionales prof ON c.profesional_id = prof.id
-            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+            LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
             LEFT JOIN servicios s ON cs.servicio_id = s.id
             ${whereClause}
-            GROUP BY c.id, cli.id, prof.id
+            GROUP BY c.id, c.fecha_cita, cli.id, prof.id
             ORDER BY c.hora_inicio ASC
         `;
     }

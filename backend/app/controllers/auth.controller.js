@@ -79,7 +79,15 @@ class AuthController {
             const token = authHeader.substring(7);
             const decoded = jwt.decode(token);
             if (decoded?.exp) {
-                await addToTokenBlacklist(token, decoded.exp);
+                // ✅ FIX: Calcular segundos restantes hasta expiración (no timestamp completo)
+                // decoded.exp es timestamp Unix (ej: 1762400432)
+                // Necesitamos: segundos desde AHORA hasta expiración
+                const secondsUntilExpiry = decoded.exp - Math.floor(Date.now() / 1000);
+
+                // Solo blacklist si el token aún no expiró
+                if (secondsUntilExpiry > 0) {
+                    await addToTokenBlacklist(token, secondsUntilExpiry);
+                }
             }
         }
 

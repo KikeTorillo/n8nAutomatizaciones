@@ -66,15 +66,17 @@ class CitaServicioModel {
         }
 
         return await RLSContextManager.transaction(organizacionId, async (db) => {
-            // Validar que la cita existe y pertenece a la organización
+            // ✅ PARTITIONING: Validar cita y obtener fecha_cita para FK compuesto
             const citaExists = await db.query(
-                'SELECT id FROM citas WHERE id = $1',
+                'SELECT id, fecha_cita FROM citas WHERE id = $1',
                 [citaId]
             );
 
             if (citaExists.rows.length === 0) {
                 throw new DatabaseError(`Cita con ID ${citaId} no encontrada o no pertenece a esta organización`, 404);
             }
+
+            const fechaCita = citaExists.rows[0].fecha_cita;
 
             // Construir query de inserción múltiple
             const values = [];
@@ -100,11 +102,12 @@ class CitaServicioModel {
                 }
 
                 placeholders.push(
-                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6}, $${paramCount + 7})`
                 );
 
                 values.push(
                     citaId,
+                    fechaCita,  // ✅ PARTITIONING: Requerido para FK compuesto
                     servicio_id,
                     orden_ejecucion || (index + 1), // Si no se proporciona, usar índice del array
                     precio_aplicado,
@@ -113,12 +116,13 @@ class CitaServicioModel {
                     notas
                 );
 
-                paramCount += 7;
+                paramCount += 8;
             });
 
             const query = `
                 INSERT INTO citas_servicios (
                     cita_id,
+                    fecha_cita,
                     servicio_id,
                     orden_ejecucion,
                     precio_aplicado,
@@ -198,15 +202,17 @@ class CitaServicioModel {
         }
 
         return await RLSContextManager.transaction(organizacionId, async (db) => {
-            // Validar que la cita existe
+            // ✅ PARTITIONING: Validar cita y obtener fecha_cita para FK compuesto
             const citaExists = await db.query(
-                'SELECT id FROM citas WHERE id = $1',
+                'SELECT id, fecha_cita FROM citas WHERE id = $1',
                 [citaId]
             );
 
             if (citaExists.rows.length === 0) {
                 throw new DatabaseError(`Cita con ID ${citaId} no encontrada`, 404);
             }
+
+            const fechaCita = citaExists.rows[0].fecha_cita;
 
             // DELETE servicios actuales
             await db.query('DELETE FROM citas_servicios WHERE cita_id = $1', [citaId]);
@@ -243,11 +249,12 @@ class CitaServicioModel {
                 }
 
                 placeholders.push(
-                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6}, $${paramCount + 7})`
                 );
 
                 values.push(
                     citaId,
+                    fechaCita,  // ✅ PARTITIONING: Requerido para FK compuesto
                     servicio_id,
                     orden_ejecucion || (index + 1),
                     precio_aplicado,
@@ -256,12 +263,13 @@ class CitaServicioModel {
                     notas
                 );
 
-                paramCount += 7;
+                paramCount += 8;
             });
 
             const query = `
                 INSERT INTO citas_servicios (
                     cita_id,
+                    fecha_cita,
                     servicio_id,
                     orden_ejecucion,
                     precio_aplicado,

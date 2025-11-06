@@ -9,9 +9,16 @@ services:
   # ========================================
 
   postgres:
-    image: postgres:17-alpine
+    build:
+      context: .
+      dockerfile: sql/Dockerfile.postgres
+    image: postgres-pgcron:17
     container_name: postgres_db
     restart: always
+    command:
+      - "postgres"
+      - "-c"
+      - "shared_preload_libraries=pg_cron"
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}

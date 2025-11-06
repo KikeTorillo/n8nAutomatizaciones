@@ -48,6 +48,15 @@ class DatabaseConfig {
       });
     }
 
+    // ✅ FIX v2.0: Pool sizes ajustados para producción
+    // Configuración adaptativa según entorno:
+    // - Development: 20 max (suficiente para desarrollo local)
+    // - Production: 50 max (soporta alta concurrencia)
+    // - Custom: Variable DB_POOL_MAX personalizable
+    const isProduction = process.env.NODE_ENV === 'production';
+    const poolMaxSize = parseInt(process.env.DB_POOL_MAX) || (isProduction ? 50 : 20);
+    const poolMinSize = parseInt(process.env.DB_POOL_MIN) || (isProduction ? 10 : 5);
+
     // Pool principal SaaS
     this.pools.saas = new Pool({
       host: process.env.DB_HOST,
@@ -55,10 +64,10 @@ class DatabaseConfig {
       database: process.env.DB_NAME,
       user: process.env.DB_USER,
       password: String(process.env.DB_PASSWORD),
-      max: 20,              // Máximo 20 conexiones
-      min: 5,               // Mínimo 5 conexiones
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      max: poolMaxSize,              // Máximo de conexiones (20 dev, 50 prod)
+      min: poolMinSize,               // Mínimo de conexiones (5 dev, 10 prod)
+      idleTimeoutMillis: 30000,       // 30s antes de cerrar conexión idle
+      connectionTimeoutMillis: 10000, // 10s timeout para obtener conexión del pool
       application_name: 'saas_backend'
     });
 
@@ -117,7 +126,12 @@ class DatabaseConfig {
 
     logger.info('Pools de base de datos inicializados', {
       pools: Object.keys(this.pools),
-      environment: process.env.NODE_ENV
+      environment: process.env.NODE_ENV,
+      poolConfig: {
+        saas: { max: poolMaxSize, min: poolMinSize },
+        n8n: { max: 10, min: 2 },
+        chat: { max: 5, min: 1 }
+      }
     });
   }
 

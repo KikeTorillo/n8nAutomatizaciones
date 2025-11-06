@@ -23,8 +23,6 @@ const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
 const { asyncHandler } = require('../middleware');
 const { ResponseHelper } = require('../utils/helpers');
 const logger = require('../utils/logger');
-const fs = require('fs');
-const path = require('path');
 
 class ChatbotController {
 
@@ -1025,37 +1023,9 @@ El cliente solo necesita información legible y amigable.`;
      */
     static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpCredential }) {
         try {
-            // 1. Determinar qué plantilla usar según la plataforma
-            let plantillaFilename;
-            switch (plataforma) {
-                case 'telegram':
-                    plantillaFilename = 'plantilla.json';
-                    break;
-                case 'whatsapp':
-                case 'whatsapp_oficial':
-                    plantillaFilename = 'plantilla-whatsapp.json';
-                    break;
-                default:
-                    // Por defecto usar template de Telegram
-                    plantillaFilename = 'plantilla.json';
-                    logger.warn(`[ChatbotController] No hay template específico para ${plataforma}, usando plantilla.json`);
-            }
+            logger.info(`[ChatbotController] Generando workflow dinámico para: ${plataforma}`);
 
-            // 2. Leer plantilla desde archivo
-            const plantillaPath = path.join(__dirname, '../flows/plantilla/', plantillaFilename);
-
-            if (!fs.existsSync(plantillaPath)) {
-                throw new Error(`Plantilla no encontrada en: ${plantillaPath}`);
-            }
-
-            const plantillaRaw = fs.readFileSync(plantillaPath, 'utf8');
-            const plantilla = JSON.parse(plantillaRaw);
-
-            logger.info(`[ChatbotController] Plantilla cargada: ${plantillaFilename} para plataforma: ${plataforma}`);
-
-            logger.debug(`[ChatbotController] Plantilla cargada: ${plantilla.nodes.length} nodos`);
-
-            // 2. Obtener credentials globales (DeepSeek, PostgreSQL, Redis)
+            // 1. Obtener credentials globales (DeepSeek, PostgreSQL, Redis)
             const globalCreds = await N8nGlobalCredentialsService.obtenerTodasLasCredentials();
 
             logger.debug(`[ChatbotController] Credentials globales obtenidas:`, {
@@ -1064,171 +1034,38 @@ El cliente solo necesita información legible y amigable.`;
                 redis: globalCreds.redis?.id || 'N/A'
             });
 
-            // 3. Actualizar nombre del workflow según plataforma
-            const plataformaNombre = plataforma.charAt(0).toUpperCase() + plataforma.slice(1);
-            plantilla.name = `${nombre} - ${plataformaNombre} Bot`;
+            // 2. Preparar credentials por plataforma
+            const credentials = {
+                telegram: plataforma === 'telegram' ? credentialId : null,
+                whatsapp: (plataforma === 'whatsapp' || plataforma === 'whatsapp_oficial') ? credentialId : null,
+                deepseek: globalCreds.deepseek.id,
+                postgres: globalCreds.postgres.id,
+                redis: globalCreds.redis.id
+            };
 
-            // 4. Recorrer nodos y reemplazar credentials y configuraciones
-            plantilla.nodes.forEach(node => {
-                // 4.1 Reemplazar credentials según plataforma
+            // 3. Cargar configuración de plataforma
+            const plataformaNormalizada = plataforma === 'whatsapp_oficial' ? 'whatsapp' : plataforma;
+            const platformConfig = require(`../flows/generator/${plataformaNormalizada}.config.js`);
 
-                // Telegram (Trigger + Send Message)
-                if (node.type === 'n8n-nodes-base.telegramTrigger' ||
-                    node.type === 'n8n-nodes-base.telegram') {
-                    if (node.credentials && node.credentials.telegramApi) {
-                        node.credentials.telegramApi.id = credentialId;
-                        node.credentials.telegramApi.name = `${nombre} - Telegram`;
-                    }
-                }
+            // 4. Generar workflow usando el generador dinámico
+            const { generarWorkflow } = require('../flows/generator/workflowGenerator.js');
 
-                // WhatsApp (Trigger + Send Message)
-                if (node.type === 'n8n-nodes-base.whatsAppTrigger' ||
-                    node.type === 'n8n-nodes-base.whatsApp') {
-                    if (node.credentials && node.credentials.whatsAppApi) {
-                        node.credentials.whatsAppApi.id = credentialId;
-                        node.credentials.whatsAppApi.name = `${nombre} - WhatsApp`;
-                    }
-                }
-
-                // 4.2 Reemplazar credential de DeepSeek
-                if (node.type === '@n8n/n8n-nodes-langchain.lmChatDeepSeek') {
-                    if (node.credentials && node.credentials.deepSeekApi) {
-                        node.credentials.deepSeekApi.id = globalCreds.deepseek.id;
-                        node.credentials.deepSeekApi.name = globalCreds.deepseek.name;
-                    }
-                }
-
-                // 4.3 Reemplazar credential de PostgreSQL (Chat Memory)
-                if (node.type === '@n8n/n8n-nodes-langchain.memoryPostgresChat') {
-                    if (node.credentials && node.credentials.postgres) {
-                        node.credentials.postgres.id = globalCreds.postgres.id;
-                        node.credentials.postgres.name = globalCreds.postgres.name;
-                    }
-                }
-
-                // 4.4 Reemplazar credentials de Redis
-                if (node.type === 'n8n-nodes-base.redis') {
-                    if (node.credentials && node.credentials.redis) {
-                        node.credentials.redis.id = globalCreds.redis.id;
-                        node.credentials.redis.name = globalCreds.redis.name;
-                    }
-                }
-
-                // 4.5 Actualizar System Prompt en AI Agent
-                if (node.type === '@n8n/n8n-nodes-langchain.agent') {
-                    if (node.parameters && node.parameters.options) {
-                        // ⚠️ IMPORTANTE: Prefijo "=" indica a n8n que es una expression (no fixed)
-                        // Esto permite que las expresiones de Luxon {{ $now.toFormat(...) }} se evalúen
-                        node.parameters.options.systemMessage = `=${systemPrompt}`;
-                    }
-                }
-
-                // 4.6 Configurar MCP Client Tools con credential httpHeaderAuth
-                if (node.type === '@n8n/n8n-nodes-langchain.mcpClientTool') {
-                    // Migrar serverUrl (v1.1) a endpointUrl (v1.2+)
-                    if (node.parameters.serverUrl && !node.parameters.endpointUrl) {
-                        // IMPORTANTE: Agregar el endpoint /mcp/execute al final
-                        const baseUrl = node.parameters.serverUrl.replace(/\/$/, ''); // Eliminar trailing slash
-                        node.parameters.endpointUrl = `${baseUrl}/mcp/execute`;
-                        delete node.parameters.serverUrl;
-                        logger.debug(`[ChatbotController] Migrado serverUrl → endpointUrl: ${node.parameters.endpointUrl}`);
-                    }
-
-                    // Actualizar typeVersion si es necesario
-                    if (node.typeVersion && node.typeVersion < 1.2) {
-                        node.typeVersion = 1.2;
-                    }
-
-                    if (mcpCredential) {
-                        // ✅ Usar autenticación oficial de n8n con credential httpHeaderAuth
-                        // La propiedad 'authentication' va en parameters, NO al nivel del nodo
-                        node.parameters.authentication = 'headerAuth';
-
-                        // La propiedad 'credentials' SÍ va al nivel del nodo
-                        node.credentials = {
-                            httpHeaderAuth: {
-                                id: mcpCredential.id,
-                                name: mcpCredential.name
-                            }
-                        };
-
-                        // Limpiar el campo options si existe (ya no es necesario)
-                        if (node.parameters && node.parameters.options) {
-                            delete node.parameters.options;
-                        }
-
-                        logger.debug(`[ChatbotController] Nodo MCP Client configurado: ${node.name} (credential: ${mcpCredential.id})`);
-                    } else {
-                        logger.warn(`[ChatbotController] Nodo MCP Client sin credential: ${node.name} (MCP tools no funcionarán)`);
-                    }
-                }
+            const workflow = generarWorkflow({
+                nombre,
+                plataforma: plataformaNormalizada,
+                platformConfig,
+                systemPrompt,
+                credentials,
+                mcpCredential
             });
 
-            // 5. Limpiar IDs y campos read-only (n8n los regenerará)
-            delete plantilla.id;
-            delete plantilla.versionId;
-            delete plantilla.pinData;  // Eliminar pinData (datos de prueba)
-            delete plantilla.tags;     // Eliminar tags (aunque esté vacío)
-            delete plantilla.meta;     // Eliminar meta completo (no solo instanceId)
-            delete plantilla.active;   // Campo read-only, n8n lo gestiona
+            logger.info(`[ChatbotController] Workflow generado con ${workflow.nodes.length} nodos`);
+            logger.info(`[ChatbotController] ✅ Usando generador dinámico (0% duplicación)`);
 
-            // 6. Procesar IDs de nodos y aplicar FIX para webhookId (PR #15486)
-            const crypto = require('crypto');
-
-            plantilla.nodes.forEach(node => {
-                // ✨ CRÍTICO: SIEMPRE regenerar node.id para evitar conflictos entre workflows
-                // La plantilla tiene IDs hardcodeados, pero cada workflow necesita IDs únicos
-                const oldId = node.id;
-                node.id = crypto.randomUUID();
-
-                logger.debug(`[ChatbotController] Regenerando ID del nodo "${node.name}": ${oldId} → ${node.id}`);
-
-                // ✨ FIX EXPERIMENTAL (basado en n8n PR #15486)
-                // Solución oficial pendiente de merge para el bug de webhookId
-                // https://github.com/n8n-io/n8n/pull/15486
-                if (node.type === 'n8n-nodes-base.telegramTrigger') {
-                    // Asignar webhookId = node.id (solución del PR oficial)
-                    node.webhookId = node.id;
-
-                    // Asegurar que el path esté establecido
-                    if (!node.parameters) {
-                        node.parameters = {};
-                    }
-                    if (!node.parameters.path) {
-                        node.parameters.path = node.id;
-                    }
-
-                    logger.info(`[ChatbotController] ✨ webhookId pre-generado para Telegram Trigger: ${node.webhookId}`);
-                    logger.info(`[ChatbotController] Aplicando fix experimental del PR #15486`);
-                }
-
-                // También regenerar webhookId para otros nodos webhook si existen
-                if (node.type === 'n8n-nodes-base.wait' && oldId !== node.id) {
-                    node.webhookId = node.id;
-                    logger.debug(`[ChatbotController] webhookId regenerado para nodo Wait: ${node.webhookId}`);
-                }
-
-                // 6.1 Limpiar IDs dentro de assignments (Edit Fields node)
-                if (node.parameters?.assignments?.assignments) {
-                    node.parameters.assignments.assignments.forEach(assignment => {
-                        delete assignment.id;
-                    });
-                }
-
-                // 6.2 Limpiar IDs dentro de conditions (If node)
-                if (node.parameters?.conditions?.conditions) {
-                    node.parameters.conditions.conditions.forEach(condition => {
-                        delete condition.id;
-                    });
-                }
-            });
-
-            logger.info(`[ChatbotController] Workflow template generado exitosamente`);
-
-            return plantilla;
+            return workflow;
 
         } catch (error) {
-            logger.error('[ChatbotController] Error generando workflow template:', error.message);
+            logger.error('[ChatbotController] Error generando workflow:', error.message);
             throw new Error(`Error generando workflow: ${error.message}`);
         }
     }

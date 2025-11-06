@@ -5,6 +5,7 @@
 
 const logger = require('../utils/logger');
 const { rateLimitService } = require('../middleware/rateLimiting');
+const tokenBlacklistService = require('../services/tokenBlacklistService');
 
 module.exports = async () => {
   logger.info('🧹 Limpiando recursos de tests...');
@@ -36,6 +37,14 @@ module.exports = async () => {
     logger.info('✅ Cliente Redis de rate limiting cerrado');
   } catch (error) {
     logger.warn('⚠️ Error cerrando Redis de rate limiting:', error.message);
+  }
+
+  // Cerrar cliente Redis de token blacklist
+  try {
+    await tokenBlacklistService.close();
+    logger.info('✅ Cliente Redis de token blacklist cerrado');
+  } catch (error) {
+    logger.warn('⚠️ Error cerrando Redis de token blacklist:', error.message);
   }
 
   logger.info('🏁 Teardown global de tests completado');

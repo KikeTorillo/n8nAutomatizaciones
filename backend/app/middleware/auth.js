@@ -6,37 +6,33 @@
  */
 
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { getDb } = require('../config/database');
 const logger = require('../utils/logger');
 const { ResponseHelper } = require('../utils/helpers');
-
-// Cache en memoria para la blacklist de tokens (en producción usar Redis)
-const tokenBlacklist = new Set();
+const tokenBlacklistService = require('../services/tokenBlacklistService');
 
 /**
  * Agregar token a la blacklist
+ *
+ * ✅ FIX v2.0: Migrado de Set en memoria a Redis (DB 3)
+ * - Persiste en disco (sobrevive a restarts)
+ * - Compartido entre instancias (horizontal scaling)
+ * - TTL automático (Redis elimina tokens expirados)
+ *
  * @param {string} token - Token JWT a invalidar
- * @param {number} expiration - Tiempo de expiración del token en segundos
+ * @param {number} expiration - Tiempo de expiración del token en segundos (para TTL)
  */
 async function addToTokenBlacklist(token, expiration = null) {
     try {
-        // Almacenar en cache en memoria
-        tokenBlacklist.add(token);
+        // Usar servicio de Redis en lugar de Set en memoria
+        await tokenBlacklistService.add(token, expiration);
 
-        // Si tenemos expiration, programar limpieza automática
-        if (expiration) {
-            const timeUntilExpiry = (expiration * 1000) - Date.now();
-            if (timeUntilExpiry > 0) {
-                setTimeout(() => {
-                    tokenBlacklist.delete(token);
-                    logger.debug('Token removido automáticamente de blacklist', { token: token.substring(0, 20) + '...' });
-                }, timeUntilExpiry);
-            }
-        }
-
-        logger.debug('Token agregado a blacklist', {
+        const size = await tokenBlacklistService.size();
+        logger.debug('Token agregado a blacklist (Redis)', {
             token: token.substring(0, 20) + '...',
-            blacklistSize: tokenBlacklist.size
+            blacklistSize: size,
+            ttl: expiration || 'default'
         });
     } catch (error) {
         logger.error('Error agregando token a blacklist', { error: error.message });
@@ -46,15 +42,66 @@ async function addToTokenBlacklist(token, expiration = null) {
 
 /**
  * Verificar si un token está en la blacklist
+ *
+ * ✅ FIX v2.0: Migrado de Set en memoria a Redis (DB 3)
+ * Verifica en Redis (persistente) en lugar de Set en memoria
+ *
  * @param {string} token - Token JWT a verificar
- * @returns {boolean} - true si está en blacklist, false si no
+ * @returns {Promise<boolean>} - true si está en blacklist, false si no
  */
 async function checkTokenBlacklist(token) {
     try {
-        return tokenBlacklist.has(token);
+        return await tokenBlacklistService.check(token);
     } catch (error) {
         logger.error('Error verificando blacklist', { error: error.message });
         return false; // Fail-open: si hay error, permitir el token
+    }
+}
+
+/**
+ * Comparación segura de strings resistente a timing attacks
+ * Usa crypto.timingSafeEqual para garantizar tiempo constante
+ *
+ * @param {string} str1 - Primer string a comparar
+ * @param {string} str2 - Segundo string a comparar
+ * @returns {boolean} - true si son iguales, false si no
+ *
+ * @security Previene timing attacks que podrían revelar información
+ * sobre el contenido de strings sensibles (emails, roles, etc.)
+ * mediante análisis de tiempos de respuesta
+ */
+function timingSafeStringCompare(str1, str2) {
+    try {
+        // Validar que ambos parámetros sean strings
+        if (typeof str1 !== 'string' || typeof str2 !== 'string') {
+            return false;
+        }
+
+        // Si las longitudes son diferentes, ya sabemos que no son iguales
+        // Pero aún hacemos la comparación con padding para mantener tiempo constante
+        const maxLen = Math.max(str1.length, str2.length);
+
+        // Padding con espacios nulos para igualar longitudes
+        // Esto es necesario porque timingSafeEqual requiere buffers del mismo tamaño
+        const paddedStr1 = str1.padEnd(maxLen, '\0');
+        const paddedStr2 = str2.padEnd(maxLen, '\0');
+
+        // Convertir a buffers
+        const buf1 = Buffer.from(paddedStr1, 'utf8');
+        const buf2 = Buffer.from(paddedStr2, 'utf8');
+
+        // Comparación de tiempo constante
+        // Esta función siempre toma el mismo tiempo sin importar dónde estén las diferencias
+        return crypto.timingSafeEqual(buf1, buf2);
+
+    } catch (error) {
+        // Si hay algún error (ej: buffers de diferente tamaño), retornar false
+        logger.error('Error en comparación segura de strings', {
+            error: error.message,
+            str1Length: str1?.length,
+            str2Length: str2?.length
+        });
+        return false;
     }
 }
 
@@ -180,7 +227,12 @@ const authenticateToken = async (req, res, next) => {
         }
 
         // 5. Verificar consistencia entre token y base de datos
-        if (usuario.email !== decoded.email || usuario.rol !== decoded.rol) {
+        // ✅ SECURITY FIX: Usar comparación de tiempo constante para prevenir timing attacks
+        // Un atacante no debe poder deducir información sobre email/rol mediante análisis de tiempos
+        const emailMatch = timingSafeStringCompare(usuario.email, decoded.email);
+        const rolMatch = timingSafeStringCompare(usuario.rol, decoded.rol);
+
+        if (!emailMatch || !rolMatch) {
             logger.warn('Inconsistencia entre token y base de datos', {
                 tokenEmail: decoded.email,
                 dbEmail: usuario.email,

@@ -319,8 +319,9 @@ CREATE INDEX idx_citas_cliente_historial
 -- 🆔 ÍNDICE 4: LOOKUP POR CÓDIGO
 -- Propósito: Búsqueda rápida por código único de cita
 -- Uso: WHERE codigo_cita = ?
-CREATE INDEX idx_citas_codigo_lookup
-    ON citas (codigo_cita) WHERE codigo_cita IS NOT NULL;
+-- NOTA: Índice movido a 06-operations-tables.sql (tabla particionada requiere UNIQUE index con fecha_cita)
+-- CREATE INDEX idx_citas_codigo_lookup
+--     ON citas (codigo_cita) WHERE codigo_cita IS NOT NULL;
 
 -- 🔄 ÍNDICE 5: WORKFLOW DE ESTADOS
 -- Propósito: Consultas por estado de cita para reportes y dashboards

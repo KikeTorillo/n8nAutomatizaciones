@@ -74,6 +74,7 @@ class N8nGlobalCredentialsService {
         return client;
     }
 
+
     /**
      * ====================================================================
      * OBTENER O CREAR CREDENTIAL DE DEEPSEEK
@@ -88,9 +89,9 @@ class N8nGlobalCredentialsService {
         const client = await this.createN8nClient(); // ✅ API Key dinámica
 
         try {
-            // Verificar si ya tenemos el ID en variable de entorno
+            // 1. Verificar si ya tenemos el ID en variable de entorno (.env)
             if (process.env.N8N_DEEPSEEK_CREDENTIAL_ID) {
-                logger.info(`[N8nGlobalCreds] Usando credential DeepSeek existente: ${process.env.N8N_DEEPSEEK_CREDENTIAL_ID}`);
+                logger.info(`[N8nGlobalCreds] ✅ Usando credential DeepSeek desde .env: ${process.env.N8N_DEEPSEEK_CREDENTIAL_ID}`);
                 return {
                     id: process.env.N8N_DEEPSEEK_CREDENTIAL_ID,
                     name: 'DeepSeek Global Account',
@@ -98,8 +99,19 @@ class N8nGlobalCredentialsService {
                 };
             }
 
-            // Si no existe, crear nueva credential
-            logger.info('[N8nGlobalCreds] Creando nueva credential DeepSeek...');
+            // 2. Verificar si ya tenemos el ID guardado en BD (metadata)
+            const credentialId = await configService.getN8nCredentialId('deepseek_credential_id');
+            if (credentialId) {
+                logger.info(`[N8nGlobalCreds] ✅ Reutilizando credential DeepSeek desde BD: ${credentialId}`);
+                return {
+                    id: credentialId,
+                    name: 'DeepSeek Global Account',
+                    type: 'deepSeekApi'
+                };
+            }
+
+            // 3. Si no existe, crear nueva credential
+            logger.info('[N8nGlobalCreds] 🆕 Creando nueva credential DeepSeek...');
 
             const apiKey = process.env.DEEPSEEKAPIKEY;
             if (!apiKey) {
@@ -114,8 +126,11 @@ class N8nGlobalCredentialsService {
                 }
             });
 
-            logger.info(`[N8nGlobalCreds] Credential DeepSeek creada: ${newCredential.data.id}`);
-            logger.warn(`[N8nGlobalCreds] ⚠️  Agregar al .env: N8N_DEEPSEEK_CREDENTIAL_ID=${newCredential.data.id}`);
+            logger.info(`[N8nGlobalCreds] ✅ Credential DeepSeek creada: ${newCredential.data.id}`);
+
+            // Guardar ID en BD para evitar duplicación futura
+            await configService.setN8nCredentialId('deepseek_credential_id', newCredential.data.id);
+            logger.info(`[N8nGlobalCreds] 💾 ID guardado en BD para reutilización`);
 
             return {
                 id: newCredential.data.id,
@@ -142,9 +157,9 @@ class N8nGlobalCredentialsService {
         const client = await this.createN8nClient(); // ✅ API Key dinámica
 
         try {
-            // Verificar si ya tenemos el ID en variable de entorno
+            // 1. Verificar si ya tenemos el ID en variable de entorno (.env)
             if (process.env.N8N_POSTGRES_CREDENTIAL_ID) {
-                logger.info(`[N8nGlobalCreds] Usando credential PostgreSQL existente: ${process.env.N8N_POSTGRES_CREDENTIAL_ID}`);
+                logger.info(`[N8nGlobalCreds] ✅ Usando credential PostgreSQL desde .env: ${process.env.N8N_POSTGRES_CREDENTIAL_ID}`);
                 return {
                     id: process.env.N8N_POSTGRES_CREDENTIAL_ID,
                     name: 'Postgres Chat Memory Global',
@@ -152,8 +167,19 @@ class N8nGlobalCredentialsService {
                 };
             }
 
-            // Si no existe, crear nueva credential
-            logger.info('[N8nGlobalCreds] Creando nueva credential PostgreSQL...');
+            // 2. Verificar si ya tenemos el ID guardado en BD (metadata)
+            const credentialId = await configService.getN8nCredentialId('postgres_credential_id');
+            if (credentialId) {
+                logger.info(`[N8nGlobalCreds] ✅ Reutilizando credential PostgreSQL desde BD: ${credentialId}`);
+                return {
+                    id: credentialId,
+                    name: 'Postgres Chat Memory Global',
+                    type: 'postgres'
+                };
+            }
+
+            // 3. Si no existe, crear nueva credential
+            logger.info('[N8nGlobalCreds] 🆕 Creando nueva credential PostgreSQL...');
 
             const newCredential = await client.post('/api/v1/credentials', {
                 name: 'Postgres Chat Memory Global',
@@ -177,8 +203,11 @@ class N8nGlobalCredentialsService {
                 }
             });
 
-            logger.info(`[N8nGlobalCreds] Credential PostgreSQL creada: ${newCredential.data.id}`);
-            logger.warn(`[N8nGlobalCreds] ⚠️  Agregar al .env: N8N_POSTGRES_CREDENTIAL_ID=${newCredential.data.id}`);
+            logger.info(`[N8nGlobalCreds] ✅ Credential PostgreSQL creada: ${newCredential.data.id}`);
+
+            // Guardar ID en BD para evitar duplicación futura
+            await configService.setN8nCredentialId('postgres_credential_id', newCredential.data.id);
+            logger.info(`[N8nGlobalCreds] 💾 ID guardado en BD para reutilización`);
 
             return {
                 id: newCredential.data.id,
@@ -208,9 +237,9 @@ class N8nGlobalCredentialsService {
         const client = await this.createN8nClient(); // ✅ API Key dinámica
 
         try {
-            // Verificar si ya tenemos el ID en variable de entorno
+            // 1. Verificar si ya tenemos el ID en variable de entorno (.env)
             if (process.env.N8N_REDIS_CREDENTIAL_ID) {
-                logger.info(`[N8nGlobalCreds] Usando credential Redis existente: ${process.env.N8N_REDIS_CREDENTIAL_ID}`);
+                logger.info(`[N8nGlobalCreds] ✅ Usando credential Redis desde .env: ${process.env.N8N_REDIS_CREDENTIAL_ID}`);
                 return {
                     id: process.env.N8N_REDIS_CREDENTIAL_ID,
                     name: 'Redis Global Account',
@@ -218,8 +247,19 @@ class N8nGlobalCredentialsService {
                 };
             }
 
-            // Si no existe, crear nueva credential
-            logger.info('[N8nGlobalCreds] Creando nueva credential Redis...');
+            // 2. Verificar si ya tenemos el ID guardado en BD (metadata)
+            const credentialId = await configService.getN8nCredentialId('redis_credential_id');
+            if (credentialId) {
+                logger.info(`[N8nGlobalCreds] ✅ Reutilizando credential Redis desde BD: ${credentialId}`);
+                return {
+                    id: credentialId,
+                    name: 'Redis Global Account',
+                    type: 'redis'
+                };
+            }
+
+            // 3. Si no existe, crear nueva credential
+            logger.info('[N8nGlobalCreds] 🆕 Creando nueva credential Redis...');
 
             const newCredential = await client.post('/api/v1/credentials', {
                 name: 'Redis Global Account',
@@ -232,8 +272,11 @@ class N8nGlobalCredentialsService {
                 }
             });
 
-            logger.info(`[N8nGlobalCreds] Credential Redis creada: ${newCredential.data.id}`);
-            logger.warn(`[N8nGlobalCreds] ⚠️  Agregar al .env: N8N_REDIS_CREDENTIAL_ID=${newCredential.data.id}`);
+            logger.info(`[N8nGlobalCreds] ✅ Credential Redis creada: ${newCredential.data.id}`);
+
+            // Guardar ID en BD para evitar duplicación futura
+            await configService.setN8nCredentialId('redis_credential_id', newCredential.data.id);
+            logger.info(`[N8nGlobalCreds] 💾 ID guardado en BD para reutilización`);
 
             return {
                 id: newCredential.data.id,

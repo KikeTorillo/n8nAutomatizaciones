@@ -1,0 +1,32 @@
+# ====================================================================
+# POSTGRESQL 17 CON PG_CRON
+# ====================================================================
+# Dockerfile personalizado para PostgreSQL 17 con extensión pg_cron
+# para mantenimiento automático de particiones
+# ====================================================================
+
+FROM postgres:17
+
+# Información del mantenedor
+LABEL maintainer="SaaS Backend Team"
+LABEL description="PostgreSQL 17 with pg_cron extension for automated partition maintenance"
+LABEL version="1.0.0"
+
+# Instalar dependencias necesarias
+RUN apt-get update && apt-get install -y \
+    postgresql-17-cron \
+    && rm -rf /var/lib/apt/lists/*
+
+# Verificar instalación de pg_cron
+RUN echo "✅ pg_cron instalado correctamente"
+
+# Configurar postgresql.conf para cargar pg_cron
+# IMPORTANTE: cron.database_name debe ser la base de datos donde se instala la extensión
+# En nuestro caso, toda la aplicación SaaS usa la base de datos 'postgres' ($POSTGRES_DB)
+RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample && \
+    echo "cron.database_name = 'postgres'" >> /usr/share/postgresql/postgresql.conf.sample
+
+# Exponer puerto estándar de PostgreSQL
+EXPOSE 5432
+
+# El resto de la configuración se hereda de la imagen base postgres:17

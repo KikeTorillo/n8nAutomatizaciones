@@ -178,11 +178,12 @@ class CitaBaseModel {
 
             serviciosData.forEach((servicio, index) => {
                 placeholders.push(
-                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+                    `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6}, $${paramCount + 7})`
                 );
 
                 values.push(
                     nuevaCita.id,
+                    fechaCitaNormalizada,  // ✅ PARTITIONING: Requerido para FK compuesto
                     servicio.servicio_id,
                     servicio.orden_ejecucion,
                     servicio.precio_aplicado,
@@ -191,12 +192,13 @@ class CitaBaseModel {
                     servicio.notas
                 );
 
-                paramCount += 7;
+                paramCount += 8;
             });
 
             const queryServiciosInsert = `
                 INSERT INTO citas_servicios (
                     cita_id,
+                    fecha_cita,
                     servicio_id,
                     orden_ejecucion,
                     precio_aplicado,
@@ -312,10 +314,10 @@ class CitaBaseModel {
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
                 LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE c.id = $1 AND c.organizacion_id = $2
-                GROUP BY c.id, cl.id, p.id
+                GROUP BY c.id, c.fecha_cita, cl.id, p.id
             `, [citaId, organizacionId]);
 
             return cita.rows.length > 0 ? cita.rows[0] : null;
@@ -350,10 +352,10 @@ class CitaBaseModel {
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
                 LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE c.id = $1 AND c.organizacion_id = $2
-                GROUP BY c.id, cl.id, p.id
+                GROUP BY c.id, c.fecha_cita, cl.id, p.id
             `, [citaId, organizacionId]);
 
             return cita.rows.length > 0 ? cita.rows[0] : null;
@@ -500,13 +502,17 @@ class CitaBaseModel {
                 const placeholders = [];
                 let paramCountServ = 1;
 
+                // ✅ PARTITIONING: Obtener fecha final (nueva o existente) para FK compuesto
+                const fechaCitaFinal = datosActualizacion.fecha_cita || citaExistente.fecha_cita;
+
                 serviciosData.forEach((servicio) => {
                     placeholders.push(
-                        `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6})`
+                        `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6}, $${paramCountServ + 7})`
                     );
 
                     values.push(
                         citaId,
+                        fechaCitaFinal,  // ✅ PARTITIONING: Requerido para FK compuesto
                         servicio.servicio_id,
                         servicio.orden_ejecucion,
                         servicio.precio_aplicado,
@@ -515,12 +521,12 @@ class CitaBaseModel {
                         servicio.notas
                     );
 
-                    paramCountServ += 7;
+                    paramCountServ += 8;
                 });
 
                 await db.query(`
                     INSERT INTO citas_servicios (
-                        cita_id, servicio_id, orden_ejecucion,
+                        cita_id, fecha_cita, servicio_id, orden_ejecucion,
                         precio_aplicado, duracion_minutos, descuento, notas
                     ) VALUES ${placeholders.join(', ')}
                 `, values);
@@ -795,10 +801,10 @@ class CitaBaseModel {
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
                 LEFT JOIN servicios s ON cs.servicio_id = s.id
                 WHERE ${whereClause}
-                GROUP BY c.id, cl.id, p.id
+                GROUP BY c.id, c.fecha_cita, cl.id, p.id
                 ${orderClause}
                 LIMIT $${paramCount + 1} OFFSET $${paramCount + 2}
             `;

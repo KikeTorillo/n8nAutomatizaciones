@@ -250,10 +250,10 @@ class CitaOperacionalModel {
                 FROM citas c
                 JOIN clientes cl ON c.cliente_id = cl.id
                 JOIN profesionales p ON c.profesional_id = p.id
-                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
                 LEFT JOIN servicios s ON cs.servicio_id = s.id
                 ${whereClause}
-                GROUP BY c.id, cl.id, p.id
+                GROUP BY c.id, c.fecha_cita, cl.id, p.id
                 ORDER BY c.profesional_id, c.hora_llegada
             `, params);
 
@@ -644,11 +644,12 @@ class CitaOperacionalModel {
 
             serviciosData.forEach((servicio) => {
                 placeholdersServicios.push(
-                    `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6})`
+                    `($${paramCountServ}, $${paramCountServ + 1}, $${paramCountServ + 2}, $${paramCountServ + 3}, $${paramCountServ + 4}, $${paramCountServ + 5}, $${paramCountServ + 6}, $${paramCountServ + 7})`
                 );
 
                 valuesServicios.push(
                     citaCreada.id,
+                    citaCreada.fecha_cita,  // ✅ PARTITIONING: Requerido para FK compuesto
                     servicio.servicio_id,
                     servicio.orden_ejecucion,
                     servicio.precio_aplicado,
@@ -657,12 +658,12 @@ class CitaOperacionalModel {
                     servicio.notas
                 );
 
-                paramCountServ += 7;
+                paramCountServ += 8;
             });
 
             await db.query(`
                 INSERT INTO citas_servicios (
-                    cita_id, servicio_id, orden_ejecucion,
+                    cita_id, fecha_cita, servicio_id, orden_ejecucion,
                     precio_aplicado, duracion_minutos, descuento, notas
                 ) VALUES ${placeholdersServicios.join(', ')}
             `, valuesServicios);

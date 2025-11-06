@@ -199,14 +199,26 @@ class SaaSApplication {
     routerApi(this.app);
 
     // Health check endpoint (usado por MCP Server y monitoring)
-    this.app.get('/health', (req, res) => {
-      res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        uptime: process.uptime(),
-        service: 'saas-backend',
-        environment: this.environment
-      });
+    this.app.get('/health', async (req, res) => {
+      try {
+        // Health check básico de BD
+        const dbHealth = await database.healthCheck();
+
+        res.json({
+          status: 'healthy',
+          timestamp: new Date().toISOString(),
+          uptime: process.uptime(),
+          service: 'saas-backend',
+          environment: this.environment,
+          database: dbHealth
+        });
+      } catch (error) {
+        res.status(503).json({
+          status: 'unhealthy',
+          timestamp: new Date().toISOString(),
+          error: error.message
+        });
+      }
     });
 
     // Ruta básica de prueba
@@ -318,7 +330,24 @@ class SaaSApplication {
       await database.close();
       logger.info('Conexiones de base de datos cerradas');
 
-      // 3. Otros recursos: Redis, workers, etc. (futuro)
+      // 3. CERRAR CLIENTES REDIS
+      // 3.1 Token Blacklist Service (DB 3)
+      try {
+        const tokenBlacklistService = require('./services/tokenBlacklistService');
+        await tokenBlacklistService.close();
+        logger.info('Cliente Redis de token blacklist cerrado');
+      } catch (error) {
+        logger.warn('Error cerrando Redis de token blacklist', { error: error.message });
+      }
+
+      // 3.2 Rate Limiting Service (DB 2)
+      try {
+        const { rateLimitService } = require('./middleware/rateLimiting');
+        await rateLimitService.close();
+        logger.info('Cliente Redis de rate limiting cerrado');
+      } catch (error) {
+        logger.warn('Error cerrando Redis de rate limiting', { error: error.message });
+      }
 
       // Shutdown exitoso
       logger.info('Graceful shutdown completado');
