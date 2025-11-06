@@ -40,7 +40,7 @@ describe('Middleware de Suscripciones', () => {
     test('Permite acceso si suscripción trial está vigente', async () => {
       // Crear org con trial vigente (creada hoy, expira en 30 días)
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Vigente'
       });
 
@@ -70,7 +70,7 @@ describe('Middleware de Suscripciones', () => {
     test('Rechaza si trial expiró', async () => {
       // Crear org con trial expirado (hace 35 días)
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Expirado'
       });
 
@@ -241,9 +241,9 @@ describe('Middleware de Suscripciones', () => {
   // ============================================================================
 
   describe('checkResourceLimit - Profesionales', () => {
-    test('Permite crear profesional si no se alcanzó el límite (trial: 2)', async () => {
+    test('Permite crear profesional si no se alcanzó el límite (basico: 5)', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial'
       });
 
@@ -269,9 +269,9 @@ describe('Middleware de Suscripciones', () => {
       expect(response.body.success).toBe(true);
     });
 
-    test('Rechaza crear profesional si límite alcanzado (trial: 2)', async () => {
+    test('Rechaza crear profesional si límite alcanzado (basico: 5)', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Límite'
       });
 
@@ -282,7 +282,7 @@ describe('Middleware de Suscripciones', () => {
 
       token = generarTokenTest(usuario, organizacion);
 
-      // Crear 2 profesionales (límite del trial)
+      // Crear 2 profesionales (límite del basico)
       await request(app)
         .post('/api/v1/profesionales')
         .set('Authorization', `Bearer ${token}`)
@@ -352,9 +352,9 @@ describe('Middleware de Suscripciones', () => {
   });
 
   describe('checkResourceLimit - Clientes', () => {
-    test('Rechaza crear cliente si límite alcanzado (trial: 50)', async () => {
+    test('Rechaza crear cliente si límite alcanzado (basico: 200)', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Clientes'
       });
 
@@ -388,9 +388,9 @@ describe('Middleware de Suscripciones', () => {
   });
 
   describe('checkResourceLimit - Servicios', () => {
-    test('Rechaza crear servicio si límite alcanzado (trial: 5)', async () => {
+    test('Rechaza crear servicio si límite alcanzado (basico: 15)', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Servicios'
       });
 
@@ -425,9 +425,9 @@ describe('Middleware de Suscripciones', () => {
   });
 
   describe('checkResourceLimit - Usuarios', () => {
-    test('Rechaza crear usuario si límite alcanzado (trial: 2)', async () => {
+    test('Rechaza crear usuario si límite alcanzado (basico: 5)', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Usuarios'
       });
 
@@ -469,7 +469,7 @@ describe('Middleware de Suscripciones', () => {
   describe('Integración - Flujo completo de límites', () => {
     test('Usuario puede usar recursos hasta alcanzar límites, luego debe upgradeear', async () => {
       organizacion = await crearOrganizacionTest({
-        plan: 'trial',
+        plan: 'basico',
         nombre: 'Org Trial Completa'
       });
 
@@ -480,7 +480,7 @@ describe('Middleware de Suscripciones', () => {
 
       token = generarTokenTest(usuario, organizacion);
 
-      // 1. Crear 2 profesionales (límite del trial)
+      // 1. Crear 2 profesionales (límite del basico)
       const prof1 = await request(app)
         .post('/api/v1/profesionales')
         .set('Authorization', `Bearer ${token}`)

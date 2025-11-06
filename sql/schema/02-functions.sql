@@ -106,36 +106,39 @@ BEGIN
         -- FASE 4: LOGGING Y AUDITORÍA EN EVENTOS_SISTEMA
         -- ═══════════════════════════════════════════════════════════════════
         -- Registrar evento de intento de login en la tabla de auditoría
+        -- Solo para usuarios con organización (no super_admin)
         -- TRY/CATCH para evitar que errores en logging bloqueen autenticación
-        BEGIN
-            INSERT INTO eventos_sistema (
-                organizacion_id, tipo_evento, descripcion, metadata,
-                usuario_id, ip_address, gravedad
-            ) VALUES (
-                org_id,
-                CASE WHEN p_exitoso THEN 'login_success'::tipo_evento_sistema
-                     ELSE 'login_failed'::tipo_evento_sistema END,
-                CASE WHEN p_exitoso THEN 'Login exitoso registrado'
-                     ELSE 'Intento de login fallido registrado' END,
-                jsonb_build_object(
-                    'exitoso', p_exitoso,
-                    'email', p_email,
-                    'intentos_previos', CASE WHEN NOT p_exitoso THEN
-                        (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) + 1
-                        ELSE 0 END,
-                    'bloqueado', CASE WHEN NOT p_exitoso THEN
-                        (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) >= 4
-                        ELSE false END
-                ),
-                usuario_id,
-                p_ip_address,
-                CASE WHEN p_exitoso THEN 'info' ELSE 'warning' END
-            );
-        EXCEPTION
-            WHEN OTHERS THEN
-                -- Logging falló, pero no interrumpir autenticación (crítica)
-                RAISE WARNING 'Error al registrar evento de login: %', SQLERRM;
-        END;
+        IF org_id IS NOT NULL THEN
+            BEGIN
+                INSERT INTO eventos_sistema (
+                    organizacion_id, tipo_evento, descripcion, metadata,
+                    usuario_id, ip_address, gravedad
+                ) VALUES (
+                    org_id,
+                    CASE WHEN p_exitoso THEN 'login_success'::tipo_evento_sistema
+                         ELSE 'login_failed'::tipo_evento_sistema END,
+                    CASE WHEN p_exitoso THEN 'Login exitoso registrado'
+                         ELSE 'Intento de login fallido registrado' END,
+                    jsonb_build_object(
+                        'exitoso', p_exitoso,
+                        'email', p_email,
+                        'intentos_previos', CASE WHEN NOT p_exitoso THEN
+                            (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) + 1
+                            ELSE 0 END,
+                        'bloqueado', CASE WHEN NOT p_exitoso THEN
+                            (SELECT intentos_fallidos FROM usuarios WHERE id = usuario_id) >= 4
+                            ELSE false END
+                    ),
+                    usuario_id,
+                    p_ip_address,
+                    CASE WHEN p_exitoso THEN 'info' ELSE 'warning' END
+                );
+            EXCEPTION
+                WHEN OTHERS THEN
+                    -- Logging falló, pero no interrumpir autenticación (crítica)
+                    RAISE WARNING 'Error al registrar evento de login: %', SQLERRM;
+            END;
+        END IF;
     END IF;
 
     -- ═══════════════════════════════════════════════════════════════════

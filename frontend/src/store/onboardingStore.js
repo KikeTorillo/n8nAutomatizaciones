@@ -27,8 +27,8 @@ const useOnboardingStore = create(
         // Paso 2: Plan seleccionado
         plan: {
           plan_id: null,
-          plan_codigo: '',       // Código interno (trial, basico, profesional, etc.)
-          plan_nombre: '',       // Nombre para mostrar (Plan de Prueba, Plan Básico, etc.)
+          plan_codigo: '',       // Código interno (basico, profesional, custom)
+          plan_nombre: '',       // Nombre para mostrar (Plan Básico, Plan Professional, etc.)
           plan_precio: 0,
         },
 

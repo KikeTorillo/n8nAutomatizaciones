@@ -253,7 +253,7 @@ describe('E2E - Flujo de Onboarding Completo', () => {
                     organizacion: {
                         nombre_comercial: 'Negocio Mínimo E2E',
                         tipo_industria: 'consultorio_medico',
-                        plan: 'trial'
+                        plan: 'basico'
                     },
                     admin: {
                         nombre: 'Admin',

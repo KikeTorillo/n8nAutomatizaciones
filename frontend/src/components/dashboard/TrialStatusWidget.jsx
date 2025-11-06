@@ -26,7 +26,7 @@ function TrialStatusWidget() {
   }
 
   // No mostrar para planes gratuitos sin trial de tiempo
-  const esPlanGratuito = ['trial', 'custom'].includes(estadoTrial.plan_codigo);
+  const esPlanGratuito = ['custom'].includes(estadoTrial.plan_codigo);
   if (esPlanGratuito) {
     return null;
   }

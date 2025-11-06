@@ -166,7 +166,7 @@ async function createTestOrganizacion(client, data = {}) {
   const organizacion = result.rows[0];
 
   // Crear subscripción activa para la organización
-  const planCodigo = data.plan_actual || data.plan || 'trial';
+  const planCodigo = data.plan_actual || data.plan || 'basico';
 
   // Obtener plan ID
   const planResult = await client.query(

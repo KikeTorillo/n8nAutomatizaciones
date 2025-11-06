@@ -536,7 +536,7 @@ class OrganizacionModel {
     }
 
     // Crear subscripción trial inicial para nueva organización
-    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial', diasTrial = 14) {
+    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'basico', diasTrial = 14) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             // Obtener información del plan
@@ -555,9 +555,9 @@ class OrganizacionModel {
             const plan = planResult.rows[0];
 
             // ✅ NUEVO: Todos los planes empiezan con trial
-            // - Planes gratuitos (trial, custom): trial sin mercadopago, pueden ser indefinidos
+            // - Planes gratuitos (custom): trial sin mercadopago, pueden ser indefinidos
             // - Planes de pago (basico, profesional): trial de X días, luego requieren pago
-            const esPlanGratuito = ['trial', 'custom'].includes(codigoPlan);
+            const esPlanGratuito = ['custom'].includes(codigoPlan);
             const esPlanDePago = ['basico', 'profesional'].includes(codigoPlan);
 
             // Crear subscripción con trial

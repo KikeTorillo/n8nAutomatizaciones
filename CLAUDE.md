@@ -12,7 +12,7 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 5 Noviembre 2025
+**Actualizado**: 6 Noviembre 2025
 
 | Componente | Estado | Métricas |
 |------------|--------|----------|
@@ -200,7 +200,7 @@ bash deploy.sh backup    # Backup BD
 ### Flujo de Suscripción
 
 1. **Onboarding** → Selección plan + Creación cuenta
-2. **Trial gratuito** → 14 días automático (planes Basic/Professional)
+2. **Trial gratuito** → 14 días automático (planes Básico/Professional)
 3. **Activación pago** → Checkout Pro (init_point) → Pago recurrente
 
 ### Componentes Clave
@@ -219,7 +219,7 @@ bash deploy.sh backup    # Backup BD
 
 ### Características
 
-✅ **Trial Automático:** 14 días para Basic/Professional, ilimitado para Free/Custom
+✅ **Trial Automático:** 14 días para Básico/Professional, ilimitado para Custom
 ✅ **Checkout Pro (init_point):** Usuario completa pago en sitio MP
 ✅ **Sincronización Manual:** Control total desde panel Super Admin
 ✅ **Suscripciones sin Plan:** Usa `auto_recurring` directamente (evita limitación SDK)
@@ -520,6 +520,6 @@ docker exec postgres_db psql -U admin -d saas_db -c "SELECT * FROM v_cron_job_ru
 
 ---
 
-**Versión**: 14.0 - **Database Partitioning**
-**Última actualización**: 5 Noviembre 2025
+**Versión**: 14.1 - **Plans Cleanup (3 planes)**
+**Última actualización**: 6 Noviembre 2025
 **Estado**: ✅ Production Ready + **Performance Optimized**

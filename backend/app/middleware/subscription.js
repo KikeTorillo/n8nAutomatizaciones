@@ -23,7 +23,7 @@ class SubscriptionMiddleware {
    * @description
    * Valida:
    * - Existe suscripción activa
-   * - Plan trial no ha expirado (fecha_fin)
+   * - Plan trial no ha expirado (fecha_fin_trial)
    * - Estado no sea 'morosa', 'suspendida' o 'cancelada'
    *
    * @example
@@ -58,13 +58,13 @@ class SubscriptionMiddleware {
             s.estado,
             s.activa,
             s.fecha_inicio,
-            s.fecha_fin,
+            s.fecha_fin_trial,
             s.fecha_proximo_pago,
             ps.codigo_plan,
             ps.nombre_plan,
             CASE
-              WHEN s.fecha_fin IS NOT NULL THEN
-                (s.fecha_fin - CURRENT_DATE)::INTEGER
+              WHEN s.fecha_fin_trial IS NOT NULL THEN
+                EXTRACT(DAY FROM s.fecha_fin_trial - NOW())::INTEGER
               ELSE NULL
             END as dias_restantes
           FROM subscripciones s
@@ -90,9 +90,9 @@ class SubscriptionMiddleware {
       const subscription = result.rows[0];
 
       // Verificar si el plan trial expiró
-      if (subscription.estado === 'trial' && subscription.fecha_fin) {
+      if (subscription.estado === 'trial' && subscription.fecha_fin_trial) {
         const hoy = new Date();
-        const fechaFin = new Date(subscription.fecha_fin);
+        const fechaFin = new Date(subscription.fecha_fin_trial);
 
         if (hoy > fechaFin) {
           logger.info(`Plan trial expirado para organización ${organizacionId}`);
@@ -171,7 +171,7 @@ class SubscriptionMiddleware {
         nombre_plan: subscription.nombre_plan,
         estado: subscription.estado,
         dias_restantes: subscription.dias_restantes,
-        fecha_fin: subscription.fecha_fin
+        fecha_fin_trial: subscription.fecha_fin_trial
       };
 
       next();

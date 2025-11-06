@@ -22,7 +22,15 @@ function Step2_PlanSelection() {
     queryKey: ['planes'],
     queryFn: async () => {
       const response = await planesApi.listar();
-      return response.data.data;
+      // Filtrar solo planes seleccionables (basico, profesional)
+      // El plan 'custom' se mostrará aparte como "Contáctanos"
+      const planesSeleccionables = response.data.data.filter(
+        plan => ['basico', 'profesional'].includes(plan.codigo_plan)
+      );
+      const planCustom = response.data.data.find(
+        plan => plan.codigo_plan === 'custom'
+      );
+      return { planesSeleccionables, planCustom };
     },
   });
 
@@ -82,9 +90,10 @@ function Step2_PlanSelection() {
         </p>
       </div>
 
-      {/* Planes - Grid 4 columnas más compacto */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {data?.map((plan) => (
+      {/* Planes - Grid 3 columnas (2 seleccionables + 1 contact) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Planes seleccionables (Básico y Professional) */}
+        {data?.planesSeleccionables?.map((plan) => (
           <div
             key={plan.id}
             onClick={() => handleSelectPlan(plan)}
@@ -104,6 +113,13 @@ function Step2_PlanSelection() {
                 </div>
               </div>
             )}
+
+            {/* Trial badge */}
+            <div className="mb-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                ✨ 14 días gratis
+              </span>
+            </div>
 
             {/* Nombre del plan */}
             <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -143,21 +159,68 @@ function Step2_PlanSelection() {
                 <Check className="w-3 h-3 text-primary-600 mr-1.5 mt-0.5 flex-shrink-0" />
                 <span>{plan.max_usuarios} usuarios</span>
               </li>
-              {plan.incluye_whatsapp && (
-                <li className="flex items-start text-xs text-gray-700">
-                  <Check className="w-3 h-3 text-primary-600 mr-1.5 mt-0.5 flex-shrink-0" />
-                  <span>WhatsApp</span>
-                </li>
-              )}
-              {plan.incluye_recordatorios && (
-                <li className="flex items-start text-xs text-gray-700">
-                  <Check className="w-3 h-3 text-primary-600 mr-1.5 mt-0.5 flex-shrink-0" />
-                  <span>Recordatorios</span>
-                </li>
-              )}
             </ul>
           </div>
         ))}
+
+        {/* Plan Custom - Contáctanos (NO seleccionable) */}
+        {data?.planCustom && (
+          <div
+            className="relative border-2 border-gray-300 rounded-lg p-4 bg-gradient-to-br from-gray-50 to-gray-100"
+          >
+            {/* Badge Enterprise */}
+            <div className="mb-2">
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                🏢 Enterprise
+              </span>
+            </div>
+
+            {/* Nombre del plan */}
+            <h3 className="text-lg font-bold text-gray-900 mb-1">
+              {data.planCustom.nombre}
+            </h3>
+
+            {/* "Contact us" en lugar de precio */}
+            <div className="mb-3">
+              <span className="text-2xl font-bold text-gray-900">
+                Contáctanos
+              </span>
+            </div>
+
+            {/* Descripción */}
+            <p className="text-xs text-gray-600 mb-3">
+              Solución personalizada para organizaciones con necesidades específicas
+            </p>
+
+            {/* Features personalizadas */}
+            <ul className="space-y-1.5 mb-4">
+              <li className="flex items-start text-xs text-gray-700">
+                <Check className="w-3 h-3 text-purple-600 mr-1.5 mt-0.5 flex-shrink-0" />
+                <span>Recursos ilimitados</span>
+              </li>
+              <li className="flex items-start text-xs text-gray-700">
+                <Check className="w-3 h-3 text-purple-600 mr-1.5 mt-0.5 flex-shrink-0" />
+                <span>Soporte prioritario</span>
+              </li>
+              <li className="flex items-start text-xs text-gray-700">
+                <Check className="w-3 h-3 text-purple-600 mr-1.5 mt-0.5 flex-shrink-0" />
+                <span>Personalización completa</span>
+              </li>
+              <li className="flex items-start text-xs text-gray-700">
+                <Check className="w-3 h-3 text-purple-600 mr-1.5 mt-0.5 flex-shrink-0" />
+                <span>SLA garantizado</span>
+              </li>
+            </ul>
+
+            {/* Botón Contáctanos */}
+            <a
+              href="mailto:contacto@tuempresa.com?subject=Consulta Plan Personalizado"
+              className="block w-full text-center px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium rounded-md transition-colors"
+            >
+              Contactar ventas
+            </a>
+          </div>
+        )}
       </div>
 
       {/* Botones */}

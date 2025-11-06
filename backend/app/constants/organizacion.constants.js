@@ -18,7 +18,6 @@ const TIPOS_INDUSTRIA = [
 ];
 
 const PLANES = [
-    'trial',
     'basico',
     'profesional',
     'empresarial',
