@@ -316,45 +316,64 @@ Variables utilizadas:
 - app.current_tenant_id: ID de la organización del usuario
 - app.bypass_rls: Bypass para funciones de sistema (true/false)';
 
--- Política de organizaciones
+-- Política de organizaciones (MEJORADO OCT 2025)
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY tenant_isolation_organizaciones ON organizaciones IS
 'Aislamiento multi-tenant para organizaciones:
-- Super admin: Acceso a todas las organizaciones
-- Usuario regular: Solo acceso a su propia organización (id = app.current_tenant_id)
-- Bypass: Funciones de sistema (registro, onboarding)
+- Usuario accede solo a su propia organización
+- Super admin tiene acceso global a todas las organizaciones
+- Bypass para funciones de sistema (ej: migrations, archivado)
+
+Casos de uso:
+1. Dashboard organizacional (datos propios)
+2. Admin panel (super_admin ve todas)
+3. Funciones de mantenimiento (bypass_rls)
 
 Escritura (WITH CHECK): Solo super_admin puede crear/modificar organizaciones.';
 
--- Política de profesionales
+-- Política de profesionales (MEJORADO OCT 2025)
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY tenant_isolation_profesionales ON profesionales IS
 'Aislamiento multi-tenant para profesionales:
-- Permite acceso solo a profesionales de la organización del usuario
+- Usuario accede solo a profesionales de su organización
 - Super admin tiene acceso global
-- Bypass disponible para funciones de sistema
+- Validación de formato numérico en tenant_id (seguridad)
 
+Crítico para: Agendamiento, asignación de citas, reportes.
 Aplica a: SELECT, INSERT, UPDATE, DELETE';
 
--- Política de clientes (isolation)
+-- Política de clientes (isolation) - MEJORADO OCT 2025
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY clientes_isolation ON clientes IS
-'Aislamiento multi-tenant seguro para clientes (CORREGIDO 2025-10-03):
-- Valida formato numérico de tenant_id con REGEX ^[0-9]+$ (previene SQL injection)
-- Usuario solo puede acceder a clientes de su organización
+'Aislamiento principal para clientes:
+- Usuario accede solo a clientes de su organización
+- Tenant ID validado con regex ^[0-9]+$ (previene SQL injection)
 - Bloquea intentos de injection como "1 OR 1=1" o tenant_id vacío
-- Ver también: clientes_super_admin para acceso global';
+- Bypass para funciones de sistema
 
--- Política de clientes (super admin)
+Datos sensibles protegidos: teléfono, email, historial de citas.
+Ver también: clientes_super_admin para acceso global.
+Corregido: 2025-10-03';
+
+-- Política de clientes (super admin) - MEJORADO OCT 2025
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY clientes_super_admin ON clientes IS
-'Acceso global para super_admin a todos los clientes del sistema.
+'Acceso global para super_admin:
+- Permite operaciones cross-tenant para soporte
+- Usado en: Admin panel, reportes globales, migrations
+- Auditoría completa en eventos_sistema
+
 Permite gestión centralizada de datos para soporte y administración.';
 
--- Política de servicios
+-- Política de servicios - MEJORADO OCT 2025
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY servicios_tenant_isolation ON servicios IS
-'Aislamiento multi-tenant para servicios:
+'Acceso a catálogo de servicios por organización:
 - Usuario accede solo a servicios de su organización
-- Super admin tiene acceso global
-- Bypass disponible para funciones de sistema
+- Super admin gestiona servicios globales
+- Bypass para importación masiva de plantillas
 
-Uso típico: Catálogo de servicios, asignación a profesionales, pricing.';
+Usado en: Catálogo de servicios, agendamiento, facturación.';
 
 -- Política de servicios (bypass)
 COMMENT ON POLICY servicios_system_bypass ON servicios IS
@@ -362,13 +381,16 @@ COMMENT ON POLICY servicios_system_bypass ON servicios IS
 Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
 Casos de uso: Triggers, funciones de migración, procesos batch.';
 
--- Política de citas
+-- Política de citas - MEJORADO OCT 2025
+-- Migrado desde: 16-mejoras-auditoria-2025-10.sql
 COMMENT ON POLICY citas_tenant_isolation ON citas IS
-'Aislamiento multi-tenant para citas:
+'Acceso a citas por organización (tabla crítica):
 - Usuario accede solo a citas de su organización
+- Validación estricta de tenant_id
 - Super admin tiene acceso global para soporte
-- Bypass para triggers y funciones automáticas
+- Bypass para: Recordatorios automáticos, reportes de métricas
 
+Datos protegidos: Información de cliente, historial médico/servicios.
 Crítico para: Agenda, reportes, facturación, métricas.';
 
 

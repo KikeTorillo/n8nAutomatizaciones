@@ -228,7 +228,8 @@ CREATE TABLE citas_servicios (
     servicio_id INTEGER NOT NULL REFERENCES servicios(id) ON DELETE RESTRICT,
 
     -- Foreign key compuesta que referencia la PRIMARY KEY completa de citas
-    FOREIGN KEY (cita_id, fecha_cita) REFERENCES citas(id, fecha_cita) ON DELETE CASCADE,
+    -- ON UPDATE CASCADE: Cuando se reagenda (cambia fecha_cita), se actualiza automáticamente
+    FOREIGN KEY (cita_id, fecha_cita) REFERENCES citas(id, fecha_cita) ON DELETE CASCADE ON UPDATE CASCADE,
 
     -- 📊 METADATA DEL SERVICIO
     orden_ejecucion INTEGER NOT NULL DEFAULT 1,

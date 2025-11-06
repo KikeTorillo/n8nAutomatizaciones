@@ -23,6 +23,8 @@ RUN echo "✅ pg_cron instalado correctamente"
 # Configurar postgresql.conf para cargar pg_cron
 # IMPORTANTE: cron.database_name debe ser la base de datos donde se instala la extensión
 # En nuestro caso, toda la aplicación SaaS usa la base de datos 'postgres' ($POSTGRES_DB)
+# NOTA: cron.timezone se configura dinámicamente en 18-pg-cron-setup.sql usando ALTER SYSTEM
+#       para respetar la variable TZ del .env
 RUN echo "shared_preload_libraries = 'pg_cron'" >> /usr/share/postgresql/postgresql.conf.sample && \
     echo "cron.database_name = 'postgres'" >> /usr/share/postgresql/postgresql.conf.sample
 

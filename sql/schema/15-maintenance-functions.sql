@@ -415,9 +415,9 @@ DECLARE
 BEGIN
     -- Crear particiones para los próximos N meses
     FOR v_mes IN 0..p_meses_adelante LOOP
-        -- Calcular inicio del mes (en UTC)
-        v_inicio := DATE_TRUNC('month', CURRENT_DATE + (v_mes || ' months')::INTERVAL) AT TIME ZONE 'UTC';
-        v_fin := DATE_TRUNC('month', CURRENT_DATE + ((v_mes + 1) || ' months')::INTERVAL) AT TIME ZONE 'UTC';
+        -- Calcular inicio del mes (mantiene zona horaria del servidor)
+        v_inicio := DATE_TRUNC('month', NOW() + (v_mes || ' months')::INTERVAL);
+        v_fin := DATE_TRUNC('month', NOW() + ((v_mes + 1) || ' months')::INTERVAL);
 
         -- Generar nombre de partición: eventos_sistema_2025_01
         v_nombre := 'eventos_sistema_' || TO_CHAR(v_inicio, 'YYYY_MM');

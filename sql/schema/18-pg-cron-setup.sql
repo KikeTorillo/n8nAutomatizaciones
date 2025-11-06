@@ -37,6 +37,35 @@ COMMENT ON EXTENSION pg_cron IS
 Permite ejecutar funciones SQL de forma programada sin depender del cron del sistema.';
 
 -- ====================================================================
+-- ⏰ CONFIGURACIÓN DE ZONA HORARIA PARA PG_CRON
+-- ====================================================================
+-- Configurar cron.timezone para que coincida con la zona horaria del servidor
+-- (heredada de la variable TZ del .env a través de docker-compose)
+-- IMPORTANTE: Esta configuración requiere superusuario y reload de configuración
+-- ====================================================================
+
+DO $$
+DECLARE
+    v_timezone TEXT;
+BEGIN
+    -- Obtener la zona horaria actual de PostgreSQL (configurada por variable TZ)
+    SELECT current_setting('TIMEZONE') INTO v_timezone;
+
+    -- Configurar cron.timezone para que pg_cron use la misma zona horaria
+    EXECUTE format('ALTER SYSTEM SET cron.timezone = %L', v_timezone);
+
+    -- Recargar configuración para aplicar cambios
+    PERFORM pg_reload_conf();
+
+    RAISE NOTICE '✅ cron.timezone configurado como: %', v_timezone;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE WARNING '⚠️  No se pudo configurar cron.timezone automáticamente: %', SQLERRM;
+        RAISE NOTICE 'ℹ️  Por favor configurar manualmente: ALTER SYSTEM SET cron.timezone = ''%'';', v_timezone;
+END $$;
+
+-- ====================================================================
 -- 🔐 PERMISOS PARA EL USUARIO DE APLICACIÓN
 -- ====================================================================
 -- Permitir que saas_app pueda ver y gestionar jobs (solo lectura)
