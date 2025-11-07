@@ -4,6 +4,7 @@
  */
 
 const logger = require('../../utils/logger');
+const authConfig = require('../../config/auth');
 
 // Contador global para generar IDs únicos en tests
 let globalTestCounter = 0;
@@ -442,10 +443,11 @@ async function createTestCita(client, organizacionId, data) {
 
   serviciosData.forEach((servicio) => {
     placeholders.push(
-      `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6})`
+      `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6}, $${paramCount + 7})`
     );
     values.push(
       cita.id,
+      cita.fecha_cita,  // ⚡ PARTITIONING: Requerido para FK compuesto
       servicio.servicio_id,
       servicio.orden_ejecucion,
       servicio.precio_aplicado,
@@ -453,12 +455,12 @@ async function createTestCita(client, organizacionId, data) {
       servicio.descuento,
       servicio.notas
     );
-    paramCount += 7;
+    paramCount += 8;
   });
 
   await client.query(
     `INSERT INTO citas_servicios (
-      cita_id, servicio_id, orden_ejecucion,
+      cita_id, fecha_cita, servicio_id, orden_ejecucion,
       precio_aplicado, duracion_minutos, descuento, notas
     ) VALUES ${placeholders.join(', ')}`,
     values
@@ -542,6 +544,21 @@ async function createTestHorariosSemanalCompleto(client, profesionalId, organiza
   return horarios;
 }
 
+/**
+ * Generar token JWT de prueba
+ * @param {Object} usuario - Usuario de test
+ * @param {Object} organizacion - Organización de test
+ * @returns {string} Token JWT
+ */
+function generateTestToken(usuario, organizacion) {
+  return authConfig.generateToken({
+    userId: usuario.id,
+    email: usuario.email,
+    rol: usuario.rol,
+    organizacionId: organizacion.id
+  });
+}
+
 module.exports = {
   setRLSContext,
   bypassRLS,
@@ -555,5 +572,6 @@ module.exports = {
   createTestCita,
   createTestHorarioProfesional,
   createTestHorariosSemanalCompleto,
+  generateTestToken,
   getUniqueTestId
 };

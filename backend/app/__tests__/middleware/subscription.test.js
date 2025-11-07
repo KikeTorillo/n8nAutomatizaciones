@@ -5,32 +5,36 @@
  */
 
 const request = require('supertest');
-const app = require('../../app');
-const { getDb } = require('../../config/database');
+const saasApp = require('../../app');
 const {
-  crearOrganizacionTest,
-  crearUsuarioTest,
-  limpiarBaseDatos,
-  generarTokenTest
+  createTestOrganizacion,
+  createTestUsuario,
+  cleanAllTables,
+  generateTestToken
 } = require('../helpers/db-helper');
 
 describe('Middleware de Suscripciones', () => {
-  let db;
+  let app;
+  let client;
   let organizacion;
   let usuario;
   let token;
 
   beforeAll(async () => {
-    db = await getDb();
+    app = saasApp.getExpressApp();
+    client = await global.testPool.connect();
+    await cleanAllTables(client);
   });
 
   afterAll(async () => {
-    if (db) db.release();
+    const cleanupClient = await global.testPool.connect();
+    await cleanAllTables(cleanupClient);
+    cleanupClient.release();
+    if (client) client.release();
   });
 
-  beforeEach(async () => {
-    await limpiarBaseDatos();
-  });
+  // No usar beforeEach para limpiar ya que beforeAll lo hace
+  // y cada test crea sus propios datos únicos
 
   // ============================================================================
   // TESTS: checkActiveSubscription - Validación de suscripción activa
@@ -39,18 +43,17 @@ describe('Middleware de Suscripciones', () => {
   describe('checkActiveSubscription', () => {
     test('Permite acceso si suscripción trial está vigente', async () => {
       // Crear org con trial vigente (creada hoy, expira en 30 días)
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Vigente'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
-        rol: 'admin',
-        email: 'admin@trial.com'
+      usuario = await createTestUsuario(client, organizacion.id, {
+        rol: 'admin'
+        // email se genera automáticamente con ID único
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Intentar crear un profesional (requiere suscripción activa)
       const response = await request(app)
@@ -69,20 +72,19 @@ describe('Middleware de Suscripciones', () => {
 
     test('Rechaza si trial expiró', async () => {
       // Crear org con trial expirado (hace 35 días)
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Expirado'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Actualizar manualmente la fecha_fin para simular expiración
-      await db.query(`
+      await client.query(`
         UPDATE subscripciones
         SET fecha_fin = CURRENT_DATE - INTERVAL '5 days'
         WHERE organizacion_id = $1
@@ -105,20 +107,19 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Rechaza si suscripción está en estado moroso', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Morosa'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Cambiar estado a moroso
-      await db.query(`
+      await client.query(`
         UPDATE subscripciones
         SET estado = 'morosa'
         WHERE organizacion_id = $1
@@ -140,20 +141,19 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Rechaza si suscripción está suspendida', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Suspendida'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Suspender suscripción
-      await db.query(`
+      await client.query(`
         UPDATE subscripciones
         SET estado = 'suspendida'
         WHERE organizacion_id = $1
@@ -175,20 +175,19 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Rechaza si suscripción está cancelada', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Cancelada'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Cancelar suscripción
-      await db.query(`
+      await client.query(`
         UPDATE subscripciones
         SET estado = 'cancelada', activa = false
         WHERE organizacion_id = $1
@@ -210,17 +209,16 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Permite acceso con plan pagado (basico)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Básico Activo'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       const response = await request(app)
         .post('/api/v1/profesionales')
@@ -242,17 +240,16 @@ describe('Middleware de Suscripciones', () => {
 
   describe('checkResourceLimit - Profesionales', () => {
     test('Permite crear profesional si no se alcanzó el límite (basico: 5)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Crear primer profesional (de 2 permitidos)
       const response = await request(app)
@@ -270,17 +267,16 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Rechaza crear profesional si límite alcanzado (basico: 5)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Límite'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Crear 2 profesionales (límite del basico)
       await request(app)
@@ -324,17 +320,16 @@ describe('Middleware de Suscripciones', () => {
     });
 
     test('Plan basico permite más profesionales (5)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Básico'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Crear 3er profesional (permitido en plan básico: límite 5)
       const response = await request(app)
@@ -353,20 +348,19 @@ describe('Middleware de Suscripciones', () => {
 
   describe('checkResourceLimit - Clientes', () => {
     test('Rechaza crear cliente si límite alcanzado (basico: 200)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Clientes'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Simular que ya tiene 50 clientes
-      await db.query(`
+      await client.query(`
         UPDATE metricas_uso_organizacion
         SET uso_clientes = 50
         WHERE organizacion_id = $1
@@ -389,20 +383,19 @@ describe('Middleware de Suscripciones', () => {
 
   describe('checkResourceLimit - Servicios', () => {
     test('Rechaza crear servicio si límite alcanzado (basico: 15)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Servicios'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Simular que ya tiene 5 servicios
-      await db.query(`
+      await client.query(`
         UPDATE metricas_uso_organizacion
         SET uso_servicios = 5
         WHERE organizacion_id = $1
@@ -426,20 +419,19 @@ describe('Middleware de Suscripciones', () => {
 
   describe('checkResourceLimit - Usuarios', () => {
     test('Rechaza crear usuario si límite alcanzado (basico: 5)', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Usuarios'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // Ya hay 1 usuario (el admin), simular que hay 2
-      await db.query(`
+      await client.query(`
         UPDATE metricas_uso_organizacion
         SET uso_usuarios = 2
         WHERE organizacion_id = $1
@@ -468,17 +460,16 @@ describe('Middleware de Suscripciones', () => {
 
   describe('Integración - Flujo completo de límites', () => {
     test('Usuario puede usar recursos hasta alcanzar límites, luego debe upgradeear', async () => {
-      organizacion = await crearOrganizacionTest({
+      organizacion = await createTestOrganizacion(client, {
         plan: 'basico',
         nombre: 'Org Trial Completa'
       });
 
-      usuario = await crearUsuarioTest({
-        organizacion_id: organizacion.id,
+      usuario = await createTestUsuario(client, organizacion.id, {
         rol: 'admin'
       });
 
-      token = generarTokenTest(usuario, organizacion);
+      token = generateTestToken(usuario, organizacion);
 
       // 1. Crear 2 profesionales (límite del basico)
       const prof1 = await request(app)
@@ -517,7 +508,7 @@ describe('Middleware de Suscripciones', () => {
       expect(prof3.body.data.accion_requerida).toBe('upgrade_plan');
 
       // 3. Simular upgrade a plan básico
-      await db.query(`
+      await client.query(`
         UPDATE subscripciones s
         SET plan_id = (SELECT id FROM planes_subscripcion WHERE codigo_plan = 'basico'),
             estado = 'activa',
@@ -525,7 +516,7 @@ describe('Middleware de Suscripciones', () => {
         WHERE organizacion_id = $1
       `, [organizacion.id]);
 
-      await db.query(`
+      await client.query(`
         UPDATE organizaciones
         SET plan_actual = 'basico'
         WHERE id = $1
