@@ -31,8 +31,6 @@ import {
   AlertTriangle,
   CheckCircle,
   Bot,
-  MessageCircle,
-  MessageSquare,
 } from 'lucide-react';
 
 /**
@@ -111,6 +109,15 @@ function Dashboard() {
   const totalServicios = servicios?.filter((s) => s.activo).length || 0;
   const totalClientes = clientes?.length || 0;
   const totalBloqueosProximos = bloqueos?.filter((b) => b.activo).length || 0;
+  const totalChatbotsActivos = chatbotsData?.chatbots?.filter((c) => c.activo).length || 0;
+
+  // Generar subtítulo de plataformas para Chatbots
+  const plataformasChatbots = chatbotsData?.chatbots
+    ?.filter((c) => c.activo)
+    .map((c) => c.plataforma === 'telegram' ? 'Telegram' : 'WhatsApp');
+  const subtituloChatbots = plataformasChatbots?.length > 0
+    ? [...new Set(plataformasChatbots)].join(' + ')
+    : 'Sin chatbots';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -210,7 +217,7 @@ function Dashboard() {
         )}
 
         {/* Cards de Métricas Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
           <StatCard
             title="Citas Hoy"
             value={totalCitasHoy}
@@ -259,6 +266,16 @@ function Dashboard() {
             color="red"
             isLoading={loadingBloqueos}
             onClick={() => navigate('/bloqueos')}
+          />
+
+          <StatCard
+            title="Chatbots IA"
+            value={totalChatbotsActivos}
+            subtitle={subtituloChatbots}
+            icon={Bot}
+            color="cyan"
+            isLoading={loadingChatbots}
+            onClick={() => navigate('/chatbots')}
           />
         </div>
 
@@ -328,82 +345,6 @@ function Dashboard() {
               <p className="text-sm text-gray-500 text-center py-4">
                 No hay datos disponibles
               </p>
-            )}
-          </div>
-
-          {/* Chatbots con IA */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-                <Bot className="w-5 h-5" />
-                Chatbots IA
-              </h2>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => navigate('/chatbots')}
-              >
-                Gestionar
-              </Button>
-            </div>
-
-            {loadingChatbots ? (
-              <div className="animate-pulse space-y-3">
-                <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ) : chatbotsData?.chatbots && chatbotsData.chatbots.length > 0 ? (
-              <div className="space-y-3">
-                {chatbotsData.chatbots.map((chatbot) => (
-                  <div
-                    key={chatbot.id}
-                    className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
-                    onClick={() => navigate('/chatbots')}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                        chatbot.plataforma === 'telegram' ? 'bg-blue-100' : 'bg-green-100'
-                      }`}>
-                        {chatbot.plataforma === 'telegram' ? (
-                          <MessageCircle className={`w-4 h-4 ${
-                            chatbot.plataforma === 'telegram' ? 'text-blue-600' : 'text-green-600'
-                          }`} />
-                        ) : (
-                          <MessageSquare className="w-4 h-4 text-green-600" />
-                        )}
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">{chatbot.nombre}</p>
-                        <p className="text-xs text-gray-500">
-                          {chatbot.plataforma === 'telegram' ? 'Telegram' : 'WhatsApp'}
-                        </p>
-                      </div>
-                    </div>
-                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                      chatbot.activo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {chatbot.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6">
-                <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-3">
-                  <Bot className="w-6 h-6 text-gray-400" />
-                </div>
-                <p className="text-sm text-gray-600 mb-3">
-                  No tienes chatbots configurados
-                </p>
-                <Button
-                  size="sm"
-                  onClick={() => navigate('/chatbots')}
-                >
-                  Crear Chatbot
-                </Button>
-              </div>
             )}
           </div>
         </div>

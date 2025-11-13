@@ -5,7 +5,7 @@
  * @param {number|string} props.value - Valor principal
  * @param {string} props.subtitle - Subtítulo
  * @param {React.Component} props.icon - Icono de lucide-react
- * @param {string} props.color - Color del tema (blue, green, purple, orange, red)
+ * @param {string} props.color - Color del tema (blue, green, purple, orange, red, cyan)
  * @param {boolean} props.isLoading - Estado de carga
  * @param {function} props.onClick - Callback al hacer clic en la card (opcional)
  */
@@ -17,6 +17,7 @@ function StatCard({ title, value, subtitle, icon, color = 'blue', isLoading = fa
     purple: 'bg-purple-50 text-purple-600',
     orange: 'bg-orange-50 text-orange-600',
     red: 'bg-red-50 text-red-600',
+    cyan: 'bg-cyan-50 text-cyan-600',
   };
 
   if (isLoading) {
