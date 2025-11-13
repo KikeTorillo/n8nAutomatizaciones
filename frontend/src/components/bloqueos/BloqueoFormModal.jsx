@@ -92,7 +92,9 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
   // Cargar datos en modo edición o fecha inicial en modo crear
   useEffect(() => {
     if (isOpen && modo === 'editar' && bloqueo) {
+      console.log('[BloqueoFormModal] Cargando datos para edición:', bloqueo);
       const datosEdicion = prepararDatosParaEdicion(bloqueo);
+      console.log('[BloqueoFormModal] Datos preparados:', datosEdicion);
       reset(datosEdicion);
     } else if (isOpen && modo === 'crear') {
       const valoresIniciales = {
@@ -122,7 +124,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
       } else {
         await actualizarMutation.mutateAsync({
           id: bloqueo.id,
-          data: datosLimpios,
+          ...datosLimpios,
         });
       }
 

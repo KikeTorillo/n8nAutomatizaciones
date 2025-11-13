@@ -44,6 +44,7 @@ class DisponibilidadModel {
    * @param {number} [params.intervaloMinutos=30] - Intervalo entre slots
    * @param {boolean} [params.soloDisponibles=true] - Filtrar solo disponibles
    * @param {string} [params.nivelDetalle='completo'] - Nivel de detalle: basico|completo|admin
+   * @param {number} [params.excluirCitaId] - ID de cita a excluir (para reagendamiento)
    * @returns {Promise<Object>}
    */
   static async consultarDisponibilidad({
@@ -57,6 +58,7 @@ class DisponibilidadModel {
     intervaloMinutos = DEFAULTS.INTERVALO_MINUTOS,
     soloDisponibles = true,
     nivelDetalle = 'completo',
+    excluirCitaId = null,
   }) {
     return await RLSContextManager.query(organizacionId, async (db) => {
       logger.info('[DisponibilidadModel.consultarDisponibilidad] Iniciando consulta', {
@@ -65,6 +67,7 @@ class DisponibilidadModel {
         profesionalId,
         hora,
         rangoDias,
+        excluirCitaId,
       });
 
       // ========== 1. Normalizar fecha (soportar "hoy", ISO, YYYY-MM-DD) ==========
@@ -133,10 +136,22 @@ class DisponibilidadModel {
         db
       );
 
+      // ========== 4.5. Filtrar cita excluida (para reagendamiento) ==========
+      let citasRangoFiltradas = citasRango;
+      if (excluirCitaId) {
+        citasRangoFiltradas = citasRango.filter(cita => cita.id !== excluirCitaId);
+        logger.debug('[DisponibilidadModel] Cita excluida del análisis', {
+          excluir_cita_id: excluirCitaId,
+          citas_antes: citasRango.length,
+          citas_despues: citasRangoFiltradas.length,
+        });
+      }
+
       logger.debug('[DisponibilidadModel] Datos cargados en batch', {
-        total_citas: citasRango.length,
+        total_citas: citasRangoFiltradas.length,
         total_bloqueos: bloqueosRango.length,
         profesionales: profesionalIds.length,
+        cita_excluida: excluirCitaId || 'ninguna',
       });
 
       // ========== 5. Por cada día en el rango ==========
@@ -187,7 +202,7 @@ class DisponibilidadModel {
             prof.id,
             fechaStr,
             duracionFinal,
-            citasRango,
+            citasRangoFiltradas,
             bloqueosRango,
             nivelDetalle
           );
@@ -386,6 +401,14 @@ class DisponibilidadModel {
           slotInfo.cliente_nombre = citaConflicto.cliente_nombre;
         }
 
+        logger.debug('[_verificarDisponibilidadSlotsEnMemoria] Slot bloqueado por cita', {
+          slot_hora: slot.hora,
+          slot_fin: horaFin,
+          cita_hora_inicio: citaConflicto.hora_inicio,
+          cita_hora_fin: citaConflicto.hora_fin,
+          cita_codigo: citaConflicto.codigo_cita
+        });
+
         slotsConDisponibilidad.push(slotInfo);
         continue;
       }
@@ -407,10 +430,25 @@ class DisponibilidadModel {
           nivelDetalle
         );
         slotInfo.duracion_disponible = 0;
+
+        logger.debug('[_verificarDisponibilidadSlotsEnMemoria] Slot bloqueado por bloqueo', {
+          slot_hora: slot.hora,
+          slot_fin: horaFin,
+          bloqueo_hora_inicio: bloqueoConflicto.hora_inicio,
+          bloqueo_hora_fin: bloqueoConflicto.hora_fin,
+          bloqueo_titulo: bloqueoConflicto.titulo
+        });
       }
 
       slotsConDisponibilidad.push(slotInfo);
     }
+
+    logger.debug('[_verificarDisponibilidadSlotsEnMemoria] Verificación completada', {
+      slots_procesados: slots.length,
+      slots_resultado: slotsConDisponibilidad.length,
+      disponibles: slotsConDisponibilidad.filter(s => s.disponible).length,
+      no_disponibles: slotsConDisponibilidad.filter(s => !s.disponible).length
+    });
 
     return slotsConDisponibilidad;
   }

@@ -945,7 +945,8 @@ Tienes acceso a 6 herramientas MCP para interactuar con el sistema:
      fecha: "DD/MM/YYYY",      // ⚠️ YA convertida por ti (no "mañana" ni "lunes")
      profesional_id?: number,  // OPCIONAL - Si el cliente tiene preferencia
      hora?: "HH:MM",           // OPCIONAL - Si el cliente especificó hora
-     duracion?: number         // OPCIONAL - Se calcula automáticamente con servicios_ids
+     duracion?: number,        // OPCIONAL - Se calcula automáticamente con servicios_ids
+     excluir_cita_id?: number  // ⚠️ CRÍTICO PARA REAGENDAMIENTO - ID de cita a excluir
    }
    Úsala para: Verificar disponibilidad ANTES de crear/reagendar citas
 
@@ -954,6 +955,11 @@ Tienes acceso a 6 herramientas MCP para interactuar con el sistema:
    - Si especificas hora: Retorna profesional_id + nombre del profesional
 
    💡 TIP: SIEMPRE usa el profesional_id de la respuesta en crearCita/reagendarCita
+
+   🔄 REAGENDAMIENTO: Cuando verifiques disponibilidad para reagendar una cita:
+   - SIEMPRE pasa excluir_cita_id con el ID de la cita que se está reagendando
+   - Esto permite ver horarios que se liberarán al mover la cita existente
+   - Sin esto, la cita actual bloquea incorrectamente los slots disponibles
 
 3. **buscarCliente** - Busca cliente existente por teléfono o nombre
    Parámetros: { busqueda: string, tipo?: "telefono"|"nombre"|"auto" }
@@ -1057,16 +1063,36 @@ NO los modifiques, expandas, o "mejores" por tu cuenta.
 - VERIFICA DISPONIBILIDAD ANTES de pedir datos personales
 - RECUERDA: Requiere servicio_id (no profesional_id)
 
-Si el horario NO está disponible:
-  ❌ NO pidas nombre ni teléfono
-  ❌ Informa que ese horario está ocupado
-  ✅ Sugiere 2-3 horarios alternativos del mismo día u otros días cercanos
-  ✅ Espera a que el cliente elija uno de los horarios disponibles
-  ✅ Vuelve a este PASO 3 con el nuevo horario elegido
+**3A. VERIFICAR HORA ESPECÍFICA:**
+verificarDisponibilidad({
+  servicios_ids: [1],          // Servicio obtenido en Paso 1
+  fecha: "15/11/2025",          // Fecha que el cliente pidió
+  hora: "14:00"                 // Hora que el cliente pidió
+})
 
 Si el horario SÍ está disponible:
   ✅ Confirma que el horario está libre
   ✅ Procede al PASO 4
+
+Si el horario NO está disponible:
+  ❌ NO pidas nombre ni teléfono
+  ❌ Informa que ese horario está ocupado
+  ✅ Continúa a 3B para obtener horarios reales
+
+**3B. OBTENER HORARIOS DISPONIBLES (si el horario está ocupado):**
+⚠️ OBLIGATORIO: Haz OTRA llamada sin especificar hora:
+verificarDisponibilidad({
+  servicios_ids: [1],          // Servicio obtenido en Paso 1
+  fecha: "15/11/2025"          // Fecha deseada
+  // ❌ NO incluyas "hora" - quieres ver TODOS los slots disponibles
+})
+
+Esta llamada retorna profesionales_disponibles[] con horarios_disponibles reales.
+✅ USA SOLO los horarios de esta respuesta para sugerir al cliente
+✅ Sugiere 2-3 horarios alternativos del mismo día u otros días cercanos
+✅ Espera a que el cliente elija uno de los horarios disponibles
+✅ Vuelve a 3A con el nuevo horario elegido
+❌ NUNCA inventes o asumas horarios - Solo sugiere lo que verificaste
 
 **PASO 4: AHORA SÍ, PIDE SOLO EL NOMBRE** ⚠️ SOLO SI HAY DISPONIBILIDAD
 - Nombre completo del cliente (OBLIGATORIO)
@@ -1121,11 +1147,45 @@ El cliente debe ver el codigo_cita legible, NO el ID numérico interno.
 - Convierte fechas naturales a formato DD/MM/YYYY
 - Convierte horas a formato HH:MM de 24h
 
-**PASO 4: USA "verificarDisponibilidad"**
+**PASO 4: USA "verificarDisponibilidad" CON EXCLUSIÓN** ⚠️ CRÍTICO
 - Usa los servicios_ids de la cita existente (vienen en buscarCitasCliente)
-- Verifica que el nuevo horario esté disponible
-- Si está ocupado, sugiere 2-3 horarios alternativos
-- Si está libre, procede al Paso 5
+- ⚠️ OBLIGATORIO: Pasa excluir_cita_id con el ID de la cita que estás reagendando
+- Esto permite ver horarios que se liberarán al mover la cita existente
+
+**4A. VERIFICAR HORA ESPECÍFICA (si el cliente especificó una hora):**
+📋 EJEMPLO:
+verificarDisponibilidad({
+  servicios_ids: [1, 2],        // Servicios de la cita existente
+  fecha: "15/11/2025",          // Nueva fecha deseada
+  hora: "14:00",                // Nueva hora deseada
+  excluir_cita_id: 123          // ⚠️ ID de la cita que estás reagendando
+})
+
+Si está libre → Procede al Paso 5
+Si está ocupado → Continúa a 4B
+
+**4B. OBTENER HORARIOS DISPONIBLES (si el horario está ocupado):**
+⚠️ OBLIGATORIO: Haz OTRA llamada sin especificar hora para obtener slots reales:
+verificarDisponibilidad({
+  servicios_ids: [1, 2],        // Servicios de la cita existente
+  fecha: "15/11/2025",          // Nueva fecha deseada
+  excluir_cita_id: 123          // ⚠️ ID de la cita que estás reagendando
+  // ❌ NO incluyas "hora" aquí - quieres ver TODOS los slots disponibles
+})
+
+Esta llamada retorna profesionales_disponibles[] con horarios_disponibles reales.
+✅ USA SOLO los horarios de esta respuesta para sugerir al cliente
+❌ NUNCA inventes o asumas horarios - Solo sugiere lo que verificaste
+
+📋 EJEMPLO DE SUGERENCIA CORRECTA:
+"No hay disponibilidad a las 13:00. Te sugiero estos horarios verificados:
+- 10:00
+- 17:30
+- 18:00
+¿Te conviene alguno?"
+
+❌ NUNCA olvides excluir_cita_id al reagendar - causará rechazos incorrectos
+❌ NUNCA sugieras horarios sin verificarlos primero
 
 **PASO 5: USA "reagendarCita"**
 - Solo cuando el horario esté CONFIRMADO disponible

@@ -66,6 +66,12 @@ const disponibilidadSchemas = {
         }),
 
       solo_disponibles: Joi.boolean().optional().default(true),
+
+      // Excluir una cita específica de la validación (útil para reagendamiento)
+      excluir_cita_id: Joi.number().integer().positive().optional().messages({
+        'number.base': 'excluir_cita_id debe ser un número',
+        'number.positive': 'excluir_cita_id debe ser positivo',
+      }),
     }),
   },
 };

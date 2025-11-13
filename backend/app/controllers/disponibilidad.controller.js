@@ -27,6 +27,7 @@ class DisponibilidadController {
       rango_dias,
       intervalo_minutos,
       solo_disponibles,
+      excluir_cita_id,
     } = req.query;
 
     logger.info('[DisponibilidadController.consultar] Request recibido', {
@@ -37,6 +38,7 @@ class DisponibilidadController {
       servicio_id,
       profesional_id,
       hora,
+      excluir_cita_id,
     });
 
     // ========== 1. Validar límites de rango_dias por rol ==========
@@ -67,6 +69,7 @@ class DisponibilidadController {
       intervaloMinutos: parseInt(intervalo_minutos) || 30,
       soloDisponibles: solo_disponibles !== 'false',
       nivelDetalle,
+      excluirCitaId: excluir_cita_id ? parseInt(excluir_cita_id) : null,
     });
 
     logger.info('[DisponibilidadController.consultar] Consulta exitosa', {

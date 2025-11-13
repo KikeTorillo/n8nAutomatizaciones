@@ -12,18 +12,16 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 6 Noviembre 2025
+**Actualizado**: 13 Noviembre 2025
 
-| Componente | Estado | Métricas Reales |
-|------------|--------|-----------------|
-| **Backend API** | ✅ Operativo | 19 módulos, 602 tests (556 passing, 92.4%) |
-| **Frontend React** | ✅ Operativo | 52 componentes, 13 hooks, 24 páginas |
-| **Base de Datos** | ✅ Optimizada | 21 tablas (2 particionadas), 15 RLS policies |
-| **⚡ Particionamiento** | ✅ Operativo | Range partitioning mensual + pg_cron (4 jobs) |
-| **Sistema IA** | ✅ Operativo | Telegram + WhatsApp + MCP (6 tools) |
-| **Panel Super Admin** | ✅ Operativo | Gestión org/planes + Sincronización MP |
+| Componente | Estado | Notas |
+|------------|--------|-------|
+| **Backend API** | ✅ Operativo | 19 módulos, validación bidireccional citas/bloqueos |
+| **Frontend React** | ✅ Operativo | React 19 + Vite 7, 13 hooks personalizados |
+| **Base de Datos** | ✅ Optimizada | 21 tablas (2 particionadas), RLS multi-tenant |
+| **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
-| **Deployment** | ✅ Listo | Scripts dev/prod + 8 servicios Docker |
+| **Deployment** | ✅ Listo | Docker Compose + scripts automatizados |
 
 ---
 
@@ -77,33 +75,18 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 ## 🏗 Arquitectura
 
-### Backend - 19 Módulos
+### Backend - Módulos Principales
 
-| # | Módulo | Características |
-|---|--------|-----------------|
-| 1 | auth | JWT + password recovery + setup inicial |
-| 2 | usuarios | Gestión usuarios + RBAC |
-| 3 | organizaciones | Multi-tenancy + trial 14 días |
-| 4 | tipos-profesional | 33 tipos sistema + custom (dinámico) |
-| 5 | tipos-bloqueo | 9 tipos sistema + custom (dinámico) |
-| 6 | profesionales | CRUD + bulk operations (1-50 items) |
-| 7 | servicios | CRUD + bulk operations (1-50 items) |
-| 8 | clientes | Búsqueda fuzzy (trigram + GIN) |
-| 9 | horarios-profesionales | Disponibilidad semanal |
-| 10 | **citas** | Múltiples servicios + **arquitectura modular** |
-| 11 | bloqueos-horarios | Bloqueos temporales |
-| 12 | disponibilidad | Verificación horarios libres |
-| 13 | planes | Catálogo planes |
-| 14 | subscripciones | Trial + activación pago MP |
-| 15 | chatbots | IA multi-plataforma (Telegram/WhatsApp) |
-| 16 | webhooks | Webhooks Mercado Pago |
-| 17 | pagos | Gestión pagos MP |
-| 18 | superadmin | Panel administración global + sync MP |
-| 19 | setup | Inicialización sistema (super_admin) |
+**Core (5):** auth, usuarios, organizaciones, planes, subscripciones
+**Negocio (7):** profesionales, servicios, clientes, horarios-profesionales, tipos-profesional, tipos-bloqueo
+**Operaciones (3):** citas (modular), bloqueos-horarios, disponibilidad
+**Pagos (2):** webhooks, pagos (Mercado Pago)
+**IA (1):** chatbots (Telegram/WhatsApp)
+**Admin (1):** superadmin (gestión global + sync MP)
 
 **Arquitectura Modular de Citas:**
-- **3 Controllers**: base (CRUD), operacional (confirmar/cancelar/reagendar), recordatorios
-- **7 Models**: base, operacional, recordatorios, helpers, cita-servicio + queries
+- **3 Controllers**: base, operacional (confirmar/cancelar/reagendar), recordatorios
+- **7 Models**: base, operacional, recordatorios, helpers, cita-servicio, queries
 
 ### Middleware Stack (7 middlewares)
 
@@ -148,30 +131,18 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 ### Frontend
 
-**13 Hooks Personalizados:**
-`useAuth`, `useCitas`, `useClientes`, `useBloqueos`, `useProfesionales`, `useServicios`, `useHorarios`, `useEstadisticas`, `useTiposProfesional`, `useTiposBloqueo`, `useChatbots`, `useSuperAdmin`, `useToast`
+**Estructura:**
+- **13 Hooks personalizados** para gestión de estado (TanStack Query)
+- **53+ Componentes** organizados por módulo (ui, dashboard, citas, clientes, etc.)
+- **24 Páginas** con routing protegido por rol
+- **Onboarding de 3 pasos** (negocio → plan → cuenta admin)
 
-**Nota:** Gestión de suscripciones usa `useQuery` directo (no hook separado)
-
-**52 Componentes** organizados en:
-- `ui/` (8) - Button, Input, Select, Modal, Toast, etc.
-- `dashboard/` (5) - StatCard, TrialStatusWidget, CitasDelDia, etc. + **Widget Chatbots inline**
-- `citas/` (10) - Forms, modals, calendarios
-- `clientes/` (5) - Lista, forms, walk-in
-- `profesionales/` (5) - CRUD + horarios + servicios
-- `servicios/` (2)
-- `bloqueos/` (6)
-- `chatbots/` (4) - Config multi-plataforma
-- `superadmin/` (3)
-- Otros (4)
-
-**24 Páginas** distribuidas en:
-- Auth (3), Onboarding (4), Dashboard (1), Citas (1), Clientes (3), Profesionales (1), Servicios (1), Bloqueos (1), Chatbots (1), Suscripción (2), Super Admin (5), Landing (1), Setup (1)
-
-**Onboarding Flow - 3 Steps:**
-1. `Step1_BusinessInfo.jsx` - Información del negocio
-2. `Step2_PlanSelection.jsx` - Selección plan (con trial)
-3. `Step3_AccountSetup.jsx` - Cuenta administrador
+**Componentes Clave:**
+- `SetupChecklist.jsx` - Guía configuración inicial (auto-oculta al completar)
+- `TrialStatusWidget.jsx` - Trial counter + activación MP
+- `CitaFormModal.jsx` - Creación/edición con múltiples servicios
+- `BloqueoFormModal.jsx` - Gestión bloqueos con validación bidireccional
+- `ChatbotConfigModal.jsx` - Config Telegram/WhatsApp
 
 ---
 
@@ -189,42 +160,18 @@ bash deploy.sh backup    # Backup PostgreSQL
 | **Pagos MP** | subscripciones, historial_subscripciones, metodos_pago, pagos |
 | **Sistema** | eventos_sistema ⚡, eventos_sistema_archivo, metricas_uso_organizacion |
 
-**⚡ Tablas Particionadas (Range Partitioning Mensual):**
-- **citas**: Particionada por `fecha_cita` - Mejora 10x+ en queries históricas
-- **eventos_sistema**: Particionada por `creado_en` - Mejora 100x+ en queries antiguas
-- 18 particiones pre-creadas (2025-2026)
-- Gestión automática via pg_cron
+**⚡ Particionamiento:**
+- **citas** por `fecha_cita` (mensual) - Mejora 10x+ queries históricas
+- **eventos_sistema** por `creado_en` (mensual) - Mejora 100x+ queries antiguas
+- Gestión automática con pg_cron (4 jobs: mantenimiento, archivado, vacuum)
 
-**Tipos Dinámicos:**
-- **33 tipos profesional** (sistema) - Organizados por 11 industrias
-- **9 tipos bloqueo** (sistema) - vacaciones, feriado, mantenimiento, etc.
-- Custom por organización
+**Catálogos Dinámicos:**
+- **33 tipos profesional** organizados por 11 industrias + custom
+- **9 tipos bloqueo** (vacaciones, feriado, mantenimiento, etc.) + custom
 
-**ENUMs Principales:**
+**ENUMs:**
 - `rol_usuario`: super_admin, admin, propietario, empleado, cliente, bot
 - `estado_cita`: pendiente, confirmada, en_curso, completada, cancelada, no_asistio
-- `industria_tipo`: 11 opciones (barberia, salon_belleza, consultorio_medico, etc.)
-- `plan_tipo`: trial, basico, profesional, custom
-
-**Funciones de Mantenimiento Particiones (8):**
-```sql
--- Gestión básica
-SELECT * FROM listar_particiones();
-SELECT * FROM crear_particiones_futuras_citas(6);
-SELECT * FROM eliminar_particiones_antiguas(24);
-
--- Todo en uno
-SELECT * FROM mantener_particiones(6, 24);
-
--- Monitoreo
-SELECT * FROM ver_estado_jobs_mantenimiento();
-```
-
-**4 Jobs Automáticos (pg_cron):**
-1. **mantenimiento-particiones-mensual** - Día 1, 00:30 - Crear futuras + eliminar antiguas
-2. **archivado-eventos-mensual** - Día 2, 01:00 - Archivar >12 meses
-3. **archivado-citas-trimestral** - Día 1 trimestre, 02:00 - Archivar >24 meses
-4. **vacuum-particiones-semanal** - Domingos, 03:00 - Optimizar almacenamiento
 
 ---
 
@@ -236,21 +183,69 @@ SELECT * FROM ver_estado_jobs_mantenimiento();
 
 ### MCP Server - 6 Tools
 1. `listarServicios` - Catálogo con precios
-2. `verificarDisponibilidad` - Horarios libres (1-10 servicios)
+2. **`verificarDisponibilidad`** - Horarios libres + **`excluir_cita_id`** para reagendamiento
 3. `buscarCliente` - Por teléfono o nombre
 4. `buscarCitasCliente` - Historial para reagendamiento
 5. `crearCita` - Creación validada (múltiples servicios)
 6. `reagendarCita` - Modificar citas existentes
 
-### Características
+### Características Críticas
+- ✅ **Prevención de alucinaciones**: System prompt obliga a verificar disponibilidad real antes de sugerir horarios
+- ✅ **Reagendamiento inteligente**: Parámetro `excluir_cita_id` evita auto-bloqueo de citas
 - ✅ System Prompt agnóstico de industria
-- ✅ Creación automática (n8n workflow + credential + webhook con rollback)
-- ✅ Multi-tenant seguro (JWT + RLS + Chat Memory)
+- ✅ Multi-tenant seguro (JWT + RLS + Chat Memory separada)
 - ✅ Anti-flood Redis (20s)
-- ✅ Widget inline en Dashboard (vista rápida + gestión)
-- ✅ Multi-plataforma (Telegram + WhatsApp en misma org)
+- ✅ Multi-plataforma (Telegram + WhatsApp)
+
+### Arquitectura Chat Memory
+- **Base de datos separada**: `chat_memories_db` (independiente de workflows)
+- **Tabla**: `n8n_chat_histories` - Preserva conversaciones incluso tras eliminar workflows
+- **Persistencia**: Historial completo por cliente + organización con RLS
+- **Eliminación workflows**: Solo borra ejecuciones técnicas, NO conversaciones
 
 **Acceso**: Rol `admin` o `propietario` | **URL**: `/chatbots`
+
+---
+
+## 🔄 Validación de Disponibilidad y Reagendamiento
+
+### Algoritmo de Solapamiento
+**Función crítica**: `haySolapamientoHorario(inicio1, fin1, inicio2, fin2)`
+```javascript
+// Algoritmo: i1 < f2 && f1 > i2
+// ⚠️ IMPORTANTE: Touching borders (14:00 == 14:00) NO se consideran solapamiento
+```
+**Ubicación**: `backend/app/utils/cita-validacion.util.js`
+
+### Validación Bidireccional
+**Crear Bloqueo** → Valida contra citas existentes (pendiente/confirmada)
+- Error 409 si hay conflicto con mensaje formateado en español
+- Formato: `• CODIGO - Cliente el DD/MM/YYYY de HH:MM a HH:MM`
+- **Ubicación**: `backend/app/database/bloqueos-horarios.model.js`
+
+**Crear Cita** → Valida contra bloqueos existentes
+- Rechaza si hay solapamiento con bloqueo activo
+- **Ubicación**: `backend/app/database/cita.operacional.model.js`
+
+### Parámetro `excluir_cita_id` (Reagendamiento)
+**Problema resuelto**: Al reagendar, la cita actual bloqueaba los slots que se iban a liberar.
+
+**Solución**: Parámetro opcional en `verificarDisponibilidad`:
+- **Schema**: `disponibilidad.schemas.js` - Validación Joi
+- **Controller**: `disponibilidad.controller.js` - Pasa parámetro al model
+- **Model**: `disponibilidad.model.js` - Filtra cita excluida del análisis
+- **MCP Tool**: `verificarDisponibilidad.js` - Acepta y pasa parámetro
+- **System Prompt**: Instruye al chatbot a SIEMPRE usarlo al reagendar
+
+**Uso en Chatbot**:
+```javascript
+verificarDisponibilidad({
+  servicios_ids: [1, 2],
+  fecha: "15/11/2025",
+  hora: "14:00",
+  excluir_cita_id: 123  // ⚠️ CRÍTICO - ID de la cita que se está reagendando
+})
+```
 
 ---
 
@@ -264,43 +259,22 @@ SELECT * FROM ver_estado_jobs_mantenimiento();
 - Edición planes (precios/límites/estado)
 - **Sincronización manual planes con Mercado Pago**
 
-### Sincronización Manual Planes MP
-
+### Sincronización Planes MP
 **Endpoint**: `POST /api/v1/superadmin/planes/sync-mercadopago`
-
-**Lógica inteligente:**
-1. Si plan tiene `mp_plan_id`: verifica que exista y esté activo en MP
-2. Si está inactivo/cancelado: lo recrea automáticamente
-3. Si NO tiene `mp_plan_id`: busca por nombre → asocia o crea nuevo
-
-**UI**: Estado visual (sincronizado ✅ / no sincronizado ⚠️ / N/A)
+- Verifica existencia en MP → asocia o crea nuevos
+- UI con estado visual (sincronizado ✅ / no sincronizado ⚠️)
 
 ---
 
 ## 💳 Sistema de Suscripciones (Mercado Pago)
 
-### Flujo
-1. **Onboarding** → Selección plan + Creación cuenta
-2. **Trial gratuito** → 14 días (planes Básico/Professional), ilimitado (Custom)
-3. **Activación pago** → Checkout Pro (init_point) → Pago recurrente
+**Flujo**: Onboarding → Trial 14 días → Activación pago (Checkout Pro)
 
-### Componentes Clave
-
-**Backend:**
-- `subscripciones.controller.js` - Trial + activación
-- `mercadopago.service.js` - Integración completa + sync planes
-- `subscription.middleware.js` - Validación límites del plan
-
-**Frontend:**
-- `TrialStatusWidget.jsx` - Contador días + botón activar (en Dashboard)
-- `ActivarSuscripcion.jsx` - Redirect a Checkout Pro MP
-
-### Características
-- ✅ Trial automático (14 días)
-- ✅ Checkout Pro con init_point
+**Características:**
+- ✅ Trial automático + contador en Dashboard
+- ✅ Checkout Pro con `init_point` (sin `preapproval_plan_id`)
+- ✅ Validación automática de límites en middleware `subscription`
 - ✅ Sincronización manual desde Super Admin
-- ✅ Suscripciones sin plan asociado (evita limitación sandbox)
-- ✅ Validación automática de límites en middleware
 
 ---
 
@@ -328,6 +302,7 @@ SELECT * FROM ver_estado_jobs_mantenimiento();
 4. **asyncHandler obligatorio** - En todas las routes
 5. **Validar límites del plan** - Middleware `subscription` lo hace automáticamente
 6. **Bulk operations** - Pre-validar límites ANTES de crear (1-50 items)
+7. **Reagendamiento** - SIEMPRE usar `excluir_cita_id` en `verificarDisponibilidad`
 
 ### Frontend
 1. **Sanitizar opcionales** - Joi rechaza `""`, usar `undefined`
@@ -339,82 +314,85 @@ SELECT * FROM ver_estado_jobs_mantenimiento();
 
 ## 🎯 Características Destacadas
 
-### 1. Bulk Operations Transaccionales
-- Profesionales y Servicios: 1-50 items por request
+### 1. Múltiples Servicios por Cita
+- Tabla M:N `citas_servicios` permite 1-10 servicios por cita
+- Cálculo automático de duración total + precio
+- Soportado en backend, MCP y chatbots
+
+### 2. Bulk Operations Transaccionales
+- Profesionales y Servicios: 1-50 items con pre-validación de límites
 - ACID garantizado (rollback completo en error)
-- Pre-validación de límites del plan
 - Endpoints: `POST /api/v1/{profesionales|servicios}/bulk-create`
 
-### 2. Búsqueda Fuzzy Avanzada
-- Clientes: Trigram similarity + normalización telefónica
-- Índices GIN para alta performance
-- Tolerancia a typos
+### 3. Búsqueda Fuzzy de Clientes
+- Trigram similarity + normalización telefónica (índices GIN)
+- Tolerancia a typos para mejorar UX
 
-### 3. Múltiples Servicios por Cita
-- Tabla M:N `citas_servicios`
-- Backend/MCP: 1-10 servicios por cita
-- Cálculo automático duración total + precio
+### 4. Setup Checklist Inteligente
+- 4 pasos esenciales: profesionales → horarios → servicios → asignaciones
+- Estado calculado en tiempo real desde PostgreSQL
+- Auto-oculta al completar + CTAs directos
+- **Endpoint**: `GET /api/v1/organizaciones/:id/setup-progress`
 
-### 4. Auto-generación de Códigos
-- Triggers PostgreSQL generan automáticamente
-- `codigo_cita`, `codigo_bloqueo`
-- **NO enviar** en requests
-
-### 5. Tipos Dinámicos por Industria
-- 33 tipos profesional + custom
-- Filtrado automático por industria seleccionada
-- UI adaptativa según tipo de negocio
+### 5. Auto-generación de Códigos
+- Triggers PostgreSQL: `codigo_cita`, `codigo_bloqueo`
+- **⚠️ NUNCA enviar estos campos** en requests POST/PUT
 
 ---
 
 ## 📚 Archivos Críticos
 
-### Backend
+### Backend - Core
 - `utils/rlsContextManager.js` - RLS Manager v2.0 (**USAR SIEMPRE**)
-- `utils/helpers.js` - 8 clases helper
+- `utils/helpers.js` - 8 clases helper (Response, Validation, Date, etc.)
+- `utils/cita-validacion.util.js` - **Algoritmo solapamiento horarios**
 - `middleware/subscription.js` - Validación límites del plan
-- `services/mercadopago.service.js` - MP completo + sync planes
-- `controllers/chatbot.controller.js` - System prompt agnóstico
-- `database/cita.*.model.js` - Arquitectura modular (7 archivos)
 
-### Frontend
-- `services/api/client.js` - Axios + auto-refresh JWT
-- `components/dashboard/TrialStatusWidget.jsx` - Trial + activación
-- `pages/onboarding/steps/Step2_PlanSelection.jsx` - Selección plan
+### Backend - Disponibilidad y Validación
+- **`database/disponibilidad.model.js`** - Verificación slots + parámetro `excluir_cita_id`
+- **`controllers/disponibilidad.controller.js`** - Endpoint disponibilidad
+- **`schemas/disponibilidad.schemas.js`** - Validación Joi con `excluir_cita_id`
+- **`database/bloqueos-horarios.model.js`** - Validación bidireccional citas ↔ bloqueos
+- `database/cita.operacional.model.js` - Validación contra bloqueos
 
-### Base de Datos
-- `sql/schema/06-operations-tables.sql` - Tabla `citas` PARTICIONADA
-- `sql/schema/15-maintenance-functions.sql` - 8 funciones mantenimiento
-- `sql/schema/18-pg-cron-setup.sql` - 4 jobs automáticos
-- `Dockerfile.postgres` - PostgreSQL 17 + pg_cron
+### Backend - Chatbots
+- **`controllers/chatbot.controller.js`** - System prompt + prevención alucinaciones
+- `services/mercadopago.service.js` - Integración MP completa
+
+### Frontend - Componentes Clave
+- `components/dashboard/SetupChecklist.jsx` - Guía configuración inicial
+- `components/dashboard/TrialStatusWidget.jsx` - Trial + activación MP
+- `components/bloqueos/BloqueoFormModal.jsx` - Validación bidireccional
+- `components/citas/CitaFormModal.jsx` - Múltiples servicios
+
+### MCP Server
+- **`tools/verificarDisponibilidad.js`** - Parámetro `excluir_cita_id`
 
 ---
 
 ## 🔧 Troubleshooting
 
 ### "Organización no encontrada" en queries
-**Solución**: Usar `RLSContextManager.withBypass()` para JOINs multi-tabla
+**Causa**: JOINs multi-tabla sin RLS context
+**Solución**: Usar `RLSContextManager.withBypass()` para queries con JOINs
 
 ### Backend 400 "field is not allowed to be empty"
+**Causa**: Joi rechaza strings vacíos `""`
 **Solución**: Sanitizar a `undefined`: `email: data.email?.trim() || undefined`
 
 ### Vite HMR no detecta cambios
 **Solución**: `docker restart front` → esperar 5-10s → Ctrl+Shift+R
 
-### Mercado Pago: "card_token_id is required"
-**Solución**: Usar `crearSuscripcionConInitPoint()` sin `preapproval_plan_id`
-**Archivo**: `backend/app/services/mercadopago.service.js:259`
+### Chatbot sugiere horarios ocupados
+**Causa**: No llama `verificarDisponibilidad` sin parámetro `hora` para obtener slots reales
+**Solución**: System prompt actualizado obliga a verificar antes de sugerir (Steps 3B/4B)
 
-### Mercado Pago: Planes duplicados
-**Solución**: Filtrar solo `status === 'active'` en `buscarPlanPorNombre()`
-**Archivo**: `backend/app/services/mercadopago.service.js:178`
-
-### Mercado Pago: SDK `PreApprovalPlan.get()` no funciona
-**Solución**: Usar `search()` + filtrar por ID
-**Archivo**: `backend/app/services/mercadopago.service.js:142`
+### Reagendamiento rechazado incorrectamente
+**Causa**: Cita actual bloquea los slots que se van a liberar
+**Solución**: Usar parámetro `excluir_cita_id` en `verificarDisponibilidad`
 
 ---
 
-**Versión**: 15.0 - **Arquitectura Documentada (Real State)**
-**Última actualización**: 6 Noviembre 2025
-**Estado**: ✅ Production Ready + Performance Optimized
+**Versión**: 17.0 - **Validación Bidireccional + Reagendamiento Inteligente**
+**Última actualización**: 13 Noviembre 2025
+**Estado**: ✅ Production Ready + AI-Optimized

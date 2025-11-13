@@ -2,6 +2,18 @@ import { differenceInDays, parseISO, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 /**
+ * Helper interno: Normalizar fecha para evitar problemas de zona horaria
+ * Si la fecha tiene timestamp UTC (2025-11-13T00:00:00.000Z), extrae solo YYYY-MM-DD
+ * @param {string} fecha - Fecha en formato YYYY-MM-DD o ISO
+ * @returns {string} Fecha normalizada YYYY-MM-DD
+ * @private
+ */
+const normalizarFecha = (fecha) => {
+  if (!fecha) return fecha;
+  return typeof fecha === 'string' && fecha.includes('T') ? fecha.split('T')[0] : fecha;
+};
+
+/**
  * Colores por tipo de bloqueo (clases Tailwind)
  */
 export const COLORES_TIPO_BLOQUEO = {
@@ -138,8 +150,12 @@ export const obtenerLabelTipoBloqueo = (tipo) => {
  */
 export const calcularDiasBloqueo = (fechaInicio, fechaFin) => {
   try {
-    const inicio = typeof fechaInicio === 'string' ? parseISO(fechaInicio) : fechaInicio;
-    const fin = typeof fechaFin === 'string' ? parseISO(fechaFin) : fechaFin;
+    // ✅ FIX: Normalizar fechas para evitar problemas de zona horaria
+    const fechaInicioNorm = normalizarFecha(fechaInicio);
+    const fechaFinNorm = normalizarFecha(fechaFin);
+
+    const inicio = typeof fechaInicioNorm === 'string' ? parseISO(fechaInicioNorm) : fechaInicioNorm;
+    const fin = typeof fechaFinNorm === 'string' ? parseISO(fechaFinNorm) : fechaFinNorm;
     return differenceInDays(fin, inicio) + 1; // +1 para incluir ambos días
   } catch {
     return 0;
@@ -162,10 +178,11 @@ export const validarSolapamientoBloqueos = (bloqueo1, bloqueo2) => {
     return false;
   }
 
-  const inicio1 = parseISO(bloqueo1.fecha_inicio);
-  const fin1 = parseISO(bloqueo1.fecha_fin);
-  const inicio2 = parseISO(bloqueo2.fecha_inicio);
-  const fin2 = parseISO(bloqueo2.fecha_fin);
+  // ✅ FIX: Normalizar fechas para evitar problemas de zona horaria
+  const inicio1 = parseISO(normalizarFecha(bloqueo1.fecha_inicio));
+  const fin1 = parseISO(normalizarFecha(bloqueo1.fecha_fin));
+  const inicio2 = parseISO(normalizarFecha(bloqueo2.fecha_inicio));
+  const fin2 = parseISO(normalizarFecha(bloqueo2.fecha_fin));
 
   // Verificar solapamiento de fechas
   const fechasSeSolapan = inicio1 <= fin2 && fin1 >= inicio2;
@@ -203,9 +220,14 @@ export const validarSolapamientoBloqueos = (bloqueo1, bloqueo2) => {
  */
 export const formatearRangoBloqueo = (fechaInicio, fechaFin, horaInicio, horaFin) => {
   try {
-    const inicio = parseISO(fechaInicio);
-    const fin = parseISO(fechaFin);
-    const dias = calcularDiasBloqueo(fechaInicio, fechaFin);
+    // ✅ FIX: Extraer solo la parte de fecha (YYYY-MM-DD) para evitar problemas de zona horaria
+    // Si viene con timestamp UTC (2025-11-13T00:00:00.000Z), extraer solo la fecha
+    const fechaInicioSolo = fechaInicio.includes('T') ? fechaInicio.split('T')[0] : fechaInicio;
+    const fechaFinSolo = fechaFin.includes('T') ? fechaFin.split('T')[0] : fechaFin;
+
+    const inicio = parseISO(fechaInicioSolo);
+    const fin = parseISO(fechaFinSolo);
+    const dias = calcularDiasBloqueo(fechaInicioSolo, fechaFinSolo);
 
     const fechaInicioStr = format(inicio, "d 'de' MMMM", { locale: es });
     const fechaFinStr = format(fin, "d 'de' MMMM, yyyy", { locale: es });
@@ -255,8 +277,9 @@ export const esBloqueoOrganizacional = (bloqueo) => {
  */
 export const obtenerFechasBloqueo = (fechaInicio, fechaFin) => {
   try {
-    const inicio = parseISO(fechaInicio);
-    const fin = parseISO(fechaFin);
+    // ✅ FIX: Normalizar fechas para evitar problemas de zona horaria
+    const inicio = parseISO(normalizarFecha(fechaInicio));
+    const fin = parseISO(normalizarFecha(fechaFin));
     const fechas = [];
 
     let fechaActual = new Date(inicio);

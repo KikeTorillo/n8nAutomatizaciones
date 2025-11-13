@@ -53,6 +53,10 @@ const inputSchema = {
       type: 'number',
       description: 'Duración en minutos (opcional, se calcula automáticamente si se proporcionan servicios_ids)',
     },
+    excluir_cita_id: {
+      type: 'number',
+      description: 'ID de cita a excluir del análisis (opcional, útil para reagendamiento)',
+    },
   },
   required: ['fecha'],
 };
@@ -83,6 +87,10 @@ const joiSchema = Joi.object({
       'string.pattern.base': 'hora debe tener formato HH:MM',
     }),
   duracion: Joi.number().integer().min(10).max(480).optional(),
+  excluir_cita_id: Joi.number().integer().positive().optional()
+    .messages({
+      'number.positive': 'excluir_cita_id debe ser un número positivo',
+    }),
 })
   // Validar que al menos uno de los dos campos esté presente
   .or('servicios_ids', 'servicio_id')
@@ -191,6 +199,10 @@ async function execute(args, jwtToken) {
 
     if (value.hora) {
       params.hora = value.hora;
+    }
+
+    if (value.excluir_cita_id) {
+      params.excluir_cita_id = value.excluir_cita_id;
     }
 
     logger.info('Consultando disponibilidad con duración total:', {

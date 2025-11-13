@@ -1,5 +1,6 @@
 const RLSContextManager = require('../utils/rlsContextManager');
 const logger = require('../utils/logger');
+const CitaValidacionUtil = require('../utils/cita-validacion.util');
 
 class BloqueosHorariosModel {
 
@@ -32,24 +33,118 @@ class BloqueosHorariosModel {
                     }
                 }
 
-                let citasAfectadas = 0;
-                if (datosBloqueo.calcular_impacto) {
-                    const queryImpacto = `
-                        SELECT COUNT(*) as total
-                        FROM citas c
-                        WHERE c.organizacion_id = $1
-                          AND c.fecha_cita BETWEEN $2::date AND $3::date
-                          AND c.estado IN ('pendiente', 'confirmada')
-                          ${datosBloqueo.profesional_id ? 'AND c.profesional_id = $4' : ''}
-                    `;
+                // ====================================================================
+                // VALIDACIÓN: Verificar que no haya citas confirmadas/pendientes en el rango
+                // ====================================================================
+                const queryCitas = `
+                    SELECT
+                        c.id,
+                        c.codigo_cita,
+                        c.profesional_id,
+                        c.fecha_cita,
+                        c.hora_inicio,
+                        c.hora_fin,
+                        c.estado,
+                        cl.nombre as cliente_nombre
+                    FROM citas c
+                    LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                    WHERE c.organizacion_id = $1
+                      AND c.fecha_cita BETWEEN $2::date AND $3::date
+                      AND c.estado IN ('pendiente', 'confirmada', 'en_curso')
+                      ${datosBloqueo.profesional_id ? 'AND c.profesional_id = $4' : ''}
+                `;
 
-                    const paramsImpacto = datosBloqueo.profesional_id
-                        ? [datosBloqueo.organizacion_id, datosBloqueo.fecha_inicio, datosBloqueo.fecha_fin, datosBloqueo.profesional_id]
-                        : [datosBloqueo.organizacion_id, datosBloqueo.fecha_inicio, datosBloqueo.fecha_fin];
+                const paramsCitas = datosBloqueo.profesional_id
+                    ? [datosBloqueo.organizacion_id, datosBloqueo.fecha_inicio, datosBloqueo.fecha_fin, datosBloqueo.profesional_id]
+                    : [datosBloqueo.organizacion_id, datosBloqueo.fecha_inicio, datosBloqueo.fecha_fin];
 
-                    const impacto = await db.query(queryImpacto, paramsImpacto);
-                    citasAfectadas = parseInt(impacto.rows[0].total);
+                const citasResult = await db.query(queryCitas, paramsCitas);
+
+                // Validar cada cita para ver si se solapa con el bloqueo
+                const citasConflictivas = [];
+
+                for (const cita of citasResult.rows) {
+                    // Si el bloqueo es organizacional, verificar TODAS las citas
+                    // Si el bloqueo es específico de profesional, solo verificar las del mismo profesional
+                    const profesionalAValidar = datosBloqueo.profesional_id || cita.profesional_id;
+
+                    // Para bloqueos de día completo (sin hora_inicio/hora_fin), siempre hay conflicto
+                    if (!datosBloqueo.hora_inicio && !datosBloqueo.hora_fin) {
+                        citasConflictivas.push(cita);
+                    } else if (datosBloqueo.hora_inicio && datosBloqueo.hora_fin) {
+                        // Para bloqueos de horario específico, validar solapamiento de horas
+                        // Usar CitaValidacionUtil para validación consistente
+                        if (CitaValidacionUtil.citaSolapaConSlot(
+                            cita,
+                            profesionalAValidar,
+                            cita.fecha_cita,
+                            datosBloqueo.hora_inicio,
+                            datosBloqueo.hora_fin
+                        )) {
+                            citasConflictivas.push(cita);
+                        }
+                    }
                 }
+
+                // Si hay citas conflictivas, rechazar la creación
+                if (citasConflictivas.length > 0) {
+                    // Formatear fecha a formato legible en español (DD/MM/YYYY)
+                    const formatearFecha = (fecha) => {
+                        // Si viene como Date object de PostgreSQL, convertir a string
+                        let fechaStr = fecha;
+                        if (fecha instanceof Date) {
+                            fechaStr = fecha.toISOString().split('T')[0];
+                        } else if (typeof fecha === 'string' && fecha.includes('T')) {
+                            fechaStr = fecha.split('T')[0];
+                        }
+
+                        // Separar YYYY-MM-DD
+                        const [year, month, day] = fechaStr.split('-');
+                        return `${day}/${month}/${year}`;
+                    };
+
+                    // Formatear hora HH:MM:SS a HH:MM
+                    const formatearHora = (hora) => {
+                        return hora ? hora.substring(0, 5) : '';
+                    };
+
+                    const detallesCitas = citasConflictivas.slice(0, 3).map(c =>
+                        `• ${c.codigo_cita} - ${c.cliente_nombre} el ${formatearFecha(c.fecha_cita)} de ${formatearHora(c.hora_inicio)} a ${formatearHora(c.hora_fin)}`
+                    ).join('\n');
+
+                    const mensajeExtra = citasConflictivas.length > 3
+                        ? `\n• ... y ${citasConflictivas.length - 3} cita${citasConflictivas.length - 3 > 1 ? 's' : ''} más`
+                        : '';
+
+                    const cantidadTexto = citasConflictivas.length === 1
+                        ? '1 cita confirmada o pendiente'
+                        : `${citasConflictivas.length} citas confirmadas o pendientes`;
+
+                    const error = new Error(
+                        `No se puede crear el bloqueo. Hay ${cantidadTexto} que se ${citasConflictivas.length === 1 ? 'solapa' : 'solapan'} con este horario:\n\n${detallesCitas}${mensajeExtra}\n\nPor favor, cancela o reagenda ${citasConflictivas.length === 1 ? 'esta cita' : 'estas citas'} antes de crear el bloqueo.`
+                    );
+                    error.statusCode = 409; // Conflict
+                    error.citasConflictivas = citasConflictivas.map(c => ({
+                        id: c.id,
+                        codigo: c.codigo_cita,
+                        cliente: c.cliente_nombre,
+                        fecha: c.fecha_cita,
+                        horario: `${c.hora_inicio}-${c.hora_fin}`,
+                        estado: c.estado
+                    }));
+
+                    logger.warn('[BloqueosHorariosModel.crear] Bloqueo rechazado por conflicto con citas', {
+                        organizacion_id: datosBloqueo.organizacion_id,
+                        fecha_inicio: datosBloqueo.fecha_inicio,
+                        fecha_fin: datosBloqueo.fecha_fin,
+                        citas_conflictivas: citasConflictivas.length
+                    });
+
+                    throw error;
+                }
+
+                // No hay conflictos, continuar con la creación
+                const citasAfectadas = 0;
 
                 const insertQuery = `
                     INSERT INTO bloqueos_horarios (
@@ -246,7 +341,7 @@ class BloqueosHorariosModel {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             try {
                 const bloqueoExistente = await db.query(`
-                    SELECT id, profesional_id, fecha_inicio, fecha_fin
+                    SELECT id, profesional_id, fecha_inicio, fecha_fin, hora_inicio, hora_fin
                     FROM bloqueos_horarios
                     WHERE id = $1 AND organizacion_id = $2 AND activo = true
                     FOR UPDATE
@@ -254,6 +349,140 @@ class BloqueosHorariosModel {
 
                 if (bloqueoExistente.rows.length === 0) {
                     throw new Error('Bloqueo no encontrado o sin permisos para actualizar');
+                }
+
+                const bloqueoActual = bloqueoExistente.rows[0];
+
+                // ====================================================================
+                // VALIDACIÓN: Si se actualizan fechas u horas, verificar conflictos
+                // ====================================================================
+                const hayActualizacionHorario = (
+                    datosActualizacion.fecha_inicio ||
+                    datosActualizacion.fecha_fin ||
+                    datosActualizacion.hora_inicio !== undefined ||
+                    datosActualizacion.hora_fin !== undefined ||
+                    datosActualizacion.profesional_id !== undefined
+                );
+
+                if (hayActualizacionHorario) {
+                    // Combinar datos actualizados con datos existentes
+                    const fechaInicioFinal = datosActualizacion.fecha_inicio || bloqueoActual.fecha_inicio;
+                    const fechaFinFinal = datosActualizacion.fecha_fin || bloqueoActual.fecha_fin;
+                    const horaInicioFinal = datosActualizacion.hora_inicio !== undefined
+                        ? datosActualizacion.hora_inicio
+                        : bloqueoActual.hora_inicio;
+                    const horaFinFinal = datosActualizacion.hora_fin !== undefined
+                        ? datosActualizacion.hora_fin
+                        : bloqueoActual.hora_fin;
+                    const profesionalIdFinal = datosActualizacion.profesional_id !== undefined
+                        ? datosActualizacion.profesional_id
+                        : bloqueoActual.profesional_id;
+
+                    // Query para obtener citas que podrían solaparse
+                    const queryCitas = `
+                        SELECT
+                            c.id,
+                            c.codigo_cita,
+                            c.profesional_id,
+                            c.fecha_cita,
+                            c.hora_inicio,
+                            c.hora_fin,
+                            c.estado,
+                            cl.nombre as cliente_nombre
+                        FROM citas c
+                        LEFT JOIN clientes cl ON c.cliente_id = cl.id
+                        WHERE c.organizacion_id = $1
+                          AND c.fecha_cita BETWEEN $2::date AND $3::date
+                          AND c.estado IN ('pendiente', 'confirmada', 'en_curso')
+                          ${profesionalIdFinal ? 'AND c.profesional_id = $4' : ''}
+                    `;
+
+                    const paramsCitas = profesionalIdFinal
+                        ? [organizacionId, fechaInicioFinal, fechaFinFinal, profesionalIdFinal]
+                        : [organizacionId, fechaInicioFinal, fechaFinFinal];
+
+                    const citasResult = await db.query(queryCitas, paramsCitas);
+
+                    // Validar cada cita para ver si se solapa con el bloqueo actualizado
+                    const citasConflictivas = [];
+
+                    for (const cita of citasResult.rows) {
+                        const profesionalAValidar = profesionalIdFinal || cita.profesional_id;
+
+                        // Para bloqueos de día completo (sin hora_inicio/hora_fin), siempre hay conflicto
+                        if (!horaInicioFinal && !horaFinFinal) {
+                            citasConflictivas.push(cita);
+                        } else if (horaInicioFinal && horaFinFinal) {
+                            // Para bloqueos de horario específico, validar solapamiento de horas
+                            if (CitaValidacionUtil.citaSolapaConSlot(
+                                cita,
+                                profesionalAValidar,
+                                cita.fecha_cita,
+                                horaInicioFinal,
+                                horaFinFinal
+                            )) {
+                                citasConflictivas.push(cita);
+                            }
+                        }
+                    }
+
+                    // Si hay citas conflictivas, rechazar la actualización
+                    if (citasConflictivas.length > 0) {
+                        // Formatear fecha a formato legible en español (DD/MM/YYYY)
+                        const formatearFecha = (fecha) => {
+                            // Si viene como Date object de PostgreSQL, convertir a string
+                            let fechaStr = fecha;
+                            if (fecha instanceof Date) {
+                                fechaStr = fecha.toISOString().split('T')[0];
+                            } else if (typeof fecha === 'string' && fecha.includes('T')) {
+                                fechaStr = fecha.split('T')[0];
+                            }
+
+                            // Separar YYYY-MM-DD
+                            const [year, month, day] = fechaStr.split('-');
+                            return `${day}/${month}/${year}`;
+                        };
+
+                        // Formatear hora HH:MM:SS a HH:MM
+                        const formatearHora = (hora) => {
+                            return hora ? hora.substring(0, 5) : '';
+                        };
+
+                        const detallesCitas = citasConflictivas.slice(0, 3).map(c =>
+                            `• ${c.codigo_cita} - ${c.cliente_nombre} el ${formatearFecha(c.fecha_cita)} de ${formatearHora(c.hora_inicio)} a ${formatearHora(c.hora_fin)}`
+                        ).join('\n');
+
+                        const mensajeExtra = citasConflictivas.length > 3
+                            ? `\n• ... y ${citasConflictivas.length - 3} cita${citasConflictivas.length - 3 > 1 ? 's' : ''} más`
+                            : '';
+
+                        const cantidadTexto = citasConflictivas.length === 1
+                            ? '1 cita confirmada o pendiente'
+                            : `${citasConflictivas.length} citas confirmadas o pendientes`;
+
+                        const error = new Error(
+                            `No se puede actualizar el bloqueo. Hay ${cantidadTexto} que se ${citasConflictivas.length === 1 ? 'solapa' : 'solapan'} con este horario:\n\n${detallesCitas}${mensajeExtra}\n\nPor favor, cancela o reagenda ${citasConflictivas.length === 1 ? 'esta cita' : 'estas citas'} antes de actualizar el bloqueo.`
+                        );
+                        error.statusCode = 409; // Conflict
+                        error.citasConflictivas = citasConflictivas.map(c => ({
+                            id: c.id,
+                            codigo: c.codigo_cita,
+                            cliente: c.cliente_nombre,
+                            fecha: c.fecha_cita,
+                            horario: `${c.hora_inicio}-${c.hora_fin}`,
+                            estado: c.estado
+                        }));
+
+                        logger.warn('[BloqueosHorariosModel.actualizar] Actualización rechazada por conflicto con citas', {
+                            bloqueo_id: bloqueoId,
+                            organizacion_id: organizacionId,
+                            fecha_inicio: fechaInicioFinal,
+                            fecha_fin: fechaFinFinal,
+                            citas_conflictivas: citasConflictivas.length
+                        });
+
+                        throw error;
+                    }
                 }
 
                 const camposActualizar = [];

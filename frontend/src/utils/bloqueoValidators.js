@@ -201,15 +201,34 @@ export const sanitizarDatosBloqueo = (data) => {
  * Preparar datos de bloqueo existente para el formulario
  */
 export const prepararDatosParaEdicion = (bloqueo) => {
+  // Helper para normalizar fechas: extraer solo YYYY-MM-DD
+  const normalizarFecha = (fecha) => {
+    if (!fecha) return '';
+    // Si viene con timestamp (2025-11-13T00:00:00.000Z), extraer solo la fecha
+    return typeof fecha === 'string' && fecha.includes('T') ? fecha.split('T')[0] : fecha;
+  };
+
+  // Helper para formatear horas de PostgreSQL (HH:MM:SS) a HTML time input (HH:MM)
+  const formatearHora = (hora) => {
+    if (!hora) return '';
+    // Si ya está en formato HH:MM, devolverlo tal cual
+    if (hora.length === 5 && hora.includes(':')) return hora;
+    // Si está en formato HH:MM:SS, tomar solo HH:MM
+    if (hora.length === 8 && hora.split(':').length === 3) {
+      return hora.substring(0, 5);
+    }
+    return hora;
+  };
+
   return {
     id: bloqueo.id,
     titulo: bloqueo.titulo || '',
     descripcion: bloqueo.descripcion || '',
     tipo_bloqueo_id: bloqueo.tipo_bloqueo_id || null,
-    fecha_inicio: bloqueo.fecha_inicio || '',
-    fecha_fin: bloqueo.fecha_fin || '',
-    hora_inicio: bloqueo.hora_inicio || '',
-    hora_fin: bloqueo.hora_fin || '',
+    fecha_inicio: normalizarFecha(bloqueo.fecha_inicio),
+    fecha_fin: normalizarFecha(bloqueo.fecha_fin),
+    hora_inicio: formatearHora(bloqueo.hora_inicio),
+    hora_fin: formatearHora(bloqueo.hora_fin),
     profesional_id: bloqueo.profesional_id || null,
     es_recurrente: bloqueo.es_recurrente || false,
     patron_recurrencia: bloqueo.patron_recurrencia || null,
