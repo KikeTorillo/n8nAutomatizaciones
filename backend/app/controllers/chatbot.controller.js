@@ -13,6 +13,7 @@
  */
 
 const ChatbotConfigModel = require('../database/chatbot-config.model');
+const OrganizacionModel = require('../database/organizacion.model');
 const N8nService = require('../services/n8nService');
 const N8nCredentialService = require('../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
@@ -123,27 +124,42 @@ class ChatbotController {
             );
         }
 
-        // ========== 4. Crear/Obtener credential MCP para autenticación del AI Agent ==========
-        let mcpCredential = null;
-        try {
-            // Estrategia: 1 credential por organización (compartida entre chatbots)
-            // Esto reduce clutter en n8n y facilita rotación de tokens
-            mcpCredential = await N8nMcpCredentialsService.obtenerOCrearPorOrganizacion(organizacionId);
+        // ========== 4. Crear/Reutilizar credential MCP para autenticación del AI Agent ==========
+        let mcpCredentialId = null;
+        let mcpJwtToken = null; // Solo disponible si creamos nueva credential
+        let mcpCredentialCreada = false;
 
-            if (mcpCredential.reutilizada) {
-                logger.info(`[ChatbotController] Credential MCP reutilizada para org ${organizacionId}: ${mcpCredential.id}`);
+        try {
+            // Verificar si la organización ya tiene credential MCP
+            const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
+
+            if (organizacion.mcp_credential_id) {
+                // Reutilizar credential existente
+                mcpCredentialId = organizacion.mcp_credential_id;
+                logger.info(`[ChatbotController] ✅ Credential MCP reutilizada para org ${organizacionId}: ${mcpCredentialId}`);
             } else {
-                logger.info(`[ChatbotController] Credential MCP creada para org ${organizacionId}: ${mcpCredential.id}`);
+                // Crear nueva credential MCP
+                const mcpCredential = await N8nMcpCredentialsService.crearParaOrganizacion(organizacionId);
+                mcpCredentialId = mcpCredential.id;
+                mcpJwtToken = mcpCredential.token; // Guardar token para auditoría
+                mcpCredentialCreada = true;
+
+                // Guardar ID en tabla organizaciones
+                await OrganizacionModel.actualizar(organizacionId, {
+                    mcp_credential_id: mcpCredentialId
+                });
+
+                logger.info(`[ChatbotController] ✅ Credential MCP creada y guardada para org ${organizacionId}: ${mcpCredentialId}`);
             }
         } catch (mcpError) {
             logger.error('[ChatbotController] Error obteniendo/creando credential MCP:', mcpError);
 
-            // Rollback: eliminar credential Telegram
+            // Rollback: eliminar credential de plataforma
             try {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
-                logger.info(`[ChatbotController] Rollback: credential Telegram ${credentialCreada.id} eliminada`);
+                logger.info(`[ChatbotController] Rollback: credential de plataforma ${credentialCreada.id} eliminada`);
             } catch (rollbackError) {
-                logger.error('[ChatbotController] Error en rollback de credential Telegram:', rollbackError.message);
+                logger.error('[ChatbotController] Error en rollback de credential de plataforma:', rollbackError.message);
             }
 
             return ResponseHelper.error(
@@ -167,7 +183,7 @@ class ChatbotController {
                 aiModel: ai_model || 'deepseek-chat',
                 aiTemperature: ai_temperature || 0.7,
                 organizacionId,
-                mcpCredential // Pasar credential MCP completa (id, name, type)
+                mcpCredentialId // Pasar solo el ID de la credential MCP
             });
 
             workflowCreado = await N8nService.crearWorkflow(workflowTemplate);
@@ -180,9 +196,18 @@ class ChatbotController {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
                 logger.info(`[ChatbotController] Rollback: credential Telegram ${credentialCreada.id} eliminada`);
 
-                // NOTA: No eliminamos mcpCredential aquí porque puede estar siendo usada
-                // por otros chatbots de la misma organización (1 credential por org)
-                logger.info(`[ChatbotController] Credential MCP ${mcpCredential.id} se mantiene (compartida por org)`);
+                // Rollback credential MCP solo si la acabamos de crear
+                if (mcpCredentialCreada) {
+                    try {
+                        await N8nMcpCredentialsService.eliminar(mcpCredentialId);
+                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
+                    } catch (rollbackMcpError) {
+                        logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
+                    }
+                } else {
+                    logger.info(`[ChatbotController] Credential MCP ${mcpCredentialId} se mantiene (reutilizada de org)`);
+                }
             } catch (rollbackError) {
                 logger.error('[ChatbotController] Error en rollback de credentials:', rollbackError.message);
             }
@@ -229,9 +254,18 @@ class ChatbotController {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
                 logger.info(`[ChatbotController] Rollback: workflow y credential Telegram eliminados`);
 
-                // NOTA: No eliminamos mcpCredential porque puede estar siendo usada
-                // por otros chatbots de la misma organización (1 credential por org)
-                logger.info(`[ChatbotController] Credential MCP ${mcpCredential.id} se mantiene (compartida por org)`);
+                // Rollback credential MCP solo si la acabamos de crear
+                if (mcpCredentialCreada) {
+                    try {
+                        await N8nMcpCredentialsService.eliminar(mcpCredentialId);
+                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
+                    } catch (rollbackMcpError) {
+                        logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
+                    }
+                } else {
+                    logger.info(`[ChatbotController] Credential MCP ${mcpCredentialId} se mantiene (reutilizada de org)`);
+                }
             } catch (rollbackError) {
                 logger.error('[ChatbotController] Error en rollback completo:', rollbackError.message);
             }
@@ -287,14 +321,13 @@ class ChatbotController {
                 config_plataforma,
                 n8n_workflow_id: workflowCreado.id,
                 n8n_credential_id: credentialCreada.id,
-                mcp_credential_id: mcpCredential?.id || null, // Credential MCP compartida por org
-                workflow_activo: workflowActivado,
+                mcp_credential_id: mcpCredentialId, // Credential MCP compartida por org
                 ai_model: ai_model || 'deepseek-chat',
                 ai_temperature: ai_temperature || 0.7,
                 system_prompt: systemPromptFinal,
-                mcp_jwt_token: mcpCredential?.token || null, // Token JWT para auditoría
-                estado: workflowActivado ? 'activo' : 'error',
-                activo: true
+                mcp_jwt_token: mcpJwtToken, // Token JWT para auditoría (NULL si reutilizada)
+                activo: workflowActivado, // Mapeo 1:1 con workflow.active de n8n
+                ultimo_error: workflowActivado ? null : 'Error al activar el workflow en n8n'
             });
 
             logger.info(`[ChatbotController] Chatbot configurado exitosamente: ${chatbotConfig.id}`);
@@ -323,9 +356,18 @@ class ChatbotController {
                 await N8nCredentialService.eliminarCredential(credentialCreada.id);
                 logger.info(`[ChatbotController] Rollback: workflow y credential Telegram eliminados`);
 
-                // NOTA: No eliminamos mcpCredential porque puede estar siendo usada
-                // por otros chatbots de la misma organización (1 credential por org)
-                logger.info(`[ChatbotController] Credential MCP ${mcpCredential?.id} se mantiene (compartida por org)`);
+                // Rollback credential MCP solo si la acabamos de crear
+                if (mcpCredentialCreada) {
+                    try {
+                        await N8nMcpCredentialsService.eliminar(mcpCredentialId);
+                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
+                    } catch (rollbackMcpError) {
+                        logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
+                    }
+                } else {
+                    logger.info(`[ChatbotController] Credential MCP ${mcpCredentialId} se mantiene (reutilizada de org)`);
+                }
             } catch (rollbackError) {
                 logger.error('[ChatbotController] Error en rollback completo:', rollbackError.message);
             }
@@ -555,16 +597,12 @@ class ChatbotController {
             filtros.plataforma = req.query.plataforma;
         }
 
-        if (req.query.estado) {
-            filtros.estado = req.query.estado;
-        }
-
         if (req.query.activo !== undefined) {
             filtros.activo = req.query.activo === 'true';
         }
 
-        if (req.query.workflow_activo !== undefined) {
-            filtros.workflow_activo = req.query.workflow_activo === 'true';
+        if (req.query.incluir_eliminados !== undefined) {
+            filtros.incluir_eliminados = req.query.incluir_eliminados === 'true';
         }
 
         const paginacion = {
@@ -625,7 +663,11 @@ class ChatbotController {
      * ====================================================================
      * ELIMINAR CHATBOT
      * ====================================================================
-     * Elimina el chatbot, el workflow y la credential de n8n
+     * Elimina el chatbot, el workflow y las credentials de n8n
+     *
+     * ESTRATEGIA CREDENTIAL MCP (1 por organización):
+     * - Solo elimina la credential MCP si es el ÚLTIMO chatbot de la org
+     * - Si quedan otros chatbots, la credential MCP se reutiliza
      *
      * @route DELETE /api/v1/chatbots/:id
      */
@@ -640,7 +682,13 @@ class ChatbotController {
             return ResponseHelper.error(res, 'Chatbot no encontrado', 404);
         }
 
-        // 2. Eliminar workflow de n8n (si existe)
+        // 2. Verificar cuántos chatbots activos quedan en la org (ANTES de eliminar)
+        const estadisticas = await ChatbotConfigModel.obtenerEstadisticas(organizacionId);
+        const esUltimoChatbot = estadisticas.total_chatbots <= 1;
+
+        logger.info(`[ChatbotController] Eliminando chatbot ${id}. Total chatbots en org: ${estadisticas.total_chatbots}, Es último: ${esUltimoChatbot}`);
+
+        // 3. Eliminar workflow de n8n (si existe)
         if (chatbot.n8n_workflow_id) {
             try {
                 await N8nService.eliminarWorkflow(chatbot.n8n_workflow_id);
@@ -651,18 +699,39 @@ class ChatbotController {
             }
         }
 
-        // 3. Eliminar credential de n8n (si existe)
+        // 4. Eliminar credential de plataforma de n8n (si existe)
         if (chatbot.n8n_credential_id) {
             try {
                 await N8nCredentialService.eliminarCredential(chatbot.n8n_credential_id);
-                logger.info(`[ChatbotController] Credential ${chatbot.n8n_credential_id} eliminada de n8n`);
+                logger.info(`[ChatbotController] Credential de plataforma ${chatbot.n8n_credential_id} eliminada de n8n`);
             } catch (error) {
-                logger.warn(`[ChatbotController] Error eliminando credential: ${error.message}`);
+                logger.warn(`[ChatbotController] Error eliminando credential de plataforma: ${error.message}`);
                 // Continuar con la eliminación aunque falle
             }
         }
 
-        // 4. Eliminar de BD (soft delete)
+        // 5. Eliminar credential MCP SOLO si es el último chatbot de la org
+        if (chatbot.mcp_credential_id) {
+            if (esUltimoChatbot) {
+                try {
+                    await N8nMcpCredentialsService.eliminar(chatbot.mcp_credential_id);
+                    logger.info(`[ChatbotController] Credential MCP ${chatbot.mcp_credential_id} eliminada (último chatbot de org ${organizacionId})`);
+
+                    // Limpiar campo en tabla organizaciones
+                    await OrganizacionModel.actualizar(organizacionId, {
+                        mcp_credential_id: null
+                    });
+                    logger.info(`[ChatbotController] Campo mcp_credential_id limpiado en org ${organizacionId}`);
+                } catch (error) {
+                    logger.warn(`[ChatbotController] Error eliminando credential MCP: ${error.message}`);
+                    // Continuar con la eliminación aunque falle
+                }
+            } else {
+                logger.info(`[ChatbotController] Credential MCP ${chatbot.mcp_credential_id} NO eliminada (quedan ${estadisticas.total_chatbots - 1} chatbots más en org ${organizacionId})`);
+            }
+        }
+
+        // 6. Eliminar de BD (soft delete)
         const eliminado = await ChatbotConfigModel.eliminar(parseInt(id), organizacionId);
 
         if (!eliminado) {
@@ -686,25 +755,110 @@ class ChatbotController {
 
     /**
      * ====================================================================
-     * ACTUALIZAR ESTADO
+     * ACTUALIZAR ESTADO ACTIVO
      * ====================================================================
+     * Activa o desactiva un chatbot (mapeo 1:1 con workflow.active de n8n)
+     *
+     * SINCRONIZACIÓN AUTOMÁTICA:
+     * 1. Verifica el estado REAL del workflow en n8n
+     * 2. Si hay desincronización, corrige la BD primero
+     * 3. Aplica el nuevo estado solicitado
+     * 4. Actualiza BD con el resultado
+     *
+     * Esto garantiza que nunca haya desincronización al momento de cambiar el estado.
+     *
      * @route PATCH /api/v1/chatbots/:id/estado
      */
     static actualizarEstado = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const { estado } = req.body;
+        const { activo } = req.body;
 
-        const chatbotActualizado = await ChatbotConfigModel.actualizarEstado(
+        // 1. Obtener chatbot para verificar que existe y tiene workflow
+        const chatbot = await ChatbotConfigModel.obtenerPorId(
             parseInt(id),
-            estado,
             req.tenant.organizacionId
         );
 
-        if (!chatbotActualizado) {
+        if (!chatbot) {
             return ResponseHelper.error(res, 'Chatbot no encontrado', 404);
         }
 
-        return ResponseHelper.success(res, chatbotActualizado, 'Estado del chatbot actualizado exitosamente');
+        if (!chatbot.n8n_workflow_id) {
+            return ResponseHelper.error(res, 'Chatbot no tiene workflow asociado', 400);
+        }
+
+        // 2. VERIFICAR ESTADO REAL EN N8N (prevenir desincronización)
+        let estadoRealN8n = null;
+        try {
+            const estadoN8n = await N8nService.verificarEstado(chatbot.n8n_workflow_id);
+            estadoRealN8n = estadoN8n.active;
+
+            // Si hay desincronización, corregir la BD silenciosamente
+            if (estadoN8n.exists && chatbot.activo !== estadoRealN8n) {
+                logger.warn(`Desincronización detectada en chatbot ${id}: BD=${chatbot.activo}, n8n=${estadoRealN8n}. Corrigiendo...`);
+                await ChatbotConfigModel.actualizarEstado(
+                    parseInt(id),
+                    estadoRealN8n,
+                    req.tenant.organizacionId,
+                    { ultimo_error: null }
+                );
+            }
+        } catch (error) {
+            logger.error(`Error al verificar estado en n8n: ${error.message}`);
+            // Continuar con la operación aunque falle la verificación
+        }
+
+        // 3. Aplicar el NUEVO estado solicitado por el usuario
+        let errorN8n = null;
+        let sincronizado = false;
+
+        try {
+            if (activo) {
+                // Activar en n8n
+                await N8nService.activarWorkflow(chatbot.n8n_workflow_id);
+                logger.info(`Workflow ${chatbot.n8n_workflow_id} activado en n8n`);
+            } else {
+                // Desactivar en n8n
+                await N8nService.desactivarWorkflow(chatbot.n8n_workflow_id);
+                logger.info(`Workflow ${chatbot.n8n_workflow_id} desactivado en n8n`);
+            }
+            sincronizado = true;
+        } catch (error) {
+            errorN8n = error.message;
+            logger.error(`Error al ${activo ? 'activar' : 'desactivar'} workflow en n8n:`, error.message);
+        }
+
+        // 4. Actualizar BD con resultado de sincronización
+        const opciones = {
+            ultimo_error: sincronizado ? null : errorN8n
+        };
+
+        const chatbotActualizado = await ChatbotConfigModel.actualizarEstado(
+            parseInt(id),
+            activo,
+            req.tenant.organizacionId,
+            opciones
+        );
+
+        if (!chatbotActualizado) {
+            return ResponseHelper.error(res, 'Error al actualizar chatbot en BD', 500);
+        }
+
+        // 5. Responder según resultado
+        if (sincronizado) {
+            return ResponseHelper.success(
+                res,
+                chatbotActualizado,
+                `Chatbot ${activo ? 'activado' : 'desactivado'} exitosamente`
+            );
+        } else {
+            return ResponseHelper.error(
+                res,
+                `Error al sincronizar con n8n: ${errorN8n}`,
+                500,
+                { chatbot: chatbotActualizado }
+            );
+        }
     });
 
     /**
@@ -1021,7 +1175,7 @@ El cliente solo necesita información legible y amigable.`;
      * - System prompt personalizado
      * - Configuración de MCP tools (cuando estén disponibles)
      */
-    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpCredential }) {
+    static async _generarWorkflowTemplate({ nombre, plataforma, credentialId, systemPrompt, aiModel, aiTemperature, organizacionId, mcpCredentialId }) {
         try {
             logger.info(`[ChatbotController] Generando workflow dinámico para: ${plataforma}`);
 
@@ -1031,7 +1185,8 @@ El cliente solo necesita información legible y amigable.`;
             logger.debug(`[ChatbotController] Credentials globales obtenidas:`, {
                 deepseek: globalCreds.deepseek?.id || 'N/A',
                 postgres: globalCreds.postgres?.id || 'N/A',
-                redis: globalCreds.redis?.id || 'N/A'
+                redis: globalCreds.redis?.id || 'N/A',
+                mcp: mcpCredentialId || 'N/A'
             });
 
             // 2. Preparar credentials por plataforma
@@ -1043,11 +1198,14 @@ El cliente solo necesita información legible y amigable.`;
                 redis: globalCreds.redis.id
             };
 
-            // 3. Cargar configuración de plataforma
+            // 3. Preparar objeto MCP credential (solo si existe)
+            const mcpCredential = mcpCredentialId ? { id: mcpCredentialId } : null;
+
+            // 4. Cargar configuración de plataforma
             const plataformaNormalizada = plataforma === 'whatsapp_oficial' ? 'whatsapp' : plataforma;
             const platformConfig = require(`../flows/generator/${plataformaNormalizada}.config.js`);
 
-            // 4. Generar workflow usando el generador dinámico
+            // 5. Generar workflow usando el generador dinámico
             const { generarWorkflow } = require('../flows/generator/workflowGenerator.js');
 
             const workflow = generarWorkflow({

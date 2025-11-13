@@ -124,24 +124,27 @@ function Step3_AccountSetup() {
     onError: (error) => {
       console.error('❌ Error en registro:', error);
 
-      const errorMsg = error.message || 'Error al crear la cuenta';
-      const errorData = error.data || {};
+      // Extraer mensaje del backend (estructura de Axios)
+      const errorMsg = error.response?.data?.message || error.message || 'Error al crear la cuenta';
+      const errorStatus = error.response?.status;
+      const errorData = error.response?.data || {};
 
-      // Si es error de email duplicado
-      if (errorMsg.includes('email') || errorMsg.includes('correo')) {
+      // Si es error 409 (email duplicado)
+      if (errorStatus === 409) {
         setError('email', {
           type: 'manual',
-          message: 'Este email ya está registrado',
+          message: errorMsg,
         });
+        toast.error(errorMsg);
       }
       // Si es error de validación 400
-      else if (error.status === 400) {
+      else if (errorStatus === 400) {
         console.error('📋 Detalles del error de validación:', errorData);
-        toast.error(`Error de validación: ${errorMsg}`);
+        toast.error(errorMsg);
       }
       // Otros errores
       else {
-        toast.error(`Error: ${errorMsg}`);
+        toast.error(errorMsg);
       }
     },
   });

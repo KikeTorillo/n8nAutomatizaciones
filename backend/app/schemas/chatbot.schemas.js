@@ -25,16 +25,6 @@ const PLATAFORMAS_VALIDAS = [
     'otro'
 ];
 
-// ========== Estados del Chatbot ==========
-
-const ESTADOS_VALIDOS = [
-    'configurando',
-    'activo',
-    'error',
-    'pausado',
-    'desactivado'
-];
-
 // ========== Modelos de IA Soportados ==========
 
 const MODELOS_IA_VALIDOS = [
@@ -211,9 +201,8 @@ const listar = {
         pagina: Joi.number().integer().min(1).default(1),
         limite: Joi.number().integer().min(1).max(100).default(20),
         plataforma: Joi.string().valid(...PLATAFORMAS_VALIDAS).optional(),
-        estado: Joi.string().valid(...ESTADOS_VALIDOS).optional(),
         activo: Joi.boolean().optional(),
-        workflow_activo: Joi.boolean().optional()
+        incluir_eliminados: Joi.boolean().optional()
     })
 };
 
@@ -267,17 +256,23 @@ const eliminar = {
 // ========== Schemas Específicos de Chatbot ==========
 
 /**
- * Schema para actualizar estado del chatbot
+ * Schema para actualizar estado activo del chatbot
+ * Mapeo 1:1 con workflow.active de n8n
  */
 const actualizarEstado = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     body: Joi.object({
-        estado: Joi.string().valid(...ESTADOS_VALIDOS).required()
+        activo: Joi.boolean().required()
             .messages({
-                'any.only': `estado debe ser uno de: ${ESTADOS_VALIDOS.join(', ')}`,
-                'string.empty': 'estado es requerido'
+                'boolean.base': 'activo debe ser un valor booleano (true/false)',
+                'any.required': 'activo es requerido'
+            }),
+
+        ultimo_error: Joi.string().trim().max(500).allow(null, '').optional()
+            .messages({
+                'string.max': 'ultimo_error no puede exceder 500 caracteres'
             })
     })
 };
@@ -300,9 +295,7 @@ const actualizarWorkflow = {
             .messages({
                 'string.empty': 'n8n_credential_id no puede estar vacío',
                 'string.max': 'n8n_credential_id no puede exceder 100 caracteres'
-            }),
-
-        workflow_activo: Joi.boolean().optional()
+            })
     }).min(1)
         .messages({
             'object.min': 'Debe proporcionar al menos un campo de workflow para actualizar'
@@ -351,7 +344,6 @@ module.exports = {
 
     // Exportar constantes para uso en tests
     PLATAFORMAS_VALIDAS,
-    ESTADOS_VALIDOS,
     MODELOS_IA_VALIDOS,
     TELEGRAM_TOKEN_REGEX
 };

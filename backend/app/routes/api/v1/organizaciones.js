@@ -50,6 +50,14 @@ router.get('/:id/estadisticas',
     (req, res, next) => OrganizacionController.obtenerEstadisticas(req, res, next)
 );
 
+router.get('/:id/setup-progress',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(organizacionSchemas.obtenerProgresoSetup),
+    (req, res, next) => OrganizacionController.obtenerProgresoSetup(req, res, next)
+);
+
 router.get('/:id/metricas',
     auth.authenticateToken,
     tenant.setTenantContext,

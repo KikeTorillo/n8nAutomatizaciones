@@ -323,7 +323,6 @@ CREATE TABLE chatbot_config (
     n8n_workflow_id VARCHAR(100) UNIQUE,
     n8n_workflow_name VARCHAR(255),
     n8n_credential_id VARCHAR(100),
-    workflow_activo BOOLEAN DEFAULT false,
 
     -- 🔐 AUTENTICACIÓN MCP SERVER (Multi-tenant)
     -- Token JWT único por chatbot para que el MCP Server
@@ -341,9 +340,15 @@ CREATE TABLE chatbot_config (
     ai_temperature DECIMAL(3,2) DEFAULT 0.7 CHECK (ai_temperature >= 0 AND ai_temperature <= 2),
     system_prompt TEXT,
 
-    -- 🔄 ESTADO Y MÉTRICAS
-    estado estado_chatbot DEFAULT 'configurando',
-    activo BOOLEAN DEFAULT true,
+    -- 🔄 ESTADO (Simplificado - Mapeo 1:1 con n8n)
+    -- activo: true/false → Mapea directamente con workflow.active en n8n
+    -- deleted_at: NULL = activo, NOT NULL = eliminado (soft delete)
+    -- ultimo_error: NULL = sin errores, TEXT = mensaje de error diagnóstico
+    activo BOOLEAN DEFAULT false,
+    deleted_at TIMESTAMPTZ NULL,
+    ultimo_error TEXT NULL,
+
+    -- 📊 MÉTRICAS
     ultimo_mensaje_recibido TIMESTAMPTZ,
     total_mensajes_procesados INTEGER DEFAULT 0 CHECK (total_mensajes_procesados >= 0),
     total_citas_creadas INTEGER DEFAULT 0 CHECK (total_citas_creadas >= 0),
@@ -363,15 +368,30 @@ CREATE TABLE chatbot_config (
     actualizado_en TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
 
     -- ✅ CONSTRAINTS
-    CONSTRAINT uq_chatbot_org_plataforma
-        UNIQUE (organizacion_id, plataforma),
-
     CONSTRAINT chk_nombre_not_empty
         CHECK (LENGTH(TRIM(nombre)) > 0),
 
     CONSTRAINT chk_system_prompt_length
         CHECK (system_prompt IS NULL OR LENGTH(system_prompt) >= 100)
 );
+
+-- ====================================================================
+-- 🔒 ÍNDICE ÚNICO PARCIAL: SOLO CHATBOTS ACTIVOS (NO ELIMINADOS)
+-- ====================================================================
+-- IMPORTANTE: No se puede usar UNIQUE constraint directo porque
+-- necesitamos excluir registros con soft delete (deleted_at IS NOT NULL).
+--
+-- Con este índice parcial:
+-- ✅ PERMITE: Crear chatbot Telegram después de eliminar uno anterior
+-- ✅ PREVIENE: Tener 2+ chatbots Telegram activos simultáneamente
+-- ====================================================================
+CREATE UNIQUE INDEX uq_chatbot_org_plataforma_active
+    ON chatbot_config(organizacion_id, plataforma)
+    WHERE deleted_at IS NULL;
+
+COMMENT ON INDEX uq_chatbot_org_plataforma_active IS
+'Garantiza 1 chatbot activo por plataforma por organización.
+Excluye registros eliminados (soft delete) para permitir recreación.';
 
 -- 📝 COMENTARIOS DE DOCUMENTACIÓN
 COMMENT ON TABLE chatbot_config IS 'Configuración de chatbots de IA multi-plataforma por organización';

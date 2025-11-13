@@ -626,15 +626,18 @@ COMMENT ON INDEX idx_chatbot_mcp_credential IS
 Útil para identificar todos los chatbots de una org que usan la misma credential
 al renovar tokens o debugging de autenticación con MCP Server.';
 
--- 📊 ÍNDICE COMPUESTO: ESTADO Y ACTIVO
--- Propósito: Filtros por estado (activo, error, pausado) y flag activo
--- Uso: WHERE estado = ? AND activo = ?
-CREATE INDEX IF NOT EXISTS idx_chatbot_estado_activo
-    ON chatbot_config(estado, activo);
+-- 📊 ÍNDICE COMPUESTO: DELETED_AT Y ACTIVO (Soft Delete + Estado)
+-- Propósito: Filtros por chatbots no eliminados y su estado activo/inactivo
+-- Uso: WHERE deleted_at IS NULL AND activo = ?
+-- Diseño: deleted_at primero porque es altamente selectivo (mayoría NULL)
+CREATE INDEX IF NOT EXISTS idx_chatbot_deleted_activo
+    ON chatbot_config(deleted_at, activo);
 
-COMMENT ON INDEX idx_chatbot_estado_activo IS
-'Índice compuesto para filtrado por estado y flag activo.
-Usado en dashboards de administración y monitoreo de chatbots.';
+COMMENT ON INDEX idx_chatbot_deleted_activo IS
+'Índice compuesto para soft delete y estado activo.
+Soporta queries: WHERE deleted_at IS NULL AND activo = true/false.
+Usado en listados de chatbots activos/inactivos (excluyendo eliminados).
+Mapeo 1:1 con workflow.active de n8n.';
 
 -- 📱 ÍNDICE: PLATAFORMA
 -- Propósito: Filtrar chatbots por plataforma (telegram, whatsapp, etc)

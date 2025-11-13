@@ -416,6 +416,72 @@ class OrganizacionModel {
         };
     }
 
+    /**
+     * Obtener progreso del setup inicial de una organización
+     * Para mostrar checklist de configuración en el dashboard
+     */
+    static async obtenerProgresoSetup(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            // 1. Contar profesionales activos
+            const profesionalesResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM profesionales
+                WHERE activo = true
+            `);
+            const profesionales = profesionalesResult.rows[0].total;
+
+            // 2. Verificar si hay horarios configurados (al menos 1 profesional con horarios)
+            const horariosResult = await db.query(`
+                SELECT COUNT(DISTINCT profesional_id)::int as total
+                FROM horarios_profesionales
+            `);
+            const horarios_configurados = horariosResult.rows[0].total > 0;
+
+            // 3. Contar servicios activos
+            const serviciosResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM servicios
+                WHERE activo = true
+            `);
+            const servicios = serviciosResult.rows[0].total;
+
+            // 4. Contar asignaciones servicio-profesional activas
+            const asignacionesResult = await db.query(`
+                SELECT COUNT(*)::int as total
+                FROM servicios_profesionales sp
+                JOIN servicios s ON s.id = sp.servicio_id
+                JOIN profesionales p ON p.id = sp.profesional_id
+                WHERE s.activo = true AND p.activo = true
+            `);
+            const asignaciones = asignacionesResult.rows[0].total;
+
+            // 5. Calcular progreso
+            const steps = [
+                profesionales > 0,      // Paso 1: Crear profesional
+                horarios_configurados,  // Paso 2: Configurar horarios
+                servicios > 0,          // Paso 3: Crear servicio
+                asignaciones > 0        // Paso 4: Asignar servicio a profesional
+            ];
+
+            const completedSteps = steps.filter(Boolean).length;
+            const totalSteps = steps.length;
+            const progressPercentage = Math.round((completedSteps / totalSteps) * 100);
+
+            return {
+                completed: completedSteps === totalSteps,
+                profesionales,
+                horarios_configurados,
+                servicios,
+                asignaciones,
+                progress: {
+                    completed_steps: completedSteps,
+                    total_steps: totalSteps,
+                    percentage: progressPercentage
+                }
+            };
+        });
+    }
+
 
     // Cambiar plan de subscripción de una organización
     static async cambiarPlan(organizacionId, codigoPlan, configuracionPlan = {}) {

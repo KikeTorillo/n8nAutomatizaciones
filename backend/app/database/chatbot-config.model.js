@@ -22,13 +22,12 @@ class ChatbotConfigModel {
      * @param {string} [chatbotData.n8n_workflow_id] - ID del workflow en n8n
      * @param {string} [chatbotData.n8n_credential_id] - ID de la credential en n8n
      * @param {string} [chatbotData.mcp_credential_id] - ID de la credential MCP en n8n (compartida por org)
-     * @param {boolean} [chatbotData.workflow_activo] - Si el workflow está activo
      * @param {string} [chatbotData.ai_model] - Modelo de IA (default: deepseek-chat)
      * @param {number} [chatbotData.ai_temperature] - Temperatura del modelo (0.0-2.0, default: 0.7)
      * @param {string} [chatbotData.system_prompt] - Prompt del sistema para el AI Agent
      * @param {string} [chatbotData.mcp_jwt_token] - Token JWT para autenticación con MCP Server
-     * @param {string} [chatbotData.estado] - Estado del chatbot (default: configurando)
-     * @param {boolean} [chatbotData.activo] - Si el chatbot está activo (default: true)
+     * @param {boolean} [chatbotData.activo] - Si el chatbot está activo (default: false, se activa después)
+     * @param {string} [chatbotData.ultimo_error] - Mensaje de error si hubo problema en activación
      * @returns {Promise<Object>} Chatbot creado
      */
     static async crear(chatbotData) {
@@ -36,15 +35,15 @@ class ChatbotConfigModel {
             const query = `
                 INSERT INTO chatbot_config (
                     organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    activo, ultimo_error
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
             `;
@@ -57,13 +56,12 @@ class ChatbotConfigModel {
                 chatbotData.n8n_workflow_id || null,
                 chatbotData.n8n_credential_id || null,
                 chatbotData.mcp_credential_id || null,
-                chatbotData.workflow_activo !== undefined ? chatbotData.workflow_activo : false,
                 chatbotData.ai_model || 'deepseek-chat',
                 chatbotData.ai_temperature !== undefined ? chatbotData.ai_temperature : 0.7,
                 chatbotData.system_prompt || null,
                 chatbotData.mcp_jwt_token || null,
-                chatbotData.estado || 'configurando',
-                chatbotData.activo !== undefined ? chatbotData.activo : true
+                chatbotData.activo !== undefined ? chatbotData.activo : false,
+                chatbotData.ultimo_error || null
             ];
 
             try {
@@ -111,13 +109,13 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
                 FROM chatbot_config
-                WHERE id = $1
+                WHERE id = $1 AND deleted_at IS NULL
             `;
 
             const result = await db.query(query, [id]);
@@ -137,13 +135,13 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
                 FROM chatbot_config
-                WHERE plataforma = $1
+                WHERE plataforma = $1 AND deleted_at IS NULL
             `;
 
             const result = await db.query(query, [plataforma]);
@@ -157,9 +155,8 @@ class ChatbotConfigModel {
      * @param {number} organizacionId - ID de la organización
      * @param {Object} [filtros] - Filtros opcionales
      * @param {string} [filtros.plataforma] - Filtrar por plataforma
-     * @param {string} [filtros.estado] - Filtrar por estado
      * @param {boolean} [filtros.activo] - Filtrar por activo
-     * @param {boolean} [filtros.workflow_activo] - Filtrar por workflow activo
+     * @param {boolean} [filtros.incluir_eliminados] - Incluir chatbots eliminados (default: false)
      * @param {Object} [paginacion] - Opciones de paginación
      * @param {number} [paginacion.pagina=1] - Página actual
      * @param {number} [paginacion.limite=20] - Elementos por página
@@ -176,15 +173,14 @@ class ChatbotConfigModel {
             const valores = [];
             let parametroIndex = 1;
 
+            // Filtro por deleted_at (excluir eliminados por defecto)
+            if (!filtros.incluir_eliminados) {
+                condiciones.push('deleted_at IS NULL');
+            }
+
             if (filtros.plataforma) {
                 condiciones.push(`plataforma = $${parametroIndex}`);
                 valores.push(filtros.plataforma);
-                parametroIndex++;
-            }
-
-            if (filtros.estado) {
-                condiciones.push(`estado = $${parametroIndex}`);
-                valores.push(filtros.estado);
                 parametroIndex++;
             }
 
@@ -194,20 +190,14 @@ class ChatbotConfigModel {
                 parametroIndex++;
             }
 
-            if (filtros.workflow_activo !== undefined) {
-                condiciones.push(`workflow_activo = $${parametroIndex}`);
-                valores.push(filtros.workflow_activo);
-                parametroIndex++;
-            }
-
             const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
             const queryChatbots = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
                 FROM chatbot_config
@@ -256,13 +246,12 @@ class ChatbotConfigModel {
      * @param {Object} workflowData - Datos del workflow a actualizar
      * @param {string} [workflowData.n8n_workflow_id] - ID del workflow en n8n
      * @param {string} [workflowData.n8n_credential_id] - ID de la credential en n8n
-     * @param {boolean} [workflowData.workflow_activo] - Si el workflow está activo
      * @param {number} organizacionId - ID de la organización
      * @returns {Promise<Object|null>} Chatbot actualizado o null
      */
     static async actualizarWorkflow(id, workflowData, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const camposActualizables = ['n8n_workflow_id', 'n8n_credential_id', 'workflow_activo'];
+            const camposActualizables = ['n8n_workflow_id', 'n8n_credential_id'];
             const setClauses = [];
             const valores = [id];
             let parametroIndex = 2;
@@ -284,12 +273,12 @@ class ChatbotConfigModel {
             const query = `
                 UPDATE chatbot_config
                 SET ${setClauses.join(', ')}
-                WHERE id = $1
+                WHERE id = $1 AND deleted_at IS NULL
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
             `;
@@ -309,29 +298,37 @@ class ChatbotConfigModel {
     }
 
     /**
-     * Actualizar estado del chatbot
+     * Actualizar estado activo del chatbot
      *
      * @param {number} id - ID del chatbot
-     * @param {string} estado - Nuevo estado (configurando, activo, error, pausado, desactivado)
+     * @param {boolean} activo - true para activar, false para desactivar
      * @param {number} organizacionId - ID de la organización
      * @param {Object} [opciones] - Opciones adicionales
-     * @param {string} [opciones.ultimo_error] - Mensaje de error si estado es 'error'
+     * @param {string} [opciones.ultimo_error] - Mensaje de error si hay problema al activar
      * @returns {Promise<Object|null>} Chatbot actualizado o null
      */
-    static async actualizarEstado(id, estado, organizacionId, opciones = {}) {
+    static async actualizarEstado(id, activo, organizacionId, opciones = {}) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const setClauses = ['estado = $2', 'actualizado_en = NOW()'];
-            const valores = [id, estado];
+            const setClauses = ['activo = $2', 'actualizado_en = NOW()'];
+            const valores = [id, activo];
+            let parametroIndex = 3;
+
+            // Si se proporciona mensaje de error, actualizarlo
+            if (opciones.ultimo_error !== undefined) {
+                setClauses.push(`ultimo_error = $${parametroIndex}`);
+                valores.push(opciones.ultimo_error);
+                parametroIndex++;
+            }
 
             const query = `
                 UPDATE chatbot_config
                 SET ${setClauses.join(', ')}
-                WHERE id = $1
+                WHERE id = $1 AND deleted_at IS NULL
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
             `;
@@ -385,12 +382,12 @@ class ChatbotConfigModel {
             const query = `
                 UPDATE chatbot_config
                 SET ${setClauses.join(', ')}
-                WHERE id = $1
+                WHERE id = $1 AND deleted_at IS NULL
                 RETURNING
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
             `;
@@ -450,8 +447,8 @@ class ChatbotConfigModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 UPDATE chatbot_config
-                SET activo = false, estado = 'desactivado', actualizado_en = NOW()
-                WHERE id = $1
+                SET activo = false, deleted_at = NOW(), actualizado_en = NOW()
+                WHERE id = $1 AND deleted_at IS NULL
             `;
 
             const result = await db.query(query, [id]);
@@ -496,15 +493,14 @@ class ChatbotConfigModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
-                    COUNT(*) as total_chatbots,
-                    COUNT(*) FILTER (WHERE activo = true) as chatbots_activos,
-                    COUNT(*) FILTER (WHERE activo = false) as chatbots_inactivos,
-                    COUNT(*) FILTER (WHERE estado = 'activo') as chatbots_funcionando,
-                    COUNT(*) FILTER (WHERE estado = 'error') as chatbots_con_error,
-                    COUNT(*) FILTER (WHERE workflow_activo = true) as workflows_activos,
-                    COUNT(DISTINCT plataforma) as total_plataformas_configuradas,
-                    SUM(total_mensajes_procesados) as total_mensajes_procesados,
-                    SUM(total_citas_creadas) as total_citas_creadas
+                    COUNT(*) FILTER (WHERE deleted_at IS NULL) as total_chatbots,
+                    COUNT(*) FILTER (WHERE activo = true AND deleted_at IS NULL) as chatbots_activos,
+                    COUNT(*) FILTER (WHERE activo = false AND deleted_at IS NULL) as chatbots_inactivos,
+                    COUNT(*) FILTER (WHERE ultimo_error IS NOT NULL AND deleted_at IS NULL) as chatbots_con_error,
+                    COUNT(*) FILTER (WHERE deleted_at IS NOT NULL) as chatbots_eliminados,
+                    COUNT(DISTINCT plataforma) FILTER (WHERE deleted_at IS NULL) as total_plataformas_configuradas,
+                    SUM(total_mensajes_procesados) FILTER (WHERE deleted_at IS NULL) as total_mensajes_procesados,
+                    SUM(total_citas_creadas) FILTER (WHERE deleted_at IS NULL) as total_citas_creadas
                 FROM chatbot_config
             `;
 
@@ -516,9 +512,8 @@ class ChatbotConfigModel {
                 total_chatbots: parseInt(stats.total_chatbots),
                 chatbots_activos: parseInt(stats.chatbots_activos),
                 chatbots_inactivos: parseInt(stats.chatbots_inactivos),
-                chatbots_funcionando: parseInt(stats.chatbots_funcionando),
                 chatbots_con_error: parseInt(stats.chatbots_con_error),
-                workflows_activos: parseInt(stats.workflows_activos),
+                chatbots_eliminados: parseInt(stats.chatbots_eliminados),
                 total_plataformas_configuradas: parseInt(stats.total_plataformas_configuradas),
                 total_mensajes_procesados: parseInt(stats.total_mensajes_procesados) || 0,
                 total_citas_creadas: parseInt(stats.total_citas_creadas) || 0
@@ -539,13 +534,13 @@ class ChatbotConfigModel {
             const query = `
                 SELECT
                     id, organizacion_id, nombre, plataforma, config_plataforma,
-                    n8n_workflow_id, n8n_credential_id, mcp_credential_id, workflow_activo,
+                    n8n_workflow_id, n8n_credential_id, mcp_credential_id,
                     ai_model, ai_temperature, system_prompt, mcp_jwt_token,
-                    estado, activo, ultimo_mensaje_recibido,
+                    activo, deleted_at, ultimo_error, ultimo_mensaje_recibido,
                     total_mensajes_procesados, total_citas_creadas,
                     creado_en, actualizado_en
                 FROM chatbot_config
-                WHERE n8n_workflow_id = $1
+                WHERE n8n_workflow_id = $1 AND deleted_at IS NULL
             `;
 
             const result = await db.query(query, [workflowId]);

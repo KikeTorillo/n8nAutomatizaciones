@@ -10,6 +10,7 @@ import StatCard from '@/components/dashboard/StatCard';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
+import SetupChecklist from '@/components/dashboard/SetupChecklist';
 import {
   useEstadisticasOrganizacion,
   useServiciosDashboard,
@@ -189,6 +190,9 @@ function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Widget de Estado de Trial */}
         <TrialStatusWidget />
+
+        {/* Checklist de Configuración Inicial */}
+        <SetupChecklist />
 
         {/* Mensaje de Error */}
         {errorEstadisticas && (

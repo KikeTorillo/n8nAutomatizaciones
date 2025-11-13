@@ -118,6 +118,18 @@ class OrganizacionController {
         return ResponseHelper.success(res, estadisticas);
     });
 
+    static obtenerProgresoSetup = asyncHandler(async (req, res) => {
+        const organizacionId = parseInt(req.params.id);
+
+        // Validar acceso
+        if (!this.validarAccesoOrganizacion(req, organizacionId)) {
+            return ResponseHelper.error(res, 'No tienes permisos para acceder a esta información', 403);
+        }
+
+        const progreso = await OrganizacionModel.obtenerProgresoSetup(organizacionId);
+        return ResponseHelper.success(res, progreso);
+    });
+
     static onboarding = asyncHandler(async (req, res) => {
         const { organizacion, admin } = req.body;
 
@@ -125,7 +137,7 @@ class OrganizacionController {
         // Esto evita dejar organizaciones huérfanas sin admin
         const emailExistente = await UsuarioModel.buscarPorEmail(admin.email);
         if (emailExistente) {
-            return ResponseHelper.error(res, 'El email del administrador ya está registrado en el sistema', 409);
+            return ResponseHelper.error(res, 'Ya existe una cuenta con este email', 409);
         }
 
         // PASO 2: Preparar datos de la organización

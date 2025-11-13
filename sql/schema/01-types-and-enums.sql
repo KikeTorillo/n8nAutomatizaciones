@@ -245,19 +245,15 @@ CREATE TYPE plataforma_chatbot AS ENUM (
 COMMENT ON TYPE plataforma_chatbot IS 'Plataformas de mensajería soportadas para chatbots de IA';
 
 -- ====================================================================
--- 🟢 ENUM ESTADO_CHATBOT - CICLO DE VIDA DE CHATBOTS
+-- 🟢 CHATBOT - ESTADO SIMPLIFICADO
 -- ====================================================================
--- Define los estados del ciclo de vida de un chatbot desde su
--- configuración inicial hasta su desactivación.
+-- Los chatbots solo usan el campo boolean 'activo' (true/false)
+-- que mapea directamente con el estado 'active' de n8n workflows.
 --
--- 🔄 WORKFLOW: configurando → activo → pausado/error → desactivado
+-- No se requiere ENUM porque n8n solo tiene dos estados:
+-- • active: true  → chatbot.activo = true
+-- • active: false → chatbot.activo = false
+--
+-- Para diagnóstico de errores se usa el campo 'ultimo_error' (TEXT)
+-- Para soft delete se usa el campo 'deleted_at' (TIMESTAMP)
 -- ────────────────────────────────────────────────────────────────────
-CREATE TYPE estado_chatbot AS ENUM (
-    'configurando',    -- En proceso de configuración inicial (credential + workflow)
-    'activo',          -- Funcionando correctamente y procesando mensajes
-    'error',           -- Error en workflow, credential inválida o API caída
-    'pausado',         -- Pausado temporalmente por el usuario
-    'desactivado'      -- Desactivado permanentemente (credential eliminada)
-);
-
-COMMENT ON TYPE estado_chatbot IS 'Estados del ciclo de vida de un chatbot de IA';

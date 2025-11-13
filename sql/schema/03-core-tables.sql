@@ -41,6 +41,11 @@ CREATE TABLE organizaciones (
     fecha_registro TIMESTAMPTZ DEFAULT NOW(),
     fecha_activacion TIMESTAMPTZ,
 
+    -- 🤖 Chatbots IA (Integración n8n)
+    -- Credential MCP compartida por todos los chatbots de la organización
+    -- Se crea al crear el primer chatbot y se elimina al eliminar el último
+    mcp_credential_id VARCHAR(50) NULL,
+
     -- Configuración regional
     zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
     idioma VARCHAR(5) DEFAULT 'es',

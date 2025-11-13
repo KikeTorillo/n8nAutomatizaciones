@@ -99,6 +99,13 @@ export const organizacionesApi = {
    * @returns {Promise<Object>}
    */
   obtenerEstadisticas: (id) => apiClient.get(`/organizaciones/${id}/estadisticas`),
+
+  /**
+   * Obtener progreso del setup inicial
+   * @param {number} id
+   * @returns {Promise<Object>} { completed, profesionales, horarios_configurados, servicios, asignaciones, progress }
+   */
+  getSetupProgress: (id) => apiClient.get(`/organizaciones/${id}/setup-progress`),
 };
 
 // ==================== USUARIOS ====================

@@ -216,6 +216,13 @@ const obtenerEstadisticas = {
     })
 };
 
+// GET /organizaciones/:id/setup-progress
+const obtenerProgresoSetup = {
+    params: Joi.object({
+        id: commonSchemas.id
+    })
+};
+
 // GET /organizaciones/:id/metricas
 const obtenerMetricas = {
     params: Joi.object({
@@ -277,6 +284,7 @@ module.exports = {
     onboarding,
     verificarLimites,
     obtenerEstadisticas,
+    obtenerProgresoSetup,
     obtenerMetricas,
     cambiarPlan,
     suspender,

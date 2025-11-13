@@ -450,10 +450,10 @@ const apiRateLimit = createRateLimit({
  * Rate limiting para operaciones computacionalmente costosas
  *
  * Específico para endpoints que consumen muchos recursos del servidor
- * como generación de reportes, exports masivos, backups, etc.
+ * como generación de reportes, exports masivos, backups, configuración de chatbots, etc.
  *
  * Configuración:
- * - 5 operaciones por hora por usuario
+ * - 20 operaciones por hora por usuario
  * - Ventana larga para operaciones intensivas
  * - Key format: 'rate_limit:heavy:123' por usuario
  *
@@ -461,11 +461,12 @@ const apiRateLimit = createRateLimit({
  * @example
  * router.post('/reports/export-all', heavyOperationRateLimit, exportController);
  * router.get('/analytics/full-report', heavyOperationRateLimit, analyticsController);
+ * router.post('/chatbots/configurar', heavyOperationRateLimit, chatbotController);
  */
 const heavyOperationRateLimit = createRateLimit({
   windowMs: 60 * 60 * 1000,                                      // 1 hora
-  max: 5,                                                      // Solo 5 operaciones pesadas
-  message: 'Límite de operaciones pesadas excedido, máximo 5 por hora',
+  max: 20,                                                     // 20 operaciones pesadas
+  message: 'Límite de operaciones pesadas excedido, máximo 20 por hora',
   keyGenerator: (req) => req.user ? `heavy:${req.user.id}` : `heavy:${req.ip}` // Por usuario
 });
 

@@ -500,8 +500,7 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                 isLoading={crearMutation.isPending || actualizarMutation.isPending}
                 disabled={
                   crearMutation.isPending ||
-                  actualizarMutation.isPending ||
-                  (!isEditMode && selectedProfessionals.length === 0)
+                  actualizarMutation.isPending
                 }
               >
                 {isEditMode

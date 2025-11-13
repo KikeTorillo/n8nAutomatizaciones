@@ -84,56 +84,33 @@ class N8nMcpCredentialsService {
 
     /**
      * ====================================================================
-     * OBTENER O CREAR CREDENTIAL MCP POR ORGANIZACIÓN
+     * CREAR CREDENTIAL MCP PARA ORGANIZACIÓN
      * ====================================================================
      *
-     * Busca si ya existe una credential MCP para la organización.
-     * Si existe, la retorna. Si no, crea una nueva con un token JWT.
+     * Crea una nueva credential MCP con token JWT para una organización.
      *
      * ESTRATEGIA: 1 credential por organización
-     * - Todos los chatbots de la org comparten la misma credential
-     * - El token JWT contiene organizacion_id para RLS
-     * - Naming convention: "MCP Auth - Org {organizacion_id}"
+     * - El controller verifica si la org ya tiene mcp_credential_id
+     * - Si no tiene, llama a este método para crear una nueva
+     * - Si tiene, reutiliza el ID existente (no llama a este método)
+     * - Naming convention: "MCP-Auth-Org{organizacion_id}"
      *
      * @param {number} organizacionId - ID de la organización
      * @returns {Promise<Object>} { id, name, type, token }
      */
-    async obtenerOCrearPorOrganizacion(organizacionId) {
+    async crearParaOrganizacion(organizacionId) {
         const client = await this.createN8nClient(); // ✅ API Key dinámica
 
         try {
-            const credentialName = `MCP Auth - Org ${organizacionId}`;
+            // Naming simplificado sin espacios para evitar problemas de búsqueda
+            const credentialName = `MCP-Auth-Org${organizacionId}`;
 
-            // 1. Buscar credential existente
-            logger.info(`[N8nMcpCreds] Buscando credential para org ${organizacionId}...`);
-
-            try {
-                const credenciales = await client.get('/api/v1/credentials');
-
-                const credentialExistente = credenciales.data.data.find(
-                    cred => cred.name === credentialName && cred.type === 'httpHeaderAuth'
-                );
-
-                if (credentialExistente) {
-                    logger.info(`[N8nMcpCreds] Credential MCP reutilizada para org ${organizacionId}: ${credentialExistente.id}`);
-                    return {
-                        id: credentialExistente.id,
-                        name: credentialExistente.name,
-                        type: credentialExistente.type,
-                        reutilizada: true
-                    };
-                }
-            } catch (error) {
-                logger.warn('[N8nMcpCreds] Error buscando credentials existentes:', error.message);
-                // Continuar para crear nueva credential
-            }
-
-            // 2. Generar token JWT para la organización
-            logger.info(`[N8nMcpCreds] Generando nuevo token JWT para org ${organizacionId}...`);
+            // 1. Generar token JWT para la organización
+            logger.info(`[N8nMcpCreds] Generando token JWT para org ${organizacionId}...`);
             const token = await generarTokenMCP(organizacionId);
 
-            // 3. Crear nueva credential en n8n
-            logger.info(`[N8nMcpCreds] Creando nueva credential MCP para org ${organizacionId}...`);
+            // 2. Crear credential en n8n
+            logger.info(`[N8nMcpCreds] Creando credential MCP "${credentialName}"...`);
 
             const newCredential = await client.post('/api/v1/credentials', {
                 name: credentialName,
@@ -144,24 +121,23 @@ class N8nMcpCredentialsService {
                 }
             });
 
-            logger.info(`[N8nMcpCreds] Credential MCP creada exitosamente: ${newCredential.data.id}`);
+            logger.info(`[N8nMcpCreds] ✅ Credential MCP creada: ${newCredential.data.id} ("${credentialName}")`);
 
             return {
                 id: newCredential.data.id,
                 name: newCredential.data.name,
                 type: newCredential.data.type,
-                token: token,
-                reutilizada: false
+                token: token
             };
 
         } catch (error) {
-            logger.error('[N8nMcpCreds] Error obteniendo/creando credential MCP:', error.message);
+            logger.error('[N8nMcpCreds] Error creando credential MCP:', error.message);
 
             if (error.response) {
                 logger.error('[N8nMcpCreds] Response data:', error.response.data);
             }
 
-            throw new Error(`Error con credential MCP: ${error.message}`);
+            throw new Error(`Error creando credential MCP: ${error.message}`);
         }
     }
 
@@ -248,44 +224,6 @@ class N8nMcpCredentialsService {
         }
     }
 
-    /**
-     * ====================================================================
-     * VERIFICAR SI CREDENTIAL EXISTE
-     * ====================================================================
-     *
-     * Verifica si existe una credential MCP para una organización.
-     *
-     * @param {number} organizacionId - ID de la organización
-     * @returns {Promise<Object|null>} Credential o null si no existe
-     */
-    async verificarExistencia(organizacionId) {
-        const client = await this.createN8nClient(); // ✅ API Key dinámica
-
-        try {
-            const credentialName = `MCP Auth - Org ${organizacionId}`;
-
-            const credenciales = await client.get('/api/v1/credentials');
-
-            const credentialExistente = credenciales.data.data.find(
-                cred => cred.name === credentialName && cred.type === 'httpHeaderAuth'
-            );
-
-            if (credentialExistente) {
-                return {
-                    id: credentialExistente.id,
-                    name: credentialExistente.name,
-                    type: credentialExistente.type,
-                    existe: true
-                };
-            }
-
-            return null;
-
-        } catch (error) {
-            logger.error('[N8nMcpCreds] Error verificando existencia de credential:', error.message);
-            return null;
-        }
-    }
 }
 
 module.exports = new N8nMcpCredentialsService();
