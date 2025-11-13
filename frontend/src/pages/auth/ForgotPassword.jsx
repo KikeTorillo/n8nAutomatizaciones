@@ -96,7 +96,7 @@ function ForgotPassword() {
               </p>
               <div className="flex items-start text-sm text-gray-600">
                 <Mail className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
-                <span>El enlace expira en 30 minutos.</span>
+                <span>El enlace expira en 1 hora.</span>
               </div>
             </div>
 

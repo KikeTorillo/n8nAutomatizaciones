@@ -16,7 +16,28 @@ const VALIDATION_CONSTANTS = {
     BUSQUEDA_MAX_LENGTH: 100,
     PASSWORD_MIN: 8,
     PASSWORD_MAX: 128,
+
+    /**
+     * POLÍTICA DE CONTRASEÑAS DEL SISTEMA
+     *
+     * Requisitos:
+     * - Mínimo 8 caracteres
+     * - Al menos 1 mayúscula (A-Z)
+     * - Al menos 1 minúscula (a-z)
+     * - Al menos 1 número (0-9)
+     * - Caracteres especiales: OPCIONALES (no requeridos)
+     *
+     * Nota: Este regex NO requiere caracteres especiales, solo verifica
+     * que haya minúscula, mayúscula y número. Los caracteres especiales
+     * son permitidos pero opcionales.
+     *
+     * Usado en:
+     * - Registro de usuarios
+     * - Reset de contraseña
+     * - Cambio de contraseña
+     */
     PASSWORD_STRONG_PATTERN: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+
     TOKEN_RESET_LENGTH: 64,
     ZONA_HORARIA_MAX: 50,
     IDIOMA_MAX: 5

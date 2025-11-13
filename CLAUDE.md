@@ -291,6 +291,14 @@ verificarDisponibilidad({
 
 **15 Políticas RLS** activas en todas las tablas multi-tenant
 
+### Política de Contraseñas (Homologada)
+
+**Requisitos:** 8+ chars, 1 mayúsc, 1 minúsc, 1 número. Especiales opcionales. Soporta caracteres internacionales.
+
+**Ubicaciones:**
+- Frontend: `PATTERNS.PASSWORD` (constants.js) + `passwordValidation` (validations.js)
+- Backend: `PASSWORD_STRONG_PATTERN` (auth.schemas.js)
+
 ---
 
 ## ⚡ Reglas Críticas

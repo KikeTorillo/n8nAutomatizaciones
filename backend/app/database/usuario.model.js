@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const logger = require('../utils/logger');
 const RLSHelper = require('../utils/rlsHelper');
 const RLSContextManager = require('../utils/rlsContextManager');
+const emailService = require('../services/emailService');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -726,8 +727,25 @@ class UsuarioModel {
 
             await db.query(updateQuery, [resetToken, resetExpiration, usuario.id]);
 
+            // 📧 Enviar email de recuperación
+            try {
+                await emailService.enviarRecuperacionPassword({
+                    email: usuario.email,
+                    nombre: usuario.nombre || 'Usuario',
+                    resetToken,
+                    expirationHours: AUTH_CONFIG.TOKEN_RESET_EXPIRATION_HOURS
+                });
+
+                logger.info(`📧 Email de recuperación enviado a: ${email}`);
+            } catch (emailError) {
+                // ⚠️ NO fallar la operación si el email falla
+                // El token ya está guardado y es funcional
+                logger.error(`❌ Error enviando email de recuperación: ${emailError.message}`);
+                logger.warn('⚠️ Token generado correctamente pero email NO enviado');
+            }
+
             return {
-                mensaje: 'Token de reset generado exitosamente',
+                mensaje: 'Si el usuario existe, se ha enviado un email con instrucciones para restablecer la contraseña',
                 token_enviado: true,
                 usuario_id: usuario.id,
                 expires_at: resetExpiration.toISOString(),

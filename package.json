@@ -53,5 +53,8 @@
   "engines": {
     "node": ">=18.0.0",
     "docker": ">=20.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.10"
   }
 }

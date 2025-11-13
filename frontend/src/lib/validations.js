@@ -60,6 +60,32 @@ export const planSelectionSchema = z.object({
   plan_precio: z.number().optional(),
 });
 
+// ==================== HELPERS DE VALIDACIÓN ====================
+
+/**
+ * Schema reutilizable de contraseña (política unificada del sistema)
+ *
+ * POLÍTICA DE CONTRASEÑAS:
+ * - Mínimo 8 caracteres
+ * - Al menos 1 mayúscula (A-Z)
+ * - Al menos 1 minúscula (a-z)
+ * - Al menos 1 número (0-9)
+ * - Caracteres especiales: OPCIONALES
+ *
+ * Esta validación se usa en:
+ * - Onboarding (Step 3 - Account Setup)
+ * - Reset Password
+ * - Cualquier cambio de contraseña
+ */
+const passwordValidation = z
+  .string()
+  .min(8, 'La contraseña debe tener al menos 8 caracteres')
+  .max(50, 'La contraseña no puede superar 50 caracteres')
+  .regex(
+    passwordRegex,
+    'La contraseña debe contener: 1 mayúscula, 1 minúscula y 1 número'
+  );
+
 // ==================== PASO 3: CREAR CUENTA ====================
 export const accountSetupSchema = z.object({
   email: z
@@ -71,14 +97,7 @@ export const accountSetupSchema = z.object({
     .trim()
     .toLowerCase(),
 
-  password: z
-    .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .max(50, 'La contraseña no puede superar 50 caracteres')
-    .regex(
-      passwordRegex,
-      'La contraseña debe contener: 1 mayúscula, 1 minúscula y 1 número'
-    ),
+  password: passwordValidation,
 
   password_confirm: z
     .string()
@@ -242,15 +261,10 @@ export const forgotPasswordSchema = z.object({
 
 /**
  * Schema para restablecer contraseña
+ * Usa la misma validación que el registro (passwordValidation definido arriba)
  */
 export const resetPasswordSchema = z.object({
-  passwordNueva: z
-    .string()
-    .min(8, 'La contraseña debe tener al menos 8 caracteres')
-    .regex(/[A-Z]/, 'Debe contener al menos una mayúscula')
-    .regex(/[a-z]/, 'Debe contener al menos una minúscula')
-    .regex(/[0-9]/, 'Debe contener al menos un número')
-    .regex(/[^A-Za-z0-9]/, 'Debe contener al menos un carácter especial'),
+  passwordNueva: passwordValidation,
 
   confirmarPassword: z.string(),
 }).refine((data) => data.passwordNueva === data.confirmarPassword, {

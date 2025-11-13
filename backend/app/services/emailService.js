@@ -1,0 +1,156 @@
+/**
+ * Servicio de Email - Abstracción para envío de correos
+ * Soporta múltiples templates y proveedores SMTP
+ */
+
+const transporter = require('./email/transporter');
+const logger = require('../utils/logger');
+const { generatePasswordResetEmail, generatePasswordResetText } = require('./email/templates/passwordReset');
+
+class EmailService {
+    constructor() {
+        this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
+        this.emailFrom = process.env.EMAIL_FROM || '"SaaS Agendamiento" <noreply@agendamiento.com>';
+    }
+
+    /**
+     * Envía un email de recuperación de contraseña
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.email - Email del destinatario
+     * @param {string} params.nombre - Nombre del usuario
+     * @param {string} params.resetToken - Token de recuperación
+     * @param {number} [params.expirationHours=1] - Horas de expiración del token
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarRecuperacionPassword({ email, nombre, resetToken, expirationHours = 1 }) {
+        try {
+            // Construir URL de reset (incluye /auth/ para coincidir con las rutas del frontend)
+            const resetUrl = `${this.frontendUrl}/auth/reset-password/${resetToken}`;
+
+            // Generar contenido del email
+            const htmlContent = generatePasswordResetEmail({
+                nombre,
+                resetUrl,
+                expirationHours
+            });
+
+            const textContent = generatePasswordResetText({
+                nombre,
+                resetUrl,
+                expirationHours
+            });
+
+            // Configuración del email
+            const mailOptions = {
+                from: this.emailFrom,
+                to: email,
+                subject: '🔐 Recuperación de Contraseña - SaaS Agendamiento',
+                text: textContent, // Versión texto plano (fallback)
+                html: htmlContent  // Versión HTML
+            };
+
+            // Enviar email
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                logger.info(`📧 Email de recuperación enviado exitosamente a: ${email}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            logger.error(`❌ Error enviando email de recuperación a ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Envía un email genérico (método interno)
+     * @param {Object} mailOptions - Opciones del email (nodemailer format)
+     * @returns {Promise<Object>} Resultado del envío
+     * @private
+     */
+    async _sendEmail(mailOptions) {
+        try {
+            // Obtener transporter
+            const emailTransporter = transporter.getTransporter();
+
+            // Si no hay transporter configurado, loguear advertencia
+            if (!emailTransporter) {
+                logger.warn('⚠️ Email NO enviado: transporter no configurado');
+                logger.warn(`📩 Email que se hubiera enviado a: ${mailOptions.to}`);
+                logger.warn(`📝 Asunto: ${mailOptions.subject}`);
+
+                // En desarrollo/testing, retornar éxito simulado
+                if (process.env.NODE_ENV !== 'production') {
+                    return {
+                        success: true,
+                        simulated: true,
+                        message: 'Email simulado (SMTP no configurado)'
+                    };
+                }
+
+                // En producción, lanzar error
+                throw new Error('SMTP no configurado - no se puede enviar email');
+            }
+
+            // Enviar email real
+            const info = await emailTransporter.sendMail(mailOptions);
+
+            return {
+                success: true,
+                simulated: false,
+                messageId: info.messageId,
+                accepted: info.accepted,
+                rejected: info.rejected,
+                response: info.response
+            };
+
+        } catch (error) {
+            logger.error(`❌ Error en _sendEmail: ${error.message}`);
+
+            // Si estamos en modo testing, no lanzar error
+            if (process.env.NODE_ENV === 'test') {
+                return {
+                    success: false,
+                    error: error.message,
+                    simulated: true
+                };
+            }
+
+            throw error;
+        }
+    }
+
+    /**
+     * Verifica la configuración SMTP
+     * @returns {Promise<boolean>} True si la configuración es válida
+     */
+    async verificarConfiguracion() {
+        try {
+            const emailTransporter = transporter.getTransporter();
+
+            if (!emailTransporter) {
+                logger.warn('⚠️ SMTP no configurado');
+                return false;
+            }
+
+            const isValid = await transporter.verifyConnection();
+            return isValid;
+
+        } catch (error) {
+            logger.error(`❌ Error verificando configuración SMTP: ${error.message}`);
+            return false;
+        }
+    }
+
+    /**
+     * Cierra las conexiones del transporter
+     */
+    close() {
+        transporter.close();
+    }
+}
+
+// Exportar instancia singleton
+module.exports = new EmailService();

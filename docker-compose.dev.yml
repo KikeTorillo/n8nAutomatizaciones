@@ -220,6 +220,12 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
 
       AUTO_SYNC_PLANS: ${AUTO_SYNC_PLANS}
+
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      EMAIL_FROM: ${EMAIL_FROM}
     volumes:
       - ./backend/app:/app
       - /app/node_modules

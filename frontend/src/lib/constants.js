@@ -69,5 +69,32 @@ export const TAMANOS_NEGOCIO = [
 export const PATTERNS = {
   EMAIL: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
   PHONE: /^[1-9]\d{9}$/,  // Teléfono mexicano: exactamente 10 dígitos
-  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/,
+
+  /**
+   * POLÍTICA DE CONTRASEÑAS DEL SISTEMA
+   *
+   * Requisitos:
+   * - Mínimo 8 caracteres
+   * - Al menos 1 mayúscula (A-Z)
+   * - Al menos 1 minúscula (a-z)
+   * - Al menos 1 número (0-9)
+   * - Caracteres especiales: OPCIONALES
+   *
+   * Permite CUALQUIER carácter (incluyendo internacionales: ñ, é, ü, etc.)
+   * para soportar usuarios con teclados no-ingleses.
+   *
+   * Homologado con backend: auth.schemas.js (PASSWORD_STRONG_PATTERN)
+   *
+   * Aplicado en:
+   * - Onboarding (creación de cuenta)
+   * - Reset password
+   * - Cambio de contraseña
+   *
+   * Ejemplos válidos:
+   * - Password123 ✅
+   * - MiClave2024 ✅
+   * - Contraseña1 ✅ (con ñ)
+   * - Sécurité9 ✅ (con acentos)
+   */
+  PASSWORD: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/,
 };
