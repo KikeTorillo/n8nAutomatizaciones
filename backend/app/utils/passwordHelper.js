@@ -8,6 +8,14 @@
 class PasswordHelper {
     /**
      * Evalúa la fortaleza de una contraseña
+     *
+     * POLÍTICA DE CONTRASEÑAS (homologada con frontend):
+     * - Mínimo 8 caracteres (OBLIGATORIO)
+     * - Al menos 1 mayúscula (OBLIGATORIO)
+     * - Al menos 1 minúscula (OBLIGATORIO)
+     * - Al menos 1 número (OBLIGATORIO)
+     * - Caracteres especiales: OPCIONALES (mejoran score)
+     *
      * @param {string} password - Contraseña a evaluar
      * @returns {Object} Resultado de la evaluación con score, nivel, feedback y recomendaciones
      */
@@ -21,46 +29,53 @@ class PasswordHelper {
             mayusculas: /[A-Z]/.test(password),
             minusculas: /[a-z]/.test(password),
             numeros: /\d/.test(password),
-            caracteres_especiales: /[!@#$%^&*(),.?":{}|<>]/.test(password)
         };
 
-        // Longitud
-        if (requisitos.longitud_minima) score += 20;
+        // Caracteres especiales son OPCIONALES (no se incluyen en requisitos base)
+        const tieneCaracteresEspeciales = /[^A-Za-z0-9]/.test(password);
+
+        // Requisitos OBLIGATORIOS (25 puntos cada uno = 100 puntos total)
+        if (requisitos.longitud_minima) score += 25;
         else feedback.push('Debe tener al menos 8 caracteres');
 
-        if (password.length >= 12) score += 10;
-
-        // Complejidad
-        if (requisitos.minusculas) score += 15;
+        if (requisitos.minusculas) score += 25;
         else feedback.push('Debe incluir letras minúsculas');
 
-        if (requisitos.mayusculas) score += 15;
+        if (requisitos.mayusculas) score += 25;
         else feedback.push('Debe incluir letras mayúsculas');
 
-        if (requisitos.numeros) score += 15;
+        if (requisitos.numeros) score += 25;
         else feedback.push('Debe incluir números');
 
-        if (requisitos.caracteres_especiales) score += 25;
-        else feedback.push('Debe incluir caracteres especiales');
+        // BONIFICACIONES OPCIONALES (mejoran la puntuación)
+        // Longitud extra: +10 puntos
+        if (password.length >= 12) score += 10;
 
-        // Nivel de fortaleza
+        // Caracteres especiales: +10 puntos (OPCIONAL, no requerido)
+        if (tieneCaracteresEspeciales) score += 10;
+
+        // Nivel de fortaleza basado en requisitos obligatorios
         let nivel;
-        if (score < 40) nivel = 'muy débil';
-        else if (score < 60) nivel = 'débil';
-        else if (score < 80) nivel = 'moderada';
-        else if (score < 90) nivel = 'fuerte';
-        else nivel = 'muy fuerte';
+        if (score < 25) nivel = 'muy débil';      // 0 requisitos
+        else if (score < 50) nivel = 'débil';     // 1 requisito
+        else if (score < 75) nivel = 'media';     // 2 requisitos
+        else if (score < 100) nivel = 'fuerte';   // 3 requisitos
+        else nivel = 'muy fuerte';                // 4 requisitos (100+ con bonificaciones)
+
+        // Calcular requisitos cumplidos (solo los 4 obligatorios)
+        const requisitosCumplidos = Object.values(requisitos).filter(Boolean).length;
+        const cumpleTodos = requisitosCumplidos === 4;
 
         return {
-            score: score,
+            score: Math.min(score, 120), // Máximo 120 (100 base + 20 bonificaciones)
             nivel: nivel,
             requisitos: requisitos,
-            cumple_requisitos: score >= 65,
+            cumple_requisitos: cumpleTodos,
             feedback: feedback,
-            recomendaciones: score < 65 ? [
-                'Usa al menos 12 caracteres',
-                'Combina mayúsculas, minúsculas, números y símbolos',
-                'Evita patrones obvios o información personal'
+            recomendaciones: !cumpleTodos ? [
+                'Asegúrate de cumplir los 4 requisitos obligatorios',
+                'Usa al menos 12 caracteres para mayor seguridad',
+                'Los caracteres especiales son opcionales pero mejoran la seguridad'
             ] : []
         };
     }

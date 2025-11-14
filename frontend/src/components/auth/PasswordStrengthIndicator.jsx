@@ -23,22 +23,23 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
       mayuscula: /[A-Z]/.test(pwd),
       minuscula: /[a-z]/.test(pwd),
       numero: /[0-9]/.test(pwd),
-      especial: /[^A-Za-z0-9]/.test(pwd),
     };
 
+    // Contar solo requisitos obligatorios (sin carácter especial)
     const cumplidos = Object.values(requisitos).filter(Boolean).length;
-    const puntuacion = (cumplidos / 5) * 100;
+    const puntuacion = (cumplidos / 4) * 100;
 
+    // Determinar nivel según cumplimiento
     let nivel = 'muy_debil';
-    if (puntuacion > 80) nivel = 'muy_fuerte';
-    else if (puntuacion > 60) nivel = 'fuerte';
-    else if (puntuacion > 40) nivel = 'media';
-    else if (puntuacion > 20) nivel = 'debil';
+    if (cumplidos === 4) nivel = 'muy_fuerte';      // 100% - Todos los requisitos
+    else if (cumplidos === 3) nivel = 'fuerte';     // 75% - 3 de 4
+    else if (cumplidos === 2) nivel = 'media';      // 50% - 2 de 4
+    else if (cumplidos === 1) nivel = 'debil';      // 25% - 1 de 4
 
     return {
       puntuacion: Math.round(puntuacion),
       nivel,
-      cumple_requisitos: cumplidos === 5,
+      cumple_requisitos: cumplidos === 4,
       requisitos,
       sugerencias: [],
     };
@@ -71,7 +72,6 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
             mayuscula: backendData.requisitos?.mayusculas || false,
             minuscula: backendData.requisitos?.minusculas || false,
             numero: backendData.requisitos?.numeros || false,
-            especial: backendData.requisitos?.caracteres_especiales || false,
           },
           sugerencias: backendData.recomendaciones || backendData.feedback || [],
         };
@@ -188,11 +188,10 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
             <span className="mr-2">{requisitos.numero ? '✓' : '○'}</span>
             Al menos un número
           </li>
-          <li className={requisitos.especial ? 'text-green-600' : 'text-gray-400'}>
-            <span className="mr-2">{requisitos.especial ? '✓' : '○'}</span>
-            Al menos un carácter especial
-          </li>
         </ul>
+        <p className="text-xs text-gray-500 mt-2 italic">
+          Los caracteres especiales son opcionales pero mejoran la seguridad
+        </p>
       </div>
 
       {/* Sugerencias (si las hay) */}

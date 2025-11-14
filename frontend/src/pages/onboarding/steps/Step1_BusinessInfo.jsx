@@ -74,7 +74,7 @@ function Step1_BusinessInfo() {
             name="pais"
             control={control}
             label="País"
-            placeholder="Ej: Colombia"
+            placeholder="Ej: México"
             required
           />
 
@@ -82,7 +82,7 @@ function Step1_BusinessInfo() {
             name="ciudad"
             control={control}
             label="Ciudad"
-            placeholder="Ej: Bogotá"
+            placeholder="Ej: Ciudad de México"
             required
           />
         </div>
