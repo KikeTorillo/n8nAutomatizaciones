@@ -63,10 +63,13 @@ class CitaOperacionalController {
     static complete = asyncHandler(async (req, res) => {
         const citaId = parseInt(req.params.id);
         const {
-            notas_finalizacion,
+            notas_profesional,
+            calificacion_profesional,
+            comentario_profesional,
             precio_total_real,      // ✅ Nuevo campo
             precio_final_real,      // ⚠️ Deprecated - backward compatibility
-            metodo_pago
+            metodo_pago,
+            pagado
         } = req.body;
         const organizacionId = req.tenant.organizacionId;
 
@@ -90,9 +93,12 @@ class CitaOperacionalController {
         const precioFinalReal = precio_total_real || precio_final_real || citaExistente.precio_total;
 
         const resultado = await CitaModel.complete(citaId, {
-            notas_finalizacion,
+            notas_profesional,
+            calificacion_profesional,
+            comentario_profesional,
             precio_final_real: precioFinalReal,
             metodo_pago,
+            pagado,
             usuario_id: req.user.id,
             ip_origen: req.ip
         }, organizacionId);

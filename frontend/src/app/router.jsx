@@ -33,6 +33,11 @@ const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 // Páginas de Chatbots
 const ChatbotsPage = lazy(() => import('@/pages/chatbots/ChatbotsPage'));
 
+// Páginas de Comisiones
+const ComisionesPage = lazy(() => import('@/pages/comisiones/ComisionesPage'));
+const ConfiguracionComisionesPage = lazy(() => import('@/pages/comisiones/ConfiguracionComisionesPage'));
+const ReportesComisionesPage = lazy(() => import('@/pages/comisiones/ReportesComisionesPage'));
+
 // Páginas de Suscripción
 const ActivarSuscripcion = lazy(() => import('@/pages/subscripcion/ActivarSuscripcion'));
 const SubscripcionResultado = lazy(() => import('@/pages/subscripcion/SubscripcionResultado'));
@@ -194,6 +199,31 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ChatbotsPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Comisiones
+      {
+        path: 'comisiones',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ComisionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'comisiones/configuracion',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ConfiguracionComisionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'comisiones/reportes',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReportesComisionesPage)}
           </ProtectedRoute>
         ),
       },

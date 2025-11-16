@@ -12,23 +12,25 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 13 Noviembre 2025
+**Actualizado**: 14 Noviembre 2025
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
-| **Backend API** | ✅ Operativo | 19 módulos, validación bidireccional citas/bloqueos |
-| **Frontend React** | ✅ Operativo | React 19 + Vite 7, 13 hooks personalizados |
-| **Base de Datos** | ✅ Optimizada | 21 tablas (2 particionadas), RLS multi-tenant |
+| **Backend API** | ✅ Operativo | 20 controllers, validación bidireccional citas/bloqueos |
+| **Frontend React** | ✅ Operativo | React 18 + Vite 7, 13 hooks personalizados |
+| **Base de Datos** | ✅ Optimizada | 25 tablas (2 particionadas), RLS multi-tenant |
+| **Sistema Comisiones** | 🔵 BD Completa | Trigger automático, 3 tablas, 11 índices (Backend pendiente) |
 | **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
-| **Deployment** | ✅ Listo | Docker Compose + scripts automatizados |
+| **Sistema Email** | ✅ Operativo | AWS SES + nodemailer, templates HTML |
+| **Deployment** | ✅ Listo | Hostinger VPS + Docker Compose |
 
 ---
 
 ## 🛠 Stack Técnico
 
 ### Frontend
-- React 19 + Vite 7 + Tailwind CSS 3
+- React 18 + Vite 7 + Tailwind CSS 3
 - Zustand (2 stores) + TanStack Query
 - React Hook Form + Zod
 - Axios (auto-refresh JWT)
@@ -42,8 +44,8 @@
 ### Base de Datos
 - PostgreSQL 17 con **pg_cron** (Dockerfile personalizado)
 - **Particionamiento por Fecha** (Range en `citas` y `eventos_sistema`)
-- Row Level Security (15 políticas)
-- 67 índices + 13 triggers + 43 funciones PL/pgSQL (8 de mantenimiento)
+- Row Level Security (29 políticas - incluye comisiones)
+- 269 índices + 25 triggers + 48 funciones PL/pgSQL
 - 4 jobs automáticos pg_cron
 
 ### IA Conversacional
@@ -79,14 +81,14 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 **Core (5):** auth, usuarios, organizaciones, planes, subscripciones
 **Negocio (7):** profesionales, servicios, clientes, horarios-profesionales, tipos-profesional, tipos-bloqueo
-**Operaciones (3):** citas (modular), bloqueos-horarios, disponibilidad
+**Operaciones (4):** citas (modular), bloqueos-horarios, disponibilidad, **comisiones** 🆕
 **Pagos (2):** webhooks, pagos (Mercado Pago)
 **IA (1):** chatbots (Telegram/WhatsApp)
 **Admin (1):** superadmin (gestión global + sync MP)
 
 **Arquitectura Modular de Citas:**
-- **3 Controllers**: base, operacional (confirmar/cancelar/reagendar), recordatorios
-- **7 Models**: base, operacional, recordatorios, helpers, cita-servicio, queries
+- **3 Controllers**: base, operacional (confirmar/cancelar/reagendar), recordatorios (+ 1 index proxy)
+- **7 Archivos de Models**: base, operacional, recordatorios, helpers, cita-servicio, cita-servicio.queries, index
 
 ### Middleware Stack (7 middlewares)
 
@@ -99,16 +101,22 @@ bash deploy.sh backup    # Backup PostgreSQL
 - `validation.js` - Joi schemas
 - `asyncHandler.js` - Manejo async/await
 
-### Servicios (8 archivos)
+### Servicios (12 archivos)
 
+**Principales (9):**
 - `mercadopago.service.js` - Integración completa MP (suscripciones + planes + sync)
+- `emailService.js` - Envío emails transaccionales (AWS SES + nodemailer)
 - `n8nService.js` - Workflows n8n
 - `n8nCredentialService.js` - Credenciales chatbots
 - `n8nGlobalCredentialsService.js` - Credenciales DeepSeek
 - `n8nMcpCredentialsService.js` - Credenciales MCP server
-- `platformValidators/` - Validadores Telegram/WhatsApp
 - `tokenBlacklistService.js` - Blacklist JWT
 - `configService.js` - Configuración sistema
+- `platformValidators/` (subcarpeta con 2 validadores)
+
+**Email (3 archivos adicionales):**
+- `email/transporter.js` - Singleton nodemailer con pool
+- `email/templates/passwordReset.js` - Template HTML recuperación
 
 ### Utilidades Críticas
 
@@ -133,8 +141,8 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 **Estructura:**
 - **13 Hooks personalizados** para gestión de estado (TanStack Query)
-- **53+ Componentes** organizados por módulo (ui, dashboard, citas, clientes, etc.)
-- **24 Páginas** con routing protegido por rol
+- **56 Componentes** organizados por módulo (ui, dashboard, citas, clientes, etc.)
+- **25 Páginas** con routing protegido por rol
 - **Onboarding de 3 pasos** (negocio → plan → cuenta admin)
 
 **Componentes Clave:**
@@ -142,23 +150,24 @@ bash deploy.sh backup    # Backup PostgreSQL
 - `TrialStatusWidget.jsx` - Trial counter + activación MP
 - `CitaFormModal.jsx` - Creación/edición con múltiples servicios
 - `BloqueoFormModal.jsx` - Gestión bloqueos con validación bidireccional
-- `ChatbotConfigModal.jsx` - Config Telegram/WhatsApp
+- `ConfigurarChatbotModal.jsx` - Config Telegram/WhatsApp
 
 ---
 
 ### Base de Datos
 
-**21 Tablas Principales:**
+**25 Tablas Principales:**
 
 | Categoría | Tablas |
 |-----------|--------|
 | **Core** | organizaciones, usuarios, planes_subscripcion |
 | **Catálogos** | tipos_profesional, tipos_bloqueo |
 | **Negocio** | profesionales, servicios, clientes, servicios_profesionales, horarios_profesionales |
-| **Operaciones** | citas ⚡, citas_servicios, bloqueos_horarios |
+| **Operaciones** | citas ⚡, citas_servicios, bloqueos_horarios, metricas_uso_organizacion |
+| **Comisiones** 🆕 | configuracion_comisiones, comisiones_profesionales, historial_configuracion_comisiones |
 | **Chatbots** | chatbot_config, chatbot_credentials |
 | **Pagos MP** | subscripciones, historial_subscripciones, metodos_pago, pagos |
-| **Sistema** | eventos_sistema ⚡, eventos_sistema_archivo, metricas_uso_organizacion |
+| **Sistema** | eventos_sistema ⚡, eventos_sistema_archivo, configuracion_sistema |
 
 **⚡ Particionamiento:**
 - **citas** por `fecha_cita` (mensual) - Mejora 10x+ queries históricas
@@ -204,6 +213,39 @@ bash deploy.sh backup    # Backup PostgreSQL
 - **Eliminación workflows**: Solo borra ejecuciones técnicas, NO conversaciones
 
 **Acceso**: Rol `admin` o `propietario` | **URL**: `/chatbots`
+
+---
+
+## 📧 Sistema de Emails Transaccionales
+
+### Proveedor y Stack
+- **Producción**: AWS SES (us-east-1) - $0.10/1,000 emails (primeros 62k gratis)
+- **Desarrollo**: Gmail SMTP (localhost)
+- **Librería**: nodemailer con pool de conexiones
+- **Templates**: HTML responsivos con alternativa plain text
+
+### Configuración por Entorno
+
+**Variables SMTP (en docker-compose):**
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_FROM`
+- `FRONTEND_URL` - **Crítico** para construir URLs en emails
+
+**Archivos .env:**
+- `.env.dev` y `.env.prod.local` → Gmail (localhost)
+- `.env.prod` → AWS SES (VPS producción)
+
+### Emails Implementados
+1. **Recuperación de contraseña** - Template HTML con link 1h expiración
+   - Remitente: `SaaS Agendamiento <noreply@n8nflowautomat.com>`
+   - Ruta: `/auth/reset-password/:token`
+   - Servicio: `emailService.enviarRecuperacionPassword()`
+
+### Hosting (Hostinger VPS)
+- ✅ Puerto 587 abierto por defecto (STARTTLS)
+- ✅ Puerto 465 disponible (SSL/TLS alternativa)
+- ⚠️ Puerto 25 limitado a 5 emails/min (no usar)
+
+**Nota**: Configuración de AWS SES requiere validación de dominio DNS y credenciales IAM
 
 ---
 
@@ -278,6 +320,101 @@ verificarDisponibilidad({
 
 ---
 
+## 💵 Sistema de Comisiones (NUEVO - Nov 2025)
+
+**Estado**: 🔵 Fase 1 Completada (BD) | ⚪ Fase 2 Pendiente (Backend/Frontend)
+
+### Arquitectura
+
+**Cálculo Automático**: Trigger PostgreSQL se dispara cuando cita cambia a estado `completada`
+
+**Tipos de Comisión:**
+- `porcentaje` - % del precio del servicio (0-100%)
+- `monto_fijo` - Cantidad fija por cita
+- `mixto` - Combinación (cita con múltiples servicios)
+
+**Configuración:**
+- **Global**: `servicio_id = NULL` → Aplica a todos los servicios del profesional
+- **Específica**: `servicio_id = X` → Solo para ese servicio (sobrescribe global)
+
+### Tablas Implementadas (3)
+
+```sql
+configuracion_comisiones          -- CRUD configuración
+comisiones_profesionales          -- Registro automático (trigger)
+historial_configuracion_comisiones -- Auditoría de cambios
+```
+
+### Trigger `calcular_comision_cita()`
+
+```sql
+1. Se dispara: AFTER UPDATE cuando estado → 'completada'
+2. Obtiene servicios de la cita (JOIN citas_servicios)
+3. Para cada servicio:
+   - Busca config específica (profesional + servicio)
+   - Si no existe → busca config global (servicio_id=NULL)
+   - Calcula comisión según tipo
+4. Suma total + genera JSON detalle
+5. INSERT en comisiones_profesionales (estado='pendiente')
+```
+
+### Ejemplo de Cálculo
+
+```javascript
+// Cita completada: $200 (Corte Premium)
+// Configuración: 15% global del profesional
+
+// Resultado automático:
+{
+  monto_base: 200.00,
+  tipo_comision: "porcentaje",
+  valor_comision: 15.00,
+  monto_comision: 30.00,  // Calculado: 200 * 0.15
+  detalle_servicios: [{
+    servicio_id: 1,
+    nombre: "Corte Premium",
+    precio: 200.00,
+    tipo_comision: "porcentaje",
+    valor_comision: 15.00,
+    comision_calculada: 30.00
+  }],
+  estado_pago: "pendiente"
+}
+```
+
+### Características Clave
+
+- ✅ **FK compuesta** a tabla particionada: `(cita_id, fecha_cita)`
+- ✅ **Índice GIN** en `detalle_servicios` (búsqueda JSONB)
+- ✅ **Índice crítico**: `idx_citas_servicios_cita_id` (performance trigger)
+- ✅ **RLS multi-tenant**: Admin ve todo, empleado solo sus comisiones
+- ✅ **Auditoría completa**: Historial de cambios en configuración
+
+### Ubicación en Código
+
+```
+sql/schema/06-operations-tables.sql   → 3 tablas (+125 líneas)
+sql/schema/07-indexes.sql             → 11 índices (+200 líneas)
+sql/schema/02-functions.sql           → 3 funciones PL/pgSQL (+280 líneas)
+sql/schema/09-triggers.sql            → 4 triggers (+60 líneas)
+sql/schema/08-rls-policies.sql        → 4 políticas RLS (+85 líneas)
+```
+
+### Pendiente (Fase 2-3)
+
+**Backend API** (36h):
+- Controllers modulares: `configuracion`, `comisiones`, `estadisticas`
+- 8 endpoints RESTful (CRUD + reportes + dashboard)
+- Models con RLSContextManager
+
+**Frontend UI** (42h):
+- Dashboard con Chart.js
+- Configuración por profesional/servicio
+- Reportes con exportación Excel/PDF
+- 4 hooks personalizados TanStack Query
+
+---
+
 ## 🔒 Seguridad Multi-Tenant (RLS)
 
 ### RBAC - Permisos por Rol
@@ -291,13 +428,26 @@ verificarDisponibilidad({
 
 **15 Políticas RLS** activas en todas las tablas multi-tenant
 
-### Política de Contraseñas (Homologada)
+### Política de Contraseñas (100% Homologada)
 
-**Requisitos:** 8+ chars, 1 mayúsc, 1 minúsc, 1 número. Especiales opcionales. Soporta caracteres internacionales.
+**Requisitos OBLIGATORIOS:**
+- Mínimo 8 caracteres
+- Al menos 1 mayúscula (A-Z)
+- Al menos 1 minúscula (a-z)
+- Al menos 1 número (0-9)
+- ✅ Caracteres especiales: **OPCIONALES** (mejoran score)
+- ✅ Caracteres internacionales: **PERMITIDOS** (ñ, é, ü, etc.)
 
-**Ubicaciones:**
-- Frontend: `PATTERNS.PASSWORD` (constants.js) + `passwordValidation` (validations.js)
-- Backend: `PASSWORD_STRONG_PATTERN` (auth.schemas.js)
+**Validación Frontend:**
+- Regex: `PATTERNS.PASSWORD` → `/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/`
+- Schema Zod: `passwordValidation` (validations.js)
+- Indicador visual: `PasswordStrengthIndicator.jsx` (llama al backend)
+
+**Validación Backend:**
+- Schema Joi: `PASSWORD_STRONG_PATTERN` → `/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/`
+- Evaluador de fortaleza: `passwordHelper.js` (score 0-120, niveles muy débil → muy fuerte)
+
+**Aplicado en:** Onboarding, reset password, change password, setup inicial, registro usuarios
 
 ---
 
@@ -311,6 +461,7 @@ verificarDisponibilidad({
 5. **Validar límites del plan** - Middleware `subscription` lo hace automáticamente
 6. **Bulk operations** - Pre-validar límites ANTES de crear (1-50 items)
 7. **Reagendamiento** - SIEMPRE usar `excluir_cita_id` en `verificarDisponibilidad`
+8. **Variables docker-compose** - `FRONTEND_URL` DEBE estar en prod.yml y prod.local.yml
 
 ### Frontend
 1. **Sanitizar opcionales** - Joi rechaza `""`, usar `undefined`
@@ -353,8 +504,14 @@ verificarDisponibilidad({
 ### Backend - Core
 - `utils/rlsContextManager.js` - RLS Manager v2.0 (**USAR SIEMPRE**)
 - `utils/helpers.js` - 8 clases helper (Response, Validation, Date, etc.)
+- `utils/passwordHelper.js` - **Evaluador fortaleza contraseña** (homologado)
 - `utils/cita-validacion.util.js` - **Algoritmo solapamiento horarios**
 - `middleware/subscription.js` - Validación límites del plan
+
+### Backend - Email
+- `services/emailService.js` - Servicio principal envío emails
+- `services/email/transporter.js` - Singleton nodemailer con pool
+- `services/email/templates/passwordReset.js` - Template HTML recuperación
 
 ### Backend - Disponibilidad y Validación
 - **`database/disponibilidad.model.js`** - Verificación slots + parámetro `excluir_cita_id`

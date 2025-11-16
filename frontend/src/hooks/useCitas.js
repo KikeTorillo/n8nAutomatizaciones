@@ -319,7 +319,7 @@ export function useCompletarCita() {
       const sanitizedData = {
         ...data,
         notas_profesional: data.notas_profesional?.trim() || undefined,
-        comentario_cliente: data.comentario_cliente?.trim() || undefined,
+        comentario_profesional: data.comentario_profesional?.trim() || undefined,
       };
 
       const response = await citasApi.completar(id, sanitizedData);

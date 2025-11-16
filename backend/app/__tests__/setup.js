@@ -3,7 +3,8 @@
  * Configura la base de datos de testing y helpers globales
  */
 
-require('dotenv').config({ path: '.env.test' });
+// Cargar .env desde el root del proyecto
+require('dotenv').config({ path: '../../.env' });
 
 const { Pool } = require('pg');
 const logger = require('../utils/logger');

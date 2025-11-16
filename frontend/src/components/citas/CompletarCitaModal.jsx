@@ -30,8 +30,8 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
       const data = {
         id: cita.id,
         notas_profesional: notasProfesional.trim() || undefined,
-        comentario_cliente: comentarioCliente.trim() || undefined,
-        calificacion_cliente: calificacion > 0 ? calificacion : undefined,
+        comentario_profesional: comentarioCliente.trim() || undefined,
+        calificacion_profesional: calificacion > 0 ? calificacion : undefined,
       };
 
       await completarMutation.mutateAsync(data);

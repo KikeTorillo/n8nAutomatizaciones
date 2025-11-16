@@ -487,28 +487,28 @@ export const citasApi = {
   cancelar: (id, data = {}) => apiClient.put(`/citas/${id}/cancelar`, data),
 
   /**
-   * Confirmar cita
+   * Confirmar asistencia de cita
    * @param {number} id
    * @param {Object} data - Datos opcionales
    * @returns {Promise<Object>}
    */
-  confirmar: (id, data = {}) => apiClient.put(`/citas/${id}/confirmar`, data),
+  confirmar: (id, data = {}) => apiClient.patch(`/citas/${id}/confirmar-asistencia`, data),
 
   /**
    * Iniciar cita (cambiar a estado en_curso)
    * @param {number} id
-   * @param {Object} data - Datos opcionales
+   * @param {Object} data - { notas_inicio }
    * @returns {Promise<Object>}
    */
-  iniciar: (id, data = {}) => apiClient.put(`/citas/${id}/iniciar`, data),
+  iniciar: (id, data = {}) => apiClient.post(`/citas/${id}/start-service`, data),
 
   /**
    * Completar cita
    * @param {number} id
-   * @param {Object} data - { calificacion_cliente, comentario_cliente, notas_profesional }
+   * @param {Object} data - { notas_finalizacion, precio_total_real, metodo_pago }
    * @returns {Promise<Object>}
    */
-  completar: (id, data = {}) => apiClient.put(`/citas/${id}/completar`, data),
+  completar: (id, data = {}) => apiClient.post(`/citas/${id}/complete`, data),
 
   /**
    * Marcar cita como no show (cliente no llegó)
@@ -799,6 +799,96 @@ export const mercadopagoApi = {
   createCardToken: (data) => apiClient.post('/mercadopago/create-card-token', data),
 };
 
+// ==================== COMISIONES ====================
+export const comisionesApi = {
+  // ========== Configuración de Comisiones ==========
+
+  /**
+   * Crear o actualizar configuración de comisión
+   * @param {Object} data - { profesional_id, servicio_id, tipo_comision, valor_comision, activo, notas }
+   * @returns {Promise<Object>}
+   */
+  crearConfiguracion: (data) => apiClient.post('/comisiones/configuracion', data),
+
+  /**
+   * Listar configuraciones de comisión
+   * @param {Object} params - { profesional_id, servicio_id, activo }
+   * @returns {Promise<Object>} { configuraciones, total }
+   */
+  listarConfiguraciones: (params = {}) => apiClient.get('/comisiones/configuracion', { params }),
+
+  /**
+   * Obtener historial de cambios en configuración
+   * @param {Object} params - { profesional_id, servicio_id, fecha_desde, fecha_hasta, limite, offset }
+   * @returns {Promise<Object>} { historial, total }
+   */
+  obtenerHistorialConfiguracion: (params = {}) =>
+    apiClient.get('/comisiones/configuracion/historial', { params }),
+
+  /**
+   * Eliminar configuración de comisión
+   * @param {number} id - ID de la configuración
+   * @returns {Promise<Object>}
+   */
+  eliminarConfiguracion: (id) => apiClient.delete(`/comisiones/configuracion/${id}`),
+
+  // ========== Consulta de Comisiones ==========
+
+  /**
+   * Obtener comisiones de un profesional
+   * @param {number} profesionalId - ID del profesional
+   * @param {Object} params - { fecha_desde, fecha_hasta, estado_pago, limite, offset }
+   * @returns {Promise<Object>} { comisiones, total, resumen }
+   */
+  obtenerPorProfesional: (profesionalId, params = {}) =>
+    apiClient.get(`/comisiones/profesional/${profesionalId}`, { params }),
+
+  /**
+   * Obtener comisiones por período
+   * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, estado_pago, limite, offset }
+   * @returns {Promise<Object>} { comisiones, total, resumen }
+   */
+  obtenerPorPeriodo: (params = {}) => apiClient.get('/comisiones/periodo', { params }),
+
+  /**
+   * Obtener comisión por ID
+   * @param {number} id - ID de la comisión
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/comisiones/${id}`),
+
+  /**
+   * Marcar comisión como pagada
+   * @param {number} id - ID de la comisión
+   * @param {Object} data - { fecha_pago, metodo_pago, referencia_pago, notas_pago }
+   * @returns {Promise<Object>}
+   */
+  marcarComoPagada: (id, data) => apiClient.patch(`/comisiones/${id}/pagar`, data),
+
+  // ========== Dashboard y Reportes ==========
+
+  /**
+   * Obtener métricas del dashboard de comisiones
+   * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+   * @returns {Promise<Object>} { total_comisiones, comisiones_pendientes, comisiones_pagadas, total_profesionales }
+   */
+  obtenerDashboard: (params = {}) => apiClient.get('/comisiones/dashboard', { params }),
+
+  /**
+   * Obtener estadísticas de comisiones
+   * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+   * @returns {Promise<Object>} { por_profesional, por_mes, por_servicio, resumen_general }
+   */
+  obtenerEstadisticas: (params = {}) => apiClient.get('/comisiones/estadisticas', { params }),
+
+  /**
+   * Obtener datos para gráfica de comisiones por día
+   * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+   * @returns {Promise<Object>} { grafica }
+   */
+  obtenerGraficaPorDia: (params = {}) => apiClient.get('/comisiones/grafica/por-dia', { params }),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -816,4 +906,5 @@ export default {
   chatbots: chatbotsApi,
   subscripciones: subscripcionesApi,
   mercadopago: mercadopagoApi,
+  comisiones: comisionesApi,
 };
