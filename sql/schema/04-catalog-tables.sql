@@ -1,5 +1,22 @@
 -- ====================================================================
--- 📚 TABLAS CATÁLOGO DEL SISTEMA
+-- ⚠️  ARCHIVO MIGRADO - NO USAR
+-- ====================================================================
+-- Este archivo ha sido COMPLETAMENTE migrado al módulo catalogos/
+-- Ubicación nueva: sql/catalogos/01-06
+-- Fecha migración: 16 Noviembre 2025
+-- ====================================================================
+--
+-- MAPEO DE MIGRACIÓN:
+-- • tipos_bloqueo → catalogos/01-tablas-catalogos.sql
+-- • tipos_profesional → catalogos/01-tablas-catalogos.sql
+-- • Índices (9) → catalogos/02-indices.sql
+-- • Políticas RLS (2) → catalogos/03-rls-policies.sql
+-- • Funciones (4) → catalogos/04-funciones.sql
+-- • Triggers (4) → catalogos/05-triggers.sql
+-- • Datos iniciales (42 tipos) → catalogos/06-datos-iniciales.sql
+--
+-- ====================================================================
+-- 📚 TABLAS CATÁLOGO DEL SISTEMA (LEGACY)
 -- ====================================================================
 --
 -- Este archivo contiene tablas catálogo dinámicas que reemplazan ENUMs

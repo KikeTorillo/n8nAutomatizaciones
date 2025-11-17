@@ -76,7 +76,7 @@ CREATE POLICY usuarios_unified_access ON usuarios
         -- Usuario puede ver/editar su propio perfil
         -- Variable: app.current_user_id = ID del usuario autenticado
         -- Uso: Edición de perfil, cambio de contraseña, preferencias
-        (current_setting('app.current_user_id', true)::INTEGER = id)
+        (id = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::INTEGER, 0))
 
         OR
 

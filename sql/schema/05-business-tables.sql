@@ -1,5 +1,26 @@
 -- ====================================================================
--- 💼 TABLAS DE NEGOCIO PRINCIPALES
+-- ⚠️  ARCHIVO MIGRADO - NO USAR
+-- ====================================================================
+-- Este archivo ha sido COMPLETAMENTE migrado al módulo negocio/
+-- Fecha migración: 17 Noviembre 2025
+--
+-- MAPEO DE MIGRACIÓN:
+-- • Tabla profesionales → negocio/01-tablas-negocio.sql
+-- • Tabla clientes → negocio/01-tablas-negocio.sql
+-- • Tabla servicios → negocio/01-tablas-negocio.sql
+-- • Tabla servicios_profesionales → negocio/01-tablas-negocio.sql
+-- • Índices (23 índices) → negocio/02-indices.sql
+-- • Políticas RLS (7 políticas) → negocio/03-rls-policies.sql
+-- • Funciones (2 funciones) → negocio/04-funciones.sql
+-- • Triggers (4 triggers) → negocio/05-triggers.sql
+--
+-- ⚠️  NO MODIFICAR ESTE ARCHIVO
+-- ⚠️  Cualquier cambio debe hacerse en sql/negocio/
+-- ⚠️  Este archivo será eliminado en FASE 4 de la migración
+-- ====================================================================
+
+-- ====================================================================
+-- 💼 TABLAS DE NEGOCIO PRINCIPALES - LEGACY
 -- ====================================================================
 --
 -- Este archivo contiene las tablas centrales para la operación del negocio:

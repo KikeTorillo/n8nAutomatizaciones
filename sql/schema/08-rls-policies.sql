@@ -158,17 +158,17 @@ ALTER TABLE profesionales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profesionales FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA: AISLAMIENTO POR TENANT
-CREATE POLICY tenant_isolation_profesionales ON profesionales
-    FOR ALL
-    TO saas_app
-    USING (
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY tenant_isolation_profesionales ON profesionales
+--     FOR ALL
+--     TO saas_app
+--     USING (
         -- Super admin acceso global
-        current_setting('app.current_user_role', true) = 'super_admin'
+--         current_setting('app.current_user_role', true) = 'super_admin'
         -- O acceso a propia organización
-        OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--         OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
         -- O bypass para funciones de sistema
-        OR current_setting('app.bypass_rls', true) = 'true'
-    );
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--     );
 
 -- ====================================================================
 -- 🧑‍💼 RLS PARA TABLA CLIENTES
@@ -182,37 +182,37 @@ ALTER TABLE clientes FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR ORGANIZACIÓN (CORREGIDO 2025-10-03)
 -- Validación REGEX para prevenir SQL injection y tenant_id vacío
-CREATE POLICY clientes_isolation ON clientes
-    FOR ALL
-    TO saas_app
-    USING (
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY clientes_isolation ON clientes
+--     FOR ALL
+--     TO saas_app
+--     USING (
         -- Validar que tenant_id sea numérico antes de comparar
-        current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
-        AND organizacion_id = COALESCE(
-            NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
-            0
-        )
-    )
-    WITH CHECK (
+--         current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
+--         AND organizacion_id = COALESCE(
+--             NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
+--             0
+--         )
+--     )
+--     WITH CHECK (
         -- Validar que tenant_id sea numérico para escritura
-        current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
-        AND organizacion_id = COALESCE(
-            NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
-            0
-        )
-    );
+--         current_setting('app.current_tenant_id', true) ~ '^[0-9]+$'
+--         AND organizacion_id = COALESCE(
+--             NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER,
+--             0
+--         )
+--     );
 
 -- POLÍTICA 2: ACCESO SUPER ADMIN
-CREATE POLICY clientes_super_admin ON clientes
-    FOR ALL
-    TO PUBLIC
-    USING (
-        EXISTS (
-            SELECT 1 FROM usuarios
-            WHERE email = current_user
-            AND rol = 'super_admin'
-        )
-    );
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY clientes_super_admin ON clientes
+--     FOR ALL
+--     TO PUBLIC
+--     USING (
+--         EXISTS (
+--             SELECT 1 FROM usuarios
+--             WHERE email = current_user
+--             AND rol = 'super_admin'
+--         )
+--     );
 
 -- ====================================================================
 -- 🎯 RLS PARA TABLA SERVICIOS
@@ -225,25 +225,25 @@ ALTER TABLE servicios ENABLE ROW LEVEL SECURITY;
 ALTER TABLE servicios FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA 1: AISLAMIENTO POR TENANT
-CREATE POLICY servicios_tenant_isolation ON servicios
-    FOR ALL
-    TO saas_app
-    USING (
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY servicios_tenant_isolation ON servicios
+--     FOR ALL
+--     TO saas_app
+--     USING (
         -- Super admin acceso global
-        current_setting('app.current_user_role', true) = 'super_admin'
+--         current_setting('app.current_user_role', true) = 'super_admin'
         -- O acceso a servicios de propia organización
-        OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--         OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
         -- O bypass para funciones de sistema
-        OR current_setting('app.bypass_rls', true) = 'true'
-    );
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--     );
 
 -- POLÍTICA 2: BYPASS PARA FUNCIONES DE SISTEMA
-CREATE POLICY servicios_system_bypass ON servicios
-    FOR ALL
-    TO saas_app
-    USING (
-        current_setting('app.bypass_rls', true) = 'true'
-    );
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY servicios_system_bypass ON servicios
+--     FOR ALL
+--     TO saas_app
+--     USING (
+--         current_setting('app.bypass_rls', true) = 'true'
+--     );
 
 -- ====================================================================
 -- 🔗 RLS PARA TABLA SERVICIOS_PROFESIONALES
@@ -256,21 +256,21 @@ ALTER TABLE servicios_profesionales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE servicios_profesionales FORCE ROW LEVEL SECURITY;
 
 -- POLÍTICA: AISLAMIENTO VIA JOINS
-CREATE POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales
-    FOR ALL
-    TO saas_app
-    USING (
+-- ⚠️  MIGRADO A MÓDULO - CREATE POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales
+--     FOR ALL
+--     TO saas_app
+--     USING (
         -- Super admin acceso global
-        current_setting('app.current_user_role', true) = 'super_admin'
+--         current_setting('app.current_user_role', true) = 'super_admin'
         -- O acceso via organización del servicio/profesional
-        OR EXISTS (
-            SELECT 1 FROM servicios s
-            WHERE s.id = servicio_id
-            AND s.organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-        )
+--         OR EXISTS (
+--             SELECT 1 FROM servicios s
+--             WHERE s.id = servicio_id
+--             AND s.organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--         )
         -- O bypass para funciones de sistema
-        OR current_setting('app.bypass_rls', true) = 'true'
-    );
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--     );
 
 -- ====================================================================
 -- 📅 RLS PARA TABLA CITAS

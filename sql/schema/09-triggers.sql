@@ -61,15 +61,15 @@ CREATE TRIGGER trigger_validar_email_usuario
 
 -- TRIGGER 1: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
 -- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_profesionales
-    BEFORE UPDATE ON profesionales
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+-- ⚠️  MIGRADO A MÓDULO - CREATE TRIGGER trigger_actualizar_profesionales
+--     BEFORE UPDATE ON profesionales
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
 -- TRIGGER 2: VALIDACIÓN DE COHERENCIA INDUSTRIA-PROFESIONAL
 -- Valida que tipo_profesional sea compatible con industria de la organización
-CREATE TRIGGER trigger_validar_profesional_industria
-    BEFORE INSERT OR UPDATE ON profesionales
-    FOR EACH ROW EXECUTE FUNCTION validar_profesional_industria();
+-- ⚠️  MIGRADO A MÓDULO - CREATE TRIGGER trigger_validar_profesional_industria
+--     BEFORE INSERT OR UPDATE ON profesionales
+--     FOR EACH ROW EXECUTE FUNCTION validar_profesional_industria();
 
 -- ====================================================================
 -- 🎯 TRIGGERS PARA TABLA SERVICIOS
@@ -79,9 +79,9 @@ CREATE TRIGGER trigger_validar_profesional_industria
 
 -- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
 -- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_timestamp_servicios
-    BEFORE UPDATE ON servicios
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp_servicios();
+-- ⚠️  MIGRADO A MÓDULO - CREATE TRIGGER trigger_actualizar_timestamp_servicios
+--     BEFORE UPDATE ON servicios
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp_servicios();
 
 -- ====================================================================
 -- 🔗 TRIGGERS PARA TABLA SERVICIOS_PROFESIONALES
@@ -91,9 +91,9 @@ CREATE TRIGGER trigger_actualizar_timestamp_servicios
 
 -- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
 -- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_timestamp_servicios_profesionales
-    BEFORE UPDATE ON servicios_profesionales
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+-- ⚠️  MIGRADO A MÓDULO - CREATE TRIGGER trigger_actualizar_timestamp_servicios_profesionales
+--     BEFORE UPDATE ON servicios_profesionales
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
 -- ====================================================================
 -- 📅 TRIGGERS PARA TABLA CITAS
