@@ -3,9 +3,9 @@
 
 echo "🔍 Validando esquema de BD..."
 
-# Contar tablas esperadas
-EXPECTED_TABLES=25
-ACTUAL_TABLES=$(docker-compose exec -T saas_db psql -U saas_user -d saas_db -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';" | xargs)
+# Contar tablas esperadas (incluye particiones y comisiones)
+EXPECTED_TABLES=30
+ACTUAL_TABLES=$(docker compose -f docker-compose.dev.yml exec -T postgres psql -U admin -d postgres -t -c "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_type = 'BASE TABLE';" | xargs)
 
 if [ "$ACTUAL_TABLES" -eq "$EXPECTED_TABLES" ]; then
     echo "✅ Tablas: $ACTUAL_TABLES/$EXPECTED_TABLES"
@@ -15,9 +15,9 @@ else
 fi
 
 # Validar funciones críticas
-FUNCTIONS=("calcular_comision_cita" "obtener_configuracion_comision" "setup_partitions_for_month" "actualizar_updated_at")
+FUNCTIONS=("calcular_comision_cita" "obtener_configuracion_comision" "actualizar_timestamp" "normalizar_telefono")
 for func in "${FUNCTIONS[@]}"; do
-    EXISTS=$(docker-compose exec -T saas_db psql -U saas_user -d saas_db -t -c "SELECT COUNT(*) FROM pg_proc WHERE proname = '$func';" | xargs)
+    EXISTS=$(docker compose -f docker-compose.dev.yml exec -T postgres psql -U admin -d postgres -t -c "SELECT COUNT(*) FROM pg_proc WHERE proname = '$func';" | xargs)
     if [ "$EXISTS" -eq "1" ]; then
         echo "✅ Función: $func"
     else
@@ -27,9 +27,9 @@ for func in "${FUNCTIONS[@]}"; do
 done
 
 # Validar triggers
-TRIGGERS=("trigger_calcular_comision_cita" "trigger_actualizar_updated_at")
+TRIGGERS=("trigger_calcular_comision_cita" "trigger_actualizar_timestamp_citas" "trigger_actualizar_timestamp_comisiones_profesionales")
 for trig in "${TRIGGERS[@]}"; do
-    EXISTS=$(docker-compose exec -T saas_db psql -U saas_user -d saas_db -t -c "SELECT COUNT(*) FROM pg_trigger WHERE tgname = '$trig';" | xargs)
+    EXISTS=$(docker compose -f docker-compose.dev.yml exec -T postgres psql -U admin -d postgres -t -c "SELECT COUNT(*) FROM pg_trigger WHERE tgname = '$trig';" | xargs)
     if [ "$EXISTS" -ge "1" ]; then
         echo "✅ Trigger: $trig"
     else
@@ -41,7 +41,7 @@ done
 # Validar ENUMs
 ENUMS=("rol_usuario" "estado_cita" "estado_subscripcion")
 for enum in "${ENUMS[@]}"; do
-    EXISTS=$(docker-compose exec -T saas_db psql -U saas_user -d saas_db -t -c "SELECT COUNT(*) FROM pg_type WHERE typname = '$enum';" | xargs)
+    EXISTS=$(docker compose -f docker-compose.dev.yml exec -T postgres psql -U admin -d postgres -t -c "SELECT COUNT(*) FROM pg_type WHERE typname = '$enum';" | xargs)
     if [ "$EXISTS" -eq "1" ]; then
         echo "✅ ENUM: $enum"
     else
