@@ -17,20 +17,13 @@
 -- ====================================================================
 
 -- ====================================================================
--- 🔍 EXTENSIONES REQUERIDAS
+-- ⚠️  EXTENSIONES MIGRADAS A ESTRUCTURA MODULAR
 -- ====================================================================
--- Extensiones necesarias para las funciones del sistema
+-- Las extensiones han sido migradas a:
+-- → sql/00-fundamentos/01-extensiones.sql
+--
+-- Fecha de migración: 16 Noviembre 2025
 -- ────────────────────────────────────────────────────────────────────
-
--- Extensión para búsqueda fuzzy (funciones similarity() y trigrama)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
--- Extensión para normalización de texto sin acentos
-CREATE EXTENSION IF NOT EXISTS unaccent;
-
--- Extensión para funciones criptográficas (gen_random_bytes, crypt, gen_salt)
--- Requerida para: crear_usuario_bot_organizacion()
-CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- ====================================================================
 -- 🔐 FUNCIÓN 1: REGISTRAR_INTENTO_LOGIN
@@ -291,13 +284,9 @@ $$ LANGUAGE plpgsql;
 -- ====================================================================
 -- Función para actualizar timestamp automáticamente
 -- ────────────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION actualizar_timestamp()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.actualizado_en = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- ⚠️ FUNCIÓN MIGRADA A: sql/00-fundamentos/03-funciones-utilidad.sql
+-- Fecha: 16 Nov 2025
+-- ────────────────────────────────────────────────────────────────────
 
 -- ====================================================================
 -- 🏭 FUNCIÓN 6: VALIDAR_PROFESIONAL_INDUSTRIA (VERSIÓN 2.0)
@@ -514,27 +503,9 @@ COMMENT ON FUNCTION validar_coherencia_cita() IS 'Versión mejorada con validaci
 -- • normalizar_telefono('+1 (555) 123-4567') → '15551234567'
 -- • normalizar_telefono('55-1234-5678') → '5512345678'
 -- ────────────────────────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION normalizar_telefono(telefono_input TEXT)
-RETURNS TEXT AS $$
-BEGIN
-    -- Validar entrada nula
-    IF telefono_input IS NULL THEN
-        RETURN NULL;
-    END IF;
-
-    -- Normalización en dos pasos:
-    -- 1. Remover códigos de país comunes (52 México, 1 USA)
-    -- 2. Remover todos los caracteres no numéricos
-    RETURN regexp_replace(
-        regexp_replace(telefono_input, '^(52|1)', ''),
-        '[^0-9]', '', 'g'
-    );
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-
--- 📝 COMENTARIO DE FUNCIÓN EN BD
-COMMENT ON FUNCTION normalizar_telefono(TEXT) IS
-'Normaliza números telefónicos removiendo caracteres especiales y códigos de país. Optimizada para búsquedas fuzzy en modelos de cliente';
+-- ⚠️ FUNCIÓN MIGRADA A: sql/00-fundamentos/03-funciones-utilidad.sql
+-- Fecha: 16 Nov 2025
+-- ────────────────────────────────────────────────────────────────────
 
 -- ====================================================================
 -- 🔢 FUNCIÓN 15: GENERAR_CODIGO_CITA
