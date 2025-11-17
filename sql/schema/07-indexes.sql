@@ -16,65 +16,73 @@
 -- ⚡ IMPACT: +300% performance en queries principales
 -- ====================================================================
 
+-- ⚠️  SECCIÓN MIGRADA A ESTRUCTURA MODULAR
 -- ====================================================================
--- 👤 ÍNDICES PARA TABLA USUARIOS (7 índices críticos)
+-- Los índices para usuarios y organizaciones han sido migrados a:
+-- → sql/nucleo/03-indices.sql
+-- Fecha de migración: 16 Noviembre 2025
+-- ====================================================================
+--
+-- ====================================================================
+-- 👤 ÍNDICES PARA TABLA USUARIOS (7 índices críticos) - LEGACY
 -- ====================================================================
 -- Optimización para autenticación, multi-tenancy y seguridad
 -- ────────────────────────────────────────────────────────────────────
 
+-- ⚠️  ÍNDICES COMENTADOS - Migrados a nucleo/03-indices.sql
 -- 🔑 ÍNDICE 1: AUTENTICACIÓN CRÍTICA
 -- Propósito: Login de usuarios (consulta MÁS frecuente del sistema)
 -- Uso: WHERE email = ? AND activo = TRUE
-CREATE UNIQUE INDEX idx_usuarios_email_unique
-    ON usuarios (email) WHERE activo = TRUE;
+-- CREATE UNIQUE INDEX idx_usuarios_email_unique
+--     ON usuarios (email) WHERE activo = TRUE;
 
 -- 🏢 ÍNDICE 2: GESTIÓN MULTI-TENANT
 -- Propósito: Listar usuarios por organización y filtrar por rol
 -- Uso: WHERE organizacion_id = ? AND rol = ? AND activo = TRUE
-CREATE INDEX idx_usuarios_org_rol_activo
-    ON usuarios (organizacion_id, rol, activo) WHERE activo = TRUE;
+-- CREATE INDEX idx_usuarios_org_rol_activo
+--     ON usuarios (organizacion_id, rol, activo) WHERE activo = TRUE;
 
 -- 👨‍⚕️ ÍNDICE 3: USUARIOS PROFESIONALES
 -- Propósito: Vincular usuarios con sus perfiles profesionales
 -- Uso: WHERE profesional_id = ? (cuando tabla profesionales esté lista)
-CREATE INDEX idx_usuarios_profesional_id
-    ON usuarios (profesional_id) WHERE profesional_id IS NOT NULL;
+-- CREATE INDEX idx_usuarios_profesional_id
+--     ON usuarios (profesional_id) WHERE profesional_id IS NOT NULL;
 
 -- 🛡️ ÍNDICE 4: CONTROL DE SEGURIDAD
 -- Propósito: Identificar usuarios bloqueados o con intentos fallidos
 -- Uso: Tareas de limpieza y auditoría de seguridad
-CREATE INDEX idx_usuarios_seguridad
-    ON usuarios (intentos_fallidos, bloqueado_hasta)
-    WHERE intentos_fallidos > 0 OR bloqueado_hasta IS NOT NULL;
+-- CREATE INDEX idx_usuarios_seguridad
+--     ON usuarios (intentos_fallidos, bloqueado_hasta)
+--     WHERE intentos_fallidos > 0 OR bloqueado_hasta IS NOT NULL;
 
 -- 🔄 ÍNDICE 5: TOKENS DE RECUPERACIÓN
 -- Propósito: Validar tokens de reset de contraseña
 -- Uso: WHERE token_reset_password = ? AND token_reset_expira > NOW()
-CREATE INDEX idx_usuarios_reset_token
-    ON usuarios (token_reset_password, token_reset_expira)
-    WHERE token_reset_password IS NOT NULL;
+-- CREATE INDEX idx_usuarios_reset_token
+--     ON usuarios (token_reset_password, token_reset_expira)
+--     WHERE token_reset_password IS NOT NULL;
 
 -- ✉️ ÍNDICE 5B: TOKENS DE VERIFICACIÓN DE EMAIL
 -- Propósito: Validar tokens de verificación de email
 -- Uso: WHERE token_verificacion_email = ? AND token_verificacion_expira > NOW()
-CREATE INDEX idx_usuarios_verificacion_email_token
-    ON usuarios (token_verificacion_email, token_verificacion_expira)
-    WHERE token_verificacion_email IS NOT NULL;
+-- CREATE INDEX idx_usuarios_verificacion_email_token
+--     ON usuarios (token_verificacion_email, token_verificacion_expira)
+--     WHERE token_verificacion_email IS NOT NULL;
 
 -- 📈 ÍNDICE 6: DASHBOARD DE ADMINISTRACIÓN
 -- Propósito: Métricas y listados de usuarios para admins
 -- Uso: Reportes de actividad y últimos accesos
-CREATE INDEX idx_usuarios_dashboard
-    ON usuarios (organizacion_id, ultimo_login, activo)
-    WHERE activo = TRUE;
+-- CREATE INDEX idx_usuarios_dashboard
+--     ON usuarios (organizacion_id, ultimo_login, activo)
+--     WHERE activo = TRUE;
 
 -- 🔍 ÍNDICE 7: BÚSQUEDA FULL-TEXT (GIN)
 -- Propósito: Autocompletar nombres en interfaces de usuario
 -- Uso: Búsqueda por nombre completo en español
 -- Tecnología: GIN (Generalized Inverted Index) optimizado para texto
-CREATE INDEX idx_usuarios_nombre_gin
-    ON usuarios USING gin(to_tsvector('spanish', nombre || ' ' || COALESCE(apellidos, '')))
-    WHERE activo = TRUE;
+-- CREATE INDEX idx_usuarios_nombre_gin
+--     ON usuarios USING gin(to_tsvector('spanish', nombre || ' ' || COALESCE(apellidos, '')))
+--     WHERE activo = TRUE;
 
 -- ====================================================================
 -- 🏢 ÍNDICES PARA TABLA ORGANIZACIONES (4 índices estratégicos)
@@ -82,23 +90,24 @@ CREATE INDEX idx_usuarios_nombre_gin
 -- Optimización para tenant isolation y búsquedas empresariales
 -- ────────────────────────────────────────────────────────────────────
 
+-- ⚠️  ÍNDICES COMENTADOS - Migrados a nucleo/03-indices.sql
 -- 🆔 ÍNDICE 1: TENANT LOOKUP ÚNICO
 -- Propósito: Resolución rápida de tenants por código único
 -- Uso: WHERE codigo_tenant = ? (crítico para multi-tenancy)
-CREATE UNIQUE INDEX idx_organizaciones_codigo_tenant
-    ON organizaciones (codigo_tenant) WHERE activo = TRUE;
+-- CREATE UNIQUE INDEX idx_organizaciones_codigo_tenant
+--     ON organizaciones (codigo_tenant) WHERE activo = TRUE;
 
 -- 🌐 ÍNDICE 2: SEO SLUG ÚNICO
 -- Propósito: URLs personalizadas para organizaciones
 -- Uso: WHERE slug = ? (para subdominios y URLs amigables)
-CREATE UNIQUE INDEX idx_organizaciones_slug
-    ON organizaciones (slug) WHERE activo = TRUE AND slug IS NOT NULL;
+-- CREATE UNIQUE INDEX idx_organizaciones_slug
+--     ON organizaciones (slug) WHERE activo = TRUE AND slug IS NOT NULL;
 
 -- 🏭 ÍNDICE 3: FILTRO POR INDUSTRIA
 -- Propósito: Análisis y reportes por sector industrial
 -- Uso: WHERE tipo_industria = ? AND activo = TRUE
-CREATE INDEX idx_organizaciones_tipo_industria
-    ON organizaciones (tipo_industria, activo) WHERE activo = TRUE;
+-- CREATE INDEX idx_organizaciones_tipo_industria
+--     ON organizaciones (tipo_industria, activo) WHERE activo = TRUE;
 
 -- 💳 ÍNDICE 4: GESTIÓN DE PLANES (COMENTADO - COLUMNA estado_subscripcion NO EXISTE)
 -- Propósito: Reportes de facturación y gestión de suscripciones

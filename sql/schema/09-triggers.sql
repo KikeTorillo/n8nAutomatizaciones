@@ -33,11 +33,12 @@ CREATE TRIGGER trigger_validar_email_usuario
     BEFORE INSERT OR UPDATE ON usuarios
     FOR EACH ROW EXECUTE FUNCTION validar_email_usuario();
 
--- TRIGGER 2: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
--- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_usuarios
-    BEFORE UPDATE ON usuarios
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+-- ⚠️  TRIGGER COMENTADO - Migrado a nucleo/06-triggers.sql
+-- -- TRIGGER 2: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- -- Actualiza campo actualizado_en automáticamente
+-- CREATE TRIGGER trigger_actualizar_usuarios
+--     BEFORE UPDATE ON usuarios
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
 -- ====================================================================
 -- 🏢 TRIGGERS PARA TABLA ORGANIZACIONES
@@ -45,11 +46,12 @@ CREATE TRIGGER trigger_actualizar_usuarios
 -- Mantenimiento automático de timestamps
 -- ────────────────────────────────────────────────────────────────────
 
--- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
--- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_organizaciones
-    BEFORE UPDATE ON organizaciones
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+-- ⚠️  TRIGGER COMENTADO - Migrado a nucleo/06-triggers.sql
+-- -- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- -- Actualiza campo actualizado_en automáticamente
+-- CREATE TRIGGER trigger_actualizar_organizaciones
+--     BEFORE UPDATE ON organizaciones
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
 -- ====================================================================
 -- 👨‍💼 TRIGGERS PARA TABLA PROFESIONALES
@@ -128,11 +130,12 @@ CREATE TRIGGER trigger_generar_codigo_cita
 COMMENT ON TRIGGER trigger_validar_email_usuario ON usuarios IS
 'Valida unicidad global de email usando función validar_email_usuario() antes de INSERT/UPDATE. Complementa el CONSTRAINT usuarios_email_key.';
 
-COMMENT ON TRIGGER trigger_actualizar_usuarios ON usuarios IS
-'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';
+-- ⚠️  COMENTARIOS COMENTADOS - Triggers migrados a nucleo/06-triggers.sql
+-- COMMENT ON TRIGGER trigger_actualizar_usuarios ON usuarios IS
+-- 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';
 
-COMMENT ON TRIGGER trigger_actualizar_organizaciones ON organizaciones IS
-'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';
+-- COMMENT ON TRIGGER trigger_actualizar_organizaciones ON organizaciones IS
+-- 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';
 
 COMMENT ON TRIGGER trigger_actualizar_profesionales ON profesionales IS
 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';

@@ -1,14 +1,13 @@
--- ⚠️  ARCHIVO MIGRADO A ESTRUCTURA MODULAR
 -- ====================================================================
--- Este archivo ha sido migrado al módulo núcleo:
--- → sql/nucleo/01-tablas-core.sql
--- Fecha de migración: 16 Noviembre 2025
+-- MÓDULO NÚCLEO: TABLAS CORE
 -- ====================================================================
+-- Tablas fundamentales del sistema multi-tenant:
+-- • organizaciones: Base del multi-tenancy (primera tabla del sistema)
+-- • usuarios: Autenticación y autorización
 --
--- TABLAS CORE DEL SISTEMA SAAS (LEGACY)
--- ====================================================================
--- organizaciones: Multi-tenancy (PRIMERO - sin dependencias)
--- usuarios: Autenticación y autorización (SEGUNDO - depende de organizaciones)
+-- Orden de creación: CRÍTICO (organizaciones → usuarios)
+-- Migrado de: sql/schema/03-core-tables.sql
+-- Fecha migración: 16 Noviembre 2025
 -- ====================================================================
 
 -- ====================================================================
@@ -138,3 +137,15 @@ CREATE TABLE usuarios (
         (rol != 'super_admin' AND organizacion_id IS NOT NULL)
     )
 );
+
+-- ====================================================================
+-- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
+-- ====================================================================
+COMMENT ON TABLE organizaciones IS 'Base del sistema multi-tenant. Cada organización es un tenant independiente con aislamiento completo de datos';
+COMMENT ON TABLE usuarios IS 'Autenticación y autorización. Vinculados a organizaciones (multi-tenant) o super_admin (global)';
+
+COMMENT ON COLUMN organizaciones.codigo_tenant IS 'Código único inmutable para identificación técnica del tenant (e.g., org-001)';
+COMMENT ON COLUMN organizaciones.slug IS 'URL-friendly identifier para subdominios y URLs personalizadas';
+COMMENT ON COLUMN organizaciones.mcp_credential_id IS 'ID de credencial MCP en n8n compartida por todos los chatbots. NULL si no hay chatbots activos';
+COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
+COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';

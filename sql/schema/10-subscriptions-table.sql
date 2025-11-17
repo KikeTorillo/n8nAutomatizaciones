@@ -1,5 +1,14 @@
+-- ⚠️  ARCHIVO MIGRADO A ESTRUCTURA MODULAR
 -- ====================================================================
--- 💳 TABLA SUBSCRIPCIONES - CONTROL DE FACTURACIÓN Y LÍMITES SAAS
+-- Este archivo ha sido migrado al módulo núcleo:
+-- → sql/nucleo/02-tablas-subscripciones.sql (tablas)
+-- → sql/nucleo/05-funciones.sql (funciones)
+-- → sql/nucleo/06-triggers.sql (triggers)
+-- → sql/nucleo/07-datos-iniciales.sql (planes base)
+-- Fecha de migración: 16 Noviembre 2025
+-- ====================================================================
+--
+-- 💳 TABLA SUBSCRIPCIONES - CONTROL DE FACTURACIÓN Y LÍMITES SAAS (LEGACY)
 -- ====================================================================
 --
 -- Esta tabla gestiona el ciclo completo de subscripciones del SaaS:

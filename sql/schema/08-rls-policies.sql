@@ -1,5 +1,13 @@
+-- ⚠️  SECCIONES MIGRADAS A ESTRUCTURA MODULAR
 -- ====================================================================
--- 🛡️ POLÍTICAS DE ROW LEVEL SECURITY (RLS)
+-- Las políticas RLS para usuarios, organizaciones y subscripciones
+-- han sido migradas a:
+-- → sql/nucleo/04-rls-policies.sql
+-- Fecha de migración: 16 Noviembre 2025
+-- ====================================================================
+--
+-- ====================================================================
+-- 🛡️ POLÍTICAS DE ROW LEVEL SECURITY (RLS) - LEGACY
 -- ====================================================================
 --
 -- Este archivo implementa el sistema de seguridad multi-tenant mediante
@@ -9,12 +17,13 @@
 -- • usuarios: 1 política unificada para 5 casos de acceso
 -- • organizaciones: Aislamiento por tenant con acceso admin
 
+-- ⚠️  POLÍTICAS RLS COMENTADAS - Migradas a nucleo/04-rls-policies.sql
 -- Habilitar RLS en usuarios
-ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
-ALTER TABLE usuarios FORCE ROW LEVEL SECURITY;
+-- ALTER TABLE usuarios ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE usuarios FORCE ROW LEVEL SECURITY;
 
 -- ====================================================================
--- 🎯 POLÍTICA UNIFICADA: USUARIOS_UNIFIED_ACCESS
+-- 🎯 POLÍTICA UNIFICADA: USUARIOS_UNIFIED_ACCESS (LEGACY - COMENTADA)
 -- ====================================================================
 -- Esta es la política MÁS CRÍTICA del sistema. Maneja todos los casos
 -- de acceso a usuarios en una sola política para evitar conflictos.
@@ -27,72 +36,72 @@ ALTER TABLE usuarios FORCE ROW LEVEL SECURITY;
 --
 -- 🔍 5 CASOS DE ACCESO SOPORTADOS:
 -- ═══════════════════════════════════════════════════════════════════════
-CREATE POLICY usuarios_unified_access ON usuarios
-    FOR ALL                                   -- Aplica a SELECT, INSERT, UPDATE, DELETE
-    TO saas_app                              -- Solo para usuario de aplicación
-    USING (
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 1: CONTEXTO DE LOGIN (AUTENTICACIÓN INICIAL)          │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Permite buscar usuario por email durante el proceso de login
-        -- Variable: app.current_user_role = 'login_context'
-        -- Uso: Validar credenciales antes de establecer sesión
-        current_setting('app.current_user_role', true) = 'login_context'
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 2: SUPER ADMIN (ACCESO TOTAL AL SISTEMA)              │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Super admins pueden gestionar usuarios de cualquier organización
-        -- Variable: app.current_user_role = 'super_admin'
-        -- Uso: Administración global del sistema SaaS
-        OR current_setting('app.current_user_role', true) = 'super_admin'
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 3: BYPASS PARA FUNCIONES DE SISTEMA                   │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Funciones PL/pgSQL como registrar_intento_login() necesitan
-        -- acceso directo sin restricciones para operaciones críticas
-        -- Variable: app.bypass_rls = 'true'
-        -- Uso: Funciones de mantenimiento y operaciones automáticas
-        OR current_setting('app.bypass_rls', true) = 'true'
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 4: ACCESO PROPIO (SELF-ACCESS)                        │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Cada usuario puede ver y editar su propio registro
-        -- Variable: app.current_user_id = ID del usuario autenticado
-        -- Uso: Perfil personal, cambio de configuraciones
-        OR id = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::INTEGER, 0)
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 5: AISLAMIENTO MULTI-TENANT (TENANT ISOLATION)        │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Usuarios pueden ver otros usuarios solo de su misma organización
-        -- Variables: app.current_tenant_id = ID de la organización
-        -- Uso: Gestión de equipo, asignación de citas, reportes
-        OR (
-            organizacion_id IS NOT NULL                                    -- Evita NULL para super_admin
-            AND current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' -- Validar formato numérico
-            AND organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-        )
-    );
+-- CREATE POLICY usuarios_unified_access ON usuarios
+--     FOR ALL                                   -- Aplica a SELECT, INSERT, UPDATE, DELETE
+--     TO saas_app                              -- Solo para usuario de aplicación
+--     USING (
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 1: CONTEXTO DE LOGIN (AUTENTICACIÓN INICIAL)          │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Permite buscar usuario por email durante el proceso de login
+--         -- Variable: app.current_user_role = 'login_context'
+--         -- Uso: Validar credenciales antes de establecer sesión
+--         current_setting('app.current_user_role', true) = 'login_context'
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 2: SUPER ADMIN (ACCESO TOTAL AL SISTEMA)              │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Super admins pueden gestionar usuarios de cualquier organización
+--         -- Variable: app.current_user_role = 'super_admin'
+--         -- Uso: Administración global del sistema SaaS
+--         OR current_setting('app.current_user_role', true) = 'super_admin'
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 3: BYPASS PARA FUNCIONES DE SISTEMA                   │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Funciones PL/pgSQL como registrar_intento_login() necesitan
+--         -- acceso directo sin restricciones para operaciones críticas
+--         -- Variable: app.bypass_rls = 'true'
+--         -- Uso: Funciones de mantenimiento y operaciones automáticas
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 4: ACCESO PROPIO (SELF-ACCESS)                        │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Cada usuario puede ver y editar su propio registro
+--         -- Variable: app.current_user_id = ID del usuario autenticado
+--         -- Uso: Perfil personal, cambio de configuraciones
+--         OR id = COALESCE(NULLIF(current_setting('app.current_user_id', true), '')::INTEGER, 0)
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 5: AISLAMIENTO MULTI-TENANT (TENANT ISOLATION)        │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Usuarios pueden ver otros usuarios solo de su misma organización
+--         -- Variables: app.current_tenant_id = ID de la organización
+--         -- Uso: Gestión de equipo, asignación de citas, reportes
+--         OR (
+--             organizacion_id IS NOT NULL                                    -- Evita NULL para super_admin
+--             AND current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' -- Validar formato numérico
+--             AND organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--         )
+--     );
 
 -- 📝 DOCUMENTACIÓN DE POLÍTICA EN BASE DE DATOS
-COMMENT ON POLICY usuarios_unified_access ON usuarios IS
-'Política unificada que maneja los 5 casos de acceso: login_context, super_admin, bypass_rls, self_access y tenant_isolation. Núcleo de la seguridad multi-tenant del sistema';
+-- COMMENT ON POLICY usuarios_unified_access ON usuarios IS
+-- 'Política unificada que maneja los 5 casos de acceso: login_context, super_admin, bypass_rls, self_access y tenant_isolation. Núcleo de la seguridad multi-tenant del sistema';
 
 -- ====================================================================
--- 🏢 RLS PARA TABLA ORGANIZACIONES
+-- 🏢 RLS PARA TABLA ORGANIZACIONES (LEGACY - COMENTADA)
 -- ====================================================================
 -- Implementa aislamiento multi-tenant para la tabla de organizaciones
 -- ────────────────────────────────────────────────────────────────────
 
 -- Habilitar RLS en organizaciones
-ALTER TABLE organizaciones ENABLE ROW LEVEL SECURITY;
-ALTER TABLE organizaciones FORCE ROW LEVEL SECURITY;
+-- ALTER TABLE organizaciones ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE organizaciones FORCE ROW LEVEL SECURITY;
 
 -- ====================================================================
--- 🎯 POLÍTICA: TENANT_ISOLATION_ORGANIZACIONES
+-- 🎯 POLÍTICA: TENANT_ISOLATION_ORGANIZACIONES (LEGACY - COMENTADA)
 -- ====================================================================
 -- Controla el acceso a los datos de organizaciones basado en el contexto
 -- del usuario autenticado y su nivel de permisos.
@@ -102,41 +111,41 @@ ALTER TABLE organizaciones FORCE ROW LEVEL SECURITY;
 -- • Usuario de organización: Solo acceso a su propia organización
 -- • Funciones de sistema: Bypass controlado para operaciones automáticas
 -- ────────────────────────────────────────────────────────────────────
-CREATE POLICY tenant_isolation_organizaciones ON organizaciones
-    FOR ALL                                     -- Aplica a todas las operaciones
-    TO saas_app                                -- Solo para usuario de aplicación
-    USING (
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 1: SUPER ADMIN (ACCESO GLOBAL)                        │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Super admin puede gestionar todas las organizaciones del sistema
-        current_setting('app.current_user_role', true) = 'super_admin'
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 2: ACCESO A PROPIA ORGANIZACIÓN                       │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Usuario solo puede acceder a su organización (tenant isolation)
-        OR id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-
-        -- ┌─────────────────────────────────────────────────────────────┐
-        -- │ CASO 3: BYPASS PARA FUNCIONES DE SISTEMA                   │
-        -- └─────────────────────────────────────────────────────────────┘
-        -- Funciones de registro, onboarding y mantenimiento automático
-        OR current_setting('app.bypass_rls', true) = 'true'
-    )
-    WITH CHECK (
-        -- ═══════════════════════════════════════════════════════════════
-        -- RESTRICCIONES PARA ESCRITURA (INSERT/UPDATE)
-        -- ═══════════════════════════════════════════════════════════════
-        -- Solo super admin puede crear/modificar organizaciones
-        current_setting('app.current_user_role', true) = 'super_admin'
-        -- O bypass está activado (para proceso de registro automático)
-        OR current_setting('app.bypass_rls', true) = 'true'
-    );
+-- CREATE POLICY tenant_isolation_organizaciones ON organizaciones
+--     FOR ALL                                     -- Aplica a todas las operaciones
+--     TO saas_app                                -- Solo para usuario de aplicación
+--     USING (
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 1: SUPER ADMIN (ACCESO GLOBAL)                        │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Super admin puede gestionar todas las organizaciones del sistema
+--         current_setting('app.current_user_role', true) = 'super_admin'
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 2: ACCESO A PROPIA ORGANIZACIÓN                       │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Usuario solo puede acceder a su organización (tenant isolation)
+--         OR id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--
+--         -- ┌─────────────────────────────────────────────────────────────┐
+--         -- │ CASO 3: BYPASS PARA FUNCIONES DE SISTEMA                   │
+--         -- └─────────────────────────────────────────────────────────────┘
+--         -- Funciones de registro, onboarding y mantenimiento automático
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--     )
+--     WITH CHECK (
+--         -- ═══════════════════════════════════════════════════════════════
+--         -- RESTRICCIONES PARA ESCRITURA (INSERT/UPDATE)
+--         -- ═══════════════════════════════════════════════════════════════
+--         -- Solo super admin puede crear/modificar organizaciones
+--         current_setting('app.current_user_role', true) = 'super_admin'
+--         -- O bypass está activado (para proceso de registro automático)
+--         OR current_setting('app.bypass_rls', true) = 'true'
+--     );
 
 -- 📝 DOCUMENTACIÓN DE POLÍTICA
-COMMENT ON POLICY tenant_isolation_organizaciones ON organizaciones IS
-'Política de aislamiento multi-tenant. Super admin acceso global, usuarios regulares solo su organización';
+-- COMMENT ON POLICY tenant_isolation_organizaciones ON organizaciones IS
+-- 'Política de aislamiento multi-tenant. Super admin acceso global, usuarios regulares solo su organización';
 
 -- ====================================================================
 -- 👨‍💼 RLS PARA TABLA PROFESIONALES
