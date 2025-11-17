@@ -115,26 +115,24 @@ CREATE POLICY servicios_system_bypass ON servicios
 -- ====================================================================
 -- 🔗 RLS PARA TABLA SERVICIOS_PROFESIONALES
 -- ====================================================================
--- Aislamiento indirecto via joins con organizaciones
+-- Aislamiento DIRECTO por organizacion_id (MEJORADO - Nov 2025)
+-- Anteriormente usaba JOIN indirecto, ahora usa columna directa para
+-- mejor performance y seguridad.
 -- ────────────────────────────────────────────────────────────────────
 
 -- Habilitar RLS en servicios_profesionales
 ALTER TABLE servicios_profesionales ENABLE ROW LEVEL SECURITY;
 ALTER TABLE servicios_profesionales FORCE ROW LEVEL SECURITY;
 
--- POLÍTICA: AISLAMIENTO VIA JOINS
+-- POLÍTICA: AISLAMIENTO DIRECTO POR ORGANIZACION_ID
 CREATE POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales
     FOR ALL
     TO saas_app
     USING (
         -- Super admin acceso global
         current_setting('app.current_user_role', true) = 'super_admin'
-        -- O acceso via organización del servicio/profesional
-        OR EXISTS (
-            SELECT 1 FROM servicios s
-            WHERE s.id = servicio_id
-            AND s.organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-        )
+        -- O acceso directo por organizacion_id (SIN JOIN, más rápido)
+        OR organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
         -- O bypass para funciones de sistema
         OR current_setting('app.bypass_rls', true) = 'true'
     );
@@ -195,8 +193,14 @@ COMMENT ON POLICY servicios_system_bypass ON servicios IS
 Activado mediante: SELECT set_config(''app.bypass_rls'', ''true'', true);
 Casos de uso: Triggers, funciones de migración, procesos batch.';
 
--- Política de servicios profesionales
+-- Política de servicios profesionales (MEJORADO Nov 2025)
 COMMENT ON POLICY servicios_profesionales_tenant_isolation ON servicios_profesionales IS
-'Aislamiento indirecto mediante JOIN con tabla servicios.
-Verifica que el servicio asociado pertenezca a la organización del usuario.
-Previene asignaciones cruzadas entre organizaciones.';
+'Aislamiento DIRECTO por organizacion_id (SIN JOIN):
+- Validación directa organizacion_id = current_tenant (más rápido)
+- Organizacion_id poblado automáticamente via trigger
+- Trigger valida que servicio y profesional sean de misma org
+- Previene mezcla de organizaciones (seguridad multi-tenant)
+
+MEJORA: Anteriormente usaba EXISTS + JOIN con servicios (más lento).
+Ahora usa columna directa con índice para mejor performance.
+Fecha: 17 Noviembre 2025';

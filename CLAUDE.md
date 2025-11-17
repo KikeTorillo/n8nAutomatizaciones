@@ -12,18 +12,19 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 16 Noviembre 2025
+**Actualizado**: 17 Noviembre 2025
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
 | **Backend API** | ✅ Operativo | 23 controllers, validación bidireccional citas/bloqueos |
 | **Frontend React** | ✅ Operativo | React 18 + Vite 7, 14 hooks personalizados |
-| **Base de Datos** | ✅ Optimizada | 25 tablas (2 particionadas), RLS multi-tenant |
+| **Base de Datos** | ✅ Optimizada | 25 tablas (2 particionadas), RLS multi-tenant mejorado |
 | **Sistema Comisiones** | ✅ Operativo | Trigger automático, 12 endpoints, Dashboard + Reportes |
 | **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
 | **Sistema Email** | ✅ Operativo | AWS SES + nodemailer, templates HTML |
 | **Deployment** | ✅ Listo | Hostinger VPS + Docker Compose |
+| **Seguridad Multi-Tenant** | ✅ Reforzada | Validación automática en `servicios_profesionales` (Nov 2025) |
 
 ---
 

@@ -291,6 +291,11 @@ CREATE TABLE servicios (
 CREATE TABLE servicios_profesionales (
     -- 🔑 Identificación
     id SERIAL PRIMARY KEY,
+
+    -- 🏢 RELACIÓN MULTI-TENANT (CRÍTICA)
+    -- Se pobla automáticamente via trigger desde servicios/profesionales
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+
     servicio_id INTEGER NOT NULL REFERENCES servicios(id) ON DELETE CASCADE,
     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
 
