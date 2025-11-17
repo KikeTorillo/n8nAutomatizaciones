@@ -583,92 +583,93 @@ Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
 -- Verifica que la cita asociada pertenezca a la organización del usuario.
 -- Performance: Usa índice idx_citas_servicios_cita_id (< 1ms overhead).
 -- Agregado: 2025-10-26 - Feature múltiples servicios por cita';
-
--- ====================================================================
--- 💵 POLÍTICAS RLS DEL SISTEMA DE COMISIONES
--- ====================================================================
--- Agregado: 14 Noviembre 2025
--- Versión: 1.0.0
--- ====================================================================
-
--- ====================================================================
--- RLS PARA TABLA configuracion_comisiones
--- ====================================================================
-
-ALTER TABLE configuracion_comisiones ENABLE ROW LEVEL SECURITY;
-ALTER TABLE configuracion_comisiones FORCE ROW LEVEL SECURITY;
-
-CREATE POLICY configuracion_comisiones_tenant_isolation
-ON configuracion_comisiones
-FOR ALL
-TO saas_app
-USING (
-    current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
-    organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-);
-
-COMMENT ON POLICY configuracion_comisiones_tenant_isolation ON configuracion_comisiones IS
-'Aislamiento multi-tenant: solo miembros de la organización pueden acceder a su configuración.
-Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';
-
--- ====================================================================
--- RLS PARA TABLA comisiones_profesionales
--- ====================================================================
-
-ALTER TABLE comisiones_profesionales ENABLE ROW LEVEL SECURITY;
-ALTER TABLE comisiones_profesionales FORCE ROW LEVEL SECURITY;
-
--- Política: Aislamiento multi-tenant (consistente con clientes, citas, etc.)
-CREATE POLICY comisiones_profesionales_tenant_isolation
-ON comisiones_profesionales
-FOR ALL
-TO saas_app
-USING (
-    current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
-    organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-);
-
-COMMENT ON POLICY comisiones_profesionales_tenant_isolation ON comisiones_profesionales IS
-'Aislamiento multi-tenant: solo miembros de la organización pueden acceder a sus comisiones.
-Fix: 2025-11-15 - Simplificado para consistencia con otras tablas (solo requiere current_tenant_id).';
-
--- ====================================================================
--- RLS PARA TABLA historial_configuracion_comisiones
--- ====================================================================
-
-ALTER TABLE historial_configuracion_comisiones ENABLE ROW LEVEL SECURITY;
-ALTER TABLE historial_configuracion_comisiones FORCE ROW LEVEL SECURITY;
-
--- Política 1: SELECT - Aislamiento multi-tenant
-CREATE POLICY historial_config_comisiones_tenant_isolation
-ON historial_configuracion_comisiones
-FOR SELECT
-TO saas_app
-USING (
-    current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
-    organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-);
-
--- Política 2: INSERT - Permite INSERT desde trigger de auditoría
-CREATE POLICY historial_config_comisiones_trigger_insert
-ON historial_configuracion_comisiones
-FOR INSERT
-TO saas_app
-WITH CHECK (
-    -- Permitir INSERT desde triggers (bypass_rls)
-    current_setting('app.bypass_rls', true) = 'true'
-    OR
-    -- O desde cualquier usuario de la organización
-    (
-        current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
-        organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
-    )
-);
-
-COMMENT ON POLICY historial_config_comisiones_tenant_isolation ON historial_configuracion_comisiones IS
-'Aislamiento multi-tenant para historial de configuración de comisiones.
-Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';
-
-COMMENT ON POLICY historial_config_comisiones_trigger_insert ON historial_configuracion_comisiones IS
-'Permite INSERT desde trigger de auditoría (bypass_rls) y desde usuarios de la organización.
-Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';
+-- ⚠️  MIGRADO A comisiones/03-rls-policies.sql
+-- 
+-- -- ====================================================================
+-- -- 💵 POLÍTICAS RLS DEL SISTEMA DE COMISIONES
+-- -- ====================================================================
+-- -- Agregado: 14 Noviembre 2025
+-- -- Versión: 1.0.0
+-- -- ====================================================================
+-- 
+-- -- ====================================================================
+-- -- RLS PARA TABLA configuracion_comisiones
+-- -- ====================================================================
+-- 
+-- ALTER TABLE configuracion_comisiones ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE configuracion_comisiones FORCE ROW LEVEL SECURITY;
+-- 
+-- CREATE POLICY configuracion_comisiones_tenant_isolation
+-- ON configuracion_comisiones
+-- FOR ALL
+-- TO saas_app
+-- USING (
+--     current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
+--     organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+-- );
+-- 
+-- COMMENT ON POLICY configuracion_comisiones_tenant_isolation ON configuracion_comisiones IS
+-- 'Aislamiento multi-tenant: solo miembros de la organización pueden acceder a su configuración.
+-- Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';
+-- 
+-- -- ====================================================================
+-- -- RLS PARA TABLA comisiones_profesionales
+-- -- ====================================================================
+-- 
+-- ALTER TABLE comisiones_profesionales ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE comisiones_profesionales FORCE ROW LEVEL SECURITY;
+-- 
+-- -- Política: Aislamiento multi-tenant (consistente con clientes, citas, etc.)
+-- CREATE POLICY comisiones_profesionales_tenant_isolation
+-- ON comisiones_profesionales
+-- FOR ALL
+-- TO saas_app
+-- USING (
+--     current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
+--     organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+-- );
+-- 
+-- COMMENT ON POLICY comisiones_profesionales_tenant_isolation ON comisiones_profesionales IS
+-- 'Aislamiento multi-tenant: solo miembros de la organización pueden acceder a sus comisiones.
+-- Fix: 2025-11-15 - Simplificado para consistencia con otras tablas (solo requiere current_tenant_id).';
+-- 
+-- -- ====================================================================
+-- -- RLS PARA TABLA historial_configuracion_comisiones
+-- -- ====================================================================
+-- 
+-- ALTER TABLE historial_configuracion_comisiones ENABLE ROW LEVEL SECURITY;
+-- ALTER TABLE historial_configuracion_comisiones FORCE ROW LEVEL SECURITY;
+-- 
+-- -- Política 1: SELECT - Aislamiento multi-tenant
+-- CREATE POLICY historial_config_comisiones_tenant_isolation
+-- ON historial_configuracion_comisiones
+-- FOR SELECT
+-- TO saas_app
+-- USING (
+--     current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
+--     organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+-- );
+-- 
+-- -- Política 2: INSERT - Permite INSERT desde trigger de auditoría
+-- CREATE POLICY historial_config_comisiones_trigger_insert
+-- ON historial_configuracion_comisiones
+-- FOR INSERT
+-- TO saas_app
+-- WITH CHECK (
+--     -- Permitir INSERT desde triggers (bypass_rls)
+--     current_setting('app.bypass_rls', true) = 'true'
+--     OR
+--     -- O desde cualquier usuario de la organización
+--     (
+--         current_setting('app.current_tenant_id', true) ~ '^[0-9]+$' AND
+--         organizacion_id = COALESCE(NULLIF(current_setting('app.current_tenant_id', true), '')::INTEGER, 0)
+--     )
+-- );
+-- 
+-- COMMENT ON POLICY historial_config_comisiones_tenant_isolation ON historial_configuracion_comisiones IS
+-- 'Aislamiento multi-tenant para historial de configuración de comisiones.
+-- Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';
+-- 
+-- COMMENT ON POLICY historial_config_comisiones_trigger_insert ON historial_configuracion_comisiones IS
+-- 'Permite INSERT desde trigger de auditoría (bypass_rls) y desde usuarios de la organización.
+-- Fix: 2025-11-15 - Simplificado para consistencia (solo requiere current_tenant_id).';

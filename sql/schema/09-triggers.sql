@@ -221,68 +221,69 @@ Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
 -- Agregado: 2025-10-26 - Feature múltiples servicios por cita';
 
 -- ====================================================================
--- 💵 TRIGGERS DEL SISTEMA DE COMISIONES
--- ====================================================================
--- Agregado: 14 Noviembre 2025
--- Versión: 1.0.0
--- ====================================================================
-
--- ====================================================================
--- TRIGGER 1: Calcular comisión automáticamente al completar cita
--- ====================================================================
-
-CREATE TRIGGER trigger_calcular_comision_cita
-    AFTER UPDATE OF estado ON citas
-    FOR EACH ROW
-    WHEN (NEW.estado = 'completada' AND OLD.estado != 'completada')
-    EXECUTE FUNCTION calcular_comision_cita();
-
-COMMENT ON TRIGGER trigger_calcular_comision_cita ON citas IS
-'Calcula comisión automáticamente cuando una cita se completa.
-Ejecuta función calcular_comision_cita() que:
-1. Obtiene servicios de la cita
-2. Para cada servicio, busca configuración (específica o global)
-3. Calcula comisión según tipo (% o monto fijo)
-4. Registra en comisiones_profesionales con detalle JSON';
-
--- ====================================================================
--- TRIGGER 2: Auditoría de cambios en configuración de comisiones
--- ====================================================================
-
--- Trigger para INSERT y UPDATE (AFTER)
-CREATE TRIGGER trigger_auditoria_configuracion_comisiones_after
-    AFTER INSERT OR UPDATE ON configuracion_comisiones
-    FOR EACH ROW
-    EXECUTE FUNCTION auditoria_configuracion_comisiones();
-
--- Trigger para DELETE (BEFORE para evitar problemas con CASCADE)
-CREATE TRIGGER trigger_auditoria_configuracion_comisiones_before
-    BEFORE DELETE ON configuracion_comisiones
-    FOR EACH ROW
-    EXECUTE FUNCTION auditoria_configuracion_comisiones();
-
-COMMENT ON TRIGGER trigger_auditoria_configuracion_comisiones_after ON configuracion_comisiones IS
-'Registra INSERT y UPDATE en historial_configuracion_comisiones para auditoría.';
-
-COMMENT ON TRIGGER trigger_auditoria_configuracion_comisiones_before ON configuracion_comisiones IS
-'Registra DELETE en historial_configuracion_comisiones ANTES de ejecutar CASCADE.';
-
--- ====================================================================
--- TRIGGER 3: Actualizar timestamp automáticamente
--- ====================================================================
-
-CREATE TRIGGER trigger_actualizar_timestamp_configuracion_comisiones
-    BEFORE UPDATE ON configuracion_comisiones
-    FOR EACH ROW
-    EXECUTE FUNCTION actualizar_timestamp();
-
-CREATE TRIGGER trigger_actualizar_timestamp_comisiones_profesionales
-    BEFORE UPDATE ON comisiones_profesionales
-    FOR EACH ROW
-    EXECUTE FUNCTION actualizar_timestamp();
-
-COMMENT ON TRIGGER trigger_actualizar_timestamp_configuracion_comisiones ON configuracion_comisiones IS
-'Actualiza automáticamente actualizado_en usando función actualizar_timestamp()';
-
-COMMENT ON TRIGGER trigger_actualizar_timestamp_comisiones_profesionales ON comisiones_profesionales IS
-'Actualiza automáticamente actualizado_en usando función actualizar_timestamp()';
+-- ⚠️  MIGRADO A comisiones/05-triggers.sql
+-- -- 💵 TRIGGERS DEL SISTEMA DE COMISIONES
+-- -- ====================================================================
+-- -- Agregado: 14 Noviembre 2025
+-- -- Versión: 1.0.0
+-- -- ====================================================================
+-- 
+-- -- ====================================================================
+-- -- TRIGGER 1: Calcular comisión automáticamente al completar cita
+-- -- ====================================================================
+-- 
+-- CREATE TRIGGER trigger_calcular_comision_cita
+--     AFTER UPDATE OF estado ON citas
+--     FOR EACH ROW
+--     WHEN (NEW.estado = 'completada' AND OLD.estado != 'completada')
+--     EXECUTE FUNCTION calcular_comision_cita();
+-- 
+-- COMMENT ON TRIGGER trigger_calcular_comision_cita ON citas IS
+-- 'Calcula comisión automáticamente cuando una cita se completa.
+-- Ejecuta función calcular_comision_cita() que:
+-- 1. Obtiene servicios de la cita
+-- 2. Para cada servicio, busca configuración (específica o global)
+-- 3. Calcula comisión según tipo (% o monto fijo)
+-- 4. Registra en comisiones_profesionales con detalle JSON';
+-- 
+-- -- ====================================================================
+-- -- TRIGGER 2: Auditoría de cambios en configuración de comisiones
+-- -- ====================================================================
+-- 
+-- -- Trigger para INSERT y UPDATE (AFTER)
+-- CREATE TRIGGER trigger_auditoria_configuracion_comisiones_after
+--     AFTER INSERT OR UPDATE ON configuracion_comisiones
+--     FOR EACH ROW
+--     EXECUTE FUNCTION auditoria_configuracion_comisiones();
+-- 
+-- -- Trigger para DELETE (BEFORE para evitar problemas con CASCADE)
+-- CREATE TRIGGER trigger_auditoria_configuracion_comisiones_before
+--     BEFORE DELETE ON configuracion_comisiones
+--     FOR EACH ROW
+--     EXECUTE FUNCTION auditoria_configuracion_comisiones();
+-- 
+-- COMMENT ON TRIGGER trigger_auditoria_configuracion_comisiones_after ON configuracion_comisiones IS
+-- 'Registra INSERT y UPDATE en historial_configuracion_comisiones para auditoría.';
+-- 
+-- COMMENT ON TRIGGER trigger_auditoria_configuracion_comisiones_before ON configuracion_comisiones IS
+-- 'Registra DELETE en historial_configuracion_comisiones ANTES de ejecutar CASCADE.';
+-- 
+-- -- ====================================================================
+-- -- TRIGGER 3: Actualizar timestamp automáticamente
+-- -- ====================================================================
+-- 
+-- CREATE TRIGGER trigger_actualizar_timestamp_configuracion_comisiones
+--     BEFORE UPDATE ON configuracion_comisiones
+--     FOR EACH ROW
+--     EXECUTE FUNCTION actualizar_timestamp();
+-- 
+-- CREATE TRIGGER trigger_actualizar_timestamp_comisiones_profesionales
+--     BEFORE UPDATE ON comisiones_profesionales
+--     FOR EACH ROW
+--     EXECUTE FUNCTION actualizar_timestamp();
+-- 
+-- COMMENT ON TRIGGER trigger_actualizar_timestamp_configuracion_comisiones ON configuracion_comisiones IS
+-- 'Actualiza automáticamente actualizado_en usando función actualizar_timestamp()';
+-- 
+-- COMMENT ON TRIGGER trigger_actualizar_timestamp_comisiones_profesionales ON comisiones_profesionales IS
+-- 'Actualiza automáticamente actualizado_en usando función actualizar_timestamp()';

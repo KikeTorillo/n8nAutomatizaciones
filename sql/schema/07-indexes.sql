@@ -775,181 +775,182 @@ Solo indexa usuarios con rol=bot activos (1 por organización).
 Usado por MCP Server para autenticación de chatbots (+90% faster).
 Critical for JWT generation performance.';
 
--- ====================================================================
--- 💵 ÍNDICES DEL SISTEMA DE COMISIONES
--- ====================================================================
--- Agregado: 14 Noviembre 2025
--- Versión: 1.0.0
--- ====================================================================
+-- ⚠️  MIGRADO A comisiones/02-indices.sql
+-- -- ====================================================================
+-- -- 💵 ÍNDICES DEL SISTEMA DE COMISIONES
+-- -- ====================================================================
+-- -- Agregado: 14 Noviembre 2025
+-- -- Versión: 1.0.0
+-- -- ====================================================================
 
--- ====================================================================
--- 🔍 ÍNDICES PARA TABLA: configuracion_comisiones
--- ====================================================================
+-- -- ====================================================================
+-- -- 🔍 ÍNDICES PARA TABLA: configuracion_comisiones
+-- -- ====================================================================
 
--- 🏢 ÍNDICE: ORGANIZACIÓN
--- Propósito: Filtrar configuraciones por organización (RLS + queries frecuentes)
--- Uso: WHERE organizacion_id = ?
-CREATE INDEX IF NOT EXISTS idx_config_comisiones_org
-    ON configuracion_comisiones(organizacion_id);
-
-COMMENT ON INDEX idx_config_comisiones_org IS
-'Índice para filtrar configuraciones por organización.
-Usado por RLS y queries de listado.
-Performance: O(log n) en búsquedas por organización.';
-
--- 👨‍💼 ÍNDICE: PROFESIONAL
--- Propósito: Buscar configuración por profesional (usado por trigger)
--- Uso: WHERE profesional_id = ?
-CREATE INDEX IF NOT EXISTS idx_config_comisiones_prof
-    ON configuracion_comisiones(profesional_id);
-
-COMMENT ON INDEX idx_config_comisiones_prof IS
-'Índice para buscar configuración por profesional.
-CRÍTICO: Usado por función obtener_configuracion_comision() en trigger.
-Performance: O(log n) en búsquedas por profesional.';
-
--- 🎯 ÍNDICE PARCIAL: SERVICIO ESPECÍFICO
--- Propósito: Buscar configuración específica de servicio
--- Uso: WHERE servicio_id = ?
-CREATE INDEX IF NOT EXISTS idx_config_comisiones_serv
-    ON configuracion_comisiones(servicio_id)
-    WHERE servicio_id IS NOT NULL;
-
-COMMENT ON INDEX idx_config_comisiones_serv IS
-'Índice parcial para configuraciones específicas de servicio.
-Solo indexa registros con servicio_id NOT NULL.
-Usado por función obtener_configuracion_comision() en trigger.';
-
--- ✅ ÍNDICE PARCIAL: CONFIGURACIONES ACTIVAS
--- Propósito: Listar solo configuraciones activas
--- Uso: WHERE activo = TRUE
-CREATE INDEX IF NOT EXISTS idx_config_comisiones_activo
-    ON configuracion_comisiones(activo)
-    WHERE activo = true;
-
-COMMENT ON INDEX idx_config_comisiones_activo IS
-'Índice parcial para configuraciones activas.
-Usado en función obtener_configuracion_comision() para filtrar configs válidas.
-Performance: Índice pequeño, solo registros activos.';
-
--- ====================================================================
--- 🔍 ÍNDICES PARA TABLA: comisiones_profesionales
--- ====================================================================
-
--- 🏢 ÍNDICE: ORGANIZACIÓN
--- Propósito: Filtrar comisiones por organización (RLS)
--- Uso: WHERE organizacion_id = ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_org
-    ON comisiones_profesionales(organizacion_id);
-
-COMMENT ON INDEX idx_comisiones_org IS
-'Índice para filtrar comisiones por organización.
-Usado por RLS en todas las queries.
-Performance: O(log n) en búsquedas por organización.';
-
--- 👨‍💼 ÍNDICE: PROFESIONAL
--- Propósito: Dashboard personal de profesional (query frecuente)
--- Uso: WHERE profesional_id = ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_prof
-    ON comisiones_profesionales(profesional_id);
-
-COMMENT ON INDEX idx_comisiones_prof IS
-'Índice para dashboard personal de profesional.
-Query MUY frecuente: empleados consultando sus comisiones.
-Performance: O(log n) en búsquedas por profesional.';
-
--- 📅 ÍNDICE: CITA
--- Propósito: Verificar si ya existe comisión para una cita (trigger)
--- Uso: WHERE cita_id = ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_cita
-    ON comisiones_profesionales(cita_id);
-
-COMMENT ON INDEX idx_comisiones_cita IS
-'Índice para verificar existencia de comisión por cita.
-CRÍTICO: Usado por trigger calcular_comision_cita() para evitar duplicados.
-Performance: O(log n) en búsquedas por cita.';
-
--- 💰 ÍNDICE: ESTADO DE PAGO
--- Propósito: Filtrar comisiones por estado (pendiente/pagada/cancelada)
--- Uso: WHERE estado_pago = ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_estado
-    ON comisiones_profesionales(estado_pago);
-
-COMMENT ON INDEX idx_comisiones_estado IS
-'Índice para filtrar comisiones por estado de pago.
-Usado en dashboard admin: listar pendientes, pagadas, etc.
-Performance: O(log n) en búsquedas por estado.';
-
--- 📆 ÍNDICE PARCIAL: FECHA DE PAGO
--- Propósito: Filtrar comisiones pagadas por fecha
--- Uso: WHERE fecha_pago BETWEEN ? AND ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_fecha_pago
-    ON comisiones_profesionales(fecha_pago)
-    WHERE fecha_pago IS NOT NULL;
-
-COMMENT ON INDEX idx_comisiones_fecha_pago IS
-'Índice parcial para comisiones pagadas por fecha.
-Solo indexa registros con fecha_pago NOT NULL.
-Usado en reportes de pagos históricos.';
-
--- 📊 ÍNDICE: FECHA DE CREACIÓN
--- Propósito: Rangos de fechas en reportes
--- Uso: WHERE creado_en BETWEEN ? AND ?
-CREATE INDEX IF NOT EXISTS idx_comisiones_creado
-    ON comisiones_profesionales(creado_en);
-
-COMMENT ON INDEX idx_comisiones_creado IS
-'Índice para rangos de fechas en reportes.
-Usado en dashboard: mes actual, mes anterior, últimos 6 meses.
-Performance: O(log n) en búsquedas por rango de fechas.';
-
--- 🔍 ÍNDICE GIN: DETALLE DE SERVICIOS (JSONB)
--- Propósito: Búsqueda en JSON de servicios (queries analíticas)
--- Uso: WHERE detalle_servicios @> '[{"servicio_id": 10}]'
-CREATE INDEX IF NOT EXISTS idx_comisiones_detalle
-    ON comisiones_profesionales USING GIN (detalle_servicios);
-
-COMMENT ON INDEX idx_comisiones_detalle IS
-'Índice GIN para búsquedas en JSON de servicios.
-Usado en queries analíticas: top servicios, breakdown por servicio.
-Performance: O(1) en búsquedas dentro del JSON.';
-
--- ====================================================================
--- 🔍 ÍNDICES PARA TABLA: historial_configuracion_comisiones
--- ====================================================================
-
--- 🏢 ÍNDICE: ORGANIZACIÓN
--- Propósito: Filtrar historial por organización (RLS)
--- Uso: WHERE organizacion_id = ?
-CREATE INDEX IF NOT EXISTS idx_historial_config_org
-    ON historial_configuracion_comisiones(organizacion_id);
-
-COMMENT ON INDEX idx_historial_config_org IS
-'Índice para filtrar historial por organización.
-Usado por RLS en queries de auditoría.
-Performance: O(log n) en búsquedas por organización.';
-
--- 👨‍💼 ÍNDICE: PROFESIONAL
--- Propósito: Ver historial de cambios de un profesional
--- Uso: WHERE profesional_id = ?
-CREATE INDEX IF NOT EXISTS idx_historial_config_prof
-    ON historial_configuracion_comisiones(profesional_id);
-
-COMMENT ON INDEX idx_historial_config_prof IS
-'Índice para ver historial de cambios por profesional.
-Usado en modal de configuración: ver auditoría de cambios.
-Performance: O(log n) en búsquedas por profesional.';
-
--- 📆 ÍNDICE: FECHA DE MODIFICACIÓN
--- Propósito: Ordenar historial por fecha
--- Uso: ORDER BY modificado_en DESC
-CREATE INDEX IF NOT EXISTS idx_historial_config_fecha
-    ON historial_configuracion_comisiones(modificado_en DESC);
-
-COMMENT ON INDEX idx_historial_config_fecha IS
-'Índice para ordenar historial por fecha de modificación.
-Usado en queries de auditoría para mostrar cambios recientes primero.
-Performance: O(1) en ordenamiento descendente.';
+-- -- 🏢 ÍNDICE: ORGANIZACIÓN
+-- -- Propósito: Filtrar configuraciones por organización (RLS + queries frecuentes)
+-- -- Uso: WHERE organizacion_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_config_comisiones_org
+--     ON configuracion_comisiones(organizacion_id);
+--
+-- -- COMMENT ON INDEX idx_config_comisiones_org IS
+-- 'Índice para filtrar configuraciones por organización.
+-- Usado por RLS y queries de listado.
+-- Performance: O(log n) en búsquedas por organización.';
+-- 
+-- -- 👨‍💼 ÍNDICE: PROFESIONAL
+-- -- Propósito: Buscar configuración por profesional (usado por trigger)
+-- -- Uso: WHERE profesional_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_config_comisiones_prof
+--     ON configuracion_comisiones(profesional_id);
+-- 
+-- COMMENT ON INDEX idx_config_comisiones_prof IS
+-- 'Índice para buscar configuración por profesional.
+-- CRÍTICO: Usado por función obtener_configuracion_comision() en trigger.
+-- Performance: O(log n) en búsquedas por profesional.';
+-- 
+-- -- 🎯 ÍNDICE PARCIAL: SERVICIO ESPECÍFICO
+-- -- Propósito: Buscar configuración específica de servicio
+-- -- Uso: WHERE servicio_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_config_comisiones_serv
+--     ON configuracion_comisiones(servicio_id)
+--     WHERE servicio_id IS NOT NULL;
+-- 
+-- COMMENT ON INDEX idx_config_comisiones_serv IS
+-- 'Índice parcial para configuraciones específicas de servicio.
+-- Solo indexa registros con servicio_id NOT NULL.
+-- Usado por función obtener_configuracion_comision() en trigger.';
+-- 
+-- -- ✅ ÍNDICE PARCIAL: CONFIGURACIONES ACTIVAS
+-- -- Propósito: Listar solo configuraciones activas
+-- -- Uso: WHERE activo = TRUE
+-- CREATE INDEX IF NOT EXISTS idx_config_comisiones_activo
+--     ON configuracion_comisiones(activo)
+--     WHERE activo = true;
+-- 
+-- COMMENT ON INDEX idx_config_comisiones_activo IS
+-- 'Índice parcial para configuraciones activas.
+-- Usado en función obtener_configuracion_comision() para filtrar configs válidas.
+-- Performance: Índice pequeño, solo registros activos.';
+-- 
+-- -- ====================================================================
+-- -- 🔍 ÍNDICES PARA TABLA: comisiones_profesionales
+-- -- ====================================================================
+-- 
+-- -- 🏢 ÍNDICE: ORGANIZACIÓN
+-- -- Propósito: Filtrar comisiones por organización (RLS)
+-- -- Uso: WHERE organizacion_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_org
+--     ON comisiones_profesionales(organizacion_id);
+-- 
+-- COMMENT ON INDEX idx_comisiones_org IS
+-- 'Índice para filtrar comisiones por organización.
+-- Usado por RLS en todas las queries.
+-- Performance: O(log n) en búsquedas por organización.';
+-- 
+-- -- 👨‍💼 ÍNDICE: PROFESIONAL
+-- -- Propósito: Dashboard personal de profesional (query frecuente)
+-- -- Uso: WHERE profesional_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_prof
+--     ON comisiones_profesionales(profesional_id);
+-- 
+-- COMMENT ON INDEX idx_comisiones_prof IS
+-- 'Índice para dashboard personal de profesional.
+-- Query MUY frecuente: empleados consultando sus comisiones.
+-- Performance: O(log n) en búsquedas por profesional.';
+-- 
+-- -- 📅 ÍNDICE: CITA
+-- -- Propósito: Verificar si ya existe comisión para una cita (trigger)
+-- -- Uso: WHERE cita_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_cita
+--     ON comisiones_profesionales(cita_id);
+-- 
+-- COMMENT ON INDEX idx_comisiones_cita IS
+-- 'Índice para verificar existencia de comisión por cita.
+-- CRÍTICO: Usado por trigger calcular_comision_cita() para evitar duplicados.
+-- Performance: O(log n) en búsquedas por cita.';
+-- 
+-- -- 💰 ÍNDICE: ESTADO DE PAGO
+-- -- Propósito: Filtrar comisiones por estado (pendiente/pagada/cancelada)
+-- -- Uso: WHERE estado_pago = ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_estado
+--     ON comisiones_profesionales(estado_pago);
+-- 
+-- COMMENT ON INDEX idx_comisiones_estado IS
+-- 'Índice para filtrar comisiones por estado de pago.
+-- Usado en dashboard admin: listar pendientes, pagadas, etc.
+-- Performance: O(log n) en búsquedas por estado.';
+-- 
+-- -- 📆 ÍNDICE PARCIAL: FECHA DE PAGO
+-- -- Propósito: Filtrar comisiones pagadas por fecha
+-- -- Uso: WHERE fecha_pago BETWEEN ? AND ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_fecha_pago
+--     ON comisiones_profesionales(fecha_pago)
+--     WHERE fecha_pago IS NOT NULL;
+-- 
+-- COMMENT ON INDEX idx_comisiones_fecha_pago IS
+-- 'Índice parcial para comisiones pagadas por fecha.
+-- Solo indexa registros con fecha_pago NOT NULL.
+-- Usado en reportes de pagos históricos.';
+-- 
+-- -- 📊 ÍNDICE: FECHA DE CREACIÓN
+-- -- Propósito: Rangos de fechas en reportes
+-- -- Uso: WHERE creado_en BETWEEN ? AND ?
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_creado
+--     ON comisiones_profesionales(creado_en);
+-- 
+-- COMMENT ON INDEX idx_comisiones_creado IS
+-- 'Índice para rangos de fechas en reportes.
+-- Usado en dashboard: mes actual, mes anterior, últimos 6 meses.
+-- Performance: O(log n) en búsquedas por rango de fechas.';
+-- 
+-- -- 🔍 ÍNDICE GIN: DETALLE DE SERVICIOS (JSONB)
+-- -- Propósito: Búsqueda en JSON de servicios (queries analíticas)
+-- -- Uso: WHERE detalle_servicios @> '[{"servicio_id": 10}]'
+-- CREATE INDEX IF NOT EXISTS idx_comisiones_detalle
+--     ON comisiones_profesionales USING GIN (detalle_servicios);
+-- 
+-- COMMENT ON INDEX idx_comisiones_detalle IS
+-- 'Índice GIN para búsquedas en JSON de servicios.
+-- Usado en queries analíticas: top servicios, breakdown por servicio.
+-- Performance: O(1) en búsquedas dentro del JSON.';
+-- 
+-- -- ====================================================================
+-- -- 🔍 ÍNDICES PARA TABLA: historial_configuracion_comisiones
+-- -- ====================================================================
+-- 
+-- -- 🏢 ÍNDICE: ORGANIZACIÓN
+-- -- Propósito: Filtrar historial por organización (RLS)
+-- -- Uso: WHERE organizacion_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_historial_config_org
+--     ON historial_configuracion_comisiones(organizacion_id);
+-- 
+-- COMMENT ON INDEX idx_historial_config_org IS
+-- 'Índice para filtrar historial por organización.
+-- Usado por RLS en queries de auditoría.
+-- Performance: O(log n) en búsquedas por organización.';
+-- 
+-- -- 👨‍💼 ÍNDICE: PROFESIONAL
+-- -- Propósito: Ver historial de cambios de un profesional
+-- -- Uso: WHERE profesional_id = ?
+-- CREATE INDEX IF NOT EXISTS idx_historial_config_prof
+--     ON historial_configuracion_comisiones(profesional_id);
+-- 
+-- COMMENT ON INDEX idx_historial_config_prof IS
+-- 'Índice para ver historial de cambios por profesional.
+-- Usado en modal de configuración: ver auditoría de cambios.
+-- Performance: O(log n) en búsquedas por profesional.';
+-- 
+-- -- 📆 ÍNDICE: FECHA DE MODIFICACIÓN
+-- -- Propósito: Ordenar historial por fecha
+-- -- Uso: ORDER BY modificado_en DESC
+-- CREATE INDEX IF NOT EXISTS idx_historial_config_fecha
+--     ON historial_configuracion_comisiones(modificado_en DESC);
+-- 
+-- COMMENT ON INDEX idx_historial_config_fecha IS
+-- 'Índice para ordenar historial por fecha de modificación.
+-- Usado en queries de auditoría para mostrar cambios recientes primero.
+-- Performance: O(1) en ordenamiento descendente.';
 
 -- ⚠️  MIGRADO A citas/03-indices.sql
 -- ====================================================================

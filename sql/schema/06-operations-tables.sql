@@ -445,130 +445,131 @@ COMMENT ON COLUMN chatbot_credentials.n8n_credential_id IS 'ID de la credential 
 COMMENT ON COLUMN chatbot_credentials.credential_type IS 'Tipo de credential en n8n (telegramApi, httpHeaderAuth, etc)';
 COMMENT ON COLUMN chatbot_credentials.is_valid IS 'Indica si la credential sigue siendo válida en n8n';
 
--- ====================================================================
--- 💵 TABLAS DEL SISTEMA DE COMISIONES
--- ====================================================================
--- Agregado: 14 Noviembre 2025
--- Versión: 1.0.0
--- ====================================================================
+-- ⚠️  MIGRADO A comisiones/01-05
+-- -- ====================================================================
+-- -- 💵 TABLAS DEL SISTEMA DE COMISIONES
+-- -- ====================================================================
+-- -- Agregado: 14 Noviembre 2025
+-- -- Versión: 1.0.0
+-- -- ====================================================================
 
--- ====================================================================
--- TABLA 1: configuracion_comisiones
--- ====================================================================
--- Almacena la configuración de comisiones por profesional y/o servicio.
--- ====================================================================
+-- -- ====================================================================
+-- -- TABLA 1: configuracion_comisiones
+-- -- ====================================================================
+-- -- Almacena la configuración de comisiones por profesional y/o servicio.
+-- -- ====================================================================
 
-CREATE TABLE configuracion_comisiones (
-    -- Identificadores
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-    profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
-    servicio_id INTEGER REFERENCES servicios(id) ON DELETE CASCADE,
-
-    -- Configuración
-    tipo_comision VARCHAR(20) NOT NULL CHECK (tipo_comision IN ('porcentaje', 'monto_fijo')),
-    valor_comision DECIMAL(10, 2) NOT NULL CHECK (valor_comision >= 0),
-    activo BOOLEAN DEFAULT true,
-
-    -- Metadata
-    notas TEXT,
-    creado_en TIMESTAMPTZ DEFAULT NOW(),
-    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
-    creado_por INTEGER REFERENCES usuarios(id),
-
-    -- Constraints
-    UNIQUE(organizacion_id, profesional_id, servicio_id),
-    CHECK (
-        (tipo_comision = 'porcentaje' AND valor_comision <= 100) OR
-        (tipo_comision = 'monto_fijo')
-    )
-);
-
-COMMENT ON TABLE configuracion_comisiones IS 'Configuración de esquemas de comisiones por profesional/servicio';
-COMMENT ON COLUMN configuracion_comisiones.servicio_id IS 'NULL = comisión global del profesional. Si especificado = comisión específica del servicio (sobrescribe global)';
-COMMENT ON COLUMN configuracion_comisiones.tipo_comision IS 'porcentaje: % del precio | monto_fijo: cantidad fija por cita';
-COMMENT ON COLUMN configuracion_comisiones.valor_comision IS 'Si tipo=porcentaje: 0-100. Si tipo=monto_fijo: cantidad en moneda';
-
--- ====================================================================
--- TABLA 2: comisiones_profesionales
--- ====================================================================
--- Registro histórico de comisiones generadas automáticamente.
--- NOTA: FK compuesta a citas(id, fecha_cita) por tabla particionada.
--- ====================================================================
-
-CREATE TABLE comisiones_profesionales (
-    -- Identificadores
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-    profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
-
-    -- FK compuesta a tabla particionada citas
-    cita_id INTEGER NOT NULL,
-    fecha_cita DATE NOT NULL,
-    FOREIGN KEY (cita_id, fecha_cita) REFERENCES citas(id, fecha_cita) ON DELETE CASCADE,
-
-    -- Cálculo de Comisión
-    monto_base DECIMAL(10, 2) NOT NULL CHECK (monto_base >= 0),
-    tipo_comision VARCHAR(20) NOT NULL CHECK (tipo_comision IN ('porcentaje', 'monto_fijo', 'mixto')),
-    valor_comision DECIMAL(10, 2) NOT NULL,
-    monto_comision DECIMAL(10, 2) NOT NULL CHECK (monto_comision >= 0),
-
-    -- Detalle de Servicios (JSON array con breakdown)
-    detalle_servicios JSONB NOT NULL,
-
-    -- Estado de Pago
-    estado_pago VARCHAR(20) DEFAULT 'pendiente' CHECK (estado_pago IN ('pendiente', 'pagada', 'cancelada')),
-    fecha_pago DATE,
-    metodo_pago VARCHAR(50),
-    referencia_pago VARCHAR(100),
-    notas_pago TEXT,
-    pagado_por INTEGER REFERENCES usuarios(id),
-
-    -- Metadata
-    creado_en TIMESTAMPTZ DEFAULT NOW(),
-    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
-
-    -- Constraints
-    CHECK (
-        (estado_pago = 'pagada' AND fecha_pago IS NOT NULL) OR
-        (estado_pago != 'pagada' AND fecha_pago IS NULL)
-    )
-);
-
-COMMENT ON TABLE comisiones_profesionales IS 'Registro histórico de comisiones generadas automáticamente al completar citas';
-COMMENT ON COLUMN comisiones_profesionales.monto_base IS 'Precio total de la cita (suma de todos los servicios)';
-COMMENT ON COLUMN comisiones_profesionales.tipo_comision IS 'porcentaje | monto_fijo | mixto (cuando hay múltiples servicios con diferentes tipos)';
-COMMENT ON COLUMN comisiones_profesionales.detalle_servicios IS 'JSON con breakdown: [{servicio_id, nombre, precio, comision_calculada}]';
-COMMENT ON COLUMN comisiones_profesionales.estado_pago IS 'pendiente: no pagada | pagada: ya procesada | cancelada: cita cancelada';
-
--- ====================================================================
--- TABLA 3: historial_configuracion_comisiones
--- ====================================================================
--- Auditoría de cambios en configuración de comisiones.
--- ====================================================================
-
-CREATE TABLE historial_configuracion_comisiones (
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
-    configuracion_id INTEGER REFERENCES configuracion_comisiones(id) ON DELETE CASCADE,
-    profesional_id INTEGER NOT NULL,
-    servicio_id INTEGER,
-
-    -- Valores anteriores
-    tipo_comision_anterior VARCHAR(20),
-    valor_comision_anterior DECIMAL(10, 2),
-    activo_anterior BOOLEAN,
-
-    -- Valores nuevos
-    tipo_comision_nuevo VARCHAR(20),
-    valor_comision_nuevo DECIMAL(10, 2),
-    activo_nuevo BOOLEAN,
-
-    -- Metadata
-    accion VARCHAR(20) CHECK (accion IN ('INSERT', 'UPDATE', 'DELETE')),
-    modificado_por INTEGER REFERENCES usuarios(id),
-    modificado_en TIMESTAMPTZ DEFAULT NOW(),
-    razon TEXT
-);
-
-COMMENT ON TABLE historial_configuracion_comisiones IS 'Auditoría de cambios en configuración de comisiones';
+-- -- CREATE TABLE configuracion_comisiones (
+-- --     -- Identificadores
+-- --     id SERIAL PRIMARY KEY,
+-- --     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+-- --     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
+-- --     servicio_id INTEGER REFERENCES servicios(id) ON DELETE CASCADE,
+--
+-- --     -- Configuración
+-- --     tipo_comision VARCHAR(20) NOT NULL CHECK (tipo_comision IN ('porcentaje', 'monto_fijo')),
+-- --     valor_comision DECIMAL(10, 2) NOT NULL CHECK (valor_comision >= 0),
+-- --     activo BOOLEAN DEFAULT true,
+--
+-- --     -- Metadata
+-- --     notas TEXT,
+-- --     creado_en TIMESTAMPTZ DEFAULT NOW(),
+-- --     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+-- --     creado_por INTEGER REFERENCES usuarios(id),
+--
+-- --     -- Constraints
+-- --     UNIQUE(organizacion_id, profesional_id, servicio_id),
+-- --     CHECK (
+-- --         (tipo_comision = 'porcentaje' AND valor_comision <= 100) OR
+-- --         (tipo_comision = 'monto_fijo')
+-- --     )
+-- -- );
+--
+-- -- COMMENT ON TABLE configuracion_comisiones IS 'Configuración de esquemas de comisiones por profesional/servicio';
+-- -- COMMENT ON COLUMN configuracion_comisiones.servicio_id IS 'NULL = comisión global del profesional. Si especificado = comisión específica del servicio (sobrescribe global)';
+-- -- COMMENT ON COLUMN configuracion_comisiones.tipo_comision IS 'porcentaje: % del precio | monto_fijo: cantidad fija por cita';
+-- -- COMMENT ON COLUMN configuracion_comisiones.valor_comision IS 'Si tipo=porcentaje: 0-100. Si tipo=monto_fijo: cantidad en moneda';
+--
+-- -- ====================================================================
+-- -- TABLA 2: comisiones_profesionales
+-- -- ====================================================================
+-- -- Registro histórico de comisiones generadas automáticamente.
+-- -- NOTA: FK compuesta a citas(id, fecha_cita) por tabla particionada.
+-- -- ====================================================================
+--
+-- -- CREATE TABLE comisiones_profesionales (
+-- --     -- Identificadores
+-- --     id SERIAL PRIMARY KEY,
+-- --     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+-- --     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
+--
+-- --     -- FK compuesta a tabla particionada citas
+-- --     cita_id INTEGER NOT NULL,
+-- --     fecha_cita DATE NOT NULL,
+-- --     FOREIGN KEY (cita_id, fecha_cita) REFERENCES citas(id, fecha_cita) ON DELETE CASCADE,
+--
+-- --     -- Cálculo de Comisión
+-- --     monto_base DECIMAL(10, 2) NOT NULL CHECK (monto_base >= 0),
+-- --     tipo_comision VARCHAR(20) NOT NULL CHECK (tipo_comision IN ('porcentaje', 'monto_fijo', 'mixto')),
+-- --     valor_comision DECIMAL(10, 2) NOT NULL,
+-- --     monto_comision DECIMAL(10, 2) NOT NULL CHECK (monto_comision >= 0),
+--
+-- --     -- Detalle de Servicios (JSON array con breakdown)
+-- --     detalle_servicios JSONB NOT NULL,
+--
+-- --     -- Estado de Pago
+-- --     estado_pago VARCHAR(20) DEFAULT 'pendiente' CHECK (estado_pago IN ('pendiente', 'pagada', 'cancelada')),
+-- --     fecha_pago DATE,
+-- --     metodo_pago VARCHAR(50),
+-- --     referencia_pago VARCHAR(100),
+-- --     notas_pago TEXT,
+-- --     pagado_por INTEGER REFERENCES usuarios(id),
+--
+-- --     -- Metadata
+-- --     creado_en TIMESTAMPTZ DEFAULT NOW(),
+-- --     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+--
+-- --     -- Constraints
+-- --     CHECK (
+-- --         (estado_pago = 'pagada' AND fecha_pago IS NOT NULL) OR
+-- --         (estado_pago != 'pagada' AND fecha_pago IS NULL)
+-- --     )
+-- -- );
+--
+-- -- COMMENT ON TABLE comisiones_profesionales IS 'Registro histórico de comisiones generadas automáticamente al completar citas';
+-- -- COMMENT ON COLUMN comisiones_profesionales.monto_base IS 'Precio total de la cita (suma de todos los servicios)';
+-- -- COMMENT ON COLUMN comisiones_profesionales.tipo_comision IS 'porcentaje | monto_fijo | mixto (cuando hay múltiples servicios con diferentes tipos)';
+-- -- COMMENT ON COLUMN comisiones_profesionales.detalle_servicios IS 'JSON con breakdown: [{servicio_id, nombre, precio, comision_calculada}]';
+-- -- COMMENT ON COLUMN comisiones_profesionales.estado_pago IS 'pendiente: no pagada | pagada: ya procesada | cancelada: cita cancelada';
+--
+-- -- ====================================================================
+-- -- TABLA 3: historial_configuracion_comisiones
+-- -- ====================================================================
+-- -- Auditoría de cambios en configuración de comisiones.
+-- -- ====================================================================
+--
+-- -- CREATE TABLE historial_configuracion_comisiones (
+-- --     id SERIAL PRIMARY KEY,
+-- --     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+-- --     configuracion_id INTEGER REFERENCES configuracion_comisiones(id) ON DELETE CASCADE,
+-- --     profesional_id INTEGER NOT NULL,
+-- --     servicio_id INTEGER,
+--
+-- --     -- Valores anteriores
+-- --     tipo_comision_anterior VARCHAR(20),
+-- --     valor_comision_anterior DECIMAL(10, 2),
+-- --     activo_anterior BOOLEAN,
+--
+-- --     -- Valores nuevos
+-- --     tipo_comision_nuevo VARCHAR(20),
+-- --     valor_comision_nuevo DECIMAL(10, 2),
+-- --     activo_nuevo BOOLEAN,
+--
+-- --     -- Metadata
+-- --     accion VARCHAR(20) CHECK (accion IN ('INSERT', 'UPDATE', 'DELETE')),
+-- --     modificado_por INTEGER REFERENCES usuarios(id),
+-- --     modificado_en TIMESTAMPTZ DEFAULT NOW(),
+-- --     razon TEXT
+-- -- );
+--
+-- -- COMMENT ON TABLE historial_configuracion_comisiones IS 'Auditoría de cambios en configuración de comisiones';
