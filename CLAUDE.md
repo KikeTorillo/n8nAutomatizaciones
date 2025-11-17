@@ -12,14 +12,14 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 14 Noviembre 2025
+**Actualizado**: 16 Noviembre 2025
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
-| **Backend API** | ✅ Operativo | 20 controllers, validación bidireccional citas/bloqueos |
-| **Frontend React** | ✅ Operativo | React 18 + Vite 7, 13 hooks personalizados |
+| **Backend API** | ✅ Operativo | 23 controllers, validación bidireccional citas/bloqueos |
+| **Frontend React** | ✅ Operativo | React 18 + Vite 7, 14 hooks personalizados |
 | **Base de Datos** | ✅ Optimizada | 25 tablas (2 particionadas), RLS multi-tenant |
-| **Sistema Comisiones** | 🔵 BD Completa | Trigger automático, 3 tablas, 11 índices (Backend pendiente) |
+| **Sistema Comisiones** | ✅ Operativo | Trigger automático, 12 endpoints, Dashboard + Reportes |
 | **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
 | **Sistema Email** | ✅ Operativo | AWS SES + nodemailer, templates HTML |
@@ -140,9 +140,9 @@ bash deploy.sh backup    # Backup PostgreSQL
 ### Frontend
 
 **Estructura:**
-- **13 Hooks personalizados** para gestión de estado (TanStack Query)
-- **56 Componentes** organizados por módulo (ui, dashboard, citas, clientes, etc.)
-- **25 Páginas** con routing protegido por rol
+- **14 Hooks personalizados** para gestión de estado (TanStack Query)
+- **65 Componentes** organizados por módulo (ui, dashboard, citas, clientes, comisiones, etc.)
+- **28 Páginas** con routing protegido por rol (incluye 3 de comisiones)
 - **Onboarding de 3 pasos** (negocio → plan → cuenta admin)
 
 **Componentes Clave:**
@@ -322,96 +322,121 @@ verificarDisponibilidad({
 
 ## 💵 Sistema de Comisiones (NUEVO - Nov 2025)
 
-**Estado**: 🔵 Fase 1 Completada (BD) | ⚪ Fase 2 Pendiente (Backend/Frontend)
+**Estado**: ✅ **Sistema Completo y Operativo** (BD + Backend + Frontend)
+**Validado**: 2 citas completadas con comisiones generadas automáticamente
 
-### Arquitectura
+### Funcionamiento
 
-**Cálculo Automático**: Trigger PostgreSQL se dispara cuando cita cambia a estado `completada`
+**Cálculo 100% Automático**: Trigger PostgreSQL `calcular_comision_cita()` se dispara cuando una cita cambia a estado `completada`. Calcula la comisión, genera detalle JSONB por servicio, e inserta en `comisiones_profesionales` con estado `pendiente`.
 
 **Tipos de Comisión:**
 - `porcentaje` - % del precio del servicio (0-100%)
 - `monto_fijo` - Cantidad fija por cita
-- `mixto` - Combinación (cita con múltiples servicios)
+- `mixto` - Automático cuando cita tiene servicios con diferentes tipos
 
-**Configuración:**
-- **Global**: `servicio_id = NULL` → Aplica a todos los servicios del profesional
-- **Específica**: `servicio_id = X` → Solo para ese servicio (sobrescribe global)
+**Configuración (Prioridad):**
+1. **Específica**: `servicio_id = X` → Solo ese servicio
+2. **Global**: `servicio_id = NULL` → Todos los servicios del profesional (fallback)
 
-### Tablas Implementadas (3)
-
-```sql
-configuracion_comisiones          -- CRUD configuración
-comisiones_profesionales          -- Registro automático (trigger)
-historial_configuracion_comisiones -- Auditoría de cambios
-```
-
-### Trigger `calcular_comision_cita()`
-
-```sql
-1. Se dispara: AFTER UPDATE cuando estado → 'completada'
-2. Obtiene servicios de la cita (JOIN citas_servicios)
-3. Para cada servicio:
-   - Busca config específica (profesional + servicio)
-   - Si no existe → busca config global (servicio_id=NULL)
-   - Calcula comisión según tipo
-4. Suma total + genera JSON detalle
-5. INSERT en comisiones_profesionales (estado='pendiente')
-```
-
-### Ejemplo de Cálculo
+### Endpoints Backend
 
 ```javascript
-// Cita completada: $200 (Corte Premium)
-// Configuración: 15% global del profesional
+// Dashboard (3)
+GET  /api/v1/comisiones/dashboard              // Métricas + gráficas
+GET  /api/v1/comisiones/estadisticas           // Stats básicas
+GET  /api/v1/comisiones/grafica/por-dia        // Datos Chart.js
 
-// Resultado automático:
+// Configuración (4)
+POST   /api/v1/comisiones/configuracion        // Crear/actualizar
+GET    /api/v1/comisiones/configuracion        // Listar
+DELETE /api/v1/comisiones/configuracion/:id    // Eliminar
+GET    /api/v1/comisiones/configuracion/historial // Auditoría
+
+// Consultas y Pagos (4)
+GET   /api/v1/comisiones/profesional/:id       // Por profesional
+GET   /api/v1/comisiones/periodo               // Por fechas (reportes)
+PATCH /api/v1/comisiones/:id/pagar             // Marcar como pagada
+GET   /api/v1/comisiones/:id                   // Detalle individual
+
+// Reportes (1)
+GET /api/v1/comisiones/reporte                 // Generar reporte
+```
+
+### Rutas Frontend
+
+```javascript
+/comisiones                   // Dashboard con Chart.js (Bar graph)
+/comisiones/configuracion     // CRUD configuración por profesional/servicio
+/comisiones/reportes          // Filtros + exportación CSV/JSON + detalle JSONB
+```
+
+**Acceso**: Rol `admin` o `propietario`
+
+### Arquitectura
+
+**Backend (11 archivos):**
+```
+controllers/comisiones/  → 3 controllers (configuracion, comisiones, estadisticas)
+database/comisiones/     → 3 models (configuracion, comisiones, reportes)
+routes/api/v1/comisiones.js
+schemas/comisiones.schemas.js
+__tests__/endpoints/comisiones.test.js
+```
+
+**Frontend (13 archivos):**
+```
+pages/comisiones/      → 3 páginas (Dashboard, Configuración, Reportes)
+components/comisiones/ → 9 componentes (Modals, Tables, Filtros, Export)
+hooks/useComisiones.js → 11 hooks TanStack Query
+```
+
+**Base de Datos:**
+```
+configuracion_comisiones            → Config por profesional/servicio
+comisiones_profesionales            → Registro automático (FK compuesta a citas particionadas)
+historial_configuracion_comisiones  → Auditoría de cambios
+```
+
+### Ejemplo Real (Validado)
+
+```javascript
+// Configuración: 15% global del profesional
+// Cita completada: $150 (1 servicio)
+
+// Comisión generada automáticamente:
 {
-  monto_base: 200.00,
+  monto_base: 150.00,
   tipo_comision: "porcentaje",
   valor_comision: 15.00,
-  monto_comision: 30.00,  // Calculado: 200 * 0.15
+  monto_comision: 22.50,  // 150 * 0.15
+  estado_pago: "pendiente",
   detalle_servicios: [{
     servicio_id: 1,
-    nombre: "Corte Premium",
-    precio: 200.00,
+    nombre: "Corte",
+    precio: 150.00,
     tipo_comision: "porcentaje",
     valor_comision: 15.00,
-    comision_calculada: 30.00
-  }],
-  estado_pago: "pendiente"
+    comision_calculada: 22.50
+  }]
 }
 ```
 
-### Características Clave
+### Características Críticas
 
-- ✅ **FK compuesta** a tabla particionada: `(cita_id, fecha_cita)`
-- ✅ **Índice GIN** en `detalle_servicios` (búsqueda JSONB)
-- ✅ **Índice crítico**: `idx_citas_servicios_cita_id` (performance trigger)
+- ✅ **Trigger automático** con bypass RLS para operaciones de sistema
+- ✅ **JSONB `detalle_servicios`** con breakdown completo por servicio
 - ✅ **RLS multi-tenant**: Admin ve todo, empleado solo sus comisiones
-- ✅ **Auditoría completa**: Historial de cambios en configuración
+- ✅ **Índice GIN** en JSONB para búsquedas analíticas rápidas
+- ✅ **Auditoría completa**: Historial de cambios con usuario modificador
+- ✅ **Validación bidireccional**: Joi (backend) + Zod (frontend)
+- ✅ **Anti-duplicados**: Trigger valida existencia antes de insertar
 
-### Ubicación en Código
+### Notas Importantes
 
-```
-sql/schema/06-operations-tables.sql   → 3 tablas (+125 líneas)
-sql/schema/07-indexes.sql             → 11 índices (+200 líneas)
-sql/schema/02-functions.sql           → 3 funciones PL/pgSQL (+280 líneas)
-sql/schema/09-triggers.sql            → 4 triggers (+60 líneas)
-sql/schema/08-rls-policies.sql        → 4 políticas RLS (+85 líneas)
-```
-
-### Pendiente (Fase 2-3)
-
-**Backend API** (36h):
-- Controllers modulares: `configuracion`, `comisiones`, `estadisticas`
-- 8 endpoints RESTful (CRUD + reportes + dashboard)
-- Models con RLSContextManager
-
-**Frontend UI** (42h):
-- Dashboard con Chart.js
-- Configuración por profesional/servicio
-- Reportes con exportación Excel/PDF
-- 4 hooks personalizados TanStack Query
+- **NO usar `JSON.parse()`** en frontend: PostgreSQL JSONB ya retorna objetos parseados
+- **Middleware `subscription`** en POST configuración: Valida límites del plan
+- **Arquitectura modular**: Sigue patrón de `citas/` (3 controllers separados)
+- **11 hooks TanStack Query** con sanitización de parámetros y cache inteligente
 
 ---
 
@@ -497,6 +522,13 @@ sql/schema/08-rls-policies.sql        → 4 políticas RLS (+85 líneas)
 - Triggers PostgreSQL: `codigo_cita`, `codigo_bloqueo`
 - **⚠️ NUNCA enviar estos campos** en requests POST/PUT
 
+### 6. Sistema de Comisiones Automático
+- Trigger PostgreSQL calcula comisiones al completar citas
+- JSONB `detalle_servicios` con breakdown por servicio
+- Dashboard con Chart.js + reportes con exportación CSV/JSON
+- Configuración flexible: global por profesional o específica por servicio
+- **⚠️ NO usar `JSON.parse()`** en frontend: JSONB ya viene parseado
+
 ---
 
 ## 📚 Archivos Críticos
@@ -524,11 +556,20 @@ sql/schema/08-rls-policies.sql        → 4 políticas RLS (+85 líneas)
 - **`controllers/chatbot.controller.js`** - System prompt + prevención alucinaciones
 - `services/mercadopago.service.js` - Integración MP completa
 
+### Backend - Comisiones
+- **`routes/api/v1/comisiones.js`** - 12 endpoints (dashboard, configuración, pagos, reportes)
+- `controllers/comisiones/` - 3 controllers modulares (configuracion, comisiones, estadisticas)
+- `database/comisiones/` - 3 models (configuracion, comisiones, reportes)
+- `schemas/comisiones.schemas.js` - 8 schemas Joi con validaciones
+- **`sql/schema/02-functions.sql`** - Trigger `calcular_comision_cita()` (línea 824)
+
 ### Frontend - Componentes Clave
 - `components/dashboard/SetupChecklist.jsx` - Guía configuración inicial
 - `components/dashboard/TrialStatusWidget.jsx` - Trial + activación MP
 - `components/bloqueos/BloqueoFormModal.jsx` - Validación bidireccional
 - `components/citas/CitaFormModal.jsx` - Múltiples servicios
+- `components/comisiones/` - 9 componentes (Dashboard, Reportes, Config, Modals)
+- **`hooks/useComisiones.js`** - 11 hooks TanStack Query
 
 ### MCP Server
 - **`tools/verificarDisponibilidad.js`** - Parámetro `excluir_cita_id`
@@ -558,6 +599,6 @@ sql/schema/08-rls-policies.sql        → 4 políticas RLS (+85 líneas)
 
 ---
 
-**Versión**: 17.0 - **Validación Bidireccional + Reagendamiento Inteligente**
-**Última actualización**: 13 Noviembre 2025
+**Versión**: 18.0 - **Sistema de Comisiones Completo**
+**Última actualización**: 16 Noviembre 2025
 **Estado**: ✅ Production Ready + AI-Optimized

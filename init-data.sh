@@ -30,7 +30,17 @@ EOF" | psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_D
 
 # 2. Aplicar esquema SaaS modular
 echo "  3️⃣ Aplicando esquema SaaS modular..."
-echo "    🎭 Tipos y enumeraciones..."
+echo ""
+echo "    📦 MÓDULO: Fundamentos (nueva estructura modular)"
+echo "       🔌 Extensiones PostgreSQL..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/fundamentos/01-extensiones.sql"
+echo "       🎭 Tipos y enumeraciones..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/fundamentos/02-tipos-enums.sql"
+echo "       ⚡ Funciones utilitarias..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/fundamentos/03-funciones-utilidad.sql"
+echo ""
+echo "    📁 ARCHIVOS LEGACY (schema/) - En migración..."
+echo "    🎭 Tipos y enumeraciones (legacy - vacío)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/01-types-and-enums.sql"
 echo "    ⚡ Funciones PL/pgSQL..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/schema/02-functions.sql"
