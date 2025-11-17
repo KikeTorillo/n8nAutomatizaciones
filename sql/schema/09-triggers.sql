@@ -95,31 +95,32 @@ CREATE TRIGGER trigger_validar_email_usuario
 --     BEFORE UPDATE ON servicios_profesionales
 --     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
+-- ⚠️  MIGRADO A citas/06-triggers.sql
 -- ====================================================================
--- 📅 TRIGGERS PARA TABLA CITAS
--- ====================================================================
--- Timestamps automáticos y validación de coherencia organizacional
--- ────────────────────────────────────────────────────────────────────
-
--- TRIGGER 1: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
--- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_timestamp_citas
-    BEFORE UPDATE ON citas
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp_citas();
-
--- TRIGGER 2: VALIDACIÓN DE COHERENCIA ORGANIZACIONAL
--- Valida que cliente, profesional y servicio pertenezcan a la misma organización
-CREATE TRIGGER trigger_validar_coherencia_cita
-    BEFORE INSERT OR UPDATE ON citas
-    FOR EACH ROW
-    EXECUTE FUNCTION validar_coherencia_cita();
-
--- TRIGGER 3: AUTO-GENERACIÓN DE CÓDIGO DE CITA (AGREGADO 2025-10-03)
--- Genera código único automáticamente si no se proporciona
-CREATE TRIGGER trigger_generar_codigo_cita
-    BEFORE INSERT ON citas
-    FOR EACH ROW
-    EXECUTE FUNCTION generar_codigo_cita();
+-- -- 📅 TRIGGERS PARA TABLA CITAS
+-- -- ====================================================================
+-- -- Timestamps automáticos y validación de coherencia organizacional
+-- -- ────────────────────────────────────────────────────────────────────
+--
+-- -- TRIGGER 1: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- -- Actualiza campo actualizado_en automáticamente
+-- CREATE TRIGGER trigger_actualizar_timestamp_citas
+--     BEFORE UPDATE ON citas
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp_citas();
+--
+-- -- TRIGGER 2: VALIDACIÓN DE COHERENCIA ORGANIZACIONAL
+-- -- Valida que cliente, profesional y servicio pertenezcan a la misma organización
+-- CREATE TRIGGER trigger_validar_coherencia_cita
+--     BEFORE INSERT OR UPDATE ON citas
+--     FOR EACH ROW
+--     EXECUTE FUNCTION validar_coherencia_cita();
+--
+-- -- TRIGGER 3: AUTO-GENERACIÓN DE CÓDIGO DE CITA (AGREGADO 2025-10-03)
+-- -- Genera código único automáticamente si no se proporciona
+-- CREATE TRIGGER trigger_generar_codigo_cita
+--     BEFORE INSERT ON citas
+--     FOR EACH ROW
+--     EXECUTE FUNCTION generar_codigo_cita();
 
 -- ====================================================================
 -- 📝 DOCUMENTACIÓN DE TRIGGERS
@@ -202,21 +203,22 @@ COMMENT ON TRIGGER trigger_actualizar_timestamp_chatbot_config ON chatbot_config
 Agregado: 2025-10-22 - Sistema de chatbots multi-plataforma';
 
 -- ====================================================================
--- 🔗 TRIGGERS PARA TABLA CITAS_SERVICIOS (M:N)
--- ====================================================================
--- Actualización automática de timestamps
--- ────────────────────────────────────────────────────────────────────
-
--- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
--- Actualiza campo actualizado_en automáticamente en cada UPDATE
-CREATE TRIGGER trigger_actualizar_timestamp_citas_servicios
-    BEFORE UPDATE ON citas_servicios
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
-
-COMMENT ON TRIGGER trigger_actualizar_timestamp_citas_servicios ON citas_servicios IS
-'Actualiza automáticamente el campo actualizado_en en citas_servicios.
-Función: actualizar_timestamp() - Reutilizada de otras tablas.
-Agregado: 2025-10-26 - Feature múltiples servicios por cita';
+-- ⚠️  MIGRADO A citas/06-triggers.sql
+-- -- 🔗 TRIGGERS PARA TABLA CITAS_SERVICIOS (M:N)
+-- -- ====================================================================
+-- -- Actualización automática de timestamps
+-- -- ────────────────────────────────────────────────────────────────────
+--
+-- -- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
+-- -- Actualiza campo actualizado_en automáticamente en cada UPDATE
+-- CREATE TRIGGER trigger_actualizar_timestamp_citas_servicios
+--     BEFORE UPDATE ON citas_servicios
+--     FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
+--
+-- COMMENT ON TRIGGER trigger_actualizar_timestamp_citas_servicios ON citas_servicios IS
+-- 'Actualiza automáticamente el campo actualizado_en en citas_servicios.
+-- Función: actualizar_timestamp() - Reutilizada de otras tablas.
+-- Agregado: 2025-10-26 - Feature múltiples servicios por cita';
 
 -- ====================================================================
 -- 💵 TRIGGERS DEL SISTEMA DE COMISIONES

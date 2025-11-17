@@ -382,105 +382,233 @@ Query: SELECT nombre, precio, duracion FROM servicios
 --     ON servicios_profesionales (profesional_id, activo) WHERE activo = TRUE;
 
 -- ====================================================================
--- 📅 ÍNDICES PARA TABLA CITAS (7 índices críticos para performance)
+-- ⚠️  ARCHIVO LEGACY - ÍNDICES DE CITAS MIGRADOS
 -- ====================================================================
--- Optimización para sistema de gestión de citas con alta concurrencia
--- ────────────────────────────────────────────────────────────────────
+--
+-- ÍNDICES DE CITAS MIGRADOS al módulo citas:
+-- • sql/citas/03-indices.sql - 14 índices para tabla citas + 3 para citas_servicios
+--
+-- ⚠️  TODO el código de índices de citas está comentado abajo.
+-- ====================================================================
 
--- 🏢 ÍNDICE 1: AGENDA ORGANIZACIONAL
--- Propósito: Vista principal de agenda por organización y fecha
--- Uso: WHERE organizacion_id = ? AND fecha_cita = ? ORDER BY hora_inicio
-CREATE INDEX idx_citas_organizacion_fecha
-    ON citas (organizacion_id, fecha_cita, hora_inicio)
-    WHERE estado != 'cancelada';
-
--- 👨‍⚕️ ÍNDICE 2: AGENDA DEL PROFESIONAL
--- Propósito: Agenda individual del profesional (crítico para solapamientos)
--- Uso: WHERE profesional_id = ? AND fecha_cita = ? AND estado IN (...)
-CREATE INDEX idx_citas_profesional_agenda
-    ON citas (profesional_id, fecha_cita, hora_inicio, hora_fin)
-    WHERE estado IN ('confirmada', 'en_curso');
-
--- 🧑‍💼 ÍNDICE 3: HISTORIAL DEL CLIENTE (MEJORADO OCT 2025)
--- Propósito: Ver todas las citas de un cliente ordenadas por fecha
--- Uso: WHERE cliente_id = ? ORDER BY fecha_cita DESC
--- Migrado desde: 16-mejoras-auditoria-2025-10.sql
-DROP INDEX IF EXISTS idx_citas_cliente_historial;
-
-CREATE INDEX idx_citas_cliente_historial
-    ON citas (cliente_id, fecha_cita DESC)
-    INCLUDE (profesional_id, estado, precio_total, duracion_total_minutos)
-    WHERE estado IN ('completada', 'cancelada', 'no_asistio');
-
-COMMENT ON INDEX idx_citas_cliente_historial IS
-'Optimiza consulta de historial de citas por cliente.
-Query: SELECT * FROM citas WHERE cliente_id = ? ORDER BY fecha_cita DESC;
-Usado en: Perfil de cliente, análisis de comportamiento.
-NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N).';
-
--- 🆔 ÍNDICE 4: LOOKUP POR CÓDIGO
--- Propósito: Búsqueda rápida por código único de cita
--- Uso: WHERE codigo_cita = ?
--- NOTA: Índice movido a 06-operations-tables.sql (tabla particionada requiere UNIQUE index con fecha_cita)
--- CREATE INDEX idx_citas_codigo_lookup
---     ON citas (codigo_cita) WHERE codigo_cita IS NOT NULL;
-
--- 🔄 ÍNDICE 5: WORKFLOW DE ESTADOS
--- Propósito: Consultas por estado de cita para reportes y dashboards
--- Uso: WHERE organizacion_id = ? AND estado = ? AND fecha_cita = ?
-CREATE INDEX idx_citas_estado_workflow
-    ON citas (organizacion_id, estado, fecha_cita);
-
--- 🔔 ÍNDICE 6: RECORDATORIOS PENDIENTES
--- Propósito: Encontrar citas que necesitan envío de recordatorios
--- Uso: WHERE recordatorio_enviado = FALSE AND estado = 'confirmada'
-CREATE INDEX idx_citas_recordatorios
-    ON citas (fecha_recordatorio)
-    WHERE recordatorio_enviado = FALSE AND estado = 'confirmada';
-
--- 🔍 ÍNDICE 7: BÚSQUEDA FULL-TEXT
--- Propósito: Búsqueda de citas por notas y código
--- Uso: Búsqueda global de citas por contenido
-CREATE INDEX idx_citas_search
-    ON citas USING gin(
-        to_tsvector('spanish', COALESCE(notas_cliente, '') || ' ' ||
-                              COALESCE(notas_profesional, '') || ' ' ||
-                              COALESCE(codigo_cita, ''))
-    );
-
--- 📊 ÍNDICE 8: COVERING INDEX PARA CITAS DEL DÍA (OCT 2025)
--- Propósito: Dashboard operacional de citas del día
--- Uso: SELECT * FROM citas WHERE organizacion_id = ? AND fecha_cita = ? AND estado IN (...)
--- Migrado desde: 16-mejoras-auditoria-2025-10.sql
-CREATE INDEX IF NOT EXISTS idx_citas_dia_covering
-    ON citas (organizacion_id, fecha_cita, estado)
-    INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, notas_cliente, precio_total, duracion_total_minutos)
-    WHERE estado IN ('confirmada', 'en_curso');
-
-COMMENT ON INDEX idx_citas_dia_covering IS
-'Índice covering para vista de citas del día (dashboard principal).
-Incluye todas las columnas necesarias para mostrar agenda sin JOIN.
-Performance crítica para: Dashboard en tiempo real, vista de calendario.
-NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N). Agregados precio_total y duracion_total_minutos.';
-
--- 📊 ÍNDICE 9: MÉTRICAS MENSUALES DE CITAS (OCT 2025)
--- Propósito: Reportes mensuales de citas activas y completadas
--- Uso: SELECT COUNT(*) FROM citas WHERE organizacion_id = ? AND fecha_cita >= ? AND estado IN (...)
--- Migrado desde: 16-mejoras-auditoria-2025-10.sql
-CREATE INDEX IF NOT EXISTS idx_citas_metricas_mes
-    ON citas (organizacion_id, fecha_cita, estado)
-    WHERE estado IN ('confirmada', 'completada', 'en_curso');
-
-COMMENT ON INDEX idx_citas_metricas_mes IS
-'Optimiza reportes mensuales de citas activas y completadas.
-Índice parcial solo para estados relevantes en métricas.
-Query: COUNT(*), GROUP BY mes para dashboard de métricas.';
+-- ⚠️  MIGRADO A citas/03-indices.sql
+-- ====================================================================
+-- -- 📅 ÍNDICES PARA TABLA CITAS (7 índices críticos para performance)
+-- ====================================================================
+-- -- Optimización para sistema de gestión de citas con alta concurrencia
+-- -- ────────────────────────────────────────────────────────────────────
+--
+-- -- 🏢 ÍNDICE 1: AGENDA ORGANIZACIONAL
+-- -- Propósito: Vista principal de agenda por organización y fecha
+-- -- Uso: WHERE organizacion_id = ? AND fecha_cita = ? ORDER BY hora_inicio
+-- CREATE INDEX idx_citas_organizacion_fecha
+--     ON citas (organizacion_id, fecha_cita, hora_inicio)
+--     WHERE estado != 'cancelada';
+--
+-- -- 👨‍⚕️ ÍNDICE 2: AGENDA DEL PROFESIONAL
+-- -- Propósito: Agenda individual del profesional (crítico para solapamientos)
+-- -- Uso: WHERE profesional_id = ? AND fecha_cita = ? AND estado IN (...)
+-- CREATE INDEX idx_citas_profesional_agenda
+--     ON citas (profesional_id, fecha_cita, hora_inicio, hora_fin)
+--     WHERE estado IN ('confirmada', 'en_curso');
+--
+-- -- 🧑‍💼 ÍNDICE 3: HISTORIAL DEL CLIENTE (MEJORADO OCT 2025)
+-- -- Propósito: Ver todas las citas de un cliente ordenadas por fecha
+-- -- Uso: WHERE cliente_id = ? ORDER BY fecha_cita DESC
+-- -- Migrado desde: 16-mejoras-auditoria-2025-10.sql
+-- DROP INDEX IF EXISTS idx_citas_cliente_historial;
+--
+-- CREATE INDEX idx_citas_cliente_historial
+--     ON citas (cliente_id, fecha_cita DESC)
+--     INCLUDE (profesional_id, estado, precio_total, duracion_total_minutos)
+--     WHERE estado IN ('completada', 'cancelada', 'no_asistio');
+--
+-- COMMENT ON INDEX idx_citas_cliente_historial IS
+-- 'Optimiza consulta de historial de citas por cliente.
+-- Query: SELECT * FROM citas WHERE cliente_id = ? ORDER BY fecha_cita DESC;
+-- Usado en: Perfil de cliente, análisis de comportamiento.
+-- NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N).';
+--
+-- -- 🆔 ÍNDICE 4: LOOKUP POR CÓDIGO
+-- -- Propósito: Búsqueda rápida por código único de cita
+-- -- Uso: WHERE codigo_cita = ?
+-- -- NOTA: Índice movido a 06-operations-tables.sql (tabla particionada requiere UNIQUE index con fecha_cita)
+-- -- CREATE INDEX idx_citas_codigo_lookup
+-- --     ON citas (codigo_cita) WHERE codigo_cita IS NOT NULL;
+--
+-- -- 🔄 ÍNDICE 5: WORKFLOW DE ESTADOS
+-- -- Propósito: Consultas por estado de cita para reportes y dashboards
+-- -- Uso: WHERE organizacion_id = ? AND estado = ? AND fecha_cita = ?
+-- CREATE INDEX idx_citas_estado_workflow
+--     ON citas (organizacion_id, estado, fecha_cita);
+--
+-- -- 🔔 ÍNDICE 6: RECORDATORIOS PENDIENTES
+-- -- Propósito: Encontrar citas que necesitan envío de recordatorios
+-- -- Uso: WHERE recordatorio_enviado = FALSE AND estado = 'confirmada'
+-- CREATE INDEX idx_citas_recordatorios
+--     ON citas (fecha_recordatorio)
+--     WHERE recordatorio_enviado = FALSE AND estado = 'confirmada';
+--
+-- -- 🔍 ÍNDICE 7: BÚSQUEDA FULL-TEXT
+-- -- Propósito: Búsqueda de citas por notas y código
+-- -- Uso: Búsqueda global de citas por contenido
+-- CREATE INDEX idx_citas_search
+--     ON citas USING gin(
+--         to_tsvector('spanish', COALESCE(notas_cliente, '') || ' ' ||
+--                               COALESCE(notas_profesional, '') || ' ' ||
+--                               COALESCE(codigo_cita, ''))
+--     );
+--
+-- -- 📊 ÍNDICE 8: COVERING INDEX PARA CITAS DEL DÍA (OCT 2025)
+-- -- Propósito: Dashboard operacional de citas del día
+-- -- Uso: SELECT * FROM citas WHERE organizacion_id = ? AND fecha_cita = ? AND estado IN (...)
+-- -- Migrado desde: 16-mejoras-auditoria-2025-10.sql
+-- CREATE INDEX IF NOT EXISTS idx_citas_dia_covering
+--     ON citas (organizacion_id, fecha_cita, estado)
+--     INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, notas_cliente, precio_total, duracion_total_minutos)
+--     WHERE estado IN ('confirmada', 'en_curso');
+--
+-- COMMENT ON INDEX idx_citas_dia_covering IS
+-- 'Índice covering para vista de citas del día (dashboard principal).
+-- Incluye todas las columnas necesarias para mostrar agenda sin JOIN.
+-- Performance crítica para: Dashboard en tiempo real, vista de calendario.
+-- NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N). Agregados precio_total y duracion_total_minutos.';
+--
+-- -- 📊 ÍNDICE 9: MÉTRICAS MENSUALES DE CITAS (OCT 2025)
+-- -- Propósito: Reportes mensuales de citas activas y completadas
+-- -- Uso: SELECT COUNT(*) FROM citas WHERE organizacion_id = ? AND fecha_cita >= ? AND estado IN (...)
+-- -- Migrado desde: 16-mejoras-auditoria-2025-10.sql
+-- CREATE INDEX IF NOT EXISTS idx_citas_metricas_mes
+--     ON citas (organizacion_id, fecha_cita, estado)
+--     WHERE estado IN ('confirmada', 'completada', 'en_curso');
+--
+-- COMMENT ON INDEX idx_citas_metricas_mes IS
+-- 'Optimiza reportes mensuales de citas activas y completadas.
+-- Índice parcial solo para estados relevantes en métricas.
+-- Query: COUNT(*), GROUP BY mes para dashboard de métricas.';
+--
+-- -- ====================================================================
+-- -- 🚀 ÍNDICES MEJORADOS - AUDITORIA OCT 2025
+-- -- ====================================================================
+-- -- Índices optimizados agregados tras auditoría de reorganización
+-- -- ────────────────────────────────────────────────────────────────────
+--
+-- -- 🏢 ÍNDICE MEJORADO: USUARIOS DE ORGANIZACIONES ACTIVAS
+-- -- Propósito: Listar usuarios activos vinculados a organizaciones
+-- -- Uso: WHERE organizacion_id = ? AND activo = TRUE
+-- -- Ventaja: Índice parcial, solo registros activos con organización
+-- CREATE INDEX IF NOT EXISTS idx_usuarios_organizacion_activos
+--     ON usuarios(organizacion_id)
+--     WHERE activo = TRUE AND organizacion_id IS NOT NULL;
+--
+-- -- NOTA: Índice de eventos_sistema movido a 12-eventos-sistema.sql
+-- -- (la tabla eventos_sistema se crea después de este archivo)
+--
+-- -- 🔔 ÍNDICE MEJORADO: RECORDATORIOS PENDIENTES (REEMPLAZO)
+-- -- Propósito: Job de envío de recordatorios de citas
+-- -- Uso: WHERE recordatorio_enviado = FALSE AND estado = 'confirmada'
+-- --      AND fecha_recordatorio <= NOW()
+-- -- Ventaja: Índice parcial extremadamente selectivo + campos INCLUDE
+-- DROP INDEX IF EXISTS idx_citas_recordatorios;
+--
+-- CREATE INDEX idx_citas_recordatorios_pendientes
+--     ON citas (fecha_recordatorio, fecha_cita, organizacion_id, cliente_id)
+--     WHERE recordatorio_enviado = FALSE AND estado = 'confirmada';
+--
+-- COMMENT ON INDEX idx_citas_recordatorios_pendientes IS
+-- 'Índice parcial optimizado para job de recordatorios. Solo indexa citas
+-- confirmadas sin recordatorio enviado (< 1% del total de registros).
+-- Reemplaza idx_citas_recordatorios con mejor selectividad.';
+--
+-- -- 📅 ÍNDICE COVERING: BÚSQUEDA DE CITAS POR RANGO DE FECHAS
+-- -- Propósito: Dashboard de citas, calendarios, reportes
+-- -- Uso: WHERE organizacion_id = ? AND fecha_cita BETWEEN ? AND ? AND estado = ?
+-- -- Ventaja: INCLUDE para evitar heap access (covering index)
+-- CREATE INDEX IF NOT EXISTS idx_citas_rango_fechas
+--     ON citas (organizacion_id, fecha_cita, estado)
+--     INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, precio_total, duracion_total_minutos);
+--
+-- COMMENT ON INDEX idx_citas_rango_fechas IS
+-- 'Covering index para consultas de citas por rango de fechas.
+-- INCLUDE permite retornar cliente_id, profesional_id, hora_inicio, hora_fin, precio_total, duracion_total_minutos
+-- sin acceder al heap (performance +40% en queries de calendario).
+-- NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N)';
+--
+-- -- 👨‍💼 ÍNDICE COVERING: PROFESIONALES DISPONIBLES ONLINE (MEJORADO OCT 2025)
+-- -- Propósito: Listado de profesionales para agendamiento online
+-- -- Uso: WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE
+-- -- Ventaja: INCLUDE ampliado con datos de contacto
+-- -- Migrado desde: 16-mejoras-auditoria-2025-10.sql
+-- DROP INDEX IF EXISTS idx_profesionales_disponibles;
+--
+-- -- ⚠️  MIGRADO A MÓDULO - CREATE INDEX idx_profesionales_disponibles_covering
+-- --     ON profesionales (organizacion_id, activo, disponible_online)
+-- --     INCLUDE (nombre_completo, calificacion_promedio, telefono, email)
+-- --     WHERE activo = TRUE AND disponible_online = TRUE;
+--
+-- COMMENT ON INDEX idx_profesionales_disponibles_covering IS
+-- 'Índice covering para búsqueda rápida de profesionales disponibles.
+-- INCLUDE evita acceso al heap (+40% performance).
+-- Query típico: SELECT nombre, calificacion, telefono, email
+--              FROM profesionales
+--              WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE;';
+--
+-- -- ====================================================================
+-- -- 🔗 ÍNDICES PARA TABLA CITAS_SERVICIOS (4 índices críticos)
+-- -- ====================================================================
+-- -- Optimización para relación M:N entre citas y servicios
+-- -- Impacto: +10x performance en listados (evita query N+1)
+-- -- ────────────────────────────────────────────────────────────────────
+--
+-- -- 🔑 ÍNDICE 1: BÚSQUEDA POR CITA (MÁS CRÍTICO)
+-- -- Propósito: Obtener todos los servicios de una cita (JOIN principal)
+-- -- Uso: WHERE cita_id = ? ORDER BY orden_ejecucion
+-- -- Performance: Index Scan + Sort en memoria (< 1ms para 10 servicios)
+-- CREATE INDEX idx_citas_servicios_cita_id
+--     ON citas_servicios (cita_id, orden_ejecucion);
+--
+-- COMMENT ON INDEX idx_citas_servicios_cita_id IS
+-- 'Índice compuesto para obtener servicios de una cita ordenados.
+-- Usado en CitaServicioQueries.buildListarConServicios() para evitar N+1.
+-- Performance: 100 citas con 3 servicios c/u = 1 query (50ms) vs 101 queries (500ms).';
+--
+-- -- 🔍 ÍNDICE 2: FILTRADO POR SERVICIO
+-- -- Propósito: Encontrar citas que incluyan un servicio específico
+-- -- Uso: WHERE servicio_id = ? (o servicio_id = ANY(ARRAY[1,2,3]))
+-- -- Performance: Index Scan selectivo
+-- CREATE INDEX idx_citas_servicios_servicio_id
+--     ON citas_servicios (servicio_id);
+--
+-- COMMENT ON INDEX idx_citas_servicios_servicio_id IS
+-- 'Índice para filtrar citas por servicio.
+-- Usado en CitaServicioQueries.buildServiciosFilter() para queries como:
+-- EXISTS (SELECT 1 FROM citas_servicios WHERE servicio_id = ANY(...))';
+--
+-- -- ⚡ ÍNDICE 3: COVERING INDEX (MÁXIMO PERFORMANCE)
+-- -- Propósito: Query sin acceder al heap (Index-Only Scan)
+-- -- Uso: SELECT cita_id, servicio_id, precio_aplicado, duracion_minutos FROM...
+-- -- Performance: +30% más rápido que Index Scan normal
+-- CREATE INDEX idx_citas_servicios_covering
+--     ON citas_servicios (cita_id, servicio_id)
+--     INCLUDE (orden_ejecucion, precio_aplicado, duracion_minutos, descuento);
+--
+-- COMMENT ON INDEX idx_citas_servicios_covering IS
+-- 'Covering index con campos más consultados en INCLUDE.
+-- Permite Index-Only Scan (no accede a tabla) para queries de agregación.
+-- Usado en cálculos de precio_total y duracion_total_minutos.';
+--
+-- -- 📊 ÍNDICE 4: ORDEN DE EJECUCIÓN
+-- -- Propósito: Validar orden único por cita (constraint enforcement)
+-- -- Uso: Validación UNIQUE (cita_id, orden_ejecucion)
+-- -- Nota: Este índice es automático por el constraint UNIQUE en la tabla
+-- -- pero lo documentamos para claridad
+-- COMMENT ON CONSTRAINT uq_cita_servicio_orden ON citas_servicios IS
+-- 'Constraint UNIQUE que crea índice automático idx_citas_servicios_cita_id_orden_ejecucion_key.
+-- Asegura que no haya servicios duplicados en el mismo orden dentro de una cita.';
 
 -- ====================================================================
--- 🚀 ÍNDICES MEJORADOS - AUDITORIA OCT 2025
+-- ⚠️  FIN DE ÍNDICES MIGRADOS A citas/03-indices.sql
 -- ====================================================================
--- Índices optimizados agregados tras auditoría de reorganización
--- ────────────────────────────────────────────────────────────────────
 
 -- 🏢 ÍNDICE MEJORADO: USUARIOS DE ORGANIZACIONES ACTIVAS
 -- Propósito: Listar usuarios activos vinculados a organizaciones
@@ -492,108 +620,6 @@ CREATE INDEX IF NOT EXISTS idx_usuarios_organizacion_activos
 
 -- NOTA: Índice de eventos_sistema movido a 12-eventos-sistema.sql
 -- (la tabla eventos_sistema se crea después de este archivo)
-
--- 🔔 ÍNDICE MEJORADO: RECORDATORIOS PENDIENTES (REEMPLAZO)
--- Propósito: Job de envío de recordatorios de citas
--- Uso: WHERE recordatorio_enviado = FALSE AND estado = 'confirmada'
---      AND fecha_recordatorio <= NOW()
--- Ventaja: Índice parcial extremadamente selectivo + campos INCLUDE
-DROP INDEX IF EXISTS idx_citas_recordatorios;
-
-CREATE INDEX idx_citas_recordatorios_pendientes
-    ON citas (fecha_recordatorio, fecha_cita, organizacion_id, cliente_id)
-    WHERE recordatorio_enviado = FALSE AND estado = 'confirmada';
-
-COMMENT ON INDEX idx_citas_recordatorios_pendientes IS
-'Índice parcial optimizado para job de recordatorios. Solo indexa citas
-confirmadas sin recordatorio enviado (< 1% del total de registros).
-Reemplaza idx_citas_recordatorios con mejor selectividad.';
-
--- 📅 ÍNDICE COVERING: BÚSQUEDA DE CITAS POR RANGO DE FECHAS
--- Propósito: Dashboard de citas, calendarios, reportes
--- Uso: WHERE organizacion_id = ? AND fecha_cita BETWEEN ? AND ? AND estado = ?
--- Ventaja: INCLUDE para evitar heap access (covering index)
-CREATE INDEX IF NOT EXISTS idx_citas_rango_fechas
-    ON citas (organizacion_id, fecha_cita, estado)
-    INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, precio_total, duracion_total_minutos);
-
-COMMENT ON INDEX idx_citas_rango_fechas IS
-'Covering index para consultas de citas por rango de fechas.
-INCLUDE permite retornar cliente_id, profesional_id, hora_inicio, hora_fin, precio_total, duracion_total_minutos
-sin acceder al heap (performance +40% en queries de calendario).
-NOTA: servicio_id eliminado - ahora en tabla citas_servicios (M:N)';
-
--- 👨‍💼 ÍNDICE COVERING: PROFESIONALES DISPONIBLES ONLINE (MEJORADO OCT 2025)
--- Propósito: Listado de profesionales para agendamiento online
--- Uso: WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE
--- Ventaja: INCLUDE ampliado con datos de contacto
--- Migrado desde: 16-mejoras-auditoria-2025-10.sql
-DROP INDEX IF EXISTS idx_profesionales_disponibles;
-
--- ⚠️  MIGRADO A MÓDULO - CREATE INDEX idx_profesionales_disponibles_covering
---     ON profesionales (organizacion_id, activo, disponible_online)
---     INCLUDE (nombre_completo, calificacion_promedio, telefono, email)
---     WHERE activo = TRUE AND disponible_online = TRUE;
-
-COMMENT ON INDEX idx_profesionales_disponibles_covering IS
-'Índice covering para búsqueda rápida de profesionales disponibles.
-INCLUDE evita acceso al heap (+40% performance).
-Query típico: SELECT nombre, calificacion, telefono, email
-             FROM profesionales
-             WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE;';
-
--- ====================================================================
--- 🔗 ÍNDICES PARA TABLA CITAS_SERVICIOS (4 índices críticos)
--- ====================================================================
--- Optimización para relación M:N entre citas y servicios
--- Impacto: +10x performance en listados (evita query N+1)
--- ────────────────────────────────────────────────────────────────────
-
--- 🔑 ÍNDICE 1: BÚSQUEDA POR CITA (MÁS CRÍTICO)
--- Propósito: Obtener todos los servicios de una cita (JOIN principal)
--- Uso: WHERE cita_id = ? ORDER BY orden_ejecucion
--- Performance: Index Scan + Sort en memoria (< 1ms para 10 servicios)
-CREATE INDEX idx_citas_servicios_cita_id
-    ON citas_servicios (cita_id, orden_ejecucion);
-
-COMMENT ON INDEX idx_citas_servicios_cita_id IS
-'Índice compuesto para obtener servicios de una cita ordenados.
-Usado en CitaServicioQueries.buildListarConServicios() para evitar N+1.
-Performance: 100 citas con 3 servicios c/u = 1 query (50ms) vs 101 queries (500ms).';
-
--- 🔍 ÍNDICE 2: FILTRADO POR SERVICIO
--- Propósito: Encontrar citas que incluyan un servicio específico
--- Uso: WHERE servicio_id = ? (o servicio_id = ANY(ARRAY[1,2,3]))
--- Performance: Index Scan selectivo
-CREATE INDEX idx_citas_servicios_servicio_id
-    ON citas_servicios (servicio_id);
-
-COMMENT ON INDEX idx_citas_servicios_servicio_id IS
-'Índice para filtrar citas por servicio.
-Usado en CitaServicioQueries.buildServiciosFilter() para queries como:
-EXISTS (SELECT 1 FROM citas_servicios WHERE servicio_id = ANY(...))';
-
--- ⚡ ÍNDICE 3: COVERING INDEX (MÁXIMO PERFORMANCE)
--- Propósito: Query sin acceder al heap (Index-Only Scan)
--- Uso: SELECT cita_id, servicio_id, precio_aplicado, duracion_minutos FROM...
--- Performance: +30% más rápido que Index Scan normal
-CREATE INDEX idx_citas_servicios_covering
-    ON citas_servicios (cita_id, servicio_id)
-    INCLUDE (orden_ejecucion, precio_aplicado, duracion_minutos, descuento);
-
-COMMENT ON INDEX idx_citas_servicios_covering IS
-'Covering index con campos más consultados en INCLUDE.
-Permite Index-Only Scan (no accede a tabla) para queries de agregación.
-Usado en cálculos de precio_total y duracion_total_minutos.';
-
--- 📊 ÍNDICE 4: ORDEN DE EJECUCIÓN
--- Propósito: Validar orden único por cita (constraint enforcement)
--- Uso: Validación UNIQUE (cita_id, orden_ejecucion)
--- Nota: Este índice es automático por el constraint UNIQUE en la tabla
--- pero lo documentamos para claridad
-COMMENT ON CONSTRAINT uq_cita_servicio_orden ON citas_servicios IS
-'Constraint UNIQUE que crea índice automático idx_citas_servicios_cita_id_orden_ejecucion_key.
-Asegura que no haya servicios duplicados en el mismo orden dentro de una cita.';
 
 -- ====================================================================
 -- 🤖 ÍNDICES PARA TABLA CHATBOT_CONFIG
@@ -925,23 +951,24 @@ COMMENT ON INDEX idx_historial_config_fecha IS
 Usado en queries de auditoría para mostrar cambios recientes primero.
 Performance: O(1) en ordenamiento descendente.';
 
+-- ⚠️  MIGRADO A citas/03-indices.sql
 -- ====================================================================
--- 🔴 CRÍTICO: ÍNDICE PARA PERFORMANCE DEL TRIGGER
--- ====================================================================
--- Este índice es ESENCIAL para el trigger calcular_comision_cita()
--- que hace JOIN con citas_servicios para obtener los servicios de la cita.
--- ====================================================================
-
--- 📅 ÍNDICE: CITA EN CITAS_SERVICIOS
--- Propósito: Optimizar JOIN del trigger calcular_comision_cita()
--- Uso: WHERE cita_id = ? (en loop del trigger)
-CREATE INDEX IF NOT EXISTS idx_citas_servicios_cita_id
-    ON citas_servicios(cita_id);
-
-COMMENT ON INDEX idx_citas_servicios_cita_id IS
-'🔴 CRÍTICO: Optimiza trigger calcular_comision_cita() que itera sobre servicios de la cita.
-Sin este índice, el cálculo de comisiones en tablas grandes (10K+ citas) será lento (3-5s vs <100ms).
-MUST-HAVE para performance en tablas particionadas.
-La tabla citas está particionada por fecha_cita, este índice evita full table scans.
-Performance: O(log n) → O(1) en JOIN con citas_servicios.
-Versión: 1.0.0 - Agregado 2025-11-14';
+-- -- 🔴 CRÍTICO: ÍNDICE PARA PERFORMANCE DEL TRIGGER
+-- -- ====================================================================
+-- -- Este índice es ESENCIAL para el trigger calcular_comision_cita()
+-- -- que hace JOIN con citas_servicios para obtener los servicios de la cita.
+-- -- ====================================================================
+--
+-- -- 📅 ÍNDICE: CITA EN CITAS_SERVICIOS
+-- -- Propósito: Optimizar JOIN del trigger calcular_comision_cita()
+-- -- Uso: WHERE cita_id = ? (en loop del trigger)
+-- CREATE INDEX IF NOT EXISTS idx_citas_servicios_cita_id
+--     ON citas_servicios(cita_id);
+--
+-- COMMENT ON INDEX idx_citas_servicios_cita_id IS
+-- '🔴 CRÍTICO: Optimiza trigger calcular_comision_cita() que itera sobre servicios de la cita.
+-- Sin este índice, el cálculo de comisiones en tablas grandes (10K+ citas) será lento (3-5s vs <100ms).
+-- MUST-HAVE para performance en tablas particionadas.
+-- La tabla citas está particionada por fecha_cita, este índice evita full table scans.
+-- Performance: O(log n) → O(1) en JOIN con citas_servicios.
+-- Versión: 1.0.0 - Agregado 2025-11-14';
