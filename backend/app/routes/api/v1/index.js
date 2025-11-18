@@ -21,6 +21,7 @@ const webhooksRouter = require('./webhooks');
 const subscripcionesRouter = require('./subscripciones');
 const mercadopagoRouter = require('./mercadopago');
 const comisionesRouter = require('./comisiones');
+const marketplaceRouter = require('./marketplace');
 
 function routerApi(app) {
     const router = express.Router();
@@ -56,6 +57,9 @@ function routerApi(app) {
 
     // Rutas de comisiones profesionales
     router.use('/comisiones', comisionesRouter);
+
+    // Rutas de marketplace público
+    router.use('/marketplace', marketplaceRouter);
 
     // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);

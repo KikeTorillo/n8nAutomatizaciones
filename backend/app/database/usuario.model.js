@@ -57,11 +57,19 @@ class UsuarioModel {
         }
     }
 
+    /**
+     * Buscar usuario por email
+     * Usado para login (no requiere RLS context de organización)
+     *
+     * FIX: Usa RLSHelper.withLoginEmail() para establecer app.login_email
+     * y satisfacer política RLS usuarios_unified_access que requiere:
+     * current_setting('app.login_email') = email
+     */
     static async buscarPorEmail(email) {
         const db = await getDb();
 
         try {
-            return await RLSHelper.withRole(db, 'login_context', async (db) => {
+            return await RLSHelper.withLoginEmail(db, email, async (db) => {
                 const query = `
                     SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
                            u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,

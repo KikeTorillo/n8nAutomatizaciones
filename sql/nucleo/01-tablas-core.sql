@@ -65,6 +65,10 @@ CREATE TABLE organizaciones (
     metadata JSONB DEFAULT '{}',
     notas_internas TEXT,
 
+    -- 🛍️ Marketplace (Nov 2025)
+    tiene_perfil_marketplace BOOLEAN DEFAULT FALSE,
+    fecha_activacion_marketplace TIMESTAMPTZ,
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -147,5 +151,7 @@ COMMENT ON TABLE usuarios IS 'Autenticación y autorización. Vinculados a organ
 COMMENT ON COLUMN organizaciones.codigo_tenant IS 'Código único inmutable para identificación técnica del tenant (e.g., org-001)';
 COMMENT ON COLUMN organizaciones.slug IS 'URL-friendly identifier para subdominios y URLs personalizadas';
 COMMENT ON COLUMN organizaciones.mcp_credential_id IS 'ID de credencial MCP en n8n compartida por todos los chatbots. NULL si no hay chatbots activos';
+COMMENT ON COLUMN organizaciones.tiene_perfil_marketplace IS 'True si la organización tiene perfil activo en marketplace público (directorio SEO)';
+COMMENT ON COLUMN organizaciones.fecha_activacion_marketplace IS 'Timestamp de primera publicación en marketplace';
 COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
 COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';

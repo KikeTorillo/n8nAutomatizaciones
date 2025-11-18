@@ -58,12 +58,12 @@ class RLSHelper {
     /**
      * Ejecutar query con contexto RLS específico
      * @param {Object} db - Cliente de base de datos
-     * @param {Object} context - Configuración del contexto { role, bypass, userId, tenantId }
+     * @param {Object} context - Configuración del contexto { role, bypass, userId, tenantId, loginEmail }
      * @param {Function} callback - Función a ejecutar con el contexto configurado
      * @returns {Promise} Resultado del callback
      */
     static async withContext(db, context = {}, callback) {
-        const { role = null, bypass = false, userId = null, tenantId = null } = context;
+        const { role = null, bypass = false, userId = null, tenantId = null, loginEmail = null } = context;
 
         try {
             if (role) {
@@ -78,6 +78,10 @@ class RLSHelper {
             }
             if (tenantId) {
                 await db.query('SELECT set_config($1, $2, false)', ['app.current_tenant_id', tenantId.toString()]);
+            }
+            if (loginEmail) {
+                // Configurar email de login para políticas RLS de autenticación
+                await db.query('SELECT set_config($1, $2, false)', ['app.login_email', loginEmail]);
             }
 
             return await callback(db);
@@ -97,6 +101,9 @@ class RLSHelper {
                 }
                 if (tenantId) {
                     await db.query("SELECT set_config('app.current_tenant_id', '', false)");
+                }
+                if (loginEmail) {
+                    await db.query("SELECT set_config('app.login_email', '', false)");
                 }
             } catch (resetError) {
                 logger.warn('Error resetting RLS variables:', resetError.message);
@@ -195,6 +202,25 @@ class RLSHelper {
      */
     static async withSelfAccess(db, userId, callback) {
         return this.withContext(db, { userId }, callback);
+    }
+
+    /**
+     * Ejecutar operación de login con email configurado en RLS
+     * Permite que políticas RLS usen: current_setting('app.login_email') = email
+     *
+     * @param {Object} db - Cliente de base de datos
+     * @param {string} email - Email del usuario intentando autenticarse
+     * @param {Function} callback - Función a ejecutar con contexto de login
+     * @returns {Promise} Resultado del callback
+     *
+     * @example
+     * const usuario = await RLSHelper.withLoginEmail(db, 'user@example.com', async (db) => {
+     *     const result = await db.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+     *     return result.rows[0];
+     * });
+     */
+    static async withLoginEmail(db, email, callback) {
+        return this.withContext(db, { loginEmail: email }, callback);
     }
 }
 

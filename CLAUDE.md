@@ -12,19 +12,19 @@
 
 ## 📊 Estado Actual
 
-**Actualizado**: 17 Noviembre 2025
+**Actualizado**: 18 Noviembre 2025
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
-| **Backend API** | ✅ Operativo | 23 controllers, validación bidireccional citas/bloqueos |
+| **Backend API** | ✅ Operativo | 26 controllers (incluye marketplace), RLS multi-tenant |
 | **Frontend React** | ✅ Operativo | React 18 + Vite 7, 14 hooks personalizados |
-| **Base de Datos** | ✅ Optimizada | 25 tablas (2 particionadas), RLS multi-tenant mejorado |
+| **Base de Datos** | ✅ Optimizada | 29 tablas (2 particionadas), RLS reforzado |
 | **Sistema Comisiones** | ✅ Operativo | Trigger automático, 12 endpoints, Dashboard + Reportes |
+| **Marketplace** | 🟡 Backend ✅ / Frontend 📋 | BD + API completa (15 endpoints), Frontend planificado |
 | **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
 | **Sistema Email** | ✅ Operativo | AWS SES + nodemailer, templates HTML |
 | **Deployment** | ✅ Listo | Hostinger VPS + Docker Compose |
-| **Seguridad Multi-Tenant** | ✅ Reforzada | Validación automática en `servicios_profesionales` (Nov 2025) |
 
 ---
 
@@ -45,8 +45,8 @@
 ### Base de Datos
 - PostgreSQL 17 con **pg_cron** (Dockerfile personalizado)
 - **Particionamiento por Fecha** (Range en `citas` y `eventos_sistema`)
-- Row Level Security (29 políticas - incluye comisiones)
-- 269 índices + 25 triggers + 48 funciones PL/pgSQL
+- Row Level Security (37 políticas - incluye comisiones + marketplace)
+- 293 índices + 29 triggers + 51 funciones PL/pgSQL
 - 4 jobs automáticos pg_cron
 
 ### IA Conversacional
@@ -82,7 +82,8 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 **Core (5):** auth, usuarios, organizaciones, planes, subscripciones
 **Negocio (7):** profesionales, servicios, clientes, horarios-profesionales, tipos-profesional, tipos-bloqueo
-**Operaciones (4):** citas (modular), bloqueos-horarios, disponibilidad, **comisiones** 🆕
+**Operaciones (4):** citas (modular), bloqueos-horarios, disponibilidad, comisiones
+**Marketplace (1):** perfiles, reseñas, analytics (GDPR-compliant) 🆕
 **Pagos (2):** webhooks, pagos (Mercado Pago)
 **IA (1):** chatbots (Telegram/WhatsApp)
 **Admin (1):** superadmin (gestión global + sync MP)
@@ -157,15 +158,16 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 ### Base de Datos
 
-**25 Tablas Principales:**
+**29 Tablas Principales:**
 
 | Categoría | Tablas |
 |-----------|--------|
 | **Core** | organizaciones, usuarios, planes_subscripcion |
-| **Catálogos** | tipos_profesional, tipos_bloqueo |
+| **Catálogos** | tipos_profesional, tipos_bloqueo, marketplace_categorias |
 | **Negocio** | profesionales, servicios, clientes, servicios_profesionales, horarios_profesionales |
 | **Operaciones** | citas ⚡, citas_servicios, bloqueos_horarios, metricas_uso_organizacion |
-| **Comisiones** 🆕 | configuracion_comisiones, comisiones_profesionales, historial_configuracion_comisiones |
+| **Comisiones** | configuracion_comisiones, comisiones_profesionales, historial_configuracion_comisiones |
+| **Marketplace** 🆕 | marketplace_perfiles, marketplace_reseñas, marketplace_analytics |
 | **Chatbots** | chatbot_config, chatbot_credentials |
 | **Pagos MP** | subscripciones, historial_subscripciones, metodos_pago, pagos |
 | **Sistema** | eventos_sistema ⚡, eventos_sistema_archivo, configuracion_sistema |
@@ -441,6 +443,108 @@ historial_configuracion_comisiones  → Auditoría de cambios
 
 ---
 
+## 🛍️ Marketplace de Clientes (NUEVO - Nov 2025)
+
+**Estado**: 🟡 **Backend Completo** (BD + API) | 📋 **Frontend Planificado**
+
+### Funcionalidad
+
+**Directorio Público SEO-optimizado** para que negocios publiquen su perfil y capturen clientes:
+- Búsqueda por ciudad + categoría + rating
+- Perfil público con servicios, profesionales, reseñas, ubicación
+- Agendamiento público (sin registro previo - crea cliente automáticamente)
+- Sistema de reseñas 5 estrellas (solo clientes con cita `completada`)
+- Analytics GDPR-compliant (IPs hasheadas SHA256)
+
+### Backend Implementado
+
+**15 Endpoints** (3 públicos + 12 privados):
+
+```javascript
+// Públicos (sin auth)
+GET  /marketplace/perfiles/buscar              // Directorio con filtros
+GET  /marketplace/perfiles/slug/:slug          // Perfil público
+POST /marketplace/analytics                    // Tracking (fire-and-forget)
+
+// Privados (admin/propietario)
+POST/PUT /marketplace/perfiles                 // CRUD perfil
+GET      /marketplace/perfiles/:id/estadisticas// Analytics del perfil
+POST     /marketplace/resenas                  // Crear reseña (cliente)
+POST/PATCH /marketplace/resenas/:id/...        // Responder/moderar (admin)
+```
+
+**Arquitectura Modular:**
+```
+controllers/marketplace/  → 3 controllers (perfiles, resenas, analytics)
+database/marketplace/     → 3 models (perfiles, resenas, analytics)
+routes/api/v1/marketplace.js
+schemas/marketplace.schemas.js
+```
+
+### Base de Datos
+
+**4 Tablas:**
+- `marketplace_perfiles` - Perfil público del negocio (slug único, meta SEO)
+- `marketplace_reseñas` - Reseñas de clientes (FK a citas completadas, 1 reseña por cita)
+- `marketplace_analytics` - Tracking eventos (6 tipos, IPs hasheadas)
+- `marketplace_categorias` - 10 categorías base (belleza, salud, fitness, etc.)
+
+**24 Índices especializados:**
+- GIN full-text search en `meta_titulo`, `descripcion_corta`, `descripcion_larga`
+- GIN geográficos en `pais` + `ciudad`
+- Índices compuestos para búsquedas filtradas
+
+**8 Políticas RLS:**
+- Acceso público (`TO PUBLIC`) para búsqueda y perfiles
+- Políticas FOR ALL corregidas: `super_admin OR bypass_rls OR tenant_isolation`
+- Tracking anónimo sin autenticación
+
+### Características Críticas
+
+✅ **SEO-Ready**: Meta tags, slugs únicos `{ciudad}-{timestamp36}`, Schema.org LocalBusiness
+✅ **GDPR-Compliant**: IPs hasheadas en backend antes de almacenar
+✅ **Reseñas Validadas**: Solo clientes con cita `completada`, 1 reseña por cita (UNIQUE)
+✅ **Analytics Fire-and-Forget**: No bloquea respuestas, tracking asíncrono
+✅ **Multi-tenant Seguro**: RLS isolation completo
+
+### Frontend (Planificado)
+
+**Plan detallado:** `docs/PLAN_FRONTEND_MARKETPLACE.md` (850 líneas)
+
+**6 Páginas:**
+- Públicas: DirectorioMarketplace, PerfilPublico, AgendarPublico
+- Privadas: MiMarketplace, Reseñas, Analytics (Chart.js)
+
+**15 Componentes específicos** + **7 UI reutilizables existentes**
+**10 Hooks TanStack Query** + API client extendido
+**Duración estimada:** 10-12 días (~88 horas)
+
+### Archivos Críticos
+
+**Backend:**
+- `routes/api/v1/marketplace.js` - Router principal (15 endpoints)
+- `controllers/marketplace/` - 3 controllers modulares
+- `database/marketplace/` - 3 models con RLS
+- `schemas/marketplace.schemas.js` - 8 schemas Joi
+
+**SQL:**
+- `sql/marketplace/01-tablas.sql` - 4 tablas
+- `sql/marketplace/02-indices.sql` - 24 índices especializados
+- `sql/marketplace/03-rls-policies.sql` - 8 políticas (corregidas Nov 2025)
+- `sql/marketplace/04-funciones.sql` - 3 funciones PL/pgSQL
+- `sql/marketplace/05-triggers.sql` - 4 triggers automáticos
+- `sql/marketplace/06-datos-iniciales.sql` - 10 categorías base
+
+### Bugs Corregidos (Nov 2025)
+
+1. ✅ RLS Policy SELECT para FORCE RLS en `marketplace_analytics`
+2. ✅ Login intermitente (RLSHelper extendido con `withLoginEmail()`)
+3. ✅ RLS violation en `perfiles.crear()` (bypass para UPDATE organizaciones)
+4. ✅ UTF-8 encoding: rutas cambiadas de `/reseñas` a `/resenas`
+5. ✅ `perfiles.activar()` retorna null: políticas actualizadas con `super_admin OR bypass_rls`
+
+---
+
 ## 🔒 Seguridad Multi-Tenant (RLS)
 
 ### RBAC - Permisos por Rol
@@ -452,7 +556,7 @@ historial_configuracion_comisiones  → Auditoría de cambios
 | **empleado** | READ servicios/profesionales, CRUD citas/clientes |
 | **bot** | READ + CRUD citas |
 
-**15 Políticas RLS** activas en todas las tablas multi-tenant
+**RLS activo** en todas las tablas multi-tenant (29 políticas core + 8 marketplace)
 
 ### Política de Contraseñas (100% Homologada)
 
@@ -488,6 +592,7 @@ historial_configuracion_comisiones  → Auditoría de cambios
 6. **Bulk operations** - Pre-validar límites ANTES de crear (1-50 items)
 7. **Reagendamiento** - SIEMPRE usar `excluir_cita_id` en `verificarDisponibilidad`
 8. **Variables docker-compose** - `FRONTEND_URL` DEBE estar en prod.yml y prod.local.yml
+9. **Marketplace Analytics** - Hash IPs en BACKEND antes de almacenar (SHA256)
 
 ### Frontend
 1. **Sanitizar opcionales** - Joi rechaza `""`, usar `undefined`
@@ -526,9 +631,15 @@ historial_configuracion_comisiones  → Auditoría de cambios
 ### 6. Sistema de Comisiones Automático
 - Trigger PostgreSQL calcula comisiones al completar citas
 - JSONB `detalle_servicios` con breakdown por servicio
-- Dashboard con Chart.js + reportes con exportación CSV/JSON
-- Configuración flexible: global por profesional o específica por servicio
+- Dashboard con Chart.js + reportes CSV/JSON
 - **⚠️ NO usar `JSON.parse()`** en frontend: JSONB ya viene parseado
+
+### 7. Marketplace Público SEO-Optimizado
+- Directorio con búsqueda por ciudad + categoría + rating
+- Perfiles públicos con slug único `{ciudad}-{timestamp36}`
+- Agendamiento público sin registro (crea cliente automáticamente)
+- Sistema de reseñas validadas (solo citas completadas)
+- Analytics GDPR-compliant con IPs hasheadas SHA256
 
 ---
 
@@ -564,6 +675,13 @@ historial_configuracion_comisiones  → Auditoría de cambios
 - `schemas/comisiones.schemas.js` - 8 schemas Joi con validaciones
 - **`sql/schema/02-functions.sql`** - Trigger `calcular_comision_cita()` (línea 824)
 
+### Backend - Marketplace
+- **`routes/api/v1/marketplace.js`** - 15 endpoints (3 públicos + 12 privados)
+- `controllers/marketplace/` - 3 controllers (perfiles, resenas, analytics)
+- `database/marketplace/` - 3 models con RLS
+- `schemas/marketplace.schemas.js` - 8 schemas Joi
+- **`utils/rlsHelper.js`** - Extendido con `withLoginEmail()` (Nov 2025)
+
 ### Frontend - Componentes Clave
 - `components/dashboard/SetupChecklist.jsx` - Guía configuración inicial
 - `components/dashboard/TrialStatusWidget.jsx` - Trial + activación MP
@@ -598,8 +716,16 @@ historial_configuracion_comisiones  → Auditoría de cambios
 **Causa**: Cita actual bloquea los slots que se van a liberar
 **Solución**: Usar parámetro `excluir_cita_id` en `verificarDisponibilidad`
 
+### Marketplace - Login intermitente después de reset de contraseña
+**Causa**: `RLSHelper.withRole('login_context')` no reconocido por RLS, solo funciona con residual `bypass_rls` en pool
+**Solución**: Usar `RLSHelper.withLoginEmail(db, email, callback)` que establece `app.login_email`
+
+### Marketplace - Tracking analytics no registra eventos
+**Causa**: IPs no hasheadas o falta política SELECT en `marketplace_analytics`
+**Solución**: Hash SHA256 en backend + agregar política SELECT pública para FORCE RLS
+
 ---
 
-**Versión**: 18.0 - **Sistema de Comisiones Completo**
-**Última actualización**: 16 Noviembre 2025
-**Estado**: ✅ Production Ready + AI-Optimized
+**Versión**: 19.0 - **Marketplace Backend Completo**
+**Última actualización**: 18 Noviembre 2025
+**Estado**: ✅ Production Ready + Marketplace BD/API + Frontend Planificado

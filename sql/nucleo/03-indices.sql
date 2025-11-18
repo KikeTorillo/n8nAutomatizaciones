@@ -88,6 +88,12 @@ CREATE UNIQUE INDEX idx_organizaciones_slug
 CREATE INDEX idx_organizaciones_tipo_industria
     ON organizaciones (tipo_industria, activo) WHERE activo = TRUE;
 
+-- Propósito: Filtrar organizaciones con perfil de marketplace activo
+-- Para reportes y estadísticas de marketplace (Nov 2025)
+CREATE INDEX idx_organizaciones_marketplace
+    ON organizaciones(tiene_perfil_marketplace)
+    WHERE tiene_perfil_marketplace = TRUE;
+
 -- ====================================================================
 -- ÍNDICES PARA PLANES_SUBSCRIPCION
 -- ====================================================================
