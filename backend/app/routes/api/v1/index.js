@@ -20,7 +20,7 @@ const pagosRouter = require('./pagos');
 const webhooksRouter = require('./webhooks');
 const subscripcionesRouter = require('./subscripciones');
 const mercadopagoRouter = require('./mercadopago');
-const comisionesRouter = require('./comisiones');
+const comisionesRouter = require('../../templates/scheduling-saas/routes/api/v1/comisiones');
 const marketplaceRouter = require('./marketplace');
 
 function routerApi(app) {
