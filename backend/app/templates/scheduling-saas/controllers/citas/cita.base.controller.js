@@ -1,8 +1,8 @@
-const CitaModel = require('../../database/citas');
-const ClienteModel = require('../../database/cliente.model');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
-const RLSContextManager = require('../../utils/rlsContextManager');
+const CitaModel = require('../../../../database/citas');
+const ClienteModel = require('../../../../database/cliente.model');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
+const RLSContextManager = require('../../../../utils/rlsContextManager');
 
 class CitaBaseController {
 

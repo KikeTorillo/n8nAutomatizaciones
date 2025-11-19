@@ -1,6 +1,6 @@
-const CitaModel = require('../../database/citas');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const CitaModel = require('../../../../database/citas');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 class CitaRecordatoriosController {
 

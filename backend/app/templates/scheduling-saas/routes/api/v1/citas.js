@@ -1,5 +1,5 @@
 const express = require('express');
-const CitaController = require('../../../../../controllers/citas');
+const CitaController = require('../../../controllers/citas');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
 const citaSchemas = require('../../../schemas/cita.schemas');
 

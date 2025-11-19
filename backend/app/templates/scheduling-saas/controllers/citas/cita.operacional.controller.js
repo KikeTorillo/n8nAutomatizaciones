@@ -1,6 +1,6 @@
-const CitaModel = require('../../database/citas');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const CitaModel = require('../../../../database/citas');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 class CitaOperacionalController {
 
@@ -180,7 +180,7 @@ class CitaOperacionalController {
 
         try {
             // Obtener zona horaria de la organización desde la BD
-            const { getDb } = require('../../config/database');
+            const { getDb } = require('../../../../config/database');
             const db = await getDb();
             let zonaHoraria = 'America/Mexico_City'; // Default
 
