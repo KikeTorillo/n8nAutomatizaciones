@@ -1,9 +1,9 @@
 // Rutas de Servicios - CRUD con aislamiento multi-tenant
 
 const express = require('express');
-const ServicioController = require('../../../controllers/servicio.controller');
-const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
-const servicioSchemas = require('../../../templates/scheduling-saas/schemas/servicio.schemas');
+const ServicioController = require('../../../../../controllers/servicio.controller');
+const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
+const servicioSchemas = require('../../schemas/servicio.schemas');
 
 const router = express.Router();
 
