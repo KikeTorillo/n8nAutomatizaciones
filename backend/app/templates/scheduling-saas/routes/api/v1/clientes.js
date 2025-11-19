@@ -1,7 +1,7 @@
 const express = require('express');
-const ClienteController = require('../../../controllers/cliente.controller');
-const { auth, tenant, validation, rateLimiting, subscription } = require('../../../middleware');
-const clienteSchemas = require('../../../templates/scheduling-saas/schemas/cliente.schemas');
+const ClienteController = require('../../../../../controllers/cliente.controller');
+const { auth, tenant, validation, rateLimiting, subscription } = require('../../../../../middleware');
+const clienteSchemas = require('../../schemas/cliente.schemas');
 
 const router = express.Router();
 
