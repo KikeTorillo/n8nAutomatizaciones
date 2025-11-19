@@ -555,7 +555,7 @@ class PerfilesMarketplaceModel {
                     mp.actualizado_en,
                     -- Datos de la organización
                     o.nombre_comercial,
-                    o.categoria_industria_id,
+                    o.categoria_id,
                     o.activo as org_activa,
                     o.plan_actual as plan_nombre,
                     CASE o.plan_actual

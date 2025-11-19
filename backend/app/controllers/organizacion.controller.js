@@ -44,7 +44,7 @@ class OrganizacionController {
         const options = {
             page: parseInt(req.query.page) || 1,
             limit: parseInt(req.query.limit) || 10,
-            categoria_industria_id: req.query.categoria_industria_id ? parseInt(req.query.categoria_industria_id) : undefined,
+            categoria_id: req.query.categoria_id ? parseInt(req.query.categoria_id) : undefined,
             incluir_inactivas: req.query.incluir_inactivas
         };
 
@@ -145,7 +145,7 @@ class OrganizacionController {
             nombre_comercial: organizacion.nombre_comercial,
             razon_social: organizacion.razon_social,
             rfc_nif: organizacion.rfc,
-            categoria_industria_id: organizacion.categoria_industria_id,
+            categoria_id: organizacion.categoria_id,
             plan_actual: organizacion.plan || 'basico',
             telefono: organizacion.telefono_principal,
             email_admin: admin.email

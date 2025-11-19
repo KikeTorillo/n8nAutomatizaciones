@@ -34,7 +34,7 @@ Este directorio contiene el **schema SQL core** universal para cualquier SaaS mu
 
 ### **ENUMs de Dominio (movidos a templates/)**
 
-- ❌ `industria_tipo` → Tabla `categorias_industria` (dinámica)
+- ❌ `industria_tipo` → Tabla `categorias` (dinámica)
 - ❌ `estado_cita` → `templates/scheduling-saas/sql/01-enums-dominio.sql`
 - ❌ `estado_franja` → `templates/scheduling-saas/sql/01-enums-dominio.sql`
 - ❌ `tipo_profesional` → Tabla dinámica en templates
@@ -126,7 +126,7 @@ templates/scheduling-saas/sql/
 
 | Componente | Versión Anterior | Versión 2.0 (19 Nov 2025) |
 |------------|------------------|---------------------------|
-| **industria_tipo** | ENUM con 11 valores | Tabla `categorias_industria` (sin datos) |
+| **industria_tipo** | ENUM con 11 valores | Tabla `categorias` (sin datos) |
 | **Datos categorías** | 7 genéricas en core | 0 en core, seeds en templates/ |
 | **estado_cita** | En fundamentos/ | En templates/scheduling-saas/ |
 | **estado_franja** | En fundamentos/ | En templates/scheduling-saas/ |
@@ -142,7 +142,7 @@ templates/scheduling-saas/sql/
 
 ```sql
 -- 1. Crear seed: sql/templates/invitations-saas/seeds/categorias-invitaciones.sql
-INSERT INTO categorias_industria (codigo, nombre, sector, descripcion, icono, orden) VALUES
+INSERT INTO categorias (codigo, nombre, sector, descripcion, icono, orden) VALUES
     ('bodas', 'Bodas', 'events', 'Invitaciones para bodas', 'heart', 1),
     ('cumpleanos', 'Cumpleaños', 'events', 'Invitaciones para cumpleaños', 'cake', 2),
     ('baby_shower', 'Baby Shower', 'events', 'Baby showers', 'baby', 3);
@@ -152,7 +152,7 @@ INSERT INTO categorias_industria (codigo, nombre, sector, descripcion, icono, or
 -- 3. Crear organización (IDs ahora son 1-3)
 INSERT INTO organizaciones (
     nombre_comercial,
-    categoria_industria_id,
+    categoria_id,
     ...
 ) VALUES (
     'Invitaciones Elegantes',
@@ -165,7 +165,7 @@ INSERT INTO organizaciones (
 
 ```sql
 -- 1. Crear seed: sql/templates/ecommerce-saas/seeds/categorias-ecommerce.sql
-INSERT INTO categorias_industria (codigo, nombre, sector, descripcion, orden) VALUES
+INSERT INTO categorias (codigo, nombre, sector, descripcion, orden) VALUES
     ('fashion', 'Moda y Ropa', 'retail', 'Tiendas de moda', 1),
     ('electronics', 'Electrónicos', 'retail', 'Tiendas de tecnología', 2);
 
@@ -187,11 +187,11 @@ INSERT INTO categorias_industria (codigo, nombre, sector, descripcion, orden) VA
 
 ### **Durante la Migración**
 
-- [ ] Ejecutar tabla `categorias_industria`
+- [ ] Ejecutar tabla `categorias`
 - [ ] Ejecutar seeds correspondientes
 - [ ] Ejecutar script de migración
 - [ ] Validar datos migrados (ver output del script)
-- [ ] Actualizar código backend/frontend para usar `categoria_industria_id`
+- [ ] Actualizar código backend/frontend para usar `categoria_id`
 
 ### **Después de Migrar**
 

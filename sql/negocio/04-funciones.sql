@@ -40,7 +40,7 @@ BEGIN
     -- 1. Obtener el código de categoría de la organización (Nov 2025: tabla dinámica)
     SELECT ci.codigo INTO categoria_codigo
     FROM organizaciones o
-    JOIN categorias_industria ci ON ci.id = o.categoria_industria_id
+    JOIN categorias ci ON ci.id = o.categoria_id
     WHERE o.id = NEW.organizacion_id;
 
     IF categoria_codigo IS NULL THEN

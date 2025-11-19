@@ -19,7 +19,7 @@ const PERIODOS_METRICAS = [
     'año'
 ];
 
-// Campos que se retornan en las consultas de organizaciones (Nov 2025: categoria_industria_id)
+// Campos que se retornan en las consultas de organizaciones (Nov 2025: categoria_id)
 const SELECT_FIELDS = [
     'id',
     'codigo_tenant',
@@ -27,8 +27,8 @@ const SELECT_FIELDS = [
     'nombre_comercial',
     'razon_social',
     'rfc_nif',
-    'categoria_industria_id',
-    'configuracion_industria',
+    'categoria_id',
+    'configuracion_categoria',
     'email_admin',
     'telefono',
     'sitio_web',
@@ -49,15 +49,15 @@ const SELECT_FIELDS = [
     'actualizado_en'
 ];
 
-// Campos permitidos para actualización (Nov 2025: categoria_industria_id)
+// Campos permitidos para actualización (Nov 2025: categoria_id)
 const CAMPOS_ACTUALIZABLES = [
     'nombre_comercial',
     'razon_social',
     'rfc_nif',
-    'categoria_industria_id',
+    'categoria_id',
     'email_admin',
     'telefono',
-    'configuracion_industria',
+    'configuracion_categoria',
     'sitio_web',
     'logo_url',
     'colores_marca',

@@ -1,8 +1,8 @@
 -- ====================================================================
--- CORE: TABLA CATEGORIAS_INDUSTRIA (Solo Estructura)
+-- CORE: TABLA CATEGORIAS (Solo Estructura)
 -- ====================================================================
 --
--- Descripción: Tabla dinámica para categorías/tipos de organizaciones
+-- Descripción: Tabla dinámica genérica para categorías de cualquier entidad
 -- Reemplaza: ENUM industria_tipo (específico de agendamiento)
 -- Orden: 01 (ANTES de tabla organizaciones)
 --
@@ -15,18 +15,19 @@
 -- - Metadata JSONB permite campos custom por dominio
 -- - Soft delete (activo/inactivo)
 -- - Reutilizable en múltiples proyectos SaaS
+-- - Nombre genérico aplicable a cualquier contexto
 --
 -- 🎯 CASOS DE USO:
--- • SaaS Agendamiento: barberia, spa, veterinaria, consultorio
--- • SaaS Invitaciones: bodas, xv_anos, baby_shower, cumpleanos
--- • SaaS E-commerce: fashion, electronics, food, beauty
+-- • SaaS Agendamiento B2B: barberia, spa, veterinaria, consultorio
+-- • SaaS Invitaciones B2C: bodas, xv_anos, baby_shower, cumpleanos
+-- • SaaS E-commerce B2C: fashion, electronics, food, beauty
 -- • Personalizado: Define tus propias categorías
 --
 -- Fecha creación: 18 Noviembre 2025 (Refactor multi-SaaS)
--- Última actualización: 19 Noviembre 2025 (Limpieza core)
+-- Última actualización: 19 Noviembre 2025 (Renombrado a 'categorias')
 -- ====================================================================
 
-CREATE TABLE categorias_industria (
+CREATE TABLE categorias (
     id SERIAL PRIMARY KEY,
     codigo VARCHAR(50) UNIQUE NOT NULL,
     nombre VARCHAR(100) NOT NULL,
@@ -47,11 +48,11 @@ CREATE TABLE categorias_industria (
 );
 
 -- Índices
-CREATE INDEX idx_categorias_industria_codigo
-    ON categorias_industria(codigo) WHERE activo = TRUE;
+CREATE INDEX idx_categorias_codigo
+    ON categorias(codigo) WHERE activo = TRUE;
 
-CREATE INDEX idx_categorias_industria_sector
-    ON categorias_industria(sector, activo) WHERE activo = TRUE;
+CREATE INDEX idx_categorias_sector
+    ON categorias(sector, activo) WHERE activo = TRUE;
 
 -- ====================================================================
 -- 📝 DATOS INICIALES
@@ -72,7 +73,8 @@ CREATE INDEX idx_categorias_industria_sector
 --   → Crear tu propio seed con las categorías que necesites
 -- ====================================================================
 
-COMMENT ON TABLE categorias_industria IS
-'Tabla dinámica para categorías/tipos de organizaciones.
+COMMENT ON TABLE categorias IS
+'Tabla genérica para categorizar organizaciones/entidades del sistema.
 Reemplaza ENUMs hardcodeados para permitir flexibilidad multi-dominio.
-Los datos se insertan mediante seeds específicos por template.';
+Los datos se insertan mediante seeds específicos por template.
+Nombre genérico aplicable a B2B (organizaciones) y B2C (perfiles).';

@@ -274,7 +274,7 @@ class ProfesionalModel {
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.creado_en, p.actualizado_en,
                        tp.codigo as tipo_codigo, tp.nombre as tipo_nombre, tp.color as tipo_color,
-                       o.nombre_comercial as organizacion_nombre, o.categoria_industria_id,
+                       o.nombre_comercial as organizacion_nombre, o.categoria_id,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id

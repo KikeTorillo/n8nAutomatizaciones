@@ -3,12 +3,12 @@
 -- ====================================================================
 --
 -- Descripción: Categorías específicas para sistemas de agendamiento
--- Ejecutar: DESPUÉS de sql/core/schema/01-tabla-categorias-industria.sql
+-- Ejecutar: DESPUÉS de sql/core/schema/01-tabla-categorias.sql
 --
 -- Contenido: 11 categorías de servicios profesionales
 -- ====================================================================
 
-INSERT INTO categorias_industria (codigo, nombre, sector, descripcion, icono, metadata, orden) VALUES
+INSERT INTO categorias (codigo, nombre, sector, descripcion, icono, metadata, orden) VALUES
     (
         'barberia',
         'Barbería',

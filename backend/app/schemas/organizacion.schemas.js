@@ -21,16 +21,16 @@ const crear = {
             .optional()
             .allow(null)
             .trim(),
-        categoria_industria_id: Joi.number()
+        categoria_id: Joi.number()
             .integer()
             .positive()
             .required()
             .messages({
-                'number.base': 'categoria_industria_id debe ser un número',
-                'number.positive': 'categoria_industria_id debe ser mayor a 0',
-                'any.required': 'categoria_industria_id es requerido'
+                'number.base': 'categoria_id debe ser un número',
+                'number.positive': 'categoria_id debe ser mayor a 0',
+                'any.required': 'categoria_id es requerido'
             }),
-        configuracion_industria: Joi.object()
+        configuracion_categoria: Joi.object()
             .optional()
             .default({}),
         email_admin: Joi.string()
@@ -82,7 +82,7 @@ const listar = {
             .min(1)
             .max(50)
             .default(10),
-        categoria_industria_id: Joi.number()
+        categoria_id: Joi.number()
             .integer()
             .positive()
             .optional(),
@@ -117,10 +117,10 @@ const actualizar = {
             .max(20)
             .allow(null)
             .trim(),
-        categoria_industria_id: Joi.number()
+        categoria_id: Joi.number()
             .integer()
             .positive(),
-        configuracion_industria: Joi.object(),
+        configuracion_categoria: Joi.object(),
         email_admin: commonSchemas.email,
         telefono: commonSchemas.mexicanPhone
             .allow(null),
@@ -164,14 +164,14 @@ const onboarding = {
                 .max(150)
                 .required()
                 .trim(),
-            categoria_industria_id: Joi.number()
+            categoria_id: Joi.number()
                 .integer()
                 .positive()
                 .required()
                 .messages({
-                    'number.base': 'categoria_industria_id debe ser un número',
-                    'number.positive': 'categoria_industria_id debe ser mayor a 0',
-                    'any.required': 'categoria_industria_id es requerido'
+                    'number.base': 'categoria_id debe ser un número',
+                    'number.positive': 'categoria_id debe ser mayor a 0',
+                    'any.required': 'categoria_id es requerido'
                 }),
             plan: Joi.string()
                 .valid(...PLANES)

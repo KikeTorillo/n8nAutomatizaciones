@@ -76,7 +76,7 @@ function Step3_AccountSetup() {
         organizacion: {
           nombre_comercial: formData.businessInfo.nombre_comercial,
           razon_social: nombre_fiscal_sanitized || formData.businessInfo.nombre_comercial,
-          categoria_industria_id: categoriaId,
+          categoria_id: categoriaId,
           plan: formData.plan.plan_codigo || 'basico',
           telefono_principal: formData.businessInfo.telefono_principal,
           email_contacto: data.email,

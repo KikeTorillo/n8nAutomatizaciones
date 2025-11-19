@@ -27,11 +27,11 @@ CREATE TABLE organizaciones (
     razon_social VARCHAR(200),
     rfc_nif VARCHAR(20),
 
-    -- Industria/Categoría (tabla dinámica - Nov 2025)
-    categoria_industria_id INTEGER NOT NULL REFERENCES categorias_industria(id)
+    -- Categoría de la organización (tabla dinámica - Nov 2025)
+    categoria_id INTEGER NOT NULL REFERENCES categorias(id)
         ON DELETE RESTRICT
         ON UPDATE CASCADE,
-    configuracion_industria JSONB DEFAULT '{}',
+    configuracion_categoria JSONB DEFAULT '{}',
 
     -- Contacto
     email_admin VARCHAR(150) NOT NULL,
