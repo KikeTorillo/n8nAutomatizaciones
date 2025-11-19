@@ -1,7 +1,7 @@
-const ProfesionalModel = require('../database/profesional.model');
-const { ResponseHelper } = require('../utils/helpers');
-const asyncHandler = require('../middleware/asyncHandler');
-const logger = require('../utils/logger');
+const ProfesionalModel = require('../../../database/profesional.model');
+const { ResponseHelper } = require('../../../utils/helpers');
+const asyncHandler = require('../../../middleware/asyncHandler');
+const logger = require('../../../utils/logger');
 
 class ProfesionalController {
     static crear = asyncHandler(async (req, res) => {
