@@ -11,9 +11,9 @@
  */
 
 const express = require('express');
-const ChatbotController = require('../../../controllers/chatbot.controller');
-const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
-const chatbotSchemas = require('../../../templates/scheduling-saas/schemas/chatbot.schemas');
+const ChatbotController = require('../../../../../controllers/chatbot.controller');
+const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
+const chatbotSchemas = require('../../schemas/chatbot.schemas');
 
 const router = express.Router();
 
