@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
-const TipoBloqueoController = require('../../../../../controllers/tipos-bloqueo.controller');
+const TipoBloqueoController = require('../../../controllers/tipos-bloqueo.controller');
 const schemas = require('../../../schemas/tipos-bloqueo.schemas');
 
 const { validate, handleValidation } = validation;

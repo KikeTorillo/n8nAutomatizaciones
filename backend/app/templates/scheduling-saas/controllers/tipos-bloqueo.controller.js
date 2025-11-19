@@ -1,6 +1,6 @@
-const TipoBloqueoModel = require('../database/tipos-bloqueo.model');
-const { ResponseHelper } = require('../utils/helpers');
-const { asyncHandler } = require('../middleware');
+const TipoBloqueoModel = require('../../../database/tipos-bloqueo.model');
+const { ResponseHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 
 class TipoBloqueoController {
   /**
