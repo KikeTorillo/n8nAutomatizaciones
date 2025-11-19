@@ -1,6 +1,6 @@
 const RLSContextManager = require('../utils/rlsContextManager');
 const logger = require('../utils/logger');
-const CitaValidacionUtil = require('../utils/cita-validacion.util');
+const CitaValidacionUtil = require('../templates/scheduling-saas/utils/cita-validacion.util');
 
 class BloqueosHorariosModel {
 

@@ -94,7 +94,7 @@
  * @version 1.0.0
  */
 
-const logger = require('./logger');
+const logger = require('../../../utils/logger');
 
 class CitaValidacionUtil {
     /**

@@ -6,7 +6,7 @@
  * Tests para CitaValidacionUtil - Funciones compartidas de validación
  */
 
-const CitaValidacionUtil = require('../../utils/cita-validacion.util');
+const CitaValidacionUtil = require('../../templates/scheduling-saas/utils/cita-validacion.util');
 
 describe('CitaValidacionUtil', () => {
     // ====================================================================

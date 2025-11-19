@@ -38,6 +38,7 @@ describe('Endpoints de Recuperación de Contraseña', () => {
     const passwordHash = await bcrypt.hash(testPassword, 10);
 
     testUsuario = await createTestUsuario(client, testOrg.id, {
+      email: 'arellanestorillo@gmail.com',
       nombre: 'Usuario',
       apellidos: 'Password Test',
       rol: 'empleado',
@@ -468,7 +469,7 @@ describe('Endpoints de Recuperación de Contraseña', () => {
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING id, token_verificacion_email`,
         [
-          `unverified-${uniqueId}@test.com`,
+          'unverified.arellanestorillo@gmail.com',
           passwordHash,
           'Unverified',
           'User',

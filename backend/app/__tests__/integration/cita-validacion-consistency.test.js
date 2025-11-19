@@ -23,7 +23,7 @@
 
 const { CitaHelpersModel } = require('../../database/citas/cita.helpers.model');
 const DisponibilidadModel = require('../../database/disponibilidad.model');
-const CitaValidacionUtil = require('../../utils/cita-validacion.util');
+const CitaValidacionUtil = require('../../templates/scheduling-saas/utils/cita-validacion.util');
 const RLSContextManager = require('../../utils/rlsContextManager');
 const {
   createTestOrganizacion,

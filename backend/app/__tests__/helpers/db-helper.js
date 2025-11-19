@@ -147,10 +147,23 @@ async function createTestOrganizacion(client, data = {}) {
   // Generar códigos únicos con contador global
   const uniqueId = getUniqueTestId();
 
+  // Resolver categoria_id desde codigo si se provee
+  let categoriaId = data.categoria_id || 1; // Por defecto: barbería
+
+  if (data.categoria_codigo && !data.categoria_id) {
+    const catResult = await client.query(
+      'SELECT id FROM categorias WHERE codigo = $1 AND activo = true',
+      [data.categoria_codigo]
+    );
+    if (catResult.rows.length > 0) {
+      categoriaId = catResult.rows[0].id;
+    }
+  }
+
   const result = await client.query(
     `INSERT INTO organizaciones (
       codigo_tenant, slug, nombre_comercial, razon_social,
-      tipo_industria, email_admin, activo
+      categoria_id, email_admin, activo
     ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *`,
     [
@@ -158,7 +171,7 @@ async function createTestOrganizacion(client, data = {}) {
       data.slug || `test-org-${uniqueId}`,
       data.nombre_comercial || data.nombre || 'Organización Test',
       data.razon_social || 'Test Org SA de CV',
-      data.tipo_industria || 'barberia',
+      categoriaId,
       data.email_admin || `admin${uniqueId}@test.com`,
       data.activo !== undefined ? data.activo : true
     ]

@@ -16,7 +16,7 @@
 const RLSContextManager = require('../utils/rlsContextManager');
 const { DateTime } = require('luxon');
 const logger = require('../utils/logger');
-const CitaValidacionUtil = require('../utils/cita-validacion.util');
+const CitaValidacionUtil = require('../templates/scheduling-saas/utils/cita-validacion.util');
 
 const DEFAULTS = {
   ZONA_HORARIA: 'America/Mexico_City',
