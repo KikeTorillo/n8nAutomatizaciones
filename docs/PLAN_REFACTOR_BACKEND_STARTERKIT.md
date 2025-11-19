@@ -1,7 +1,7 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
 **Fecha de creación:** 19 Noviembre 2025
-**Última actualización:** 19 Noviembre 2025 - 22:10 UTC (Nivel 4 completado: 12/12 schemas)
+**Última actualización:** 19 Noviembre 2025 - 23:22 UTC (Nivel 5 completado: 12/12 routes)
 **Estado:** 🟢 Operativo - Refactor Incremental en ejecución
 
 ---
@@ -20,7 +20,8 @@
 - ✅ Nivel 1: Utils (1 archivo)
 - ✅ Nivel 2: Constants (1 archivo)
 - ❌ Nivel 3: OMITIDO (archivos no existen)
-- ✅ Nivel 4: Schemas (12/12 completados - 100%)
+- ✅ Nivel 4: Schemas (12/12 - 100%)
+- ✅ Nivel 5: Routes (12/12 - 100%)
 
 **Schemas movidos a template (12):**
 - ✅ `tipos-bloqueo.schemas.js` (2.1K)
@@ -41,6 +42,23 @@
 - `organizacion.schemas.js` (7.8K)
 - `pagos.schemas.js` (1.3K)
 - `usuario.schemas.js` (4.1K)
+
+**Routes movidas a template (12):**
+- ✅ `tipos-bloqueo.js` (1.8K)
+- ✅ `tipos-profesional.js` (1.6K)
+- ✅ `disponibilidad.js` (2.1K)
+- ✅ `bloqueos-horarios.js` (1.3K)
+- ✅ `profesionales.js` (3.3K)
+- ✅ `servicios.js` (4.5K)
+- ✅ `horarios-profesionales.js` (3.0K)
+- ✅ `clientes.js` (2.8K)
+- ✅ `comisiones.js` (7.5K)
+- ✅ `chatbots.js` (3.4K)
+- ✅ `marketplace.js` (9.8K)
+- ✅ `citas.js` (7.1K)
+
+**Routes CORE que permanecen (13):**
+- `auth.js`, `setup.js`, `superadmin.js`, `organizaciones.js`, `usuarios.js`, `planes.js`, `pagos.js`, `webhooks.js`, `subscripciones.js`, `mercadopago.js`, `index.js`
 
 **Estado:** Backend ✅ Healthy | Tests: 561/630 pasando (89.0%)
 
@@ -83,10 +101,23 @@ backend/app/
         │   ├── tipos-bloqueo.schemas.js
         │   └── tipos-profesional.schemas.js
         │
+        ├── routes/api/v1/                            # ✅ Movido (Nivel 5 - 12 routes)
+        │   ├── bloqueos-horarios.js
+        │   ├── chatbots.js
+        │   ├── citas.js
+        │   ├── clientes.js
+        │   ├── comisiones.js
+        │   ├── disponibilidad.js
+        │   ├── horarios-profesionales.js
+        │   ├── marketplace.js
+        │   ├── profesionales.js
+        │   ├── servicios.js
+        │   ├── tipos-bloqueo.js
+        │   └── tipos-profesional.js
+        │
         └── [Pendientes de mover]
             ├── controllers/  (11 controllers + 3 carpetas modulares)
             ├── models/       (11 models + 3 carpetas modulares)
-            ├── routes/       (11 routes)
             └── constants/    (2 archivos adicionales)
 ```
 
@@ -191,10 +222,40 @@ backend/app/
 
 **⚠️ Lección clave:** Los schemas importan `../middleware/validation` que debe actualizarse desde su nueva ubicación.
 
-### Nivel 5 - Routes
-- [ ] Mover 11 routes específicas → `templates/scheduling-saas/routes/api/v1/`
-- [ ] Actualizar `server.js` o router principal
-- [ ] Validar con tests
+### Nivel 5 - Routes ✅ COMPLETADO (12/12 - 100%)
+
+**Patrón ejecutado:**
+1. Mover archivo a `templates/scheduling-saas/routes/api/v1/`
+2. Actualizar `index.js`: `require('./route')` → `require('../../../templates/scheduling-saas/routes/api/v1/route')`
+3. Actualizar imports del archivo movido:
+   - Controllers: `../../../controllers/` → `../../../../../controllers/`
+   - Middleware: `../../../middleware` → `../../../../../middleware`
+   - **CRÍTICO:** Schemas: `../../../templates/.../schemas/` → `../../schemas/` (2 niveles arriba desde nueva ubicación)
+4. Reiniciar backend y verificar
+5. Commit individual
+
+**⚠️ ERROR ENCONTRADO Y CORREGIDO:**
+- **Error inicial:** Rutas de importación incorrectas causaban crash silencioso
+  - En `index.js`: `../../templates/` → Debía ser `../../../templates/` (3 niveles)
+  - En routes movidas: `../../schemas/` → Debía ser `../../../schemas/` (3 nivels)
+- **Fix commit:** 5a40c46 - Corrigió 13 archivos (index.js + 12 routes)
+- **Validación:** Backend healthy, health endpoint 200 OK
+
+**✅ Routes movidas (12):**
+1. `tipos-bloqueo.js` (1.8K) - Commit 91c0e77
+2. `tipos-profesional.js` (1.6K) - Commit 665b70c
+3. `disponibilidad.js` (2.1K) - Commit 4900b5b
+4. `bloqueos-horarios.js` (1.3K) - Commit dff017e
+5. `profesionales.js` (3.3K) - Commit ff8c5f8
+6. `servicios.js` (4.5K) - Commit b0eee2f + d81436d
+7. `horarios-profesionales.js` (3.0K) - Commit bba740d
+8. `clientes.js` (2.8K) - Commit 68fe5b8
+9. `comisiones.js` (7.5K) - Commit 82483e8
+10. `chatbots.js` (3.4K) - Commit 411ef8c
+11. `marketplace.js` (9.8K) - Commit 0086ef1
+12. `citas.js` (7.1K) - Commit a486073
+
+**Fix commit:** 5a40c46 - Corrección de rutas de importación (13 archivos)
 
 ### Nivel 6 - Controllers
 - [ ] Mover 11 controllers + 3 carpetas modulares → `templates/scheduling-saas/controllers/`
@@ -264,6 +325,20 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
        ├── servicio.schemas.js                    # 12K
        ├── tipos-bloqueo.schemas.js               # 2.1K
        └── tipos-profesional.schemas.js           # 3.2K
+   │
+   └── routes/api/v1/                             # ✅ Movido (Nivel 5)
+       ├── bloqueos-horarios.js                   # 1.3K
+       ├── chatbots.js                            # 3.4K
+       ├── citas.js                               # 7.1K
+       ├── clientes.js                            # 2.8K
+       ├── comisiones.js                          # 7.5K
+       ├── disponibilidad.js                      # 2.1K
+       ├── horarios-profesionales.js              # 3.0K
+       ├── marketplace.js                         # 9.8K
+       ├── profesionales.js                       # 3.3K
+       ├── servicios.js                           # 4.5K
+       ├── tipos-bloqueo.js                       # 1.8K
+       └── tipos-profesional.js                   # 1.6K
 ```
 
 ### Ejecución de Tests
@@ -285,7 +360,7 @@ docker exec back npm test -- profesionales
 
 ## 📈 Resumen de Progreso
 
-**Progreso:** ~40% del refactor total | **Backend:** ✅ Operativo
+**Progreso:** ~55% del refactor total | **Backend:** ✅ Operativo
 
 | Nivel | Estado | Archivos |
 |-------|--------|----------|
@@ -293,7 +368,7 @@ docker exec back npm test -- profesionales
 | 2. Constants | ✅ Completado | 1/1 (100%) |
 | 3. Constants | ❌ Omitido | N/A |
 | 4. Schemas | ✅ Completado | 12/12 (100%) |
-| 5. Routes | ⏳ Pendiente | 0/11 |
+| 5. Routes | ✅ Completado | 12/12 (100%) |
 | 6. Controllers | ⏳ Pendiente | 0/17 |
 | 7. Models | ⏳ Pendiente | 0/17 |
 | 8. Ambiguos | ⏳ Pendiente | 0/5 |
@@ -318,6 +393,10 @@ docker exec back npm test -- profesionales
 6. Commit individual con mensaje descriptivo
 
 ### ⚠️ Trampas Comunes
+- **Conteo de niveles de rutas relativas ES CRÍTICO:**
+  - Desde `routes/api/v1/index.js` hasta `templates/` son **3 niveles** arriba (`../../../`)
+  - Desde `templates/.../routes/api/v1/archivo.js` hasta `templates/.../schemas/` son **3 niveles** arriba (`../../../`)
+  - **ERROR:** Usar `../../` causa "Cannot find module" que crashea silenciosamente el backend
 - **Schemas importan `../middleware/validation`** → Debe ser `../../../middleware/validation`
 - Git muestra "borrados" pero detecta rename al commit → Normal
 - Backend tarda ~20s en arrancar → Esperar antes de verificar
