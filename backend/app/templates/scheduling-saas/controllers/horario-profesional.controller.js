@@ -1,6 +1,6 @@
-const HorarioProfesionalModel = require('../database/horario-profesional.model');
-const { ResponseHelper } = require('../utils/helpers');
-const { asyncHandler } = require('../middleware');
+const HorarioProfesionalModel = require('../../../database/horario-profesional.model');
+const { ResponseHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 
 class HorarioProfesionalController {
 

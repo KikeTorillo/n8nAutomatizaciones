@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
-const HorarioProfesionalController = require('../../../../../controllers/horario-profesional.controller');
+const HorarioProfesionalController = require('../../../controllers/horario-profesional.controller');
 const schemas = require('../../../schemas/horario-profesional.schemas');
 
 const { validate } = validation;
