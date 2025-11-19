@@ -1,6 +1,6 @@
-const BloqueosHorariosModel = require('../database/bloqueos-horarios.model');
-const { ResponseHelper } = require('../utils/helpers');
-const { asyncHandler } = require('../middleware');
+const BloqueosHorariosModel = require('../../../database/bloqueos-horarios.model');
+const { ResponseHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 
 class BloqueosHorariosController {
 
