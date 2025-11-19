@@ -3,7 +3,7 @@
 const express = require('express');
 const ServicioController = require('../../../../../controllers/servicio.controller');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
-const servicioSchemas = require('../../schemas/servicio.schemas');
+const servicioSchemas = require('../../../schemas/servicio.schemas');
 
 const router = express.Router();
 

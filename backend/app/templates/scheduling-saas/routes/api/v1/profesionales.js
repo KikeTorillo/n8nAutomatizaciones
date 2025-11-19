@@ -1,7 +1,7 @@
 const express = require('express');
 const ProfesionalController = require('../../../../../controllers/profesional.controller');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
-const schemas = require('../../schemas/profesional.schemas');
+const schemas = require('../../../schemas/profesional.schemas');
 
 const router = express.Router();
 

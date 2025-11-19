@@ -13,7 +13,7 @@
 const express = require('express');
 const ComisionesController = require('../../../../../controllers/comisiones');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
-const comisionesSchemas = require('../../schemas/comisiones.schemas');
+const comisionesSchemas = require('../../../schemas/comisiones.schemas');
 
 const router = express.Router();
 const validate = validation.validate;
