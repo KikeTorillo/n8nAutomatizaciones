@@ -1,5 +1,5 @@
 const express = require('express');
-const ClienteController = require('../../../../../controllers/cliente.controller');
+const ClienteController = require('../../../controllers/cliente.controller');
 const { auth, tenant, validation, rateLimiting, subscription } = require('../../../../../middleware');
 const clienteSchemas = require('../../../schemas/cliente.schemas');
 
