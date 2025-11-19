@@ -7,9 +7,9 @@
  */
 
 const express = require('express');
-const DisponibilidadController = require('../../../controllers/disponibilidad.controller');
-const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
-const disponibilidadSchemas = require('../../../templates/scheduling-saas/schemas/disponibilidad.schemas');
+const DisponibilidadController = require('../../../../../controllers/disponibilidad.controller');
+const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
+const disponibilidadSchemas = require('../../schemas/disponibilidad.schemas');
 
 const router = express.Router();
 
