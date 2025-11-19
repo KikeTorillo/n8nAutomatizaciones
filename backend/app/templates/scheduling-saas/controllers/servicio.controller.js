@@ -1,9 +1,9 @@
 // Controller de Servicios - Gestión CRUD multi-tenant
 
-const ServicioModel = require('../database/servicio.model');
-const { asyncHandler } = require('../middleware');
-const { ResponseHelper } = require('../utils/helpers');
-const logger = require('../utils/logger');
+const ServicioModel = require('../../../database/servicio.model');
+const { asyncHandler } = require('../../../middleware');
+const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class ServicioController {
     static crear = asyncHandler(async (req, res) => {
