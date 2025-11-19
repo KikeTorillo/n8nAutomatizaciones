@@ -4,7 +4,7 @@
  */
 
 const Joi = require('joi');
-const { commonSchemas } = require('../middleware/validation');
+const { commonSchemas } = require('../../../middleware/validation');
 
 /**
  * Schema para crear bloqueo
