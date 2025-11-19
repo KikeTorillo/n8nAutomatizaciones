@@ -1,6 +1,6 @@
-const { ComisionesModel, ReportesComisionesModel } = require('../../database/comisiones');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const { ComisionesModel, ReportesComisionesModel } = require('../../../../database/comisiones');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 /**
  * Controller para consultas y operaciones de comisiones profesionales

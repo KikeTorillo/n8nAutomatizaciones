@@ -1,6 +1,6 @@
-const { ConfiguracionComisionesModel } = require('../../database/comisiones');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const { ConfiguracionComisionesModel } = require('../../../../database/comisiones');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 /**
  * Controller para gestión de configuración de comisiones
