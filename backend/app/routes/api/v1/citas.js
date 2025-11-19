@@ -1,7 +1,7 @@
 const express = require('express');
 const CitaController = require('../../../controllers/citas');
 const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
-const citaSchemas = require('../../../schemas/cita.schemas');
+const citaSchemas = require('../../../templates/scheduling-saas/schemas/cita.schemas');
 
 const router = express.Router();
 const validate = validation.validate;
