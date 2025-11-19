@@ -137,13 +137,12 @@ backend/app/
 
 ## 📝 Próximos Niveles de Refactor
 
-### Nivel 3 - Constants Restantes
-- [ ] Mover `cita.constants.js` → `templates/scheduling-saas/constants/`
-- [ ] Mover `servicio.constants.js` → `templates/scheduling-saas/constants/`
-- [ ] Actualizar imports (estimar 2-3 archivos por constant)
-- [ ] Validar con tests
+### Nivel 3 - Constants Restantes ❌ OMITIDO
+**Decisión:** Archivos `cita.constants.js` y `servicio.constants.js` no existen.
+**Evaluación:** Constantes inline tienen duplicación mínima (2-3 repeticiones) que no justifica extracción.
+**Acción:** Saltar directo a Nivel 4.
 
-### Nivel 4 - Schemas
+### Nivel 4 - Schemas (PRÓXIMO)
 - [ ] Mover 9 schemas específicos → `templates/scheduling-saas/schemas/`
 - [ ] Actualizar imports en controllers (estimar 11 archivos)
 - [ ] Validar con tests
@@ -227,18 +226,18 @@ docker exec back npm test -- profesionales
 
 ## 📈 Resumen de Progreso
 
-**Última actualización:** 19 Noviembre 2025 (Niveles 1-2 completados y validados)
-**Progreso:** 2/8 niveles completados (25%)
+**Última actualización:** 19 Noviembre 2025 (Niveles 1-2 completados, Nivel 3 omitido)
+**Progreso:** 2/7 niveles completados (29%) - Nivel 3 eliminado del plan
 
 | Nivel | Componente | Estado | Tests | Imports |
 |-------|-----------|---------|-------|---------|
 | 1 | Utils | ✅ Completado | ✅ Pasando | 6 actualizados |
 | 2 | Constants | ✅ Completado | ✅ Pasando | 1 actualizado |
-| 3 | Constants adicionales | ⏳ Pendiente | - | 2-3 estimados |
-| 4 | Schemas | ⏳ Pendiente | - | ~11 estimados |
+| 3 | Constants adicionales | ❌ Omitido | N/A | Archivos no existen |
+| 4 | Schemas | ⏳ Próximo | - | ~15-20 estimados |
 | 5 | Routes | ⏳ Pendiente | - | 11 estimados |
-| 6 | Controllers | ⏳ Pendiente | - | ~11 estimados |
-| 7 | Models | ⏳ Pendiente | - | ~11 estimados |
+| 6 | Controllers | ⏳ Pendiente | - | ~20-25 estimados |
+| 7 | Models | ⏳ Pendiente | - | ~30-40 estimados |
 | 8 | Módulos Ambiguos | ⏳ Pendiente | - | Por determinar |
 
 **Estado del Sistema:**
