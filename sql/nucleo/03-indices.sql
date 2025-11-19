@@ -83,10 +83,10 @@ CREATE UNIQUE INDEX idx_organizaciones_codigo_tenant
 CREATE UNIQUE INDEX idx_organizaciones_slug
     ON organizaciones (slug) WHERE activo = TRUE AND slug IS NOT NULL;
 
--- Propósito: Reportes y estadísticas por tipo de industria
--- Agrupaciones y filtros por industria
-CREATE INDEX idx_organizaciones_tipo_industria
-    ON organizaciones (tipo_industria, activo) WHERE activo = TRUE;
+-- Propósito: Reportes y estadísticas por categoría de industria (Nov 2025: migrado a tabla dinámica)
+-- Agrupaciones y filtros por categoría
+CREATE INDEX idx_organizaciones_categoria_industria
+    ON organizaciones (categoria_industria_id, activo) WHERE activo = TRUE;
 
 -- Propósito: Filtrar organizaciones con perfil de marketplace activo
 -- Para reportes y estadísticas de marketplace (Nov 2025)

@@ -15,7 +15,7 @@ class OrganizacionModel {
         return await RLSContextManager.withBypass(async (db) => {
             const query = `
                 INSERT INTO organizaciones (
-                    nombre_comercial, razon_social, rfc_nif, tipo_industria,
+                    nombre_comercial, razon_social, rfc_nif, categoria_industria_id,
                     configuracion_industria, email_admin, telefono, codigo_tenant, slug,
                     sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
@@ -38,7 +38,7 @@ class OrganizacionModel {
                 organizacionData.nombre_comercial,
                 organizacionData.razon_social || null,
                 organizacionData.rfc_nif || null,
-                organizacionData.tipo_industria,
+                organizacionData.categoria_industria_id,
                 organizacionData.configuracion_industria || {},
                 organizacionData.email_admin || `admin-${codigoTenant}@temp.local`,
                 organizacionData.telefono || null,
@@ -90,7 +90,7 @@ class OrganizacionModel {
     static async listar(options = {}) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
-            const { page = 1, limit = 10, tipo_industria, incluir_inactivas = false, organizacion_id } = options;
+            const { page = 1, limit = 10, categoria_industria_id, incluir_inactivas = false, organizacion_id } = options;
             const offset = (page - 1) * limit;
 
             let whereConditions = [];
@@ -104,9 +104,9 @@ class OrganizacionModel {
                 paramCounter++;
             }
 
-            if (tipo_industria) {
-                whereConditions.push(`tipo_industria = $${paramCounter}`);
-                values.push(tipo_industria);
+            if (categoria_industria_id) {
+                whereConditions.push(`categoria_industria_id = $${paramCounter}`);
+                values.push(categoria_industria_id);
                 paramCounter++;
             }
 
@@ -405,7 +405,7 @@ class OrganizacionModel {
             organizacion: {
                 id: organizacion.id,
                 nombre: organizacion.nombre_comercial,
-                tipo_industria: organizacion.tipo_industria,
+                categoria_industria_id: organizacion.categoria_industria_id,
                 fecha_creacion: organizacion.fecha_registro
             },
             uso_actual: limites,

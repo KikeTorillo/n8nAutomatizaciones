@@ -108,9 +108,9 @@ Este módulo contiene las tablas y funciones fundamentales del sistema multi-ten
 Los archivos **DEBEN** ejecutarse en este orden:
 
 ```
-1. fundamentos/01-extensiones.sql         (extensiones PostgreSQL)
-2. fundamentos/02-tipos-enums.sql         (ENUMs requeridos)
-3. fundamentos/03-funciones-utilidad.sql  (actualizar_timestamp)
+1. core/fundamentos/01-extensiones.sql         (extensiones PostgreSQL)
+2. core/fundamentos/02-tipos-enums-core.sql    (ENUMs universales)
+3. core/fundamentos/03-funciones-utilidad.sql  (actualizar_timestamp)
 4. nucleo/01-tablas-core.sql              (organizaciones → usuarios)
 5. nucleo/02-tablas-subscripciones.sql    (4 tablas con FKs)
 6. nucleo/03-indices.sql                  (índices especializados)

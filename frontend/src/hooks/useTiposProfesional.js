@@ -4,17 +4,17 @@ import useAuthStore from '@/store/authStore';
 
 /**
  * Hook para listar tipos de profesional con filtros
- * @param {Object} params - { solo_sistema, solo_personalizados, tipo_industria, activo }
+ * @param {Object} params - { solo_sistema, solo_personalizados, categoria_codigo, activo }
  *
- * ✅ FILTRADO AUTOMÁTICO POR INDUSTRIA:
- * - Si no se especifica `tipo_industria` en params, usa automáticamente el de la org del usuario
- * - Esto garantiza que solo se muestren tipos compatibles con la industria de la organización
+ * ✅ FILTRADO AUTOMÁTICO POR CATEGORÍA (Nov 2025: migrado a tabla dinámica):
+ * - Si no se especifica `categoria_codigo` en params, usa automáticamente el de la org del usuario
+ * - Esto garantiza que solo se muestren tipos compatibles con la categoría de la organización
  */
 export function useTiposProfesional(params = {}) {
   const user = useAuthStore((state) => state.user);
 
   return useQuery({
-    queryKey: ['tipos-profesional', params, user?.tipo_industria],
+    queryKey: ['tipos-profesional', params, user?.categoria_codigo],
     queryFn: async () => {
       // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
@@ -25,9 +25,9 @@ export function useTiposProfesional(params = {}) {
         return acc;
       }, {});
 
-      // ✅ Filtrado automático por industria si no se especificó explícitamente
-      if (!sanitizedParams.tipo_industria && user?.tipo_industria) {
-        sanitizedParams.tipo_industria = user.tipo_industria;
+      // ✅ Filtrado automático por categoría si no se especificó explícitamente (Nov 2025)
+      if (!sanitizedParams.categoria_codigo && user?.categoria_codigo) {
+        sanitizedParams.categoria_codigo = user.categoria_codigo;
       }
 
       const response = await tiposProfesionalApi.listar(sanitizedParams);

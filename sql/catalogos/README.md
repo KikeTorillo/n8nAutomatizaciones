@@ -106,9 +106,9 @@ Este módulo contiene tablas de catálogos dinámicos que reemplazan ENUMs está
 Los archivos **DEBEN** ejecutarse en este orden:
 
 ```
-1. fundamentos/01-extensiones.sql         (extensiones PostgreSQL)
-2. fundamentos/02-tipos-enums.sql         (ENUMs requeridos)
-3. fundamentos/03-funciones-utilidad.sql  (funciones base)
+1. core/fundamentos/01-extensiones.sql         (extensiones PostgreSQL)
+2. core/fundamentos/02-tipos-enums-core.sql    (ENUMs universales)
+3. core/fundamentos/03-funciones-utilidad.sql  (funciones base)
 4. nucleo/01-tablas-core.sql              (organizaciones)
 5. nucleo/02-tablas-subscripciones.sql    (subscripciones)
 6. nucleo/03-indices.sql                  (índices núcleo)

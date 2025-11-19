@@ -13,7 +13,7 @@ class TiposProfesionalController {
             organizacion_id: req.tenant.organizacionId,
             solo_sistema: req.query.solo_sistema === 'true',
             solo_personalizados: req.query.solo_personalizados === 'true',
-            tipo_industria: req.query.tipo_industria || null,
+            categoria_codigo: req.query.categoria_codigo || null,  // Nov 2025: Cambiado de tipo_industria
             activo: req.query.activo !== 'false'
         };
 

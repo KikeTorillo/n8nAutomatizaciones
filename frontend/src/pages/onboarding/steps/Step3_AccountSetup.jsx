@@ -52,11 +52,31 @@ function Step3_AccountSetup() {
       // Sanitizar campos opcionales (convertir "" a undefined para omitir del payload)
       const nombre_fiscal_sanitized = formData.businessInfo.nombre_fiscal?.trim();
 
+      // Mapeo de códigos de industria a IDs (Nov 2025: migrado a tabla dinámica)
+      // ⚠️ IMPORTANTE: Los IDs corresponden al seed de categorias-agendamiento.sql
+      // Solo existen categorías de agendamiento (11 categorías, IDs 1-11)
+      const industriaCodigoToId = {
+        'barberia': 1,              // Barbería
+        'salon_belleza': 2,         // Salón de Belleza
+        'estetica': 3,              // Estética
+        'spa': 4,                   // Spa y Relajación
+        'podologia': 5,             // Podología
+        'consultorio_medico': 6,    // Consultorio Médico
+        'academia': 7,              // Academia
+        'taller_tecnico': 8,        // Taller Técnico
+        'centro_fitness': 9,        // Centro Fitness
+        'veterinaria': 10,          // Veterinaria
+        'otro': 11,                 // Otros Servicios (otro_agendamiento)
+        'clinica_dental': 6,        // Mapear a consultorio_medico
+      };
+
+      const categoriaId = industriaCodigoToId[formData.businessInfo.industria] || 11;
+
       const registroData = {
         organizacion: {
           nombre_comercial: formData.businessInfo.nombre_comercial,
           razon_social: nombre_fiscal_sanitized || formData.businessInfo.nombre_comercial,
-          tipo_industria: formData.businessInfo.industria || 'otro',
+          categoria_industria_id: categoriaId,
           plan: formData.plan.plan_codigo || 'basico',
           telefono_principal: formData.businessInfo.telefono_principal,
           email_contacto: data.email,

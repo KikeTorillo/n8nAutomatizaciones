@@ -114,7 +114,8 @@ class AuthController {
                 organizacion_id: usuario.organizacion_id,
                 email_verificado: usuario.email_verificado,
                 // Datos de la organización (para filtros de tipos profesionales, etc.)
-                tipo_industria: usuario.tipo_industria || null,
+                categoria_industria_id: usuario.categoria_industria_id || null,
+                categoria_codigo: usuario.categoria_codigo || null,
                 nombre_comercial: usuario.nombre_comercial || null,
                 plan_actual: usuario.plan_actual || null
             }

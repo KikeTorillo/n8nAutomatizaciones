@@ -29,10 +29,10 @@ class TiposProfesionalModel {
                 paramCounter++;
             }
 
-            // Filtro: por tipo de industria compatible
-            if (filtros.tipo_industria) {
+            // Filtro: por categoría compatible (Nov 2025: cambiado de tipo_industria)
+            if (filtros.categoria_codigo) {
                 whereClause += ` AND $${paramCounter} = ANY(tp.industrias_compatibles)`;
-                queryParams.push(filtros.tipo_industria);
+                queryParams.push(filtros.categoria_codigo);
                 paramCounter++;
             }
 
@@ -74,7 +74,7 @@ class TiposProfesionalModel {
                     organizacion_id: filtros.organizacion_id,
                     solo_sistema: filtros.solo_sistema || false,
                     solo_personalizados: filtros.solo_personalizados || false,
-                    tipo_industria: filtros.tipo_industria,
+                    categoria_codigo: filtros.categoria_codigo,
                     activo: filtros.activo
                 }
             };

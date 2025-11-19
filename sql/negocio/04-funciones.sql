@@ -33,17 +33,18 @@
 CREATE OR REPLACE FUNCTION validar_profesional_industria()
 RETURNS TRIGGER AS $$
 DECLARE
-    industria_org industria_tipo;
+    categoria_codigo VARCHAR(50);
     tipo_info RECORD;
     tipo_compatible BOOLEAN;
 BEGIN
-    -- 1. Obtener la industria de la organización
-    SELECT tipo_industria INTO industria_org
-    FROM organizaciones
-    WHERE id = NEW.organizacion_id;
+    -- 1. Obtener el código de categoría de la organización (Nov 2025: tabla dinámica)
+    SELECT ci.codigo INTO categoria_codigo
+    FROM organizaciones o
+    JOIN categorias_industria ci ON ci.id = o.categoria_industria_id
+    WHERE o.id = NEW.organizacion_id;
 
-    IF industria_org IS NULL THEN
-        RAISE EXCEPTION 'No se encontró la organización con ID %', NEW.organizacion_id;
+    IF categoria_codigo IS NULL THEN
+        RAISE EXCEPTION 'No se encontró la organización con ID % o su categoría', NEW.organizacion_id;
     END IF;
 
     -- 2. Obtener información del tipo de profesional
@@ -72,15 +73,15 @@ BEGIN
         RAISE EXCEPTION 'El tipo de profesional "%" no pertenece a esta organización', tipo_info.nombre;
     END IF;
 
-    -- 5. Verificar compatibilidad con la industria (cast ENUM to TEXT)
-    tipo_compatible := industria_org::text = ANY(tipo_info.industrias_compatibles);
+    -- 5. Verificar compatibilidad con la categoría (Nov 2025: comparación directa con código)
+    tipo_compatible := categoria_codigo = ANY(tipo_info.industrias_compatibles);
 
     IF NOT tipo_compatible THEN
         RAISE EXCEPTION
-            'El tipo de profesional "%" (código: %) no es compatible con la industria "%" de la organización. Industrias compatibles: %',
+            'El tipo de profesional "%" (código: %) no es compatible con la categoría "%" de la organización. Categorías compatibles: %',
             tipo_info.nombre,
             tipo_info.codigo,
-            industria_org,
+            categoria_codigo,
             array_to_string(tipo_info.industrias_compatibles, ', ');
     END IF;
 
@@ -90,7 +91,7 @@ $$ LANGUAGE plpgsql;
 
 -- Comentario de la función
 COMMENT ON FUNCTION validar_profesional_industria() IS
-'Valida automáticamente que el tipo_profesional_id sea compatible con la industria de la organización consultando la tabla tipos_profesional. Versión 2.0: Soporta catálogo dinámico en lugar de ENUM.';
+'Valida automáticamente que el tipo_profesional_id sea compatible con la categoría de la organización consultando categorias_industria y tipos_profesional. Versión 3.0 (Nov 2025): Migrado de ENUM a tabla dinámica para soportar cualquier tipo de SaaS.';
 
 -- ====================================================================
 -- 🛍️ FUNCIÓN: ACTUALIZAR_TIMESTAMP_SERVICIOS

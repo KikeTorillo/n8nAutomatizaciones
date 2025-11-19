@@ -1,6 +1,7 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../middleware/validation');
-const { TIPOS_INDUSTRIA, PLANES } = require('../constants/organizacion.constants');
+const { PLANES } = require('../constants/organizacion.constants');
+// ⚠️ Nov 2025: TIPOS_INDUSTRIA removido - ahora se usa tabla dinámica categorias_industria
 
 // POST /organizaciones
 const crear = {
@@ -20,9 +21,15 @@ const crear = {
             .optional()
             .allow(null)
             .trim(),
-        tipo_industria: Joi.string()
-            .valid(...TIPOS_INDUSTRIA)
-            .required(),
+        categoria_industria_id: Joi.number()
+            .integer()
+            .positive()
+            .required()
+            .messages({
+                'number.base': 'categoria_industria_id debe ser un número',
+                'number.positive': 'categoria_industria_id debe ser mayor a 0',
+                'any.required': 'categoria_industria_id es requerido'
+            }),
         configuracion_industria: Joi.object()
             .optional()
             .default({}),
@@ -75,8 +82,9 @@ const listar = {
             .min(1)
             .max(50)
             .default(10),
-        tipo_industria: Joi.string()
-            .valid(...TIPOS_INDUSTRIA)
+        categoria_industria_id: Joi.number()
+            .integer()
+            .positive()
             .optional(),
         incluir_inactivas: Joi.boolean()
             .optional()
@@ -109,8 +117,9 @@ const actualizar = {
             .max(20)
             .allow(null)
             .trim(),
-        tipo_industria: Joi.string()
-            .valid(...TIPOS_INDUSTRIA),
+        categoria_industria_id: Joi.number()
+            .integer()
+            .positive(),
         configuracion_industria: Joi.object(),
         email_admin: commonSchemas.email,
         telefono: commonSchemas.mexicanPhone
@@ -155,9 +164,15 @@ const onboarding = {
                 .max(150)
                 .required()
                 .trim(),
-            tipo_industria: Joi.string()
-                .valid(...TIPOS_INDUSTRIA)
-                .required(),
+            categoria_industria_id: Joi.number()
+                .integer()
+                .positive()
+                .required()
+                .messages({
+                    'number.base': 'categoria_industria_id debe ser un número',
+                    'number.positive': 'categoria_industria_id debe ser mayor a 0',
+                    'any.required': 'categoria_industria_id es requerido'
+                }),
             plan: Joi.string()
                 .valid(...PLANES)
                 .default('basico'),

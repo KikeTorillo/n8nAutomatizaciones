@@ -211,11 +211,13 @@ class UsuarioModel {
                 SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
                     u.rol, u.organizacion_id, u.activo, u.email_verificado,
-                    o.tipo_industria,
+                    o.categoria_industria_id,
+                    ci.codigo as categoria_codigo,
                     o.nombre_comercial,
                     o.plan_actual
                 FROM usuarios u
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
+                LEFT JOIN categorias_industria ci ON o.categoria_industria_id = ci.id
                 WHERE u.id = $1 AND u.activo = TRUE
             `;
 
@@ -423,7 +425,7 @@ class UsuarioModel {
             try {
                 // Validar que la organización existe
                 const orgQuery = `
-                    SELECT id, nombre_comercial, email_admin, tipo_industria, activo
+                    SELECT id, nombre_comercial, email_admin, categoria_industria_id, activo
                     FROM organizaciones
                     WHERE id = $1 AND activo = true
                 `;

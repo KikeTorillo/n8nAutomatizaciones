@@ -1,21 +1,10 @@
 /**
  * Constantes para el módulo de Organizaciones
  * Sincronizadas con ENUMs de base de datos y usadas en rutas, controllers y modelos
+ *
+ * ⚠️ NOTA (Nov 2025): TIPOS_INDUSTRIA removido - ahora se usa tabla dinámica categorias_industria
+ * Las categorías se obtienen desde la base de datos, no están hardcodeadas
  */
-
-const TIPOS_INDUSTRIA = [
-    'barberia',
-    'salon_belleza',
-    'estetica',
-    'spa',
-    'podologia',
-    'consultorio_medico',
-    'academia',
-    'taller_tecnico',
-    'centro_fitness',
-    'veterinaria',
-    'otro'
-];
 
 const PLANES = [
     'basico',
@@ -30,7 +19,7 @@ const PERIODOS_METRICAS = [
     'año'
 ];
 
-// Campos que se retornan en las consultas de organizaciones
+// Campos que se retornan en las consultas de organizaciones (Nov 2025: categoria_industria_id)
 const SELECT_FIELDS = [
     'id',
     'codigo_tenant',
@@ -38,7 +27,7 @@ const SELECT_FIELDS = [
     'nombre_comercial',
     'razon_social',
     'rfc_nif',
-    'tipo_industria',
+    'categoria_industria_id',
     'configuracion_industria',
     'email_admin',
     'telefono',
@@ -60,12 +49,12 @@ const SELECT_FIELDS = [
     'actualizado_en'
 ];
 
-// Campos permitidos para actualización
+// Campos permitidos para actualización (Nov 2025: categoria_industria_id)
 const CAMPOS_ACTUALIZABLES = [
     'nombre_comercial',
     'razon_social',
     'rfc_nif',
-    'tipo_industria',
+    'categoria_industria_id',
     'email_admin',
     'telefono',
     'configuracion_industria',
@@ -85,7 +74,6 @@ const CAMPOS_ACTUALIZABLES = [
 ];
 
 module.exports = {
-    TIPOS_INDUSTRIA,
     PLANES,
     PERIODOS_METRICAS,
     SELECT_FIELDS,

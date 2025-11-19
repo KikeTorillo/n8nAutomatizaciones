@@ -17,7 +17,7 @@ const listar = {
     query: Joi.object({
         solo_sistema: Joi.boolean().optional(),
         solo_personalizados: Joi.boolean().optional(),
-        tipo_industria: Joi.string().valid(...industrias).optional(),
+        categoria_codigo: Joi.string().valid(...industrias).optional(),  // Nov 2025: Cambiado de tipo_industria a categoria_codigo
         activo: Joi.boolean().optional()
     })
 };
