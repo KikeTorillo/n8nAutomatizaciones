@@ -1,7 +1,7 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
 **Fecha de creación:** 19 Noviembre 2025
-**Última actualización:** 19 Noviembre 2025 - 21:35 UTC (Nivel 4 en progreso: 3/12 schemas)
+**Última actualización:** 19 Noviembre 2025 - 22:10 UTC (Nivel 4 completado: 12/12 schemas)
 **Estado:** 🟢 Operativo - Refactor Incremental en ejecución
 
 ---
@@ -20,25 +20,29 @@
 - ✅ Nivel 1: Utils (1 archivo)
 - ✅ Nivel 2: Constants (1 archivo)
 - ❌ Nivel 3: OMITIDO (archivos no existen)
-- 🔄 Nivel 4: Schemas (3/12 completados)
+- ✅ Nivel 4: Schemas (12/12 completados - 100%)
 
-**Schemas movidos:**
-- ✅ `tipos-bloqueo.schemas.js`
-- ✅ `tipos-profesional.schemas.js`
-- ✅ `disponibilidad.schemas.js`
+**Schemas movidos a template (12):**
+- ✅ `tipos-bloqueo.schemas.js` (2.1K)
+- ✅ `tipos-profesional.schemas.js` (3.2K)
+- ✅ `disponibilidad.schemas.js` (3.4K)
+- ✅ `bloqueos-horarios.schemas.js` (6.9K)
+- ✅ `cliente.schemas.js` (9.9K)
+- ✅ `chatbot.schemas.js` (11K)
+- ✅ `profesional.schemas.js` (12K)
+- ✅ `servicio.schemas.js` (12K)
+- ✅ `comisiones.schemas.js` (12K)
+- ✅ `horario-profesional.schemas.js` (13K)
+- ✅ `cita.schemas.js` (17K)
+- ✅ `marketplace.schemas.js` (17K)
 
-**Schemas pendientes (9):**
-- `bloqueos-horarios.schemas.js` (6.9K)
-- `cliente.schemas.js` (9.9K)
-- `chatbot.schemas.js` (11K)
-- `profesional.schemas.js` (12K)
-- `servicio.schemas.js` (12K)
-- `comisiones.schemas.js` (12K)
-- `horario-profesional.schemas.js` (13K)
-- `cita.schemas.js` (17K) ⚠️
-- `marketplace.schemas.js` (17K) ⚠️
+**Schemas CORE que permanecen (4):**
+- `auth.schemas.js` (11K)
+- `organizacion.schemas.js` (7.8K)
+- `pagos.schemas.js` (1.3K)
+- `usuario.schemas.js` (4.1K)
 
-**Estado:** Backend ✅ Healthy | Tests: 562/630 (89.2%)
+**Estado:** Backend ✅ Healthy | Tests: 561/630 pasando (89.0%)
 
 ### 🎯 Objetivo
 
@@ -54,20 +58,34 @@ backend/app/
 │   ├── middleware/        # Auth, tenant, validation, rateLimit, asyncHandler
 │   ├── utils/             # rlsContextManager, helpers, passwordHelper
 │   ├── services/          # Mercado Pago, email, n8n, config
+│   ├── schemas/           # auth, organizacion, pagos, usuario (4 schemas CORE)
 │   └── controllers/       # auth, usuario, plan, superadmin, webhook, pagos
 │
 └── templates/
-    └── scheduling-saas/   # ❌ Específico de agendamiento
+    └── scheduling-saas/   # ✅ Específico de agendamiento
         ├── constants/
         │   └── profesionales.constants.js    # ✅ Movido (Nivel 2)
         │
         ├── utils/
         │   └── cita-validacion.util.js       # ✅ Movido (Nivel 1)
         │
+        ├── schemas/                          # ✅ Movido (Nivel 4 - 12 schemas)
+        │   ├── bloqueos-horarios.schemas.js
+        │   ├── chatbot.schemas.js
+        │   ├── cita.schemas.js
+        │   ├── cliente.schemas.js
+        │   ├── comisiones.schemas.js
+        │   ├── disponibilidad.schemas.js
+        │   ├── horario-profesional.schemas.js
+        │   ├── marketplace.schemas.js
+        │   ├── profesional.schemas.js
+        │   ├── servicio.schemas.js
+        │   ├── tipos-bloqueo.schemas.js
+        │   └── tipos-profesional.schemas.js
+        │
         └── [Pendientes de mover]
             ├── controllers/  (11 controllers + 3 carpetas modulares)
             ├── models/       (11 models + 3 carpetas modulares)
-            ├── schemas/      (9 schemas)
             ├── routes/       (11 routes)
             └── constants/    (2 archivos adicionales)
 ```
@@ -146,9 +164,9 @@ backend/app/
 **Evaluación:** Constantes inline tienen duplicación mínima (2-3 repeticiones) que no justifica extracción.
 **Acción:** Saltar directo a Nivel 4.
 
-### Nivel 4 - Schemas (🔄 EN PROGRESO - 3/12)
+### Nivel 4 - Schemas ✅ COMPLETADO (12/12 - 100%)
 
-**Patrón validado:**
+**Patrón validado y ejecutado:**
 1. Buscar imports: `grep -rn "NOMBRE.schemas" backend/app/routes/`
 2. Mover archivo a `templates/scheduling-saas/schemas/`
 3. Actualizar import en route: `../../../schemas/` → `../../../templates/scheduling-saas/schemas/`
@@ -156,6 +174,20 @@ backend/app/
 5. Reiniciar backend: `docker restart back && sleep 20`
 6. Verificar healthy: `docker ps | grep back`
 7. Commit individual
+
+**✅ Schemas movidos (12):**
+1. `tipos-bloqueo.schemas.js` (2.1K) - Commit 2655be8
+2. `tipos-profesional.schemas.js` (3.2K) - Commit c3370ed
+3. `disponibilidad.schemas.js` (3.4K) - Commit 12fd702
+4. `bloqueos-horarios.schemas.js` (6.9K) - Commit 88a76f4
+5. `cliente.schemas.js` (9.9K) - Commit 7e95e46
+6. `chatbot.schemas.js` (11K) - Commit 9090a4b
+7. `profesional.schemas.js` (12K) - Commit 0ef6728
+8. `servicio.schemas.js` (12K) - Commit d4621a0
+9. `comisiones.schemas.js` (12K) - Commit dfc150d
+10. `horario-profesional.schemas.js` (13K) - Commit 242cceb
+11. `cita.schemas.js` (17K) - Commit 9efbaa3
+12. `marketplace.schemas.js` (17K) - Commit 5a695c9
 
 **⚠️ Lección clave:** Los schemas importan `../middleware/validation` que debe actualizarse desde su nueva ubicación.
 
@@ -214,9 +246,24 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 ```
 ✅ templates/scheduling-saas/
    ├── utils/
-   │   └── cita-validacion.util.js      # ✅ Movido, 6 imports actualizados
-   └── constants/
-       └── profesionales.constants.js   # ✅ Movido, 1 import actualizado
+   │   └── cita-validacion.util.js                # ✅ Movido (Nivel 1)
+   │
+   ├── constants/
+   │   └── profesionales.constants.js             # ✅ Movido (Nivel 2)
+   │
+   └── schemas/                                    # ✅ Movido (Nivel 4)
+       ├── bloqueos-horarios.schemas.js           # 6.9K
+       ├── chatbot.schemas.js                     # 11K
+       ├── cita.schemas.js                        # 17K
+       ├── cliente.schemas.js                     # 9.9K
+       ├── comisiones.schemas.js                  # 12K
+       ├── disponibilidad.schemas.js              # 3.4K
+       ├── horario-profesional.schemas.js         # 13K
+       ├── marketplace.schemas.js                 # 17K
+       ├── profesional.schemas.js                 # 12K
+       ├── servicio.schemas.js                    # 12K
+       ├── tipos-bloqueo.schemas.js               # 2.1K
+       └── tipos-profesional.schemas.js           # 3.2K
 ```
 
 ### Ejecución de Tests
@@ -238,14 +285,14 @@ docker exec back npm test -- profesionales
 
 ## 📈 Resumen de Progreso
 
-**Progreso:** ~30% del refactor total | **Backend:** ✅ Operativo
+**Progreso:** ~40% del refactor total | **Backend:** ✅ Operativo
 
 | Nivel | Estado | Archivos |
 |-------|--------|----------|
-| 1. Utils | ✅ Completado | 1/1 |
-| 2. Constants | ✅ Completado | 1/1 |
+| 1. Utils | ✅ Completado | 1/1 (100%) |
+| 2. Constants | ✅ Completado | 1/1 (100%) |
 | 3. Constants | ❌ Omitido | N/A |
-| 4. Schemas | 🔄 En Progreso | 3/12 (25%) |
+| 4. Schemas | ✅ Completado | 12/12 (100%) |
 | 5. Routes | ⏳ Pendiente | 0/11 |
 | 6. Controllers | ⏳ Pendiente | 0/17 |
 | 7. Models | ⏳ Pendiente | 0/17 |
@@ -253,7 +300,8 @@ docker exec back npm test -- profesionales
 
 **Estado del Sistema:**
 - Backend: ✅ Healthy y operativo
-- Tests: 562/630 pasando (89.2%)
+- Tests: 561/630 pasando (89.0%)
+- Test Suites: 18 passed, 12 failed, 30 total
 - Base de Datos: ✅ Todas las conexiones funcionando
 - Docker Compose: ✅ 8 contenedores corriendo correctamente
 
