@@ -100,6 +100,12 @@ export default function SuperAdminLayout() {
                         >
                             🔄 Sincronización MP
                         </Link>
+                        <Link
+                            to="/superadmin/marketplace"
+                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                        >
+                            🛍️ Marketplace
+                        </Link>
                     </div>
                 </div>
             </nav>

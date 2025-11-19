@@ -15,6 +15,13 @@ const disponibilidadSchemas = {
    */
   consultar: {
     query: Joi.object({
+      // ========== PÚBLICO (MARKETPLACE) ==========
+      // organizacion_id: Requerido solo para peticiones públicas (sin auth)
+      organizacion_id: Joi.number().integer().positive().optional().messages({
+        'number.base': 'organizacion_id debe ser un número',
+        'number.positive': 'organizacion_id debe ser positivo',
+      }),
+
       // ========== OBLIGATORIOS ==========
       fecha: Joi.alternatives()
         .try(
@@ -28,11 +35,22 @@ const disponibilidadSchemas = {
             'Formato de fecha inválido. Use YYYY-MM-DD, ISO, "hoy" o "mañana"',
         }),
 
-      servicio_id: Joi.number().integer().positive().required().messages({
-        'any.required': 'El servicio_id es requerido',
+      // Soportar tanto servicio_id (single) como servicios_ids (array)
+      servicio_id: Joi.number().integer().positive().optional().messages({
         'number.base': 'servicio_id debe ser un número',
         'number.positive': 'servicio_id debe ser positivo',
       }),
+
+      servicios_ids: Joi.alternatives()
+        .try(
+          Joi.array().items(Joi.number().integer().positive()).min(1).max(10),
+          Joi.number().integer().positive() // También acepta un solo número
+        )
+        .optional()
+        .messages({
+          'array.min': 'Debe proporcionar al menos un servicio',
+          'array.max': 'Máximo 10 servicios por cita',
+        }),
 
       // ========== OPCIONALES ==========
       profesional_id: Joi.number().integer().positive().optional().messages({

@@ -253,6 +253,71 @@ class PerfilesMarketplaceController {
             'Estadísticas obtenidas exitosamente'
         );
     });
+
+    /**
+     * Obtener mi perfil de marketplace
+     * GET /api/v1/marketplace/perfiles/mi-perfil
+     *
+     * @requires auth - admin o propietario
+     * @requires tenant - organizacionId desde RLS context
+     * @note Retorna el perfil de la organización del usuario logueado
+     */
+    static obtenerMiPerfil = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const perfil = await PerfilesMarketplaceModel.obtenerPorOrganizacion(organizacionId);
+
+        if (!perfil) {
+            return ResponseHelper.success(
+                res,
+                null,
+                'No tienes un perfil de marketplace'
+            );
+        }
+
+        return ResponseHelper.success(
+            res,
+            perfil,
+            'Perfil obtenido exitosamente'
+        );
+    });
+
+    /**
+     * Listar TODOS los perfiles para super admin
+     * GET /api/v1/superadmin/marketplace/perfiles
+     *
+     * @requires auth - solo super_admin
+     * @note Usa bypass RLS para acceder a perfiles activos e inactivos
+     * @note Incluye datos de organización (nombre, plan, estado)
+     */
+    static listarParaAdmin = asyncHandler(async (req, res) => {
+        // Validar que el usuario sea super_admin (middleware ya lo valida)
+        if (req.user.rol !== 'super_admin') {
+            return ResponseHelper.error(
+                res,
+                'Solo super administradores pueden listar todos los perfiles',
+                403
+            );
+        }
+
+        const filtros = {
+            activo: req.query.activo !== undefined
+                ? req.query.activo === 'true'
+                : undefined,
+            ciudad: req.query.ciudad || undefined,
+            rating_min: req.query.rating_min ? parseFloat(req.query.rating_min) : undefined,
+            pagina: req.query.pagina ? parseInt(req.query.pagina) : 1,
+            limite: req.query.limite ? parseInt(req.query.limite) : 20
+        };
+
+        const resultado = await PerfilesMarketplaceModel.listarTodosParaAdmin(filtros);
+
+        return ResponseHelper.success(
+            res,
+            resultado,
+            'Perfiles obtenidos exitosamente'
+        );
+    });
 }
 
 module.exports = PerfilesMarketplaceController;

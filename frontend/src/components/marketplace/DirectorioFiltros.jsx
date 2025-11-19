@@ -1,0 +1,152 @@
+import { X } from 'lucide-react';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
+import EstrellaRating from './EstrellaRating';
+
+/**
+ * Componente de filtros para el directorio de marketplace
+ * Sidebar con filtros de ciudad, categoría y rating mínimo
+ *
+ * @param {Object} filtros - Valores actuales de filtros
+ * @param {string} filtros.ciudad - Ciudad seleccionada
+ * @param {string} filtros.categoria - Categoría seleccionada
+ * @param {number} filtros.rating_min - Rating mínimo (1-5)
+ * @param {function} onChange - Callback cuando cambia un filtro: (key, value) => void
+ * @param {function} onLimpiar - Callback para limpiar todos los filtros
+ * @param {string} className - Clases adicionales
+ *
+ * @example
+ * <DirectorioFiltros
+ *   filtros={filtros}
+ *   onChange={(key, value) => setFiltros(prev => ({ ...prev, [key]: value }))}
+ *   onLimpiar={() => setFiltros({ ciudad: '', categoria: '', rating_min: '' })}
+ * />
+ */
+function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
+  // Opciones de ciudades (TODO: Obtener dinámicamente del backend)
+  const ciudadesOpciones = [
+    { value: '', label: 'Todas las ciudades' },
+    { value: 'CDMX', label: 'Ciudad de México' },
+    { value: 'Guadalajara', label: 'Guadalajara' },
+    { value: 'Monterrey', label: 'Monterrey' },
+    { value: 'Puebla', label: 'Puebla' },
+    { value: 'Querétaro', label: 'Querétaro' },
+    { value: 'Cancún', label: 'Cancún' },
+    { value: 'Mérida', label: 'Mérida' },
+    { value: 'Tijuana', label: 'Tijuana' },
+  ];
+
+  // Opciones de categorías (basadas en marketplace_categorias del backend)
+  const categoriasOpciones = [
+    { value: '', label: 'Todas las categorías' },
+    { value: 'belleza', label: 'Belleza y Estética' },
+    { value: 'salud', label: 'Salud y Bienestar' },
+    { value: 'fitness', label: 'Fitness y Deporte' },
+    { value: 'educacion', label: 'Educación y Capacitación' },
+    { value: 'legal', label: 'Legal y Consultoría' },
+    { value: 'tecnologia', label: 'Tecnología e IT' },
+    { value: 'hogar', label: 'Hogar y Mantenimiento' },
+    { value: 'eventos', label: 'Eventos y Celebraciones' },
+    { value: 'profesional', label: 'Servicios Profesionales' },
+    { value: 'otro', label: 'Otros' },
+  ];
+
+  // Opciones de rating mínimo
+  const ratingsOpciones = [
+    { value: '', label: 'Cualquier rating' },
+    { value: '4', label: '4+ estrellas' },
+    { value: '3', label: '3+ estrellas' },
+    { value: '2', label: '2+ estrellas' },
+    { value: '1', label: '1+ estrellas' },
+  ];
+
+  // Contar filtros activos
+  const filtrosActivos = Object.values(filtros).filter((v) => v !== '' && v !== null && v !== undefined).length;
+
+  return (
+    <div className={className}>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4">
+        {/* Header con contador */}
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-lg font-semibold text-gray-900">Filtros</h3>
+          {filtrosActivos > 0 && (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+              {filtrosActivos}
+            </span>
+          )}
+        </div>
+
+        {/* Filtros */}
+        <div className="space-y-6">
+          {/* Ciudad */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ciudad
+            </label>
+            <Select
+              value={filtros.ciudad || ''}
+              onChange={(e) => onChange('ciudad', e.target.value)}
+              options={ciudadesOpciones}
+            />
+          </div>
+
+          {/* Categoría */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categoría
+            </label>
+            <Select
+              value={filtros.categoria || ''}
+              onChange={(e) => onChange('categoria', e.target.value)}
+              options={categoriasOpciones}
+            />
+          </div>
+
+          {/* Rating mínimo */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Rating mínimo
+            </label>
+            <Select
+              value={filtros.rating_min || ''}
+              onChange={(e) => onChange('rating_min', e.target.value)}
+              options={ratingsOpciones}
+            />
+
+            {/* Vista visual del rating seleccionado */}
+            {filtros.rating_min && (
+              <div className="mt-2 flex items-center">
+                <EstrellaRating rating={parseInt(filtros.rating_min)} size="sm" />
+                <span className="ml-2 text-xs text-gray-500">o superior</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Botón limpiar filtros */}
+        {filtrosActivos > 0 && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onLimpiar}
+              className="w-full justify-center"
+            >
+              <X className="w-4 h-4 mr-2" />
+              Limpiar filtros
+            </Button>
+          </div>
+        )}
+
+        {/* Info adicional */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <p className="text-xs text-gray-500 leading-relaxed">
+            Los resultados se actualizan automáticamente al cambiar los filtros.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default DirectorioFiltros;

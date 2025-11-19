@@ -29,6 +29,8 @@ module.exports = {
   // Middleware de tenant
   tenant: {
     setTenantContext: tenant.setTenantContext,
+    setTenantContextFromBody: tenant.setTenantContextFromBody,
+    setTenantContextFromQuery: tenant.setTenantContextFromQuery,
     validateTenantParams: tenant.validateTenantParams,
     injectTenantId: tenant.injectTenantId,
     verifyTenantActive: tenant.verifyTenantActive,

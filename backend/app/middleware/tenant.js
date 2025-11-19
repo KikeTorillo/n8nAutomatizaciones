@@ -355,6 +355,188 @@ const releaseTenantConnection = (req, res, next) => {
 };
 
 /**
+ * Middleware para establecer tenant context desde body (requests públicas)
+ * Usado en endpoints sin autenticación como agendamiento de marketplace
+ *
+ * Este middleware obtiene organizacion_id del body en lugar de req.user
+ * y verifica que la organización existe y está activa.
+ *
+ * @requires organizacion_id en req.body o req.query
+ */
+const setTenantContextFromBody = async (req, res, next) => {
+  let client;
+  try {
+    // Obtener organizacion_id del body o query
+    const organizacionId = parseInt(req.body.organizacion_id || req.query.organizacion_id);
+
+    if (!organizacionId || isNaN(organizacionId) || organizacionId <= 0) {
+      logger.warn('setTenantContextFromBody: organizacion_id no proporcionado o inválido', {
+        body: req.body.organizacion_id,
+        query: req.query.organizacion_id,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'organizacion_id requerido y debe ser numérico positivo', 400);
+    }
+
+    // Obtener conexión del pool principal para bypass RLS
+    client = await database.getPool('saas').connect();
+
+    // Configurar bypass RLS para verificar existencia de organización
+    await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
+
+    // Verificar que la organización existe y está activa
+    const result = await client.query(
+      'SELECT id, activo, suspendido, plan_actual FROM organizaciones WHERE id = $1',
+      [organizacionId]
+    );
+
+    if (result.rows.length === 0) {
+      logger.warn('setTenantContextFromBody: Organización no encontrada', {
+        organizacionId,
+        path: req.path,
+        ip: req.ip
+      });
+      return ResponseHelper.error(res, 'Organización no encontrada', 404);
+    }
+
+    const organizacion = result.rows[0];
+
+    if (!organizacion.activo || organizacion.suspendido) {
+      logger.warn('setTenantContextFromBody: Organización inactiva o suspendida', {
+        organizacionId,
+        activo: organizacion.activo,
+        suspendido: organizacion.suspendido,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'Organización inactiva o suspendida', 403, {
+        code: 'ORGANIZATION_INACTIVE'
+      });
+    }
+
+    // Establecer tenant context (mismo patrón que setTenantContext)
+    if (!req.tenant) {
+      req.tenant = {};
+    }
+    req.tenant.organizacionId = organizacionId;
+    req.tenant.plan = organizacion.plan_actual;
+
+    logger.debug('Tenant context establecido desde body', {
+      organizacionId,
+      plan: organizacion.plan_actual,
+      path: req.path,
+      method: req.method
+    });
+
+    next();
+  } catch (error) {
+    logger.error('Error en setTenantContextFromBody', {
+      error: error.message,
+      stack: error.stack,
+      path: req.path
+    });
+    return ResponseHelper.error(res, 'Error interno del servidor', 500);
+  } finally {
+    // Asegurar que la conexión se libere
+    if (client) {
+      await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
+      client.release();
+    }
+  }
+};
+
+/**
+ * Middleware para establecer contexto de tenant desde query parameters (request público)
+ * Similar a setTenantContextFromBody pero solo lee de query (para GET requests)
+ *
+ * ✅ FEATURE: Consultas públicas de disponibilidad desde marketplace
+ * - Valida que la organización existe y está activa
+ * - No requiere autenticación
+ *
+ * @param {Request} req - Express request
+ * @param {Response} res - Express response
+ * @param {Function} next - Next middleware
+ */
+const setTenantContextFromQuery = async (req, res, next) => {
+  let client;
+  try {
+    // Obtener organizacion_id del query
+    const organizacionId = parseInt(req.query.organizacion_id);
+
+    if (!organizacionId || isNaN(organizacionId) || organizacionId <= 0) {
+      logger.warn('setTenantContextFromQuery: organizacion_id no proporcionado o inválido', {
+        query: req.query.organizacion_id,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'organizacion_id requerido y debe ser numérico positivo', 400);
+    }
+
+    // Obtener conexión del pool principal para bypass RLS
+    client = await database.getPool('saas').connect();
+
+    // Configurar bypass RLS para verificar existencia de organización
+    await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'true']);
+
+    // Verificar que la organización existe y está activa
+    const result = await client.query(
+      'SELECT id, activo, suspendido, plan_actual FROM organizaciones WHERE id = $1',
+      [organizacionId]
+    );
+
+    if (result.rows.length === 0) {
+      logger.warn('setTenantContextFromQuery: Organización no encontrada', {
+        organizacionId,
+        path: req.path,
+        ip: req.ip
+      });
+      return ResponseHelper.error(res, 'Organización no encontrada', 404);
+    }
+
+    const organizacion = result.rows[0];
+
+    if (!organizacion.activo || organizacion.suspendido) {
+      logger.warn('setTenantContextFromQuery: Organización inactiva o suspendida', {
+        organizacionId,
+        activo: organizacion.activo,
+        suspendido: organizacion.suspendido,
+        path: req.path
+      });
+      return ResponseHelper.error(res, 'Organización inactiva o suspendida', 403, {
+        code: 'ORGANIZATION_INACTIVE'
+      });
+    }
+
+    // Establecer tenant context (mismo patrón que setTenantContext)
+    if (!req.tenant) {
+      req.tenant = {};
+    }
+    req.tenant.organizacionId = organizacionId;
+    req.tenant.plan = organizacion.plan_actual;
+
+    logger.debug('Tenant context establecido desde query', {
+      organizacionId,
+      plan: organizacion.plan_actual,
+      path: req.path,
+      method: req.method
+    });
+
+    next();
+  } catch (error) {
+    logger.error('Error en setTenantContextFromQuery', {
+      error: error.message,
+      stack: error.stack,
+      path: req.path
+    });
+    return ResponseHelper.error(res, 'Error interno del servidor', 500);
+  } finally {
+    // Asegurar que la conexión se libere
+    if (client) {
+      await client.query('SELECT set_config($1, $2, false)', ['app.bypass_rls', 'false']);
+      client.release();
+    }
+  }
+};
+
+/**
  * Middleware de desarrollo para simular diferentes tenants (solo en desarrollo)
  */
 const simulateTenant = (req, res, next) => {
@@ -380,6 +562,8 @@ const simulateTenant = (req, res, next) => {
 
 module.exports = {
   setTenantContext,
+  setTenantContextFromBody,
+  setTenantContextFromQuery,
   validateTenantParams,
   injectTenantId,
   verifyTenantActive,

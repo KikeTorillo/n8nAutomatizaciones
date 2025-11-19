@@ -73,12 +73,58 @@ router.get('/recordatorios',
 // CRUD
 // ===================================================================
 
+/**
+ * POST /api/v1/citas
+ * Crear cita (soporta agendamiento público sin auth)
+ *
+ * ✅ FEATURE: Agendamiento público de marketplace
+ * - Con auth: Usa organizacion_id del usuario, valida suscripción
+ * - Sin auth: Usa organizacion_id del body, NO valida suscripción
+ *
+ * @public Acepta requests con y sin autenticación
+ */
 router.post('/',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    tenant.verifyTenantActive,
-    subscription.checkActiveSubscription,        // ✅ Verificar suscripción activa
-    subscription.checkResourceLimit('citas_mes'), // ✅ Verificar límite de citas/mes
+    auth.optionalAuth,  // ✅ Permite requests con y sin token
+    // Middleware condicional para tenant context
+    (req, res, next) => {
+        if (req.user) {
+            // Usuario autenticado: usar tenant context normal
+            return tenant.setTenantContext(req, res, next);
+        } else {
+            // Request público: usar tenant context desde body
+            return tenant.setTenantContextFromBody(req, res, next);
+        }
+    },
+    // Middleware condicional para verificación de tenant activo
+    (req, res, next) => {
+        if (req.user) {
+            // Usuario autenticado: verificar que tenant esté activo
+            return tenant.verifyTenantActive(req, res, next);
+        } else {
+            // Request público: ya se verificó en setTenantContextFromBody
+            return next();
+        }
+    },
+    // Middleware condicional para validación de suscripción
+    (req, res, next) => {
+        if (req.user) {
+            // Usuario autenticado: verificar suscripción activa
+            return subscription.checkActiveSubscription(req, res, next);
+        } else {
+            // Request público: NO validar suscripción (marketplace público)
+            return next();
+        }
+    },
+    // Middleware condicional para límite de citas
+    (req, res, next) => {
+        if (req.user) {
+            // Usuario autenticado: verificar límite de citas/mes
+            return subscription.checkResourceLimit('citas_mes')(req, res, next);
+        } else {
+            // Request público: NO validar límite (marketplace público)
+            return next();
+        }
+    },
     rateLimiting.apiRateLimit,
     validate(citaSchemas.crear),
     CitaController.crear

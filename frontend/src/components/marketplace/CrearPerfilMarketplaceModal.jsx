@@ -1,0 +1,357 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useCrearPerfil } from '@/hooks/useMarketplace';
+import { useToast } from '@/hooks/useToast';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import { X, ChevronRight, ChevronLeft, Check, Store } from 'lucide-react';
+
+/**
+ * Modal wizard de 3 pasos para crear perfil de marketplace
+ * Paso 1: Información Básica
+ * Paso 2: Ubicación y Contacto
+ * Paso 3: Redes Sociales (opcional)
+ */
+function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
+  const navigate = useNavigate();
+  const [paso, setPaso] = useState(1);
+  const { success, error } = useToast();
+
+  const [formData, setFormData] = useState({
+    // Paso 1: Información Básica
+    descripcion_corta: '',
+    descripcion_larga: '',
+
+    // Paso 2: Ubicación y Contacto
+    pais: 'México',
+    estado: '',
+    ciudad: '',
+    codigo_postal: '',
+    direccion_completa: '',
+    telefono_publico: '',
+    email_publico: '',
+    sitio_web: '',
+
+    // Paso 3: Redes Sociales
+    instagram: '',
+    facebook: '',
+    tiktok: '',
+  });
+
+  const crearPerfilMutation = useCrearPerfil();
+
+  if (!isOpen) return null;
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleNext = () => {
+    // Validar paso 1
+    if (paso === 1) {
+      if (!formData.descripcion_corta.trim()) {
+        error('Debes escribir una descripción corta');
+        return;
+      }
+      if (!formData.ciudad.trim()) {
+        error('Debes indicar tu ciudad');
+        return;
+      }
+    }
+
+    // Validar paso 2
+    if (paso === 2) {
+      if (!formData.ciudad.trim()) {
+        error('La ciudad es obligatoria');
+        return;
+      }
+    }
+
+    setPaso(paso + 1);
+  };
+
+  const handleBack = () => {
+    setPaso(paso - 1);
+  };
+
+  const handleSubmit = (e) => {
+    // Prevenir submit del form (todos los botones son type="button")
+    e.preventDefault();
+  };
+
+  const handleCrearPerfil = async () => {
+    try {
+      await crearPerfilMutation.mutateAsync(formData);
+      success('¡Perfil de marketplace creado exitosamente!');
+      onClose();
+      navigate('/mi-marketplace');
+    } catch (err) {
+      error(err.message || 'Error al crear el perfil');
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      {/* Overlay */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="flex min-h-full items-center justify-center p-4">
+        <div
+          className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                <Store className="w-5 h-5 text-primary-700" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Activar Perfil de Marketplace
+                </h2>
+                <p className="text-sm text-gray-600">Paso {paso} de 3</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Indicador de Progreso */}
+          <div className="px-6 pt-4">
+            <div className="flex items-center justify-between mb-6">
+              {[1, 2, 3].map((num) => (
+                <div key={num} className="flex items-center flex-1">
+                  <div
+                    className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                      paso > num
+                        ? 'bg-green-500 text-white'
+                        : paso === num
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-200 text-gray-600'
+                    }`}
+                  >
+                    {paso > num ? <Check className="w-4 h-4" /> : num}
+                  </div>
+                  {num < 3 && (
+                    <div
+                      className={`flex-1 h-1 mx-2 rounded ${
+                        paso > num ? 'bg-green-500' : 'bg-gray-200'
+                      }`}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Contenido del Form */}
+          <form onSubmit={handleSubmit} className="p-6">
+            {/* Paso 1: Información Básica */}
+            {paso === 1 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Información Básica
+                </h3>
+
+                <Input
+                  label="Descripción Corta *"
+                  name="descripcion_corta"
+                  value={formData.descripcion_corta}
+                  onChange={handleChange}
+                  placeholder="Ej: Barbería profesional con más de 10 años de experiencia"
+                  maxLength={200}
+                  helpText={`${formData.descripcion_corta.length}/200 caracteres`}
+                  required
+                />
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Descripción Larga
+                  </label>
+                  <textarea
+                    name="descripcion_larga"
+                    value={formData.descripcion_larga}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Describe tu negocio en detalle..."
+                  />
+                </div>
+
+                <Input
+                  label="Ciudad *"
+                  name="ciudad"
+                  value={formData.ciudad}
+                  onChange={handleChange}
+                  placeholder="Ej: CDMX"
+                  required
+                />
+              </div>
+            )}
+
+            {/* Paso 2: Ubicación y Contacto */}
+            {paso === 2 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Ubicación y Contacto
+                </h3>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Select
+                    label="País"
+                    name="pais"
+                    value={formData.pais}
+                    onChange={handleChange}
+                    options={[
+                      { value: 'México', label: 'México' },
+                      { value: 'Argentina', label: 'Argentina' },
+                      { value: 'Colombia', label: 'Colombia' },
+                      { value: 'Chile', label: 'Chile' },
+                      { value: 'Perú', label: 'Perú' },
+                    ]}
+                  />
+
+                  <Input
+                    label="Estado/Provincia"
+                    name="estado"
+                    value={formData.estado}
+                    onChange={handleChange}
+                    placeholder="Ej: Ciudad de México"
+                  />
+                </div>
+
+                <Input
+                  label="Código Postal"
+                  name="codigo_postal"
+                  value={formData.codigo_postal}
+                  onChange={handleChange}
+                  placeholder="Ej: 03100"
+                />
+
+                <Input
+                  label="Dirección Completa"
+                  name="direccion_completa"
+                  value={formData.direccion_completa}
+                  onChange={handleChange}
+                  placeholder="Ej: Avenida Insurgentes Sur 1234"
+                />
+
+                <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Teléfono Público"
+                    name="telefono_publico"
+                    value={formData.telefono_publico}
+                    onChange={handleChange}
+                    placeholder="+52 55 1234 5678"
+                    type="tel"
+                  />
+
+                  <Input
+                    label="Email Público"
+                    name="email_publico"
+                    value={formData.email_publico}
+                    onChange={handleChange}
+                    placeholder="contacto@tunegocio.com"
+                    type="email"
+                  />
+                </div>
+
+                <Input
+                  label="Sitio Web"
+                  name="sitio_web"
+                  value={formData.sitio_web}
+                  onChange={handleChange}
+                  placeholder="https://tunegocio.com"
+                  type="url"
+                />
+              </div>
+            )}
+
+            {/* Paso 3: Redes Sociales */}
+            {paso === 3 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Redes Sociales (Opcional)
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Agrega tus redes sociales para que tus clientes puedan encontrarte más fácilmente.
+                </p>
+
+                <Input
+                  label="Instagram"
+                  name="instagram"
+                  value={formData.instagram}
+                  onChange={handleChange}
+                  placeholder="@tunegocio"
+                />
+
+                <Input
+                  label="Facebook"
+                  name="facebook"
+                  value={formData.facebook}
+                  onChange={handleChange}
+                  placeholder="https://facebook.com/tunegocio"
+                  type="url"
+                />
+
+                <Input
+                  label="TikTok"
+                  name="tiktok"
+                  value={formData.tiktok}
+                  onChange={handleChange}
+                  placeholder="@tunegocio"
+                />
+              </div>
+            )}
+
+            {/* Botones de Navegación */}
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+              <div>
+                {paso > 1 && (
+                  <Button type="button" variant="outline" onClick={handleBack}>
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Atrás
+                  </Button>
+                )}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <Button type="button" variant="outline" onClick={onClose}>
+                  Cancelar
+                </Button>
+
+                {paso < 3 ? (
+                  <Button type="button" onClick={handleNext}>
+                    Siguiente
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    onClick={handleCrearPerfil}
+                    disabled={crearPerfilMutation.isLoading}
+                  >
+                    {crearPerfilMutation.isLoading ? 'Creando...' : 'Crear Perfil'}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default CrearPerfilMarketplaceModal;

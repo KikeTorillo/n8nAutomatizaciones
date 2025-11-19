@@ -221,6 +221,34 @@ const marketplaceSchemas = {
         })
     },
 
+    /**
+     * Schema para listar TODOS los perfiles (solo super_admin)
+     * GET /api/v1/superadmin/marketplace/perfiles
+     */
+    listarPerfilesAdmin: {
+        query: Joi.object({
+            // Filtro por estado activo (opcional)
+            activo: Joi.string().valid('true', 'false').optional().messages({
+                'any.only': 'activo debe ser "true" o "false"'
+            }),
+
+            // Filtro por ciudad (opcional)
+            ciudad: Joi.string().max(100).optional(),
+
+            // Filtro de rating mínimo (opcional)
+            rating_min: Joi.number().min(0).max(5).optional().messages({
+                'number.min': 'El rating mínimo debe ser 0',
+                'number.max': 'El rating máximo debe ser 5'
+            }),
+
+            // Paginación
+            pagina: Joi.number().integer().min(1).optional().default(1),
+            limite: Joi.number().integer().min(1).max(100).optional().default(20).messages({
+                'number.max': 'El límite máximo es 100 perfiles por página'
+            })
+        })
+    },
+
     // ========================================================================
     // RESEÑAS
     // ========================================================================

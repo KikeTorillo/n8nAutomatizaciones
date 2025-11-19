@@ -482,6 +482,119 @@ class PerfilesMarketplaceModel {
     }
 
     /**
+     * Listar TODOS los perfiles para super admin
+     * Usa bypass RLS para acceder a perfiles activos e inactivos
+     * Incluye datos de organización (nombre, plan, estado)
+     *
+     * @param {Object} filtros - { activo, ciudad, rating_min, pagina, limite }
+     * @returns {Object} { perfiles, paginacion }
+     */
+    static async listarTodosParaAdmin(filtros = {}) {
+        return await RLSContextManager.withBypass(async (db) => {
+            let whereConditions = [];
+            let queryParams = [];
+            let paramIndex = 1;
+
+            // Filtro por estado activo (opcional)
+            if (filtros.activo !== undefined && filtros.activo !== null) {
+                whereConditions.push(`mp.activo = $${paramIndex}`);
+                queryParams.push(filtros.activo);
+                paramIndex++;
+            }
+
+            // Filtro por ciudad (opcional)
+            if (filtros.ciudad) {
+                whereConditions.push(`LOWER(mp.ciudad) = LOWER($${paramIndex})`);
+                queryParams.push(filtros.ciudad);
+                paramIndex++;
+            }
+
+            // Filtro de rating mínimo (opcional)
+            if (filtros.rating_min) {
+                whereConditions.push(`mp.rating_promedio >= $${paramIndex}`);
+                queryParams.push(filtros.rating_min);
+                paramIndex++;
+            }
+
+            const whereClause = whereConditions.length > 0
+                ? 'WHERE ' + whereConditions.join(' AND ')
+                : '';
+
+            // Contar total
+            const countQuery = `
+                SELECT COUNT(*) as total
+                FROM marketplace_perfiles mp
+                ${whereClause}
+            `;
+
+            const countResult = await db.query(countQuery, queryParams);
+            const total = parseInt(countResult.rows[0].total);
+
+            // Paginación
+            const { limit, offset } = PaginationHelper.calculatePagination(
+                filtros.pagina || 1,
+                filtros.limite || 20
+            );
+
+            // Query principal con JOIN a organizaciones
+            const query = `
+                SELECT
+                    mp.id,
+                    mp.organizacion_id,
+                    mp.slug,
+                    mp.ciudad,
+                    mp.estado,
+                    mp.pais,
+                    mp.descripcion_corta,
+                    mp.rating_promedio,
+                    mp.total_reseñas,
+                    mp.activo,
+                    mp.visible_en_directorio,
+                    mp.creado_en,
+                    mp.publicado_en,
+                    mp.actualizado_en,
+                    -- Datos de la organización
+                    o.nombre_comercial,
+                    o.tipo_industria,
+                    o.activo as org_activa,
+                    o.plan_actual as plan_nombre,
+                    CASE o.plan_actual
+                        WHEN 'trial' THEN 0
+                        WHEN 'basico' THEN 1
+                        WHEN 'profesional' THEN 2
+                        WHEN 'custom' THEN 3
+                        ELSE 0
+                    END as nivel_plan
+                FROM marketplace_perfiles mp
+                INNER JOIN organizaciones o ON mp.organizacion_id = o.id
+                ${whereClause}
+                ORDER BY mp.creado_en DESC
+                LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+            `;
+
+            queryParams.push(limit, offset);
+
+            logger.info('[PerfilesMarketplaceModel.listarTodosParaAdmin] Listando perfiles para admin', {
+                filtros,
+                total,
+                limite: limit,
+                offset
+            });
+
+            const result = await db.query(query, queryParams);
+
+            return {
+                perfiles: result.rows,
+                paginacion: PaginationHelper.getPaginationInfo(
+                    total,
+                    filtros.pagina || 1,
+                    filtros.limite || 20
+                )
+            };
+        });
+    }
+
+    /**
      * Generar slug único para el perfil
      * Formato: {ciudad}-{timestamp36}
      *

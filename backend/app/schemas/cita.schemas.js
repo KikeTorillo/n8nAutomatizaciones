@@ -7,13 +7,32 @@ const { commonSchemas } = require('../middleware/validation');
 
 const crear = {
     body: Joi.object({
+        // ✅ FEATURE: Agendamiento público
+        // - Con auth: Forbidden (usa organizacion_id del JWT)
+        // - Sin auth: Requerido (marketplace público necesita especificar organización)
+        // - Super admin: Opcional (puede especificar organización diferente)
         organizacion_id: Joi.when('$userRole', {
             is: 'super_admin',
             then: commonSchemas.id.optional(),
-            otherwise: Joi.forbidden()
+            otherwise: Joi.when('$userRole', {
+                is: Joi.exist(),  // Si existe userRole (usuario autenticado)
+                then: Joi.forbidden(),  // No permitir override
+                otherwise: commonSchemas.id.required()  // Request público: requerido
+            })
         }),
-        cliente_id: commonSchemas.id,
-        profesional_id: commonSchemas.id,
+        // ✅ FEATURE: Agendamiento público - permite crear cliente automáticamente
+        cliente_id: commonSchemas.id.optional(),
+        cliente: Joi.object({
+            nombre: Joi.string().trim().min(1).max(100).required(),
+            apellidos: Joi.string().trim().max(100).optional(),
+            email: Joi.string().trim().email().max(255).required(),
+            telefono: Joi.string().trim().pattern(/^\+?[0-9]{10,15}$/).required()
+                .messages({
+                    'string.pattern.base': 'Teléfono debe tener entre 10 y 15 dígitos'
+                })
+        }).optional(),
+        // ✅ FEATURE: Agendamiento público - profesional opcional (se asigna automáticamente)
+        profesional_id: commonSchemas.id.optional(),
         // ✅ FEATURE: Múltiples servicios (backward compatibility con servicio_id)
         servicios_ids: Joi.array()
             .items(commonSchemas.id)
@@ -49,7 +68,8 @@ const crear = {
             .valid('efectivo', 'tarjeta', 'transferencia')
             .optional()
             .allow(null),
-        notas_cliente: Joi.string().max(1000).optional()
+        notas_cliente: Joi.string().max(1000).optional(),
+        notas: Joi.string().max(1000).optional() // Alias para compatibilidad
     })
     .custom((value, helpers) => {
         // Validar que proporcione servicios_ids O servicio_id (no ambos)
@@ -59,11 +79,20 @@ const crear = {
         if (!value.servicios_ids && !value.servicio_id) {
             return helpers.error('custom.servicio_requerido');
         }
+        // Validar que proporcione cliente_id O cliente (no ambos, al menos uno)
+        if (value.cliente_id && value.cliente) {
+            return helpers.error('custom.solo_un_tipo_cliente');
+        }
+        if (!value.cliente_id && !value.cliente) {
+            return helpers.error('custom.cliente_requerido');
+        }
         return value;
     })
     .messages({
         'custom.solo_un_tipo_servicio': 'Use servicios_ids (array) O servicio_id (deprecated), no ambos',
-        'custom.servicio_requerido': 'Debe proporcionar servicios_ids (array) o servicio_id'
+        'custom.servicio_requerido': 'Debe proporcionar servicios_ids (array) o servicio_id',
+        'custom.solo_un_tipo_cliente': 'Use cliente_id (existente) O cliente (nuevo), no ambos',
+        'custom.cliente_requerido': 'Debe proporcionar cliente_id o cliente'
     }),
     query: Joi.object({
         organizacion_id: Joi.when('$userRole', {

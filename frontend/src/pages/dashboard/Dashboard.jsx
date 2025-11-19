@@ -11,6 +11,7 @@ import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import SetupChecklist from '@/components/dashboard/SetupChecklist';
+import MarketplaceActivationCard from '@/components/dashboard/MarketplaceActivationCard';
 import {
   useEstadisticasOrganizacion,
   useServiciosDashboard,
@@ -179,6 +180,12 @@ function Dashboard() {
                 >
                   Bloqueos
                 </button>
+                <button
+                  onClick={() => navigate('/mi-marketplace')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Marketplace
+                </button>
               </div>
             </div>
 
@@ -206,6 +213,9 @@ function Dashboard() {
 
         {/* Checklist de Configuración Inicial */}
         <SetupChecklist />
+
+        {/* Card de Activación del Marketplace */}
+        <MarketplaceActivationCard />
 
         {/* Mensaje de Error */}
         {errorEstadisticas && (

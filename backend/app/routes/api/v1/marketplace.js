@@ -76,6 +76,20 @@ router.patch('/perfiles/:id/activar',
 );
 
 /**
+ * GET /api/v1/marketplace/perfiles/mi-perfil
+ * Obtener mi perfil de marketplace
+ * @requires auth - admin o propietario
+ * @requires tenant
+ * @note Retorna el perfil de la organización del usuario logueado
+ */
+router.get('/perfiles/mi-perfil',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    PerfilesMarketplaceController.obtenerMiPerfil
+);
+
+/**
  * GET /api/v1/marketplace/perfiles/buscar
  * Búsqueda pública de perfiles en el marketplace
  * @public Sin autenticación

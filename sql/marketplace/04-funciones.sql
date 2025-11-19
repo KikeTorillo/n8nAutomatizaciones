@@ -150,9 +150,10 @@ RETURNS TABLE (
 BEGIN
     RETURN QUERY
     WITH perfil_data AS (
-        -- Obtener perfil base
-        SELECT mp.*
+        -- Obtener perfil base con nombre comercial de la organización
+        SELECT mp.*, o.nombre_comercial
         FROM marketplace_perfiles mp
+        INNER JOIN organizaciones o ON mp.organizacion_id = o.id
         WHERE mp.slug = p_slug
           AND mp.activo = true
           AND mp.visible_en_directorio = true
@@ -203,7 +204,7 @@ BEGIN
             ) ORDER BY r.creado_en DESC
         ) as reseñas
         FROM (
-            SELECT *
+            SELECT r.id, r.rating, r.titulo, r.comentario, r.respuesta_negocio, r.creado_en, r.votos_util
             FROM marketplace_reseñas r
             INNER JOIN perfil_data pd ON r.organizacion_id = pd.organizacion_id
             WHERE r.estado = 'publicada'

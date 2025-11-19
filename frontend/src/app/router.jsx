@@ -38,6 +38,12 @@ const ComisionesPage = lazy(() => import('@/pages/comisiones/ComisionesPage'));
 const ConfiguracionComisionesPage = lazy(() => import('@/pages/comisiones/ConfiguracionComisionesPage'));
 const ReportesComisionesPage = lazy(() => import('@/pages/comisiones/ReportesComisionesPage'));
 
+// Páginas de Marketplace
+const DirectorioMarketplacePage = lazy(() => import('@/pages/marketplace/DirectorioMarketplacePage'));
+const PerfilPublicoPage = lazy(() => import('@/pages/marketplace/PerfilPublicoPage'));
+const MiMarketplacePage = lazy(() => import('@/pages/marketplace/MiMarketplacePage'));
+const AgendarPublicoPage = lazy(() => import('@/pages/marketplace/AgendarPublicoPage'));
+
 // Páginas de Suscripción
 const ActivarSuscripcion = lazy(() => import('@/pages/subscripcion/ActivarSuscripcion'));
 const SubscripcionResultado = lazy(() => import('@/pages/subscripcion/SubscripcionResultado'));
@@ -48,6 +54,7 @@ const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
 const SuperAdminOrganizaciones = lazy(() => import('@/pages/superadmin/Organizaciones'));
 const SuperAdminPlanes = lazy(() => import('@/pages/superadmin/Planes'));
 const SuperAdminGestionPlanes = lazy(() => import('@/pages/superadmin/GestionPlanes'));
+const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
 
 // Página de Setup Inicial
 const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
@@ -102,6 +109,20 @@ export const router = createBrowserRouter([
       {
         path: 'onboarding',
         element: withSuspense(OnboardingFlow),
+      },
+      // Rutas de Marketplace (públicas)
+      {
+        path: 'marketplace',
+        element: withSuspense(DirectorioMarketplacePage),
+      },
+      // Rutas de Marketplace (protegidas)
+      {
+        path: 'mi-marketplace',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(MiMarketplacePage)}
+          </ProtectedRoute>
+        ),
       },
       // Rutas de suscripción
       {
@@ -254,6 +275,10 @@ export const router = createBrowserRouter([
             path: 'planes/mercadopago',
             element: withSuspense(SuperAdminGestionPlanes),
           },
+          {
+            path: 'marketplace',
+            element: withSuspense(MarketplaceGestion),
+          },
         ],
       },
       // Agregar más rutas protegidas aquí
@@ -265,6 +290,17 @@ export const router = createBrowserRouter([
       //     </ProtectedRoute>
       //   ),
       // },
+
+      // ⚠️ IMPORTANTE: Rutas dinámicas DEBEN IR AL FINAL
+      // Pero las rutas más específicas (/agendar/:slug) ANTES de las genéricas (/:slug)
+      {
+        path: 'agendar/:slug',
+        element: withSuspense(AgendarPublicoPage),
+      },
+      {
+        path: ':slug',
+        element: withSuspense(PerfilPublicoPage),
+      },
     ],
   },
 ]);

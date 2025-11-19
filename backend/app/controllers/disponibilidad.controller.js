@@ -21,6 +21,7 @@ class DisponibilidadController {
     const {
       fecha,
       servicio_id,
+      servicios_ids,
       profesional_id,
       hora,
       duracion,
@@ -30,24 +31,30 @@ class DisponibilidadController {
       excluir_cita_id,
     } = req.query;
 
+    // Determinar si es request público o autenticado
+    const esPublico = !req.user;
+    const rol = esPublico ? 'cliente' : req.user.rol; // Requests públicos se tratan como cliente
+
     logger.info('[DisponibilidadController.consultar] Request recibido', {
-      usuario_id: req.user.id,
-      rol: req.user.rol,
+      usuario_id: req.user?.id,
+      rol,
+      es_publico: esPublico,
       organizacion_id: req.tenant.organizacionId,
       fecha,
       servicio_id,
+      servicios_ids,
       profesional_id,
       hora,
       excluir_cita_id,
     });
 
     // ========== 1. Validar límites de rango_dias por rol ==========
-    const rangoDiasMax = this._obtenerRangoDiasMax(req.user.rol);
+    const rangoDiasMax = this._obtenerRangoDiasMax(rol);
     const rangoDiasFinal = Math.min(parseInt(rango_dias) || 1, rangoDiasMax);
 
     if (parseInt(rango_dias) > rangoDiasMax) {
       logger.warn('[DisponibilidadController] Rango de días excedido para rol', {
-        rol: req.user.rol,
+        rol,
         rango_solicitado: rango_dias,
         rango_max: rangoDiasMax,
         rango_aplicado: rangoDiasFinal,
@@ -55,13 +62,24 @@ class DisponibilidadController {
     }
 
     // ========== 2. Determinar nivel de detalle según rol ==========
-    const nivelDetalle = this._determinarNivelDetalle(req.user.rol);
+    const nivelDetalle = this._determinarNivelDetalle(rol);
 
-    // ========== 3. Consultar disponibilidad ==========
+    // ========== 3. Procesar servicios_ids (soporta array o número único) ==========
+    let servicioIdFinal = null;
+    if (servicios_ids) {
+      // Si es array, tomar el primer elemento; si es número, usarlo directamente
+      servicioIdFinal = Array.isArray(servicios_ids)
+        ? parseInt(servicios_ids[0])
+        : parseInt(servicios_ids);
+    } else if (servicio_id) {
+      servicioIdFinal = parseInt(servicio_id);
+    }
+
+    // ========== 4. Consultar disponibilidad ==========
     const disponibilidad = await DisponibilidadModel.consultarDisponibilidad({
       organizacionId: req.tenant.organizacionId,
       fecha,
-      servicioId: parseInt(servicio_id),
+      servicioId: servicioIdFinal,
       profesionalId: profesional_id ? parseInt(profesional_id) : null,
       hora,
       duracion: duracion ? parseInt(duracion) : null,

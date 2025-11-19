@@ -17,10 +17,10 @@
 | Componente | Estado | Notas |
 |------------|--------|-------|
 | **Backend API** | ✅ Operativo | 26 controllers (incluye marketplace), RLS multi-tenant |
-| **Frontend React** | ✅ Operativo | React 18 + Vite 7, 14 hooks personalizados |
+| **Frontend React** | ✅ Operativo | React 18 + Vite 7, 15 hooks personalizados (incluye marketplace) |
 | **Base de Datos** | ✅ Optimizada | 29 tablas (2 particionadas), RLS reforzado |
 | **Sistema Comisiones** | ✅ Operativo | Trigger automático, 12 endpoints, Dashboard + Reportes |
-| **Marketplace** | 🟡 Backend ✅ / Frontend 📋 | BD + API completa (15 endpoints), Frontend planificado |
+| **Marketplace** | 🟢 98% Completo | Backend ✅ + Frontend ✅ (Agendamiento Público con disponibilidad real-time) |
 | **Sistema IA** | ✅ Operativo | Telegram + WhatsApp, prevención de alucinaciones |
 | **Suscripciones MP** | ✅ Operativo | Trial 14 días + Checkout Pro |
 | **Sistema Email** | ✅ Operativo | AWS SES + nodemailer, templates HTML |
@@ -45,7 +45,7 @@
 ### Base de Datos
 - PostgreSQL 17 con **pg_cron** (Dockerfile personalizado)
 - **Particionamiento por Fecha** (Range en `citas` y `eventos_sistema`)
-- Row Level Security (37 políticas - incluye comisiones + marketplace)
+- Row Level Security (37 políticas: 29 core + 8 marketplace)
 - 293 índices + 29 triggers + 51 funciones PL/pgSQL
 - 4 jobs automáticos pg_cron
 
@@ -94,14 +94,23 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 ### Middleware Stack (7 middlewares)
 
-**Orden obligatorio**: `auth` → `tenant.setTenantContext` → **`subscription`** → `rateLimiting` → `validation` → `asyncHandler`
+**Orden obligatorio (Requests Autenticados)**:
+`auth.authenticateToken` → `tenant.setTenantContext` → **`subscription`** → `rateLimiting` → `validation` → `asyncHandler`
 
-- `auth.js` - JWT + verificación roles
+**Orden para Requests Públicos (API Marketplace)**:
+`auth.optionalAuth` → `tenant.setTenantContextFromQuery` → `rateLimiting` → `validation` → `asyncHandler`
+
+**Middlewares Disponibles:**
+- `auth.js` - JWT + verificación roles + **optionalAuth** (permite requests sin token)
 - `tenant.js` - RLS context multi-tenant
+  - `setTenantContext` - Extrae organizacionId de JWT (requests autenticados)
+  - **`setTenantContextFromQuery`** 🆕 - Extrae organizacion_id de query params (requests públicos)
 - **`subscription.js`** - **Validación límites del plan** (profesionales, servicios, citas)
 - `rateLimiting.js` - Rate limiting por rol
 - `validation.js` - Joi schemas
 - `asyncHandler.js` - Manejo async/await
+
+**⚠️ CRÍTICO**: Todos los middlewares creados en archivos individuales DEBEN estar exportados en `middleware/index.js`
 
 ### Servicios (12 archivos)
 
@@ -142,9 +151,9 @@ bash deploy.sh backup    # Backup PostgreSQL
 ### Frontend
 
 **Estructura:**
-- **14 Hooks personalizados** para gestión de estado (TanStack Query)
-- **65 Componentes** organizados por módulo (ui, dashboard, citas, clientes, comisiones, etc.)
-- **28 Páginas** con routing protegido por rol (incluye 3 de comisiones)
+- **15 Hooks personalizados** para gestión de estado (TanStack Query)
+- **80+ Componentes** organizados por módulo (ui, dashboard, citas, clientes, comisiones, marketplace, etc.)
+- **31 Páginas** con routing protegido por rol (incluye 3 comisiones + 3 marketplace)
 - **Onboarding de 3 pasos** (negocio → plan → cuenta admin)
 
 **Componentes Clave:**
@@ -291,6 +300,167 @@ verificarDisponibilidad({
   excluir_cita_id: 123  // ⚠️ CRÍTICO - ID de la cita que se está reagendando
 })
 ```
+
+---
+
+## 🌐 API Pública para Marketplace (Nov 2025)
+
+### Contexto Multi-Tenant sin Autenticación
+
+**Problema**: El marketplace público necesita acceder a datos de organizaciones sin requerir autenticación del usuario.
+
+**Solución**: Middleware `setTenantContextFromQuery` que establece contexto RLS desde parámetros de query.
+
+### Middleware Crítico: `setTenantContextFromQuery`
+
+**Ubicación**: `backend/app/middleware/tenant.js` (líneas 459-537)
+
+**Funcionalidad**:
+1. Extrae `organizacion_id` de query parameters
+2. Valida que la organización existe y está activa
+3. Establece contexto RLS usando `set_config('app.bypass_rls', 'true')`
+4. Asigna `req.tenant.organizacionId` y `req.tenant.plan`
+5. **Limpia bypass RLS** en finally para seguridad
+
+**⚠️ CRÍTICO**: Este middleware DEBE estar exportado en `middleware/index.js` (línea 33):
+```javascript
+tenant: {
+  setTenantContext: tenant.setTenantContext,
+  setTenantContextFromQuery: tenant.setTenantContextFromQuery, // ← NECESARIO
+  // ...
+}
+```
+
+### Patrón de Middleware Condicional
+
+**Ubicación**: `backend/app/routes/api/v1/disponibilidad.js`
+
+```javascript
+router.get(
+  '/',
+  auth.optionalAuth,  // ✅ Permite requests con y sin token
+  (req, res, next) => {
+    // Si está autenticado → usa tenant context normal
+    if (req.user) {
+      return tenant.setTenantContext(req, res, next);
+    }
+    // Si NO está autenticado → usa tenant context desde query
+    else {
+      return tenant.setTenantContextFromQuery(req, res, next);
+    }
+  },
+  rateLimiting.apiRateLimit,
+  validation.validate(disponibilidadSchemas.consultar),
+  DisponibilidadController.consultar
+);
+```
+
+### Soporte en Controller
+
+**Ubicación**: `backend/app/controllers/disponibilidad.controller.js`
+
+**Cambio clave**:
+```javascript
+static consultar = asyncHandler(async (req, res) => {
+  // Detectar si es request público o autenticado
+  const esPublico = !req.user;
+  const rol = esPublico ? 'cliente' : req.user.rol;
+
+  // Procesar servicios_ids (soporta array o número único)
+  let servicioIdFinal = null;
+  if (servicios_ids) {
+    servicioIdFinal = Array.isArray(servicios_ids)
+      ? parseInt(servicios_ids[0])
+      : parseInt(servicios_ids);
+  }
+  // ...
+});
+```
+
+### Transformación de Datos Frontend
+
+**Ubicación**: `frontend/src/hooks/useMarketplace.js` (líneas 214-269)
+
+**Problema**: Backend retorna estructura anidada, frontend espera estructura plana.
+
+**Backend retorna**:
+```javascript
+{
+  disponibilidad_por_fecha: [{
+    fecha: "2025-11-25",
+    profesionales: [{
+      profesional_id: 1,
+      slots: [{ hora: "09:00:00", disponible: true }]
+    }]
+  }]
+}
+```
+
+**Frontend necesita**:
+```javascript
+{
+  dias: [{
+    fecha: "2025-11-25",
+    slots_disponibles: [{ hora: "09:00", disponible: true }]
+  }]
+}
+```
+
+**Solución**: Hook `useDisponibilidadPublica` transforma automáticamente:
+```javascript
+export function useDisponibilidadPublica(organizacionId, params = {}) {
+  return useQuery({
+    queryKey: ['disponibilidad-publica', organizacionId, params],
+    queryFn: async () => {
+      const response = await marketplaceApi.consultarDisponibilidadPublica({
+        organizacion_id: organizacionId,
+        ...params
+      });
+
+      // Transformar respuesta
+      return {
+        ...backendData,
+        dias: backendData.disponibilidad_por_fecha?.map((fecha) => ({
+          fecha: fecha.fecha,
+          slots_disponibles: fecha.profesionales?.flatMap((prof) =>
+            prof.slots
+              ?.filter((slot) => slot.disponible)
+              .map((slot) => ({
+                hora: slot.hora.substring(0, 5), // "09:00:00" -> "09:00"
+                disponible: slot.disponible,
+                profesional_id: prof.profesional_id,
+              }))
+          ),
+        })),
+      };
+    },
+    enabled: !!organizacionId && !!params.fecha &&
+             Array.isArray(params.servicios_ids) && params.servicios_ids.length > 0,
+  });
+}
+```
+
+### Características Críticas
+
+✅ **RLS Seguro**: Usa bypass temporal pero solo para validar organización activa
+✅ **Rol cliente por defecto**: Requests públicos tienen permisos limitados
+✅ **Validación dual**: Schema Joi acepta tanto `servicios_ids` (array) como `servicio_id` (single)
+✅ **Limpieza automática**: Finally block garantiza que bypass RLS se desactiva
+✅ **Cache inteligente**: React Query con staleTime 30s para reducir llamadas
+
+### Troubleshooting
+
+**Error: "tenant.setTenantContextFromQuery is not a function"**
+- **Causa**: Middleware definido en tenant.js pero NO exportado en middleware/index.js
+- **Solución**: Agregar a exports en middleware/index.js línea 33
+
+**React Query no ejecuta**
+- **Causa**: `enabled` condition incorrecta (arrays vacíos son truthy)
+- **Solución**: Verificar longitud del array: `params.servicios_ids.length > 0`
+
+**Slots muestran "0 min"**
+- **Causa**: Backend puede retornar `duracion_minutos` o `duracion`
+- **Solución**: Verificar ambos campos en componente
 
 ---
 
@@ -443,23 +613,23 @@ historial_configuracion_comisiones  → Auditoría de cambios
 
 ---
 
-## 🛍️ Marketplace de Clientes (NUEVO - Nov 2025)
+## 🛍️ Marketplace de Clientes (Nov 2025)
 
-**Estado**: 🟡 **Backend Completo** (BD + API) | 📋 **Frontend Planificado**
+**Estado**: 🟢 **98% Completado** - Backend ✅ + Frontend ✅ (Todos los módulos funcionales)
 
 ### Funcionalidad
 
 **Directorio Público SEO-optimizado** para que negocios publiquen su perfil y capturen clientes:
-- Búsqueda por ciudad + categoría + rating
-- Perfil público con servicios, profesionales, reseñas, ubicación
-- Agendamiento público (sin registro previo - crea cliente automáticamente)
-- Sistema de reseñas 5 estrellas (solo clientes con cita `completada`)
-- Analytics GDPR-compliant (IPs hasheadas SHA256)
+- ✅ Búsqueda por ciudad + categoría + rating
+- ✅ Perfil público con servicios, profesionales, reseñas, ubicación
+- ✅ **Agendamiento público con verificación de disponibilidad en tiempo real** (sin registro previo - crea cliente automáticamente)
+- ✅ Sistema de reseñas 5 estrellas (solo clientes con cita `completada`)
+- ✅ Analytics GDPR-compliant (IPs hasheadas SHA256)
+- ✅ Panel Super Admin para gestión de perfiles marketplace
 
-### Backend Implementado
+### Backend ✅ (100% Completo)
 
 **15 Endpoints** (3 públicos + 12 privados):
-
 ```javascript
 // Públicos (sin auth)
 GET  /marketplace/perfiles/buscar              // Directorio con filtros
@@ -471,77 +641,108 @@ POST/PUT /marketplace/perfiles                 // CRUD perfil
 GET      /marketplace/perfiles/:id/estadisticas// Analytics del perfil
 POST     /marketplace/resenas                  // Crear reseña (cliente)
 POST/PATCH /marketplace/resenas/:id/...        // Responder/moderar (admin)
+
+// Super Admin (pendiente frontend)
+PATCH /marketplace/perfiles/:id/activar        // Activar/desactivar perfil
+DELETE /marketplace/analytics/limpiar          // Limpiar analytics antiguos
 ```
 
-**Arquitectura Modular:**
-```
-controllers/marketplace/  → 3 controllers (perfiles, resenas, analytics)
-database/marketplace/     → 3 models (perfiles, resenas, analytics)
-routes/api/v1/marketplace.js
-schemas/marketplace.schemas.js
-```
+**Arquitectura:** 3 controllers + 3 models + schemas Joi
 
-### Base de Datos
+### Frontend ✅ (98% Completado)
+
+**Plan detallado:** `docs/PLAN_FRONTEND_MARKETPLACE.md`
+
+**✅ Completado (5 de 5 flujos principales):**
+
+1. **Panel Admin** (100%)
+   - `MiMarketplacePage` - 3 tabs: Perfil, Reseñas, Analytics
+   - `PerfilFormulario` - CRUD con modo Vista/Edición
+   - `ListaReseñas` - Gestión de reseñas con respuestas y moderación
+   - `AnalyticsDashboard` - Métricas de visibilidad
+   - `CrearPerfilMarketplaceModal` - Wizard 3 pasos
+   - `MarketplaceActivationCard` - CTA en Dashboard
+
+2. **Directorio Público** (100%)
+   - `DirectorioMarketplacePage` (`/marketplace`) - Hero + búsqueda + filtros
+   - `DirectorioFiltros` - Sidebar sticky (ciudad, categoría, rating)
+   - `DirectorioGrid` - Grid responsivo + paginación
+   - `NegocioCard` - Tarjeta con imagen, rating, ubicación
+
+3. **Perfil Público** (100%)
+   - `PerfilPublicoPage` (`/:slug`) - Tabs: Servicios | Profesionales | Reseñas | Ubicación
+   - `SEOHead` - Meta tags (Open Graph + Schema.org LocalBusiness)
+   - `MapaUbicacion` - Google Maps embebido
+   - `ReseñasSection` + `ReseñaCard` - Lista pública de reseñas
+   - `ServicioCard` + `ProfesionalCard` - Tarjetas de servicios y profesionales
+
+4. **Agendamiento Público** (100%) 🆕
+   - `AgendarPublicoPage` (`/agendar/:slug`) - Stepper 4 pasos con validación
+   - `SelectorServiciosPublico` - Multi-selección con cálculo automático duración/precio
+   - `SelectorFechaHoraPublico` - **Verificación de disponibilidad en tiempo real** con grid de slots
+   - `FormularioClientePublico` - Captura datos para creación automática de cliente
+   - `ConfirmacionCitaPublico` - Resumen final y confirmación
+
+5. **Panel Super Admin Marketplace** (100%) 🆕
+   - `MarketplaceGestion.jsx` - Tabla con todos los perfiles (activos/inactivos)
+   - Activar/desactivar perfiles desde Super Admin
+   - Hook: `useSuperAdminMarketplace.js` con 3 queries
+
+**✅ Hooks y API:**
+- `useMarketplace.js` - **8 queries + 6 mutations** (incluye `useDisponibilidadPublica` y `useCrearCitaPublica`)
+- `useSuperAdminMarketplace.js` - 3 queries para gestión de perfiles
+- `marketplaceApi` - 17 endpoints implementados (incluye `consultarDisponibilidadPublica`)
+- Sanitización automática, invalidación de queries, manejo de errores
+
+**✅ Componentes Reutilizables (11):**
+- `EstrellaRating` - Sistema 5 estrellas (readonly + editable, medias estrellas)
+- `SEOHead`, `MapaUbicacion`, `NegocioCard`, `ReseñaCard`, `ServicioCard`, `ProfesionalCard`
+- `SelectorServiciosPublico`, `SelectorFechaHoraPublico`, `FormularioClientePublico`, `ConfirmacionCitaPublico`
+
+**⏳ Pendiente (2%):**
+1. **Multimedia con MinIO** - 6-8h (Opcional pero recomendado)
+   - MinIO S3-compatible storage (Docker)
+   - Backend: MinioService + upload middleware + controller
+   - Frontend: ImageUploader (react-dropzone) + GaleriaFotos
+   - Soporte: Logo (500x500), Portada (1920x600), Galería (6x 800x600)
+   - Procesamiento: Sharp (resize, compress, WebP conversion)
+
+### Base de Datos ✅
 
 **4 Tablas:**
-- `marketplace_perfiles` - Perfil público del negocio (slug único, meta SEO)
-- `marketplace_reseñas` - Reseñas de clientes (FK a citas completadas, 1 reseña por cita)
-- `marketplace_analytics` - Tracking eventos (6 tipos, IPs hasheadas)
-- `marketplace_categorias` - 10 categorías base (belleza, salud, fitness, etc.)
+- `marketplace_perfiles` - Perfil público (slug único, meta SEO)
+- `marketplace_reseñas` - Reseñas validadas (1 por cita completada)
+- `marketplace_analytics` - Tracking eventos (IPs hasheadas SHA256)
+- `marketplace_categorias` - 10 categorías base
 
-**24 Índices especializados:**
-- GIN full-text search en `meta_titulo`, `descripcion_corta`, `descripcion_larga`
-- GIN geográficos en `pais` + `ciudad`
-- Índices compuestos para búsquedas filtradas
-
-**8 Políticas RLS:**
-- Acceso público (`TO PUBLIC`) para búsqueda y perfiles
-- Políticas FOR ALL corregidas: `super_admin OR bypass_rls OR tenant_isolation`
-- Tracking anónimo sin autenticación
+**24 Índices especializados** - GIN full-text search + geográficos
+**8 Políticas RLS** - Acceso público + multi-tenant seguro
 
 ### Características Críticas
 
-✅ **SEO-Ready**: Meta tags, slugs únicos `{ciudad}-{timestamp36}`, Schema.org LocalBusiness
+✅ **SEO-Ready**: Meta tags, slugs únicos, Schema.org LocalBusiness
 ✅ **GDPR-Compliant**: IPs hasheadas en backend antes de almacenar
-✅ **Reseñas Validadas**: Solo clientes con cita `completada`, 1 reseña por cita (UNIQUE)
-✅ **Analytics Fire-and-Forget**: No bloquea respuestas, tracking asíncrono
+✅ **Reseñas Validadas**: Solo clientes con cita `completada`, 1 reseña por cita
+✅ **Analytics Fire-and-Forget**: Tracking asíncrono no bloqueante
 ✅ **Multi-tenant Seguro**: RLS isolation completo
-
-### Frontend (Planificado)
-
-**Plan detallado:** `docs/PLAN_FRONTEND_MARKETPLACE.md` (850 líneas)
-
-**6 Páginas:**
-- Públicas: DirectorioMarketplace, PerfilPublico, AgendarPublico
-- Privadas: MiMarketplace, Reseñas, Analytics (Chart.js)
-
-**15 Componentes específicos** + **7 UI reutilizables existentes**
-**10 Hooks TanStack Query** + API client extendido
-**Duración estimada:** 10-12 días (~88 horas)
 
 ### Archivos Críticos
 
 **Backend:**
-- `routes/api/v1/marketplace.js` - Router principal (15 endpoints)
-- `controllers/marketplace/` - 3 controllers modulares
+- `routes/api/v1/marketplace.js` - 15 endpoints
+- `controllers/marketplace/` - 3 controllers (perfiles, resenas, analytics)
 - `database/marketplace/` - 3 models con RLS
 - `schemas/marketplace.schemas.js` - 8 schemas Joi
 
-**SQL:**
-- `sql/marketplace/01-tablas.sql` - 4 tablas
-- `sql/marketplace/02-indices.sql` - 24 índices especializados
-- `sql/marketplace/03-rls-policies.sql` - 8 políticas (corregidas Nov 2025)
-- `sql/marketplace/04-funciones.sql` - 3 funciones PL/pgSQL
-- `sql/marketplace/05-triggers.sql` - 4 triggers automáticos
-- `sql/marketplace/06-datos-iniciales.sql` - 10 categorías base
+**Frontend:**
+- `pages/marketplace/` - 3 páginas (MiMarketplacePage, DirectorioMarketplacePage, PerfilPublicoPage)
+- `components/marketplace/` - 15 componentes (incluye wizard, formularios, cards, filtros)
+- `components/dashboard/MarketplaceActivationCard.jsx` - CTA activación
+- `hooks/useMarketplace.js` - 7 queries + 5 mutations
+- `services/api/endpoints.js` - marketplaceApi (15 endpoints)
 
-### Bugs Corregidos (Nov 2025)
-
-1. ✅ RLS Policy SELECT para FORCE RLS en `marketplace_analytics`
-2. ✅ Login intermitente (RLSHelper extendido con `withLoginEmail()`)
-3. ✅ RLS violation en `perfiles.crear()` (bypass para UPDATE organizaciones)
-4. ✅ UTF-8 encoding: rutas cambiadas de `/reseñas` a `/resenas`
-5. ✅ `perfiles.activar()` retorna null: políticas actualizadas con `super_admin OR bypass_rls`
+**Base de Datos:**
+- `sql/marketplace/` - 6 archivos (tablas, índices, RLS, funciones, triggers, datos iniciales)
 
 ---
 
@@ -593,6 +794,8 @@ schemas/marketplace.schemas.js
 7. **Reagendamiento** - SIEMPRE usar `excluir_cita_id` en `verificarDisponibilidad`
 8. **Variables docker-compose** - `FRONTEND_URL` DEBE estar en prod.yml y prod.local.yml
 9. **Marketplace Analytics** - Hash IPs en BACKEND antes de almacenar (SHA256)
+10. **Exports de middleware** - SIEMPRE exportar en `middleware/index.js` (ej: setTenantContextFromQuery)
+11. **API pública** - Usar `auth.optionalAuth` + middleware condicional basado en `req.user`
 
 ### Frontend
 1. **Sanitizar opcionales** - Joi rechaza `""`, usar `undefined`
@@ -634,12 +837,21 @@ schemas/marketplace.schemas.js
 - Dashboard con Chart.js + reportes CSV/JSON
 - **⚠️ NO usar `JSON.parse()`** en frontend: JSONB ya viene parseado
 
-### 7. Marketplace Público SEO-Optimizado
-- Directorio con búsqueda por ciudad + categoría + rating
-- Perfiles públicos con slug único `{ciudad}-{timestamp36}`
-- Agendamiento público sin registro (crea cliente automáticamente)
-- Sistema de reseñas validadas (solo citas completadas)
-- Analytics GDPR-compliant con IPs hasheadas SHA256
+### 7. Marketplace Público SEO-Optimizado (98% Completo)
+- ✅ Directorio con búsqueda por ciudad + categoría + rating
+- ✅ Perfiles públicos con slug único `{ciudad}-{timestamp36}`
+- ✅ Sistema de reseñas validadas (solo citas completadas)
+- ✅ Analytics GDPR-compliant con IPs hasheadas SHA256
+- ✅ Panel Admin completo (CRUD perfil, gestión reseñas, analytics)
+- ✅ Panel Super Admin para activar/desactivar perfiles
+- ✅ **Agendamiento público con disponibilidad en tiempo real** (sin autenticación)
+
+### 8. API Pública con Contexto Multi-Tenant (Nov 2025)
+- Middleware `setTenantContextFromQuery` para requests sin autenticación
+- Patrón de middleware condicional basado en `req.user`
+- Transformación automática de datos backend ↔ frontend
+- Soporte dual para `servicios_ids` (array) y `servicio_id` (single)
+- Cache inteligente con React Query (staleTime 30s)
 
 ---
 
@@ -675,12 +887,27 @@ schemas/marketplace.schemas.js
 - `schemas/comisiones.schemas.js` - 8 schemas Joi con validaciones
 - **`sql/schema/02-functions.sql`** - Trigger `calcular_comision_cita()` (línea 824)
 
-### Backend - Marketplace
-- **`routes/api/v1/marketplace.js`** - 15 endpoints (3 públicos + 12 privados)
+### Backend - Middleware y API Pública (Nov 2025)
+- **`middleware/tenant.js`** - **setTenantContextFromQuery** (líneas 459-537) para API pública
+- **`middleware/index.js`** - ⚠️ CRÍTICO: Exportar setTenantContextFromQuery (línea 33)
+- **`routes/api/v1/disponibilidad.js`** - Middleware condicional (auth.optionalAuth)
+- **`controllers/disponibilidad.controller.js`** - Soporte requests públicos (esPublico flag)
+- **`schemas/disponibilidad.schemas.js`** - Validación dual servicios_ids/servicio_id
+
+### Backend - Marketplace (100%)
+- **`routes/api/v1/marketplace.js`** - 17 endpoints (3 públicos + 12 privados + 2 super admin)
 - `controllers/marketplace/` - 3 controllers (perfiles, resenas, analytics)
 - `database/marketplace/` - 3 models con RLS
 - `schemas/marketplace.schemas.js` - 8 schemas Joi
-- **`utils/rlsHelper.js`** - Extendido con `withLoginEmail()` (Nov 2025)
+
+### Frontend - Marketplace (98%)
+- `pages/marketplace/` - 4 páginas (MiMarketplacePage, DirectorioMarketplacePage, PerfilPublicoPage, **AgendarPublicoPage**)
+- `components/marketplace/agendamiento/` - **4 componentes stepper** (SelectorServiciosPublico, **SelectorFechaHoraPublico**, FormularioClientePublico, ConfirmacionCitaPublico)
+- `components/marketplace/` - 15+ componentes (wizard, formularios, cards, filtros)
+- `components/dashboard/MarketplaceActivationCard.jsx` - CTA activación
+- **`hooks/useMarketplace.js`** - **8 queries + 6 mutations** (incluye **useDisponibilidadPublica** con transformación de datos)
+- **`hooks/useSuperAdminMarketplace.js`** - 3 queries para panel super admin
+- `pages/superadmin/MarketplaceGestion.jsx` - Panel Super Admin marketplace
 
 ### Frontend - Componentes Clave
 - `components/dashboard/SetupChecklist.jsx` - Guía configuración inicial
@@ -724,8 +951,35 @@ schemas/marketplace.schemas.js
 **Causa**: IPs no hasheadas o falta política SELECT en `marketplace_analytics`
 **Solución**: Hash SHA256 en backend + agregar política SELECT pública para FORCE RLS
 
+### API Pública - "tenant.setTenantContextFromQuery is not a function"
+**Causa**: Middleware definido en tenant.js pero NO exportado en middleware/index.js
+**Solución**: Agregar export en middleware/index.js línea 33
+**⚠️ MUY IMPORTANTE**: Siempre reiniciar contenedor backend después de modificar exports
+
+### API Pública - React Query no ejecuta
+**Causa**: Condition `enabled` incorrecta (arrays vacíos son truthy en JS)
+**Solución**: Verificar longitud: `Array.isArray(params.servicios_ids) && params.servicios_ids.length > 0`
+
+### Disponibilidad Pública - Slots muestran "0 min"
+**Causa**: Backend puede retornar `duracion_minutos` (nuevo) o `duracion` (legacy)
+**Solución**: Verificar ambos campos: `servicio.duracion_minutos || servicio.duracion`
+
 ---
 
-**Versión**: 19.0 - **Marketplace Backend Completo**
-**Última actualización**: 18 Noviembre 2025
-**Estado**: ✅ Production Ready + Marketplace BD/API + Frontend Planificado
+**Versión**: 21.0 - **Marketplace 98% Completado**
+**Última actualización**: 18 Noviembre 2025 (Sesión 2)
+**Estado**: ✅ Production Ready + Marketplace Completo (Backend + Frontend + API Pública)
+
+**Cambios en esta sesión:**
+- ✅ Implementado agendamiento público con disponibilidad en tiempo real
+- ✅ Middleware `setTenantContextFromQuery` para API pública sin autenticación
+- ✅ Patrón de middleware condicional (auth.optionalAuth)
+- ✅ Transformación automática de datos backend ↔ frontend
+- ✅ Verificado Panel Super Admin Marketplace (ya existía)
+
+**Pendiente (2% restante):**
+- ⏳ Multimedia con MinIO (6-8h) - Logo, Portada, Galería 6 imágenes
+  - Docker: MinIO + auto-init bucket
+  - Backend: MinioService + upload middleware + controller
+  - Frontend: ImageUploader (react-dropzone) + GaleriaFotos
+  - Processing: Sharp (resize, compress, WebP)
