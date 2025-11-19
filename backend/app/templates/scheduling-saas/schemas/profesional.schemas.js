@@ -1,6 +1,6 @@
 const Joi = require('joi');
-const { commonSchemas } = require('../middleware/validation');
-const { FORMAS_PAGO, LIMITES } = require('../templates/scheduling-saas/constants/profesionales.constants');
+const { commonSchemas } = require('../../../middleware/validation');
+const { FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
 
 // POST /profesionales
 const crear = {
