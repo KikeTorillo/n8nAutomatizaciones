@@ -1,8 +1,8 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
 **Fecha de creación:** 19 Noviembre 2025
-**Última actualización:** 19 Noviembre 2025 (Niveles 1-2 completados y validados)
-**Estado:** 🟢 Operativo - Refactor Incremental (Backend funcionando correctamente)
+**Última actualización:** 19 Noviembre 2025 - 21:35 UTC (Nivel 4 en progreso: 3/12 schemas)
+**Estado:** 🟢 Operativo - Refactor Incremental en ejecución
 
 ---
 
@@ -14,27 +14,31 @@
 - Nomenclatura consistente: `categoria_id`, `configuracion_categoria`
 - PostgreSQL con pg_cron funcionando correctamente
 
-### ✅ Backend (Refactor Incremental - Funcionando)
+### ✅ Backend - Refactor en Progreso
 
-**Nivel 1 - Utils:** ✅ Completado y Validado
-- `cita-validacion.util.js` → `templates/scheduling-saas/utils/`
-- 6 imports actualizados y funcionando:
-  - `bloqueos-horarios.model.js`
-  - `disponibilidad.model.js`
-  - `cita.helpers.model.js`
-  - Tests relacionados (3 archivos)
-- Backend arrancando correctamente
-- Tests pasando
+**Completado:**
+- ✅ Nivel 1: Utils (1 archivo)
+- ✅ Nivel 2: Constants (1 archivo)
+- ❌ Nivel 3: OMITIDO (archivos no existen)
+- 🔄 Nivel 4: Schemas (3/12 completados)
 
-**Nivel 2 - Constants:** ✅ Completado y Validado
-- `profesionales.constants.js` → `templates/scheduling-saas/constants/`
-- 1 import actualizado y funcionando:
-  - `profesional.schemas.js`
-- Backend arrancando correctamente
-- Tests pasando (25/25 profesionales)
+**Schemas movidos:**
+- ✅ `tipos-bloqueo.schemas.js`
+- ✅ `tipos-profesional.schemas.js`
+- ✅ `disponibilidad.schemas.js`
 
-**Tests:** 562/630 pasando (89.2%)
-**Backend Status:** ✅ Healthy (todas las conexiones de BD funcionando)
+**Schemas pendientes (9):**
+- `bloqueos-horarios.schemas.js` (6.9K)
+- `cliente.schemas.js` (9.9K)
+- `chatbot.schemas.js` (11K)
+- `profesional.schemas.js` (12K)
+- `servicio.schemas.js` (12K)
+- `comisiones.schemas.js` (12K)
+- `horario-profesional.schemas.js` (13K)
+- `cita.schemas.js` (17K) ⚠️
+- `marketplace.schemas.js` (17K) ⚠️
+
+**Estado:** Backend ✅ Healthy | Tests: 562/630 (89.2%)
 
 ### 🎯 Objetivo
 
@@ -142,10 +146,18 @@ backend/app/
 **Evaluación:** Constantes inline tienen duplicación mínima (2-3 repeticiones) que no justifica extracción.
 **Acción:** Saltar directo a Nivel 4.
 
-### Nivel 4 - Schemas (PRÓXIMO)
-- [ ] Mover 9 schemas específicos → `templates/scheduling-saas/schemas/`
-- [ ] Actualizar imports en controllers (estimar 11 archivos)
-- [ ] Validar con tests
+### Nivel 4 - Schemas (🔄 EN PROGRESO - 3/12)
+
+**Patrón validado:**
+1. Buscar imports: `grep -rn "NOMBRE.schemas" backend/app/routes/`
+2. Mover archivo a `templates/scheduling-saas/schemas/`
+3. Actualizar import en route: `../../../schemas/` → `../../../templates/scheduling-saas/schemas/`
+4. **CRÍTICO:** Actualizar imports internos del schema: `../middleware/` → `../../../middleware/`
+5. Reiniciar backend: `docker restart back && sleep 20`
+6. Verificar healthy: `docker ps | grep back`
+7. Commit individual
+
+**⚠️ Lección clave:** Los schemas importan `../middleware/validation` que debe actualizarse desde su nueva ubicación.
 
 ### Nivel 5 - Routes
 - [ ] Mover 11 routes específicas → `templates/scheduling-saas/routes/api/v1/`
@@ -226,19 +238,18 @@ docker exec back npm test -- profesionales
 
 ## 📈 Resumen de Progreso
 
-**Última actualización:** 19 Noviembre 2025 (Niveles 1-2 completados, Nivel 3 omitido)
-**Progreso:** 2/7 niveles completados (29%) - Nivel 3 eliminado del plan
+**Progreso:** ~30% del refactor total | **Backend:** ✅ Operativo
 
-| Nivel | Componente | Estado | Tests | Imports |
-|-------|-----------|---------|-------|---------|
-| 1 | Utils | ✅ Completado | ✅ Pasando | 6 actualizados |
-| 2 | Constants | ✅ Completado | ✅ Pasando | 1 actualizado |
-| 3 | Constants adicionales | ❌ Omitido | N/A | Archivos no existen |
-| 4 | Schemas | ⏳ Próximo | - | ~15-20 estimados |
-| 5 | Routes | ⏳ Pendiente | - | 11 estimados |
-| 6 | Controllers | ⏳ Pendiente | - | ~20-25 estimados |
-| 7 | Models | ⏳ Pendiente | - | ~30-40 estimados |
-| 8 | Módulos Ambiguos | ⏳ Pendiente | - | Por determinar |
+| Nivel | Estado | Archivos |
+|-------|--------|----------|
+| 1. Utils | ✅ Completado | 1/1 |
+| 2. Constants | ✅ Completado | 1/1 |
+| 3. Constants | ❌ Omitido | N/A |
+| 4. Schemas | 🔄 En Progreso | 3/12 (25%) |
+| 5. Routes | ⏳ Pendiente | 0/11 |
+| 6. Controllers | ⏳ Pendiente | 0/17 |
+| 7. Models | ⏳ Pendiente | 0/17 |
+| 8. Ambiguos | ⏳ Pendiente | 0/5 |
 
 **Estado del Sistema:**
 - Backend: ✅ Healthy y operativo
@@ -248,42 +259,17 @@ docker exec back npm test -- profesionales
 
 ---
 
-## 📝 Lecciones Aprendidas (Niveles 1-2)
+## 📝 Lecciones Críticas
 
-### ✅ Buenas Prácticas Validadas
-1. **Refactor incremental por niveles** - Permite validar cada cambio
-2. **Ejecutar tests después de cada nivel** - Detecta problemas temprano
-3. **Verificar imports con búsqueda global** - `grep -r "archivo.js"` antes de mover
-4. **Backend debe arrancar sin errores** - Validación crítica de imports
-5. **Docker restart tras cambios** - Asegura que imports se cargan correctamente
+### ✅ Patrón de Movimiento Validado
+1. `grep -rn "archivo.js" backend/app/` → Encontrar TODOS los imports
+2. `mv` archivo a `templates/scheduling-saas/`
+3. Actualizar imports en routes/controllers
+4. **CRÍTICO:** Actualizar imports internos del archivo movido
+5. `docker restart back && sleep 20` → Verificar healthy
+6. Commit individual con mensaje descriptivo
 
-### ⚠️ Problemas Comunes y Soluciones
-1. **Timing de PostgreSQL al arranque**
-   - Problema: Backend intenta conectar antes de que PostgreSQL esté listo
-   - Solución: `docker restart back` tras levantar stack
-
-2. **Tests fallan por imports rotos**
-   - Problema: No actualizar todos los archivos que importan el módulo movido
-   - Solución: Usar `grep` para encontrar TODOS los imports antes de mover
-
-3. **Archivos eliminados vs movidos en git**
-   - Problema: `git status` muestra archivos como "borrados" en lugar de "movidos"
-   - Solución: Normal, Git detecta el movimiento al hacer commit
-
-### 🎯 Recomendaciones para Próximos Niveles
-
-**Antes de mover archivos:**
-1. ✅ Ejecutar `grep -r "nombre-archivo.js" backend/app/`
-2. ✅ Listar todos los archivos que tienen imports
-3. ✅ Planificar actualización de imports
-4. ✅ Mover archivo a nueva ubicación
-5. ✅ Actualizar todos los imports encontrados
-6. ✅ Reiniciar backend: `docker restart back`
-7. ✅ Verificar que arranca sin errores
-8. ✅ Ejecutar tests: `docker exec back npm test`
-
-**Orden recomendado para próximos niveles:**
-- Nivel 3 (Constants) → Impacto bajo, 2-3 archivos
-- Nivel 4 (Schemas) → Impacto medio, ~11 archivos
-- Nivel 5 (Routes) → Impacto alto, requiere actualizar server.js
-- Niveles 6-7 (Controllers/Models) → Impacto muy alto, muchos imports cruzados
+### ⚠️ Trampas Comunes
+- **Schemas importan `../middleware/validation`** → Debe ser `../../../middleware/validation`
+- Git muestra "borrados" pero detecta rename al commit → Normal
+- Backend tarda ~20s en arrancar → Esperar antes de verificar
