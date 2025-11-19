@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { auth, tenant, rateLimiting, validation } = require('../../../middleware');
-const BloqueosHorariosController = require('../../../controllers/bloqueos-horarios.controller');
-const schemas = require('../../../templates/scheduling-saas/schemas/bloqueos-horarios.schemas');
+const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
+const BloqueosHorariosController = require('../../../../../controllers/bloqueos-horarios.controller');
+const schemas = require('../../schemas/bloqueos-horarios.schemas');
 
 const { validate, handleValidation } = validation;
 
