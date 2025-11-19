@@ -11,7 +11,7 @@
  */
 
 const express = require('express');
-const ChatbotController = require('../../../../../controllers/chatbot.controller');
+const ChatbotController = require('../../../controllers/chatbot.controller');
 const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
 const chatbotSchemas = require('../../../schemas/chatbot.schemas');
 

@@ -12,18 +12,18 @@
  * @module controllers/chatbot.controller
  */
 
-const ChatbotConfigModel = require('../database/chatbot-config.model');
-const OrganizacionModel = require('../database/organizacion.model');
-const N8nService = require('../services/n8nService');
-const N8nCredentialService = require('../services/n8nCredentialService');
-const N8nGlobalCredentialsService = require('../services/n8nGlobalCredentialsService');
-const N8nMcpCredentialsService = require('../services/n8nMcpCredentialsService');
-const TelegramValidator = require('../services/platformValidators/telegramValidator');
-const WhatsAppValidator = require('../services/platformValidators/whatsAppValidator');
-const { generarTokenMCP } = require('../utils/mcpTokenGenerator');
-const { asyncHandler } = require('../middleware');
-const { ResponseHelper } = require('../utils/helpers');
-const logger = require('../utils/logger');
+const ChatbotConfigModel = require('../../../database/chatbot-config.model');
+const OrganizacionModel = require('../../../database/organizacion.model');
+const N8nService = require('../../../services/n8nService');
+const N8nCredentialService = require('../../../services/n8nCredentialService');
+const N8nGlobalCredentialsService = require('../../../services/n8nGlobalCredentialsService');
+const N8nMcpCredentialsService = require('../../../services/n8nMcpCredentialsService');
+const TelegramValidator = require('../../../services/platformValidators/telegramValidator');
+const WhatsAppValidator = require('../../../services/platformValidators/whatsAppValidator');
+const { generarTokenMCP } = require('../../../utils/mcpTokenGenerator');
+const { asyncHandler } = require('../../../middleware');
+const { ResponseHelper } = require('../../../utils/helpers');
+const logger = require('../../../utils/logger');
 
 class ChatbotController {
 
@@ -1266,7 +1266,7 @@ El cliente solo necesita información legible y amigable.`;
             const platformConfig = require(`../flows/generator/${plataformaNormalizada}.config.js`);
 
             // 5. Generar workflow usando el generador dinámico
-            const { generarWorkflow } = require('../flows/generator/workflowGenerator.js');
+            const { generarWorkflow } = require('../../../flows/generator/workflowGenerator.js');
 
             const workflow = generarWorkflow({
                 nombre,
