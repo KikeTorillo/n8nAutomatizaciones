@@ -21,9 +21,9 @@ const {
     PerfilesMarketplaceController,
     ReseñasMarketplaceController,
     AnalyticsMarketplaceController
-} = require('../../../controllers/marketplace');
-const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
-const marketplaceSchemas = require('../../../templates/scheduling-saas/schemas/marketplace.schemas');
+} = require('../../../../../controllers/marketplace');
+const { auth, tenant, rateLimiting, validation, subscription } = require('../../../../../middleware');
+const marketplaceSchemas = require('../../schemas/marketplace.schemas');
 
 const router = express.Router();
 const validate = validation.validate;

@@ -21,7 +21,7 @@ const webhooksRouter = require('./webhooks');
 const subscripcionesRouter = require('./subscripciones');
 const mercadopagoRouter = require('./mercadopago');
 const comisionesRouter = require('../../templates/scheduling-saas/routes/api/v1/comisiones');
-const marketplaceRouter = require('./marketplace');
+const marketplaceRouter = require('../../templates/scheduling-saas/routes/api/v1/marketplace');
 
 function routerApi(app) {
     const router = express.Router();
