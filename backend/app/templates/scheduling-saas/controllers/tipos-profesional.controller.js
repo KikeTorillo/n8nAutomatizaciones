@@ -1,6 +1,6 @@
-const TiposProfesionalModel = require('../database/tipos-profesional.model');
-const { ResponseHelper } = require('../utils/helpers');
-const { asyncHandler } = require('../middleware');
+const TiposProfesionalModel = require('../../../database/tipos-profesional.model');
+const { ResponseHelper } = require('../../../utils/helpers');
+const { asyncHandler } = require('../../../middleware');
 
 class TiposProfesionalController {
 

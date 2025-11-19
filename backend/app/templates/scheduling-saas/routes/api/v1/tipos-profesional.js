@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const TiposProfesionalController = require('../../../../../controllers/tipos-profesional.controller');
+const TiposProfesionalController = require('../../../controllers/tipos-profesional.controller');
 const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
 const tiposProfesionalSchemas = require('../../../schemas/tipos-profesional.schemas');
 
