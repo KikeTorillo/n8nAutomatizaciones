@@ -7,7 +7,7 @@
  */
 
 const express = require('express');
-const DisponibilidadController = require('../../../../../controllers/disponibilidad.controller');
+const DisponibilidadController = require('../../../controllers/disponibilidad.controller');
 const { auth, tenant, rateLimiting, validation } = require('../../../../../middleware');
 const disponibilidadSchemas = require('../../../schemas/disponibilidad.schemas');
 
