@@ -374,7 +374,7 @@ describe('✨ Auto-generación de codigo_cita', () => {
 
   describe('Integración con modelo CitaBaseModel', () => {
     test('CitaBaseModel.crearEstandar NO envía codigo_cita', async () => {
-      const CitaModel = require('../../database/citas/cita.base.model');
+      const CitaModel = require('../../models/citas/cita.base.model');
 
       const citaData = {
         organizacion_id: org1.id,

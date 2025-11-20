@@ -18,11 +18,11 @@ const {
   createTestUsuario
 } = require('../helpers/db-helper');
 
-const OrganizacionModel = require('../../database/organizacion.model');
-const UsuarioModel = require('../../database/usuario.model');
-const ClienteModel = require('../../database/cliente.model');
-const ProfesionalModel = require('../../database/profesional.model');
-const ServicioModel = require('../../database/servicio.model');
+const OrganizacionModel = require('../../models/organizacion.model');
+const UsuarioModel = require('../../models/usuario.model');
+const ClienteModel = require('../../models/cliente.model');
+const ProfesionalModel = require('../../models/profesional.model');
+const ServicioModel = require('../../models/servicio.model');
 
 describe('📦 Modelos CRUD Básicos', () => {
   let client;

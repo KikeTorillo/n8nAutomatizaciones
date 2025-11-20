@@ -21,8 +21,8 @@
  * @see backend/app/database/disponibilidad.model.js:344
  */
 
-const { CitaHelpersModel } = require('../../database/citas/cita.helpers.model');
-const DisponibilidadModel = require('../../database/disponibilidad.model');
+const { CitaHelpersModel } = require('../../models/citas/cita.helpers.model');
+const DisponibilidadModel = require('../../models/disponibilidad.model');
 const CitaValidacionUtil = require('../../templates/scheduling-saas/utils/cita-validacion.util');
 const RLSContextManager = require('../../utils/rlsContextManager');
 const {

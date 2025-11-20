@@ -1,6 +1,6 @@
 // Controller de Organizaciones - Gestión CRUD para tenants
 
-const { OrganizacionModel, UsuarioModel } = require('../database');
+const { OrganizacionModel, UsuarioModel } = require('../models');
 const { ResponseHelper } = require('../utils/helpers');
 const { asyncHandler } = require('../middleware');
 const authConfig = require('../config/auth');

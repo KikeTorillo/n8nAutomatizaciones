@@ -1,4 +1,4 @@
-const PlanModel = require('../database/planes.model');
+const PlanModel = require('../models/planes.model');
 const asyncHandler = require('../middleware/asyncHandler');
 const { ResponseHelper } = require('../utils/helpers');
 

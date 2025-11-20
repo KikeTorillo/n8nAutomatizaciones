@@ -14,7 +14,7 @@
  */
 
 const jwt = require('jsonwebtoken');
-const pool = require('../database/db');
+const pool = require('../config/database');
 const logger = require('../utils/logger');
 
 /**

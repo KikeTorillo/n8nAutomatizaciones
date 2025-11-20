@@ -8,7 +8,7 @@
 
 const mercadopagoService = require('../services/mercadopago.service');
 const mercadopagoApi = require('../services/mercadopago.service');
-const SubscripcionModel = require('../database/subscripcion.model');
+const SubscripcionModel = require('../models/subscripcion.model');
 const { ResponseHelper, ValidationHelper } = require('../utils/helpers');
 const logger = require('../utils/logger');
 const RLSContextManager = require('../utils/rlsContextManager');

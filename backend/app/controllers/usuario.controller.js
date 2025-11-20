@@ -1,4 +1,4 @@
-const UsuarioModel = require('../database/usuario.model');
+const UsuarioModel = require('../models/usuario.model');
 const { ResponseHelper } = require('../utils/helpers');
 const { asyncHandler } = require('../middleware');
 

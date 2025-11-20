@@ -4,7 +4,7 @@
  * @version 3.0.0 - Migrado a asyncHandler
  */
 
-const UsuarioModel = require('../database/usuario.model');
+const UsuarioModel = require('../models/usuario.model');
 const jwt = require('jsonwebtoken');
 const { addToTokenBlacklist } = require('../middleware/auth');
 const { ResponseHelper } = require('../utils/helpers');
