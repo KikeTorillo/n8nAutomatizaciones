@@ -1,6 +1,6 @@
-const { ReseñasMarketplaceModel } = require('../../database/marketplace');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const { ReseñasMarketplaceModel } = require('../../../../database/marketplace');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 /**
  * ====================================================================

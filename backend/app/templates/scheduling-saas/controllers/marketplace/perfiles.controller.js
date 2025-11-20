@@ -1,6 +1,6 @@
-const { PerfilesMarketplaceModel } = require('../../database/marketplace');
-const { ResponseHelper } = require('../../utils/helpers');
-const { asyncHandler } = require('../../middleware');
+const { PerfilesMarketplaceModel } = require('../../../../database/marketplace');
+const { ResponseHelper } = require('../../../../utils/helpers');
+const { asyncHandler } = require('../../../../middleware');
 
 /**
  * ====================================================================

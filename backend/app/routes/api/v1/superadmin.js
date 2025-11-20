@@ -7,7 +7,7 @@
 
 const express = require('express');
 const SuperAdminController = require('../../../controllers/superadmin.controller');
-const { PerfilesMarketplaceController } = require('../../../controllers/marketplace');
+const { PerfilesMarketplaceController } = require('../../../templates/scheduling-saas/controllers/marketplace');
 const { auth, rateLimiting, validation } = require('../../../middleware');
 const marketplaceSchemas = require('../../../templates/scheduling-saas/schemas/marketplace.schemas');
 
