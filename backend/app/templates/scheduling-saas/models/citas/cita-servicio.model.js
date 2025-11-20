@@ -27,8 +27,8 @@
  * ====================================================================
  */
 
-const RLSContextManager = require('../../utils/rlsContextManager');
-const { DatabaseError } = require('../../utils/helpers');
+const RLSContextManager = require('../../../../utils/rlsContextManager');
+const { DatabaseError } = require('../../../../utils/helpers');
 
 class CitaServicioModel {
     /**

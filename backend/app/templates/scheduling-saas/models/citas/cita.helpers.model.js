@@ -1,5 +1,5 @@
-const logger = require('../../utils/logger');
-const CitaValidacionUtil = require('../../templates/scheduling-saas/utils/cita-validacion.util');
+const logger = require('../../../../utils/logger');
+const CitaValidacionUtil = require('../../utils/cita-validacion.util');
 
 const DEFAULTS = {
     ZONA_HORARIA: 'America/Mexico_City',

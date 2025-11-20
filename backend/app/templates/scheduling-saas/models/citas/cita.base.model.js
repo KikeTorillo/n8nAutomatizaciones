@@ -1,7 +1,7 @@
-const { getDb } = require('../../config/database');
-const logger = require('../../utils/logger');
+const { getDb } = require('../../../../config/database');
+const logger = require('../../../../utils/logger');
 const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
-const RLSContextManager = require('../../utils/rlsContextManager');
+const RLSContextManager = require('../../../../utils/rlsContextManager');
 // ✅ FIX GAP #5: Importar CitaServicioQueries para evitar N+1 en listarConFiltros
 const CitaServicioQueries = require('./cita-servicio.queries');
 

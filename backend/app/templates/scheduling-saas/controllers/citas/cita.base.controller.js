@@ -1,4 +1,4 @@
-const CitaModel = require('../../../../database/citas');
+const CitaModel = require('../../models/citas');
 const ClienteModel = require('../../models/cliente.model');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
