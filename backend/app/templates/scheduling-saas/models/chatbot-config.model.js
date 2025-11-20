@@ -7,7 +7,7 @@
  * @module database/chatbot-config.model
  */
 
-const RLSContextManager = require('../utils/rlsContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 class ChatbotConfigModel {
 

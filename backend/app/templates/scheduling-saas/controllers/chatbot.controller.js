@@ -12,7 +12,7 @@
  * @module controllers/chatbot.controller
  */
 
-const ChatbotConfigModel = require('../../../database/chatbot-config.model');
+const ChatbotConfigModel = require('../models/chatbot-config.model');
 const OrganizacionModel = require('../../../database/organizacion.model');
 const N8nService = require('../../../services/n8nService');
 const N8nCredentialService = require('../../../services/n8nCredentialService');
