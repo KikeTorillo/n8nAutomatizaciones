@@ -1,4 +1,4 @@
-const ProfesionalModel = require('../../../database/profesional.model');
+const ProfesionalModel = require('../models/profesional.model');
 const { ResponseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const logger = require('../../../utils/logger');
