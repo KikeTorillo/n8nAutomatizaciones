@@ -1,31 +1,25 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
-**Última actualización:** 19 Noviembre 2025 - 22:05 CST
-**Estado:** ✅ Nivel 8.1 COMPLETADO - Nomenclatura consistente (87% del refactor total)
+**Última actualización:** 19 Noviembre 2025 - 23:30 CST
+**Estado:** ✅ Nivel 8.1 COMPLETADO | ⏳ Nivel 8.2 en progreso (3 módulos pendientes)
 
 ---
 
 ## 🎯 Objetivo
 
-Separar código **CORE** (reutilizable) de código **TEMPLATE** (específico de agendamiento) mediante refactor incremental.
+Separar código **CORE** (reutilizable) de código **TEMPLATE** (específico de agendamiento).
 
 ---
 
 ## 📊 Progreso Global
 
-| Nivel | Archivos | Estado |
-|-------|----------|--------|
-| 1. Utils | 1/1 | ✅ Completado |
-| 2. Constants | 1/1 | ✅ Completado |
-| 3. Constants | N/A | ❌ Omitido (no existen) |
-| 4. Schemas | 12/12 | ✅ Completado |
-| 5. Routes | 12/12 | ✅ Completado |
-| 6. Controllers | 12/12 | ✅ Completado |
-| 7. Models | 10/10 | ✅ Completado |
-| 8.1 Nomenclatura | 15 archivos | ✅ Completado |
-| 8.2 Módulos Ambiguos | 0/4 | ⏳ Pendiente |
+| Nivel | Descripción | Estado |
+|-------|-------------|--------|
+| 1-7 | Utils, Constants, Schemas, Routes, Controllers, Models | ✅ Completado (71 archivos migrados) |
+| 8.1 | Nomenclatura `database/` → `models/` | ✅ Completado (15 archivos) |
+| 8.2 | Módulos ambiguos | ⏳ **0/3 pendientes** |
 
-**Sistema:** Backend ✅ Healthy | Tests: 561/630 (89.0%) | Docker: 8 contenedores operativos
+**Sistema:** ✅ Backend healthy | ⚠️ Tests: 534/600 passing (89%) - 66 failing | 🐳 8 contenedores up
 
 ---
 
@@ -33,185 +27,113 @@ Separar código **CORE** (reutilizable) de código **TEMPLATE** (específico de 
 
 ```
 backend/app/
-├── [CORE - Universal]
-│   ├── middleware/        # Auth, tenant, validation, rateLimit
-│   ├── utils/             # rlsContextManager, helpers, passwordHelper
-│   ├── services/          # Mercado Pago, email, n8n
-│   ├── schemas/           # auth, organizacion, pagos, usuario (4)
-│   ├── controllers/       # auth, usuario, plan, superadmin, webhook, pagos (8)
-│   └── models/            # organizacion, usuario, plan, subscripcion, pago (5) ✅ Renombrado
+├── [CORE] 6 middleware, 3 utils, 9 services, 4 schemas, 8 controllers, 5 models
+│   ⚠️ 3 módulos con lógica de agendamiento (ver Nivel 8.2)
 │
-└── templates/scheduling-saas/   ✅ Migración completa
-    ├── utils/                   # cita-validacion.util.js
-    ├── constants/               # profesionales.constants.js
-    ├── schemas/                 # 12 schemas
-    ├── routes/api/v1/           # 12 routes
-    ├── controllers/             # 12 controllers (9 + 3 carpetas modulares)
-    └── models/                  # 10 models (7 + 3 carpetas modulares)
+└── [TEMPLATE] 71 archivos migrados ✅
+    1 util, 1 constant, 12 schemas, 12 routes, 12 controllers, 10 models
+    ✅ chatbot.controller.js (1,292 líneas - migrado)
 ```
 
-**CORE permanece (mínimo universal):**
-- 6 middleware, 3 utils, 9 services, 4 schemas, 8 controllers, 5 models
-
-**TEMPLATE migrado (100% agendamiento):**
-- 1 util, 1 constant, 12 schemas, 12 routes, 12 controllers, 10 models
-
 ---
 
-## ✅ Nivel 8.1 - Nomenclatura Consistente (Completado)
+## 🚨 ACCIÓN INMEDIATA: Resolver Tests Fallando
 
-**Objetivo:** Alinear nomenclatura entre CORE y TEMPLATE
+**Problema:** 66 tests fallando (11% del total) post-migración
 
-**Cambios realizados:**
-- Renombrado: `backend/app/database/` → `backend/app/models/`
-- Actualizados: 15 archivos (6 productivos + 8 tests + 1 fix)
-- **Bonus fix:** `generate-mcp-token.js` ahora importa pool desde `config/database`
+```bash
+# Ejecutar con detalle
+docker exec back npm test -- --verbose --detectOpenHandles
 
-**Resultado:**
-```
-✅ backend/app/models/              # CORE models
-✅ templates/.../models/            # TEMPLATE models
+# Filtrar errores comunes
+docker exec back npm test 2>&1 | grep -E "Cannot find module|FAIL"
 ```
 
-**Commit:** `24f5385` - refactor(nivel-8.1): Renombrar database/ → models/ para consistencia
+**Causa probable:** Imports no actualizados tras migración `database/` → `models/`
+
+**Prioridad:** 🔴 **CRÍTICA** - Bloquea validación del refactor
 
 ---
 
-## ⚠️ Nivel 8.2 - Módulos Ambiguos (Pendientes)
+## ⏳ Nivel 8.2 - Módulos Ambiguos (3 Pendientes)
 
-Archivos CORE con lógica específica de agendamiento que requieren refactor:
+| # | Módulo | Problema | Solución | Effort |
+|---|--------|----------|----------|--------|
+| 1 | `middleware/subscription.js` | Límites hardcodeados: `profesionales`, `servicios`, `citas_mes` | Crear `config/planLimits.config.js` con mapping configurable | 3-4h |
+| 2 | `models/organizacion.model.js` | `obtenerProgresoSetup()` consulta tablas de template | Extraer a `templates/.../models/setup-progress.model.js` + Strategy pattern | 2-3h |
+| 3 | `services/n8nMcpCredentialsService.js` | System prompt específico de agendamiento | Mover a `templates/.../services/` | 30min |
 
-| Módulo | Problema | Acción Requerida |
-|--------|----------|------------------|
-| `middleware/subscription.js` | Valida límites hardcodeados: `profesionales`, `servicios`, `citas_mes` | Mover a template o generalizar |
-| `organizacion.controller.js` | Método `obtenerProgresoSetup()` consulta tablas de agendamiento | Extraer método a template |
-| `chatbot.controller.js` + `n8nMcpCredentialsService.js` | System prompt y MCP tools específicos (`verificarDisponibilidad`, `crearCita`) | Mover a template |
-| `organizacion.constants.js` | `SELECT_FIELDS` incluye `configuracion_categoria` | Revisar dependencias |
-
----
-
-## 📝 Patrones de Migración Validados
-
-### Patrón General (Niveles 4-7)
-
-1. **Identificar imports:** `grep -rn "archivo.js" backend/app/`
-2. **Mover archivo:** `mv database/archivo.js templates/scheduling-saas/models/`
-3. **Actualizar imports externos:** Archivo movido cambia `../../` → `../../../../`
-4. **Actualizar imports consumidores:** Routes/controllers cambian `../../../database/` → `../../../templates/.../models/`
-5. **Reiniciar y validar:** `docker restart back && sleep 30 && curl http://localhost:3000/health`
-6. **Commit individual:** Mensaje descriptivo con número de nivel
-
-### Patrón Específico Models (Nivel 7)
-
-**Models individuales:**
-1. Actualizar `database/index.js` **PRIMERO** con nueva ruta template
-2. Mover archivo
-3. Actualizar imports externos: `../../` → `../../../../`
-4. Actualizar controllers: `../../../database/` → `../../models/`
-
-**Carpetas modulares (citas/, comisiones/, marketplace/):**
-1. Analizar TODOS los imports: `grep -h "^const.*require" *.js | sort -u`
-2. Identificar 5 tipos:
-   - Config/database externos
-   - Utils CORE (logger, helpers, RLS)
-   - **Utils TEMPLATE** (ej: CitaValidacionUtil) - ⚠️ Cambiar ruta relativa
-   - Internos carpeta (mantener `./`)
-   - Models externos (profesional, servicio)
-3. Mover carpeta completa
-4. Actualizar todos los imports
+**Total estimado:** 6-8 horas desarrollo + 2-4 horas testing
 
 ---
 
-## ⚠️ Lecciones Críticas
+## 📝 Referencia Rápida
 
-### Conteo de Niveles de Rutas Relativas
+### Rutas Relativas Críticas
 
-| Desde | Hasta | Niveles | Ejemplo |
-|-------|-------|---------|---------|
-| `routes/api/v1/index.js` | `templates/` | 3 arriba | `../../../templates/` |
-| `templates/.../schemas/` | CORE `middleware/` | 3 arriba | `../../../middleware/` |
-| `templates/.../controllers/` regulares | CORE utils | 3 arriba | `../../../utils/` |
-| `templates/.../controllers/subcarpeta/` | CORE utils | **4 arriba** | `../../../../utils/` |
-| `templates/.../models/` regulares | CORE utils | **4 arriba** | `../../../../utils/` |
-| `templates/.../models/subcarpeta/` | CORE utils | **4 arriba** | `../../../../utils/` |
+| Desde | A CORE utils/middleware | Niveles |
+|-------|------------------------|---------|
+| `templates/.../schemas/` | `../../../utils/` | 3 |
+| `templates/.../controllers/` | `../../../utils/` | 3 |
+| `templates/.../models/` | `../../../../utils/` | **4** |
+| `templates/.../models/subcarpeta/` | `../../../../utils/` | **4** |
 
-**❌ ERROR COMÚN:** Usar `../../` causa "Cannot find module" → crasheo silencioso
+⚠️ **ERROR COMÚN:** Usar `../../` en models causa "Cannot find module"
 
-### Imports entre Archivos de Template
+### Imports dentro de Template
 
 ```javascript
-// ❌ ANTES (crashea - ruta absoluta desde CORE):
-const CitaValidacionUtil = require('../../templates/scheduling-saas/utils/cita-validacion.util');
-
-// ✅ DESPUÉS (ruta relativa dentro de template):
+// ✅ CORRECTO - Rutas relativas dentro de templates/scheduling-saas/
 const CitaValidacionUtil = require('../../utils/cita-validacion.util');
 ```
 
-**Regla:** Si un archivo en `templates/.../models/` importa otro en `templates/.../utils/`, la ruta es relativa dentro de `templates/scheduling-saas/`, NO desde CORE.
-
-### Validación Obligatoria
-
-1. **Backend container:** `docker ps --filter "name=back" --format "{{.Status}}"` → Must show "healthy"
-2. **Health endpoint:** `curl -s http://localhost:3000/health | jq -r '.status'` → Must return "healthy"
-3. **Esperar 20-30s** después de `docker restart back` antes de validar
-
-### Checklist Pre-Move (Models)
-
-- [ ] Actualizar `database/index.js` PRIMERO
-- [ ] Analizar TODOS los imports (externos + template + internos)
-- [ ] Identificar si hay imports de utils template (cambiar ruta)
-- [ ] Buscar imports en CORE que referencien el archivo (ej: `superadmin.js`)
-
----
-
-## 🔧 Comandos Útiles
+### Validación Post-Cambio
 
 ```bash
-# Encontrar imports de un archivo
-grep -rn "nombre-archivo.js" backend/app/
-
-# Analizar imports de una carpeta
-cd backend/app/database/carpeta/
-grep -h "^const.*require" *.js | sort -u
-
-# Actualizar imports externos (models)
-sed -i "s|require('../../config/database')|require('../../../../config/database')|g" *.js
-sed -i "s|require('../../utils/logger')|require('../../../../utils/logger')|g" *.js
-sed -i "s|require('../../utils/helpers')|require('../../../../utils/helpers')|g" *.js
-sed -i "s|require('../../utils/rlsContextManager')|require('../../../../utils/rlsContextManager')|g" *.js
-
-# Validar backend
 docker restart back && sleep 30
-docker ps --filter "name=back" --format "{{.Status}}"
-curl -s http://localhost:3000/health | jq -r '.status'
-
-# Tests
-docker exec back npm test
-docker exec back npm test -- nombre-modulo
+curl -s http://localhost:3000/health | jq -r '.status'  # Debe retornar "healthy"
+docker exec back npm test  # Verificar tests
 ```
 
 ---
 
-## ✅ Criterios de Éxito
+## 🎯 Plan de Ejecución
 
-**CORE desacoplado cuando:**
-- ❌ No menciona conceptos de dominio específicos
-- ✅ Solo consulta tablas universales: `organizaciones`, `usuarios`, `planes`, `subscripciones`
-- ✅ Middleware y utils sin lógica de negocio
+### Fase 1: Estabilización (Semana 1)
+```
+Día 1-2: 🔴 Resolver 66 tests fallando (CRÍTICO)
+Día 3-4: 🟠 Refactor subscription.js → config/planLimits.config.js
+Día 5:   🟠 Extraer obtenerProgresoSetup() → setup-progress.model.js
+```
 
-**TEMPLATE aislado cuando:**
-- ✅ Toda la lógica de dominio está en `templates/scheduling-saas/`
-- ✅ Puede copiarse a otro proyecto SaaS sin modificar CORE
-- ✅ Define sus propios seeds SQL en `sql/templates/scheduling-saas/`
+### Fase 2: Finalización (Semana 2)
+```
+Día 6:   🟡 Mover n8nMcpCredentialsService.js a templates/
+Día 7-8: ✅ Regression testing completo (600 tests al 100%)
+Día 9:   📝 Documentar guía de uso del starter kit
+Día 10:  🚀 Release v1.0 Backend Starter Kit
+```
 
 ---
 
-## 📌 Próximos Pasos
+## ✅ Criterios de Éxito Final
 
-1. **Nivel 8.2:** Refactorizar módulos ambiguos (4 pendientes)
-   - Generalizar o mover `subscription.js`
-   - Extraer `obtenerProgresoSetup()` de organizacion.controller.js
-   - Mover `chatbot.controller.js` + MCP a template
-   - Revisar `organizacion.constants.js`
-2. **Validación final:** Ejecutar suite completa de tests
-3. **Documentación:** Guía de uso del starter kit para nuevos proyectos
+**CORE 100% desacoplado:**
+- ✅ Solo tablas universales: `organizaciones`, `usuarios`, `planes`, `subscripciones`
+- ✅ Sin referencias a: `profesionales`, `servicios`, `citas`, `clientes`
+- ✅ Middleware sin lógica de negocio específica
+
+**TEMPLATE 100% portable:**
+- ✅ 71 archivos autocontenidos en `templates/scheduling-saas/`
+- ✅ Copiable a nuevo proyecto sin modificar CORE
+- ✅ 600 tests pasando (100%)
+
+---
+
+## 📋 Checklist Final
+
+- [ ] 600 tests pasando (actualmente 534/600)
+- [ ] 0 módulos ambiguos en CORE (actualmente 3)
+- [ ] Backend healthy post-refactor
+- [ ] Documentación starter kit completada
+- [ ] Git tags: `v1.0-core` y `v1.0-template-scheduling`
