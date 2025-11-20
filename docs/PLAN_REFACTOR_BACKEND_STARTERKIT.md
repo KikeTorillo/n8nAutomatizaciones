@@ -1,7 +1,7 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
 **Fecha de creación:** 19 Noviembre 2025
-**Última actualización:** 19 Noviembre 2025 - 23:22 UTC (Nivel 5 completado: 12/12 routes)
+**Última actualización:** 19 Noviembre 2025 - 18:05 CST (Nivel 6 completado: 12/12 controllers)
 **Estado:** 🟢 Operativo - Refactor Incremental en ejecución
 
 ---
@@ -22,6 +22,7 @@
 - ❌ Nivel 3: OMITIDO (archivos no existen)
 - ✅ Nivel 4: Schemas (12/12 - 100%)
 - ✅ Nivel 5: Routes (12/12 - 100%)
+- ✅ Nivel 6: Controllers (12/12 - 100%)
 
 **Schemas movidos a template (12):**
 - ✅ `tipos-bloqueo.schemas.js` (2.1K)
@@ -59,6 +60,23 @@
 
 **Routes CORE que permanecen (13):**
 - `auth.js`, `setup.js`, `superadmin.js`, `organizaciones.js`, `usuarios.js`, `planes.js`, `pagos.js`, `webhooks.js`, `subscripciones.js`, `mercadopago.js`, `index.js`
+
+**Controllers movidos a template (12):**
+- ✅ `tipos-bloqueo.controller.js` - Commit 5617bc3
+- ✅ `tipos-profesional.controller.js` - Commit 1a4b0b4
+- ✅ `disponibilidad.controller.js` - Commit ebf65f3
+- ✅ `bloqueos-horarios.controller.js` - Commit 185b26a
+- ✅ `profesional.controller.js` - Commit d4721d7
+- ✅ `servicio.controller.js` - Commit 0f9fa27
+- ✅ `horario-profesional.controller.js` - Commit 085b00c
+- ✅ `cliente.controller.js` - Commit 23198c1
+- ✅ `chatbot.controller.js` - Commit 9065069
+- ✅ `citas/` (carpeta modular - 4 archivos) - Commit 3936e81
+- ✅ `comisiones/` (carpeta modular - 4 archivos) - Commit bdea9c4
+- ✅ `marketplace/` (carpeta modular - 4 archivos) - Commit b865c1d
+
+**Controllers CORE que permanecen (8):**
+- `auth.controller.js`, `organizacion.controller.js`, `usuario.controller.js`, `planes.controller.js`, `subscripciones.controller.js`, `superadmin.controller.js`, `pagos.controller.js`, `webhooks.controller.js`
 
 **Estado:** Backend ✅ Healthy | Tests: 561/630 pasando (89.0%)
 
@@ -115,8 +133,33 @@ backend/app/
         │   ├── tipos-bloqueo.js
         │   └── tipos-profesional.js
         │
+        ├── controllers/                              # ✅ Movido (Nivel 6 - 12 controllers)
+        │   ├── bloqueos-horarios.controller.js
+        │   ├── chatbot.controller.js
+        │   ├── citas/                                # Carpeta modular (4 archivos)
+        │   │   ├── cita.base.controller.js
+        │   │   ├── cita.operacional.controller.js
+        │   │   ├── cita.recordatorios.controller.js
+        │   │   └── index.js
+        │   ├── cliente.controller.js
+        │   ├── comisiones/                           # Carpeta modular (4 archivos)
+        │   │   ├── comisiones.controller.js
+        │   │   ├── configuracion.controller.js
+        │   │   ├── estadisticas.controller.js
+        │   │   └── index.js
+        │   ├── disponibilidad.controller.js
+        │   ├── horario-profesional.controller.js
+        │   ├── marketplace/                          # Carpeta modular (4 archivos)
+        │   │   ├── analytics.controller.js
+        │   │   ├── perfiles.controller.js
+        │   │   ├── reseñas.controller.js
+        │   │   └── index.js
+        │   ├── profesional.controller.js
+        │   ├── servicio.controller.js
+        │   ├── tipos-bloqueo.controller.js
+        │   └── tipos-profesional.controller.js
+        │
         └── [Pendientes de mover]
-            ├── controllers/  (11 controllers + 3 carpetas modulares)
             ├── models/       (11 models + 3 carpetas modulares)
             └── constants/    (2 archivos adicionales)
 ```
@@ -257,10 +300,34 @@ backend/app/
 
 **Fix commit:** 5a40c46 - Corrección de rutas de importación (13 archivos)
 
-### Nivel 6 - Controllers
-- [ ] Mover 11 controllers + 3 carpetas modulares → `templates/scheduling-saas/controllers/`
-- [ ] Actualizar imports en routes
-- [ ] Validar con tests
+### Nivel 6 - Controllers ✅ COMPLETADO (12/12 - 100%)
+
+**Patrón ejecutado:**
+1. Mover archivo/carpeta a `templates/scheduling-saas/controllers/`
+2. Actualizar import en route: `../../../controllers/` → `../../../templates/scheduling-saas/controllers/`
+3. **CRÍTICO Controllers regulares:** Actualizar imports internos desde 2→3 niveles: `../` → `../../../`
+4. **CRÍTICO Controllers en subcarpeta (marketplace/):** Actualizar imports desde 2→4 niveles: `../../` → `../../../../`
+5. Reiniciar backend y verificar healthy
+6. Commit individual
+
+**✅ Controllers movidos (12):**
+1. `tipos-bloqueo.controller.js` - Commit 5617bc3
+2. `tipos-profesional.controller.js` - Commit 1a4b0b4
+3. `disponibilidad.controller.js` - Commit ebf65f3
+4. `bloqueos-horarios.controller.js` - Commit 185b26a
+5. `profesional.controller.js` - Commit d4721d7
+6. `servicio.controller.js` - Commit 0f9fa27
+7. `horario-profesional.controller.js` - Commit 085b00c
+8. `cliente.controller.js` - Commit 23198c1
+9. `chatbot.controller.js` - Commit 9065069
+10. `citas/` (carpeta modular - 4 archivos) - Commit 3936e81
+11. `comisiones/` (carpeta modular - 4 archivos) - Commit bdea9c4
+12. `marketplace/` (carpeta modular - 4 archivos) - Commit b865c1d
+
+**⚠️ Problema resuelto - Import en superadmin.js:**
+- **Error:** `superadmin.js` importaba `../../../controllers/marketplace` (ruta vieja)
+- **Fix:** Actualizado a `../../../templates/scheduling-saas/controllers/marketplace`
+- **Incluido en commit:** b865c1d (amend)
 
 ### Nivel 7 - Models
 - [ ] Mover 11 models + 3 carpetas modulares → `templates/scheduling-saas/models/`
@@ -312,33 +379,59 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
    ├── constants/
    │   └── profesionales.constants.js             # ✅ Movido (Nivel 2)
    │
-   └── schemas/                                    # ✅ Movido (Nivel 4)
-       ├── bloqueos-horarios.schemas.js           # 6.9K
-       ├── chatbot.schemas.js                     # 11K
-       ├── cita.schemas.js                        # 17K
-       ├── cliente.schemas.js                     # 9.9K
-       ├── comisiones.schemas.js                  # 12K
-       ├── disponibilidad.schemas.js              # 3.4K
-       ├── horario-profesional.schemas.js         # 13K
-       ├── marketplace.schemas.js                 # 17K
-       ├── profesional.schemas.js                 # 12K
-       ├── servicio.schemas.js                    # 12K
-       ├── tipos-bloqueo.schemas.js               # 2.1K
-       └── tipos-profesional.schemas.js           # 3.2K
+   ├── schemas/                                    # ✅ Movido (Nivel 4 - 12 schemas)
+   │   ├── bloqueos-horarios.schemas.js
+   │   ├── chatbot.schemas.js
+   │   ├── cita.schemas.js
+   │   ├── cliente.schemas.js
+   │   ├── comisiones.schemas.js
+   │   ├── disponibilidad.schemas.js
+   │   ├── horario-profesional.schemas.js
+   │   ├── marketplace.schemas.js
+   │   ├── profesional.schemas.js
+   │   ├── servicio.schemas.js
+   │   ├── tipos-bloqueo.schemas.js
+   │   └── tipos-profesional.schemas.js
    │
-   └── routes/api/v1/                             # ✅ Movido (Nivel 5)
-       ├── bloqueos-horarios.js                   # 1.3K
-       ├── chatbots.js                            # 3.4K
-       ├── citas.js                               # 7.1K
-       ├── clientes.js                            # 2.8K
-       ├── comisiones.js                          # 7.5K
-       ├── disponibilidad.js                      # 2.1K
-       ├── horarios-profesionales.js              # 3.0K
-       ├── marketplace.js                         # 9.8K
-       ├── profesionales.js                       # 3.3K
-       ├── servicios.js                           # 4.5K
-       ├── tipos-bloqueo.js                       # 1.8K
-       └── tipos-profesional.js                   # 1.6K
+   ├── routes/api/v1/                             # ✅ Movido (Nivel 5 - 12 routes)
+   │   ├── bloqueos-horarios.js
+   │   ├── chatbots.js
+   │   ├── citas.js
+   │   ├── clientes.js
+   │   ├── comisiones.js
+   │   ├── disponibilidad.js
+   │   ├── horarios-profesionales.js
+   │   ├── marketplace.js
+   │   ├── profesionales.js
+   │   ├── servicios.js
+   │   ├── tipos-bloqueo.js
+   │   └── tipos-profesional.js
+   │
+   └── controllers/                               # ✅ Movido (Nivel 6 - 12 controllers)
+       ├── bloqueos-horarios.controller.js
+       ├── chatbot.controller.js
+       ├── citas/                                 # Carpeta modular (4 archivos)
+       │   ├── cita.base.controller.js
+       │   ├── cita.operacional.controller.js
+       │   ├── cita.recordatorios.controller.js
+       │   └── index.js
+       ├── cliente.controller.js
+       ├── comisiones/                            # Carpeta modular (4 archivos)
+       │   ├── comisiones.controller.js
+       │   ├── configuracion.controller.js
+       │   ├── estadisticas.controller.js
+       │   └── index.js
+       ├── disponibilidad.controller.js
+       ├── horario-profesional.controller.js
+       ├── marketplace/                           # Carpeta modular (4 archivos)
+       │   ├── analytics.controller.js
+       │   ├── perfiles.controller.js
+       │   ├── reseñas.controller.js
+       │   └── index.js
+       ├── profesional.controller.js
+       ├── servicio.controller.js
+       ├── tipos-bloqueo.controller.js
+       └── tipos-profesional.controller.js
 ```
 
 ### Ejecución de Tests
@@ -360,7 +453,7 @@ docker exec back npm test -- profesionales
 
 ## 📈 Resumen de Progreso
 
-**Progreso:** ~55% del refactor total | **Backend:** ✅ Operativo
+**Progreso:** ~70% del refactor total | **Backend:** ✅ Operativo
 
 | Nivel | Estado | Archivos |
 |-------|--------|----------|
@@ -369,7 +462,7 @@ docker exec back npm test -- profesionales
 | 3. Constants | ❌ Omitido | N/A |
 | 4. Schemas | ✅ Completado | 12/12 (100%) |
 | 5. Routes | ✅ Completado | 12/12 (100%) |
-| 6. Controllers | ⏳ Pendiente | 0/17 |
+| 6. Controllers | ✅ Completado | 12/12 (100%) |
 | 7. Models | ⏳ Pendiente | 0/17 |
 | 8. Ambiguos | ⏳ Pendiente | 0/5 |
 
@@ -396,7 +489,11 @@ docker exec back npm test -- profesionales
 - **Conteo de niveles de rutas relativas ES CRÍTICO:**
   - Desde `routes/api/v1/index.js` hasta `templates/` son **3 niveles** arriba (`../../../`)
   - Desde `templates/.../routes/api/v1/archivo.js` hasta `templates/.../schemas/` son **3 niveles** arriba (`../../../`)
+  - **Controllers en subcarpeta** (marketplace/): Requieren **4 niveles** (`../../../../`) porque tienen profundidad extra
   - **ERROR:** Usar `../../` causa "Cannot find module" que crashea silenciosamente el backend
 - **Schemas importan `../middleware/validation`** → Debe ser `../../../middleware/validation`
+- **Controllers regulares:** Usar sed `s|require('../|require('../../../|g` para actualizar de 2→3 niveles
+- **Controllers en subcarpeta:** Usar sed `s|require('../../|require('../../../../|g` para actualizar de 2→4 niveles
+- **Revisar TODOS los imports externos:** Buscar imports en archivos CORE (ej: `superadmin.js`) que referencien controllers movidos
 - Git muestra "borrados" pero detecta rename al commit → Normal
 - Backend tarda ~20s en arrancar → Esperar antes de verificar
