@@ -37,11 +37,11 @@ services:
     networks:
       - backend_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres"]
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres && psql -U admin -d postgres -c 'SELECT 1 FROM usuarios LIMIT 1;' > /dev/null 2>&1 && psql -U admin -d postgres -c 'SELECT COUNT(*) FROM cron.job;' > /dev/null 2>&1"]
       interval: 15s
       timeout: 10s
       retries: 10
-      start_period: 60s
+      start_period: 90s
 
   redis:
     image: redis:7-alpine
@@ -155,7 +155,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: ["sh", "-c", "sleep 10 && node app.js"]
+    command: ["sh", "-c", "sleep 30 && node app.js"]
     environment:
       # Database
       DB_HOST: ${DB_HOST}
@@ -225,7 +225,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 60s
     networks:
       - backend_network
     ports:

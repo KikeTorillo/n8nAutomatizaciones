@@ -1,9 +1,11 @@
 # 🛒 PLAN COMPLETO - GESTIÓN DE INVENTARIO Y PUNTO DE VENTA (POS)
 
 **Fecha Creación:** 18 Noviembre 2025
-**Estado:** 📋 Planificación
+**Última Actualización:** 20 Noviembre 2025
+**Estado:** ✅ Fase 0 Completada (Base de Datos)
 **Prioridad:** 🟡 MEDIA
-**Tiempo Estimado:** 9.5 semanas ⚠️ (Actualizado tras análisis arquitectónico)
+**Tiempo Estimado Restante:** 7.5 semanas (Fases 1-5: Backend + Frontend)
+**Próxima Fase:** Fase 1 - Backend Core (2.5 semanas)
 
 ---
 
@@ -984,40 +986,102 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ```
 backend/app/
-├── controllers/
-│   ├── inventario/
-│   │   ├── index.js (proxy exports)
-│   │   ├── productos.controller.js
-│   │   ├── categorias.controller.js
-│   │   ├── proveedores.controller.js
-│   │   ├── movimientos.controller.js
-│   │   └── reportes.controller.js
-│   └── pos/
-│       ├── index.js (proxy exports)
-│       ├── ventas.controller.js
-│       ├── terminal.controller.js
-│       └── tickets.controller.js
-├── database/
-│   ├── inventario/
-│   │   ├── productos.model.js
-│   │   ├── categorias.model.js
-│   │   ├── proveedores.model.js
-│   │   ├── movimientos.model.js
-│   │   └── alertas.model.js
-│   └── pos/
-│       ├── ventas.model.js
-│       └── terminal.model.js
-├── schemas/
-│   ├── inventario.schemas.js
-│   └── pos.schemas.js
-├── routes/api/v1/
-│   ├── inventario.js
-│   └── pos.js
-└── services/
-    ├── mercadoPagoTerminal.service.js (nuevo)
-    ├── clipTerminal.service.js (nuevo)
-    └── emailService.js (extender existente con alertas)
+├── templates/scheduling-saas/
+│   ├── controllers/
+│   │   ├── inventario/
+│   │   │   ├── index.js (proxy exports)
+│   │   │   ├── productos.controller.js
+│   │   │   ├── categorias.controller.js
+│   │   │   ├── proveedores.controller.js
+│   │   │   ├── movimientos.controller.js
+│   │   │   └── reportes.controller.js
+│   │   └── pos/
+│   │       ├── index.js (proxy exports)
+│   │       ├── ventas.controller.js
+│   │       └── tickets.controller.js
+│   ├── models/
+│   │   ├── inventario/
+│   │   │   ├── productos.model.js
+│   │   │   ├── categorias.model.js
+│   │   │   ├── proveedores.model.js
+│   │   │   ├── movimientos.model.js
+│   │   │   ├── alertas.model.js
+│   │   │   └── index.js
+│   │   └── pos/
+│   │       ├── ventas.model.js
+│   │       ├── tickets.model.js
+│   │       └── index.js
+│   ├── schemas/
+│   │   ├── inventario.schemas.js
+│   │   └── pos.schemas.js
+│   ├── routes/
+│   │   ├── inventario.js
+│   │   └── pos.js
+│   └── utils/
+│       └── barcode.util.js (nuevo - validación de códigos de barras)
+├── config/
+│   └── planLimits.js (nuevo - límites por plan)
+├── services/
+│   └── emailService.js (extender existente con alertas de stock)
+└── utils/
+    └── dbRetry.util.js (nuevo - retry logic para deadlocks)
 ```
+
+**⚠️ IMPORTANTE - Estructura Corregida:**
+- ✅ Usa `models/` NO `database/` (consistente con arquitectura existente)
+- ✅ Ubicación completa: `backend/app/templates/scheduling-saas/`
+- ✅ Sigue patrón de módulos `citas/`, `comisiones/`, `marketplace/`
+- ✅ Cada subcarpeta de models tiene `index.js` para exports
+
+---
+
+### ⚠️ Middleware Stack OBLIGATORIO
+
+**Todas las rutas deben seguir este orden:**
+
+```javascript
+// EJEMPLO: Ruta para crear producto
+router.post('/productos',
+    auth.authenticateToken,           // 1. Autenticación JWT
+    tenant.setTenantContext,          // 2. Contexto RLS multi-tenant
+    subscription.validateLimits('productos'), // 3. ✅ VALIDAR LÍMITES DEL PLAN
+    rateLimiting.apiRateLimit,        // 4. Rate limiting
+    validation.validate(inventarioSchemas.crearProducto), // 5. Validación Joi
+    asyncHandler(InventarioController.crearProducto)      // 6. Controller
+);
+
+// EJEMPLO: Ruta bulk create (validar antes de crear)
+router.post('/productos/bulk',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    subscription.validateBulkLimits('productos', 50), // ✅ Max 50 items
+    rateLimiting.apiRateLimit,
+    validation.validate(inventarioSchemas.bulkCrearProductos),
+    asyncHandler(InventarioController.bulkCrear)
+);
+
+// EJEMPLO: Ruta de consulta (SIN validación de límites)
+router.get('/productos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(inventarioSchemas.listarProductos),
+    asyncHandler(InventarioController.listar)
+);
+```
+
+**🔴 CRÍTICO:** El middleware `subscription` es **OBLIGATORIO** en:
+- `POST /productos` (crear)
+- `POST /productos/bulk` (crear múltiples)
+- `POST /categorias` (crear)
+- `POST /proveedores` (crear)
+- `POST /ventas` (crear venta POS)
+
+**Referencias:**
+- `backend/app/config/planLimits.js` - Configuración de límites por plan
+- `backend/app/middleware/subscription.js` - Middleware existente (extender)
+
+---
 
 ### Endpoints - Inventario (22 endpoints)
 
@@ -1096,7 +1160,7 @@ GET    /api/v1/inventario/alertas                      // Listar alertas no leí
 PATCH  /api/v1/inventario/alertas/:id/marcar-leida    // Marcar como leída
 ```
 
-### Endpoints - POS (14 endpoints)
+### Endpoints - POS (11 endpoints) ⚠️ MVP sin terminales físicas
 
 #### **Ventas** (9 endpoints)
 
@@ -1122,27 +1186,6 @@ GET    /api/v1/pos/ventas/:id/ticket                   // Generar ticket PDF
 - `fecha_desde`, `fecha_hasta`: Rango
 - `metodo_pago`: efectivo|tarjeta|etc
 
-#### **Terminal Física** (4 endpoints)
-
-```javascript
-POST   /api/v1/pos/terminal/registrar                  // ✅ Registrar terminal física (MP Point/Clip)
-POST   /api/v1/pos/terminal/generar-qr                 // Generar QR de Mercado Pago
-POST   /api/v1/pos/terminal/procesar-pago              // Procesar pago con terminal
-GET    /api/v1/pos/terminal/estado-pago/:id            // Consultar estado de pago
-```
-
-**Schema para registrar terminal:**
-```javascript
-registrarTerminal: {
-    body: Joi.object({
-        tipo_terminal: Joi.string().valid('mercadopago', 'clip').required(),
-        device_id: Joi.string().required(),
-        nombre: Joi.string().max(100).required(),
-        activo: Joi.boolean().optional().default(true)
-    })
-}
-```
-
 #### **Reportes POS** (2 endpoints)
 
 ```javascript
@@ -1150,12 +1193,25 @@ GET    /api/v1/pos/reportes/ventas-diarias             // Reporte de ventas del 
 POST   /api/v1/pos/reportes/corte-caja                 // Corte de caja
 ```
 
+### Dependencias a Instalar
+
+**Backend (`backend/app/`):**
+```bash
+cd backend/app
+npm install jsbarcode --save
+```
+
+**Nota:** Se utilizará `jsbarcode` para validación y generación de códigos de barras (EAN13, Code128).
+
+---
+
 ### Schemas de Validación (Joi)
 
 #### inventario.schemas.js
 
 ```javascript
 const Joi = require('joi');
+const jsbarcode = require('jsbarcode'); // ⚠️ Instalado en backend/app
 
 const inventarioSchemas = {
     // ========== PRODUCTOS ==========
@@ -1165,13 +1221,20 @@ const inventarioSchemas = {
             descripcion: Joi.string().max(1000).optional().allow(null, ''),
             sku: Joi.string().max(50).optional(),
             codigo_barras: Joi.string().max(50).optional().custom((value, helpers) => {
-                // ✅ REQUERIDO: npm install barcode-validator
-                // Validar formato EAN13/Code128
-                const barcodeValidator = require('barcode-validator');
-                if (value && !barcodeValidator.isValid(value)) {
-                    return helpers.error('any.custom', {
-                        message: 'Código de barras inválido (se espera EAN13 o Code128)'
-                    });
+                // Validar formato EAN13/Code128 usando jsbarcode
+                if (value) {
+                    try {
+                        // Validación simple de longitud y formato
+                        if (!/^[0-9]{8,13}$/.test(value)) {
+                            return helpers.error('any.custom', {
+                                message: 'Código de barras inválido (formato EAN8/EAN13 esperado)'
+                            });
+                        }
+                    } catch (error) {
+                        return helpers.error('any.custom', {
+                            message: 'Código de barras inválido'
+                        });
+                    }
                 }
                 return value;
             }),
@@ -1953,72 +2016,22 @@ export function useGenerarTicket(ventaId) {
 
 ---
 
-## 🔌 INTEGRACIÓN CON TERMINALES FÍSICAS
+## 🔌 INTEGRACIÓN CON TERMINALES FÍSICAS ⏳ POST-MVP
 
-### Terminales Soportadas
+**⚠️ NOTA IMPORTANTE:** Esta funcionalidad fue movida a **Fase 6** (Post-MVP).
 
-#### 1. **Mercado Pago Point**
+**Documento completo:** `docs/PLAN_POS_TERMINALES_FISICAS.md`
 
-**Características:**
-- Terminal Bluetooth/WiFi
-- Acepta tarjetas chip, contactless, QR
-- API oficial de integración
-- Webhook de confirmación en tiempo real
+**Resumen:**
+- 💳 **Terminales soportadas:** Mercado Pago Point + Clip
+- ⚡ **Valor:** Cobros instantáneos con confirmación automática
+- 🔜 **Prioridad:** Media (evaluar demanda post-lanzamiento MVP)
+- ⏱️ **Tiempo estimado:** 1-2 semanas adicionales
 
-**Flujo de integración:**
-1. Registrar terminal en Mercado Pago
-2. Obtener device_id
-3. Crear payment_intent desde backend
-4. Terminal muestra monto y espera pago
-5. Webhook notifica resultado
-6. Backend confirma venta
-
-#### 2. **Clip**
-
-**Características:**
-- Terminal móvil (conecta al teléfono)
-- Acepta chip, banda magnética
-- API REST para integración
-- Requiere SDK móvil para terminales físicas
-
-**Flujo de integración:**
-1. Registrar en Clip Dashboard
-2. Obtener API keys
-3. Crear transacción desde backend
-4. Link de pago o SDK móvil
-5. Webhook notifica resultado
-
-### Diagrama de Flujo POS con Terminal
-
-```
-[Cliente solicita pagar]
-         ↓
-[Cajero: "Cobrar" en POS]
-         ↓
-[Backend: Crear venta estado=pendiente]
-         ↓
-[Frontend: Modal "Seleccionar Terminal"]
-         ↓
-[Backend: POST /pos/terminal/procesar-pago]
-         ↓
-[MercadoPagoTerminal.crearOrdenTerminal()]
-         ↓
-[Terminal física muestra monto]
-         ↓
-[Cliente pasa tarjeta]
-         ↓
-[Terminal procesa pago]
-         ↓
-[Mercado Pago → Webhook /webhooks/mercadopago]
-         ↓
-[Backend actualiza venta estado=pagado]
-         ↓
-[Backend descuenta stock automático (trigger)]
-         ↓
-[Backend genera comisión si aplica]
-         ↓
-[Frontend muestra ticket + envía WhatsApp]
-```
+**MVP incluye:**
+- ✅ Métodos de pago manuales (efectivo, tarjeta, transferencia, mixto)
+- ✅ QR dinámico Mercado Pago (sin terminal física)
+- ✅ Registro manual de pagos
 
 ---
 
@@ -2035,10 +2048,11 @@ export function useGenerarTicket(ventaId) {
 3. Sistema agrega automáticamente al carrito
 4. Ajusta cantidad si es necesario
 5. Asocia a cliente (busca por teléfono)
-6. Selecciona método de pago: Terminal
-7. Cliente pasa tarjeta en terminal física
-8. Sistema registra pago, descuenta stock, genera ticket
-9. Envía ticket por WhatsApp al cliente
+6. Selecciona método de pago: Efectivo / Tarjeta manual / Transferencia / QR MP
+7. Registra pago en el sistema
+8. Sistema descuenta stock automáticamente (trigger)
+9. Sistema genera comisión para vendedor (si aplica)
+10. Genera ticket PDF y envía por WhatsApp al cliente
 
 **Resultado:**
 - ✅ Venta registrada
@@ -2112,29 +2126,303 @@ export function useGenerarTicket(ventaId) {
 
 ---
 
+## 🧪 ESTRATEGIA DE TESTING
+
+### Cobertura Objetivo
+
+**Mínimo aceptable:** 85% de cobertura de código
+
+**Distribución:**
+- Models: 90%+ (lógica crítica de negocio)
+- Controllers: 85%+
+- Services: 90%+
+- Triggers y funciones SQL: 100% (testing manual + scripts)
+- Middleware: 95%+
+
+---
+
+### Tests Unitarios - Backend
+
+#### 1. Models (Estimado: 180 tests)
+
+**`models/inventario/productos.model.js` (50 tests):**
+- ✅ CRUD básico con RLS
+- ✅ Validación de códigos de barras (EAN13, Code128)
+- ✅ Ajuste de stock manual
+- ✅ Búsqueda full-text (nombre, SKU, código)
+- ✅ Filtros: categoría, proveedor, stock bajo
+- ✅ Paginación y ordenamiento
+
+**`models/inventario/movimientos.model.js` (40 tests):**
+- ✅ Registro de entradas/salidas
+- ✅ Validación: cantidad positiva (entradas) / negativa (salidas)
+- ✅ Cálculo automático de `stock_antes` y `stock_despues`
+- ✅ Kardex por producto
+- ✅ Consultas por fecha y tipo de movimiento
+
+**`models/pos/ventas.model.js` (70 tests):**
+- ✅ Creación de venta + items (transacción completa)
+- ✅ Locks optimistas (`FOR UPDATE`) en productos
+- ✅ **Deadlock simulation:** Crear 10 ventas simultáneas con mismos productos
+- ✅ Retry logic (3 intentos con backoff exponencial)
+- ✅ Validación de stock insuficiente
+- ✅ Generación automática de folio (POS-2025-0001)
+- ✅ Cálculo de totales (subtotal, descuentos, total)
+- ✅ Pago parcial vs pago completo
+- ✅ Cancelación de venta (revertir stock)
+
+**`models/inventario/alertas.model.js` (20 tests):**
+- ✅ Listar alertas no leídas
+- ✅ Marcar como leída
+- ✅ Filtros por tipo y nivel
+
+---
+
+#### 2. Controllers (Estimado: 130 tests)
+
+**`controllers/inventario/*.controller.js` (80 tests):**
+- ✅ Productos: CRUD + bulk create + búsqueda
+- ✅ Categorías: CRUD + jerarquía
+- ✅ Proveedores: CRUD
+- ✅ Movimientos: Registro + kardex
+- ✅ Reportes: Valor inventario, Análisis ABC, Rotación
+
+**`controllers/pos/*.controller.js` (50 tests):**
+- ✅ Ventas: CRUD + agregar items + pagar + devolver
+- ✅ Tickets: Generar PDF
+- ✅ Reportes: Ventas diarias, Corte de caja
+
+---
+
+#### 3. Services (Estimado: 20 tests)
+
+**`services/emailService.js` (10 tests - nuevos):**
+- ✅ Envío de alerta de stock bajo (mock SMTP)
+- ✅ Envío de alerta de stock agotado
+- ✅ Template HTML correcto
+- ✅ Manejo de errores de SMTP
+
+**`utils/barcode.util.js` (10 tests):**
+- ✅ Validación EAN13 (checksum correcto)
+- ✅ Validación Code128
+- ✅ Auto-detección de tipo
+- ✅ Rechazo de códigos inválidos
+
+---
+
+### Tests de Integración - Backend
+
+#### 1. Endpoints (Estimado: 130 tests)
+
+**`__tests__/endpoints/inventario.test.js` (80 tests):**
+```javascript
+describe('POST /api/v1/inventario/productos', () => {
+    it('debe crear producto con límites del plan', async () => {
+        // Verificar que middleware subscription valida límites
+    });
+
+    it('debe rechazar si excede límite del plan', async () => {
+        // Crear 100 productos (límite plan básico)
+        // Intento 101 debe fallar con 403
+    });
+
+    it('debe validar código de barras EAN13', async () => {
+        // Código inválido debe fallar
+    });
+
+    // ... 77 tests más
+});
+```
+
+**`__tests__/endpoints/pos.test.js` (50 tests):**
+```javascript
+describe('POST /api/v1/pos/ventas', () => {
+    it('debe crear venta y descontar stock automáticamente', async () => {
+        // 1. Crear venta estado=pendiente
+        // 2. Actualizar a estado=completada
+        // 3. Verificar stock descontado
+        // 4. Verificar movimiento_inventario registrado
+    });
+
+    it('debe rechazar venta si stock insuficiente', async () => {
+        // Stock: 5 unidades
+        // Intentar vender 10 → debe fallar
+    });
+
+    it('debe generar comisión si aplica', async () => {
+        // Venta completada con productos
+        // Verificar comisión en tabla comisiones_profesionales
+    });
+
+    // ... 47 tests más
+});
+```
+
+---
+
+#### 2. Triggers y Funciones SQL (Estimado: 40 tests)
+
+**Scripts SQL de testing:**
+```sql
+-- sql/tests/test_trigger_actualizar_stock.sql
+BEGIN;
+    -- Crear producto con stock 10
+    -- Crear venta con 3 unidades
+    -- Verificar stock = 7
+    -- Verificar movimiento_inventario registrado
+    -- Rollback
+END;
+
+-- sql/tests/test_trigger_alertas.sql
+BEGIN;
+    -- Crear producto con stock_minimo=5, stock_actual=5
+    -- Crear venta que baja a stock=3
+    -- Verificar alerta_inventario generada
+    -- Rollback
+END;
+
+-- sql/tests/test_particionamiento.sql
+BEGIN;
+    -- Insertar 1000 movimientos en diferentes meses
+    -- Verificar que se crean particiones automáticas
+    -- Query performance < 50ms
+    -- Rollback
+END;
+```
+
+---
+
+#### 3. Deadlocks y Concurrencia (Estimado: 10 tests)
+
+**`__tests__/concurrency/deadlocks.test.js`:**
+```javascript
+describe('Ventas concurrentes', () => {
+    it('debe manejar 100 ventas simultáneas sin deadlocks', async () => {
+        const productos = [1, 2, 3]; // IDs de productos
+
+        // Crear 100 ventas simultáneas con mismos productos
+        const promesas = Array.from({ length: 100 }, (_, i) =>
+            crearVenta({
+                items: [
+                    { producto_id: productos[i % 3], cantidad: 1 }
+                ]
+            })
+        );
+
+        const resultados = await Promise.allSettled(promesas);
+
+        // Verificar que al menos 95% se completaron (5% puede tener retry)
+        const exitosas = resultados.filter(r => r.status === 'fulfilled').length;
+        expect(exitosas).toBeGreaterThanOrEqual(95);
+    });
+});
+```
+
+---
+
+### Tests E2E - Frontend
+
+#### 1. Flujo Completo POS (Estimado: 10 tests)
+
+**`frontend/src/__tests__/e2e/pos.test.jsx`:**
+```javascript
+describe('Flujo completo de venta POS', () => {
+    it('debe crear venta, generar ticket y enviar WhatsApp', async () => {
+        // 1. Login
+        // 2. Navegar a POS
+        // 3. Buscar producto por código de barras
+        // 4. Agregar al carrito
+        // 5. Seleccionar cliente
+        // 6. Seleccionar método pago: efectivo
+        // 7. Confirmar venta
+        // 8. Verificar ticket PDF generado
+        // 9. Verificar stock actualizado en UI
+        // 10. Verificar comisión generada
+    });
+
+    it('debe escanear código de barras con lector USB', async () => {
+        // Simular eventos keydown de lector
+        // Verificar producto agregado
+    });
+});
+```
+
+---
+
+### Herramientas y Configuración
+
+**Backend:**
+- **Framework:** Jest + Supertest
+- **Coverage:** Istanbul (nyc)
+- **Mocks:** Sinon para servicios externos (email, MP API)
+- **CI/CD:** GitHub Actions (ejecutar tests en cada PR)
+
+**Frontend:**
+- **Framework:** Vitest + React Testing Library
+- **E2E:** Playwright
+- **Coverage:** Vitest coverage
+
+**Base de Datos:**
+- **Testing:** Scripts SQL manuales + rollback
+- **Fixtures:** Seeds de datos de prueba
+- **Cleanup:** Truncate tables entre tests
+
+---
+
+### Métricas de Testing
+
+**Objetivos:**
+- ⏱️ Suite completa < 5 minutos
+- 📊 Cobertura ≥ 85%
+- ✅ 0 tests flakey (intermitentes)
+- 🚀 Tests ejecutados en cada commit (CI)
+
+**KPIs:**
+- Tests unitarios backend: 330 tests
+- Tests integración backend: 130 tests
+- Tests triggers SQL: 40 tests
+- Tests E2E frontend: 10 tests
+- **Total: ~510 tests**
+
+---
+
 ## 🗺️ ROADMAP DE IMPLEMENTACIÓN
 
-### Fase 1: Base de Datos y Backend Core (2.5 semanas) ⚠️ AJUSTADO
+### Fase 0: Base de Datos ✅ COMPLETADA (20 Nov 2025)
+
+**Archivos SQL creados:**
+- [x] sql/inventario/01-tablas.sql (284 líneas) - 4 tablas
+- [x] sql/inventario/02-indices.sql (241 líneas) - 20 índices
+- [x] sql/inventario/03-rls-policies.sql (231 líneas) - 16 políticas RLS
+- [x] sql/inventario/04-funciones.sql (260 líneas) - 7 funciones PL/pgSQL
+- [x] sql/inventario/05-triggers.sql (178 líneas) - 3 triggers
+- [x] sql/inventario/06-particionamiento.sql (331 líneas) - Particionamiento completo
+- [x] sql/pos/01-tablas.sql (158 líneas) - 3 tablas
+- [x] sql/pos/02-indices.sql (157 líneas) - 14 índices
+- [x] sql/pos/03-rls-policies.sql (153 líneas) - 12 políticas RLS
+- [x] sql/pos/04-funciones.sql (267 líneas) - 6 funciones PL/pgSQL
+- [x] sql/pos/05-triggers.sql (74 líneas) - 4 triggers (solo triggers, funciones separadas)
+- [x] sql/core/schema/UPDATE_planes_subscripcion_inventario_pos.sql - Actualización de límites
+
+**Integración:**
+- [x] Agregado a init-data.sh (líneas 208-236) - ⚠️ **IMPORTANTE:** Este es el script maestro que ejecuta TODOS los módulos SQL. No crear scripts adicionales de instalación.
+
+**Backend Config:**
+- [x] backend/app/config/planLimits.js - Límites definidos para productos, categorías, proveedores, ventas_pos_mes
+
+### Fase 1: Backend Core (2.5 semanas) - PENDIENTE
 
 **Semana 1:**
-- [x] Diseño final de tablas SQL
-- [ ] Crear migrations SQL (8 tablas)
-- [ ] **✅ CRÍTICO:** Implementar particionamiento de `movimientos_inventario` (+2 días)
-- [ ] Implementar triggers automáticos con bypass RLS (3)
-- [ ] Implementar funciones PL/pgSQL (2)
-- [ ] RLS policies (7 tablas)
-
-**Semana 2:**
-- [ ] Backend: Models inventario (5 archivos)
-- [ ] Backend: Models POS con locks optimistas (2 archivos) (+1 día)
+- [ ] Backend: Models inventario (5 archivos + index.js)
+- [ ] Backend: Models POS con locks optimistas + retry logic (2 archivos + index.js)
 - [ ] Backend: Schemas Joi con validación códigos de barras (2 archivos)
 - [ ] Backend: Routes (2 archivos)
-- [ ] Tests de base de datos
 
-**Semana 2.5 (+0.5 semanas):**
+**Semana 2:**
+- [ ] **✅ CRÍTICO:** Agregar middleware `subscription.validateLimits()` en todas las rutas POST
+- [ ] Tests de base de datos
 - [ ] Tests unitarios models
 - [ ] **✅ Extender emailService con alertas de stock** (+1 día)
-- [ ] **✅ Agregar endpoint de registro de terminales** (+1 día)
 
 ### Fase 2: Backend API y Lógica de Negocio (2 semanas)
 
@@ -2144,15 +2432,16 @@ export function useGenerarTicket(ventaId) {
 - [ ] Endpoints categorías (5)
 - [ ] Endpoints proveedores (5)
 - [ ] Endpoints movimientos (3)
+- [ ] Endpoints reportes inventario (4)
 - [ ] Tests de integración endpoints
 
 **Semana 4:**
-- [ ] Controllers POS (3 archivos)
+- [ ] Controllers POS (2 archivos: ventas, tickets)
 - [ ] Endpoints ventas (9)
-- [ ] Endpoints terminal (3)
-- [ ] Servicio Mercado Pago Terminal
-- [ ] Servicio Clip Terminal
+- [ ] Endpoints reportes POS (2)
 - [ ] Tests de integración POS
+- [ ] **✅ Validación exhaustiva:** Todos los endpoints POST tienen middleware `subscription`
+- [ ] Tests de límites por plan (verificar rechazo al exceder)
 
 ### Fase 3: Frontend Inventario (1.5 semanas)
 
@@ -2170,44 +2459,46 @@ export function useGenerarTicket(ventaId) {
 - [ ] GraficaRotacion.jsx (Chart.js)
 - [ ] InventarioWidget.jsx (Dashboard)
 
-### Fase 4: Frontend POS (2 semanas) ⚠️ AJUSTADO
+### Fase 4: Frontend POS (1.5 semanas)
 
 **Semana 6 (segunda mitad):**
-- [ ] Hooks usePOS con sanitización (12 hooks)
+- [ ] Hooks usePOS con sanitización (10 hooks)
 - [ ] VentaPOSPage.jsx (pantalla principal)
 - [ ] CarritoVenta.jsx
-- [ ] BuscadorProductosPOS.jsx con validación código de barras
+- [ ] BuscadorProductosPOS.jsx con código de barras
 
 **Semana 7:**
-- [ ] MetodoPagoModal.jsx
-- [ ] TerminalPagoModal.jsx
-- [ ] TicketVenta.jsx (integración pdfkit + qrcode)
-- [ ] **✅ Integración lector código de barras USB/Bluetooth** (+1 día)
+- [ ] MetodoPagoModal.jsx (efectivo, tarjeta, transferencia, mixto)
+- [ ] TicketVenta.jsx (PDF con pdfkit + qrcode)
 - [ ] HistorialVentasPage.jsx
-
-**Semana 7.5 (+0.5 semanas):**
 - [ ] ReportesCajaPage.jsx
 - [ ] CorteCAjaModal.jsx
-- [ ] **✅ Testing de escáner código de barras en hardware real** (+2 días)
+- [ ] **✅ Integración lector código de barras USB/Bluetooth** (+1 día)
 
-### Fase 5: Integraciones y Testing (1.5 semanas) ⚠️ AJUSTADO
+### Fase 5: Integraciones y Testing (1 semana)
 
-**Semana 8:**
-- [ ] Integrar con módulo comisiones (extender tabla)
+**Semana 7.5:**
+- [ ] Integrar con módulo comisiones (extender tabla + trigger)
 - [ ] Integrar con citas (agregar productos a citas)
 - [ ] Testing E2E flujo completo de venta
-- [ ] **✅ Testing Mercado Pago Point en sandbox** (+2 días)
-- [ ] Optimización de queries
-
-**Semana 8.5 (+0.5 semanas):**
-- [ ] **✅ Testing Clip en sandbox** (+1 día)
 - [ ] Testing de alertas de stock por email
+- [ ] Optimización de queries particionadas
 - [ ] Documentación CLAUDE.md
-- [ ] Documentación API endpoints
+- [ ] Documentación API endpoints (Swagger/OpenAPI)
 
 ### Fase 6: Features Avanzados (Opcional - Futuro)
 
-**Post-MVP:**
+**Post-MVP - Terminales Físicas (1-2 semanas):**
+- [ ] Servicio Mercado Pago Terminal (mercadoPagoTerminal.service.js)
+- [ ] Servicio Clip Terminal (clipTerminal.service.js)
+- [ ] Tabla `terminales_pos` para registro de dispositivos
+- [ ] Endpoints `/api/v1/pos/terminal/*` (4 endpoints)
+- [ ] TerminalPagoModal.jsx en frontend
+- [ ] Testing Mercado Pago Point en sandbox
+- [ ] Testing Clip Terminal (si disponible)
+- [ ] Documentación integración terminales
+
+**Post-MVP - Otras Features:**
 - [ ] Variantes de producto
 - [ ] Inventario multi-ubicación
 - [ ] Lotes y series
@@ -2215,6 +2506,7 @@ export function useGenerarTicket(ventaId) {
 - [ ] Reservas de productos
 - [ ] Impresión térmica de tickets
 - [ ] Código de barras custom generación
+- [ ] QR dinámico Mercado Pago (sin terminal física)
 
 ---
 
@@ -2255,10 +2547,10 @@ export function useGenerarTicket(ventaId) {
 | Característica | Tu Plataforma | AgendaPro |
 |----------------|---------------|-----------|
 | **Gestión de Inventario** | ✅ Incluido desde plan profesional ($34 USD) | ✅ Plan Premium ($149 USD) |
-| **POS Integrado** | ✅ Incluido + Terminal física | ⚠️ Solo planes premium |
+| **POS Integrado** | ✅ Incluido desde MVP | ⚠️ Solo planes premium |
 | **Comisiones por Productos** | ✅ Automáticas | ❌ No tiene |
 | **Código de Barras** | ✅ Soporte nativo | ✅ |
-| **Terminal Física** | ✅ Mercado Pago Point + Clip | ✅ Solo MP |
+| **Terminal Física** | 🔜 Post-MVP (MP Point + Clip) | ✅ Solo MP |
 | **Alertas Automáticas** | ✅ Triggers automáticos | ✅ |
 | **Análisis ABC** | ✅ Con función PL/pgSQL | ⚠️ Básico |
 | **Multi-ubicación** | 🔜 Fase 6 | ✅ |
@@ -2275,7 +2567,16 @@ export function useGenerarTicket(ventaId) {
 
 ### Resumen Ejecutivo
 
-Este plan implementa **Gestión de Inventario y Punto de Venta** completos en **6-8 semanas**, con arquitectura robusta y features competitivos.
+Este plan implementa **Gestión de Inventario y Punto de Venta (MVP)** en **7.5 semanas**, con arquitectura robusta y features competitivos.
+
+**Alcance MVP:**
+- ✅ Gestión completa de inventario (productos, categorías, proveedores, movimientos)
+- ✅ Punto de venta con métodos de pago tradicionales (efectivo, tarjeta, transferencia)
+- ✅ Integración con comisiones automáticas
+- ✅ Integración con citas (agregar productos)
+- ✅ Reportes y analytics
+- ✅ Alertas automáticas de stock
+- ⏳ **Terminales físicas (MP Point/Clip):** Post-MVP (+1-2 semanas)
 
 **Beneficios principales:**
 1. **Incremento de ingresos:** Salones generan 30-40% más con venta de productos
@@ -2283,29 +2584,82 @@ Este plan implementa **Gestión de Inventario y Punto de Venta** completos en **
 3. **Eficiencia:** Comisiones automáticas, integración con citas, un solo sistema
 4. **Ventaja competitiva:** Funcionalidades premium a precio de plan profesional
 
-### Decisión de Prioridad
+---
 
-**Según el análisis competitivo:**
-- Prioridad: 🟡 MEDIA
-- Impacto: ALTO para salones con venta de productos
-- ROI: 6-12 meses (basado en incremento de ingresos)
+## 📝 REGISTRO DE CAMBIOS
 
-**Recomendación:**
-Implementar **DESPUÉS de:**
-1. ✅ Sistema de Comisiones (COMPLETADO)
-2. ✅ Marketplace (98% COMPLETADO)
-3. 🔴 Instagram/Facebook Messenger (CRÍTICO para marketing)
+### v1.3 - Fase 0 Completada (20 Noviembre 2025)
 
-**Timeline sugerido:**
-- **Inicio:** Enero 2026 (después de completar IG/FB)
-- **Duración:** 9.5 semanas ⚠️ ACTUALIZADO (Fase 1-5)
-- **Launch:** Marzo 2026
+**Estado:** ✅ Base de datos completa e integrada
+
+**Archivos SQL creados (11 archivos):**
+1. ✅ `sql/inventario/01-tablas.sql` (284 líneas) - 4 tablas
+2. ✅ `sql/inventario/02-indices.sql` (241 líneas) - 20 índices
+3. ✅ `sql/inventario/03-rls-policies.sql` (231 líneas) - 16 políticas RLS
+4. ✅ `sql/inventario/04-funciones.sql` (260 líneas) - 7 funciones PL/pgSQL
+5. ✅ `sql/inventario/05-triggers.sql` (178 líneas) - 3 triggers con bypass RLS
+6. ✅ `sql/inventario/06-particionamiento.sql` (331 líneas) - Particionamiento mensual
+7. ✅ `sql/pos/01-tablas.sql` (158 líneas) - 3 tablas
+8. ✅ `sql/pos/02-indices.sql` (157 líneas) - 14 índices
+9. ✅ `sql/pos/03-rls-policies.sql` (153 líneas) - 12 políticas RLS
+10. ✅ `sql/pos/04-funciones.sql` (267 líneas) - 6 funciones PL/pgSQL (**NUEVO:** separado de triggers)
+11. ✅ `sql/pos/05-triggers.sql` (74 líneas) - 4 triggers (limpiado, solo triggers)
+
+**Actualización de sistema:**
+- ✅ `sql/core/schema/UPDATE_planes_subscripcion_inventario_pos.sql` - Límites de inventario/POS en BD
+- ✅ `backend/app/config/planLimits.js` - Límites sincronizados (productos, categorías, proveedores, ventas_pos_mes)
+
+**Integración con init-data.sh:**
+- ✅ Agregados módulos inventario y POS (líneas 208-236)
+- ✅ Sistema actualizado de 13 → 15 módulos SQL independientes
+- ⚠️ **IMPORTANTE:** `init-data.sh` es el script maestro que ejecuta TODOS los módulos. Ver CLAUDE.md para contexto.
+
+**Correcciones arquitectónicas:**
+- ✅ Separación de funciones y triggers en POS (patrón del proyecto)
+- ✅ Particionamiento de `movimientos_inventario` (patrón de `citas`)
+- ✅ Triggers con `SECURITY DEFINER` y bypass RLS (patrón de `comisiones`)
+- ✅ Funciones con manejo de excepciones y cleanup de RLS
+
+**Próximo paso:** Fase 1 - Backend Core (2.5 semanas)
 
 ---
 
-## 📝 REGISTRO DE CAMBIOS (v1.1 - Post Análisis Arquitectónico)
+### v1.2 - Ajuste de Alcance MVP (20 Noviembre 2025)
 
-**Fecha Actualización:** 18 Noviembre 2025
+**Decisión estratégica:** Mover integración de terminales físicas a Post-MVP
+
+**Cambios aplicados:**
+
+1. **⏰ Tiempo reducido de 9.5 → 7.5 semanas**
+   - Eliminadas 2 semanas de desarrollo e integración de terminales
+   - Roadmap optimizado sin dependencias de hardware externo
+
+2. **📦 Terminales físicas → Fase 6 (Post-MVP)**
+   - Movido: Servicios mercadoPagoTerminal.service.js y clipTerminal.service.js
+   - Movido: Endpoints `/api/v1/pos/terminal/*` (4 endpoints)
+   - Movido: TerminalPagoModal.jsx frontend
+   - Movido: Testing en sandbox de MP Point y Clip
+   - **Razón:** Evaluar primero adopción del módulo antes de invertir en hardware
+
+3. **🔧 Dependencias actualizadas**
+   - Especificado: `npm install jsbarcode` en `backend/app/`
+   - Validación de códigos de barras usando regex simple (EAN8/EAN13)
+
+4. **📊 Endpoints POS reducidos de 14 → 11**
+   - Mantenidos: 9 endpoints ventas + 2 reportes
+   - Eliminados temporalmente: 4 endpoints de terminales
+
+5. **✅ Alcance MVP clarificado**
+   - ✅ Gestión completa de inventario
+   - ✅ POS con métodos tradicionales (efectivo, tarjeta, transferencia, mixto)
+   - ✅ Integración con comisiones y citas
+   - ✅ Reportes y alertas automáticas
+   - ⏳ Terminales físicas: A evaluar post-lanzamiento
+
+---
+
+### v1.1 - Post Análisis Arquitectónico (18 Noviembre 2025)
+
 **Cambios aplicados tras validación con código real del proyecto:**
 
 ### ✅ CORRECCIONES CRÍTICAS APLICADAS
