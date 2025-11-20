@@ -1,5 +1,5 @@
-const RLSContextManager = require('../utils/rlsContextManager');
-const logger = require('../utils/logger');
+const RLSContextManager = require('../../../utils/rlsContextManager');
+const logger = require('../../../utils/logger');
 
 class TipoBloqueoModel {
   /**

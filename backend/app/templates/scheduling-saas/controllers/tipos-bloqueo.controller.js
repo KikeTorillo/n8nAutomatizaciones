@@ -1,4 +1,4 @@
-const TipoBloqueoModel = require('../../../database/tipos-bloqueo.model');
+const TipoBloqueoModel = require('../models/tipos-bloqueo.model');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
