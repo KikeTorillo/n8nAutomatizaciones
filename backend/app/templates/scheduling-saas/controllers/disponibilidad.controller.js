@@ -7,7 +7,7 @@
  * Reutilizable para: chatbot, frontend admin, portal cliente.
  */
 
-const DisponibilidadModel = require('../../../database/disponibilidad.model');
+const DisponibilidadModel = require('../models/disponibilidad.model');
 const { asyncHandler } = require('../../../middleware');
 const { ResponseHelper } = require('../../../utils/helpers');
 const logger = require('../../../utils/logger');
