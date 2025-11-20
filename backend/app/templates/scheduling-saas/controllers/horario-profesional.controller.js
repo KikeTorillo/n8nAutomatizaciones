@@ -1,4 +1,4 @@
-const HorarioProfesionalModel = require('../../../database/horario-profesional.model');
+const HorarioProfesionalModel = require('../models/horario-profesional.model');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
