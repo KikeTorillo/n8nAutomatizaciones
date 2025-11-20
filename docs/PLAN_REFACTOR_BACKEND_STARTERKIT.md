@@ -1,7 +1,7 @@
 # 🔧 Plan de Refactor: Backend para SaaS Starter Kit
 
-**Última actualización:** 19 Noviembre 2025 - 21:30 CST
-**Estado:** ✅ Nivel 7 COMPLETADO (85% del refactor total)
+**Última actualización:** 19 Noviembre 2025 - 22:05 CST
+**Estado:** ✅ Nivel 8.1 COMPLETADO - Nomenclatura consistente (87% del refactor total)
 
 ---
 
@@ -22,7 +22,8 @@ Separar código **CORE** (reutilizable) de código **TEMPLATE** (específico de 
 | 5. Routes | 12/12 | ✅ Completado |
 | 6. Controllers | 12/12 | ✅ Completado |
 | 7. Models | 10/10 | ✅ Completado |
-| 8. Módulos Ambiguos | 0/5 | ⏳ Pendiente |
+| 8.1 Nomenclatura | 15 archivos | ✅ Completado |
+| 8.2 Módulos Ambiguos | 0/4 | ⏳ Pendiente |
 
 **Sistema:** Backend ✅ Healthy | Tests: 561/630 (89.0%) | Docker: 8 contenedores operativos
 
@@ -38,7 +39,7 @@ backend/app/
 │   ├── services/          # Mercado Pago, email, n8n
 │   ├── schemas/           # auth, organizacion, pagos, usuario (4)
 │   ├── controllers/       # auth, usuario, plan, superadmin, webhook, pagos (8)
-│   └── database/          # organizacion, usuario, plan, subscripcion, pago (5)
+│   └── models/            # organizacion, usuario, plan, subscripcion, pago (5) ✅ Renombrado
 │
 └── templates/scheduling-saas/   ✅ Migración completa
     ├── utils/                   # cita-validacion.util.js
@@ -57,7 +58,26 @@ backend/app/
 
 ---
 
-## ⚠️ Nivel 8 - Módulos Ambiguos (Pendientes)
+## ✅ Nivel 8.1 - Nomenclatura Consistente (Completado)
+
+**Objetivo:** Alinear nomenclatura entre CORE y TEMPLATE
+
+**Cambios realizados:**
+- Renombrado: `backend/app/database/` → `backend/app/models/`
+- Actualizados: 15 archivos (6 productivos + 8 tests + 1 fix)
+- **Bonus fix:** `generate-mcp-token.js` ahora importa pool desde `config/database`
+
+**Resultado:**
+```
+✅ backend/app/models/              # CORE models
+✅ templates/.../models/            # TEMPLATE models
+```
+
+**Commit:** `24f5385` - refactor(nivel-8.1): Renombrar database/ → models/ para consistencia
+
+---
+
+## ⚠️ Nivel 8.2 - Módulos Ambiguos (Pendientes)
 
 Archivos CORE con lógica específica de agendamiento que requieren refactor:
 
@@ -67,8 +87,6 @@ Archivos CORE con lógica específica de agendamiento que requieren refactor:
 | `organizacion.controller.js` | Método `obtenerProgresoSetup()` consulta tablas de agendamiento | Extraer método a template |
 | `chatbot.controller.js` + `n8nMcpCredentialsService.js` | System prompt y MCP tools específicos (`verificarDisponibilidad`, `crearCita`) | Mover a template |
 | `organizacion.constants.js` | `SELECT_FIELDS` incluye `configuracion_categoria` | Revisar dependencias |
-
-**Nota:** `marketplace/` ya fue migrado a template en Nivel 6 y 7.
 
 ---
 
@@ -190,6 +208,10 @@ docker exec back npm test -- nombre-modulo
 
 ## 📌 Próximos Pasos
 
-1. **Nivel 8:** Refactorizar módulos ambiguos (5 pendientes)
+1. **Nivel 8.2:** Refactorizar módulos ambiguos (4 pendientes)
+   - Generalizar o mover `subscription.js`
+   - Extraer `obtenerProgresoSetup()` de organizacion.controller.js
+   - Mover `chatbot.controller.js` + MCP a template
+   - Revisar `organizacion.constants.js`
 2. **Validación final:** Ejecutar suite completa de tests
 3. **Documentación:** Guía de uso del starter kit para nuevos proyectos
