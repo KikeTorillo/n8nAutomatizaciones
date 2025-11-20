@@ -1,4 +1,4 @@
-const { AnalyticsMarketplaceModel } = require('../../../../database/marketplace');
+const { AnalyticsMarketplaceModel } = require('../../models/marketplace');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
 const crypto = require('crypto');

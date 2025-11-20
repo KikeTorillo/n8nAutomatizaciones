@@ -1,7 +1,7 @@
-const RLSContextManager = require('../../utils/rlsContextManager');
-const logger = require('../../utils/logger');
-const PaginationHelper = require('../../utils/helpers').PaginationHelper;
-const db = require('../../config/database');
+const RLSContextManager = require('../../../../utils/rlsContextManager');
+const logger = require('../../../../utils/logger');
+const PaginationHelper = require('../../../../utils/helpers').PaginationHelper;
+const db = require('../../../../config/database');
 
 /**
  * ====================================================================

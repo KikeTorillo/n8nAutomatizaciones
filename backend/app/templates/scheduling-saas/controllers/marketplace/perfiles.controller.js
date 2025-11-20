@@ -1,4 +1,4 @@
-const { PerfilesMarketplaceModel } = require('../../../../database/marketplace');
+const { PerfilesMarketplaceModel } = require('../../models/marketplace');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
 
