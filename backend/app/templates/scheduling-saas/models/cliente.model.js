@@ -1,6 +1,6 @@
 /** Modelo de Cliente - Operaciones CRUD con RLS multi-tenant */
 
-const RLSContextManager = require('../utils/rlsContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 class ClienteModel {
 

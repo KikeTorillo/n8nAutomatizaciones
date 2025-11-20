@@ -1,6 +1,6 @@
 /** Controller de Clientes - Gestión CRUD con aislamiento multi-tenant */
 
-const ClienteModel = require('../../../database/cliente.model');
+const ClienteModel = require('../models/cliente.model');
 const { ResponseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 
