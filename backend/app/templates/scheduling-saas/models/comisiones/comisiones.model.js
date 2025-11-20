@@ -1,6 +1,6 @@
-const RLSContextManager = require('../../utils/rlsContextManager');
-const logger = require('../../utils/logger');
-const PaginationHelper = require('../../utils/helpers').PaginationHelper;
+const RLSContextManager = require('../../../../utils/rlsContextManager');
+const logger = require('../../../../utils/logger');
+const PaginationHelper = require('../../../../utils/helpers').PaginationHelper;
 
 /**
  * Model para consultas de comisiones profesionales

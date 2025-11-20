@@ -1,4 +1,4 @@
-const { ConfiguracionComisionesModel } = require('../../../../database/comisiones');
+const { ConfiguracionComisionesModel } = require('../../models/comisiones');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
 
