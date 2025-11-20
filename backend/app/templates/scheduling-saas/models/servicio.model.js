@@ -1,6 +1,6 @@
 // Modelo de Servicios - CRUD multi-tenant con RLS
 
-const RLSContextManager = require('../utils/rlsContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 class ServicioModel {
 
