@@ -1263,7 +1263,7 @@ El cliente solo necesita información legible y amigable.`;
 
             // 4. Cargar configuración de plataforma
             const plataformaNormalizada = plataforma === 'whatsapp_oficial' ? 'whatsapp' : plataforma;
-            const platformConfig = require(`../flows/generator/${plataformaNormalizada}.config.js`);
+            const platformConfig = require(`../../../flows/generator/${plataformaNormalizada}.config.js`);
 
             // 5. Generar workflow usando el generador dinámico
             const { generarWorkflow } = require('../../../flows/generator/workflowGenerator.js');
