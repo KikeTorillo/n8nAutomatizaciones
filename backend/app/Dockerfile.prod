@@ -53,6 +53,7 @@ COPY --chown=nodejs:nodejs config ./config
 COPY --chown=nodejs:nodejs schemas ./schemas
 COPY --chown=nodejs:nodejs constants ./constants
 COPY --chown=nodejs:nodejs flows ./flows
+COPY --chown=nodejs:nodejs templates ./templates
 
 # Cambiar a usuario no-root
 USER nodejs
