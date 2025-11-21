@@ -102,12 +102,18 @@ function CitasPage() {
         iniciarMutation.mutate({ id: cita.id });
         break;
       case 'completar':
-        // Abrir modal especializado
-        setModalCompletarAbierto(true);
+        // Transición suave: cerrar modal de detalles y después de la animación abrir modal de completar
+        setModalDetallesAbierto(false);
+        setTimeout(() => {
+          setModalCompletarAbierto(true);
+        }, 300); // Espera a que termine la animación de cierre del modal
         break;
       case 'no_show':
-        // Abrir modal especializado
-        setModalNoShowAbierto(true);
+        // Transición suave: cerrar modal de detalles y después de la animación abrir modal de no_show
+        setModalDetallesAbierto(false);
+        setTimeout(() => {
+          setModalNoShowAbierto(true);
+        }, 300); // Espera a que termine la animación de cierre del modal
         break;
       default:
         break;

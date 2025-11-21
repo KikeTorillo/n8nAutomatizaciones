@@ -22,6 +22,8 @@ const subscripcionesRouter = require('./subscripciones');
 const mercadopagoRouter = require('./mercadopago');
 const comisionesRouter = require('../../../templates/scheduling-saas/routes/api/v1/comisiones');
 const marketplaceRouter = require('../../../templates/scheduling-saas/routes/api/v1/marketplace');
+const inventarioRouter = require('../../../templates/scheduling-saas/routes/api/v1/inventario');
+const posRouter = require('../../../templates/scheduling-saas/routes/api/v1/pos');
 
 function routerApi(app) {
     const router = express.Router();
@@ -60,6 +62,10 @@ function routerApi(app) {
 
     // Rutas de marketplace público
     router.use('/marketplace', marketplaceRouter);
+
+    // Rutas de inventario y punto de venta
+    router.use('/inventario', inventarioRouter);
+    router.use('/pos', posRouter);
 
     // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);

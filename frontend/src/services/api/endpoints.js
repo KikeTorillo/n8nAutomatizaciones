@@ -1027,6 +1027,350 @@ export const marketplaceApi = {
   limpiarAnalytics: (params = {}) => apiClient.delete('/marketplace/analytics/limpiar', { params }),
 };
 
+// ==================== INVENTARIO ====================
+export const inventarioApi = {
+  // ========== Categorías de Productos ==========
+
+  /**
+   * Crear categoría de producto
+   * @param {Object} data - { nombre, descripcion?, categoria_padre_id?, icono?, color?, orden?, activo? }
+   * @returns {Promise<Object>}
+   */
+  crearCategoria: (data) => apiClient.post('/inventario/categorias', data),
+
+  /**
+   * Listar categorías con filtros
+   * @param {Object} params - { activo?, categoria_padre_id?, busqueda? }
+   * @returns {Promise<Object>} { categorias }
+   */
+  listarCategorias: (params = {}) => apiClient.get('/inventario/categorias', { params }),
+
+  /**
+   * Obtener árbol jerárquico de categorías
+   * @returns {Promise<Object>} { arbol }
+   */
+  obtenerArbolCategorias: () => apiClient.get('/inventario/categorias/arbol'),
+
+  /**
+   * Obtener categoría por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerCategoria: (id) => apiClient.get(`/inventario/categorias/${id}`),
+
+  /**
+   * Actualizar categoría
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarCategoria: (id, data) => apiClient.put(`/inventario/categorias/${id}`, data),
+
+  /**
+   * Eliminar categoría (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarCategoria: (id) => apiClient.delete(`/inventario/categorias/${id}`),
+
+  // ========== Proveedores ==========
+
+  /**
+   * Crear proveedor
+   * @param {Object} data - { nombre, razon_social?, rfc?, telefono?, email?, sitio_web?, direccion?, ciudad?, estado?, codigo_postal?, pais?, dias_credito?, dias_entrega_estimados?, monto_minimo_compra?, notas?, activo? }
+   * @returns {Promise<Object>}
+   */
+  crearProveedor: (data) => apiClient.post('/inventario/proveedores', data),
+
+  /**
+   * Listar proveedores con filtros
+   * @param {Object} params - { activo?, busqueda?, ciudad?, rfc?, limit?, offset? }
+   * @returns {Promise<Object>} { proveedores, total }
+   */
+  listarProveedores: (params = {}) => apiClient.get('/inventario/proveedores', { params }),
+
+  /**
+   * Obtener proveedor por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerProveedor: (id) => apiClient.get(`/inventario/proveedores/${id}`),
+
+  /**
+   * Actualizar proveedor
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarProveedor: (id, data) => apiClient.put(`/inventario/proveedores/${id}`, data),
+
+  /**
+   * Eliminar proveedor (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarProveedor: (id) => apiClient.delete(`/inventario/proveedores/${id}`),
+
+  // ========== Productos ==========
+
+  /**
+   * Crear producto
+   * @param {Object} data - { nombre, descripcion?, sku?, codigo_barras?, categoria_id?, proveedor_id?, precio_compra?, precio_venta, precio_mayoreo?, cantidad_mayoreo?, stock_actual?, stock_minimo?, stock_maximo?, unidad_medida?, alerta_stock_minimo?, es_perecedero?, dias_vida_util?, permite_venta?, permite_uso_servicio?, notas?, activo? }
+   * @returns {Promise<Object>}
+   */
+  crearProducto: (data) => apiClient.post('/inventario/productos', data),
+
+  /**
+   * Crear múltiples productos (bulk 1-50)
+   * @param {Object} data - { productos: [...] }
+   * @returns {Promise<Object>} { productos_creados, errores? }
+   */
+  bulkCrearProductos: (data) => apiClient.post('/inventario/productos/bulk', data),
+
+  /**
+   * Listar productos con filtros
+   * @param {Object} params - { activo?, categoria_id?, proveedor_id?, busqueda?, sku?, codigo_barras?, stock_bajo?, stock_agotado?, permite_venta?, orden_por?, orden_dir?, limit?, offset? }
+   * @returns {Promise<Object>} { productos, total }
+   */
+  listarProductos: (params = {}) => apiClient.get('/inventario/productos', { params }),
+
+  /**
+   * Buscar productos (full-text search + código de barras)
+   * @param {Object} params - { q, tipo_busqueda?, categoria_id?, proveedor_id?, solo_activos?, solo_con_stock?, limit? }
+   * @returns {Promise<Object>} { productos }
+   */
+  buscarProductos: (params) => apiClient.get('/inventario/productos/buscar', { params }),
+
+  /**
+   * Obtener productos con stock crítico
+   * @returns {Promise<Object>} { productos }
+   */
+  obtenerStockCritico: () => apiClient.get('/inventario/productos/stock-critico'),
+
+  /**
+   * Obtener producto por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerProducto: (id) => apiClient.get(`/inventario/productos/${id}`),
+
+  /**
+   * Actualizar producto
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarProducto: (id, data) => apiClient.put(`/inventario/productos/${id}`, data),
+
+  /**
+   * Ajustar stock manualmente (conteo físico, correcciones)
+   * @param {number} id
+   * @param {Object} data - { cantidad_ajuste, motivo, tipo_movimiento: 'entrada_ajuste' | 'salida_ajuste' }
+   * @returns {Promise<Object>}
+   */
+  ajustarStock: (id, data) => apiClient.patch(`/inventario/productos/${id}/stock`, data),
+
+  /**
+   * Eliminar producto (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarProducto: (id) => apiClient.delete(`/inventario/productos/${id}`),
+
+  // ========== Movimientos de Inventario ==========
+
+  /**
+   * Registrar movimiento de inventario
+   * @param {Object} data - { producto_id, tipo_movimiento, cantidad, costo_unitario?, proveedor_id?, venta_pos_id?, cita_id?, usuario_id?, referencia?, motivo?, fecha_vencimiento?, lote? }
+   * @returns {Promise<Object>}
+   */
+  registrarMovimiento: (data) => apiClient.post('/inventario/movimientos', data),
+
+  /**
+   * Listar movimientos con filtros
+   * @param {Object} params - { tipo_movimiento?, categoria?, producto_id?, proveedor_id?, fecha_desde?, fecha_hasta?, limit?, offset? }
+   * @returns {Promise<Object>} { movimientos, total }
+   */
+  listarMovimientos: (params = {}) => apiClient.get('/inventario/movimientos', { params }),
+
+  /**
+   * Obtener kardex de un producto
+   * @param {number} productoId
+   * @param {Object} params - { tipo_movimiento?, fecha_desde?, fecha_hasta?, proveedor_id?, limit?, offset? }
+   * @returns {Promise<Object>} { kardex, producto }
+   */
+  obtenerKardex: (productoId, params = {}) => apiClient.get(`/inventario/movimientos/kardex/${productoId}`, { params }),
+
+  /**
+   * Obtener estadísticas de movimientos
+   * @param {Object} params - { fecha_desde, fecha_hasta }
+   * @returns {Promise<Object>} { estadisticas }
+   */
+  obtenerEstadisticasMovimientos: (params) => apiClient.get('/inventario/movimientos/estadisticas', { params }),
+
+  // ========== Alertas de Inventario ==========
+
+  /**
+   * Listar alertas con filtros
+   * @param {Object} params - { tipo_alerta?, nivel?, leida?, producto_id?, fecha_desde?, fecha_hasta?, limit?, offset? }
+   * @returns {Promise<Object>} { alertas, total }
+   */
+  listarAlertas: (params = {}) => apiClient.get('/inventario/alertas', { params }),
+
+  /**
+   * Obtener dashboard de alertas
+   * @returns {Promise<Object>} { resumen, alertas_recientes }
+   */
+  obtenerDashboardAlertas: () => apiClient.get('/inventario/alertas/dashboard'),
+
+  /**
+   * Obtener alerta por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerAlerta: (id) => apiClient.get(`/inventario/alertas/${id}`),
+
+  /**
+   * Marcar alerta como leída
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  marcarAlertaLeida: (id) => apiClient.patch(`/inventario/alertas/${id}/marcar-leida`),
+
+  /**
+   * Marcar múltiples alertas como leídas
+   * @param {Object} data - { alerta_ids: [...] }
+   * @returns {Promise<Object>}
+   */
+  marcarVariasAlertasLeidas: (data) => apiClient.patch('/inventario/alertas/marcar-varias-leidas', data),
+
+  // ========== Reportes de Inventario ==========
+
+  /**
+   * Obtener valor total del inventario
+   * @returns {Promise<Object>} { total_productos, total_unidades, valor_compra, valor_venta, margen_potencial }
+   */
+  obtenerValorInventario: () => apiClient.get('/inventario/reportes/valor-inventario'),
+
+  /**
+   * Obtener análisis ABC de productos (clasificación Pareto)
+   * @param {Object} params - { fecha_desde, fecha_hasta, categoria_id? }
+   * @returns {Promise<Object>} { productos_abc }
+   */
+  obtenerAnalisisABC: (params) => apiClient.get('/inventario/reportes/analisis-abc', { params }),
+
+  /**
+   * Obtener reporte de rotación de inventario
+   * @param {Object} params - { fecha_desde, fecha_hasta, categoria_id?, top? }
+   * @returns {Promise<Object>} { productos_rotacion }
+   */
+  obtenerRotacionInventario: (params) => apiClient.get('/inventario/reportes/rotacion', { params }),
+
+  /**
+   * Obtener resumen de alertas agrupadas
+   * @returns {Promise<Object>} { resumen_alertas }
+   */
+  obtenerResumenAlertas: () => apiClient.get('/inventario/reportes/alertas'),
+};
+
+// ==================== PUNTO DE VENTA (POS) ====================
+export const posApi = {
+  // ========== Ventas POS ==========
+
+  /**
+   * Crear venta con items
+   * @param {Object} data - { tipo_venta?, cliente_id?, cita_id?, profesional_id?, usuario_id, items: [{ producto_id, cantidad, precio_unitario?, descuento_porcentaje?, descuento_monto?, aplica_comision?, notas? }], descuento_porcentaje?, descuento_monto?, impuestos?, metodo_pago, monto_pagado?, fecha_apartado?, fecha_vencimiento_apartado?, notas? }
+   * @returns {Promise<Object>}
+   */
+  crearVenta: (data) => apiClient.post('/pos/ventas', data),
+
+  /**
+   * Listar ventas con filtros
+   * @param {Object} params - { estado?, estado_pago?, tipo_venta?, cliente_id?, profesional_id?, metodo_pago?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
+   * @returns {Promise<Object>} { ventas, total }
+   */
+  listarVentas: (params = {}) => apiClient.get('/pos/ventas', { params }),
+
+  /**
+   * Obtener venta por ID con sus items
+   * @param {number} id
+   * @returns {Promise<Object>} { venta, items }
+   */
+  obtenerVenta: (id) => apiClient.get(`/pos/ventas/${id}`),
+
+  /**
+   * Actualizar venta
+   * @param {number} id
+   * @param {Object} data - { tipo_venta?, cliente_id?, profesional_id?, descuento_porcentaje?, descuento_monto?, impuestos?, metodo_pago?, fecha_apartado?, fecha_vencimiento_apartado?, notas? }
+   * @returns {Promise<Object>}
+   */
+  actualizarVenta: (id, data) => apiClient.put(`/pos/ventas/${id}`, data),
+
+  /**
+   * Actualizar estado de venta
+   * @param {number} id
+   * @param {Object} data - { estado: 'cotizacion' | 'apartado' | 'completada' | 'cancelada' }
+   * @returns {Promise<Object>}
+   */
+  actualizarEstadoVenta: (id, data) => apiClient.patch(`/pos/ventas/${id}/estado`, data),
+
+  /**
+   * Registrar pago en venta
+   * @param {number} id
+   * @param {Object} data - { monto_pago, metodo_pago, pago_id? }
+   * @returns {Promise<Object>}
+   */
+  registrarPago: (id, data) => apiClient.post(`/pos/ventas/${id}/pago`, data),
+
+  /**
+   * Cancelar venta y revertir stock
+   * @param {number} id
+   * @param {Object} data - { motivo?, usuario_id }
+   * @returns {Promise<Object>}
+   */
+  cancelarVenta: (id, data) => apiClient.post(`/pos/ventas/${id}/cancelar`, data),
+
+  /**
+   * Procesar devolución parcial o total de items
+   * @param {number} id
+   * @param {Object} data - { items_devueltos: [{ item_id, cantidad_devolver }], motivo?, usuario_id }
+   * @returns {Promise<Object>}
+   */
+  devolverItems: (id, data) => apiClient.post(`/pos/ventas/${id}/devolver`, data),
+
+  /**
+   * Agregar items a venta existente
+   * @param {number} id
+   * @param {Object} data - { items: [{ producto_id, cantidad, precio_unitario?, descuento_porcentaje?, descuento_monto?, aplica_comision?, notas? }] }
+   * @returns {Promise<Object>}
+   */
+  agregarItems: (id, data) => apiClient.post(`/pos/ventas/${id}/items`, data),
+
+  /**
+   * Eliminar venta (marca como cancelada y revierte stock)
+   * @param {number} id
+   * @param {Object} data - { motivo, usuario_id }
+   * @returns {Promise<Object>}
+   */
+  eliminarVenta: (id, data) => apiClient.delete(`/pos/ventas/${id}`, { data }),
+
+  // ========== Reportes POS ==========
+
+  /**
+   * Obtener corte de caja por período
+   * @param {Object} params - { fecha_inicio, fecha_fin, usuario_id? }
+   * @returns {Promise<Object>} { resumen, totales_por_metodo, ventas_por_hora, top_productos }
+   */
+  obtenerCorteCaja: (params) => apiClient.get('/pos/corte-caja', { params }),
+
+  /**
+   * Obtener reporte de ventas diarias
+   * @param {Object} params - { fecha, profesional_id?, usuario_id? }
+   * @returns {Promise<Object>} { resumen, ventas_por_hora, top_productos, detalle }
+   */
+  obtenerVentasDiarias: (params) => apiClient.get('/pos/reportes/ventas-diarias', { params }),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -1046,4 +1390,6 @@ export default {
   mercadopago: mercadopagoApi,
   comisiones: comisionesApi,
   marketplace: marketplaceApi,
+  inventario: inventarioApi,
+  pos: posApi,
 };

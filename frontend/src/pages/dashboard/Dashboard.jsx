@@ -12,6 +12,7 @@ import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import SetupChecklist from '@/components/dashboard/SetupChecklist';
 import MarketplaceActivationCard from '@/components/dashboard/MarketplaceActivationCard';
+import AlertasWidget from '@/components/inventario/AlertasWidget';
 import {
   useEstadisticasOrganizacion,
   useServiciosDashboard,
@@ -173,6 +174,12 @@ function Dashboard() {
                   className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Comisiones
+                </button>
+                <button
+                  onClick={() => navigate('/inventario/productos')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  Inventario
                 </button>
                 <button
                   onClick={() => navigate('/bloqueos')}
@@ -363,6 +370,11 @@ function Dashboard() {
               </p>
             )}
           </div>
+        </div>
+
+        {/* Widget de Alertas de Inventario */}
+        <div className="mt-8">
+          <AlertasWidget />
         </div>
 
         {/* Tarjeta de Asignaciones Servicio-Profesional */}

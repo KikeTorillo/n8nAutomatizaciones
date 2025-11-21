@@ -197,6 +197,10 @@ class SubscriptionMiddleware {
    * - servicios
    * - usuarios
    * - citas_mes
+   * - productos (nuevo)
+   * - categorias_productos (nuevo)
+   * - proveedores (nuevo)
+   * - ventas_pos_mes (nuevo)
    *
    * @param {string} tipoRecurso - Tipo de recurso a validar
    * @returns {Function} Middleware de Express
@@ -209,7 +213,17 @@ class SubscriptionMiddleware {
    */
   static checkResourceLimit(tipoRecurso) {
     // Validar que el tipo de recurso sea válido
-    const tiposValidos = ['profesionales', 'clientes', 'servicios', 'usuarios', 'citas_mes'];
+    const tiposValidos = [
+      'profesionales',
+      'clientes',
+      'servicios',
+      'usuarios',
+      'citas_mes',
+      'productos',
+      'categorias_productos',
+      'proveedores',
+      'ventas_pos_mes'
+    ];
     if (!tiposValidos.includes(tipoRecurso)) {
       throw new Error(`Tipo de recurso inválido: ${tipoRecurso}. Debe ser uno de: ${tiposValidos.join(', ')}`);
     }
@@ -244,6 +258,10 @@ class SubscriptionMiddleware {
                   WHEN 'servicios' THEN ps.limite_servicios
                   WHEN 'usuarios' THEN ps.limite_usuarios
                   WHEN 'citas_mes' THEN ps.limite_citas_mes
+                  WHEN 'productos' THEN ps.limite_productos
+                  WHEN 'categorias_productos' THEN ps.limite_categorias_productos
+                  WHEN 'proveedores' THEN ps.limite_proveedores
+                  WHEN 'ventas_pos_mes' THEN ps.limite_ventas_pos_mes
                 END as limite,
                 CASE $2
                   WHEN 'profesionales' THEN m.uso_profesionales
@@ -251,6 +269,10 @@ class SubscriptionMiddleware {
                   WHEN 'servicios' THEN m.uso_servicios
                   WHEN 'usuarios' THEN m.uso_usuarios
                   WHEN 'citas_mes' THEN m.uso_citas_mes_actual
+                  WHEN 'productos' THEN m.uso_productos
+                  WHEN 'categorias_productos' THEN m.uso_categorias_productos
+                  WHEN 'proveedores' THEN m.uso_proveedores
+                  WHEN 'ventas_pos_mes' THEN m.uso_ventas_pos_mes_actual
                 END as uso_actual
               FROM subscripciones s
               JOIN planes_subscripcion ps ON s.plan_id = ps.id
@@ -280,7 +302,11 @@ class SubscriptionMiddleware {
             'clientes': 'clientes',
             'servicios': 'servicios',
             'usuarios': 'usuarios',
-            'citas_mes': 'citas por mes'
+            'citas_mes': 'citas por mes',
+            'productos': 'productos',
+            'categorias_productos': 'categorías de productos',
+            'proveedores': 'proveedores',
+            'ventas_pos_mes': 'ventas POS por mes'
           };
 
           const nombreAmigable = nombresRecursos[tipoRecurso] || tipoRecurso;
@@ -341,6 +367,10 @@ class SubscriptionMiddleware {
                 WHEN 'servicios' THEN ps.limite_servicios
                 WHEN 'usuarios' THEN ps.limite_usuarios
                 WHEN 'citas_mes' THEN ps.limite_citas_mes
+                WHEN 'productos' THEN ps.limite_productos
+                WHEN 'categorias_productos' THEN ps.limite_categorias_productos
+                WHEN 'proveedores' THEN ps.limite_proveedores
+                WHEN 'ventas_pos_mes' THEN ps.limite_ventas_pos_mes
               END as limite,
               CASE $2
                 WHEN 'profesionales' THEN m.uso_profesionales
@@ -348,6 +378,10 @@ class SubscriptionMiddleware {
                 WHEN 'servicios' THEN m.uso_servicios
                 WHEN 'usuarios' THEN m.uso_usuarios
                 WHEN 'citas_mes' THEN m.uso_citas_mes_actual
+                WHEN 'productos' THEN m.uso_productos
+                WHEN 'categorias_productos' THEN m.uso_categorias_productos
+                WHEN 'proveedores' THEN m.uso_proveedores
+                WHEN 'ventas_pos_mes' THEN m.uso_ventas_pos_mes_actual
               END as uso_actual
             FROM subscripciones s
             JOIN planes_subscripcion ps ON s.plan_id = ps.id

@@ -45,16 +45,10 @@ function CitaDetailModal({ isOpen, onClose, cita, onCambiarEstado, onEditar, onC
         onClose();
         break;
       case 'completar':
-        // No cerrar inmediatamente - el modal de completar se abrirá
         onCambiarEstado(cita, 'completar');
-        // Cerrar después de un pequeño delay para que el otro modal se abra
-        setTimeout(() => onClose(), 100);
         break;
       case 'no_show':
-        // No cerrar inmediatamente - el modal de no_show se abrirá
         onCambiarEstado(cita, 'no_show');
-        // Cerrar después de un pequeño delay para que el otro modal se abra
-        setTimeout(() => onClose(), 100);
         break;
       case 'cancelar':
         onCancelar(cita);

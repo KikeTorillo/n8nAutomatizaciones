@@ -38,6 +38,14 @@ const ComisionesPage = lazy(() => import('@/pages/comisiones/ComisionesPage'));
 const ConfiguracionComisionesPage = lazy(() => import('@/pages/comisiones/ConfiguracionComisionesPage'));
 const ReportesComisionesPage = lazy(() => import('@/pages/comisiones/ReportesComisionesPage'));
 
+// Páginas de Inventario
+const ProductosPage = lazy(() => import('@/pages/inventario/ProductosPage'));
+const CategoriasPage = lazy(() => import('@/pages/inventario/CategoriasPage'));
+const ProveedoresPage = lazy(() => import('@/pages/inventario/ProveedoresPage'));
+const MovimientosPage = lazy(() => import('@/pages/inventario/MovimientosPage'));
+const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
+const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
+
 // Páginas de Marketplace
 const DirectorioMarketplacePage = lazy(() => import('@/pages/marketplace/DirectorioMarketplacePage'));
 const PerfilPublicoPage = lazy(() => import('@/pages/marketplace/PerfilPublicoPage'));
@@ -245,6 +253,55 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ReportesComisionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Inventario
+      {
+        path: 'inventario/productos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(ProductosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/categorias',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(CategoriasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/proveedores',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(ProveedoresPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/movimientos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(MovimientosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/alertas',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(AlertasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/reportes',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReportesInventarioPage)}
           </ProtectedRoute>
         ),
       },
