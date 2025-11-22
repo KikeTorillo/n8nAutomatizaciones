@@ -182,6 +182,12 @@ function Dashboard() {
                   Inventario
                 </button>
                 <button
+                  onClick={() => navigate('/pos/venta')}
+                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                >
+                  POS
+                </button>
+                <button
                   onClick={() => navigate('/bloqueos')}
                   className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >

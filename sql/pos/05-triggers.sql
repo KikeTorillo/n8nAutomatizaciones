@@ -36,17 +36,18 @@ CREATE TRIGGER trigger_calcular_totales_venta
 COMMENT ON TRIGGER trigger_calcular_totales_venta ON ventas_pos_items IS 'Recalcula totales de venta al agregar/modificar/eliminar items';
 
 -- ============================================================================
--- TRIGGER 3: Actualizar stock al completar venta
--- Se ejecuta DESPUÉS de INSERT/UPDATE
+-- TRIGGER 3: Actualizar stock al completar venta (solo UPDATE)
+-- Se ejecuta DESPUÉS de UPDATE cuando cambia el estado
 -- Función: actualizar_stock_venta_pos() (definida en 04-funciones.sql)
+-- NOTA: Para INSERT, el descuento de stock lo maneja trigger_calcular_totales_venta
 -- ============================================================================
 
 CREATE TRIGGER trigger_actualizar_stock_venta
-    AFTER INSERT OR UPDATE OF estado ON ventas_pos
+    AFTER UPDATE OF estado ON ventas_pos
     FOR EACH ROW
     EXECUTE FUNCTION actualizar_stock_venta_pos();
 
-COMMENT ON TRIGGER trigger_actualizar_stock_venta ON ventas_pos IS 'Descuenta stock y crea movimientos al completar venta';
+COMMENT ON TRIGGER trigger_actualizar_stock_venta ON ventas_pos IS 'Descuenta stock al cambiar estado a completada en UPDATE (cotizacion→completada)';
 
 -- ============================================================================
 -- TRIGGER 4: Actualizar timestamp en ventas_pos
@@ -65,9 +66,27 @@ COMMENT ON TRIGGER trigger_actualizar_timestamp_venta ON ventas_pos IS 'Actualiz
 -- FIN: TRIGGERS DE PUNTO DE VENTA
 -- ============================================================================
 
--- ⚙️ ORDEN DE EJECUCIÓN DE TRIGGERS:
--- 1. BEFORE INSERT: generar_folio_venta (si folio es NULL)
--- 2. INSERT: Se inserta la venta en ventas_pos
--- 3. AFTER INSERT en ventas_pos_items: calcular_totales_venta (recalcula subtotal/total)
--- 4. AFTER UPDATE estado='completada': actualizar_stock_venta (descuenta stock)
--- 5. AFTER INSERT en movimientos_inventario: verificar_alertas_inventario (genera alertas - módulo inventario)
+-- ⚙️ ORDEN DE EJECUCIÓN DE TRIGGERS (ACTUALIZADO):
+--
+-- FLUJO 1: CREAR VENTA DIRECTA (estado='completada' desde el inicio)
+-- 1. BEFORE INSERT en ventas_pos: generar_folio_venta (si folio es NULL)
+-- 2. INSERT en ventas_pos: Se inserta la venta con estado='completada'
+-- 3. INSERT en ventas_pos_items: Se insertan los items
+-- 4. AFTER INSERT en ventas_pos_items: trigger_calcular_totales_venta
+--    a. Recalcula subtotal/total
+--    b. ✨ DESCUENTA STOCK (si estado='completada' y no hay movimientos previos)
+--    c. Registra movimientos en movimientos_inventario
+-- 5. AFTER INSERT en movimientos_inventario: verificar_alertas_inventario (genera alertas)
+--
+-- FLUJO 2: CREAR COTIZACIÓN Y LUEGO COMPLETARLA (cotizacion → completada)
+-- 1. BEFORE INSERT en ventas_pos: generar_folio_venta
+-- 2. INSERT en ventas_pos: Se inserta con estado='cotizacion'
+-- 3. INSERT en ventas_pos_items: Se insertan los items
+-- 4. AFTER INSERT en ventas_pos_items: trigger_calcular_totales_venta
+--    a. Recalcula totales
+--    b. NO descuenta stock (estado='cotizacion')
+-- 5. UPDATE ventas_pos SET estado='completada': Cambiar estado
+-- 6. AFTER UPDATE en ventas_pos: trigger_actualizar_stock_venta
+--    a. ✨ DESCUENTA STOCK (detecta cambio cotizacion→completada)
+--    b. Registra movimientos en movimientos_inventario
+-- 7. AFTER INSERT en movimientos_inventario: verificar_alertas_inventario

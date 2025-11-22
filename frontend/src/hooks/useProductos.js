@@ -55,7 +55,7 @@ export function useBuscarProductos(params) {
       }, {});
 
       const response = await inventarioApi.buscarProductos(sanitizedParams);
-      return response.data.data.productos || [];
+      return response.data.data || [];
     },
     enabled: !!params.q && params.q.length >= 2,
     staleTime: 1000 * 30, // 30 segundos (búsqueda debe ser más fresca)

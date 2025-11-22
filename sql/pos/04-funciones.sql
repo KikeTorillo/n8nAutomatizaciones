@@ -28,7 +28,7 @@ BEGIN
     INTO contador
     FROM ventas_pos
     WHERE organizacion_id = NEW.organizacion_id
-    AND folio ~ '^POS-' || EXTRACT(YEAR FROM NOW())::TEXT || '-\d{4}$';
+    AND folio ~ ('^POS-' || EXTRACT(YEAR FROM NOW())::TEXT || '-\d{4}$');
 
     -- Generar folio: POS-2025-0001
     nuevo_folio := 'POS-' || EXTRACT(YEAR FROM NOW())::TEXT || '-' || LPAD(contador::TEXT, 4, '0');
@@ -43,6 +43,7 @@ COMMENT ON FUNCTION generar_folio_venta IS 'Genera folio único auto-incremental
 -- ============================================================================
 -- FUNCIÓN 2: calcular_totales_venta_pos
 -- Descripción: Calcula subtotal, total y monto_pendiente automáticamente
+--              ADEMÁS descuenta stock si la venta está completada
 -- Uso: Llamada por trigger al modificar ventas_pos_items
 -- ============================================================================
 CREATE OR REPLACE FUNCTION calcular_totales_venta_pos()
@@ -50,6 +51,11 @@ RETURNS TRIGGER AS $$
 DECLARE
     suma_subtotales DECIMAL(10, 2);
     v_venta_pos_id INTEGER;
+    v_estado_venta VARCHAR(20);
+    v_organizacion_id INTEGER;
+    v_usuario_id INTEGER;
+    item RECORD;
+    v_stock_actual INTEGER;
 BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
@@ -71,6 +77,80 @@ BEGIN
         actualizado_en = NOW()
     WHERE id = v_venta_pos_id;
 
+    -- ✨ NUEVO: Descontar stock si la venta está completada
+    -- Solo se ejecuta en INSERT de items (cuando se agregan productos a la venta)
+    IF TG_OP = 'INSERT' THEN
+        -- Obtener estado de la venta
+        SELECT estado, organizacion_id, usuario_id
+        INTO v_estado_venta, v_organizacion_id, v_usuario_id
+        FROM ventas_pos
+        WHERE id = v_venta_pos_id;
+
+        -- Si la venta está completada Y no tiene movimientos previos
+        IF v_estado_venta = 'completada' THEN
+            -- ✅ Anti-duplicados: Validar que no existan movimientos previos para esta venta
+            IF NOT EXISTS (
+                SELECT 1 FROM movimientos_inventario
+                WHERE venta_pos_id = v_venta_pos_id
+                AND tipo_movimiento = 'salida_venta'
+            ) THEN
+                -- Por cada item de la venta
+                FOR item IN
+                    SELECT * FROM ventas_pos_items WHERE venta_pos_id = v_venta_pos_id
+                LOOP
+                    -- ✅ Lock optimista: Evitar race conditions
+                    SELECT stock_actual INTO v_stock_actual
+                    FROM productos
+                    WHERE id = item.producto_id
+                    FOR UPDATE;
+
+                    -- Validar stock suficiente
+                    IF v_stock_actual < item.cantidad THEN
+                        PERFORM set_config('app.bypass_rls', 'false', true);
+                        RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
+                            item.producto_id, v_stock_actual, item.cantidad;
+                    END IF;
+
+                    -- Actualizar stock del producto
+                    UPDATE productos
+                    SET stock_actual = stock_actual - item.cantidad,
+                        actualizado_en = NOW()
+                    WHERE id = item.producto_id;
+
+                    -- Registrar movimiento de inventario
+                    INSERT INTO movimientos_inventario (
+                        organizacion_id,
+                        producto_id,
+                        tipo_movimiento,
+                        cantidad,
+                        stock_antes,
+                        stock_despues,
+                        costo_unitario,
+                        valor_total,
+                        venta_pos_id,
+                        usuario_id,
+                        creado_en
+                    )
+                    SELECT
+                        v_organizacion_id,
+                        item.producto_id,
+                        'salida_venta',
+                        -item.cantidad, -- Negativo porque es salida
+                        v_stock_actual, -- Stock antes (con lock)
+                        v_stock_actual - item.cantidad, -- Stock después
+                        p.precio_compra,
+                        p.precio_compra * item.cantidad,
+                        v_venta_pos_id,
+                        v_usuario_id,
+                        NOW()
+                    FROM productos p
+                    WHERE p.id = item.producto_id;
+
+                END LOOP;
+            END IF;
+        END IF;
+    END IF;
+
     -- Limpiar bypass RLS
     PERFORM set_config('app.bypass_rls', 'false', true);
     RETURN COALESCE(NEW, OLD);
@@ -81,12 +161,13 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION calcular_totales_venta_pos IS 'Calcula automáticamente subtotal, total y monto_pendiente al modificar items';
+COMMENT ON FUNCTION calcular_totales_venta_pos IS 'Calcula totales Y descuenta stock automáticamente si venta está completada (se ejecuta al insertar items)';
 
 -- ============================================================================
 -- FUNCIÓN 3: actualizar_stock_venta_pos
--- Descripción: Descuenta stock automáticamente al completar venta
--- Uso: Llamada por trigger al cambiar estado a 'completada'
+-- Descripción: Descuenta stock cuando se actualiza el estado de una venta existente
+--              (Solo para casos de UPDATE, no INSERT - esos los maneja calcular_totales_venta_pos)
+-- Uso: Llamada por trigger al cambiar estado a 'completada' en ventas existentes
 -- ============================================================================
 CREATE OR REPLACE FUNCTION actualizar_stock_venta_pos()
 RETURNS TRIGGER AS $$
@@ -97,8 +178,11 @@ BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
 
-    -- Solo procesar si la venta está completada Y es un cambio de estado
-    IF NEW.estado = 'completada' AND (OLD IS NULL OR OLD.estado != 'completada') THEN
+    -- Solo procesar si:
+    -- 1. Es un UPDATE (no INSERT, porque esos los maneja calcular_totales_venta_pos)
+    -- 2. La venta cambió a estado 'completada'
+    -- 3. El estado anterior NO era 'completada'
+    IF TG_OP = 'UPDATE' AND NEW.estado = 'completada' AND OLD.estado != 'completada' THEN
 
         -- ✅ Anti-duplicados: Validar que no existan movimientos previos
         IF EXISTS (
@@ -177,7 +261,7 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
-COMMENT ON FUNCTION actualizar_stock_venta_pos IS 'Descuenta stock automáticamente y registra movimientos al completar venta';
+COMMENT ON FUNCTION actualizar_stock_venta_pos IS 'Descuenta stock al cambiar estado a completada en UPDATE (ventas que cambian de cotizacion→completada)';
 
 -- ============================================================================
 -- FUNCIÓN 4: actualizar_timestamp_venta

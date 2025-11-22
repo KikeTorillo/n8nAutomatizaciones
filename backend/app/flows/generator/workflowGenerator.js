@@ -59,7 +59,7 @@ function crearRedisNode(nodeIds, redisCredentialId) {
 function crearWaitNode(nodeIds) {
     return {
         parameters: {
-            amount: 20
+            amount: 10
         },
         type: 'n8n-nodes-base.wait',
         typeVersion: 1.1,

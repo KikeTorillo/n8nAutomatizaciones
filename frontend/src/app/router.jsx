@@ -46,6 +46,12 @@ const MovimientosPage = lazy(() => import('@/pages/inventario/MovimientosPage'))
 const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
 const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
 
+// Páginas de Punto de Venta (POS)
+const VentaPOSPage = lazy(() => import('@/pages/pos/VentaPOSPage'));
+const VentasListPage = lazy(() => import('@/pages/pos/VentasListPage'));
+const CorteCajaPage = lazy(() => import('@/pages/pos/CorteCajaPage'));
+const ReporteVentasDiariasPage = lazy(() => import('@/pages/pos/ReporteVentasDiariasPage'));
+
 // Páginas de Marketplace
 const DirectorioMarketplacePage = lazy(() => import('@/pages/marketplace/DirectorioMarketplacePage'));
 const PerfilPublicoPage = lazy(() => import('@/pages/marketplace/PerfilPublicoPage'));
@@ -302,6 +308,39 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ReportesInventarioPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Rutas de Punto de Venta (POS)
+      {
+        path: 'pos/venta',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(VentaPOSPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pos/ventas',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(VentasListPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pos/corte-caja',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(CorteCajaPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pos/reportes',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReporteVentasDiariasPage)}
           </ProtectedRoute>
         ),
       },

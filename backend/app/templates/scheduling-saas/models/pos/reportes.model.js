@@ -1,4 +1,4 @@
-const { RLSContextManager } = require('../../../../utils/rlsContextManager');
+const RLSContextManager = require('../../../../utils/rlsContextManager');
 const logger = require('../../../../utils/logger');
 
 /**
@@ -15,7 +15,7 @@ class ReportesPOSModel {
      * GET /api/v1/pos/reportes/ventas-diarias
      */
     static async obtenerVentasDiarias(fecha, organizacionId, filtros = {}) {
-        return await RLSContextManager.query(organizacionId, async (db) => {
+        return await RLSContextManager.withBypass(async (db) => {
             const { profesional_id, usuario_id } = filtros;
 
             // Query base
@@ -46,11 +46,18 @@ class ReportesPOSModel {
                     SUM(v.subtotal) as subtotal,
                     SUM(v.descuento_monto) as descuentos,
                     SUM(v.impuestos) as impuestos,
-                    SUM(v.total) as total,
-                    AVG(v.total) as promedio_venta,
+                    SUM(v.total) as total_ingresos,
+                    AVG(v.total) as ticket_promedio,
                     SUM(CASE WHEN v.estado_pago = 'pagado' THEN v.total ELSE 0 END) as total_pagado,
                     SUM(CASE WHEN v.estado_pago = 'pendiente' THEN v.total ELSE 0 END) as total_pendiente,
-                    COUNT(DISTINCT v.cliente_id) FILTER (WHERE v.cliente_id IS NOT NULL) as clientes_unicos
+                    COUNT(DISTINCT v.cliente_id) FILTER (WHERE v.cliente_id IS NOT NULL) as clientes_unicos,
+                    COALESCE((
+                        SELECT SUM(vi.cantidad)
+                        FROM ventas_pos_items vi
+                        WHERE vi.venta_pos_id IN (
+                            SELECT id FROM ventas_pos v2 WHERE ${whereConditions.join(' AND ').replace(/v\./g, 'v2.')}
+                        )
+                    ), 0) as total_items_vendidos
                 FROM ventas_pos v
                 WHERE ${whereConditions.join(' AND ')}
             `;
@@ -89,7 +96,7 @@ class ReportesPOSModel {
             const ventasPorHoraQuery = `
                 SELECT
                     EXTRACT(HOUR FROM v.fecha_venta) as hora,
-                    COUNT(*) as cantidad,
+                    COUNT(*) as cantidad_ventas,
                     SUM(v.total) as total
                 FROM ventas_pos v
                 WHERE ${whereConditions.join(' AND ')}
@@ -102,16 +109,17 @@ class ReportesPOSModel {
             // 5. Top 10 productos vendidos del día
             const topProductosQuery = `
                 SELECT
-                    vi.nombre_producto,
-                    vi.sku,
-                    SUM(vi.cantidad) as unidades_vendidas,
-                    SUM(vi.subtotal) as total_ventas,
+                    vi.producto_id,
+                    vi.nombre_producto as producto_nombre,
+                    vi.sku as producto_sku,
+                    SUM(vi.cantidad) as cantidad_vendida,
+                    SUM(vi.subtotal) as total,
                     COUNT(DISTINCT vi.venta_pos_id) as numero_ventas
                 FROM ventas_pos_items vi
                 JOIN ventas_pos v ON v.id = vi.venta_pos_id
                 WHERE ${whereConditions.join(' AND ')}
-                GROUP BY vi.nombre_producto, vi.sku
-                ORDER BY total_ventas DESC
+                GROUP BY vi.producto_id, vi.nombre_producto, vi.sku
+                ORDER BY total DESC
                 LIMIT 10
             `;
 
@@ -125,9 +133,9 @@ class ReportesPOSModel {
                     c.nombre AS cliente_nombre,
                     p.nombre_completo AS profesional_nombre
                 FROM ventas_pos v
-                LEFT JOIN usuarios u ON u.id = v.usuario_id
-                LEFT JOIN clientes c ON c.id = v.cliente_id
-                LEFT JOIN profesionales p ON p.id = v.profesional_id
+                LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id
+                LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
+                LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id
                 WHERE ${whereConditions.join(' AND ')}
                 ORDER BY v.fecha_venta DESC
             `;
@@ -137,17 +145,17 @@ class ReportesPOSModel {
             logger.info('[ReportesPOSModel.obtenerVentasDiarias] Reporte generado', {
                 fecha,
                 total_ventas: resumen.rows[0].total_ventas,
-                total: resumen.rows[0].total
+                total_ingresos: resumen.rows[0].total_ingresos
             });
 
             return {
                 fecha,
-                resumen_general: resumen.rows[0],
+                resumen: resumen.rows[0],
                 por_metodo_pago: metodosPago.rows,
                 por_tipo_venta: tiposVenta.rows,
-                por_hora: ventasPorHora.rows,
+                ventas_por_hora: ventasPorHora.rows,
                 top_productos: topProductos.rows,
-                ventas: ventas.rows
+                detalle: ventas.rows
             };
         });
     }

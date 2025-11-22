@@ -133,10 +133,22 @@ class VentasPOSModel {
             const impuestos = data.impuestos || 0;
             const total = subtotal - descuentoVenta + impuestos;
 
-            // Insertar venta (el trigger genera el folio automáticamente)
+            // Generar folio manualmente (evita problemas con trigger)
+            const year = new Date().getFullYear();
+            const folioQuery = await db.query(
+                `SELECT COALESCE(MAX(CAST(SUBSTRING(folio FROM 'POS-\\d{4}-(\\d+)') AS INTEGER)), 0) + 1 AS contador
+                 FROM ventas_pos
+                 WHERE organizacion_id = $1 AND folio LIKE $2`,
+                [organizacionId, `POS-${year}-%`]
+            );
+            const contador = folioQuery.rows[0].contador;
+            const folio = `POS-${year}-${String(contador).padStart(4, '0')}`;
+
+            // Insertar venta con folio generado manualmente
             const ventaQuery = `
                 INSERT INTO ventas_pos (
                     organizacion_id,
+                    folio,
                     tipo_venta,
                     cliente_id,
                     cita_id,
@@ -156,7 +168,7 @@ class VentasPOSModel {
                     fecha_venta,
                     fecha_apartado,
                     fecha_vencimiento_apartado
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING *
             `;
 
@@ -171,6 +183,7 @@ class VentasPOSModel {
 
             const ventaValues = [
                 organizacionId,
+                folio,
                 data.tipo_venta || 'directa',
                 data.cliente_id || null,
                 data.cita_id || null,
@@ -277,22 +290,23 @@ class VentasPOSModel {
      * Obtener venta por ID con sus items
      */
     static async obtenerPorId(id, organizacionId) {
-        return await RLSContextManager.query(organizacionId, async (db) => {
+        // ⚠️ CRÍTICO: Usar withBypass para JOINs multi-tabla
+        return await RLSContextManager.withBypass(async (db) => {
             const ventaQuery = `
                 SELECT
                     v.*,
-                    c.nombre AS nombre_cliente,
-                    c.telefono AS telefono_cliente,
-                    p.nombre AS nombre_profesional,
-                    u.nombre AS nombre_usuario
+                    c.nombre AS cliente_nombre,
+                    c.telefono AS cliente_telefono,
+                    p.nombre_completo AS profesional_nombre,
+                    u.nombre AS usuario_nombre
                 FROM ventas_pos v
-                LEFT JOIN clientes c ON c.id = v.cliente_id
-                LEFT JOIN profesionales p ON p.id = v.profesional_id
-                LEFT JOIN usuarios u ON u.id = v.usuario_id
-                WHERE v.id = $1
+                LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
+                LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id
+                LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id
+                WHERE v.id = $1 AND v.organizacion_id = $2
             `;
 
-            const ventaResult = await db.query(ventaQuery, [id]);
+            const ventaResult = await db.query(ventaQuery, [id, organizacionId]);
 
             if (ventaResult.rows.length === 0) {
                 return null;
@@ -304,17 +318,19 @@ class VentasPOSModel {
             const itemsQuery = `
                 SELECT
                     vi.*,
-                    p.stock_actual
+                    pr.nombre AS producto_nombre,
+                    pr.sku AS producto_sku,
+                    pr.stock_actual
                 FROM ventas_pos_items vi
-                LEFT JOIN productos p ON p.id = vi.producto_id
+                LEFT JOIN productos pr ON pr.id = vi.producto_id AND pr.organizacion_id = $2
                 WHERE vi.venta_pos_id = $1
                 ORDER BY vi.id ASC
             `;
 
-            const itemsResult = await db.query(itemsQuery, [id]);
+            const itemsResult = await db.query(itemsQuery, [id, organizacionId]);
 
             return {
-                ...venta,
+                venta,
                 items: itemsResult.rows
             };
         });
