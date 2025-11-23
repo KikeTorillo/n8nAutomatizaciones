@@ -14,6 +14,7 @@
 const Joi = require('joi');
 const { createApiClient } = require('../utils/apiClient');
 const logger = require('../utils/logger');
+const { normalizarArgumentos } = require('../utils/normalizers');
 
 /**
  * Schema de validación de inputs
@@ -79,8 +80,12 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 1. Validar inputs ==========
-    const { error, value } = joiSchema.validate(args);
+    // ========== 1. Normalizar inputs ==========
+    // Los modelos de IA pueden enviar formatos variados (ej: "14:0" en lugar de "14:00")
+    const argsNormalizados = normalizarArgumentos(args, ['nueva_hora'], ['nueva_fecha']);
+
+    // ========== 2. Validar inputs ==========
+    const { error, value } = joiSchema.validate(argsNormalizados);
 
     if (error) {
       logger.warn('Validación fallida en reagendarCita:', error.details);
@@ -91,7 +96,7 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 2. Crear cliente API con token del chatbot ==========
+    // ========== 3. Crear cliente API con token del chatbot ==========
     const apiClient = createApiClient(jwtToken);
 
     // ========== 3. OBTENER CITA EXISTENTE ==========

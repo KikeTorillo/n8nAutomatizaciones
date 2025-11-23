@@ -494,6 +494,97 @@ class CitaBaseModel {
                 datosActualizacion.precio_total = precio_total;
                 datosActualizacion.duracion_total_minutos = duracion_total_minutos;
 
+                // ✅ FIX: Recalcular hora_fin basándose en nueva duración (si no se proporcionó explícitamente)
+                if (!datosActualizacion.hora_fin && duracion_total_minutos > 0) {
+                    const horaInicioFinal = datosActualizacion.hora_inicio || citaExistente.hora_inicio;
+
+                    // Convertir hora_inicio (HH:MM:SS o HH:MM) a minutos desde medianoche
+                    const [horas, minutos] = horaInicioFinal.split(':').map(Number);
+                    const minutosDesdeMedianoche = horas * 60 + minutos;
+
+                    // Sumar duración
+                    const minutosFinales = minutosDesdeMedianoche + duracion_total_minutos;
+
+                    // Convertir de vuelta a HH:MM:SS
+                    const horasFin = Math.floor(minutosFinales / 60);
+                    const minutosFin = minutosFinales % 60;
+
+                    datosActualizacion.hora_fin = `${String(horasFin).padStart(2, '0')}:${String(minutosFin).padStart(2, '0')}:00`;
+
+                    logger.info('[CitaBaseModel.actualizarEstandar] ✅ Recalculada hora_fin automáticamente', {
+                        cita_id: citaId,
+                        hora_inicio: horaInicioFinal,
+                        duracion_minutos: duracion_total_minutos,
+                        hora_fin_nueva: datosActualizacion.hora_fin
+                    });
+
+                    // ✅ FIX: Validar que la nueva duración NO cause conflictos con otras citas
+                    const fechaFinal = datosActualizacion.fecha_cita || citaExistente.fecha_cita;
+                    const profesionalFinal = datosActualizacion.profesional_id || citaExistente.profesional_id;
+
+                    logger.info('[CitaBaseModel.actualizarEstandar] 🔍 Validando conflictos post-cambio de duración', {
+                        cita_id: citaId,
+                        profesional_id: profesionalFinal,
+                        fecha: fechaFinal,
+                        hora_inicio: horaInicioFinal,
+                        hora_fin_nueva: datosActualizacion.hora_fin,
+                        duracion_anterior: citaExistente.duracion_total_minutos,
+                        duracion_nueva: duracion_total_minutos
+                    });
+
+                    // Validar que no cruce medianoche
+                    CitaHelpersModel.validarNoMidnightCrossing(horaInicioFinal, datosActualizacion.hora_fin);
+
+                    // Validar conflictos (horario laboral, bloqueos, otras citas)
+                    const validacion = await CitaHelpersModel.validarHorarioPermitido(
+                        profesionalFinal,
+                        fechaFinal,
+                        horaInicioFinal,
+                        datosActualizacion.hora_fin,
+                        organizacionId,
+                        db,
+                        citaId, // excluir esta cita de la validación de conflictos
+                        { esWalkIn: false, permitirFueraHorario: false }
+                    );
+
+                    if (!validacion.valido) {
+                        const mensajesError = validacion.errores.map(e => e.mensaje).join('; ');
+                        logger.error('[CitaBaseModel.actualizarEstandar] ❌ Conflicto detectado al cambiar servicios', {
+                            cita_id: citaId,
+                            profesional_id: profesionalFinal,
+                            fecha: fechaFinal,
+                            horario: `${horaInicioFinal}-${datosActualizacion.hora_fin}`,
+                            errores: validacion.errores
+                        });
+                        throw new Error(`No se puede actualizar los servicios: ${mensajesError}`);
+                    }
+
+                    if (validacion.advertencias.length > 0) {
+                        logger.warn('[CitaBaseModel.actualizarEstandar] ⚠️ Advertencias en validación post-cambio servicios', {
+                            cita_id: citaId,
+                            advertencias: validacion.advertencias
+                        });
+                    }
+                }
+
+                // ✅ FIX PARTITIONING: Si cambia la fecha, actualizar tabla citas PRIMERO
+                // para que el FK compuesto (cita_id, fecha_cita) sea válido al insertar servicios
+                if (datosActualizacion.fecha_cita && datosActualizacion.fecha_cita !== citaExistente.fecha_cita) {
+                    await db.query(
+                        'UPDATE citas SET fecha_cita = $1, actualizado_en = NOW() WHERE id = $2 AND organizacion_id = $3',
+                        [datosActualizacion.fecha_cita, citaId, organizacionId]
+                    );
+
+                    logger.info('[CitaBaseModel.actualizarEstandar] ✅ Pre-actualizada fecha_cita para FK compuesto', {
+                        cita_id: citaId,
+                        fecha_anterior: citaExistente.fecha_cita,
+                        fecha_nueva: datosActualizacion.fecha_cita
+                    });
+
+                    // Actualizar citaExistente para reflejar el cambio
+                    citaExistente.fecha_cita = datosActualizacion.fecha_cita;
+                }
+
                 // DELETE servicios actuales
                 await db.query('DELETE FROM citas_servicios WHERE cita_id = $1', [citaId]);
 

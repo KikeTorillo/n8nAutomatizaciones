@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MultiSelect from '@/components/ui/MultiSelect';
 import FormField from '@/components/forms/FormField';
-import { useCrearCita, useActualizarCita, useCita } from '@/hooks/useCitas';
+import { useCrearCita, useActualizarCita } from '@/hooks/useCitas';
 import { useClientes } from '@/hooks/useClientes';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
@@ -103,7 +103,6 @@ const citaEditSchema = z
 function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPreseleccionada = null }) {
   const toast = useToast();
   const isEditMode = mode === 'edit';
-  const citaId = cita?.id;
 
   // Estados locales
   const [serviciosDisponibles, setServiciosDisponibles] = useState([]);
@@ -111,7 +110,6 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   const [precioCalculado, setPrecioCalculado] = useState(0);
 
   // Fetch data
-  const { data: citaData, isLoading: loadingCita } = useCita(citaId);
   const { data: clientesData } = useClientes({ activo: true });
   const { data: profesionales } = useProfesionales({ activo: true });
   const { data: servicios } = useServicios({ activo: true });
@@ -264,32 +262,39 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
   // Pre-cargar datos de la cita en modo edición
   useEffect(() => {
-    if (isEditMode && citaData && isOpen) {
+    if (isEditMode && cita && isOpen) {
       // Convertir servicios a array de IDs si existe el campo servicios
       let serviciosIds = [];
-      if (citaData.servicios && Array.isArray(citaData.servicios)) {
-        // Si citaData tiene array de servicios (respuesta de listar con JSON_AGG)
-        serviciosIds = citaData.servicios.map(s => s.servicio_id?.toString());
-      } else if (citaData.servicio_id) {
+      if (cita.servicios && Array.isArray(cita.servicios)) {
+        // Si cita tiene array de servicios (respuesta de listar con JSON_AGG)
+        serviciosIds = cita.servicios.map(s => s.servicio_id?.toString());
+      } else if (cita.servicio_id) {
         // Backward compatibility: si solo tiene servicio_id (respuesta antigua)
-        serviciosIds = [citaData.servicio_id.toString()];
+        serviciosIds = [cita.servicio_id.toString()];
+      }
+
+      // Convertir fecha ISO a formato yyyy-MM-dd para input type="date"
+      let fechaFormateada = '';
+      if (cita.fecha_cita) {
+        // Si viene como "2025-11-24T00:00:00.000Z", extraer solo "2025-11-24"
+        fechaFormateada = cita.fecha_cita.split('T')[0];
       }
 
       reset({
-        cliente_id: citaData.cliente_id?.toString() || '',
-        profesional_id: citaData.profesional_id?.toString() || '',
+        cliente_id: cita.cliente_id?.toString() || '',
+        profesional_id: cita.profesional_id?.toString() || '',
         servicios_ids: serviciosIds,
-        fecha_cita: citaData.fecha_cita || '',
-        hora_inicio: citaData.hora_inicio?.substring(0, 5) || '', // "14:30:00" → "14:30"
-        duracion_minutos: citaData.duracion_total_minutos || citaData.duracion_minutos || 30,
-        precio_servicio: citaData.precio_total || citaData.precio_servicio || 0,
-        descuento: citaData.descuento || 0,
-        notas_cliente: citaData.notas_cliente || '',
-        notas_internas: citaData.notas_internas || '',
+        fecha_cita: fechaFormateada,
+        hora_inicio: cita.hora_inicio?.substring(0, 5) || '', // "14:30:00" → "14:30"
+        duracion_minutos: cita.duracion_total_minutos || cita.duracion_minutos || 30,
+        precio_servicio: cita.precio_total || cita.precio_servicio || 0,
+        descuento: cita.descuento || 0,
+        notas_cliente: cita.notas_cliente || '',
+        notas_internas: cita.notas_internas || '',
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditMode, citaData, isOpen]);
+  }, [isEditMode, cita, isOpen]);
 
   // Pre-rellenar fecha cuando se abre el modal con fecha preseleccionada
   useEffect(() => {
@@ -299,14 +304,14 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, fechaPreseleccionada, isEditMode]);
 
-  // Reset form cuando cierra el modal
+  // Limpiar formulario cuando se abre en modo creación (no cuando se cierra)
   useEffect(() => {
-    if (!isOpen) {
-      reset();
+    if (isOpen && !isEditMode) {
+      // Solo limpiar serviciosDisponibles en modo creación
       setServiciosDisponibles([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen]);
+  }, [isOpen, isEditMode]);
 
   // Handler de submit
   const onSubmit = async (data) => {
@@ -337,7 +342,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
       if (isEditMode) {
         // Modo edición
-        await actualizarMutation.mutateAsync({ id: citaId, ...sanitized });
+        await actualizarMutation.mutateAsync({ id: cita.id, ...sanitized });
         toast.success('Cita actualizada exitosamente');
       } else {
         // Modo creación
@@ -378,7 +383,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   };
 
   // Loading state durante fetch de datos
-  const isLoadingData = isEditMode && loadingCita;
+  // Como ahora usamos el prop cita directamente (no hacemos fetch), no hay estado de loading
+  const isLoadingData = false;
 
   // Opciones de selects
   // NOTA: No incluimos opción placeholder vacía porque el componente Select ya la agrega automáticamente

@@ -146,6 +146,75 @@ class N8nGlobalCredentialsService {
 
     /**
      * ====================================================================
+     * OBTENER O CREAR CREDENTIAL DE OPENROUTER
+     * ====================================================================
+     *
+     * Busca si ya existe una credential de OpenRouter, si no la crea.
+     * Esta credential es global y se comparte entre todos los workflows.
+     *
+     * @returns {Promise<Object>} { id, name, type }
+     */
+    async obtenerOCrearOpenRouter() {
+        const client = await this.createN8nClient(); // ✅ API Key dinámica
+
+        try {
+            // 1. Verificar si ya tenemos el ID en variable de entorno (.env)
+            if (process.env.N8N_OPENROUTER_CREDENTIAL_ID) {
+                logger.info(`[N8nGlobalCreds] ✅ Usando credential OpenRouter desde .env: ${process.env.N8N_OPENROUTER_CREDENTIAL_ID}`);
+                return {
+                    id: process.env.N8N_OPENROUTER_CREDENTIAL_ID,
+                    name: 'OpenRouter Global Account',
+                    type: 'openRouterApi'
+                };
+            }
+
+            // 2. Verificar si ya tenemos el ID guardado en BD (metadata)
+            const credentialId = await configService.getN8nCredentialId('openrouter_credential_id');
+            if (credentialId) {
+                logger.info(`[N8nGlobalCreds] ✅ Reutilizando credential OpenRouter desde BD: ${credentialId}`);
+                return {
+                    id: credentialId,
+                    name: 'OpenRouter Global Account',
+                    type: 'openRouterApi'
+                };
+            }
+
+            // 3. Si no existe, crear nueva credential
+            logger.info('[N8nGlobalCreds] 🆕 Creando nueva credential OpenRouter...');
+
+            const apiKey = process.env.OPENROUTER_API_KEY;
+            if (!apiKey) {
+                throw new Error('OPENROUTER_API_KEY no está configurado en .env');
+            }
+
+            const newCredential = await client.post('/api/v1/credentials', {
+                name: 'OpenRouter Global Account',
+                type: 'openRouterApi',
+                data: {
+                    apiKey: apiKey
+                }
+            });
+
+            logger.info(`[N8nGlobalCreds] ✅ Credential OpenRouter creada: ${newCredential.data.id}`);
+
+            // Guardar ID en BD para evitar duplicación futura
+            await configService.setN8nCredentialId('openrouter_credential_id', newCredential.data.id);
+            logger.info(`[N8nGlobalCreds] 💾 ID guardado en BD para reutilización`);
+
+            return {
+                id: newCredential.data.id,
+                name: newCredential.data.name,
+                type: newCredential.data.type
+            };
+
+        } catch (error) {
+            logger.error('[N8nGlobalCreds] Error obteniendo/creando credential OpenRouter:', error.message);
+            throw new Error(`Error con credential OpenRouter: ${error.message}`);
+        }
+    }
+
+    /**
+     * ====================================================================
      * OBTENER O CREAR CREDENTIAL DE POSTGRESQL (CHAT MEMORY)
      * ====================================================================
      *
@@ -297,14 +366,15 @@ class N8nGlobalCredentialsService {
      *
      * Wrapper que obtiene/crea todas las credentials globales necesarias.
      *
-     * @returns {Promise<Object>} { deepseek, postgres, redis }
+     * @returns {Promise<Object>} { deepseek, openrouter, postgres, redis }
      */
     async obtenerTodasLasCredentials() {
         try {
             logger.info('[N8nGlobalCreds] Obteniendo todas las credentials globales...');
 
-            const [deepseek, postgres, redis] = await Promise.all([
+            const [deepseek, openrouter, postgres, redis] = await Promise.all([
                 this.obtenerOCrearDeepSeek(),
+                this.obtenerOCrearOpenRouter(),
                 this.obtenerOCrearPostgres(),
                 this.obtenerOCrearRedis()
             ]);
@@ -312,7 +382,8 @@ class N8nGlobalCredentialsService {
             logger.info('[N8nGlobalCreds] Todas las credentials globales obtenidas exitosamente');
 
             return {
-                deepseek,
+                deepseek,      // ✅ Mantenemos como fallback
+                openrouter,    // ✅ NUEVO - Prioridad para nuevos chatbots
                 postgres,
                 redis
             };

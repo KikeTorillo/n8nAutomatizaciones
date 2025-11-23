@@ -15,6 +15,7 @@
 const Joi = require('joi');
 const { createApiClient } = require('../utils/apiClient');
 const logger = require('../utils/logger');
+const { normalizarArgumentos } = require('../utils/normalizers');
 
 /**
  * Schema de validación de inputs
@@ -113,8 +114,12 @@ async function execute(args, jwtToken) {
       };
     }
 
-    // ========== 1. Validar inputs ==========
-    const { error, value } = joiSchema.validate(args);
+    // ========== 1. Normalizar inputs ==========
+    // Los modelos de IA pueden enviar formatos variados (ej: "14:0" en lugar de "14:00")
+    const argsNormalizados = normalizarArgumentos(args, ['hora'], ['fecha']);
+
+    // ========== 2. Validar inputs ==========
+    const { error, value } = joiSchema.validate(argsNormalizados);
 
     if (error) {
       logger.warn('Validación fallida en verificarDisponibilidad:', error.details);
