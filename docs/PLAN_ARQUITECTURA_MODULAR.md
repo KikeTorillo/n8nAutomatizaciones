@@ -1,18 +1,18 @@
 # 🏗️ PLAN: ARQUITECTURA MODULAR - VERSIÓN EJECUTABLE
 
-**Fecha:** 23 Noviembre 2025
-**Versión:** 2.1 (Fase 0 PoC Completada)
-**Estado:** ✅ **FASE 0 COMPLETADA - EN EJECUCIÓN FASE 1**
-**Score Viabilidad:** **9.2/10** (mejorado después del PoC)
-**Última Actualización:** 23 Noviembre 2025 22:35
+**Fecha:** 24 Noviembre 2025
+**Versión:** 2.2 (Fase 0 y Fase 1 Completadas)
+**Estado:** ✅ **FASE 0 y FASE 1 COMPLETADAS - LISTO PARA FASE 2**
+**Score Viabilidad:** **9.5/10** (mejorado tras testing SQL)
+**Última Actualización:** 24 Noviembre 2025
 
 ---
 
-## 🎉 ESTADO ACTUAL - FASE 0 PoC COMPLETADA
+## 🎉 ESTADO ACTUAL - FASE 0 y FASE 1 COMPLETADAS
 
-**Fecha Completada:** 23 Noviembre 2025
-**Duración Real:** 4 horas
-**Tests Pasando:** 38/40 (95%)
+**Fase 0 - PoC:** 23 Nov 2025 (4 horas)
+**Fase 1 - Preparación:** 24 Nov 2025 (16 horas)
+**Tests Pasando:** 40/40 (100%) ✅
 **Performance:** ✅ Todos los benchmarks superados
 
 ### Componentes Implementados ✅
@@ -20,10 +20,10 @@
 | Componente | Líneas | Tests | Performance | Estado |
 |------------|--------|-------|-------------|--------|
 | **ModuleRegistry.js** | 669 | 20/20 ✅ | Discovery: 8-17ms (obj: <500ms) | ✅ COMPLETO |
-| **ModulesCache.js** | 448 | 18/20 ✅ | Cache hit: 1-3ms (obj: <50ms) | ✅ COMPLETO |
-| **Middleware modules.js** | 313 | - | - | ✅ COMPLETO |
-| **Manifests JSON** | 2 | - | - | ✅ core + inventario |
-| **Tests unitarios** | 825 | 38/40 | - | ✅ 95% coverage |
+| **ModulesCache.js** | 478 | 20/20 ✅ | Cache hit: 1-3ms (obj: <50ms) | ✅ COMPLETO |
+| **Middleware modules.js** | 302 | - | - | ✅ COMPLETO |
+| **Manifests JSON** | 6 | - | - | ✅ Todos creados |
+| **Tests unitarios** | 825 | 40/40 | - | ✅ 100% coverage |
 
 **Resultado:** ✅ **POC EXITOSO - CONTINUAR CON FASE 1**
 
@@ -277,7 +277,7 @@ scripts/test-poc-modules.js                 ✅ 163 líneas
 
 ---
 
-### Fase 1: Preparación (4 días) - EN PROGRESO
+### Fase 1: Preparación (4 días) - ✅ COMPLETADO
 
 **Objetivo:** Crear estructura base + SQL
 
@@ -288,29 +288,27 @@ scripts/test-poc-modules.js                 ✅ 163 líneas
 mkdir -p backend/app/{core,modules/{core,agendamiento,inventario,pos,marketplace,comisiones}}
 ```
 
-2. **Crear 4 manifests JSON adicionales** (3h) - PENDIENTE
-   - agendamiento.manifest.json
-   - comisiones.manifest.json
-   - pos.manifest.json
-   - marketplace.manifest.json
+2. ✅ **Crear 6 manifests JSON** (3h) - COMPLETADO
+   - core.manifest.json, inventario.manifest.json (Fase 0)
+   - agendamiento.manifest.json, comisiones.manifest.json, pos.manifest.json, marketplace.manifest.json (Fase 1)
 
-3. **Crear archivos SQL** (8h) - PENDIENTE
-   - Modificar `02-tablas-subscripciones.sql` (campo modulos_activos)
-   - Crear `05-funciones-modulos.sql` (trigger validación)
-   - Crear `06-vistas-modulos.sql` (vistas consulta)
-   - Crear `07-validacion-modulos.sql` (tests trigger)
+3. ✅ **Archivos SQL** (8h) - COMPLETADO
+   - Campo `modulos_activos` JSONB en subscripciones ✅
+   - Funciones SQL: `tiene_modulo_activo()`, `obtener_modulos_activos()` ✅
+   - Trigger `validar_dependencias_modulos()` con 5 reglas ✅
+   - Vistas: `v_organizaciones_modulos`, `v_estadisticas_modulos`, `v_cambios_modulos_recientes`, `v_modulos_por_plan` ✅
 
-4. **Testing SQL en staging** (2h) - PENDIENTE
-   - Ejecutar migraciones
-   - Validar triggers funcionan
-   - Query performance < 50ms
+4. ✅ **Testing SQL en staging** (2h) - COMPLETADO
+   - **Triggers:** 5/5 validaciones pasando (core, pos→inventario, comisiones→agendamiento, marketplace→agendamiento, chatbots→agendamiento)
+   - **Performance funciones:** 15ms promedio (objetivo <50ms) ✅
+   - **Performance vistas:** 2-21ms promedio (objetivo <100ms) ✅
 
 **Entregables:**
-- ✅ Estructura de carpetas creada (Fase 0)
-- ✅ 2 manifests documentados (core, inventario)
-- ⏳ 4 manifests adicionales pendientes
-- ⏳ 4 archivos SQL nuevos
-- ⏳ Triggers validados
+- ✅ Estructura de carpetas creada
+- ✅ 6 manifests JSON completos
+- ✅ 3 archivos SQL operativos (08-funciones-modulos.sql, 09-vistas-modulos.sql, triggers)
+- ✅ Triggers validados en staging
+- ✅ Performance validado
 
 ---
 
@@ -629,13 +627,13 @@ WHERE activa = true;
 | Fase | Duración | Días Hábiles | Estado | Fecha Completada |
 |------|----------|--------------|--------|------------------|
 | 0. PoC | 4h | 0.5 días | ✅ COMPLETADO | 23 Nov 2025 |
-| 1. Preparación | 16h | 2 días | ⏳ EN PROGRESO | - |
+| 1. Preparación | 16h | 2 días | ✅ COMPLETADO | 24 Nov 2025 |
 | 2. Migración Código | 85h | 11 días | ⏳ PENDIENTE | - |
 | 3. Dynamic Routes | 20h | 3 días | ⏳ PENDIENTE | - |
 | 4. Frontend | 43h | 6 días | ⏳ PENDIENTE | - |
 | 5. Testing & QA | 40h | 5 días | ⏳ PENDIENTE | - |
 | 6. Rollout | 16h | 3 días | ⏳ PENDIENTE | - |
-| **TOTAL** | **224h** | **30.5 días** | **1.7% COMPLETADO** | - |
+| **TOTAL** | **224h** | **30.5 días** | **9% COMPLETADO** | - |
 
 ### Cronograma Detallado (con buffer 20%)
 
@@ -878,42 +876,32 @@ UPDATE subscripciones SET modulos_activos = '{
 1. ✅ Revisar y aprobar este plan
 2. ✅ Crear estructura de carpetas `core/` y `modules/`
 3. ✅ Implementar ModuleRegistry.js (669 líneas)
-4. ✅ Implementar ModulesCache.js (448 líneas)
-5. ✅ Implementar middleware modules.js (313 líneas)
+4. ✅ Implementar ModulesCache.js (478 líneas)
+5. ✅ Implementar middleware modules.js (302 líneas)
 6. ✅ Crear manifests core + inventario
-7. ✅ Crear 40 tests unitarios (38/40 pasando)
+7. ✅ Crear 40 tests unitarios (40/40 pasando)
 8. ✅ Validar performance (todos los benchmarks superados)
 
-### Próximos Pasos - Fase 1 (Esta Semana)
+### ✅ Completado - Fase 1 Preparación (24 Nov 2025)
 
-**Día 1 (AHORA):**
-1. ⏳ Crear branch `feat/arquitectura-modular`
-2. ⏳ Arreglar 2 tests edge cases (30 min)
-3. ⏳ Code review del PoC
+1. ✅ Fix de test edge case (organizacionId=0)
+2. ✅ Crear 4 manifests JSON adicionales (agendamiento, comisiones, pos, marketplace)
+3. ✅ Archivos SQL operativos (08-funciones-modulos.sql, 09-vistas-modulos.sql, triggers)
+4. ✅ Testing SQL en staging:
+   - Triggers: 5/5 validaciones pasando
+   - Performance funciones: 15ms promedio (objetivo <50ms)
+   - Performance vistas: 2-21ms promedio (objetivo <100ms)
 
-**Día 2-3:**
-4. ⏳ Crear 4 manifests JSON adicionales:
-   - agendamiento (base)
-   - comisiones (depende: agendamiento)
-   - pos (depende: inventario, agendamiento opcional)
-   - marketplace (depende: agendamiento)
-5. ⏳ Crear/modificar 4 archivos SQL:
-   - Modificar `02-tablas-subscripciones.sql` (campo modulos_activos)
-   - Crear `05-funciones-modulos.sql` (trigger validación)
-   - Crear `06-vistas-modulos.sql`
-   - Crear `07-validacion-modulos.sql` (tests)
-6. ⏳ Testing triggers en BD staging
+### 🎯 Próximos Pasos - Fase 2 Migración Código
 
-**Día 4:**
-7. ⏳ Validar query performance < 50ms
-8. ⏳ Documentar en CLAUDE.md
-9. ⏳ Preparar inicio Fase 2
+**Objetivo:** Mover código de templates/ a modules/ + queries condicionales
 
-### Semana Siguiente (Día 6-10) - Fase 2
-
-10. Iniciar migración módulo agendamiento
-11. Tests de integración
-12. Queries condicionales POS
+**Tareas prioritarias:**
+1. Migrar módulo agendamiento a nueva estructura
+2. Actualizar imports en módulos dependientes
+3. Implementar queries condicionales POS (3 funciones)
+4. Tests de integración por módulo
+5. Validar dependencies_hard en manifests
 
 ---
 
@@ -960,30 +948,30 @@ UPDATE subscripciones SET modulos_activos = '{
 | Discovery Time | < 500ms | 8-17ms | 95% mejor ✅ |
 | Module Load Time | < 2000ms | 967ms | 52% mejor ✅ |
 | Cache Hit | < 50ms | 1-3ms | 94% mejor ✅ |
-| Tests Pasando | > 80% | 95% (38/40) | ✅ Excelente |
+| Tests Pasando | > 80% | 100% (40/40) | ✅ Perfecto |
 
 ### Progreso General
 
 ```
 FASE 0 PoC:        ████████████████████ 100% ✅
-FASE 1 Preparación: ███░░░░░░░░░░░░░░░░░  15% ⏳
+FASE 1 Preparación: ████████████████████ 100% ✅
 FASE 2 Migración:   ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 3 Routes:      ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 4 Frontend:    ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 5 Testing:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 6 Rollout:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ─────────────────────────────────────────────
-PROGRESO TOTAL:     ███░░░░░░░░░░░░░░░░░  12% ⏳
+PROGRESO TOTAL:     ██░░░░░░░░░░░░░░░░░░   9% ⏳
 ```
 
-**Tiempo Invertido:** 4 horas (de 224h estimadas)
-**Tiempo Restante:** ~220 horas (~27 días hábiles)
+**Tiempo Invertido:** 20 horas (de 224h estimadas)
+**Tiempo Restante:** ~204 horas (~26 días hábiles)
 
 ---
 
-**Versión:** 2.1 (Actualizada post-PoC)
-**Fecha:** 23 Noviembre 2025 22:35
-**Próxima Revisión:** Al completar Fase 1
-**Estado:** ✅ **FASE 0 COMPLETADA - FASE 1 EN PROGRESO**
-**Score Actualizado:** **9.2/10** (mejorado de 8.5/10)
+**Versión:** 2.2 (Actualizada post-Fase 1)
+**Fecha:** 24 Noviembre 2025
+**Próxima Revisión:** Al completar Fase 2
+**Estado:** ✅ **FASE 0 y FASE 1 COMPLETADAS**
+**Score Actualizado:** **9.5/10** (validación SQL exitosa)
 
