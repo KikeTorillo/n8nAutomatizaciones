@@ -13,7 +13,7 @@
  */
 
 const ChatbotConfigModel = require('../models/chatbot-config.model');
-const OrganizacionModel = require('../../../models/organizacion.model');
+const OrganizacionModel = require('../../../modules/core/models/organizacion.model');
 const N8nService = require('../../../services/n8nService');
 const N8nCredentialService = require('../../../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../../../services/n8nGlobalCredentialsService');

@@ -1,25 +1,40 @@
 const express = require('express');
 
-const authRouter = require('./auth');
-const setupRouter = require('./setup');
-const superadminRouter = require('./superadmin');
-const organizacionesRouter = require('./organizaciones');
+// ========================================
+// MÓDULO CORE - Migrado a modules/core
+// ========================================
+const authRouter = require('../../../modules/core/routes/auth');
+const setupRouter = require('../../../modules/core/routes/setup');
+const superadminRouter = require('../../../modules/core/routes/superadmin');
+const organizacionesRouter = require('../../../modules/core/routes/organizaciones');
+const usuariosRouter = require('../../../modules/core/routes/usuarios');
+const planesRouter = require('../../../modules/core/routes/planes');
+const pagosRouter = require('../../../modules/core/routes/pagos');
+const webhooksRouter = require('../../../modules/core/routes/webhooks');
+const subscripcionesRouter = require('../../../modules/core/routes/subscripciones');
+
+// ========================================
+// PENDIENTE DE MIGRAR (mercadopago faltó)
+// ========================================
+const mercadopagoRouter = require('./mercadopago');
+
+// ========================================
+// MÓDULO AGENDAMIENTO - Pendiente migrar
+// ========================================
 const profesionalesRouter = require('../../../templates/scheduling-saas/routes/api/v1/profesionales');
 const clientesRouter = require('../../../templates/scheduling-saas/routes/api/v1/clientes');
 const serviciosRouter = require('../../../templates/scheduling-saas/routes/api/v1/servicios');
 const citasRouter = require('../../../templates/scheduling-saas/routes/api/v1/citas');
-const usuariosRouter = require('./usuarios');
 const bloqueosHorariosRouter = require('../../../templates/scheduling-saas/routes/api/v1/bloqueos-horarios');
 const tiposBloqueoRouter = require('../../../templates/scheduling-saas/routes/api/v1/tipos-bloqueo');
 const tiposProfesionalRouter = require('../../../templates/scheduling-saas/routes/api/v1/tipos-profesional');
 const horariosProfesionalesRouter = require('../../../templates/scheduling-saas/routes/api/v1/horarios-profesionales');
-const planesRouter = require('./planes');
 const chatbotsRouter = require('../../../templates/scheduling-saas/routes/api/v1/chatbots');
 const disponibilidadRouter = require('../../../templates/scheduling-saas/routes/api/v1/disponibilidad');
-const pagosRouter = require('./pagos');
-const webhooksRouter = require('./webhooks');
-const subscripcionesRouter = require('./subscripciones');
-const mercadopagoRouter = require('./mercadopago');
+
+// ========================================
+// OTROS MÓDULOS - Pendiente migrar
+// ========================================
 const comisionesRouter = require('../../../templates/scheduling-saas/routes/api/v1/comisiones');
 const marketplaceRouter = require('../../../templates/scheduling-saas/routes/api/v1/marketplace');
 const inventarioRouter = require('../../../templates/scheduling-saas/routes/api/v1/inventario');

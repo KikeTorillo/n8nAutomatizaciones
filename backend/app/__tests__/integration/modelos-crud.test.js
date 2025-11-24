@@ -18,8 +18,8 @@ const {
   createTestUsuario
 } = require('../helpers/db-helper');
 
-const OrganizacionModel = require('../../models/organizacion.model');
-const UsuarioModel = require('../../models/usuario.model');
+const OrganizacionModel = require('../../modules/core/models/organizacion.model');
+const UsuarioModel = require('../../modules/core/models/usuario.model');
 const ClienteModel = require('../../models/cliente.model');
 const ProfesionalModel = require('../../models/profesional.model');
 const ServicioModel = require('../../models/servicio.model');

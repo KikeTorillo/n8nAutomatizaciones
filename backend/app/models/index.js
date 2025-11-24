@@ -6,10 +6,10 @@
 
 const ClienteModel = require('../templates/scheduling-saas/models/cliente.model');
 const CitaModel = require('../templates/scheduling-saas/models/citas');
-const OrganizacionModel = require('./organizacion.model');
+const OrganizacionModel = require('../modules/core/models/organizacion.model');
 const ProfesionalModel = require('../templates/scheduling-saas/models/profesional.model');
 const ServicioModel = require('../templates/scheduling-saas/models/servicio.model');
-const UsuarioModel = require('./usuario.model');
+const UsuarioModel = require('../modules/core/models/usuario.model');
 
 module.exports = {
     ClienteModel,

@@ -1,0 +1,81 @@
+#!/usr/bin/env node
+/**
+ * Script de prueba para validar que el módulo CORE carga correctamente
+ * Verifica que todos los imports funcionan sin errores
+ */
+
+// Cargar variables de entorno
+require('dotenv').config();
+
+// Configurar JWT_SECRET si no existe (para testing)
+if (!process.env.JWT_SECRET) {
+  process.env.JWT_SECRET = 'test-secret-key-for-module-testing-only';
+  process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-key';
+}
+
+console.log('🧪 Iniciando prueba del módulo CORE...\n');
+
+try {
+  console.log('📦 Cargando rutas del módulo CORE...');
+
+  // Intentar cargar todas las rutas del módulo CORE
+  const authRouter = require('../modules/core/routes/auth');
+  console.log('  ✅ auth.js cargado');
+
+  const setupRouter = require('../modules/core/routes/setup');
+  console.log('  ✅ setup.js cargado');
+
+  const superadminRouter = require('../modules/core/routes/superadmin');
+  console.log('  ✅ superadmin.js cargado');
+
+  const organizacionesRouter = require('../modules/core/routes/organizaciones');
+  console.log('  ✅ organizaciones.js cargado');
+
+  const usuariosRouter = require('../modules/core/routes/usuarios');
+  console.log('  ✅ usuarios.js cargado');
+
+  const planesRouter = require('../modules/core/routes/planes');
+  console.log('  ✅ planes.js cargado');
+
+  const pagosRouter = require('../modules/core/routes/pagos');
+  console.log('  ✅ pagos.js cargado');
+
+  const webhooksRouter = require('../modules/core/routes/webhooks');
+  console.log('  ✅ webhooks.js cargado');
+
+  const subscripcionesRouter = require('../modules/core/routes/subscripciones');
+  console.log('  ✅ subscripciones.js cargado');
+
+  console.log('\n📦 Cargando controllers del módulo CORE...');
+  const controllers = require('../modules/core/controllers');
+  console.log('  ✅ Controllers index cargado');
+
+  console.log('\n📦 Cargando models del módulo CORE...');
+  const models = require('../modules/core/models');
+  console.log('  ✅ Models index cargado');
+
+  console.log('\n📦 Cargando schemas del módulo CORE...');
+  const schemas = require('../modules/core/schemas');
+  console.log('  ✅ Schemas index cargado');
+
+  console.log('\n📦 Cargando routes/api/v1/index.js...');
+  const routerApi = require('../routes/api/v1/index');
+  console.log('  ✅ index.js principal cargado');
+
+  console.log('\n✅ ¡ÉXITO! Todos los archivos del módulo CORE cargan correctamente');
+  console.log('\n📊 Resumen:');
+  console.log('  • 9 routes cargadas');
+  console.log('  • Controllers, Models y Schemas cargados');
+  console.log('  • index.js principal actualizado');
+  console.log('\n🎉 El módulo CORE está listo para funcionar!\n');
+
+  process.exit(0);
+
+} catch (error) {
+  console.error('\n❌ ERROR al cargar el módulo CORE:');
+  console.error('\n🔍 Detalles del error:');
+  console.error(error.message);
+  console.error('\n📍 Stack trace:');
+  console.error(error.stack);
+  process.exit(1);
+}
