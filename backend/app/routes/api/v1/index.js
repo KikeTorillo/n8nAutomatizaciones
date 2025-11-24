@@ -33,12 +33,24 @@ const chatbotsRouter = require('../../../modules/agendamiento/routes/chatbots');
 const disponibilidadRouter = require('../../../modules/agendamiento/routes/disponibilidad');
 
 // ========================================
-// OTROS MÓDULOS - Pendiente migrar
+// MÓDULO INVENTARIO - Migrado a modules/inventario
 // ========================================
-const comisionesRouter = require('../../../templates/scheduling-saas/routes/api/v1/comisiones');
-const marketplaceRouter = require('../../../templates/scheduling-saas/routes/api/v1/marketplace');
-const inventarioRouter = require('../../../templates/scheduling-saas/routes/api/v1/inventario');
-const posRouter = require('../../../templates/scheduling-saas/routes/api/v1/pos');
+const inventarioRouter = require('../../../modules/inventario/routes');
+
+// ========================================
+// MÓDULO POS - Migrado a modules/pos
+// ========================================
+const posRouter = require('../../../modules/pos/routes');
+
+// ========================================
+// MÓDULO MARKETPLACE - Migrado a modules/marketplace
+// ========================================
+const marketplaceRouter = require('../../../modules/marketplace/routes');
+
+// ========================================
+// MÓDULO COMISIONES - Migrado a modules/comisiones
+// ========================================
+const comisionesRouter = require('../../../modules/comisiones/routes');
 
 function routerApi(app) {
     const router = express.Router();

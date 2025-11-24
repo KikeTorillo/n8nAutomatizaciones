@@ -1,11 +1,9 @@
 /**
  * @fileoverview Routes del Módulo Inventario
- * @description Re-exporta las rutas existentes de inventario (PoC)
- * En producción, estas rutas estarían directamente en este módulo
+ * @description Rutas para gestión de inventario - Módulo migrado
+ * @version 1.0.0
  */
 
-// Por ahora, re-exportamos las rutas existentes
-// Esto permite probar el ModuleRegistry sin mover todo el código
-const inventarioRouter = require('../../../templates/scheduling-saas/routes/api/v1/inventario');
+const inventarioRouter = require('./inventario');
 
 module.exports = inventarioRouter;
