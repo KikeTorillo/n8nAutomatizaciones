@@ -1,0 +1,76 @@
+{
+  "name": "agendamiento",
+  "display_name": "Sistema de Agendamiento",
+  "version": "1.0.0",
+  "description": "Módulo base de agendamiento: profesionales, servicios, clientes, citas, horarios y bloqueos",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base del sistema, incluido en todos los planes"
+  },
+  "routes": {
+    "profesionales": "/api/v1/profesionales",
+    "servicios": "/api/v1/servicios",
+    "clientes": "/api/v1/clientes",
+    "citas": "/api/v1/citas",
+    "horarios": "/api/v1/horarios-profesionales",
+    "disponibilidad": "/api/v1/disponibilidad",
+    "bloqueos": "/api/v1/bloqueos-horarios",
+    "tipos_profesional": "/api/v1/tipos-profesional",
+    "tipos_bloqueo": "/api/v1/tipos-bloqueo"
+  },
+  "resources": {
+    "profesionales": {
+      "table": "profesionales",
+      "limit_field": "limite_profesionales",
+      "notes": "Limitado por plan"
+    },
+    "servicios": {
+      "table": "servicios",
+      "limit_field": "limite_servicios",
+      "notes": "Limitado por plan"
+    },
+    "clientes": {
+      "table": "clientes",
+      "limit_field": "limite_clientes",
+      "notes": "Limitado por plan"
+    },
+    "citas": {
+      "table": "citas",
+      "limit_field": "limite_citas_mes",
+      "notes": "Limitado por mes según plan, tabla particionada"
+    }
+  },
+  "tables": [
+    "profesionales",
+    "tipos_profesional",
+    "servicios",
+    "servicios_profesionales",
+    "clientes",
+    "horarios_profesionales",
+    "disponibilidad_excepciones",
+    "citas",
+    "citas_servicios",
+    "bloqueos_horarios",
+    "tipos_bloqueo"
+  ],
+  "features": [
+    "Gestión de profesionales y especialidades",
+    "Catálogo de servicios con precios",
+    "Base de datos de clientes",
+    "Agendamiento de citas múltiples servicios",
+    "Horarios personalizados por profesional",
+    "Verificación de disponibilidad en tiempo real",
+    "Bloqueos de horarios (vacaciones, ausencias)",
+    "Historial completo de citas",
+    "Búsqueda fuzzy de clientes",
+    "Setup checklist inteligente"
+  ],
+  "priority": 1,
+  "required": true,
+  "can_disable": false
+}

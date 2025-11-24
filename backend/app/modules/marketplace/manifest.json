@@ -1,0 +1,63 @@
+{
+  "name": "marketplace",
+  "display_name": "Marketplace Público",
+  "version": "1.0.0",
+  "description": "Directorio público SEO con perfiles de profesionales, agendamiento público sin autenticación y sistema de reseñas",
+  "depends": ["core", "agendamiento"],
+  "dependencies_hard": {
+    "agendamiento": {
+      "razon": "Perfiles del marketplace publican servicios y profesionales del módulo agendamiento. FK perfiles_marketplace.organizacion_id → organizaciones(id). Reseñas requieren citas completadas",
+      "tablas": ["profesionales", "servicios", "citas", "clientes"],
+      "eliminar_modulo": "BLOQUEADO - Requiere desactivar marketplace primero"
+    }
+  },
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 199,
+    "currency": "MXN",
+    "incluido_en": ["empresarial"],
+    "addon_para": ["basico", "profesional"],
+    "notes": "Aumenta visibilidad y captación de clientes"
+  },
+  "routes": {
+    "marketplace": "/api/v1/marketplace",
+    "perfiles": "/api/v1/marketplace/perfiles",
+    "reseñas": "/api/v1/marketplace/reseñas",
+    "analytics": "/api/v1/marketplace/analytics"
+  },
+  "resources": {
+    "perfiles_marketplace": {
+      "table": "perfiles_marketplace",
+      "limit_field": null,
+      "notes": "Un perfil por organización"
+    },
+    "reseñas_marketplace": {
+      "table": "reseñas_marketplace",
+      "limit_field": null,
+      "notes": "Validadas: 1 reseña por cita completada"
+    }
+  },
+  "tables": [
+    "perfiles_marketplace",
+    "reseñas_marketplace",
+    "analytics_marketplace",
+    "categorias_marketplace"
+  ],
+  "features": [
+    "Directorio público SEO (ciudad + categoría + rating)",
+    "Perfiles con slug único y customizable",
+    "Agendamiento público sin autenticación",
+    "Sistema de reseñas validadas (1 por cita completada)",
+    "Analytics GDPR (IPs hasheadas SHA256)",
+    "Panel Super Admin para activar/desactivar perfiles",
+    "Verificación de disponibilidad en tiempo real",
+    "Creación automática de clientes en agendamiento público",
+    "Middleware optionalAuth para API pública"
+  ],
+  "priority": 40,
+  "required": false,
+  "can_disable": true,
+  "notes": {
+    "api_publica": "Usa middleware auth.optionalAuth + tenant.setTenantContextFromQuery para requests sin autenticación"
+  }
+}

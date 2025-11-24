@@ -1,0 +1,58 @@
+{
+  "name": "comisiones",
+  "display_name": "Sistema de Comisiones",
+  "version": "1.0.0",
+  "description": "Cálculo automático de comisiones por citas completadas con configuración flexible por servicio",
+  "depends": ["core", "agendamiento"],
+  "dependencies_hard": {
+    "agendamiento": {
+      "razon": "Comisiones se calculan automáticamente desde citas completadas (trigger automático). FK comisiones_profesionales.cita_id → citas(id) NOT NULL",
+      "tablas": ["citas", "profesionales", "clientes", "servicios"],
+      "trigger": "calcular_comision_cita() se dispara al completar cita",
+      "eliminar_modulo": "BLOQUEADO - Requiere desactivar comisiones primero"
+    }
+  },
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 99,
+    "currency": "MXN",
+    "incluido_en": ["profesional", "empresarial"],
+    "addon_para": ["basico"],
+    "notes": "Ideal para negocios con múltiples profesionales"
+  },
+  "routes": {
+    "comisiones": "/api/v1/comisiones",
+    "configuracion": "/api/v1/comisiones/configuracion",
+    "dashboard": "/api/v1/comisiones/dashboard"
+  },
+  "resources": {
+    "comisiones_profesionales": {
+      "table": "comisiones_profesionales",
+      "limit_field": null,
+      "notes": "Sin límite, generadas automáticamente"
+    },
+    "configuracion_comisiones": {
+      "table": "configuracion_comisiones",
+      "limit_field": null,
+      "notes": "Configuración por servicio"
+    }
+  },
+  "tables": [
+    "configuracion_comisiones",
+    "comisiones_profesionales",
+    "historial_comisiones"
+  ],
+  "features": [
+    "Cálculo automático por cita completada",
+    "Configuración por servicio (porcentaje, monto fijo, mixto)",
+    "Dashboard de comisiones por profesional",
+    "Historial completo con auditoría",
+    "Exportación CSV/JSON",
+    "Estadísticas y gráficas por período",
+    "Detalle JSONB con breakdown por servicio",
+    "RLS: Admin ve todo, empleado solo sus comisiones"
+  ],
+  "priority": 20,
+  "required": false,
+  "can_disable": true
+}

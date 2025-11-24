@@ -1,0 +1,61 @@
+{
+  "name": "pos",
+  "display_name": "Punto de Venta (POS)",
+  "version": "1.0.0",
+  "description": "Terminal de punto de venta con gestión de ventas, caja y reportes en tiempo real",
+  "depends": ["core", "inventario"],
+  "dependencies_hard": {
+    "inventario": {
+      "razon": "FK ventas_pos_items.producto_id → productos(id) NOT NULL. Cada item de venta requiere un producto del inventario",
+      "tablas": ["productos"],
+      "eliminar_modulo": "BLOQUEADO - Requiere desactivar POS primero"
+    }
+  },
+  "dependencies_optional": {
+    "agendamiento": "Permite asociar ventas a clientes y profesionales del módulo de agendamiento. Si no está activo, ventas sin cliente_id/profesional_id"
+  },
+  "pricing": {
+    "base_mensual": 149,
+    "currency": "MXN",
+    "incluido_en": ["empresarial"],
+    "addon_para": ["basico", "profesional"],
+    "notes": "Ideal para negocios con venta de productos"
+  },
+  "routes": {
+    "pos": "/api/v1/pos",
+    "ventas": "/api/v1/pos/ventas",
+    "reportes": "/api/v1/pos/reportes"
+  },
+  "resources": {
+    "ventas_pos": {
+      "table": "ventas_pos",
+      "limit_field": null,
+      "notes": "Sin límite de ventas"
+    },
+    "items_venta": {
+      "table": "ventas_pos_items",
+      "limit_field": null,
+      "notes": "Items de cada venta"
+    }
+  },
+  "tables": [
+    "ventas_pos",
+    "ventas_pos_items"
+  ],
+  "features": [
+    "Terminal de punto de venta",
+    "Gestión de ventas con múltiples items",
+    "Asociación opcional a clientes/profesionales",
+    "Métodos de pago múltiples",
+    "Reportes de caja (diarios, por período)",
+    "Integración automática con inventario",
+    "Auditoría completa de ventas",
+    "Queries condicionales para agendamiento opcional"
+  ],
+  "priority": 30,
+  "required": false,
+  "can_disable": true,
+  "notes": {
+    "queries_condicionales": "3 funciones en models requieren queries condicionales para agendamiento: ventas.obtenerPorId(), ventas.listar(), reportes.obtenerVentasDiarias()"
+  }
+}
