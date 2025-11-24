@@ -4,11 +4,11 @@
  * Plataforma SaaS Multi-Tenant para Automatización de Agendamiento
  */
 
-const ClienteModel = require('../templates/scheduling-saas/models/cliente.model');
-const CitaModel = require('../templates/scheduling-saas/models/citas');
+const ClienteModel = require('../modules/agendamiento/models/cliente.model');
+const CitaModel = require('../modules/agendamiento/models/citas');
 const OrganizacionModel = require('../modules/core/models/organizacion.model');
-const ProfesionalModel = require('../templates/scheduling-saas/models/profesional.model');
-const ServicioModel = require('../templates/scheduling-saas/models/servicio.model');
+const ProfesionalModel = require('../modules/agendamiento/models/profesional.model');
+const ServicioModel = require('../modules/agendamiento/models/servicio.model');
 const UsuarioModel = require('../modules/core/models/usuario.model');
 
 module.exports = {

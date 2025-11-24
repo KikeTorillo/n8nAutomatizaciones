@@ -19,18 +19,18 @@ const subscripcionesRouter = require('../../../modules/core/routes/subscripcione
 const mercadopagoRouter = require('./mercadopago');
 
 // ========================================
-// MÓDULO AGENDAMIENTO - Pendiente migrar
+// MÓDULO AGENDAMIENTO - Migrado a modules/agendamiento
 // ========================================
-const profesionalesRouter = require('../../../templates/scheduling-saas/routes/api/v1/profesionales');
-const clientesRouter = require('../../../templates/scheduling-saas/routes/api/v1/clientes');
-const serviciosRouter = require('../../../templates/scheduling-saas/routes/api/v1/servicios');
-const citasRouter = require('../../../templates/scheduling-saas/routes/api/v1/citas');
-const bloqueosHorariosRouter = require('../../../templates/scheduling-saas/routes/api/v1/bloqueos-horarios');
-const tiposBloqueoRouter = require('../../../templates/scheduling-saas/routes/api/v1/tipos-bloqueo');
-const tiposProfesionalRouter = require('../../../templates/scheduling-saas/routes/api/v1/tipos-profesional');
-const horariosProfesionalesRouter = require('../../../templates/scheduling-saas/routes/api/v1/horarios-profesionales');
-const chatbotsRouter = require('../../../templates/scheduling-saas/routes/api/v1/chatbots');
-const disponibilidadRouter = require('../../../templates/scheduling-saas/routes/api/v1/disponibilidad');
+const profesionalesRouter = require('../../../modules/agendamiento/routes/profesionales');
+const clientesRouter = require('../../../modules/agendamiento/routes/clientes');
+const serviciosRouter = require('../../../modules/agendamiento/routes/servicios');
+const citasRouter = require('../../../modules/agendamiento/routes/citas');
+const bloqueosHorariosRouter = require('../../../modules/agendamiento/routes/bloqueos-horarios');
+const tiposBloqueoRouter = require('../../../modules/agendamiento/routes/tipos-bloqueo');
+const tiposProfesionalRouter = require('../../../modules/agendamiento/routes/tipos-profesional');
+const horariosProfesionalesRouter = require('../../../modules/agendamiento/routes/horarios-profesionales');
+const chatbotsRouter = require('../../../modules/agendamiento/routes/chatbots');
+const disponibilidadRouter = require('../../../modules/agendamiento/routes/disponibilidad');
 
 // ========================================
 // OTROS MÓDULOS - Pendiente migrar
