@@ -1,0 +1,130 @@
+📊 CONFIGURACIÓN DE AUDITORÍA
+============================
+Directorios escaneados:
+  - backend/app/templates/scheduling-saas/models
+  - backend/app/templates/scheduling-saas/controllers
+
+Módulos configurados:
+  [agendamiento] profesionales|servicios|clientes|horarios_profesionales|citas|citas_servicios|bloqueos_horarios
+  [comisiones] configuracion_comisiones|comisiones_profesionales|historial_comisiones
+  [inventario] productos|categorias_productos|proveedores|movimientos_inventario|inventario_actual|alertas_stock
+  [pos] ventas_pos|ventas_pos_items
+  [core] organizaciones|usuarios|planes_subscripcion|subscripciones
+  [marketplace] perfiles_marketplace|reseñas_marketplace|analytics_marketplace|categorias_marketplace
+
+🔎 PASO 1: Buscando JOINs en archivos...
+
+✅ Encontrados 114 JOINs totales
+
+📋 PASO 2: Analizando JOINs multi-módulo...
+
+📄 PASO 3: Generando reporte detallado...
+
+============================================================================
+REPORTE DE DEPENDENCIAS SQL ENTRE MÓDULOS
+============================================================================
+Fecha: 2025-11-23 20:39:35
+
+📊 RESUMEN DE DEPENDENCIAS ENTRE MÓDULOS
+=========================================
+
+⚠️  core -> agendamiento: 5 JOINs
+⚠️  pos -> inventario: 1 JOINs
+⚠️  marketplace -> agendamiento: 4 JOINs
+⚠️  comisiones -> agendamiento: 18 JOINs
+⚠️  pos -> agendamiento: 6 JOINs
+
+TOTAL JOINS CROSS-MODULE: 34
+
+📋 DETALLE DE CADA DEPENDENCIA
+===============================
+
+────────────────────────────────────────────────────────────────
+🔗 DEPENDENCIA: core -> agendamiento
+────────────────────────────────────────────────────────────────
+
+[backend/app/templates/scheduling-saas/models/disponibilidad.model.js:286] JOIN clientes
+[backend/app/templates/scheduling-saas/models/bloqueos-horarios.model.js:50] JOIN clientes
+[backend/app/templates/scheduling-saas/models/bloqueos-horarios.model.js:288] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/bloqueos-horarios.model.js:289] JOIN servicios
+[backend/app/templates/scheduling-saas/models/bloqueos-horarios.model.js:393] JOIN clientes
+
+────────────────────────────────────────────────────────────────
+🔗 DEPENDENCIA: pos -> inventario
+────────────────────────────────────────────────────────────────
+
+[backend/app/templates/scheduling-saas/models/pos/ventas.model.js:325] JOIN productos
+
+────────────────────────────────────────────────────────────────
+🔗 DEPENDENCIA: marketplace -> agendamiento
+────────────────────────────────────────────────────────────────
+
+[backend/app/templates/scheduling-saas/models/marketplace/reseñas.model.js:210] JOIN clientes
+[backend/app/templates/scheduling-saas/models/marketplace/reseñas.model.js:211] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/marketplace/reseñas.model.js:257] JOIN clientes
+[backend/app/templates/scheduling-saas/models/marketplace/reseñas.model.js:258] JOIN profesionales
+
+────────────────────────────────────────────────────────────────
+🔗 DEPENDENCIA: comisiones -> agendamiento
+────────────────────────────────────────────────────────────────
+
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:70] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:71] JOIN citas
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:72] JOIN clientes
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:151] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:152] JOIN citas
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:153] JOIN clientes
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:318] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:319] JOIN citas
+[backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js:320] JOIN clientes
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:163] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:164] JOIN servicios
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:193] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:194] JOIN servicios
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:271] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js:272] JOIN servicios
+[backend/app/templates/scheduling-saas/models/comisiones/reportes.model.js:326] JOIN citas
+[backend/app/templates/scheduling-saas/models/comisiones/reportes.model.js:327] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/comisiones/reportes.model.js:328] JOIN clientes
+
+────────────────────────────────────────────────────────────────
+🔗 DEPENDENCIA: pos -> agendamiento
+────────────────────────────────────────────────────────────────
+
+[backend/app/templates/scheduling-saas/models/pos/ventas.model.js:303] JOIN clientes
+[backend/app/templates/scheduling-saas/models/pos/ventas.model.js:304] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/pos/ventas.model.js:413] JOIN clientes
+[backend/app/templates/scheduling-saas/models/pos/ventas.model.js:414] JOIN profesionales
+[backend/app/templates/scheduling-saas/models/pos/reportes.model.js:137] JOIN clientes
+[backend/app/templates/scheduling-saas/models/pos/reportes.model.js:138] JOIN profesionales
+
+📁 ARCHIVOS MÁS AFECTADOS (Top 10)
+===================================
+
+9 backend/app/templates/scheduling-saas/models/comisiones/comisiones.model.js
+6 backend/app/templates/scheduling-saas/models/comisiones/configuracion.model.js
+5 backend/app/templates/scheduling-saas/models/pos/ventas.model.js
+4 backend/app/templates/scheduling-saas/models/marketplace/reseñas.model.js
+4 backend/app/templates/scheduling-saas/models/bloqueos-horarios.model.js
+3 backend/app/templates/scheduling-saas/models/comisiones/reportes.model.js
+2 backend/app/templates/scheduling-saas/models/pos/reportes.model.js
+1 backend/app/templates/scheduling-saas/models/disponibilidad.model.js
+
+💡 RECOMENDACIONES
+==================
+
+1. QUERIES CONDICIONALES: Implementar construcción dinámica de JOINs
+   basados en módulos activos para TODAS las dependencias identificadas.
+
+2. PRIORIZACIÓN:
+   🔴 CRÍTICO: POS → Agendamiento (clientes, profesionales)
+   🔴 CRÍTICO: POS → Inventario (productos) [FK HARD]
+   🟡 IMPORTANTE: Marketplace → Agendamiento (profesionales, servicios)
+   🟡 IMPORTANTE: Comisiones → Agendamiento (citas, profesionales)
+
+3. TIEMPO ESTIMADO:
+   - Análisis detallado: 2 horas
+   - Implementación queries condicionales: 6 - 11 horas
+   - Testing: 4 horas
+   - TOTAL: 12 - 17 horas
+

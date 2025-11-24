@@ -9,6 +9,7 @@ const validation = require('./validation');
 const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
 const subscription = require('./subscription');
+const modules = require('./modules');
 
 module.exports = {
   // Middleware de manejo de errores async
@@ -69,6 +70,14 @@ module.exports = {
     checkActiveSubscription: subscription.checkActiveSubscription,
     checkResourceLimit: subscription.checkResourceLimit,
     checkResourceWarning: subscription.checkResourceWarning
+  },
+
+  // Middleware de módulos (PoC - Fase 0)
+  modules: {
+    requireModule: modules.requireModule,
+    requireAnyModule: modules.requireAnyModule,
+    requireAllModules: modules.requireAllModules,
+    injectActiveModules: modules.injectActiveModules
   }
 };
 

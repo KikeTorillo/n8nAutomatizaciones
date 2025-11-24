@@ -182,6 +182,14 @@ CREATE TABLE subscripciones (
     metadata JSONB DEFAULT '{}',                         -- Datos adicionales flexibles
 
     -- ====================================================================
+    -- 🧩 SECCIÓN: SISTEMA MODULAR
+    -- ====================================================================
+    -- Módulos activos para esta organización
+    -- Estructura: {"core": true, "agendamiento": true, "inventario": true, ...}
+    -- core siempre debe estar activo (validado por trigger)
+    modulos_activos JSONB NOT NULL DEFAULT '{"core": true, "agendamiento": true}'::jsonb,
+
+    -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS DE AUDITORÍA
     -- ====================================================================
     creado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -273,6 +281,19 @@ CREATE TABLE historial_subscripciones (
 );
 
 -- ====================================================================
+-- 📊 ÍNDICES
+-- ====================================================================
+
+-- Índice GIN para búsqueda eficiente en modulos_activos JSONB
+-- Permite queries como: modulos_activos ? 'inventario' (verificar si clave existe)
+-- Performance: O(log n) vs O(n) sin índice
+CREATE INDEX idx_subscripciones_modulos_activos
+ON subscripciones USING GIN (modulos_activos);
+
+COMMENT ON INDEX idx_subscripciones_modulos_activos IS
+'Índice GIN para búsqueda eficiente de módulos activos por organización. Soporta operadores ?, ?&, ?| y @>';
+
+-- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 COMMENT ON TABLE planes_subscripcion IS 'Definición normalizada de planes de subscripción con límites y características';
@@ -284,3 +305,4 @@ COMMENT ON COLUMN subscripciones.precio_actual IS 'Precio negociado específico,
 COMMENT ON COLUMN metricas_uso_organizacion.uso_citas_mes_actual IS 'Contador de citas del mes actual, se resetea automáticamente';
 COMMENT ON COLUMN planes_subscripcion.funciones_habilitadas IS 'JSONB con features específicas habilitadas por plan (whatsapp, reports, branding, api, etc.)';
 COMMENT ON COLUMN subscripciones.valor_total_pagado IS 'Lifetime Value (LTV) acumulado del cliente';
+COMMENT ON COLUMN subscripciones.modulos_activos IS 'JSONB con módulos activos para la organización. Estructura: {"core": true, "agendamiento": true, "inventario": false, ...}. El módulo core siempre debe estar activo';

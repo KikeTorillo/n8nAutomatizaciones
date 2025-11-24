@@ -106,7 +106,7 @@ run_test() {
 # Contador de tests
 TESTS_PASSED=0
 TESTS_FAILED=0
-TESTS_TOTAL=5
+TESTS_TOTAL=7
 
 # Timestamp inicio
 START_TIME=$(date +%s)
@@ -149,6 +149,20 @@ fi
 
 # TEST 05: Performance
 if run_test "05-test-performance.sql" "Performance y Optimización" "05"; then
+    ((TESTS_PASSED++))
+else
+    ((TESTS_FAILED++))
+fi
+
+# TEST 06: Comisiones
+if run_test "06-test-comisiones.sql" "Sistema de Comisiones" "06"; then
+    ((TESTS_PASSED++))
+else
+    ((TESTS_FAILED++))
+fi
+
+# TEST 07: Sistema Modular
+if run_test "test-sistema-modular.sql" "Sistema Modular (Módulos Activos)" "07"; then
     ((TESTS_PASSED++))
 else
     ((TESTS_FAILED++))

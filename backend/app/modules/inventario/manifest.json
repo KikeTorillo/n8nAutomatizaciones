@@ -1,0 +1,59 @@
+{
+  "name": "inventario",
+  "display_name": "Gestión de Inventario",
+  "version": "1.0.0",
+  "description": "Sistema completo de inventario: productos, proveedores, movimientos, alertas, análisis ABC",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
+    "agendamiento": "Permite vincular productos a servicios para seguimiento de costos"
+  },
+  "pricing": {
+    "base_mensual": 199,
+    "currency": "MXN",
+    "incluido_en": ["empresarial"],
+    "addon_para": ["basico", "profesional"],
+    "notes": "Módulo independiente, no requiere agendamiento"
+  },
+  "routes": {
+    "inventario": "/api/v1/inventario"
+  },
+  "resources": {
+    "productos": {
+      "table": "productos",
+      "limit_field": "limite_productos",
+      "notes": "Productos en catálogo"
+    },
+    "proveedores": {
+      "table": "proveedores",
+      "limit_field": null,
+      "notes": "Sin límite"
+    },
+    "movimientos": {
+      "table": "movimientos_inventario",
+      "limit_field": null,
+      "notes": "Particionada por fecha"
+    }
+  },
+  "tables": [
+    "productos",
+    "categorias_productos",
+    "proveedores",
+    "movimientos_inventario",
+    "inventario_actual",
+    "alertas_inventario"
+  ],
+  "features": [
+    "Catálogo de productos con SKU",
+    "Control de stock en tiempo real",
+    "Movimientos de entrada/salida/ajuste/merma",
+    "Alertas de stock mínimo/máximo",
+    "Análisis ABC de inventario",
+    "Reportes de valoración y rotación",
+    "Integración con proveedores",
+    "Soporte para precios mayoreo/menudeo"
+  ],
+  "priority": 10,
+  "required": false,
+  "can_disable": true
+}
