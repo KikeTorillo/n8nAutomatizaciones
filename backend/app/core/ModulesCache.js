@@ -117,7 +117,7 @@ class ModulesCache {
    * @returns {Promise<Object>} Objeto con módulos activos { modulo: true/false }
    */
   static async get(organizacionId) {
-    if (!organizacionId) {
+    if (organizacionId === null || organizacionId === undefined) {
       throw new Error('organizacionId es requerido');
     }
 
