@@ -1,6 +1,7 @@
 const { VentasPOSModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const ModulesCache = require('../../../core/ModulesCache');
 
 /**
  * Controller para gestión de ventas POS
@@ -33,7 +34,13 @@ class VentasPOSController {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
 
-        const venta = await VentasPOSModel.obtenerPorId(parseInt(id), organizacionId);
+        // Verificar si módulo agendamiento está activo para incluir JOINs
+        const modulosActivos = await ModulesCache.get(organizacionId);
+        const incluirAgendamiento = modulosActivos?.agendamiento === true;
+
+        const venta = await VentasPOSModel.obtenerPorId(parseInt(id), organizacionId, {
+            incluirAgendamiento
+        });
 
         if (!venta) {
             return ResponseHelper.error(res, 'Venta no encontrada', 404);
@@ -49,6 +56,10 @@ class VentasPOSController {
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
+        // Verificar si módulo agendamiento está activo para incluir JOINs
+        const modulosActivos = await ModulesCache.get(organizacionId);
+        const incluirAgendamiento = modulosActivos?.agendamiento === true;
+
         const filtros = {
             estado: req.query.estado || undefined,
             estado_pago: req.query.estado_pago || undefined,
@@ -63,7 +74,9 @@ class VentasPOSController {
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const ventas = await VentasPOSModel.listar(filtros, organizacionId);
+        const ventas = await VentasPOSModel.listar(filtros, organizacionId, {
+            incluirAgendamiento
+        });
 
         return ResponseHelper.success(res, ventas, 'Ventas obtenidas exitosamente');
     });

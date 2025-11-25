@@ -13,8 +13,15 @@ class ReportesPOSModel {
     /**
      * Reporte de ventas diarias
      * GET /api/v1/pos/reportes/ventas-diarias
+     * @param {string} fecha - Fecha del reporte (YYYY-MM-DD)
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} filtros - Filtros opcionales
+     * @param {Object} options - Opciones de query
+     * @param {boolean} options.incluirAgendamiento - Si incluir JOINs a clientes/profesionales (default: true)
      */
-    static async obtenerVentasDiarias(fecha, organizacionId, filtros = {}) {
+    static async obtenerVentasDiarias(fecha, organizacionId, filtros = {}, options = {}) {
+        const { incluirAgendamiento = true } = options;
+
         return await RLSContextManager.withBypass(async (db) => {
             const { profesional_id, usuario_id } = filtros;
 
@@ -28,8 +35,8 @@ class ReportesPOSModel {
             const values = [organizacionId, fecha];
             let valueIndex = 3;
 
-            // Filtros opcionales
-            if (profesional_id) {
+            // Filtros opcionales (solo si agendamiento activo)
+            if (profesional_id && incluirAgendamiento) {
                 whereConditions.push(`v.profesional_id = $${valueIndex++}`);
                 values.push(profesional_id);
             }
@@ -39,7 +46,11 @@ class ReportesPOSModel {
                 values.push(usuario_id);
             }
 
-            // 1. Resumen general del día
+            // 1. Resumen general del día (clientes_unicos solo si agendamiento activo)
+            const clientesUnicosField = incluirAgendamiento
+                ? "COUNT(DISTINCT v.cliente_id) FILTER (WHERE v.cliente_id IS NOT NULL) as clientes_unicos"
+                : "0 as clientes_unicos";
+
             const resumenQuery = `
                 SELECT
                     COUNT(*) as total_ventas,
@@ -50,7 +61,7 @@ class ReportesPOSModel {
                     AVG(v.total) as ticket_promedio,
                     SUM(CASE WHEN v.estado_pago = 'pagado' THEN v.total ELSE 0 END) as total_pagado,
                     SUM(CASE WHEN v.estado_pago = 'pendiente' THEN v.total ELSE 0 END) as total_pendiente,
-                    COUNT(DISTINCT v.cliente_id) FILTER (WHERE v.cliente_id IS NOT NULL) as clientes_unicos,
+                    ${clientesUnicosField},
                     COALESCE((
                         SELECT SUM(vi.cantidad)
                         FROM ventas_pos_items vi
@@ -125,27 +136,42 @@ class ReportesPOSModel {
 
             const topProductos = await db.query(topProductosQuery, values);
 
-            // 6. Ventas completas del día
+            // 6. Ventas completas del día (JOINs condicionales)
+            let selectFields = 'v.*, u.nombre AS usuario_nombre';
+            let joins = 'LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id';
+
+            if (incluirAgendamiento) {
+                selectFields += ', c.nombre AS cliente_nombre, p.nombre_completo AS profesional_nombre';
+                joins += `
+                    LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
+                    LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id`;
+            }
+
             const ventasQuery = `
-                SELECT
-                    v.*,
-                    u.nombre AS usuario_nombre,
-                    c.nombre AS cliente_nombre,
-                    p.nombre_completo AS profesional_nombre
+                SELECT ${selectFields}
                 FROM ventas_pos v
-                LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id
-                LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
-                LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id
+                ${joins}
                 WHERE ${whereConditions.join(' AND ')}
                 ORDER BY v.fecha_venta DESC
             `;
 
             const ventas = await db.query(ventasQuery, values);
 
+            // Si no incluye agendamiento, agregar campos null para mantener estructura
+            let detalleVentas = ventas.rows;
+            if (!incluirAgendamiento) {
+                detalleVentas = ventas.rows.map(row => ({
+                    ...row,
+                    cliente_nombre: null,
+                    profesional_nombre: null
+                }));
+            }
+
             logger.info('[ReportesPOSModel.obtenerVentasDiarias] Reporte generado', {
                 fecha,
                 total_ventas: resumen.rows[0].total_ventas,
-                total_ingresos: resumen.rows[0].total_ingresos
+                total_ingresos: resumen.rows[0].total_ingresos,
+                incluirAgendamiento
             });
 
             return {
@@ -155,7 +181,7 @@ class ReportesPOSModel {
                 por_tipo_venta: tiposVenta.rows,
                 ventas_por_hora: ventasPorHora.rows,
                 top_productos: topProductos.rows,
-                detalle: ventas.rows
+                detalle: detalleVentas
             };
         });
     }

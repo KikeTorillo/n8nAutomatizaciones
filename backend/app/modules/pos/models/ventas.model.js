@@ -288,21 +288,31 @@ class VentasPOSModel {
 
     /**
      * Obtener venta por ID con sus items
+     * @param {number} id - ID de la venta
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} options - Opciones de query
+     * @param {boolean} options.incluirAgendamiento - Si incluir JOINs a clientes/profesionales (default: true)
      */
-    static async obtenerPorId(id, organizacionId) {
+    static async obtenerPorId(id, organizacionId, options = {}) {
+        const { incluirAgendamiento = true } = options;
+
         // ⚠️ CRÍTICO: Usar withBypass para JOINs multi-tabla
         return await RLSContextManager.withBypass(async (db) => {
+            // Construir SELECT y JOINs condicionalmente
+            let selectFields = 'v.*, u.nombre AS usuario_nombre';
+            let joins = 'LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id';
+
+            if (incluirAgendamiento) {
+                selectFields += `, c.nombre AS cliente_nombre, c.telefono AS cliente_telefono, p.nombre_completo AS profesional_nombre`;
+                joins += `
+                    LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
+                    LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id`;
+            }
+
             const ventaQuery = `
-                SELECT
-                    v.*,
-                    c.nombre AS cliente_nombre,
-                    c.telefono AS cliente_telefono,
-                    p.nombre_completo AS profesional_nombre,
-                    u.nombre AS usuario_nombre
+                SELECT ${selectFields}
                 FROM ventas_pos v
-                LEFT JOIN clientes c ON c.id = v.cliente_id AND c.organizacion_id = v.organizacion_id
-                LEFT JOIN profesionales p ON p.id = v.profesional_id AND p.organizacion_id = v.organizacion_id
-                LEFT JOIN usuarios u ON u.id = v.usuario_id AND u.organizacion_id = v.organizacion_id
+                ${joins}
                 WHERE v.id = $1 AND v.organizacion_id = $2
             `;
 
@@ -313,6 +323,13 @@ class VentasPOSModel {
             }
 
             const venta = ventaResult.rows[0];
+
+            // Si no incluye agendamiento, agregar campos como null para mantener estructura
+            if (!incluirAgendamiento) {
+                venta.cliente_nombre = null;
+                venta.cliente_telefono = null;
+                venta.profesional_nombre = null;
+            }
 
             // Obtener items de la venta
             const itemsQuery = `
@@ -338,8 +355,14 @@ class VentasPOSModel {
 
     /**
      * Listar ventas con filtros
+     * @param {Object} filtros - Filtros de búsqueda
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} options - Opciones de query
+     * @param {boolean} options.incluirAgendamiento - Si incluir JOINs a clientes/profesionales (default: true)
      */
-    static async listar(filtros, organizacionId) {
+    static async listar(filtros, organizacionId, options = {}) {
+        const { incluirAgendamiento = true } = options;
+
         return await RLSContextManager.query(organizacionId, async (db) => {
             let whereConditions = ['v.organizacion_id = $1'];
             let values = [organizacionId];
@@ -364,13 +387,14 @@ class VentasPOSModel {
                 paramCounter++;
             }
 
-            if (filtros.cliente_id) {
+            // Filtros de agendamiento solo si el módulo está activo
+            if (filtros.cliente_id && incluirAgendamiento) {
                 whereConditions.push(`v.cliente_id = $${paramCounter}`);
                 values.push(filtros.cliente_id);
                 paramCounter++;
             }
 
-            if (filtros.profesional_id) {
+            if (filtros.profesional_id && incluirAgendamiento) {
                 whereConditions.push(`v.profesional_id = $${paramCounter}`);
                 values.push(filtros.profesional_id);
                 paramCounter++;
@@ -402,20 +426,27 @@ class VentasPOSModel {
                 paramCounter++;
             }
 
+            // Construir SELECT y JOINs condicionalmente
+            let selectFields = 'v.*, u.nombre AS nombre_usuario, COUNT(vi.id) AS total_items';
+            let joins = `LEFT JOIN usuarios u ON u.id = v.usuario_id
+                LEFT JOIN ventas_pos_items vi ON vi.venta_pos_id = v.id`;
+            let groupBy = 'v.id, u.nombre';
+
+            if (incluirAgendamiento) {
+                selectFields = `v.*, c.nombre AS nombre_cliente, p.nombre_completo AS nombre_profesional, u.nombre AS nombre_usuario, COUNT(vi.id) AS total_items`;
+                joins = `LEFT JOIN clientes c ON c.id = v.cliente_id
+                    LEFT JOIN profesionales p ON p.id = v.profesional_id
+                    LEFT JOIN usuarios u ON u.id = v.usuario_id
+                    LEFT JOIN ventas_pos_items vi ON vi.venta_pos_id = v.id`;
+                groupBy = 'v.id, c.nombre, p.nombre_completo, u.nombre';
+            }
+
             const query = `
-                SELECT
-                    v.*,
-                    c.nombre AS nombre_cliente,
-                    p.nombre_completo AS nombre_profesional,
-                    u.nombre AS nombre_usuario,
-                    COUNT(vi.id) AS total_items
+                SELECT ${selectFields}
                 FROM ventas_pos v
-                LEFT JOIN clientes c ON c.id = v.cliente_id
-                LEFT JOIN profesionales p ON p.id = v.profesional_id
-                LEFT JOIN usuarios u ON u.id = v.usuario_id
-                LEFT JOIN ventas_pos_items vi ON vi.venta_pos_id = v.id
+                ${joins}
                 WHERE ${whereConditions.join(' AND ')}
-                GROUP BY v.id, c.nombre, p.nombre_completo, u.nombre
+                GROUP BY ${groupBy}
                 ORDER BY v.fecha_venta DESC
                 LIMIT $${paramCounter}
                 OFFSET $${paramCounter + 1}
@@ -425,6 +456,15 @@ class VentasPOSModel {
             values.push(filtros.offset || 0);
 
             const result = await db.query(query, values);
+
+            // Si no incluye agendamiento, agregar campos null para mantener estructura
+            if (!incluirAgendamiento) {
+                result.rows = result.rows.map(row => ({
+                    ...row,
+                    nombre_cliente: null,
+                    nombre_profesional: null
+                }));
+            }
 
             // Obtener totales
             const totalesQuery = `
