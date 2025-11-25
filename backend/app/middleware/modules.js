@@ -95,7 +95,7 @@ class ModulesMiddleware {
           });
 
           // Mensaje de error con información de pricing
-          const mensaje = this.getModuleErrorMessage(moduleName);
+          const mensaje = ModulesMiddleware.getModuleErrorMessage(moduleName);
 
           return ResponseHelper.error(res, mensaje, 403, {
             codigo: 'MODULO_NO_ACTIVO',

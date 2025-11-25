@@ -275,7 +275,7 @@ CREATE TABLE historial_subscripciones (
     -- ✅ VALIDACIONES
     -- ====================================================================
     CONSTRAINT valid_evento
-        CHECK (tipo_evento IN ('creacion', 'upgrade', 'downgrade', 'cancelacion', 'reactivacion', 'pago_exitoso', 'pago_fallido', 'cambio_precio', 'suspension')),
+        CHECK (tipo_evento IN ('creacion', 'upgrade', 'downgrade', 'cancelacion', 'reactivacion', 'pago_exitoso', 'pago_fallido', 'cambio_precio', 'suspension', 'cambio_modulos')),
     CONSTRAINT valid_iniciador
         CHECK (iniciado_por IN ('usuario', 'sistema', 'admin', 'gateway'))
 );
