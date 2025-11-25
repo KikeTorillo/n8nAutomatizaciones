@@ -73,6 +73,9 @@ const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGest
 // Página de Setup Inicial
 const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
 
+// Página de Configuración de Módulos
+const ModulosPage = lazy(() => import('@/pages/configuracion/ModulosPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -377,15 +380,15 @@ export const router = createBrowserRouter([
           },
         ],
       },
-      // Agregar más rutas protegidas aquí
-      // {
-      //   path: 'settings',
-      //   element: (
-      //     <ProtectedRoute requiredRole={['admin', 'propietario']}>
-      //       {withSuspense(SettingsPage)}
-      //     </ProtectedRoute>
-      //   ),
-      // },
+      // Rutas de Configuración
+      {
+        path: 'configuracion/modulos',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ModulosPage)}
+          </ProtectedRoute>
+        ),
+      },
 
       // ⚠️ IMPORTANTE: Rutas dinámicas DEBEN IR AL FINAL
       // Pero las rutas más específicas (/agendar/:slug) ANTES de las genéricas (/:slug)

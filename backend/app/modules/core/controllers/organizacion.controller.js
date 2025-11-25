@@ -131,7 +131,7 @@ class OrganizacionController {
     });
 
     static onboarding = asyncHandler(async (req, res) => {
-        const { organizacion, admin } = req.body;
+        const { organizacion, admin, modulos_activos = [] } = req.body;
 
         // PASO 1: Validar email duplicado ANTES de crear la organización
         // Esto evita dejar organizaciones huérfanas sin admin
@@ -164,6 +164,24 @@ class OrganizacionController {
             organizacionData.plan_actual,
             diasTrial
         );
+
+        // PASO 4.5: Guardar módulos activos seleccionados durante el onboarding
+        if (modulos_activos && modulos_activos.length > 0) {
+            // Los módulos base (core, agendamiento) siempre están activos
+            // Solo guardamos los módulos opcionales seleccionados
+            const modulosActuales = {
+                core: true,
+                agendamiento: true
+            };
+
+            // Agregar módulos opcionales seleccionados
+            modulos_activos.forEach(modulo => {
+                modulosActuales[modulo] = true;
+            });
+
+            // Guardar en la organización
+            await OrganizacionModel.actualizarModulosActivos(nuevaOrganizacion.id, modulosActuales);
+        }
 
         // PASO 5: Crear usuario admin
         const adminData = {

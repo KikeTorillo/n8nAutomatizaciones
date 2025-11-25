@@ -12,6 +12,7 @@ const planesRouter = require('../../../modules/core/routes/planes');
 const pagosRouter = require('../../../modules/core/routes/pagos');
 const webhooksRouter = require('../../../modules/core/routes/webhooks');
 const subscripcionesRouter = require('../../../modules/core/routes/subscripciones');
+const modulosRouter = require('../../../modules/core/routes/modulos');
 
 // ========================================
 // PENDIENTE DE MIGRAR (mercadopago faltó)
@@ -68,6 +69,9 @@ function routerApi(app) {
 
     // Rutas públicas
     router.use('/planes', planesRouter);
+
+    // Rutas de módulos (gestión de módulos activos)
+    router.use('/modulos', modulosRouter);
 
     // Rutas de recursos
     router.use('/organizaciones', organizacionesRouter);

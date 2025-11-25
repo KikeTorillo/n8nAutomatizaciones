@@ -32,7 +32,13 @@ const useOnboardingStore = create(
           plan_precio: 0,
         },
 
-        // Paso 3: Cuenta de usuario
+        // Paso 3: Módulos seleccionados
+        modulos: {
+          selected: [],          // Array de nombres de módulos opcionales seleccionados
+          costoAdicional: 0,     // Costo mensual adicional por módulos
+        },
+
+        // Paso 4: Cuenta de usuario
         account: {
           email: '',
           password: '',
@@ -144,6 +150,10 @@ const useOnboardingStore = create(
               plan_nombre: '',
               plan_precio: 0,
             },
+            modulos: {
+              selected: [],
+              costoAdicional: 0,
+            },
             account: {
               email: '',
               password: '',
@@ -161,7 +171,7 @@ const useOnboardingStore = create(
        */
       getProgress: () => {
         const { completedSteps } = get();
-        const totalSteps = 3;
+        const totalSteps = 4;
         return Math.round((completedSteps.length / totalSteps) * 100);
       },
     }),

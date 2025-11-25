@@ -657,6 +657,31 @@ class OrganizacionModel {
             return result.rows[0];
         });
     }
+
+    /**
+     * Actualizar módulos activos de una organización
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} modulosActivos - Objeto con módulos y su estado {core: true, inventario: true, ...}
+     * @returns {Promise<Object>} Resultado de la actualización
+     */
+    static async actualizarModulosActivos(organizacionId, modulosActivos) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                UPDATE organizaciones
+                SET modulos_activos = $2,
+                    actualizado_en = NOW()
+                WHERE id = $1
+                RETURNING id, modulos_activos
+            `;
+
+            const result = await db.query(query, [
+                organizacionId,
+                JSON.stringify(modulosActivos)
+            ]);
+
+            return result.rows[0];
+        });
+    }
 }
 
 module.exports = OrganizacionModel;

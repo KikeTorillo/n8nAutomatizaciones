@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { authApi, serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import useOnboardingStore from '@/store/onboardingStore';
+import { useModulos } from '@/hooks/useModulos';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ModuleVisible } from '@/components/ui/ModuleGuard';
 import StatCard from '@/components/dashboard/StatCard';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
@@ -44,6 +46,15 @@ function Dashboard() {
   const { logout: clearAuth, user } = useAuthStore();
   const { resetOnboarding } = useOnboardingStore();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  // Hook de módulos activos
+  const {
+    tieneInventario,
+    tienePOS,
+    tieneComisiones,
+    tieneMarketplace,
+    tieneChatbots,
+  } = useModulos();
 
   // Queries de datos
   const { data: estadisticas, isLoading: loadingEstadisticas, error: errorEstadisticas } =
@@ -137,7 +148,7 @@ function Dashboard() {
                 )}
               </div>
 
-              {/* Navigation Links */}
+              {/* Navigation Links - Condicional por módulos */}
               <div className="hidden md:flex items-center gap-6">
                 <button
                   onClick={() => navigate('/clientes')}
@@ -163,42 +174,52 @@ function Dashboard() {
                 >
                   Servicios
                 </button>
-                <button
-                  onClick={() => navigate('/chatbots')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Chatbots
-                </button>
-                <button
-                  onClick={() => navigate('/comisiones')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Comisiones
-                </button>
-                <button
-                  onClick={() => navigate('/inventario/productos')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Inventario
-                </button>
-                <button
-                  onClick={() => navigate('/pos/venta')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  POS
-                </button>
+                {tieneChatbots && (
+                  <button
+                    onClick={() => navigate('/chatbots')}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Chatbots
+                  </button>
+                )}
+                {tieneComisiones && (
+                  <button
+                    onClick={() => navigate('/comisiones')}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Comisiones
+                  </button>
+                )}
+                {tieneInventario && (
+                  <button
+                    onClick={() => navigate('/inventario/productos')}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Inventario
+                  </button>
+                )}
+                {tienePOS && (
+                  <button
+                    onClick={() => navigate('/pos/venta')}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    POS
+                  </button>
+                )}
                 <button
                   onClick={() => navigate('/bloqueos')}
                   className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
                 >
                   Bloqueos
                 </button>
-                <button
-                  onClick={() => navigate('/mi-marketplace')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Marketplace
-                </button>
+                {tieneMarketplace && (
+                  <button
+                    onClick={() => navigate('/mi-marketplace')}
+                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                  >
+                    Marketplace
+                  </button>
+                )}
               </div>
             </div>
 
@@ -227,8 +248,8 @@ function Dashboard() {
         {/* Checklist de Configuración Inicial */}
         <SetupChecklist />
 
-        {/* Card de Activación del Marketplace */}
-        <MarketplaceActivationCard />
+        {/* Card de Activación del Marketplace - Solo si tiene módulo */}
+        {tieneMarketplace && <MarketplaceActivationCard />}
 
         {/* Mensaje de Error */}
         {errorEstadisticas && (
@@ -297,15 +318,17 @@ function Dashboard() {
             onClick={() => navigate('/bloqueos')}
           />
 
-          <StatCard
-            title="Chatbots IA"
-            value={totalChatbotsActivos}
-            subtitle={subtituloChatbots}
-            icon={Bot}
-            color="cyan"
-            isLoading={loadingChatbots}
-            onClick={() => navigate('/chatbots')}
-          />
+          {tieneChatbots && (
+            <StatCard
+              title="Chatbots IA"
+              value={totalChatbotsActivos}
+              subtitle={subtituloChatbots}
+              icon={Bot}
+              color="cyan"
+              isLoading={loadingChatbots}
+              onClick={() => navigate('/chatbots')}
+            />
+          )}
         </div>
 
         {/* Grid Principal */}
@@ -378,10 +401,12 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Widget de Alertas de Inventario */}
-        <div className="mt-8">
-          <AlertasWidget />
-        </div>
+        {/* Widget de Alertas de Inventario - Solo si tiene módulo */}
+        {tieneInventario && (
+          <div className="mt-8">
+            <AlertasWidget />
+          </div>
+        )}
 
         {/* Tarjeta de Asignaciones Servicio-Profesional */}
         <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
