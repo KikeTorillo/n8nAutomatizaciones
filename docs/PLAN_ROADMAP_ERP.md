@@ -1,7 +1,8 @@
 # Plan de Desarrollo: Roadmap ERP para PYMES México
 
 **Fecha**: 25 Noviembre 2025
-**Versión**: 1.0
+**Versión**: 2.0
+**Última actualización**: 25 Noviembre 2025
 **Análisis competitivo**: vs Odoo
 
 ---
@@ -20,29 +21,197 @@ Este documento define el roadmap de desarrollo para evolucionar de una plataform
 
 ## Prioridades de Desarrollo
 
-1. **Completar Agendamiento** - Sistema de recordatorios
+1. **Completar Agendamiento** - Sistema de recordatorios con IA
 2. **Validar POS e Inventario** - Funcionalidades faltantes
-3. **Marketplace** - No compite con Website de Odoo (son productos diferentes)
+3. **Marketplace** - Mejoras SEO y UX
 4. **Siguiente Módulo: Contabilidad** - CFDI + Contabilidad básica
 
 ---
 
-## Fase 1: Completar Sistema de Recordatorios (Agendamiento)
+## Fase 1: Sistema de Recordatorios con IA Conversacional
 
-### Estado Actual: 50% Implementado
+### Estado Actual: ~35-40% Implementado
 
 **Lo que YA existe:**
 - Campos en tabla `citas`: `recordatorio_enviado`, `fecha_recordatorio`, `confirmacion_requerida`
 - Índice optimizado `idx_citas_recordatorios_pendientes`
 - 2 endpoints: `GET /citas/recordatorios` y `PATCH /citas/:codigo/recordatorio-enviado`
-- Model y Controller básicos
+- Model y Controller básicos (`cita.recordatorios.controller.js`, `cita.recordatorios.model.js`)
 - Hooks frontend: `useEnviarRecordatorio()`, `useRecordatorios()`
+- **Endpoint confirmar cita**: `PATCH /api/v1/citas/:id/confirmar-asistencia` ✅
 
 **Lo que FALTA (crítico):**
+- Tablas de configuración e historial
+- Servicio de envío con inyección en memoria del chat
+- MCP tool `confirmarCita`
+- Job pg_cron automatizado
+- UI de configuración
 
-### 1.1 Tabla de Configuración de Recordatorios
+---
+
+### 1.1 Arquitectura del Sistema
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    SISTEMA DE RECORDATORIOS - ARQUITECTURA                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                              │
+│  ⚠️  REQUISITO: La organización DEBE tener chatbot configurado              │
+│      Sin chatbot activo = Sin recordatorios                                  │
+│                                                                              │
+│  ══════════════════════════════════════════════════════════════════════════ │
+│  FASE 1: PROGRAMACIÓN Y ENVÍO                                               │
+│  ══════════════════════════════════════════════════════════════════════════ │
+│                                                                              │
+│  pg_cron (*/5 min)                                                          │
+│       │                                                                      │
+│       ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  SELECT citas pendientes de recordatorio                            │    │
+│  │  JOIN chatbot_config (para obtener credentials)                     │    │
+│  │  WHERE chatbot.activo = TRUE  ← Solo orgs con chatbot               │    │
+│  └───────────────────────────────┬─────────────────────────────────────┘    │
+│                                  │                                          │
+│                                  ▼                                          │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  Backend: RecordatorioService.procesarBatch()                       │    │
+│  │  ─────────────────────────────────────────────────────────────────  │    │
+│  │                                                                      │    │
+│  │  Para cada recordatorio:                                            │    │
+│  │                                                                      │    │
+│  │  1. CONSTRUIR MENSAJE PERSONALIZADO                                 │    │
+│  │     "Hola {cliente}! Te recordamos tu cita en {negocio}:            │    │
+│  │      📅 {fecha} a las {hora}                                        │    │
+│  │      ✂️ Servicios: {servicios}                                      │    │
+│  │      Responde SI para confirmar o escríbeme si necesitas cambiar."  │    │
+│  │                                                                      │    │
+│  │  2. INYECTAR EN MEMORIA DEL CHAT (n8n_chat_histories)  ← CRÍTICO   │    │
+│  │     INSERT INTO n8n_chat_histories (session_id, message)            │    │
+│  │     VALUES (sender, '{"type":"ai","content":"..."}')                │    │
+│  │                                                                      │    │
+│  │  3. ENVIAR MENSAJE VÍA API (credentials del chatbot del negocio)   │    │
+│  │     IF telegram → Telegram Bot API (bot_token del negocio)          │    │
+│  │     IF whatsapp → WhatsApp Cloud API (phone_id del negocio)         │    │
+│  │                                                                      │    │
+│  │  4. REGISTRAR EN HISTORIAL                                          │    │
+│  │     UPDATE citas SET recordatorio_enviado = TRUE                    │    │
+│  │     INSERT INTO historial_recordatorios (...)                       │    │
+│  │                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+│  ══════════════════════════════════════════════════════════════════════════ │
+│  FASE 2: CLIENTE RESPONDE → CHATBOT CON CONTEXTO                            │
+│  ══════════════════════════════════════════════════════════════════════════ │
+│                                                                              │
+│  Cliente responde: "SI" o "Quiero cambiar mi cita"                          │
+│       │                                                                      │
+│       ▼                                                                      │
+│  ┌─────────────────────────────────────────────────────────────────────┐    │
+│  │  Workflow Chatbot Existente (mismo bot/número)                      │    │
+│  │  ─────────────────────────────────────────────────────────────────  │    │
+│  │                                                                      │    │
+│  │  Telegram Trigger → recibe mensaje del cliente                      │    │
+│  │       │                                                              │    │
+│  │       ▼                                                              │    │
+│  │  Postgres Chat Memory → LEE la memoria                              │    │
+│  │       │                                                              │    │
+│  │       │  Memoria contiene:                                          │    │
+│  │       │  [AI] "Te recordamos tu cita para CORTE DE CABELLO..."     │    │
+│  │       │  [Human] "SI"  ← mensaje actual                             │    │
+│  │       │                                                              │    │
+│  │       ▼                                                              │    │
+│  │  AI Agent → ENTIENDE EL CONTEXTO                                    │    │
+│  │       │                                                              │    │
+│  │       │  "El último mensaje que envié fue un recordatorio.          │    │
+│  │       │   El cliente respondió 'SI'. Esto es una confirmación."     │    │
+│  │       │                                                              │    │
+│  │       ▼                                                              │    │
+│  │  MCP Tools:                                                         │    │
+│  │    SI respuesta = confirmación:                                     │    │
+│  │      → buscarCitasCliente(sender)                                   │    │
+│  │      → confirmarCita(cita_id)  ← NUEVO TOOL                        │    │
+│  │                                                                      │    │
+│  │    SI respuesta = quiere cambiar:                                   │    │
+│  │      → buscarCitasCliente(sender)                                   │    │
+│  │      → verificarDisponibilidad(...)                                 │    │
+│  │      → reagendarCita(...)                                           │    │
+│  │                                                                      │    │
+│  │       ▼                                                              │    │
+│  │  Respuesta: "✅ Perfecto! Tu cita está confirmada."                │    │
+│  │                                                                      │    │
+│  └─────────────────────────────────────────────────────────────────────┘    │
+│                                                                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+### 1.2 Estructura de la Memoria del Chat (n8n_chat_histories)
+
+El sistema usa **Postgres Chat Memory** de n8n con LangChain. La tabla tiene esta estructura:
+
 ```sql
--- sql/agendamiento/recordatorios/01-tablas.sql
+-- Tabla creada automáticamente por n8n
+CREATE TABLE n8n_chat_histories (
+    id SERIAL PRIMARY KEY,
+    session_id VARCHAR(255) NOT NULL,   -- sender (teléfono o chat_id)
+    message JSONB NOT NULL              -- Mensaje serializado LangChain
+);
+```
+
+**Formato del campo `message` (JSONB):**
+
+```json
+// Mensaje del AI (recordatorio)
+{
+    "type": "ai",
+    "content": "Te recordamos tu cita para CORTE DE CABELLO mañana 26/11 a las 10:00...",
+    "additional_kwargs": {},
+    "tool_calls": [],
+    "response_metadata": {},
+    "id": null
+}
+
+// Mensaje del usuario (respuesta)
+{
+    "type": "human",
+    "content": "SI",
+    "additional_kwargs": {},
+    "id": null
+}
+```
+
+**Inyección desde Backend:**
+
+```javascript
+// backend/app/modules/recordatorios/services/recordatorioService.js
+
+async inyectarEnMemoriaChat(sender, mensajeRecordatorio) {
+    const query = `
+        INSERT INTO n8n_chat_histories (session_id, message)
+        VALUES ($1, $2)
+    `;
+
+    const mensajeAI = {
+        type: "ai",
+        content: mensajeRecordatorio,
+        additional_kwargs: {},
+        tool_calls: [],
+        response_metadata: {},
+        id: null
+    };
+
+    await db.query(query, [sender, JSON.stringify(mensajeAI)]);
+}
+```
+
+---
+
+### 1.3 Tabla de Configuración de Recordatorios
+
+```sql
+-- sql/recordatorios/01-tablas.sql
+
 CREATE TABLE configuracion_recordatorios (
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
@@ -56,14 +225,15 @@ CREATE TABLE configuracion_recordatorios (
     recordatorio_2_horas INTEGER DEFAULT 2,       -- 2h antes
     recordatorio_2_activo BOOLEAN DEFAULT FALSE,
 
-    -- Canales
-    canal_whatsapp BOOLEAN DEFAULT TRUE,
-    canal_email BOOLEAN DEFAULT FALSE,
-    canal_sms BOOLEAN DEFAULT FALSE,
+    -- Plantillas personalizables
+    plantilla_mensaje TEXT DEFAULT 'Hola {{cliente_nombre}}! 👋
 
-    -- Plantillas
-    plantilla_whatsapp TEXT DEFAULT 'Hola {{cliente_nombre}}, te recordamos tu cita para {{servicios}} el {{fecha}} a las {{hora}} en {{negocio_nombre}}. Confirma respondiendo SI.',
-    plantilla_email TEXT,
+Te recordamos tu cita en {{negocio_nombre}}:
+📅 {{fecha}} a las {{hora}}
+✂️ Servicios: {{servicios}}
+💰 Total: ${{precio}}
+
+Responde SI para confirmar o escríbeme si necesitas cambiar algo.',
 
     -- Ventana horaria (no enviar de noche)
     hora_inicio TIME DEFAULT '08:00',
@@ -81,145 +251,321 @@ CREATE TABLE configuracion_recordatorios (
 -- Historial de envíos
 CREATE TABLE historial_recordatorios (
     id BIGSERIAL PRIMARY KEY,
-    cita_id INTEGER NOT NULL,
-    fecha_cita DATE NOT NULL,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id),
+    cita_id INTEGER NOT NULL,
 
-    -- Tipo de recordatorio
-    numero_recordatorio INTEGER DEFAULT 1,  -- 1 = primer recordatorio, 2 = segundo
+    -- Detalles del envío
+    canal VARCHAR(20) NOT NULL,  -- 'telegram', 'whatsapp'
+    sender VARCHAR(50) NOT NULL,  -- ID del chat o teléfono
+    mensaje_enviado TEXT NOT NULL,
 
-    -- Canal y estado
-    canal VARCHAR(20) NOT NULL,  -- 'whatsapp', 'email', 'sms'
-    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',  -- 'pendiente', 'enviado', 'fallido', 'confirmado'
+    -- Estado
+    estado VARCHAR(20) NOT NULL DEFAULT 'pendiente',
+    -- Estados: 'pendiente', 'enviado', 'fallido', 'confirmado'
 
-    -- Detalles
-    mensaje_enviado TEXT,
-    respuesta_cliente TEXT,
-    codigo_error VARCHAR(100),
+    error_mensaje TEXT,
     intento_numero INTEGER DEFAULT 1,
+
+    -- Respuesta del cliente (si aplica)
+    respuesta_cliente TEXT,
+    fecha_respuesta TIMESTAMPTZ,
 
     -- Timestamps
     programado_para TIMESTAMPTZ NOT NULL,
     enviado_en TIMESTAMPTZ,
-    creado_en TIMESTAMPTZ DEFAULT NOW(),
-
-    FOREIGN KEY (cita_id, fecha_cita) REFERENCES citas(id, fecha_cita) ON DELETE CASCADE
+    creado_en TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Índices
 CREATE INDEX idx_historial_recordatorios_pendientes
 ON historial_recordatorios(programado_para)
 WHERE estado = 'pendiente';
+
+CREATE INDEX idx_historial_recordatorios_org
+ON historial_recordatorios(organizacion_id, creado_en DESC);
 ```
 
-### 1.2 Job Automático pg_cron
+---
+
+### 1.4 MCP Tool: confirmarCita
+
+**El endpoint ya existe:** `PATCH /api/v1/citas/:id/confirmar-asistencia`
+
+Solo necesitamos crear el wrapper MCP:
+
+```javascript
+// backend/mcp-server/tools/confirmarCita.js
+
+const Joi = require('joi');
+const { createApiClient } = require('../utils/apiClient');
+const logger = require('../utils/logger');
+
+const inputSchema = {
+    type: 'object',
+    properties: {
+        cita_id: {
+            type: 'number',
+            description: 'ID de la cita a confirmar',
+        },
+    },
+    required: ['cita_id'],
+};
+
+const joiSchema = Joi.object({
+    cita_id: Joi.number().integer().positive().required(),
+});
+
+async function execute(args, jwtToken) {
+    try {
+        if (!jwtToken) {
+            return {
+                success: false,
+                message: 'Token JWT no proporcionado.',
+                data: null,
+            };
+        }
+
+        const { error, value } = joiSchema.validate(args);
+        if (error) {
+            return {
+                success: false,
+                message: `Error de validación: ${error.details[0].message}`,
+                data: null,
+            };
+        }
+
+        const apiClient = createApiClient(jwtToken);
+
+        // Usar endpoint existente
+        const response = await apiClient.patch(
+            `/api/v1/citas/${value.cita_id}/confirmar-asistencia`,
+            {}
+        );
+
+        const resultado = response.data.data || response.data;
+
+        logger.info(`✅ Cita ${value.cita_id} confirmada exitosamente`);
+
+        return {
+            success: true,
+            message: 'Cita confirmada exitosamente. El cliente ha confirmado su asistencia.',
+            data: {
+                cita_id: resultado.id || value.cita_id,
+                codigo_cita: resultado.codigo_cita,
+                estado: 'confirmada',
+                confirmada_en: new Date().toISOString(),
+            },
+        };
+
+    } catch (error) {
+        logger.error('[confirmarCita] Error:', error.message);
+
+        if (error.response?.status === 400) {
+            return {
+                success: false,
+                message: error.response.data?.mensaje || 'No se puede confirmar esta cita.',
+                data: null,
+            };
+        }
+
+        if (error.response?.status === 404) {
+            return {
+                success: false,
+                message: 'Cita no encontrada.',
+                data: null,
+            };
+        }
+
+        return {
+            success: false,
+            message: `Error al confirmar cita: ${error.message}`,
+            data: null,
+        };
+    }
+}
+
+module.exports = {
+    name: 'confirmarCita',
+    description: 'Confirma la asistencia del cliente a una cita. Cambia el estado de "pendiente" a "confirmada". Solo puede confirmar citas en estado "pendiente". Usar cuando el cliente responde afirmativamente a un recordatorio.',
+    inputSchema,
+    execute,
+};
+```
+
+---
+
+### 1.5 Backend Service: RecordatorioService
+
+```javascript
+// backend/app/modules/recordatorios/services/recordatorioService.js
+
+class RecordatorioService {
+
+    /**
+     * Obtiene recordatorios pendientes de envío
+     * Solo para organizaciones con chatbot activo
+     */
+    async obtenerPendientes(limite = 100) {
+        const query = `
+            SELECT
+                c.id as cita_id,
+                c.fecha_cita,
+                c.hora_inicio,
+                c.precio_total,
+                cl.nombre as cliente_nombre,
+                cl.telefono as cliente_telefono,
+                o.nombre as negocio_nombre,
+                cc.plataforma,
+                cc.config_plataforma,
+                cr.plantilla_mensaje
+            FROM citas c
+            JOIN clientes cl ON c.cliente_id = cl.id
+            JOIN organizaciones o ON c.organizacion_id = o.id
+            JOIN chatbot_config cc ON c.organizacion_id = cc.organizacion_id
+            JOIN configuracion_recordatorios cr ON c.organizacion_id = cr.organizacion_id
+            WHERE c.estado IN ('pendiente', 'confirmada')
+              AND c.recordatorio_enviado = FALSE
+              AND c.fecha_cita - INTERVAL '1 hour' * cr.recordatorio_1_horas <= NOW()
+              AND c.fecha_cita > NOW()
+              AND cc.activo = TRUE
+              AND cc.deleted_at IS NULL
+              AND cr.habilitado = TRUE
+              AND CURRENT_TIME BETWEEN cr.hora_inicio AND cr.hora_fin
+            ORDER BY c.fecha_cita ASC
+            LIMIT $1
+        `;
+
+        return await db.query(query, [limite]);
+    }
+
+    /**
+     * Procesa un batch de recordatorios
+     */
+    async procesarBatch(recordatorios) {
+        const resultados = [];
+
+        for (const rec of recordatorios) {
+            try {
+                // 1. Construir mensaje
+                const mensaje = this.construirMensaje(rec);
+
+                // 2. Determinar sender (chat_id o teléfono)
+                const sender = this.obtenerSender(rec);
+
+                // 3. Inyectar en memoria del chat
+                await this.inyectarEnMemoriaChat(sender, mensaje);
+
+                // 4. Enviar mensaje
+                const enviado = await this.enviarMensaje(rec, mensaje);
+
+                // 5. Registrar resultado
+                await this.registrarEnvio(rec, mensaje, enviado);
+
+                resultados.push({ cita_id: rec.cita_id, success: true });
+
+            } catch (error) {
+                logger.error(`Error procesando recordatorio cita ${rec.cita_id}:`, error);
+                resultados.push({ cita_id: rec.cita_id, success: false, error: error.message });
+            }
+        }
+
+        return resultados;
+    }
+
+    /**
+     * Inyecta el mensaje de recordatorio en la memoria del chat
+     * para que el AI Agent tenga contexto cuando el cliente responda
+     */
+    async inyectarEnMemoriaChat(sender, mensaje) {
+        const query = `
+            INSERT INTO n8n_chat_histories (session_id, message)
+            VALUES ($1, $2)
+        `;
+
+        const mensajeAI = {
+            type: "ai",
+            content: mensaje,
+            additional_kwargs: {},
+            tool_calls: [],
+            response_metadata: {},
+            id: null
+        };
+
+        await db.query(query, [sender, JSON.stringify(mensajeAI)]);
+    }
+
+    /**
+     * Envía el mensaje usando las credentials del chatbot del negocio
+     */
+    async enviarMensaje(recordatorio, mensaje) {
+        const { plataforma, config_plataforma } = recordatorio;
+        const credentials = JSON.parse(config_plataforma);
+
+        if (plataforma === 'telegram') {
+            return await this.enviarTelegram(credentials.bot_token, recordatorio.chat_id, mensaje);
+        } else if (plataforma === 'whatsapp') {
+            return await this.enviarWhatsApp(credentials, recordatorio.cliente_telefono, mensaje);
+        }
+
+        throw new Error(`Plataforma ${plataforma} no soportada`);
+    }
+}
+```
+
+---
+
+### 1.6 Job pg_cron
+
 ```sql
 -- sql/mantenimiento/06-pg-cron.sql (agregar)
+
 SELECT cron.schedule(
-    'enviar-recordatorios',
+    'procesar-recordatorios',
     '*/5 * * * *',  -- Cada 5 minutos
     $$
-    SELECT enviar_recordatorios_pendientes();
+    SELECT net.http_post(
+        'http://backend:3000/internal/recordatorios/procesar',
+        '{}',
+        'application/json'
+    );
     $$
 );
 ```
 
-### 1.3 Función de Envío
-```sql
--- sql/agendamiento/recordatorios/04-funciones.sql
-CREATE OR REPLACE FUNCTION enviar_recordatorios_pendientes()
-RETURNS INTEGER AS $$
-DECLARE
-    v_count INTEGER := 0;
-    v_record RECORD;
-BEGIN
-    -- Obtener recordatorios pendientes dentro de ventana horaria
-    FOR v_record IN
-        SELECT hr.*, c.cliente_id, cl.telefono, cl.email, cl.nombre as cliente_nombre,
-               o.nombre as negocio_nombre
-        FROM historial_recordatorios hr
-        JOIN citas c ON hr.cita_id = c.id AND hr.fecha_cita = c.fecha_cita
-        JOIN clientes cl ON c.cliente_id = cl.id
-        JOIN organizaciones o ON hr.organizacion_id = o.id
-        JOIN configuracion_recordatorios cr ON hr.organizacion_id = cr.organizacion_id
-        WHERE hr.estado = 'pendiente'
-          AND hr.programado_para <= NOW()
-          AND CURRENT_TIME BETWEEN cr.hora_inicio AND cr.hora_fin
-          AND hr.intento_numero <= cr.max_reintentos
-        ORDER BY hr.programado_para
-        LIMIT 100
-    LOOP
-        -- Marcar como procesando (evita duplicados)
-        UPDATE historial_recordatorios
-        SET estado = 'procesando'
-        WHERE id = v_record.id;
+---
 
-        -- El envío real se hace vía n8n webhook o API
-        v_count := v_count + 1;
-    END LOOP;
-
-    RETURN v_count;
-END;
-$$ LANGUAGE plpgsql;
-```
-
-### 1.4 Integración n8n/WhatsApp
-
-**Workflow n8n para recordatorios:**
-1. Webhook recibe lista de recordatorios pendientes
-2. Para cada recordatorio:
-   - Si canal = 'whatsapp': Enviar vía WhatsApp Business API
-   - Si canal = 'email': Enviar vía AWS SES
-3. Callback al backend con resultado
-4. Actualizar `historial_recordatorios.estado`
-
-**Endpoints nuevos backend:**
-```javascript
-// POST /api/v1/citas/recordatorios/procesar
-// Llamado por pg_cron o n8n - Retorna lista de recordatorios a enviar
-
-// POST /api/v1/citas/recordatorios/callback
-// Recibe resultado de envío de n8n - Actualiza historial_recordatorios
-```
-
-### 1.5 UI Frontend
-
-**Páginas nuevas:**
-- `ConfiguracionRecordatoriosPage.jsx` - Configurar tiempos, canales, plantillas
-- Agregar tab en `ConfiguracionPage.jsx`
-
-**Componentes:**
-- `PlantillaRecordatorioEditor.jsx` - Editor con variables {{cliente_nombre}}, {{fecha}}, etc.
-- `HistorialRecordatoriosModal.jsx` - Ver historial de envíos por cita
-
-### Archivos a Crear/Modificar
+### 1.7 Archivos a Crear/Modificar
 
 | Archivo | Acción | Descripción |
 |---------|--------|-------------|
-| `sql/agendamiento/recordatorios/01-tablas.sql` | CREAR | 2 tablas nuevas |
-| `sql/agendamiento/recordatorios/02-indices.sql` | CREAR | Índices optimizados |
-| `sql/agendamiento/recordatorios/03-rls.sql` | CREAR | Políticas RLS |
-| `sql/agendamiento/recordatorios/04-funciones.sql` | CREAR | Función envío |
+| `sql/recordatorios/01-tablas.sql` | CREAR | 2 tablas nuevas |
+| `sql/recordatorios/02-indices.sql` | CREAR | Índices optimizados |
+| `sql/recordatorios/03-rls.sql` | CREAR | Políticas RLS |
 | `sql/mantenimiento/06-pg-cron.sql` | MODIFICAR | Agregar job |
-| `backend/app/modules/agendamiento/models/recordatorios.model.js` | CREAR | CRUD + lógica |
-| `backend/app/modules/agendamiento/controllers/recordatorios.controller.js` | CREAR | Endpoints |
-| `backend/app/modules/agendamiento/routes/recordatorios.js` | CREAR | 6 rutas |
+| `backend/app/modules/recordatorios/services/recordatorioService.js` | CREAR | Lógica principal |
+| `backend/app/modules/recordatorios/services/telegramService.js` | CREAR | Envío Telegram |
+| `backend/app/modules/recordatorios/services/whatsappService.js` | CREAR | Envío WhatsApp |
+| `backend/app/modules/recordatorios/controllers/recordatorios.controller.js` | CREAR | Endpoints |
+| `backend/app/modules/recordatorios/routes/recordatorios.js` | CREAR | Rutas |
+| `backend/mcp-server/tools/confirmarCita.js` | CREAR | MCP Tool |
+| `backend/mcp-server/tools/index.js` | MODIFICAR | Registrar tool |
 | `frontend/src/pages/configuracion/RecordatoriosPage.jsx` | CREAR | UI config |
-| `frontend/src/hooks/useRecordatorios.js` | CREAR | Queries + mutations |
-
-### Estimación: 2-3 semanas
+| `frontend/src/hooks/useRecordatoriosConfig.js` | CREAR | Queries + mutations |
 
 ---
 
 ## Fase 2: Validar y Completar POS e Inventario
 
-### 2.1 Inventario - Estado: 95%
+### 2.1 Inventario - Estado: ~92%
+
+**Funcionalidades existentes:** 33 endpoints, 7 tablas, análisis ABC, alertas automáticas
 
 **Funcionalidades faltantes:**
 
 | Funcionalidad | Prioridad | Esfuerzo |
 |---------------|-----------|----------|
-| Exportación CSV/Excel reportes | Alta | 3 días |
-| Órdenes de Compra | Media | 1 semana |
+| **Órdenes de Compra** | Alta | 1 semana |
+| Exportación CSV/Excel reportes | Media | 3 días |
 | Validación RFC proveedores | Baja | 2 días |
 | Generación códigos de barras | Baja | 3 días |
 
@@ -232,7 +578,8 @@ CREATE TABLE ordenes_compra (
     proveedor_id INTEGER NOT NULL REFERENCES proveedores(id),
 
     folio VARCHAR(20) NOT NULL,  -- OC-2025-0001
-    estado VARCHAR(20) DEFAULT 'borrador',  -- borrador, enviada, parcial, recibida, cancelada
+    estado VARCHAR(20) DEFAULT 'borrador',
+    -- Estados: borrador, enviada, parcial, recibida, cancelada
 
     fecha_orden DATE DEFAULT CURRENT_DATE,
     fecha_entrega_esperada DATE,
@@ -264,15 +611,18 @@ CREATE TABLE ordenes_compra_items (
 );
 ```
 
-### 2.2 POS - Estado: 85%
+### 2.2 POS - Estado: ~90%
+
+**Funcionalidades existentes:** 12 endpoints, ventas, corte de caja, **devoluciones** ✅
+
+> ⚠️ **NOTA**: Las devoluciones YA ESTÁN IMPLEMENTADAS en `routes/pos.js:164-173`
 
 **Funcionalidades faltantes:**
 
 | Funcionalidad | Prioridad | Esfuerzo |
 |---------------|-----------|----------|
-| Ticket PDF (térmica 58/80mm) | Alta | 1 semana |
-| Comisiones por venta POS | Alta | 3 días |
-| Devoluciones con nota crédito | Media | 4 días |
+| **Ticket PDF (térmica 58/80mm)** | Alta | 1 semana |
+| Comisiones por venta POS | Media | 3 días |
 | Descuento por cliente VIP | Baja | 2 días |
 
 **Implementar Ticket PDF:**
@@ -297,9 +647,8 @@ class TicketService {
         // Header
         doc.fontSize(12).text(venta.organizacion.nombre, { align: 'center' });
         doc.fontSize(8).text(venta.organizacion.direccion, { align: 'center' });
-        doc.text(`Tel: ${venta.organizacion.telefono}`, { align: 'center' });
-
         // ... resto de implementación
+
         return doc;
     }
 }
@@ -312,15 +661,12 @@ class TicketService {
 | `sql/inventario/ordenes-compra/01-tablas.sql` | CREAR | Órdenes de compra |
 | `backend/app/modules/inventario/controllers/ordenes-compra.controller.js` | CREAR | CRUD |
 | `backend/app/modules/pos/services/ticket.service.js` | CREAR | Generación PDF |
-| `backend/app/modules/pos/routes/pos.js` | MODIFICAR | Endpoint ticket |
 | `frontend/src/pages/inventario/OrdenesCompraPage.jsx` | CREAR | UI |
 | `frontend/src/components/pos/TicketPreview.jsx` | CREAR | Preview ticket |
 
-### Estimación: 2 semanas
-
 ---
 
-## Fase 3: Marketplace - Mejoras (NO Website Builder)
+## Fase 3: Marketplace - Mejoras (~95% completo)
 
 ### Análisis Competitivo: Marketplace vs Odoo Website
 
@@ -333,7 +679,7 @@ class TicketService {
 
 **Conclusión**: Son productos **COMPLETAMENTE DIFERENTES**. No intentar convertir Marketplace en website builder.
 
-### Mejoras Recomendadas al Marketplace
+### Mejoras Recomendadas
 
 **Prioridad Alta:**
 
@@ -342,7 +688,6 @@ class TicketService {
 | SEO Técnico | Sitemap.xml, robots.txt, Schema.org LocalBusiness | 3 días |
 | Horarios visuales | UI para definir horarios de atención en perfil | 2 días |
 | Galería mejorada | Lightbox, ordenamiento drag-and-drop | 3 días |
-| Analytics dashboard | Gráficos conversión, comparación períodos | 4 días |
 
 **Prioridad Media:**
 
@@ -360,8 +705,6 @@ class TicketService {
 - Blog
 - E-commerce/carrito
 - Temas personalizables
-
-### Estimación: 2 semanas
 
 ---
 
@@ -418,35 +761,16 @@ CREATE TABLE facturas_complementos_pago (...);
 - `polizas_movimientos` - Movimientos de póliza
 - `balanza_comprobacion` - Vista para reportes
 
-### Archivos a Crear
-
-| Archivo | Descripción |
-|---------|-------------|
-| `sql/facturacion/01-tablas.sql` | 8 tablas CFDI |
-| `sql/facturacion/02-catalogos-sat.sql` | Catálogos precargados |
-| `sql/facturacion/03-indices.sql` | Índices |
-| `sql/facturacion/04-rls.sql` | Políticas RLS |
-| `sql/facturacion/05-funciones.sql` | Generar folio, etc. |
-| `sql/contabilidad/01-tablas.sql` | Cuentas, pólizas |
-| `backend/app/modules/facturacion/` | Módulo completo |
-| `backend/app/modules/contabilidad/` | Módulo básico |
-| `frontend/src/pages/facturacion/` | UI facturación |
-| `frontend/src/pages/contabilidad/` | UI contabilidad |
-
-### Estimación: 6-8 semanas
-
 ---
 
 ## Resumen de Roadmap
 
-| Fase | Módulo | Estado Actual | Objetivo | Tiempo |
-|------|--------|---------------|----------|--------|
-| 1 | Recordatorios | 50% | 100% | 2-3 semanas |
-| 2 | POS + Inventario | 85-95% | 100% | 2 semanas |
-| 3 | Marketplace | 90% | 100% | 2 semanas |
-| 4 | CFDI + Contabilidad | 0% | MVP | 6-8 semanas |
-
-**Total estimado: 12-15 semanas (3-4 meses)**
+| Fase | Módulo | Estado Actual | Objetivo | Componentes Clave |
+|------|--------|---------------|----------|-------------------|
+| 1 | Recordatorios | ~35-40% | 100% | Inyección memoria chat, MCP confirmarCita |
+| 2 | POS + Inventario | 90-92% | 100% | Órdenes compra, Ticket PDF |
+| 3 | Marketplace | ~95% | 100% | SEO, Widget embebible |
+| 4 | CFDI + Contabilidad | 0% | MVP | PAC, XML CFDI 4.0 |
 
 ---
 
@@ -473,12 +797,32 @@ CREATE TABLE facturas_complementos_pago (...);
 
 ---
 
+## MCP Tools - Estado Actual
+
+| Tool | Estado | Descripción |
+|------|--------|-------------|
+| `listarServicios` | ✅ Existe | Catálogo con precios |
+| `verificarDisponibilidad` | ✅ Existe | Slots libres |
+| `buscarCliente` | ✅ Existe | Por teléfono/nombre |
+| `buscarCitasCliente` | ✅ Existe | Historial del cliente |
+| `crearCita` | ✅ Existe | Creación validada |
+| `reagendarCita` | ✅ Existe | Modificar citas |
+| `modificarServiciosCita` | ✅ Existe | Cambiar servicios |
+| `confirmarCita` | ❌ **CREAR** | Confirmar asistencia |
+
+---
+
 ## Archivos Críticos Existentes
 
 ### Recordatorios (base existente)
 - `backend/app/modules/agendamiento/models/citas/cita.recordatorios.model.js`
 - `backend/app/modules/agendamiento/controllers/citas/cita.recordatorios.controller.js`
 - `sql/citas/01-tablas-citas.sql` (campos recordatorio_*)
+
+### Endpoint Confirmar Cita (YA EXISTE)
+- `backend/app/modules/agendamiento/routes/citas.js:171` → `PATCH /:id/confirmar-asistencia`
+- `backend/app/modules/agendamiento/controllers/citas/cita.base.controller.js:155`
+- `backend/app/modules/agendamiento/models/citas/cita.base.model.js:737`
 
 ### POS
 - `sql/pos/01-tablas.sql`
@@ -497,21 +841,10 @@ CREATE TABLE facturas_complementos_pago (...);
 
 ---
 
-## Próximos Pasos Inmediatos
-
-1. **Semana 1-2**: Implementar sistema de recordatorios completo
-2. **Semana 3**: Ticket PDF para POS
-3. **Semana 4**: Órdenes de compra para Inventario
-4. **Semana 5-6**: SEO y mejoras Marketplace
-5. **Semana 7+**: Iniciar módulo CFDI
-
----
-
 ## Fuentes de Investigación
 
 - [Odoo Pricing Guide 2025](https://www.brainvire.com/insights/odoo-erp-implementation-cost/)
 - [Odoo Official Pricing](https://www.odoo.com/pricing)
-- [Odoo Reviews - TrustPilot](https://www.trustpilot.com/review/odoo.com)
-- [Odoo Reviews - Software Advice](https://www.softwareadvice.com/crm/odoo-profile/reviews/)
-- [Vertical SaaS Strategy - SingleGrain](https://www.singlegrain.com/saas/vertical-saas/)
-- [Verticalization of Everything - NFX](https://www.nfx.com/post/verticalization-of-everything)
+- [LangChain PostgresChatMessageHistory](https://api.python.langchain.com/en/latest/chat_message_histories/langchain_postgres.chat_message_histories.PostgresChatMessageHistory.html)
+- [n8n Postgres Chat Memory Docs](https://docs.n8n.io/integrations/builtin/cluster-nodes/sub-nodes/n8n-nodes-langchain.memorypostgreschat/)
+- [LangChain Messages Documentation](https://docs.langchain.com/oss/python/langchain/messages)
