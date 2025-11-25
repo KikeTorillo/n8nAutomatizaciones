@@ -1,10 +1,10 @@
 # 🏗️ PLAN: ARQUITECTURA MODULAR - VERSIÓN EJECUTABLE
 
 **Fecha:** 24 Noviembre 2025
-**Versión:** 2.8 (Fase 3 EN PROGRESO - Dynamic Loading + Queries Condicionales)
-**Estado:** 🔄 **FASE 3 - 80% COMPLETADA**
+**Versión:** 2.9 (Fase 3 COMPLETADA - Tests de Integración OK)
+**Estado:** ✅ **FASE 3 - 100% COMPLETADA**
 **Score Viabilidad:** **9.8/10**
-**Última Actualización:** 25 Noviembre 2025 - 00:20 hrs
+**Última Actualización:** 25 Noviembre 2025 - 00:45 hrs
 
 ---
 
@@ -356,7 +356,7 @@ mkdir -p backend/app/{core,modules/{core,agendamiento,inventario,pos,marketplace
 
 ---
 
-### Fase 3: Dynamic Routes (5 días) - 🔄 EN PROGRESO (80%)
+### Fase 3: Dynamic Routes (5 días) - ✅ COMPLETADA (100%)
 
 **Objetivo:** Activar sistema de carga dinámica
 
@@ -437,22 +437,36 @@ mkdir -p backend/app/{core,modules/{core,agendamiento,inventario,pos,marketplace
    }
    ```
 
-4. ⏳ **Testing integración** (4h) - PENDIENTE
-   - Verificar módulos se cargan en orden correcto
-   - Verificar dependencias se validan
-   - Verificar endpoints rechazan sin módulo activo
+4. ✅ **Testing integración** (4h) - COMPLETADO
+
+   **Archivo:** `__tests__/integration/modules-integration.test.js`
+
+   **Tests implementados (17/17 passing):**
+   - ✅ Middleware rechaza sin módulo activo (INVENTARIO, POS, COMISIONES, MARKETPLACE)
+   - ✅ Middleware permite acceso con módulo activo
+   - ✅ Validación SQL de dependencias (POS→inventario, comisiones→agendamiento)
+   - ✅ Cache de módulos se invalida correctamente
+   - ✅ Cache hits en múltiples requests
+   - ✅ Módulo CORE siempre accesible
+   - ✅ Trigger impide desactivar CORE
+   - ✅ Organización sin subscripción tiene fallback a CORE
+
+   **Fixes durante tests:**
+   - `modules.js`: corregir `this.getModuleErrorMessage` → `ModulesMiddleware.getModuleErrorMessage`
+   - `02-tablas-subscripciones.sql`: agregar `'cambio_modulos'` a constraint `valid_evento`
 
 **Entregables:**
 - ✅ Dynamic loading funcional (híbrido: validación + protección middleware)
 - ✅ 31 rutas de escritura protegidas con `requireModule()`
 - ✅ Queries condicionales POS (4 archivos modificados)
-- ⏳ Tests de integración pasando
+- ✅ Tests de integración pasando (17/17)
 
 **Commits Fase 3:**
 ```
 f2339f8 feat(middleware): aplicar requireModule() a rutas de módulos - Fase 3
 2f24539 feat(pos): implementar queries condicionales para módulo agendamiento
-PENDING feat(modules): integrar ModuleRegistry.initialize() en app.js
+591d0d4 feat(modules): integrar ModuleRegistry.initialize() en app.js
+b28f069 test(modules): agregar tests de integración para sistema de módulos - Fase 3
 ```
 
 ---
@@ -1002,25 +1016,25 @@ UPDATE subscripciones SET modulos_activos = '{
 FASE 0 PoC:         ████████████████████ 100% ✅
 FASE 1 Preparación: ████████████████████ 100% ✅
 FASE 2 Migración:   ████████████████████ 100% ✅ (6/6 módulos)
-FASE 3 Routes:      ████████████████░░░░  80% 🔄 (Dynamic + Queries POS)
+FASE 3 Routes:      ████████████████████ 100% ✅ (17 tests passing)
 FASE 4 Frontend:    ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 5 Testing:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 6 Rollout:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ─────────────────────────────────────────────
-PROGRESO TOTAL:     ████████████░░░░░░░░  60% 🔄
+PROGRESO TOTAL:     █████████████░░░░░░░  65% 🔄
 ```
 
-**Tiempo Invertido:** ~86 horas
-**Tiempo Restante:** ~103 horas (~13 días hábiles)
+**Tiempo Invertido:** ~90 horas
+**Tiempo Restante:** ~99 horas (~12 días hábiles)
 
-**Hito Actual:** 🔄 **FASE 3 EN PROGRESO** - Dynamic loading + Queries condicionales POS
-**Próximo Hito:** ⏳ Tests de integración módulos
+**Hito Actual:** ✅ **FASE 3 COMPLETADA** - Dynamic loading + Tests de integración
+**Próximo Hito:** ⏳ Fase 4 - Frontend Modular
 
 ---
 
-**Versión:** 2.8
-**Fecha:** 25 Noviembre 2025 - 00:20 hrs
-**Próxima Revisión:** Al completar Fase 3 (Tests de integración)
-**Estado:** 🔄 **FASE 3 EN PROGRESO - 80% COMPLETADA**
+**Versión:** 2.9
+**Fecha:** 25 Noviembre 2025 - 00:45 hrs
+**Próxima Revisión:** Al iniciar Fase 4 (Frontend Modular)
+**Estado:** ✅ **FASE 3 COMPLETADA - 100%**
 **Score:** **9.8/10**
 
