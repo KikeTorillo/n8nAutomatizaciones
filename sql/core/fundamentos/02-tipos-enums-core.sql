@@ -79,26 +79,38 @@ Usado en RLS y validación de acceso en toda la aplicación.';
 -- ====================================================================
 -- 💰 ENUM PLAN_TIPO - PLANES DE SUBSCRIPCIÓN SAAS
 -- ====================================================================
--- Define los 4 niveles de planes de subscripción con características
--- diferenciadas según el tamaño y necesidades del negocio.
+-- Modelo de Negocio Estilo Odoo (Nov 2025):
+-- • free: 1 App gratis a elegir, usuarios ilimitados
+-- • pro: Todas las apps, $249 MXN/usuario/mes
+-- • custom: Plan personalizado (precio negociado)
+-- • trial: Período de prueba 14 días
+-- • basico/profesional: LEGACY (inactivos)
 --
 -- 💡 NOTA: Los límites específicos se definen en tabla planes_subscripcion
 -- ────────────────────────────────────────────────────────────────────
 CREATE TYPE plan_tipo AS ENUM (
-    'trial',              -- Plan de prueba gratuito (14-30 días típico)
+    'trial',              -- Plan de prueba gratuito (14 días)
+                          -- • Acceso a todas las apps para evaluar
                           -- • Límites reducidos
-                          -- • Funcionalidades básicas
                           -- • Sin compromiso de pago
 
-    'basico',             -- Plan básico para negocios pequeños
-                          -- • Límites moderados
-                          -- • Funcionalidades esenciales
-                          -- • Precio accesible
+    'free',               -- Plan Free: 1 App gratis a elegir
+                          -- • Usuario elige: Agendamiento, Inventario o POS
+                          -- • Sin límites dentro de la app elegida
+                          -- • Usuarios ilimitados, para siempre
 
-    'profesional',        -- Plan avanzado para negocios en crecimiento
-                          -- • Límites amplios
-                          -- • Funcionalidades completas
+    'pro',                -- Plan Pro: Todas las apps incluidas
+                          -- • $249 MXN/usuario/mes (~$15 USD)
+                          -- • Sin límites
                           -- • Soporte prioritario
+
+    'basico',             -- [LEGACY] Plan básico para negocios pequeños
+                          -- • NO disponible para nuevos clientes
+                          -- • Solo clientes existentes
+
+    'profesional',        -- [LEGACY] Plan avanzado para negocios en crecimiento
+                          -- • NO disponible para nuevos clientes
+                          -- • Solo clientes existentes
 
     'custom'              -- Plan personalizado con características específicas
                           -- • Límites personalizados

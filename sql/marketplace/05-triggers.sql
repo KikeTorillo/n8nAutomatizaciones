@@ -94,7 +94,7 @@ COMMENT ON TRIGGER trigger_marketplace_search_vector ON marketplace_perfiles IS
 'Actualiza search_vector automáticamente para búsqueda full-text.
 Función: actualizar_search_vector_marketplace().
 Momento: BEFORE INSERT/UPDATE.
-Indexa: meta_titulo, ciudad, descripcion_corta, estado, descripcion_larga.';
+Indexa: meta_titulo, ciudad (desde FK), descripcion_corta, estado (desde FK), descripcion_larga.';
 
 COMMENT ON TRIGGER trigger_marketplace_updated_at ON marketplace_perfiles IS
 'Actualiza actualizado_en automáticamente cuando se modifica un perfil.

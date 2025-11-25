@@ -54,10 +54,10 @@ CREATE TABLE marketplace_perfiles (
     descripcion_corta VARCHAR(200),  -- Tagline del negocio
     descripcion_larga TEXT,  -- Descripción completa (markdown)
 
-    -- 📍 Ubicación Geográfica (para SEO local)
-    pais VARCHAR(50) DEFAULT 'México',
-    estado VARCHAR(100),  -- Estado/Provincia
-    ciudad VARCHAR(100) NOT NULL,  -- Ciudad principal
+    -- 📍 Ubicación Geográfica (Normalizada con catálogos - Nov 2025)
+    pais_id INTEGER REFERENCES paises(id) ON DELETE SET NULL,
+    estado_id INTEGER REFERENCES estados(id) ON DELETE SET NULL,
+    ciudad_id INTEGER NOT NULL REFERENCES ciudades(id) ON DELETE RESTRICT,
     codigo_postal VARCHAR(10),
     direccion_completa TEXT,
     latitud DECIMAL(10, 8),  -- Para mapas
@@ -95,8 +95,7 @@ CREATE TABLE marketplace_perfiles (
     search_vector tsvector,  -- Para búsqueda de texto completo
 
     -- ✅ Constraints
-    CHECK (LENGTH(slug) >= 3),
-    CHECK (ciudad IS NOT NULL AND ciudad != '')
+    CHECK (LENGTH(slug) >= 3)
 );
 
 -- ====================================================================

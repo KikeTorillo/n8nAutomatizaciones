@@ -53,10 +53,10 @@ CREATE INDEX IF NOT EXISTS idx_proveedores_rfc
     ON proveedores(rfc)
     WHERE rfc IS NOT NULL;
 
--- Índice para búsqueda por ciudad
+-- Índice para búsqueda por ciudad (FK normalizada - Nov 2025)
 CREATE INDEX IF NOT EXISTS idx_proveedores_ciudad
-    ON proveedores(ciudad)
-    WHERE ciudad IS NOT NULL;
+    ON proveedores(ciudad_id)
+    WHERE ciudad_id IS NOT NULL;
 
 -- ============================================================================
 -- ÍNDICES: productos

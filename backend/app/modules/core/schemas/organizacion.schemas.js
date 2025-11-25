@@ -156,6 +156,9 @@ const desactivar = {
 };
 
 // POST /organizaciones/onboarding
+// Modelo Free/Pro (Nov 2025):
+// - plan: 'free', 'pro', 'trial' (default: trial)
+// - app_seleccionada: requerido solo si plan = 'free'
 const onboarding = {
     body: Joi.object({
         organizacion: Joi.object({
@@ -175,7 +178,18 @@ const onboarding = {
                 }),
             plan: Joi.string()
                 .valid(...PLANES)
-                .default('basico'),
+                .default('trial'),
+            // App elegida para Plan Free (Nov 2025)
+            // Requerido si plan = 'free', ignorado para otros planes
+            app_seleccionada: Joi.string()
+                .valid('agendamiento', 'inventario', 'pos')
+                .when('plan', {
+                    is: 'free',
+                    then: Joi.required().messages({
+                        'any.required': 'Debes elegir una app para el Plan Free (agendamiento, inventario o pos)'
+                    }),
+                    otherwise: Joi.optional().allow(null)
+                }),
             razon_social: Joi.string()
                 .max(200)
                 .optional()
@@ -191,7 +205,24 @@ const onboarding = {
                 .allow(null),
             email_contacto: commonSchemas.email
                 .optional()
-                .allow(null)
+                .allow(null),
+            // Ubicación geográfica (Nov 2025 - Catálogo normalizado México)
+            estado_id: Joi.number()
+                .integer()
+                .positive()
+                .optional()
+                .messages({
+                    'number.base': 'estado_id debe ser un número',
+                    'number.positive': 'estado_id debe ser mayor a 0'
+                }),
+            ciudad_id: Joi.number()
+                .integer()
+                .positive()
+                .optional()
+                .messages({
+                    'number.base': 'ciudad_id debe ser un número',
+                    'number.positive': 'ciudad_id debe ser mayor a 0'
+                })
         }).required(),
         admin: Joi.object({
             nombre: Joi.string()

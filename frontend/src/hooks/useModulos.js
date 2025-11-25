@@ -137,12 +137,16 @@ export function useDesactivarModulo() {
 /**
  * Hook combinado para obtener estado completo de módulos
  * Retorna helpers útiles para verificar módulos
+ * Actualizado para modelo Free/Pro (Nov 2025)
  */
 export function useModulos() {
   const { data: modulosData, isLoading, error, refetch } = useModulosActivos();
 
   // Extraer módulos activos como objeto simple { inventario: true, pos: false, ... }
   const modulosActivos = modulosData?.modulos_activos || { core: true };
+
+  // Información del plan (Modelo Free/Pro Nov 2025)
+  const plan = modulosData?.plan || null;
 
   // Helpers para verificar módulos
   const tieneModulo = (modulo) => modulosActivos[modulo] === true;
@@ -157,12 +161,51 @@ export function useModulos() {
   // Contar módulos activos
   const totalActivos = Object.values(modulosActivos).filter(Boolean).length;
 
+  // Helpers del plan (Modelo Free/Pro Nov 2025)
+  const esPlanFree = plan?.es_free === true;
+  const esPlanPro = plan?.es_pro === true;
+  const esPlanTrial = plan?.es_trial === true;
+  const todasLasApps = plan?.todas_las_apps === true;
+  const appSeleccionada = plan?.app_seleccionada || null;
+
+  // Verificar si puede acceder a una app específica
+  const puedeAccederApp = (app) => {
+    // Apps que siempre están disponibles (core, agendamiento base)
+    const appsBase = ['core'];
+
+    if (appsBase.includes(app)) return true;
+
+    // Si tiene todas las apps (Pro, Trial, Custom)
+    if (todasLasApps) return true;
+
+    // Plan Free: solo puede acceder a la app seleccionada
+    if (esPlanFree) {
+      // Agendamiento es la app por defecto si se eligió 'agendamiento'
+      if (app === 'agendamiento' && appSeleccionada === 'agendamiento') return true;
+      if (app === 'inventario' && appSeleccionada === 'inventario') return true;
+      if (app === 'pos' && appSeleccionada === 'pos') return true;
+
+      return false;
+    }
+
+    // Fallback: verificar en modulosActivos
+    return tieneModulo(app);
+  };
+
   return {
     // Data
     modulosActivos,
     modulos,
     totalActivos,
     organizacionId: modulosData?.organizacion_id,
+
+    // Información del plan (Nov 2025)
+    plan,
+    esPlanFree,
+    esPlanPro,
+    esPlanTrial,
+    todasLasApps,
+    appSeleccionada,
 
     // Estado
     isLoading,
@@ -172,11 +215,12 @@ export function useModulos() {
     tieneModulo,
     tieneAlgunModulo,
     tieneTodosModulos,
+    puedeAccederApp,
 
     // Acciones
     refetch,
 
-    // Shortcuts comunes
+    // Shortcuts comunes (basados en modulosActivos de subscripción)
     tieneInventario: tieneModulo('inventario'),
     tienePOS: tieneModulo('pos'),
     tieneComisiones: tieneModulo('comisiones'),

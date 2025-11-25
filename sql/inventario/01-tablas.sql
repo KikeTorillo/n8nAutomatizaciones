@@ -61,12 +61,12 @@ CREATE TABLE IF NOT EXISTS proveedores (
     email VARCHAR(255),
     sitio_web VARCHAR(255),
 
-    -- 📍 DIRECCIÓN
+    -- 📍 DIRECCIÓN (Normalizada con catálogos - Nov 2025)
     direccion TEXT,
-    ciudad VARCHAR(100),
-    estado VARCHAR(100),
+    ciudad_id INTEGER REFERENCES ciudades(id) ON DELETE SET NULL,
+    estado_id INTEGER REFERENCES estados(id) ON DELETE SET NULL,
+    pais_id INTEGER REFERENCES paises(id) ON DELETE SET NULL,
     codigo_postal VARCHAR(10),
-    pais VARCHAR(100) DEFAULT 'México',
 
     -- 💼 TÉRMINOS COMERCIALES
     dias_credito INTEGER DEFAULT 0, -- Días de crédito que otorga (0 = contado)

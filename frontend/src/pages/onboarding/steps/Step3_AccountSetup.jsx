@@ -13,11 +13,12 @@ import Button from '@/components/ui/Button';
 import { UserPlus, Eye, EyeOff } from 'lucide-react';
 
 /**
- * Paso 4: Crear Cuenta (Registro + Autenticación con Trial Gratuito)
+ * Paso 3: Crear Cuenta (Modelo Free/Pro - Nov 2025)
+ * Registro + Autenticación automática
  */
-function Step4_AccountSetup() {
+function Step3_AccountSetup() {
   const navigate = useNavigate();
-  const { formData, updateFormData, setIds, prevStep } = useOnboardingStore();
+  const { formData, updateFormData, setIds, prevStep, resetOnboarding } = useOnboardingStore();
   const { setAuth } = useAuthStore();
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
@@ -48,41 +49,48 @@ function Step4_AccountSetup() {
       const nombre = nombrePartes[0] || 'Usuario';
       const apellidos = nombrePartes.slice(1).join(' ') || 'Sin Apellido';
 
-      // Preparar datos según formato del backend
       // Sanitizar campos opcionales (convertir "" a undefined para omitir del payload)
       const nombre_fiscal_sanitized = formData.businessInfo.nombre_fiscal?.trim();
 
       // Mapeo de códigos de industria a IDs (Nov 2025: migrado a tabla dinámica)
-      // ⚠️ IMPORTANTE: Los IDs corresponden al seed de categorias-agendamiento.sql
-      // Solo existen categorías de agendamiento (11 categorías, IDs 1-11)
+      // Los IDs corresponden al seed de categorias-agendamiento.sql
       const industriaCodigoToId = {
-        'barberia': 1,              // Barbería
-        'salon_belleza': 2,         // Salón de Belleza
-        'estetica': 3,              // Estética
-        'spa': 4,                   // Spa y Relajación
-        'podologia': 5,             // Podología
-        'consultorio_medico': 6,    // Consultorio Médico
-        'academia': 7,              // Academia
-        'taller_tecnico': 8,        // Taller Técnico
-        'centro_fitness': 9,        // Centro Fitness
-        'veterinaria': 10,          // Veterinaria
-        'otro': 11,                 // Otros Servicios (otro_agendamiento)
-        'clinica_dental': 6,        // Mapear a consultorio_medico
+        'barberia': 1,
+        'salon_belleza': 2,
+        'estetica': 3,
+        'spa': 4,
+        'podologia': 5,
+        'consultorio_medico': 6,
+        'academia': 7,
+        'taller_tecnico': 8,
+        'centro_fitness': 9,
+        'veterinaria': 10,
+        'otro': 11,
+        'clinica_dental': 6,
       };
 
       const categoriaId = industriaCodigoToId[formData.businessInfo.industria] || 11;
 
-      // Módulos seleccionados (opcionales)
-      const modulosSeleccionados = formData.modulos?.selected || [];
-
+      // Construir datos para el registro (Modelo Free/Pro Nov 2025)
       const registroData = {
         organizacion: {
           nombre_comercial: formData.businessInfo.nombre_comercial,
           razon_social: nombre_fiscal_sanitized || formData.businessInfo.nombre_comercial,
           categoria_id: categoriaId,
-          plan: formData.plan.plan_codigo || 'basico',
+          plan: planSeleccionado.plan_codigo || 'trial',
+          // Si es Plan Free, enviar la app seleccionada
+          app_seleccionada: planSeleccionado.plan_codigo === 'free'
+            ? planSeleccionado.app_seleccionada
+            : null,
           telefono_principal: formData.businessInfo.telefono_principal,
           email_contacto: data.email,
+          // Ubicación geográfica (Nov 2025 - Catálogo normalizado)
+          estado_id: formData.businessInfo.estado_id
+            ? parseInt(formData.businessInfo.estado_id)
+            : undefined,
+          ciudad_id: formData.businessInfo.ciudad_id
+            ? parseInt(formData.businessInfo.ciudad_id)
+            : undefined,
         },
         admin: {
           nombre,
@@ -91,14 +99,15 @@ function Step4_AccountSetup() {
           password: data.password,
           telefono: formData.businessInfo.telefono_principal || undefined,
         },
-        modulos_activos: modulosSeleccionados,
         aplicar_plantilla_servicios: true,
         enviar_email_bienvenida: false,
       };
 
       console.log('📤 Creando cuenta...', {
-        plan: formData.plan.plan_codigo,
-        modulos: modulosSeleccionados
+        plan: planSeleccionado.plan_codigo,
+        app_seleccionada: planSeleccionado.app_seleccionada,
+        estado_id: formData.businessInfo.estado_id,
+        ciudad_id: formData.businessInfo.ciudad_id
       });
 
       // Llamar al endpoint de registro público
@@ -132,45 +141,47 @@ function Step4_AccountSetup() {
         usuario_id: data.admin.id,
       });
 
-      // ✅ NUEVO FLUJO: Todos los planes empiezan con trial
-      // La suscripción trial ya fue creada en el backend
-      const esPlanDePago = ['basico', 'profesional'].includes(planSeleccionado?.plan_codigo);
-      const diasTrial = 14;
+      // Mostrar mensaje según el plan (Modelo Free/Pro Nov 2025)
+      const planCodigo = planSeleccionado?.plan_codigo;
 
-      if (esPlanDePago) {
-        toast.success(`¡Cuenta creada! Tienes ${diasTrial} días de trial gratis. Te redirigimos al dashboard...`);
+      if (planCodigo === 'free') {
+        const appNombre = {
+          'agendamiento': 'Agendamiento',
+          'inventario': 'Inventario',
+          'pos': 'Punto de Venta'
+        }[planSeleccionado.app_seleccionada] || 'tu app';
+
+        toast.success(`¡Cuenta creada! Tienes acceso gratuito a ${appNombre}. Te redirigimos al dashboard...`);
+      } else if (planCodigo === 'pro') {
+        toast.success('¡Cuenta Pro creada! Tienes 14 días de prueba gratis con todas las apps incluidas.');
       } else {
-        toast.success('¡Cuenta creada exitosamente! Te redirigimos al dashboard...');
+        // Trial por defecto
+        toast.success('¡Cuenta creada! Tienes 14 días de prueba gratis. Te redirigimos al dashboard...');
       }
 
-      // Redirigir al dashboard después de un breve delay para que vean el mensaje
+      // Limpiar el onboarding store
       setTimeout(() => {
+        resetOnboarding();
         navigate('/dashboard');
       }, 1500);
     },
     onError: (error) => {
       console.error('❌ Error en registro:', error);
 
-      // Extraer mensaje del backend (estructura de Axios)
       const errorMsg = error.response?.data?.message || error.message || 'Error al crear la cuenta';
       const errorStatus = error.response?.status;
       const errorData = error.response?.data || {};
 
-      // Si es error 409 (email duplicado)
       if (errorStatus === 409) {
         setError('email', {
           type: 'manual',
           message: errorMsg,
         });
         toast.error(errorMsg);
-      }
-      // Si es error de validación 400
-      else if (errorStatus === 400) {
+      } else if (errorStatus === 400) {
         console.error('📋 Detalles del error de validación:', errorData);
         toast.error(errorMsg);
-      }
-      // Otros errores
-      else {
+      } else {
         toast.error(errorMsg);
       }
     },
@@ -182,8 +193,25 @@ function Step4_AccountSetup() {
       nombre_completo: data.nombre_completo,
     });
 
-    // Crear cuenta (todos los planes empiezan con trial)
     createAccountMutation.mutate(data);
+  };
+
+  // Helper para obtener descripción del plan seleccionado
+  const getPlanDescription = () => {
+    const planCodigo = planSeleccionado?.plan_codigo;
+
+    if (planCodigo === 'free') {
+      const appNombre = {
+        'agendamiento': 'Agendamiento',
+        'inventario': 'Inventario',
+        'pos': 'Punto de Venta'
+      }[planSeleccionado.app_seleccionada] || 'tu app';
+
+      return `Plan Free - ${appNombre}`;
+    } else if (planCodigo === 'pro') {
+      return 'Plan Pro - Todas las apps incluidas';
+    }
+    return 'Plan Trial - 14 días gratis';
   };
 
   return (
@@ -198,12 +226,11 @@ function Step4_AccountSetup() {
         </h2>
         <p className="text-gray-600">
           Configura tus credenciales de acceso
-          {planSeleccionado?.plan_codigo && ['basico', 'profesional'].includes(planSeleccionado.plan_codigo) && (
-            <span className="block mt-1 text-sm text-primary-600 font-medium">
-              ✨ Incluye 14 días de prueba gratis
-            </span>
-          )}
         </p>
+        {/* Mostrar plan seleccionado */}
+        <div className="mt-2 inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+          {getPlanDescription()}
+        </div>
       </div>
 
       {/* Formulario */}
@@ -311,4 +338,4 @@ function Step4_AccountSetup() {
   );
 }
 
-export default Step4_AccountSetup;
+export default Step3_AccountSetup;

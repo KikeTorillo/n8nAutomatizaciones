@@ -118,6 +118,7 @@ class ModulosController {
   /**
    * GET /api/v1/modulos/activos
    * Obtiene los módulos activos de la organización del usuario autenticado
+   * Incluye información del plan para modelo Free/Pro (Nov 2025)
    */
   static async obtenerActivos(req, res) {
     try {
@@ -129,6 +130,42 @@ class ModulosController {
 
       // Obtener módulos activos (con cache)
       const modulosActivos = await ModulesCache.get(organizacionId);
+
+      // Obtener información del plan y app_seleccionada (Modelo Free/Pro Nov 2025)
+      let planInfo = null;
+      try {
+        const result = await RLSContextManager.withBypass(async (db) => {
+          const query = `
+            SELECT
+              p.codigo_plan,
+              p.nombre as plan_nombre,
+              p.tipo as plan_tipo,
+              o.app_seleccionada
+            FROM subscripciones s
+            JOIN planes_subscripcion p ON s.plan_id = p.id
+            JOIN organizaciones o ON s.organizacion_id = o.id
+            WHERE s.organizacion_id = $1 AND s.activa = true
+            LIMIT 1
+          `;
+          return await db.query(query, [organizacionId]);
+        });
+
+        if (result.rows.length > 0) {
+          const row = result.rows[0];
+          planInfo = {
+            codigo: row.codigo_plan,
+            nombre: row.plan_nombre,
+            tipo: row.plan_tipo,
+            app_seleccionada: row.app_seleccionada,
+            es_free: row.plan_tipo === 'free',
+            es_pro: row.plan_tipo === 'pro',
+            es_trial: row.plan_tipo === 'trial',
+            todas_las_apps: ['pro', 'trial', 'custom'].includes(row.plan_tipo)
+          };
+        }
+      } catch (planError) {
+        logger.warn('[ModulosController] Error obteniendo info del plan:', planError.message);
+      }
 
       // Enriquecer con metadata
       const modulosEnriquecidos = {};
@@ -156,7 +193,8 @@ class ModulosController {
       return ResponseHelper.success(res, {
         modulos_activos: modulosActivos,
         modulos: modulosEnriquecidos,
-        organizacion_id: organizacionId
+        organizacion_id: organizacionId,
+        plan: planInfo  // Modelo Free/Pro Nov 2025
       }, 'Módulos activos obtenidos exitosamente');
 
     } catch (error) {

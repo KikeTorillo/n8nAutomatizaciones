@@ -12,13 +12,13 @@
 
 ## 📊 Estado Actual del Proyecto
 
-**Última verificación**: 23 Noviembre 2025
+**Última verificación**: 24 Noviembre 2025
 
 | Componente | Estado | Métricas Reales |
 |------------|--------|-----------------|
-| **Backend API** | ✅ Operativo | 39 controllers, 213 endpoints, 31 models (97% RLS), 7 middleware |
-| **Frontend React** | ✅ Operativo | 98 componentes, 43 páginas, 22 hooks TanStack Query |
-| **Base de Datos** | ✅ Optimizada | 17 módulos SQL, 95 archivos, 3 tablas particionadas, 76+ RLS |
+| **Backend API** | ✅ Operativo | 40 controllers, 226 endpoints, 32 models, 7 middleware |
+| **Frontend React** | ✅ Operativo | 99 componentes, 43 páginas, 23 hooks TanStack Query |
+| **Base de Datos** | ✅ Optimizada | 18 módulos SQL, 97 archivos, 3 tablas particionadas, 76+ RLS |
 | **Sistema IA** | ✅ Operativo | 7 MCP tools, Telegram + WhatsApp, DeepSeek Chat |
 | **Marketplace** | ✅ 100% | Backend + Frontend + Agendamiento Público sin auth |
 | **Comisiones** | ✅ Operativo | Cálculo automático trigger, 12 endpoints, Dashboard |
@@ -157,10 +157,10 @@ bash deploy.sh backup    # Backup PostgreSQL
 
 ### Base de Datos - Estructura Verificada
 
-**Módulos SQL (17 carpetas):**
+**Módulos SQL (18 carpetas):**
 1. core/ - Extensiones, ENUMs, funciones utilidad
 2. nucleo/ - Organizaciones, usuarios, planes, subscripciones
-3. catalogos/ - Tipos profesional (33), tipos bloqueo (9)
+3. catalogos/ - Tipos profesional, tipos bloqueo, **ubicaciones geográficas**
 4. negocio/ - Profesionales, servicios, clientes, horarios
 5. agendamiento/ - Infraestructura base
 6. citas/ - **Particionada** (mensual), citas_servicios
@@ -291,6 +291,26 @@ router.get('/',
 **Hooks**:
 - useMarketplace.js - 8 queries + 6 mutations (incluye useDisponibilidadPublica)
 - useSuperAdminMarketplace.js - 3 queries para gestión
+
+---
+
+## 💼 Modelo de Negocio (Nov 2025)
+
+### Planes Disponibles
+- **Free**: 1 app gratuita (agendamiento, inventario o POS) - sin límite de tiempo
+- **Pro**: Todas las apps + funciones avanzadas - $299 MXN/mes (14 días trial)
+
+### Onboarding Simplificado (3 pasos)
+1. **Información del Negocio** - Nombre, industria, ubicación (selector cascada estado→ciudad)
+2. **Selección de Plan** - Free (elegir 1 app) o Pro (todas incluidas)
+3. **Crear Cuenta** - Email, contraseña, términos
+
+### Catálogos Geográficos (México)
+- **4 tablas**: paises, estados (32), ciudades (~2,500), codigos_postales
+- **13 endpoints públicos**: `/api/v1/ubicaciones/*`
+- **Normalización**: organizaciones, marketplace_perfiles, proveedores usan FKs
+- **Componente**: `SelectorUbicacion.jsx` (cascada estado→ciudad)
+- **Hook**: `useUbicaciones.js` con staleTime optimizado para datos estáticos
 
 ---
 
@@ -503,46 +523,14 @@ router.get('/',
 
 ## 📊 Métricas del Proyecto
 
-**Backend:**
-- 39 controllers (34 únicos + 5 index)
-- 213 endpoints HTTP
-- 34 models (93% usan RLS)
-- 19 schemas Joi
-- 12 servicios
-- 30 archivos test
+**Backend:** 40 controllers, 226 endpoints, 32 models, 20 schemas Joi, 12 servicios, 30 tests
 
-**Frontend:**
-- 98 componentes
-- 43 páginas
-- 22 hooks TanStack Query
-- 20 API collections
-- 2 stores Zustand
+**Frontend:** 99 componentes, 43 páginas, 23 hooks, 21 API collections, 2 stores Zustand
 
-**Base de Datos:**
-- 17 módulos SQL
-- 95 archivos SQL
-- 76+ políticas RLS
-- 232+ índices
-- 47+ triggers
-- 3 tablas particionadas
+**Base de Datos:** 18 módulos SQL, 97 archivos, 76+ RLS, 235+ índices, 3 particionadas
 
-**Deployment:**
-- 7 contenedores Docker
-- 3 docker-compose (dev, prod, prod.local)
-- 1 script deploy.sh (312 líneas)
+**Deployment:** 7 contenedores Docker, 3 docker-compose, deploy.sh automatizado
 
 ---
 
-**Versión**: 22.0 - **Estado Verificado**
-**Última actualización**: 23 Noviembre 2025
-**Estado**: ✅ Production Ready
-
-**Sistema 100% Completo**:
-- ✅ Backend: 213 endpoints operativos
-- ✅ Frontend: 98 componentes + 43 páginas
-- ✅ Base de datos: 17 módulos optimizados
-- ✅ IA Conversacional: 7 MCP tools
-- ✅ Marketplace: Completo con agendamiento público
-- ✅ Comisiones: Cálculo automático operativo
-- ✅ Inventario + POS: Totalmente funcionales
-- ✅ Tests: 30 archivos de cobertura
+**Versión**: 23.0 | **Última actualización**: 24 Noviembre 2025 | **Estado**: ✅ Production Ready

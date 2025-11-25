@@ -24,23 +24,36 @@
 --
 -- CAMPOS INDEXADOS (con pesos):
 -- • meta_titulo (peso A - máxima relevancia)
--- • ciudad (peso A - muy importante para SEO local)
+-- • nombre_ciudad (peso A - muy importante para SEO local, desde FK)
 -- • descripcion_corta (peso B - alta relevancia)
--- • estado (peso B - importante para SEO)
+-- • nombre_estado (peso B - importante para SEO, desde FK)
 -- • descripcion_larga (peso C - contenido completo)
 --
 -- USO: Trigger BEFORE INSERT OR UPDATE
--- RENDIMIENTO: <1ms por registro
+-- RENDIMIENTO: <2ms por registro (incluye lookups a tablas ubicaciones)
 -- ====================================================================
 
 CREATE OR REPLACE FUNCTION actualizar_search_vector_marketplace()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_nombre_ciudad TEXT;
+    v_nombre_estado TEXT;
 BEGIN
+    -- Obtener nombre de ciudad desde catálogo normalizado
+    SELECT nombre INTO v_nombre_ciudad
+    FROM ciudades
+    WHERE id = NEW.ciudad_id;
+
+    -- Obtener nombre de estado desde catálogo normalizado
+    SELECT nombre_corto INTO v_nombre_estado
+    FROM estados
+    WHERE id = NEW.estado_id;
+
     NEW.search_vector :=
         setweight(to_tsvector('spanish', COALESCE(NEW.meta_titulo, '')), 'A') ||
-        setweight(to_tsvector('spanish', COALESCE(NEW.ciudad, '')), 'A') ||
+        setweight(to_tsvector('spanish', COALESCE(v_nombre_ciudad, '')), 'A') ||
         setweight(to_tsvector('spanish', COALESCE(NEW.descripcion_corta, '')), 'B') ||
-        setweight(to_tsvector('spanish', COALESCE(NEW.estado, '')), 'B') ||
+        setweight(to_tsvector('spanish', COALESCE(v_nombre_estado, '')), 'B') ||
         setweight(to_tsvector('spanish', COALESCE(NEW.descripcion_larga, '')), 'C');
     RETURN NEW;
 END;
@@ -50,7 +63,8 @@ COMMENT ON FUNCTION actualizar_search_vector_marketplace() IS
 'Actualiza search_vector para búsqueda full-text en español.
 Trigger: BEFORE INSERT/UPDATE en marketplace_perfiles.
 Pesos: A=meta_titulo/ciudad, B=descripcion_corta/estado, C=descripcion_larga.
-Performance: <1ms por registro.';
+Los nombres de ciudad/estado se obtienen de las tablas normalizadas.
+Performance: <2ms por registro.';
 
 -- ====================================================================
 -- FUNCIÓN 2/3: actualizar_stats_perfil_marketplace

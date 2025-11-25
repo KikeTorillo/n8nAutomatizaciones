@@ -4,6 +4,11 @@ import { persist } from 'zustand/middleware';
 /**
  * Store de Onboarding con Zustand
  * Maneja el flujo de registro y configuración inicial
+ *
+ * Modelo Free/Pro (Nov 2025):
+ * - 3 pasos: Info Negocio → Plan (con selección de app) → Cuenta
+ * - Plan Free: 1 app gratis a elegir
+ * - Plan Pro: Todas las apps incluidas
  */
 const useOnboardingStore = create(
   persist(
@@ -11,6 +16,7 @@ const useOnboardingStore = create(
       // ========== STATE ==========
       currentStep: 1,
       completedSteps: [],
+      totalSteps: 3,  // Antes eran 4, ahora son 3
 
       // Datos del formulario por paso
       formData: {
@@ -19,26 +25,21 @@ const useOnboardingStore = create(
           nombre_comercial: '',
           nombre_fiscal: '',
           industria: '',
-          pais: '',
-          ciudad: '',
+          estado_id: '',       // ID del catálogo de estados (México)
+          ciudad_id: '',       // ID del catálogo de ciudades
           telefono_principal: '',
         },
 
-        // Paso 2: Plan seleccionado
+        // Paso 2: Plan seleccionado (Modelo Free/Pro)
         plan: {
           plan_id: null,
-          plan_codigo: '',       // Código interno (basico, profesional, custom)
-          plan_nombre: '',       // Nombre para mostrar (Plan Básico, Plan Professional, etc.)
+          plan_codigo: '',           // Código interno: 'free', 'pro', 'trial'
+          plan_nombre: '',           // Nombre para mostrar
           plan_precio: 0,
+          app_seleccionada: null,    // App elegida en Plan Free: 'agendamiento', 'inventario', 'pos'
         },
 
-        // Paso 3: Módulos seleccionados
-        modulos: {
-          selected: [],          // Array de nombres de módulos opcionales seleccionados
-          costoAdicional: 0,     // Costo mensual adicional por módulos
-        },
-
-        // Paso 4: Cuenta de usuario
+        // Paso 3: Cuenta de usuario (antes era Paso 4)
         account: {
           email: '',
           password: '',
@@ -135,13 +136,14 @@ const useOnboardingStore = create(
         set({
           currentStep: 1,
           completedSteps: [],
+          totalSteps: 3,
           formData: {
             businessInfo: {
               nombre_comercial: '',
               nombre_fiscal: '',
               industria: '',
-              pais: '',
-              ciudad: '',
+              estado_id: '',
+              ciudad_id: '',
               telefono_principal: '',
             },
             plan: {
@@ -149,10 +151,7 @@ const useOnboardingStore = create(
               plan_codigo: '',
               plan_nombre: '',
               plan_precio: 0,
-            },
-            modulos: {
-              selected: [],
-              costoAdicional: 0,
+              app_seleccionada: null,
             },
             account: {
               email: '',
@@ -170,8 +169,7 @@ const useOnboardingStore = create(
        * @returns {number}
        */
       getProgress: () => {
-        const { completedSteps } = get();
-        const totalSteps = 4;
+        const { completedSteps, totalSteps } = get();
         return Math.round((completedSteps.length / totalSteps) * 100);
       },
     }),

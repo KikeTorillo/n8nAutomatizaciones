@@ -13,6 +13,7 @@ const pagosRouter = require('../../../modules/core/routes/pagos');
 const webhooksRouter = require('../../../modules/core/routes/webhooks');
 const subscripcionesRouter = require('../../../modules/core/routes/subscripciones');
 const modulosRouter = require('../../../modules/core/routes/modulos');
+const ubicacionesRouter = require('../../../modules/core/routes/ubicaciones');
 
 // ========================================
 // PENDIENTE DE MIGRAR (mercadopago faltó)
@@ -69,6 +70,7 @@ function routerApi(app) {
 
     // Rutas públicas
     router.use('/planes', planesRouter);
+    router.use('/ubicaciones', ubicacionesRouter);  // Catálogos geográficos (Nov 2025)
 
     // Rutas de módulos (gestión de módulos activos)
     router.use('/modulos', modulosRouter);

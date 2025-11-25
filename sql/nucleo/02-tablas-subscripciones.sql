@@ -28,6 +28,7 @@ CREATE TABLE planes_subscripcion (
     -- Configuración de precios
     precio_mensual DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     precio_anual DECIMAL(10,2),  -- Descuento anual
+    precio_por_usuario DECIMAL(10,2) DEFAULT NULL,  -- Para facturación escalable (Plan Pro: $249/usuario)
     moneda VARCHAR(3) DEFAULT 'MXN',
 
     -- Límites por plan
@@ -53,7 +54,11 @@ CREATE TABLE planes_subscripcion (
 
     -- Validaciones
     CONSTRAINT valid_precios_plan
-        CHECK (precio_mensual >= 0 AND (precio_anual IS NULL OR precio_anual >= 0)),
+        CHECK (
+            precio_mensual >= 0 AND
+            (precio_anual IS NULL OR precio_anual >= 0) AND
+            (precio_por_usuario IS NULL OR precio_por_usuario >= 0)
+        ),
     CONSTRAINT valid_limites_plan
         CHECK (
             (limite_profesionales IS NULL OR limite_profesionales > 0) AND
@@ -304,5 +309,6 @@ COMMENT ON TABLE historial_subscripciones IS 'Auditoría completa de cambios en 
 COMMENT ON COLUMN subscripciones.precio_actual IS 'Precio negociado específico, puede diferir del precio base del plan';
 COMMENT ON COLUMN metricas_uso_organizacion.uso_citas_mes_actual IS 'Contador de citas del mes actual, se resetea automáticamente';
 COMMENT ON COLUMN planes_subscripcion.funciones_habilitadas IS 'JSONB con features específicas habilitadas por plan (whatsapp, reports, branding, api, etc.)';
+COMMENT ON COLUMN planes_subscripcion.precio_por_usuario IS 'Precio por usuario activo para facturación escalable. NULL = precio fijo. Plan Pro: $249 MXN/usuario/mes';
 COMMENT ON COLUMN subscripciones.valor_total_pagado IS 'Lifetime Value (LTV) acumulado del cliente';
 COMMENT ON COLUMN subscripciones.modulos_activos IS 'JSONB con módulos activos para la organización. Estructura: {"core": true, "agendamiento": true, "inventario": false, ...}. El módulo core siempre debe estar activo';

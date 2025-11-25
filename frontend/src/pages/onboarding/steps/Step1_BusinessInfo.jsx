@@ -4,6 +4,7 @@ import { businessInfoSchema } from '@/lib/validations';
 import { INDUSTRIAS } from '@/lib/constants';
 import useOnboardingStore from '@/store/onboardingStore';
 import FormField from '@/components/forms/FormField';
+import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import Button from '@/components/ui/Button';
 import { Building2 } from 'lucide-react';
 
@@ -16,6 +17,9 @@ function Step1_BusinessInfo() {
   const {
     control,
     handleSubmit,
+    setValue,
+    watch,
+    formState: { errors },
   } = useForm({
     resolver: zodResolver(businessInfoSchema),
     defaultValues: formData.businessInfo,
@@ -69,23 +73,15 @@ function Step1_BusinessInfo() {
           required
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <FormField
-            name="pais"
-            control={control}
-            label="País"
-            placeholder="Ej: México"
-            required
-          />
-
-          <FormField
-            name="ciudad"
-            control={control}
-            label="Ciudad"
-            placeholder="Ej: Ciudad de México"
-            required
-          />
-        </div>
+        {/* Ubicación geográfica (Estado → Ciudad) */}
+        <SelectorUbicacion
+          control={control}
+          setValue={setValue}
+          watch={watch}
+          errors={errors}
+          required
+          horizontal
+        />
 
         <FormField
           name="telefono_principal"

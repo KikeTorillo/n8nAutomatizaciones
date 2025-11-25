@@ -1,21 +1,25 @@
 import { Link } from 'react-router-dom';
 import useOnboardingStore from '@/store/onboardingStore';
 import { cn } from '@/lib/utils';
-import { Building2, CreditCard, UserPlus, Package } from 'lucide-react';
+import { Building2, CreditCard, UserPlus } from 'lucide-react';
 
-// Importar los pasos
+// Importar los pasos (3 pasos - Modelo Free/Pro Nov 2025)
 import Step1_BusinessInfo from './steps/Step1_BusinessInfo';
 import Step2_PlanSelection from './steps/Step2_PlanSelection';
-import Step3_ModulosSelection from './steps/Step3_ModulosSelection';
-import Step4_AccountSetup from './steps/Step4_AccountSetup';
+import Step3_AccountSetup from './steps/Step3_AccountSetup';
 
 /**
  * Flujo de Onboarding - Componente Principal
+ *
+ * Modelo Free/Pro (Nov 2025):
+ * - Paso 1: Info del Negocio
+ * - Paso 2: Selección de Plan (Free con selector de app / Pro con todo incluido)
+ * - Paso 3: Crear Cuenta
  */
 function OnboardingFlow() {
-  const { currentStep, completedSteps, getProgress } = useOnboardingStore();
+  const { currentStep, completedSteps, getProgress, totalSteps } = useOnboardingStore();
 
-  // Configuración de pasos - Onboarding con módulos
+  // Configuración de pasos - Onboarding simplificado (3 pasos)
   const steps = [
     {
       number: 1,
@@ -31,15 +35,9 @@ function OnboardingFlow() {
     },
     {
       number: 3,
-      title: 'Módulos',
-      icon: Package,
-      component: Step3_ModulosSelection,
-    },
-    {
-      number: 4,
       title: 'Cuenta',
       icon: UserPlus,
-      component: Step4_AccountSetup,
+      component: Step3_AccountSetup,
     },
   ];
 
@@ -55,7 +53,7 @@ function OnboardingFlow() {
               ¡Bienvenido a SaaS Agendamiento!
             </h1>
             <p className="text-xl text-gray-600">
-              Crea tu cuenta en solo 4 pasos rápidos
+              Crea tu cuenta en solo 3 pasos rápidos
             </p>
           </div>
 

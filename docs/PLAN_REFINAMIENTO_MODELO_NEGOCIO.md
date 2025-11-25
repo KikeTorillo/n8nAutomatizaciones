@@ -1,8 +1,8 @@
 # PLAN DE REFINAMIENTO: MODELO DE NEGOCIO
 
 **Fecha:** 24 Noviembre 2025
-**Versión:** 2.0
-**Estado:** En Planificación
+**Versión:** 3.0
+**Estado:** ✅ FASE A y B COMPLETADAS
 
 ---
 
@@ -339,32 +339,36 @@ const verificarAccesoApp = (appRequerida) => {
 
 ## 6. FASES DE MIGRACIÓN
 
-### Fase 1: Backend - Estructura Base
-- [ ] Agregar columna `app_seleccionada` a `organizaciones`
-- [ ] Crear planes 'free' y 'pro' en `planes_subscripcion`
-- [ ] Implementar middleware `verificarAccesoApp`
-- [ ] Actualizar `organizacion.controller.js` para recibir `app_seleccionada`
+### Fase A: Backend - Estructura Base ✅ COMPLETADA
+- [x] Agregar columna `app_seleccionada` a `organizaciones`
+- [x] Crear planes 'free' y 'pro' en `planes_subscripcion`
+- [x] Implementar middleware `verificarAccesoApp` en `subscription.js`
+- [x] Actualizar `organizacion.model.js` para recibir `app_seleccionada`
+- [x] Agregar `estado_id`, `ciudad_id` a organizaciones (catálogos geográficos)
 
-### Fase 2: Frontend - Onboarding
-- [ ] Rediseñar `Step2_PlanSelection.jsx` con selector de apps
-- [ ] **ELIMINAR** `Step3_ModulosSelection.jsx`
-- [ ] Actualizar `OnboardingFlow.jsx` (volver a 3 pasos)
-- [ ] Actualizar `onboardingStore.js`
+### Fase B: Catálogos Geográficos México ✅ COMPLETADA
+- [x] Crear tablas: paises, estados (32), ciudades (~2,500), codigos_postales
+- [x] 13 endpoints públicos: `/api/v1/ubicaciones/*`
+- [x] Controller, Model, Routes para ubicaciones
+- [x] Normalizar FKs en: organizaciones, marketplace_perfiles, proveedores
+- [x] Componente `SelectorUbicacion.jsx` (cascada estado→ciudad)
+- [x] Hook `useUbicaciones.js` con staleTime optimizado
 
-### Fase 3: Frontend - Dashboard y Navegación
+### Fase C: Frontend - Onboarding ✅ COMPLETADA
+- [x] Rediseñar `Step2_PlanSelection.jsx` con selector de apps
+- [x] **ELIMINADO** `Step3_ModulosSelection.jsx`
+- [x] Actualizar `OnboardingFlow.jsx` (ahora 3 pasos)
+- [x] Actualizar `onboardingStore.js`
+- [x] Integrar `SelectorUbicacion` en Step1_BusinessInfo
+
+### Fase D: Frontend - Dashboard y Navegación 🔄 PARCIAL
+- [x] Banner `PlanStatusBanner.jsx` en Dashboard
 - [ ] Modificar `Sidebar.jsx` para mostrar solo apps activas
-- [ ] Agregar banner "Upgrade a Pro" en páginas bloqueadas
 - [ ] Crear página de "Gestionar Plan" para upgrade
 
-### Fase 4: Migración de Clientes Existentes
-- [ ] Script para migrar clientes actuales:
-  - Básico/Profesional → Pro (mantener acceso actual)
-  - Trial → Free + app_seleccionada = 'agendamiento'
-- [ ] Comunicar cambios por email
-
-### Fase 5: Marketing y Landing
+### Fase E: Marketing y Landing ⏳ PENDIENTE
 - [ ] Actualizar landing page con nuevo modelo
-- [ ] Nuevo copy: "1 App Gratis - Todo por $249/usuario"
+- [ ] Nuevo copy: "1 App Gratis - Todo por $299/usuario"
 - [ ] Crear comparativa de apps
 
 ---
@@ -473,4 +477,5 @@ El upsell es por necesitar MÁS APPS, no por límites artificiales.
 ---
 
 **Última actualización:** 24 Noviembre 2025
-**Versión:** 2.0
+**Versión:** 3.0
+**Progreso:** Fases A, B, C completadas | Fase D parcial | Fase E pendiente

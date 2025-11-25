@@ -339,6 +339,157 @@ class SubscriptionMiddleware {
   }
 
   /**
+   * Middleware factory para verificar acceso a una app específica
+   *
+   * @description
+   * Verifica si la organización tiene acceso a la app solicitada según su plan:
+   * - Plan Pro/Custom/Trial: Acceso a todas las apps
+   * - Plan Free: Solo acceso a la app seleccionada (app_seleccionada)
+   *
+   * Apps disponibles:
+   * - agendamiento (standalone)
+   * - inventario (standalone)
+   * - pos (standalone)
+   * - comisiones (requiere agendamiento)
+   * - marketplace (requiere agendamiento)
+   * - chatbots (requiere agendamiento)
+   *
+   * @param {string} appRequerida - App a la que se quiere acceder
+   * @returns {Function} Middleware de Express
+   *
+   * @example
+   * router.get('/inventario',
+   *   auth.authenticateToken,
+   *   tenant.setTenantContext,
+   *   subscription.checkAppAccess('inventario'),  // <-- Aquí
+   *   asyncHandler(Controller.listar)
+   * );
+   */
+  static checkAppAccess(appRequerida) {
+    // Validar que la app sea válida
+    const appsValidas = [
+      'agendamiento',
+      'inventario',
+      'pos',
+      'comisiones',
+      'marketplace',
+      'chatbots'
+    ];
+
+    if (!appsValidas.includes(appRequerida)) {
+      throw new Error(`App inválida: ${appRequerida}. Debe ser una de: ${appsValidas.join(', ')}`);
+    }
+
+    return async (req, res, next) => {
+      const organizacionId = req.tenant?.organizacionId;
+
+      if (!organizacionId) {
+        logger.warn('Intento de verificar acceso a app sin organizacionId en req.tenant');
+        return ResponseHelper.error(res, 'Organización no encontrada', 400);
+      }
+
+      try {
+        // Obtener plan actual y app_seleccionada de la organización
+        const result = await RLSContextManager.withBypass(async (db) => {
+          const query = `
+            SELECT
+              o.plan_actual,
+              o.app_seleccionada,
+              s.modulos_activos
+            FROM organizaciones o
+            LEFT JOIN subscripciones s ON s.organizacion_id = o.id AND s.activa = true
+            WHERE o.id = $1
+          `;
+          return await db.query(query, [organizacionId]);
+        });
+
+        if (result.rows.length === 0) {
+          logger.warn(`Organización ${organizacionId} no encontrada`);
+          return ResponseHelper.error(res, 'Organización no encontrada', 404);
+        }
+
+        const { plan_actual, app_seleccionada, modulos_activos } = result.rows[0];
+
+        // Plan Pro, Custom, Trial o Enterprise: acceso a todas las apps
+        if (['pro', 'custom', 'trial', 'profesional', 'basico'].includes(plan_actual)) {
+          // Verificar si el módulo está activo en modulos_activos (JSONB)
+          if (modulos_activos) {
+            const moduloKey = appRequerida === 'chatbots' ? 'chatbots' : appRequerida;
+            if (modulos_activos[moduloKey] === false) {
+              logger.info(`Módulo ${appRequerida} desactivado para org ${organizacionId}`);
+              return ResponseHelper.error(
+                res,
+                `El módulo ${appRequerida} no está activo en tu organización.`,
+                403,
+                {
+                  codigo_error: 'MODULE_DISABLED',
+                  modulo: appRequerida,
+                  accion_requerida: 'activate_module'
+                }
+              );
+            }
+          }
+          return next();
+        }
+
+        // Plan Free: verificar si es la app seleccionada
+        if (plan_actual === 'free') {
+          // Apps dependientes siempre requieren upgrade a Pro
+          const appsDependientes = ['comisiones', 'marketplace', 'chatbots'];
+          if (appsDependientes.includes(appRequerida)) {
+            logger.info(`App dependiente ${appRequerida} bloqueada para plan Free org ${organizacionId}`);
+            return ResponseHelper.error(
+              res,
+              `${appRequerida} no está disponible en el Plan Free. Actualiza a Pro para acceder a todas las apps.`,
+              403,
+              {
+                codigo_error: 'APP_REQUIRES_PRO',
+                app_requerida: appRequerida,
+                plan_actual: 'free',
+                accion_requerida: 'upgrade_to_pro'
+              }
+            );
+          }
+
+          // Verificar si es la app elegida
+          if (app_seleccionada === appRequerida) {
+            return next();
+          }
+
+          // Bloqueado: no es la app seleccionada
+          const nombresApps = {
+            'agendamiento': 'Agendamiento',
+            'inventario': 'Inventario',
+            'pos': 'Punto de Venta'
+          };
+
+          logger.info(`Acceso bloqueado a ${appRequerida} para plan Free org ${organizacionId} (app_seleccionada: ${app_seleccionada})`);
+          return ResponseHelper.error(
+            res,
+            `Tu Plan Free solo incluye ${nombresApps[app_seleccionada] || app_seleccionada}. Actualiza a Pro para acceder a ${nombresApps[appRequerida] || appRequerida}.`,
+            403,
+            {
+              codigo_error: 'APP_NOT_INCLUDED_FREE',
+              app_requerida: appRequerida,
+              app_seleccionada: app_seleccionada,
+              plan_actual: 'free',
+              accion_requerida: 'upgrade_to_pro'
+            }
+          );
+        }
+
+        // Plan desconocido o no manejado
+        logger.warn(`Plan desconocido ${plan_actual} para org ${organizacionId}`);
+        return next();
+
+      } catch (error) {
+        logger.error(`Error verificando acceso a app ${appRequerida}:`, error);
+        return ResponseHelper.error(res, 'Error al verificar acceso a la aplicación', 500);
+      }
+    };
+  }
+
+  /**
    * Middleware opcional para agregar warning headers si el límite está cerca
    *
    * @description

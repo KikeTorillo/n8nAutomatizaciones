@@ -53,6 +53,12 @@ CREATE TABLE organizaciones (
     -- Se crea al crear el primer chatbot y se elimina al eliminar el último
     mcp_credential_id VARCHAR(50) NULL,
 
+    -- Ubicación geográfica (Nov 2025 - Catálogo normalizado)
+    -- FKs a tablas en sql/catalogos/07-tablas-ubicaciones.sql
+    pais_id INTEGER DEFAULT 1,              -- Default: México (id=1)
+    estado_id INTEGER,                      -- Estado del catálogo
+    ciudad_id INTEGER,                      -- Ciudad del catálogo
+
     -- Configuración regional
     zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
     idioma VARCHAR(5) DEFAULT 'es',
@@ -71,13 +77,19 @@ CREATE TABLE organizaciones (
     tiene_perfil_marketplace BOOLEAN DEFAULT FALSE,
     fecha_activacion_marketplace TIMESTAMPTZ,
 
+    -- 🎯 Modelo de Negocio Free/Pro (Nov 2025)
+    -- App elegida en Plan Free (1 app gratis). NULL si plan Pro (todas las apps)
+    -- Valores: 'agendamiento', 'inventario', 'pos'
+    app_seleccionada VARCHAR(50) DEFAULT NULL,
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
     -- Constraints
     CHECK (char_length(codigo_tenant) >= 3),
-    CHECK (char_length(slug) >= 3)
+    CHECK (char_length(slug) >= 3),
+    CHECK (app_seleccionada IS NULL OR app_seleccionada IN ('agendamiento', 'inventario', 'pos'))
 );
 
 -- ====================================================================
@@ -155,5 +167,6 @@ COMMENT ON COLUMN organizaciones.slug IS 'URL-friendly identifier para subdomini
 COMMENT ON COLUMN organizaciones.mcp_credential_id IS 'ID de credencial MCP en n8n compartida por todos los chatbots. NULL si no hay chatbots activos';
 COMMENT ON COLUMN organizaciones.tiene_perfil_marketplace IS 'True si la organización tiene perfil activo en marketplace público (directorio SEO)';
 COMMENT ON COLUMN organizaciones.fecha_activacion_marketplace IS 'Timestamp de primera publicación en marketplace';
+COMMENT ON COLUMN organizaciones.app_seleccionada IS 'App elegida en Plan Free (1 app gratis). NULL si plan Pro (todas las apps). Valores: agendamiento, inventario, pos';
 COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
 COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';

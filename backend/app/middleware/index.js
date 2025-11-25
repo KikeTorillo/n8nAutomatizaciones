@@ -69,7 +69,8 @@ module.exports = {
   subscription: {
     checkActiveSubscription: subscription.checkActiveSubscription,
     checkResourceLimit: subscription.checkResourceLimit,
-    checkResourceWarning: subscription.checkResourceWarning
+    checkResourceWarning: subscription.checkResourceWarning,
+    checkAppAccess: subscription.checkAppAccess  // Modelo Free/Pro
   },
 
   // Middleware de módulos (PoC - Fase 0)

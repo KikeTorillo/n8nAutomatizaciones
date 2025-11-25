@@ -17,8 +17,9 @@ class OrganizacionModel {
                 INSERT INTO organizaciones (
                     nombre_comercial, razon_social, rfc_nif, categoria_id,
                     configuracion_categoria, email_admin, telefono, codigo_tenant, slug,
-                    sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    sitio_web, logo_url, colores_marca, configuracion_ui, plan_actual,
+                    app_seleccionada, pais_id, estado_id, ciudad_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                 RETURNING *
             `;
 
@@ -34,6 +35,13 @@ class OrganizacionModel {
             const uniqueSuffix = Date.now().toString().slice(-8); // Últimos 8 dígitos del timestamp
             const slug = `${baseSlug}-${uniqueSuffix}`.substring(0, 50);
 
+            // Determinar plan: free, pro, trial (default: trial)
+            const plan = organizacionData.plan || organizacionData.plan_actual || 'trial';
+
+            // app_seleccionada solo aplica para Plan Free
+            // Para otros planes es NULL (tienen acceso a todas las apps)
+            const appSeleccionada = plan === 'free' ? organizacionData.app_seleccionada : null;
+
             const values = [
                 organizacionData.nombre_comercial,
                 organizacionData.razon_social || null,
@@ -48,7 +56,12 @@ class OrganizacionModel {
                 organizacionData.logo_url || null,
                 organizacionData.colores_marca || {},
                 organizacionData.configuracion_ui || {},
-                organizacionData.plan || organizacionData.plan_actual || 'basico'
+                plan,
+                appSeleccionada,
+                // Ubicación geográfica (Nov 2025)
+                organizacionData.pais_id || 1,        // Default: México (id=1)
+                organizacionData.estado_id || null,
+                organizacionData.ciudad_id || null
             ];
 
             const result = await db.query(query, values);
@@ -601,13 +614,14 @@ class OrganizacionModel {
         });
     }
 
-    // Crear subscripción trial inicial para nueva organización
-    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'basico', diasTrial = 14) {
+    // Crear subscripción inicial para nueva organización
+    // Soporta: trial (14 días), free (permanente), pro (pago)
+    static async crearSubscripcionActiva(organizacionId, codigoPlan = 'trial', diasTrial = 14) {
         // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
             // Obtener información del plan
             const planQuery = `
-                SELECT id, codigo_plan, precio_mensual
+                SELECT id, codigo_plan, precio_mensual, precio_por_usuario
                 FROM planes_subscripcion
                 WHERE codigo_plan = $1
             `;
@@ -620,38 +634,77 @@ class OrganizacionModel {
 
             const plan = planResult.rows[0];
 
-            // ✅ NUEVO: Todos los planes empiezan con trial
-            // - Planes gratuitos (custom): trial sin mercadopago, pueden ser indefinidos
-            // - Planes de pago (basico, profesional): trial de X días, luego requieren pago
-            const esPlanGratuito = ['custom'].includes(codigoPlan);
-            const esPlanDePago = ['basico', 'profesional'].includes(codigoPlan);
+            // Modelo Free/Pro (Nov 2025):
+            // - free: Permanente, sin trial, 1 app gratis
+            // - pro: Pago, precio_por_usuario, todas las apps
+            // - trial: 14 días de prueba con todas las apps
+            // - custom: Sin restricciones, precio negociado
+            // - basico/profesional: [LEGACY]
+            const esPlanFree = codigoPlan === 'free';
+            const esPlanPro = codigoPlan === 'pro';
+            const esPlanTrial = codigoPlan === 'trial';
+            const esPlanCustom = codigoPlan === 'custom';
 
-            // Crear subscripción con trial
+            // Determinar estado de la subscripción
+            let estado;
+            if (esPlanTrial) {
+                estado = 'trial';
+            } else if (esPlanFree || esPlanCustom) {
+                estado = 'activa';  // Free y Custom son activas inmediatamente
+            } else {
+                estado = 'activa';  // Pro también activa (requiere pago para mantener)
+            }
+
+            // Módulos activos según el plan
+            let modulosActivos;
+            if (esPlanFree) {
+                // Plan Free: solo core + la app seleccionada
+                // La app específica se determina en el middleware según app_seleccionada
+                modulosActivos = { core: true, agendamiento: true };  // Default, se ajusta según app_seleccionada
+            } else {
+                // Pro, Trial, Custom: todas las apps
+                modulosActivos = {
+                    core: true,
+                    agendamiento: true,
+                    inventario: true,
+                    pos: true,
+                    comisiones: true,
+                    marketplace: true,
+                    chatbots: true
+                };
+            }
+
+            // Crear subscripción
             const subscripcionQuery = `
                 INSERT INTO subscripciones (
                     organizacion_id, plan_id, precio_actual,
                     fecha_inicio, fecha_proximo_pago, estado, activa,
                     fecha_inicio_trial, fecha_fin_trial, dias_trial,
+                    modulos_activos,
                     metadata
                 ) VALUES (
                     $1, $2, $3,
                     CURRENT_DATE,
-                    CURRENT_DATE + INTERVAL '1 month',
-                    'trial',
+                    ${esPlanFree ? 'NULL' : "CURRENT_DATE + INTERVAL '1 month'"},
+                    $4,
                     true,
-                    ${esPlanDePago ? 'NOW()' : 'NULL'},
-                    ${esPlanDePago ? `NOW() + INTERVAL '${diasTrial} days'` : 'NULL'},
-                    ${esPlanDePago ? diasTrial : 'NULL'},
+                    ${esPlanTrial ? 'NOW()' : 'NULL'},
+                    ${esPlanTrial ? `NOW() + INTERVAL '${diasTrial} days'` : 'NULL'},
+                    ${esPlanTrial ? diasTrial : 'NULL'},
+                    $5::jsonb,
                     '{}'::jsonb
                 )
                 RETURNING id, organizacion_id, plan_id, estado, activa,
-                          fecha_inicio, fecha_inicio_trial, fecha_fin_trial, dias_trial
+                          fecha_inicio, fecha_inicio_trial, fecha_fin_trial, dias_trial,
+                          modulos_activos
             `;
 
             const result = await db.query(subscripcionQuery, [
                 organizacionId,
                 plan.id,
-                plan.precio_mensual
+                plan.precio_mensual,
+                estado,
+                JSON.stringify(modulosActivos)
             ]);
 
             return result.rows[0];

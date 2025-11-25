@@ -27,17 +27,17 @@
 CREATE INDEX idx_marketplace_perfiles_org
     ON marketplace_perfiles(organizacion_id);
 
--- 📍 ÍNDICE 2: BÚSQUEDA POR CIUDAD
+-- 📍 ÍNDICE 2: BÚSQUEDA POR CIUDAD (FK normalizada)
 -- Propósito: Filtrar negocios por ciudad (query MÁS común)
--- Uso: WHERE ciudad = 'Guadalajara'
+-- Uso: WHERE ciudad_id = 123
 CREATE INDEX idx_marketplace_perfiles_ciudad
-    ON marketplace_perfiles(ciudad);
+    ON marketplace_perfiles(ciudad_id);
 
--- 📍 ÍNDICE 3: BÚSQUEDA POR ESTADO
+-- 📍 ÍNDICE 3: BÚSQUEDA POR ESTADO (FK normalizada)
 -- Propósito: Filtrar negocios por estado/provincia
--- Uso: WHERE estado = 'Jalisco'
+-- Uso: WHERE estado_id = 14
 CREATE INDEX idx_marketplace_perfiles_estado
-    ON marketplace_perfiles(estado);
+    ON marketplace_perfiles(estado_id);
 
 -- 🎯 ÍNDICE 4: PERFILES ACTIVOS (PARCIAL)
 -- Propósito: Solo perfiles activados manualmente
@@ -66,11 +66,11 @@ CREATE INDEX idx_marketplace_perfiles_slug
 CREATE INDEX idx_marketplace_search
     ON marketplace_perfiles USING GIN(search_vector);
 
--- 📍 ÍNDICE 8: CIUDAD + INDUSTRIA (COMPUESTO)
--- Propósito: Búsquedas combinadas ciudad + tipo de negocio
--- Uso: WHERE ciudad = ? AND activo = TRUE AND visible_en_directorio = TRUE
-CREATE INDEX idx_marketplace_ciudad_industria
-    ON marketplace_perfiles(ciudad, activo, visible_en_directorio)
+-- 📍 ÍNDICE 8: CIUDAD + ESTADO (COMPUESTO NORMALIZADO)
+-- Propósito: Búsquedas combinadas por ubicación geográfica
+-- Uso: WHERE ciudad_id = ? AND activo = TRUE AND visible_en_directorio = TRUE
+CREATE INDEX idx_marketplace_ciudad_estado
+    ON marketplace_perfiles(ciudad_id, estado_id, activo, visible_en_directorio)
     WHERE activo = true AND visible_en_directorio = true;
 
 -- ⭐ ÍNDICE 9: ORDENAMIENTO POR RATING
@@ -198,13 +198,13 @@ CREATE INDEX idx_marketplace_categorias_orden
 
 COMMENT ON INDEX idx_marketplace_search IS
 'Índice GIN para búsqueda full-text en español.
-Busca en: meta_titulo, descripcion_corta, descripcion_larga, ciudad, estado.
-Actualizado automáticamente por trigger.
+Busca en: meta_titulo, descripcion_corta, descripcion_larga + ciudad/estado (desde FKs).
+Actualizado automáticamente por trigger (consulta tablas ciudades/estados).
 Performance: <10ms para millones de registros.';
 
-COMMENT ON INDEX idx_marketplace_ciudad_industria IS
-'Índice compuesto para búsquedas geográficas combinadas.
-Query típico: Negocios activos y visibles en Guadalajara.
+COMMENT ON INDEX idx_marketplace_ciudad_estado IS
+'Índice compuesto para búsquedas geográficas combinadas (FKs normalizadas).
+Query típico: Negocios activos y visibles por ciudad_id y estado_id.
 Cubre 80% de las búsquedas públicas del marketplace.';
 
 COMMENT ON INDEX idx_marketplace_analytics_org_tipo_fecha IS

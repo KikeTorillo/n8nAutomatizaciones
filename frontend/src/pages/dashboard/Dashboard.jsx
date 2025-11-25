@@ -14,6 +14,7 @@ import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import SetupChecklist from '@/components/dashboard/SetupChecklist';
 import MarketplaceActivationCard from '@/components/dashboard/MarketplaceActivationCard';
+import PlanStatusBanner from '@/components/dashboard/PlanStatusBanner';
 import AlertasWidget from '@/components/inventario/AlertasWidget';
 import {
   useEstadisticasOrganizacion,
@@ -47,13 +48,16 @@ function Dashboard() {
   const { resetOnboarding } = useOnboardingStore();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  // Hook de módulos activos
+  // Hook de módulos activos (Modelo Free/Pro Nov 2025)
   const {
     tieneInventario,
     tienePOS,
     tieneComisiones,
     tieneMarketplace,
     tieneChatbots,
+    tieneAgendamiento,
+    esPlanFree,
+    appSeleccionada,
   } = useModulos();
 
   // Queries de datos
@@ -148,32 +152,43 @@ function Dashboard() {
                 )}
               </div>
 
-              {/* Navigation Links - Condicional por módulos */}
+              {/* Navigation Links - Condicional por módulos (Modelo Free/Pro Nov 2025) */}
               <div className="hidden md:flex items-center gap-6">
-                <button
-                  onClick={() => navigate('/clientes')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Clientes
-                </button>
-                <button
-                  onClick={() => navigate('/citas')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Citas
-                </button>
-                <button
-                  onClick={() => navigate('/profesionales')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Profesionales
-                </button>
-                <button
-                  onClick={() => navigate('/servicios')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Servicios
-                </button>
+                {/* Enlaces de Agendamiento - Solo si tiene el módulo */}
+                {tieneAgendamiento && (
+                  <>
+                    <button
+                      onClick={() => navigate('/clientes')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Clientes
+                    </button>
+                    <button
+                      onClick={() => navigate('/citas')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Citas
+                    </button>
+                    <button
+                      onClick={() => navigate('/profesionales')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Profesionales
+                    </button>
+                    <button
+                      onClick={() => navigate('/servicios')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Servicios
+                    </button>
+                    <button
+                      onClick={() => navigate('/bloqueos')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Bloqueos
+                    </button>
+                  </>
+                )}
                 {tieneChatbots && (
                   <button
                     onClick={() => navigate('/chatbots')}
@@ -206,12 +221,6 @@ function Dashboard() {
                     POS
                   </button>
                 )}
-                <button
-                  onClick={() => navigate('/bloqueos')}
-                  className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                >
-                  Bloqueos
-                </button>
                 {tieneMarketplace && (
                   <button
                     onClick={() => navigate('/mi-marketplace')}
@@ -244,6 +253,9 @@ function Dashboard() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Widget de Estado de Trial */}
         <TrialStatusWidget />
+
+        {/* Banner de Estado del Plan (Free/Pro) - Nov 2025 */}
+        <PlanStatusBanner />
 
         {/* Checklist de Configuración Inicial */}
         <SetupChecklist />

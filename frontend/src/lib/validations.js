@@ -30,17 +30,14 @@ export const businessInfoSchema = z.object({
     .string()
     .min(1, 'Debes seleccionar una industria'),
 
-  pais: z
+  // Ubicación normalizada (catálogo geográfico México)
+  estado_id: z
     .string()
-    .min(2, 'El país debe tener al menos 2 caracteres')
-    .max(50, 'El país no puede superar 50 caracteres')
-    .trim(),
+    .min(1, 'Debes seleccionar un estado'),
 
-  ciudad: z
+  ciudad_id: z
     .string()
-    .min(2, 'La ciudad debe tener al menos 2 caracteres')
-    .max(50, 'La ciudad no puede superar 50 caracteres')
-    .trim(),
+    .min(1, 'Debes seleccionar una ciudad'),
 
   telefono_principal: z
     .string()
