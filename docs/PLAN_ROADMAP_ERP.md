@@ -1,7 +1,7 @@
 # Plan de Desarrollo: Roadmap ERP para PYMES México
 
 **Fecha**: 25 Noviembre 2025
-**Versión**: 2.1 (Validado contra código real)
+**Versión**: 2.2 (Análisis arquitectónico + starterkit)
 **Última actualización**: 25 Noviembre 2025
 **Análisis competitivo**: vs Odoo
 
@@ -864,6 +864,198 @@ CREATE TABLE facturas_complementos_pago (...);
 - `sql/marketplace/01-tablas-marketplace.sql`
 - `backend/app/modules/marketplace/controllers/`
 - `frontend/src/pages/marketplace/`
+
+---
+
+## Análisis Arquitectónico: Optimización y Desacoplamiento
+
+> **Contexto**: Análisis realizado para evaluar viabilidad de usar el proyecto como starterkit ERP.
+
+### Métricas del Código Actual
+
+| Métrica | Valor | Observación |
+|---------|-------|-------------|
+| Endpoints HTTP | ~200 | Handlers `async (req, res)` |
+| Usos `req.tenant.organizacionId` | 171 | Patrón repetido en controllers |
+| Usos `RLSContextManager` | 309 | Bien adoptado en models |
+| Usos `ResponseHelper` | 406 | Consistente en todo el backend |
+| Hooks TanStack Query | 296 | `useQuery`/`useMutation` en frontend |
+| Controllers | ~35 clases | Patrón consistente |
+| Models | ~30 clases | Todos usan RLS |
+
+### ✅ Patrones Bien Implementados
+
+1. **RLSContextManager** - Abstracción sólida para multi-tenancy
+   - Gestión automática de conexiones y transacciones
+   - Limpieza de contexto en `finally` (previene contaminación del pool)
+   - Métodos claros: `query()`, `transaction()`, `withBypass()`
+
+2. **ResponseHelper** - Respuestas HTTP estandarizadas
+   - Consistente en 406 usos
+   - Incluye timestamp, pagination, error codes
+
+3. **Estructura modular por dominio**
+   ```
+   modules/
+   ├── core/        # Auth, organizaciones, planes (CORE)
+   ├── agendamiento/# Citas, profesionales (TEMPLATE)
+   ├── inventario/  # Productos, stock (TEMPLATE)
+   ├── pos/         # Ventas (TEMPLATE)
+   └── marketplace/ # Perfiles públicos (TEMPLATE)
+   ```
+
+4. **Frontend con TanStack Query**
+   - 296 hooks bien organizados
+   - Invalidación de cache correcta
+   - staleTime configurado por tipo de dato
+
+### ⚠️ Redundancias Identificadas
+
+#### 1. Boilerplate en Controllers (ALTA PRIORIDAD)
+
+```javascript
+// Patrón repetido en TODOS los controllers:
+static obtenerPorId = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    const organizacionId = req.tenant.organizacionId;  // ← 171 veces
+    const item = await Model.obtenerPorId(parseInt(id), organizacionId);
+    if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
+    return ResponseHelper.success(res, item, 'Obtenido');
+});
+```
+
+**Solución propuesta**: BaseController con métodos genéricos
+
+```javascript
+// utils/BaseController.js (NUEVO)
+class BaseController {
+    constructor(model, resourceName) {
+        this.model = model;
+        this.resourceName = resourceName;
+    }
+
+    obtenerPorId = asyncHandler(async (req, res) => {
+        const id = parseInt(req.params.id);
+        const orgId = req.tenant.organizacionId;
+        const item = await this.model.obtenerPorId(id, orgId);
+        if (!item) return ResponseHelper.notFound(res, `${this.resourceName} no encontrado`);
+        return ResponseHelper.success(res, item);
+    });
+
+    // crear, actualizar, eliminar, listar genéricos...
+}
+```
+
+#### 2. Parsing de Query Params (MEDIA PRIORIDAD)
+
+```javascript
+// Repetido en múltiples controllers:
+const filtros = {
+    activo: req.query.activo === 'true' || req.query.activo === true,
+    categoria_id: req.query.categoria_id ? parseInt(req.query.categoria_id) : undefined,
+    busqueda: req.query.busqueda || undefined,
+    limit: req.query.limit ? parseInt(req.query.limit) : 50,
+    offset: req.query.offset ? parseInt(req.query.offset) : 0
+};
+```
+
+**Solución propuesta**: QueryParser helper
+
+```javascript
+// utils/queryParser.js (NUEVO)
+class QueryParser {
+    static parse(query, schema) {
+        return Object.entries(schema).reduce((acc, [key, config]) => {
+            const value = query[key];
+            if (value === undefined) return acc;
+
+            if (config.type === 'boolean') acc[key] = value === 'true' || value === true;
+            else if (config.type === 'int') acc[key] = parseInt(value);
+            else acc[key] = value;
+            return acc;
+        }, {});
+    }
+}
+```
+
+### 🔧 Acoplamiento a Resolver (Nivel 9 del Refactor)
+
+El `middleware/subscription.js` tiene **lógica hardcodeada** que impide reutilización:
+
+```javascript
+// ❌ ACTUAL - Acoplado a SaaS recurrente:
+const tiposValidos = ['profesionales', 'servicios', 'citas_mes'...]; // Hardcoded
+if (subscription.estado === 'trial')...  // Específico de modelo recurrente
+if (subscription.estado === 'morosa')... // No aplica a pago único
+```
+
+**Solución (ya documentada en PLAN_REFACTOR)**: Strategy Pattern
+
+```javascript
+// ✅ OBJETIVO - Access Control agnóstico:
+// CORE: middleware/access-control.js
+AccessControlMiddleware.checkAccess(accessStrategy)  // Dependency injection
+
+// TEMPLATE: config/access-rules.config.js
+class SubscriptionAccessStrategy { verifyAccess() } // SaaS recurrente
+class PackageAccessStrategy { verifyAccess() }      // Pago único
+```
+
+### 📊 Clasificación de Archivos: CORE vs TEMPLATE
+
+| Capa | CORE (Reutilizable) | TEMPLATE (Específico) |
+|------|---------------------|----------------------|
+| **Middleware** | auth, tenant, validation, rateLimiting | subscription.js ⚠️ |
+| **Utils** | RLSContextManager, helpers, logger | cita-validacion.util.js |
+| **Models** | usuario, organizacion, planes | citas, profesionales, productos |
+| **SQL** | core/, nucleo/ | agendamiento/, pos/, inventario/ |
+
+### 🎯 Recomendaciones de Optimización
+
+| Prioridad | Acción | Impacto | Esfuerzo |
+|-----------|--------|---------|----------|
+| **Alta** | Crear BaseController genérico | Reduce ~40% boilerplate | 8h |
+| **Alta** | Completar Access Control Layer (Nivel 9) | Habilita starterkit | 15h |
+| **Media** | QueryParser para filtros comunes | Reduce duplicación | 4h |
+| **Media** | Extraer subscripcion.model a template | Desacopla CORE | 6h |
+| **Baja** | ErrorHandler centralizado | Mejora debugging | 4h |
+| **Baja** | Documentar API con Swagger/OpenAPI | DX mejorada | 12h |
+
+### 📁 Estructura Objetivo para Starterkit
+
+```
+backend/app/
+├── core/                           # 100% REUTILIZABLE
+│   ├── middleware/
+│   │   ├── access-control.js       # Strategy pattern (nuevo)
+│   │   ├── auth.js
+│   │   ├── tenant.js
+│   │   └── validation.js
+│   ├── utils/
+│   │   ├── rlsContextManager.js
+│   │   ├── BaseController.js       # (nuevo)
+│   │   ├── QueryParser.js          # (nuevo)
+│   │   └── helpers.js
+│   └── models/
+│       ├── usuario.model.js
+│       ├── organizacion.model.js
+│       └── planes.model.js         # Con JSONB genérico
+│
+└── templates/
+    ├── scheduling-saas/            # Este proyecto
+    │   ├── config/access-rules.js
+    │   ├── middleware/subscription.js
+    │   ├── models/subscripcion.model.js
+    │   └── modules/
+    │       ├── agendamiento/
+    │       ├── comisiones/
+    │       └── marketplace/
+    │
+    └── invitaciones-digitales/     # Futuro proyecto
+        ├── config/access-rules.js  # Pago único
+        ├── models/paquete.model.js
+        └── modules/invitaciones/
+```
 
 ---
 
