@@ -12,7 +12,7 @@
 
 const express = require('express');
 const ComisionesController = require('../controllers');
-const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const comisionesSchemas = require('../schemas/comisiones.schemas');
 
 const router = express.Router();
@@ -122,6 +122,7 @@ router.get('/configuracion/historial',
 router.post('/configuracion',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
@@ -153,6 +154,7 @@ router.get('/configuracion',
 router.delete('/configuracion/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
     rateLimiting.apiRateLimit,
     validate(comisionesSchemas.eliminarConfiguracion),
@@ -216,6 +218,7 @@ router.get('/periodo',
 router.patch('/:id/pagar',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('comisiones'),
     tenant.verifyTenantActive,
     rateLimiting.apiRateLimit,
     validate(comisionesSchemas.marcarComoPagada),

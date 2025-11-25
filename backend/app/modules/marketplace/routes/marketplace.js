@@ -22,7 +22,7 @@ const {
     ReseñasMarketplaceController,
     AnalyticsMarketplaceController
 } = require('../controllers');
-const { auth, tenant, rateLimiting, validation, subscription } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const marketplaceSchemas = require('../schemas/marketplace.schemas');
 
 const router = express.Router();
@@ -42,6 +42,7 @@ const validate = validation.validate;
 router.post('/perfiles',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('marketplace'),
     subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.crearPerfil),
@@ -57,6 +58,7 @@ router.post('/perfiles',
 router.put('/perfiles/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('marketplace'),
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.actualizarPerfil),
     PerfilesMarketplaceController.actualizar
@@ -173,6 +175,7 @@ router.get('/perfiles/:id/estadisticas',
 router.post('/resenas',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('marketplace'),
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.crearReseña),
     ReseñasMarketplaceController.crear
@@ -189,6 +192,7 @@ router.post('/resenas',
 router.post('/resenas/:id/responder',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('marketplace'),
     auth.requireRole(['admin', 'propietario']),
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.responderReseña),
@@ -207,6 +211,7 @@ router.post('/resenas/:id/responder',
 router.patch('/resenas/:id/moderar',
     auth.authenticateToken,
     tenant.setTenantContext,
+    modules.requireModule('marketplace'),
     auth.requireRole(['admin', 'propietario']),
     rateLimiting.apiRateLimit,
     validate(marketplaceSchemas.moderarReseña),
