@@ -1,10 +1,10 @@
 # 🏗️ PLAN: ARQUITECTURA MODULAR - VERSIÓN EJECUTABLE
 
 **Fecha:** 24 Noviembre 2025
-**Versión:** 2.7 (Fase 3 EN PROGRESO - Middleware Aplicado)
-**Estado:** 🔄 **FASE 3 - 60% COMPLETADA**
+**Versión:** 2.8 (Fase 3 EN PROGRESO - Dynamic Loading + Queries Condicionales)
+**Estado:** 🔄 **FASE 3 - 80% COMPLETADA**
 **Score Viabilidad:** **9.8/10**
-**Última Actualización:** 24 Noviembre 2025 - 24:00 hrs
+**Última Actualización:** 25 Noviembre 2025 - 00:20 hrs
 
 ---
 
@@ -356,29 +356,36 @@ mkdir -p backend/app/{core,modules/{core,agendamiento,inventario,pos,marketplace
 
 ---
 
-### Fase 3: Dynamic Routes (5 días) - 🔄 EN PROGRESO (60%)
+### Fase 3: Dynamic Routes (5 días) - 🔄 EN PROGRESO (80%)
 
 **Objetivo:** Activar sistema de carga dinámica
 
 **Tareas:**
 
-1. ⏳ **Actualizar routes/api/v1/index.js** (4h) - PENDIENTE
-```javascript
-// ANTES
-router.use('/citas', citasRouter);
-router.use('/inventario', inventarioRouter);
+1. ✅ **Inicialización ModuleRegistry en app.js** (4h) - COMPLETADO
 
-// DESPUÉS
-const ModuleRegistry = require('../../core/ModuleRegistry');
+   **Enfoque Híbrido:** ModuleRegistry valida módulos al inicio; rutas se cargan estáticamente (seguro y probado); protección dinámica vía middleware `requireModule()`.
 
-async function setupRoutes(app) {
-  await ModuleRegistry.discoverModules();
-  await ModuleRegistry.loadModule('core');
-  await ModuleRegistry.loadModule('agendamiento');
-  // ... más módulos
-  ModuleRegistry.registerRoutes(app);
-}
-```
+   ```javascript
+   // backend/app/app.js - método start()
+   const ModuleRegistry = require('./core/ModuleRegistry');
+
+   async start() {
+     // INICIALIZACIÓN DE MÓDULOS
+     await ModuleRegistry.initialize({
+       defaultModules: ['core']
+     });
+
+     // Health check y resto del arranque...
+   }
+   ```
+
+   **Logs de arranque:**
+   ```
+   [ModuleRegistry] 🚀 Inicializando Module Registry...
+   [ModuleRegistry] 📦 Cargando módulo: core...
+   [ModuleRegistry] ✅ Module Registry inicializado { total_modules: 6, loaded_modules: 1 }
+   ```
 
 2. ✅ **Aplicar middleware `requireModule()` a rutas de escritura** (4h) - COMPLETADO
 
@@ -403,9 +410,32 @@ async function setupRoutes(app) {
    );
    ```
 
-3. ⏳ **Queries condicionales POS** (8h) - PENDIENTE
+3. ✅ **Queries condicionales POS** (8h) - COMPLETADO
+
+   **Archivos modificados:**
    - `ventas.model.js` - JOINs opcionales a clientes/profesionales
-   - `reportes.model.js` - obtenerVentasDiarias() sin agendamiento
+     - `obtenerPorId()` con `options.incluirAgendamiento`
+     - `listar()` con `options.incluirAgendamiento`
+   - `ventas.controller.js` - Verificación de módulo activo vía ModulesCache
+   - `reportes.model.js` - `obtenerVentasDiarias()` con JOINs condicionales
+   - `reportes.controller.js` - Verificación de módulo activo vía ModulesCache
+
+   **Patrón aplicado:**
+   ```javascript
+   // Controller
+   const modulosActivos = await ModulesCache.get(organizacionId);
+   const incluirAgendamiento = modulosActivos?.agendamiento === true;
+
+   const venta = await VentasPOSModel.obtenerPorId(id, organizacionId, {
+     incluirAgendamiento
+   });
+
+   // Model - JOINs condicionales
+   if (incluirAgendamiento) {
+     selectFields += ', c.nombre AS cliente_nombre, p.nombre_completo AS profesional_nombre';
+     joins += 'LEFT JOIN clientes c ON ... LEFT JOIN profesionales p ON ...';
+   }
+   ```
 
 4. ⏳ **Testing integración** (4h) - PENDIENTE
    - Verificar módulos se cargan en orden correcto
@@ -413,15 +443,16 @@ async function setupRoutes(app) {
    - Verificar endpoints rechazan sin módulo activo
 
 **Entregables:**
-- ⏳ Dynamic loading funcional
+- ✅ Dynamic loading funcional (híbrido: validación + protección middleware)
 - ✅ 31 rutas de escritura protegidas con `requireModule()`
-- ⏳ Queries condicionales POS
+- ✅ Queries condicionales POS (4 archivos modificados)
 - ⏳ Tests de integración pasando
 
-**Commit Fase 3 (parcial):**
+**Commits Fase 3:**
 ```
 f2339f8 feat(middleware): aplicar requireModule() a rutas de módulos - Fase 3
-4 files changed, 34 insertions(+), 4 deletions(-)
+2f24539 feat(pos): implementar queries condicionales para módulo agendamiento
+PENDING feat(modules): integrar ModuleRegistry.initialize() en app.js
 ```
 
 ---
@@ -971,25 +1002,25 @@ UPDATE subscripciones SET modulos_activos = '{
 FASE 0 PoC:         ████████████████████ 100% ✅
 FASE 1 Preparación: ████████████████████ 100% ✅
 FASE 2 Migración:   ████████████████████ 100% ✅ (6/6 módulos)
-FASE 3 Routes:      ████████████░░░░░░░░  60% 🔄 (31 rutas protegidas)
+FASE 3 Routes:      ████████████████░░░░  80% 🔄 (Dynamic + Queries POS)
 FASE 4 Frontend:    ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 5 Testing:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 6 Rollout:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ─────────────────────────────────────────────
-PROGRESO TOTAL:     ███████████░░░░░░░░░  55% 🔄
+PROGRESO TOTAL:     ████████████░░░░░░░░  60% 🔄
 ```
 
-**Tiempo Invertido:** ~82 horas
-**Tiempo Restante:** ~107 horas (~13 días hábiles)
+**Tiempo Invertido:** ~86 horas
+**Tiempo Restante:** ~103 horas (~13 días hábiles)
 
-**Hito Actual:** 🔄 **FASE 3 EN PROGRESO** - Middleware aplicado a 31 rutas
-**Próximo Hito:** ⏳ Queries condicionales POS + Carga dinámica ModuleRegistry
+**Hito Actual:** 🔄 **FASE 3 EN PROGRESO** - Dynamic loading + Queries condicionales POS
+**Próximo Hito:** ⏳ Tests de integración módulos
 
 ---
 
-**Versión:** 2.7
-**Fecha:** 24 Noviembre 2025 - 24:00 hrs
-**Próxima Revisión:** Al completar Fase 3 (Queries condicionales POS)
-**Estado:** 🔄 **FASE 3 EN PROGRESO - 60% COMPLETADA**
+**Versión:** 2.8
+**Fecha:** 25 Noviembre 2025 - 00:20 hrs
+**Próxima Revisión:** Al completar Fase 3 (Tests de integración)
+**Estado:** 🔄 **FASE 3 EN PROGRESO - 80% COMPLETADA**
 **Score:** **9.8/10**
 

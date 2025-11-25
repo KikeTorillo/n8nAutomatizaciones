@@ -34,6 +34,9 @@ const logger = require('./utils/logger');
 // Base de datos - conexiones a PostgreSQL
 const database = require('./config/database');
 
+// Module Registry - Sistema de auto-discovery y validación de módulos
+const ModuleRegistry = require('./core/ModuleRegistry');
+
 // Helper para generar respuestas HTTP estandarizadas
 const { ResponseHelper } = require('./utils/helpers');
 
@@ -365,6 +368,13 @@ class SaaSApplication {
    */
   async start() {
     try {
+      // INICIALIZACIÓN DE MÓDULOS
+      // Module Registry descubre y valida módulos disponibles
+      // Las rutas se cargan estáticamente; la protección dinámica viene del middleware requireModule()
+      await ModuleRegistry.initialize({
+        defaultModules: ['core']
+      });
+
       // VERIFICACIÓN DE DEPENDENCIAS
       const dbHealth = await database.healthCheck();
       const hasDbIssues = Object.values(dbHealth).some(db => db.status !== 'ok');
