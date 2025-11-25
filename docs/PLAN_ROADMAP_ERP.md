@@ -1,7 +1,7 @@
 # Plan de Desarrollo: Roadmap ERP para PYMES México
 
 **Fecha**: 25 Noviembre 2025
-**Versión**: 2.0
+**Versión**: 2.1 (Validado contra código real)
 **Última actualización**: 25 Noviembre 2025
 **Análisis competitivo**: vs Odoo
 
@@ -37,7 +37,7 @@ Este documento define el roadmap de desarrollo para evolucionar de una plataform
 - Índice optimizado `idx_citas_recordatorios_pendientes`
 - 2 endpoints: `GET /citas/recordatorios` y `PATCH /citas/:codigo/recordatorio-enviado`
 - Model y Controller básicos (`cita.recordatorios.controller.js`, `cita.recordatorios.model.js`)
-- Hooks frontend: `useEnviarRecordatorio()`, `useRecordatorios()`
+- Hook frontend: `useEnviarRecordatorio()` (en `useCitas.js:450`)
 - **Endpoint confirmar cita**: `PATCH /api/v1/citas/:id/confirmar-asistencia` ✅
 
 **Lo que FALTA (crítico):**
@@ -516,8 +516,14 @@ class RecordatorioService {
 
 ### 1.6 Job pg_cron
 
+> ⚠️ **DEPENDENCIA**: Requiere extensión `pg_net` para HTTP desde PostgreSQL.
+> Alternativa: Usar cron del sistema operativo o n8n Schedule Trigger.
+
 ```sql
 -- sql/mantenimiento/06-pg-cron.sql (agregar)
+
+-- Verificar extensión pg_net
+CREATE EXTENSION IF NOT EXISTS pg_net;
 
 SELECT cron.schedule(
     'procesar-recordatorios',
@@ -556,9 +562,9 @@ SELECT cron.schedule(
 
 ## Fase 2: Validar y Completar POS e Inventario
 
-### 2.1 Inventario - Estado: ~92%
+### 2.1 Inventario - Estado: ~85%
 
-**Funcionalidades existentes:** 33 endpoints, 7 tablas, análisis ABC, alertas automáticas
+**Funcionalidades existentes:** 33 endpoints, 5 tablas (`categorias_productos`, `proveedores`, `productos`, `movimientos_inventario`, `alertas_inventario`), análisis ABC, alertas automáticas
 
 **Funcionalidades faltantes:**
 
@@ -611,9 +617,9 @@ CREATE TABLE ordenes_compra_items (
 );
 ```
 
-### 2.2 POS - Estado: ~90%
+### 2.2 POS - Estado: ~88%
 
-**Funcionalidades existentes:** 12 endpoints, ventas, corte de caja, **devoluciones** ✅
+**Funcionalidades existentes:** 11 endpoints activos (`routes/pos.js`), ventas, corte de caja, **devoluciones** ✅
 
 > ⚠️ **NOTA**: Las devoluciones YA ESTÁN IMPLEMENTADAS en `routes/pos.js:164-173`
 
@@ -710,6 +716,26 @@ class TicketService {
 
 ## Fase 4: Módulo Contabilidad + CFDI
 
+> ⚠️ **COMPLEJIDAD ALTA**: Este módulo requiere ~160-264 horas de desarrollo.
+> Se recomienda dividir en sub-fases incrementales.
+
+### Riesgos Críticos a Considerar
+
+| Riesgo | Severidad | Mitigación |
+|--------|-----------|------------|
+| Certificados CSD por organización | Alta | Almacenamiento encriptado BYTEA + gestión de vigencia |
+| Validación RFC en tiempo real | Alta | Cache local + validación periódica SAT |
+| Actualizaciones catálogos SAT | Media | Job pg_cron para sincronización mensual |
+| Cancelación CFDI 4.0 | Alta | Workflow complejo con motivos obligatorios |
+| Complementos de pago | Alta | Lógica separada para pagos parciales |
+
+### Sub-fases Recomendadas
+
+1. **4.1a**: Catálogos SAT + UI captura datos fiscales (40h)
+2. **4.1b**: Generación XML sin timbrado - modo sandbox (60h)
+3. **4.1c**: Integración PAC sandbox (Finkok/Facturama) (40h)
+4. **4.1d**: Producción + certificación (60h)
+
 ### 4.1 Facturación CFDI - CRÍTICO para México
 
 **Estructura del módulo:**
@@ -765,12 +791,12 @@ CREATE TABLE facturas_complementos_pago (...);
 
 ## Resumen de Roadmap
 
-| Fase | Módulo | Estado Actual | Objetivo | Componentes Clave |
-|------|--------|---------------|----------|-------------------|
-| 1 | Recordatorios | ~35-40% | 100% | Inyección memoria chat, MCP confirmarCita |
-| 2 | POS + Inventario | 90-92% | 100% | Órdenes compra, Ticket PDF |
-| 3 | Marketplace | ~95% | 100% | SEO, Widget embebible |
-| 4 | CFDI + Contabilidad | 0% | MVP | PAC, XML CFDI 4.0 |
+| Fase | Módulo | Estado Actual | Objetivo | Esfuerzo Est. | Componentes Clave |
+|------|--------|---------------|----------|---------------|-------------------|
+| 1 | Recordatorios | ~35-40% | 100% | 20-30h | Inyección memoria chat, MCP confirmarCita |
+| 2 | POS + Inventario | 85-88% | 100% | 40-60h | Órdenes compra, Ticket PDF |
+| 3 | Marketplace | ~92% | 100% | 20-30h | SEO técnico, Widget embebible |
+| 4 | CFDI + Contabilidad | 0% | MVP | 160-264h | PAC, XML CFDI 4.0, Certificados CSD |
 
 ---
 
