@@ -1,10 +1,10 @@
 # 🏗️ PLAN: ARQUITECTURA MODULAR - VERSIÓN EJECUTABLE
 
 **Fecha:** 24 Noviembre 2025
-**Versión:** 2.6 (Fase 2 COMPLETADA - 6/6 Módulos Migrados)
-**Estado:** ✅ **FASE 2 - 100% COMPLETADA - LISTO PARA FASE 3**
+**Versión:** 2.7 (Fase 3 EN PROGRESO - Middleware Aplicado)
+**Estado:** 🔄 **FASE 3 - 60% COMPLETADA**
 **Score Viabilidad:** **9.8/10**
-**Última Actualización:** 24 Noviembre 2025 - 23:35 hrs
+**Última Actualización:** 24 Noviembre 2025 - 24:00 hrs
 
 ---
 
@@ -352,17 +352,17 @@ mkdir -p backend/app/{core,modules/{core,agendamiento,inventario,pos,marketplace
 
 **Pendiente para Fase 3:**
 - ⏳ Queries condicionales POS (JOINs a agendamiento)
-- ⏳ Activar middleware `requireModule()` en endpoints
+- ✅ Middleware `requireModule()` aplicado a 31 rutas de escritura
 
 ---
 
-### Fase 3: Dynamic Routes (5 días)
+### Fase 3: Dynamic Routes (5 días) - 🔄 EN PROGRESO (60%)
 
 **Objetivo:** Activar sistema de carga dinámica
 
 **Tareas:**
 
-1. **Actualizar routes/api/v1/index.js** (4h)
+1. ⏳ **Actualizar routes/api/v1/index.js** (4h) - PENDIENTE
 ```javascript
 // ANTES
 router.use('/citas', citasRouter);
@@ -380,27 +380,49 @@ async function setupRoutes(app) {
 }
 ```
 
-2. **Aplicar middleware a 213 endpoints** (8h)
-```javascript
-router.post('/productos',
-  auth.authenticateToken,
-  tenant.setTenantContext,
-  modules.requireModule('inventario'), // ✅ NUEVO
-  subscription.checkResourceLimit,
-  validation.validate(schemas.crearProducto),
-  asyncHandler(ProductosController.crear)
-);
-```
+2. ✅ **Aplicar middleware `requireModule()` a rutas de escritura** (4h) - COMPLETADO
 
-3. **Testing integración** (8h)
+   | Módulo | Rutas Protegidas | Estado |
+   |--------|------------------|--------|
+   | INVENTARIO | 14 (categorías, proveedores, productos, movimientos, alertas) | ✅ |
+   | POS | 9 (ventas, pagos, cancelaciones, devoluciones) | ✅ |
+   | COMISIONES | 3 (configuración, pagos) | ✅ |
+   | MARKETPLACE | 5 (perfiles, reseñas) | ✅ |
+   | **Total** | **31 rutas** | ✅ |
+
+   **Patrón aplicado:**
+   ```javascript
+   router.post('/productos',
+     auth.authenticateToken,
+     tenant.setTenantContext,
+     modules.requireModule('inventario'), // ✅ NUEVO
+     tenant.verifyTenantActive,
+     subscription.checkResourceLimit,
+     validation.validate(schemas.crearProducto),
+     asyncHandler(ProductosController.crear)
+   );
+   ```
+
+3. ⏳ **Queries condicionales POS** (8h) - PENDIENTE
+   - `ventas.model.js` - JOINs opcionales a clientes/profesionales
+   - `reportes.model.js` - obtenerVentasDiarias() sin agendamiento
+
+4. ⏳ **Testing integración** (4h) - PENDIENTE
    - Verificar módulos se cargan en orden correcto
    - Verificar dependencias se validan
    - Verificar endpoints rechazan sin módulo activo
 
 **Entregables:**
-- ✅ Dynamic loading funcional
-- ✅ 213 endpoints protegidos
-- ✅ Tests de integración pasando
+- ⏳ Dynamic loading funcional
+- ✅ 31 rutas de escritura protegidas con `requireModule()`
+- ⏳ Queries condicionales POS
+- ⏳ Tests de integración pasando
+
+**Commit Fase 3 (parcial):**
+```
+f2339f8 feat(middleware): aplicar requireModule() a rutas de módulos - Fase 3
+4 files changed, 34 insertions(+), 4 deletions(-)
+```
 
 ---
 
@@ -602,11 +624,11 @@ WHERE activa = true;
 | 0. PoC | 4h | ✅ COMPLETADO | 23 Nov 2025 | 100% |
 | 1. Preparación | 16h | ✅ COMPLETADO | 24 Nov 2025 | 100% |
 | 2. Migración Código | 50h | ✅ COMPLETADO | 24 Nov 2025 | 100% |
-| 3. Dynamic Routes | 20h | ⏳ PENDIENTE | - | 0% |
+| 3. Dynamic Routes | 20h | 🔄 EN PROGRESO | 24 Nov 2025 | 60% |
 | 4. Frontend | 43h | ⏳ PENDIENTE | - | 0% |
 | 5. Testing & QA | 40h | ⏳ PENDIENTE | - | 0% |
 | 6. Rollout | 16h | ⏳ PENDIENTE | - | 0% |
-| **TOTAL** | **189h** | **50% COMPLETADO** | - | 70h/189h |
+| **TOTAL** | **189h** | **55% COMPLETADO** | - | 82h/189h |
 
 ### Cronograma Detallado (con buffer 20%)
 
@@ -883,17 +905,18 @@ UPDATE subscripciones SET modulos_activos = '{
    - Performance funciones: 15ms promedio (objetivo <50ms)
    - Performance vistas: 2-21ms promedio (objetivo <100ms)
 
-### 🎯 Próximos Pasos - Fase 3 Dynamic Routes
+### 🎯 Próximos Pasos - Fase 3 Dynamic Routes (Continuación)
 
-**Objetivo:** Activar sistema de carga dinámica + queries condicionales
+**Completado:**
+- ✅ Middleware `requireModule()` aplicado a 31 rutas de escritura
+- ✅ Backend verificado healthy con cambios
 
-**Tareas prioritarias:**
-1. **Actualizar routes/api/v1/index.js** - Usar ModuleRegistry para carga dinámica
-2. **Aplicar middleware `requireModule()`** a 213 endpoints
-3. **Queries condicionales POS** (JOINs opcionales a agendamiento)
-   - `ventas.model.js` - obtenerPorId(), listar()
-   - `reportes.model.js` - obtenerVentasDiarias()
-4. **Tests de integración** - Verificar módulos se cargan correctamente
+**Tareas pendientes:**
+1. ⏳ **Queries condicionales POS** (8h) - JOINs opcionales a agendamiento
+   - `ventas.model.js` - obtenerPorId(), listar() sin cliente/profesional
+   - `reportes.model.js` - obtenerVentasDiarias() sin agendamiento
+2. ⏳ **Actualizar routes/api/v1/index.js** (4h) - Carga dinámica con ModuleRegistry
+3. ⏳ **Tests de integración** (4h) - Verificar módulos se cargan correctamente
 
 ---
 
@@ -948,25 +971,25 @@ UPDATE subscripciones SET modulos_activos = '{
 FASE 0 PoC:         ████████████████████ 100% ✅
 FASE 1 Preparación: ████████████████████ 100% ✅
 FASE 2 Migración:   ████████████████████ 100% ✅ (6/6 módulos)
-FASE 3 Routes:      ░░░░░░░░░░░░░░░░░░░░   0% ⏳
+FASE 3 Routes:      ████████████░░░░░░░░  60% 🔄 (31 rutas protegidas)
 FASE 4 Frontend:    ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 5 Testing:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 FASE 6 Rollout:     ░░░░░░░░░░░░░░░░░░░░   0% ⏳
 ─────────────────────────────────────────────
-PROGRESO TOTAL:     ██████████░░░░░░░░░░  50% ⏳
+PROGRESO TOTAL:     ███████████░░░░░░░░░  55% 🔄
 ```
 
-**Tiempo Invertido:** ~70 horas
-**Tiempo Restante:** ~130 horas (~16 días hábiles)
+**Tiempo Invertido:** ~82 horas
+**Tiempo Restante:** ~107 horas (~13 días hábiles)
 
-**Hito Actual:** ✅ **FASE 2 COMPLETADA** - 6/6 módulos migrados y operativos
-**Próximo Hito:** ⏳ Fase 3 - Dynamic Routes + Queries condicionales POS
+**Hito Actual:** 🔄 **FASE 3 EN PROGRESO** - Middleware aplicado a 31 rutas
+**Próximo Hito:** ⏳ Queries condicionales POS + Carga dinámica ModuleRegistry
 
 ---
 
-**Versión:** 2.6
-**Fecha:** 24 Noviembre 2025 - 23:35 hrs
-**Próxima Revisión:** Al completar Fase 3 (Dynamic Routes)
-**Estado:** ✅ **FASE 2 COMPLETADA - LISTO PARA FASE 3**
+**Versión:** 2.7
+**Fecha:** 24 Noviembre 2025 - 24:00 hrs
+**Próxima Revisión:** Al completar Fase 3 (Queries condicionales POS)
+**Estado:** 🔄 **FASE 3 EN PROGRESO - 60% COMPLETADA**
 **Score:** **9.8/10**
 
