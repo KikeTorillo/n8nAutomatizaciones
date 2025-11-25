@@ -870,7 +870,6 @@ CREATE TABLE facturas_complementos_pago (...);
 ## Análisis Arquitectónico: Optimización y Desacoplamiento
 
 > **Contexto**: Análisis realizado para evaluar viabilidad de usar el proyecto como starterkit ERP.
-> Ver también: `docs/PLAN_REFACTOR_BACKEND_STARTERKIT.md`
 
 ### Métricas del Código Actual
 
