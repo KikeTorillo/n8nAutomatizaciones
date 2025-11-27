@@ -1,6 +1,6 @@
 /**
  * Index de Controllers de Inventario - Módulos especializados combinados
- * Combina categorías, proveedores, productos, movimientos y alertas
+ * Combina categorías, proveedores, productos, movimientos, alertas y órdenes de compra
  */
 
 const CategoriasProductosController = require('./categorias.controller');
@@ -9,6 +9,7 @@ const ProductosController = require('./productos.controller');
 const MovimientosInventarioController = require('./movimientos.controller');
 const AlertasInventarioController = require('./alertas.controller');
 const ReportesInventarioController = require('./reportes.controller');
+const OrdenesCompraController = require('./ordenes-compra.controller');
 
 /**
  * Controller principal que combina todos los módulos especializados
@@ -170,6 +171,70 @@ class InventarioMainController {
 
     static obtenerResumenAlertas(req, res) {
         return ReportesInventarioController.obtenerResumenAlertas(req, res);
+    }
+
+    // ===================================================================
+    // 📋 ENDPOINTS ÓRDENES DE COMPRA
+    // ===================================================================
+
+    static crearOrdenCompra(req, res) {
+        return OrdenesCompraController.crear(req, res);
+    }
+
+    static obtenerOrdenCompraPorId(req, res) {
+        return OrdenesCompraController.obtenerPorId(req, res);
+    }
+
+    static listarOrdenesCompra(req, res) {
+        return OrdenesCompraController.listar(req, res);
+    }
+
+    static actualizarOrdenCompra(req, res) {
+        return OrdenesCompraController.actualizar(req, res);
+    }
+
+    static eliminarOrdenCompra(req, res) {
+        return OrdenesCompraController.eliminar(req, res);
+    }
+
+    static agregarItemsOrdenCompra(req, res) {
+        return OrdenesCompraController.agregarItems(req, res);
+    }
+
+    static actualizarItemOrdenCompra(req, res) {
+        return OrdenesCompraController.actualizarItem(req, res);
+    }
+
+    static eliminarItemOrdenCompra(req, res) {
+        return OrdenesCompraController.eliminarItem(req, res);
+    }
+
+    static enviarOrdenCompra(req, res) {
+        return OrdenesCompraController.enviar(req, res);
+    }
+
+    static cancelarOrdenCompra(req, res) {
+        return OrdenesCompraController.cancelar(req, res);
+    }
+
+    static recibirMercanciaOrdenCompra(req, res) {
+        return OrdenesCompraController.recibirMercancia(req, res);
+    }
+
+    static obtenerOrdenesCompraPendientes(req, res) {
+        return OrdenesCompraController.obtenerPendientes(req, res);
+    }
+
+    static obtenerOrdenesCompraPendientesPago(req, res) {
+        return OrdenesCompraController.obtenerPendientesPago(req, res);
+    }
+
+    static registrarPagoOrdenCompra(req, res) {
+        return OrdenesCompraController.registrarPago(req, res);
+    }
+
+    static obtenerEstadisticasComprasPorProveedor(req, res) {
+        return OrdenesCompraController.estadisticasPorProveedor(req, res);
     }
 }
 

@@ -1,7 +1,7 @@
 # Roadmap ERP para PYMES México
 
-**Versión**: 3.0
-**Última actualización**: 26 Noviembre 2025
+**Versión**: 4.0
+**Última actualización**: 27 Noviembre 2025
 
 ---
 
@@ -14,7 +14,7 @@
 | **Recordatorios** | 95% | pg_cron + HTTP, Telegram/WhatsApp, inyección memoria chat |
 | **Comisiones** | 100% | Trigger automático, dashboard, reportes |
 | **Marketplace** | 95% | Directorio público, agendamiento sin auth, SEO básico |
-| **Inventario** | 85% | CRUD completo, ABC, alertas. Falta: Órdenes de compra |
+| **Inventario** | 100% | CRUD, ABC, alertas, órdenes de compra, recepciones |
 | **POS** | 88% | Ventas, devoluciones, corte caja. Falta: Ticket PDF |
 | **Chatbots** | 100% | MCP Server (7 tools), Telegram + WhatsApp |
 | **Contabilidad/CFDI** | 0% | Fase futura |
@@ -53,35 +53,39 @@
 
 ### Fase 2: Completar POS e Inventario
 
-#### Inventario - Faltante: Órdenes de Compra
+#### Inventario - Órdenes de Compra - COMPLETADO (100%)
 
-```sql
--- Propuesta de tablas
-CREATE TABLE ordenes_compra (
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id),
-    proveedor_id INTEGER NOT NULL REFERENCES proveedores(id),
-    folio VARCHAR(20) NOT NULL,  -- OC-2025-0001
-    estado VARCHAR(20) DEFAULT 'borrador',
-    -- Estados: borrador, enviada, parcial, recibida, cancelada
-    fecha_orden DATE DEFAULT CURRENT_DATE,
-    fecha_entrega_esperada DATE,
-    subtotal DECIMAL(12,2) DEFAULT 0,
-    total DECIMAL(12,2) DEFAULT 0,
-    creado_en TIMESTAMPTZ DEFAULT NOW()
-);
+**Implementado (27 Nov 2025):**
 
-CREATE TABLE ordenes_compra_items (
-    id SERIAL PRIMARY KEY,
-    orden_compra_id INTEGER REFERENCES ordenes_compra(id) ON DELETE CASCADE,
-    producto_id INTEGER REFERENCES productos(id),
-    cantidad_ordenada INTEGER NOT NULL,
-    cantidad_recibida INTEGER DEFAULT 0,
-    precio_unitario DECIMAL(10,2) NOT NULL
-);
-```
+**Base de Datos (4 archivos SQL):**
+- `08-ordenes-compra-tablas.sql` - 3 tablas: ordenes_compra, ordenes_compra_items, ordenes_compra_recepciones
+- `09-ordenes-compra-indices.sql` - 12 índices optimizados
+- `10-ordenes-compra-rls.sql` - 6 políticas RLS multi-tenant
+- `11-ordenes-compra-funciones.sql` - 5 funciones + 4 triggers
 
-**Esfuerzo estimado**: 20-30 horas
+**Backend:**
+- `ordenes-compra.model.js` - Modelo con RLSContextManager
+- `ordenes-compra.controller.js` - 8 endpoints (CRUD + recepciones + pagos)
+- `ordenes-compra.schemas.js` - Validación Joi completa
+- Integrado en rutas `/api/v1/inventario/ordenes-compra/*`
+
+**Frontend:**
+- `OrdenesCompraPage.jsx` - Página principal con filtros y estadísticas
+- `OrdenCompraFormModal.jsx` - Crear/editar órdenes con múltiples productos
+- `OrdenCompraDetalleModal.jsx` - Ver detalle completo
+- `RecibirMercanciaModal.jsx` - Registrar recepciones parciales/completas
+- `RegistrarPagoModal.jsx` - Registrar pagos
+- `useOrdenesCompra.js` - Hook TanStack Query (6 queries + 6 mutations)
+
+**Funcionalidades:**
+- Ciclo de vida: borrador → enviada → parcial/recibida | cancelada
+- Recepciones parciales con tracking de lotes
+- Totales automáticos (subtotal, descuento, impuestos, total)
+- Control de pagos con saldo pendiente
+- Filtros por estado, proveedor, fechas
+- Dashboard con estadísticas
+
+---
 
 #### POS - Faltante: Ticket PDF (térmica 58/80mm)
 
@@ -201,7 +205,7 @@ if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
 | bloqueos | 6 | bloqueos_horarios | 100% |
 | comisiones | 5 | config, historial, trigger | 100% |
 | marketplace | 6 | perfiles, reseñas, analytics | 100% |
-| inventario | 7 | productos, movimientos (particionado) | 85% |
+| inventario | 11 | productos, movimientos, órdenes compra | 100% |
 | pos | 5 | ventas, items | 88% |
 | pagos | 4 | métodos, Mercado Pago | 100% |
 | chatbots | 4 | config, credentials | 100% |
@@ -245,9 +249,19 @@ Activación: `SET app.bypass_rls = 'true'`
 | Fase | Módulo | Esfuerzo | Prioridad |
 |------|--------|----------|-----------|
 | 1 | MCP confirmarCita + UI config | 6-10h | Alta |
-| 2 | Órdenes de compra | 20-30h | Media |
+| 2 | ~~Órdenes de compra~~ | ~~20-30h~~ | ✅ COMPLETADO |
 | 2 | Ticket PDF | 15-20h | Media |
 | 3 | Mejoras Marketplace | 20-30h | Baja |
 | 4 | CFDI + Contabilidad | 160-264h | Futura |
 
-**Total pendiente corto plazo**: ~60-90 horas
+**Total pendiente corto plazo**: ~40-60 horas
+
+---
+
+## Historial de Cambios
+
+| Versión | Fecha | Cambios |
+|---------|-------|---------|
+| 4.0 | 27 Nov 2025 | Órdenes de Compra completado (100%), Inventario al 100% |
+| 3.0 | 26 Nov 2025 | Recordatorios 95%, análisis arquitectónico |
+| 2.0 | 24 Nov 2025 | Comisiones, Marketplace, POS operativos |

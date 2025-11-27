@@ -45,6 +45,7 @@ const ProveedoresPage = lazy(() => import('@/pages/inventario/ProveedoresPage'))
 const MovimientosPage = lazy(() => import('@/pages/inventario/MovimientosPage'));
 const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
 const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
+const OrdenesCompraPage = lazy(() => import('@/pages/inventario/OrdenesCompraPage'));
 
 // Páginas de Punto de Venta (POS)
 const VentaPOSPage = lazy(() => import('@/pages/pos/VentaPOSPage'));
@@ -314,6 +315,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ReportesInventarioPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/ordenes-compra',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(OrdenesCompraPage)}
           </ProtectedRoute>
         ),
       },

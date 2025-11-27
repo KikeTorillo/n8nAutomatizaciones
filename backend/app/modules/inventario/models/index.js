@@ -8,6 +8,7 @@ const ProductosModel = require('./productos.model');
 const MovimientosInventarioModel = require('./movimientos.model');
 const AlertasInventarioModel = require('./alertas.model');
 const ReportesInventarioModel = require('./reportes.model');
+const OrdenesCompraModel = require('./ordenes-compra.model');
 
 module.exports = {
     CategoriasProductosModel,
@@ -15,5 +16,6 @@ module.exports = {
     ProductosModel,
     MovimientosInventarioModel,
     AlertasInventarioModel,
-    ReportesInventarioModel
+    ReportesInventarioModel,
+    OrdenesCompraModel
 };

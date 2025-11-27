@@ -482,4 +482,211 @@ router.get('/reportes/alertas',
     InventarioController.obtenerResumenAlertas
 );
 
+// ===================================================================
+// ÓRDENES DE COMPRA
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/ordenes-compra
+ * Crear nueva orden de compra (estado: borrador)
+ * Body: proveedor_id, fecha_entrega_esperada?, items[]?
+ */
+router.post('/ordenes-compra',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearOrdenCompra),
+    InventarioController.crearOrdenCompra
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/pendientes
+ * Obtener órdenes pendientes de recibir
+ */
+router.get('/ordenes-compra/pendientes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    InventarioController.obtenerOrdenesCompraPendientes
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/pendientes-pago
+ * Obtener órdenes pendientes de pago
+ */
+router.get('/ordenes-compra/pendientes-pago',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    InventarioController.obtenerOrdenesCompraPendientesPago
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/reportes/por-proveedor
+ * Estadísticas de compras por proveedor
+ */
+router.get('/ordenes-compra/reportes/por-proveedor',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.estadisticasComprasPorProveedor),
+    InventarioController.obtenerEstadisticasComprasPorProveedor
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id
+ * Obtener orden por ID con items y recepciones
+ */
+router.get('/ordenes-compra/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerOrdenCompraPorId),
+    InventarioController.obtenerOrdenCompraPorId
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra
+ * Listar órdenes con filtros
+ */
+router.get('/ordenes-compra',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarOrdenesCompra),
+    InventarioController.listarOrdenesCompra
+);
+
+/**
+ * PUT /api/v1/inventario/ordenes-compra/:id
+ * Actualizar orden (solo borradores)
+ */
+router.put('/ordenes-compra/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarOrdenCompra),
+    InventarioController.actualizarOrdenCompra
+);
+
+/**
+ * DELETE /api/v1/inventario/ordenes-compra/:id
+ * Eliminar orden (solo borradores)
+ */
+router.delete('/ordenes-compra/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerOrdenCompraPorId),
+    InventarioController.eliminarOrdenCompra
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/items
+ * Agregar items a orden
+ */
+router.post('/ordenes-compra/:id/items',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.agregarItemsOrdenCompra),
+    InventarioController.agregarItemsOrdenCompra
+);
+
+/**
+ * PUT /api/v1/inventario/ordenes-compra/:id/items/:itemId
+ * Actualizar item de orden
+ */
+router.put('/ordenes-compra/:id/items/:itemId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarItemOrdenCompra),
+    InventarioController.actualizarItemOrdenCompra
+);
+
+/**
+ * DELETE /api/v1/inventario/ordenes-compra/:id/items/:itemId
+ * Eliminar item de orden
+ */
+router.delete('/ordenes-compra/:id/items/:itemId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.eliminarItemOrdenCompra),
+    InventarioController.eliminarItemOrdenCompra
+);
+
+/**
+ * PATCH /api/v1/inventario/ordenes-compra/:id/enviar
+ * Enviar orden al proveedor (borrador → enviada)
+ */
+router.patch('/ordenes-compra/:id/enviar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.enviarOrdenCompra),
+    InventarioController.enviarOrdenCompra
+);
+
+/**
+ * PATCH /api/v1/inventario/ordenes-compra/:id/cancelar
+ * Cancelar orden
+ */
+router.patch('/ordenes-compra/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarOrdenCompra),
+    InventarioController.cancelarOrdenCompra
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/recibir
+ * Recibir mercancía (parcial o total)
+ * CRÍTICO: Actualiza stock y crea movimientos de inventario
+ */
+router.post('/ordenes-compra/:id/recibir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.recibirMercanciaOrdenCompra),
+    InventarioController.recibirMercanciaOrdenCompra
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/pago
+ * Registrar pago de orden
+ */
+router.post('/ordenes-compra/:id/pago',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.registrarPagoOrdenCompra),
+    InventarioController.registrarPagoOrdenCompra
+);
+
 module.exports = router;
