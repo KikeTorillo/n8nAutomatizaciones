@@ -81,6 +81,14 @@ CREATE POLICY clientes_super_admin ON clientes
         )
     );
 
+-- POLÍTICA 3: BYPASS PARA FUNCIONES DE SISTEMA (Nov 2025)
+-- Necesario para jobs como recordatorios que cruzan organizaciones
+CREATE POLICY clientes_system_bypass ON clientes
+    FOR ALL
+    TO saas_app
+    USING (current_setting('app.bypass_rls', true) = 'true')
+    WITH CHECK (current_setting('app.bypass_rls', true) = 'true');
+
 -- ====================================================================
 -- 🎯 RLS PARA TABLA SERVICIOS
 -- ====================================================================

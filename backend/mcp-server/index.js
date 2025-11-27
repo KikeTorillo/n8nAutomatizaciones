@@ -24,6 +24,7 @@ const verificarDisponibilidadTool = require('./tools/verificarDisponibilidad');
 const listarServiciosTool = require('./tools/listarServicios');
 const buscarClienteTool = require('./tools/buscarCliente');
 const buscarCitasClienteTool = require('./tools/buscarCitasCliente');
+const confirmarCitaTool = require('./tools/confirmarCita');
 
 // ====================================================================
 // CONFIGURACIÓN EXPRESS
@@ -91,6 +92,7 @@ const tools = {
   listarServicios: listarServiciosTool,
   buscarCliente: buscarClienteTool,
   buscarCitasCliente: buscarCitasClienteTool,
+  confirmarCita: confirmarCitaTool,
 };
 
 // ====================================================================

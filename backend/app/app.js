@@ -233,6 +233,53 @@ class SaaSApplication {
       });
     });
 
+    // ========================================
+    // RUTAS INTERNAS (sin autenticación, solo red interna)
+    // ========================================
+
+    // Endpoint interno para procesamiento de recordatorios
+    // Llamado por pg_cron, n8n Schedule Trigger, o cron del sistema
+    this.app.post('/internal/recordatorios/procesar', async (req, res) => {
+      try {
+        // Validación básica de origen (solo red interna)
+        const clientIp = req.ip || req.connection.remoteAddress;
+        const isInternal = clientIp === '127.0.0.1' ||
+                          clientIp === '::1' ||
+                          clientIp.startsWith('172.') ||
+                          clientIp.startsWith('10.') ||
+                          clientIp.startsWith('192.168.');
+
+        // En desarrollo permitir todos, en producción solo red interna
+        if (this.environment === 'production' && !isInternal) {
+          logger.warn(`[Internal] Acceso denegado desde IP: ${clientIp}`);
+          return res.status(403).json({
+            success: false,
+            message: 'Acceso denegado'
+          });
+        }
+
+        const RecordatorioService = require('./modules/recordatorios/services/recordatorioService');
+        const { limite } = req.body;
+
+        logger.info('[Internal] Iniciando procesamiento de recordatorios');
+
+        const resultado = await RecordatorioService.procesarBatch(limite || 100);
+
+        res.json({
+          success: true,
+          data: resultado,
+          timestamp: new Date().toISOString()
+        });
+
+      } catch (error) {
+        logger.error('[Internal] Error procesando recordatorios:', error);
+        res.status(500).json({
+          success: false,
+          message: error.message
+        });
+      }
+    });
+
     logger.info('Rutas inicializadas');
   }
 

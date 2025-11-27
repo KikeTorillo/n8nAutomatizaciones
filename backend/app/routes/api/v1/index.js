@@ -54,6 +54,11 @@ const marketplaceRouter = require('../../../modules/marketplace/routes');
 // ========================================
 const comisionesRouter = require('../../../modules/comisiones/routes');
 
+// ========================================
+// MÓDULO RECORDATORIOS - Nov 2025
+// ========================================
+const recordatoriosRouter = require('../../../modules/recordatorios/routes/recordatorios.routes');
+
 function routerApi(app) {
     const router = express.Router();
 
@@ -92,6 +97,9 @@ function routerApi(app) {
 
     // Rutas de comisiones profesionales
     router.use('/comisiones', comisionesRouter);
+
+    // Rutas de recordatorios automáticos
+    router.use('/recordatorios', recordatoriosRouter);
 
     // Rutas de marketplace público
     router.use('/marketplace', marketplaceRouter);

@@ -190,12 +190,20 @@ function Dashboard() {
                   </>
                 )}
                 {tieneChatbots && (
-                  <button
-                    onClick={() => navigate('/chatbots')}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    Chatbots
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate('/chatbots')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Chatbots
+                    </button>
+                    <button
+                      onClick={() => navigate('/configuracion/recordatorios')}
+                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
+                    >
+                      Recordatorios
+                    </button>
+                  </>
                 )}
                 {tieneComisiones && (
                   <button

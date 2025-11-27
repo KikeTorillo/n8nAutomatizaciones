@@ -1,0 +1,58 @@
+{
+  "name": "recordatorios",
+  "display_name": "Sistema de Recordatorios",
+  "version": "1.0.0",
+  "description": "Recordatorios automáticos de citas con inyección en memoria del chat para contexto IA",
+  "depends": ["core", "agendamiento"],
+  "dependencies_hard": {
+    "agendamiento": {
+      "razon": "Recordatorios se envían para citas pendientes. FK historial_recordatorios.cita_id → citas(id) NOT NULL",
+      "tablas": ["citas", "clientes", "chatbot_config"],
+      "trigger": "Job n8n Schedule Trigger cada 5 minutos",
+      "eliminar_modulo": "BLOQUEADO - Requiere desactivar recordatorios primero"
+    }
+  },
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en": ["profesional", "empresarial", "basico"],
+    "addon_para": [],
+    "notes": "Incluido en todos los planes con chatbot activo"
+  },
+  "routes": {
+    "recordatorios": "/api/v1/recordatorios",
+    "configuracion": "/api/v1/recordatorios/configuracion",
+    "estadisticas": "/api/v1/recordatorios/estadisticas"
+  },
+  "resources": {
+    "historial_recordatorios": {
+      "table": "historial_recordatorios",
+      "limit_field": null,
+      "notes": "Historial de envíos, sin límite"
+    },
+    "configuracion_recordatorios": {
+      "table": "configuracion_recordatorios",
+      "limit_field": null,
+      "notes": "Una configuración por organización"
+    }
+  },
+  "tables": [
+    "configuracion_recordatorios",
+    "historial_recordatorios"
+  ],
+  "features": [
+    "Recordatorio automático 24h antes de cita",
+    "Recordatorio secundario configurable (2h por defecto)",
+    "Inyección en memoria del chat para contexto IA",
+    "Soporte Telegram y WhatsApp Business",
+    "Plantillas personalizables con variables",
+    "Ventana horaria configurable (no enviar de noche)",
+    "Reintentos automáticos en caso de fallo",
+    "Vista de debugging v_recordatorios_pendientes",
+    "MCP Tool confirmarCita para respuestas"
+  ],
+  "priority": 25,
+  "required": false,
+  "can_disable": true
+}

@@ -15,6 +15,7 @@ LABEL version="1.0.0"
 # Instalar dependencias necesarias
 RUN apt-get update && apt-get install -y \
     postgresql-17-cron \
+    postgresql-17-http \
     && rm -rf /var/lib/apt/lists/*
 
 # Verificar instalación de pg_cron

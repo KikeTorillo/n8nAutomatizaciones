@@ -76,6 +76,9 @@ const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
 // Página de Configuración de Módulos
 const ModulosPage = lazy(() => import('@/pages/configuracion/ModulosPage'));
 
+// Página de Configuración de Recordatorios (Nov 2025)
+const RecordatoriosPage = lazy(() => import('@/pages/configuracion/RecordatoriosPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -386,6 +389,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ModulosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/recordatorios',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(RecordatoriosPage)}
           </ProtectedRoute>
         ),
       },
