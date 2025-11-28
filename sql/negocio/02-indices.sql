@@ -94,6 +94,36 @@ Query típico: SELECT nombre, calificacion, telefono, email
              FROM profesionales
              WHERE organizacion_id = ? AND activo = TRUE AND disponible_online = TRUE;';
 
+-- 🔗 ÍNDICE 8: BÚSQUEDA POR USUARIO VINCULADO (Nov 2025 - Modelo Unificado)
+-- Propósito: Encontrar profesional por usuario (para auto-asignación en POS)
+-- Uso: WHERE usuario_id = ? (query desde VentaPOSPage)
+-- Performance: O(1) - índice parcial solo con usuarios vinculados
+CREATE INDEX idx_profesionales_usuario
+    ON profesionales (usuario_id)
+    WHERE usuario_id IS NOT NULL;
+
+COMMENT ON INDEX idx_profesionales_usuario IS
+'Índice para vincular profesionales con usuarios del sistema (Nov 2025).
+Uso principal: Auto-asignación de vendedor en POS.
+Query: SELECT * FROM profesionales WHERE usuario_id = ?
+Performance: O(1), índice parcial solo incluye registros con usuario vinculado.';
+
+-- 🎛️ ÍNDICE 9: BÚSQUEDA EN MÓDULOS HABILITADOS (Nov 2025 - Modelo Unificado)
+-- Propósito: Filtrar profesionales por módulo habilitado (POS, Inventario, etc.)
+-- Uso: WHERE modulos_acceso->>'pos' = 'true' AND activo = TRUE
+-- Performance: GIN permite queries eficientes en JSONB
+CREATE INDEX idx_profesionales_modulos_gin
+    ON profesionales USING GIN (modulos_acceso)
+    WHERE activo = TRUE;
+
+COMMENT ON INDEX idx_profesionales_modulos_gin IS
+'Índice GIN para búsquedas en módulos habilitados por profesional (Nov 2025).
+Queries ejemplo:
+  - Profesionales con acceso a POS: WHERE modulos_acceso->>''pos'' = ''true''
+  - Profesionales con acceso a agendamiento: WHERE modulos_acceso->>''agendamiento'' = ''true''
+  - Profesionales multi-módulo: WHERE modulos_acceso ?& array[''pos'', ''agendamiento'']
+Performance: <5ms para tablas con miles de profesionales.';
+
 -- ====================================================================
 -- 🧑‍💼 ÍNDICES PARA TABLA CLIENTES (7 índices optimizados)
 -- ====================================================================

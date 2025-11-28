@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { DollarSign, Calendar, TrendingUp, CreditCard, Package, Download } from 'lucide-react';
+import { DollarSign, Calendar, TrendingUp, CreditCard, Package, Download, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useCorteCaja } from '@/hooks/useVentas';
+import POSNavTabs from '@/components/pos/POSNavTabs';
 
 /**
  * Página de Corte de Caja
  * Muestra resumen de ventas por período con totales por método de pago
  */
 export default function CorteCajaPage() {
+  const navigate = useNavigate();
   const toast = useToast();
 
   // Estado de filtros
@@ -20,8 +23,8 @@ export default function CorteCajaPage() {
 
   // Query
   const { data: corteData, isLoading, isError } = useCorteCaja(filtros);
-  const resumen = corteData?.resumen || {};
-  const totalesPorMetodo = corteData?.totales_por_metodo || [];
+  const resumen = corteData?.resumen_general || {};
+  const totalesPorMetodo = corteData?.totales_por_metodo_pago || [];
   const ventasPorHora = corteData?.ventas_por_hora || [];
   const topProductos = corteData?.top_productos || [];
 
@@ -56,28 +59,49 @@ export default function CorteCajaPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <DollarSign className="h-8 w-8 text-green-600" />
-            Corte de Caja
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Resumen de ventas y totales por método de pago
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={handleExportarPDF}
-          icon={Download}
-          disabled={!corteData}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
         >
-          Exportar PDF
-        </Button>
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
+
+        <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona ventas, historial y reportes
+        </p>
       </div>
+
+      {/* Tabs de navegación POS */}
+      <POSNavTabs />
+
+      {/* Contenido */}
+      <div className="p-6 space-y-6">
+        {/* Header de sección */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <DollarSign className="h-6 w-6 text-green-600" />
+              Corte de Caja
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Resumen de ventas y totales por método de pago
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={handleExportarPDF}
+            icon={Download}
+            disabled={!corteData}
+          >
+            Exportar PDF
+          </Button>
+        </div>
 
       {/* Filtros */}
       <div className="bg-white rounded-lg shadow p-4">
@@ -226,15 +250,15 @@ export default function CorteCajaPage() {
                           {formatearMetodoPago(metodo.metodo_pago)}
                         </span>
                         <span className="text-sm text-gray-600">
-                          {metodo.cantidad_ventas} venta{metodo.cantidad_ventas !== 1 ? 's' : ''}
+                          {metodo.total_ventas} venta{parseInt(metodo.total_ventas) !== 1 ? 's' : ''}
                         </span>
                       </div>
                       <div className="text-right">
                         <p className="text-lg font-bold text-gray-900">
-                          ${parseFloat(metodo.total || 0).toFixed(2)}
+                          ${parseFloat(metodo.total_monto || 0).toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {((parseFloat(metodo.total || 0) / parseFloat(resumen.total_ingresos || 1)) * 100).toFixed(1)}%
+                          {((parseFloat(metodo.total_monto || 0) / parseFloat(resumen.total_ingresos || 1)) * 100).toFixed(1)}%
                         </p>
                       </div>
                     </div>
@@ -276,10 +300,10 @@ export default function CorteCajaPage() {
                             {hora.hora}:00 hrs
                           </td>
                           <td className="px-4 py-3 text-sm text-center text-gray-900">
-                            {hora.cantidad_ventas}
+                            {hora.total_ventas}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                            ${parseFloat(hora.total || 0).toFixed(2)}
+                            ${parseFloat(hora.total_monto || 0).toFixed(2)}
                           </td>
                         </tr>
                       ))}
@@ -317,20 +341,20 @@ export default function CorteCajaPage() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {topProductos.map((producto, index) => (
-                        <tr key={producto.producto_id} className={index < 3 ? 'bg-orange-50' : ''}>
+                        <tr key={`${producto.nombre_producto}-${index}`} className={index < 3 ? 'bg-orange-50' : ''}>
                           <td className="px-4 py-3 text-sm text-gray-900">
                             <div>
-                              <p className="font-medium">{producto.producto_nombre}</p>
-                              {producto.producto_sku && (
-                                <p className="text-xs text-gray-500">SKU: {producto.producto_sku}</p>
+                              <p className="font-medium">{producto.nombre_producto}</p>
+                              {producto.sku && (
+                                <p className="text-xs text-gray-500">SKU: {producto.sku}</p>
                               )}
                             </div>
                           </td>
                           <td className="px-4 py-3 text-sm text-center font-semibold text-gray-900">
-                            {producto.cantidad_vendida}
+                            {producto.unidades_vendidas}
                           </td>
                           <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
-                            ${parseFloat(producto.total || 0).toFixed(2)}
+                            ${parseFloat(producto.total_ventas || 0).toFixed(2)}
                           </td>
                         </tr>
                       ))}
@@ -342,6 +366,7 @@ export default function CorteCajaPage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

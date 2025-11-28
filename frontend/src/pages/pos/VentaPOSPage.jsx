@@ -1,22 +1,44 @@
-import { useState } from 'react';
-import { ShoppingCart, Trash2, Check, AlertCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { ShoppingCart, Trash2, Check, AlertCircle, ArrowLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useCrearVenta } from '@/hooks/useVentas';
+import { useAccesoModulo } from '@/hooks/useAccesoModulo';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
+import POSNavTabs from '@/components/pos/POSNavTabs';
 
 /**
  * Página principal del punto de venta (POS)
  * Permite crear ventas escaneando/buscando productos
+ *
+ * Nov 2025: Integración con Modelo Unificado Profesional-Usuario
+ * - Muestra el vendedor auto-asignado en el header
+ * - Valida acceso al módulo POS
  */
 export default function VentaPOSPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
   const toast = useToast();
   const crearVenta = useCrearVenta();
+
+  // Nov 2025: Obtener profesional vinculado y validar acceso a POS
+  const {
+    tieneAcceso,
+    profesional,
+    profesionalNombre,
+    isLoading: isLoadingAcceso
+  } = useAccesoModulo('pos');
+
+  // Redirigir si no tiene acceso a POS (después de cargar)
+  useEffect(() => {
+    if (!isLoadingAcceso && profesional && !tieneAcceso) {
+      toast.error('No tienes acceso al módulo de Punto de Venta');
+      navigate('/home');
+    }
+  }, [tieneAcceso, profesional, isLoadingAcceso, navigate, toast]);
 
   const [items, setItems] = useState([]);
   const [descuentoGlobal, setDescuentoGlobal] = useState(0);
@@ -168,6 +190,15 @@ export default function VentaPOSPage() {
     <div className="h-[calc(100vh-4rem)] flex flex-col">
       {/* Header */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
+        {/* Botón de regreso al home */}
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
@@ -176,17 +207,30 @@ export default function VentaPOSPage() {
             </p>
           </div>
 
-          {items.length > 0 && (
-            <button
-              onClick={handleVaciarCarrito}
-              className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors font-medium"
-            >
-              <Trash2 className="h-5 w-5" />
-              Vaciar Carrito
-            </button>
-          )}
+          <div className="flex items-center gap-4">
+            {/* Nov 2025: Mostrar vendedor asignado */}
+            {profesionalNombre && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
+                <User className="h-5 w-5" />
+                <span className="font-medium">Vendedor: {profesionalNombre}</span>
+              </div>
+            )}
+
+            {items.length > 0 && (
+              <button
+                onClick={handleVaciarCarrito}
+                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors font-medium"
+              >
+                <Trash2 className="h-5 w-5" />
+                Vaciar Carrito
+              </button>
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Tabs de navegación POS */}
+      <POSNavTabs />
 
       {/* Main Content */}
       <div className="flex-1 overflow-hidden">

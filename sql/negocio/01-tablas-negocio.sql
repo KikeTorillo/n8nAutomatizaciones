@@ -94,6 +94,23 @@ CREATE TABLE profesionales (
     total_clientes_atendidos INTEGER DEFAULT 0, -- Contador de clientes únicos
 
     -- ====================================================================
+    -- 🔗 SECCIÓN: VINCULACIÓN CON USUARIO Y MÓDULOS (Nov 2025)
+    -- ====================================================================
+    -- Permite reutilizar el profesional en múltiples módulos (POS, Comisiones)
+    -- y controlar granularmente a qué módulos tiene acceso.
+    -- ────────────────────────────────────────────────────────────────────
+    usuario_id INTEGER UNIQUE,                  -- Usuario del sistema vinculado (opcional)
+                                               -- FK se agrega después de CREATE TABLE usuarios
+                                               -- NULL = profesional sin acceso al sistema
+                                               -- Si tiene valor = puede hacer login y auto-asignarse
+
+    modulos_acceso JSONB DEFAULT '{"agendamiento": true, "pos": false, "inventario": false}',
+                                               -- Módulos habilitados para este profesional
+                                               -- agendamiento: puede atender citas
+                                               -- pos: puede registrar ventas (vendedor)
+                                               -- inventario: puede gestionar stock
+
+    -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS
     -- ====================================================================
     creado_en TIMESTAMPTZ DEFAULT NOW(),       -- Fecha de registro
@@ -341,6 +358,17 @@ ALTER TABLE usuarios
 ADD CONSTRAINT fk_usuarios_profesional
 FOREIGN KEY (profesional_id) REFERENCES profesionales(id)
     ON DELETE SET NULL    -- Si se elimina profesional, SET NULL en usuario
+    ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
+
+-- FK: profesionales.usuario_id → usuarios.id (Nov 2025 - Modelo Unificado)
+-- Permite vincular un profesional con un usuario del sistema para:
+-- - Auto-asignación en POS (vendedor)
+-- - Comisiones unificadas (citas + ventas)
+-- - Control de acceso por módulo
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_usuario
+FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    ON DELETE SET NULL    -- Si se elimina usuario, SET NULL en profesional
     ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
 
 -- FK: clientes.profesional_preferido_id → profesionales.id

@@ -2,6 +2,9 @@ const { VentasPOSModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const ModulesCache = require('../../../core/ModulesCache');
+const ProfesionalModel = require('../../agendamiento/models/profesional.model');
+const TicketPDFService = require('../../../services/ticketPDF.service');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 /**
  * Controller para gestión de ventas POS
@@ -12,11 +15,26 @@ class VentasPOSController {
     /**
      * Crear nueva venta con items
      * POST /api/v1/pos/ventas
+     *
+     * Nov 2025: Auto-asigna profesional_id si el usuario tiene
+     * un profesional vinculado con acceso al módulo POS
      */
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user?.id;
 
-        const venta = await VentasPOSModel.crear(req.body, organizacionId);
+        // Nov 2025: Auto-asignar profesional si el usuario tiene uno vinculado
+        let ventaData = { ...req.body };
+
+        if (usuarioId && !ventaData.profesional_id) {
+            const profesional = await ProfesionalModel.buscarPorUsuario(usuarioId, organizacionId);
+
+            if (profesional && profesional.modulos_acceso?.pos === true) {
+                ventaData.profesional_id = profesional.id;
+            }
+        }
+
+        const venta = await VentasPOSModel.crear(ventaData, organizacionId);
 
         return ResponseHelper.success(
             res,
@@ -225,6 +243,74 @@ class VentasPOSController {
         );
 
         return ResponseHelper.success(res, resultado, resultado.mensaje);
+    });
+
+    /**
+     * Generar ticket PDF de una venta
+     * GET /api/v1/pos/ventas/:id/ticket
+     * Query params:
+     * - paper_size: '58mm' | '80mm' (default: '80mm')
+     * - download: 'true' para forzar descarga, 'false' para inline (default: 'true')
+     */
+    static generarTicket = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+        const paperSize = req.query.paper_size || '80mm';
+        const download = req.query.download !== 'false';
+
+        // Obtener datos de la venta
+        const ventaData = await VentasPOSModel.obtenerPorId(parseInt(id), organizacionId, {
+            incluirAgendamiento: true
+        });
+
+        if (!ventaData || !ventaData.venta) {
+            return ResponseHelper.error(res, 'Venta no encontrada', 404);
+        }
+
+        // Obtener datos de la organización
+        const organizacion = await RLSContextManager.withBypass(async (db) => {
+            const result = await db.query(`
+                SELECT
+                    o.nombre_comercial,
+                    o.razon_social,
+                    o.rfc_nif,
+                    o.telefono,
+                    o.email_admin,
+                    o.logo_url,
+                    CONCAT_WS(', ',
+                        c.nombre,
+                        e.nombre,
+                        p.nombre
+                    ) AS direccion
+                FROM organizaciones o
+                LEFT JOIN ciudades c ON c.id = o.ciudad_id
+                LEFT JOIN estados e ON e.id = o.estado_id
+                LEFT JOIN paises p ON p.id = o.pais_id
+                WHERE o.id = $1
+            `, [organizacionId]);
+            return result.rows[0];
+        });
+
+        if (!organizacion) {
+            return ResponseHelper.error(res, 'Organización no encontrada', 404);
+        }
+
+        // Generar PDF
+        const pdfBuffer = await TicketPDFService.generarTicket({
+            venta: ventaData.venta,
+            items: ventaData.items,
+            organizacion
+        }, { paperSize });
+
+        // Configurar headers de respuesta
+        const filename = `ticket-${ventaData.venta.folio}.pdf`;
+        const disposition = download ? 'attachment' : 'inline';
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+
+        return res.send(pdfBuffer);
     });
 }
 

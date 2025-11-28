@@ -862,11 +862,13 @@ class VentasPOSModel {
             });
 
             // Condiciones WHERE base
+            // Nota: fecha_fin se ajusta para incluir todo el día (hasta las 23:59:59)
+            // usando < fecha_fin + 1 día en lugar de <= fecha_fin
             let whereConditions = [
                 'v.organizacion_id = $1',
                 'v.estado = $2',
                 'v.fecha_venta >= $3',
-                'v.fecha_venta <= $4'
+                "v.fecha_venta < ($4::date + interval '1 day')"
             ];
             let values = [organizacionId, 'completada', fechaInicio, fechaFin];
             let paramCounter = 5;

@@ -22,15 +22,16 @@ class ProfesionalModel {
                     documento_identidad, tipo_profesional_id, licencias_profesionales,
                     años_experiencia, idiomas, color_calendario, biografia, foto_url,
                     configuracion_horarios, configuracion_servicios, comision_porcentaje,
-                    salario_base, forma_pago, activo, disponible_online, fecha_ingreso
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                    salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
+                    usuario_id, modulos_acceso
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
                 RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
                          documento_identidad, tipo_profesional_id, licencias_profesionales,
                          años_experiencia, idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios, comision_porcentaje,
                          salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
                          calificacion_promedio, total_citas_completadas, total_clientes_atendidos,
-                         creado_en, actualizado_en
+                         usuario_id, modulos_acceso, creado_en, actualizado_en
             `;
 
             const values = [
@@ -54,7 +55,9 @@ class ProfesionalModel {
                 profesionalData.forma_pago || 'comision',
                 profesionalData.activo !== undefined ? profesionalData.activo : true,
                 profesionalData.disponible_online !== undefined ? profesionalData.disponible_online : true,
-                profesionalData.fecha_ingreso
+                profesionalData.fecha_ingreso,
+                profesionalData.usuario_id || null,
+                profesionalData.modulos_acceso || { agendamiento: true, pos: false, inventario: false }
             ];
 
             try {
@@ -272,16 +275,19 @@ class ProfesionalModel {
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
+                       p.usuario_id, p.modulos_acceso,
                        p.creado_en, p.actualizado_en,
                        tp.codigo as tipo_codigo, tp.nombre as tipo_nombre, tp.color as tipo_color,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
+                       u.nombre as usuario_nombre, u.email as usuario_email,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
                 JOIN organizaciones o ON p.organizacion_id = o.id
+                LEFT JOIN usuarios u ON p.usuario_id = u.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
-                GROUP BY p.id, tp.id, o.id
+                GROUP BY p.id, tp.id, o.id, u.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
@@ -303,6 +309,8 @@ class ProfesionalModel {
                 disponible_online = null,
                 tipo_profesional_id = null,
                 busqueda = null,
+                modulo = null, // Filtrar por módulo habilitado: 'agendamiento', 'pos', 'inventario'
+                con_usuario = null, // Filtrar profesionales con/sin usuario vinculado
                 limite = 50,
                 offset = 0
             } = filtros;
@@ -317,11 +325,14 @@ class ProfesionalModel {
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
+                       p.usuario_id, p.modulos_acceso,
                        p.creado_en, p.actualizado_en,
                        tp.codigo as tipo_codigo, tp.nombre as tipo_nombre, tp.color as tipo_color,
+                       u.nombre as usuario_nombre, u.email as usuario_email,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN usuarios u ON p.usuario_id = u.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.organizacion_id = $1
             `;
@@ -353,7 +364,19 @@ class ProfesionalModel {
                 contador++;
             }
 
-            query += ` GROUP BY p.id, tp.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
+            // Filtrar por módulo habilitado (Nov 2025)
+            if (modulo) {
+                query += ` AND p.modulos_acceso->>'${modulo}' = 'true'`;
+            }
+
+            // Filtrar por usuario vinculado (Nov 2025)
+            if (con_usuario === true) {
+                query += ` AND p.usuario_id IS NOT NULL`;
+            } else if (con_usuario === false) {
+                query += ` AND p.usuario_id IS NULL`;
+            }
+
+            query += ` GROUP BY p.id, tp.id, u.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
             values.push(limite, offset);
 
             const result = await db.query(query, values);
@@ -386,7 +409,8 @@ class ProfesionalModel {
                 'años_experiencia', 'idiomas', 'color_calendario', 'biografia',
                 'foto_url', 'configuracion_horarios', 'configuracion_servicios',
                 'comision_porcentaje', 'salario_base', 'forma_pago', 'activo',
-                'disponible_online', 'fecha_salida', 'motivo_inactividad'
+                'disponible_online', 'fecha_salida', 'motivo_inactividad',
+                'usuario_id', 'modulos_acceso' // Nov 2025 - Modelo Unificado
             ];
 
             const campos = [];
@@ -603,6 +627,156 @@ class ProfesionalModel {
 
             const result = await db.query(query, values);
             return parseInt(result.rows[0].count) === 0;
+        });
+    }
+
+    // ====================================================================
+    // MÉTODOS PARA MODELO UNIFICADO PROFESIONAL-USUARIO (Nov 2025)
+    // ====================================================================
+
+    /**
+     * Busca un profesional por su usuario_id vinculado
+     * Usado para auto-asignación en POS
+     * @param {number} usuarioId - ID del usuario
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Object|null>} Profesional o null
+     */
+    static async buscarPorUsuario(usuarioId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
+                       p.tipo_profesional_id, p.usuario_id, p.modulos_acceso,
+                       p.activo, p.disponible_online,
+                       tp.codigo as tipo_codigo, tp.nombre as tipo_nombre
+                FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                WHERE p.usuario_id = $1 AND p.organizacion_id = $2 AND p.activo = TRUE
+            `;
+
+            const result = await db.query(query, [usuarioId, organizacionId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Vincula o desvincula un usuario a un profesional
+     * @param {number} profesionalId - ID del profesional
+     * @param {number} organizacionId - ID de la organización
+     * @param {number|null} usuarioId - ID del usuario (null para desvincular)
+     * @returns {Promise<Object>} Profesional actualizado
+     */
+    static async vincularUsuario(profesionalId, organizacionId, usuarioId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            // Si se va a vincular, verificar que el usuario no esté vinculado a otro profesional
+            if (usuarioId) {
+                const checkQuery = `
+                    SELECT id, nombre_completo
+                    FROM profesionales
+                    WHERE usuario_id = $1 AND organizacion_id = $2 AND id != $3 AND activo = TRUE
+                `;
+                const checkResult = await db.query(checkQuery, [usuarioId, organizacionId, profesionalId]);
+
+                if (checkResult.rows.length > 0) {
+                    throw new Error(`El usuario ya está vinculado al profesional "${checkResult.rows[0].nombre_completo}"`);
+                }
+            }
+
+            const query = `
+                UPDATE profesionales
+                SET usuario_id = $1, actualizado_en = NOW()
+                WHERE id = $2 AND organizacion_id = $3
+                RETURNING id, nombre_completo, usuario_id, modulos_acceso, actualizado_en
+            `;
+
+            const result = await db.query(query, [usuarioId, profesionalId, organizacionId]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Profesional no encontrado en la organización');
+            }
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Actualiza los módulos habilitados para un profesional
+     * @param {number} profesionalId - ID del profesional
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} modulosAcceso - Objeto con módulos habilitados
+     * @returns {Promise<Object>} Profesional actualizado
+     */
+    static async actualizarModulos(profesionalId, organizacionId, modulosAcceso) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                UPDATE profesionales
+                SET modulos_acceso = $1, actualizado_en = NOW()
+                WHERE id = $2 AND organizacion_id = $3
+                RETURNING id, nombre_completo, usuario_id, modulos_acceso, actualizado_en
+            `;
+
+            const result = await db.query(query, [modulosAcceso, profesionalId, organizacionId]);
+
+            if (result.rows.length === 0) {
+                throw new Error('Profesional no encontrado en la organización');
+            }
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Lista profesionales con acceso a un módulo específico
+     * @param {number} organizacionId - ID de la organización
+     * @param {string} modulo - Nombre del módulo ('agendamiento', 'pos', 'inventario')
+     * @param {boolean} soloActivos - Filtrar solo profesionales activos
+     * @returns {Promise<Array>} Lista de profesionales
+     */
+    static async listarPorModulo(organizacionId, modulo, soloActivos = true) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            let query = `
+                SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
+                       p.tipo_profesional_id, p.usuario_id, p.modulos_acceso,
+                       p.activo, p.disponible_online,
+                       tp.codigo as tipo_codigo, tp.nombre as tipo_nombre,
+                       u.nombre as usuario_nombre, u.email as usuario_email
+                FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN usuarios u ON p.usuario_id = u.id
+                WHERE p.organizacion_id = $1
+                    AND p.modulos_acceso->>'${modulo}' = 'true'
+            `;
+
+            if (soloActivos) {
+                query += ' AND p.activo = TRUE';
+            }
+
+            query += ' ORDER BY p.nombre_completo ASC';
+
+            const result = await db.query(query, [organizacionId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Obtiene usuarios disponibles para vincular (sin profesional asignado)
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} Lista de usuarios disponibles
+     */
+    static async obtenerUsuariosDisponibles(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT u.id, u.nombre, u.email, u.rol
+                FROM usuarios u
+                LEFT JOIN profesionales p ON u.id = p.usuario_id AND p.activo = TRUE
+                WHERE u.organizacion_id = $1
+                    AND u.activo = TRUE
+                    AND p.id IS NULL
+                    AND u.rol IN ('empleado', 'admin', 'propietario')
+                ORDER BY u.nombre ASC
+            `;
+
+            const result = await db.query(query, [organizacionId]);
+            return result.rows;
         });
     }
 

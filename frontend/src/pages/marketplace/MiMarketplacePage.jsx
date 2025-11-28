@@ -81,11 +81,11 @@ function MiMarketplacePage() {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/home')}
                 className="mb-2 -ml-2"
               >
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al Dashboard
+                Volver al Inicio
               </Button>
               <h1 className="text-3xl font-bold text-gray-900">Mi Marketplace</h1>
               <p className="text-sm text-gray-600 mt-1">

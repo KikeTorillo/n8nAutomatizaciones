@@ -1,14 +1,17 @@
 import { useState } from 'react';
-import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt } from 'lucide-react';
+import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useVentasDiarias } from '@/hooks/useVentas';
+import POSNavTabs from '@/components/pos/POSNavTabs';
 
 /**
  * Página de Reporte de Ventas Diarias
  * Muestra análisis detallado de ventas de un día específico
  */
 export default function ReporteVentasDiariasPage() {
+  const navigate = useNavigate();
   const toast = useToast();
 
   // Estado de filtros
@@ -34,30 +37,51 @@ export default function ReporteVentasDiariasPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <BarChart3 className="h-8 w-8 text-blue-600" />
-            Reporte de Ventas Diarias
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Análisis detallado de ventas por día
-          </p>
-        </div>
-
-        <Button
-          variant="outline"
-          onClick={handleExportarExcel}
-          icon={Download}
-          disabled={!reporteData}
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
         >
-          Exportar Excel
-        </Button>
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
+
+        <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona ventas, historial y reportes
+        </p>
       </div>
 
-      {/* Filtros */}
+      {/* Tabs de navegación POS */}
+      <POSNavTabs />
+
+      {/* Contenido */}
+      <div className="p-6 space-y-6">
+        {/* Header de sección */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-blue-600" />
+              Reporte de Ventas Diarias
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Análisis detallado de ventas por día
+            </p>
+          </div>
+
+          <Button
+            variant="outline"
+            onClick={handleExportarExcel}
+            icon={Download}
+            disabled={!reporteData}
+          >
+            Exportar Excel
+          </Button>
+        </div>
+
+        {/* Filtros */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
@@ -384,6 +408,7 @@ export default function ReporteVentasDiariasPage() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }

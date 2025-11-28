@@ -245,28 +245,23 @@ router.get('/reportes/ventas-diarias',
 );
 
 // ===================================================================
-// PENDIENTE: TICKETS PDF
+// TICKETS PDF
 // ===================================================================
 
 /**
- * ⚠️ PENDIENTE DE IMPLEMENTACIÓN
  * GET /api/v1/pos/ventas/:id/ticket
- * Generar ticket de venta en PDF
- *
- * REQUERIMIENTOS:
- * 1. Instalar: npm install pdfkit
- * 2. Crear: models/pos/tickets.model.js
- * 3. Crear: controllers/pos/tickets.controller.js
- * 4. Implementar plantilla de ticket térmica (58mm o 80mm)
- * 5. Incluir: Folio, fecha, items, totales, código QR
- *
- * router.get('/ventas/:id/ticket',
- *     auth.authenticateToken,
- *     tenant.setTenantContext,
- *     rateLimiting.apiRateLimit,
- *     validate(posSchemas.obtenerPorId),
- *     POSController.generarTicket
- * );
+ * Generar ticket de venta en PDF (formato térmico 58mm/80mm)
+ * Query params:
+ * - paper_size: '58mm' | '80mm' (default: '80mm')
+ * - download: 'true' | 'false' (default: 'true')
+ * Returns: PDF binary
  */
+router.get('/ventas/:id/ticket',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerPorId),
+    POSController.generarTicket
+);
 
 module.exports = router;

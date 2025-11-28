@@ -120,11 +120,11 @@ function ChatbotsPage() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/home')}
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver al Dashboard
+            Volver al Inicio
           </button>
 
           <div className="flex items-center justify-between">

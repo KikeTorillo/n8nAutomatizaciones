@@ -53,17 +53,17 @@ function Login() {
 
       // Redirección basada en el rol del usuario
       const userRole = data.usuario.rol;
-      let redirectPath = '/dashboard'; // Default
+      let redirectPath = '/home'; // Default: App Home (Nov 2025)
 
       if (userRole === 'super_admin') {
         redirectPath = '/superadmin';
         console.log('➡️ Super Admin detectado - Redirigiendo a panel super admin');
       } else if (userRole === 'empleado') {
-        redirectPath = '/citas';
-        console.log('➡️ Empleado detectado - Redirigiendo a citas');
+        redirectPath = '/home';
+        console.log('➡️ Empleado detectado - Redirigiendo a App Home');
       } else {
         // admin, propietario
-        console.log('➡️ Admin/Propietario detectado - Redirigiendo a dashboard');
+        console.log('➡️ Admin/Propietario detectado - Redirigiendo a App Home');
       }
 
       navigate(redirectPath);

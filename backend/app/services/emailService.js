@@ -6,6 +6,7 @@
 const transporter = require('./email/transporter');
 const logger = require('../utils/logger');
 const { generatePasswordResetEmail, generatePasswordResetText } = require('./email/templates/passwordReset');
+const { generateInvitacionEmail, generateInvitacionText } = require('./email/templates/invitacionProfesional');
 
 class EmailService {
     constructor() {
@@ -60,6 +61,74 @@ class EmailService {
 
         } catch (error) {
             logger.error(`❌ Error enviando email de recuperación a ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Envía un email de invitación a un profesional
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.email - Email del destinatario
+     * @param {string} params.nombre - Nombre del invitado
+     * @param {string} params.token - Token de invitación
+     * @param {string} params.organizacion_nombre - Nombre de la organización
+     * @param {string} [params.profesional_nombre] - Nombre del rol/profesional
+     * @param {string} params.expira_en - Fecha de expiración
+     * @param {boolean} [params.es_reenvio=false] - Si es un reenvío
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarInvitacionProfesional({
+        email,
+        nombre,
+        token,
+        organizacion_nombre,
+        profesional_nombre,
+        expira_en,
+        es_reenvio = false
+    }) {
+        try {
+            // Construir URL de registro
+            const registroUrl = `${this.frontendUrl}/registro-invitacion/${token}`;
+
+            // Generar contenido del email
+            const htmlContent = generateInvitacionEmail({
+                nombre,
+                registroUrl,
+                organizacion_nombre,
+                profesional_nombre: profesional_nombre || nombre,
+                expira_en,
+                es_reenvio
+            });
+
+            const textContent = generateInvitacionText({
+                nombre,
+                registroUrl,
+                organizacion_nombre,
+                profesional_nombre: profesional_nombre || nombre,
+                expira_en,
+                es_reenvio
+            });
+
+            // Configuración del email
+            const mailOptions = {
+                from: this.emailFrom,
+                to: email,
+                subject: `👋 ${es_reenvio ? '[Recordatorio] ' : ''}Invitación de ${organizacion_nombre}`,
+                text: textContent,
+                html: htmlContent
+            };
+
+            // Enviar email
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                logger.info(`📧 Invitación ${es_reenvio ? 'reenviada' : 'enviada'} a: ${email}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            logger.error(`❌ Error enviando invitación a ${email}: ${error.message}`);
             throw error;
         }
     }

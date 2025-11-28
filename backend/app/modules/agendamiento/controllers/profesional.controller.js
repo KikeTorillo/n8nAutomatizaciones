@@ -92,6 +92,8 @@ class ProfesionalController {
             disponible_online: req.query.disponible_online !== undefined ? req.query.disponible_online === 'true' : null,
             tipo_profesional_id: req.query.tipo_profesional_id ? parseInt(req.query.tipo_profesional_id) : null,
             busqueda: req.query.busqueda || null,
+            modulo: req.query.modulo || null, // Nov 2025: filtrar por módulo habilitado
+            con_usuario: req.query.con_usuario !== undefined ? req.query.con_usuario === 'true' : null, // Nov 2025
             limite: Math.min(parseInt(req.query.limit) || 20, 50),
             offset: Math.max(parseInt(req.query.offset) || 0, 0)
         };
@@ -215,6 +217,116 @@ class ProfesionalController {
             disponible,
             organizacion_id: req.tenant.organizacionId
         }, disponible ? 'Email disponible' : 'Email ya está en uso');
+    });
+
+    // ====================================================================
+    // ENDPOINTS PARA MODELO UNIFICADO PROFESIONAL-USUARIO (Nov 2025)
+    // ====================================================================
+
+    /**
+     * Buscar profesional por usuario vinculado
+     * GET /profesionales/por-usuario/:usuarioId
+     */
+    static buscarPorUsuario = asyncHandler(async (req, res) => {
+        const { usuarioId } = req.params;
+
+        const profesional = await ProfesionalModel.buscarPorUsuario(
+            parseInt(usuarioId),
+            req.tenant.organizacionId
+        );
+
+        if (!profesional) {
+            return ResponseHelper.success(res, null, 'Usuario no tiene profesional vinculado');
+        }
+
+        return ResponseHelper.success(res, profesional, 'Profesional encontrado');
+    });
+
+    /**
+     * Vincular o desvincular usuario a profesional
+     * PATCH /profesionales/:id/vincular-usuario
+     */
+    static vincularUsuario = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { usuario_id } = req.body; // null para desvincular
+
+        try {
+            const profesional = await ProfesionalModel.vincularUsuario(
+                parseInt(id),
+                req.tenant.organizacionId,
+                usuario_id
+            );
+
+            const mensaje = usuario_id
+                ? 'Usuario vinculado exitosamente'
+                : 'Usuario desvinculado exitosamente';
+
+            return ResponseHelper.success(res, profesional, mensaje);
+        } catch (error) {
+            if (error.message.includes('ya está vinculado')) {
+                return ResponseHelper.error(res, error.message, 409);
+            }
+            throw error;
+        }
+    });
+
+    /**
+     * Actualizar módulos habilitados para un profesional
+     * PATCH /profesionales/:id/modulos
+     */
+    static actualizarModulos = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { modulos_acceso } = req.body;
+
+        const profesional = await ProfesionalModel.actualizarModulos(
+            parseInt(id),
+            req.tenant.organizacionId,
+            modulos_acceso
+        );
+
+        return ResponseHelper.success(res, profesional, 'Módulos actualizados exitosamente');
+    });
+
+    /**
+     * Listar profesionales por módulo habilitado
+     * GET /profesionales/por-modulo/:modulo
+     */
+    static listarPorModulo = asyncHandler(async (req, res) => {
+        const { modulo } = req.params;
+        const soloActivos = req.query.activos !== 'false';
+
+        const modulosValidos = ['agendamiento', 'pos', 'inventario'];
+        if (!modulosValidos.includes(modulo)) {
+            return ResponseHelper.error(res, `Módulo inválido. Valores permitidos: ${modulosValidos.join(', ')}`, 400);
+        }
+
+        const profesionales = await ProfesionalModel.listarPorModulo(
+            req.tenant.organizacionId,
+            modulo,
+            soloActivos
+        );
+
+        return ResponseHelper.success(res, {
+            modulo,
+            solo_activos: soloActivos,
+            profesionales,
+            total: profesionales.length
+        }, `Profesionales con acceso a ${modulo} obtenidos`);
+    });
+
+    /**
+     * Obtener usuarios disponibles para vincular
+     * GET /profesionales/usuarios-disponibles
+     */
+    static obtenerUsuariosDisponibles = asyncHandler(async (req, res) => {
+        const usuarios = await ProfesionalModel.obtenerUsuariosDisponibles(
+            req.tenant.organizacionId
+        );
+
+        return ResponseHelper.success(res, {
+            usuarios,
+            total: usuarios.length
+        }, 'Usuarios disponibles obtenidos');
     });
 }
 

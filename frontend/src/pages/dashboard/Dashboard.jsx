@@ -1,257 +1,83 @@
-import { useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { authApi, serviciosApi } from '@/services/api/endpoints';
+import { serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
-import useOnboardingStore from '@/store/onboardingStore';
 import { useModulos } from '@/hooks/useModulos';
 import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { ModuleVisible } from '@/components/ui/ModuleGuard';
-import StatCard from '@/components/dashboard/StatCard';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
-import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
-import SetupChecklist from '@/components/dashboard/SetupChecklist';
-import MarketplaceActivationCard from '@/components/dashboard/MarketplaceActivationCard';
-import PlanStatusBanner from '@/components/dashboard/PlanStatusBanner';
 import AlertasWidget from '@/components/inventario/AlertasWidget';
-import {
-  useEstadisticasOrganizacion,
-  useServiciosDashboard,
-  useBloqueosDashboard,
-} from '@/hooks/useEstadisticas';
+import { useEstadisticasOrganizacion } from '@/hooks/useEstadisticas';
 import { useCitasDelDia } from '@/hooks/useCitas';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useClientes } from '@/hooks/useClientes';
-import { useChatbots } from '@/hooks/useChatbots';
 import {
-  LogOut,
-  Calendar,
-  Users,
-  Briefcase,
-  UserCheck,
+  ArrowLeft,
   AlertCircle,
-  Lock,
   AlertTriangle,
   CheckCircle,
-  Bot,
+  BarChart3,
 } from 'lucide-react';
 
 /**
- * Dashboard Principal con Datos Reales
+ * Dashboard de Estadísticas
+ * Vista consolidada de métricas, KPIs y alertas del negocio.
+ * La navegación principal está en /home (App Launcher).
  */
 function Dashboard() {
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { logout: clearAuth, user } = useAuthStore();
-  const { resetOnboarding } = useOnboardingStore();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+  const { user } = useAuthStore();
 
-  // Hook de módulos activos (Modelo Free/Pro Nov 2025)
-  const {
-    tieneInventario,
-    tienePOS,
-    tieneComisiones,
-    tieneMarketplace,
-    tieneChatbots,
-    tieneAgendamiento,
-    esPlanFree,
-    appSeleccionada,
-  } = useModulos();
+  // Hook de módulos activos
+  const { tieneInventario } = useModulos();
 
   // Queries de datos
   const { data: estadisticas, isLoading: loadingEstadisticas, error: errorEstadisticas } =
     useEstadisticasOrganizacion();
   const { data: citasDelDia, isLoading: loadingCitas } = useCitasDelDia();
-  const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
-  const { data: servicios, isLoading: loadingServicios } = useServiciosDashboard();
-  const { data: clientesData, isLoading: loadingClientes } = useClientes();
-  const { data: bloqueos, isLoading: loadingBloqueos } = useBloqueosDashboard();
-  const { data: chatbotsData, isLoading: loadingChatbots } = useChatbots();
 
-  // Extraer array de clientes (useClientes retorna { clientes, pagination })
-  const clientes = clientesData?.clientes || [];
-
-  // Hook para estadísticas de asignaciones servicio-profesional
+  // Estadísticas de asignaciones servicio-profesional
   const { data: statsAsignaciones, isLoading: loadingStats } = useQuery({
     queryKey: ['estadisticas-asignaciones'],
     queryFn: () => serviciosApi.obtenerEstadisticasAsignaciones(),
     select: (response) => response.data.data,
-    staleTime: 5 * 60 * 1000, // Cache de 5 minutos
+    staleTime: 5 * 60 * 1000,
   });
-
-  // Mutation de logout
-  const logoutMutation = useMutation({
-    mutationFn: authApi.logout,
-    onSuccess: () => {
-      console.log('✅ Logout exitoso');
-
-      // 🧹 CRÍTICO: Limpiar cache de React Query al cerrar sesión
-      // Evita que se muestren datos al iniciar sesión con otra cuenta
-      queryClient.clear();
-      console.log('✅ Cache de React Query limpiado');
-
-      // 🧹 CRÍTICO: Limpiar onboarding storage
-      resetOnboarding();
-      console.log('✅ Onboarding storage limpiado');
-
-      clearAuth();
-      navigate('/login');
-    },
-    onError: (error) => {
-      console.error('❌ Error en logout:', error);
-
-      // Limpiar cache incluso si hay error
-      queryClient.clear();
-      resetOnboarding();
-
-      clearAuth();
-      navigate('/login');
-    },
-  });
-
-  const handleLogout = () => {
-    setShowLogoutDialog(true);
-  };
-
-  const confirmLogout = () => {
-    setShowLogoutDialog(false);
-    logoutMutation.mutate();
-  };
-
-  // Calcular totales
-  const totalCitasHoy = citasDelDia?.length || 0;
-  const totalProfesionales = profesionales?.filter((p) => p.activo).length || 0;
-  const totalServicios = servicios?.filter((s) => s.activo).length || 0;
-  const totalClientes = clientes?.length || 0;
-  const totalBloqueosProximos = bloqueos?.filter((b) => b.activo).length || 0;
-  const totalChatbotsActivos = chatbotsData?.chatbots?.filter((c) => c.activo).length || 0;
-
-  // Generar subtítulo de plataformas para Chatbots
-  const plataformasChatbots = chatbotsData?.chatbots
-    ?.filter((c) => c.activo)
-    .map((c) => c.plataforma === 'telegram' ? 'Telegram' : 'WhatsApp');
-  const subtituloChatbots = plataformasChatbots?.length > 0
-    ? [...new Set(plataformasChatbots)].join(' + ')
-    : 'Sin chatbots';
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header Simple - La navegación principal está en /home */}
       <nav className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
-            <div className="flex items-center gap-8">
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">Dashboard</h1>
-                {estadisticas?.organizacion && (
-                  <p className="text-sm text-gray-600">
-                    {estadisticas.organizacion.nombre}
-                  </p>
-                )}
-              </div>
-
-              {/* Navigation Links - Condicional por módulos (Modelo Free/Pro Nov 2025) */}
-              <div className="hidden md:flex items-center gap-6">
-                {/* Enlaces de Agendamiento - Solo si tiene el módulo */}
-                {tieneAgendamiento && (
-                  <>
-                    <button
-                      onClick={() => navigate('/clientes')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Clientes
-                    </button>
-                    <button
-                      onClick={() => navigate('/citas')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Citas
-                    </button>
-                    <button
-                      onClick={() => navigate('/profesionales')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Profesionales
-                    </button>
-                    <button
-                      onClick={() => navigate('/servicios')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Servicios
-                    </button>
-                    <button
-                      onClick={() => navigate('/bloqueos')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Bloqueos
-                    </button>
-                  </>
-                )}
-                {tieneChatbots && (
-                  <>
-                    <button
-                      onClick={() => navigate('/chatbots')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Chatbots
-                    </button>
-                    <button
-                      onClick={() => navigate('/configuracion/recordatorios')}
-                      className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                    >
-                      Recordatorios
-                    </button>
-                  </>
-                )}
-                {tieneComisiones && (
-                  <button
-                    onClick={() => navigate('/comisiones')}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    Comisiones
-                  </button>
-                )}
-                {tieneInventario && (
-                  <button
-                    onClick={() => navigate('/inventario/productos')}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    Inventario
-                  </button>
-                )}
-                {tienePOS && (
-                  <button
-                    onClick={() => navigate('/pos/venta')}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    POS
-                  </button>
-                )}
-                {tieneMarketplace && (
-                  <button
-                    onClick={() => navigate('/mi-marketplace')}
-                    className="text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-                  >
-                    Marketplace
-                  </button>
-                )}
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate('/home')}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Inicio
+              </Button>
+              <div className="h-6 w-px bg-gray-300" />
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-indigo-100 rounded-lg flex items-center justify-center">
+                  <BarChart3 className="w-5 h-5 text-indigo-600" />
+                </div>
+                <div>
+                  <h1 className="text-lg font-semibold text-gray-900">Estadísticas</h1>
+                  {estadisticas?.organizacion && (
+                    <p className="text-xs text-gray-500">
+                      {estadisticas.organizacion.nombre}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <span className="text-sm text-gray-600">
                 {user?.nombre} {user?.apellidos}
               </span>
-              <Button
-                variant="outline"
-                onClick={handleLogout}
-                isLoading={logoutMutation.isPending}
-              >
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar Sesión
-              </Button>
             </div>
           </div>
         </div>
@@ -259,18 +85,6 @@ function Dashboard() {
 
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Widget de Estado de Trial */}
-        <TrialStatusWidget />
-
-        {/* Banner de Estado del Plan (Free/Pro) - Nov 2025 */}
-        <PlanStatusBanner />
-
-        {/* Checklist de Configuración Inicial */}
-        <SetupChecklist />
-
-        {/* Card de Activación del Marketplace - Solo si tiene módulo */}
-        {tieneMarketplace && <MarketplaceActivationCard />}
-
         {/* Mensaje de Error */}
         {errorEstadisticas && (
           <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
@@ -285,71 +99,6 @@ function Dashboard() {
             </div>
           </div>
         )}
-
-        {/* Cards de Métricas Principales */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
-          <StatCard
-            title="Citas Hoy"
-            value={totalCitasHoy}
-            subtitle={`${citasDelDia?.filter((c) => c.estado === 'programada').length || 0} programadas`}
-            icon={Calendar}
-            color="blue"
-            isLoading={loadingCitas}
-            onClick={() => navigate('/citas')}
-          />
-
-          <StatCard
-            title="Profesionales"
-            value={totalProfesionales}
-            subtitle="Activos"
-            icon={Users}
-            color="green"
-            isLoading={loadingProfesionales}
-            onClick={() => navigate('/profesionales')}
-          />
-
-          <StatCard
-            title="Servicios"
-            value={totalServicios}
-            subtitle="Disponibles"
-            icon={Briefcase}
-            color="purple"
-            isLoading={loadingServicios}
-            onClick={() => navigate('/servicios')}
-          />
-
-          <StatCard
-            title="Clientes"
-            value={totalClientes}
-            subtitle="Registrados"
-            icon={UserCheck}
-            color="orange"
-            isLoading={loadingClientes}
-            onClick={() => navigate('/clientes')}
-          />
-
-          <StatCard
-            title="Bloqueos"
-            value={totalBloqueosProximos}
-            subtitle="Próximos 30 días"
-            icon={Lock}
-            color="red"
-            isLoading={loadingBloqueos}
-            onClick={() => navigate('/bloqueos')}
-          />
-
-          {tieneChatbots && (
-            <StatCard
-              title="Chatbots IA"
-              value={totalChatbotsActivos}
-              subtitle={subtituloChatbots}
-              icon={Bot}
-              color="cyan"
-              isLoading={loadingChatbots}
-              onClick={() => navigate('/chatbots')}
-            />
-          )}
-        </div>
 
         {/* Grid Principal */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -554,42 +303,7 @@ function Dashboard() {
           )}
         </div>
 
-        {/* Información de la Cuenta */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Información de la Cuenta
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <span className="text-sm text-gray-600">Nombre completo:</span>
-              <p className="font-medium text-gray-900">
-                {user?.nombre} {user?.apellidos}
-              </p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Email:</span>
-              <p className="font-medium text-gray-900">{user?.email}</p>
-            </div>
-            <div>
-              <span className="text-sm text-gray-600">Rol:</span>
-              <p className="font-medium text-gray-900 capitalize">{user?.rol}</p>
-            </div>
-          </div>
-        </div>
       </main>
-
-      {/* Modal de confirmación de logout */}
-      <ConfirmDialog
-        isOpen={showLogoutDialog}
-        onClose={() => setShowLogoutDialog(false)}
-        onConfirm={confirmLogout}
-        title="Cerrar Sesión"
-        message="¿Estás seguro que deseas cerrar sesión? Tendrás que volver a iniciar sesión para acceder."
-        confirmText="Cerrar Sesión"
-        cancelText="Cancelar"
-        variant="warning"
-        isLoading={logoutMutation.isPending}
-      />
     </div>
   );
 }

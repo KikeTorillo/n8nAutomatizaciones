@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search, ArrowLeft, ArrowLeftRight } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { useToast } from '@/hooks/useToast';
+import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import { useMovimientos } from '@/hooks/useInventario';
 import { useProductos } from '@/hooks/useProductos';
 import { useProveedores } from '@/hooks/useProveedores';
@@ -14,6 +16,7 @@ import { es } from 'date-fns/locale';
  * Página principal de Movimientos de Inventario
  */
 function MovimientosPage() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   // Estado de filtros
@@ -87,19 +90,37 @@ function MovimientosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <RefreshCw className="h-8 w-8 text-indigo-600" />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">Movimientos de Inventario</h1>
-                <p className="text-sm text-gray-600 mt-1">
-                  {total} movimiento{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
-                </p>
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
+
+        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona productos, proveedores y stock
+        </p>
+      </div>
+
+      {/* Tabs de navegación */}
+      <InventarioNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header de sección */}
+        <div className="mb-6">
+          <div className="flex items-center space-x-3">
+            <ArrowLeftRight className="h-8 w-8 text-indigo-600" />
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Movimientos de Inventario</h2>
+              <p className="text-sm text-gray-600">
+                {total} movimiento{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
+              </p>
             </div>
           </div>
         </div>

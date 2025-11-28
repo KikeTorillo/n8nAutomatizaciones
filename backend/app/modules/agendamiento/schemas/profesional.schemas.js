@@ -249,6 +249,13 @@ const listar = {
             .max(100)
             .trim()
             .optional(),
+        // Nov 2025 - Modelo Unificado
+        modulo: Joi.string()
+            .valid('agendamiento', 'pos', 'inventario')
+            .optional(),
+        con_usuario: Joi.string()
+            .valid('true', 'false')
+            .optional(),
         limit: Joi.number()
             .integer()
             .min(1)
@@ -366,6 +373,72 @@ const validarEmail = {
     })
 };
 
+// ====================================================================
+// SCHEMAS PARA MODELO UNIFICADO PROFESIONAL-USUARIO (Nov 2025)
+// ====================================================================
+
+// GET /profesionales/por-usuario/:usuarioId
+const buscarPorUsuario = {
+    params: Joi.object({
+        usuarioId: Joi.number()
+            .integer()
+            .positive()
+            .required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/vincular-usuario
+const vincularUsuario = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        usuario_id: Joi.number()
+            .integer()
+            .positive()
+            .allow(null) // null para desvincular
+            .required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/modulos
+const actualizarModulos = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        modulos_acceso: Joi.object({
+            agendamiento: Joi.boolean().optional(),
+            pos: Joi.boolean().optional(),
+            inventario: Joi.boolean().optional()
+        }).required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/por-modulo/:modulo
+const listarPorModulo = {
+    params: Joi.object({
+        modulo: Joi.string()
+            .valid('agendamiento', 'pos', 'inventario')
+            .required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        activos: Joi.string()
+            .valid('true', 'false')
+            .default('true')
+    })
+};
+
 module.exports = {
     crear,
     bulkCrear,
@@ -377,5 +450,10 @@ module.exports = {
     actualizarMetricas,
     eliminar,
     obtenerEstadisticas,
-    validarEmail
+    validarEmail,
+    // Nov 2025 - Modelo Unificado
+    buscarPorUsuario,
+    vincularUsuario,
+    actualizarModulos,
+    listarPorModulo
 };

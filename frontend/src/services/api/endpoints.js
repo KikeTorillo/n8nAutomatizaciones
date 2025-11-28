@@ -186,6 +186,47 @@ export const profesionalesApi = {
    * @returns {Promise<Object>}
    */
   eliminar: (id) => apiClient.delete(`/profesionales/${id}`),
+
+  // ========== Modelo Unificado Profesional-Usuario (Nov 2025) ==========
+
+  /**
+   * Buscar profesional vinculado a un usuario
+   * @param {number} usuarioId
+   * @returns {Promise<Object>}
+   */
+  buscarPorUsuario: (usuarioId) => apiClient.get(`/profesionales/por-usuario/${usuarioId}`),
+
+  /**
+   * Obtener usuarios disponibles para vincular (sin profesional asignado)
+   * @returns {Promise<Object>}
+   */
+  usuariosDisponibles: () => apiClient.get('/profesionales/usuarios-disponibles'),
+
+  /**
+   * Listar profesionales por módulo habilitado
+   * @param {string} modulo - 'agendamiento' | 'pos' | 'inventario'
+   * @param {Object} params - { activos }
+   * @returns {Promise<Object>}
+   */
+  listarPorModulo: (modulo, params = {}) => apiClient.get(`/profesionales/por-modulo/${modulo}`, { params }),
+
+  /**
+   * Vincular o desvincular usuario a profesional
+   * @param {number} profesionalId
+   * @param {number|null} usuarioId - null para desvincular
+   * @returns {Promise<Object>}
+   */
+  vincularUsuario: (profesionalId, usuarioId) =>
+    apiClient.patch(`/profesionales/${profesionalId}/vincular-usuario`, { usuario_id: usuarioId }),
+
+  /**
+   * Actualizar módulos habilitados para un profesional
+   * @param {number} profesionalId
+   * @param {Object} modulosAcceso - { agendamiento, pos, inventario }
+   * @returns {Promise<Object>}
+   */
+  actualizarModulos: (profesionalId, modulosAcceso) =>
+    apiClient.patch(`/profesionales/${profesionalId}/modulos`, { modulos_acceso: modulosAcceso }),
 };
 
 // ==================== TIPOS PROFESIONAL ====================
@@ -1480,6 +1521,37 @@ export const posApi = {
    */
   eliminarVenta: (id, data) => apiClient.delete(`/pos/ventas/${id}`, { data }),
 
+  // ========== Tickets PDF ==========
+
+  /**
+   * Generar ticket PDF de una venta
+   * @param {number} id - ID de la venta
+   * @param {Object} options - { paper_size?: '58mm' | '80mm', download?: boolean }
+   * @returns {Promise<Blob>} PDF binary
+   */
+  generarTicket: (id, options = {}) => {
+    const params = new URLSearchParams();
+    if (options.paper_size) params.append('paper_size', options.paper_size);
+    if (options.download !== undefined) params.append('download', options.download);
+    const queryString = params.toString();
+    const url = `/pos/ventas/${id}/ticket${queryString ? '?' + queryString : ''}`;
+    return apiClient.get(url, { responseType: 'blob' });
+  },
+
+  /**
+   * Obtener URL para descargar ticket (útil para abrir en nueva pestaña)
+   * @param {number} id - ID de la venta
+   * @param {Object} options - { paper_size?: '58mm' | '80mm' }
+   * @returns {string} URL del endpoint
+   */
+  getTicketUrl: (id, options = {}) => {
+    const params = new URLSearchParams();
+    if (options.paper_size) params.append('paper_size', options.paper_size);
+    params.append('download', 'false'); // Para visualizar inline
+    const queryString = params.toString();
+    return `${import.meta.env.VITE_API_URL || ''}/api/v1/pos/ventas/${id}/ticket?${queryString}`;
+  },
+
   // ========== Reportes POS ==========
 
   /**
@@ -1691,6 +1763,59 @@ export const recordatoriosApi = {
   enviarPrueba: (data) => apiClient.post('/recordatorios/test', data),
 };
 
+// ==================== INVITACIONES (Nov 2025 - Sistema Profesional-Usuario) ====================
+export const invitacionesApi = {
+  /**
+   * Validar token de invitación (público)
+   * @param {string} token - Token de 64 caracteres
+   * @returns {Promise<Object>} { valido, invitacion: { email, nombre_sugerido, organizacion_nombre, ... } }
+   */
+  validar: (token) => apiClient.get(`/invitaciones/validar/${token}`),
+
+  /**
+   * Aceptar invitación y crear usuario (público)
+   * @param {string} token - Token de invitación
+   * @param {Object} data - { nombre, apellidos?, password }
+   * @returns {Promise<Object>} { usuario, profesional }
+   */
+  aceptar: (token, data) => apiClient.post(`/invitaciones/aceptar/${token}`, data),
+
+  /**
+   * Crear y enviar invitación (requiere auth)
+   * @param {Object} data - { profesional_id, email, nombre_sugerido? }
+   * @returns {Promise<Object>} { invitacion: { id, email, estado, expira_en } }
+   */
+  crear: (data) => apiClient.post('/invitaciones', data),
+
+  /**
+   * Listar invitaciones de la organización
+   * @param {Object} params - { estado? }
+   * @returns {Promise<Object>} { invitaciones: [...] }
+   */
+  listar: (params) => apiClient.get('/invitaciones', { params }),
+
+  /**
+   * Obtener invitación de un profesional
+   * @param {number} profesionalId - ID del profesional
+   * @returns {Promise<Object>} { invitacion }
+   */
+  obtenerPorProfesional: (profesionalId) => apiClient.get(`/invitaciones/profesional/${profesionalId}`),
+
+  /**
+   * Reenviar invitación
+   * @param {number} id - ID de la invitación
+   * @returns {Promise<Object>} { invitacion }
+   */
+  reenviar: (id) => apiClient.post(`/invitaciones/${id}/reenviar`),
+
+  /**
+   * Cancelar invitación
+   * @param {number} id - ID de la invitación
+   * @returns {Promise<Object>}
+   */
+  cancelar: (id) => apiClient.delete(`/invitaciones/${id}`),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -1716,4 +1841,5 @@ export default {
   modulos: modulosApi,
   ubicaciones: ubicacionesApi,
   recordatorios: recordatoriosApi,
+  invitaciones: invitacionesApi,
 };

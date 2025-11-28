@@ -14,6 +14,7 @@ const webhooksRouter = require('../../../modules/core/routes/webhooks');
 const subscripcionesRouter = require('../../../modules/core/routes/subscripciones');
 const modulosRouter = require('../../../modules/core/routes/modulos');
 const ubicacionesRouter = require('../../../modules/core/routes/ubicaciones');
+const invitacionesRouter = require('./invitaciones');
 
 // ========================================
 // PENDIENTE DE MIGRAR (mercadopago faltó)
@@ -110,6 +111,9 @@ function routerApi(app) {
 
     // Rutas de gestión de usuarios
     router.use('/usuarios', usuariosRouter);
+
+    // Rutas de invitaciones (Nov 2025 - Sistema Profesional-Usuario)
+    router.use('/invitaciones', invitacionesRouter);
 
     // Rutas de pagos y webhooks (Mercado Pago)
     router.use('/pagos', pagosRouter);

@@ -192,3 +192,77 @@ export function useBuscarProfesionales(termino, options = {}) {
     staleTime: 1000 * 30, // 30 segundos
   });
 }
+
+// ====================================================================
+// HOOKS PARA MODELO UNIFICADO PROFESIONAL-USUARIO (Nov 2025)
+// ====================================================================
+
+/**
+ * Hook para listar profesionales por módulo habilitado
+ * @param {string} modulo - 'agendamiento' | 'pos' | 'inventario'
+ * @param {Object} options - { activos: boolean }
+ */
+export function useProfesionalesPorModulo(modulo, options = {}) {
+  return useQuery({
+    queryKey: ['profesionales-modulo', modulo, options],
+    queryFn: async () => {
+      const response = await profesionalesApi.listarPorModulo(modulo, options);
+      return response.data.data?.profesionales || [];
+    },
+    enabled: !!modulo,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Hook para vincular/desvincular usuario a profesional
+ */
+export function useVincularUsuario() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ profesionalId, usuarioId }) => {
+      const response = await profesionalesApi.vincularUsuario(profesionalId, usuarioId);
+      return response.data.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['profesional', data.id]);
+      queryClient.invalidateQueries(['profesionales']);
+      queryClient.invalidateQueries(['usuarios-disponibles']);
+      queryClient.invalidateQueries(['profesional-usuario']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+      throw new Error(error.response?.status === 409
+        ? 'El usuario ya está vinculado a otro profesional'
+        : 'Error al vincular usuario');
+    },
+  });
+}
+
+/**
+ * Hook para actualizar módulos habilitados de un profesional
+ */
+export function useActualizarModulos() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ profesionalId, modulosAcceso }) => {
+      const response = await profesionalesApi.actualizarModulos(profesionalId, modulosAcceso);
+      return response.data.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['profesional', data.id]);
+      queryClient.invalidateQueries(['profesionales']);
+      queryClient.invalidateQueries(['profesionales-modulo']);
+      queryClient.invalidateQueries(['profesional-usuario']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      throw new Error(backendMessage || 'Error al actualizar módulos');
+    },
+  });
+}

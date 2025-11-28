@@ -80,6 +80,12 @@ const ModulosPage = lazy(() => import('@/pages/configuracion/ModulosPage'));
 // Página de Configuración de Recordatorios (Nov 2025)
 const RecordatoriosPage = lazy(() => import('@/pages/configuracion/RecordatoriosPage'));
 
+// Página de App Home / Launcher (Nov 2025)
+const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
+
+// Página de Registro por Invitación (Nov 2025 - Sistema Profesional-Usuario)
+const RegistroInvitacionPage = lazy(() => import('@/pages/auth/RegistroInvitacionPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -122,6 +128,11 @@ export const router = createBrowserRouter([
         path: 'login',
         element: withSuspense(LoginPage),
       },
+      // Ruta de registro por invitación (pública)
+      {
+        path: 'registro-invitacion/:token',
+        element: withSuspense(RegistroInvitacionPage),
+      },
       // Ruta de setup inicial (primera vez)
       {
         path: 'setup',
@@ -157,6 +168,15 @@ export const router = createBrowserRouter([
       {
         path: 'subscripcion/resultado',
         element: withSuspense(SubscripcionResultado),
+      },
+      // App Home - Página principal post-login (Nov 2025)
+      {
+        path: 'home',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(AppHomePage)}
+          </ProtectedRoute>
+        ),
       },
       {
         path: 'dashboard',

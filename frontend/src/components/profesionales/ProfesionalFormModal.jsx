@@ -2,15 +2,21 @@ import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Palette } from 'lucide-react';
+import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import FormField from '@/components/forms/FormField';
-import { useCrearProfesional, useActualizarProfesional, useProfesional } from '@/hooks/useProfesionales';
+import {
+  useCrearProfesional,
+  useActualizarProfesional,
+  useProfesional,
+  useActualizarModulos
+} from '@/hooks/useProfesionales';
 import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
+import { invitacionesApi } from '@/services/api/endpoints';
 
 /**
  * Colores predefinidos para el calendario
@@ -40,7 +46,10 @@ const profesionalCreateSchema = z.object({
     required_error: 'Debes seleccionar un tipo de profesional',
     invalid_type_error: 'Tipo inválido',
   }).int().positive('Debes seleccionar un tipo de profesional'),
-  email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
+  // Email obligatorio para enviar invitación al crear
+  email: z.string({
+    required_error: 'El email es obligatorio para enviar la invitación',
+  }).email('Email inválido').max(100, 'Máximo 100 caracteres'),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#3b82f6'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -75,6 +84,16 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [selectedColor, setSelectedColor] = useState(COLORES_CALENDARIO[0]);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
+  // Nov 2025: Estado para módulos e invitación
+  const [modulosAcceso, setModulosAcceso] = useState({
+    agendamiento: true,
+    pos: false,
+    inventario: false
+  });
+  const [emailInvitacion, setEmailInvitacion] = useState('');
+  const [invitacionActual, setInvitacionActual] = useState(null);
+  const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
+
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
 
@@ -87,6 +106,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Hooks de mutación
   const crearMutation = useCrearProfesional();
   const actualizarMutation = useActualizarProfesional();
+  const actualizarModulosMutation = useActualizarModulos();
+
+  // Cargar invitación actual en modo edición
+  useEffect(() => {
+    const cargarInvitacion = async () => {
+      if (isEditMode && profesionalId && isOpen) {
+        try {
+          const response = await invitacionesApi.obtenerPorProfesional(profesionalId);
+          setInvitacionActual(response.data.data.invitacion);
+        } catch (err) {
+          // No hay invitación, es normal
+          setInvitacionActual(null);
+        }
+      }
+    };
+    cargarInvitacion();
+  }, [isEditMode, profesionalId, isOpen]);
 
   // React Hook Form con validación Zod
   const {
@@ -142,6 +178,13 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         activo: profesionalData.activo !== undefined ? profesionalData.activo : true,
       });
       setSelectedColor(profesionalData.color_calendario || COLORES_CALENDARIO[0]);
+
+      // Nov 2025: Cargar módulos
+      setModulosAcceso(profesionalData.modulos_acceso || {
+        agendamiento: true,
+        pos: false,
+        inventario: false
+      });
     }
   }, [isEditMode, profesionalData, isOpen, reset]);
 
@@ -151,8 +194,65 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       reset();
       setSelectedColor(COLORES_CALENDARIO[0]);
       setShowColorPicker(false);
+      setEmailInvitacion('');
+      setInvitacionActual(null);
     }
   }, [isOpen, reset]);
+
+  // Handler para enviar invitación
+  const handleEnviarInvitacion = async () => {
+    if (!emailInvitacion || !emailInvitacion.includes('@')) {
+      toast.error('Ingresa un email válido');
+      return;
+    }
+
+    setEnviandoInvitacion(true);
+    try {
+      const response = await invitacionesApi.crear({
+        profesional_id: profesionalId,
+        email: emailInvitacion,
+        nombre_sugerido: profesionalData?.nombre_completo
+      });
+      setInvitacionActual(response.data.data.invitacion);
+      setEmailInvitacion('');
+      toast.success('Invitación enviada exitosamente');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al enviar invitación');
+    } finally {
+      setEnviandoInvitacion(false);
+    }
+  };
+
+  // Handler para reenviar invitación
+  const handleReenviarInvitacion = async () => {
+    if (!invitacionActual?.id) return;
+
+    setEnviandoInvitacion(true);
+    try {
+      const response = await invitacionesApi.reenviar(invitacionActual.id);
+      setInvitacionActual(response.data.data.invitacion);
+      toast.success('Invitación reenviada');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al reenviar invitación');
+    } finally {
+      setEnviandoInvitacion(false);
+    }
+  };
+
+  // Handler para cancelar invitación
+  const handleCancelarInvitacion = async () => {
+    if (!invitacionActual?.id) return;
+
+    if (!window.confirm('¿Cancelar esta invitación?')) return;
+
+    try {
+      await invitacionesApi.cancelar(invitacionActual.id);
+      setInvitacionActual(null);
+      toast.success('Invitación cancelada');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al cancelar invitación');
+    }
+  };
 
   // Handler para seleccionar color
   const handleColorSelect = (color) => {
@@ -173,21 +273,54 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         color_calendario: data.color_calendario,
         biografia: data.descripcion?.trim() || undefined, // Backend usa 'biografia'
         activo: data.activo,
+        // Nov 2025: Incluir módulos
+        modulos_acceso: modulosAcceso,
       };
 
       if (isEditMode) {
-        // Modo edición
+        // Modo edición: actualizar datos básicos
         await actualizarMutation.mutateAsync({ id: profesionalId, data: sanitized });
+
+        // Nov 2025: Si cambiaron los módulos, actualizarlos
+        const modulosCambiaron = JSON.stringify(profesionalData?.modulos_acceso) !== JSON.stringify(modulosAcceso);
+        if (modulosCambiaron) {
+          await actualizarModulosMutation.mutateAsync({
+            profesionalId,
+            modulosAcceso
+          });
+        }
+
         toast.success('Profesional actualizado exitosamente');
       } else {
-        // Modo creación
-        await crearMutation.mutateAsync(sanitized);
-        toast.success('Profesional creado exitosamente');
+        // Modo creación: crear profesional y enviar invitación automáticamente
+        const resultado = await crearMutation.mutateAsync(sanitized);
+        const nuevoProfesionalId = resultado.data?.id || resultado.id;
+
+        // Enviar invitación automáticamente
+        if (nuevoProfesionalId && data.email?.trim()) {
+          try {
+            await invitacionesApi.crear({
+              profesional_id: nuevoProfesionalId,
+              email: data.email.trim(),
+              nombre_sugerido: data.nombre_completo?.trim()
+            });
+            toast.success('Profesional creado e invitación enviada');
+          } catch (invErr) {
+            // El profesional se creó pero falló la invitación
+            console.error('Error enviando invitación:', invErr);
+            toast.warning('Profesional creado, pero hubo un error al enviar la invitación. Puedes reenviarla desde la edición.');
+          }
+        } else {
+          toast.success('Profesional creado exitosamente');
+        }
       }
 
       onClose();
       reset();
       setSelectedColor(COLORES_CALENDARIO[0]);
+      setModulosAcceso({ agendamiento: true, pos: false, inventario: false });
+      setEmailInvitacion('');
+      setInvitacionActual(null);
     } catch (error) {
       toast.error(error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} profesional`);
     }
@@ -272,9 +405,11 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 <FormField
                   name="email"
                   control={control}
-                  label="Email (Opcional)"
+                  label={isEditMode ? "Email" : "Email del empleado"}
                   type="email"
                   placeholder="ejemplo@correo.com"
+                  required={!isEditMode}
+                  helperText={!isEditMode ? "Se enviará invitación a este correo" : undefined}
                 />
                 <FormField
                   name="telefono"
@@ -359,6 +494,179 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   </div>
                 )}
               />
+
+              {/* Nov 2025: Sección Acceso al Sistema y Módulos */}
+              <div className="border-t border-gray-200 pt-4 mt-4">
+                <div className="flex items-center gap-2 mb-4">
+                  <Settings className="h-5 w-5 text-gray-500" />
+                  <h4 className="font-medium text-gray-900">Acceso al Sistema</h4>
+                </div>
+
+                {/* Estado actual: Usuario vinculado, invitación pendiente, o info */}
+                {profesionalData?.usuario_id ? (
+                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700">
+                      <CheckCircle className="h-5 w-5" />
+                      <span className="font-medium">Usuario vinculado</span>
+                    </div>
+                    <p className="text-sm text-green-600 mt-1">
+                      {profesionalData.usuario_nombre || profesionalData.usuario_email}
+                    </p>
+                  </div>
+                ) : isEditMode ? (
+                  /* Sección de Invitación (solo en modo edición) */
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <span className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Estado de invitación
+                      </span>
+                    </label>
+
+                    {/* Mostrar invitación actual si existe */}
+                    {invitacionActual && invitacionActual.estado === 'pendiente' ? (
+                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-amber-700">
+                            <Clock className="h-5 w-5" />
+                            <span className="font-medium">Invitación pendiente</span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={handleReenviarInvitacion}
+                              disabled={enviandoInvitacion}
+                              className="p-1 text-amber-600 hover:text-amber-800"
+                              title="Reenviar"
+                            >
+                              <RefreshCw className={`h-4 w-4 ${enviandoInvitacion ? 'animate-spin' : ''}`} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleCancelarInvitacion}
+                              className="p-1 text-red-600 hover:text-red-800"
+                              title="Cancelar"
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-sm text-amber-600 mt-1">
+                          Enviada a: {invitacionActual.email}
+                        </p>
+                        <p className="text-xs text-amber-500 mt-1">
+                          Expira: {new Date(invitacionActual.expira_en).toLocaleDateString('es-MX')}
+                        </p>
+                      </div>
+                    ) : invitacionActual && invitacionActual.estado === 'aceptada' ? (
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-700">
+                          <CheckCircle className="h-5 w-5" />
+                          <span className="font-medium">Invitación aceptada</span>
+                        </div>
+                        <p className="text-sm text-green-600 mt-1">
+                          {invitacionActual.email}
+                        </p>
+                      </div>
+                    ) : (
+                      /* Formulario para nueva invitación (si no hay invitación previa) */
+                      <div className="flex gap-2">
+                        <input
+                          type="email"
+                          value={emailInvitacion}
+                          onChange={(e) => setEmailInvitacion(e.target.value)}
+                          placeholder="correo@empleado.com"
+                          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleEnviarInvitacion}
+                          disabled={enviandoInvitacion || !emailInvitacion}
+                          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          {enviandoInvitacion ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Send className="h-4 w-4" />
+                          )}
+                          Enviar
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="mt-2 text-xs text-gray-500">
+                      El empleado recibirá un email con un enlace para completar su registro.
+                    </p>
+                  </div>
+                ) : (
+                  /* Modo creación: mensaje informativo */
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-center gap-2 text-blue-700">
+                      <Mail className="h-5 w-5" />
+                      <span className="font-medium">Invitación automática</span>
+                    </div>
+                    <p className="text-sm text-blue-600 mt-1">
+                      Al guardar, se enviará automáticamente un email de invitación al correo ingresado.
+                    </p>
+                  </div>
+                )}
+
+                {/* Módulos Habilitados */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Módulos habilitados
+                  </label>
+                  <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={modulosAcceso.agendamiento}
+                        onChange={(e) => setModulosAcceso({
+                          ...modulosAcceso,
+                          agendamiento: e.target.checked
+                        })}
+                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Agendamiento</span>
+                        <p className="text-xs text-gray-500">Puede atender citas de clientes</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={modulosAcceso.pos}
+                        onChange={(e) => setModulosAcceso({
+                          ...modulosAcceso,
+                          pos: e.target.checked
+                        })}
+                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Punto de Venta</span>
+                        <p className="text-xs text-gray-500">Puede registrar ventas como vendedor</p>
+                      </div>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={modulosAcceso.inventario}
+                        onChange={(e) => setModulosAcceso({
+                          ...modulosAcceso,
+                          inventario: e.target.checked
+                        })}
+                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                      />
+                      <div>
+                        <span className="text-sm font-medium text-gray-900">Inventario</span>
+                        <p className="text-xs text-gray-500">Puede gestionar productos y stock</p>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
 
               {/* Estado Activo */}
               <Controller

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   ShoppingCart,
   Plus,
@@ -12,11 +13,13 @@ import {
   Filter,
   Search,
   Calendar,
-  Building2
+  Building2,
+  ArrowLeft,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
+import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useOrdenesCompra,
   useEliminarOrdenCompra,
@@ -34,6 +37,7 @@ import RegistrarPagoModal from '@/components/inventario/ordenes-compra/Registrar
  * Gestión completa del ciclo de compras a proveedores
  */
 export default function OrdenesCompraPage() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   // Estado de filtros
@@ -249,31 +253,52 @@ export default function OrdenesCompraPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <ShoppingCart className="h-8 w-8 text-indigo-600" />
-            Órdenes de Compra
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Gestiona las órdenes de compra a proveedores
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
 
-        <div className="flex gap-2">
-          <Button
-            variant={mostrarFiltros ? 'secondary' : 'outline'}
-            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            icon={Filter}
-          >
-            {mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros
-          </Button>
-          <Button variant="primary" onClick={handleNuevaOrden} icon={Plus}>
-            Nueva Orden
-          </Button>
-        </div>
+        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona productos, proveedores y stock
+        </p>
+      </div>
+
+      {/* Tabs de navegación */}
+      <InventarioNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {/* Header de sección */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <ShoppingCart className="h-8 w-8 text-indigo-600" />
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Órdenes de Compra</h2>
+              <p className="text-sm text-gray-500">
+                Gestiona las órdenes de compra a proveedores
+              </p>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button
+              variant={mostrarFiltros ? 'secondary' : 'outline'}
+              onClick={() => setMostrarFiltros(!mostrarFiltros)}
+              icon={Filter}
+            >
+              {mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros
+            </Button>
+            <Button variant="primary" onClick={handleNuevaOrden} icon={Plus}>
+              Nueva Orden
+            </Button>
+          </div>
       </div>
 
       {/* Resumen de totales */}
@@ -623,6 +648,7 @@ export default function OrdenesCompraPage() {
             </div>
           </>
         )}
+      </div>
       </div>
 
       {/* Modales */}

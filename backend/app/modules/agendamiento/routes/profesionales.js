@@ -80,6 +80,57 @@ router.delete('/:id',
     ProfesionalController.eliminar
 );
 
+// ========== Rutas Modelo Unificado Profesional-Usuario (Nov 2025) ==========
+
+// Obtener usuarios disponibles para vincular (sin profesional asignado)
+router.get('/usuarios-disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    ProfesionalController.obtenerUsuariosDisponibles
+);
+
+// Listar profesionales por módulo habilitado
+router.get('/por-modulo/:modulo',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.listarPorModulo),
+    ProfesionalController.listarPorModulo
+);
+
+// Buscar profesional vinculado a un usuario
+router.get('/por-usuario/:usuarioId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.buscarPorUsuario),
+    ProfesionalController.buscarPorUsuario
+);
+
+// Vincular/desvincular usuario a profesional
+router.patch('/:id/vincular-usuario',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.vincularUsuario),
+    ProfesionalController.vincularUsuario
+);
+
+// Actualizar módulos habilitados para un profesional
+router.patch('/:id/modulos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.actualizarModulos),
+    ProfesionalController.actualizarModulos
+);
+
 // ========== Rutas Autenticadas ==========
 
 router.get('/tipo/:tipoId',

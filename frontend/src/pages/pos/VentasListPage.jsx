@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { Receipt, Eye, XCircle, RefreshCw, Filter, Search, Calendar, DollarSign } from 'lucide-react';
+import { Receipt, Eye, XCircle, RefreshCw, Filter, Search, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useVentas } from '@/hooks/useVentas';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
 import CancelarVentaModal from '@/components/pos/CancelarVentaModal';
 import DevolverItemsModal from '@/components/pos/DevolverItemsModal';
+import POSNavTabs from '@/components/pos/POSNavTabs';
 
 /**
  * Página de lista de ventas POS con filtros
  * Permite ver, cancelar y procesar devoluciones
  */
 export default function VentasListPage() {
+  const navigate = useNavigate();
   const toast = useToast();
 
   // Estado de filtros
@@ -118,23 +121,44 @@ export default function VentasListPage() {
   };
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Receipt className="h-8 w-8 text-blue-600" />
-            Historial de Ventas
-          </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Consulta y gestiona las ventas realizadas en el punto de venta
-          </p>
-        </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
 
-        <Button
-          variant={mostrarFiltros ? 'secondary' : 'outline'}
-          onClick={() => setMostrarFiltros(!mostrarFiltros)}
-          icon={Filter}
+        <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona ventas, historial y reportes
+        </p>
+      </div>
+
+      {/* Tabs de navegación POS */}
+      <POSNavTabs />
+
+      {/* Contenido */}
+      <div className="p-6 space-y-6">
+        {/* Header de sección */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Receipt className="h-6 w-6 text-blue-600" />
+              Historial de Ventas
+            </h2>
+            <p className="mt-1 text-sm text-gray-500">
+              Consulta y gestiona las ventas realizadas
+            </p>
+          </div>
+
+          <Button
+            variant={mostrarFiltros ? 'secondary' : 'outline'}
+            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+            icon={Filter}
         >
           {mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros
         </Button>
@@ -413,6 +437,7 @@ export default function VentasListPage() {
             </div>
           </>
         )}
+      </div>
       </div>
 
       {/* Modales */}

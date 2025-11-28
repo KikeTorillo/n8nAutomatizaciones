@@ -1,6 +1,8 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   AlertCircle,
+  AlertTriangle,
   TrendingDown,
   Clock,
   XCircle,
@@ -8,10 +10,12 @@ import {
   X,
   CheckCircle,
   CheckCheck,
+  ArrowLeft,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import { useToast } from '@/hooks/useToast';
+import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useAlertas,
   useMarcarAlertaLeida,
@@ -24,6 +28,7 @@ import { es } from 'date-fns/locale';
  * Página principal de Alertas de Inventario
  */
 function AlertasPage() {
+  const navigate = useNavigate();
   const { showToast } = useToast();
 
   // Estado de filtros
@@ -166,16 +171,36 @@ function AlertasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="mb-8">
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
+
+        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona productos, proveedores y stock
+        </p>
+      </div>
+
+      {/* Tabs de navegación */}
+      <InventarioNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header de sección */}
+        <div className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <AlertCircle className="h-8 w-8 text-indigo-600" />
+              <AlertTriangle className="h-8 w-8 text-orange-600" />
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Alertas de Inventario</h1>
-                <p className="text-sm text-gray-600 mt-1">
+                <h2 className="text-xl font-bold text-gray-900">Alertas de Inventario</h2>
+                <p className="text-sm text-gray-600">
                   {total} alerta{total !== 1 ? 's' : ''} registrada{total !== 1 ? 's' : ''}
                 </p>
               </div>

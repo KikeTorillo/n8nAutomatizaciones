@@ -156,13 +156,13 @@ function Step3_AccountSetup() {
         toast.success('¡Cuenta Pro creada! Tienes 14 días de prueba gratis con todas las apps incluidas.');
       } else {
         // Trial por defecto
-        toast.success('¡Cuenta creada! Tienes 14 días de prueba gratis. Te redirigimos al dashboard...');
+        toast.success('¡Cuenta creada! Tienes 14 días de prueba gratis. Te redirigimos al inicio...');
       }
 
       // Limpiar el onboarding store
       setTimeout(() => {
         resetOnboarding();
-        navigate('/dashboard');
+        navigate('/home');
       }, 1500);
     },
     onError: (error) => {

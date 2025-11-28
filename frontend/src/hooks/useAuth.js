@@ -25,7 +25,7 @@ export function useAuth() {
 
       // Redirección basada en el rol del usuario
       const userRole = data.user?.rol || data.usuario?.rol;
-      let redirectPath = '/dashboard'; // Default
+      let redirectPath = '/home'; // Default: App Home (Nov 2025)
 
       if (userRole === 'super_admin') {
         redirectPath = '/superadmin';

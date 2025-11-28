@@ -139,11 +139,11 @@ function ServiciosPage() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate('/dashboard')}
+              onClick={() => navigate('/home')}
               className="text-gray-600 hover:text-gray-900"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
-              Volver al Dashboard
+              Volver al Inicio
             </Button>
           </div>
 

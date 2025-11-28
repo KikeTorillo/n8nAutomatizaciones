@@ -1,6 +1,9 @@
-import { X, Receipt, User, Calendar, DollarSign, CreditCard, Package, FileText } from 'lucide-react';
+import { useState } from 'react';
+import { X, Receipt, User, Calendar, DollarSign, CreditCard, Package, FileText, Printer, Download } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
+import Button from '@/components/ui/Button';
 import { useVenta } from '@/hooks/useVentas';
+import { posApi } from '@/services/api/endpoints';
 
 /**
  * Modal para mostrar detalle completo de una venta
@@ -10,6 +13,77 @@ export default function VentaDetalleModal({ isOpen, onClose, ventaId }) {
   const { data: ventaData, isLoading } = useVenta(ventaId);
   const venta = ventaData?.venta || null;
   const items = ventaData?.items || [];
+
+  const [isGeneratingTicket, setIsGeneratingTicket] = useState(false);
+  const [ticketError, setTicketError] = useState(null);
+
+  /**
+   * Descargar ticket PDF
+   * @param {string} paperSize - '58mm' o '80mm'
+   */
+  const handleDownloadTicket = async (paperSize = '80mm') => {
+    if (!ventaId) return;
+
+    setIsGeneratingTicket(true);
+    setTicketError(null);
+
+    try {
+      const response = await posApi.generarTicket(ventaId, {
+        paper_size: paperSize,
+        download: true
+      });
+
+      // Crear blob y descargar
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ticket-${venta?.folio || ventaId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error generando ticket:', error);
+      setTicketError('Error al generar el ticket. Intenta de nuevo.');
+    } finally {
+      setIsGeneratingTicket(false);
+    }
+  };
+
+  /**
+   * Imprimir ticket (abre en nueva pestaña para imprimir)
+   * @param {string} paperSize - '58mm' o '80mm'
+   */
+  const handlePrintTicket = async (paperSize = '80mm') => {
+    if (!ventaId) return;
+
+    setIsGeneratingTicket(true);
+    setTicketError(null);
+
+    try {
+      const response = await posApi.generarTicket(ventaId, {
+        paper_size: paperSize,
+        download: false
+      });
+
+      // Crear blob URL y abrir para imprimir
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const printWindow = window.open(url, '_blank');
+
+      if (printWindow) {
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+      }
+    } catch (error) {
+      console.error('Error generando ticket para imprimir:', error);
+      setTicketError('Error al preparar impresión. Intenta de nuevo.');
+    } finally {
+      setIsGeneratingTicket(false);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -296,14 +370,61 @@ export default function VentaDetalleModal({ isOpen, onClose, ventaId }) {
           </>
         )}
 
-        {/* Footer */}
-        <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
+        {/* Error de ticket */}
+        {ticketError && (
+          <div className="bg-red-50 border border-red-200 rounded-md p-3 text-sm text-red-600">
+            {ticketError}
+          </div>
+        )}
+
+        {/* Footer con acciones */}
+        <div className="flex flex-col sm:flex-row justify-between gap-3 border-t border-gray-200 pt-4">
+          {/* Botones de ticket */}
+          <div className="flex flex-wrap gap-2">
+            {venta && venta.estado !== 'cancelada' && (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePrintTicket('80mm')}
+                  disabled={isGeneratingTicket}
+                  isLoading={isGeneratingTicket}
+                >
+                  <Printer className="w-4 h-4 mr-1" />
+                  Imprimir
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleDownloadTicket('80mm')}
+                  disabled={isGeneratingTicket}
+                >
+                  <Download className="w-4 h-4 mr-1" />
+                  Descargar PDF
+                </Button>
+                <select
+                  className="text-xs border border-gray-300 rounded px-2 py-1 text-gray-600"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleDownloadTicket(e.target.value);
+                      e.target.value = '';
+                    }
+                  }}
+                  disabled={isGeneratingTicket}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Tamaño papel</option>
+                  <option value="58mm">58mm (mini)</option>
+                  <option value="80mm">80mm (estándar)</option>
+                </select>
+              </>
+            )}
+          </div>
+
+          {/* Botón cerrar */}
+          <Button variant="secondary" onClick={onClose}>
             Cerrar
-          </button>
+          </Button>
         </div>
       </div>
     </Modal>

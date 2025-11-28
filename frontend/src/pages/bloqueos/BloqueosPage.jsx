@@ -148,13 +148,13 @@ function BloqueosPage() {
       <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-6">
-          {/* Botón de regreso al dashboard */}
+          {/* Botón de regreso al home */}
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/home')}
             className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Volver al Dashboard</span>
+            <span className="font-medium">Volver al Inicio</span>
           </button>
 
           <div className="flex items-center justify-between">
