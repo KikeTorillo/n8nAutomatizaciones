@@ -1,6 +1,6 @@
 # Roadmap ERP para PYMES México
 
-**Versión**: 10.0
+**Versión**: 11.0
 **Última actualización**: 28 Noviembre 2025
 
 ---
@@ -52,7 +52,78 @@
 
 ---
 
-### Fase 2: Vista 360° del Cliente (CRM)
+### Fase 2: Onboarding Simplificado (Estilo Odoo)
+
+**Objetivo**: Reducir fricción de 13 campos en 3 pasos → 4 campos + email activación.
+
+#### 2.1 Nueva Pantalla de Registro (1 sola)
+```
+┌─────────────────────────────────────┐
+│  Comienza a usar [NombreApp]        │
+│                                     │
+│  Nombre completo      [___________] │
+│  Email                [___________] │
+│  Nombre del negocio   [___________] │
+│  Plan  [Free ▼] App [Agendamiento▼] │
+│                                     │
+│  [Crear cuenta]                     │
+│                                     │
+│  Al continuar aceptas términos...   │
+└─────────────────────────────────────┘
+```
+
+#### 2.2 Email de Activación
+- Enviar email con link + token (64 chars, 24h expiración)
+- Template HTML profesional (reutilizar estilo invitaciones)
+- Link: `/activar-cuenta/:token`
+
+#### 2.3 Página de Activación
+```
+┌─────────────────────────────────────┐
+│  Activa tu cuenta                   │
+│                                     │
+│  Email: juan@empresa.com ✓          │
+│  Contraseña        [___________]    │
+│  Confirmar         [___________]    │
+│                                     │
+│  [Activar cuenta]                   │
+└─────────────────────────────────────┘
+```
+
+#### 2.4 Completar Perfil (dentro del app)
+- Mover a Configuración → Perfil del Negocio:
+  - Teléfono
+  - Estado / Ciudad
+  - Industria
+  - Logo
+  - Datos fiscales (opcional)
+- Mostrar banner "Completa tu perfil" hasta 80% completado
+
+#### Cambios Backend
+| Archivo | Cambio |
+|---------|--------|
+| `organizacion.controller.js` | Nuevo endpoint `POST /registrar` (sin password) |
+| `activacion.model.js` | CRUD tokens activación |
+| `auth.controller.js` | `POST /activar-cuenta/:token` |
+| `emailService.js` | Template `activacionCuenta.js` |
+
+#### Cambios Frontend
+| Archivo | Cambio |
+|---------|--------|
+| `OnboardingFlow.jsx` | Simplificar a 1 paso |
+| `ActivarCuentaPage.jsx` | Nueva página pública |
+| `ConfiguracionPage.jsx` | Sección "Perfil del Negocio" |
+| `SetupChecklist.jsx` | Banner completar perfil |
+
+#### Migración
+- Usuarios existentes: No afectados (ya tienen password)
+- Tabla nueva: `activaciones_cuenta` (token, email, org_id, expira_en)
+
+**Esfuerzo**: 12-16 horas
+
+---
+
+### Fase 3: Vista 360° del Cliente (CRM)
 
 **Objetivo**: Tabs con historial completo en ClienteDetailPage.
 
@@ -66,7 +137,7 @@
 
 ---
 
-### Fase 3: Mejoras Marketplace
+### Fase 4: Mejoras Marketplace
 
 | Mejora | Prioridad | Esfuerzo |
 |--------|-----------|----------|
@@ -80,7 +151,7 @@
 
 ---
 
-### Fase 4: Contabilidad + CFDI (Futuro)
+### Fase 5: Contabilidad + CFDI (Futuro)
 
 **Complejidad**: Alta - 160-264 horas
 
@@ -123,11 +194,12 @@ if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
 | Fase | Módulo | Esfuerzo | Prioridad |
 |------|--------|----------|-----------|
 | 1 | POS | ✅ Completado | - |
-| 2 | Vista 360° CRM | 8-12h | Alta |
-| 3 | Mejoras Marketplace | 20-30h | Media |
-| 4 | CFDI + Contabilidad | 160-264h | Futura |
+| 2 | Onboarding Simplificado | 12-16h | **Alta** |
+| 3 | Vista 360° CRM | 8-12h | Media |
+| 4 | Mejoras Marketplace | 20-30h | Media |
+| 5 | CFDI + Contabilidad | 160-264h | Futura |
 
-**Total corto plazo**: ~38-42 horas
+**Total corto plazo**: ~50-58 horas
 
 ---
 
@@ -135,6 +207,7 @@ if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
 
 | Versión | Fecha | Cambios |
 |---------|-------|---------|
+| 11.0 | 28 Nov 2025 | Fase 2: Onboarding Simplificado (4 campos + email activación) |
 | 10.0 | 28 Nov 2025 | POS 98% ✅ (Ticket PDF completado, vendedor auto-asignado) |
 | 9.0 | 28 Nov 2025 | Super Admin Model ✅ (org propia, NO acceso cross-tenant, app Admin Plataforma) |
 | 8.0 | 28 Nov 2025 | Clientes como Módulo Core ✅ completado (migración backend, ClienteSelector POS, app independiente) |
