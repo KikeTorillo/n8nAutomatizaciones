@@ -208,13 +208,32 @@ router.post('/create-superadmin',
             const passwordHash = await bcrypt.hash(password, 10);
 
             // ====================================================================
-            // 7. CREAR SUPER ADMIN
+            // 7. OBTENER ORGANIZACIÓN DE PLATAFORMA (ID=1)
+            // ====================================================================
+            // El super_admin requiere organización (modelo Nov 2025)
+            // Usa la org de plataforma creada en datos-iniciales.sql
+            const orgResult = await db.query(
+                'SELECT id FROM organizaciones WHERE id = 1'
+            );
+
+            if (orgResult.rows.length === 0) {
+                return ResponseHelper.error(
+                    res,
+                    'Error: No existe la organización de plataforma (ID=1). Ejecute los scripts SQL primero.',
+                    500
+                );
+            }
+
+            const organizacionId = orgResult.rows[0].id;
+
+            // ====================================================================
+            // 8. CREAR SUPER ADMIN
             // ====================================================================
             const query = `
                 INSERT INTO usuarios (
                     email, password_hash, nombre, apellidos,
                     rol, email_verificado, activo, organizacion_id
-                ) VALUES ($1, $2, $3, $4, $5, true, true, NULL)
+                ) VALUES ($1, $2, $3, $4, $5, true, true, $6)
                 RETURNING id, email, nombre, apellidos, rol, creado_en
             `;
 
@@ -223,7 +242,8 @@ router.post('/create-superadmin',
                 passwordHash,
                 nombre || 'Super',          // Usar nombre del form o default
                 apellidos || 'Admin',       // Usar apellidos del form o default
-                'super_admin'
+                'super_admin',
+                organizacionId              // Asignar org de plataforma
             ]);
 
             const superAdmin = result.rows[0];
@@ -421,21 +441,34 @@ router.post('/unified-setup',
             // 4. CREAR SUPER ADMIN + N8N OWNER + API KEY (TRANSACCIONAL)
             // ====================================================================
             const resultado = await RLSContextManager.withBypass(async (db) => {
-                // 4.1 Crear super admin en BD
+                // 4.1 Obtener organización de plataforma (ID=1)
+                // El super_admin requiere organización (modelo Nov 2025)
+                const orgResult = await db.query(
+                    'SELECT id FROM organizaciones WHERE id = 1'
+                );
+
+                if (orgResult.rows.length === 0) {
+                    throw new Error('No existe la organización de plataforma (ID=1). Ejecute los scripts SQL primero.');
+                }
+
+                const organizacionId = orgResult.rows[0].id;
+
+                // 4.2 Crear super admin en BD
                 const passwordHash = await bcrypt.hash(superAdmin.password, 10);
 
                 const superAdminCreado = await db.query(`
                     INSERT INTO usuarios (
                         email, password_hash, nombre, apellidos,
                         rol, email_verificado, activo, organizacion_id
-                    ) VALUES ($1, $2, $3, $4, $5, true, true, NULL)
+                    ) VALUES ($1, $2, $3, $4, $5, true, true, $6)
                     RETURNING id, email, nombre, apellidos, rol, creado_en
                 `, [
                     superAdmin.email,
                     passwordHash,
                     superAdmin.nombre || 'Super',
                     superAdmin.apellidos || 'Admin',
-                    'super_admin'
+                    'super_admin',
+                    organizacionId
                 ]);
 
                 const superAdminData = superAdminCreado.rows[0];

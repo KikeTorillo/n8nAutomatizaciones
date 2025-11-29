@@ -15,6 +15,8 @@ import {
   Bell,
   Users,
   Briefcase,
+  UserCircle,
+  Shield,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -55,8 +57,9 @@ function AppHomePage() {
   // Notificaciones por app
   const notifications = useAppNotifications();
 
-  // Detectar si es empleado para adaptar la UI
+  // Detectar rol para adaptar la UI
   const esEmpleado = user?.rol === 'empleado';
+  const esSuperAdmin = user?.rol === 'super_admin';
 
   // Mutation de logout
   const logoutMutation = useMutation({
@@ -119,6 +122,18 @@ function AppHomePage() {
       enabled: tieneAgendamiento,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'clientes',
+      name: 'Clientes',
+      description: 'CRM y base de clientes',
+      icon: UserCircle,
+      path: '/clientes',
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100',
+      enabled: true, // Siempre activo (módulo core compartido)
+      badge: 0,
+      adminOnly: false, // Visible para empleados también
     },
     {
       id: 'inventario',
@@ -204,14 +219,35 @@ function AppHomePage() {
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },
+    // App exclusiva para super_admin - Admin de Plataforma
+    {
+      id: 'admin-plataforma',
+      name: 'Admin Plataforma',
+      description: 'Gestión global del SaaS',
+      icon: Shield,
+      path: '/superadmin',
+      color: 'text-red-600',
+      bgColor: 'bg-red-100',
+      enabled: true,
+      badge: 0,
+      superAdminOnly: true, // Solo super_admin
+    },
   ];
 
   // Filtrar apps según el rol
   // Empleados: solo ven apps habilitadas y no administrativas
-  // Admin/Propietario: ven todas las apps
-  const apps = esEmpleado
-    ? allApps.filter(app => !app.adminOnly && app.enabled)
-    : allApps;
+  // Admin/Propietario: ven todas las apps (excepto superAdminOnly)
+  // Super_admin: ve todas las apps incluyendo Admin Plataforma
+  const apps = allApps.filter(app => {
+    // Super_admin ve todo
+    if (esSuperAdmin) return app.enabled;
+
+    // Empleado: solo apps no admin y habilitadas
+    if (esEmpleado) return !app.adminOnly && !app.superAdminOnly && app.enabled;
+
+    // Admin/Propietario: todo excepto superAdminOnly
+    return !app.superAdminOnly && app.enabled;
+  });
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">

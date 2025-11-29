@@ -9,6 +9,7 @@ import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
 import POSNavTabs from '@/components/pos/POSNavTabs';
+import ClienteSelector from '@/components/pos/ClienteSelector';
 
 /**
  * Página principal del punto de venta (POS)
@@ -43,6 +44,8 @@ export default function VentaPOSPage() {
   const [items, setItems] = useState([]);
   const [descuentoGlobal, setDescuentoGlobal] = useState(0);
   const [mostrarModalPago, setMostrarModalPago] = useState(false);
+  // Nov 2025: Cliente asociado a la venta (opcional)
+  const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
   // Calcular total
   const subtotal = items.reduce((sum, item) => {
@@ -151,6 +154,8 @@ export default function VentaPOSPage() {
       const datosVenta = {
         tipo_venta: 'directa',
         usuario_id: user.id,
+        // Nov 2025: Incluir cliente si está seleccionado
+        cliente_id: clienteSeleccionado?.id || undefined,
         items: itemsBackend,
         descuento_porcentaje: parseFloat(descuentoGlobal) || 0,
         descuento_monto: descuentoGlobalMonto,
@@ -175,9 +180,10 @@ export default function VentaPOSPage() {
         });
       }
 
-      // Limpiar carrito
+      // Limpiar carrito y cliente
       setItems([]);
       setDescuentoGlobal(0);
+      setClienteSeleccionado(null);
       setMostrarModalPago(false);
 
     } catch (error) {
@@ -208,6 +214,15 @@ export default function VentaPOSPage() {
           </div>
 
           <div className="flex items-center gap-4">
+            {/* Nov 2025: Selector de cliente (opcional) */}
+            <div className="w-64">
+              <ClienteSelector
+                value={clienteSeleccionado}
+                onChange={setClienteSeleccionado}
+                placeholder="Asociar cliente (opcional)"
+              />
+            </div>
+
             {/* Nov 2025: Mostrar vendedor asignado */}
             {profesionalNombre && (
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">

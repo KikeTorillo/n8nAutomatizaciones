@@ -22,10 +22,14 @@ const invitacionesRouter = require('./invitaciones');
 const mercadopagoRouter = require('./mercadopago');
 
 // ========================================
+// MÓDULO CORE - Clientes (Nov 2025 - Migrado desde Agendamiento)
+// ========================================
+const clientesRouter = require('./clientes');
+
+// ========================================
 // MÓDULO AGENDAMIENTO - Migrado a modules/agendamiento
 // ========================================
 const profesionalesRouter = require('../../../modules/agendamiento/routes/profesionales');
-const clientesRouter = require('../../../modules/agendamiento/routes/clientes');
 const serviciosRouter = require('../../../modules/agendamiento/routes/servicios');
 const citasRouter = require('../../../modules/agendamiento/routes/citas');
 const bloqueosHorariosRouter = require('../../../modules/agendamiento/routes/bloqueos-horarios');

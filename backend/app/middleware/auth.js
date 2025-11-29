@@ -323,6 +323,11 @@ const requireAdmin = (req, res, next) => {
 
 /**
  * Middleware para verificar que el usuario puede acceder a la organización
+ *
+ * MODELO DE SEGURIDAD (Nov 2025):
+ * - TODOS los usuarios (incluido super_admin) solo pueden acceder a SU organización
+ * - Super_admin tiene acceso extra al panel /superadmin/* pero NO a datos de otros tenants
+ *
  * @param {number} organizacionId - ID de la organización a verificar
  */
 const verifyOrganizationAccess = (organizacionId) => {
@@ -332,15 +337,12 @@ const verifyOrganizationAccess = (organizacionId) => {
             return ResponseHelper.error(res, 'Error de configuración', 500);
         }
 
-        // Super admin puede acceder a cualquier organización
-        if (req.user.rol === 'super_admin') {
-            return next();
-        }
-
-        // Otros roles solo pueden acceder a su propia organización
+        // TODOS los usuarios solo pueden acceder a su propia organización
+        // (incluido super_admin - modelo de seguridad Nov 2025)
         if (req.user.organizacion_id !== organizacionId) {
             logger.warn('Intento de acceso a organización no autorizada', {
                 userId: req.user.id,
+                userRol: req.user.rol,
                 userOrgId: req.user.organizacion_id,
                 requestedOrgId: organizacionId,
                 path: req.path,

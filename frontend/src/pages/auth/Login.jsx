@@ -51,22 +51,12 @@ function Login() {
         refreshToken: data.refreshToken,
       });
 
-      // Redirección basada en el rol del usuario
+      // Redirección: TODOS los usuarios van a /home (Nov 2025)
+      // Super_admin tiene su org completa + acceso a /superadmin desde el menú
       const userRole = data.usuario.rol;
-      let redirectPath = '/home'; // Default: App Home (Nov 2025)
+      console.log(`➡️ Usuario ${userRole} - Redirigiendo a App Home`);
 
-      if (userRole === 'super_admin') {
-        redirectPath = '/superadmin';
-        console.log('➡️ Super Admin detectado - Redirigiendo a panel super admin');
-      } else if (userRole === 'empleado') {
-        redirectPath = '/home';
-        console.log('➡️ Empleado detectado - Redirigiendo a App Home');
-      } else {
-        // admin, propietario
-        console.log('➡️ Admin/Propietario detectado - Redirigiendo a App Home');
-      }
-
-      navigate(redirectPath);
+      navigate('/home');
     },
     onError: (error) => {
       console.error('❌ Error en login:', error);

@@ -183,3 +183,77 @@ COMMENT ON TABLE planes_subscripcion IS
 - custom: Plan personalizado sin límites (precio negociado)
 - trial: Período de prueba 14 días
 - basico/profesional: LEGACY (inactivos, solo clientes existentes)';
+
+
+-- ====================================================================
+-- ORGANIZACIÓN INICIAL PARA SUPER_ADMIN
+-- ====================================================================
+-- El super_admin requiere una organización (como todos los usuarios).
+-- Esta es una organización normal con todas las funcionalidades.
+-- El super_admin puede crear citas, clientes, ventas, etc. aquí.
+-- Adicionalmente tiene acceso al panel /superadmin/* para gestión global.
+--
+-- Fecha: 28 Noviembre 2025
+-- ====================================================================
+
+INSERT INTO organizaciones (
+    id,
+    codigo_tenant,
+    slug,
+    nombre_comercial,
+    razon_social,
+    email_admin,
+    categoria_id,
+    plan_actual,
+    zona_horaria,
+    idioma,
+    moneda,
+    activo
+) VALUES (
+    1,
+    'org_admin_principal',
+    'admin',
+    'Administración',
+    'Organización Principal',
+    'admin@plataforma.local',
+    1,
+    'custom',
+    'America/Mexico_City',
+    'es',
+    'MXN',
+    TRUE
+) ON CONFLICT (id) DO NOTHING;
+
+-- Asegurar que la secuencia continúe después del ID 1
+SELECT setval('organizaciones_id_seq', GREATEST(1, (SELECT MAX(id) FROM organizaciones)));
+
+-- ====================================================================
+-- SUSCRIPCIÓN PARA LA ORGANIZACIÓN DEL SUPER_ADMIN
+-- ====================================================================
+-- El super_admin tiene plan "custom" con todos los módulos habilitados
+-- Sin fecha de expiración (100 años en el futuro)
+-- ====================================================================
+
+INSERT INTO subscripciones (
+    organizacion_id,
+    plan_id,
+    precio_actual,
+    fecha_inicio,
+    fecha_proximo_pago,
+    estado,
+    activa,
+    periodo_facturacion,
+    auto_renovacion,
+    modulos_activos
+) VALUES (
+    1,  -- Org del super_admin
+    (SELECT id FROM planes_subscripcion WHERE codigo_plan = 'custom'),
+    0.00,  -- Sin costo
+    NOW(),
+    NOW() + INTERVAL '100 years',  -- No expira
+    'activa',
+    true,
+    'mensual',
+    true,
+    '{"core": true, "agendamiento": true, "inventario": true, "pos": true, "comisiones": true, "chatbots": true, "marketplace": true}'::jsonb
+) ON CONFLICT (organizacion_id) DO NOTHING;

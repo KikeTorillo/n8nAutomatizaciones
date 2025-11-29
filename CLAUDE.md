@@ -16,15 +16,16 @@
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
-| **Backend API** | ✅ | 40 controllers, 230+ endpoints, 33 models |
-| **Frontend React** | ✅ | 101 componentes, 44 páginas, 24 hooks |
-| **App Home / Launcher** | ✅ | Grid 10 apps, badges, accesos rápidos |
+| **Backend API** | ✅ | 40 controllers, 230+ endpoints, 34 models |
+| **Frontend React** | ✅ | 108 componentes, 47 páginas, 24 hooks |
+| **App Home / Launcher** | ✅ | Grid 12 apps, badges, accesos rápidos |
+| **Clientes (Core)** | ✅ | Módulo independiente, ClienteSelector POS |
 | **Sistema Invitaciones** | ✅ | Token 64-char, email auto, vinculación profesional-usuario |
-| **Base de Datos** | ✅ | 19 módulos SQL, 3 tablas particionadas, 76+ RLS |
+| **Base de Datos** | ✅ | 19 módulos SQL, 3 tablas particionadas, 93 RLS |
 | **Chatbots IA** | ✅ | 7 MCP tools, Telegram + WhatsApp |
 | **Marketplace** | ✅ | Agendamiento público sin auth |
 | **Inventario** | ✅ | ABC, alertas, órdenes compra |
-| **POS** | 85% | Falta: Ticket PDF, Vendedor UI |
+| **POS** | ✅ | Ticket PDF térmico, vendedor auto-asignado |
 | **Email & Pagos** | ✅ | AWS SES, Mercado Pago |
 
 ---
@@ -46,7 +47,7 @@
 ### Base de Datos
 - PostgreSQL 17 con pg_cron
 - Particionamiento: citas, eventos_sistema, movimientos_inventario
-- Row Level Security (76+ políticas)
+- Row Level Security (93 políticas)
 - 235+ índices, 47+ triggers
 
 ### IA Conversacional
@@ -153,10 +154,23 @@ auth.optionalAuth → tenant.setTenantContextFromQuery → controller
 ### Roles RBAC
 | Rol | Permisos |
 |-----|----------|
-| super_admin | Acceso total + gestión planes |
+| super_admin | CRUD en su org + panel `/superadmin/*` (gestión global) |
 | admin/propietario | CRUD completo en su org |
 | empleado | Solo módulos en `modulos_acceso` |
 | bot | READ + CRUD citas (MCP) |
+
+### Modelo Super Admin (Nov 2025)
+- **Tiene organización propia** (como cualquier admin)
+- **Puede usar todas las apps** (citas, clientes, POS, inventario, etc.)
+- **Acceso extra**: Panel `/superadmin/*` para gestión de plataforma
+- **NO puede acceder** a datos de otras organizaciones
+- **Login redirige** a `/home` (igual que todos los usuarios)
+- **App "Admin Plataforma"** visible solo para super_admin en el grid
+
+```
+CONSTRAINT usuarios: organizacion_id IS NOT NULL
+(TODOS los usuarios requieren organización, incluido super_admin)
+```
 
 ### Contraseñas
 - Mínimo 8 chars, 1 mayúscula, 1 minúscula, 1 número
@@ -209,6 +223,12 @@ auth.optionalAuth → tenant.setTenantContextFromQuery → controller
 - `frontend/src/pages/home/AppHomePage.jsx` - UI filtrada
 - `frontend/src/pages/auth/Login.jsx` - Redirect a /home
 
+### Clientes (Módulo Core)
+- `modules/core/models/cliente.model.js` - CRUD + estadísticas
+- `modules/core/controllers/cliente.controller.js` - Endpoints
+- `frontend/src/components/pos/ClienteSelector.jsx` - Selector en POS
+- `frontend/src/pages/clientes/ClientesPage.jsx` - App independiente
+
 ---
 
 ## Métricas
@@ -217,13 +237,13 @@ auth.optionalAuth → tenant.setTenantContextFromQuery → controller
 |------|----------|
 | Controllers | 40 |
 | Endpoints | 230+ |
-| Models | 33 |
-| Componentes React | 101 |
+| Models | 34 |
+| Componentes React | 108 |
+| Páginas | 47 |
 | Hooks TanStack | 24 |
-| Políticas RLS | 76+ |
-| Tests | 30 archivos |
+| Políticas RLS | 93 |
 | Contenedores Docker | 8 |
 
 ---
 
-**Versión**: 25.0 | **Actualizado**: 28 Nov 2025 | **Estado**: ✅ Production Ready
+**Versión**: 28.0 | **Actualizado**: 28 Nov 2025 | **Estado**: ✅ Production Ready

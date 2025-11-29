@@ -24,6 +24,8 @@ import {
   AlertTriangle,
   Zap,
   Crown,
+  Bell,
+  ChevronRight,
 } from 'lucide-react';
 
 /**
@@ -389,6 +391,41 @@ function ModulosPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* Otras Configuraciones */}
+        <div className="mt-8">
+          <div className="flex items-center gap-2 mb-4">
+            <Settings className="w-5 h-5 text-gray-500" />
+            <h2 className="text-lg font-semibold text-gray-900">
+              Otras Configuraciones
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Recordatorios */}
+            <button
+              onClick={() => navigate('/configuracion/recordatorios')}
+              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-left hover:border-indigo-300 hover:shadow-md transition-all group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 rounded-lg bg-amber-100 text-amber-600">
+                    <Bell className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      Recordatorios
+                    </h3>
+                    <p className="text-sm text-gray-600 mt-1">
+                      Configura recordatorios automáticos para citas
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
+              </div>
+            </button>
           </div>
         </div>
 

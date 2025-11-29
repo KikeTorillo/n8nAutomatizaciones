@@ -1,5 +1,6 @@
 const CitaModel = require('../../models/citas');
-const ClienteModel = require('../../models/cliente.model');
+// Nov 2025: ClienteModel migrado a Core (patrón Odoo/Salesforce)
+const ClienteModel = require('../../../core/models/cliente.model');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
 const RLSContextManager = require('../../../../utils/rlsContextManager');

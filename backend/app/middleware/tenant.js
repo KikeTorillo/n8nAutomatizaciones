@@ -26,68 +26,38 @@ const { ResponseHelper } = require('../utils/helpers');
  * Middleware para configurar el contexto del tenant en todas las consultas
  * Debe usarse después del middleware de autenticación
  *
- * PATRÓN ORGANIZACION_ID:
- *
- * SUPER_ADMIN:
- *   - Header X-Organization-Id (OBLIGATORIO - estándar enterprise)
- *   - Excepción: /organizaciones/:id usa params.id
- *
- * USUARIOS REGULARES:
- *   - Siempre usa organizacion_id del JWT (req.user.organizacion_id)
+ * MODELO DE SEGURIDAD (Nov 2025):
+ * - TODOS los usuarios (incluido super_admin) usan su organizacion_id del JWT
+ * - Super_admin tiene acceso a su propia organización + panel /superadmin/*
+ * - Super_admin NO puede acceder a datos de otras organizaciones
+ * - Eliminado: header X-Organization-Id (violaba aislamiento de tenants)
  */
 const setTenantContext = async (req, res, next) => {
-  let client;
   try {
     if (!req.user) {
       logger.error('Middleware setTenantContext usado sin usuario autenticado');
       return ResponseHelper.error(res, 'Error de configuración', 500);
     }
 
-    let tenantId;
+    // TODOS los usuarios usan su organizacion_id (incluido super_admin)
+    const tenantId = req.user.organizacion_id;
 
     logger.debug('Determinando tenant context', {
       userRol: req.user.rol,
-      organizacionId: req.user.organizacion_id,
-      header: req.headers?.['x-organization-id'],
+      organizacionId: tenantId,
       path: req.path
     });
 
-    if (req.user.rol === 'super_admin') {
-      // CASO ESPECIAL: Controller organizaciones usa params.id
-      if (req.baseUrl && req.baseUrl.includes('/organizaciones') && req.params.id) {
-        logger.debug('Controller organizaciones: usando params.id', { paramsId: req.params.id });
-        tenantId = parseInt(req.params.id);
-      } else {
-        // Header X-Organization-Id (ÚNICO MÉTODO para super_admin)
-        tenantId = parseInt(req.headers?.['x-organization-id']);
-
-        if (isNaN(tenantId) || !tenantId) {
-          logger.error('Super_admin: X-Organization-Id header no especificado o inválido', {
-            method: req.method,
-            baseUrl: req.baseUrl,
-            header: req.headers['x-organization-id']
-          });
-
-          return ResponseHelper.error(res,
-            'Super_admin debe especificar X-Organization-Id header',
-            400
-          );
-        }
-
-        logger.debug('Usando X-Organization-Id header', { tenantId });
-      }
-    } else if (req.user.organizacion_id) {
-      logger.debug('Usando organizacion_id del usuario', { organizacionId: req.user.organizacion_id });
-      tenantId = req.user.organizacion_id;
-    } else {
-      logger.error('No se pudo determinar tenant context', {
-        userRol: req.user.rol,
-        organizacionId: req.user.organizacion_id
+    // Validar que el usuario tiene organizacion_id
+    if (!tenantId) {
+      logger.error('Usuario sin organizacion_id', {
+        userId: req.user.id,
+        userRol: req.user.rol
       });
-      return ResponseHelper.error(res, 'Error de configuración de tenant', 500);
+      return ResponseHelper.error(res, 'Usuario sin organización asignada', 500);
     }
 
-    logger.debug('Tenant ID final', { tenantId });
+    logger.debug('Tenant ID establecido', { tenantId });
 
     // Validar que tenant_id es numérico (prevenir SQL injection)
     if (isNaN(tenantId) || tenantId <= 0) {

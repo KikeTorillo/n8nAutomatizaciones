@@ -10,6 +10,7 @@ import CitaFormModal from '@/components/citas/CitaFormModal';
 import CompletarCitaModal from '@/components/citas/CompletarCitaModal';
 import NoShowModal from '@/components/citas/NoShowModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
+import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
 import { useToast } from '@/hooks/useToast';
 import {
   useCitas,
@@ -176,24 +177,38 @@ function CitasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Botón de regreso al home */}
-          <button
-            onClick={() => navigate('/home')}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="h-5 w-5" />
-            <span className="font-medium">Volver al Inicio</span>
-          </button>
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+        >
+          <ArrowLeft className="h-5 w-5" />
+          <span className="font-medium">Volver al Inicio</span>
+        </button>
 
+        <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Gestiona citas, bloqueos y clientes
+        </p>
+      </div>
+
+      {/* Tabs de navegación */}
+      <AgendamientoNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header de sección */}
+        <div className="mb-6">
           <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Gestión de Citas</h1>
-              <p className="text-sm text-gray-600 mt-1">
-                Administra y monitorea todas las citas de tu negocio
-              </p>
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-8 w-8 text-blue-600" />
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Gestión de Citas</h2>
+                <p className="text-sm text-gray-600">
+                  Administra y monitorea todas las citas de tu negocio
+                </p>
+              </div>
             </div>
             <Button variant="primary" onClick={handleNuevaCita}>
               <Plus className="w-5 h-5 mr-2" />
@@ -201,10 +216,6 @@ function CitasPage() {
             </Button>
           </div>
         </div>
-      </div>
-
-      {/* Contenido Principal */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Estadísticas Rápidas */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           {/* Total Citas del Día */}

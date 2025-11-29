@@ -150,17 +150,17 @@ CREATE TABLE usuarios (
     CHECK (char_length(email) >= 5),
     CHECK (char_length(nombre) >= 2),
     CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
-    CHECK (
-        (rol = 'super_admin') OR
-        (rol != 'super_admin' AND organizacion_id IS NOT NULL)
-    )
+    -- TODOS los usuarios requieren organización (incluido super_admin)
+    -- Super_admin usa la organización de plataforma (codigo_tenant='org_plataforma_sistema')
+    -- Cambio: Nov 2025 - Modelo de seguridad mejorado
+    CHECK (organizacion_id IS NOT NULL)
 );
 
 -- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 COMMENT ON TABLE organizaciones IS 'Base del sistema multi-tenant. Cada organización es un tenant independiente con aislamiento completo de datos';
-COMMENT ON TABLE usuarios IS 'Autenticación y autorización. Vinculados a organizaciones (multi-tenant) o super_admin (global)';
+COMMENT ON TABLE usuarios IS 'Autenticación y autorización. TODOS los usuarios requieren organización. Super_admin usa org de plataforma (codigo_tenant=org_plataforma_sistema)';
 
 COMMENT ON COLUMN organizaciones.codigo_tenant IS 'Código único inmutable para identificación técnica del tenant (e.g., org-001)';
 COMMENT ON COLUMN organizaciones.slug IS 'URL-friendly identifier para subdominios y URLs personalizadas';
@@ -169,4 +169,4 @@ COMMENT ON COLUMN organizaciones.tiene_perfil_marketplace IS 'True si la organiz
 COMMENT ON COLUMN organizaciones.fecha_activacion_marketplace IS 'Timestamp de primera publicación en marketplace';
 COMMENT ON COLUMN organizaciones.app_seleccionada IS 'App elegida en Plan Free (1 app gratis). NULL si plan Pro (todas las apps). Valores: agendamiento, inventario, pos';
 COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
-COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';
+COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (org plataforma, acceso admin global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';

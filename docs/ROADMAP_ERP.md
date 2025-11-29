@@ -1,6 +1,6 @@
 # Roadmap ERP para PYMES México
 
-**Versión**: 6.0
+**Versión**: 10.0
 **Última actualización**: 28 Noviembre 2025
 
 ---
@@ -9,15 +9,16 @@
 
 | Módulo | Estado | Descripción |
 |--------|--------|-------------|
-| **Core** (Auth, Orgs, Planes) | 100% | Multi-tenant RLS, JWT, RBAC |
-| **App Home / Launcher** | 100% | Grid 10 apps, badges, accesos rápidos |
+| **Core** (Auth, Orgs, Planes, Clientes) | 100% | Multi-tenant RLS, JWT, RBAC, CRM |
+| **Super Admin Model** | 100% | Org propia + panel `/superadmin/*` |
+| **App Home / Launcher** | 100% | Grid 11 apps, badges, accesos rápidos |
 | **Profesionales-Usuario** | 100% | Invitaciones, modulos_acceso, empleados |
 | **Agendamiento** | 100% | Particionado, múltiples servicios por cita |
 | **Recordatorios** | 100% | pg_cron + HTTP, Telegram/WhatsApp |
 | **Comisiones** | 100% | Trigger automático, dashboard, reportes |
 | **Marketplace** | 95% | Directorio público, agendamiento sin auth |
 | **Inventario** | 100% | CRUD, ABC, alertas, órdenes compra |
-| **POS** | 85% | Ventas, devoluciones, corte caja |
+| **POS** | 98% | Ventas, Ticket PDF, ClienteSelector, corte caja |
 | **Chatbots** | 100% | MCP Server (7 tools), Telegram + WhatsApp |
 | **Contabilidad/CFDI** | 0% | Fase futura |
 
@@ -37,30 +38,35 @@
 
 ## Roadmap - PENDIENTES
 
-### Fase 1: Completar POS
+### Fase 1: POS (98% Completado)
 
-#### 1.1 Ticket PDF (térmica 58/80mm)
+#### 1.1 Ticket PDF ✅ COMPLETADO
+- `ticketPDF.service.js` (367 líneas) - Soporte 58mm/80mm
+- `GET /api/v1/pos/ventas/:id/ticket`
+- Descarga e impresión en `VentaDetalleModal.jsx`
 
-**Archivos a crear:**
-| Archivo | Descripción |
-|---------|-------------|
-| `backend/app/services/ticketPDF.service.js` | Generador PDFKit |
-| `backend/app/controllers/pos/ticket.controller.js` | Endpoint `/api/v1/pos/ventas/:id/ticket` |
-| `frontend/src/components/pos/TicketPreview.jsx` | Vista previa del ticket |
-
-**Esfuerzo**: 15-20 horas
-
-#### 1.2 Vendedor en POS
-
-- Ya implementado: `profesional_id` en `ventas_pos`
-- Ya implementado: `modulos_acceso.pos` para control de acceso
-- Pendiente: UI selector/auto-asignación en frontend POS
-
-**Esfuerzo**: 4-6 horas
+#### 1.2 Vendedor en POS ✅ AUTO-ASIGNADO
+- Backend auto-asigna `profesional_id` del usuario vinculado
+- Badge visual "Vendedor: X" (solo lectura)
+- Decisión de diseño: 1 usuario = 1 vendedor
 
 ---
 
-### Fase 2: Mejoras Marketplace
+### Fase 2: Vista 360° del Cliente (CRM)
+
+**Objetivo**: Tabs con historial completo en ClienteDetailPage.
+
+| Tab | Contenido | Endpoint |
+|-----|-----------|----------|
+| Resumen | Datos + stats | GET `/clientes/:id/estadisticas` |
+| Citas | Historial | GET `/citas?cliente_id=X` |
+| Compras | Historial POS | GET `/pos/ventas?cliente_id=X` |
+
+**Esfuerzo**: 8-12 horas
+
+---
+
+### Fase 3: Mejoras Marketplace
 
 | Mejora | Prioridad | Esfuerzo |
 |--------|-----------|----------|
@@ -74,7 +80,7 @@
 
 ---
 
-### Fase 3: Contabilidad + CFDI (Futuro)
+### Fase 4: Contabilidad + CFDI (Futuro)
 
 **Complejidad**: Alta - 160-264 horas
 
@@ -116,12 +122,12 @@ if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
 
 | Fase | Módulo | Esfuerzo | Prioridad |
 |------|--------|----------|-----------|
-| 1.1 | Ticket PDF (POS) | 15-20h | Media |
-| 1.2 | Vendedor UI (POS) | 4-6h | Media |
-| 2 | Mejoras Marketplace | 20-30h | Baja |
-| 3 | CFDI + Contabilidad | 160-264h | Futura |
+| 1 | POS | ✅ Completado | - |
+| 2 | Vista 360° CRM | 8-12h | Alta |
+| 3 | Mejoras Marketplace | 20-30h | Media |
+| 4 | CFDI + Contabilidad | 160-264h | Futura |
 
-**Total corto plazo**: ~40-56 horas
+**Total corto plazo**: ~38-42 horas
 
 ---
 
@@ -129,6 +135,10 @@ if (!item) return ResponseHelper.error(res, 'No encontrado', 404);
 
 | Versión | Fecha | Cambios |
 |---------|-------|---------|
-| 6.0 | 28 Nov 2025 | Fase Profesional-Usuario 100% completada (invitaciones, empleados, modulos_acceso) |
-| 5.0 | 27 Nov 2025 | Limpieza: eliminadas fases completadas |
+| 10.0 | 28 Nov 2025 | POS 98% ✅ (Ticket PDF completado, vendedor auto-asignado) |
+| 9.0 | 28 Nov 2025 | Super Admin Model ✅ (org propia, NO acceso cross-tenant, app Admin Plataforma) |
+| 8.0 | 28 Nov 2025 | Clientes como Módulo Core ✅ completado (migración backend, ClienteSelector POS, app independiente) |
+| 7.0 | 28 Nov 2025 | Análisis arquitectónico Clientes (patrón Odoo/Salesforce) |
+| 6.0 | 28 Nov 2025 | Profesional-Usuario 100% (invitaciones, empleados, modulos_acceso) |
+| 5.0 | 27 Nov 2025 | Limpieza fases completadas |
 | 4.0 | 27 Nov 2025 | Órdenes de Compra completado |
