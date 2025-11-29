@@ -15,7 +15,7 @@ function LandingPage() {
 
           <div className="flex gap-4 justify-center items-center animate-slide-up">
             <Link
-              to="/onboarding"
+              to="/registro"
               className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-lg hover:bg-gray-100 transition-colors"
             >
               Empezar Gratis - 14 días de prueba

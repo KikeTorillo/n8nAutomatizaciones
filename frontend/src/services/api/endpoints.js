@@ -61,6 +61,37 @@ export const authApi = {
    * @returns {Promise<Object>} { puntuacion, nivel, cumple_requisitos, requisitos, sugerencias }
    */
   evaluarFortaleza: (data) => apiClient.post('/auth/password-strength', data),
+
+  // ===== Onboarding Simplificado - Fase 2 (Nov 2025) =====
+
+  /**
+   * Registro simplificado (sin password, envía email de activación)
+   * @param {Object} data - { nombre, email, nombre_negocio, categoria_id, estado_id, ciudad_id, plan, app_seleccionada }
+   * @returns {Promise<Object>} { mensaje, email_enviado, expira_en, token (dev only) }
+   */
+  registrar: (data) => apiClient.post('/auth/registrar', data),
+
+  /**
+   * Validar token de activación
+   * @param {string} token - Token de 64 caracteres
+   * @returns {Promise<Object>} { valido, email, nombre, nombre_negocio, organizacion_id, tiempo_restante }
+   */
+  validarActivacion: (token) => apiClient.get(`/auth/activar/${token}`),
+
+  /**
+   * Activar cuenta con password
+   * @param {string} token - Token de activación
+   * @param {Object} data - { password, password_confirm }
+   * @returns {Promise<Object>} { usuario, organizacion, accessToken, expiresIn }
+   */
+  activarCuenta: (token, data) => apiClient.post(`/auth/activar/${token}`, data),
+
+  /**
+   * Reenviar email de activación
+   * @param {Object} data - { email }
+   * @returns {Promise<Object>} { mensaje, email_enviado, expira_en, reenvio_numero }
+   */
+  reenviarActivacion: (data) => apiClient.post('/auth/reenviar-activacion', data),
 };
 
 // ==================== ORGANIZACIONES ====================

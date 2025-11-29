@@ -124,7 +124,7 @@ function DirectorioMarketplacePage() {
               Únete a nuestro marketplace y conecta con nuevos clientes
             </p>
             <a
-              href="/onboarding"
+              href="/registro"
               className="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 transition-colors"
             >
               Registra tu negocio

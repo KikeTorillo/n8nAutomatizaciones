@@ -131,7 +131,7 @@ function SubscripcionResultado() {
         </p>
 
         <div className="space-y-3">
-          <Button onClick={() => navigate('/onboarding')} className="w-full">
+          <Button onClick={() => navigate('/registro')} className="w-full">
             Intentar de Nuevo
           </Button>
           <Button variant="outline" onClick={() => navigate('/')} className="w-full">

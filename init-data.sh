@@ -72,6 +72,8 @@ echo "       🧩 Funciones del sistema modular (tiene_modulo_activo, validacion
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/nucleo/08-funciones-modulos.sql"
 echo "       👁️ Vistas del sistema modular (estadísticas, cambios recientes)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/nucleo/09-vistas-modulos.sql"
+echo "       🔐 Sistema de activación de cuentas (onboarding simplificado)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/nucleo/10-activaciones-cuenta.sql"
 echo ""
 echo "    📦 MÓDULO: Catálogos (nueva estructura modular)"
 echo "       📋 Tablas catálogo (tipos_bloqueo, tipos_profesional)..."

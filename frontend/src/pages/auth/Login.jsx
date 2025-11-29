@@ -136,7 +136,7 @@ function Login() {
           <p className="text-sm text-gray-600">
             ¿No tienes cuenta?{' '}
             <Link
-              to="/onboarding"
+              to="/registro"
               className="text-primary-600 hover:text-primary-700 font-medium"
             >
               Regístrate gratis

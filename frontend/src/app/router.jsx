@@ -10,7 +10,7 @@ const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
 const ForgotPasswordPage = lazy(() => import('@/pages/auth/ForgotPassword'));
 const ResetPasswordPage = lazy(() => import('@/pages/auth/ResetPassword'));
-const OnboardingFlow = lazy(() => import('@/pages/onboarding/OnboardingFlow'));
+const RegistroPage = lazy(() => import('@/pages/auth/RegistroPage'));
 const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 
 // Páginas de Clientes
@@ -86,6 +86,9 @@ const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
 // Página de Registro por Invitación (Nov 2025 - Sistema Profesional-Usuario)
 const RegistroInvitacionPage = lazy(() => import('@/pages/auth/RegistroInvitacionPage'));
 
+// Páginas de Activación de Cuenta (Nov 2025 - Fase 2)
+const ActivarCuentaPage = lazy(() => import('@/pages/auth/ActivarCuentaPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -133,14 +136,19 @@ export const router = createBrowserRouter([
         path: 'registro-invitacion/:token',
         element: withSuspense(RegistroInvitacionPage),
       },
+      // Ruta de Registro (Nov 2025 - Fase 2: Onboarding Simplificado)
+      {
+        path: 'registro',
+        element: withSuspense(RegistroPage),
+      },
+      {
+        path: 'activar-cuenta/:token',
+        element: withSuspense(ActivarCuentaPage),
+      },
       // Ruta de setup inicial (primera vez)
       {
         path: 'setup',
         element: withSuspense(InitialSetup),
-      },
-      {
-        path: 'onboarding',
-        element: withSuspense(OnboardingFlow),
       },
       // Rutas de Marketplace (públicas)
       {

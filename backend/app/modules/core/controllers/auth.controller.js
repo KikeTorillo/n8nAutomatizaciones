@@ -5,11 +5,15 @@
  */
 
 const UsuarioModel = require('../models/usuario.model');
+const OrganizacionModel = require('../models/organizacion.model');
+const ActivacionModel = require('../models/activacion.model');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const { addToTokenBlacklist } = require('../../../middleware/auth');
 const { ResponseHelper } = require('../../../utils/helpers');
 const PasswordHelper = require('../../../utils/passwordHelper');
 const asyncHandler = require('../../../middleware/asyncHandler');
+const emailService = require('../../../services/emailService');
 
 class AuthController {
 
@@ -238,6 +242,226 @@ class AuthController {
         const evaluacion = PasswordHelper.evaluarFortaleza(password);
 
         return ResponseHelper.success(res, evaluacion, 'Fortaleza de contraseña evaluada');
+    });
+
+    // ====================================================================
+    // ONBOARDING SIMPLIFICADO - Fase 2 (Nov 2025)
+    // ====================================================================
+
+    /**
+     * POST /api/v1/auth/registrar
+     * Registro simplificado: crea org + envía email de activación (sin password)
+     * @public
+     */
+    static registrarSimplificado = asyncHandler(async (req, res) => {
+        const {
+            nombre,
+            email,
+            nombre_negocio,
+            industria,
+            estado_id,
+            ciudad_id,
+            plan,
+            app_seleccionada
+        } = req.body;
+
+        // 1. Verificar que el email no esté registrado
+        const usuarioExistente = await UsuarioModel.buscarPorEmail(email);
+        if (usuarioExistente) {
+            return ResponseHelper.error(res, 'Este email ya está registrado. ¿Olvidaste tu contraseña?', 409);
+        }
+
+        // 2. Verificar que no haya activación pendiente
+        const activacionExistente = await ActivacionModel.obtenerPorEmail(email);
+        if (activacionExistente && activacionExistente.estado === 'pendiente') {
+            return ResponseHelper.error(res, 'Ya existe un registro pendiente para este email. Revisa tu bandeja de entrada.', 409);
+        }
+
+        // 3. Resolver categoria_id desde código de industria
+        const RLSContextManager = require('../../../utils/rlsContextManager');
+        const categoriaResult = await RLSContextManager.withBypass(async (client) => {
+            return client.query(
+                'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
+                [industria]
+            );
+        });
+
+        if (categoriaResult.rows.length === 0) {
+            return ResponseHelper.error(res, 'Industria no válida', 400);
+        }
+        const categoria_id = categoriaResult.rows[0].id;
+
+        // 4. Crear organización (sin admin aún)
+        const organizacion = await OrganizacionModel.crear({
+            nombre_comercial: nombre_negocio,
+            razon_social: nombre_negocio,
+            email_admin: email,
+            categoria_id,
+            estado_id,
+            ciudad_id,
+            plan: plan || 'trial',
+            app_seleccionada: plan === 'free' ? app_seleccionada : null
+        });
+
+        // 4.1 Crear suscripción con módulos activos según el plan
+        await OrganizacionModel.crearSubscripcionActiva(
+            organizacion.id,
+            plan || 'trial',
+            14 // días de trial
+        );
+
+        // 5. Crear activación pendiente
+        const activacion = await ActivacionModel.crear({
+            organizacion_id: organizacion.id,
+            email,
+            nombre,
+            horas_expiracion: 24
+        });
+
+        // 5. Enviar email de activación
+        await emailService.enviarActivacionCuenta({
+            email,
+            nombre,
+            token: activacion.token,
+            nombre_negocio,
+            expira_en: activacion.expira_en,
+            es_reenvio: false
+        });
+
+        // 6. Responder (sin exponer token en producción)
+        const responseData = {
+            mensaje: 'Registro iniciado. Revisa tu email para activar tu cuenta.',
+            email_enviado: email,
+            expira_en: activacion.expira_en
+        };
+
+        // En desarrollo, incluir token para testing
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.token = activacion.token;
+        }
+
+        return ResponseHelper.success(res, responseData, 'Email de activación enviado', 201);
+    });
+
+    /**
+     * GET /api/v1/auth/activar/:token
+     * Valida token de activación (para mostrar formulario de password)
+     * @public
+     */
+    static validarActivacion = asyncHandler(async (req, res) => {
+        const { token } = req.params;
+
+        const resultado = await ActivacionModel.validarToken(token);
+
+        if (!resultado.valido) {
+            return ResponseHelper.error(res, resultado.error, 400, { valido: false });
+        }
+
+        return ResponseHelper.success(res, {
+            valido: true,
+            ...resultado.activacion
+        }, 'Token de activación válido');
+    });
+
+    /**
+     * POST /api/v1/auth/activar/:token
+     * Activa cuenta creando usuario admin con password
+     * @public
+     */
+    static activarCuenta = asyncHandler(async (req, res) => {
+        const { token } = req.params;
+        const { password } = req.body;
+
+        // 1. Hashear password
+        const password_hash = await bcrypt.hash(password, 12);
+
+        // 2. Activar cuenta (crear usuario)
+        const resultado = await ActivacionModel.activar(token, password_hash);
+
+        // 3. Generar tokens JWT para login automático
+        // IMPORTANTE: Usar mismo formato que usuario.model.js para consistencia con middleware auth
+        const crypto = require('crypto');
+        const jti = crypto.randomBytes(16).toString('hex');
+
+        const accessToken = jwt.sign(
+            {
+                userId: resultado.usuario.id,
+                email: resultado.usuario.email,
+                rol: resultado.usuario.rol,
+                organizacionId: resultado.usuario.organizacion_id,
+                jti: jti
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        );
+
+        // 4. Establecer cookie de refresh
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
+        });
+
+        // 5. Responder con datos del usuario y tokens
+        const responseData = {
+            usuario: resultado.usuario,
+            organizacion: resultado.organizacion,
+            accessToken,
+            expiresIn: 3600 // 1 hora en segundos
+        };
+
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.refreshToken = refreshToken;
+        }
+
+        return ResponseHelper.success(res, responseData, 'Cuenta activada exitosamente', 201);
+    });
+
+    /**
+     * POST /api/v1/auth/reenviar-activacion
+     * Reenvía email de activación para un registro pendiente
+     * @public
+     */
+    static reenviarActivacion = asyncHandler(async (req, res) => {
+        const { email } = req.body;
+
+        // 1. Buscar activación pendiente
+        const activacionExistente = await ActivacionModel.obtenerPorEmail(email);
+
+        if (!activacionExistente) {
+            return ResponseHelper.error(res, 'No hay registro pendiente para este email', 404);
+        }
+
+        if (activacionExistente.estado === 'activada') {
+            return ResponseHelper.error(res, 'Esta cuenta ya fue activada. Puedes iniciar sesión.', 400);
+        }
+
+        // 2. Reenviar (genera nuevo token)
+        const nuevaActivacion = await ActivacionModel.reenviar(email);
+
+        // 3. Enviar email
+        await emailService.enviarActivacionCuenta({
+            email,
+            nombre: nuevaActivacion.nombre,
+            token: nuevaActivacion.token,
+            nombre_negocio: activacionExistente.nombre_comercial,
+            expira_en: nuevaActivacion.expira_en,
+            es_reenvio: true
+        });
+
+        return ResponseHelper.success(res, {
+            mensaje: 'Email de activación reenviado',
+            email_enviado: email,
+            expira_en: nuevaActivacion.expira_en,
+            reenvio_numero: nuevaActivacion.reenvios
+        }, 'Email reenviado exitosamente');
     });
 }
 

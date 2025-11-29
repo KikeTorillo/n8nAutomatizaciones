@@ -7,6 +7,7 @@ const transporter = require('./email/transporter');
 const logger = require('../utils/logger');
 const { generatePasswordResetEmail, generatePasswordResetText } = require('./email/templates/passwordReset');
 const { generateInvitacionEmail, generateInvitacionText } = require('./email/templates/invitacionProfesional');
+const { generateActivacionEmail, generateActivacionText } = require('./email/templates/activacionCuenta');
 
 class EmailService {
     constructor() {
@@ -129,6 +130,70 @@ class EmailService {
 
         } catch (error) {
             logger.error(`❌ Error enviando invitación a ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Envía un email de activación de cuenta
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.email - Email del destinatario
+     * @param {string} params.nombre - Nombre del usuario
+     * @param {string} params.token - Token de activación
+     * @param {string} params.nombre_negocio - Nombre del negocio registrado
+     * @param {string} params.expira_en - Fecha de expiración
+     * @param {boolean} [params.es_reenvio=false] - Si es un reenvío
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarActivacionCuenta({
+        email,
+        nombre,
+        token,
+        nombre_negocio,
+        expira_en,
+        es_reenvio = false
+    }) {
+        try {
+            // Construir URL de activación
+            const activacionUrl = `${this.frontendUrl}/activar-cuenta/${token}`;
+
+            // Generar contenido del email
+            const htmlContent = generateActivacionEmail({
+                nombre,
+                activacionUrl,
+                nombre_negocio,
+                expira_en,
+                es_reenvio
+            });
+
+            const textContent = generateActivacionText({
+                nombre,
+                activacionUrl,
+                nombre_negocio,
+                expira_en,
+                es_reenvio
+            });
+
+            // Configuración del email
+            const mailOptions = {
+                from: this.emailFrom,
+                to: email,
+                subject: `🚀 ${es_reenvio ? '[Recordatorio] ' : ''}Activa tu cuenta - ${nombre_negocio}`,
+                text: textContent,
+                html: htmlContent
+            };
+
+            // Enviar email
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                logger.info(`📧 Email de activación ${es_reenvio ? 'reenviado' : 'enviado'} a: ${email}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            logger.error(`❌ Error enviando email de activación a ${email}: ${error.message}`);
             throw error;
         }
     }
