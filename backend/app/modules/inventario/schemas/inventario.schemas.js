@@ -103,10 +103,11 @@ const inventarioSchemas = {
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
 
             direccion: Joi.string().max(500).optional().allow(null, ''),
-            ciudad: Joi.string().max(100).optional().allow(null, ''),
-            estado: Joi.string().max(100).optional().allow(null, ''),
             codigo_postal: Joi.string().max(10).optional().allow(null, ''),
-            pais: Joi.string().max(100).optional().default('México'),
+            // IDs de ubicación normalizados (Nov 2025)
+            pais_id: Joi.number().integer().positive().optional().allow(null),
+            estado_id: Joi.number().integer().positive().optional().allow(null),
+            ciudad_id: Joi.number().integer().positive().optional().allow(null),
 
             dias_credito: Joi.number().integer().min(0).optional().default(0),
             dias_entrega_estimados: Joi.number().integer().min(1).optional().allow(null),
@@ -134,10 +135,11 @@ const inventarioSchemas = {
             email: Joi.string().email().max(255).optional().allow(null, ''),
             sitio_web: Joi.string().uri().max(255).optional().allow(null, ''),
             direccion: Joi.string().max(500).optional().allow(null, ''),
-            ciudad: Joi.string().max(100).optional().allow(null, ''),
-            estado: Joi.string().max(100).optional().allow(null, ''),
             codigo_postal: Joi.string().max(10).optional().allow(null, ''),
-            pais: Joi.string().max(100).optional(),
+            // IDs de ubicación normalizados (Nov 2025)
+            pais_id: Joi.number().integer().positive().optional().allow(null),
+            estado_id: Joi.number().integer().positive().optional().allow(null),
+            ciudad_id: Joi.number().integer().positive().optional().allow(null),
             dias_credito: Joi.number().integer().min(0).optional(),
             dias_entrega_estimados: Joi.number().integer().min(1).optional().allow(null),
             monto_minimo_compra: Joi.number().min(0).optional().allow(null),

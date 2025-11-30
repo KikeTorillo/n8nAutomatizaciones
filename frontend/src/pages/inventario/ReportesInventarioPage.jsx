@@ -43,36 +43,46 @@ function ReporteValorInventario() {
     );
   }
 
+  // Calcular valores para mostrar
+  const valorVenta = parseFloat(reporte.valor_venta) || 0;
+  const valorCompra = parseFloat(reporte.valor_compra) || 0;
+  const totalProductos = parseInt(reporte.total_productos) || 0;
+  const totalUnidades = parseInt(reporte.total_unidades) || 0;
+  const margenPotencial = parseFloat(reporte.margen_potencial) || 0;
+  const porcentajeMargen = parseFloat(reporte.porcentaje_margen) || 0;
+
   return (
     <div className="space-y-6">
       {/* Resumen */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Valor Total</p>
+          <p className="text-sm text-gray-600 mb-1">Valor Venta</p>
           <p className="text-2xl font-bold text-indigo-600">
-            ${reporte.valor_total_inventario?.toLocaleString('es-MX', {
-              minimumFractionDigits: 2,
-            }) || '0.00'}
+            ${valorVenta.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            Costo: ${valorCompra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Total Productos</p>
           <p className="text-2xl font-bold text-gray-900">
-            {reporte.total_productos?.toLocaleString('es-MX') || 0}
+            {totalProductos.toLocaleString('es-MX')}
           </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <p className="text-sm text-gray-600 mb-1">Unidades Totales</p>
           <p className="text-2xl font-bold text-gray-900">
-            {reporte.total_unidades?.toLocaleString('es-MX') || 0}
+            {totalUnidades.toLocaleString('es-MX')}
           </p>
         </div>
         <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Valor Promedio</p>
-          <p className="text-2xl font-bold text-gray-900">
-            ${reporte.valor_promedio_producto?.toLocaleString('es-MX', {
-              minimumFractionDigits: 2,
-            }) || '0.00'}
+          <p className="text-sm text-gray-600 mb-1">Margen Potencial</p>
+          <p className="text-2xl font-bold text-green-600">
+            ${margenPotencial.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+          </p>
+          <p className="text-xs text-gray-500 mt-1">
+            {porcentajeMargen.toFixed(1)}% de margen
           </p>
         </div>
       </div>

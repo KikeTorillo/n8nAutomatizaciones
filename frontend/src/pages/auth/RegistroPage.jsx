@@ -15,7 +15,8 @@ import {
   Sparkles,
   Calendar,
   Package,
-  ShoppingCart
+  ShoppingCart,
+  UserCheck
 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { authApi } from '@/services/api/endpoints';
@@ -24,7 +25,7 @@ import { INDUSTRIAS } from '@/lib/constants';
 
 /**
  * Schema de validación para registro simplificado
- * 7 campos obligatorios + selección de app para Plan Free
+ * 7 campos obligatorios + selección de app para Plan Free + soy_profesional
  */
 const registroSchema = z.object({
   nombre: z.string()
@@ -47,7 +48,8 @@ const registroSchema = z.object({
     .transform((val) => parseInt(val, 10))
     .refine((val) => !isNaN(val) && val > 0, 'Selecciona una ciudad'),
   plan: z.enum(['free', 'pro', 'trial']).default('trial'),
-  app_seleccionada: z.enum(['agendamiento', 'inventario', 'pos']).optional().nullable()
+  app_seleccionada: z.enum(['agendamiento', 'inventario', 'pos']).optional().nullable(),
+  soy_profesional: z.boolean().default(true) // Por defecto true (caso más común)
 });
 
 /**
@@ -94,7 +96,8 @@ function RegistroPage() {
       estado_id: '',
       ciudad_id: '',
       plan: 'trial',
-      app_seleccionada: null
+      app_seleccionada: null,
+      soy_profesional: true // Por defecto marcado (caso más común en PYMES)
     }
   });
 
@@ -267,6 +270,29 @@ function RegistroPage() {
             {errors.industria && (
               <p className="text-red-500 text-sm mt-1">{errors.industria.message}</p>
             )}
+          </div>
+
+          {/* Soy Profesional - Checkbox para auto-crear perfil profesional */}
+          <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                {...register('soy_profesional')}
+                className="w-5 h-5 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <UserCheck className="h-4 w-4 text-blue-600" />
+                  <span className="font-medium text-gray-900">
+                    Yo atiendo clientes
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mt-1">
+                  Activa esto si tú también realizarás servicios o ventas.
+                  Te crearemos un perfil de profesional automáticamente.
+                </p>
+              </div>
+            </label>
           </div>
 
           {/* Ubicación */}

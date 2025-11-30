@@ -205,7 +205,7 @@ class OrdenesCompraModel {
                 SELECT
                     oc.*,
                     p.nombre AS proveedor_nombre,
-                    COUNT(oci.id) AS total_items,
+                    COUNT(oci.id) AS items_count,
                     SUM(oci.cantidad_ordenada) AS total_unidades,
                     SUM(oci.cantidad_recibida) AS unidades_recibidas
                 FROM ordenes_compra oc
@@ -223,18 +223,24 @@ class OrdenesCompraModel {
 
             const result = await db.query(query, values);
 
-            // Obtener totales
+            // Obtener totales (usamos las condiciones originales sin limit/offset)
+            const countConditions = whereConditions.join(' AND ');
+            const countValues = values.slice(0, paramCounter - 1); // Sin limit ni offset
+
             const countQuery = `
                 SELECT
-                    COUNT(*) as total,
+                    COUNT(*) as cantidad,
+                    COALESCE(SUM(total), 0) as valor_total,
+                    COALESCE(SUM(monto_pagado), 0) as total_pagado,
+                    COALESCE(SUM(total - monto_pagado), 0) as pendiente_pago,
                     SUM(CASE WHEN estado = 'borrador' THEN 1 ELSE 0 END) as borradores,
                     SUM(CASE WHEN estado IN ('enviada', 'parcial') THEN 1 ELSE 0 END) as pendientes,
                     SUM(CASE WHEN estado = 'recibida' THEN 1 ELSE 0 END) as recibidas
                 FROM ordenes_compra oc
-                WHERE ${whereConditions.slice(0, -2).join(' AND ') || 'oc.organizacion_id = $1'}
+                WHERE ${countConditions}
             `;
 
-            const countResult = await db.query(countQuery, values.slice(0, paramCounter - 2));
+            const countResult = await db.query(countQuery, countValues);
 
             return {
                 ordenes: result.rows,

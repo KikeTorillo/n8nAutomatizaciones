@@ -138,12 +138,31 @@ export function useDesactivarModulo() {
  * Hook combinado para obtener estado completo de módulos
  * Retorna helpers útiles para verificar módulos
  * Actualizado para modelo Free/Pro (Nov 2025)
+ * Super Admin tiene acceso a TODOS los módulos (Nov 2025)
  */
 export function useModulos() {
   const { data: modulosData, isLoading, error, refetch } = useModulosActivos();
+  const { user } = useAuthStore();
+
+  // Super Admin bypass: tiene acceso a TODOS los módulos
+  const esSuperAdmin = user?.rol === 'super_admin';
+
+  // Módulos completos para super_admin
+  const TODOS_LOS_MODULOS = {
+    core: true,
+    agendamiento: true,
+    inventario: true,
+    pos: true,
+    comisiones: true,
+    marketplace: true,
+    chatbots: true,
+  };
 
   // Extraer módulos activos como objeto simple { inventario: true, pos: false, ... }
-  const modulosActivos = modulosData?.modulos_activos || { core: true };
+  // Super Admin: todos los módulos activos
+  const modulosActivos = esSuperAdmin
+    ? TODOS_LOS_MODULOS
+    : (modulosData?.modulos_activos || { core: true });
 
   // Información del plan (Modelo Free/Pro Nov 2025)
   const plan = modulosData?.plan || null;
@@ -165,11 +184,15 @@ export function useModulos() {
   const esPlanFree = plan?.es_free === true;
   const esPlanPro = plan?.es_pro === true;
   const esPlanTrial = plan?.es_trial === true;
-  const todasLasApps = plan?.todas_las_apps === true;
+  // Super Admin tiene acceso a todas las apps
+  const todasLasApps = esSuperAdmin || plan?.todas_las_apps === true;
   const appSeleccionada = plan?.app_seleccionada || null;
 
   // Verificar si puede acceder a una app específica
   const puedeAccederApp = (app) => {
+    // Super Admin tiene acceso a TODO
+    if (esSuperAdmin) return true;
+
     // Apps que siempre están disponibles (core, agendamiento base)
     const appsBase = ['core'];
 
@@ -207,6 +230,9 @@ export function useModulos() {
     todasLasApps,
     appSeleccionada,
 
+    // Rol Super Admin (Nov 2025)
+    esSuperAdmin,
+
     // Estado
     isLoading,
     error,
@@ -221,6 +247,7 @@ export function useModulos() {
     refetch,
 
     // Shortcuts comunes (basados en modulosActivos de subscripción)
+    // Super Admin: todos true
     tieneInventario: tieneModulo('inventario'),
     tienePOS: tieneModulo('pos'),
     tieneComisiones: tieneModulo('comisiones'),

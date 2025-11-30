@@ -24,6 +24,7 @@ class ActivacionModel {
      * @param {number} data.organizacion_id - ID de la organización creada
      * @param {string} data.email - Email del usuario
      * @param {string} data.nombre - Nombre completo del usuario
+     * @param {boolean} [data.soy_profesional=true] - Si crear profesional al activar
      * @param {number} [data.horas_expiracion=24] - Horas hasta expiración
      * @returns {Promise<Object>} Activación creada con token
      */
@@ -32,6 +33,7 @@ class ActivacionModel {
             organizacion_id,
             email,
             nombre,
+            soy_profesional = true,  // Default true (caso más común en PYMES)
             horas_expiracion = 24
         } = data;
 
@@ -66,15 +68,16 @@ class ActivacionModel {
                     organizacion_id,
                     email,
                     nombre,
+                    soy_profesional,
                     expira_en,
                     email_enviado_en
                 ) VALUES (
-                    $1, $2, LOWER($3), $4,
+                    $1, $2, LOWER($3), $4, $5,
                     NOW() + INTERVAL '${horas_expiracion} hours',
                     NOW()
                 )
                 RETURNING *
-            `, [token, organizacion_id, email, nombre]);
+            `, [token, organizacion_id, email, nombre, soy_profesional]);
 
             const activacion = activacionResult.rows[0];
 
@@ -147,6 +150,7 @@ class ActivacionModel {
                     nombre_negocio: activacion.nombre_comercial,
                     logo_url: activacion.logo_url,
                     organizacion_id: activacion.organizacion_id,
+                    soy_profesional: activacion.soy_profesional,  // Para crear profesional al activar
                     expira_en: activacion.expira_en,
                     tiempo_restante: TokenManager.formatTimeRemaining(activacion.expira_en),
                     minutos_restantes: tiempoRestante.minutes
@@ -237,7 +241,8 @@ class ActivacionModel {
                 organizacion: {
                     id: activacion.organizacion_id,
                     nombre_comercial: activacion.nombre_comercial
-                }
+                },
+                soy_profesional: activacion.soy_profesional  // Para crear profesional
             };
         });
     }

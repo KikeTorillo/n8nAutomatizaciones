@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS activaciones_cuenta (
     email VARCHAR(150) NOT NULL,
     nombre VARCHAR(150) NOT NULL,
 
+    -- Auto-crear profesional vinculado al admin (Nov 2025)
+    soy_profesional BOOLEAN DEFAULT TRUE,
+
     -- Estado de la activación
     estado VARCHAR(20) DEFAULT 'pendiente'
         CHECK (estado IN ('pendiente', 'activada', 'expirada')),
@@ -144,5 +147,6 @@ COMMENT ON COLUMN activaciones_cuenta.token IS 'Token único para URL de activac
 COMMENT ON COLUMN activaciones_cuenta.organizacion_id IS 'Organización creada en el registro, esperando activación de admin';
 COMMENT ON COLUMN activaciones_cuenta.email IS 'Email del usuario a crear (será el admin de la organización)';
 COMMENT ON COLUMN activaciones_cuenta.nombre IS 'Nombre completo del usuario (se puede separar en nombre/apellidos al crear)';
+COMMENT ON COLUMN activaciones_cuenta.soy_profesional IS 'Si TRUE, se crea profesional vinculado al usuario admin al activar. Default TRUE (caso común PYMES)';
 COMMENT ON COLUMN activaciones_cuenta.expira_en IS 'Fecha límite para activar (default 24 horas desde creación)';
 COMMENT ON COLUMN activaciones_cuenta.usuario_id IS 'Usuario admin creado al activar. NULL mientras está pendiente.';

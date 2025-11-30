@@ -93,6 +93,13 @@ const activacionSchemas = {
                 .messages({
                     'any.only': 'App debe ser agendamiento, inventario o pos',
                     'any.required': 'Debe seleccionar una app para el Plan Free'
+                }),
+
+            // Auto-creación de profesional (Nov 2025)
+            soy_profesional: Joi.boolean()
+                .default(true)
+                .messages({
+                    'boolean.base': 'soy_profesional debe ser verdadero o falso'
                 })
         }),
         query: Joi.object(),

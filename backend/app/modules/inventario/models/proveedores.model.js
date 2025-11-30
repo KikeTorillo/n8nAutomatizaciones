@@ -27,10 +27,10 @@ class ProveedoresModel {
                     email,
                     sitio_web,
                     direccion,
-                    ciudad,
-                    estado,
+                    ciudad_id,
+                    estado_id,
+                    pais_id,
                     codigo_postal,
-                    pais,
                     dias_credito,
                     dias_entrega_estimados,
                     monto_minimo_compra,
@@ -49,10 +49,10 @@ class ProveedoresModel {
                 data.email || null,
                 data.sitio_web || null,
                 data.direccion || null,
-                data.ciudad || null,
-                data.estado || null,
+                data.ciudad_id || null,
+                data.estado_id || null,
+                data.pais_id || null,
                 data.codigo_postal || null,
-                data.pais || 'México',
                 data.dias_credito !== undefined ? data.dias_credito : 0,
                 data.dias_entrega_estimados || null,
                 data.monto_minimo_compra || null,
@@ -120,10 +120,10 @@ class ProveedoresModel {
                 paramCounter++;
             }
 
-            // Filtro por ciudad
-            if (filtros.ciudad) {
-                whereConditions.push(`p.ciudad = $${paramCounter}`);
-                values.push(filtros.ciudad);
+            // Filtro por ciudad (ID)
+            if (filtros.ciudad_id) {
+                whereConditions.push(`p.ciudad_id = $${paramCounter}`);
+                values.push(filtros.ciudad_id);
                 paramCounter++;
             }
 
@@ -197,7 +197,7 @@ class ProveedoresModel {
             // Construir query de actualización dinámica
             const camposActualizables = [
                 'nombre', 'razon_social', 'rfc', 'telefono', 'email', 'sitio_web',
-                'direccion', 'ciudad', 'estado', 'codigo_postal', 'pais',
+                'direccion', 'ciudad_id', 'estado_id', 'pais_id', 'codigo_postal',
                 'dias_credito', 'dias_entrega_estimados', 'monto_minimo_compra',
                 'notas', 'activo'
             ];

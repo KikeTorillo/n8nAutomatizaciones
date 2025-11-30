@@ -178,10 +178,11 @@ export const router = createBrowserRouter([
         element: withSuspense(SubscripcionResultado),
       },
       // App Home - Página principal post-login (Nov 2025)
+      // Super admin NO tiene acceso (es usuario de plataforma sin organización)
       {
         path: 'home',
         element: (
-          <ProtectedRoute>
+          <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin/dashboard">
             {withSuspense(AppHomePage)}
           </ProtectedRoute>
         ),

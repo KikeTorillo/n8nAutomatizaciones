@@ -172,12 +172,15 @@ class VentasPOSModel {
                 RETURNING *
             `;
 
-            const montoPagado = data.monto_pagado !== undefined ? data.monto_pagado : total;
-            const montoPendiente = total - montoPagado;
+            // El monto_pagado en BD es lo efectivamente cobrado (máximo = total)
+            // El "cambio" para el cliente se calcula en frontend como: monto_recibido - total
+            const montoRecibido = data.monto_pagado !== undefined ? data.monto_pagado : total;
+            const montoPagado = Math.min(montoRecibido, total); // No guardar más del total
+            const montoPendiente = Math.max(0, total - montoPagado);
             let estadoPago = 'pendiente';
-            if (montoPagado >= total) {
+            if (montoRecibido >= total) {
                 estadoPago = 'pagado';
-            } else if (montoPagado > 0) {
+            } else if (montoRecibido > 0) {
                 estadoPago = 'parcial';
             }
 

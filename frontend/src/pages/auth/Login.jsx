@@ -51,12 +51,19 @@ function Login() {
         refreshToken: data.refreshToken,
       });
 
-      // Redirección: TODOS los usuarios van a /home (Nov 2025)
-      // Super_admin tiene su org completa + acceso a /superadmin desde el menú
+      // Redirección según rol (Nov 2025)
       const userRole = data.usuario.rol;
-      console.log(`➡️ Usuario ${userRole} - Redirigiendo a App Home`);
 
-      navigate('/home');
+      if (userRole === 'super_admin') {
+        // Super admin es usuario de plataforma (sin organización)
+        // Va directo al panel de administración
+        console.log(`➡️ Super Admin - Redirigiendo a Panel Admin`);
+        navigate('/superadmin/dashboard');
+      } else {
+        // Usuarios normales van al App Home
+        console.log(`➡️ Usuario ${userRole} - Redirigiendo a App Home`);
+        navigate('/home');
+      }
     },
     onError: (error) => {
       console.error('❌ Error en login:', error);

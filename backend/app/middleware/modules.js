@@ -47,8 +47,8 @@ class ModulesMiddleware {
           return ResponseHelper.error(res, 'Error de configuración del servidor', 500);
         }
 
-        // 2. Bypass para super_admin si está habilitado
-        if (allowSuperAdmin && req.user.rol === 'super_admin') {
+        // 2. Super admin SIEMPRE tiene bypass (usuario de plataforma sin organización)
+        if (req.user.rol === 'super_admin') {
           logger.debug('[ModulesMiddleware] Super admin bypassing module check', {
             module: moduleName,
             user_id: req.user.id
@@ -139,6 +139,11 @@ class ModulesMiddleware {
   static requireAnyModule(moduleNames) {
     return async (req, res, next) => {
       try {
+        // Super admin tiene acceso a todo (usuario de plataforma)
+        if (req.user?.rol === 'super_admin') {
+          return next();
+        }
+
         const organizacionId = req.tenant?.organizacionId || req.user?.organizacion_id;
 
         if (!organizacionId) {
@@ -195,6 +200,11 @@ class ModulesMiddleware {
   static requireAllModules(moduleNames) {
     return async (req, res, next) => {
       try {
+        // Super admin tiene acceso a todo (usuario de plataforma)
+        if (req.user?.rol === 'super_admin') {
+          return next();
+        }
+
         const organizacionId = req.tenant?.organizacionId || req.user?.organizacion_id;
 
         if (!organizacionId) {
@@ -269,6 +279,20 @@ class ModulesMiddleware {
    */
   static async injectActiveModules(req, res, next) {
     try {
+      // Super admin tiene todos los módulos activos
+      if (req.user?.rol === 'super_admin') {
+        req.modulosActivos = {
+          core: true,
+          agendamiento: true,
+          inventario: true,
+          pos: true,
+          comisiones: true,
+          marketplace: true,
+          chatbots: true
+        };
+        return next();
+      }
+
       const organizacionId = req.tenant?.organizacionId || req.user?.organizacion_id;
 
       if (!organizacionId) {

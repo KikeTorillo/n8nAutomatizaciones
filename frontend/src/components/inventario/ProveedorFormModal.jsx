@@ -1,13 +1,14 @@
-import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useEffect, useState } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building2, Phone, Mail, Globe, MapPin } from 'lucide-react';
+import { Building2, Phone, MapPin, ChevronDown } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearProveedor, useActualizarProveedor } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
+import { usePaises, useEstadosPorPais, useCiudadesPorEstado } from '@/hooks/useUbicaciones';
 
 /**
  * Schema de validación Zod para proveedores
@@ -28,12 +29,9 @@ const proveedorSchema = z.object({
   email: z.string().email('Email inválido').max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
   sitio_web: z.string().url('URL inválida').max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
 
-  // Dirección
+  // Dirección (IDs normalizados)
   direccion: z.string().max(500, 'Máximo 500 caracteres').optional(),
-  ciudad: z.string().max(100, 'Máximo 100 caracteres').optional(),
-  estado: z.string().max(100, 'Máximo 100 caracteres').optional(),
   codigo_postal: z.string().max(10, 'Máximo 10 caracteres').optional(),
-  pais: z.string().max(100, 'Máximo 100 caracteres').default('México'),
 
   // Términos Comerciales
   dias_credito: z.coerce.number().min(0, 'No puede ser negativo').default(0),
@@ -55,8 +53,18 @@ const proveedorSchema = z.object({
  * Modal para crear/editar proveedores
  */
 function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create' }) {
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const esEdicion = mode === 'edit' && proveedor;
+
+  // Estados para cascada de ubicaciones (IDs)
+  const [paisIdSeleccionado, setPaisIdSeleccionado] = useState(null);
+  const [estadoIdSeleccionado, setEstadoIdSeleccionado] = useState(null);
+  const [ciudadIdSeleccionado, setCiudadIdSeleccionado] = useState(null);
+
+  // Queries de ubicaciones
+  const { data: paises = [], isLoading: loadingPaises } = usePaises();
+  const { data: estados = [], isLoading: loadingEstados } = useEstadosPorPais(paisIdSeleccionado);
+  const { data: ciudades = [], isLoading: loadingCiudades } = useCiudadesPorEstado(estadoIdSeleccionado);
 
   // Mutations
   const crearMutation = useCrearProveedor();
@@ -69,6 +77,8 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
+    watch,
   } = useForm({
     resolver: zodResolver(proveedorSchema),
     defaultValues: {
@@ -79,10 +89,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
       email: '',
       sitio_web: '',
       direccion: '',
-      ciudad: '',
-      estado: '',
       codigo_postal: '',
-      pais: 'México',
       dias_credito: 0,
       dias_entrega_estimados: '',
       monto_minimo_compra: '',
@@ -90,6 +97,42 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
       activo: true,
     },
   });
+
+  // Limpiar formulario al abrir modal en modo creación
+  useEffect(() => {
+    if (isOpen && !esEdicion) {
+      reset({
+        nombre: '',
+        razon_social: '',
+        rfc: '',
+        telefono: '',
+        email: '',
+        sitio_web: '',
+        direccion: '',
+        codigo_postal: '',
+        dias_credito: 0,
+        dias_entrega_estimados: '',
+        monto_minimo_compra: '',
+        notas: '',
+        activo: true,
+      });
+      // Reset cascada de ubicaciones
+      setEstadoIdSeleccionado(null);
+      setCiudadIdSeleccionado(null);
+      // El país default se setea en el siguiente useEffect
+      setPaisIdSeleccionado(null);
+    }
+  }, [isOpen, esEdicion, reset]);
+
+  // Setear país default (México) cuando se cargan los países
+  useEffect(() => {
+    if (paises.length > 0 && !paisIdSeleccionado && !esEdicion && isOpen) {
+      const mexicoDefault = paises.find(p => p.es_default) || paises.find(p => p.codigo === 'MEX') || paises[0];
+      if (mexicoDefault) {
+        setPaisIdSeleccionado(mexicoDefault.id);
+      }
+    }
+  }, [paises, paisIdSeleccionado, esEdicion, isOpen]);
 
   // Cargar datos al editar
   useEffect(() => {
@@ -102,17 +145,25 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
         email: proveedor.email || '',
         sitio_web: proveedor.sitio_web || '',
         direccion: proveedor.direccion || '',
-        ciudad: proveedor.ciudad || '',
-        estado: proveedor.estado || '',
         codigo_postal: proveedor.codigo_postal || '',
-        pais: proveedor.pais || 'México',
         dias_credito: proveedor.dias_credito || 0,
         dias_entrega_estimados: proveedor.dias_entrega_estimados || '',
         monto_minimo_compra: proveedor.monto_minimo_compra || '',
         notas: proveedor.notas || '',
         activo: proveedor.activo ?? true,
       });
-    } else {
+
+      // Cargar IDs de ubicación al editar
+      if (proveedor.pais_id) {
+        setPaisIdSeleccionado(proveedor.pais_id);
+      }
+      if (proveedor.estado_id) {
+        setEstadoIdSeleccionado(proveedor.estado_id);
+      }
+      if (proveedor.ciudad_id) {
+        setCiudadIdSeleccionado(proveedor.ciudad_id);
+      }
+    } else if (!esEdicion) {
       reset({
         nombre: '',
         razon_social: '',
@@ -121,30 +172,32 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
         email: '',
         sitio_web: '',
         direccion: '',
-        ciudad: '',
-        estado: '',
         codigo_postal: '',
-        pais: 'México',
         dias_credito: 0,
         dias_entrega_estimados: '',
         monto_minimo_compra: '',
         notas: '',
         activo: true,
       });
+      // Reset cascada
+      setPaisIdSeleccionado(null);
+      setEstadoIdSeleccionado(null);
+      setCiudadIdSeleccionado(null);
     }
   }, [esEdicion, proveedor, reset]);
 
-  // Auto-cerrar modal al completar mutation
-  useEffect(() => {
-    if (mutation.isSuccess) {
-      reset();
-      onClose();
-    }
-  }, [mutation.isSuccess, reset, onClose]);
+  // Función para cerrar modal y resetear formulario
+  const handleCloseModal = () => {
+    reset();
+    setPaisIdSeleccionado(null);
+    setEstadoIdSeleccionado(null);
+    setCiudadIdSeleccionado(null);
+    onClose();
+  };
 
   // Submit handler
   const onSubmit = (data) => {
-    // Sanitizar datos opcionales
+    // Sanitizar datos opcionales y enviar IDs de ubicación
     const payload = {
       nombre: data.nombre,
       razon_social: data.razon_social || undefined,
@@ -153,10 +206,11 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
       email: data.email || undefined,
       sitio_web: data.sitio_web || undefined,
       direccion: data.direccion || undefined,
-      ciudad: data.ciudad || undefined,
-      estado: data.estado || undefined,
       codigo_postal: data.codigo_postal || undefined,
-      pais: data.pais,
+      // IDs de ubicación normalizados
+      pais_id: paisIdSeleccionado || undefined,
+      estado_id: estadoIdSeleccionado || undefined,
+      ciudad_id: ciudadIdSeleccionado || undefined,
       dias_credito: data.dias_credito,
       dias_entrega_estimados: data.dias_entrega_estimados || undefined,
       monto_minimo_compra: data.monto_minimo_compra || undefined,
@@ -165,32 +219,23 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
     };
 
     if (esEdicion) {
-      mutation.mutate(
-        { id: proveedor.id, data: payload },
-        {
-          onSuccess: () => {
-            showToast('Proveedor actualizado correctamente', 'success');
-          },
-          onError: (error) => {
-            showToast(
-              error.response?.data?.mensaje || 'Error al actualizar proveedor',
-              'error'
-            );
-          },
-        }
-      );
+      mutation.mutateAsync({ id: proveedor.id, data: payload })
+        .then(() => {
+          showSuccess('Proveedor actualizado correctamente');
+          handleCloseModal();
+        })
+        .catch((err) => {
+          showError(err.message || 'Error al actualizar proveedor');
+        });
     } else {
-      mutation.mutate(payload, {
-        onSuccess: () => {
-          showToast('Proveedor creado correctamente', 'success');
-        },
-        onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al crear proveedor',
-            'error'
-          );
-        },
-      });
+      mutation.mutateAsync(payload)
+        .then(() => {
+          showSuccess('Proveedor creado correctamente');
+          handleCloseModal();
+        })
+        .catch((err) => {
+          showError(err.message || 'Error al crear proveedor');
+        });
     }
   };
 
@@ -285,34 +330,85 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           </h3>
 
           <div className="space-y-4">
-            <FieldWrapper label="Dirección" error={errors.direccion?.message}>
-              <textarea
-                {...register('direccion')}
-                rows={2}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Calle, número, colonia"
-              />
-            </FieldWrapper>
-
+            {/* Fila 1: País, Estado, Ciudad, CP */}
             <div className="grid grid-cols-4 gap-4">
-              <FieldWrapper label="Ciudad" error={errors.ciudad?.message}>
-                <input
-                  type="text"
-                  {...register('ciudad')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Ej: Guadalajara"
-                />
+              {/* PAÍS */}
+              <FieldWrapper label="País">
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
+                    value={paisIdSeleccionado || ''}
+                    onChange={(e) => {
+                      const paisId = e.target.value ? Number(e.target.value) : null;
+                      setPaisIdSeleccionado(paisId);
+                      setEstadoIdSeleccionado(null);
+                      setCiudadIdSeleccionado(null);
+                    }}
+                    disabled={loadingPaises}
+                  >
+                    <option value="">Seleccionar país</option>
+                    {paises.map((pais) => (
+                      <option key={pais.id} value={pais.id}>
+                        {pais.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
               </FieldWrapper>
 
-              <FieldWrapper label="Estado" error={errors.estado?.message}>
-                <input
-                  type="text"
-                  {...register('estado')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Ej: Jalisco"
-                />
+              {/* ESTADO */}
+              <FieldWrapper label="Estado">
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    value={estadoIdSeleccionado || ''}
+                    onChange={(e) => {
+                      const estadoId = e.target.value ? Number(e.target.value) : null;
+                      setEstadoIdSeleccionado(estadoId);
+                      setCiudadIdSeleccionado(null);
+                    }}
+                    disabled={!paisIdSeleccionado || loadingEstados}
+                  >
+                    <option value="">
+                      {loadingEstados ? 'Cargando...' : 'Seleccionar estado'}
+                    </option>
+                    {estados.map((estado) => (
+                      <option key={estado.id} value={estado.id}>
+                        {estado.nombre_corto || estado.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
               </FieldWrapper>
 
+              {/* CIUDAD */}
+              <FieldWrapper label="Ciudad">
+                <div className="relative">
+                  <select
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    value={ciudadIdSeleccionado || ''}
+                    onChange={(e) => {
+                      const ciudadId = e.target.value ? Number(e.target.value) : null;
+                      setCiudadIdSeleccionado(ciudadId);
+                    }}
+                    disabled={!estadoIdSeleccionado || loadingCiudades}
+                  >
+                    <option value="">
+                      {loadingCiudades ? 'Cargando...' : 'Seleccionar ciudad'}
+                    </option>
+                    {ciudades.map((ciudad) => (
+                      <option key={ciudad.id} value={ciudad.id}>
+                        {ciudad.nombre}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                </div>
+              </FieldWrapper>
+
+              {/* CP */}
               <FieldWrapper label="CP" error={errors.codigo_postal?.message}>
                 <input
                   type="text"
@@ -322,15 +418,17 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
                   maxLength={10}
                 />
               </FieldWrapper>
-
-              <FieldWrapper label="País" error={errors.pais?.message}>
-                <input
-                  type="text"
-                  {...register('pais')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                />
-              </FieldWrapper>
             </div>
+
+            {/* Fila 2: Dirección completa */}
+            <FieldWrapper label="Dirección" error={errors.direccion?.message}>
+              <textarea
+                {...register('direccion')}
+                rows={2}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                placeholder="Calle, número, colonia"
+              />
+            </FieldWrapper>
           </div>
         </div>
 

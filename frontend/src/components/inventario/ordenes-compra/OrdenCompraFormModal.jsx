@@ -38,7 +38,7 @@ const ordenSchema = z.object({
  * Modal para crear/editar órdenes de compra
  */
 export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mode = 'create' }) {
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError, warning: showWarning } = useToast();
   const esEdicion = mode === 'edit' && orden;
 
   // Estado para items
@@ -49,7 +49,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
   const [precioItem, setPrecioItem] = useState('');
 
   // Queries
-  const { data: proveedoresData } = useProveedores({ activo: true, limit: 1000 });
+  const { data: proveedoresData } = useProveedores({ activo: true, limit: 100 });
   const proveedores = proveedoresData?.proveedores || [];
 
   const { data: productosData } = useProductos({ busqueda: busquedaProducto, activo: true, limit: 50 });
@@ -124,7 +124,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
   // Calcular totales
   const calcularTotales = () => {
     const subtotal = items.reduce((sum, item) => {
-      return sum + (item.cantidad * item.precio_unitario);
+      return sum + (item.cantidad_ordenada * item.precio_unitario);
     }, 0);
     return { subtotal };
   };
@@ -134,18 +134,18 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
   // Handlers de items
   const handleAgregarItem = () => {
     if (!productoSeleccionado) {
-      showToast('Selecciona un producto', 'warning');
+      showWarning('Selecciona un producto');
       return;
     }
     if (cantidadItem <= 0) {
-      showToast('La cantidad debe ser mayor a 0', 'warning');
+      showWarning('La cantidad debe ser mayor a 0');
       return;
     }
 
     // Verificar si ya existe
     const existe = items.find(i => i.producto_id === productoSeleccionado.id);
     if (existe) {
-      showToast('Este producto ya está en la lista', 'warning');
+      showWarning('Este producto ya está en la lista');
       return;
     }
 
@@ -199,21 +199,18 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
         { id: orden.id, data: payload },
         {
           onSuccess: () => {
-            showToast('Orden actualizada correctamente', 'success');
+            showSuccess('Orden actualizada correctamente');
             onClose();
           },
-          onError: (error) => {
-            showToast(
-              error.response?.data?.mensaje || 'Error al actualizar la orden',
-              'error'
-            );
+          onError: (err) => {
+            showError(err.message || 'Error al actualizar la orden');
           },
         }
       );
     } else {
       // Crear nueva orden
       if (items.length === 0) {
-        showToast('Agrega al menos un producto a la orden', 'warning');
+        showWarning('Agrega al menos un producto a la orden');
         return;
       }
 
@@ -225,14 +222,11 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
 
       mutation.mutate(payload, {
         onSuccess: () => {
-          showToast('Orden de compra creada correctamente', 'success');
+          showSuccess('Orden de compra creada correctamente');
           onClose();
         },
-        onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al crear la orden',
-            'error'
-          );
+        onError: (err) => {
+          showError(err.message || 'Error al crear la orden');
         },
       });
     }

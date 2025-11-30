@@ -60,12 +60,6 @@ export default function SuperAdminLayout() {
                             <span className="text-sm">
                                 {user?.nombre} ({user?.email})
                             </span>
-                            <Link
-                                to="/home"
-                                className="px-4 py-2 bg-white text-red-600 hover:bg-red-50 rounded text-sm font-medium transition-colors flex items-center gap-2"
-                            >
-                                🏠 Ir a Inicio
-                            </Link>
                             <button
                                 onClick={handleLogout}
                                 disabled={logoutMutation.isPending}

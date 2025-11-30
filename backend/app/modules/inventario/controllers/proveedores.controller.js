@@ -15,14 +15,28 @@ class ProveedoresController {
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
-        const proveedor = await ProveedoresModel.crear(req.body, organizacionId);
+        try {
+            const proveedor = await ProveedoresModel.crear(req.body, organizacionId);
 
-        return ResponseHelper.success(
-            res,
-            proveedor,
-            'Proveedor creado exitosamente',
-            201
-        );
+            return ResponseHelper.success(
+                res,
+                proveedor,
+                'Proveedor creado exitosamente',
+                201
+            );
+        } catch (error) {
+            // Manejar error de constraint único (nombre duplicado)
+            if (error.code === '23505') {
+                if (error.constraint?.includes('nombre')) {
+                    return ResponseHelper.error(res, 'Ya existe un proveedor con ese nombre', 409);
+                }
+                if (error.constraint?.includes('rfc')) {
+                    return ResponseHelper.error(res, 'Ya existe un proveedor con ese RFC', 409);
+                }
+                return ResponseHelper.error(res, 'Ya existe un proveedor con esos datos', 409);
+            }
+            throw error;
+        }
     });
 
     /**

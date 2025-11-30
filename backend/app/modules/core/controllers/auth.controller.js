@@ -262,7 +262,8 @@ class AuthController {
             estado_id,
             ciudad_id,
             plan,
-            app_seleccionada
+            app_seleccionada,
+            soy_profesional = true  // Default true (caso más común en PYMES)
         } = req.body;
 
         // 1. Verificar que el email no esté registrado
@@ -315,6 +316,7 @@ class AuthController {
             organizacion_id: organizacion.id,
             email,
             nombre,
+            soy_profesional,  // Auto-crear profesional al activar
             horas_expiracion: 24
         });
 
@@ -377,6 +379,58 @@ class AuthController {
 
         // 2. Activar cuenta (crear usuario)
         const resultado = await ActivacionModel.activar(token, password_hash);
+
+        // 2.1 Si soy_profesional, crear profesional vinculado al admin
+        if (resultado.soy_profesional) {
+            const RLSContextManager = require('../../../utils/rlsContextManager');
+
+            await RLSContextManager.withBypass(async (db) => {
+                // Obtener código de industria de la organización
+                const orgResult = await db.query(`
+                    SELECT c.codigo as industria_codigo
+                    FROM organizaciones o
+                    JOIN categorias c ON o.categoria_id = c.id
+                    WHERE o.id = $1
+                `, [resultado.organizacion.id]);
+
+                const industriaCodigo = orgResult.rows[0]?.industria_codigo;
+
+                // Buscar tipo_profesional compatible (primer match)
+                const tipoResult = await db.query(`
+                    SELECT id FROM tipos_profesional
+                    WHERE $1 = ANY(industrias_compatibles)
+                      AND activo = TRUE
+                      AND es_sistema = TRUE
+                    ORDER BY id LIMIT 1
+                `, [industriaCodigo]);
+
+                const tipoProfesionalId = tipoResult.rows[0]?.id || null;
+
+                // Construir nombre completo
+                const nombreCompleto = resultado.usuario.nombre +
+                    (resultado.usuario.apellidos ? ' ' + resultado.usuario.apellidos : '');
+
+                // Crear profesional vinculado al usuario admin
+                await db.query(`
+                    INSERT INTO profesionales (
+                        organizacion_id,
+                        nombre_completo,
+                        email,
+                        tipo_profesional_id,
+                        usuario_id,
+                        activo,
+                        modulos_acceso
+                    ) VALUES ($1, $2, $3, $4, $5, TRUE, $6)
+                `, [
+                    resultado.organizacion.id,
+                    nombreCompleto,
+                    resultado.usuario.email,
+                    tipoProfesionalId,
+                    resultado.usuario.id,
+                    { agendamiento: true, pos: true, inventario: true }
+                ]);
+            });
+        }
 
         // 3. Generar tokens JWT para login automático
         // IMPORTANTE: Usar mismo formato que usuario.model.js para consistencia con middleware auth

@@ -133,7 +133,7 @@ function NodoCategoria({
  */
 function CategoriasPage() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
 
   // Estado
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
@@ -174,15 +174,12 @@ function CategoriasPage() {
   const handleEliminar = () => {
     eliminarMutation.mutate(categoriaSeleccionada.id, {
       onSuccess: () => {
-        showToast('Categoría eliminada correctamente', 'success');
+        showSuccess('Categoría eliminada correctamente');
         setModalEliminarAbierto(false);
         setCategoriaSeleccionada(null);
       },
-      onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al eliminar categoría',
-          'error'
-        );
+      onError: (err) => {
+        showError(err.message || 'Error al eliminar categoría');
       },
     });
   };

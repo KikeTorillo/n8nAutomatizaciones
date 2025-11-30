@@ -1,4 +1,4 @@
-const { RLSContextManager } = require('../../../utils/rlsContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 /**
  * ====================================================================
@@ -110,7 +110,7 @@ class ReportesInventarioModel {
                         COUNT(*) AS total_movimientos,
                         SUM(ABS(m.cantidad)) AS total_vendido,
                         ROUND(
-                            EXTRACT(EPOCH FROM ($2::date - $1::date)) / 86400 /
+                            ($2::date - $1::date)::numeric /
                             NULLIF(COUNT(*), 0)
                         , 2) AS dias_promedio_rotacion
                     FROM movimientos_inventario m
@@ -144,7 +144,7 @@ class ReportesInventarioModel {
                         ELSE 'Muy Baja'
                     END AS clasificacion_rotacion,
                     CASE
-                        WHEN stock_actual > 0 THEN ROUND(stock_actual::numeric / (total_vendido::numeric / EXTRACT(EPOCH FROM ($2::date - $1::date)) * 86400), 1)
+                        WHEN stock_actual > 0 AND total_vendido > 0 THEN ROUND(stock_actual::numeric / (total_vendido::numeric / NULLIF(($2::date - $1::date)::numeric, 0)), 1)
                         ELSE 0
                     END AS dias_stock_restante
                 FROM ventas_producto
@@ -173,7 +173,6 @@ class ReportesInventarioModel {
                     COUNT(*) FILTER (WHERE leida = false) AS no_leidas
                 FROM alertas_inventario
                 WHERE organizacion_id = $1
-                  AND activa = true
                 GROUP BY tipo_alerta, nivel
                 ORDER BY
                     CASE nivel

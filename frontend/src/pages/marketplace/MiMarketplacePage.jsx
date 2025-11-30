@@ -7,6 +7,7 @@ import { useMiPerfilMarketplace } from '@/hooks/useMarketplace';
 import PerfilFormulario from '@/components/marketplace/PerfilFormulario';
 import ListaReseñas from '@/components/marketplace/ListaReseñas';
 import AnalyticsDashboard from '@/components/marketplace/AnalyticsDashboard';
+import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMarketplaceModal';
 
 /**
  * Página de gestión del perfil de marketplace
@@ -16,6 +17,7 @@ import AnalyticsDashboard from '@/components/marketplace/AnalyticsDashboard';
 function MiMarketplacePage() {
   const navigate = useNavigate();
   const [tabActivo, setTabActivo] = useState('perfil');
+  const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
 
   // Fetch del perfil del negocio
   const { data: perfil, isLoading, error } = useMiPerfilMarketplace();
@@ -49,11 +51,17 @@ function MiMarketplacePage() {
             <p className="text-gray-600 mb-6">
               Crea tu perfil público para aparecer en el directorio y captar nuevos clientes
             </p>
-            <Button size="lg" onClick={() => window.location.href = '/mi-marketplace/crear'}>
+            <Button size="lg" onClick={() => setMostrarModalCrear(true)}>
               Crear Perfil de Marketplace
             </Button>
           </div>
         </div>
+
+        {/* Modal de creación de perfil */}
+        <CrearPerfilMarketplaceModal
+          isOpen={mostrarModalCrear}
+          onClose={() => setMostrarModalCrear(false)}
+        />
       </div>
     );
   }

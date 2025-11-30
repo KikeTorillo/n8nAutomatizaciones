@@ -16,7 +16,7 @@ import ProveedorFormModal from '@/components/inventario/ProveedorFormModal';
  */
 function ProveedoresPage() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -73,15 +73,12 @@ function ProveedoresPage() {
   const handleEliminar = () => {
     eliminarMutation.mutate(proveedorSeleccionado.id, {
       onSuccess: () => {
-        showToast('Proveedor eliminado correctamente', 'success');
+        showSuccess('Proveedor eliminado correctamente');
         setModalEliminarAbierto(false);
         setProveedorSeleccionado(null);
       },
-      onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al eliminar proveedor',
-          'error'
-        );
+      onError: (err) => {
+        showError(err.response?.data?.mensaje || 'Error al eliminar proveedor');
       },
     });
   };

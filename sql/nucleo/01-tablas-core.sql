@@ -150,17 +150,17 @@ CREATE TABLE usuarios (
     CHECK (char_length(email) >= 5),
     CHECK (char_length(nombre) >= 2),
     CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
-    -- TODOS los usuarios requieren organización (incluido super_admin)
-    -- Super_admin usa la organización de plataforma (codigo_tenant='org_plataforma_sistema')
-    -- Cambio: Nov 2025 - Modelo de seguridad mejorado
-    CHECK (organizacion_id IS NOT NULL)
+    -- Super_admin es usuario de plataforma (sin organización)
+    -- Resto de roles REQUIEREN organización obligatoriamente
+    -- Cambio: Nov 2025 - Super admin sin organización
+    CHECK (organizacion_id IS NOT NULL OR rol = 'super_admin')
 );
 
 -- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 COMMENT ON TABLE organizaciones IS 'Base del sistema multi-tenant. Cada organización es un tenant independiente con aislamiento completo de datos';
-COMMENT ON TABLE usuarios IS 'Autenticación y autorización. TODOS los usuarios requieren organización. Super_admin usa org de plataforma (codigo_tenant=org_plataforma_sistema)';
+COMMENT ON TABLE usuarios IS 'Autenticación y autorización. Super_admin es usuario de plataforma (sin organización). Resto de roles requieren organizacion_id obligatorio';
 
 COMMENT ON COLUMN organizaciones.codigo_tenant IS 'Código único inmutable para identificación técnica del tenant (e.g., org-001)';
 COMMENT ON COLUMN organizaciones.slug IS 'URL-friendly identifier para subdominios y URLs personalizadas';

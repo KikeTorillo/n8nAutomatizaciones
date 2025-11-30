@@ -38,7 +38,7 @@ import RegistrarPagoModal from '@/components/inventario/ordenes-compra/Registrar
  */
 export default function OrdenesCompraPage() {
   const navigate = useNavigate();
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError, warning: showWarning, info: showInfo } = useToast();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -70,7 +70,7 @@ export default function OrdenesCompraPage() {
   const totales = ordenesData?.totales || {};
   const total = totales.cantidad || 0;
 
-  const { data: proveedoresData } = useProveedores({ activo: true, limit: 1000 });
+  const { data: proveedoresData } = useProveedores({ activo: true, limit: 100 });
   const proveedores = proveedoresData?.proveedores || [];
 
   // Mutations
@@ -103,7 +103,7 @@ export default function OrdenesCompraPage() {
 
   const handleEditar = (orden) => {
     if (orden.estado !== 'borrador') {
-      showToast('Solo se pueden editar órdenes en estado borrador', 'warning');
+      showWarning('Solo se pueden editar órdenes en estado borrador');
       return;
     }
     setModalForm({ isOpen: true, orden, mode: 'edit' });
@@ -115,7 +115,7 @@ export default function OrdenesCompraPage() {
 
   const handleAbrirModalEliminar = (orden) => {
     if (orden.estado !== 'borrador') {
-      showToast('Solo se pueden eliminar órdenes en estado borrador', 'warning');
+      showWarning('Solo se pueden eliminar órdenes en estado borrador');
       return;
     }
     setModalEliminar({ isOpen: true, orden });
@@ -124,25 +124,22 @@ export default function OrdenesCompraPage() {
   const handleEliminar = () => {
     eliminarMutation.mutate(modalEliminar.orden.id, {
       onSuccess: () => {
-        showToast('Orden de compra eliminada correctamente', 'success');
+        showSuccess('Orden de compra eliminada correctamente');
         setModalEliminar({ isOpen: false, orden: null });
       },
       onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al eliminar la orden',
-          'error'
-        );
+        showError(error.response?.data?.mensaje || 'Error al eliminar la orden');
       },
     });
   };
 
   const handleAbrirModalEnviar = (orden) => {
     if (orden.estado !== 'borrador') {
-      showToast('Solo se pueden enviar órdenes en estado borrador', 'warning');
+      showWarning('Solo se pueden enviar órdenes en estado borrador');
       return;
     }
     if (!orden.items_count || orden.items_count === 0) {
-      showToast('La orden debe tener al menos un item para enviar', 'warning');
+      showWarning('La orden debe tener al menos un item para enviar');
       return;
     }
     setModalEnviar({ isOpen: true, orden });
@@ -151,21 +148,18 @@ export default function OrdenesCompraPage() {
   const handleEnviar = () => {
     enviarMutation.mutate(modalEnviar.orden.id, {
       onSuccess: () => {
-        showToast('Orden enviada al proveedor correctamente', 'success');
+        showSuccess('Orden enviada al proveedor correctamente');
         setModalEnviar({ isOpen: false, orden: null });
       },
       onError: (error) => {
-        showToast(
-          error.response?.data?.mensaje || 'Error al enviar la orden',
-          'error'
-        );
+        showError(error.response?.data?.mensaje || 'Error al enviar la orden');
       },
     });
   };
 
   const handleAbrirModalCancelar = (orden) => {
     if (!['borrador', 'enviada', 'parcial'].includes(orden.estado)) {
-      showToast('Esta orden no puede ser cancelada', 'warning');
+      showWarning('Esta orden no puede ser cancelada');
       return;
     }
     setMotivoCancelacion('');
@@ -177,15 +171,12 @@ export default function OrdenesCompraPage() {
       { id: modalCancelar.orden.id, motivo: motivoCancelacion || undefined },
       {
         onSuccess: () => {
-          showToast('Orden cancelada correctamente', 'success');
+          showSuccess('Orden cancelada correctamente');
           setModalCancelar({ isOpen: false, orden: null });
           setMotivoCancelacion('');
         },
         onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al cancelar la orden',
-            'error'
-          );
+          showError(error.response?.data?.mensaje || 'Error al cancelar la orden');
         },
       }
     );
@@ -193,7 +184,7 @@ export default function OrdenesCompraPage() {
 
   const handleRecibirMercancia = (orden) => {
     if (!['enviada', 'parcial'].includes(orden.estado)) {
-      showToast('Solo se puede recibir mercancía de órdenes enviadas o parciales', 'warning');
+      showWarning('Solo se puede recibir mercancía de órdenes enviadas o parciales');
       return;
     }
     setModalRecibir({ isOpen: true, orden });
@@ -201,11 +192,11 @@ export default function OrdenesCompraPage() {
 
   const handleRegistrarPago = (orden) => {
     if (orden.estado_pago === 'pagado') {
-      showToast('Esta orden ya está completamente pagada', 'info');
+      showInfo('Esta orden ya está completamente pagada');
       return;
     }
     if (orden.estado === 'cancelada' || orden.estado === 'borrador') {
-      showToast('No se pueden registrar pagos en órdenes canceladas o en borrador', 'warning');
+      showWarning('No se pueden registrar pagos en órdenes canceladas o en borrador');
       return;
     }
     setModalPago({ isOpen: true, orden });

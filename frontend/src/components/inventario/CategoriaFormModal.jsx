@@ -45,7 +45,7 @@ const COLORES_PREDEFINIDOS = [
  * Modal para crear/editar categorías
  */
 function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create' }) {
-  const { showToast } = useToast();
+  const { success: showSuccess, error: showError } = useToast();
   const esEdicion = mode === 'edit' && categoria;
 
   // Queries
@@ -105,14 +105,6 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
     }
   }, [esEdicion, categoria, reset]);
 
-  // Auto-cerrar modal al completar mutation
-  useEffect(() => {
-    if (mutation.isSuccess) {
-      reset();
-      onClose();
-    }
-  }, [mutation.isSuccess, reset, onClose]);
-
   // Submit handler
   const onSubmit = (data) => {
     // Sanitizar datos
@@ -131,26 +123,24 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
         { id: categoria.id, data: payload },
         {
           onSuccess: () => {
-            showToast('Categoría actualizada correctamente', 'success');
+            showSuccess('Categoría actualizada correctamente');
+            reset();
+            onClose();
           },
-          onError: (error) => {
-            showToast(
-              error.response?.data?.mensaje || 'Error al actualizar categoría',
-              'error'
-            );
+          onError: (err) => {
+            showError(err.message || 'Error al actualizar categoría');
           },
         }
       );
     } else {
       mutation.mutate(payload, {
         onSuccess: () => {
-          showToast('Categoría creada correctamente', 'success');
+          showSuccess('Categoría creada correctamente');
+          reset();
+          onClose();
         },
-        onError: (error) => {
-          showToast(
-            error.response?.data?.mensaje || 'Error al crear categoría',
-            'error'
-          );
+        onError: (err) => {
+          showError(err.message || 'Error al crear categoría');
         },
       });
     }

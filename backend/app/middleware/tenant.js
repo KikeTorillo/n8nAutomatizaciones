@@ -107,6 +107,11 @@ const validateTenantParams = (req, res, next) => {
       return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }
 
+    // Super admin tiene acceso a todas las organizaciones (usuario de plataforma)
+    if (req.user.rol === 'super_admin') {
+      return next();
+    }
+
     // Verificar parámetros de organización en la URL
     const orgIdFromParams = req.params.organizacion_id || req.params.org_id;
 
@@ -195,6 +200,11 @@ const injectTenantId = (req, res, next) => {
 const verifyTenantActive = async (req, res, next) => {
   let client;
   try {
+    // Super admin no tiene organización - bypass completo
+    if (req.user?.rol === 'super_admin') {
+      return next();
+    }
+
     if (!req.user || !req.user.organizacion_id) {
       return ResponseHelper.error(res, 'Autenticación requerida', 401);
     }

@@ -39,6 +39,11 @@ class SubscriptionMiddleware {
    * @param {Function} next - Next middleware
    */
   static async checkActiveSubscription(req, res, next) {
+    // Super admin no necesita suscripción (usuario de plataforma)
+    if (req.user?.rol === 'super_admin') {
+      return next();
+    }
+
     const organizacionId = req.tenant?.organizacionId;
 
     logger.debug('🔍 checkActiveSubscription - organizacionId:', organizacionId);
@@ -229,6 +234,11 @@ class SubscriptionMiddleware {
     }
 
     return async (req, res, next) => {
+      // Super admin no tiene límites (usuario de plataforma)
+      if (req.user?.rol === 'super_admin') {
+        return next();
+      }
+
       const organizacionId = req.tenant?.organizacionId;
 
       if (!organizacionId) {
@@ -381,6 +391,11 @@ class SubscriptionMiddleware {
     }
 
     return async (req, res, next) => {
+      // Super admin tiene acceso a todas las apps (usuario de plataforma)
+      if (req.user?.rol === 'super_admin') {
+        return next();
+      }
+
       const organizacionId = req.tenant?.organizacionId;
 
       if (!organizacionId) {
