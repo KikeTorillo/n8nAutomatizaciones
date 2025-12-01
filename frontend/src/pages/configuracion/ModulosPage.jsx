@@ -19,13 +19,8 @@ import {
   Globe,
   Bot,
   ArrowLeft,
-  Check,
-  X,
   AlertTriangle,
   Zap,
-  Crown,
-  Bell,
-  ChevronRight,
 } from 'lucide-react';
 
 /**
@@ -181,9 +176,8 @@ function ModulosPage() {
     );
   }
 
-  // Separar módulos base de los opcionales
-  const modulosBase = modulosDisponibles.filter((m) => m.incluido_en_todos);
-  const modulosOpcionales = modulosDisponibles.filter((m) => !m.incluido_en_todos);
+  // Filtrar solo módulos que el usuario puede gestionar (excluir core)
+  const modulosOpcionales = modulosDisponibles.filter((m) => m.nombre !== 'core');
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -221,68 +215,18 @@ function ModulosPage() {
               Personaliza tu experiencia
             </h3>
             <p className="text-sm text-blue-700 mt-1">
-              Activa solo los módulos que necesitas. Los módulos desactivados no aparecerán
-              en el menú ni consumirán recursos.
+              Todos los módulos están incluidos en tu suscripción. Activa solo los que necesitas
+              para mantener tu menú organizado.
             </p>
           </div>
         </div>
 
-        {/* Módulos Base */}
-        <div className="mb-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Crown className="w-5 h-5 text-yellow-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              Módulos Base
-            </h2>
-            <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded-full">
-              Incluidos en tu plan
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {modulosBase.map((modulo) => {
-              const Icono = ICONOS[modulo.nombre] || Settings;
-              const activo = estaActivo(modulo.nombre);
-              const colorClasses = COLORES[modulo.nombre] || COLORES.core;
-
-              return (
-                <div
-                  key={modulo.nombre}
-                  className="bg-white rounded-xl shadow-sm border border-gray-200 p-5"
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start gap-4">
-                      <div className={`p-3 rounded-lg ${colorClasses}`}>
-                        <Icono className="w-6 h-6" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">
-                          {modulo.display_name}
-                        </h3>
-                        <p className="text-sm text-gray-600 mt-1">
-                          {modulo.descripcion}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full flex items-center gap-1">
-                        <Check className="w-3 h-3" />
-                        Siempre activo
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Módulos Opcionales */}
+        {/* Módulos Disponibles */}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Package className="w-5 h-5 text-purple-500" />
             <h2 className="text-lg font-semibold text-gray-900">
-              Módulos Opcionales
+              Módulos Disponibles
             </h2>
           </div>
 
@@ -314,11 +258,6 @@ function ModulosPage() {
                         </h3>
                         <p className="text-sm text-gray-600 mt-1">
                           {modulo.descripcion}
-                        </p>
-
-                        {/* Precio */}
-                        <p className="text-sm font-medium text-gray-900 mt-2">
-                          ${modulo.precio_mensual} MXN/mes
                         </p>
 
                         {/* Dependencias */}
@@ -391,41 +330,6 @@ function ModulosPage() {
                 </div>
               );
             })}
-          </div>
-        </div>
-
-        {/* Otras Configuraciones */}
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-4">
-            <Settings className="w-5 h-5 text-gray-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
-              Otras Configuraciones
-            </h2>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Recordatorios */}
-            <button
-              onClick={() => navigate('/configuracion/recordatorios')}
-              className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 text-left hover:border-indigo-300 hover:shadow-md transition-all group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-start gap-4">
-                  <div className="p-3 rounded-lg bg-amber-100 text-amber-600">
-                    <Bell className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      Recordatorios
-                    </h3>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Configura recordatorios automáticos para citas
-                    </p>
-                  </div>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-indigo-600 transition-colors" />
-              </div>
-            </button>
           </div>
         </div>
 

@@ -26,6 +26,7 @@ import {
   Settings,
   TestTube,
 } from 'lucide-react';
+import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
 
 /**
  * Schema de validación para configuración
@@ -209,36 +210,47 @@ function RecordatoriosPage() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => navigate(-1)}
-            className="p-2 hover:bg-gray-100 rounded-lg"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header con navegación */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <button
+          onClick={() => navigate('/home')}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Volver al inicio</span>
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
+      </div>
+
+      {/* Tabs de navegación */}
+      <AgendamientoNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header de sección */}
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              <Bell className="w-6 h-6 text-primary-600" />
+            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Bell className="w-5 h-5 text-amber-600" />
               Recordatorios Automáticos
-            </h1>
-            <p className="text-gray-500">
+            </h2>
+            <p className="text-gray-500 text-sm">
               Configura los recordatorios de citas para tus clientes
             </p>
           </div>
+
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            disabled={!isDirty || actualizarMutation.isPending}
+            loading={actualizarMutation.isPending}
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Guardar cambios
+          </Button>
         </div>
 
-        <Button
-          onClick={handleSubmit(onSubmit)}
-          disabled={!isDirty || actualizarMutation.isPending}
-          loading={actualizarMutation.isPending}
-        >
-          <Save className="w-4 h-4 mr-2" />
-          Guardar cambios
-        </Button>
-      </div>
+        <div className="space-y-6">
 
       {/* Estadísticas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -445,6 +457,7 @@ function RecordatoriosPage() {
       </form>
 
       {/* Prueba de envío */}
+      {/* Test de envío */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
           <TestTube className="w-5 h-5 text-gray-500" />
@@ -458,6 +471,9 @@ function RecordatoriosPage() {
           isLoading={enviarPruebaMutation.isPending}
         />
       </div>
+
+        </div>{/* Cierre space-y-6 */}
+      </div>{/* Cierre max-w-7xl */}
     </div>
   );
 }

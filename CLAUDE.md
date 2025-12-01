@@ -17,7 +17,7 @@
 | Componente | Estado | Notas |
 |------------|--------|-------|
 | **Backend API** | ✅ | 40 controllers, 249 endpoints, 52 models |
-| **Frontend React** | ✅ | 108 componentes, 45 páginas, 28 hooks |
+| **Frontend React** | ✅ | 108 componentes, 47 páginas, 28 hooks |
 | **Super Admin** | ✅ | Usuario plataforma SIN organización, panel `/superadmin/*` |
 | **Registro Simplificado** | ✅ | 7 campos + email activación + auto-login |
 | **App Home / Launcher** | ✅ | Grid 12 apps, badges, accesos rápidos |
@@ -29,6 +29,7 @@
 | **Inventario** | ✅ | ABC, alertas, órdenes compra, kardex |
 | **POS** | ✅ | Ticket PDF térmico, vendedor auto-asignado |
 | **Comisiones** | ✅ | Configuración por profesional, reportes |
+| **Configuración Hub** | ✅ | Mi Negocio, Módulos, Apariencia (próximamente) |
 
 ---
 
@@ -111,8 +112,9 @@
 | Chatbots | 4 | 1 | Telegram, WhatsApp config |
 | Auth | 3 | 6 | Login, registro, activación |
 | Super Admin | 3 | 5 | Panel administración plataforma |
+| Configuración | - | 3 | Hub, Mi Negocio, Módulos |
 | UI Common | 10 | - | Botones, modales, inputs |
-| **Total** | **108** | **45** | |
+| **Total** | **108** | **47** | |
 
 ### Hooks Principales (28)
 
@@ -139,6 +141,35 @@ npm run logs             # Logs en tiempo real
 npm run test:backend     # Tests Jest
 npm run clean            # Limpiar todo
 ```
+
+---
+
+## Navegación Frontend
+
+### Agendamiento (tabs)
+```
+/citas → /bloqueos → /recordatorios
+```
+Componente: `AgendamientoNavTabs.jsx`
+
+### Configuración (hub con cards)
+```
+/configuracion (hub)
+  ├── /configuracion/negocio (Mi Negocio)
+  ├── /configuracion/modulos (Módulos)
+  └── /configuracion/apariencia (próximamente)
+```
+
+### Módulos Opcionales (6)
+Todos incluidos en suscripción, sin precios individuales:
+- Sistema de Agendamiento
+- Gestión de Inventario
+- Sistema de Comisiones
+- Punto de Venta
+- Marketplace Público
+- Chatbots IA
+
+**Nota**: Core del Sistema está oculto para usuarios (siempre activo internamente).
 
 ---
 
@@ -320,6 +351,13 @@ PostgreSQL (políticas RLS)
 - `app/flows/generator/` - Generador dinámico workflows
 - `app/utils/mcpTokenGenerator.js` - JWT para MCP
 
+### Configuración
+- `frontend/src/pages/configuracion/ConfiguracionPage.jsx` - Hub de configuración
+- `frontend/src/pages/configuracion/NegocioPage.jsx` - Datos de la organización
+- `frontend/src/pages/configuracion/ModulosPage.jsx` - Activación de módulos
+- `frontend/src/pages/configuracion/RecordatoriosPage.jsx` - Config recordatorios (parte de Agendamiento)
+- `frontend/src/components/agendamiento/AgendamientoNavTabs.jsx` - Tabs Citas/Bloqueos/Recordatorios
+
 ---
 
 ## Estructura SQL
@@ -349,4 +387,4 @@ PostgreSQL (políticas RLS)
 
 ---
 
-**Versión**: 32.0 | **Actualizado**: 30 Nov 2025 | **Estado**: ✅ Production Ready
+**Versión**: 33.0 | **Actualizado**: 30 Nov 2025 | **Estado**: ✅ Production Ready

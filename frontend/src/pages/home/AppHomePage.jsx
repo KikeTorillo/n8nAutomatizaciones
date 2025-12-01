@@ -212,7 +212,7 @@ function AppHomePage() {
       name: 'Configuración',
       description: 'Módulos y preferencias',
       icon: Settings,
-      path: '/configuracion/modulos',
+      path: '/configuracion',
       color: 'text-gray-600',
       bgColor: 'bg-gray-100',
       enabled: true,

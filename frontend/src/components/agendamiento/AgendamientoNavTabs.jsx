@@ -1,12 +1,9 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Lock } from 'lucide-react';
+import { Calendar, Lock, Bell } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo de Agendamiento
- * Permite navegar entre Citas y Bloqueos
- *
- * Nov 2025: Clientes fue migrado a módulo Core independiente
- * (patrón Odoo/Salesforce - Clientes es transversal)
+ * Permite navegar entre Citas, Bloqueos y Recordatorios
  */
 const tabs = [
   {
@@ -20,6 +17,12 @@ const tabs = [
     label: 'Bloqueos',
     path: '/bloqueos',
     icon: Lock,
+  },
+  {
+    id: 'recordatorios',
+    label: 'Recordatorios',
+    path: '/recordatorios',
+    icon: Bell,
   },
 ];
 

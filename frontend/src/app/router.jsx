@@ -74,10 +74,10 @@ const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGest
 // Página de Setup Inicial
 const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
 
-// Página de Configuración de Módulos
+// Páginas de Configuración
+const ConfiguracionPage = lazy(() => import('@/pages/configuracion/ConfiguracionPage'));
+const NegocioPage = lazy(() => import('@/pages/configuracion/NegocioPage'));
 const ModulosPage = lazy(() => import('@/pages/configuracion/ModulosPage'));
-
-// Página de Configuración de Recordatorios (Nov 2025)
 const RecordatoriosPage = lazy(() => import('@/pages/configuracion/RecordatoriosPage'));
 
 // Página de App Home / Launcher (Nov 2025)
@@ -423,6 +423,22 @@ export const router = createBrowserRouter([
       },
       // Rutas de Configuración
       {
+        path: 'configuracion',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ConfiguracionPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/negocio',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(NegocioPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
         path: 'configuracion/modulos',
         element: (
           <ProtectedRoute>
@@ -431,7 +447,7 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: 'configuracion/recordatorios',
+        path: 'recordatorios',
         element: (
           <ProtectedRoute>
             {withSuspense(RecordatoriosPage)}
