@@ -42,18 +42,18 @@ COPY --from=dependencies --chown=nodejs:nodejs /app/node_modules ./node_modules
 COPY --chown=nodejs:nodejs package*.json ./
 
 # Copiar código fuente (solo lo necesario, sin tests ni docs)
+# Nota: controllers/ está vacío - toda la lógica está en modules/
 COPY --chown=nodejs:nodejs app.js ./
-COPY --chown=nodejs:nodejs controllers ./controllers
-COPY --chown=nodejs:nodejs models ./models
+COPY --chown=nodejs:nodejs modules ./modules
 COPY --chown=nodejs:nodejs middleware ./middleware
-COPY --chown=nodejs:nodejs routes ./routes
 COPY --chown=nodejs:nodejs services ./services
-COPY --chown=nodejs:nodejs utils ./utils
 COPY --chown=nodejs:nodejs config ./config
+COPY --chown=nodejs:nodejs utils ./utils
 COPY --chown=nodejs:nodejs schemas ./schemas
 COPY --chown=nodejs:nodejs constants ./constants
+COPY --chown=nodejs:nodejs models ./models
+COPY --chown=nodejs:nodejs routes ./routes
 COPY --chown=nodejs:nodejs flows ./flows
-COPY --chown=nodejs:nodejs modules ./modules
 COPY --chown=nodejs:nodejs core ./core
 
 # Cambiar a usuario no-root
