@@ -58,7 +58,7 @@ function Login() {
         // Super admin es usuario de plataforma (sin organización)
         // Va directo al panel de administración
         console.log(`➡️ Super Admin - Redirigiendo a Panel Admin`);
-        navigate('/superadmin/dashboard');
+        navigate('/superadmin');
       } else {
         // Usuarios normales van al App Home
         console.log(`➡️ Usuario ${userRole} - Redirigiendo a App Home`);

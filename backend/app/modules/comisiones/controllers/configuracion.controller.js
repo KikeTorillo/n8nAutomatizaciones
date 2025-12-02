@@ -34,13 +34,25 @@ class ConfiguracionComisionesController {
     /**
      * Listar configuraciones de comisiones
      * GET /api/v1/comisiones/configuracion
+     *
+     * Query params:
+     * - profesional_id: Filtrar por profesional
+     * - aplica_a: 'servicio', 'producto' o 'ambos'
+     * - servicio_id: Filtrar por servicio específico
+     * - producto_id: Filtrar por producto específico
+     * - categoria_producto_id: Filtrar por categoría de producto
+     * - activo: true/false
+     * - tipo_comision: 'porcentaje' o 'monto_fijo'
      */
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
 
         const filtros = {
             profesional_id: req.query.profesional_id ? parseInt(req.query.profesional_id) : undefined,
+            aplica_a: req.query.aplica_a || undefined,
             servicio_id: req.query.servicio_id ? parseInt(req.query.servicio_id) : undefined,
+            producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
+            categoria_producto_id: req.query.categoria_producto_id ? parseInt(req.query.categoria_producto_id) : undefined,
             activo: req.query.activo !== undefined ? req.query.activo === 'true' : undefined,
             tipo_comision: req.query.tipo_comision || undefined
         };

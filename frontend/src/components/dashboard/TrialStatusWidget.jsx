@@ -44,18 +44,19 @@ function TrialStatusWidget() {
     const Icon = esUrgente ? AlertCircle : Sparkles;
 
     return (
-      <div className={`rounded-lg border ${colorClasses} p-5 mb-6`}>
-        <div className="flex items-start justify-between gap-4">
+      <div className={`rounded-lg border ${colorClasses} p-4 sm:p-5 mb-6`}>
+        {/* Mobile: Stack, Desktop: Row */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className={`p-2 rounded-lg ${esUrgente ? 'bg-orange-100' : 'bg-blue-100'}`}>
-              <Icon className={`w-6 h-6 ${iconColorClasses}`} />
+            <div className={`p-2 rounded-lg flex-shrink-0 ${esUrgente ? 'bg-orange-100' : 'bg-blue-100'}`}>
+              <Icon className={`w-5 h-5 sm:w-6 sm:h-6 ${iconColorClasses}`} />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className={`text-lg font-semibold ${textColorClasses}`}>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className={`text-base sm:text-lg font-semibold ${textColorClasses}`}>
                   {esUrgente ? '¡Trial por Vencer!' : 'Trial Activo'}
                 </h3>
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                   esUrgente ? 'bg-orange-100 text-orange-800' : 'bg-blue-100 text-blue-800'
                 }`}>
                   <Clock className="w-3 h-3 mr-1" />
@@ -80,7 +81,7 @@ function TrialStatusWidget() {
           <Button
             onClick={() => navigate('/suscripcion')}
             variant={esUrgente ? 'primary' : 'outline'}
-            className="flex-shrink-0"
+            className="w-full sm:w-auto flex-shrink-0"
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Activar Suscripción
@@ -93,18 +94,19 @@ function TrialStatusWidget() {
   // Trial vencido
   if (trial_vencido) {
     return (
-      <div className="rounded-lg border bg-red-50 border-red-200 p-5 mb-6">
-        <div className="flex items-start justify-between gap-4">
+      <div className="rounded-lg border bg-red-50 border-red-200 p-4 sm:p-5 mb-6">
+        {/* Mobile: Stack, Desktop: Row */}
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
           <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-red-100">
-              <AlertCircle className="w-6 h-6 text-red-600" />
+            <div className="p-2 rounded-lg bg-red-100 flex-shrink-0">
+              <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-red-600" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-lg font-semibold text-red-900">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-base sm:text-lg font-semibold text-red-900">
                   Trial Vencido
                 </h3>
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                   Acción requerida
                 </span>
               </div>
@@ -119,7 +121,7 @@ function TrialStatusWidget() {
           <Button
             onClick={() => navigate('/suscripcion')}
             variant="primary"
-            className="flex-shrink-0"
+            className="w-full sm:w-auto flex-shrink-0"
           >
             <CreditCard className="w-4 h-4 mr-2" />
             Activar Ahora

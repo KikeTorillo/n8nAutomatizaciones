@@ -155,22 +155,107 @@ Performance: Index-only scan, 3-5x más rápido que scan normal.
 Columnas incluidas: profesional_id, monto_comision, tipo_comision';
 
 -- ====================================================================
+-- 🔍 ÍNDICES ADICIONALES PARA PRODUCTOS (COMISIONES UNIFICADAS)
+-- ====================================================================
+
+-- ÍNDICE 5: PRODUCTO (PARCIAL)
+-- Propósito: Buscar configuración específica de producto
+-- Uso: WHERE producto_id = ?
+CREATE INDEX IF NOT EXISTS idx_config_comisiones_producto
+    ON configuracion_comisiones(producto_id)
+    WHERE producto_id IS NOT NULL;
+
+COMMENT ON INDEX idx_config_comisiones_producto IS
+'Índice parcial para configuraciones específicas de producto.
+Solo indexa registros con producto_id NOT NULL.
+Usado por función obtener_configuracion_comision_producto() en trigger.';
+
+-- ÍNDICE 6: CATEGORÍA PRODUCTO (PARCIAL)
+-- Propósito: Buscar configuración por categoría de producto
+-- Uso: WHERE categoria_producto_id = ?
+CREATE INDEX IF NOT EXISTS idx_config_comisiones_categoria
+    ON configuracion_comisiones(categoria_producto_id)
+    WHERE categoria_producto_id IS NOT NULL;
+
+COMMENT ON INDEX idx_config_comisiones_categoria IS
+'Índice parcial para configuraciones por categoría de productos.
+Solo indexa registros con categoria_producto_id NOT NULL.
+Usado por función obtener_configuracion_comision_producto() en trigger.';
+
+-- ÍNDICE 7: APLICA_A + ACTIVO (COMPUESTO)
+-- Propósito: Filtrar configs activas por scope (servicio/producto/ambos)
+-- Uso: WHERE aplica_a = ? AND activo = TRUE
+CREATE INDEX IF NOT EXISTS idx_config_comisiones_aplica
+    ON configuracion_comisiones(organizacion_id, profesional_id, aplica_a, activo)
+    WHERE activo = true;
+
+COMMENT ON INDEX idx_config_comisiones_aplica IS
+'Índice compuesto para filtrar configs activas por scope.
+Usado para búsqueda de configuraciones globales por aplica_a.
+Cubre queries de cascada en triggers de citas y ventas.';
+
+-- ====================================================================
+-- 🔍 ÍNDICES ADICIONALES PARA VENTAS POS
+-- ====================================================================
+
+-- ÍNDICE 7: ORIGEN (para filtrar por tipo de comisión)
+-- Propósito: Filtrar comisiones por origen (cita vs venta)
+-- Uso: WHERE origen = ?
+CREATE INDEX IF NOT EXISTS idx_comisiones_origen
+    ON comisiones_profesionales(organizacion_id, origen, estado_pago);
+
+COMMENT ON INDEX idx_comisiones_origen IS
+'Índice para filtrar comisiones por origen (cita/venta).
+Usado en dashboard y reportes para separar comisiones por tipo.
+Incluye estado_pago para queries combinadas frecuentes.';
+
+-- ÍNDICE 8: VENTA_ID (PARCIAL)
+-- Propósito: Anti-duplicados para trigger de ventas
+-- Uso: WHERE venta_id = ?
+CREATE INDEX IF NOT EXISTS idx_comisiones_venta
+    ON comisiones_profesionales(venta_id)
+    WHERE venta_id IS NOT NULL;
+
+COMMENT ON INDEX idx_comisiones_venta IS
+'Índice parcial para verificar existencia de comisión por venta.
+CRÍTICO: Usado por trigger calcular_comision_venta() para evitar duplicados.
+Query: EXISTS (SELECT 1 FROM comisiones_profesionales WHERE venta_id = ?)';
+
+-- ÍNDICE 9: DETALLE_PRODUCTOS (GIN para búsquedas JSONB)
+-- Propósito: Búsquedas analíticas en detalle_productos
+-- Uso: WHERE detalle_productos @> '[{"producto_id": 1}]'::jsonb
+CREATE INDEX IF NOT EXISTS idx_comisiones_detalle_productos
+    ON comisiones_profesionales USING GIN (detalle_productos)
+    WHERE detalle_productos IS NOT NULL;
+
+COMMENT ON INDEX idx_comisiones_detalle_productos IS
+'Índice GIN para búsquedas avanzadas en JSONB detalle_productos.
+Permite queries analíticas por producto específico.
+Solo indexa registros con origen = venta (detalle_productos NOT NULL).';
+
+-- ====================================================================
 -- 📊 RESUMEN DE ÍNDICES
 -- ====================================================================
--- TOTAL: 10 índices especializados
+-- TOTAL: 16 índices especializados
 --
--- configuracion_comisiones (4):
+-- configuracion_comisiones (7):
 -- ├── idx_config_comisiones_org         → RLS multi-tenant
 -- ├── idx_config_comisiones_prof        → Trigger + dashboard
--- ├── idx_config_comisiones_serv        → Trigger (configuración específica)
--- └── idx_config_comisiones_activo      → Filtrado rápido configs activas
+-- ├── idx_config_comisiones_serv        → Trigger (configuración específica servicio)
+-- ├── idx_config_comisiones_activo      → Filtrado rápido configs activas
+-- ├── idx_config_comisiones_producto    → Trigger (configuración específica producto)
+-- ├── idx_config_comisiones_categoria   → Trigger (configuración por categoría)
+-- └── idx_config_comisiones_aplica      → Filtrado por scope (servicio/producto/ambos)
 --
--- comisiones_profesionales (6):
+-- comisiones_profesionales (9):
 -- ├── idx_comisiones_org                → RLS multi-tenant
 -- ├── idx_comisiones_prof               → Dashboard profesional
--- ├── idx_comisiones_cita               → Anti-duplicados (trigger)
+-- ├── idx_comisiones_cita               → Anti-duplicados (trigger citas)
 -- ├── idx_comisiones_estado             → Filtros dashboard
--- ├── idx_comisiones_detalle_servicios  → Búsquedas analíticas JSONB
--- └── idx_comisiones_fecha_estado_covering → Reportes (index-only scan)
+-- ├── idx_comisiones_detalle_servicios  → Búsquedas analíticas JSONB (servicios)
+-- ├── idx_comisiones_fecha_estado_covering → Reportes (index-only scan)
+-- ├── idx_comisiones_origen             → Filtrar por tipo (cita/venta)
+-- ├── idx_comisiones_venta              → Anti-duplicados (trigger ventas)
+-- └── idx_comisiones_detalle_productos  → Búsquedas analíticas JSONB (productos)
 --
 -- ====================================================================

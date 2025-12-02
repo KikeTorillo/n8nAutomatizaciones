@@ -26,6 +26,7 @@ function ReportesComisionesPage() {
     fecha_hasta: format(endOfMonth(hoy), 'yyyy-MM-dd'),
     profesional_id: '',
     estado_pago: '',
+    origen: '',
   });
 
   // Estado de búsqueda aplicada
@@ -37,6 +38,7 @@ function ReportesComisionesPage() {
     fecha_hasta: filtrosAplicados.fecha_hasta,
     profesional_id: filtrosAplicados.profesional_id || undefined,
     estado_pago: filtrosAplicados.estado_pago || undefined,
+    origen: filtrosAplicados.origen || undefined,
   });
 
   const comisiones = data?.comisiones || [];
@@ -56,6 +58,7 @@ function ReportesComisionesPage() {
       fecha_hasta: format(endOfMonth(hoy), 'yyyy-MM-dd'),
       profesional_id: '',
       estado_pago: '',
+      origen: '',
     };
     setFiltros(filtrosDefault);
     setFiltrosAplicados(filtrosDefault);
@@ -81,12 +84,12 @@ function ReportesComisionesPage() {
             Volver a Comisiones
           </Button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Reportes de Comisiones
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
                 Consulta, filtra y exporta comisiones por período
               </p>
             </div>
@@ -151,7 +154,7 @@ function ReportesComisionesPage() {
         >
           <div className="space-y-4">
             {/* Info General */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <p className="text-sm text-gray-500">Profesional</p>
                 <p className="font-medium text-gray-900">
@@ -221,7 +224,7 @@ function ReportesComisionesPage() {
             {comisionSeleccionada.estado_pago === 'pagada' && (
               <div className="pt-4 border-t border-gray-200 bg-green-50 rounded-lg p-3">
                 <h4 className="font-medium text-green-900 mb-2">Información de Pago</h4>
-                <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                   {comisionSeleccionada.fecha_pago && (
                     <div>
                       <p className="text-green-700">Fecha Pago:</p>

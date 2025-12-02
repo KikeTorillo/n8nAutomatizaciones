@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { DollarSign, TrendingUp, Clock, Users, Calendar } from 'lucide-react';
+import { DollarSign, TrendingUp, Clock, Users, Calendar, ShoppingBag } from 'lucide-react';
 import StatCard from '@/components/dashboard/StatCard';
 import Select from '@/components/ui/Select';
 import { useDashboardComisiones, useGraficaComisionesPorDia } from '@/hooks/useComisiones';
@@ -7,6 +7,13 @@ import { useProfesionales } from '@/hooks/useProfesionales';
 import { formatCurrency } from '@/lib/utils';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+
+// Opciones de origen
+const ORIGEN_OPTIONS = [
+  { value: '', label: 'Todos los orígenes' },
+  { value: 'cita', label: 'Citas (Servicios)' },
+  { value: 'venta', label: 'Ventas POS (Productos)' },
+];
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -41,6 +48,7 @@ function ComisionesDashboard() {
   const hoy = new Date();
   const [periodoSeleccionado, setPeriodoSeleccionado] = useState('mes_actual');
   const [profesionalSeleccionado, setProfesionalSeleccionado] = useState('');
+  const [origenSeleccionado, setOrigenSeleccionado] = useState('');
 
   // Fetch profesionales
   const { data: profesionales } = useProfesionales();
@@ -84,6 +92,7 @@ function ComisionesDashboard() {
     fecha_desde: desde,
     fecha_hasta: hasta,
     profesional_id: profesionalSeleccionado || undefined,
+    origen: origenSeleccionado || undefined,
   });
 
   // Fetch datos para gráfica
@@ -91,6 +100,7 @@ function ComisionesDashboard() {
     fecha_desde: desde,
     fecha_hasta: hasta,
     profesional_id: profesionalSeleccionado || undefined,
+    origen: origenSeleccionado || undefined,
   });
 
   // Métricas
@@ -180,7 +190,7 @@ function ComisionesDashboard() {
     <div className="space-y-6">
       {/* Filtros */}
       <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Selector de período */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -210,6 +220,23 @@ function ComisionesDashboard() {
               {profesionales?.map(prof => (
                 <option key={prof.id} value={prof.id}>
                   {prof.nombre} {prof.apellidos}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          {/* Selector de origen */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Origen
+            </label>
+            <Select
+              value={origenSeleccionado}
+              onChange={(e) => setOrigenSeleccionado(e.target.value)}
+            >
+              {ORIGEN_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </Select>

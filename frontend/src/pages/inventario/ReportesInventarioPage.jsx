@@ -54,31 +54,31 @@ function ReporteValorInventario() {
   return (
     <div className="space-y-6">
       {/* Resumen */}
-      <div className="grid grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Valor Venta</p>
-          <p className="text-2xl font-bold text-indigo-600">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">Valor Venta</p>
+          <p className="text-lg sm:text-2xl font-bold text-indigo-600">
             ${valorVenta.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
           <p className="text-xs text-gray-500 mt-1">
             Costo: ${valorCompra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Total Productos</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">Total Productos</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">
             {totalProductos.toLocaleString('es-MX')}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Unidades Totales</p>
-          <p className="text-2xl font-bold text-gray-900">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">Unidades Totales</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">
             {totalUnidades.toLocaleString('es-MX')}
           </p>
         </div>
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <p className="text-sm text-gray-600 mb-1">Margen Potencial</p>
-          <p className="text-2xl font-bold text-green-600">
+        <div className="bg-white p-3 sm:p-4 rounded-lg border border-gray-200">
+          <p className="text-xs sm:text-sm text-gray-600 mb-1">Margen Potencial</p>
+          <p className="text-lg sm:text-2xl font-bold text-green-600">
             ${margenPotencial.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
           </p>
           <p className="text-xs text-gray-500 mt-1">
@@ -187,7 +187,7 @@ function ReporteAnalisisABC() {
     <div className="space-y-6">
       {/* Filtros de Fecha */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fecha Desde
@@ -324,7 +324,7 @@ function ReporteRotacion() {
     <div className="space-y-6">
       {/* Filtros de Fecha */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fecha Desde
@@ -433,22 +433,22 @@ function ReporteAlertas() {
   return (
     <div className="space-y-6">
       {/* Resumen por Nivel */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-          <p className="text-sm text-blue-800 mb-1">Info</p>
-          <p className="text-3xl font-bold text-blue-900">
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="bg-blue-50 border border-blue-200 p-3 sm:p-4 rounded-lg">
+          <p className="text-xs sm:text-sm text-blue-800 mb-1">Info</p>
+          <p className="text-xl sm:text-3xl font-bold text-blue-900">
             {resumen.total_info || 0}
           </p>
         </div>
-        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
-          <p className="text-sm text-yellow-800 mb-1">Warning</p>
-          <p className="text-3xl font-bold text-yellow-900">
+        <div className="bg-yellow-50 border border-yellow-200 p-3 sm:p-4 rounded-lg">
+          <p className="text-xs sm:text-sm text-yellow-800 mb-1">Warning</p>
+          <p className="text-xl sm:text-3xl font-bold text-yellow-900">
             {resumen.total_warning || 0}
           </p>
         </div>
-        <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
-          <p className="text-sm text-red-800 mb-1">Critical</p>
-          <p className="text-3xl font-bold text-red-900">
+        <div className="bg-red-50 border border-red-200 p-3 sm:p-4 rounded-lg">
+          <p className="text-xs sm:text-sm text-red-800 mb-1">Critical</p>
+          <p className="text-xl sm:text-3xl font-bold text-red-900">
             {resumen.total_critical || 0}
           </p>
         </div>
@@ -550,7 +550,7 @@ function ReportesInventarioPage() {
         {/* Tabs */}
         <div className="bg-white rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6" aria-label="Tabs">
+            <nav className="-mb-px flex px-2 sm:px-6" aria-label="Tabs">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
                 return (
@@ -558,7 +558,7 @@ function ReportesInventarioPage() {
                     key={tab.id}
                     onClick={() => setTabActivo(tab.id)}
                     className={`
-                      flex items-center py-4 px-1 border-b-2 font-medium text-sm
+                      flex-1 sm:flex-none flex items-center justify-center sm:justify-start py-3 sm:py-4 px-1 sm:px-3 border-b-2 font-medium text-xs sm:text-sm
                       ${
                         tabActivo === tab.id
                           ? 'border-indigo-500 text-indigo-600'
@@ -566,8 +566,9 @@ function ReportesInventarioPage() {
                       }
                     `}
                   >
-                    <Icon className="h-5 w-5 mr-2" />
-                    {tab.label}
+                    <Icon className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                    <span className="sm:hidden ml-1">{tab.label.split(' ')[0]}</span>
                   </button>
                 );
               })}

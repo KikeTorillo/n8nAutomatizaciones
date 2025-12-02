@@ -383,7 +383,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             />
           </FieldWrapper>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="SKU" error={errors.sku?.message}>
               <input
                 type="text"
@@ -403,7 +403,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             </FieldWrapper>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="Categoría" error={errors.categoria_id?.message}>
               <select
                 {...register('categoria_id')}
@@ -441,7 +441,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             Precios
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="Precio de Compra" error={errors.precio_compra?.message}>
               <input
                 type="number"
@@ -463,7 +463,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             </FieldWrapper>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="Precio de Mayoreo" error={errors.precio_mayoreo?.message}>
               <input
                 type="number"
@@ -498,7 +498,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               Inventario
             </h3>
 
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <FieldWrapper label="Stock Actual" error={errors.stock_actual?.message}>
                 <input
                   type="number"

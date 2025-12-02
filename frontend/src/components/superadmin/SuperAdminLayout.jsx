@@ -49,21 +49,20 @@ export default function SuperAdminLayout() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* Header */}
+            {/* Header - Mobile First */}
             <header className="bg-red-600 text-white shadow-lg">
-                <div className="container mx-auto px-4 py-4">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                            <h1 className="text-2xl font-bold">🔴 SUPER ADMIN PANEL</h1>
-                        </div>
-                        <div className="flex items-center space-x-4">
-                            <span className="text-sm">
-                                {user?.nombre} ({user?.email})
+                <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4">
+                    {/* Mobile: Stack, Desktop: Row */}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <h1 className="text-lg sm:text-2xl font-bold">SUPER ADMIN</h1>
+                        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+                            <span className="text-xs sm:text-sm truncate max-w-[180px] sm:max-w-none">
+                                {user?.nombre}
                             </span>
                             <button
                                 onClick={handleLogout}
                                 disabled={logoutMutation.isPending}
-                                className="px-4 py-2 bg-red-700 hover:bg-red-800 rounded text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-700 hover:bg-red-800 rounded text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                             >
                                 {logoutMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}
                             </button>
@@ -72,46 +71,46 @@ export default function SuperAdminLayout() {
                 </div>
             </header>
 
-            {/* Navigation */}
-            <nav className="bg-white shadow-md border-b">
-                <div className="container mx-auto px-4">
-                    <div className="flex space-x-8">
+            {/* Navigation - Scrollable on mobile */}
+            <nav className="bg-white shadow-md border-b overflow-x-auto">
+                <div className="container mx-auto px-2 sm:px-4">
+                    <div className="flex min-w-max sm:min-w-0">
                         <Link
                             to="/superadmin"
-                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
-                            📊 Dashboard
+                            <span className="hidden sm:inline">📊 </span>Dashboard
                         </Link>
                         <Link
                             to="/superadmin/organizaciones"
-                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
-                            🏢 Organizaciones
+                            <span className="hidden sm:inline">🏢 </span>Orgs
                         </Link>
                         <Link
                             to="/superadmin/planes"
-                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
-                            💳 Planes
+                            <span className="hidden sm:inline">💳 </span>Planes
                         </Link>
                         <Link
                             to="/superadmin/planes/mercadopago"
-                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
-                            🔄 Sincronización MP
+                            <span className="hidden sm:inline">🔄 </span>Sync MP
                         </Link>
                         <Link
                             to="/superadmin/marketplace"
-                            className="py-4 px-2 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 font-medium transition-colors"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
-                            🛍️ Marketplace
+                            <span className="hidden sm:inline">🛍️ </span>Market
                         </Link>
                     </div>
                 </div>
             </nav>
 
             {/* Main Content */}
-            <main className="container mx-auto px-4 py-8">
+            <main className="container mx-auto px-3 py-4 sm:px-4 sm:py-8">
                 <Outlet />
             </main>
         </div>

@@ -11,6 +11,14 @@ class ComisionesController {
     /**
      * Listar comisiones de un profesional
      * GET /api/v1/comisiones/profesional/:id
+     *
+     * Query params:
+     * - estado_pago: 'pendiente', 'pagada' o 'cancelada'
+     * - origen: 'cita' o 'venta'
+     * - fecha_desde: YYYY-MM-DD
+     * - fecha_hasta: YYYY-MM-DD
+     * - pagina: número de página
+     * - limite: registros por página
      */
     static listarPorProfesional = asyncHandler(async (req, res) => {
         const { id } = req.params;
@@ -18,6 +26,7 @@ class ComisionesController {
 
         const filtros = {
             estado_pago: req.query.estado_pago || undefined,
+            origen: req.query.origen || undefined,
             fecha_desde: req.query.fecha_desde || undefined,
             fecha_hasta: req.query.fecha_hasta || undefined,
             pagina: req.query.pagina ? parseInt(req.query.pagina) : 1,
@@ -40,6 +49,13 @@ class ComisionesController {
     /**
      * Consultar comisiones por período
      * GET /api/v1/comisiones/periodo
+     *
+     * Query params:
+     * - fecha_desde: YYYY-MM-DD (requerido)
+     * - fecha_hasta: YYYY-MM-DD (requerido)
+     * - profesional_id: Filtrar por profesional
+     * - estado_pago: 'pendiente', 'pagada' o 'cancelada'
+     * - origen: 'cita' o 'venta'
      */
     static consultarPorPeriodo = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -48,7 +64,8 @@ class ComisionesController {
             fecha_desde: req.query.fecha_desde,
             fecha_hasta: req.query.fecha_hasta,
             profesional_id: req.query.profesional_id ? parseInt(req.query.profesional_id) : undefined,
-            estado_pago: req.query.estado_pago || undefined
+            estado_pago: req.query.estado_pago || undefined,
+            origen: req.query.origen || undefined
         };
 
         const comisiones = await ComisionesModel.consultarPorPeriodo(filtros, organizacionId);
@@ -107,6 +124,15 @@ class ComisionesController {
     /**
      * Generar reporte de comisiones
      * GET /api/v1/comisiones/reporte
+     *
+     * Query params:
+     * - fecha_desde: YYYY-MM-DD (requerido)
+     * - fecha_hasta: YYYY-MM-DD (requerido)
+     * - profesional_id: Filtrar por profesional
+     * - estado_pago: 'pendiente', 'pagada' o 'cancelada'
+     * - origen: 'cita' o 'venta'
+     * - tipo: 'por_profesional', 'detallado', 'por_dia', 'por_origen'
+     * - formato: 'json', 'excel', 'pdf'
      */
     static generarReporte = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -115,7 +141,8 @@ class ComisionesController {
             fecha_desde: req.query.fecha_desde,
             fecha_hasta: req.query.fecha_hasta,
             profesional_id: req.query.profesional_id ? parseInt(req.query.profesional_id) : undefined,
-            estado_pago: req.query.estado_pago || undefined
+            estado_pago: req.query.estado_pago || undefined,
+            origen: req.query.origen || undefined
         };
 
         const tipo = req.query.tipo || 'por_profesional';
@@ -134,6 +161,10 @@ class ComisionesController {
 
             case 'por_dia':
                 reporte = await ReportesComisionesModel.comisionesPorDia(filtros, organizacionId);
+                break;
+
+            case 'por_origen':
+                reporte = await ReportesComisionesModel.reportePorOrigen(filtros, organizacionId);
                 break;
 
             default:

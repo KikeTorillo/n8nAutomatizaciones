@@ -39,7 +39,7 @@ function ReportesComisionesFiltros({
         <h3 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Fecha Desde */}
         <div>
           <Input
@@ -90,6 +90,19 @@ function ReportesComisionesFiltros({
             <option value="pendiente">Pendiente</option>
             <option value="pagada">Pagada</option>
             <option value="cancelada">Cancelada</option>
+          </Select>
+        </div>
+
+        {/* Origen */}
+        <div>
+          <Select
+            label="Origen"
+            value={filtros.origen || ''}
+            onChange={(e) => handleChange('origen', e.target.value)}
+          >
+            <option value="">Todos los orígenes</option>
+            <option value="cita">Citas (Servicios)</option>
+            <option value="venta">Ventas POS (Productos)</option>
           </Select>
         </div>
       </div>

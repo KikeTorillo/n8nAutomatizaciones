@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, ArrowLeft, Filter, X } from 'lucide-react';
+import { Plus, ArrowLeft, Filter, X, Calendar, Package } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import ConfiguracionComisionesTable from '@/components/comisiones/ConfiguracionComisionesTable';
@@ -9,12 +9,22 @@ import HistorialCambiosModal from '@/components/comisiones/HistorialCambiosModal
 import { useConfiguracionesComision } from '@/hooks/useComisiones';
 import { useProfesionales } from '@/hooks/useProfesionales';
 
+// Tabs disponibles
+const TABS = [
+  { id: 'servicio', label: 'Servicios', icon: Calendar, description: 'Comisiones por citas' },
+  { id: 'producto', label: 'Productos', icon: Package, description: 'Comisiones por ventas POS' },
+];
+
 /**
  * Página de gestión de configuración de comisiones
  * Permite CRUD de configuraciones y ver historial de cambios
+ * Soporta tanto servicios (citas) como productos (ventas POS)
  */
 function ConfiguracionComisionesPage() {
   const navigate = useNavigate();
+
+  // Tab activo
+  const [activeTab, setActiveTab] = useState('servicio');
 
   // Estados
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,11 +39,12 @@ function ConfiguracionComisionesPage() {
   });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Fetch data
+  // Fetch data - filtra por aplica_a según el tab activo
   const { data: profesionales } = useProfesionales();
   const { data: configuraciones, isLoading } = useConfiguracionesComision({
     profesional_id: filtros.profesional_id || undefined,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
+    aplica_a: activeTab, // 'servicio' o 'producto'
   });
 
   // Handlers
@@ -74,33 +85,72 @@ function ConfiguracionComisionesPage() {
             Volver a Comisiones
           </Button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Configuración de Comisiones
               </h1>
-              <p className="text-gray-600 mt-2">
-                Gestiona las reglas de comisión para profesionales y servicios
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
+                Gestiona las reglas de comisión para profesionales
               </p>
             </div>
 
-            <div className="flex space-x-3">
+            <div className="flex gap-2 sm:gap-3">
               <Button
                 variant="secondary"
                 onClick={() => setShowFilters(!showFilters)}
+                className="flex-1 sm:flex-none text-sm"
               >
-                <Filter className="w-4 h-4 mr-2" />
-                {showFilters ? 'Ocultar Filtros' : 'Filtros'}
+                <Filter className="w-4 h-4 mr-1 sm:mr-2" />
+                Filtros
               </Button>
 
               <Button
                 variant="primary"
                 onClick={handleNuevaConfiguracion}
+                className="flex-1 sm:flex-none text-sm"
               >
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Configuración
+                <Plus className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Nueva Configuración</span>
+                <span className="sm:hidden">Nueva</span>
               </Button>
             </div>
+          </div>
+        </div>
+
+        {/* Tabs Servicios / Productos */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex" aria-label="Tabs">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`
+                      flex-1 sm:flex-none group inline-flex items-center justify-center sm:justify-start py-3 sm:py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm
+                      ${isActive
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }
+                    `}
+                  >
+                    <Icon
+                      className={`
+                        mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5
+                        ${isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                      `}
+                    />
+                    <span>{tab.label}</span>
+                    <span className="hidden sm:inline ml-2 text-xs text-gray-400">
+                      ({tab.description})
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         </div>
 
@@ -173,21 +223,43 @@ function ConfiguracionComisionesPage() {
           onViewHistory={handleVerHistorial}
         />
 
-        {/* Información adicional */}
+        {/* Información adicional - varía según el tab */}
         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
           <h4 className="text-sm font-medium text-blue-900 mb-2">
-            Configuraciones Globales vs Específicas
+            {activeTab === 'servicio'
+              ? 'Comisiones por Servicios (Citas)'
+              : 'Comisiones por Productos (Ventas POS)'
+            }
           </h4>
           <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-            <li>
-              <strong>Configuración Global:</strong> Se aplica a todos los servicios del profesional
-            </li>
-            <li>
-              <strong>Configuración Específica:</strong> Se aplica solo al servicio seleccionado y tiene prioridad sobre la global
-            </li>
-            <li>
-              Las comisiones se calculan automáticamente cuando una cita cambia a estado "completada"
-            </li>
+            {activeTab === 'servicio' ? (
+              <>
+                <li>
+                  <strong>Configuración Global:</strong> Se aplica a todos los servicios del profesional
+                </li>
+                <li>
+                  <strong>Configuración Específica:</strong> Se aplica solo al servicio seleccionado y tiene prioridad sobre la global
+                </li>
+                <li>
+                  Las comisiones se calculan automáticamente cuando una cita cambia a estado "completada"
+                </li>
+              </>
+            ) : (
+              <>
+                <li>
+                  <strong>Configuración Global:</strong> Se aplica a todas las ventas del profesional
+                </li>
+                <li>
+                  <strong>Por Categoría:</strong> Se aplica a todos los productos de una categoría
+                </li>
+                <li>
+                  <strong>Por Producto:</strong> Aplica solo al producto específico (máxima prioridad)
+                </li>
+                <li>
+                  Las comisiones se calculan automáticamente al completar una venta POS
+                </li>
+              </>
+            )}
           </ul>
         </div>
       </div>
@@ -200,6 +272,7 @@ function ConfiguracionComisionesPage() {
           setConfiguracionSeleccionada(null);
         }}
         configuracion={configuracionSeleccionada}
+        aplicaA={activeTab}
       />
 
       <HistorialCambiosModal

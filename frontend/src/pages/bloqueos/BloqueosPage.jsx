@@ -167,62 +167,62 @@ function BloqueosPage() {
 
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
+        {/* Header de sección - Mobile First */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Lock className="h-8 w-8 text-indigo-600" />
+              <Lock className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Bloqueos de Horarios</h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Bloqueos de Horarios</h2>
+                <p className="text-sm text-gray-600 hidden sm:block">
                   Gestiona bloqueos por vacaciones, feriados y más
                 </p>
               </div>
             </div>
-            <Button onClick={handleNuevoBloqueo} className="flex items-center gap-2">
+            <Button onClick={handleNuevoBloqueo} className="w-full sm:w-auto flex items-center justify-center gap-2">
               <Plus className="h-5 w-5" />
               Nuevo Bloqueo
             </Button>
           </div>
         </div>
 
-        {/* Estadísticas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        {/* Estadísticas - 2 cols mobile, 4 cols desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {/* Total bloqueos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Lock className="h-6 w-6 text-primary-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Bloqueos</p>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.totalBloqueos}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Total Bloqueos</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalBloqueos}</p>
               </div>
             </div>
           </div>
 
           {/* Total días */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Calendar className="h-6 w-6 text-blue-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Total Días</p>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.totalDias}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Total Días</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalDias}</p>
               </div>
             </div>
           </div>
 
           {/* Ingresos perdidos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
-                <TrendingDown className="h-6 w-6 text-red-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Ingresos Perdidos</p>
-                <p className="text-lg font-bold text-gray-900">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600 truncate">Ingresos Perdidos</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900">
                   {formatCurrency(estadisticas.ingresosPerdidos)}
                 </p>
               </div>
@@ -230,14 +230,14 @@ function BloqueosPage() {
           </div>
 
           {/* Próximos bloqueos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center">
-                <Clock className="h-6 w-6 text-amber-600" />
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
               </div>
-              <div>
-                <p className="text-sm text-gray-600">Próximos 30 días</p>
-                <p className="text-2xl font-bold text-gray-900">
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm text-gray-600">Próximos 30 días</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900">
                   {bloqueosFiltrados.filter((b) => {
                     const hoy = new Date();
                     const fecha = new Date(b.fecha_inicio);
@@ -251,49 +251,52 @@ function BloqueosPage() {
           </div>
         </div>
 
-        {/* Tabs de vistas */}
+        {/* Tabs de vistas - Mobile First */}
         <div className="bg-white rounded-t-lg shadow-sm border border-gray-200 border-b-0">
           <div className="flex border-b border-gray-200">
             <button
               onClick={() => setVistaActiva('todos')}
-              className={`px-6 py-3 font-medium transition-colors ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'todos'
                   ? 'text-primary-600 border-b-2 border-primary-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Todos los Bloqueos
+              Todos
             </button>
             <button
               onClick={() => setVistaActiva('profesionales')}
-              className={`px-6 py-3 font-medium transition-colors ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'profesionales'
                   ? 'text-primary-600 border-b-2 border-primary-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Por Profesional
+              <span className="sm:hidden">Profes.</span>
+              <span className="hidden sm:inline">Por Profesional</span>
             </button>
             <button
               onClick={() => setVistaActiva('organizacionales')}
-              className={`px-6 py-3 font-medium transition-colors ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'organizacionales'
                   ? 'text-primary-600 border-b-2 border-primary-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              Organizacionales
+              <span className="sm:hidden">Org.</span>
+              <span className="hidden sm:inline">Organizacionales</span>
             </button>
             <button
               onClick={() => setVistaActiva('calendario')}
-              className={`px-6 py-3 font-medium transition-colors flex items-center gap-2 ${
+              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 ${
                 vistaActiva === 'calendario'
                   ? 'text-primary-600 border-b-2 border-primary-600'
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
               <CalendarDays className="h-4 w-4" />
-              Vista Calendario
+              <span className="sm:hidden">Cal.</span>
+              <span className="hidden sm:inline">Calendario</span>
             </button>
           </div>
         </div>

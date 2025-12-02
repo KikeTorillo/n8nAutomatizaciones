@@ -240,13 +240,13 @@ function CategoriasPage() {
 
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
+        {/* Header de sección - Mobile First */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <FolderTree className="h-8 w-8 text-indigo-600" />
+              <FolderTree className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Categorías</h2>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Categorías</h2>
                 <p className="text-sm text-gray-600">
                   {total} categoría{total !== 1 ? 's' : ''} en total
                 </p>
@@ -256,20 +256,22 @@ function CategoriasPage() {
               variant="primary"
               onClick={handleNuevaCategoria}
               icon={Plus}
+              className="w-full sm:w-auto"
             >
               Nueva Categoría
             </Button>
           </div>
         </div>
 
-        {/* Controles */}
+        {/* Controles - Mobile First */}
         <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
                 size="sm"
                 onClick={handleExpandirTodas}
+                className="flex-1 sm:flex-none text-xs sm:text-sm"
               >
                 Expandir Todas
               </Button>
@@ -277,6 +279,7 @@ function CategoriasPage() {
                 variant="secondary"
                 size="sm"
                 onClick={handleContraerTodas}
+                className="flex-1 sm:flex-none text-xs sm:text-sm"
               >
                 Contraer Todas
               </Button>

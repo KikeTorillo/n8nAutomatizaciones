@@ -127,17 +127,17 @@ function ChatbotsPage() {
             Volver al Inicio
           </button>
 
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Chatbots con IA</h1>
-              <p className="mt-2 text-gray-600">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Chatbots con IA</h1>
+              <p className="mt-2 text-sm sm:text-base text-gray-600">
                 Gestiona tus asistentes virtuales inteligentes para agendamiento automático
               </p>
             </div>
 
             <Button
               onClick={handleNuevoChatbot}
-              className="flex items-center gap-2"
+              className="flex items-center justify-center gap-2 w-full sm:w-auto"
             >
               <Plus className="w-5 h-5" />
               Nuevo Chatbot

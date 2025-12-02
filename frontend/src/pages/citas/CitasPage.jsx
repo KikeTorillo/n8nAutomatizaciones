@@ -198,74 +198,74 @@ function CitasPage() {
 
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
+        {/* Header de sección - Mobile First */}
         <div className="mb-6">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Calendar className="h-8 w-8 text-blue-600" />
+              <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Gestión de Citas</h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Gestión de Citas</h2>
+                <p className="text-sm text-gray-600 hidden sm:block">
                   Administra y monitorea todas las citas de tu negocio
                 </p>
               </div>
             </div>
-            <Button variant="primary" onClick={handleNuevaCita}>
+            <Button variant="primary" onClick={handleNuevaCita} className="w-full sm:w-auto">
               <Plus className="w-5 h-5 mr-2" />
               Nueva Cita
             </Button>
           </div>
         </div>
-        {/* Estadísticas Rápidas */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+        {/* Estadísticas Rápidas - 2 cols mobile, 4 cols desktop */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6">
           {/* Total Citas del Día */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Citas Hoy</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{citasDelDia.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Citas Hoy</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{citasDelDia.length}</p>
               </div>
-              <div className="bg-primary-100 p-3 rounded-lg">
-                <Calendar className="w-6 h-6 text-primary-600" />
+              <div className="bg-primary-100 p-2 sm:p-3 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
               </div>
             </div>
           </div>
 
           {/* Pendientes */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pendientes</p>
-                <p className="text-2xl font-bold text-yellow-600 mt-1">{citasPendientes}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Pendientes</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600 mt-1">{citasPendientes}</p>
               </div>
-              <div className="bg-yellow-100 p-3 rounded-lg">
-                <Clock className="w-6 h-6 text-yellow-600" />
+              <div className="bg-yellow-100 p-2 sm:p-3 rounded-lg">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
               </div>
             </div>
           </div>
 
           {/* En Curso */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">En Curso</p>
-                <p className="text-2xl font-bold text-blue-600 mt-1">{citasEnCurso}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">En Curso</p>
+                <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">{citasEnCurso}</p>
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-blue-600" />
+              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
           {/* Completadas */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completadas</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{citasCompletadas}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Completadas</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">{citasCompletadas}</p>
               </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <CheckCircle className="w-6 h-6 text-green-600" />
+              <div className="bg-green-100 p-2 sm:p-3 rounded-lg">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
             </div>
           </div>

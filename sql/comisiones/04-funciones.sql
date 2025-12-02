@@ -90,6 +90,88 @@ Usada por trigger calcular_comision_cita() para determinar tipo y valor de comis
 Performance: O(log n) con índices idx_config_comisiones_prof y idx_config_comisiones_serv.';
 
 -- ====================================================================
+-- FUNCIÓN 1b: obtener_configuracion_comision_producto()
+-- ====================================================================
+-- Obtiene la configuración de comisión aplicable para un producto.
+-- Busca con prioridad cascada: producto específico > categoría > global.
+--
+-- PRIORIDAD DE BÚSQUEDA:
+-- 1. Configuración específica: producto_id = p_producto_id
+-- 2. Configuración por categoría: categoria_producto_id = p_categoria_id
+-- 3. Configuración global de productos: aplica_a IN ('producto', 'ambos')
+--
+-- USADO POR:
+-- • Trigger calcular_comision_venta() (crítico para cálculo automático)
+--
+-- RETURNS:
+-- • tipo_comision: 'porcentaje' | 'monto_fijo'
+-- • valor_comision: 0-100 (si porcentaje) o monto fijo
+-- • NULL si no hay configuración
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION obtener_configuracion_comision_producto(
+    p_profesional_id INTEGER,
+    p_producto_id INTEGER,
+    p_categoria_producto_id INTEGER,
+    p_organizacion_id INTEGER
+)
+RETURNS TABLE (
+    tipo_comision VARCHAR(20),
+    valor_comision DECIMAL(10, 2)
+) AS $$
+BEGIN
+    -- 1. Buscar configuración específica del producto
+    RETURN QUERY
+    SELECT cc.tipo_comision, cc.valor_comision
+    FROM configuracion_comisiones cc
+    WHERE cc.organizacion_id = p_organizacion_id
+      AND cc.profesional_id = p_profesional_id
+      AND cc.producto_id = p_producto_id
+      AND cc.activo = true
+    LIMIT 1;
+
+    IF FOUND THEN RETURN; END IF;
+
+    -- 2. Buscar configuración por categoría de producto
+    IF p_categoria_producto_id IS NOT NULL THEN
+        RETURN QUERY
+        SELECT cc.tipo_comision, cc.valor_comision
+        FROM configuracion_comisiones cc
+        WHERE cc.organizacion_id = p_organizacion_id
+          AND cc.profesional_id = p_profesional_id
+          AND cc.categoria_producto_id = p_categoria_producto_id
+          AND cc.producto_id IS NULL
+          AND cc.activo = true
+        LIMIT 1;
+
+        IF FOUND THEN RETURN; END IF;
+    END IF;
+
+    -- 3. Buscar configuración global de productos
+    RETURN QUERY
+    SELECT cc.tipo_comision, cc.valor_comision
+    FROM configuracion_comisiones cc
+    WHERE cc.organizacion_id = p_organizacion_id
+      AND cc.profesional_id = p_profesional_id
+      AND cc.producto_id IS NULL
+      AND cc.categoria_producto_id IS NULL
+      AND cc.servicio_id IS NULL
+      AND cc.aplica_a IN ('producto', 'ambos')
+      AND cc.activo = true
+    LIMIT 1;
+
+    -- Si no hay configuración, retornar vacío
+    RETURN;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION obtener_configuracion_comision_producto IS
+'Obtiene la configuración de comisión aplicable para un producto.
+Prioridad cascada: producto_id > categoria_producto_id > global (aplica_a IN producto, ambos).
+Usada por trigger calcular_comision_venta() para determinar tipo y valor de comisión.
+Performance: O(log n) con índices idx_config_comisiones_producto y idx_config_comisiones_categoria.';
+
+-- ====================================================================
 -- FUNCIÓN 2: calcular_comision_cita()
 -- ====================================================================
 -- Calcula y registra comisión al completar una cita.
@@ -302,26 +384,36 @@ BEGIN
             organizacion_id,
             configuracion_id,
             profesional_id,
+            aplica_a,
             servicio_id,
+            producto_id,
+            categoria_producto_id,
             tipo_comision_anterior,
             valor_comision_anterior,
             activo_anterior,
+            aplica_a_anterior,
             tipo_comision_nuevo,
             valor_comision_nuevo,
             activo_nuevo,
+            aplica_a_nuevo,
             accion,
             modificado_por
         ) VALUES (
             NEW.organizacion_id,
             NEW.id,
             NEW.profesional_id,
+            NEW.aplica_a,
             NEW.servicio_id,
+            NEW.producto_id,
+            NEW.categoria_producto_id,
             OLD.tipo_comision,
             OLD.valor_comision,
             OLD.activo,
+            OLD.aplica_a,
             NEW.tipo_comision,
             NEW.valor_comision,
             NEW.activo,
+            NEW.aplica_a,
             'UPDATE',
             current_setting('app.user_id', true)::integer
         );
@@ -331,20 +423,28 @@ BEGIN
             organizacion_id,
             configuracion_id,
             profesional_id,
+            aplica_a,
             servicio_id,
+            producto_id,
+            categoria_producto_id,
             tipo_comision_nuevo,
             valor_comision_nuevo,
             activo_nuevo,
+            aplica_a_nuevo,
             accion,
             modificado_por
         ) VALUES (
             NEW.organizacion_id,
             NEW.id,
             NEW.profesional_id,
+            NEW.aplica_a,
             NEW.servicio_id,
+            NEW.producto_id,
+            NEW.categoria_producto_id,
             NEW.tipo_comision,
             NEW.valor_comision,
             NEW.activo,
+            NEW.aplica_a,
             'INSERT',
             current_setting('app.user_id', true)::integer
         );
@@ -354,20 +454,28 @@ BEGIN
             organizacion_id,
             configuracion_id,
             profesional_id,
+            aplica_a,
             servicio_id,
+            producto_id,
+            categoria_producto_id,
             tipo_comision_anterior,
             valor_comision_anterior,
             activo_anterior,
+            aplica_a_anterior,
             accion,
             modificado_por
         ) VALUES (
             OLD.organizacion_id,
             OLD.id,
             OLD.profesional_id,
+            OLD.aplica_a,
             OLD.servicio_id,
+            OLD.producto_id,
+            OLD.categoria_producto_id,
             OLD.tipo_comision,
             OLD.valor_comision,
             OLD.activo,
+            OLD.aplica_a,
             'DELETE',
             current_setting('app.user_id', true)::integer
         );
@@ -385,15 +493,199 @@ Inserta en historial_configuracion_comisiones con valores anteriores/nuevos y us
 Bypass RLS: set_config(''app.bypass_rls'', ''true'') para operación de sistema';
 
 -- ====================================================================
+-- FUNCIÓN 4: calcular_comision_venta()
+-- ====================================================================
+-- Calcula y registra comisión al completar una venta POS.
+-- Se ejecuta por trigger AFTER INSERT/UPDATE en ventas_pos.
+--
+-- ALGORITMO:
+-- 1. Verifica que la venta está en estado 'completada'
+-- 2. Verifica que hay profesional_id (vendedor) asignado
+-- 3. Valida que no exista comisión previa (anti-duplicados)
+-- 4. Obtiene items de la venta desde ventas_pos_items
+-- 5. Para cada item con aplica_comision = true:
+--    a. Busca configuración (producto > categoría > global)
+--    b. Calcula comisión según tipo (porcentaje o monto_fijo)
+--    c. Agrega al detalle_productos JSONB
+-- 6. Determina tipo_comision final
+-- 7. Inserta en comisiones_profesionales con origen = 'venta'
+--
+-- BYPASS RLS:
+-- Activa bypass_rls para poder insertar sin restricciones de RLS.
+--
+-- NOTA: Este función requiere que el módulo POS se inicialice ANTES que
+-- el módulo comisiones. Ver init-data.sh para el orden de ejecución.
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION calcular_comision_venta()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_profesional_id INTEGER;
+    v_item RECORD;
+    v_config RECORD;
+    v_comision_item DECIMAL(10,2);
+    v_total_comision DECIMAL(10,2) := 0;
+    v_monto_base DECIMAL(10,2) := 0;
+    v_detalle_productos JSONB := '[]'::JSONB;
+    v_tipos_usados TEXT[] := ARRAY[]::TEXT[];
+    v_tipo_final VARCHAR(20);
+    v_primer_valor DECIMAL(10,2);
+BEGIN
+    -- Solo procesar ventas completadas
+    IF NEW.estado != 'completada' THEN
+        RETURN NEW;
+    END IF;
+
+    -- Obtener profesional (vendedor)
+    v_profesional_id := NEW.profesional_id;
+
+    -- Si no hay profesional asignado, no hay comisión
+    IF v_profesional_id IS NULL THEN
+        RETURN NEW;
+    END IF;
+
+    -- Anti-duplicados: Verificar si ya existe comisión para esta venta
+    IF EXISTS (
+        SELECT 1 FROM comisiones_profesionales
+        WHERE venta_id = NEW.id AND origen = 'venta'
+    ) THEN
+        RETURN NEW;
+    END IF;
+
+    -- Bypass RLS para operaciones de sistema
+    PERFORM set_config('app.bypass_rls', 'true', true);
+
+    -- Iterar sobre los items de la venta
+    FOR v_item IN
+        SELECT
+            vpi.producto_id,
+            vpi.nombre_producto,
+            vpi.cantidad,
+            vpi.subtotal,
+            vpi.aplica_comision,
+            p.categoria_id
+        FROM ventas_pos_items vpi
+        JOIN productos p ON vpi.producto_id = p.id
+        WHERE vpi.venta_pos_id = NEW.id
+          AND vpi.aplica_comision = true  -- Solo items que aplican comisión
+    LOOP
+        -- Acumular monto base
+        v_monto_base := v_monto_base + v_item.subtotal;
+
+        -- Buscar configuración de comisión (cascada: producto > categoría > global)
+        SELECT tipo_comision, valor_comision INTO v_config
+        FROM obtener_configuracion_comision_producto(
+            v_profesional_id,
+            v_item.producto_id,
+            v_item.categoria_id,
+            NEW.organizacion_id
+        );
+
+        -- Si hay configuración, calcular comisión
+        IF v_config.tipo_comision IS NOT NULL THEN
+            -- Calcular comisión según tipo
+            IF v_config.tipo_comision = 'porcentaje' THEN
+                v_comision_item := v_item.subtotal * (v_config.valor_comision / 100);
+            ELSE -- monto_fijo
+                v_comision_item := v_config.valor_comision * v_item.cantidad;
+            END IF;
+
+            v_total_comision := v_total_comision + v_comision_item;
+
+            -- Registrar tipo usado
+            IF NOT v_config.tipo_comision = ANY(v_tipos_usados) THEN
+                v_tipos_usados := array_append(v_tipos_usados, v_config.tipo_comision);
+            END IF;
+
+            -- Guardar el primer valor para valor_comision
+            IF v_primer_valor IS NULL THEN
+                v_primer_valor := v_config.valor_comision;
+            END IF;
+
+            -- Agregar al detalle
+            v_detalle_productos := v_detalle_productos || jsonb_build_object(
+                'producto_id', v_item.producto_id,
+                'nombre', v_item.nombre_producto,
+                'cantidad', v_item.cantidad,
+                'subtotal', v_item.subtotal,
+                'tipo_comision', v_config.tipo_comision,
+                'valor_comision', v_config.valor_comision,
+                'comision_calculada', v_comision_item
+            );
+        END IF;
+    END LOOP;
+
+    -- Solo insertar si hay comisión > 0
+    IF v_total_comision > 0 THEN
+        -- Determinar tipo final
+        IF array_length(v_tipos_usados, 1) = 1 THEN
+            v_tipo_final := v_tipos_usados[1];
+        ELSE
+            v_tipo_final := 'mixto';
+            v_primer_valor := 0; -- No aplica en mixto
+        END IF;
+
+        -- Insertar comisión
+        INSERT INTO comisiones_profesionales (
+            organizacion_id,
+            profesional_id,
+            origen,
+            venta_id,
+            monto_base,
+            tipo_comision,
+            valor_comision,
+            monto_comision,
+            detalle_productos,
+            estado_pago
+        ) VALUES (
+            NEW.organizacion_id,
+            v_profesional_id,
+            'venta',
+            NEW.id,
+            v_monto_base,
+            v_tipo_final,
+            COALESCE(v_primer_valor, 0),
+            v_total_comision,
+            v_detalle_productos,
+            'pendiente'
+        );
+    END IF;
+
+    -- Restaurar RLS
+    PERFORM set_config('app.bypass_rls', 'false', true);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION calcular_comision_venta IS
+'Calcula y registra automáticamente la comisión al completar una venta POS.
+Triggers: trigger_calcular_comision_venta (AFTER INSERT/UPDATE ON ventas_pos)
+Algoritmo:
+1. Valida estado = completada y profesional_id NOT NULL
+2. Verifica anti-duplicados (EXISTS en comisiones_profesionales WHERE venta_id = ?)
+3. Obtiene items desde ventas_pos_items WHERE aplica_comision = true
+4. Para cada item: busca config (producto > categoría > global) y calcula comisión
+5. Determina tipo final: porcentaje | monto_fijo | mixto
+6. Inserta en comisiones_profesionales con origen = venta
+Bypass RLS: set_config(''app.bypass_rls'', ''true'') para operación de sistema';
+
+-- ====================================================================
 -- 📊 RESUMEN DE FUNCIONES
 -- ====================================================================
--- TOTAL: 3 funciones especializadas
+-- TOTAL: 5 funciones en este módulo
 --
 -- obtener_configuracion_comision():
 -- ├── Parámetros: p_profesional_id, p_servicio_id, p_organizacion_id
 -- ├── Returns: tipo_comision, valor_comision (o NULL)
 -- ├── Prioridad: específica (servicio_id) > global (servicio_id NULL)
 -- └── Usado por: calcular_comision_cita()
+--
+-- obtener_configuracion_comision_producto():
+-- ├── Parámetros: p_profesional_id, p_producto_id, p_categoria_producto_id, p_organizacion_id
+-- ├── Returns: tipo_comision, valor_comision (o NULL)
+-- ├── Prioridad: producto_id > categoria_producto_id > global (aplica_a IN producto, ambos)
+-- └── Usado por: calcular_comision_venta()
 --
 -- calcular_comision_cita():
 -- ├── Tipo: TRIGGER FUNCTION
@@ -409,5 +701,17 @@ Bypass RLS: set_config(''app.bypass_rls'', ''true'') para operación de sistema'
 -- ├── Acción: Registra cambios en historial_configuracion_comisiones
 -- ├── Usuario: current_setting('app.user_id')
 -- └── Bypass RLS: set_config('app.bypass_rls', 'true')
+--
+-- calcular_comision_venta():
+-- ├── Tipo: TRIGGER FUNCTION
+-- ├── Evento: AFTER INSERT/UPDATE OF estado ON ventas_pos
+-- ├── Condición: NEW.estado = 'completada' AND profesional_id IS NOT NULL
+-- ├── Algoritmo: Itera items → busca config (producto>categoría>global) → calcula
+-- ├── Anti-duplicados: EXISTS (SELECT 1 WHERE venta_id = ? AND origen = 'venta')
+-- └── Bypass RLS: set_config('app.bypass_rls', 'true')
+--
+-- ORDEN DE EJECUCIÓN:
+-- El módulo POS debe ejecutarse ANTES que comisiones en init-data.sh
+-- para que las tablas ventas_pos y ventas_pos_items existan.
 --
 -- ====================================================================

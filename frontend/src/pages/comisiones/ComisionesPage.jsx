@@ -15,7 +15,7 @@ function ComisionesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <Button
                 variant="ghost"
@@ -26,29 +26,32 @@ function ComisionesPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver al Inicio
               </Button>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
                 Sistema de Comisiones
               </h1>
-              <p className="text-gray-600 mt-2">
+              <p className="text-gray-600 mt-2 text-sm sm:text-base">
                 Gestión y análisis de comisiones de profesionales
               </p>
             </div>
 
             {/* Navegación rápida */}
-            <div className="flex space-x-3">
+            <div className="flex gap-2 sm:gap-3">
               <Button
                 variant="secondary"
                 onClick={() => navigate('/comisiones/configuracion')}
+                className="flex-1 sm:flex-none text-sm"
               >
-                <Settings className="w-4 h-4 mr-2" />
-                Configuración
+                <Settings className="w-4 h-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Configuración</span>
+                <span className="sm:hidden">Config</span>
               </Button>
 
               <Button
                 variant="primary"
                 onClick={() => navigate('/comisiones/reportes')}
+                className="flex-1 sm:flex-none text-sm"
               >
-                <FileText className="w-4 h-4 mr-2" />
+                <FileText className="w-4 h-4 mr-1 sm:mr-2" />
                 Reportes
               </Button>
             </div>

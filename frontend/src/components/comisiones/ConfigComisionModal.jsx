@@ -10,15 +10,23 @@ import Select from '@/components/ui/Select';
 import { useCrearConfiguracionComision } from '@/hooks/useComisiones';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
+import { useProductos } from '@/hooks/useProductos';
+import { useCategorias } from '@/hooks/useCategorias';
 import { useToast } from '@/hooks/useToast';
 
 /**
  * Schema de validación Zod para configuración de comisión
+ * Soporta tanto servicios (citas) como productos (ventas POS)
  */
 const configComisionSchema = z.object({
   profesional_id: z.string().min(1, 'Debes seleccionar un profesional'),
 
+  // Para servicios
   servicio_id: z.string().optional(),
+
+  // Para productos
+  producto_id: z.string().optional(),
+  categoria_producto_id: z.string().optional(),
 
   tipo_comision: z.enum(['porcentaje', 'monto_fijo'], {
     required_error: 'Tipo de comisión es requerido',
@@ -57,27 +65,30 @@ const configComisionSchema = z.object({
  * @param {function} onClose - Función para cerrar el modal
  * @param {object|null} configuracion - Configuración a editar (null para crear nueva)
  * @param {number|null} profesionalIdPredefinido - ID del profesional predefinido (opcional)
+ * @param {string} aplicaA - 'servicio' o 'producto' - define el tipo de configuración
  */
 function ConfigComisionModal({
   isOpen,
   onClose,
   configuracion = null,
-  profesionalIdPredefinido = null
+  profesionalIdPredefinido = null,
+  aplicaA = 'servicio'
 }) {
   const toast = useToast();
   const crearMutation = useCrearConfiguracionComision();
 
-  // Fetch profesionales y servicios
+  // Fetch profesionales, servicios, productos y categorías
   const { data: profesionales, isLoading: loadingProfesionales } = useProfesionales();
   const { data: serviciosData, isLoading: loadingServicios } = useServicios();
+  const { data: productosData, isLoading: loadingProductos } = useProductos({ activo: true });
+  const { data: categoriasData, isLoading: loadingCategorias } = useCategorias();
 
   const servicios = serviciosData?.servicios || [];
-
-  // Debug: verificar qué datos llegan
-  console.log('ConfigComisionModal - profesionales:', profesionales);
-  console.log('ConfigComisionModal - servicios:', servicios);
+  const productos = productosData?.productos || [];
+  const categorias = categoriasData?.categorias || [];
 
   const isEditMode = !!configuracion;
+  const isProducto = aplicaA === 'producto';
 
   // React Hook Form
   const {
@@ -91,6 +102,8 @@ function ConfigComisionModal({
     defaultValues: {
       profesional_id: profesionalIdPredefinido || '',
       servicio_id: '',
+      producto_id: '',
+      categoria_producto_id: '',
       tipo_comision: 'porcentaje',
       valor_comision: 15, // Valor por defecto 15%
       activo: true,
@@ -99,6 +112,7 @@ function ConfigComisionModal({
   });
 
   const tipoComision = watch('tipo_comision');
+  const productoId = watch('producto_id');
 
   // Pre-cargar datos en modo edición
   useEffect(() => {
@@ -106,6 +120,8 @@ function ConfigComisionModal({
       reset({
         profesional_id: String(configuracion.profesional_id),
         servicio_id: configuracion.servicio_id ? String(configuracion.servicio_id) : '',
+        producto_id: configuracion.producto_id ? String(configuracion.producto_id) : '',
+        categoria_producto_id: configuracion.categoria_producto_id ? String(configuracion.categoria_producto_id) : '',
         tipo_comision: configuracion.tipo_comision,
         valor_comision: String(parseFloat(configuracion.valor_comision)),
         activo: configuracion.activo,
@@ -120,6 +136,8 @@ function ConfigComisionModal({
       reset({
         profesional_id: profesionalIdPredefinido || '',
         servicio_id: '',
+        producto_id: '',
+        categoria_producto_id: '',
         tipo_comision: 'porcentaje',
         valor_comision: 15, // Valor por defecto 15%
         activo: true,
@@ -131,15 +149,33 @@ function ConfigComisionModal({
   // Handler de submit
   const onSubmit = async (data) => {
     try {
-      // Convertir strings a números y sanitizar
+      // Construir payload base
       const payload = {
         profesional_id: parseInt(data.profesional_id, 10),
-        servicio_id: data.servicio_id && data.servicio_id !== '' ? parseInt(data.servicio_id, 10) : undefined,
+        aplica_a: aplicaA, // 'servicio' o 'producto'
         tipo_comision: data.tipo_comision,
         valor_comision: parseFloat(data.valor_comision),
         activo: data.activo,
         notas: data.notas?.trim() || undefined,
       };
+
+      // Agregar campos específicos según el tipo
+      if (aplicaA === 'servicio') {
+        payload.servicio_id = data.servicio_id && data.servicio_id !== ''
+          ? parseInt(data.servicio_id, 10)
+          : undefined;
+      } else {
+        // Para productos
+        payload.producto_id = data.producto_id && data.producto_id !== ''
+          ? parseInt(data.producto_id, 10)
+          : undefined;
+        // Solo incluir categoría si no hay producto específico
+        if (!payload.producto_id) {
+          payload.categoria_producto_id = data.categoria_producto_id && data.categoria_producto_id !== ''
+            ? parseInt(data.categoria_producto_id, 10)
+            : undefined;
+        }
+      }
 
       await crearMutation.mutateAsync(payload);
 
@@ -158,11 +194,15 @@ function ConfigComisionModal({
     }
   };
 
+  const modalTitle = isEditMode
+    ? `Editar Comisión por ${isProducto ? 'Producto' : 'Servicio'}`
+    : `Nueva Comisión por ${isProducto ? 'Producto' : 'Servicio'}`;
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Editar Configuración de Comisión' : 'Nueva Configuración de Comisión'}
+      title={modalTitle}
       icon={DollarSign}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -197,36 +237,106 @@ function ConfigComisionModal({
           )}
         </div>
 
-        {/* Servicio (opcional - null = configuración global) */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Servicio Específico
-          </label>
-          <Controller
-            name="servicio_id"
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                disabled={loadingServicios}
-                className={errors.servicio_id ? 'border-red-500' : ''}
-              >
-                <option value="">Todos los servicios (global)</option>
-                {servicios?.map((servicio) => (
-                  <option key={servicio.id} value={servicio.id}>
-                    {servicio.nombre}
-                  </option>
-                ))}
-              </Select>
+        {/* Selector de Servicio o Producto según aplicaA */}
+        {!isProducto ? (
+          /* Servicio (opcional - null = configuración global) */
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Servicio Específico
+            </label>
+            <Controller
+              name="servicio_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  disabled={loadingServicios}
+                  className={errors.servicio_id ? 'border-red-500' : ''}
+                >
+                  <option value="">Todos los servicios (global)</option>
+                  {servicios?.map((servicio) => (
+                    <option key={servicio.id} value={servicio.id}>
+                      {servicio.nombre}
+                    </option>
+                  ))}
+                </Select>
+              )}
+            />
+            <p className="mt-1 text-sm text-gray-500">
+              Dejar en blanco para configuración global (aplica a todos los servicios)
+            </p>
+            {errors.servicio_id && (
+              <p className="mt-1 text-sm text-red-600">{errors.servicio_id.message}</p>
             )}
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            Dejar en blanco para configuración global (aplica a todos los servicios)
-          </p>
-          {errors.servicio_id && (
-            <p className="mt-1 text-sm text-red-600">{errors.servicio_id.message}</p>
-          )}
-        </div>
+          </div>
+        ) : (
+          /* Producto y Categoría para ventas POS */
+          <>
+            {/* Producto específico */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Producto Específico
+              </label>
+              <Controller
+                name="producto_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    {...field}
+                    disabled={loadingProductos}
+                    className={errors.producto_id ? 'border-red-500' : ''}
+                  >
+                    <option value="">Sin producto específico</option>
+                    {productos?.map((producto) => (
+                      <option key={producto.id} value={producto.id}>
+                        {producto.nombre} - ${parseFloat(producto.precio_venta || 0).toFixed(2)}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              />
+              <p className="mt-1 text-sm text-gray-500">
+                Configuración con máxima prioridad
+              </p>
+              {errors.producto_id && (
+                <p className="mt-1 text-sm text-red-600">{errors.producto_id.message}</p>
+              )}
+            </div>
+
+            {/* Categoría de producto (solo si no hay producto específico) */}
+            {!productoId && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Categoría de Productos
+                </label>
+                <Controller
+                  name="categoria_producto_id"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      {...field}
+                      disabled={loadingCategorias}
+                      className={errors.categoria_producto_id ? 'border-red-500' : ''}
+                    >
+                      <option value="">Todas las categorías (global)</option>
+                      {categorias?.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.nombre}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                />
+                <p className="mt-1 text-sm text-gray-500">
+                  Aplica a todos los productos de esta categoría
+                </p>
+                {errors.categoria_producto_id && (
+                  <p className="mt-1 text-sm text-red-600">{errors.categoria_producto_id.message}</p>
+                )}
+              </div>
+            )}
+          </>
+        )}
 
         {/* Tipo de Comisión */}
         <div>
@@ -345,7 +455,7 @@ function ConfigComisionModal({
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            disabled={isSubmitting || loadingProfesionales || loadingServicios}
+            disabled={isSubmitting || loadingProfesionales || (isProducto ? (loadingProductos || loadingCategorias) : loadingServicios)}
           >
             {isEditMode ? 'Actualizar' : 'Crear Configuración'}
           </Button>

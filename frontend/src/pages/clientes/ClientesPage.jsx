@@ -42,31 +42,34 @@ function ClientesPage() {
           <span className="font-medium">Volver al Inicio</span>
         </button>
 
-        <div className="flex items-center justify-between">
+        {/* Header - Mobile First */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-cyan-100 rounded-xl flex items-center justify-center">
-              <UserCircle className="h-7 w-7 text-cyan-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <UserCircle className="h-6 w-6 sm:h-7 sm:w-7 text-cyan-600" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Clientes</h1>
-              <p className="text-sm text-gray-500">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Clientes</h1>
+              <p className="text-sm text-gray-500 hidden sm:block">
                 Gestiona tu base de clientes y atención walk-in
               </p>
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2 sm:gap-3">
             <Button
               variant="outline"
               onClick={() => setWalkInOpen(true)}
+              className="flex-1 sm:flex-none"
             >
               <UserPlus className="w-4 h-4 mr-2" />
               Walk-in
             </Button>
 
-            <Button onClick={() => navigate('/clientes/nuevo')}>
+            <Button onClick={() => navigate('/clientes/nuevo')} className="flex-1 sm:flex-none">
               <Plus className="w-4 h-4 mr-2" />
-              Nuevo Cliente
+              <span className="hidden sm:inline">Nuevo Cliente</span>
+              <span className="sm:hidden">Nuevo</span>
             </Button>
           </div>
         </div>

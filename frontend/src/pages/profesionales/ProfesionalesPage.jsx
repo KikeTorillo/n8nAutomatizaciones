@@ -131,20 +131,19 @@ function ProfesionalesPage() {
             </Button>
           </div>
 
-          <div className="flex items-center justify-between">
+          {/* Header - Mobile First */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Profesionales</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Profesionales</h1>
+              <p className="text-sm text-gray-600 mt-1 hidden sm:block">
                 Gestiona los profesionales de tu negocio
               </p>
             </div>
 
-            <div className="flex gap-3">
-              <Button onClick={handleNuevoProfesional}>
-                <Plus className="w-4 h-4 mr-2" />
-                Nuevo Profesional
-              </Button>
-            </div>
+            <Button onClick={handleNuevoProfesional} className="w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" />
+              Nuevo Profesional
+            </Button>
           </div>
 
           {/* Search Bar y Filtros */}

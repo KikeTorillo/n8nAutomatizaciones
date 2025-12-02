@@ -16,6 +16,7 @@ const comisionesSchemas = {
     /**
      * Schema para crear/actualizar configuración
      * POST /api/v1/comisiones/configuracion
+     * Soporta servicios (citas) y productos (ventas POS)
      */
     crearConfiguracion: {
         body: Joi.object({
@@ -40,12 +41,33 @@ const comisionesSchemas = {
                 'number.min': 'valor_comision debe ser mayor o igual a 0'
             }),
 
-            // ========== OPCIONALES ==========
+            // ========== SCOPE DE APLICACIÓN ==========
+            aplica_a: Joi.string()
+                .valid('servicio', 'producto', 'ambos')
+                .optional()
+                .default('servicio')
+                .messages({
+                    'any.only': 'aplica_a debe ser "servicio", "producto" o "ambos"'
+                }),
+
+            // ========== PARA SERVICIOS (citas) ==========
             servicio_id: Joi.number().integer().positive().optional().messages({
                 'number.base': 'servicio_id debe ser un número',
                 'number.positive': 'servicio_id debe ser positivo'
             }),
 
+            // ========== PARA PRODUCTOS (ventas POS) ==========
+            producto_id: Joi.number().integer().positive().optional().messages({
+                'number.base': 'producto_id debe ser un número',
+                'number.positive': 'producto_id debe ser positivo'
+            }),
+
+            categoria_producto_id: Joi.number().integer().positive().optional().messages({
+                'number.base': 'categoria_producto_id debe ser un número',
+                'number.positive': 'categoria_producto_id debe ser positivo'
+            }),
+
+            // ========== OPCIONALES ==========
             activo: Joi.boolean().optional().default(true),
 
             notas: Joi.string().max(500).optional().allow(null, '').messages({
@@ -57,7 +79,7 @@ const comisionesSchemas = {
                 'number.positive': 'creado_por debe ser positivo'
             })
         }).custom((value, helpers) => {
-            // Validación adicional: Si tipo es porcentaje, valor debe estar entre 0-100
+            // Validación: Si tipo es porcentaje, valor debe estar entre 0-100
             if (value.tipo_comision === 'porcentaje') {
                 if (value.valor_comision < 0 || value.valor_comision > 100) {
                     return helpers.error('any.custom', {
@@ -65,6 +87,39 @@ const comisionesSchemas = {
                     });
                 }
             }
+
+            // Validación: Mutual exclusivity
+            const tieneServicio = !!value.servicio_id;
+            const tieneProducto = !!value.producto_id;
+            const tieneCategoria = !!value.categoria_producto_id;
+
+            // No puede tener servicio Y producto/categoría al mismo tiempo
+            if (tieneServicio && (tieneProducto || tieneCategoria)) {
+                return helpers.error('any.custom', {
+                    message: 'No puede especificar servicio_id junto con producto_id o categoria_producto_id'
+                });
+            }
+
+            // No puede tener producto Y categoría al mismo tiempo
+            if (tieneProducto && tieneCategoria) {
+                return helpers.error('any.custom', {
+                    message: 'No puede especificar producto_id y categoria_producto_id simultáneamente'
+                });
+            }
+
+            // Validar aplica_a según el scope especificado
+            if (tieneServicio && value.aplica_a !== 'servicio') {
+                return helpers.error('any.custom', {
+                    message: 'Cuando especifica servicio_id, aplica_a debe ser "servicio"'
+                });
+            }
+
+            if ((tieneProducto || tieneCategoria) && value.aplica_a !== 'producto') {
+                return helpers.error('any.custom', {
+                    message: 'Cuando especifica producto_id o categoria_producto_id, aplica_a debe ser "producto"'
+                });
+            }
+
             return value;
         })
     },
@@ -80,9 +135,29 @@ const comisionesSchemas = {
                 'number.positive': 'profesional_id debe ser positivo'
             }),
 
+            // Filtro por scope
+            aplica_a: Joi.string()
+                .valid('servicio', 'producto', 'ambos')
+                .optional()
+                .messages({
+                    'any.only': 'aplica_a debe ser "servicio", "producto" o "ambos"'
+                }),
+
+            // Para servicios
             servicio_id: Joi.number().integer().positive().optional().messages({
                 'number.base': 'servicio_id debe ser un número',
                 'number.positive': 'servicio_id debe ser positivo'
+            }),
+
+            // Para productos
+            producto_id: Joi.number().integer().positive().optional().messages({
+                'number.base': 'producto_id debe ser un número',
+                'number.positive': 'producto_id debe ser positivo'
+            }),
+
+            categoria_producto_id: Joi.number().integer().positive().optional().messages({
+                'number.base': 'categoria_producto_id debe ser un número',
+                'number.positive': 'categoria_producto_id debe ser positivo'
             }),
 
             activo: Joi.boolean().optional(),
@@ -135,6 +210,14 @@ const comisionesSchemas = {
                     'any.only': 'estado_pago debe ser "pendiente", "pagada" o "cancelada"'
                 }),
 
+            // Filtro por origen (cita o venta)
+            origen: Joi.string()
+                .valid('cita', 'venta')
+                .optional()
+                .messages({
+                    'any.only': 'origen debe ser "cita" o "venta"'
+                }),
+
             fecha_desde: Joi.string().isoDate().optional().messages({
                 'string.isoDate': 'fecha_desde debe tener formato YYYY-MM-DD'
             }),
@@ -182,6 +265,13 @@ const comisionesSchemas = {
                 .optional()
                 .messages({
                     'any.only': 'estado_pago debe ser "pendiente", "pagada" o "cancelada"'
+                }),
+
+            origen: Joi.string()
+                .valid('cita', 'venta')
+                .optional()
+                .messages({
+                    'any.only': 'origen debe ser "cita" o "venta"'
                 })
         })
     },
@@ -250,11 +340,11 @@ const comisionesSchemas = {
 
             // ========== OPCIONALES ==========
             tipo: Joi.string()
-                .valid('por_profesional', 'detallado', 'por_dia')
+                .valid('por_profesional', 'detallado', 'por_dia', 'por_origen')
                 .optional()
                 .default('por_profesional')
                 .messages({
-                    'any.only': 'tipo debe ser "por_profesional", "detallado" o "por_dia"'
+                    'any.only': 'tipo debe ser "por_profesional", "detallado", "por_dia" o "por_origen"'
                 }),
 
             profesional_id: Joi.number().integer().positive().optional().messages({
@@ -267,6 +357,13 @@ const comisionesSchemas = {
                 .optional()
                 .messages({
                     'any.only': 'estado_pago debe ser "pendiente", "pagada" o "cancelada"'
+                }),
+
+            origen: Joi.string()
+                .valid('cita', 'venta')
+                .optional()
+                .messages({
+                    'any.only': 'origen debe ser "cita" o "venta"'
                 }),
 
             formato: Joi.string()

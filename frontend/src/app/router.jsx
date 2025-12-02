@@ -182,7 +182,7 @@ export const router = createBrowserRouter([
       {
         path: 'home',
         element: (
-          <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin/dashboard">
+          <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin">
             {withSuspense(AppHomePage)}
           </ProtectedRoute>
         ),

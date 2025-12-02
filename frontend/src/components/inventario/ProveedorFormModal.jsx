@@ -254,7 +254,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
             Información Básica
           </h3>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="Nombre Comercial" error={errors.nombre?.message} required>
               <input
                 type="text"
@@ -292,7 +292,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
             Contacto
           </h3>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FieldWrapper label="Teléfono" error={errors.telefono?.message}>
               <input
                 type="tel"
@@ -331,7 +331,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
 
           <div className="space-y-4">
             {/* Fila 1: País, Estado, Ciudad, CP */}
-            <div className="grid grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               {/* PAÍS */}
               <FieldWrapper label="País">
                 <div className="relative">
@@ -436,7 +436,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Términos Comerciales</h3>
 
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FieldWrapper
               label="Días de Crédito"
               error={errors.dias_credito?.message}
@@ -506,14 +506,15 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
         </FieldWrapper>
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">
+          <Button type="button" variant="secondary" onClick={onClose} className="w-full sm:w-auto">
             Cancelar
           </Button>
           <Button
             type="submit"
             variant="primary"
             isLoading={mutation.isPending}
+            className="w-full sm:w-auto"
           >
             {esEdicion ? 'Actualizar' : 'Crear'} Proveedor
           </Button>

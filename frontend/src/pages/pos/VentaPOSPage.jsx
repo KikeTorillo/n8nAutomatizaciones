@@ -143,7 +143,7 @@ export default function VentaPOSPage() {
         cantidad: item.cantidad,
         precio_unitario: parseFloat(item.precio_unitario),
         descuento_monto: parseFloat(item.descuento_monto || 0),
-        aplica_comision: false,
+        aplica_comision: true,
         notas: ''
       }));
 
@@ -193,81 +193,84 @@ export default function VentaPOSPage() {
   };
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
-        {/* Botón de regreso al home */}
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Volver al Inicio</span>
-        </button>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      {/* Header - Mobile First */}
+      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-4">
+        {/* Row 1: Botón de regreso + Vendedor */}
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={() => navigate('/home')}
+            className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span className="text-sm sm:text-base font-medium">Volver al Inicio</span>
+          </button>
 
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Escanea o busca productos para crear una venta
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Nov 2025: Selector de cliente (opcional) */}
-            <div className="w-64">
-              <ClienteSelector
-                value={clienteSeleccionado}
-                onChange={setClienteSeleccionado}
-                placeholder="Asociar cliente (opcional)"
-              />
+          {/* Vendedor - siempre visible pero compacto en móvil */}
+          {profesionalNombre && (
+            <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-blue-50 text-blue-700 rounded-lg text-xs sm:text-sm">
+              <User className="h-4 w-4" />
+              <span className="font-medium hidden sm:inline">Vendedor:</span>
+              <span className="font-medium">{profesionalNombre}</span>
             </div>
+          )}
+        </div>
 
-            {/* Nov 2025: Mostrar vendedor asignado */}
-            {profesionalNombre && (
-              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-700 rounded-lg">
-                <User className="h-5 w-5" />
-                <span className="font-medium">Vendedor: {profesionalNombre}</span>
-              </div>
-            )}
+        {/* Row 2: Título */}
+        <div className="mb-2 sm:mb-3">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Punto de Venta</h1>
+          <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+            Escanea o busca productos para crear una venta
+          </p>
+        </div>
 
-            {items.length > 0 && (
-              <button
-                onClick={handleVaciarCarrito}
-                className="flex items-center gap-2 px-4 py-2 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors font-medium"
-              >
-                <Trash2 className="h-5 w-5" />
-                Vaciar Carrito
-              </button>
-            )}
+        {/* Row 3: Cliente + Vaciar Carrito */}
+        <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex-1 max-w-xs sm:max-w-sm">
+            <ClienteSelector
+              value={clienteSeleccionado}
+              onChange={setClienteSeleccionado}
+              placeholder="Asociar cliente (opcional)"
+            />
           </div>
+
+          {items.length > 0 && (
+            <button
+              onClick={handleVaciarCarrito}
+              className="flex items-center gap-1 sm:gap-2 px-2 py-2 sm:px-4 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
+            >
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Vaciar Carrito</span>
+            </button>
+          )}
         </div>
       </div>
 
       {/* Tabs de navegación POS */}
       <POSNavTabs />
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        <div className="h-full grid grid-cols-1 lg:grid-cols-3 gap-6 p-6">
+      {/* Main Content - Mobile First */}
+      <div className="flex-1 overflow-auto">
+        <div className="p-3 sm:p-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
           {/* Columna izquierda: Buscador */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2 space-y-3 sm:space-y-4">
             <BuscadorProductosPOS onProductoSeleccionado={handleProductoSeleccionado} />
 
-            {/* Info de ayuda */}
+            {/* Info de ayuda - simplificada en móvil */}
             {items.length === 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
-                <ShoppingCart className="h-16 w-16 text-blue-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 text-center">
+                <ShoppingCart className="h-10 w-10 sm:h-16 sm:w-16 text-blue-400 mx-auto mb-2 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-semibold text-blue-900 mb-1 sm:mb-2">
                   Comienza a agregar productos
                 </h3>
-                <p className="text-blue-700 mb-4">
+                <p className="text-sm text-blue-700 mb-3 sm:mb-4">
                   Busca productos por nombre, SKU o escanea el código de barras
                 </p>
-                <div className="bg-white rounded-lg p-4 text-left max-w-md mx-auto">
+                {/* Atajos de teclado - ocultos en móvil */}
+                <div className="hidden sm:block bg-white rounded-lg p-4 text-left max-w-md mx-auto">
                   <p className="text-sm text-gray-600 font-medium mb-2">Atajos de teclado:</p>
                   <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">Enter</kbd> - Seleccionar producto (si solo hay 1 resultado)</li>
+                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">Enter</kbd> - Seleccionar producto</li>
                     <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">Esc</kbd> - Cerrar resultados</li>
                     <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">F2</kbd> - Proceder al pago</li>
                   </ul>
@@ -275,21 +278,21 @@ export default function VentaPOSPage() {
               </div>
             )}
 
-            {/* Resumen rápido */}
+            {/* Resumen rápido - responsive */}
             {items.length > 0 && (
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-6">
-                <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-3 sm:p-6">
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div>
-                    <p className="text-blue-100 text-sm">Items</p>
-                    <p className="text-3xl font-bold">{items.length}</p>
+                    <p className="text-blue-100 text-xs sm:text-sm">Items</p>
+                    <p className="text-xl sm:text-3xl font-bold">{items.length}</p>
                   </div>
                   <div>
-                    <p className="text-blue-100 text-sm">Subtotal</p>
-                    <p className="text-3xl font-bold">${subtotal.toFixed(2)}</p>
+                    <p className="text-blue-100 text-xs sm:text-sm">Subtotal</p>
+                    <p className="text-lg sm:text-3xl font-bold">${subtotal.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-blue-100 text-sm">Total</p>
-                    <p className="text-3xl font-bold">${total.toFixed(2)}</p>
+                    <p className="text-blue-100 text-xs sm:text-sm">Total</p>
+                    <p className="text-lg sm:text-3xl font-bold">${total.toFixed(2)}</p>
                   </div>
                 </div>
               </div>
@@ -297,7 +300,7 @@ export default function VentaPOSPage() {
           </div>
 
           {/* Columna derecha: Carrito */}
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col h-full">
+          <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col lg:h-[calc(100vh-16rem)]">
             <CarritoVenta
               items={items}
               onActualizarCantidad={handleActualizarCantidad}
@@ -309,12 +312,12 @@ export default function VentaPOSPage() {
 
             {/* Botón de pago */}
             {items.length > 0 && (
-              <div className="p-4 bg-white border-t border-gray-200">
+              <div className="p-3 sm:p-4 bg-white border-t border-gray-200">
                 <button
                   onClick={handleProcederPago}
-                  className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-3 text-lg shadow-lg hover:shadow-xl"
+                  className="w-full py-3 sm:py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg shadow-lg hover:shadow-xl"
                 >
-                  <Check className="h-6 w-6" />
+                  <Check className="h-5 w-5 sm:h-6 sm:w-6" />
                   PROCEDER AL PAGO
                 </button>
               </div>

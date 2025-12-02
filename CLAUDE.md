@@ -6,30 +6,35 @@
 
 ## Visión del Proyecto
 
-**Plataforma SaaS Multi-Tenant** para automatización de agendamiento empresarial con **IA Conversacional** (Telegram, WhatsApp).
+### Nexo - Sistema de Gestión Empresarial
+
+**Plataforma ERP SaaS Multi-Tenant** que integra todos los módulos esenciales para la gestión de negocios en una sola solución. Similar a Odoo, pero diseñado específicamente para el mercado latinoamericano con **IA Conversacional** integrada (Telegram, WhatsApp).
+
+### Propuesta de Valor
+- **Todo en uno**: POS, Inventario, Agendamiento, Clientes, Comisiones, Marketplace
+- **IA Conversacional**: Chatbots inteligentes para automatizar operaciones vía mensajería
+- **Multi-Tenant**: Cada organización tiene sus datos completamente aislados
+- **Modular**: Activa solo los módulos que necesitas
+- **Accesible**: Diseñado para negocios sin personal técnico especializado
 
 ---
 
 ## Estado Actual del Proyecto
 
-**Última verificación**: 30 Noviembre 2025
+**Última verificación**: 1 Diciembre 2025
 
 | Componente | Estado | Notas |
 |------------|--------|-------|
 | **Backend API** | ✅ | 40 controllers, 249 endpoints, 52 models |
 | **Frontend React** | ✅ | 108 componentes, 47 páginas, 28 hooks |
-| **Super Admin** | ✅ | Usuario plataforma SIN organización, panel `/superadmin/*` |
+| **Mobile-First UI** | ✅ | Responsive en todas las páginas principales |
+| **Super Admin** | ✅ | Usuario plataforma SIN organización |
 | **Registro Simplificado** | ✅ | 7 campos + email activación + auto-login |
-| **App Home / Launcher** | ✅ | Grid 12 apps, badges, accesos rápidos |
 | **Clientes (Core)** | ✅ | Módulo independiente, ClienteSelector POS |
-| **Sistema Invitaciones** | ✅ | Token 64-char, email auto, vinculación profesional-usuario |
-| **Base de Datos** | ✅ | 24 módulos SQL, 54 tablas, 3 particionadas, 93 RLS, 86 funciones |
-| **Chatbots IA** | ✅ | 8 MCP tools, Telegram + WhatsApp, n8n workflows |
-| **Marketplace** | ✅ | Agendamiento público sin auth, analytics |
+| **Chatbots IA** | ✅ | 8 MCP tools, Telegram + WhatsApp |
 | **Inventario** | ✅ | ABC, alertas, órdenes compra, kardex |
 | **POS** | ✅ | Ticket PDF térmico, vendedor auto-asignado |
 | **Comisiones** | ✅ | Configuración por profesional, reportes |
-| **Configuración Hub** | ✅ | Mi Negocio, Módulos, Apariencia (próximamente) |
 
 ---
 
@@ -177,7 +182,7 @@ Todos incluidos en suscripción, sin precios individuales:
 
 ### Setup Inicial (Primera vez)
 ```
-/setup → crear super_admin (sin org) → auto-login → /superadmin/dashboard
+/setup → crear super_admin (sin org) → auto-login → /superadmin
 ```
 
 **Archivos**:
@@ -387,4 +392,41 @@ PostgreSQL (políticas RLS)
 
 ---
 
-**Versión**: 33.0 | **Actualizado**: 30 Nov 2025 | **Estado**: ✅ Production Ready
+## Patrones Mobile-First (Tailwind CSS)
+
+### Headers Responsive
+```jsx
+// Antes (NO responsive)
+<div className="flex items-center justify-between">
+
+// Después (Mobile-First)
+<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+```
+
+### Grids Responsive
+```jsx
+// Stats cards: 2 cols móvil, 4 cols desktop
+<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+
+// Formularios: 1 col móvil, 2+ cols desktop
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+```
+
+### Botones
+```jsx
+// Full width en móvil, auto en desktop
+<Button className="w-full sm:w-auto">
+
+// Igual ancho en grupo
+<Button className="flex-1 sm:flex-none">
+```
+
+### Texto Abreviado
+```jsx
+<span className="hidden sm:inline">Configuración Completa</span>
+<span className="sm:hidden">Config</span>
+```
+
+---
+
+**Versión**: 34.0 | **Actualizado**: 1 Dic 2025 | **Estado**: ✅ Production Ready

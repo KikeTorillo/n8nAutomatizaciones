@@ -1,7 +1,7 @@
 {
-  "name": "n8n-whatsapp-bot",
+  "name": "nexo-erp",
   "version": "1.0.0",
-  "description": "SaaS Multi-Tenant con n8n, Telegram Bot, DeepSeek AI Agent, y MCP Server",
+  "description": "Nexo - Sistema de Gestión Empresarial (ERP) SaaS Multi-Tenant con POS, Inventario, Agendamiento, Comisiones, Marketplace e IA Conversacional",
   "license": "MIT",
   "author": "Kike",
   "type": "commonjs",
@@ -40,15 +40,18 @@
     "frontend:rebuild": "docker compose -f docker-compose.dev.yml build --no-cache frontend && docker compose -f docker-compose.dev.yml up -d frontend"
   },
   "keywords": [
-    "n8n",
-    "telegram",
+    "erp",
     "saas",
     "multi-tenant",
-    "deepseek",
+    "pos",
+    "inventario",
+    "agendamiento",
+    "chatbot",
     "ai",
-    "mcp-server",
-    "docker",
-    "automation"
+    "telegram",
+    "whatsapp",
+    "gestion-empresarial",
+    "latinoamerica"
   ],
   "engines": {
     "node": ">=18.0.0",

@@ -275,6 +275,9 @@ class VentasPOSModel {
                 itemsInsertados.push(resultItem.rows[0]);
             }
 
+            // NOTA: La comisión se calcula automáticamente por el trigger DEFERRED
+            // trigger_calcular_comision_venta que se ejecuta al COMMIT de la transacción
+
             logger.info('[VentasPOSModel.crear] Venta creada exitosamente', {
                 venta_id: venta.id,
                 folio: venta.folio,

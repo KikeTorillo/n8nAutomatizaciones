@@ -33,7 +33,7 @@ export default function AgendamientoNavTabs() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="flex gap-1 border-b border-gray-200 bg-gray-50 px-2 overflow-x-auto">
+    <nav className="flex border-b border-gray-200 bg-gray-50">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const active = isActive(tab.path);
@@ -43,7 +43,7 @@ export default function AgendamientoNavTabs() {
             key={tab.id}
             onClick={() => navigate(tab.path)}
             className={`
-              flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors whitespace-nowrap
+              flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors
               border-b-2 -mb-[1px]
               ${active
                 ? 'text-indigo-600 border-indigo-600 bg-white'

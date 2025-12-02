@@ -59,7 +59,7 @@ function hasRoleAccess(userRole, requiredRoles) {
  *
  * @example
  * // Excluir roles específicos (ej: super_admin no puede acceder a /home)
- * <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin/dashboard">
+ * <ProtectedRoute excludeRoles="super_admin" redirectTo="/superadmin">
  */
 function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, redirectTo = '/dashboard' }) {
   const { isAuthenticated, user } = useAuthStore();

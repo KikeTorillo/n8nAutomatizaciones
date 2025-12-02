@@ -11,12 +11,13 @@ import { useToast } from './useToast';
 
 /**
  * Hook para listar configuraciones de comisión
- * @param {Object} params - Filtros: { profesional_id, servicio_id, activo }
+ * @param {Object} params - Filtros: { profesional_id, aplica_a, servicio_id, producto_id, categoria_producto_id, activo, tipo_comision }
  * @returns {Object} { data, isLoading, error, refetch }
  *
  * @example
  * const { data: configuraciones, isLoading } = useConfiguracionesComision({
  *   profesional_id: 1,
+ *   aplica_a: 'servicio', // 'servicio', 'producto' o 'ambos'
  *   activo: true
  * });
  */
@@ -96,7 +97,10 @@ export function useCrearConfiguracionComision() {
       // Sanitizar campos opcionales
       const sanitizedData = {
         ...data,
+        aplica_a: data.aplica_a || 'servicio',
         servicio_id: data.servicio_id || undefined,
+        producto_id: data.producto_id || undefined,
+        categoria_producto_id: data.categoria_producto_id || undefined,
         notas: data.notas?.trim() || undefined,
       };
 
@@ -150,14 +154,15 @@ export function useEliminarConfiguracionComision() {
 /**
  * Hook para obtener comisiones de un profesional
  * @param {number} profesionalId - ID del profesional
- * @param {Object} params - { fecha_desde, fecha_hasta, estado_pago, limite, offset }
+ * @param {Object} params - { fecha_desde, fecha_hasta, estado_pago, origen, limite, offset }
  * @returns {Object} { data, isLoading, error, refetch }
  *
  * @example
  * const { data, isLoading } = useComisionesProfesional(1, {
  *   fecha_desde: '2025-01-01',
  *   fecha_hasta: '2025-01-31',
- *   estado_pago: 'pendiente'
+ *   estado_pago: 'pendiente',
+ *   origen: 'cita' // 'cita' o 'venta'
  * });
  */
 export function useComisionesProfesional(profesionalId, params = {}) {
@@ -185,13 +190,14 @@ export function useComisionesProfesional(profesionalId, params = {}) {
 
 /**
  * Hook para obtener comisiones por período
- * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, estado_pago, limite, offset }
+ * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, estado_pago, origen, limite, offset }
  * @returns {Object} { data, isLoading, error }
  *
  * @example
  * const { data } = useComisionesPorPeriodo({
  *   fecha_desde: '2025-01-01',
- *   fecha_hasta: '2025-01-31'
+ *   fecha_hasta: '2025-01-31',
+ *   origen: 'venta' // 'cita' o 'venta'
  * });
  */
 export function useComisionesPorPeriodo(params = {}) {
@@ -304,13 +310,14 @@ export function useMarcarComoPagada() {
 
 /**
  * Hook para obtener métricas del dashboard de comisiones
- * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+ * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, origen }
  * @returns {Object} { data, isLoading, error }
  *
  * @example
  * const { data: dashboard } = useDashboardComisiones({
  *   fecha_desde: '2025-01-01',
- *   fecha_hasta: '2025-01-31'
+ *   fecha_hasta: '2025-01-31',
+ *   origen: 'cita' // 'cita' o 'venta' (opcional, muestra ambos si no se especifica)
  * });
  */
 export function useDashboardComisiones(params = {}) {
@@ -334,13 +341,14 @@ export function useDashboardComisiones(params = {}) {
 
 /**
  * Hook para obtener estadísticas de comisiones
- * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+ * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, origen }
  * @returns {Object} { data, isLoading, error }
  *
  * @example
  * const { data: estadisticas } = useEstadisticasComisiones({
  *   fecha_desde: '2025-01-01',
- *   fecha_hasta: '2025-12-31'
+ *   fecha_hasta: '2025-12-31',
+ *   origen: 'venta' // 'cita' o 'venta'
  * });
  */
 export function useEstadisticasComisiones(params = {}) {
@@ -364,14 +372,15 @@ export function useEstadisticasComisiones(params = {}) {
 
 /**
  * Hook para obtener datos para gráfica de comisiones por día
- * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id }
+ * @param {Object} params - { fecha_desde, fecha_hasta, profesional_id, origen }
  * @returns {Object} { data, isLoading, error }
  *
  * @example
  * const { data: graficaData } = useGraficaComisionesPorDia({
  *   fecha_desde: '2025-01-01',
  *   fecha_hasta: '2025-01-31',
- *   profesional_id: 1
+ *   profesional_id: 1,
+ *   origen: 'cita' // 'cita' o 'venta'
  * });
  */
 export function useGraficaComisionesPorDia(params = {}) {

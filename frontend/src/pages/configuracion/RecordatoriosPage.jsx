@@ -56,15 +56,15 @@ function StatCard({ title, value, icon: Icon, color = 'blue', subtitle }) {
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-500">{title}</p>
-          <p className="text-2xl font-bold text-gray-900">{value}</p>
+    <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <p className="text-xs sm:text-sm text-gray-500 truncate">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900">{value}</p>
           {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
         </div>
-        <div className={`p-3 rounded-full ${colors[color]}`}>
-          <Icon className="w-6 h-6" />
+        <div className={`p-2 sm:p-3 rounded-full flex-shrink-0 ${colors[color]}`}>
+          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
         </div>
       </div>
     </div>
@@ -86,13 +86,13 @@ function VariablesDisponibles() {
   ];
 
   return (
-    <div className="bg-gray-50 rounded-lg p-4 mt-2">
+    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mt-2">
       <h4 className="text-sm font-medium text-gray-700 mb-2">Variables disponibles:</h4>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {variables.map((v) => (
-          <div key={v.variable} className="flex items-center gap-2 text-sm">
-            <code className="bg-gray-200 px-2 py-0.5 rounded text-xs">{v.variable}</code>
-            <span className="text-gray-500">{v.descripcion}</span>
+          <div key={v.variable} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
+            <code className="bg-gray-200 px-2 py-0.5 rounded text-xs w-fit">{v.variable}</code>
+            <span className="text-gray-500 text-xs sm:text-sm">{v.descripcion}</span>
           </div>
         ))}
       </div>
@@ -114,7 +114,7 @@ function TestForm({ onEnviar, isLoading }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2">
       <Input
         type="tel"
         placeholder="Ej: +521234567890"
@@ -127,6 +127,7 @@ function TestForm({ onEnviar, isLoading }) {
         variant="secondary"
         disabled={!telefono.trim() || isLoading}
         loading={isLoading}
+        className="w-full sm:w-auto"
       >
         <TestTube className="w-4 h-4 mr-2" />
         Enviar prueba
@@ -228,14 +229,14 @@ function RecordatoriosPage() {
 
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="flex items-center justify-between mb-6">
+        {/* Header de sección - Mobile First */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-amber-600" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
+              <Bell className="w-5 h-5 text-amber-600 flex-shrink-0" />
               Recordatorios Automáticos
             </h2>
-            <p className="text-gray-500 text-sm">
+            <p className="text-gray-500 text-sm hidden sm:block">
               Configura los recordatorios de citas para tus clientes
             </p>
           </div>
@@ -244,6 +245,7 @@ function RecordatoriosPage() {
             onClick={handleSubmit(onSubmit)}
             disabled={!isDirty || actualizarMutation.isPending}
             loading={actualizarMutation.isPending}
+            className="w-full sm:w-auto"
           >
             <Save className="w-4 h-4 mr-2" />
             Guardar cambios
@@ -252,8 +254,8 @@ function RecordatoriosPage() {
 
         <div className="space-y-6">
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {/* Estadísticas - 2 cols mobile, 4 cols desktop */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
         <StatCard
           title="Total enviados"
           value={stats?.total || 0}
