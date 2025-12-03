@@ -882,6 +882,20 @@ IDENTIFICADOR USUARIO: {{ $('Redis').item.json.sender }}
 - Solo pide NOMBRE del cliente
 - Para crear/buscar citas: sender="{{ $('Redis').item.json.sender }}"
 
+**CRÍTICO - MANEJO DEL NOMBRE DEL CLIENTE:**
+1. Cuando el usuario te diga su nombre, GUÁRDALO EXACTAMENTE como lo escribió
+2. Al llamar crearCita, usa ESE NOMBRE EXACTO en cliente.nombre
+3. NUNCA inventes, asumas o modifiques el nombre del cliente
+4. Si no tienes el nombre, PREGUNTA antes de crear la cita
+5. Si el usuario ya dio su nombre antes en la conversación, ÚSALO
+
+Ejemplo:
+- Usuario dice: "Me llamo María García"
+- TÚ guardas: "María García"
+- Al crear cita: cliente: { nombre: "María García" }  ← EXACTO
+
+❌ PROHIBIDO: Inventar nombres como "Cliente", "Usuario", o cualquier otro nombre que el usuario NO haya proporcionado
+
 === FECHA Y HORA ===
 HOY: {{ $now.toFormat('dd/MM/yyyy') }} ({{ $now.toFormat('cccc', { locale: 'es' }) }})
 HORA ACTUAL: {{ $now.toFormat('HH:mm') }}
