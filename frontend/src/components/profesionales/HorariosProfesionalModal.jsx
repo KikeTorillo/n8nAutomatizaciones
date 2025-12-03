@@ -4,6 +4,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import {
   useHorariosProfesional,
   useCrearHorarioSemanal,
@@ -45,6 +46,9 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
   const [horaFin, setHoraFin] = useState('18:00');
   const [tipoHorario, setTipoHorario] = useState('regular');
   const [nombreHorario, setNombreHorario] = useState('Horario Laboral');
+
+  // Estado para modal de confirmación de eliminación
+  const [confirmDelete, setConfirmDelete] = useState({ isOpen: false, horarioId: null, diaNombre: '' });
 
   // Fetch horarios existentes
   const { data: horarios, isLoading: loadingHorarios } = useHorariosProfesional(
@@ -124,13 +128,17 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
     }
   };
 
-  // Handler para eliminar horario
-  const handleEliminarHorario = async (horarioId, diaNombre) => {
-    if (!confirm(`¿Eliminar horario del ${diaNombre}?`)) return;
+  // Handler para abrir modal de confirmación de eliminación
+  const handleEliminarHorario = (horarioId, diaNombre) => {
+    setConfirmDelete({ isOpen: true, horarioId, diaNombre });
+  };
 
+  // Handler para confirmar eliminación
+  const handleConfirmDelete = async () => {
     try {
-      await eliminarMutation.mutateAsync(horarioId);
+      await eliminarMutation.mutateAsync(confirmDelete.horarioId);
       toast.success('Horario eliminado exitosamente');
+      setConfirmDelete({ isOpen: false, horarioId: null, diaNombre: '' });
     } catch (error) {
       toast.error(error.message || 'Error al eliminar horario');
     }
@@ -372,6 +380,19 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
           </Button>
         </div>
       </div>
+
+      {/* Modal de confirmación para eliminar horario */}
+      <ConfirmDialog
+        isOpen={confirmDelete.isOpen}
+        onClose={() => setConfirmDelete({ isOpen: false, horarioId: null, diaNombre: '' })}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar Horario"
+        message={`¿Estás seguro de eliminar el horario del ${confirmDelete.diaNombre}?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={eliminarMutation.isPending}
+      />
     </Modal>
   );
 }
