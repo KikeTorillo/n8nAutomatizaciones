@@ -296,7 +296,7 @@ function ClienteDetailPage() {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => navigate('/citas/nueva', { state: { clienteId: id } })}
+                    onClick={() => navigate('/citas', { state: { abrirModal: true, clienteId: id } })}
                     className="mt-4"
                   >
                     Agendar Primera Cita

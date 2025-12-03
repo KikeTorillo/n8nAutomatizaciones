@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Plus, TrendingUp, Clock, CheckCircle, AlertCircle, List, CalendarDays, ArrowLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -27,6 +27,7 @@ import { useServicios } from '@/hooks/useServicios';
  */
 function CitasPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
 
   // Estado de vista activa (lista o calendario)
@@ -53,6 +54,20 @@ function CitasPage() {
   const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
   const [modalCompletarAbierto, setModalCompletarAbierto] = useState(false);
   const [modalNoShowAbierto, setModalNoShowAbierto] = useState(false);
+  const [clientePreseleccionado, setClientePreseleccionado] = useState(null);
+
+  // Efecto para abrir modal desde navegación (ej: desde ClienteDetailPage)
+  useEffect(() => {
+    if (location.state?.abrirModal) {
+      setModalMode('create');
+      if (location.state?.clienteId) {
+        setClientePreseleccionado(location.state.clienteId);
+      }
+      setIsFormModalOpen(true);
+      // Limpiar el state para evitar que se abra de nuevo al navegar
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location.state, navigate, location.pathname]);
 
   // Queries
   const { data: citas = [], isLoading: cargandoCitas } = useCitas(filtros);
@@ -364,10 +379,12 @@ function CitasPage() {
           setModalMode('create');
           setCitaParaEditar(null);
           setFechaPreseleccionada(null);
+          setClientePreseleccionado(null);
         }}
         mode={modalMode}
         cita={citaParaEditar}
         fechaPreseleccionada={fechaPreseleccionada}
+        clientePreseleccionado={clientePreseleccionado}
       />
 
       {/* Modal de Completar Cita */}

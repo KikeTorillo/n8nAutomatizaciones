@@ -100,7 +100,7 @@ const citaEditSchema = z
  * @param {object|null} cita - Datos de la cita a editar (solo en modo edit)
  * @param {string|null} fechaPreseleccionada - Fecha preseleccionada desde el calendario (formato ISO YYYY-MM-DD)
  */
-function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPreseleccionada = null }) {
+function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPreseleccionada = null, clientePreseleccionado = null }) {
   const toast = useToast();
   const isEditMode = mode === 'edit';
 
@@ -153,6 +153,13 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   const watchServicios = watch('servicios_ids');
   const watchPrecio = watch('precio_servicio');
   const watchDescuento = watch('descuento');
+
+  // Preseleccionar cliente si viene de otra página
+  useEffect(() => {
+    if (isOpen && clientePreseleccionado && !isEditMode) {
+      setValue('cliente_id', String(clientePreseleccionado));
+    }
+  }, [isOpen, clientePreseleccionado, isEditMode, setValue]);
 
   // Cargar servicios del profesional seleccionado
   useEffect(() => {

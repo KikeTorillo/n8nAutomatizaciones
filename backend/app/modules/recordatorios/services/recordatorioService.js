@@ -27,6 +27,7 @@ const RecordatoriosModel = require('../models/recordatorios.model');
 const TelegramService = require('./telegramService');
 const WhatsAppService = require('./whatsappService');
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const { queryDatabase } = require('../../../config/database');
 const logger = require('../../../utils/logger');
 
 class RecordatorioService {
@@ -254,42 +255,26 @@ class RecordatorioService {
    */
   static async inyectarEnMemoriaChat(sender, mensaje) {
     try {
-      // Usamos bypass porque accedemos a tabla de n8n (sin RLS)
-      await RLSContextManager.withBypass(async (db) => {
-        // Verificar si la tabla existe (creada por n8n)
-        const checkTable = await db.query(`
-          SELECT EXISTS (
-            SELECT FROM information_schema.tables
-            WHERE table_name = 'n8n_chat_histories'
-          )
-        `);
+      // Formato LangChain para mensaje AI
+      const mensajeAI = {
+        type: 'ai',
+        content: mensaje,
+        additional_kwargs: {},
+        tool_calls: [],
+        response_metadata: {
+          source: 'recordatorio_automatico',
+          timestamp: new Date().toISOString()
+        },
+        id: null
+      };
 
-        if (!checkTable.rows[0].exists) {
-          logger.warn('[RecordatorioService] Tabla n8n_chat_histories no existe. El mensaje no se inyectará en memoria.');
-          return;
-        }
+      // Usar el pool de chat (chat_memories_db) en lugar del pool principal
+      await queryDatabase('chat', `
+        INSERT INTO n8n_chat_histories (session_id, message)
+        VALUES ($1, $2)
+      `, [sender, JSON.stringify(mensajeAI)]);
 
-        // Formato LangChain para mensaje AI
-        const mensajeAI = {
-          type: 'ai',
-          content: mensaje,
-          additional_kwargs: {},
-          tool_calls: [],
-          response_metadata: {
-            source: 'recordatorio_automatico',
-            timestamp: new Date().toISOString()
-          },
-          id: null
-        };
-
-        const query = `
-          INSERT INTO n8n_chat_histories (session_id, message)
-          VALUES ($1, $2)
-        `;
-
-        await db.query(query, [sender, JSON.stringify(mensajeAI)]);
-        logger.info(`[RecordatorioService] Mensaje inyectado en memoria del chat para sender: ${sender}`);
-      });
+      logger.info(`[RecordatorioService] Mensaje inyectado en memoria del chat para sender: ${sender}`);
     } catch (error) {
       // No fallar el recordatorio si no se puede inyectar en memoria
       logger.warn(`[RecordatorioService] No se pudo inyectar en memoria del chat:`, error.message);

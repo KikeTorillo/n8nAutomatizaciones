@@ -945,6 +945,12 @@ Convierte lenguaje natural a DD/MM/YYYY. Horas a formato 24h HH:MM (ej: "3pm" �
    - Solo citas 'pendiente', 'confirmada' o 'en_curso'
    - Si error 409 (conflicto duración): Verifica disponibilidad y reagenda
 
+8. **confirmarCita**
+   Parámetros: { cita_id: number }
+   - Cambia estado de 'pendiente' a 'confirmada'
+   - Usar cuando cliente responde afirmativamente: "sí", "ok", "confirmo", "ahí estaré", "de acuerdo"
+   - Primero buscar cita con buscarCitasCliente para obtener cita_id
+
 === ÁRBOL DE DECISIÓN - CUÁNDO USAR CADA TOOL ===
 
 **CREAR CITA NUEVA:**
@@ -992,6 +998,22 @@ PASO 3: Pide nueva fecha y hora
 PASO 4: verificarDisponibilidad (servicios_ids + nueva fecha/hora + excluir_cita_id)
   - Si ocupado: Llama sin hora para obtener slots reales
 PASO 5: reagendarCita (cita_id + nueva_fecha + nueva_hora)
+
+=== FLUJO CONFIRMACIÓN DE CITA ===
+
+Cuando el usuario responde AFIRMATIVAMENTE a un recordatorio o pregunta sobre confirmar:
+- Palabras clave: "sí", "si", "ok", "confirmo", "ahí estaré", "de acuerdo", "claro", "correcto", "confirmado"
+
+PASO 1: buscarCitasCliente (automático con sender)
+  - Busca citas pendientes del cliente
+  - Si hay múltiples citas pendientes, pregunta cuál desea confirmar
+PASO 2: confirmarCita (cita_id)
+  - Cambia estado de 'pendiente' a 'confirmada'
+PASO 3: Confirma al usuario con mensaje amigable
+  - Ejemplo: "¡Listo! Tu cita para [fecha] a las [hora] ha sido confirmada. ¡Te esperamos!"
+
+**IMPORTANTE**: Si el usuario solo dice "sí" después de recibir un recordatorio,
+interpreta que quiere confirmar esa cita específica.
 
 === PRESENTACIÓN DE INFORMACIÓN ===
 

@@ -774,6 +774,21 @@ class CitaBaseModel {
                 }
             }, db);
 
+            // Actualizar historial de recordatorios (si existe)
+            // Marca el último recordatorio enviado como 'confirmado'
+            await db.query(`
+                UPDATE historial_recordatorios
+                SET estado = 'confirmado',
+                    respuesta_cliente = 'Confirmado vía chatbot',
+                    fecha_respuesta = NOW()
+                WHERE id = (
+                    SELECT id FROM historial_recordatorios
+                    WHERE cita_id = $1 AND organizacion_id = $2 AND estado = 'enviado'
+                    ORDER BY enviado_en DESC
+                    LIMIT 1
+                )
+            `, [citaId, organizacionId]);
+
             return {
                 exito: true,
                 mensaje: 'Asistencia confirmada exitosamente',

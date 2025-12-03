@@ -52,7 +52,7 @@ function QuickActions() {
       id: 'recordatorios',
       label: 'Recordatorios',
       icon: Bell,
-      path: '/configuracion/recordatorios',
+      path: '/recordatorios',
       color: 'bg-cyan-500 hover:bg-cyan-600',
       enabled: tieneChatbots,
     },
