@@ -54,7 +54,7 @@ const COLORES = {
  */
 function ModulosPage() {
   const navigate = useNavigate();
-  const { toast } = useToast();
+  const toast = useToast();
   const { isAdmin } = useAuthStore();
 
   // Estado local
@@ -113,11 +113,7 @@ function ModulosPage() {
       // Desactivar
       if (!puedeDesactivar(modulo)) {
         const dependientes = getModulosDependientes(modulo);
-        toast({
-          title: 'No se puede desactivar',
-          description: `Los siguientes módulos dependen de este: ${dependientes.join(', ')}`,
-          variant: 'warning',
-        });
+        toast.warning(`No se puede desactivar. Los siguientes módulos dependen de este: ${dependientes.join(', ')}`);
         return;
       }
       setConfirmDialog({ open: true, modulo, accion: 'desactivar' });
@@ -125,11 +121,7 @@ function ModulosPage() {
       // Activar
       if (!puedeActivar(modulo)) {
         const faltantes = getDependenciasFaltantes(modulo);
-        toast({
-          title: 'Dependencias faltantes',
-          description: `Primero activa: ${faltantes.join(', ')}`,
-          variant: 'warning',
-        });
+        toast.warning(`Dependencias faltantes. Primero activa: ${faltantes.join(', ')}`);
         return;
       }
       setConfirmDialog({ open: true, modulo, accion: 'activar' });
@@ -142,26 +134,14 @@ function ModulosPage() {
     try {
       if (accion === 'activar') {
         await activarMutation.mutateAsync(modulo);
-        toast({
-          title: 'Módulo activado',
-          description: `El módulo se ha activado correctamente`,
-          variant: 'success',
-        });
+        toast.success('Módulo activado correctamente');
       } else {
         await desactivarMutation.mutateAsync(modulo);
-        toast({
-          title: 'Módulo desactivado',
-          description: `El módulo se ha desactivado correctamente`,
-          variant: 'success',
-        });
+        toast.success('Módulo desactivado correctamente');
       }
       refetch();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: error.message,
-        variant: 'error',
-      });
+      toast.error(error.message || 'Error al procesar la solicitud');
     }
 
     setConfirmDialog({ open: false, modulo: null, accion: null });
@@ -355,7 +335,7 @@ function ModulosPage() {
         }
         confirmText={confirmDialog.accion === 'activar' ? 'Activar' : 'Desactivar'}
         cancelText="Cancelar"
-        variant={confirmDialog.accion === 'activar' ? 'primary' : 'warning'}
+        variant={confirmDialog.accion === 'activar' ? 'success' : 'warning'}
         isLoading={activarMutation.isPending || desactivarMutation.isPending}
       />
     </div>
