@@ -353,7 +353,7 @@ class RecordatoriosModel {
           -- Cliente tiene contacto según plataforma
           AND (
             (cc.plataforma = 'telegram' AND cl.telegram_chat_id IS NOT NULL AND cl.telegram_chat_id != '')
-            OR (cc.plataforma IN ('whatsapp', 'whatsapp_oficial') AND COALESCE(cl.whatsapp_phone, cl.telefono) IS NOT NULL AND COALESCE(cl.whatsapp_phone, cl.telefono) != '')
+            OR (cc.plataforma = 'whatsapp' AND COALESCE(cl.whatsapp_phone, cl.telefono) IS NOT NULL AND COALESCE(cl.whatsapp_phone, cl.telefono) != '')
           )
         ORDER BY c.fecha_cita ASC, c.hora_inicio ASC
         LIMIT $1
