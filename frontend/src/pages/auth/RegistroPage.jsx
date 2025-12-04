@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -13,19 +13,18 @@ import {
   Check,
   ArrowRight,
   Sparkles,
-  Calendar,
-  Package,
-  ShoppingCart,
-  UserCheck
+  UserCheck,
+  Crown,
+  Zap
 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
-import { authApi } from '@/services/api/endpoints';
+import { authApi, planesApi } from '@/services/api/endpoints';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import { INDUSTRIAS } from '@/lib/constants';
 
 /**
  * Schema de validación para registro simplificado
- * 7 campos obligatorios + selección de app para Plan Free + soy_profesional
+ * 7 campos obligatorios + soy_profesional
  */
 const registroSchema = z.object({
   nombre: z.string()
@@ -47,19 +46,18 @@ const registroSchema = z.object({
     .min(1, 'Selecciona una ciudad')
     .transform((val) => parseInt(val, 10))
     .refine((val) => !isNaN(val) && val > 0, 'Selecciona una ciudad'),
-  plan: z.enum(['free', 'pro', 'trial']).default('trial'),
-  app_seleccionada: z.enum(['agendamiento', 'inventario', 'pos']).optional().nullable(),
+  plan: z.string().min(1, 'Selecciona un plan'),
   soy_profesional: z.boolean().default(true) // Por defecto true (caso más común)
 });
 
 /**
- * Apps disponibles para Plan Free
+ * Iconos para cada tipo de plan
  */
-const APPS_DISPONIBLES = [
-  { id: 'agendamiento', nombre: 'Citas', icon: Calendar, emoji: '📅' },
-  { id: 'inventario', nombre: 'Inventario', icon: Package, emoji: '📦' },
-  { id: 'pos', nombre: 'Ventas', icon: ShoppingCart, emoji: '💰' }
-];
+const PLAN_ICONS = {
+  trial: Zap,
+  pro: Crown,
+  custom: Sparkles
+};
 
 /**
  * Página de Registro Simplificado
@@ -78,6 +76,8 @@ function RegistroPage() {
   const [registrando, setRegistrando] = useState(false);
   const [registroExitoso, setRegistroExitoso] = useState(false);
   const [emailEnviado, setEmailEnviado] = useState('');
+  const [planes, setPlanes] = useState([]);
+  const [cargandoPlanes, setCargandoPlanes] = useState(true);
 
   const {
     register,
@@ -96,23 +96,42 @@ function RegistroPage() {
       estado_id: '',
       ciudad_id: '',
       plan: 'trial',
-      app_seleccionada: null,
       soy_profesional: true // Por defecto marcado (caso más común en PYMES)
     }
   });
 
   const planSeleccionado = watch('plan');
 
+  // Cargar planes desde la API
+  useEffect(() => {
+    const cargarPlanes = async () => {
+      try {
+        const response = await planesApi.listar();
+        // Filtrar solo planes activos y que no sean custom (custom es para empresas)
+        const planesDisponibles = (response.data?.data || [])
+          .filter(p => p.codigo_plan !== 'custom')
+          .sort((a, b) => (a.orden_display || 0) - (b.orden_display || 0));
+        setPlanes(planesDisponibles);
+
+        // Si el plan por defecto no existe, seleccionar el primero disponible
+        if (planesDisponibles.length > 0) {
+          const planDefault = planesDisponibles.find(p => p.codigo_plan === 'trial') || planesDisponibles[0];
+          setValue('plan', planDefault.codigo_plan);
+        }
+      } catch (error) {
+        console.error('Error cargando planes:', error);
+        // Fallback: usar trial como default si falla la carga
+      } finally {
+        setCargandoPlanes(false);
+      }
+    };
+    cargarPlanes();
+  }, [setValue]);
+
   const onSubmit = async (data) => {
     setRegistrando(true);
     try {
-      // Limpiar app_seleccionada si no es plan free
-      const payload = {
-        ...data,
-        app_seleccionada: data.plan === 'free' ? data.app_seleccionada : null
-      };
-
-      const response = await authApi.registrar(payload);
+      const response = await authApi.registrar(data);
 
       setEmailEnviado(response.data.data.email_enviado);
       setRegistroExitoso(true);
@@ -316,78 +335,58 @@ function RegistroPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Plan
             </label>
-            <div className="grid grid-cols-2 gap-3">
-              <label className={`relative flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                planSeleccionado === 'trial'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  {...register('plan')}
-                  value="trial"
-                  className="sr-only"
-                />
-                <div className="text-center">
-                  <span className="block font-semibold text-gray-900">Prueba Gratis</span>
-                  <span className="text-sm text-gray-500">14 días, todo incluido</span>
-                </div>
-                {planSeleccionado === 'trial' && (
-                  <Check className="absolute top-2 right-2 h-5 w-5 text-blue-500" />
-                )}
-              </label>
-
-              <label className={`relative flex items-center justify-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                planSeleccionado === 'free'
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}>
-                <input
-                  type="radio"
-                  {...register('plan')}
-                  value="free"
-                  className="sr-only"
-                />
-                <div className="text-center">
-                  <span className="block font-semibold text-gray-900">Free</span>
-                  <span className="text-sm text-gray-500">1 módulo gratis</span>
-                </div>
-                {planSeleccionado === 'free' && (
-                  <Check className="absolute top-2 right-2 h-5 w-5 text-blue-500" />
-                )}
-              </label>
-            </div>
-          </div>
-
-          {/* App seleccionada (solo para plan free) */}
-          {planSeleccionado === 'free' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                ¿Qué módulo necesitas?
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {APPS_DISPONIBLES.map((app) => (
-                  <label
-                    key={app.id}
-                    className={`flex flex-col items-center p-3 border-2 rounded-lg cursor-pointer transition-all ${
-                      watch('app_seleccionada') === app.id
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      {...register('app_seleccionada')}
-                      value={app.id}
-                      className="sr-only"
-                    />
-                    <span className="text-2xl mb-1">{app.emoji}</span>
-                    <span className="text-sm font-medium">{app.nombre}</span>
-                  </label>
-                ))}
+            {cargandoPlanes ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                <span className="ml-2 text-sm text-gray-500">Cargando planes...</span>
               </div>
-            </div>
-          )}
+            ) : planes.length === 0 ? (
+              <div className="text-center py-4 text-gray-500 text-sm">
+                No hay planes disponibles
+              </div>
+            ) : (
+              <div className={`grid gap-3 ${planes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                {planes.map((plan) => {
+                  const IconoPlan = PLAN_ICONS[plan.codigo_plan] || Sparkles;
+                  const esTrial = plan.codigo_plan === 'trial';
+                  const precioTexto = parseFloat(plan.precio_mensual) > 0
+                    ? `$${plan.precio_mensual}/mes`
+                    : esTrial ? '14 días gratis' : 'Gratis';
+
+                  return (
+                    <label
+                      key={plan.codigo_plan}
+                      className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
+                        planSeleccionado === plan.codigo_plan
+                          ? 'border-blue-500 bg-blue-50'
+                          : 'border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        {...register('plan')}
+                        value={plan.codigo_plan}
+                        className="sr-only"
+                      />
+                      <IconoPlan className={`h-6 w-6 mb-2 ${
+                        planSeleccionado === plan.codigo_plan ? 'text-blue-600' : 'text-gray-400'
+                      }`} />
+                      <span className="block font-semibold text-gray-900">
+                        {plan.nombre || plan.nombre_plan}
+                      </span>
+                      <span className="text-sm text-gray-500">{precioTexto}</span>
+                      {planSeleccionado === plan.codigo_plan && (
+                        <Check className="absolute top-2 right-2 h-5 w-5 text-blue-500" />
+                      )}
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+            {errors.plan && (
+              <p className="text-red-500 text-sm mt-1">{errors.plan.message}</p>
+            )}
+          </div>
 
           {/* Botón de registro */}
           <button

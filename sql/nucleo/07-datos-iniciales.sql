@@ -2,16 +2,16 @@
 -- MÓDULO NÚCLEO: DATOS INICIALES
 -- ====================================================================
 -- Datos de configuración inicial del sistema:
--- • Planes de subscripción (free, pro, custom)
+-- • Planes de subscripción (trial, pro, custom)
 --
--- Modelo de Negocio: Estilo Odoo (Nov 2025)
--- • Free: 1 App gratis a elegir, usuarios ilimitados
+-- Modelo de Negocio (Dic 2025):
+-- • Trial: 14 días de prueba con acceso completo
 -- • Pro: Todas las apps, $249 MXN/usuario/mes
 -- • Custom: Plan personalizado (precio negociado)
 --
 -- Migrado de: sql/schema/10-subscriptions-table.sql
 -- Fecha migración: 16 Noviembre 2025
--- Actualización: 24 Noviembre 2025 - Modelo Free/Pro
+-- Actualización: 3 Diciembre 2025 - Modelo Trial/Pro (sin Free)
 -- ====================================================================
 
 -- ====================================================================
@@ -27,26 +27,24 @@ INSERT INTO planes_subscripcion (
 ) VALUES
 
 -- ============================================================
--- Plan Free: 1 App gratis a elegir
+-- Plan Trial: Período de prueba (14 días)
 -- ============================================================
--- Usuario elige: Agendamiento, Inventario o POS
--- Sin límites funcionales dentro de la app elegida
--- Upsell: Cuando necesitan otra app → Pro
+-- Acceso temporal a todas las apps para evaluar
+-- Después del trial: suscribirse a Pro
 -- ============================================================
-('free', 'Free',
- '1 App gratis a elegir. Usuarios ilimitados. Para siempre.',
- 0.00, 0.00, NULL, 'MXN',
- NULL, NULL, NULL, NULL, NULL,  -- Sin límites
+('trial', 'Trial',
+ 'Período de prueba de 14 días. Acceso completo para evaluar.',
+ 0.00, NULL, NULL, 'MXN',
+ 3, 50, 10, 2, 50,  -- Límites para trial
  '{
    "soporte_email": true,
    "soporte_chat": false,
-   "soporte_prioritario": false,
    "api_access": false,
    "custom_branding": false,
-   "whatsapp": false,
+   "whatsapp": true,
    "reportes_avanzados": false
  }'::jsonb,
- TRUE, 1),
+ TRUE, 0),
 
 -- ============================================================
 -- Plan Pro: Todas las apps incluidas
@@ -72,7 +70,7 @@ INSERT INTO planes_subscripcion (
    "comisiones": true,
    "chatbots_ia": true
  }'::jsonb,
- TRUE, 2),
+ TRUE, 1),
 
 -- ============================================================
 -- Plan Custom: Empresarial / Personalizado
@@ -99,27 +97,7 @@ INSERT INTO planes_subscripcion (
    "sla_garantizado": true,
    "features_custom": true
  }'::jsonb,
- TRUE, 3),
-
--- ============================================================
--- Plan Trial: Período de prueba (14 días)
--- ============================================================
--- Acceso temporal a todas las apps para evaluar
--- Después del trial: elegir Free o Pro
--- ============================================================
-('trial', 'Trial',
- 'Período de prueba de 14 días. Acceso completo para evaluar.',
- 0.00, NULL, NULL, 'MXN',
- 3, 50, 10, 2, 50,  -- Límites para trial
- '{
-   "soporte_email": true,
-   "soporte_chat": false,
-   "api_access": false,
-   "custom_branding": false,
-   "whatsapp": true,
-   "reportes_avanzados": false
- }'::jsonb,
- TRUE, 0)
+ TRUE, 2)
 
 ON CONFLICT (codigo_plan) DO UPDATE SET
     nombre_plan = EXCLUDED.nombre_plan,
@@ -138,51 +116,13 @@ ON CONFLICT (codigo_plan) DO UPDATE SET
     actualizado_en = NOW();
 
 -- ====================================================================
--- PLANES LEGACY (Inactivos - Solo para clientes existentes)
--- ====================================================================
--- Estos planes ya no están disponibles para nuevos registros
--- Los clientes existentes mantienen su plan hasta migración
--- ====================================================================
-
-INSERT INTO planes_subscripcion (
-    codigo_plan, nombre_plan, descripcion,
-    precio_mensual, precio_anual, precio_por_usuario, moneda,
-    limite_profesionales, limite_clientes, limite_servicios,
-    limite_usuarios, limite_citas_mes,
-    funciones_habilitadas, activo, orden_display
-) VALUES
-
-('basico', 'Plan Básico [LEGACY]',
- 'Plan legacy - No disponible para nuevos clientes.',
- 299.00, 2990.00, NULL, 'MXN',
- 5, 200, 15, 3, 200,
- '{"whatsapp_integration": true, "advanced_reports": false, "custom_branding": false, "api_access": false}'::jsonb,
- FALSE, 99),
-
-('profesional', 'Plan Professional [LEGACY]',
- 'Plan legacy - No disponible para nuevos clientes.',
- 599.00, 5990.00, NULL, 'MXN',
- 15, 1000, 50, 8, 800,
- '{"whatsapp_integration": true, "advanced_reports": true, "custom_branding": true, "api_access": false}'::jsonb,
- FALSE, 99)
-
-ON CONFLICT (codigo_plan) DO UPDATE SET
-    nombre_plan = EXCLUDED.nombre_plan,
-    descripcion = EXCLUDED.descripcion,
-    activo = EXCLUDED.activo,
-    orden_display = EXCLUDED.orden_display,
-    actualizado_en = NOW();
-
--- ====================================================================
 -- 🎯 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 COMMENT ON TABLE planes_subscripcion IS
-'Planes de subscripción del SaaS (Modelo Estilo Odoo - Nov 2025):
-- free: 1 App gratis a elegir, usuarios ilimitados, para siempre
-- pro: Todas las apps, $249 MXN/usuario/mes (~$15 USD)
-- custom: Plan personalizado sin límites (precio negociado)
-- trial: Período de prueba 14 días
-- basico/profesional: LEGACY (inactivos, solo clientes existentes)';
+'Planes de subscripción del SaaS (Modelo Dic 2025):
+- trial: Período de prueba 14 días con límites
+- pro: Todas las apps, $249 MXN/usuario/mes (~$15 USD), sin límites
+- custom: Plan personalizado (precio negociado)';
 
 
 -- ====================================================================
