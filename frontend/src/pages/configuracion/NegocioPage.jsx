@@ -14,11 +14,14 @@ import {
   Loader2,
   CheckCircle,
   Image,
+  Camera,
+  X,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
 import { organizacionesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
+import { useUploadArchivo } from '@/hooks/useStorage';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 
@@ -29,12 +32,14 @@ import Input from '@/components/ui/Input';
 function NegocioPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { toast } = useToast();
+  const toast = useToast();
   const { user } = useAuthStore();
   const organizacionId = user?.organizacion_id;
 
   // Estado para preview del logo
   const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const uploadMutation = useUploadArchivo();
 
   // Form
   const {
@@ -83,50 +88,82 @@ function NegocioPage() {
 
   // Actualizar preview cuando cambia la URL del logo
   useEffect(() => {
-    if (logoUrl) {
+    if (logoUrl && !logoFile) {
       setLogoPreview(logoUrl);
     }
-  }, [logoUrl]);
+  }, [logoUrl, logoFile]);
+
+  // Handler para seleccionar archivo de logo
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler para eliminar logo
+  const handleEliminarLogo = () => {
+    setLogoFile(null);
+    setLogoPreview(null);
+    // Limpiar el campo del form también
+    reset({ ...watch(), logo_url: '' });
+  };
 
   // Mutation para actualizar
   const updateMutation = useMutation({
     mutationFn: (formData) => organizacionesApi.actualizar(organizacionId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries(['organizacion', organizacionId]);
-      toast({
-        title: 'Datos actualizados',
-        description: 'La información del negocio se guardó correctamente',
-        variant: 'success',
-      });
+      toast.success('La información del negocio se guardó correctamente');
     },
     onError: (error) => {
-      toast({
-        title: 'Error al guardar',
-        description: error.response?.data?.message || 'No se pudieron guardar los cambios',
-        variant: 'error',
-      });
+      toast.error(error.response?.data?.message || 'No se pudieron guardar los cambios');
     },
   });
 
   // Submit
-  const onSubmit = (formData) => {
-    // Limpiar campos vacíos a null
-    const cleanData = {};
-    Object.entries(formData).forEach(([key, value]) => {
-      cleanData[key] = value?.trim() || null;
-    });
+  const onSubmit = async (formData) => {
+    try {
+      // Subir logo si hay un archivo nuevo
+      let logoUrlFinal = formData.logo_url;
+      if (logoFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: logoFile,
+          folder: 'logos',
+          isPublic: true,
+        });
+        logoUrlFinal = resultado?.url || resultado;
+      }
 
-    // nombre_comercial es requerido
-    if (!cleanData.nombre_comercial) {
-      toast({
-        title: 'Campo requerido',
-        description: 'El nombre comercial es obligatorio',
-        variant: 'warning',
+      // Limpiar campos vacíos a null
+      const cleanData = {};
+      Object.entries(formData).forEach(([key, value]) => {
+        cleanData[key] = value?.trim() || null;
       });
-      return;
-    }
 
-    updateMutation.mutate(cleanData);
+      // Actualizar logo_url con la URL subida
+      cleanData.logo_url = logoUrlFinal || null;
+
+      // nombre_comercial es requerido
+      if (!cleanData.nombre_comercial) {
+        toast.warning('El nombre comercial es obligatorio');
+        return;
+      }
+
+      updateMutation.mutate(cleanData);
+      setLogoFile(null); // Limpiar archivo después de guardar
+    } catch (error) {
+      toast.error('No se pudo subir el logo');
+    }
   };
 
   // Loading
@@ -191,8 +228,8 @@ function NegocioPage() {
             </h2>
 
             <div className="flex items-start gap-6">
-              {/* Preview */}
-              <div className="flex-shrink-0">
+              {/* Preview con botón de subir */}
+              <div className="flex-shrink-0 relative">
                 <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
                   {logoPreview ? (
                     <img
@@ -205,21 +242,52 @@ function NegocioPage() {
                     <Upload className="w-8 h-8 text-gray-400" />
                   )}
                 </div>
+                {/* Botón de cámara para subir */}
+                <label className="absolute -bottom-2 -right-2 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+                  <Camera className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="sr-only"
+                    disabled={uploadMutation.isPending}
+                  />
+                </label>
+                {/* Botón de eliminar */}
+                {logoPreview && (
+                  <button
+                    type="button"
+                    onClick={handleEliminarLogo}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                )}
+                {/* Loading de subida */}
+                {uploadMutation.isPending && (
+                  <div className="absolute inset-0 bg-white bg-opacity-75 rounded-xl flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                  </div>
+                )}
               </div>
 
-              {/* URL Input */}
+              {/* Opciones */}
               <div className="flex-1">
+                <p className="text-sm text-gray-700 mb-3">
+                  Haz clic en el ícono de cámara para subir tu logo, o ingresa una URL directamente.
+                </p>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  URL del logo
+                  URL del logo (opcional)
                 </label>
                 <input
                   type="url"
                   {...register('logo_url')}
                   placeholder="https://ejemplo.com/mi-logo.png"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  disabled={!!logoFile}
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Ingresa la URL de una imagen (PNG, JPG). Tamaño recomendado: 200x200px
+                  PNG, JPG o WEBP. Máximo 5MB. Tamaño recomendado: 200x200px
                 </p>
               </div>
             </div>
@@ -336,10 +404,15 @@ function NegocioPage() {
 
             <Button
               type="submit"
-              disabled={!isDirty || updateMutation.isPending}
+              disabled={(!isDirty && !logoFile) || updateMutation.isPending || uploadMutation.isPending}
               className="flex items-center gap-2"
             >
-              {updateMutation.isPending ? (
+              {uploadMutation.isPending ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Subiendo logo...
+                </>
+              ) : updateMutation.isPending ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
                   Guardando...

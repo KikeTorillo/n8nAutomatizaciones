@@ -64,6 +64,11 @@ const comisionesRouter = require('../../../modules/comisiones/routes');
 // ========================================
 const recordatoriosRouter = require('../../../modules/recordatorios/routes/recordatorios.routes');
 
+// ========================================
+// MÓDULO STORAGE - Dic 2025
+// ========================================
+const storageRouter = require('../../../modules/storage/routes');
+
 function routerApi(app) {
     const router = express.Router();
 
@@ -124,6 +129,9 @@ function routerApi(app) {
     router.use('/webhooks', webhooksRouter);
     router.use('/subscripciones', subscripcionesRouter);
     router.use('/mercadopago', mercadopagoRouter);
+
+    // Rutas de storage (MinIO) - Dic 2025
+    router.use('/storage', storageRouter);
 }
 
 module.exports = routerApi;

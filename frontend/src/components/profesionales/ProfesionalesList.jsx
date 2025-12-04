@@ -1,5 +1,6 @@
 import {
   Users,
+  User,
   Edit,
   Trash2,
   Clock,
@@ -76,16 +77,25 @@ function ProfesionalesList({
             {/* Header del Card con Avatar */}
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-start gap-4">
-                {/* Avatar con color */}
-                <div
-                  className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
-                  style={{
-                    backgroundColor: profesional.color_calendario || '#3b82f6',
-                  }}
-                >
-                  {profesional.nombre_completo?.split(' ')[0]?.charAt(0)}
-                  {profesional.nombre_completo?.split(' ')[1]?.charAt(0)}
-                </div>
+                {/* Avatar con foto o iniciales */}
+                {profesional.foto_url ? (
+                  <img
+                    src={profesional.foto_url}
+                    alt={profesional.nombre_completo}
+                    className="w-16 h-16 rounded-full object-cover flex-shrink-0 border-2"
+                    style={{ borderColor: profesional.color_calendario || '#3b82f6' }}
+                  />
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl flex-shrink-0"
+                    style={{
+                      backgroundColor: profesional.color_calendario || '#3b82f6',
+                    }}
+                  >
+                    {profesional.nombre_completo?.split(' ')[0]?.charAt(0)}
+                    {profesional.nombre_completo?.split(' ')[1]?.charAt(0) || ''}
+                  </div>
+                )}
 
                 {/* Info principal */}
                 <div className="flex-1 min-w-0">

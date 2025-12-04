@@ -1,8 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Package, DollarSign, TrendingUp, Tag, Barcode } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -11,6 +11,7 @@ import { useCrearProducto, useActualizarProducto } from '@/hooks/useProductos';
 import { useCategorias } from '@/hooks/useCategorias';
 import { useProveedores } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
+import { useUploadArchivo } from '@/hooks/useStorage';
 
 /**
  * Schema de validación Zod para CREAR producto - COMPLETO
@@ -150,6 +151,14 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
   const { success: showSuccess, error: showError } = useToast();
   const esEdicion = mode === 'edit' && producto;
 
+  // Estado para imagen
+  const [imagenFile, setImagenFile] = useState(null);
+  const [imagenPreview, setImagenPreview] = useState(null);
+  const [imagenUrl, setImagenUrl] = useState(null);
+
+  // Hook para subir archivos
+  const uploadMutation = useUploadArchivo();
+
   // Queries
   const { data: categoriasData } = useCategorias({ activo: true });
   const categorias = categoriasData?.categorias || [];
@@ -251,6 +260,15 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         notas: producto.notas || '',
         activo: producto.activo ?? true,
       });
+      // Cargar imagen existente
+      if (producto.imagen_url) {
+        setImagenUrl(producto.imagen_url);
+        setImagenPreview(producto.imagen_url);
+      } else {
+        setImagenUrl(null);
+        setImagenPreview(null);
+      }
+      setImagenFile(null);
     } else {
       reset({
         nombre: '',
@@ -275,6 +293,10 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         notas: '',
         activo: true,
       });
+      // Limpiar imagen
+      setImagenFile(null);
+      setImagenPreview(null);
+      setImagenUrl(null);
     }
   }, [esEdicion, producto, reset]);
 
@@ -322,31 +344,82 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
     }
   }, [actualizarMutation.isError, actualizarMutation, showError]);
 
+  // Handler para seleccionar imagen
+  const handleImagenChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validar tipo
+      if (!file.type.startsWith('image/')) {
+        showError('Solo se permiten archivos de imagen');
+        return;
+      }
+      // Validar tamaño (máx 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showError('La imagen no debe superar 5MB');
+        return;
+      }
+      setImagenFile(file);
+      setImagenPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler para eliminar imagen
+  const handleEliminarImagen = () => {
+    setImagenFile(null);
+    setImagenPreview(null);
+    setImagenUrl(null);
+  };
+
   // Submit handler
   const onSubmit = async (data) => {
     console.log('🚀 onSubmit ejecutado con data:', data);
     console.log('🚀 Errores de validación:', errors);
 
-    // Sanitizar datos
-    const datosSanitizados = Object.entries(data).reduce((acc, [key, value]) => {
-      if (value !== '' && value !== null && value !== undefined) {
-        acc[key] = value;
+    try {
+      let urlImagenFinal = imagenUrl;
+
+      // Si hay un nuevo archivo de imagen, subirlo primero
+      if (imagenFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: imagenFile,
+          folder: 'productos',
+          isPublic: true,
+        });
+        urlImagenFinal = resultado?.url || resultado;
       }
-      return acc;
-    }, {});
 
-    // Convertir IDs a números
-    if (datosSanitizados.categoria_id) {
-      datosSanitizados.categoria_id = parseInt(datosSanitizados.categoria_id);
-    }
-    if (datosSanitizados.proveedor_id) {
-      datosSanitizados.proveedor_id = parseInt(datosSanitizados.proveedor_id);
-    }
+      // Sanitizar datos
+      const datosSanitizados = Object.entries(data).reduce((acc, [key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
 
-    if (mode === 'create') {
-      crearMutation.mutate(datosSanitizados);
-    } else {
-      actualizarMutation.mutate({ id: producto.id, data: datosSanitizados });
+      // Agregar URL de imagen
+      if (urlImagenFinal) {
+        datosSanitizados.imagen_url = urlImagenFinal;
+      } else if (imagenUrl === null && producto?.imagen_url) {
+        // Si se eliminó la imagen, enviar null
+        datosSanitizados.imagen_url = null;
+      }
+
+      // Convertir IDs a números
+      if (datosSanitizados.categoria_id) {
+        datosSanitizados.categoria_id = parseInt(datosSanitizados.categoria_id);
+      }
+      if (datosSanitizados.proveedor_id) {
+        datosSanitizados.proveedor_id = parseInt(datosSanitizados.proveedor_id);
+      }
+
+      if (mode === 'create') {
+        crearMutation.mutate(datosSanitizados);
+      } else {
+        actualizarMutation.mutate({ id: producto.id, data: datosSanitizados });
+      }
+    } catch (error) {
+      showError('Error al subir la imagen');
+      console.error('Error subiendo imagen:', error);
     }
   };
 
@@ -431,6 +504,71 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                 ))}
               </select>
             </FieldWrapper>
+          </div>
+        </div>
+
+        {/* Imagen del Producto */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-medium text-gray-900 flex items-center">
+            <ImageIcon className="h-5 w-5 mr-2 text-pink-600" />
+            Imagen del Producto
+          </h3>
+
+          <div className="flex items-start space-x-4">
+            {/* Preview de imagen */}
+            <div className="flex-shrink-0">
+              {imagenPreview ? (
+                <div className="relative">
+                  <img
+                    src={imagenPreview}
+                    alt="Preview"
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleEliminarImagen}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
+                  <ImageIcon className="h-10 w-10 text-gray-400" />
+                </div>
+              )}
+            </div>
+
+            {/* Input de archivo */}
+            <div className="flex-1">
+              <label className="block">
+                <span className="sr-only">Seleccionar imagen</span>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImagenChange}
+                    className="block w-full text-sm text-gray-500
+                      file:mr-4 file:py-2 file:px-4
+                      file:rounded-lg file:border-0
+                      file:text-sm file:font-semibold
+                      file:bg-indigo-50 file:text-indigo-700
+                      hover:file:bg-indigo-100
+                      cursor-pointer"
+                    disabled={uploadMutation.isPending}
+                  />
+                  {uploadMutation.isPending && (
+                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                      <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+                      <span className="ml-2 text-sm text-gray-600">Subiendo...</span>
+                    </div>
+                  )}
+                </div>
+              </label>
+              <p className="mt-1 text-xs text-gray-500">
+                PNG, JPG o WEBP. Máximo 5MB.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -627,9 +765,9 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           <Button
             type="submit"
             variant="primary"
-            isLoading={crearMutation.isPending || actualizarMutation.isPending}
+            isLoading={crearMutation.isPending || actualizarMutation.isPending || uploadMutation.isPending}
           >
-            {mode === 'create' ? 'Crear Producto' : 'Guardar Cambios'}
+            {uploadMutation.isPending ? 'Subiendo imagen...' : mode === 'create' ? 'Crear Producto' : 'Guardar Cambios'}
           </Button>
         </div>
       </form>

@@ -49,7 +49,8 @@ const crear = {
             .messages({
                 'array.base': 'profesionales_ids debe ser un array de IDs'
             }),
-        activo: Joi.boolean().optional().default(true)
+        activo: Joi.boolean().optional().default(true),
+        imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
     })
 };
 
@@ -93,7 +94,8 @@ const actualizar = {
         tags: Joi.array().items(Joi.string().trim().min(1).max(30)).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
         tipos_profesional_autorizados: Joi.array().optional().allow(null),
-        activo: Joi.boolean().optional()
+        activo: Joi.boolean().optional(),
+        imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
     }).min(1)
 };
 
@@ -276,7 +278,12 @@ const bulkCrear = {
                         .default([]),
                     activo: Joi.boolean()
                         .optional()
-                        .default(true)
+                        .default(true),
+                    imagen_url: Joi.string()
+                        .uri()
+                        .max(500)
+                        .optional()
+                        .allow(null, '')
                 })
             )
             .min(1)

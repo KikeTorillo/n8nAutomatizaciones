@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCrearPerfil } from '@/hooks/useMarketplace';
+import { useUbicacionSelector, usePaisDefault } from '@/hooks/useUbicaciones';
 import { useToast } from '@/hooks/useToast';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import { X, ChevronRight, ChevronLeft, Check, Store } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, Check, Store, Loader2 } from 'lucide-react';
 
 /**
  * Modal wizard de 3 pasos para crear perfil de marketplace
- * Paso 1: Información Básica
- * Paso 2: Ubicación y Contacto
+ * Paso 1: Información Básica + Ubicación (Estado y Ciudad)
+ * Paso 2: Dirección y Contacto
  * Paso 3: Redes Sociales (opcional)
  */
 function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
@@ -18,15 +19,27 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
   const [paso, setPaso] = useState(1);
   const { success, error } = useToast();
 
+  // Estado para ubicación (IDs)
+  const [estadoId, setEstadoId] = useState(null);
+  const [ciudadId, setCiudadId] = useState(null);
+
+  // Hook de ubicación para selectores en cascada
+  const { data: paisDefault } = usePaisDefault();
+  const {
+    estados,
+    ciudades,
+    loadingEstados,
+    loadingCiudades,
+    getEstadoNombre,
+    getCiudadNombre,
+  } = useUbicacionSelector({ estadoId, ciudadId });
+
   const [formData, setFormData] = useState({
     // Paso 1: Información Básica
     descripcion_corta: '',
     descripcion_larga: '',
 
-    // Paso 2: Ubicación y Contacto
-    pais: 'México',
-    estado: '',
-    ciudad: '',
+    // Paso 2: Dirección y Contacto
     codigo_postal: '',
     direccion_completa: '',
     telefono_publico: '',
@@ -55,16 +68,8 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
         error('Debes escribir una descripción corta');
         return;
       }
-      if (!formData.ciudad.trim()) {
-        error('Debes indicar tu ciudad');
-        return;
-      }
-    }
-
-    // Validar paso 2
-    if (paso === 2) {
-      if (!formData.ciudad.trim()) {
-        error('La ciudad es obligatoria');
+      if (!ciudadId) {
+        error('Debes seleccionar tu ciudad');
         return;
       }
     }
@@ -83,7 +88,15 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
 
   const handleCrearPerfil = async () => {
     try {
-      await crearPerfilMutation.mutateAsync(formData);
+      // Construir datos con IDs de ubicación
+      const datosCrear = {
+        ...formData,
+        ciudad_id: ciudadId,
+        estado_id: estadoId || null,
+        pais_id: paisDefault?.id || null,
+      };
+
+      await crearPerfilMutation.mutateAsync(datosCrear);
       success('¡Perfil de marketplace creado exitosamente!');
       onClose();
       navigate('/mi-marketplace');
@@ -157,7 +170,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
 
           {/* Contenido del Form */}
           <form onSubmit={handleSubmit} className="p-6">
-            {/* Paso 1: Información Básica */}
+            {/* Paso 1: Información Básica + Ubicación */}
             {paso === 1 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -189,65 +202,88 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                   />
                 </div>
 
-                <Input
-                  label="Ciudad *"
-                  name="ciudad"
-                  value={formData.ciudad}
-                  onChange={handleChange}
-                  placeholder="Ej: CDMX"
-                  required
-                />
+                {/* Selectores de ubicación en cascada */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Estado *
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={estadoId || ''}
+                        onChange={(e) => {
+                          setEstadoId(e.target.value ? Number(e.target.value) : null);
+                          setCiudadId(null); // Reset ciudad al cambiar estado
+                        }}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white"
+                        disabled={loadingEstados}
+                      >
+                        <option value="">Selecciona un estado</option>
+                        {estados.map((estado) => (
+                          <option key={estado.id} value={estado.id}>
+                            {estado.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      {loadingEstados && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Ciudad *
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={ciudadId || ''}
+                        onChange={(e) => setCiudadId(e.target.value ? Number(e.target.value) : null)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                        disabled={!estadoId || loadingCiudades}
+                      >
+                        <option value="">
+                          {!estadoId ? 'Primero selecciona un estado' : 'Selecciona una ciudad'}
+                        </option>
+                        {ciudades.map((ciudad) => (
+                          <option key={ciudad.id} value={ciudad.id}>
+                            {ciudad.nombre}
+                          </option>
+                        ))}
+                      </select>
+                      {loadingCiudades && (
+                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
-            {/* Paso 2: Ubicación y Contacto */}
+            {/* Paso 2: Dirección y Contacto */}
             {paso === 2 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                  Ubicación y Contacto
+                  Dirección y Contacto
                 </h3>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <Select
-                    label="País"
-                    name="pais"
-                    value={formData.pais}
-                    onChange={handleChange}
-                    options={[
-                      { value: 'México', label: 'México' },
-                      { value: 'Argentina', label: 'Argentina' },
-                      { value: 'Colombia', label: 'Colombia' },
-                      { value: 'Chile', label: 'Chile' },
-                      { value: 'Perú', label: 'Perú' },
-                    ]}
-                  />
-
-                  <Input
-                    label="Estado/Provincia"
-                    name="estado"
-                    value={formData.estado}
-                    onChange={handleChange}
-                    placeholder="Ej: Ciudad de México"
-                  />
+                {/* Mostrar ubicación seleccionada */}
+                <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Ubicación:</span>{' '}
+                    {getCiudadNombre(ciudadId)}, {getEstadoNombre(estadoId)}, México
+                  </p>
                 </div>
 
-                <Input
-                  label="Código Postal"
-                  name="codigo_postal"
-                  value={formData.codigo_postal}
-                  onChange={handleChange}
-                  placeholder="Ej: 03100"
-                />
-
-                <Input
-                  label="Dirección Completa"
-                  name="direccion_completa"
-                  value={formData.direccion_completa}
-                  onChange={handleChange}
-                  placeholder="Ej: Avenida Insurgentes Sur 1234"
-                />
-
                 <div className="grid grid-cols-2 gap-4">
+                  <Input
+                    label="Código Postal"
+                    name="codigo_postal"
+                    value={formData.codigo_postal}
+                    onChange={handleChange}
+                    placeholder="Ej: 03100"
+                  />
+
                   <Input
                     label="Teléfono Público"
                     name="telefono_publico"
@@ -256,7 +292,17 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                     placeholder="+52 55 1234 5678"
                     type="tel"
                   />
+                </div>
 
+                <Input
+                  label="Dirección Completa"
+                  name="direccion_completa"
+                  value={formData.direccion_completa}
+                  onChange={handleChange}
+                  placeholder="Ej: Avenida Insurgentes Sur 1234, Colonia del Valle"
+                />
+
+                <div className="grid grid-cols-2 gap-4">
                   <Input
                     label="Email Público"
                     name="email_publico"
@@ -265,16 +311,16 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                     placeholder="contacto@tunegocio.com"
                     type="email"
                   />
-                </div>
 
-                <Input
-                  label="Sitio Web"
-                  name="sitio_web"
-                  value={formData.sitio_web}
-                  onChange={handleChange}
-                  placeholder="https://tunegocio.com"
-                  type="url"
-                />
+                  <Input
+                    label="Sitio Web"
+                    name="sitio_web"
+                    value={formData.sitio_web}
+                    onChange={handleChange}
+                    placeholder="https://tunegocio.com"
+                    type="url"
+                  />
+                </div>
               </div>
             )}
 

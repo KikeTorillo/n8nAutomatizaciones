@@ -132,7 +132,12 @@ const crear = {
         profesional_preferido_id: commonSchemas.id.optional(),
         activo: Joi.boolean()
             .optional()
-            .default(true)
+            .default(true),
+        foto_url: Joi.string()
+            .uri()
+            .max(500)
+            .optional()
+            .allow(null, '')
     })
 };
 
@@ -195,7 +200,11 @@ const actualizar = {
             .allow(null),
         marketing_permitido: Joi.boolean(),
         profesional_preferido_id: commonSchemas.id.optional(),
-        activo: Joi.boolean()
+        activo: Joi.boolean(),
+        foto_url: Joi.string()
+            .uri()
+            .max(500)
+            .allow(null, '')
     }).min(1), // Al menos un campo debe estar presente
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional() // Solo super_admin

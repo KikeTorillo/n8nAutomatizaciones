@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Scissors } from 'lucide-react';
+import { Scissors, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -11,6 +11,7 @@ import FormField from '@/components/forms/FormField';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';
+import { useUploadArchivo } from '@/hooks/useStorage';
 
 /**
  * Schema de validación Zod para CREAR servicio
@@ -78,6 +79,12 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
   const toast = useToast();
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
 
+  // Dic 2025: Estado para imagen del servicio
+  const [imagenFile, setImagenFile] = useState(null);
+  const [imagenPreview, setImagenPreview] = useState(null);
+  const [imagenUrl, setImagenUrl] = useState(null);
+  const uploadMutation = useUploadArchivo();
+
   const isEditMode = mode === 'edit';
   const servicioId = servicio?.id;
 
@@ -134,6 +141,15 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
         precio: parseFloat(servicioData.precio) || 0,
         activo: servicioData.activo !== undefined ? servicioData.activo : true,
       });
+      // Dic 2025: Cargar imagen existente
+      if (servicioData.imagen_url) {
+        setImagenUrl(servicioData.imagen_url);
+        setImagenPreview(servicioData.imagen_url);
+      } else {
+        setImagenUrl(null);
+        setImagenPreview(null);
+      }
+      setImagenFile(null);
     }
   }, [isEditMode, servicioData, isOpen, reset]);
 
@@ -142,8 +158,36 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
     if (!isOpen) {
       reset();
       setSelectedProfessionals([]);
+      // Dic 2025: Limpiar imagen
+      setImagenFile(null);
+      setImagenPreview(null);
+      setImagenUrl(null);
     }
   }, [isOpen, reset]);
+
+  // Dic 2025: Handler para seleccionar imagen
+  const handleImagenChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setImagenFile(file);
+      setImagenPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Dic 2025: Handler para eliminar imagen
+  const handleEliminarImagen = () => {
+    setImagenFile(null);
+    setImagenPreview(null);
+    setImagenUrl(null);
+  };
 
   // Handler para toggle de profesionales
   const toggleProfessional = (profId) => {
@@ -158,11 +202,29 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
   // Handler de submit
   const onSubmit = async (data) => {
     try {
+      // Dic 2025: Subir imagen si hay una nueva
+      let urlImagenFinal = imagenUrl;
+      if (imagenFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: imagenFile,
+          folder: 'servicios',
+          isPublic: true,
+        });
+        urlImagenFinal = resultado?.url || resultado;
+      }
+
       // Sanitizar campos opcionales vacíos
       const sanitized = {
         ...data,
         descripcion: data.descripcion?.trim() || undefined,
+        // Dic 2025: Incluir imagen
+        imagen_url: urlImagenFinal || undefined,
       };
+
+      // Si se eliminó la imagen existente
+      if (imagenUrl === null && servicioData?.imagen_url) {
+        sanitized.imagen_url = null;
+      }
 
       if (isEditMode) {
         // Modo edición
@@ -177,6 +239,10 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
       onClose();
       reset();
       setSelectedProfessionals([]);
+      // Dic 2025: Limpiar imagen
+      setImagenFile(null);
+      setImagenPreview(null);
+      setImagenUrl(null);
     } catch (error) {
       toast.error(error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} servicio`);
     }
@@ -193,10 +259,46 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
       maxWidth="3xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
-          <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-            <Scissors className="w-6 h-6 text-primary-600" />
+        {/* Header con imagen del servicio */}
+        <div className="flex items-center gap-4 pb-4 border-b">
+          {/* Imagen del servicio editable */}
+          <div className="relative">
+            {imagenPreview ? (
+              <div className="relative">
+                <img
+                  src={imagenPreview}
+                  alt="Imagen del servicio"
+                  className="w-16 h-16 rounded-lg object-cover border-2 border-primary-200"
+                />
+                <button
+                  type="button"
+                  onClick={handleEliminarImagen}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div className="w-16 h-16 bg-primary-100 rounded-lg flex items-center justify-center">
+                <Scissors className="w-8 h-8 text-primary-600" />
+              </div>
+            )}
+            {/* Botón para cambiar imagen */}
+            <label className="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
+              <Camera className="h-3.5 w-3.5 text-gray-600" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImagenChange}
+                className="sr-only"
+                disabled={uploadMutation.isPending}
+              />
+            </label>
+            {uploadMutation.isPending && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
+                <Loader2 className="h-5 w-5 text-primary-600 animate-spin" />
+              </div>
+            )}
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -497,19 +599,22 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
               </Button>
               <Button
                 type="submit"
-                isLoading={crearMutation.isPending || actualizarMutation.isPending}
+                isLoading={crearMutation.isPending || actualizarMutation.isPending || uploadMutation.isPending}
                 disabled={
                   crearMutation.isPending ||
-                  actualizarMutation.isPending
+                  actualizarMutation.isPending ||
+                  uploadMutation.isPending
                 }
               >
-                {isEditMode
-                  ? actualizarMutation.isPending
-                    ? 'Actualizando...'
-                    : 'Actualizar Servicio'
-                  : crearMutation.isPending
-                    ? 'Creando...'
-                    : 'Crear Servicio'}
+                {uploadMutation.isPending
+                  ? 'Subiendo imagen...'
+                  : isEditMode
+                    ? actualizarMutation.isPending
+                      ? 'Actualizando...'
+                      : 'Actualizar Servicio'
+                    : crearMutation.isPending
+                      ? 'Creando...'
+                      : 'Crear Servicio'}
               </Button>
             </div>
           </>

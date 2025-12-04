@@ -92,9 +92,18 @@ function ServiciosList({
                     {/* Servicio */}
                     <td className="px-6 py-4">
                       <div className="flex items-center">
-                        <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-full flex items-center justify-center">
-                          <Scissors className="w-5 h-5 text-primary-600" />
-                        </div>
+                        {/* Imagen o icono del servicio */}
+                        {servicio.imagen_url ? (
+                          <img
+                            src={servicio.imagen_url}
+                            alt={servicio.nombre}
+                            className="flex-shrink-0 h-10 w-10 rounded-lg object-cover border border-gray-200"
+                          />
+                        ) : (
+                          <div className="flex-shrink-0 h-10 w-10 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <Scissors className="w-5 h-5 text-primary-600" />
+                          </div>
+                        )}
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
                             {servicio.nombre}

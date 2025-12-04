@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useActualizarPerfil } from '@/hooks/useMarketplace';
+import { useUploadArchivo } from '@/hooks/useStorage';
+import { useUbicacionSelector } from '@/hooks/useUbicaciones';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import GaleriaEditor from './GaleriaEditor';
 import { useToast } from '@/hooks/useToast';
-import { Save, Edit2, X } from 'lucide-react';
+import { Save, Edit2, X, Camera, Loader2, Image, ImagePlus } from 'lucide-react';
 
 /**
  * Formulario CRUD para editar perfil de marketplace
@@ -12,14 +14,24 @@ import { Save, Edit2, X } from 'lucide-react';
  */
 function PerfilFormulario({ perfil, onSuccess }) {
   const [modoEdicion, setModoEdicion] = useState(false);
+
+  // Estados para ubicación (IDs)
+  const [estadoId, setEstadoId] = useState(null);
+  const [ciudadId, setCiudadId] = useState(null);
+
+  // Hook de ubicación para selectores en cascada
+  const {
+    estados,
+    ciudades,
+    loadingEstados,
+    loadingCiudades,
+  } = useUbicacionSelector({ estadoId, ciudadId });
+
   const [formData, setFormData] = useState({
     descripcion_corta: '',
     descripcion_larga: '',
     meta_titulo: '',
     meta_descripcion: '',
-    pais: 'México',
-    estado: '',
-    ciudad: '',
     codigo_postal: '',
     direccion_completa: '',
     telefono_publico: '',
@@ -28,22 +40,34 @@ function PerfilFormulario({ perfil, onSuccess }) {
     instagram: '',
     facebook: '',
     tiktok: '',
+    logo_url: '',
+    portada_url: '',
+    galeria_urls: [],
   });
 
+  // Estados para preview de imágenes
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
+  const [portadaPreview, setPortadaPreview] = useState(null);
+  const [portadaFile, setPortadaFile] = useState(null);
+
   const actualizarMutation = useActualizarPerfil();
-  const { success, error, info } = useToast();
+  const uploadMutation = useUploadArchivo();
+  const toast = useToast();
+  const { success, error, info } = toast;
 
   // Inicializar formulario con datos del perfil
   useEffect(() => {
     if (perfil) {
+      // Cargar IDs de ubicación
+      setEstadoId(perfil.estado_id || null);
+      setCiudadId(perfil.ciudad_id || null);
+
       setFormData({
         descripcion_corta: perfil.descripcion_corta || '',
         descripcion_larga: perfil.descripcion_larga || '',
         meta_titulo: perfil.meta_titulo || '',
         meta_descripcion: perfil.meta_descripcion || '',
-        pais: perfil.pais || 'México',
-        estado: perfil.estado || '',
-        ciudad: perfil.ciudad || '',
         codigo_postal: perfil.codigo_postal || '',
         direccion_completa: perfil.direccion_completa || '',
         telefono_publico: perfil.telefono_publico || '',
@@ -52,7 +76,12 @@ function PerfilFormulario({ perfil, onSuccess }) {
         instagram: perfil.instagram || '',
         facebook: perfil.facebook || '',
         tiktok: perfil.tiktok || '',
+        logo_url: perfil.logo_url || '',
+        portada_url: perfil.portada_url || '',
+        galeria_urls: perfil.galeria_urls || [],
       });
+      setLogoPreview(perfil.logo_url || null);
+      setPortadaPreview(perfil.portada_url || null);
     }
   }, [perfil]);
 
@@ -61,14 +90,85 @@ function PerfilFormulario({ perfil, onSuccess }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handler para logo
+  const handleLogoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setLogoFile(file);
+      setLogoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler para portada
+  const handlePortadaChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setPortadaFile(file);
+      setPortadaPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler para galería
+  const handleGaleriaChange = (nuevasImagenes) => {
+    setFormData((prev) => ({ ...prev, galeria_urls: nuevasImagenes }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      // Subir logo si hay archivo nuevo
+      let logoUrlFinal = formData.logo_url;
+      if (logoFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: logoFile,
+          folder: 'marketplace/logos',
+          isPublic: true,
+        });
+        logoUrlFinal = resultado?.url || resultado;
+      }
+
+      // Subir portada si hay archivo nuevo
+      let portadaUrlFinal = formData.portada_url;
+      if (portadaFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: portadaFile,
+          folder: 'marketplace/portadas',
+          isPublic: true,
+        });
+        portadaUrlFinal = resultado?.url || resultado;
+      }
+
       await actualizarMutation.mutateAsync({
         id: perfil.id,
-        data: formData,
+        data: {
+          ...formData,
+          ciudad_id: ciudadId,
+          estado_id: estadoId || null,
+          logo_url: logoUrlFinal || undefined,
+          portada_url: portadaUrlFinal || undefined,
+        },
       });
+
+      // Limpiar archivos
+      setLogoFile(null);
+      setPortadaFile(null);
 
       success('Perfil actualizado exitosamente');
       setModoEdicion(false);
@@ -80,14 +180,15 @@ function PerfilFormulario({ perfil, onSuccess }) {
 
   const handleCancelar = () => {
     if (perfil) {
+      // Restaurar ubicación
+      setEstadoId(perfil.estado_id || null);
+      setCiudadId(perfil.ciudad_id || null);
+
       setFormData({
         descripcion_corta: perfil.descripcion_corta || '',
         descripcion_larga: perfil.descripcion_larga || '',
         meta_titulo: perfil.meta_titulo || '',
         meta_descripcion: perfil.meta_descripcion || '',
-        pais: perfil.pais || 'México',
-        estado: perfil.estado || '',
-        ciudad: perfil.ciudad || '',
         codigo_postal: perfil.codigo_postal || '',
         direccion_completa: perfil.direccion_completa || '',
         telefono_publico: perfil.telefono_publico || '',
@@ -96,7 +197,15 @@ function PerfilFormulario({ perfil, onSuccess }) {
         instagram: perfil.instagram || '',
         facebook: perfil.facebook || '',
         tiktok: perfil.tiktok || '',
+        logo_url: perfil.logo_url || '',
+        portada_url: perfil.portada_url || '',
+        galeria_urls: perfil.galeria_urls || [],
       });
+      // Restaurar previews
+      setLogoPreview(perfil.logo_url || null);
+      setPortadaPreview(perfil.portada_url || null);
+      setLogoFile(null);
+      setPortadaFile(null);
       setModoEdicion(false);
       info('Cambios descartados');
     }
@@ -112,6 +221,66 @@ function PerfilFormulario({ perfil, onSuccess }) {
             <Edit2 className="w-4 h-4 mr-2" />
             Editar Perfil
           </Button>
+        </div>
+
+        {/* Imágenes del Perfil */}
+        <div className="bg-gray-50 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Perfil</h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            {/* Logo */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
+              {perfil.logo_url ? (
+                <img
+                  src={perfil.logo_url}
+                  alt="Logo"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                  <Image className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+            </div>
+
+            {/* Portada */}
+            <div>
+              <p className="text-sm font-medium text-gray-700 mb-2">Portada</p>
+              {perfil.portada_url ? (
+                <img
+                  src={perfil.portada_url}
+                  alt="Portada"
+                  className="w-full h-32 rounded-lg object-cover border border-gray-200"
+                />
+              ) : (
+                <div className="w-full h-32 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <Image className="w-8 h-8 text-gray-400" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Galería */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">
+              Galería ({perfil.galeria_urls?.length || 0} imágenes)
+            </p>
+            {perfil.galeria_urls && perfil.galeria_urls.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                {perfil.galeria_urls.map((url, index) => (
+                  <img
+                    key={index}
+                    src={url}
+                    alt={`Galería ${index + 1}`}
+                    className="aspect-square rounded-lg object-cover border border-gray-200"
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-500 text-sm">Sin imágenes en la galería</p>
+            )}
+          </div>
         </div>
 
         {/* Información Básica */}
@@ -217,6 +386,100 @@ function PerfilFormulario({ perfil, onSuccess }) {
   // Modo Edición: Mostrar formulario
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
+      {/* Imágenes del Perfil */}
+      <div className="bg-gray-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Perfil</h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          {/* Logo */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
+            <div className="flex items-center gap-4">
+              <div className="relative">
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-white overflow-hidden">
+                  {logoPreview ? (
+                    <img
+                      src={logoPreview}
+                      alt="Logo"
+                      className="w-full h-full object-cover"
+                      onError={() => setLogoPreview(null)}
+                    />
+                  ) : (
+                    <Image className="w-8 h-8 text-gray-400" />
+                  )}
+                </div>
+                <label className="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+                  <Camera className="h-4 w-4" />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="sr-only"
+                    disabled={uploadMutation.isPending}
+                  />
+                </label>
+                {uploadMutation.isPending && logoFile && (
+                  <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                  </div>
+                )}
+              </div>
+              <div className="text-xs text-gray-500">
+                <p>Recomendado: 200x200px</p>
+                <p>PNG, JPG. Max 5MB</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Portada */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Imagen de Portada</p>
+            <div className="relative">
+              <div className="w-full h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-white overflow-hidden">
+                {portadaPreview ? (
+                  <img
+                    src={portadaPreview}
+                    alt="Portada"
+                    className="w-full h-full object-cover"
+                    onError={() => setPortadaPreview(null)}
+                  />
+                ) : (
+                  <div className="text-center">
+                    <ImagePlus className="w-8 h-8 text-gray-400 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500">1200x400px recomendado</p>
+                  </div>
+                )}
+              </div>
+              <label className="absolute bottom-2 right-2 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+                <Camera className="h-4 w-4" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePortadaChange}
+                  className="sr-only"
+                  disabled={uploadMutation.isPending}
+                />
+              </label>
+              {uploadMutation.isPending && portadaFile && (
+                <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Galería */}
+        <div>
+          <p className="text-sm font-medium text-gray-700 mb-2">Galería de Imágenes</p>
+          <GaleriaEditor
+            imagenes={formData.galeria_urls}
+            onChange={handleGaleriaChange}
+            maxImagenes={10}
+          />
+        </div>
+      </div>
+
       {/* Información Básica */}
       <div className="bg-gray-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
@@ -288,36 +551,60 @@ function PerfilFormulario({ perfil, onSuccess }) {
       <div className="bg-gray-50 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Select
-            label="País"
-            name="pais"
-            value={formData.pais}
-            onChange={handleChange}
-            options={[
-              { value: 'México', label: 'México' },
-              { value: 'Argentina', label: 'Argentina' },
-              { value: 'Colombia', label: 'Colombia' },
-              { value: 'Chile', label: 'Chile' },
-              { value: 'Perú', label: 'Perú' },
-            ]}
-          />
+          {/* Selector de Estado */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Estado *
+            </label>
+            <div className="relative">
+              <select
+                value={estadoId || ''}
+                onChange={(e) => {
+                  setEstadoId(e.target.value ? Number(e.target.value) : null);
+                  setCiudadId(null); // Reset ciudad al cambiar estado
+                }}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white"
+                disabled={loadingEstados}
+              >
+                <option value="">Selecciona un estado</option>
+                {estados.map((estado) => (
+                  <option key={estado.id} value={estado.id}>
+                    {estado.nombre}
+                  </option>
+                ))}
+              </select>
+              {loadingEstados && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+              )}
+            </div>
+          </div>
 
-          <Input
-            label="Estado/Provincia"
-            name="estado"
-            value={formData.estado}
-            onChange={handleChange}
-            placeholder="Ej: Ciudad de México"
-          />
-
-          <Input
-            label="Ciudad *"
-            name="ciudad"
-            value={formData.ciudad}
-            onChange={handleChange}
-            placeholder="Ej: CDMX"
-            required
-          />
+          {/* Selector de Ciudad */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Ciudad *
+            </label>
+            <div className="relative">
+              <select
+                value={ciudadId || ''}
+                onChange={(e) => setCiudadId(e.target.value ? Number(e.target.value) : null)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                disabled={!estadoId || loadingCiudades}
+              >
+                <option value="">
+                  {!estadoId ? 'Primero selecciona un estado' : 'Selecciona una ciudad'}
+                </option>
+                {ciudades.map((ciudad) => (
+                  <option key={ciudad.id} value={ciudad.id}>
+                    {ciudad.nombre}
+                  </option>
+                ))}
+              </select>
+              {loadingCiudades && (
+                <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 animate-spin" />
+              )}
+            </div>
+          </div>
 
           <Input
             label="Código Postal"

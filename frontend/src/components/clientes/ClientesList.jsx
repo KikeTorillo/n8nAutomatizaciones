@@ -75,11 +75,19 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                        <span className="text-blue-600 font-semibold">
-                          {cliente.nombre?.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                      {cliente.foto_url ? (
+                        <img
+                          src={cliente.foto_url}
+                          alt={cliente.nombre}
+                          className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200"
+                        />
+                      ) : (
+                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                          <span className="text-blue-600 font-semibold">
+                            {cliente.nombre?.charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
                           {cliente.nombre}

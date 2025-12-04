@@ -27,10 +27,9 @@ const marketplaceSchemas = {
     crearPerfil: {
         body: Joi.object({
             // ========== OBLIGATORIOS ==========
-            ciudad: Joi.string().min(2).max(100).required().messages({
+            ciudad_id: Joi.number().integer().positive().required().messages({
                 'any.required': 'La ciudad es requerida',
-                'string.min': 'La ciudad debe tener al menos 2 caracteres',
-                'string.max': 'La ciudad no puede exceder 100 caracteres'
+                'number.positive': 'El ID de ciudad debe ser positivo'
             }),
 
             descripcion_corta: Joi.string().max(200).required().messages({
@@ -39,6 +38,14 @@ const marketplaceSchemas = {
             }),
 
             // ========== OPCIONALES ==========
+            estado_id: Joi.number().integer().positive().optional().allow(null).messages({
+                'number.positive': 'El ID de estado debe ser positivo'
+            }),
+
+            pais_id: Joi.number().integer().positive().optional().allow(null).messages({
+                'number.positive': 'El ID de país debe ser positivo'
+            }),
+
             meta_titulo: Joi.string().max(70).optional().allow(null, '').messages({
                 'string.max': 'El meta título no puede exceder 70 caracteres'
             }),
@@ -49,9 +56,7 @@ const marketplaceSchemas = {
 
             descripcion_larga: Joi.string().optional().allow(null, ''),
 
-            // Ubicación
-            pais: Joi.string().max(50).optional().default('México'),
-            estado: Joi.string().max(100).optional().allow(null, ''),
+            // Ubicación adicional
             codigo_postal: Joi.string().max(10).optional().allow(null, ''),
             direccion_completa: Joi.string().optional().allow(null, ''),
             latitud: Joi.number().min(-90).max(90).optional().allow(null),
@@ -99,13 +104,13 @@ const marketplaceSchemas = {
             })
         }),
         body: Joi.object({
-            ciudad: Joi.string().min(2).max(100).optional(),
+            ciudad_id: Joi.number().integer().positive().optional().allow(null),
+            estado_id: Joi.number().integer().positive().optional().allow(null),
+            pais_id: Joi.number().integer().positive().optional().allow(null),
             descripcion_corta: Joi.string().max(200).optional(),
             meta_titulo: Joi.string().max(70).optional().allow(null, ''),
             meta_descripcion: Joi.string().max(160).optional().allow(null, ''),
             descripcion_larga: Joi.string().optional().allow(null, ''),
-            pais: Joi.string().max(50).optional(),
-            estado: Joi.string().max(100).optional().allow(null, ''),
             codigo_postal: Joi.string().max(10).optional().allow(null, ''),
             direccion_completa: Joi.string().optional().allow(null, ''),
             latitud: Joi.number().min(-90).max(90).optional().allow(null),

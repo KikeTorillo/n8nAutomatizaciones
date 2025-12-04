@@ -212,6 +212,7 @@ const inventarioSchemas = {
             permite_uso_servicio: Joi.boolean().optional().default(true),
 
             notas: Joi.string().max(500).optional().allow(null, ''),
+            imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
             activo: Joi.boolean().optional().default(true)
         }).custom((value, helpers) => {
             // Validación: Si especifica precio_mayoreo, debe especificar cantidad_mayoreo
@@ -269,6 +270,7 @@ const inventarioSchemas = {
             permite_venta: Joi.boolean().optional(),
             permite_uso_servicio: Joi.boolean().optional(),
             notas: Joi.string().max(500).optional().allow(null, ''),
+            imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
             activo: Joi.boolean().optional()
         }).min(1)
     },
@@ -301,7 +303,8 @@ const inventarioSchemas = {
                         dias_vida_util: Joi.number().integer().min(1).optional().allow(null),
                         permite_venta: Joi.boolean().optional().default(true),
                         permite_uso_servicio: Joi.boolean().optional().default(true),
-                        notas: Joi.string().max(500).optional().allow(null, '')
+                        notas: Joi.string().max(500).optional().allow(null, ''),
+                        imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
                     })
                 )
                 .min(1)

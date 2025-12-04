@@ -139,6 +139,9 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 📝 NOTAS
     notas TEXT,
 
+    -- 🖼️ IMAGEN (Dic 2025 - Storage MinIO)
+    imagen_url TEXT, -- URL de la imagen del producto
+
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT true,
 

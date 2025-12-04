@@ -178,6 +178,9 @@ CREATE TABLE clientes (
     direccion TEXT,
     como_conocio VARCHAR(100), -- 'referido', 'redes_sociales', 'google', 'caminando', etc.
 
+    -- 🖼️ FOTO (Dic 2025 - Storage MinIO)
+    foto_url TEXT,                              -- URL de la foto del cliente
+
     -- ⚙️ Control y configuración
     activo BOOLEAN DEFAULT TRUE,
     marketing_permitido BOOLEAN DEFAULT TRUE,
@@ -248,6 +251,9 @@ CREATE TABLE servicios (
                                                          -- Ej: {"requiere_cita_previa": true, "productos_incluidos": ["shampoo"]}
     tags TEXT[] DEFAULT ARRAY[]::TEXT[],                 -- Etiquetas para búsqueda y filtros
                                                          -- Ej: ["popular", "promocion", "nuevo"]
+
+    -- 🖼️ IMAGEN (Dic 2025 - Storage MinIO)
+    imagen_url TEXT,                                      -- URL de la imagen del servicio
 
     -- ====================================================================
     -- 🎯 SECCIÓN: COMPATIBILIDAD CON PROFESIONALES

@@ -14,11 +14,19 @@ function ClienteCard({ cliente }) {
       {/* Header */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-center gap-3">
-          <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
-            <span className="text-blue-600 font-semibold text-lg">
-              {cliente.nombre?.charAt(0).toUpperCase()}
-            </span>
-          </div>
+          {cliente.foto_url ? (
+            <img
+              src={cliente.foto_url}
+              alt={cliente.nombre}
+              className="flex-shrink-0 h-12 w-12 rounded-full object-cover border border-gray-200"
+            />
+          ) : (
+            <div className="flex-shrink-0 h-12 w-12 bg-blue-100 rounded-full flex items-center justify-center">
+              <span className="text-blue-600 font-semibold text-lg">
+                {cliente.nombre?.charAt(0).toUpperCase()}
+              </span>
+            </div>
+          )}
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
               {cliente.nombre}

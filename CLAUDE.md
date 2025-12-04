@@ -314,7 +314,8 @@ PostgreSQL (políticas RLS)
 |-------|----------|
 | "Organización no encontrada" | Usar `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar a `undefined` |
-| Vite HMR no detecta cambios | `docker restart front` + Ctrl+Shift+R |
+| HMR no funciona en contenedores | **HMR NO funciona en Docker**. Siempre reiniciar: `docker restart front` o `docker restart back` |
+| Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R en navegador |
 | RLS policy violation | Verificar `app.current_tenant_id` en política SQL |
 | Chatbot no responde | Verificar workflow activo en n8n, revisar logs |
 | MCP tool falla | Verificar JWT válido (180d), revisar `mcp-server` logs |

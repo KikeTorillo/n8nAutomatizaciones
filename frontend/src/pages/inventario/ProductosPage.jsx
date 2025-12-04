@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ArrowLeft } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ArrowLeft, ImageIcon } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
@@ -347,7 +347,21 @@ function ProductosPage() {
                     return (
                       <tr key={producto.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
+                          <div className="flex items-center space-x-3">
+                            {/* Imagen del producto */}
+                            <div className="flex-shrink-0 h-10 w-10">
+                              {producto.imagen_url ? (
+                                <img
+                                  src={producto.imagen_url}
+                                  alt={producto.nombre}
+                                  className="h-10 w-10 rounded-lg object-cover border border-gray-200"
+                                />
+                              ) : (
+                                <div className="h-10 w-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                                  <ImageIcon className="h-5 w-5 text-gray-400" />
+                                </div>
+                              )}
+                            </div>
                             <div>
                               <div className="text-sm font-medium text-gray-900">
                                 {producto.nombre}

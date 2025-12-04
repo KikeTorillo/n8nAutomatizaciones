@@ -137,9 +137,9 @@ function PerfilPublicoPage() {
       <section className="relative">
         {/* Foto de portada */}
         <div className="h-64 md:h-80 bg-gradient-to-r from-primary-600 to-primary-700 relative overflow-hidden">
-          {perfil.foto_portada ? (
+          {perfil.portada_url ? (
             <img
-              src={perfil.foto_portada}
+              src={perfil.portada_url}
               alt={perfil.nombre_comercial}
               className="w-full h-full object-cover"
             />
@@ -256,14 +256,39 @@ function PerfilPublicoPage() {
           <main className="flex-1 min-w-0">
             {/* Tab: Información */}
             {tabActivo === 'informacion' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">Sobre nosotros</h2>
-                {perfil.descripcion_larga ? (
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
-                    {perfil.descripcion_larga}
-                  </p>
-                ) : (
-                  <p className="text-gray-500 italic">No hay descripción disponible</p>
+              <div className="space-y-6">
+                {/* Descripción */}
+                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Sobre nosotros</h2>
+                  {perfil.descripcion_larga ? (
+                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {perfil.descripcion_larga}
+                    </p>
+                  ) : (
+                    <p className="text-gray-500 italic">No hay descripción disponible</p>
+                  )}
+                </div>
+
+                {/* Galería de Imágenes */}
+                {perfil.galeria_urls && perfil.galeria_urls.length > 0 && (
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Galería</h2>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                      {perfil.galeria_urls.map((url, index) => (
+                        <div
+                          key={index}
+                          className="aspect-square rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
+                          onClick={() => window.open(url, '_blank')}
+                        >
+                          <img
+                            src={url}
+                            alt={`${perfil.nombre_comercial} - Imagen ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
             )}

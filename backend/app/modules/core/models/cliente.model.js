@@ -24,12 +24,12 @@ class ClienteModel {
                 INSERT INTO clientes (
                     organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+                    direccion, como_conocio, activo, marketing_permitido, foto_url
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido,
+                    direccion, como_conocio, activo, marketing_permitido, foto_url,
                     creado_en, actualizado_en
             `;
 
@@ -47,7 +47,8 @@ class ClienteModel {
                 clienteData.direccion || null,
                 clienteData.como_conocio || null,
                 clienteData.activo !== undefined ? clienteData.activo : true,
-                clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true
+                clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true,
+                clienteData.foto_url || null
             ];
 
             try {
@@ -92,7 +93,7 @@ class ClienteModel {
                 SELECT
                     id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido,
+                    direccion, como_conocio, activo, marketing_permitido, foto_url,
                     creado_en, actualizado_en
                 FROM clientes
                 WHERE id = $1
@@ -153,7 +154,7 @@ class ClienteModel {
                 SELECT
                     c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
                     c.profesional_preferido_id, c.notas_especiales, c.alergias,
-                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido,
+                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
                     c.creado_en, c.actualizado_en,
                     COUNT(citas.id) as total_citas,
                     MAX(citas.fecha_cita) as ultima_cita
@@ -162,7 +163,7 @@ class ClienteModel {
                 ${whereClause}
                 GROUP BY c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
                     c.profesional_preferido_id, c.notas_especiales, c.alergias,
-                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido,
+                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
                     c.creado_en, c.actualizado_en
                 ORDER BY ${campoOrden} ${ordenValido}
                 LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
@@ -203,7 +204,7 @@ class ClienteModel {
             const camposActualizables = [
                 'nombre', 'email', 'telefono', 'fecha_nacimiento',
                 'profesional_preferido_id', 'notas_especiales', 'alergias',
-                'direccion', 'como_conocio', 'activo', 'marketing_permitido'
+                'direccion', 'como_conocio', 'activo', 'marketing_permitido', 'foto_url'
             ];
 
             const setClauses = [];
@@ -231,7 +232,7 @@ class ClienteModel {
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
                     profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido,
+                    direccion, como_conocio, activo, marketing_permitido, foto_url,
                     creado_en, actualizado_en
             `;
 

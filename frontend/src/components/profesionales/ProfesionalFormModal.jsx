@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw, Camera, X, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +17,7 @@ import {
 import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
+import { useUploadArchivo } from '@/hooks/useStorage';
 
 /**
  * Colores predefinidos para el calendario
@@ -93,6 +94,12 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [emailInvitacion, setEmailInvitacion] = useState('');
   const [invitacionActual, setInvitacionActual] = useState(null);
   const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
+
+  // Dic 2025: Estado para foto de perfil
+  const [fotoFile, setFotoFile] = useState(null);
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [fotoUrl, setFotoUrl] = useState(null);
+  const uploadMutation = useUploadArchivo();
 
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
@@ -185,6 +192,16 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         pos: false,
         inventario: false
       });
+
+      // Dic 2025: Cargar foto existente
+      if (profesionalData.foto_url) {
+        setFotoUrl(profesionalData.foto_url);
+        setFotoPreview(profesionalData.foto_url);
+      } else {
+        setFotoUrl(null);
+        setFotoPreview(null);
+      }
+      setFotoFile(null);
     }
   }, [isEditMode, profesionalData, isOpen, reset]);
 
@@ -196,6 +213,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       setShowColorPicker(false);
       setEmailInvitacion('');
       setInvitacionActual(null);
+      // Dic 2025: Limpiar foto
+      setFotoFile(null);
+      setFotoPreview(null);
+      setFotoUrl(null);
     }
   }, [isOpen, reset]);
 
@@ -254,6 +275,30 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
     }
   };
 
+  // Dic 2025: Handler para seleccionar foto
+  const handleFotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setFotoFile(file);
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Dic 2025: Handler para eliminar foto
+  const handleEliminarFoto = () => {
+    setFotoFile(null);
+    setFotoPreview(null);
+    setFotoUrl(null);
+  };
+
   // Handler para seleccionar color
   const handleColorSelect = (color) => {
     setSelectedColor(color);
@@ -264,6 +309,17 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Handler de submit
   const onSubmit = async (data) => {
     try {
+      // Dic 2025: Subir foto si hay una nueva
+      let urlFotoFinal = fotoUrl;
+      if (fotoFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: fotoFile,
+          folder: 'profesionales',
+          isPublic: true,
+        });
+        urlFotoFinal = resultado?.url || resultado;
+      }
+
       // Sanitizar campos opcionales vacíos
       const sanitized = {
         nombre_completo: data.nombre_completo?.trim(),
@@ -275,7 +331,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         activo: data.activo,
         // Nov 2025: Incluir módulos
         modulos_acceso: modulosAcceso,
+        // Dic 2025: Incluir foto
+        foto_url: urlFotoFinal || undefined,
       };
+
+      // Si se eliminó la foto existente
+      if (fotoUrl === null && profesionalData?.foto_url) {
+        sanitized.foto_url = null;
+      }
 
       if (isEditMode) {
         // Modo edición: actualizar datos básicos
@@ -321,6 +384,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       setModulosAcceso({ agendamiento: true, pos: false, inventario: false });
       setEmailInvitacion('');
       setInvitacionActual(null);
+      // Dic 2025: Limpiar foto
+      setFotoFile(null);
+      setFotoPreview(null);
+      setFotoUrl(null);
     } catch (error) {
       toast.error(error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} profesional`);
     }
@@ -337,13 +404,50 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       maxWidth="3xl"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-            style={{ backgroundColor: selectedColor }}
-          >
-            <User className="w-6 h-6" />
+        {/* Header con foto de perfil */}
+        <div className="flex items-center gap-4 pb-4 border-b">
+          {/* Foto de perfil editable */}
+          <div className="relative">
+            {fotoPreview ? (
+              <div className="relative">
+                <img
+                  src={fotoPreview}
+                  alt="Foto del profesional"
+                  className="w-16 h-16 rounded-full object-cover border-2"
+                  style={{ borderColor: selectedColor }}
+                />
+                <button
+                  type="button"
+                  onClick={handleEliminarFoto}
+                  className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : (
+              <div
+                className="w-16 h-16 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: selectedColor }}
+              >
+                <User className="w-8 h-8" />
+              </div>
+            )}
+            {/* Botón para cambiar foto */}
+            <label className="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
+              <Camera className="h-3.5 w-3.5 text-gray-600" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFotoChange}
+                className="sr-only"
+                disabled={uploadMutation.isPending}
+              />
+            </label>
+            {uploadMutation.isPending && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
+                <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+              </div>
+            )}
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900">
@@ -701,16 +805,18 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
               </Button>
               <Button
                 type="submit"
-                isLoading={crearMutation.isPending || actualizarMutation.isPending}
-                disabled={crearMutation.isPending || actualizarMutation.isPending}
+                isLoading={crearMutation.isPending || actualizarMutation.isPending || uploadMutation.isPending}
+                disabled={crearMutation.isPending || actualizarMutation.isPending || uploadMutation.isPending}
               >
-                {isEditMode
-                  ? actualizarMutation.isPending
-                    ? 'Actualizando...'
-                    : 'Actualizar Profesional'
-                  : crearMutation.isPending
-                    ? 'Creando...'
-                    : 'Crear Profesional'}
+                {uploadMutation.isPending
+                  ? 'Subiendo foto...'
+                  : isEditMode
+                    ? actualizarMutation.isPending
+                      ? 'Actualizando...'
+                      : 'Actualizar Profesional'
+                    : crearMutation.isPending
+                      ? 'Creando...'
+                      : 'Crear Profesional'}
               </Button>
             </div>
           </>

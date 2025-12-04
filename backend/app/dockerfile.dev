@@ -8,8 +8,16 @@ FROM node:22-alpine
 # Establecer directorio de trabajo (consistente con frontend)
 WORKDIR /app
 
-# Instalar dependencias del sistema si se necesitan para módulos nativos
-# RUN apk add --no-cache python3 make g++ ffmpeg
+# ========================================
+# DEPENDENCIAS DEL SISTEMA
+# ========================================
+# vips-dev: Requerido para Sharp (procesamiento de imágenes)
+# build-base: Compiladores para módulos nativos
+# python3: Requerido por algunos módulos npm
+RUN apk add --no-cache \
+    vips-dev \
+    build-base \
+    python3
 
 # Crear usuario no-root para seguridad
 RUN addgroup -g 1001 -S nodejs && \

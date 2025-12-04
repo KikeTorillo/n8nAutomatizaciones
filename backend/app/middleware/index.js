@@ -10,6 +10,7 @@ const rateLimiting = require('./rateLimiting');
 const asyncHandler = require('./asyncHandler');
 const subscription = require('./subscription');
 const modules = require('./modules');
+const storage = require('./storage');
 
 module.exports = {
   // Middleware de manejo de errores async
@@ -79,6 +80,16 @@ module.exports = {
     requireAnyModule: modules.requireAnyModule,
     requireAllModules: modules.requireAllModules,
     injectActiveModules: modules.injectActiveModules
+  },
+
+  // Middleware de storage (MinIO)
+  storage: {
+    uploadSingle: storage.uploadSingle,
+    uploadMultiple: storage.uploadMultiple,
+    checkStorageLimit: storage.checkStorageLimit,
+    validateFileSize: storage.validateFileSize,
+    ALLOWED_TYPES: storage.ALLOWED_TYPES,
+    SIZE_LIMITS: storage.SIZE_LIMITS
   }
 };
 

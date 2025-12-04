@@ -28,26 +28,33 @@ class PerfilesMarketplaceModel {
      * Crear perfil de marketplace
      * Auto-genera slug único: {ciudad}-{timestamp36}
      *
-     * @param {Object} datos - Datos del perfil
-     * @returns {Object} Perfil creado
+     * @param {Object} datos - Datos del perfil (usa ciudad_id, estado_id, pais_id)
+     * @returns {Object} Perfil creado con ubicación expandida
      */
     static async crear(datos) {
-        // Generar slug único
-        const slug = this._generarSlug(datos.ciudad, datos.organizacion_id);
-
         // Usar transacción para garantizar atomicidad
         return await RLSContextManager.transaction(datos.organizacion_id, async (db) => {
+            // Obtener nombre de ciudad para el slug
+            const ciudadResult = await db.query(
+                'SELECT nombre FROM ciudades WHERE id = $1',
+                [datos.ciudad_id]
+            );
+            const ciudadNombre = ciudadResult.rows[0]?.nombre || 'ciudad';
+
+            // Generar slug único
+            const slug = this._generarSlug(ciudadNombre, datos.organizacion_id);
+
             const query = `
                 INSERT INTO marketplace_perfiles (
                     organizacion_id,
                     slug,
-                    ciudad,
+                    ciudad_id,
+                    estado_id,
+                    pais_id,
                     descripcion_corta,
                     meta_titulo,
                     meta_descripcion,
                     descripcion_larga,
-                    pais,
-                    estado,
                     codigo_postal,
                     direccion_completa,
                     latitud,
@@ -74,13 +81,13 @@ class PerfilesMarketplaceModel {
             const valores = [
                 datos.organizacion_id,
                 slug,
-                datos.ciudad,
+                datos.ciudad_id,
+                datos.estado_id || null,
+                datos.pais_id || null,
                 datos.descripcion_corta,
                 datos.meta_titulo || null,
                 datos.meta_descripcion || null,
                 datos.descripcion_larga || null,
-                datos.pais || 'México',
-                datos.estado || null,
                 datos.codigo_postal || null,
                 datos.direccion_completa || null,
                 datos.latitud || null,
@@ -101,7 +108,7 @@ class PerfilesMarketplaceModel {
             logger.info('[PerfilesMarketplaceModel.crear] Creando perfil', {
                 organizacion_id: datos.organizacion_id,
                 slug,
-                ciudad: datos.ciudad
+                ciudad_id: datos.ciudad_id
             });
 
             const result = await db.query(query, valores);
@@ -140,8 +147,8 @@ class PerfilesMarketplaceModel {
 
             // Construir SET dinámicamente
             const camposPermitidos = [
-                'ciudad', 'descripcion_corta', 'meta_titulo', 'meta_descripcion',
-                'descripcion_larga', 'pais', 'estado', 'codigo_postal',
+                'ciudad_id', 'estado_id', 'pais_id', 'descripcion_corta', 'meta_titulo', 'meta_descripcion',
+                'descripcion_larga', 'codigo_postal',
                 'direccion_completa', 'latitud', 'longitud', 'telefono_publico',
                 'email_publico', 'sitio_web', 'instagram', 'facebook', 'tiktok',
                 'logo_url', 'portada_url', 'galeria_urls', 'horarios_atencion',
@@ -227,41 +234,53 @@ class PerfilesMarketplaceModel {
     static async buscar(filtros) {
         return await RLSContextManager.withBypass(async (db) => {
             let whereConditions = [
-                'activo = true',
-                'visible_en_directorio = true'
+                'mp.activo = true',
+                'mp.visible_en_directorio = true'
             ];
             let queryParams = [];
             let paramIndex = 1;
 
             // Full-text search
             if (filtros.q) {
-                whereConditions.push(`search_vector @@ plainto_tsquery('spanish', $${paramIndex})`);
+                whereConditions.push(`mp.search_vector @@ plainto_tsquery('spanish', $${paramIndex})`);
                 queryParams.push(filtros.q);
                 paramIndex++;
             }
 
-            // Filtros geográficos
-            if (filtros.ciudad) {
-                whereConditions.push(`LOWER(ciudad) = LOWER($${paramIndex})`);
+            // Filtros geográficos (por nombre o por ID)
+            if (filtros.ciudad_id) {
+                whereConditions.push(`mp.ciudad_id = $${paramIndex}`);
+                queryParams.push(filtros.ciudad_id);
+                paramIndex++;
+            } else if (filtros.ciudad) {
+                whereConditions.push(`LOWER(c.nombre) = LOWER($${paramIndex})`);
                 queryParams.push(filtros.ciudad);
                 paramIndex++;
             }
 
-            if (filtros.estado) {
-                whereConditions.push(`LOWER(estado) = LOWER($${paramIndex})`);
+            if (filtros.estado_id) {
+                whereConditions.push(`mp.estado_id = $${paramIndex}`);
+                queryParams.push(filtros.estado_id);
+                paramIndex++;
+            } else if (filtros.estado) {
+                whereConditions.push(`LOWER(e.nombre) = LOWER($${paramIndex})`);
                 queryParams.push(filtros.estado);
                 paramIndex++;
             }
 
-            if (filtros.pais) {
-                whereConditions.push(`LOWER(pais) = LOWER($${paramIndex})`);
+            if (filtros.pais_id) {
+                whereConditions.push(`mp.pais_id = $${paramIndex}`);
+                queryParams.push(filtros.pais_id);
+                paramIndex++;
+            } else if (filtros.pais) {
+                whereConditions.push(`LOWER(p.nombre) = LOWER($${paramIndex})`);
                 queryParams.push(filtros.pais);
                 paramIndex++;
             }
 
             // Filtro de rating
             if (filtros.rating_minimo) {
-                whereConditions.push(`rating_promedio >= $${paramIndex}`);
+                whereConditions.push(`mp.rating_promedio >= $${paramIndex}`);
                 queryParams.push(filtros.rating_minimo);
                 paramIndex++;
             }
@@ -271,7 +290,10 @@ class PerfilesMarketplaceModel {
             // Contar total
             const countQuery = `
                 SELECT COUNT(*) as total
-                FROM marketplace_perfiles
+                FROM marketplace_perfiles mp
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
+                LEFT JOIN estados e ON mp.estado_id = e.id
+                LEFT JOIN paises p ON mp.pais_id = p.id
                 WHERE ${whereClause}
             `;
 
@@ -279,16 +301,16 @@ class PerfilesMarketplaceModel {
             const total = parseInt(countResult.rows[0].total);
 
             // Determinar ordenamiento
-            let orderBy = 'rating_promedio DESC, total_reseñas DESC'; // default: rating
+            let orderBy = 'mp.rating_promedio DESC, mp.total_reseñas DESC'; // default: rating
             switch (filtros.orden) {
                 case 'reseñas':
-                    orderBy = 'total_reseñas DESC, rating_promedio DESC';
+                    orderBy = 'mp.total_reseñas DESC, mp.rating_promedio DESC';
                     break;
                 case 'reciente':
-                    orderBy = 'publicado_en DESC NULLS LAST, creado_en DESC';
+                    orderBy = 'mp.publicado_en DESC NULLS LAST, mp.creado_en DESC';
                     break;
                 case 'alfabetico':
-                    orderBy = 'ciudad ASC';
+                    orderBy = 'c.nombre ASC';
                     break;
             }
 
@@ -298,10 +320,18 @@ class PerfilesMarketplaceModel {
                 filtros.limite || 12
             );
 
-            // Query principal
+            // Query principal con JOINs a tablas de ubicación
             const query = `
-                SELECT mp.*
+                SELECT
+                    mp.*,
+                    c.nombre as ciudad,
+                    e.nombre as estado,
+                    e.nombre_corto as estado_codigo,
+                    p.nombre as pais
                 FROM marketplace_perfiles mp
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
+                LEFT JOIN estados e ON mp.estado_id = e.id
+                LEFT JOIN paises p ON mp.pais_id = p.id
                 WHERE ${whereClause}
                 ORDER BY ${orderBy}
                 LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
@@ -362,13 +392,21 @@ class PerfilesMarketplaceModel {
      *
      * @param {number} id - ID del perfil
      * @param {number} organizacionId - ID de la organización
-     * @returns {Object} Perfil
+     * @returns {Object} Perfil con nombres de ubicación
      */
     static async obtenerPorId(id, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
-                SELECT mp.*
+                SELECT
+                    mp.*,
+                    c.nombre as ciudad,
+                    e.nombre as estado,
+                    e.nombre_corto as estado_codigo,
+                    p.nombre as pais
                 FROM marketplace_perfiles mp
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
+                LEFT JOIN estados e ON mp.estado_id = e.id
+                LEFT JOIN paises p ON mp.pais_id = p.id
                 WHERE mp.id = $1
             `;
 
@@ -387,13 +425,22 @@ class PerfilesMarketplaceModel {
      * Usado para validar si ya existe perfil
      *
      * @param {number} organizacionId - ID de la organización
-     * @returns {Object|null} Perfil o null
+     * @returns {Object|null} Perfil con nombres de ubicación o null
      */
     static async obtenerPorOrganizacion(organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
-                SELECT * FROM marketplace_perfiles
-                WHERE organizacion_id = $1
+                SELECT
+                    mp.*,
+                    c.nombre as ciudad,
+                    e.nombre as estado,
+                    e.nombre_corto as estado_codigo,
+                    p.nombre as pais
+                FROM marketplace_perfiles mp
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
+                LEFT JOIN estados e ON mp.estado_id = e.id
+                LEFT JOIN paises p ON mp.pais_id = p.id
+                WHERE mp.organizacion_id = $1
             `;
 
             logger.info('[PerfilesMarketplaceModel.obtenerPorOrganizacion] Verificando perfil existente', {
@@ -486,7 +533,7 @@ class PerfilesMarketplaceModel {
      * Usa bypass RLS para acceder a perfiles activos e inactivos
      * Incluye datos de organización (nombre, plan, estado)
      *
-     * @param {Object} filtros - { activo, ciudad, rating_min, pagina, limite }
+     * @param {Object} filtros - { activo, ciudad, ciudad_id, rating_min, pagina, limite }
      * @returns {Object} { perfiles, paginacion }
      */
     static async listarTodosParaAdmin(filtros = {}) {
@@ -502,9 +549,13 @@ class PerfilesMarketplaceModel {
                 paramIndex++;
             }
 
-            // Filtro por ciudad (opcional)
-            if (filtros.ciudad) {
-                whereConditions.push(`LOWER(mp.ciudad) = LOWER($${paramIndex})`);
+            // Filtro por ciudad (opcional, por ID o nombre)
+            if (filtros.ciudad_id) {
+                whereConditions.push(`mp.ciudad_id = $${paramIndex}`);
+                queryParams.push(filtros.ciudad_id);
+                paramIndex++;
+            } else if (filtros.ciudad) {
+                whereConditions.push(`LOWER(c.nombre) = LOWER($${paramIndex})`);
                 queryParams.push(filtros.ciudad);
                 paramIndex++;
             }
@@ -524,6 +575,7 @@ class PerfilesMarketplaceModel {
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM marketplace_perfiles mp
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
                 ${whereClause}
             `;
 
@@ -536,15 +588,18 @@ class PerfilesMarketplaceModel {
                 filtros.limite || 20
             );
 
-            // Query principal con JOIN a organizaciones
+            // Query principal con JOINs a organizaciones y ubicaciones
             const query = `
                 SELECT
                     mp.id,
                     mp.organizacion_id,
                     mp.slug,
-                    mp.ciudad,
-                    mp.estado,
-                    mp.pais,
+                    mp.ciudad_id,
+                    mp.estado_id,
+                    mp.pais_id,
+                    c.nombre as ciudad,
+                    e.nombre as estado,
+                    p.nombre as pais,
                     mp.descripcion_corta,
                     mp.rating_promedio,
                     mp.total_reseñas,
@@ -567,6 +622,9 @@ class PerfilesMarketplaceModel {
                     END as nivel_plan
                 FROM marketplace_perfiles mp
                 INNER JOIN organizaciones o ON mp.organizacion_id = o.id
+                LEFT JOIN ciudades c ON mp.ciudad_id = c.id
+                LEFT JOIN estados e ON mp.estado_id = e.id
+                LEFT JOIN paises p ON mp.pais_id = p.id
                 ${whereClause}
                 ORDER BY mp.creado_en DESC
                 LIMIT $${paramIndex} OFFSET $${paramIndex + 1}

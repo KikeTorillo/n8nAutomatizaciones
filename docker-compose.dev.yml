@@ -223,6 +223,17 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASSWORD: ${SMTP_PASSWORD}
       EMAIL_FROM: ${EMAIL_FROM}
+
+      # MinIO Storage Configuration
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_USE_SSL: ${MINIO_USE_SSL:-false}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC:-nexo-public}
+      MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE:-nexo-private}
+      MINIO_BUCKET_TEMP: ${MINIO_BUCKET_TEMP:-nexo-temp}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
     volumes:
       - ./backend/app:/app
       - /app/node_modules
@@ -322,6 +333,41 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # ========================================
+  # MINIO - Object Storage (S3 Compatible)
+  # ========================================
+  # Almacenamiento de archivos: logos, imágenes, exports
+  # Console: http://localhost:9001
+  # API S3: http://localhost:9000
+  minio:
+    image: minio/minio:latest
+    container_name: minio_storage
+    restart: unless-stopped
+    ports:
+      - "9000:9000"     # API S3
+      - "9001:9001"     # Console Web
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_BROWSER_REDIRECT_URL: http://localhost:9001
+      TZ: ${TZ}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Volúmenes persistentes
+volumes:
+  minio_data:
+    driver: local
 
 # Configuración de redes
 networks:

@@ -12,13 +12,14 @@ class ServicioModel {
                     organizacion_id, nombre, descripcion, categoria,
                     subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                     requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
-                    color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                    color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo,
+                    imagen_url
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                 RETURNING id, organizacion_id, nombre, descripcion, categoria,
                          subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                          requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
                          color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados,
-                         activo, creado_en, actualizado_en
+                         activo, imagen_url, creado_en, actualizado_en
             `;
 
             const values = [
@@ -38,7 +39,8 @@ class ServicioModel {
                 servicioData.configuracion_especifica || {},
                 servicioData.tags || [],
                 servicioData.tipos_profesional_autorizados || null,
-                servicioData.activo !== undefined ? servicioData.activo : true
+                servicioData.activo !== undefined ? servicioData.activo : true,
+                servicioData.imagen_url || null
             ];
 
             try {
@@ -186,13 +188,14 @@ class ServicioModel {
                         organizacion_id, nombre, descripcion, categoria,
                         subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                         requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
-                        color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+                        color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados, activo,
+                        imagen_url
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
                     RETURNING id, organizacion_id, nombre, descripcion, categoria,
                              subcategoria, duracion_minutos, precio, precio_minimo, precio_maximo,
                              requiere_preparacion_minutos, tiempo_limpieza_minutos, max_clientes_simultaneos,
                              color_servicio, configuracion_especifica, tags, tipos_profesional_autorizados,
-                             activo, creado_en, actualizado_en
+                             activo, imagen_url, creado_en, actualizado_en
                 `;
 
                 const values = [
@@ -212,7 +215,8 @@ class ServicioModel {
                     servicioData.configuracion_especifica || {},
                     servicioData.tags || [],
                     servicioData.tipos_profesional_autorizados || null,
-                    servicioData.activo !== undefined ? servicioData.activo : true
+                    servicioData.activo !== undefined ? servicioData.activo : true,
+                    servicioData.imagen_url || null
                 ];
 
                 const result = await db.query(query, values);
@@ -408,7 +412,8 @@ class ServicioModel {
                 'nombre', 'descripcion', 'categoria', 'subcategoria',
                 'duracion_minutos', 'precio', 'precio_minimo', 'precio_maximo',
                 'requiere_preparacion_minutos', 'tiempo_limpieza_minutos', 'max_clientes_simultaneos',
-                'color_servicio', 'configuracion_especifica', 'tags', 'tipos_profesional_autorizados', 'activo'
+                'color_servicio', 'configuracion_especifica', 'tags', 'tipos_profesional_autorizados', 'activo',
+                'imagen_url'
             ];
 
             const setClauses = [];

@@ -92,8 +92,9 @@ class ProductosModel {
                     permite_venta,
                     permite_uso_servicio,
                     notas,
+                    imagen_url,
                     activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
                 RETURNING *
             `;
 
@@ -119,6 +120,7 @@ class ProductosModel {
                 data.permite_venta !== undefined ? data.permite_venta : true,
                 data.permite_uso_servicio !== undefined ? data.permite_uso_servicio : true,
                 data.notas || null,
+                data.imagen_url || null,
                 data.activo !== undefined ? data.activo : true
             ];
 
@@ -365,7 +367,7 @@ class ProductosModel {
                 'precio_compra', 'precio_venta', 'precio_mayoreo', 'cantidad_mayoreo',
                 'stock_minimo', 'stock_maximo', 'unidad_medida', 'alerta_stock_minimo',
                 'es_perecedero', 'dias_vida_util', 'permite_venta', 'permite_uso_servicio',
-                'notas', 'activo'
+                'notas', 'imagen_url', 'activo'
             ];
             const updates = [];
             const values = [];
@@ -492,9 +494,9 @@ class ProductosModel {
                         categoria_id, proveedor_id, precio_compra, precio_venta,
                         precio_mayoreo, cantidad_mayoreo, stock_actual, stock_minimo,
                         stock_maximo, unidad_medida, alerta_stock_minimo, es_perecedero,
-                        dias_vida_util, permite_venta, permite_uso_servicio, notas, activo
+                        dias_vida_util, permite_venta, permite_uso_servicio, notas, imagen_url, activo
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
                     RETURNING *
                 `;
 
@@ -520,6 +522,7 @@ class ProductosModel {
                     producto.permite_venta !== undefined ? producto.permite_venta : true,
                     producto.permite_uso_servicio !== undefined ? producto.permite_uso_servicio : true,
                     producto.notas || null,
+                    producto.imagen_url || null,
                     producto.activo !== undefined ? producto.activo : true
                 ];
 

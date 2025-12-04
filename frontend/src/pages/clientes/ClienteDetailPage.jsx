@@ -65,11 +65,19 @@ function ClienteDetailPage() {
 
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-4">
-              <div className="flex-shrink-0 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
-                <span className="text-blue-600 font-semibold text-2xl">
-                  {cliente.nombre?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              {cliente.foto_url ? (
+                <img
+                  src={cliente.foto_url}
+                  alt={cliente.nombre}
+                  className="flex-shrink-0 h-16 w-16 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="flex-shrink-0 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <span className="text-blue-600 font-semibold text-2xl">
+                    {cliente.nombre?.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
                   {cliente.nombre}

@@ -431,6 +431,23 @@ class SaaSApplication {
         throw new Error('No se puede conectar a todas las bases de datos');
       }
 
+      // INICIALIZACIÓN DE MINIO STORAGE
+      // Verifica conexión y crea buckets si no existen
+      try {
+        const { initializeBuckets, checkConnection } = require('./services/storage');
+        const minioConnected = await checkConnection();
+
+        if (minioConnected) {
+          await initializeBuckets();
+          logger.info('MinIO Storage inicializado correctamente');
+        } else {
+          logger.warn('MinIO no disponible - funcionalidad de storage deshabilitada');
+        }
+      } catch (minioError) {
+        // MinIO es opcional, no detener el servidor si falla
+        logger.warn('Error inicializando MinIO Storage', { error: minioError.message });
+      }
+
       // INICIAR SERVIDOR HTTP: Escucha en el puerto configurado
       this.server = this.app.listen(this.port, () => {
         // Log de inicio exitoso con métricas del sistema

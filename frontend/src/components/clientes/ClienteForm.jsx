@@ -1,14 +1,19 @@
 import { useState, useEffect } from 'react';
-import { Save } from 'lucide-react';
+import { Save, Camera, X, Loader2, User } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';
+import { useUploadArchivo } from '@/hooks/useStorage';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Formulario reutilizable para crear/editar clientes
  */
 function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
+  const toast = useToast();
+  const uploadMutation = useUploadArchivo();
+
   const [formData, setFormData] = useState({
     nombre_completo: '',
     telefono: '',
@@ -22,9 +27,12 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       profesional_preferido: '',
       servicios_favoritos: [],
     },
+    foto_url: '',
   });
 
   const [errors, setErrors] = useState({});
+  const [fotoPreview, setFotoPreview] = useState(null);
+  const [fotoFile, setFotoFile] = useState(null);
 
   // Cargar datos de profesionales y servicios para preferencias
   const { data: profesionales = [] } = useProfesionales();
@@ -51,7 +59,9 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           profesional_preferido: cliente.profesional_preferido_id || '', // Backend devuelve "profesional_preferido_id"
           servicios_favoritos: [], // Este campo NO existe en backend
         },
+        foto_url: cliente.foto_url || '',
       });
+      setFotoPreview(cliente.foto_url || null);
     }
   }, [cliente]);
 
@@ -89,6 +99,30 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
     handlePreferenciasChange('servicios_favoritos', nuevosServicios);
   };
 
+  // Handler para seleccionar archivo de foto
+  const handleFotoChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast.error('Solo se permiten archivos de imagen');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('La imagen no debe superar 5MB');
+        return;
+      }
+      setFotoFile(file);
+      setFotoPreview(URL.createObjectURL(file));
+    }
+  };
+
+  // Handler para eliminar foto
+  const handleEliminarFoto = () => {
+    setFotoFile(null);
+    setFotoPreview(null);
+    setFormData((prev) => ({ ...prev, foto_url: '' }));
+  };
+
   const validate = () => {
     const newErrors = {};
 
@@ -112,37 +146,116 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validate()) {
       return;
     }
 
-    // Preparar datos para enviar
-    // ⚠️ CRÍTICO: Mapear campos del frontend a los nombres que espera el backend
-    // Backend espera: nombre, alergias, profesional_preferido_id
-    // Frontend usa: nombre_completo, notas_medicas, preferencias.profesional_preferido
-    const dataToSubmit = {
-      nombre: formData.nombre_completo, // Backend espera "nombre" no "nombre_completo"
-      telefono: formData.telefono,
-      email: formData.email?.trim() || undefined,
-      direccion: formData.direccion?.trim() || undefined,
-      fecha_nacimiento: formData.fecha_nacimiento?.trim() || undefined,
-      alergias: formData.notas_medicas?.trim() || undefined, // Backend espera "alergias"
-      marketing_permitido: formData.marketing_permitido,
-      activo: formData.activo,
-      profesional_preferido_id: formData.preferencias.profesional_preferido
-        ? parseInt(formData.preferencias.profesional_preferido)
-        : undefined,
-      // Nota: servicios_favoritos NO existe en backend, se omite
-    };
+    try {
+      // Subir foto si hay un archivo nuevo
+      let fotoUrlFinal = formData.foto_url;
+      if (fotoFile) {
+        const resultado = await uploadMutation.mutateAsync({
+          file: fotoFile,
+          folder: 'clientes',
+          isPublic: true,
+        });
+        fotoUrlFinal = resultado?.url || resultado;
+      }
 
-    onSubmit(dataToSubmit);
+      // Preparar datos para enviar
+      // ⚠️ CRÍTICO: Mapear campos del frontend a los nombres que espera el backend
+      // Backend espera: nombre, alergias, profesional_preferido_id
+      // Frontend usa: nombre_completo, notas_medicas, preferencias.profesional_preferido
+      const dataToSubmit = {
+        nombre: formData.nombre_completo, // Backend espera "nombre" no "nombre_completo"
+        telefono: formData.telefono,
+        email: formData.email?.trim() || undefined,
+        direccion: formData.direccion?.trim() || undefined,
+        fecha_nacimiento: formData.fecha_nacimiento?.trim() || undefined,
+        alergias: formData.notas_medicas?.trim() || undefined, // Backend espera "alergias"
+        marketing_permitido: formData.marketing_permitido,
+        activo: formData.activo,
+        profesional_preferido_id: formData.preferencias.profesional_preferido
+          ? parseInt(formData.preferencias.profesional_preferido)
+          : undefined,
+        foto_url: fotoUrlFinal || undefined,
+        // Nota: servicios_favoritos NO existe en backend, se omite
+      };
+
+      setFotoFile(null); // Limpiar archivo después de subir
+      onSubmit(dataToSubmit);
+    } catch (error) {
+      toast.error('No se pudo subir la foto');
+    }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Foto del Cliente */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          Foto del Cliente
+        </h3>
+
+        <div className="flex items-center gap-6">
+          {/* Preview con botón de subir */}
+          <div className="flex-shrink-0 relative">
+            <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+              {fotoPreview ? (
+                <img
+                  src={fotoPreview}
+                  alt="Foto del cliente"
+                  className="w-full h-full object-cover"
+                  onError={() => setFotoPreview(null)}
+                />
+              ) : (
+                <User className="w-10 h-10 text-gray-400" />
+              )}
+            </div>
+            {/* Botón de cámara para subir */}
+            <label className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
+              <Camera className="h-4 w-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFotoChange}
+                className="sr-only"
+                disabled={uploadMutation.isPending}
+              />
+            </label>
+            {/* Botón de eliminar */}
+            {fotoPreview && (
+              <button
+                type="button"
+                onClick={handleEliminarFoto}
+                className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {/* Loading de subida */}
+            {uploadMutation.isPending && (
+              <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
+                <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+              </div>
+            )}
+          </div>
+
+          {/* Instrucciones */}
+          <div className="flex-1">
+            <p className="text-sm text-gray-700">
+              Haz clic en el ícono de cámara para subir una foto del cliente.
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              PNG, JPG o WEBP. Máximo 5MB.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {/* Información Básica */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">
@@ -338,11 +451,20 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       <div className="flex justify-end gap-3">
         <Button
           type="submit"
-          isLoading={isLoading}
-          disabled={isLoading}
+          isLoading={isLoading || uploadMutation.isPending}
+          disabled={isLoading || uploadMutation.isPending}
         >
-          <Save className="w-4 h-4 mr-2" />
-          {cliente ? 'Actualizar Cliente' : 'Crear Cliente'}
+          {uploadMutation.isPending ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Subiendo foto...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              {cliente ? 'Actualizar Cliente' : 'Crear Cliente'}
+            </>
+          )}
         </Button>
       </div>
     </form>
