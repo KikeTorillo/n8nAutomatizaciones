@@ -182,8 +182,7 @@ class ModulosController {
           const query = `
             SELECT
               p.codigo_plan,
-              p.nombre as plan_nombre,
-              p.tipo as plan_tipo,
+              p.nombre_plan,
               o.app_seleccionada
             FROM subscripciones s
             JOIN planes_subscripcion p ON s.plan_id = p.id
@@ -196,15 +195,16 @@ class ModulosController {
 
         if (result.rows.length > 0) {
           const row = result.rows[0];
+          const tipo = row.codigo_plan; // codigo_plan es el tipo (trial, pro, custom)
           planInfo = {
             codigo: row.codigo_plan,
-            nombre: row.plan_nombre,
-            tipo: row.plan_tipo,
+            nombre: row.nombre_plan,
+            tipo: tipo,
             app_seleccionada: row.app_seleccionada,
-            es_free: row.plan_tipo === 'free',
-            es_pro: row.plan_tipo === 'pro',
-            es_trial: row.plan_tipo === 'trial',
-            todas_las_apps: ['pro', 'trial', 'custom'].includes(row.plan_tipo)
+            es_free: tipo === 'free',
+            es_pro: tipo === 'pro',
+            es_trial: tipo === 'trial',
+            todas_las_apps: ['pro', 'trial', 'custom'].includes(tipo)
           };
         }
       } catch (planError) {

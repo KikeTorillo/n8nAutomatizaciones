@@ -1,7 +1,7 @@
 # Módulo de Eventos Digitales (Invitaciones)
 
 **Actualizado**: 5 Diciembre 2025
-**Estado**: En producción - Funcionalidades extras pendientes
+**Estado**: En producción - Funcionalidad QR en desarrollo
 
 ---
 
@@ -13,7 +13,7 @@
 |------|---------------|--------|
 | **Backend** | CRUD eventos, invitados, ubicaciones, mesa de regalos, felicitaciones | ✅ |
 | **Backend** | CRUD plantillas con temas (super_admin) | ✅ |
-| **Backend** | Rutas públicas (RSVP, slug, tema incluido) | ✅ |
+| **Backend** | Rutas públicas (RSVP, slug, tema incluido, regalos) | ✅ |
 | **Backend** | Importar/Exportar CSV invitados | ✅ |
 | **Frontend Admin** | Lista eventos, detalle, formulario crear/editar | ✅ |
 | **Frontend Admin** | Gestión invitados con estadísticas RSVP | ✅ |
@@ -22,188 +22,212 @@
 | **Frontend Admin** | Selector plantillas con preview de colores | ✅ |
 | **Frontend Admin** | Panel super_admin para plantillas con editor de tema | ✅ |
 | **Frontend Público** | Página invitación con tema dinámico | ✅ |
-| **Frontend Público** | Contador, galería con lightbox, ubicaciones | ✅ |
+| **Frontend Público** | Contador, galería con lightbox, ubicaciones, mesa regalos | ✅ |
 | **Frontend Público** | Formulario RSVP funcional con mensaje personalizado | ✅ |
 | **Frontend Público** | Google Fonts cargadas dinámicamente | ✅ |
 | **SQL** | 6 tablas con RLS, índices, triggers | ✅ |
 | **SQL** | 13 plantillas predefinidas con temas | ✅ |
 
-### Pendiente - Fase 3
+### Pendiente
 
-| Área | Funcionalidad | Prioridad |
-|------|---------------|-----------|
-| **QR** | Generación de código QR por invitado | Alta |
-| **Calendario** | Botón "Agregar a calendario" (.ics + Google) | Media |
-| **Recordatorios** | Emails automáticos a invitados pendientes | Baja |
+| Área | Funcionalidad | Prioridad | Estado |
+|------|---------------|-----------|--------|
+| **QR + Check-in** | Sistema completo de QR y control de acceso | Alta | 🔄 En desarrollo |
+| **Calendario** | Botón "Agregar a calendario" (.ics + Google) | Baja | Pendiente |
+| **Recordatorios** | Emails automáticos a invitados pendientes | Baja | Pendiente |
 
 ---
 
-## Siguiente Paso: Código QR por Invitado
+## Fase 3.1: Sistema QR + Check-in (En Desarrollo)
 
 ### Objetivo
 
-Generar un código QR único para cada invitado que enlace a su invitación personalizada.
+Sistema completo de códigos QR para invitaciones con funcionalidad opcional de check-in en el evento.
 
-### Implementación
+### Casos de Uso
 
-#### 1. Backend - Instalar librería QR
+| Caso | Descripción | Requiere QR |
+|------|-------------|-------------|
+| **Invitación física** | QR impreso en invitación de papel | ✅ Sí |
+| **Check-in en evento** | Escanear QR en entrada para control de acceso | ✅ Sí |
+| **Invitación digital** | Compartir por WhatsApp/Email | ❌ Link es mejor |
+
+### Arquitectura
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUJO QR + CHECK-IN                          │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ADMIN PANEL                    PÁGINA PÚBLICA                  │
+│  ─────────────                  ─────────────                   │
+│  • Generar QR individual        • Mostrar QR (si habilitado)    │
+│  • Descargar QR (PNG)           • Botón "Guardar QR"            │
+│  • Descargar todos (ZIP)        • Para presentar en entrada     │
+│  • Ver estado check-in                                          │
+│                                                                 │
+│  TAB CHECK-IN (nueva)                                           │
+│  ─────────────────────                                          │
+│  • Escáner con cámara                                           │
+│  • Dashboard tiempo real                                        │
+│  • Lista de llegadas                                            │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Cambios en Base de Datos
+
+```sql
+-- Agregar campo check-in a invitados_evento
+ALTER TABLE invitados_evento
+ADD COLUMN IF NOT EXISTS checkin_at TIMESTAMPTZ DEFAULT NULL;
+
+COMMENT ON COLUMN invitados_evento.checkin_at IS
+    'Timestamp de cuando el invitado hizo check-in en el evento';
+
+-- La configuración del evento usa JSONB existente:
+-- configuracion: { "habilitar_qr_checkin": true/false }
+```
+
+### Endpoints Backend
+
+| Método | Endpoint | Descripción | Auth |
+|--------|----------|-------------|------|
+| GET | `/eventos/:id/invitados/:invitadoId/qr` | Generar QR individual | Admin |
+| GET | `/eventos/:id/qr-masivo` | ZIP con todos los QR | Admin |
+| POST | `/eventos/:id/checkin` | Marcar check-in | Admin |
+| GET | `/eventos/:id/checkin/stats` | Estadísticas check-in | Admin |
+| GET | `/public/evento/:slug/:token/qr` | QR para página pública | Público |
+
+### Librerías Necesarias
 
 ```bash
-npm install qrcode
+# Backend
+npm install qrcode archiver
+
+# Frontend
+npm install html5-qrcode
 ```
 
-#### 2. Backend - Endpoint para generar QR
+### Tareas de Implementación
 
-En `invitados.controller.js`:
+#### Backend
+- [ ] Agregar columna `checkin_at` a `invitados_evento`
+- [ ] Instalar `qrcode` y `archiver`
+- [ ] Endpoint: Generar QR individual
+- [ ] Endpoint: Generar ZIP masivo
+- [ ] Endpoint: Marcar check-in por token
+- [ ] Endpoint: Estadísticas check-in
+- [ ] Endpoint público: QR para invitación
+
+#### Frontend Admin
+- [ ] Botón "Ver QR" en tabla de invitados
+- [ ] Modal con QR + botón descargar
+- [ ] Botón "Descargar todos los QR"
+- [ ] Nueva tab "Check-in" en detalle evento
+- [ ] Componente escáner de cámara
+- [ ] Dashboard check-in tiempo real
+- [ ] Columna estado check-in en tabla invitados
+
+#### Frontend Público
+- [ ] Mostrar QR en invitación (si habilitado)
+- [ ] Botón "Guardar QR"
+- [ ] Estilo coherente con tema del evento
+
+### Flujo de Check-in en el Evento
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  PANTALLA CHECK-IN (tablet/móvil)                            │
+├──────────────────────────────────────────────────────────────┤
+│                                                              │
+│   1. Admin abre tab "Check-in" en detalle del evento        │
+│                                                              │
+│   2. Click "Iniciar escaneo" → activa cámara                │
+│                                                              │
+│   3. Escanea QR del invitado                                │
+│      QR contiene: https://nexo.app/e/slug/TOKEN             │
+│                                                              │
+│   4. Sistema extrae TOKEN y valida:                         │
+│      • Token válido y pertenece al evento                   │
+│      • No ha hecho check-in previamente                     │
+│                                                              │
+│   5. Respuesta visual:                                       │
+│      ┌─────────────────────────────┐                        │
+│      │  ✓ BIENVENIDO               │  (verde = OK)          │
+│      │    Juan Pérez               │                        │
+│      │    Familia Pérez            │                        │
+│      │    4 personas               │                        │
+│      └─────────────────────────────┘                        │
+│                                                              │
+│      ┌─────────────────────────────┐                        │
+│      │  ⚠ YA REGISTRADO            │  (amarillo = duplicado)│
+│      │    Juan Pérez               │                        │
+│      │    Llegó: 14:32             │                        │
+│      └─────────────────────────────┘                        │
+│                                                              │
+│      ┌─────────────────────────────┐                        │
+│      │  ✗ QR INVÁLIDO              │  (rojo = error)        │
+│      │    No encontrado            │                        │
+│      └─────────────────────────────┘                        │
+│                                                              │
+│   6. Auto-regresa a modo escaneo en 3 segundos              │
+│                                                              │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### Configuración del Evento
 
 ```javascript
-const QRCode = require('qrcode');
-
-// GET /api/v1/eventos-digitales/eventos/:eventoId/invitados/:id/qr
-static async generarQR(req, res) {
-  const { id, eventoId } = req.params;
-  const organizacionId = req.user.organizacion_id;
-
-  const invitado = await InvitadoModel.obtenerPorId(id, organizacionId);
-  if (!invitado) {
-    return ResponseHelper.error(res, 'Invitado no encontrado', 404);
-  }
-
-  // Obtener slug del evento
-  const evento = await EventoModel.obtenerPorId(eventoId, organizacionId);
-
-  // Generar URL de invitación
-  const baseUrl = process.env.FRONTEND_URL || 'https://nexo.app';
-  const invitacionUrl = `${baseUrl}/e/${evento.slug}/${invitado.token}`;
-
-  // Generar QR como Data URL
-  const qrDataUrl = await QRCode.toDataURL(invitacionUrl, {
-    width: 300,
-    margin: 2,
-    color: { dark: '#000000', light: '#ffffff' }
-  });
-
-  return ResponseHelper.success(res, {
-    qr: qrDataUrl,
-    url: invitacionUrl,
-    invitado: invitado.nombre
-  });
+// En evento.configuracion (JSONB)
+{
+  "mostrar_ubicaciones": true,
+  "mostrar_mesa_regalos": true,
+  "permitir_felicitaciones": true,
+  "habilitar_qr_checkin": false  // ← NUEVO (default: false)
 }
 ```
 
-#### 3. Frontend - Mostrar QR en detalle de invitado
-
-```jsx
-// Botón para ver QR
-<Button onClick={() => setShowQRModal(true)}>
-  <QrCode className="w-4 h-4 mr-2" />
-  Ver QR
-</Button>
-
-// Modal con QR
-{showQRModal && (
-  <Modal onClose={() => setShowQRModal(false)}>
-    <img src={qrData.qr} alt="QR Invitación" />
-    <p>{qrData.url}</p>
-    <Button onClick={() => descargarQR()}>Descargar QR</Button>
-  </Modal>
-)}
-```
-
-### Tareas
-
-1. [ ] Instalar `qrcode` en backend
-2. [ ] Crear endpoint GET `/eventos/:eventoId/invitados/:id/qr`
-3. [ ] Agregar hook `useGenerarQR` en frontend
-4. [ ] Crear modal de visualización de QR
-5. [ ] Agregar botón "Descargar QR" (como PNG)
-6. [ ] Agregar botón "Descargar todos los QR" (ZIP)
-
 ---
 
-## Fase 3.2: Agregar a Calendario
+## Fase 3.2: Agregar a Calendario (Pendiente - Baja Prioridad)
 
 ### Objetivo
 
-Permitir a los invitados agregar el evento a su calendario (Google Calendar, Apple Calendar, Outlook).
+Permitir a los invitados agregar el evento a su calendario.
 
-### Implementación
+### Funcionalidades
 
-#### 1. Generar archivo .ics
+- Botón "Agregar a Google Calendar" (link directo)
+- Botón "Descargar .ics" (Apple Calendar, Outlook)
 
-```javascript
-// utils/icsGenerator.js
-function generarICS(evento) {
-  const inicio = new Date(evento.fecha_evento);
-  const fin = evento.fecha_fin_evento
-    ? new Date(evento.fecha_fin_evento)
-    : new Date(inicio.getTime() + 4 * 60 * 60 * 1000); // +4 horas default
+### Notas
 
-  const formatDate = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-
-  return `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Nexo//Eventos Digitales//ES
-BEGIN:VEVENT
-UID:${evento.id}@nexo.app
-DTSTART:${formatDate(inicio)}
-DTEND:${formatDate(fin)}
-SUMMARY:${evento.nombre}
-DESCRIPTION:${evento.descripcion || ''}
-LOCATION:${evento.ubicaciones?.[0]?.direccion || ''}
-END:VEVENT
-END:VCALENDAR`;
-}
-```
-
-#### 2. Botón en página pública
-
-```jsx
-// Botones de calendario
-<div className="flex gap-2">
-  <a
-    href={`data:text/calendar;charset=utf8,${encodeURIComponent(generarICS(evento))}`}
-    download={`${evento.slug}.ics`}
-    className="btn"
-  >
-    <Download className="w-4 h-4" />
-    Descargar .ics
-  </a>
-
-  <a
-    href={`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(evento.nombre)}&dates=${fechaInicio}/${fechaFin}&details=${encodeURIComponent(evento.descripcion)}`}
-    target="_blank"
-    className="btn"
-  >
-    <Calendar className="w-4 h-4" />
-    Google Calendar
-  </a>
-</div>
-```
-
-### Tareas
-
-1. [ ] Crear función `generarICS` en utils
-2. [ ] Agregar botón "Agregar a calendario" en EventoPublicoPage
-3. [ ] Soporte para Google Calendar (link directo)
-4. [ ] Soporte para .ics (Apple/Outlook)
+Esta funcionalidad se implementará después del sistema QR.
+Es independiente y no bloquea otras funcionalidades.
 
 ---
 
-## Fase 3.3: Recordatorios por Email
+## Fase 3.3: Recordatorios Automáticos (Pendiente - Baja Prioridad)
 
 ### Objetivo
 
-Enviar recordatorios automáticos a invitados que no han confirmado.
+Enviar recordatorios automáticos a invitados pendientes de confirmar.
 
-### Implementación
+### Funcionalidades
 
-1. Crear tabla `recordatorios_enviados`
-2. Job de n8n que revisa invitados pendientes
-3. Envío de email con link de confirmación
-4. Tracking de emails enviados
+- Job programado que revisa invitados con `estado_rsvp = 'pendiente'`
+- Envío de email/WhatsApp X días antes del evento
+- Tracking de recordatorios enviados
 
-**Nota**: Requiere configuración de email SMTP y plantillas de email.
+### Notas
+
+Requiere:
+- Configuración SMTP
+- Plantillas de email
+- Posible integración con WhatsApp Business API
+
+Se implementará como última fase del módulo.
 
 ---
 
@@ -246,7 +270,12 @@ GET/POST    /api/v1/eventos-digitales/eventos/:id/invitados
 PUT/DEL     /api/v1/eventos-digitales/invitados/:id
 POST        /api/v1/eventos-digitales/eventos/:id/invitados/importar
 GET         /api/v1/eventos-digitales/eventos/:id/invitados/exportar
-GET         /api/v1/eventos-digitales/eventos/:id/invitados/:id/qr  # PENDIENTE
+
+# QR + Check-in (NUEVO)
+GET         /api/v1/eventos-digitales/eventos/:id/invitados/:invitadoId/qr
+GET         /api/v1/eventos-digitales/eventos/:id/qr-masivo
+POST        /api/v1/eventos-digitales/eventos/:id/checkin
+GET         /api/v1/eventos-digitales/eventos/:id/checkin/stats
 
 # Plantillas (lectura: todos, escritura: super_admin)
 GET/POST    /api/v1/eventos-digitales/plantillas
@@ -254,6 +283,10 @@ PUT/DEL     /api/v1/eventos-digitales/plantillas/:id
 
 # Público (sin auth)
 GET         /api/v1/public/evento/:slug
+GET         /api/v1/public/evento/:slug/ubicaciones
+GET         /api/v1/public/evento/:slug/regalos
 GET         /api/v1/public/evento/:slug/:token
 POST        /api/v1/public/evento/:slug/:token/rsvp
+GET         /api/v1/public/evento/:slug/:token/whatsapp
+GET         /api/v1/public/evento/:slug/:token/qr     # NUEVO
 ```

@@ -115,33 +115,9 @@ function PlanStatusBanner() {
     );
   }
 
-  // Banner para Plan Trial
+  // Trial se maneja en TrialStatusWidget (más detallado)
   if (esPlanTrial) {
-    return (
-      <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4 mb-6">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                <Sparkles className="w-3 h-3 mr-1" />
-                Trial Activo
-              </span>
-            </div>
-            <p className="text-sm text-blue-800">
-              Tienes acceso completo a todas las funcionalidades durante tu periodo de prueba.
-              Suscríbete al Plan Pro para mantener el acceso.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            onClick={() => navigate('/suscripcion')}
-            className="whitespace-nowrap"
-          >
-            Suscribirse
-          </Button>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   // Banner para Plan Pro (mostrar que tiene todo)

@@ -60,6 +60,12 @@ const marketplaceRouter = require('../../../modules/marketplace/routes');
 const comisionesRouter = require('../../../modules/comisiones/routes');
 
 // ========================================
+// MÓDULO CONTABILIDAD - Dic 2025
+// Catálogo SAT, asientos, reportes financieros
+// ========================================
+const contabilidadRouter = require('../../../modules/contabilidad/routes');
+
+// ========================================
 // MÓDULO RECORDATORIOS - Nov 2025
 // ========================================
 const recordatoriosRouter = require('../../../modules/recordatorios/routes/recordatorios.routes');
@@ -121,6 +127,9 @@ function routerApi(app) {
 
     // Rutas de comisiones profesionales
     router.use('/comisiones', comisionesRouter);
+
+    // Rutas de contabilidad (catálogo SAT, asientos, reportes) - Dic 2025
+    router.use('/contabilidad', contabilidadRouter);
 
     // Rutas de recordatorios automáticos
     router.use('/recordatorios', recordatoriosRouter);

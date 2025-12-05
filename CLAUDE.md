@@ -8,22 +8,18 @@
 
 **Plataforma ERP SaaS Multi-Tenant** para el mercado latinoamericano con **IA Conversacional** integrada (Telegram, WhatsApp).
 
-**Módulos**: POS, Inventario, Agendamiento, Clientes, Comisiones, Marketplace, Storage (MinIO)
-
 ---
 
 ## Estado Actual
 
-**Última verificación**: 4 Diciembre 2025
+**Última verificación**: 5 Diciembre 2025
 
 | Componente | Métricas |
 |------------|----------|
-| **Backend** | 41 controllers, 38 models, ~274 endpoints |
-| **Frontend** | 112 componentes, 47 páginas, 29 hooks |
-| **SQL** | 63 tablas, 94 políticas RLS, 88 funciones |
-| **Middlewares** | 9 archivos |
-| **MCP Server** | 8 herramientas |
-| **Storage** | MinIO integrado (85%) |
+| **Backend** | 48 controllers, 44 models, ~301 endpoints, 20 servicios |
+| **Frontend** | 112 componentes, 52 páginas, 30 hooks, 2 stores |
+| **SQL** | 61 tablas, 99 políticas RLS, 96 funciones, 67 triggers |
+| **MCP Server** | 8 herramientas (JSON-RPC 2.0) |
 
 ---
 
@@ -31,12 +27,12 @@
 
 | Capa | Tecnologías |
 |------|-------------|
-| **Frontend** | React 18, Vite 7, Tailwind CSS 3, Zustand (2 stores), TanStack Query, Zod |
+| **Frontend** | React 18, Vite 7, Tailwind CSS 3, Zustand, TanStack Query, Zod |
 | **Backend** | Node.js, Express.js, JWT (1h access/7d refresh), Joi, Winston, Redis |
-| **Database** | PostgreSQL 17, pg_cron, RLS, particionamiento |
+| **Database** | PostgreSQL 17, pg_cron, RLS multi-tenant, particionamiento mensual |
 | **IA** | OpenRouter (Qwen3-32B), n8n workflows, MCP Server |
 | **Storage** | MinIO (S3-compatible) |
-| **Infra** | Docker Compose (9 contenedores) |
+| **Infra** | Docker Compose |
 
 ---
 
@@ -53,38 +49,37 @@ docker restart back      # Aplicar cambios backend
 
 ---
 
-## Arquitectura Backend
+## Módulos Backend (10)
 
-### Módulos
+| Módulo | Controllers | Descripción |
+|--------|-------------|-------------|
+| **core** | 12 | Auth, usuarios, organizaciones, suscripciones, ubicaciones, pagos |
+| **agendamiento** | 12 | Citas, profesionales, servicios, horarios, disponibilidad, chatbots |
+| **inventario** | 7 | Productos, categorías, proveedores, alertas, órdenes compra |
+| **eventos-digitales** | 7 | Eventos, invitados, mesa de regalos, felicitaciones, plantillas |
+| **pos** | 2 | Ventas, reportes, ticket PDF térmico |
+| **comisiones** | 3 | Cálculo, configuración, reportes |
+| **marketplace** | 3 | Perfiles públicos, reseñas, analytics |
+| **storage** | 1 | Archivos MinIO, upload/delete, presigned URLs |
+| **recordatorios** | 1 | Recordatorios de citas automáticos |
 
-| Módulo | Descripción |
-|--------|-------------|
-| **core** | Auth, usuarios, organizaciones, suscripciones, ubicaciones |
-| **agendamiento** | Citas, profesionales, servicios, horarios, disponibilidad |
-| **inventario** | Productos, categorías, proveedores, alertas, órdenes compra |
-| **pos** | Ventas, ticket PDF térmico |
-| **comisiones** | Cálculo, configuración, reportes |
-| **marketplace** | Perfiles públicos, reseñas, analytics |
-| **storage** | Archivos MinIO, upload/delete, presigned URLs |
-| **chatbots** | Configuración Telegram/WhatsApp, MCP integration |
-| **recordatorios** | Recordatorios de citas automáticos |
+---
 
-### Middlewares (9)
+## Middlewares (9)
 
 | Archivo | Función Principal |
 |---------|-------------------|
 | `auth.js` | JWT, roles, optionalAuth, refreshToken |
-| `tenant.js` | RLS context, multi-tenant, bypass super_admin |
+| `tenant.js` | RLS context multi-tenant, bypass super_admin |
 | `subscription.js` | Plan activo, límites recursos |
-| `modules.js` | Módulos activos |
+| `modules.js` | Módulos activos por organización |
 | `validation.js` | Joi validation, sanitización XSS |
-| `rateLimiting.js` | Rate limit por IP/usuario/org |
+| `rateLimiting.js` | Rate limit por IP/usuario/org/plan |
 | `storage.js` | Multer config, validación archivos |
 | `asyncHandler.js` | Wrapper errores async |
 | `index.js` | Exports centralizados + composiciones |
 
-### Orden de Middleware
-
+**Orden de Middleware**:
 ```
 # Autenticados
 auth.authenticateToken → tenant.setTenantContext → controller
@@ -95,31 +90,28 @@ auth.optionalAuth → tenant.setTenantContextFromQuery → controller
 
 ---
 
-## Arquitectura Frontend
+## Frontend - Componentes Principales
 
-### Componentes por Área
+| Área | Qty | Descripción |
+|------|-----|-------------|
+| marketplace | 15 | Perfiles, reseñas, agendamiento público, mapa |
+| inventario | 12 | Productos, kardex, órdenes compra (4 subcomponentes) |
+| citas | 10 | Calendario día/mes, modales, filtros |
+| comisiones | 9 | Dashboard, reportes, configuración |
+| pos | 8 | Venta, carrito, cliente selector, devoluciones |
+| ui | 8 | Button, Modal, Input, Select, Toast, ConfirmDialog |
+| dashboard | 7 | Widgets, estadísticas, setup checklist |
+| bloqueos | 6 | Calendario, modales, filtros |
+| profesionales | 5 | Gestión, horarios, servicios, stats |
 
-| Área | Componentes | Descripción |
-|------|-------------|-------------|
-| marketplace | 19 | Perfiles, reseñas, agendamiento público |
-| inventario | 12 | Productos, kardex, órdenes |
-| citas | 10 | Calendario, modales |
-| comisiones | 9 | Dashboard, reportes |
-| pos | 8 | Venta, carrito |
-| ui | 8 | Botones, modales, inputs |
-| dashboard | 7 | Widgets, estadísticas |
-| bloqueos | 6 | Calendario bloqueos |
-| profesionales | 5 | Gestión, horarios |
-| clientes/chatbots | 4 c/u | CRUD, config |
-| storage | 3 | FileUploader, FileList, StorageUsage |
-| auth/servicios/superadmin | 3 c/u | Login, CRUD, panel |
+---
 
-### Hooks Principales (29)
+## Hooks por Módulo (30)
 
-**Core**: useAuth, useModulos, useAccesoModulo, useToast
-**Agendamiento**: useCitas, useProfesionales, useServicios, useHorarios, useBloqueos, useRecordatorios
+**Core**: useAuth, useModulos, useAccesoModulo, useToast, useUbicaciones
+**Agendamiento**: useCitas, useProfesionales, useServicios, useHorarios, useBloqueos, useTiposBloqueo, useTiposProfesional, useRecordatorios
 **Inventario**: useInventario, useProductos, useCategorias, useProveedores, useOrdenesCompra
-**Otros**: usePOS, useVentas, useClientes, useComisiones, useMarketplace, useChatbots, useStorage
+**Otros**: usePOS, useVentas, useClientes, useComisiones, useMarketplace, useChatbots, useStorage, useEventosDigitales, useSuperAdmin, useEstadisticas
 
 ---
 
@@ -131,8 +123,6 @@ auth.optionalAuth → tenant.setTenantContextFromQuery → controller
 | `admin/propietario` | Requerida | CRUD completo en su org |
 | `empleado` | Requerida | Solo módulos en `modulos_acceso` |
 | `bot` | Requerida | READ + CRUD citas (MCP) |
-
-**Constraint**: Solo `super_admin` puede tener `organizacion_id = NULL`.
 
 ---
 
@@ -150,106 +140,77 @@ MCP Server (JSON-RPC 2.0 + JWT 180d)
 Backend API → PostgreSQL (RLS)
 ```
 
-### Tools
+### Tools (8)
 
 | Tool | Descripción |
 |------|-------------|
 | listarServicios | Catálogo con precios y duración |
-| verificarDisponibilidad | Slots libres |
-| buscarCliente | Por teléfono o nombre |
+| verificarDisponibilidad | Slots libres (soporta múltiples servicios) |
+| buscarCliente | Por teléfono, nombre o sender |
 | buscarCitasCliente | Historial del cliente |
 | crearCita | Múltiples servicios, auto-crea cliente |
 | reagendarCita | Validación disponibilidad |
 | modificarServiciosCita | Cambiar servicios sin mover fecha |
 | confirmarCita | Marcar cita confirmada |
 
+**Características**: Auto-detección Telegram/WhatsApp, normalización de fechas/horas variadas, soporte 1-10 servicios por cita.
+
 ---
 
-## Storage (MinIO)
+## Servicios Backend (20)
 
-**Estado**: 85% implementado
+| Servicio | Descripción |
+|----------|-------------|
+| configService | Config centralizada con cache (TTL 60s) |
+| emailService | SMTP con templates (reset, activación, invitación) |
+| mercadopago.service | Integración pagos MercadoPago |
+| n8nService | Gestión workflows n8n |
+| n8nCredentialService | Credenciales Telegram/WhatsApp |
+| n8nMcpCredentialsService | JWT tokens MCP (180d) |
+| ticketPDF.service | Tickets térmicos 80mm |
+| tokenBlacklistService | Blacklist JWT con Redis |
+| storage/* | MinIO client, image processor, validator |
 
-### Módulos Integrados
+---
 
-- Organizaciones (logos)
-- Profesionales (fotos)
-- Productos (imágenes)
-- Servicios (imágenes)
-- Clientes (fotos)
-- Marketplace (logo, portada, galería)
+## Estructura SQL
 
-### Endpoints
+| Módulo | Tablas | Descripción |
+|--------|--------|-------------|
+| nucleo | 8 | Organizaciones, usuarios, planes, suscripciones |
+| negocio | 5 | Profesionales, clientes, servicios |
+| citas | 2 | Citas (particionada), citas_servicios |
+| inventario | 8 | Productos, movimientos (particionada), órdenes |
+| pos | 2 | Ventas, items |
+| comisiones | 3 | Config, profesionales, historial |
+| marketplace | 4 | Perfiles, reseñas, analytics, categorías |
+| eventos-digitales | 6 | Eventos, invitados, mesa regalos, felicitaciones |
+| chatbots | 2 | Config, credenciales |
+| auditoria | 2 | Eventos (particionada), archivo |
 
-```
-POST   /api/v1/storage/upload          # Subir archivo
-DELETE /api/v1/storage/:id             # Eliminar
-GET    /api/v1/storage/files           # Listar
-GET    /api/v1/storage/usage           # Uso almacenamiento
-GET    /api/v1/storage/presigned/:id   # URL firmada
-```
-
-### Frontend
-
-```javascript
-import { useUploadArchivo } from '@/hooks/useStorage';
-
-const uploadMutation = useUploadArchivo();
-const resultado = await uploadMutation.mutateAsync({
-  file,
-  folder: 'productos',
-  isPublic: true
-});
-```
+**Tablas Particionadas**: citas, eventos_sistema, movimientos_inventario (RANGE mensual)
 
 ---
 
 ## Reglas de Desarrollo
 
 ### Backend
-
 1. **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
 2. **withBypass**: Solo para JOINs multi-tabla
 3. **asyncHandler**: Obligatorio en todas las routes
-4. **Exports**: Todo middleware en `middleware/index.js`
-5. **Variable RLS**: Usar `app.current_tenant_id` (NO `app.current_organization_id`)
+4. **Variable RLS**: Usar `app.current_tenant_id`
 
 ### Frontend
-
 1. **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 2. **Invalidar queries**: Tras mutaciones `queryClient.invalidateQueries()`
 3. **Limpiar cache**: Login/Logout `queryClient.clear()`
 
 ### Mobile-First
-
 ```jsx
-// Headers
 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
-// Grids
 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-
-// Botones
 <Button className="w-full sm:w-auto">
 ```
-
----
-
-## Estructura SQL
-
-| Carpeta | Contenido |
-|---------|-----------|
-| nucleo | Organizaciones, usuarios, planes, suscripciones |
-| agendamiento | Profesionales, horarios |
-| citas | Citas (particionada), citas_servicios |
-| inventario | Productos, movimientos (particionada), órdenes |
-| pos | Ventas, detalles |
-| comisiones | Comisiones, configuración |
-| marketplace | Perfiles, reseñas |
-| chatbots | Configuración, memoria |
-| auditoria | Eventos (particionada), logs |
-| storage | archivos_storage, límites |
-
-**Particionadas**: citas, eventos_sistema, movimientos_inventario (RANGE mensual)
 
 ---
 
@@ -261,18 +222,17 @@ const resultado = await uploadMutation.mutateAsync({
 | "field not allowed to be empty" | Sanitizar a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | RLS policy violation | Verificar `app.current_tenant_id` |
-| Chatbot no responde | Verificar workflow n8n, revisar logs |
 | MCP tool falla | Verificar JWT (180d), logs mcp-server |
 
 ---
 
 ## Archivos Clave
 
-**Backend Core**: `utils/rlsContextManager.js`, `middleware/index.js`
+**Backend**: `utils/rlsContextManager.js`, `middleware/index.js`
 **Auth**: `modules/core/controllers/auth.controller.js`
-**MCP**: `backend/mcp-server/`, `app/utils/mcpTokenGenerator.js`
-**Storage**: `services/storage/`, `modules/storage/`, `middleware/storage.js`
+**MCP**: `backend/mcp-server/tools/`, `app/utils/mcpTokenGenerator.js`
+**Storage**: `services/storage/`, `modules/storage/`
 
 ---
 
-**Versión**: 35.0 | **Actualizado**: 4 Dic 2025 | **Estado**: Production Ready
+**Versión**: 36.0 | **Actualizado**: 5 Dic 2025 | **Estado**: Production Ready

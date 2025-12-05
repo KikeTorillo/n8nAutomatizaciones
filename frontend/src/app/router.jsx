@@ -96,6 +96,12 @@ const EventoDetailPage = lazy(() => import('@/pages/eventos-digitales/EventoDeta
 const EventoFormPage = lazy(() => import('@/pages/eventos-digitales/EventoFormPage'));
 const EventoPublicoPage = lazy(() => import('@/pages/eventos-digitales/EventoPublicoPage'));
 
+// Páginas de Contabilidad (Dic 2025)
+const ContabilidadPage = lazy(() => import('@/pages/contabilidad/ContabilidadPage'));
+const CuentasContablesPage = lazy(() => import('@/pages/contabilidad/CuentasContablesPage'));
+const AsientosContablesPage = lazy(() => import('@/pages/contabilidad/AsientosContablesPage'));
+const ReportesContablesPage = lazy(() => import('@/pages/contabilidad/ReportesContablesPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -462,6 +468,40 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(RecordatoriosPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Contabilidad (Dic 2025)
+      {
+        path: 'contabilidad',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ContabilidadPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'contabilidad/cuentas',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(CuentasContablesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'contabilidad/asientos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(AsientosContablesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'contabilidad/reportes',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReportesContablesPage)}
           </ProtectedRoute>
         ),
       },

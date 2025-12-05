@@ -22,6 +22,18 @@ class ResponseHelper {
   }
 
   /**
+   * Respuesta de recurso creado (201)
+   */
+  static created(res, data = null, message = 'Recurso creado exitosamente') {
+    return res.status(201).json({
+      success: true,
+      message,
+      data,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  /**
    * Respuesta de error
    */
   static error(res, message = 'Error interno del servidor', statusCode = 500, dataOrErrors = null) {

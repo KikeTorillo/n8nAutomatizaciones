@@ -18,6 +18,7 @@ import {
   UserCircle,
   Shield,
   PartyPopper,
+  BookOpen,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -170,6 +171,18 @@ function AppHomePage() {
       color: 'text-emerald-600',
       bgColor: 'bg-emerald-100',
       enabled: tieneComisiones,
+      badge: 0,
+      adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'contabilidad',
+      name: 'Contabilidad',
+      description: 'Catálogo de cuentas y asientos',
+      icon: BookOpen,
+      path: '/contabilidad',
+      color: 'text-amber-600',
+      bgColor: 'bg-amber-100',
+      enabled: true, // Siempre disponible
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },

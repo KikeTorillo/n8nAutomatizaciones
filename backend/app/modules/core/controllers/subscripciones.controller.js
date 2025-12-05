@@ -154,10 +154,10 @@ class SubscripcionesController {
             s.*,
             p.nombre_plan,
             p.codigo_plan,
-            p.max_profesionales,
-            p.max_servicios,
-            p.max_usuarios,
-            p.max_citas_mes
+            p.limite_profesionales,
+            p.limite_servicios,
+            p.limite_usuarios,
+            p.limite_citas_mes
           FROM subscripciones s
           INNER JOIN planes_subscripcion p ON s.plan_id = p.id
           WHERE s.organizacion_id = $1 AND s.activa = true
