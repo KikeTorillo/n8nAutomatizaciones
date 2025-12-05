@@ -28,7 +28,8 @@ LABEL description="Backend API Express en producción"
 WORKDIR /app
 
 # Instalar dumb-init para manejo correcto de señales
-RUN apk add --no-cache dumb-init
+# vips-dev requerido para Sharp (procesamiento de imágenes MinIO)
+RUN apk add --no-cache dumb-init vips-dev
 
 # Crear usuario no-root
 RUN addgroup -g 1001 -S nodejs && \

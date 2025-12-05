@@ -1,6 +1,6 @@
 # Sistema de Almacenamiento con MinIO
 
-**Estado**: ✅ Implementado (85%)
+**Estado**: ✅ Implementado (98%)
 **Última actualización**: 4 Diciembre 2025
 
 ---
@@ -189,12 +189,13 @@ const url = resultado.url;        // URL pública del archivo
 
 ### Estado Actual
 
-| Archivo | Estado | Acción Requerida |
-|---------|--------|------------------|
-| `backend/app/Dockerfile.prod` | ❌ Sin vips-dev | Agregar `apk add vips-dev` |
-| `docker-compose.prod.yml` | ❌ Sin MinIO | Agregar servicio minio |
-| `docker-compose.prod.local.yml` | ❌ Sin MinIO | Agregar servicio minio |
-| Variables .env.prod | ❌ Incompleto | Agregar variables MinIO |
+| Archivo | Estado | Observaciones |
+|---------|--------|---------------|
+| `backend/app/Dockerfile.prod` | ✅ | vips-dev agregado |
+| `docker-compose.prod.yml` | ✅ | Servicio minio + variables backend |
+| `docker-compose.prod.local.yml` | ✅ | Servicio minio + variables backend |
+| `.env.prod` | ✅ | Variables MinIO configuradas |
+| `.env.prod.local` | ✅ | Variables MinIO configuradas |
 
 ### 1. Modificar Dockerfile.prod
 

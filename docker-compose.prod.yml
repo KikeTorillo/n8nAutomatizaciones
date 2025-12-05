@@ -155,6 +155,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
     command: ["sh", "-c", "sleep 30 && node app.js"]
     environment:
       # Database
@@ -207,6 +209,17 @@ services:
       REDIS_HOST: ${REDIS_HOST}
       REDIS_PORT: ${REDIS_PORT}
       REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+      # MinIO Storage
+      MINIO_ENDPOINT: ${MINIO_ENDPOINT}
+      MINIO_PORT: ${MINIO_PORT}
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_USE_SSL: ${MINIO_USE_SSL}
+      MINIO_BUCKET_PUBLIC: ${MINIO_BUCKET_PUBLIC}
+      MINIO_BUCKET_PRIVATE: ${MINIO_BUCKET_PRIVATE}
+      MINIO_BUCKET_TEMP: ${MINIO_BUCKET_TEMP}
+      MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL}
 
       # Email SMTP
       SMTP_HOST: ${SMTP_HOST}
@@ -302,6 +315,41 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+  # ========================================
+  # MINIO - Object Storage (S3 Compatible)
+  # ========================================
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio_storage
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      TZ: ${TZ}
+    volumes:
+      - minio_data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# ========================================
+# VOLUMES
+# ========================================
+
+volumes:
+  minio_data:
+    driver: local
 
 # ========================================
 # NETWORKS
