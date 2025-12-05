@@ -334,7 +334,7 @@ class InvitadoModel {
 
             return {
                 invitados: result.rows,
-                paginacion: PaginationHelper.getPaginationInfo(total, filtros.pagina || 1, filtros.limite || 50)
+                paginacion: PaginationHelper.getPaginationInfo(filtros.pagina || 1, filtros.limite || 50, total)
             };
         });
     }

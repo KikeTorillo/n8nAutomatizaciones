@@ -10,6 +10,7 @@
 
 const EventoModel = require('../models/evento.model');
 const InvitadoModel = require('../models/invitado.model');
+const MesaRegalosModel = require('../models/mesa-regalos.model');
 const logger = require('../../../utils/logger');
 const { ResponseHelper } = require('../../../utils/helpers');
 
@@ -183,6 +184,41 @@ class PublicController {
         } catch (error) {
             logger.error('[PublicController.obtenerUbicaciones] Error', { error: error.message });
             return ResponseHelper.error(res, 'Error obteniendo ubicaciones', 500);
+        }
+    }
+
+    /**
+     * Obtener mesa de regalos del evento
+     * GET /api/v1/public/evento/:slug/regalos
+     */
+    static async obtenerRegalos(req, res) {
+        try {
+            const { slug } = req.params;
+
+            const evento = await EventoModel.obtenerPorSlug(slug);
+
+            if (!evento) {
+                return ResponseHelper.error(res, 'Evento no encontrado', 404);
+            }
+
+            // Verificar si la mesa de regalos está habilitada
+            if (evento.configuracion?.mostrar_mesa_regalos === false) {
+                return ResponseHelper.success(res, []);
+            }
+
+            const regalos = await MesaRegalosModel.obtenerPublica(evento.id);
+
+            logger.info('[PublicController.obtenerRegalos] Mesa de regalos consultada', {
+                slug,
+                evento_id: evento.id,
+                total_regalos: regalos.length
+            });
+
+            return ResponseHelper.success(res, regalos);
+
+        } catch (error) {
+            logger.error('[PublicController.obtenerRegalos] Error', { error: error.message });
+            return ResponseHelper.error(res, 'Error obteniendo mesa de regalos', 500);
         }
     }
 

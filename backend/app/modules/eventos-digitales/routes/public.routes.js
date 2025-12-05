@@ -6,10 +6,11 @@
  *
  * Endpoints:
  * GET  /api/v1/public/evento/:slug                    - Info del evento
+ * GET  /api/v1/public/evento/:slug/ubicaciones        - Ubicaciones del evento
+ * GET  /api/v1/public/evento/:slug/regalos            - Mesa de regalos
  * GET  /api/v1/public/evento/:slug/:token             - Invitación personalizada
  * POST /api/v1/public/evento/:slug/:token/rsvp        - Confirmar asistencia
  * GET  /api/v1/public/evento/:slug/:token/whatsapp    - Generar mensaje WhatsApp
- * GET  /api/v1/public/evento/:slug/ubicaciones        - Ubicaciones del evento
  *
  * Fecha creación: 4 Diciembre 2025
  */
@@ -54,6 +55,16 @@ router.get('/evento/:slug/ubicaciones',
     rateLimiting.apiRateLimit,
     validate(publicSchemas.obtenerEventoPublico),
     asyncHandler(PublicController.obtenerUbicaciones)
+);
+
+/**
+ * GET /evento/:slug/regalos
+ * Obtener mesa de regalos del evento
+ */
+router.get('/evento/:slug/regalos',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.obtenerEventoPublico),
+    asyncHandler(PublicController.obtenerRegalos)
 );
 
 /**

@@ -97,7 +97,7 @@ function EventoDetailPage() {
 
   // Forms state
   const [invitadoForm, setInvitadoForm] = useState({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
-  const [ubicacionForm, setUbicacionForm] = useState({ nombre: '', tipo: 'ceremonia', direccion: '', hora: '', google_maps_url: '' });
+  const [ubicacionForm, setUbicacionForm] = useState({ nombre: '', tipo: 'ceremonia', direccion: '', hora_inicio: '', hora_fin: '', google_maps_url: '' });
   const [regaloForm, setRegaloForm] = useState({ nombre: '', tipo: 'producto', descripcion: '', precio: '', url_externa: '' });
 
   const handlePublicar = async () => {
@@ -168,7 +168,8 @@ function EventoDetailPage() {
         nombre: ubicacionForm.nombre,
         tipo: ubicacionForm.tipo,
         direccion: ubicacionForm.direccion || undefined,
-        hora: ubicacionForm.hora || undefined,
+        hora_inicio: ubicacionForm.hora_inicio || undefined,
+        hora_fin: ubicacionForm.hora_fin || undefined,
         google_maps_url: ubicacionForm.google_maps_url || undefined,
       };
 
@@ -180,7 +181,7 @@ function EventoDetailPage() {
         await crearUbicacion.mutateAsync({ eventoId: id, data });
         toast.success('Ubicación agregada');
       }
-      setUbicacionForm({ nombre: '', tipo: 'ceremonia', direccion: '', hora: '', google_maps_url: '' });
+      setUbicacionForm({ nombre: '', tipo: 'ceremonia', direccion: '', hora_inicio: '', hora_fin: '', google_maps_url: '' });
       setShowUbicacionForm(false);
     } catch (error) {
       toast.error(error.message);
@@ -192,7 +193,8 @@ function EventoDetailPage() {
       nombre: ubi.nombre,
       tipo: ubi.tipo || 'ceremonia',
       direccion: ubi.direccion || '',
-      hora: ubi.hora || '',
+      hora_inicio: ubi.hora_inicio || '',
+      hora_fin: ubi.hora_fin || '',
       google_maps_url: ubi.google_maps_url || '',
     });
     setEditingUbicacionId(ubi.id);
@@ -200,7 +202,7 @@ function EventoDetailPage() {
   };
 
   const handleCancelarUbicacion = () => {
-    setUbicacionForm({ nombre: '', tipo: 'ceremonia', direccion: '', hora: '', google_maps_url: '' });
+    setUbicacionForm({ nombre: '', tipo: 'ceremonia', direccion: '', hora_inicio: '', hora_fin: '', google_maps_url: '' });
     setEditingUbicacionId(null);
     setShowUbicacionForm(false);
   };
@@ -716,10 +718,16 @@ function EventoDetailPage() {
                     onChange={(e) => setUbicacionForm({ ...ubicacionForm, direccion: e.target.value })}
                   />
                   <Input
-                    label="Hora"
+                    label="Hora Inicio"
                     type="time"
-                    value={ubicacionForm.hora}
-                    onChange={(e) => setUbicacionForm({ ...ubicacionForm, hora: e.target.value })}
+                    value={ubicacionForm.hora_inicio}
+                    onChange={(e) => setUbicacionForm({ ...ubicacionForm, hora_inicio: e.target.value })}
+                  />
+                  <Input
+                    label="Hora Fin"
+                    type="time"
+                    value={ubicacionForm.hora_fin}
+                    onChange={(e) => setUbicacionForm({ ...ubicacionForm, hora_fin: e.target.value })}
                   />
                   <Input
                     label="Link Google Maps"
@@ -771,7 +779,12 @@ function EventoDetailPage() {
                       </div>
                     </div>
                     {ubi.direccion && <p className="text-sm text-gray-600 flex items-center gap-1"><MapPin className="w-4 h-4" />{ubi.direccion}</p>}
-                    {ubi.hora && <p className="text-sm text-gray-600 flex items-center gap-1"><Clock className="w-4 h-4" />{ubi.hora}</p>}
+                    {(ubi.hora_inicio || ubi.hora_fin) && (
+                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {ubi.hora_inicio}{ubi.hora_inicio && ubi.hora_fin && ' - '}{ubi.hora_fin}
+                      </p>
+                    )}
                     {ubi.google_maps_url && (
                       <a href={ubi.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1 mt-2">
                         <ExternalLink className="w-4 h-4" />Ver en Google Maps

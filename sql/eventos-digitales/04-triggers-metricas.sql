@@ -176,7 +176,8 @@ RETURNS TABLE (
     total_asistentes INTEGER,
     -- Ubicaciones
     ubicaciones JSONB,
-    -- Mesa de regalos count
+    -- Mesa de regalos
+    regalos JSONB,
     total_regalos INTEGER,
     -- Felicitaciones count
     total_felicitaciones INTEGER
@@ -232,6 +233,24 @@ BEGIN
             ), '[]'::jsonb)
             FROM ubicaciones_evento u
             WHERE u.evento_id = e.id AND u.activo = true
+        ),
+        -- Regalos como JSONB array
+        (
+            SELECT COALESCE(jsonb_agg(
+                jsonb_build_object(
+                    'id', m.id,
+                    'tipo', m.tipo,
+                    'nombre', m.nombre,
+                    'descripcion', m.descripcion,
+                    'precio', m.precio,
+                    'imagen_url', m.imagen_url,
+                    'url_externa', m.url_externa,
+                    'comprado', m.comprado,
+                    'orden', m.orden
+                ) ORDER BY m.orden, m.id
+            ), '[]'::jsonb)
+            FROM mesa_regalos_evento m
+            WHERE m.evento_id = e.id AND m.activo = true
         ),
         -- Total regalos
         (SELECT COUNT(*) FROM mesa_regalos_evento m WHERE m.evento_id = e.id AND m.activo = true)::INTEGER,

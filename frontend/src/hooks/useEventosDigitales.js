@@ -100,10 +100,11 @@ export function useInvitados(eventoId, params = {}) {
       }, {});
 
       const response = await eventosDigitalesApi.listarInvitados(eventoId, sanitizedParams);
+      const data = response.data.data;
       return {
-        invitados: response.data.data.invitados || [],
-        paginacion: response.data.data.paginacion || null,
-        total: response.data.data.total || 0,
+        invitados: data.invitados || [],
+        paginacion: data.paginacion || null,
+        total: data.paginacion?.total || data.invitados?.length || 0,
       };
     },
     enabled: !!eventoId,
@@ -654,6 +655,33 @@ export function useExportarInvitados() {
 // ==================== MUTATIONS UBICACIONES (3) ====================
 
 /**
+ * Extrae mensajes de error detallados de la respuesta del backend
+ * @param {Object} responseData - response.data del error de axios
+ * @returns {string} Mensaje de error formateado
+ */
+function extraerMensajesValidacion(responseData) {
+  if (!responseData?.errors) {
+    return responseData?.message || 'Error de validación';
+  }
+
+  const errores = [];
+  // Los errores vienen agrupados por tipo: body, params, query
+  for (const tipo of ['body', 'params', 'query']) {
+    if (Array.isArray(responseData.errors[tipo])) {
+      for (const err of responseData.errors[tipo]) {
+        errores.push(err.message);
+      }
+    }
+  }
+
+  if (errores.length === 0) {
+    return responseData?.message || 'Error de validación';
+  }
+
+  return errores.join('. ');
+}
+
+/**
  * Hook para crear ubicación
  * @returns {Object} { mutate, mutateAsync, isLoading, error }
  */
@@ -677,9 +705,8 @@ export function useCrearUbicacion() {
       queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', variables.eventoId] });
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al crear ubicación');
+      const mensaje = extraerMensajesValidacion(error.response?.data);
+      throw new Error(mensaje);
     },
   });
 }
@@ -708,9 +735,8 @@ export function useActualizarUbicacion() {
       queryClient.invalidateQueries({ queryKey: ['ubicaciones-evento', data.eventoId] });
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      if (backendMessage) throw new Error(backendMessage);
-      throw new Error('Error al actualizar ubicación');
+      const mensaje = extraerMensajesValidacion(error.response?.data);
+      throw new Error(mensaje);
     },
   });
 }
