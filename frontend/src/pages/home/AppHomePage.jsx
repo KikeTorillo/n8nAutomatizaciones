@@ -17,6 +17,7 @@ import {
   Briefcase,
   UserCircle,
   Shield,
+  PartyPopper,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -51,6 +52,7 @@ function AppHomePage() {
     tieneComisiones,
     tieneChatbots,
     tieneMarketplace,
+    tieneEventosDigitales,
     esPlanFree,
   } = useModulos();
 
@@ -192,6 +194,18 @@ function AppHomePage() {
       color: 'text-pink-600',
       bgColor: 'bg-pink-100',
       enabled: tieneMarketplace,
+      badge: 0,
+      adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'eventos-digitales',
+      name: 'Invitaciones',
+      description: 'Bodas, XV años y más',
+      icon: PartyPopper,
+      path: '/eventos-digitales',
+      color: 'text-rose-600',
+      bgColor: 'bg-rose-100',
+      enabled: tieneEventosDigitales,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },

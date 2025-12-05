@@ -259,7 +259,8 @@ class ModulesMiddleware {
       agendamiento: 'El módulo de Agendamiento no está activo. Este es el módulo base del sistema.',
       comisiones: 'El módulo de Comisiones no está activo. Requiere el módulo de Agendamiento.',
       marketplace: 'El módulo de Marketplace no está activo. Contáctanos para activarlo.',
-      chatbots: 'El módulo de Chatbots IA no está activo. Requiere el módulo de Agendamiento.'
+      chatbots: 'El módulo de Chatbots IA no está activo. Requiere el módulo de Agendamiento.',
+      'eventos-digitales': 'El módulo de Eventos Digitales no está activo. Permite crear invitaciones digitales para bodas, XV años, bautizos y más. Contáctanos para activarlo.'
     };
 
     return mensajes[moduleName] || `El módulo "${moduleName}" no está activo en tu plan.`;

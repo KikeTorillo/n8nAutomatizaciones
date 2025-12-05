@@ -13,7 +13,8 @@ const MODULOS_VALIDOS = [
   'pos',
   'marketplace',
   'comisiones',
-  'chatbots'
+  'chatbots',
+  'eventos-digitales'
 ];
 
 const modulosSchemas = {

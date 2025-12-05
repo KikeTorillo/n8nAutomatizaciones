@@ -70,6 +70,7 @@ const SuperAdminOrganizaciones = lazy(() => import('@/pages/superadmin/Organizac
 const SuperAdminPlanes = lazy(() => import('@/pages/superadmin/Planes'));
 const SuperAdminGestionPlanes = lazy(() => import('@/pages/superadmin/GestionPlanes'));
 const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
+const PlantillasEventos = lazy(() => import('@/pages/superadmin/PlantillasEventos'));
 
 // Página de Setup Inicial
 const InitialSetup = lazy(() => import('@/pages/setup/InitialSetup'));
@@ -88,6 +89,12 @@ const RegistroInvitacionPage = lazy(() => import('@/pages/auth/RegistroInvitacio
 
 // Páginas de Activación de Cuenta (Nov 2025 - Fase 2)
 const ActivarCuentaPage = lazy(() => import('@/pages/auth/ActivarCuentaPage'));
+
+// Páginas de Eventos Digitales (Dic 2025)
+const EventosPage = lazy(() => import('@/pages/eventos-digitales/EventosPage'));
+const EventoDetailPage = lazy(() => import('@/pages/eventos-digitales/EventoDetailPage'));
+const EventoFormPage = lazy(() => import('@/pages/eventos-digitales/EventoFormPage'));
+const EventoPublicoPage = lazy(() => import('@/pages/eventos-digitales/EventoPublicoPage'));
 
 // Loading fallback
 const loadingFallback = (
@@ -419,6 +426,10 @@ export const router = createBrowserRouter([
             path: 'marketplace',
             element: withSuspense(MarketplaceGestion),
           },
+          {
+            path: 'plantillas-eventos',
+            element: withSuspense(PlantillasEventos),
+          },
         ],
       },
       // Rutas de Configuración
@@ -453,6 +464,50 @@ export const router = createBrowserRouter([
             {withSuspense(RecordatoriosPage)}
           </ProtectedRoute>
         ),
+      },
+
+      // Rutas de Eventos Digitales (Dic 2025)
+      {
+        path: 'eventos-digitales',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(EventosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'eventos-digitales/nuevo',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(EventoFormPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'eventos-digitales/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(EventoDetailPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'eventos-digitales/:id/editar',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(EventoFormPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas públicas de Eventos Digitales (Dic 2025)
+      {
+        path: 'e/:slug',
+        element: withSuspense(EventoPublicoPage),
+      },
+      {
+        path: 'e/:slug/:token',
+        element: withSuspense(EventoPublicoPage),
       },
 
       // ⚠️ IMPORTANTE: Rutas dinámicas DEBEN IR AL FINAL

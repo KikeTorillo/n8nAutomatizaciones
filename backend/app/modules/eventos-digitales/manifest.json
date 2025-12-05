@@ -1,0 +1,33 @@
+{
+  "name": "eventos-digitales",
+  "version": "1.0.0",
+  "description": "Módulo de Eventos Digitales - Invitaciones para bodas, XV años, bautizos, cumpleaños y eventos corporativos",
+  "author": "Nexo Team",
+  "depends": ["core"],
+  "routes": {
+    "eventos": "/api/v1/eventos-digitales",
+    "public": "/api/v1/public/evento"
+  },
+  "models": [
+    "evento",
+    "invitado",
+    "ubicacion",
+    "mesa-regalos",
+    "felicitacion",
+    "plantilla"
+  ],
+  "permissions": {
+    "admin": ["*"],
+    "propietario": ["*"],
+    "empleado": ["read", "create", "update"],
+    "bot": ["read"]
+  },
+  "features": {
+    "rsvp": true,
+    "mesa_regalos": true,
+    "felicitaciones": true,
+    "qr_codes": true,
+    "csv_import": true,
+    "whatsapp_share": true
+  }
+}

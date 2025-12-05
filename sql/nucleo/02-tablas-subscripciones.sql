@@ -38,6 +38,11 @@ CREATE TABLE planes_subscripcion (
     limite_usuarios INTEGER DEFAULT 3,
     limite_citas_mes INTEGER,
 
+    -- Límites para módulo eventos-digitales
+    limite_eventos_activos INTEGER,         -- Eventos activos simultáneos. NULL = ilimitado
+    limite_invitados_por_evento INTEGER,    -- Invitados por evento. NULL = ilimitado
+    limite_fotos_galeria_evento INTEGER DEFAULT 5,  -- Fotos en galería del evento
+
     -- Características habilitadas
     funciones_habilitadas JSONB DEFAULT '{}',
 
@@ -65,7 +70,10 @@ CREATE TABLE planes_subscripcion (
             (limite_clientes IS NULL OR limite_clientes > 0) AND
             (limite_servicios IS NULL OR limite_servicios > 0) AND
             (limite_usuarios > 0) AND
-            (limite_citas_mes IS NULL OR limite_citas_mes > 0)
+            (limite_citas_mes IS NULL OR limite_citas_mes > 0) AND
+            (limite_eventos_activos IS NULL OR limite_eventos_activos > 0) AND
+            (limite_invitados_por_evento IS NULL OR limite_invitados_por_evento > 0) AND
+            (limite_fotos_galeria_evento IS NULL OR limite_fotos_galeria_evento > 0)
         )
 );
 
@@ -93,6 +101,10 @@ CREATE TABLE metricas_uso_organizacion (
     max_citas_mes INTEGER DEFAULT 0,
     mes_max_citas DATE,
 
+    -- Métricas módulo eventos-digitales
+    uso_eventos_activos INTEGER DEFAULT 0,   -- Eventos activos actuales
+    uso_invitados_total INTEGER DEFAULT 0,   -- Total invitados en todos los eventos
+
     -- Control de actualización
     ultima_actualizacion TIMESTAMPTZ DEFAULT NOW(),
 
@@ -104,7 +116,9 @@ CREATE TABLE metricas_uso_organizacion (
             uso_servicios >= 0 AND
             uso_usuarios >= 1 AND
             uso_citas_mes_actual >= 0 AND
-            max_citas_mes >= 0
+            max_citas_mes >= 0 AND
+            uso_eventos_activos >= 0 AND
+            uso_invitados_total >= 0
         )
 );
 

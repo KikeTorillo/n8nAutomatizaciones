@@ -21,6 +21,7 @@ import {
   ArrowLeft,
   AlertTriangle,
   Zap,
+  PartyPopper,
 } from 'lucide-react';
 
 /**
@@ -34,6 +35,7 @@ const ICONOS = {
   comisiones: DollarSign,
   marketplace: Globe,
   chatbots: Bot,
+  'eventos-digitales': PartyPopper,
 };
 
 /**
@@ -47,6 +49,7 @@ const COLORES = {
   comisiones: 'bg-yellow-100 text-yellow-600',
   marketplace: 'bg-pink-100 text-pink-600',
   chatbots: 'bg-cyan-100 text-cyan-600',
+  'eventos-digitales': 'bg-rose-100 text-rose-600',
 };
 
 /**

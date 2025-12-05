@@ -79,6 +79,16 @@ const MODULOS_DISPONIBLES = {
     dependencias: ['agendamiento'],
     icono: 'Bot',
     orden: 50
+  },
+  'eventos-digitales': {
+    nombre: 'eventos-digitales',
+    display_name: 'Invitaciones Digitales',
+    descripcion: 'Invitaciones para bodas, XV años, bautizos con RSVP y mesa de regalos',
+    incluido_en_todos: false,
+    puede_desactivar: true,
+    dependencias: [],
+    icono: 'PartyPopper',
+    orden: 60
   }
 };
 

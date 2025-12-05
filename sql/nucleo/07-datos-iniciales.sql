@@ -23,6 +23,7 @@ INSERT INTO planes_subscripcion (
     precio_mensual, precio_anual, precio_por_usuario, moneda,
     limite_profesionales, limite_clientes, limite_servicios,
     limite_usuarios, limite_citas_mes,
+    limite_eventos_activos, limite_invitados_por_evento, limite_fotos_galeria_evento,
     funciones_habilitadas, activo, orden_display
 ) VALUES
 
@@ -36,6 +37,7 @@ INSERT INTO planes_subscripcion (
  'Período de prueba de 14 días. Acceso completo para evaluar.',
  0.00, NULL, NULL, 'MXN',
  3, 50, 10, 2, 50,  -- Límites para trial
+ 1, 50, 5,  -- Eventos: 1 activo, 50 invitados, 5 fotos galería
  '{
    "soporte_email": true,
    "soporte_chat": false,
@@ -58,6 +60,7 @@ INSERT INTO planes_subscripcion (
  'Todas las apps incluidas. $249 MXN por usuario al mes.',
  249.00, 2490.00, 249.00, 'MXN',  -- precio_por_usuario = $249
  NULL, NULL, NULL, NULL, NULL,  -- Sin límites
+ NULL, NULL, 50,  -- Eventos: ilimitados, invitados ilimitados, 50 fotos galería
  '{
    "soporte_email": true,
    "soporte_chat": true,
@@ -82,6 +85,7 @@ INSERT INTO planes_subscripcion (
  'Plan a medida para organizaciones con necesidades específicas.',
  0.00, NULL, NULL, 'MXN',
  NULL, NULL, NULL, NULL, NULL,  -- Sin límites
+ NULL, NULL, 100,  -- Eventos: ilimitados, invitados ilimitados, 100 fotos galería
  '{
    "soporte_email": true,
    "soporte_chat": true,
@@ -110,6 +114,9 @@ ON CONFLICT (codigo_plan) DO UPDATE SET
     limite_servicios = EXCLUDED.limite_servicios,
     limite_usuarios = EXCLUDED.limite_usuarios,
     limite_citas_mes = EXCLUDED.limite_citas_mes,
+    limite_eventos_activos = EXCLUDED.limite_eventos_activos,
+    limite_invitados_por_evento = EXCLUDED.limite_invitados_por_evento,
+    limite_fotos_galeria_evento = EXCLUDED.limite_fotos_galeria_evento,
     funciones_habilitadas = EXCLUDED.funciones_habilitadas,
     activo = EXCLUDED.activo,
     orden_display = EXCLUDED.orden_display,

@@ -69,6 +69,20 @@ const recordatoriosRouter = require('../../../modules/recordatorios/routes/recor
 // ========================================
 const storageRouter = require('../../../modules/storage/routes');
 
+// ========================================
+// MÓDULO EVENTOS DIGITALES - Dic 2025
+// Invitaciones para bodas, XV años, bautizos, etc.
+// ========================================
+const {
+    eventosRoutes,
+    invitadosRoutes,
+    ubicacionesRoutes: eventosUbicacionesRoutes,
+    mesaRegalosRoutes,
+    felicitacionesRoutes,
+    plantillasRoutes,
+    publicRoutes: eventosPublicRoutes
+} = require('../../../modules/eventos-digitales/routes');
+
 function routerApi(app) {
     const router = express.Router();
 
@@ -132,6 +146,15 @@ function routerApi(app) {
 
     // Rutas de storage (MinIO) - Dic 2025
     router.use('/storage', storageRouter);
+
+    // Rutas de eventos digitales (invitaciones) - Dic 2025
+    router.use('/eventos-digitales', eventosRoutes);              // Gestión de eventos
+    router.use('/eventos-digitales', invitadosRoutes);            // Gestión de invitados
+    router.use('/eventos-digitales', eventosUbicacionesRoutes);   // Ubicaciones de eventos
+    router.use('/eventos-digitales', mesaRegalosRoutes);          // Mesa de regalos
+    router.use('/eventos-digitales', felicitacionesRoutes);       // Felicitaciones
+    router.use('/eventos-digitales', plantillasRoutes);           // Plantillas
+    router.use('/public', eventosPublicRoutes);                   // Rutas públicas (RSVP)
 }
 
 module.exports = routerApi;

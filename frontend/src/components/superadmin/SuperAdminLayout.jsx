@@ -105,6 +105,12 @@ export default function SuperAdminLayout() {
                         >
                             <span className="hidden sm:inline">🛍️ </span>Market
                         </Link>
+                        <Link
+                            to="/superadmin/plantillas-eventos"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                        >
+                            <span className="hidden sm:inline">🎨 </span>Plantillas
+                        </Link>
                     </div>
                 </div>
             </nav>
