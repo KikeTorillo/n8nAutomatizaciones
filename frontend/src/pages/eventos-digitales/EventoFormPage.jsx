@@ -507,36 +507,125 @@ function EventoFormPage() {
           {plantillas && plantillas.length > 0 && (
             <div className="bg-white rounded-lg shadow-sm p-6 border">
               <h2 className="text-lg font-semibold text-gray-900 mb-4">Plantilla de Diseño</h2>
+              <p className="text-sm text-gray-500 mb-4">Selecciona un estilo visual para tu invitación</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                {plantillas.map((plantilla) => (
-                  <button
-                    key={plantilla.id}
-                    type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, plantilla_id: plantilla.id }))}
-                    className={`
-                      relative rounded-lg border-2 overflow-hidden transition-all
-                      ${formData.plantilla_id == plantilla.id
-                        ? 'border-pink-500 ring-2 ring-pink-200'
-                        : 'border-gray-200 hover:border-gray-300'
-                      }
-                    `}
-                  >
-                    <div className="aspect-[3/4] bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                      {plantilla.preview_url ? (
-                        <img src={plantilla.preview_url} alt={plantilla.nombre} className="w-full h-full object-cover" />
-                      ) : (
-                        <PartyPopper className="w-12 h-12 text-pink-300" />
+                {plantillas.map((plantilla) => {
+                  const tema = plantilla.tema || {
+                    color_primario: '#ec4899',
+                    color_secundario: '#fce7f3',
+                    color_fondo: '#fdf2f8',
+                    color_texto: '#1f2937',
+                  };
+
+                  return (
+                    <button
+                      key={plantilla.id}
+                      type="button"
+                      onClick={() => setFormData(prev => ({ ...prev, plantilla_id: plantilla.id }))}
+                      className={`
+                        relative rounded-lg border-2 overflow-hidden transition-all
+                        ${formData.plantilla_id == plantilla.id
+                          ? 'ring-2 ring-offset-2'
+                          : 'hover:border-gray-300'
+                        }
+                      `}
+                      style={{
+                        borderColor: formData.plantilla_id == plantilla.id ? tema.color_primario : undefined,
+                        '--tw-ring-color': tema.color_primario,
+                      }}
+                    >
+                      {/* Preview del tema */}
+                      <div
+                        className="aspect-[3/4] flex flex-col items-center justify-center p-3"
+                        style={{ backgroundColor: tema.color_fondo }}
+                      >
+                        {plantilla.preview_url ? (
+                          <img src={plantilla.preview_url} alt={plantilla.nombre} className="w-full h-full object-cover rounded" />
+                        ) : (
+                          <>
+                            {/* Mini preview de colores */}
+                            <div className="flex gap-1 mb-2">
+                              <div
+                                className="w-4 h-4 rounded-full border border-white/50"
+                                style={{ backgroundColor: tema.color_primario }}
+                                title="Color primario"
+                              />
+                              <div
+                                className="w-4 h-4 rounded-full border border-white/50"
+                                style={{ backgroundColor: tema.color_secundario }}
+                                title="Color secundario"
+                              />
+                            </div>
+                            {/* Simulación de invitación */}
+                            <div
+                              className="w-full rounded-lg p-2 text-center"
+                              style={{ backgroundColor: tema.color_secundario }}
+                            >
+                              <div
+                                className="text-[10px] font-bold mb-1"
+                                style={{ color: tema.color_texto }}
+                              >
+                                Evento
+                              </div>
+                              <div
+                                className="w-full h-1 rounded mb-1"
+                                style={{ backgroundColor: tema.color_primario }}
+                              />
+                              <div className="flex justify-center gap-1">
+                                {[1, 2, 3].map(i => (
+                                  <div
+                                    key={i}
+                                    className="w-3 h-3 rounded"
+                                    style={{ backgroundColor: tema.color_fondo, border: `1px solid ${tema.color_primario}` }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <PartyPopper className="w-8 h-8 mt-2" style={{ color: tema.color_primario }} />
+                          </>
+                        )}
+                      </div>
+
+                      {/* Info de la plantilla */}
+                      <div className="p-2 bg-white border-t">
+                        <p className="text-sm font-medium text-gray-900 truncate">{plantilla.nombre}</p>
+                        <div className="flex items-center justify-between mt-1">
+                          {/* Paleta de colores */}
+                          <div className="flex gap-0.5">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: tema.color_primario }}
+                            />
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: tema.color_secundario }}
+                            />
+                            <div
+                              className="w-3 h-3 rounded-full border"
+                              style={{ backgroundColor: tema.color_fondo }}
+                            />
+                          </div>
+                          {plantilla.es_premium && (
+                            <span className="text-xs text-yellow-600 font-medium">Premium</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Indicador de seleccionado */}
+                      {formData.plantilla_id == plantilla.id && (
+                        <div
+                          className="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: tema.color_primario }}
+                        >
+                          <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
                       )}
-                    </div>
-                    <div className="p-2 bg-white">
-                      <p className="text-sm font-medium text-gray-900 truncate">{plantilla.nombre}</p>
-                      {plantilla.es_premium && (
-                        <span className="text-xs text-yellow-600">Premium</span>
-                      )}
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}

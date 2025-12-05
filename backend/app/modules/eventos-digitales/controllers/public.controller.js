@@ -87,7 +87,9 @@ class PublicController {
                 portada_url: invitacion.portada_url,
                 galeria_urls: invitacion.galeria_urls,
                 configuracion: invitacion.evento_configuracion,
-                estado: invitacion.evento_estado
+                estado: invitacion.evento_estado,
+                tema: invitacion.tema,
+                plantilla_nombre: invitacion.plantilla_nombre
             };
 
             const invitado = {

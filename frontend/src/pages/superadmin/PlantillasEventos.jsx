@@ -22,7 +22,36 @@ const TIPOS_EVENTO = [
   { value: 'bautizo', label: 'Bautizo' },
   { value: 'cumpleanos', label: 'Cumpleaños' },
   { value: 'corporativo', label: 'Corporativo' },
+  { value: 'universal', label: 'Universal' },
   { value: 'otro', label: 'Otro' },
+];
+
+const TEMA_DEFAULT = {
+  color_primario: '#ec4899',
+  color_secundario: '#fce7f3',
+  color_fondo: '#fdf2f8',
+  color_texto: '#1f2937',
+  color_texto_claro: '#6b7280',
+  fuente_titulo: 'Playfair Display',
+  fuente_cuerpo: 'Inter',
+};
+
+const FUENTES_DISPONIBLES = [
+  'Playfair Display',
+  'Inter',
+  'Cormorant Garamond',
+  'Great Vibes',
+  'Dancing Script',
+  'Montserrat',
+  'Lora',
+  'Merriweather',
+  'Poppins',
+  'Roboto',
+  'Open Sans',
+  'Raleway',
+  'Cinzel',
+  'Cinzel Decorative',
+  'Abril Fatface',
 ];
 
 function PlantillasEventos() {
@@ -39,6 +68,7 @@ function PlantillasEventos() {
     estilos_css: '',
     es_premium: false,
     preview_url: '',
+    tema: { ...TEMA_DEFAULT },
   });
 
   // Queries
@@ -60,6 +90,7 @@ function PlantillasEventos() {
       estilos_css: '',
       es_premium: false,
       preview_url: '',
+      tema: { ...TEMA_DEFAULT },
     });
     setEditingId(null);
     setShowForm(false);
@@ -75,9 +106,20 @@ function PlantillasEventos() {
       estilos_css: plantilla.estilos_css || '',
       es_premium: plantilla.es_premium || false,
       preview_url: plantilla.preview_url || '',
+      tema: plantilla.tema ? { ...TEMA_DEFAULT, ...plantilla.tema } : { ...TEMA_DEFAULT },
     });
     setEditingId(plantilla.id);
     setShowForm(true);
+  };
+
+  const handleTemaChange = (campo, valor) => {
+    setFormData(prev => ({
+      ...prev,
+      tema: {
+        ...prev.tema,
+        [campo]: valor,
+      }
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -91,13 +133,14 @@ function PlantillasEventos() {
     try {
       const data = {
         nombre: formData.nombre.trim(),
-        codigo: formData.codigo.trim().toLowerCase().replace(/\s+/g, '_'),
+        codigo: formData.codigo.trim().toLowerCase().replace(/\s+/g, '-'),
         tipo_evento: formData.tipo_evento,
         descripcion: formData.descripcion.trim() || undefined,
         estructura_html: formData.estructura_html || undefined,
         estilos_css: formData.estilos_css || undefined,
         es_premium: formData.es_premium,
         preview_url: formData.preview_url.trim() || undefined,
+        tema: formData.tema,
       };
 
       if (editingId) {
@@ -242,7 +285,172 @@ function PlantillasEventos() {
               />
             </div>
 
-            <label className="flex items-center gap-2">
+            {/* Editor de Tema */}
+            <div className="border-t pt-4 mt-4">
+              <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+                <Palette className="w-5 h-5" />
+                Tema Visual
+              </h3>
+
+              {/* Preview del tema */}
+              <div
+                className="rounded-lg p-4 mb-4"
+                style={{ backgroundColor: formData.tema.color_fondo }}
+              >
+                <div className="text-center space-y-2">
+                  <p
+                    className="text-lg font-bold"
+                    style={{ color: formData.tema.color_texto, fontFamily: formData.tema.fuente_titulo }}
+                  >
+                    Vista Previa
+                  </p>
+                  <p
+                    className="text-sm"
+                    style={{ color: formData.tema.color_texto_claro, fontFamily: formData.tema.fuente_cuerpo }}
+                  >
+                    Así se verá tu invitación
+                  </p>
+                  <div
+                    className="inline-block px-4 py-2 rounded-lg text-white text-sm font-medium"
+                    style={{ backgroundColor: formData.tema.color_primario }}
+                  >
+                    Botón de Acción
+                  </div>
+                  <div
+                    className="rounded-lg p-2 mt-2"
+                    style={{ backgroundColor: formData.tema.color_secundario }}
+                  >
+                    <p className="text-xs" style={{ color: formData.tema.color_texto }}>
+                      Sección secundaria
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Colores */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Primario</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.tema.color_primario}
+                      onChange={(e) => handleTemaChange('color_primario', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border"
+                    />
+                    <input
+                      type="text"
+                      value={formData.tema.color_primario}
+                      onChange={(e) => handleTemaChange('color_primario', e.target.value)}
+                      className="w-20 text-xs px-2 py-1 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Secundario</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.tema.color_secundario}
+                      onChange={(e) => handleTemaChange('color_secundario', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border"
+                    />
+                    <input
+                      type="text"
+                      value={formData.tema.color_secundario}
+                      onChange={(e) => handleTemaChange('color_secundario', e.target.value)}
+                      className="w-20 text-xs px-2 py-1 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Fondo</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.tema.color_fondo}
+                      onChange={(e) => handleTemaChange('color_fondo', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border"
+                    />
+                    <input
+                      type="text"
+                      value={formData.tema.color_fondo}
+                      onChange={(e) => handleTemaChange('color_fondo', e.target.value)}
+                      className="w-20 text-xs px-2 py-1 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Texto</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.tema.color_texto}
+                      onChange={(e) => handleTemaChange('color_texto', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border"
+                    />
+                    <input
+                      type="text"
+                      value={formData.tema.color_texto}
+                      onChange={(e) => handleTemaChange('color_texto', e.target.value)}
+                      className="w-20 text-xs px-2 py-1 border rounded"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-gray-700 mb-1">Texto Claro</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="color"
+                      value={formData.tema.color_texto_claro}
+                      onChange={(e) => handleTemaChange('color_texto_claro', e.target.value)}
+                      className="w-10 h-10 rounded cursor-pointer border"
+                    />
+                    <input
+                      type="text"
+                      value={formData.tema.color_texto_claro}
+                      onChange={(e) => handleTemaChange('color_texto_claro', e.target.value)}
+                      className="w-20 text-xs px-2 py-1 border rounded"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Fuentes */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuente para Títulos</label>
+                  <select
+                    value={formData.tema.fuente_titulo}
+                    onChange={(e) => handleTemaChange('fuente_titulo', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    {FUENTES_DISPONIBLES.map((fuente) => (
+                      <option key={fuente} value={fuente}>{fuente}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuente para Texto</label>
+                  <select
+                    value={formData.tema.fuente_cuerpo}
+                    onChange={(e) => handleTemaChange('fuente_cuerpo', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  >
+                    {FUENTES_DISPONIBLES.map((fuente) => (
+                      <option key={fuente} value={fuente}>{fuente}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 mt-4">
               <input
                 type="checkbox"
                 checked={formData.es_premium}
@@ -252,7 +460,7 @@ function PlantillasEventos() {
               <span className="text-sm text-gray-700">Es plantilla Premium</span>
             </label>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-4">
               <Button type="submit" disabled={crearPlantilla.isLoading || actualizarPlantilla.isLoading}>
                 {(crearPlantilla.isLoading || actualizarPlantilla.isLoading) ? 'Guardando...' : 'Guardar'}
               </Button>
@@ -269,72 +477,128 @@ function PlantillasEventos() {
         <LoadingSpinner />
       ) : plantillas.length > 0 ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {plantillas.map((plantilla) => (
-            <div key={plantilla.id} className="bg-white rounded-lg shadow-sm overflow-hidden border">
-              {/* Preview */}
-              <div className="aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                {plantilla.preview_url ? (
-                  <img
-                    src={plantilla.preview_url}
-                    alt={plantilla.nombre}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Palette className="w-16 h-16 text-gray-300" />
-                )}
-              </div>
+          {plantillas.map((plantilla) => {
+            const tema = plantilla.tema || TEMA_DEFAULT;
+            return (
+              <div key={plantilla.id} className="bg-white rounded-lg shadow-sm overflow-hidden border">
+                {/* Preview con tema */}
+                <div
+                  className="aspect-[4/3] flex flex-col items-center justify-center p-4"
+                  style={{ backgroundColor: tema.color_fondo }}
+                >
+                  {plantilla.preview_url ? (
+                    <img
+                      src={plantilla.preview_url}
+                      alt={plantilla.nombre}
+                      className="w-full h-full object-cover rounded"
+                    />
+                  ) : (
+                    <>
+                      {/* Mini preview del tema */}
+                      <div
+                        className="w-full rounded-lg p-3 text-center"
+                        style={{ backgroundColor: tema.color_secundario }}
+                      >
+                        <p
+                          className="text-sm font-bold mb-1"
+                          style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                        >
+                          Evento
+                        </p>
+                        <p
+                          className="text-xs mb-2"
+                          style={{ color: tema.color_texto_claro, fontFamily: tema.fuente_cuerpo }}
+                        >
+                          Tu invitación
+                        </p>
+                        <div
+                          className="inline-block px-3 py-1 rounded text-white text-xs"
+                          style={{ backgroundColor: tema.color_primario }}
+                        >
+                          Confirmar
+                        </div>
+                      </div>
+                      <Palette className="w-8 h-8 mt-2" style={{ color: tema.color_primario }} />
+                    </>
+                  )}
+                </div>
 
-              {/* Info */}
-              <div className="p-4">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{plantilla.nombre}</h3>
-                    <p className="text-sm text-gray-500">{plantilla.codigo}</p>
+                {/* Info */}
+                <div className="p-4">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">{plantilla.nombre}</h3>
+                      <p className="text-sm text-gray-500">{plantilla.codigo}</p>
+                    </div>
+                    {plantilla.es_premium && (
+                      <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded-full">
+                        Premium
+                      </span>
+                    )}
                   </div>
-                  {plantilla.es_premium && (
-                    <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded-full">
-                      Premium
+
+                  {/* Paleta de colores del tema */}
+                  <div className="flex items-center gap-1 mt-2">
+                    <div
+                      className="w-5 h-5 rounded-full border"
+                      style={{ backgroundColor: tema.color_primario }}
+                      title="Primario"
+                    />
+                    <div
+                      className="w-5 h-5 rounded-full border"
+                      style={{ backgroundColor: tema.color_secundario }}
+                      title="Secundario"
+                    />
+                    <div
+                      className="w-5 h-5 rounded-full border"
+                      style={{ backgroundColor: tema.color_fondo }}
+                      title="Fondo"
+                    />
+                    <div
+                      className="w-5 h-5 rounded-full border"
+                      style={{ backgroundColor: tema.color_texto }}
+                      title="Texto"
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                      {TIPOS_EVENTO.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
                     </span>
+                    {plantilla.activo === false && (
+                      <span className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">
+                        Inactiva
+                      </span>
+                    )}
+                  </div>
+
+                  {plantilla.descripcion && (
+                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{plantilla.descripcion}</p>
                   )}
-                </div>
 
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
-                    {TIPOS_EVENTO.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
-                  </span>
-                  {plantilla.activo === false && (
-                    <span className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">
-                      Inactiva
-                    </span>
-                  )}
-                </div>
-
-                {plantilla.descripcion && (
-                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{plantilla.descripcion}</p>
-                )}
-
-                {/* Actions */}
-                <div className="flex gap-2 mt-4 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEditar(plantilla)}
-                  >
-                    <Edit className="w-4 h-4 mr-1" />
-                    Editar
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEliminar(plantilla.id)}
-                    className="text-red-600 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
+                  {/* Actions */}
+                  <div className="flex gap-2 mt-4 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditar(plantilla)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEliminar(plantilla.id)}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       ) : (
         <div className="text-center py-12 bg-white rounded-lg">

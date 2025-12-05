@@ -69,10 +69,13 @@ const eventosSchemas = {
             configuracion: Joi.object({
                 mostrar_contador: Joi.boolean().optional(),
                 mostrar_mapa: Joi.boolean().optional(),
+                mostrar_ubicaciones: Joi.boolean().optional(),
                 mostrar_mesa_regalos: Joi.boolean().optional(),
                 mostrar_felicitaciones: Joi.boolean().optional(),
+                permitir_felicitaciones: Joi.boolean().optional(),
                 permitir_acompanantes: Joi.boolean().optional(),
-                mensaje_confirmacion: Joi.string().max(500).optional()
+                mensaje_bienvenida: Joi.string().max(500).optional().allow(null, ''),
+                mensaje_confirmacion: Joi.string().max(500).optional().allow(null, '')
             }).optional()
         })
     },

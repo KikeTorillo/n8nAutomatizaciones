@@ -227,9 +227,20 @@ class InvitadoModel {
                     e.portada_url,
                     e.galeria_urls,
                     e.configuracion as evento_configuracion,
-                    e.estado as evento_estado
+                    e.estado as evento_estado,
+                    COALESCE(p.tema, '{
+                        "color_primario": "#ec4899",
+                        "color_secundario": "#fce7f3",
+                        "color_fondo": "#fdf2f8",
+                        "color_texto": "#1f2937",
+                        "color_texto_claro": "#6b7280",
+                        "fuente_titulo": "Playfair Display",
+                        "fuente_cuerpo": "Inter"
+                    }'::jsonb) as tema,
+                    p.nombre as plantilla_nombre
                 FROM invitados_evento i
                 JOIN eventos_digitales e ON i.evento_id = e.id
+                LEFT JOIN plantillas_evento p ON e.plantilla_id = p.id
                 WHERE i.token = $1
                   AND i.activo = true
                   AND e.activo = true

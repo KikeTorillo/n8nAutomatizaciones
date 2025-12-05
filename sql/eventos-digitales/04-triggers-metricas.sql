@@ -168,6 +168,9 @@ RETURNS TABLE (
     portada_url TEXT,
     galeria_urls JSONB,
     configuracion JSONB,
+    -- Tema de la plantilla
+    tema JSONB,
+    plantilla_nombre VARCHAR,
     -- Estadísticas
     total_confirmados INTEGER,
     total_asistentes INTEGER,
@@ -195,6 +198,17 @@ BEGIN
         e.portada_url,
         e.galeria_urls,
         e.configuracion,
+        -- Tema de la plantilla (con default si no tiene)
+        COALESCE(p.tema, '{
+            "color_primario": "#ec4899",
+            "color_secundario": "#fce7f3",
+            "color_fondo": "#fdf2f8",
+            "color_texto": "#1f2937",
+            "color_texto_claro": "#6b7280",
+            "fuente_titulo": "Playfair Display",
+            "fuente_cuerpo": "Inter"
+        }'::jsonb),
+        p.nombre,
         -- Estadísticas de invitados
         (SELECT COUNT(*) FROM invitados_evento i WHERE i.evento_id = e.id AND i.estado_rsvp = 'confirmado')::INTEGER,
         (SELECT COALESCE(SUM(i.num_asistentes), 0) FROM invitados_evento i WHERE i.evento_id = e.id AND i.estado_rsvp = 'confirmado')::INTEGER,
@@ -224,6 +238,7 @@ BEGIN
         -- Total felicitaciones
         (SELECT COUNT(*) FROM felicitaciones_evento f WHERE f.evento_id = e.id AND f.aprobado = true)::INTEGER
     FROM eventos_digitales e
+    LEFT JOIN plantillas_evento p ON e.plantilla_id = p.id
     WHERE e.slug = p_slug
       AND e.estado = 'publicado'
       AND e.activo = true;
@@ -231,4 +246,4 @@ END;
 $$ LANGUAGE plpgsql STABLE;
 
 COMMENT ON FUNCTION obtener_evento_publico_por_slug IS
-    'Obtiene toda la información pública de un evento por su slug, incluyendo ubicaciones y contadores';
+    'Obtiene toda la información pública de un evento por su slug, incluyendo tema de plantilla, ubicaciones y contadores';

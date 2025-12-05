@@ -87,8 +87,11 @@ class PlantillaModel {
             codigo,
             nombre,
             tipo_evento,
+            descripcion,
             preview_url,
-            configuracion_default = {},
+            tema,
+            estructura_html,
+            estilos_css,
             es_premium = false,
             orden = 0
         } = datos;
@@ -96,13 +99,14 @@ class PlantillaModel {
         return await RLSContextManager.withBypass(async (db) => {
             const result = await db.query(`
                 INSERT INTO plantillas_evento (
-                    codigo, nombre, tipo_evento, preview_url,
-                    configuracion_default, es_premium, orden
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    codigo, nombre, tipo_evento, descripcion, preview_url,
+                    tema, estructura_html, estilos_css, es_premium, orden
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
                 RETURNING *
             `, [
-                codigo, nombre, tipo_evento, preview_url,
-                JSON.stringify(configuracion_default), es_premium, orden
+                codigo, nombre, tipo_evento, descripcion, preview_url,
+                tema ? JSON.stringify(tema) : null,
+                estructura_html, estilos_css, es_premium, orden
             ]);
 
             return result.rows[0];
@@ -118,13 +122,14 @@ class PlantillaModel {
         let idx = 1;
 
         const camposPermitidos = [
-            'nombre', 'tipo_evento', 'preview_url',
-            'configuracion_default', 'es_premium', 'activo', 'orden'
+            'nombre', 'tipo_evento', 'descripcion', 'preview_url',
+            'tema', 'estructura_html', 'estilos_css',
+            'es_premium', 'activo', 'orden'
         ];
 
         for (const campo of camposPermitidos) {
             if (datos[campo] !== undefined) {
-                if (campo === 'configuracion_default') {
+                if (campo === 'tema') {
                     campos.push(`${campo} = $${idx}`);
                     valores.push(JSON.stringify(datos[campo]));
                 } else {

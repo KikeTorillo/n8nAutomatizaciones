@@ -26,15 +26,22 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
     tipo_evento VARCHAR(50) NOT NULL,
     descripcion TEXT,
     preview_url TEXT,
-    configuracion_default JSONB DEFAULT '{
-        "colores": {
-            "primario": "#000000",
-            "secundario": "#ffffff",
-            "acento": "#d4af37"
-        },
-        "tipografia": "Playfair Display",
-        "estilo": "clasico"
+
+    -- Tema visual de la plantilla
+    tema JSONB DEFAULT '{
+        "color_primario": "#ec4899",
+        "color_secundario": "#fce7f3",
+        "color_fondo": "#fdf2f8",
+        "color_texto": "#1f2937",
+        "color_texto_claro": "#6b7280",
+        "fuente_titulo": "Playfair Display",
+        "fuente_cuerpo": "Inter"
     }',
+
+    -- HTML/CSS personalizados (opcional, para plantillas avanzadas)
+    estructura_html TEXT,
+    estilos_css TEXT,
+
     es_premium BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,
     orden INTEGER DEFAULT 0,
@@ -48,7 +55,7 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
 
 COMMENT ON TABLE plantillas_evento IS 'Plantillas de diseño para eventos. Datos del sistema, sin RLS. Solo super_admin puede modificar.';
 COMMENT ON COLUMN plantillas_evento.codigo IS 'Código único para identificar la plantilla (ej: elegante-dorado, moderno-minimalista)';
-COMMENT ON COLUMN plantillas_evento.configuracion_default IS 'Configuración por defecto de colores, tipografías y estilos';
+COMMENT ON COLUMN plantillas_evento.tema IS 'Configuración visual: colores primario/secundario/fondo/texto, fuentes título/cuerpo';
 
 -- ====================================================================
 -- 2. EVENTOS DIGITALES

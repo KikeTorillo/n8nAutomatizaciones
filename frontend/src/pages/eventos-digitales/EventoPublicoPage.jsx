@@ -1,20 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Calendar,
   Clock,
   MapPin,
   Gift,
-  MessageCircle,
-  Users,
   Heart,
   Send,
   ExternalLink,
   Check,
   X,
-  PartyPopper
+  PartyPopper,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
@@ -27,7 +27,7 @@ import { eventosDigitalesApi } from '@/services/api/endpoints';
 
 /**
  * Página pública del evento digital (RSVP)
- * Accesible en /e/:slug o /e/:slug/:token
+ * Diseño con scroll continuo y animaciones al aparecer
  */
 function EventoPublicoPage() {
   const { slug, token } = useParams();
@@ -44,6 +44,19 @@ function EventoPublicoPage() {
     mensaje: '',
   });
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [visibleSections, setVisibleSections] = useState(new Set());
+
+  // Refs para las secciones
+  const sectionRefs = {
+    inicio: useRef(null),
+    galeria: useRef(null),
+    ubicaciones: useRef(null),
+    regalos: useRef(null),
+    felicitaciones: useRef(null),
+    rsvp: useRef(null),
+  };
 
   // Queries
   const { data: eventoPublico, isLoading: loadingEvento, error: errorEvento } = token
@@ -56,6 +69,36 @@ function EventoPublicoPage() {
   const evento = token ? eventoPublico?.evento : eventoPublico;
   const invitado = token ? eventoPublico?.invitado : null;
 
+  // Tema de la plantilla (con defaults)
+  const tema = evento?.tema || {
+    color_primario: '#ec4899',
+    color_secundario: '#fce7f3',
+    color_fondo: '#fdf2f8',
+    color_texto: '#1f2937',
+    color_texto_claro: '#6b7280',
+    fuente_titulo: 'Playfair Display',
+    fuente_cuerpo: 'Inter'
+  };
+
+  // Cargar Google Fonts dinámicamente
+  useEffect(() => {
+    if (!evento) return;
+
+    const fuentes = [tema.fuente_titulo, tema.fuente_cuerpo].filter(Boolean);
+    const fuentesUnicas = [...new Set(fuentes)];
+
+    if (fuentesUnicas.length > 0) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = `https://fonts.googleapis.com/css2?${fuentesUnicas.map(f => `family=${f.replace(/\s+/g, '+')}:wght@300;400;500;600;700`).join('&')}&display=swap`;
+      document.head.appendChild(link);
+
+      return () => {
+        document.head.removeChild(link);
+      };
+    }
+  }, [evento, tema.fuente_titulo, tema.fuente_cuerpo]);
+
   // Countdown timer
   useEffect(() => {
     if (!evento?.fecha_evento) return;
@@ -66,21 +109,16 @@ function EventoPublicoPage() {
         const [hours, minutes] = evento.hora_evento.split(':');
         eventDate.setHours(parseInt(hours), parseInt(minutes));
       }
-
       const now = new Date();
       const diff = eventDate - now;
 
-      if (diff <= 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        return;
+      if (diff > 0) {
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdown({ days, hours, minutes, seconds });
       }
-
-      setCountdown({
-        days: Math.floor(diff / (1000 * 60 * 60 * 24)),
-        hours: Math.floor((diff / (1000 * 60 * 60)) % 24),
-        minutes: Math.floor((diff / (1000 * 60)) % 60),
-        seconds: Math.floor((diff / 1000) % 60),
-      });
     };
 
     updateCountdown();
@@ -88,12 +126,114 @@ function EventoPublicoPage() {
     return () => clearInterval(interval);
   }, [evento?.fecha_evento, evento?.hora_evento]);
 
-  const handleRSVP = async (asistira) => {
-    if (!token) {
-      toast.error('Necesitas un link personalizado para confirmar asistencia');
-      return;
-    }
+  // Intersection Observer para detectar secciones visibles y animar
+  useEffect(() => {
+    if (!evento) return;
 
+    // Marcar sección 'inicio' como visible inmediatamente
+    setVisibleSections(prev => new Set([...prev, 'inicio']));
+
+    const observerOptions = {
+      root: null,
+      rootMargin: '0px 0px -10% 0px',
+      threshold: 0.1
+    };
+
+    const observerCallback = (entries) => {
+      entries.forEach((entry) => {
+        const sectionId = entry.target.getAttribute('data-section');
+
+        // Actualizar sección activa en nav
+        if (entry.isIntersecting) {
+          setActiveSection(sectionId);
+        }
+
+        // Marcar como visible para animaciones
+        if (entry.isIntersecting) {
+          setVisibleSections(prev => new Set([...prev, sectionId]));
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    // Observar todas las secciones
+    Object.values(sectionRefs).forEach((ref) => {
+      if (ref.current) {
+        observer.observe(ref.current);
+      }
+    });
+
+    // Check inicial: marcar secciones ya visibles en viewport
+    setTimeout(() => {
+      Object.entries(sectionRefs).forEach(([sectionId, ref]) => {
+        if (ref.current) {
+          const rect = ref.current.getBoundingClientRect();
+          const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+          if (isVisible) {
+            setVisibleSections(prev => new Set([...prev, sectionId]));
+          }
+        }
+      });
+    }, 100);
+
+    return () => observer.disconnect();
+  }, [evento]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'Escape':
+          closeLightbox();
+          break;
+        case 'ArrowRight':
+          nextImage();
+          break;
+        case 'ArrowLeft':
+          prevImage();
+          break;
+        default:
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen]);
+
+  // Scroll to section
+  const scrollToSection = useCallback((sectionId) => {
+    const ref = sectionRefs[sectionId];
+    if (ref?.current) {
+      const navHeight = 60;
+      const elementPosition = ref.current.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({
+        top: elementPosition - navHeight,
+        behavior: 'smooth'
+      });
+    }
+  }, []);
+
+  // Scroll to content (from hero)
+  const scrollToContent = () => {
+    const configuracion = evento?.configuracion || {};
+    const galeria = evento?.galeria_urls || [];
+
+    // Determinar la primera sección después del hero
+    if (galeria.length > 0) {
+      scrollToSection('galeria');
+    } else if (configuracion.mostrar_ubicaciones !== false && (evento?.ubicaciones || []).length > 0) {
+      scrollToSection('ubicaciones');
+    } else {
+      scrollToSection('felicitaciones');
+    }
+  };
+
+  // Handlers
+  const handleRSVP = async (asistira) => {
     try {
       await confirmarRSVP.mutateAsync({
         slug,
@@ -103,35 +243,41 @@ function EventoPublicoPage() {
           num_asistentes: asistira ? rsvpForm.num_asistentes : 0,
           mensaje_rsvp: rsvpForm.mensaje_rsvp || undefined,
           restricciones_dieteticas: rsvpForm.restricciones_dieteticas || undefined,
-        }
+        },
       });
-      toast.success(asistira ? 'Asistencia confirmada' : 'Respuesta registrada');
-      setRsvpForm({ ...rsvpForm, asistira });
+      toast.success(asistira ? '¡Asistencia confirmada!' : 'Respuesta registrada');
     } catch (error) {
-      toast.error(error.message);
+      toast.error('Error al confirmar asistencia');
     }
   };
 
   const handleEnviarFelicitacion = async (e) => {
     e.preventDefault();
-
-    if (!felicitacionForm.nombre_autor.trim() || !felicitacionForm.mensaje.trim()) {
-      toast.error('Por favor completa todos los campos');
-      return;
-    }
-
     try {
-      // Usar API directa para felicitaciones públicas
-      await eventosDigitalesApi.crearFelicitacion(evento.id, {
-        nombre_autor: felicitacionForm.nombre_autor.trim(),
-        mensaje: felicitacionForm.mensaje.trim(),
-        invitado_id: invitado?.id,
-      });
-      toast.success('Felicitación enviada. Será visible cuando los anfitriones la aprueben.');
+      await eventosDigitalesApi.enviarFelicitacion(evento.id, felicitacionForm);
+      toast.success('¡Felicitación enviada!');
       setFelicitacionForm({ nombre_autor: '', mensaje: '' });
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al enviar felicitación');
+      toast.error('Error al enviar felicitación');
     }
+  };
+
+  // Lightbox handlers
+  const openLightbox = (index) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => setLightboxOpen(false);
+
+  const nextImage = () => {
+    const galeria = evento?.galeria_urls || [];
+    setLightboxIndex((prev) => (prev + 1) % galeria.length);
+  };
+
+  const prevImage = () => {
+    const galeria = evento?.galeria_urls || [];
+    setLightboxIndex((prev) => (prev - 1 + galeria.length) % galeria.length);
   };
 
   if (loadingEvento) {
@@ -145,10 +291,10 @@ function EventoPublicoPage() {
   if (errorEvento || !evento) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 flex items-center justify-center">
-        <div className="text-center">
-          <PartyPopper className="w-16 h-16 text-pink-300 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Evento no encontrado</h1>
-          <p className="text-gray-600">El evento que buscas no existe o ya no está disponible</p>
+        <div className="text-center px-4">
+          <PartyPopper className="w-20 h-20 text-pink-300 mx-auto mb-6" />
+          <h1 className="text-3xl font-bold text-gray-800 mb-3">Evento no encontrado</h1>
+          <p className="text-gray-600 text-lg">El evento que buscas no existe o ya no está disponible</p>
         </div>
       </div>
     );
@@ -158,7 +304,6 @@ function EventoPublicoPage() {
   const ubicaciones = evento.ubicaciones || [];
   const regalos = evento.regalos || [];
   const felicitaciones = evento.felicitaciones?.filter(f => f.aprobada) || [];
-
   const galeria = evento.galeria_urls || [];
 
   const sections = [
@@ -170,386 +315,837 @@ function EventoPublicoPage() {
     ...(token ? [{ id: 'rsvp', label: 'Confirmar' }] : []),
   ];
 
+  // Helper para clases de animación
+  const getAnimationClass = (sectionId, baseClass = 'animate-fadeInUp') => {
+    return visibleSections.has(sectionId) ? baseClass : 'opacity-0';
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
-        <div className="max-w-4xl mx-auto px-4">
-          <div className="flex items-center justify-center gap-6 overflow-x-auto py-3">
+    <div
+      className="min-h-screen"
+      style={{
+        backgroundColor: tema.color_fondo,
+        fontFamily: tema.fuente_cuerpo,
+      }}
+    >
+      {/* Animation Styles */}
+      <style>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(40px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes slideInRight {
+          from {
+            opacity: 0;
+            transform: translateX(50px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        .animate-fadeInUp {
+          animation: fadeInUp 0.8s ease-out forwards;
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.6s ease-out forwards;
+        }
+        .animate-scaleIn {
+          animation: scaleIn 0.7s ease-out forwards;
+        }
+        .animate-slideInLeft {
+          animation: slideInLeft 0.8s ease-out forwards;
+        }
+        .animate-slideInRight {
+          animation: slideInRight 0.8s ease-out forwards;
+        }
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        .stagger-5 { animation-delay: 0.5s; }
+      `}</style>
+
+      {/* Hero Section - Fullscreen */}
+      <section
+        ref={sectionRefs.inicio}
+        data-section="inicio"
+        className="relative min-h-screen flex flex-col"
+      >
+        {/* Background Image */}
+        {evento.portada_url ? (
+          <div className="absolute inset-0">
+            <img
+              src={evento.portada_url}
+              alt={evento.nombre}
+              className="w-full h-full object-cover"
+            />
+            <div
+              className="absolute inset-0"
+              style={{
+                background: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, ${tema.color_fondo} 100%)`
+              }}
+            />
+          </div>
+        ) : (
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(135deg, ${tema.color_secundario} 0%, ${tema.color_fondo} 100%)`
+            }}
+          />
+        )}
+
+        {/* Hero Content */}
+        <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+          {/* Saludo personalizado */}
+          {invitado && (
+            <p
+              className={`text-lg sm:text-xl mb-4 ${getAnimationClass('inicio')}`}
+              style={{
+                color: evento.portada_url ? 'white' : tema.color_primario,
+                textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+              }}
+            >
+              Querido/a <span className="font-semibold">{invitado.nombre}</span>
+            </p>
+          )}
+
+          {/* Título principal */}
+          <h1
+            className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight ${getAnimationClass('inicio')} stagger-1`}
+            style={{
+              fontFamily: tema.fuente_titulo,
+              color: evento.portada_url ? 'white' : tema.color_texto,
+              textShadow: evento.portada_url ? '0 4px 20px rgba(0,0,0,0.4)' : 'none'
+            }}
+          >
+            {evento.nombre}
+          </h1>
+
+          {/* Descripción */}
+          {evento.descripcion && (
+            <p
+              className={`text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-8 font-light italic ${getAnimationClass('inicio')} stagger-2`}
+              style={{
+                color: evento.portada_url ? 'rgba(255,255,255,0.9)' : tema.color_texto_claro,
+                textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+              }}
+            >
+              {configuracion.mensaje_bienvenida || evento.descripcion}
+            </p>
+          )}
+
+          {/* Fecha destacada */}
+          <div
+            className={`inline-flex items-center gap-3 sm:gap-6 px-6 sm:px-10 py-4 sm:py-5 rounded-full backdrop-blur-sm mb-8 ${getAnimationClass('inicio', 'animate-scaleIn')} stagger-3`}
+            style={{
+              backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
+              border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}20`
+            }}
+          >
+            <div className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: evento.portada_url ? 'white' : tema.color_primario }} />
+              <span
+                className="text-base sm:text-lg font-medium"
+                style={{ color: evento.portada_url ? 'white' : tema.color_texto }}
+              >
+                {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+            {evento.hora_evento && (
+              <>
+                <div
+                  className="w-px h-8"
+                  style={{ backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.4)' : tema.color_primario }}
+                />
+                <div className="flex items-center gap-2">
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: evento.portada_url ? 'white' : tema.color_primario }} />
+                  <span
+                    className="text-base sm:text-lg font-medium"
+                    style={{ color: evento.portada_url ? 'white' : tema.color_texto }}
+                  >
+                    {evento.hora_evento}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Countdown elegante */}
+          {configuracion.mostrar_contador !== false && (
+            <div className={`grid grid-cols-4 gap-3 sm:gap-6 max-w-lg mx-auto mb-10 ${getAnimationClass('inicio')} stagger-4`}>
+              {[
+                { value: countdown.days, label: 'Días' },
+                { value: countdown.hours, label: 'Horas' },
+                { value: countdown.minutes, label: 'Min' },
+                { value: countdown.seconds, label: 'Seg' },
+              ].map((item) => (
+                <div
+                  key={item.label}
+                  className="text-center"
+                >
+                  <div
+                    className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1"
+                    style={{
+                      fontFamily: tema.fuente_titulo,
+                      color: evento.portada_url ? 'white' : tema.color_primario,
+                      textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+                    }}
+                  >
+                    {String(item.value).padStart(2, '0')}
+                  </div>
+                  <div
+                    className="text-xs sm:text-sm uppercase tracking-wider"
+                    style={{
+                      color: evento.portada_url ? 'rgba(255,255,255,0.8)' : tema.color_texto_claro
+                    }}
+                  >
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Badge de confirmación si ya confirmó */}
+          {invitado?.estado_rsvp === 'confirmado' && (
+            <div
+              className={`inline-flex items-center gap-2 px-6 py-3 rounded-full ${getAnimationClass('inicio', 'animate-scaleIn')} stagger-5`}
+              style={{
+                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
+                color: evento.portada_url ? 'white' : tema.color_primario,
+                backdropFilter: 'blur(10px)'
+              }}
+            >
+              <span className="flex items-center gap-2">
+                <Check className="w-5 h-5" />
+                Asistencia Confirmada
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer" onClick={scrollToContent}>
+          <ChevronDown
+            className="w-8 h-8"
+            style={{ color: evento.portada_url ? 'white' : tema.color_primario }}
+          />
+        </div>
+      </section>
+
+      {/* Sticky Navigation */}
+      <nav
+        className="sticky top-0 z-50 backdrop-blur-md border-b transition-all"
+        style={{
+          backgroundColor: `${tema.color_fondo}ee`,
+          borderColor: `${tema.color_secundario}`
+        }}
+      >
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="flex items-center justify-center gap-2 sm:gap-8 overflow-x-auto py-4 scrollbar-hide">
             {sections.map((section) => (
               <button
                 key={section.id}
-                onClick={() => setActiveSection(section.id)}
-                className={`
-                  text-sm font-medium whitespace-nowrap transition-colors pb-1 border-b-2
-                  ${activeSection === section.id
-                    ? 'text-pink-600 border-pink-500'
-                    : 'text-gray-500 hover:text-gray-700 border-transparent'
-                  }
-                `}
+                onClick={() => scrollToSection(section.id)}
+                className="relative px-4 py-2 text-sm sm:text-base font-medium whitespace-nowrap transition-all duration-300"
+                style={{
+                  color: activeSection === section.id ? tema.color_primario : tema.color_texto_claro,
+                }}
               >
                 {section.label}
+                {activeSection === section.id && (
+                  <span
+                    className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full transition-all"
+                    style={{ backgroundColor: tema.color_primario }}
+                  />
+                )}
               </button>
             ))}
           </div>
         </div>
       </nav>
 
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Section: Inicio */}
-        {activeSection === 'inicio' && (
-          <div className="text-center space-y-8">
-            {/* Portada Hero */}
-            {evento.portada_url && (
-              <div className="relative -mx-4 sm:mx-0 sm:rounded-2xl overflow-hidden">
-                <img
-                  src={evento.portada_url}
-                  alt={evento.nombre}
-                  className="w-full h-64 sm:h-80 md:h-96 object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-              </div>
-            )}
-
-            {/* Header */}
-            <div className="space-y-4">
-              {invitado && (
-                <p className="text-lg text-pink-600">
-                  Querido/a <span className="font-semibold">{invitado.nombre}</span>
-                </p>
-              )}
-              <h1 className="text-4xl sm:text-5xl font-bold text-gray-900 font-serif">
-                {evento.nombre}
-              </h1>
-              {evento.descripcion && (
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                  {configuracion.mensaje_bienvenida || evento.descripcion}
-                </p>
-              )}
+      {/* Main Content - Continuous Scroll */}
+      <main>
+        {/* Galería */}
+        {galeria.length > 0 && (
+          <section
+            ref={sectionRefs.galeria}
+            data-section="galeria"
+            className="max-w-5xl mx-auto px-4 py-20"
+          >
+            <div className={`text-center mb-12 ${getAnimationClass('galeria')}`}>
+              <h2
+                className="text-4xl sm:text-5xl font-bold mb-4"
+                style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+              >
+                Nuestra Historia
+              </h2>
+              <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                Momentos que atesoramos
+              </p>
             </div>
 
-            {/* Fecha y Hora */}
-            <div className="bg-white/60 rounded-2xl p-6 inline-block">
-              <div className="flex items-center gap-6 justify-center flex-wrap">
-                <div className="flex items-center gap-2">
-                  <Calendar className="w-6 h-6 text-pink-500" />
-                  <span className="text-lg font-medium">
-                    {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
-                      weekday: 'long',
-                      day: 'numeric',
-                      month: 'long',
-                      year: 'numeric'
-                    })}
-                  </span>
-                </div>
-                {evento.hora_evento && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-6 h-6 text-pink-500" />
-                    <span className="text-lg font-medium">{evento.hora_evento}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Countdown */}
-            {configuracion.mostrar_contador !== false && (
-              <div className="grid grid-cols-4 gap-4 max-w-md mx-auto">
-                {[
-                  { value: countdown.days, label: 'Días' },
-                  { value: countdown.hours, label: 'Horas' },
-                  { value: countdown.minutes, label: 'Minutos' },
-                  { value: countdown.seconds, label: 'Segundos' },
-                ].map((item) => (
-                  <div key={item.label} className="bg-white rounded-xl p-4 shadow-sm">
-                    <p className="text-3xl font-bold text-pink-600">{item.value}</p>
-                    <p className="text-xs text-gray-500">{item.label}</p>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {/* RSVP Button */}
-            {token && invitado && invitado.estado_rsvp === 'pendiente' && (
-              <div className="pt-4">
-                <Button
-                  size="lg"
-                  onClick={() => setActiveSection('rsvp')}
-                  className="bg-pink-600 hover:bg-pink-700"
+            {/* Masonry-style grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {galeria.map((url, idx) => (
+                <div
+                  key={idx}
+                  className={`
+                    relative overflow-hidden rounded-2xl cursor-pointer group
+                    ${idx === 0 ? 'md:col-span-2 md:row-span-2' : ''}
+                    ${idx === 0 ? 'aspect-square md:aspect-auto' : 'aspect-square'}
+                    ${visibleSections.has('galeria') ? 'animate-scaleIn' : 'opacity-0'}
+                  `}
+                  style={{ animationDelay: `${idx * 0.1}s` }}
+                  onClick={() => openLightbox(idx)}
                 >
-                  <Heart className="w-5 h-5 mr-2" />
-                  Confirmar Asistencia
-                </Button>
-              </div>
-            )}
-
-            {invitado && invitado.estado_rsvp === 'confirmado' && (
-              <div className="bg-green-50 text-green-700 rounded-xl p-4 inline-block">
-                <div className="flex items-center gap-2">
-                  <Check className="w-5 h-5" />
-                  <span className="font-medium">Asistencia Confirmada</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Section: Galería */}
-        {activeSection === 'galeria' && galeria.length > 0 && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900">Galería</h2>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {galeria.map((url, index) => (
-                <div key={index} className="aspect-square rounded-xl overflow-hidden shadow-sm">
                   <img
                     src={url}
-                    alt={`Foto ${index + 1}`}
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                    alt={`Foto ${idx + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ backgroundColor: `${tema.color_primario}30` }}
                   />
                 </div>
               ))}
             </div>
-          </div>
-        )}
 
-        {/* Section: Ubicaciones */}
-        {activeSection === 'ubicaciones' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900">Ubicaciones</h2>
-            <div className="grid gap-4">
-              {ubicaciones.map((ubi) => (
-                <div key={ubi.id} className="bg-white rounded-xl p-6 shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <MapPin className="w-6 h-6 text-pink-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{ubi.nombre}</h3>
-                      <p className="text-sm text-pink-600 uppercase">{ubi.tipo}</p>
-                      {ubi.hora && (
-                        <p className="text-sm text-gray-600 flex items-center gap-1 mt-1">
-                          <Clock className="w-4 h-4" />{ubi.hora}
-                        </p>
-                      )}
-                      {ubi.direccion && (
-                        <p className="text-sm text-gray-600 mt-1">{ubi.direccion}</p>
-                      )}
-                      {ubi.google_maps_url && (
-                        <a
-                          href={ubi.google_maps_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-pink-600 hover:underline mt-2"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Ver en Maps
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Section: Mesa de Regalos */}
-        {activeSection === 'regalos' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900">Mesa de Regalos</h2>
-            <div className="grid sm:grid-cols-2 gap-4">
-              {regalos.filter(r => !r.comprado).map((regalo) => (
-                <div key={regalo.id} className="bg-white rounded-xl p-4 shadow-sm">
-                  <div className="flex items-start gap-4">
-                    <div className="w-12 h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-                      <Gift className="w-6 h-6 text-pink-600" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{regalo.nombre}</h3>
-                      {regalo.descripcion && (
-                        <p className="text-sm text-gray-600">{regalo.descripcion}</p>
-                      )}
-                      {regalo.precio && (
-                        <p className="text-lg font-semibold text-pink-600 mt-1">
-                          ${regalo.precio.toLocaleString()}
-                        </p>
-                      )}
-                      {regalo.url_externa && (
-                        <a
-                          href={regalo.url_externa}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm text-pink-600 hover:underline mt-2"
-                        >
-                          <ExternalLink className="w-4 h-4" />
-                          Ver producto
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Section: Felicitaciones */}
-        {activeSection === 'felicitaciones' && (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900">Felicitaciones</h2>
-
-            {/* Form */}
-            <form onSubmit={handleEnviarFelicitacion} className="bg-white rounded-xl p-6 shadow-sm">
-              <h3 className="font-semibold text-gray-900 mb-4">Deja tu mensaje</h3>
-              <div className="space-y-4">
-                <Input
-                  label="Tu Nombre"
-                  value={felicitacionForm.nombre_autor}
-                  onChange={(e) => setFelicitacionForm({ ...felicitacionForm, nombre_autor: e.target.value })}
-                  placeholder="Escribe tu nombre"
-                  required
+            {/* Lightbox */}
+            {lightboxOpen && (
+              <div
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90"
+                onClick={closeLightbox}
+              >
+                <button
+                  className="absolute top-4 right-4 text-white p-2 hover:bg-white/20 rounded-full transition-colors"
+                  onClick={closeLightbox}
+                >
+                  <X className="w-8 h-8" />
+                </button>
+                <button
+                  className="absolute left-4 text-white p-2 hover:bg-white/20 rounded-full transition-colors"
+                  onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                >
+                  <ChevronLeft className="w-8 h-8" />
+                </button>
+                <img
+                  src={galeria[lightboxIndex]}
+                  alt={`Foto ${lightboxIndex + 1}`}
+                  className="max-h-[90vh] max-w-[90vw] object-contain"
+                  onClick={(e) => e.stopPropagation()}
                 />
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
-                  <textarea
-                    value={felicitacionForm.mensaje}
-                    onChange={(e) => setFelicitacionForm({ ...felicitacionForm, mensaje: e.target.value })}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                    placeholder="Escribe tu felicitación..."
-                    required
-                  />
+                <button
+                  className="absolute right-4 text-white p-2 hover:bg-white/20 rounded-full transition-colors"
+                  onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                >
+                  <ChevronRight className="w-8 h-8" />
+                </button>
+                <div className="absolute bottom-4 text-white text-sm">
+                  {lightboxIndex + 1} / {galeria.length}
                 </div>
-                <Button type="submit" className="w-full bg-pink-600 hover:bg-pink-700">
-                  <Send className="w-4 h-4 mr-2" />
-                  Enviar Felicitación
-                </Button>
               </div>
-            </form>
+            )}
+          </section>
+        )}
 
-            {/* List */}
-            {felicitaciones.length > 0 && (
-              <div className="space-y-4">
-                {felicitaciones.map((fel) => (
-                  <div key={fel.id} className="bg-white rounded-xl p-4 shadow-sm">
-                    <p className="font-medium text-gray-900">{fel.nombre_autor}</p>
-                    <p className="text-gray-600 mt-1 italic">"{fel.mensaje}"</p>
+        {/* Ubicaciones */}
+        {configuracion.mostrar_ubicaciones !== false && ubicaciones.length > 0 && (
+          <section
+            ref={sectionRefs.ubicaciones}
+            data-section="ubicaciones"
+            className="py-20"
+            style={{ backgroundColor: tema.color_secundario + '30' }}
+          >
+            <div className="max-w-5xl mx-auto px-4">
+              <div className={`text-center mb-12 ${getAnimationClass('ubicaciones')}`}>
+                <h2
+                  className="text-4xl sm:text-5xl font-bold mb-4"
+                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                >
+                  Ubicaciones
+                </h2>
+                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                  Te esperamos en
+                </p>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                {ubicaciones.map((ubi, ubiIdx) => (
+                  <div
+                    key={ubi.id}
+                    className={`relative overflow-hidden rounded-3xl p-8 transition-transform hover:scale-[1.02] ${visibleSections.has('ubicaciones') ? (ubiIdx % 2 === 0 ? 'animate-slideInLeft' : 'animate-slideInRight') : 'opacity-0'}`}
+                    style={{
+                      animationDelay: `${ubiIdx * 0.15}s`,
+                      backgroundColor: 'white',
+                      boxShadow: `0 10px 40px ${tema.color_primario}15`
+                    }}
+                  >
+                    {/* Decorative corner */}
+                    <div
+                      className="absolute top-0 right-0 w-24 h-24 opacity-10"
+                      style={{
+                        background: `radial-gradient(circle at top right, ${tema.color_primario}, transparent)`
+                      }}
+                    />
+
+                    <div className="flex items-start gap-5">
+                      <div
+                        className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
+                        style={{ backgroundColor: tema.color_secundario }}
+                      >
+                        <MapPin className="w-8 h-8" style={{ color: tema.color_primario }} />
+                      </div>
+                      <div className="flex-1">
+                        <p
+                          className="text-sm font-semibold uppercase tracking-wider mb-1"
+                          style={{ color: tema.color_primario }}
+                        >
+                          {ubi.tipo}
+                        </p>
+                        <h3
+                          className="text-2xl font-bold mb-3"
+                          style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                        >
+                          {ubi.nombre}
+                        </h3>
+                        {ubi.hora_inicio && (
+                          <p className="flex items-center gap-2 mb-2" style={{ color: tema.color_texto_claro }}>
+                            <Clock className="w-4 h-4" />
+                            {ubi.hora_inicio}{ubi.hora_fin ? ` - ${ubi.hora_fin}` : ''}
+                          </p>
+                        )}
+                        {ubi.direccion && (
+                          <p className="mb-2" style={{ color: tema.color_texto_claro }}>{ubi.direccion}</p>
+                        )}
+                        {ubi.codigo_vestimenta && (
+                          <p className="text-sm mb-3" style={{ color: tema.color_texto_claro }}>
+                            <span className="font-medium">Vestimenta:</span> {ubi.codigo_vestimenta}
+                          </p>
+                        )}
+                        {ubi.google_maps_url && (
+                          <a
+                            href={ubi.google_maps_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
+                            style={{
+                              backgroundColor: tema.color_primario,
+                              color: 'white'
+                            }}
+                          >
+                            <MapPin className="w-4 h-4" />
+                            Ver en Maps
+                          </a>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          </section>
         )}
 
-        {/* Section: RSVP */}
-        {activeSection === 'rsvp' && token && invitado && (
-          <div className="max-w-md mx-auto space-y-6">
-            <h2 className="text-2xl font-bold text-center text-gray-900">Confirmar Asistencia</h2>
+        {/* Mesa de Regalos */}
+        {configuracion.mostrar_mesa_regalos !== false && regalos.length > 0 && (
+          <section
+            ref={sectionRefs.regalos}
+            data-section="regalos"
+            className="max-w-5xl mx-auto px-4 py-20"
+          >
+            <div className={`text-center mb-12 ${getAnimationClass('regalos')}`}>
+              <h2
+                className="text-4xl sm:text-5xl font-bold mb-4"
+                style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+              >
+                Mesa de Regalos
+              </h2>
+              <p className="text-lg max-w-xl mx-auto" style={{ color: tema.color_texto_claro }}>
+                Tu presencia es nuestro mejor regalo, pero si deseas obsequiarnos algo
+              </p>
+            </div>
 
-            {invitado.estado_rsvp === 'pendiente' ? (
-              <div className="bg-white rounded-xl p-6 shadow-sm space-y-6">
-                <div className="text-center">
-                  <p className="text-gray-600">
-                    Hola <span className="font-semibold">{invitado.nombre}</span>, nos encantaría contar con tu presencia.
-                  </p>
-                </div>
-
-                {/* Número de asistentes */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Número de personas que asistirán (incluyéndote)
-                  </label>
-                  <select
-                    value={rsvpForm.num_asistentes}
-                    onChange={(e) => setRsvpForm({ ...rsvpForm, num_asistentes: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {regalos.filter(r => !r.comprado).map((regalo, idx) => (
+                <div
+                  key={regalo.id}
+                  className={`group relative overflow-hidden rounded-3xl p-6 transition-all hover:scale-[1.02] ${visibleSections.has('regalos') ? 'animate-scaleIn' : 'opacity-0'}`}
+                  style={{
+                    animationDelay: `${idx * 0.1}s`,
+                    backgroundColor: 'white',
+                    boxShadow: `0 10px 40px ${tema.color_primario}10`
+                  }}
+                >
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+                    style={{ backgroundColor: tema.color_secundario }}
                   >
-                    {[...Array(invitado.max_acompanantes + 1)].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>{i + 1}</option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Mensaje opcional */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Mensaje para los anfitriones (opcional)
-                  </label>
-                  <textarea
-                    value={rsvpForm.mensaje_rsvp}
-                    onChange={(e) => setRsvpForm({ ...rsvpForm, mensaje_rsvp: e.target.value })}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    placeholder="Un mensaje especial..."
-                  />
-                </div>
-
-                {/* Restricciones dietéticas */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Restricciones dietéticas (opcional)
-                  </label>
-                  <Input
-                    value={rsvpForm.restricciones_dieteticas}
-                    onChange={(e) => setRsvpForm({ ...rsvpForm, restricciones_dieteticas: e.target.value })}
-                    placeholder="Ej: Vegetariano, sin gluten..."
-                  />
-                </div>
-
-                {/* Botones */}
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => handleRSVP(true)}
-                    disabled={confirmarRSVP.isLoading}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    <Gift className="w-7 h-7" style={{ color: tema.color_primario }} />
+                  </div>
+                  <h3
+                    className="text-xl font-bold mb-2"
+                    style={{ color: tema.color_texto }}
                   >
-                    <Check className="w-5 h-5 mr-2" />
-                    Confirmo
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => handleRSVP(false)}
-                    disabled={confirmarRSVP.isLoading}
-                    className="flex-1 text-red-600 border-red-300 hover:bg-red-50"
-                  >
-                    <X className="w-5 h-5 mr-2" />
-                    No asistiré
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className={`text-center rounded-xl p-6 ${
-                invitado.estado_rsvp === 'confirmado' ? 'bg-green-50' : 'bg-red-50'
-              }`}>
-                <div className={`inline-flex items-center gap-2 text-lg font-medium ${
-                  invitado.estado_rsvp === 'confirmado' ? 'text-green-700' : 'text-red-700'
-                }`}>
-                  {invitado.estado_rsvp === 'confirmado' ? (
-                    <>
-                      <Check className="w-6 h-6" />
-                      <span>Asistencia Confirmada</span>
-                    </>
-                  ) : (
-                    <>
-                      <X className="w-6 h-6" />
-                      <span>No asistirás al evento</span>
-                    </>
+                    {regalo.nombre}
+                  </h3>
+                  {regalo.descripcion && (
+                    <p className="text-sm mb-3" style={{ color: tema.color_texto_claro }}>
+                      {regalo.descripcion}
+                    </p>
+                  )}
+                  {regalo.precio && (
+                    <p
+                      className="text-2xl font-bold mb-4"
+                      style={{ color: tema.color_primario }}
+                    >
+                      ${regalo.precio.toLocaleString()}
+                    </p>
+                  )}
+                  {regalo.url_externa && (
+                    <a
+                      href={regalo.url_externa}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm font-medium transition-colors"
+                      style={{ color: tema.color_primario }}
+                    >
+                      Ver regalo
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
                   )}
                 </div>
-                {invitado.estado_rsvp === 'confirmado' && invitado.num_asistentes > 0 && (
-                  <p className="text-gray-600 mt-2">
-                    {invitado.num_asistentes} persona(s) confirmada(s)
-                  </p>
-                )}
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Felicitaciones */}
+        {configuracion.permitir_felicitaciones !== false && (
+          <section
+            ref={sectionRefs.felicitaciones}
+            data-section="felicitaciones"
+            className="py-20"
+            style={{ backgroundColor: tema.color_secundario + '30' }}
+          >
+            <div className="max-w-5xl mx-auto px-4">
+              <div className={`text-center mb-12 ${getAnimationClass('felicitaciones')}`}>
+                <h2
+                  className="text-4xl sm:text-5xl font-bold mb-4"
+                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                >
+                  Libro de Firmas
+                </h2>
+                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                  Déjanos tus buenos deseos
+                </p>
               </div>
-            )}
-          </div>
+
+              {/* Form */}
+              <form
+                onSubmit={handleEnviarFelicitacion}
+                className={`max-w-xl mx-auto rounded-3xl p-8 ${visibleSections.has('felicitaciones') ? 'animate-scaleIn stagger-2' : 'opacity-0'}`}
+                style={{
+                  backgroundColor: 'white',
+                  boxShadow: `0 10px 40px ${tema.color_primario}10`
+                }}
+              >
+                <div className="space-y-5">
+                  <Input
+                    label="Tu Nombre"
+                    value={felicitacionForm.nombre_autor}
+                    onChange={(e) => setFelicitacionForm({ ...felicitacionForm, nombre_autor: e.target.value })}
+                    placeholder="Escribe tu nombre"
+                    required
+                  />
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: tema.color_texto }}
+                    >
+                      Tu Mensaje
+                    </label>
+                    <textarea
+                      value={felicitacionForm.mensaje}
+                      onChange={(e) => setFelicitacionForm({ ...felicitacionForm, mensaje: e.target.value })}
+                      rows={4}
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
+                      style={{
+                        borderColor: tema.color_secundario,
+                        '--tw-ring-color': tema.color_primario
+                      }}
+                      placeholder="Escribe tus buenos deseos..."
+                      required
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    className="w-full py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02]"
+                    style={{
+                      backgroundColor: tema.color_primario,
+                      boxShadow: `0 10px 30px ${tema.color_primario}40`
+                    }}
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <Send className="w-5 h-5" />
+                      Enviar Felicitación
+                    </span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Messages */}
+              {felicitaciones.length > 0 && (
+                <div className="grid sm:grid-cols-2 gap-6 mt-12">
+                  {felicitaciones.map((fel, idx) => (
+                    <div
+                      key={fel.id}
+                      className={`relative rounded-3xl p-6 transition-transform hover:scale-[1.02] ${visibleSections.has('felicitaciones') ? 'animate-fadeInUp' : 'opacity-0'}`}
+                      style={{
+                        animationDelay: `${0.3 + idx * 0.1}s`,
+                        backgroundColor: 'white',
+                        boxShadow: `0 5px 20px ${tema.color_primario}10`
+                      }}
+                    >
+                      <div
+                        className="absolute top-6 left-6 text-6xl opacity-10"
+                        style={{ color: tema.color_primario, fontFamily: 'serif' }}
+                      >
+                        "
+                      </div>
+                      <p
+                        className="text-lg italic mb-4 relative z-10"
+                        style={{ color: tema.color_texto }}
+                      >
+                        {fel.mensaje}
+                      </p>
+                      <p
+                        className="font-semibold"
+                        style={{ color: tema.color_primario }}
+                      >
+                        — {fel.nombre_autor}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </section>
+        )}
+
+        {/* RSVP */}
+        {token && invitado && (
+          <section
+            ref={sectionRefs.rsvp}
+            data-section="rsvp"
+            className="max-w-5xl mx-auto px-4 py-20"
+          >
+            <div className="max-w-lg mx-auto">
+              <div className={`text-center mb-10 ${getAnimationClass('rsvp')}`}>
+                <h2
+                  className="text-4xl sm:text-5xl font-bold mb-4"
+                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                >
+                  Confirmar Asistencia
+                </h2>
+              </div>
+
+              {invitado.estado_rsvp === 'pendiente' ? (
+                <div
+                  className={`rounded-3xl p-8 ${visibleSections.has('rsvp') ? 'animate-scaleIn stagger-2' : 'opacity-0'}`}
+                  style={{
+                    backgroundColor: 'white',
+                    boxShadow: `0 20px 60px ${tema.color_primario}15`
+                  }}
+                >
+                  <div className="text-center mb-8">
+                    <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                      Hola <span className="font-bold" style={{ color: tema.color_primario }}>{invitado.nombre}</span>
+                    </p>
+                    <p style={{ color: tema.color_texto_claro }}>
+                      Nos encantaría contar con tu presencia
+                    </p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: tema.color_texto }}
+                      >
+                        Número de personas
+                      </label>
+                      <select
+                        value={rsvpForm.num_asistentes}
+                        onChange={(e) => setRsvpForm({ ...rsvpForm, num_asistentes: parseInt(e.target.value) })}
+                        className="w-full px-4 py-3 border-2 rounded-xl"
+                        style={{ borderColor: tema.color_secundario }}
+                      >
+                        {[...Array(invitado.max_acompanantes + 1)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>{i + 1} persona{i > 0 ? 's' : ''}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: tema.color_texto }}
+                      >
+                        Mensaje (opcional)
+                      </label>
+                      <textarea
+                        value={rsvpForm.mensaje_rsvp}
+                        onChange={(e) => setRsvpForm({ ...rsvpForm, mensaje_rsvp: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-3 border-2 rounded-xl"
+                        style={{ borderColor: tema.color_secundario }}
+                        placeholder="Un mensaje especial..."
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        className="block text-sm font-medium mb-2"
+                        style={{ color: tema.color_texto }}
+                      >
+                        Restricciones dietéticas (opcional)
+                      </label>
+                      <Input
+                        value={rsvpForm.restricciones_dieteticas}
+                        onChange={(e) => setRsvpForm({ ...rsvpForm, restricciones_dieteticas: e.target.value })}
+                        placeholder="Ej: Vegetariano, sin gluten..."
+                      />
+                    </div>
+
+                    <div className="flex gap-4 pt-4">
+                      <button
+                        type="button"
+                        onClick={() => handleRSVP(true)}
+                        disabled={confirmarRSVP.isLoading}
+                        className="flex-1 py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02]"
+                        style={{
+                          backgroundColor: tema.color_primario,
+                          boxShadow: `0 10px 30px ${tema.color_primario}40`
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <Check className="w-5 h-5" />
+                          Confirmo
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRSVP(false)}
+                        disabled={confirmarRSVP.isLoading}
+                        className="flex-1 py-4 rounded-xl font-semibold border-2 transition-all hover:scale-[1.02]"
+                        style={{
+                          borderColor: tema.color_secundario,
+                          color: tema.color_texto_claro
+                        }}
+                      >
+                        <span className="flex items-center justify-center gap-2">
+                          <X className="w-5 h-5" />
+                          No asistiré
+                        </span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div
+                  className={`text-center rounded-3xl p-10 ${visibleSections.has('rsvp') ? 'animate-scaleIn' : 'opacity-0'}`}
+                  style={{
+                    backgroundColor: invitado.estado_rsvp === 'confirmado' ? tema.color_secundario : '#fee2e2'
+                  }}
+                >
+                  <div
+                    className="inline-flex items-center gap-3 text-2xl font-bold mb-4"
+                    style={{
+                      color: invitado.estado_rsvp === 'confirmado' ? tema.color_primario : '#dc2626'
+                    }}
+                  >
+                    {invitado.estado_rsvp === 'confirmado' ? (
+                      <>
+                        <Check className="w-8 h-8" />
+                        <span>¡Asistencia Confirmada!</span>
+                      </>
+                    ) : (
+                      <>
+                        <X className="w-8 h-8" />
+                        <span>No asistirás al evento</span>
+                      </>
+                    )}
+                  </div>
+                  {invitado.estado_rsvp === 'confirmado' && invitado.num_asistentes > 0 && (
+                    <p style={{ color: tema.color_texto_claro }}>
+                      {invitado.num_asistentes} persona{invitado.num_asistentes > 1 ? 's' : ''} confirmada{invitado.num_asistentes > 1 ? 's' : ''}
+                    </p>
+                  )}
+                  {/* Mensaje de confirmación personalizado */}
+                  {invitado.estado_rsvp === 'confirmado' && configuracion.mensaje_confirmacion && (
+                    <p className="mt-4 text-lg italic" style={{ color: tema.color_texto }}>
+                      {configuracion.mensaje_confirmacion}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </section>
         )}
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-8 text-gray-500 text-sm">
-        <p>Creado con Nexo</p>
+      <footer
+        className="py-8 text-center border-t"
+        style={{
+          borderColor: tema.color_secundario,
+          backgroundColor: tema.color_fondo
+        }}
+      >
+        <p className="text-sm flex items-center justify-center gap-1" style={{ color: tema.color_texto_claro }}>
+          Hecho con <Heart className="w-4 h-4 fill-current" style={{ color: tema.color_primario }} /> usando
+          {' '}
+          <span className="font-semibold" style={{ color: tema.color_primario }}>Nexo</span>
+        </p>
       </footer>
     </div>
   );
