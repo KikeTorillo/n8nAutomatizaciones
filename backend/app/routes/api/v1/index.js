@@ -89,6 +89,12 @@ const {
     publicRoutes: eventosPublicRoutes
 } = require('../../../modules/eventos-digitales/routes');
 
+// ========================================
+// MÓDULO WEBSITE - Dic 2025
+// Sitio web público por organización
+// ========================================
+const { websiteRouter, publicRouter: websitePublicRouter } = require('../../../modules/website/routes');
+
 function routerApi(app) {
     const router = express.Router();
 
@@ -164,6 +170,10 @@ function routerApi(app) {
     router.use('/eventos-digitales', felicitacionesRoutes);       // Felicitaciones
     router.use('/eventos-digitales', plantillasRoutes);           // Plantillas
     router.use('/public', eventosPublicRoutes);                   // Rutas públicas (RSVP)
+
+    // Rutas de website (sitio web público) - Dic 2025
+    router.use('/website', websiteRouter);                        // Gestión del sitio
+    router.use('/public', websitePublicRouter);                   // Sitio público /sitio/:slug
 }
 
 module.exports = routerApi;

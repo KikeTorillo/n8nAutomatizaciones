@@ -89,6 +89,16 @@ const MODULOS_DISPONIBLES = {
     dependencias: [],
     icono: 'PartyPopper',
     orden: 60
+  },
+  website: {
+    nombre: 'website',
+    display_name: 'Sitio Web Público',
+    descripcion: 'Página web pública con bloques arrastrables y SEO',
+    incluido_en_todos: true,
+    puede_desactivar: false,
+    dependencias: [],
+    icono: 'Globe2',
+    orden: 5
   }
 };
 
