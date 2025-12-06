@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -14,9 +14,17 @@ import { Eye, EyeOff } from 'lucide-react';
 function Login() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const { setAuth } = useAuthStore();
+  const { setAuth, isAuthenticated, user } = useAuthStore();
   const toast = useToast();
   const [showPassword, setShowPassword] = useState(false);
+
+  // Redirigir si ya tiene sesión activa
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const redirectTo = user.rol === 'super_admin' ? '/superadmin' : '/home';
+      navigate(redirectTo, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate]);
 
   const {
     control,
