@@ -13,10 +13,22 @@ class ReportesModel {
      */
     static async obtenerBalanzaComprobacion(periodoId, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
-            // Llamar a la función SQL
+            // Obtener fechas del período
+            const periodoResult = await db.query(
+                `SELECT fecha_inicio, fecha_fin FROM periodos_contables WHERE id = $1 AND organizacion_id = $2`,
+                [periodoId, organizacionId]
+            );
+
+            if (periodoResult.rows.length === 0) {
+                throw new Error('Período no encontrado');
+            }
+
+            const { fecha_inicio, fecha_fin } = periodoResult.rows[0];
+
+            // Llamar a la función SQL con las fechas del período
             const result = await db.query(
-                `SELECT * FROM obtener_balanza_comprobacion($1, $2)`,
-                [organizacionId, periodoId]
+                `SELECT * FROM obtener_balanza_comprobacion($1, $2, $3)`,
+                [organizacionId, fecha_inicio, fecha_fin]
             );
 
             // Calcular totales
@@ -39,8 +51,8 @@ class ReportesModel {
                     naturaleza: row.naturaleza,
                     nivel: row.nivel,
                     saldo_inicial: parseFloat(row.saldo_inicial || 0),
-                    debe: parseFloat(row.debe || 0),
-                    haber: parseFloat(row.haber || 0),
+                    total_debe: parseFloat(row.debe || 0),
+                    total_haber: parseFloat(row.haber || 0),
                     saldo_final: parseFloat(row.saldo_final || 0)
                 };
             });
@@ -56,8 +68,8 @@ class ReportesModel {
                 cuentas,
                 totales: {
                     saldo_inicial: totalSaldoInicial,
-                    debe: totalDebe,
-                    haber: totalHaber,
+                    total_debe: totalDebe,
+                    total_haber: totalHaber,
                     saldo_final: totalSaldoFinal
                 },
                 cuadra: Math.abs(totalDebe - totalHaber) < 0.01
@@ -406,6 +418,123 @@ class ReportesModel {
                 configurado: config.rows.length > 0,
                 configuracion: config.rows[0] || null
             };
+        });
+    }
+
+    /**
+     * Obtener configuración contable
+     */
+    static async obtenerConfiguracion(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(`
+                SELECT
+                    cc.*,
+                    cv.codigo as cuenta_ventas_codigo,
+                    cv.nombre as cuenta_ventas_nombre,
+                    ccv.codigo as cuenta_costo_ventas_codigo,
+                    ccv.nombre as cuenta_costo_ventas_nombre,
+                    ci.codigo as cuenta_inventario_codigo,
+                    ci.nombre as cuenta_inventario_nombre,
+                    ccl.codigo as cuenta_clientes_codigo,
+                    ccl.nombre as cuenta_clientes_nombre,
+                    cp.codigo as cuenta_proveedores_codigo,
+                    cp.nombre as cuenta_proveedores_nombre,
+                    cit.codigo as cuenta_iva_trasladado_codigo,
+                    cit.nombre as cuenta_iva_trasladado_nombre,
+                    cia.codigo as cuenta_iva_acreditable_codigo,
+                    cia.nombre as cuenta_iva_acreditable_nombre,
+                    cb.codigo as cuenta_bancos_codigo,
+                    cb.nombre as cuenta_bancos_nombre,
+                    cca.codigo as cuenta_caja_codigo,
+                    cca.nombre as cuenta_caja_nombre
+                FROM config_contabilidad cc
+                LEFT JOIN cuentas_contables cv ON cv.id = cc.cuenta_ventas_id
+                LEFT JOIN cuentas_contables ccv ON ccv.id = cc.cuenta_costo_ventas_id
+                LEFT JOIN cuentas_contables ci ON ci.id = cc.cuenta_inventario_id
+                LEFT JOIN cuentas_contables ccl ON ccl.id = cc.cuenta_clientes_id
+                LEFT JOIN cuentas_contables cp ON cp.id = cc.cuenta_proveedores_id
+                LEFT JOIN cuentas_contables cit ON cit.id = cc.cuenta_iva_trasladado_id
+                LEFT JOIN cuentas_contables cia ON cia.id = cc.cuenta_iva_acreditable_id
+                LEFT JOIN cuentas_contables cb ON cb.id = cc.cuenta_bancos_id
+                LEFT JOIN cuentas_contables cca ON cca.id = cc.cuenta_caja_id
+                WHERE cc.organizacion_id = $1
+            `, [organizacionId]);
+
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Actualizar configuración contable
+     */
+    static async actualizarConfiguracion(data, organizacionId, usuarioId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Verificar que exista la configuración
+            const existe = await db.query(
+                `SELECT id FROM config_contabilidad WHERE organizacion_id = $1`,
+                [organizacionId]
+            );
+
+            if (existe.rows.length === 0) {
+                throw new Error('No existe configuración contable. Inicialice primero el catálogo SAT.');
+            }
+
+            // Construir query de actualización dinámica
+            const campos = [];
+            const valores = [];
+            let idx = 1;
+
+            // Campos actualizables
+            const camposPermitidos = [
+                'generar_asientos_automaticos',
+                'tasa_iva',
+                'metodo_costeo',
+                'cuenta_ventas_id',
+                'cuenta_costo_ventas_id',
+                'cuenta_inventario_id',
+                'cuenta_clientes_id',
+                'cuenta_proveedores_id',
+                'cuenta_iva_trasladado_id',
+                'cuenta_iva_acreditable_id',
+                'cuenta_bancos_id',
+                'cuenta_caja_id',
+                'cuenta_comisiones_gasto_id',
+                'cuenta_descuentos_id'
+            ];
+
+            for (const campo of camposPermitidos) {
+                if (data[campo] !== undefined) {
+                    campos.push(`${campo} = $${idx}`);
+                    valores.push(data[campo]);
+                    idx++;
+                }
+            }
+
+            if (campos.length === 0) {
+                throw new Error('No hay campos para actualizar');
+            }
+
+            // Agregar timestamp y usuario
+            campos.push(`actualizado_en = NOW()`);
+
+            valores.push(organizacionId);
+
+            const query = `
+                UPDATE config_contabilidad
+                SET ${campos.join(', ')}
+                WHERE organizacion_id = $${idx}
+                RETURNING *
+            `;
+
+            const result = await db.query(query, valores);
+
+            logger.info('[ReportesModel.actualizarConfiguracion] Configuración actualizada', {
+                organizacion_id: organizacionId,
+                usuario_id: usuarioId,
+                campos_actualizados: Object.keys(data)
+            });
+
+            return result.rows[0];
         });
     }
 }

@@ -140,6 +140,35 @@ class ReportesController {
 
         return ResponseHelper.success(res, resultado);
     });
+
+    /**
+     * Obtener configuración contable
+     * GET /api/v1/contabilidad/configuracion
+     */
+    static obtenerConfiguracion = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const config = await ReportesModel.obtenerConfiguracion(organizacionId);
+
+        if (!config) {
+            return ResponseHelper.notFound(res, 'No existe configuración contable. Inicialice primero el catálogo SAT.');
+        }
+
+        return ResponseHelper.success(res, config, 'Configuración obtenida');
+    });
+
+    /**
+     * Actualizar configuración contable
+     * PUT /api/v1/contabilidad/configuracion
+     */
+    static actualizarConfiguracion = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        const config = await ReportesModel.actualizarConfiguracion(req.body, organizacionId, usuarioId);
+
+        return ResponseHelper.success(res, config, 'Configuración actualizada');
+    });
 }
 
 module.exports = ReportesController;

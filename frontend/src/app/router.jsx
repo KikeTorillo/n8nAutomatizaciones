@@ -101,6 +101,7 @@ const ContabilidadPage = lazy(() => import('@/pages/contabilidad/ContabilidadPag
 const CuentasContablesPage = lazy(() => import('@/pages/contabilidad/CuentasContablesPage'));
 const AsientosContablesPage = lazy(() => import('@/pages/contabilidad/AsientosContablesPage'));
 const ReportesContablesPage = lazy(() => import('@/pages/contabilidad/ReportesContablesPage'));
+const ConfiguracionContablePage = lazy(() => import('@/pages/contabilidad/ConfiguracionContablePage'));
 
 // Loading fallback
 const loadingFallback = (
@@ -502,6 +503,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ReportesContablesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'contabilidad/configuracion',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ConfiguracionContablePage)}
           </ProtectedRoute>
         ),
       },

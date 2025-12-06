@@ -173,6 +173,8 @@ CREATE POLICY movimientos_tenant_modify ON movimientos_contables
 -- ⚙️ POLÍTICAS: config_contabilidad
 -- ====================================================================
 -- Solo admin/propietario pueden ver y modificar configuración.
+-- NOTA: La verificación de rol se hace en el backend middleware.
+-- RLS aquí solo asegura aislamiento multi-tenant.
 -- ====================================================================
 
 CREATE POLICY config_tenant_all ON config_contabilidad
@@ -183,7 +185,6 @@ CREATE POLICY config_tenant_all ON config_contabilidad
     )
     WITH CHECK (
         organizacion_id::text = current_setting('app.current_tenant_id', true)
-        AND current_setting('app.current_role', true) IN ('admin', 'propietario')
     );
 
 -- ====================================================================

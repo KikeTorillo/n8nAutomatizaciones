@@ -16,10 +16,10 @@
 
 | Componente | Métricas |
 |------------|----------|
-| **Backend** | 48 controllers, 44 models, ~301 endpoints, 20 servicios |
-| **Frontend** | 112 componentes, 52 páginas, 30 hooks, 2 stores |
-| **SQL** | 61 tablas, 99 políticas RLS, 96 funciones, 67 triggers |
-| **MCP Server** | 8 herramientas (JSON-RPC 2.0) |
+| **Backend** | 51 controllers, 48 models, 385 endpoints, 11 módulos |
+| **Frontend** | 118 componentes, 59 páginas, 31 hooks, 2 stores |
+| **SQL** | 78 tablas, 113 políticas RLS, 120 funciones, 80 triggers |
+| **MCP Server** | 8 herramientas JSON-RPC 2.0 |
 
 ---
 
@@ -49,7 +49,7 @@ docker restart back      # Aplicar cambios backend
 
 ---
 
-## Módulos Backend (10)
+## Módulos Backend (11)
 
 | Módulo | Controllers | Descripción |
 |--------|-------------|-------------|
@@ -57,6 +57,7 @@ docker restart back      # Aplicar cambios backend
 | **agendamiento** | 12 | Citas, profesionales, servicios, horarios, disponibilidad, chatbots |
 | **inventario** | 7 | Productos, categorías, proveedores, alertas, órdenes compra |
 | **eventos-digitales** | 7 | Eventos, invitados, mesa de regalos, felicitaciones, plantillas |
+| **contabilidad** | 3 | Cuentas contables, asientos, reportes SAT México |
 | **pos** | 2 | Ventas, reportes, ticket PDF térmico |
 | **comisiones** | 3 | Cálculo, configuración, reportes |
 | **marketplace** | 3 | Perfiles públicos, reseñas, analytics |
@@ -65,10 +66,10 @@ docker restart back      # Aplicar cambios backend
 
 ---
 
-## Middlewares (9)
+## Middlewares
 
-| Archivo | Función Principal |
-|---------|-------------------|
+| Archivo | Función |
+|---------|---------|
 | `auth.js` | JWT, roles, optionalAuth, refreshToken |
 | `tenant.js` | RLS context multi-tenant, bypass super_admin |
 | `subscription.js` | Plan activo, límites recursos |
@@ -77,138 +78,70 @@ docker restart back      # Aplicar cambios backend
 | `rateLimiting.js` | Rate limit por IP/usuario/org/plan |
 | `storage.js` | Multer config, validación archivos |
 | `asyncHandler.js` | Wrapper errores async |
-| `index.js` | Exports centralizados + composiciones |
 
-**Orden de Middleware**:
-```
-# Autenticados
-auth.authenticateToken → tenant.setTenantContext → controller
-
-# Públicos
-auth.optionalAuth → tenant.setTenantContextFromQuery → controller
-```
-
----
-
-## Frontend - Componentes Principales
-
-| Área | Qty | Descripción |
-|------|-----|-------------|
-| marketplace | 15 | Perfiles, reseñas, agendamiento público, mapa |
-| inventario | 12 | Productos, kardex, órdenes compra (4 subcomponentes) |
-| citas | 10 | Calendario día/mes, modales, filtros |
-| comisiones | 9 | Dashboard, reportes, configuración |
-| pos | 8 | Venta, carrito, cliente selector, devoluciones |
-| ui | 8 | Button, Modal, Input, Select, Toast, ConfirmDialog |
-| dashboard | 7 | Widgets, estadísticas, setup checklist |
-| bloqueos | 6 | Calendario, modales, filtros |
-| profesionales | 5 | Gestión, horarios, servicios, stats |
-
----
-
-## Hooks por Módulo (30)
-
-**Core**: useAuth, useModulos, useAccesoModulo, useToast, useUbicaciones
-**Agendamiento**: useCitas, useProfesionales, useServicios, useHorarios, useBloqueos, useTiposBloqueo, useTiposProfesional, useRecordatorios
-**Inventario**: useInventario, useProductos, useCategorias, useProveedores, useOrdenesCompra
-**Otros**: usePOS, useVentas, useClientes, useComisiones, useMarketplace, useChatbots, useStorage, useEventosDigitales, useSuperAdmin, useEstadisticas
+**Orden**: `auth.authenticateToken → tenant.setTenantContext → controller`
 
 ---
 
 ## Roles y Seguridad
 
-| Rol | Organización | Permisos |
-|-----|--------------|----------|
-| `super_admin` | NULL | Plataforma completa, bypass middlewares |
-| `admin/propietario` | Requerida | CRUD completo en su org |
-| `empleado` | Requerida | Solo módulos en `modulos_acceso` |
-| `bot` | Requerida | READ + CRUD citas (MCP) |
+| Rol | Permisos |
+|-----|----------|
+| `super_admin` | Plataforma completa, bypass middlewares, org NULL |
+| `admin/propietario` | CRUD completo en su organización |
+| `empleado` | Solo módulos en `modulos_acceso` |
+| `bot` | READ + CRUD citas (MCP) |
 
 ---
 
 ## MCP Server (Chatbots IA)
 
 ```
-Usuario (Telegram/WhatsApp)
-    ↓
-n8n Workflow (Anti-flood Redis + Debouncing 10s)
-    ↓
-AI Agent (OpenRouter Qwen3-32B)
-    ↓
-MCP Server (JSON-RPC 2.0 + JWT 180d)
-    ↓
-Backend API → PostgreSQL (RLS)
+Usuario (Telegram/WhatsApp) → n8n Workflow → AI Agent (Qwen3-32B) → MCP Server → Backend API
 ```
 
-### Tools (8)
+**Tools**: listarServicios, verificarDisponibilidad, buscarCliente, buscarCitasCliente, crearCita, reagendarCita, modificarServiciosCita, confirmarCita
 
-| Tool | Descripción |
-|------|-------------|
-| listarServicios | Catálogo con precios y duración |
-| verificarDisponibilidad | Slots libres (soporta múltiples servicios) |
-| buscarCliente | Por teléfono, nombre o sender |
-| buscarCitasCliente | Historial del cliente |
-| crearCita | Múltiples servicios, auto-crea cliente |
-| reagendarCita | Validación disponibilidad |
-| modificarServiciosCita | Cambiar servicios sin mover fecha |
-| confirmarCita | Marcar cita confirmada |
-
-**Características**: Auto-detección Telegram/WhatsApp, normalización de fechas/horas variadas, soporte 1-10 servicios por cita.
+**Características**: Auto-detección Telegram/WhatsApp, normalización fechas/horas, 1-10 servicios por cita, auto-creación de clientes.
 
 ---
 
-## Servicios Backend (20)
-
-| Servicio | Descripción |
-|----------|-------------|
-| configService | Config centralizada con cache (TTL 60s) |
-| emailService | SMTP con templates (reset, activación, invitación) |
-| mercadopago.service | Integración pagos MercadoPago |
-| n8nService | Gestión workflows n8n |
-| n8nCredentialService | Credenciales Telegram/WhatsApp |
-| n8nMcpCredentialsService | JWT tokens MCP (180d) |
-| ticketPDF.service | Tickets térmicos 80mm |
-| tokenBlacklistService | Blacklist JWT con Redis |
-| storage/* | MinIO client, image processor, validator |
-
----
-
-## Estructura SQL
+## Estructura SQL por Módulo
 
 | Módulo | Tablas | Descripción |
 |--------|--------|-------------|
 | nucleo | 8 | Organizaciones, usuarios, planes, suscripciones |
-| negocio | 5 | Profesionales, clientes, servicios |
-| citas | 2 | Citas (particionada), citas_servicios |
-| inventario | 8 | Productos, movimientos (particionada), órdenes |
+| negocio | 7 | Profesionales, clientes, servicios |
+| contabilidad | 9 | Cuentas, asientos, pólizas, catálogo SAT |
+| inventario | 10 | Productos, movimientos, órdenes compra |
+| eventos-digitales | 6 | Eventos, invitados, mesa regalos |
+| citas | 6 | Citas (particionada), servicios |
+| catalogos | 6 | Estados, ciudades, industrias |
+| marketplace | 4 | Perfiles, reseñas, analytics |
+| auditoria | 3 | Eventos sistema (particionada) |
+| comisiones | 3 | Config, historial |
 | pos | 2 | Ventas, items |
-| comisiones | 3 | Config, profesionales, historial |
-| marketplace | 4 | Perfiles, reseñas, analytics, categorías |
-| eventos-digitales | 6 | Eventos, invitados, mesa regalos, felicitaciones |
-| chatbots | 2 | Config, credenciales |
-| auditoria | 2 | Eventos (particionada), archivo |
 
-**Tablas Particionadas**: citas, eventos_sistema, movimientos_inventario (RANGE mensual)
+**Tablas Particionadas**: citas, eventos_sistema (RANGE mensual)
 
 ---
 
 ## Reglas de Desarrollo
 
 ### Backend
-1. **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
-2. **withBypass**: Solo para JOINs multi-tabla
-3. **asyncHandler**: Obligatorio en todas las routes
-4. **Variable RLS**: Usar `app.current_tenant_id`
+- **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
+- **withBypass**: Solo para JOINs multi-tabla o super_admin
+- **asyncHandler**: Obligatorio en todas las routes
+- **Variable RLS**: `app.current_tenant_id`
 
 ### Frontend
-1. **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
-2. **Invalidar queries**: Tras mutaciones `queryClient.invalidateQueries()`
-3. **Limpiar cache**: Login/Logout `queryClient.clear()`
+- **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
+- **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
+- **Limpiar cache**: `queryClient.clear()` en Login/Logout
 
 ### Mobile-First
 ```jsx
-<div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+<div className="flex flex-col sm:flex-row gap-4">
 <Button className="w-full sm:w-auto">
 ```
 
@@ -218,7 +151,7 @@ Backend API → PostgreSQL (RLS)
 
 | Error | Solución |
 |-------|----------|
-| "Organización no encontrada" | `RLSContextManager.withBypass()` |
+| "Organización no encontrada" | Usar `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | RLS policy violation | Verificar `app.current_tenant_id` |
@@ -228,11 +161,14 @@ Backend API → PostgreSQL (RLS)
 
 ## Archivos Clave
 
-**Backend**: `utils/rlsContextManager.js`, `middleware/index.js`
-**Auth**: `modules/core/controllers/auth.controller.js`
-**MCP**: `backend/mcp-server/tools/`, `app/utils/mcpTokenGenerator.js`
-**Storage**: `services/storage/`, `modules/storage/`
+| Área | Archivos |
+|------|----------|
+| **RLS** | `app/utils/rlsContextManager.js` |
+| **Middlewares** | `app/middleware/index.js` |
+| **Auth** | `modules/core/controllers/auth.controller.js` |
+| **MCP Tools** | `mcp-server/tools/*.js` |
+| **Storage** | `services/storage/` |
 
 ---
 
-**Versión**: 36.0 | **Actualizado**: 5 Dic 2025 | **Estado**: Production Ready
+**Versión**: 37.0 | **Actualizado**: 5 Dic 2025 | **Estado**: Production Ready

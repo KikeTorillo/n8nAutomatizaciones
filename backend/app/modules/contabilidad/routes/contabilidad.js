@@ -270,4 +270,27 @@ router.get('/reportes/balance-general',
     ReportesController.obtenerBalanceGeneral
 );
 
+// ===================================================================
+// CONFIGURACIÓN CONTABLE
+// ===================================================================
+
+/**
+ * GET /api/v1/contabilidad/configuracion
+ * Obtener configuración contable
+ */
+router.get('/configuracion',
+    ...authMiddleware,
+    ReportesController.obtenerConfiguracion
+);
+
+/**
+ * PUT /api/v1/contabilidad/configuracion
+ * Actualizar configuración contable
+ */
+router.put('/configuracion',
+    ...authMiddleware,
+    validate(contabilidadSchemas.actualizarConfiguracion),
+    ReportesController.actualizarConfiguracion
+);
+
 module.exports = router;

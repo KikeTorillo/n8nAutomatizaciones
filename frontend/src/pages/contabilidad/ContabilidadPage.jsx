@@ -12,6 +12,7 @@ import {
   Clock,
   Calculator,
   Plus,
+  Settings,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { useDashboardContabilidad, useInicializarCatalogoSAT } from '@/hooks/useContabilidad';
@@ -137,6 +138,15 @@ function ContabilidadPage() {
               >
                 <BarChart3 className="w-4 h-4 mr-1 sm:mr-2" />
                 Reportes
+              </Button>
+
+              <Button
+                variant="ghost"
+                onClick={() => navigate('/contabilidad/configuracion')}
+                className="text-sm"
+                title="Configuración"
+              >
+                <Settings className="w-4 h-4" />
               </Button>
             </div>
           </div>

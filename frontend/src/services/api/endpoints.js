@@ -2398,6 +2398,21 @@ export const contabilidadApi = {
    */
   obtenerBalanceGeneral: (fecha) =>
     apiClient.get('/contabilidad/reportes/balance-general', { params: { fecha } }),
+
+  // ========== Configuración ==========
+
+  /**
+   * Obtener configuración contable
+   * @returns {Promise<Object>} Configuración con cuentas del sistema
+   */
+  obtenerConfiguracion: () => apiClient.get('/contabilidad/configuracion'),
+
+  /**
+   * Actualizar configuración contable
+   * @param {Object} data - { generar_asientos_automaticos?, tasa_iva?, metodo_costeo?, cuenta_*_id? }
+   * @returns {Promise<Object>}
+   */
+  actualizarConfiguracion: (data) => apiClient.put('/contabilidad/configuracion', data),
 };
 
 export default {

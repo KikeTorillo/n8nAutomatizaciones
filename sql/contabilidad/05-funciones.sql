@@ -222,7 +222,7 @@ BEGIN
     -- Obtener datos de la venta
     SELECT
         v.*,
-        o.nombre as org_nombre
+        o.nombre_comercial as org_nombre
     INTO v_venta
     FROM ventas_pos v
     JOIN organizaciones o ON o.id = v.organizacion_id
@@ -271,7 +271,7 @@ BEGIN
     -- Obtener siguiente número de asiento
     v_numero_asiento := obtener_siguiente_numero_asiento(v_venta.organizacion_id);
 
-    -- Crear asiento
+    -- Crear asiento como BORRADOR (se publicará después de insertar movimientos)
     INSERT INTO asientos_contables (
         organizacion_id,
         numero_asiento,
@@ -284,9 +284,7 @@ BEGIN
         total_debe,
         total_haber,
         estado,
-        creado_por,
-        publicado_en,
-        publicado_por
+        creado_por
     ) VALUES (
         v_venta.organizacion_id,
         v_numero_asiento,
@@ -296,11 +294,9 @@ BEGIN
         v_venta.folio,
         'venta_pos',
         p_venta_id,
-        v_venta.total,
-        v_venta.total,
-        'publicado',
-        v_venta.usuario_id,
-        NOW(),
+        0,
+        0,
+        'borrador',
         v_venta.usuario_id
     )
     RETURNING id INTO v_asiento_id;
@@ -361,6 +357,13 @@ BEGIN
             'IVA trasladado ' || v_venta.folio
         );
     END IF;
+
+    -- Publicar el asiento (ahora los totales ya están correctos por el trigger)
+    UPDATE asientos_contables
+    SET estado = 'publicado',
+        publicado_en = NOW(),
+        publicado_por = v_venta.usuario_id
+    WHERE id = v_asiento_id AND fecha = v_fecha;
 
     RETURN v_asiento_id;
 END;
@@ -439,7 +442,7 @@ BEGIN
     -- Obtener siguiente número
     v_numero_asiento := obtener_siguiente_numero_asiento(v_orden.organizacion_id);
 
-    -- Crear asiento
+    -- Crear asiento como BORRADOR (se publicará después de insertar movimientos)
     INSERT INTO asientos_contables (
         organizacion_id,
         numero_asiento,
@@ -451,8 +454,7 @@ BEGIN
         documento_id,
         total_debe,
         total_haber,
-        estado,
-        publicado_en
+        estado
     ) VALUES (
         v_orden.organizacion_id,
         v_numero_asiento,
@@ -462,10 +464,9 @@ BEGIN
         v_orden.numero_orden,
         'orden_compra',
         p_orden_id,
-        v_orden.total,
-        v_orden.total,
-        'publicado',
-        NOW()
+        0,
+        0,
+        'borrador'
     )
     RETURNING id INTO v_asiento_id;
 
@@ -529,6 +530,12 @@ BEGIN
         'proveedor',
         v_orden.proveedor_id
     );
+
+    -- Publicar el asiento (ahora los totales ya están correctos por el trigger)
+    UPDATE asientos_contables
+    SET estado = 'publicado',
+        publicado_en = NOW()
+    WHERE id = v_asiento_id AND fecha = v_fecha;
 
     RETURN v_asiento_id;
 END;

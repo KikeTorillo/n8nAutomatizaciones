@@ -1,23 +1,23 @@
 # Módulo de Contabilidad - México
 
 **Estado**: ✅ Producción
-**Verificado**: 5 Diciembre 2025 (desde cero)
+**Verificado**: 6 Diciembre 2025
 
 ---
 
 ## Resumen
 
-Contabilidad para México con catálogo SAT (Anexo 24), partida doble y reportes financieros.
+Contabilidad electrónica para México basada en el catálogo SAT (Anexo 24). Soporta partida doble, asientos automáticos desde POS/Compras y reportes financieros.
 
 ---
 
-## Archivos
+## Estructura
 
-| Capa | Archivos |
-|------|----------|
-| **SQL** | `sql/contabilidad/` - 7 archivos (tablas, índices, RLS, funciones, triggers, catálogo SAT) |
-| **Backend** | `modules/contabilidad/` - 4 controllers, 4 models, 1 route, 1 schema |
-| **Frontend** | `pages/contabilidad/` - 4 páginas + `useContabilidad.js` hook |
+| Capa | Ubicación | Contenido |
+|------|-----------|-----------|
+| **SQL** | `sql/contabilidad/` | 7 archivos (tablas, RLS, funciones, triggers, catálogo SAT) |
+| **Backend** | `app/modules/contabilidad/` | 3 controllers, 3 models, 1 route, 1 schema |
+| **Frontend** | `pages/contabilidad/` | 5 páginas + 22 hooks |
 
 ---
 
@@ -27,63 +27,59 @@ Contabilidad para México con catálogo SAT (Anexo 24), partida doble y reportes
 |-------|-------------|
 | `cuentas_contables` | Catálogo jerárquico SAT (24 cuentas base) |
 | `periodos_contables` | Control mensual abierto/cerrado |
-| `asientos_contables` | Libro diario (particionada) |
-| `movimientos_contables` | Líneas debe/haber |
-| `config_contabilidad` | Cuentas default por org |
-| `saldos_cuentas` | Cache saldos mensuales |
+| `asientos_contables` | Libro diario (particionada mensual) |
+| `movimientos_contables` | Líneas debe/haber por asiento |
+| `config_contabilidad` | Cuentas default y configuración por org |
+| `saldos_cuentas` | Cache de saldos mensuales (actualizado por triggers) |
 
 ---
 
-## API Endpoints
+## Integraciones Automáticas
 
-| Grupo | Endpoints |
-|-------|-----------|
-| Dashboard | `GET /dashboard` |
-| Cuentas | `GET /cuentas`, `/arbol`, `/afectables`, `POST /cuentas`, `/inicializar-sat` |
-| Asientos | `GET/POST /asientos`, `POST /:id/publicar`, `/:id/anular` |
-| Reportes | `GET /balanza/:periodoId`, `/libro-mayor/:cuentaId`, `/estado-resultados`, `/balance-general` |
-| Períodos | `GET /periodos` |
+| Origen | Trigger | Asiento Generado |
+|--------|---------|------------------|
+| **Venta POS** | `trigger_asiento_venta_pos` | DEBE: Caja, HABER: Ingresos (+IVA si aplica) |
+| **Orden Compra** | `trigger_asiento_compra` | DEBE: Inventario (+IVA), HABER: Proveedores |
 
-Base: `/api/v1/contabilidad`
+Habilitado en: Configuración → Asientos Automáticos
 
 ---
 
-## Funcionalidades
+## Reportes
 
-| Feature | Estado |
-|---------|--------|
-| Inicializar catálogo SAT | ✅ |
-| Crear asiento (partida doble) | ✅ |
-| Publicar/Anular asiento | ✅ |
-| Libro Mayor por cuenta | ✅ |
-| Estado de Resultados | ✅ |
-| Balance General | ✅ |
-| Balanza de Comprobación | ✅ |
+| Reporte | Endpoint | Función SQL |
+|---------|----------|-------------|
+| Balanza de Comprobación | `/reportes/balanza` | `obtener_balanza_comprobacion()` |
+| Libro Mayor | `/reportes/libro-mayor` | `obtener_libro_mayor()` |
+| Estado de Resultados | `/reportes/estado-resultados` | Query directo |
+| Balance General | `/reportes/balance-general` | Query directo |
 
 ---
 
-## Correcciones RLS Críticas
+## Flujo de Balanza
 
-Las políticas RLS de INSERT/UPDATE solo verifican `tenant_id` (el rol se valida en middleware):
-
-```sql
--- 04-rls-policies.sql
-asientos_tenant_insert   -- WITH CHECK (tenant_id)
-asientos_tenant_update   -- USING (tenant_id)
-movimientos_tenant_modify -- USING/WITH CHECK (tenant_id)
+```
+Frontend (periodoId)
+    → Model (obtiene fechas del período)
+    → SQL: obtener_balanza_comprobacion(org_id, fecha_inicio, fecha_fin)
+    → Retorna: código, cuenta, saldo_inicial, debe, haber, saldo_final
+    → Valida: total_debe = total_haber (cuadrada)
 ```
 
 ---
 
 ## Pendiente
 
-**Alta**: Asientos automáticos desde POS y compras
-**Media**: Exportación PDF/Excel, cierre de período
-**Futuro**: CFDI 4.0, contabilidad electrónica SAT
+| Prioridad | Feature |
+|-----------|---------|
+| **Media** | Exportación PDF/Excel de reportes |
+| **Baja** | Asiento de cierre anual automático |
+| **Futuro** | CFDI 4.0 integración |
+| **Futuro** | Contabilidad electrónica SAT (XML) |
 
 ---
 
 ## Acceso
 
 - **Ruta**: `/contabilidad`
-- **Permisos**: `adminOnly: true`
+- **Rol mínimo**: admin/propietario

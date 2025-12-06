@@ -553,6 +553,50 @@ export function useBalanceGeneral(fecha) {
 }
 
 // ====================================================================
+// CONFIGURACIÓN
+// ====================================================================
+
+/**
+ * Hook para obtener configuración contable
+ * @returns {Object} { data, isLoading, error, refetch }
+ */
+export function useConfiguracionContable() {
+  return useQuery({
+    queryKey: ['contabilidad', 'configuracion'],
+    queryFn: async () => {
+      const response = await contabilidadApi.obtenerConfiguracion();
+      return response.data?.data;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para actualizar configuración contable
+ * @returns {Object} { mutate, mutateAsync, isPending, error }
+ */
+export function useActualizarConfiguracion() {
+  const queryClient = useQueryClient();
+  const { success, error: showError } = useToast();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await contabilidadApi.actualizarConfiguracion(data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contabilidad', 'configuracion'] });
+      queryClient.invalidateQueries({ queryKey: ['contabilidad', 'dashboard'] });
+      success('Configuración actualizada exitosamente');
+    },
+    onError: (error) => {
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al actualizar la configuración';
+      showError(mensaje);
+    },
+  });
+}
+
+// ====================================================================
 // EXPORT DEFAULT
 // ====================================================================
 
@@ -588,4 +632,8 @@ export default {
   useLibroMayor,
   useEstadoResultados,
   useBalanceGeneral,
+
+  // Configuración
+  useConfiguracionContable,
+  useActualizarConfiguracion,
 };

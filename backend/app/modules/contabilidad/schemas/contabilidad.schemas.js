@@ -418,6 +418,46 @@ const contabilidadSchemas = {
         params: Joi.object({
             id: Joi.number().integer().positive().required()
         })
+    },
+
+    // ========================================================================
+    // CONFIGURACIÓN
+    // ========================================================================
+
+    /**
+     * Schema para actualizar configuración contable
+     * PUT /api/v1/contabilidad/configuracion
+     */
+    actualizarConfiguracion: {
+        body: Joi.object({
+            generar_asientos_automaticos: Joi.boolean().optional(),
+
+            tasa_iva: Joi.number().min(0).max(100).optional().messages({
+                'number.min': 'tasa_iva no puede ser negativa',
+                'number.max': 'tasa_iva no puede exceder 100'
+            }),
+
+            metodo_costeo: Joi.string()
+                .valid('promedio', 'ueps', 'peps', 'identificado')
+                .optional()
+                .messages({
+                    'any.only': 'metodo_costeo debe ser promedio, ueps, peps o identificado'
+                }),
+
+            cuenta_ventas_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_costo_ventas_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_inventario_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_clientes_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_proveedores_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_iva_trasladado_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_iva_acreditable_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_bancos_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_caja_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_comisiones_gasto_id: Joi.number().integer().positive().optional().allow(null),
+            cuenta_descuentos_id: Joi.number().integer().positive().optional().allow(null)
+        }).min(1).messages({
+            'object.min': 'Debe proporcionar al menos un campo para actualizar'
+        })
     }
 };
 
