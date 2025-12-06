@@ -10,15 +10,25 @@
 
 ---
 
+## Memoria Persistente (Cipher)
+
+Tienes acceso a **Cipher** via MCP para memoria persistente del proyecto. **ÚSALO SIEMPRE**:
+
+- **Guardar información**: Cuando descubras algo importante (bugs, decisiones, patrones), usa `ask_cipher` para almacenarlo
+- **Consultar contexto**: Antes de responder preguntas sobre el proyecto, consulta `ask_cipher` para obtener contexto relevante
+- **Actualizar estado**: Después de cambios significativos, actualiza la memoria con el nuevo estado
+
+---
+
 ## Estado Actual
 
-**Última verificación**: 5 Diciembre 2025
+**Última verificación**: 6 Diciembre 2025
 
 | Componente | Métricas |
 |------------|----------|
-| **Backend** | 51 controllers, 48 models, 385 endpoints, 11 módulos |
-| **Frontend** | 118 componentes, 59 páginas, 31 hooks, 2 stores |
-| **SQL** | 78 tablas, 113 políticas RLS, 120 funciones, 80 triggers |
+| **Backend** | 55 controllers, 50 models, 350 endpoints, 12 módulos |
+| **Frontend** | 112 componentes, 86 páginas, 32 hooks, 2 stores |
+| **SQL** | 72 tablas, 122 políticas RLS, 120 funciones, 79 triggers |
 | **MCP Server** | 8 herramientas JSON-RPC 2.0 |
 
 ---
@@ -28,7 +38,7 @@
 | Capa | Tecnologías |
 |------|-------------|
 | **Frontend** | React 18, Vite 7, Tailwind CSS 3, Zustand, TanStack Query, Zod |
-| **Backend** | Node.js, Express.js, JWT (1h access/7d refresh), Joi, Winston, Redis |
+| **Backend** | Node.js, Express.js, JWT (1h access/7d refresh), Joi, Winston |
 | **Database** | PostgreSQL 17, pg_cron, RLS multi-tenant, particionamiento mensual |
 | **IA** | OpenRouter (Qwen3-32B), n8n workflows, MCP Server |
 | **Storage** | MinIO (S3-compatible) |
@@ -49,20 +59,21 @@ docker restart back      # Aplicar cambios backend
 
 ---
 
-## Módulos Backend (11)
+## Módulos Backend (12)
 
 | Módulo | Controllers | Descripción |
 |--------|-------------|-------------|
-| **core** | 12 | Auth, usuarios, organizaciones, suscripciones, ubicaciones, pagos |
-| **agendamiento** | 12 | Citas, profesionales, servicios, horarios, disponibilidad, chatbots |
-| **inventario** | 7 | Productos, categorías, proveedores, alertas, órdenes compra |
-| **eventos-digitales** | 7 | Eventos, invitados, mesa de regalos, felicitaciones, plantillas |
-| **contabilidad** | 3 | Cuentas contables, asientos, reportes SAT México |
-| **pos** | 2 | Ventas, reportes, ticket PDF térmico |
-| **comisiones** | 3 | Cálculo, configuración, reportes |
+| **core** | 12 | Auth, usuarios, organizaciones, suscripciones, ubicaciones, pagos, webhooks |
+| **agendamiento** | 13 | Citas (base, operacional, recordatorios), profesionales, servicios, horarios, chatbots |
+| **inventario** | 8 | Productos, categorías, proveedores, alertas, órdenes compra, movimientos, reportes |
+| **eventos-digitales** | 7 | Eventos, invitados, mesa de regalos, felicitaciones, plantillas, público |
+| **contabilidad** | 4 | Cuentas contables, asientos, reportes SAT México |
+| **website** | 5 | Páginas, bloques, configuración, público |
+| **pos** | 2 | Ventas, reportes |
+| **comisiones** | 3 | Cálculo, configuración, estadísticas |
 | **marketplace** | 3 | Perfiles públicos, reseñas, analytics |
-| **storage** | 1 | Archivos MinIO, upload/delete, presigned URLs |
-| **recordatorios** | 1 | Recordatorios de citas automáticos |
+| **storage** | 1 | Archivos MinIO, presigned URLs |
+| **recordatorios** | 1 | Recordatorios citas automáticos |
 
 ---
 
@@ -102,27 +113,18 @@ Usuario (Telegram/WhatsApp) → n8n Workflow → AI Agent (Qwen3-32B) → MCP Se
 
 **Tools**: listarServicios, verificarDisponibilidad, buscarCliente, buscarCitasCliente, crearCita, reagendarCita, modificarServiciosCita, confirmarCita
 
-**Características**: Auto-detección Telegram/WhatsApp, normalización fechas/horas, 1-10 servicios por cita, auto-creación de clientes.
-
 ---
 
-## Estructura SQL por Módulo
+## Tablas Particionadas (4)
 
-| Módulo | Tablas | Descripción |
-|--------|--------|-------------|
-| nucleo | 8 | Organizaciones, usuarios, planes, suscripciones |
-| negocio | 7 | Profesionales, clientes, servicios |
-| contabilidad | 9 | Cuentas, asientos, pólizas, catálogo SAT |
-| inventario | 10 | Productos, movimientos, órdenes compra |
-| eventos-digitales | 6 | Eventos, invitados, mesa regalos |
-| citas | 6 | Citas (particionada), servicios |
-| catalogos | 6 | Estados, ciudades, industrias |
-| marketplace | 4 | Perfiles, reseñas, analytics |
-| auditoria | 3 | Eventos sistema (particionada) |
-| comisiones | 3 | Config, historial |
-| pos | 2 | Ventas, items |
+| Tabla | Particionamiento |
+|-------|------------------|
+| `citas` | RANGE (fecha_cita) |
+| `eventos_sistema` | RANGE (creado_en) |
+| `asientos_contables` | RANGE (fecha) |
+| `movimientos_inventario` | RANGE (creado_en) |
 
-**Tablas Particionadas**: citas, eventos_sistema (RANGE mensual)
+Mantenimiento automático con **pg_cron** (creación mensual).
 
 ---
 
@@ -163,12 +165,12 @@ Usuario (Telegram/WhatsApp) → n8n Workflow → AI Agent (Qwen3-32B) → MCP Se
 
 | Área | Archivos |
 |------|----------|
-| **RLS** | `app/utils/rlsContextManager.js` |
-| **Middlewares** | `app/middleware/index.js` |
-| **Auth** | `modules/core/controllers/auth.controller.js` |
-| **MCP Tools** | `mcp-server/tools/*.js` |
-| **Storage** | `services/storage/` |
+| **RLS** | `backend/app/utils/rlsContextManager.js` |
+| **Middlewares** | `backend/app/middleware/index.js` |
+| **Auth** | `backend/app/modules/core/controllers/auth.controller.js` |
+| **MCP Tools** | `backend/mcp-server/tools/*.js` |
+| **Stores** | `frontend/src/store/authStore.js`, `onboardingStore.js` |
 
 ---
 
-**Versión**: 37.0 | **Actualizado**: 5 Dic 2025 | **Estado**: Production Ready
+**Versión**: 39.0 | **Actualizado**: 6 Dic 2025

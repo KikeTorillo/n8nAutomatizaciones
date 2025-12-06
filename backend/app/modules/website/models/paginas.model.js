@@ -122,6 +122,61 @@ class WebsitePaginasModel {
     }
 
     /**
+     * Obtener página de inicio (primera página por orden)
+     *
+     * @param {string} websiteSlug - Slug del sitio
+     * @returns {Object|null} Página con bloques o null
+     */
+    static async obtenerPaginaInicio(websiteSlug) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    wp.*,
+                    wc.id as website_id,
+                    wc.slug as website_slug,
+                    wc.nombre_sitio,
+                    wc.color_primario,
+                    wc.color_secundario,
+                    wc.color_acento,
+                    wc.color_texto,
+                    wc.color_fondo,
+                    wc.fuente_titulos,
+                    wc.fuente_cuerpo,
+                    wc.logo_url,
+                    wc.redes_sociales,
+                    (
+                        SELECT json_agg(
+                            json_build_object(
+                                'id', wb.id,
+                                'tipo', wb.tipo,
+                                'contenido', wb.contenido,
+                                'estilos', wb.estilos,
+                                'orden', wb.orden
+                            ) ORDER BY wb.orden
+                        )
+                        FROM website_bloques wb
+                        WHERE wb.pagina_id = wp.id
+                        AND wb.visible = true
+                    ) as bloques
+                FROM website_paginas wp
+                JOIN website_config wc ON wc.id = wp.website_id
+                WHERE wc.slug = $1
+                AND wc.publicado = true
+                AND wp.publicada = true
+                ORDER BY wp.orden ASC
+                LIMIT 1
+            `;
+
+            logger.info('[WebsitePaginasModel.obtenerPaginaInicio] Obteniendo página de inicio', {
+                website_slug: websiteSlug
+            });
+
+            const result = await db.query(query, [websiteSlug]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
      * Obtener página por slug para vista pública
      *
      * @param {string} websiteSlug - Slug del sitio

@@ -1,6 +1,7 @@
 const { WebsiteConfigModel, WebsitePaginasModel, WebsiteBloquesModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 /**
  * ====================================================================
@@ -39,8 +40,8 @@ class WebsitePublicController {
             );
         }
 
-        // Obtener página de inicio (slug vacío)
-        const paginaInicio = await WebsitePaginasModel.obtenerPorSlug(slug, '');
+        // Obtener página de inicio (primera página por orden)
+        const paginaInicio = await WebsitePaginasModel.obtenerPaginaInicio(slug);
 
         return ResponseHelper.success(
             res,
@@ -167,6 +168,48 @@ class WebsitePublicController {
                 fecha: new Date().toISOString()
             },
             'Mensaje enviado exitosamente. Te contactaremos pronto.'
+        );
+    });
+
+    /**
+     * Obtener servicios públicos de la organización
+     * GET /api/v1/public/sitio/:slug/servicios
+     *
+     * @public Sin autenticación requerida
+     * @returns Lista de servicios activos de la organización
+     */
+    static obtenerServicios = asyncHandler(async (req, res) => {
+        const { slug } = req.params;
+
+        // Obtener config para validar que existe y obtener organizacion_id
+        const config = await WebsiteConfigModel.obtenerPorSlug(slug);
+        if (!config) {
+            return ResponseHelper.error(res, 'Sitio no encontrado', 404);
+        }
+
+        // Obtener servicios activos de la organización
+        const servicios = await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    s.id,
+                    s.nombre,
+                    s.descripcion,
+                    s.precio,
+                    s.duracion_minutos,
+                    s.imagen_url
+                FROM servicios s
+                WHERE s.organizacion_id = $1
+                AND s.activo = true
+                ORDER BY s.nombre ASC
+            `;
+            const result = await db.query(query, [config.organizacion_id]);
+            return result.rows;
+        });
+
+        return ResponseHelper.success(
+            res,
+            { servicios },
+            'Servicios obtenidos exitosamente'
         );
     });
 }

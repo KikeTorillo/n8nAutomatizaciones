@@ -157,6 +157,7 @@ export function useModulos() {
     marketplace: true,
     chatbots: true,
     'eventos-digitales': true,
+    website: true,
   };
 
   // Extraer módulos activos como objeto simple { inventario: true, pos: false, ... }
@@ -256,6 +257,7 @@ export function useModulos() {
     tieneChatbots: tieneModulo('chatbots'),
     tieneAgendamiento: tieneModulo('agendamiento'),
     tieneEventosDigitales: tieneModulo('eventos-digitales'),
+    tieneWebsite: tieneModulo('website'),
   };
 }
 

@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { HelmetProvider } from 'react-helmet-async';
+import { Toaster } from 'sonner';
 import { queryClient } from './queryClient';
 import ToastContainer from '@/components/common/ToastContainer';
 import SetupGuard from '@/components/auth/SetupGuard';
@@ -35,6 +36,7 @@ function App() {
           <div className="min-h-screen bg-background">
             <Outlet />
             <ToastContainer />
+            <Toaster position="top-center" richColors closeButton />
           </div>
         </SetupGuard>
       </QueryClientProvider>

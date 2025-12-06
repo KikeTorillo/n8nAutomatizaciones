@@ -1,4 +1,4 @@
-# Plan de Implementación - Módulo Website
+# Módulo Website - Estado Actual
 
 **Actualizado**: 6 Diciembre 2025
 
@@ -6,127 +6,124 @@
 
 ## Resumen
 
-Módulo para página web pública por organización: `nexo.com/sitio/{slug}`
-
-**Incluido en**: Suscripción base (todos los planes)
+Sitio web público por organización: `nexo.com/sitio/{slug}`
 
 ---
 
-## Estado Actual
+## Estado: 85% Completo
 
-### Fase 1: Backend ✅ COMPLETA
+| Fase | Estado | Descripción |
+|------|--------|-------------|
+| Backend | ✅ | 3 tablas, 4 controllers, 21 endpoints |
+| Editor Visual | ✅ | Drag & drop, 11 editores de bloques |
+| Renderizado Público | ✅ | 11 renderizadores, tema dinámico |
+| Integraciones | 🔄 | Servicios ✅, Equipo/Agendar pendiente |
 
-| Componente | Estado | Ubicación |
-|------------|--------|-----------|
-| SQL (3 tablas) | ✅ | `sql/website/01-tablas.sql` |
-| Índices (8) | ✅ | `sql/website/02-indices.sql` |
-| RLS (9 políticas) | ✅ | `sql/website/03-rls-policies.sql` |
-| Models (3) | ✅ | `backend/app/modules/website/models/` |
-| Controllers (4) | ✅ | `backend/app/modules/website/controllers/` |
-| Routes (20 endpoints) | ✅ | `backend/app/modules/website/routes/` |
-| Validators | ✅ | `backend/app/modules/website/validators/` |
+---
 
-### Bloques Implementados (11)
+## Archivos Clave
 
-| Bloque | Tipo | Descripción |
-|--------|------|-------------|
-| Hero | `hero` | Banner principal |
-| Servicios | `servicios` | Cards de servicios |
-| Testimonios | `testimonios` | Reseñas de clientes |
-| Equipo | `equipo` | Staff/profesionales |
-| CTA | `cta` | Call to action |
-| Contacto | `contacto` | Formulario + info |
-| Footer | `footer` | Pie de página |
-| Texto | `texto` | Texto enriquecido |
-| Galería | `galeria` | Grid de imágenes |
-| Video | `video` | YouTube/Vimeo embed |
-| Separador | `separador` | División visual |
-
-### Endpoints Implementados
-
-**Privados** (auth + tenant + módulo website):
 ```
-POST   /api/v1/website/config                    # Crear config
-GET    /api/v1/website/config                    # Obtener config
-PUT    /api/v1/website/config/:id                # Actualizar config
-POST   /api/v1/website/config/:id/publicar       # Publicar/despublicar
-GET    /api/v1/website/config/slug/:slug/disponible  # Verificar slug
-DELETE /api/v1/website/config/:id                # Eliminar sitio
+backend/app/modules/website/
+├── models/          config, paginas, bloques
+├── controllers/     config, paginas, bloques, public
+├── routes/          protected.routes.js, public.routes.js
+└── validators/      website.schemas.js
 
-POST   /api/v1/website/paginas                   # Crear página
-GET    /api/v1/website/paginas                   # Listar páginas
-GET    /api/v1/website/paginas/:id               # Obtener página
-PUT    /api/v1/website/paginas/:id               # Actualizar página
-PUT    /api/v1/website/paginas/orden             # Reordenar páginas
-DELETE /api/v1/website/paginas/:id               # Eliminar página
-
-POST   /api/v1/website/bloques                   # Crear bloque
-GET    /api/v1/website/paginas/:paginaId/bloques # Listar bloques
-GET    /api/v1/website/bloques/:id               # Obtener bloque
-PUT    /api/v1/website/bloques/:id               # Actualizar bloque
-PUT    /api/v1/website/paginas/:paginaId/bloques/orden  # Reordenar
-POST   /api/v1/website/bloques/:id/duplicar      # Duplicar bloque
-DELETE /api/v1/website/bloques/:id               # Eliminar bloque
-GET    /api/v1/website/bloques/tipos             # Listar tipos
-GET    /api/v1/website/bloques/tipos/:tipo/default  # Contenido default
-```
-
-**Públicos** (sin auth):
-```
-GET    /api/v1/public/sitio/:slug                # Sitio completo
-GET    /api/v1/public/sitio/:slug/:pagina        # Página específica
-POST   /api/v1/public/sitio/:slug/contacto       # Formulario contacto
+frontend/src/
+├── hooks/useWebsite.js
+├── pages/website/
+│   ├── WebsiteEditorPage.jsx
+│   └── components/
+│       ├── PageManager, BlockPalette, BlockEditor
+│       ├── ThemeEditor, PreviewPanel
+│       └── blocks/   (11 editores)
+└── pages/public/
+    ├── SitioPublicoPage.jsx
+    └── components/blocks/   (11 renderizadores)
 ```
 
 ---
 
-## Fases Pendientes
+## Endpoints
 
-### Fase 2: Editor Visual (Frontend Admin)
-- [ ] Página `WebsiteEditor.jsx`
-- [ ] Componente `BlockPalette` (paleta de bloques)
-- [ ] Drag & Drop con @dnd-kit
-- [ ] Editores de cada bloque (11 bloques)
-- [ ] `ThemeEditor` (colores y fuentes)
-- [ ] Preview antes de publicar
+**Privados** `/api/v1/website/`:
+- Config: `POST/GET/PUT/DELETE /config`, `POST /:id/publicar`
+- Páginas: CRUD + `PUT /orden`
+- Bloques: CRUD + `PUT /orden`, `POST /:id/duplicar`, `GET /tipos`
 
-### Fase 3: Renderizado Público
-- [ ] Componentes de bloques (solo lectura)
-- [ ] Navegación pública
-- [ ] Estilos responsive
-- [ ] SEO (meta tags, Open Graph)
-
-### Fase 4: Integraciones
-- [ ] Bloque servicios ← módulo servicios
-- [ ] Bloque equipo ← módulo profesionales
-- [ ] Botón agendar ← módulo agendamiento
-- [ ] Formulario contacto → notificaciones
+**Públicos** `/api/v1/public/sitio/:slug`:
+- `GET /` - Sitio + página inicio
+- `GET /:pagina` - Página específica
+- `GET /servicios` - Servicios de la org
+- `POST /contacto` - Formulario
 
 ---
 
-## Dependencias Frontend (por instalar)
+## Bloques (11)
+
+| Tipo | Editor | Renderizador | Integración |
+|------|--------|--------------|-------------|
+| hero | ✅ | ✅ | - |
+| servicios | ✅ | ✅ | ✅ Sistema |
+| testimonios | ✅ | ✅ | - |
+| equipo | ✅ | ✅ | ⏳ Profesionales |
+| cta | ✅ | ✅ | - |
+| contacto | ✅ | ✅ | ⏳ Notificaciones |
+| footer | ✅ | ✅ | - |
+| texto | ✅ | ✅ | - |
+| galeria | ✅ | ✅ | - |
+| video | ✅ | ✅ | - |
+| separador | ✅ | ✅ | - |
+
+---
+
+## Pendiente: Validación Detallada
+
+### Por Probar (Editor)
+
+- [ ] Crear sitio nuevo desde cero
+- [ ] Verificar slug único
+- [ ] Crear múltiples páginas
+- [ ] Reordenar páginas (drag)
+- [ ] Agregar cada tipo de bloque
+- [ ] Editar contenido de cada bloque
+- [ ] Reordenar bloques (drag)
+- [ ] Duplicar bloque
+- [ ] Eliminar bloque
+- [ ] Cambiar tema (colores, fuentes)
+- [ ] Publicar/despublicar sitio
+- [ ] Vista previa antes de publicar
+
+### Por Probar (Público)
+
+- [ ] Navegación entre páginas
+- [ ] Responsive (móvil, tablet)
+- [ ] Formulario contacto funcional
+- [ ] Galería con lightbox
+- [ ] Video YouTube/Vimeo embed
+- [ ] SEO meta tags (verificar HTML)
+
+### Por Implementar
+
+- [ ] Bloque equipo ← profesionales del sistema
+- [ ] Botón "Agendar" → módulo agendamiento
+- [ ] Formulario contacto → crear lead/notificación
+- [ ] Subir imágenes (hero, galería) → MinIO
+
+---
+
+## Dependencias
 
 ```bash
-npm install @dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities react-colorful
+@dnd-kit/core @dnd-kit/sortable @dnd-kit/utilities
+react-colorful sonner
 ```
 
 ---
 
-## Estructura Frontend (por crear)
+## Notas Técnicas
 
-```
-frontend/src/pages/website/
-├── WebsiteEditor.jsx
-└── components/
-    ├── BlockEditor/
-    │   └── blocks/          # 11 editores
-    ├── BlockPalette/
-    ├── PageManager/
-    ├── ThemeEditor/
-    └── Preview/
-
-frontend/src/pages/public/
-├── SitioPublico.jsx
-└── components/
-    └── blocks/              # 11 renderizadores
-```
+- Bloque servicios: `origen: "sistema"` carga de BD, `origen: "manual"` usa items del contenido
+- Tema: CSS variables `--color-primario`, `--font-titulos`, etc.
+- RLS: Tablas website tienen políticas por `organizacion_id`

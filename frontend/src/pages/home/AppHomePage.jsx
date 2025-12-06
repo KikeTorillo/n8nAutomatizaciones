@@ -19,6 +19,7 @@ import {
   Shield,
   PartyPopper,
   BookOpen,
+  Globe,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -54,6 +55,7 @@ function AppHomePage() {
     tieneChatbots,
     tieneMarketplace,
     tieneEventosDigitales,
+    tieneWebsite,
     esPlanFree,
   } = useModulos();
 
@@ -219,6 +221,18 @@ function AppHomePage() {
       color: 'text-rose-600',
       bgColor: 'bg-rose-100',
       enabled: tieneEventosDigitales,
+      badge: 0,
+      adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'website',
+      name: 'Mi Sitio Web',
+      description: 'Crea tu página web',
+      icon: Globe,
+      path: '/website',
+      color: 'text-cyan-600',
+      bgColor: 'bg-cyan-100',
+      enabled: tieneWebsite,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },

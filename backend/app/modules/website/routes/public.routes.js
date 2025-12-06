@@ -34,6 +34,16 @@ router.get('/sitio/:slug',
 );
 
 /**
+ * GET /api/v1/public/sitio/:slug/servicios
+ * Obtener servicios públicos de la organización
+ * @public Sin autenticación
+ */
+router.get('/sitio/:slug/servicios',
+    rateLimiting.apiRateLimit,
+    WebsitePublicController.obtenerServicios
+);
+
+/**
  * GET /api/v1/public/sitio/:slug/:pagina
  * Obtener página específica con bloques
  * @public Sin autenticación

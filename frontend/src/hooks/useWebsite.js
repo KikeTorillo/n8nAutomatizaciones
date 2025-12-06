@@ -391,7 +391,7 @@ export function useWebsiteEditor() {
   return {
     // Data
     config,
-    paginas: paginasData?.paginas || [],
+    paginas: paginasData || [],
     tiposBloques: tiposBloques?.tipos || [],
 
     // Estado

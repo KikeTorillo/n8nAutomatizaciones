@@ -92,13 +92,13 @@ const MODULOS_DISPONIBLES = {
   },
   website: {
     nombre: 'website',
-    display_name: 'Sitio Web Público',
+    display_name: 'Mi Sitio Web',
     descripcion: 'Página web pública con bloques arrastrables y SEO',
-    incluido_en_todos: true,
-    puede_desactivar: false,
+    incluido_en_todos: false,
+    puede_desactivar: true,
     dependencias: [],
-    icono: 'Globe2',
-    orden: 5
+    icono: 'Globe',
+    orden: 55
   }
 };
 

@@ -103,6 +103,10 @@ const AsientosContablesPage = lazy(() => import('@/pages/contabilidad/AsientosCo
 const ReportesContablesPage = lazy(() => import('@/pages/contabilidad/ReportesContablesPage'));
 const ConfiguracionContablePage = lazy(() => import('@/pages/contabilidad/ConfiguracionContablePage'));
 
+// Páginas de Website (Dic 2025)
+const WebsiteEditorPage = lazy(() => import('@/pages/website/WebsiteEditorPage'));
+const SitioPublicoPage = lazy(() => import('@/pages/public/SitioPublicoPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen">
@@ -515,6 +519,16 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Rutas de Website Editor (Dic 2025)
+      {
+        path: 'website',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(WebsiteEditorPage)}
+          </ProtectedRoute>
+        ),
+      },
+
       // Rutas de Eventos Digitales (Dic 2025)
       {
         path: 'eventos-digitales',
@@ -557,6 +571,16 @@ export const router = createBrowserRouter([
       {
         path: 'e/:slug/:token',
         element: withSuspense(EventoPublicoPage),
+      },
+
+      // Rutas públicas de Website (Dic 2025)
+      {
+        path: 'sitio/:slug',
+        element: withSuspense(SitioPublicoPage),
+      },
+      {
+        path: 'sitio/:slug/:pagina',
+        element: withSuspense(SitioPublicoPage),
       },
 
       // ⚠️ IMPORTANTE: Rutas dinámicas DEBEN IR AL FINAL
