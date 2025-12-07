@@ -23,14 +23,13 @@ embedding:
   type: ollama
   model: nomic-embed-text
   baseUrl: http://localhost:11434
+  dimensions: 768
 
 # ========================================
-# VECTOR STORE - Qdrant
+# VECTOR STORE - Qdrant (configurado via env vars)
 # ========================================
-vectorStore:
-  provider: qdrant
-  url: http://localhost:6333
-  collectionName: nexo_memory
+# VECTOR_STORE_TYPE=qdrant
+# VECTOR_STORE_URL=http://localhost:6333
 
 # ========================================
 # SYSTEM PROMPT - Contexto Nexo

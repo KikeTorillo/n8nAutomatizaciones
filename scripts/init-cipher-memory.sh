@@ -4,16 +4,10 @@
 set -e
 cd /home/kike/Documentos/n8nAutomatizaciones
 
-# Cargar solo variables necesarias del .env
-if [ -f .env ]; then
-    export OPENAI_API_KEY=$(grep '^OPENAI_API_KEY=' .env | cut -d'=' -f2)
-    export OPENROUTER_API_KEY=$(grep '^OPENROUTER_API_KEY=' .env | cut -d'=' -f2)
-fi
-
-# Variables específicas para Cipher
-export VECTOR_STORE_TYPE=qdrant
-export VECTOR_STORE_URL=http://localhost:6333
-export OLLAMA_BASE_URL=http://localhost:11434
+# Cargar todas las variables de Cipher desde .env
+set -a
+source .env
+set +a
 
 echo "🧠 Inicializando memoria de Cipher..."
 
@@ -37,7 +31,7 @@ curl -s http://localhost:11434/api/tags > /dev/null || { echo "❌ Ollama no dis
 send_to_cipher() {
     local message="$1"
     echo "   → Guardando..."
-    cipher --no-verbose "Guarda: $message" -a memAgent/cipher.yml 2>/dev/null || true
+    cipher --no-verbose "Guarda: $message" --agent /home/kike/Documentos/n8nAutomatizaciones/memAgent/cipher.yml 2>/dev/null || true
     sleep 1
 }
 
@@ -60,5 +54,5 @@ send_to_cipher "Troubleshooting Nexo: Error 'Organización no encontrada' = usar
 echo ""
 echo "✅ Memoria inicializada correctamente"
 echo ""
-echo "📊 Estado de Qdrant:"
-curl -s http://localhost:6333/collections/knowledge_memory | jq '{puntos: .result.points_count, estado: .result.status}'
+echo "📊 Estado de Qdrant (nexo_knowledge):"
+curl -s http://localhost:6333/collections/nexo_knowledge | jq '{puntos: .result.points_count, estado: .result.status}'
