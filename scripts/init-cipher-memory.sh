@@ -2,7 +2,11 @@
 # Inicializa la memoria de Cipher con contexto del proyecto Nexo ERP
 
 set -e
-cd /home/kike/Documentos/n8nAutomatizaciones
+
+# Obtener directorio raíz del proyecto (un nivel arriba de scripts/)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+cd "$PROJECT_ROOT"
 
 # Cargar todas las variables de Cipher desde .env
 set -a
@@ -31,7 +35,7 @@ curl -s http://localhost:11434/api/tags > /dev/null || { echo "❌ Ollama no dis
 send_to_cipher() {
     local message="$1"
     echo "   → Guardando..."
-    cipher --no-verbose "Guarda: $message" --agent /home/kike/Documentos/n8nAutomatizaciones/memAgent/cipher.yml 2>/dev/null || true
+    cipher --no-verbose "Guarda: $message" --agent "$PROJECT_ROOT/memAgent/cipher.yml" 2>/dev/null || true
     sleep 1
 }
 
