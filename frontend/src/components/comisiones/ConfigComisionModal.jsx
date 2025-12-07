@@ -7,6 +7,8 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import { useCrearConfiguracionComision } from '@/hooks/useComisiones';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
@@ -207,239 +209,164 @@ function ConfigComisionModal({
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Profesional */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Profesional <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="profesional_id"
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                disabled={loadingProfesionales || !!profesionalIdPredefinido}
-                className={errors.profesional_id ? 'border-red-500' : ''}
-              >
-                <option value="">Seleccionar profesional</option>
-                {profesionales && Array.isArray(profesionales) && profesionales.map((prof) => {
-                  console.log('Renderizando profesional:', prof);
-                  return (
-                    <option key={prof.id} value={prof.id}>
-                      {prof.nombre_completo || `${prof.nombre} ${prof.apellidos || ''}`.trim()}
-                    </option>
-                  );
-                })}
-              </Select>
-            )}
-          />
-          {errors.profesional_id && (
-            <p className="mt-1 text-sm text-red-600">{errors.profesional_id.message}</p>
+        <Controller
+          name="profesional_id"
+          control={control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              label="Profesional"
+              required
+              disabled={loadingProfesionales || !!profesionalIdPredefinido}
+              placeholder="Seleccionar profesional"
+              options={profesionales?.map((prof) => ({
+                value: String(prof.id),
+                label: prof.nombre_completo || `${prof.nombre} ${prof.apellidos || ''}`.trim(),
+              })) || []}
+              error={errors.profesional_id?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Selector de Servicio o Producto según aplicaA */}
         {!isProducto ? (
           /* Servicio (opcional - null = configuración global) */
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Servicio Específico
-            </label>
-            <Controller
-              name="servicio_id"
-              control={control}
-              render={({ field }) => (
-                <Select
-                  {...field}
-                  disabled={loadingServicios}
-                  className={errors.servicio_id ? 'border-red-500' : ''}
-                >
-                  <option value="">Todos los servicios (global)</option>
-                  {servicios?.map((servicio) => (
-                    <option key={servicio.id} value={servicio.id}>
-                      {servicio.nombre}
-                    </option>
-                  ))}
-                </Select>
-              )}
-            />
-            <p className="mt-1 text-sm text-gray-500">
-              Dejar en blanco para configuración global (aplica a todos los servicios)
-            </p>
-            {errors.servicio_id && (
-              <p className="mt-1 text-sm text-red-600">{errors.servicio_id.message}</p>
+          <Controller
+            name="servicio_id"
+            control={control}
+            render={({ field }) => (
+              <Select
+                {...field}
+                label="Servicio Específico"
+                disabled={loadingServicios}
+                placeholder="Todos los servicios (global)"
+                options={servicios?.map((servicio) => ({
+                  value: String(servicio.id),
+                  label: servicio.nombre,
+                })) || []}
+                helper="Dejar en blanco para configuración global (aplica a todos los servicios)"
+                error={errors.servicio_id?.message}
+              />
             )}
-          </div>
+          />
         ) : (
           /* Producto y Categoría para ventas POS */
           <>
             {/* Producto específico */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Producto Específico
-              </label>
+            <Controller
+              name="producto_id"
+              control={control}
+              render={({ field }) => (
+                <Select
+                  {...field}
+                  label="Producto Específico"
+                  disabled={loadingProductos}
+                  placeholder="Sin producto específico"
+                  options={productos?.map((producto) => ({
+                    value: String(producto.id),
+                    label: `${producto.nombre} - $${parseFloat(producto.precio_venta || 0).toFixed(2)}`,
+                  })) || []}
+                  helper="Configuración con máxima prioridad"
+                  error={errors.producto_id?.message}
+                />
+              )}
+            />
+
+            {/* Categoría de producto (solo si no hay producto específico) */}
+            {!productoId && (
               <Controller
-                name="producto_id"
+                name="categoria_producto_id"
                 control={control}
                 render={({ field }) => (
                   <Select
                     {...field}
-                    disabled={loadingProductos}
-                    className={errors.producto_id ? 'border-red-500' : ''}
-                  >
-                    <option value="">Sin producto específico</option>
-                    {productos?.map((producto) => (
-                      <option key={producto.id} value={producto.id}>
-                        {producto.nombre} - ${parseFloat(producto.precio_venta || 0).toFixed(2)}
-                      </option>
-                    ))}
-                  </Select>
+                    label="Categoría de Productos"
+                    disabled={loadingCategorias}
+                    placeholder="Todas las categorías (global)"
+                    options={categorias?.map((cat) => ({
+                      value: String(cat.id),
+                      label: cat.nombre,
+                    })) || []}
+                    helper="Aplica a todos los productos de esta categoría"
+                    error={errors.categoria_producto_id?.message}
+                  />
                 )}
               />
-              <p className="mt-1 text-sm text-gray-500">
-                Configuración con máxima prioridad
-              </p>
-              {errors.producto_id && (
-                <p className="mt-1 text-sm text-red-600">{errors.producto_id.message}</p>
-              )}
-            </div>
-
-            {/* Categoría de producto (solo si no hay producto específico) */}
-            {!productoId && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Categoría de Productos
-                </label>
-                <Controller
-                  name="categoria_producto_id"
-                  control={control}
-                  render={({ field }) => (
-                    <Select
-                      {...field}
-                      disabled={loadingCategorias}
-                      className={errors.categoria_producto_id ? 'border-red-500' : ''}
-                    >
-                      <option value="">Todas las categorías (global)</option>
-                      {categorias?.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.nombre}
-                        </option>
-                      ))}
-                    </Select>
-                  )}
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  Aplica a todos los productos de esta categoría
-                </p>
-                {errors.categoria_producto_id && (
-                  <p className="mt-1 text-sm text-red-600">{errors.categoria_producto_id.message}</p>
-                )}
-              </div>
             )}
           </>
         )}
 
         {/* Tipo de Comisión */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Tipo de Comisión <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="tipo_comision"
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                className={errors.tipo_comision ? 'border-red-500' : ''}
-              >
-                <option value="porcentaje">Porcentaje (%)</option>
-                <option value="monto_fijo">Monto Fijo ($)</option>
-              </Select>
-            )}
-          />
-          {errors.tipo_comision && (
-            <p className="mt-1 text-sm text-red-600">{errors.tipo_comision.message}</p>
+        <Controller
+          name="tipo_comision"
+          control={control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              label="Tipo de Comisión"
+              required
+              options={[
+                { value: 'porcentaje', label: 'Porcentaje (%)' },
+                { value: 'monto_fijo', label: 'Monto Fijo ($)' },
+              ]}
+              error={errors.tipo_comision?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Valor de Comisión */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            {tipoComision === 'porcentaje' ? 'Porcentaje' : 'Monto Fijo'} <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="valor_comision"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                type="number"
-                step={tipoComision === 'porcentaje' ? '0.01' : '0.01'}
-                min="0"
-                max={tipoComision === 'porcentaje' ? '100' : '100000'}
-                placeholder={tipoComision === 'porcentaje' ? '15' : '500'}
-                className={errors.valor_comision ? 'border-red-500' : ''}
-              />
-            )}
-          />
-          <p className="mt-1 text-sm text-gray-500">
-            {tipoComision === 'porcentaje' ? 'Valor entre 0 y 100' : 'Monto en pesos'}
-          </p>
-          {errors.valor_comision && (
-            <p className="mt-1 text-sm text-red-600">{errors.valor_comision.message}</p>
+        <Controller
+          name="valor_comision"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label={tipoComision === 'porcentaje' ? 'Porcentaje' : 'Monto Fijo'}
+              required
+              type="number"
+              step="0.01"
+              min="0"
+              max={tipoComision === 'porcentaje' ? '100' : '100000'}
+              placeholder={tipoComision === 'porcentaje' ? '15' : '500'}
+              helper={tipoComision === 'porcentaje' ? 'Valor entre 0 y 100' : 'Monto en pesos'}
+              error={errors.valor_comision?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Estado Activo */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Estado
-          </label>
-          <Controller
-            name="activo"
-            control={control}
-            render={({ field: { value, onChange, ...field } }) => (
-              <label className="flex items-center space-x-2 cursor-pointer">
-                <input
-                  {...field}
-                  type="checkbox"
-                  checked={value}
-                  onChange={(e) => onChange(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <span className="text-sm text-gray-700">Configuración activa</span>
-              </label>
-            )}
-          />
-          {errors.activo && (
-            <p className="mt-1 text-sm text-red-600">{errors.activo.message}</p>
+        <Controller
+          name="activo"
+          control={control}
+          render={({ field: { value, onChange, ref, ...field } }) => (
+            <Checkbox
+              {...field}
+              ref={ref}
+              label="Configuración activa"
+              description="Desactiva para pausar el cálculo de esta comisión"
+              checked={value}
+              onChange={(e) => onChange(e.target.checked)}
+              error={errors.activo?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Notas */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Notas
-          </label>
-          <Controller
-            name="notas"
-            control={control}
-            render={({ field }) => (
-              <textarea
-                {...field}
-                rows={3}
-                maxLength={500}
-                placeholder="Notas adicionales sobre esta configuración..."
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  errors.notas ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-            )}
-          />
-          <p className="mt-1 text-sm text-gray-500">Opcional - Máximo 500 caracteres</p>
-          {errors.notas && (
-            <p className="mt-1 text-sm text-red-600">{errors.notas.message}</p>
+        <Controller
+          name="notas"
+          control={control}
+          render={({ field }) => (
+            <Textarea
+              {...field}
+              label="Notas"
+              rows={3}
+              maxLength={500}
+              placeholder="Notas adicionales sobre esta configuración..."
+              helper="Opcional - Máximo 500 caracteres"
+              error={errors.notas?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t">

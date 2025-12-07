@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { AlertCircle, FileText } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 import { useNoShowCita } from '@/hooks/useCitas';
 import { useToast } from '@/hooks/useToast';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
@@ -94,21 +95,16 @@ function NoShowModal({ isOpen, onClose, cita }) {
         </div>
 
         {/* Motivo del No Show */}
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <FileText className="w-4 h-4" />
-            Motivo del No Show <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={motivo}
-            onChange={(e) => setMotivo(e.target.value)}
-            placeholder="Ej: Cliente no llegó y no avisó, No contestó llamadas, Llegó 30 min tarde..."
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-sm resize-none"
-            maxLength={500}
-          />
-          <p className="mt-1 text-xs text-gray-500">{motivo.length}/500 caracteres</p>
-        </div>
+        <Textarea
+          label="Motivo del No Show"
+          required
+          value={motivo}
+          onChange={(e) => setMotivo(e.target.value)}
+          placeholder="Ej: Cliente no llegó y no avisó, No contestó llamadas, Llegó 30 min tarde..."
+          rows={4}
+          maxLength={500}
+          showCharCount
+        />
 
         {/* Sugerencias de motivos comunes */}
         <div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, XCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useCancelarVenta } from '@/hooks/useVentas';
@@ -119,32 +120,21 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
         </div>
 
         {/* Motivo de cancelación */}
-        <div>
-          <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-1">
-            Motivo de Cancelación <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="motivo"
-            value={motivo}
-            onChange={(e) => {
-              setMotivo(e.target.value);
-              if (errores.motivo) {
-                setErrores({ ...errores, motivo: null });
-              }
-            }}
-            rows={4}
-            className={`w-full rounded-md shadow-sm focus:ring-red-500 focus:border-red-500 ${
-              errores.motivo ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="Describe el motivo de la cancelación (ej: Error en el registro, Cliente solicitó cancelación, etc.)"
-          />
-          {errores.motivo && (
-            <p className="mt-1 text-sm text-red-600">{errores.motivo}</p>
-          )}
-          <p className="mt-1 text-xs text-gray-500">
-            Este motivo quedará registrado en el historial de la venta
-          </p>
-        </div>
+        <Textarea
+          label="Motivo de Cancelación"
+          value={motivo}
+          onChange={(e) => {
+            setMotivo(e.target.value);
+            if (errores.motivo) {
+              setErrores({ ...errores, motivo: null });
+            }
+          }}
+          rows={4}
+          placeholder="Describe el motivo de la cancelación (ej: Error en el registro, Cliente solicitó cancelación, etc.)"
+          error={errores.motivo}
+          helper="Este motivo quedará registrado en el historial de la venta"
+          required
+        />
 
         {/* Botones de acción */}
         <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">

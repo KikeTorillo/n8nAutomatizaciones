@@ -6,6 +6,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
 import { useMarcarComoPagada } from '@/hooks/useComisiones';
 import { useToast } from '@/hooks/useToast';
 import { formatCurrency } from '@/lib/utils';
@@ -144,81 +145,60 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
         </div>
 
         {/* Método de Pago */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Método de Pago <span className="text-red-500">*</span>
-          </label>
-          <Controller
-            name="metodo_pago"
-            control={control}
-            render={({ field }) => (
-              <Select
-                {...field}
-                className={errors.metodo_pago ? 'border-red-500' : ''}
-              >
-                <option value="">Selecciona un método de pago</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="cheque">Cheque</option>
-                <option value="tarjeta">Tarjeta</option>
-                <option value="otro">Otro</option>
-              </Select>
-            )}
-          />
-          {errors.metodo_pago && (
-            <p className="mt-1 text-sm text-red-600">{errors.metodo_pago.message}</p>
+        <Controller
+          name="metodo_pago"
+          control={control}
+          render={({ field }) => (
+            <Select
+              {...field}
+              label="Método de Pago"
+              required
+              placeholder="Selecciona un método de pago"
+              options={[
+                { value: 'efectivo', label: 'Efectivo' },
+                { value: 'transferencia', label: 'Transferencia' },
+                { value: 'cheque', label: 'Cheque' },
+                { value: 'tarjeta', label: 'Tarjeta' },
+                { value: 'otro', label: 'Otro' },
+              ]}
+              error={errors.metodo_pago?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Referencia de Pago */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Referencia de Pago
-          </label>
-          <p className="text-xs text-gray-500 mb-2">Opcional - Número de transacción, cheque, etc.</p>
-          <Controller
-            name="referencia_pago"
-            control={control}
-            render={({ field }) => (
-              <Input
-                {...field}
-                type="text"
-                placeholder="Ej: TRX-123456, Cheque #789"
-                maxLength={100}
-                className={errors.referencia_pago ? 'border-red-500' : ''}
-              />
-            )}
-          />
-          {errors.referencia_pago && (
-            <p className="mt-1 text-sm text-red-600">{errors.referencia_pago.message}</p>
+        <Controller
+          name="referencia_pago"
+          control={control}
+          render={({ field }) => (
+            <Input
+              {...field}
+              label="Referencia de Pago"
+              type="text"
+              placeholder="Ej: TRX-123456, Cheque #789"
+              maxLength={100}
+              helper="Opcional - Número de transacción, cheque, etc."
+              error={errors.referencia_pago?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Notas */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Notas
-          </label>
-          <p className="text-xs text-gray-500 mb-2">Opcional - Máximo 500 caracteres</p>
-          <Controller
-            name="notas_pago"
-            control={control}
-            render={({ field }) => (
-              <textarea
-                {...field}
-                rows={3}
-                maxLength={500}
-                placeholder="Notas adicionales sobre el pago..."
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
-                  errors.notas_pago ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-            )}
-          />
-          {errors.notas_pago && (
-            <p className="mt-1 text-sm text-red-600">{errors.notas_pago.message}</p>
+        <Controller
+          name="notas_pago"
+          control={control}
+          render={({ field }) => (
+            <Textarea
+              {...field}
+              label="Notas"
+              rows={3}
+              maxLength={500}
+              placeholder="Notas adicionales sobre el pago..."
+              helper="Opcional - Máximo 500 caracteres"
+              error={errors.notas_pago?.message}
+            />
           )}
-        </div>
+        />
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t">

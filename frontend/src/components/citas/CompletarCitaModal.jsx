@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { CheckCircle2, FileText, Star } from 'lucide-react';
+import { CheckCircle2, Star } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 import { useCompletarCita } from '@/hooks/useCitas';
 import { useToast } from '@/hooks/useToast';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
@@ -110,42 +111,27 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
         </div>
 
         {/* Notas del Profesional */}
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <FileText className="w-4 h-4" />
-            Notas del Profesional <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={notasProfesional}
-            onChange={(e) => setNotasProfesional(e.target.value)}
-            placeholder="Describe cómo fue el servicio, detalles del trabajo realizado, observaciones..."
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm resize-none"
-            maxLength={500}
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            {notasProfesional.length}/500 caracteres
-          </p>
-        </div>
+        <Textarea
+          label="Notas del Profesional"
+          required
+          value={notasProfesional}
+          onChange={(e) => setNotasProfesional(e.target.value)}
+          placeholder="Describe cómo fue el servicio, detalles del trabajo realizado, observaciones..."
+          rows={4}
+          maxLength={500}
+          showCharCount
+        />
 
         {/* Comentario del Cliente (opcional) */}
-        <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
-            <FileText className="w-4 h-4" />
-            Comentario del Cliente (Opcional)
-          </label>
-          <textarea
-            value={comentarioCliente}
-            onChange={(e) => setComentarioCliente(e.target.value)}
-            placeholder="Si el cliente dejó algún comentario o feedback..."
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 text-sm resize-none"
-            maxLength={500}
-          />
-          <p className="mt-1 text-xs text-gray-500">
-            {comentarioCliente.length}/500 caracteres
-          </p>
-        </div>
+        <Textarea
+          label="Comentario del Cliente (Opcional)"
+          value={comentarioCliente}
+          onChange={(e) => setComentarioCliente(e.target.value)}
+          placeholder="Si el cliente dejó algún comentario o feedback..."
+          rows={3}
+          maxLength={500}
+          showCharCount
+        />
 
         {/* Calificación del Cliente */}
         <div>

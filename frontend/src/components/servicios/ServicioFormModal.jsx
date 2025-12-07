@@ -7,6 +7,8 @@ import { Scissors, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import FormField from '@/components/forms/FormField';
 import { profesionalesApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/useServicios';
@@ -334,11 +336,18 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
               />
 
               {/* Descripción */}
-              <FormField
+              <Controller
                 name="descripcion"
                 control={control}
-                label="Descripción (Opcional)"
-                placeholder="Breve descripción del servicio"
+                render={({ field }) => (
+                  <Textarea
+                    {...field}
+                    label="Descripción (Opcional)"
+                    placeholder="Breve descripción del servicio..."
+                    rows={3}
+                    error={errors.descripcion?.message}
+                  />
+                )}
               />
 
               {/* Categoría */}
@@ -530,11 +539,9 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                       }
                     `}
                   >
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={selectedProfessionals.includes(prof.id)}
-                      onChange={() => {}}
-                      className="h-4 w-4 text-primary-600 border-gray-300 rounded"
+                      onChange={() => toggleProfessional(prof.id)}
                     />
                     <div
                       className="w-8 h-8 rounded-full flex-shrink-0"
@@ -571,18 +578,11 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                 name="activo"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="activo"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                    />
-                    <label htmlFor="activo" className="text-sm font-medium text-gray-700">
-                      Servicio activo
-                    </label>
-                  </div>
+                  <Checkbox
+                    label="Servicio activo"
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                  />
                 )}
               />
             </div>

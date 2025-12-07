@@ -69,14 +69,12 @@ function ReportesComisionesFiltros({
             value={filtros.profesional_id || ''}
             onChange={(e) => handleChange('profesional_id', e.target.value)}
             disabled={loadingProfesionales}
-          >
-            <option value="">Todos los profesionales</option>
-            {profesionales?.map((prof) => (
-              <option key={prof.id} value={prof.id}>
-                {prof.nombre} {prof.apellidos}
-              </option>
-            ))}
-          </Select>
+            placeholder="Todos los profesionales"
+            options={profesionales?.map((prof) => ({
+              value: String(prof.id),
+              label: `${prof.nombre} ${prof.apellidos || ''}`.trim(),
+            })) || []}
+          />
         </div>
 
         {/* Estado de Pago */}
@@ -85,12 +83,13 @@ function ReportesComisionesFiltros({
             label="Estado de Pago"
             value={filtros.estado_pago || ''}
             onChange={(e) => handleChange('estado_pago', e.target.value)}
-          >
-            <option value="">Todos los estados</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="pagada">Pagada</option>
-            <option value="cancelada">Cancelada</option>
-          </Select>
+            placeholder="Todos los estados"
+            options={[
+              { value: 'pendiente', label: 'Pendiente' },
+              { value: 'pagada', label: 'Pagada' },
+              { value: 'cancelada', label: 'Cancelada' },
+            ]}
+          />
         </div>
 
         {/* Origen */}
@@ -99,11 +98,12 @@ function ReportesComisionesFiltros({
             label="Origen"
             value={filtros.origen || ''}
             onChange={(e) => handleChange('origen', e.target.value)}
-          >
-            <option value="">Todos los orígenes</option>
-            <option value="cita">Citas (Servicios)</option>
-            <option value="venta">Ventas POS (Productos)</option>
-          </Select>
+            placeholder="Todos los orígenes"
+            options={[
+              { value: 'cita', label: 'Citas (Servicios)' },
+              { value: 'venta', label: 'Ventas POS (Productos)' },
+            ]}
+          />
         </div>
       </div>
 

@@ -6,6 +6,8 @@ import { FolderTree, Tag, Palette } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/useCategorias';
 import { useToast } from '@/hooks/useToast';
@@ -171,30 +173,26 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
         </FieldWrapper>
 
         {/* Descripción */}
-        <FieldWrapper label="Descripción" error={errors.descripcion?.message}>
-          <textarea
-            {...register('descripcion')}
-            rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Descripción opcional de la categoría"
-          />
-        </FieldWrapper>
+        <Textarea
+          label="Descripción"
+          {...register('descripcion')}
+          rows={3}
+          placeholder="Descripción opcional de la categoría"
+          error={errors.descripcion?.message}
+        />
 
         {/* Categoría Padre */}
-        <FieldWrapper
+        <Select
           label="Categoría Padre"
+          {...register('categoria_padre_id')}
+          placeholder="Sin categoría padre (categoría raíz)"
+          options={categoriasDisponibles.map((cat) => ({
+            value: cat.id.toString(),
+            label: cat.nombre,
+          }))}
+          helper="Opcional - Permite crear subcategorías"
           error={errors.categoria_padre_id?.message}
-          helperText="Opcional - Permite crear subcategorías"
-        >
-          <Select {...register('categoria_padre_id')}>
-            <option value="">Sin categoría padre (categoría raíz)</option>
-            {categoriasDisponibles.map((cat) => (
-              <option key={cat.id} value={cat.id}>
-                {cat.nombre}
-              </option>
-            ))}
-          </Select>
-        </FieldWrapper>
+        />
 
         <div className="grid grid-cols-2 gap-4">
           {/* Icono */}
@@ -272,18 +270,10 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
         </FieldWrapper>
 
         {/* Activo */}
-        <FieldWrapper>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register('activo')}
-              className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              Categoría activa
-            </span>
-          </label>
-        </FieldWrapper>
+        <Checkbox
+          label="Categoría activa"
+          {...register('activo')}
+        />
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t">

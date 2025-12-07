@@ -3,10 +3,13 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Eye, EyeOff, Check, AlertCircle, Loader2, Building2, Lock, Sparkles } from 'lucide-react';
+import { Eye, EyeOff, Check, AlertCircle, Loader2, Building2 } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
+import AuthLayout from '@/components/auth/AuthLayout';
+import FormField from '@/components/forms/FormField';
+import Button from '@/components/ui/Button';
 import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
 
 /**
@@ -25,11 +28,7 @@ const activacionSchema = z.object({
 });
 
 /**
- * Página de Activación de Cuenta
- * Fase 2 - Onboarding Simplificado (Nov 2025)
- *
- * El usuario llega aquí desde el email de activación.
- * Solo necesita crear su contraseña para activar la cuenta.
+ * Página de Activación de Cuenta - Estilo minimalista homologado
  */
 export default function ActivarCuentaPage() {
   const { token } = useParams();
@@ -45,10 +44,9 @@ export default function ActivarCuentaPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const {
-    register,
+    control,
     handleSubmit,
     watch,
-    formState: { errors }
   } = useForm({
     resolver: zodResolver(activacionSchema),
     defaultValues: {
@@ -100,8 +98,6 @@ export default function ActivarCuentaPage() {
       });
 
       toast.success('¡Cuenta activada exitosamente!');
-
-      // Redirigir inmediatamente al home
       navigate('/home');
 
     } catch (err) {
@@ -114,182 +110,138 @@ export default function ActivarCuentaPage() {
   // Estado: Validando
   if (validando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-          <Loader2 className="h-12 w-12 text-blue-600 animate-spin mx-auto mb-4" />
+      <AuthLayout title="Validando enlace..." subtitle="Por favor espera">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 text-primary-600 animate-spin mx-auto mb-4" />
           <p className="text-gray-600">Validando enlace de activación...</p>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   // Estado: Error
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+      <AuthLayout title="Enlace no válido" subtitle={error}>
+        <div className="text-center">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <AlertCircle className="h-8 w-8 text-red-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Enlace no válido</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
           <div className="space-y-3">
-            <Link
-              to="/registro"
-              className="block w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-            >
-              Crear nueva cuenta
+            <Link to="/registro">
+              <Button variant="primary" className="w-full">
+                Crear nueva cuenta
+              </Button>
             </Link>
-            <Link
-              to="/auth/login"
-              className="block w-full px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              Iniciar sesión
+            <Link to="/auth/login">
+              <Button variant="secondary" className="w-full">
+                Iniciar sesión
+              </Button>
             </Link>
           </div>
         </div>
-      </div>
+      </AuthLayout>
     );
   }
 
   // Formulario de activación
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-8 py-6 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="h-5 w-5" />
-            <span className="text-sm font-medium">Último paso</span>
-          </div>
-          <h1 className="text-2xl font-bold">Activa tu cuenta</h1>
-          <p className="text-blue-100 mt-1">
-            Crea tu contraseña para comenzar
-          </p>
+    <AuthLayout
+      title="Activa tu cuenta"
+      subtitle="Crea tu contraseña para comenzar"
+    >
+      {/* Info del negocio */}
+      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-6">
+        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
+          <Building2 className="h-6 w-6 text-primary-600" />
         </div>
-
-        {/* Info del negocio */}
-        <div className="px-8 pt-6">
-          <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <Building2 className="h-6 w-6 text-blue-600" />
-            </div>
-            <div>
-              <p className="font-semibold text-gray-900">{activacion?.nombre_negocio}</p>
-              <p className="text-sm text-gray-500">{activacion?.email}</p>
-            </div>
-          </div>
+        <div>
+          <p className="font-semibold text-gray-900">{activacion?.nombre_negocio}</p>
+          <p className="text-sm text-gray-500">{activacion?.email}</p>
         </div>
-
-        {/* Formulario */}
-        <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
-          {/* Contraseña */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Contraseña <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type={showPassword ? 'text' : 'password'}
-                {...register('password')}
-                placeholder="Crea una contraseña segura"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-            )}
-            {password && <PasswordStrengthIndicator password={password} />}
-          </div>
-
-          {/* Confirmar contraseña */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Confirmar contraseña <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                {...register('password_confirm')}
-                placeholder="Repite la contraseña"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.password_confirm ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-              >
-                {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-              </button>
-            </div>
-            {errors.password_confirm && (
-              <p className="text-red-500 text-sm mt-1">{errors.password_confirm.message}</p>
-            )}
-          </div>
-
-          {/* Requisitos de contraseña */}
-          <div className="bg-gray-50 rounded-lg p-4">
-            <p className="text-sm font-medium text-gray-700 mb-2">La contraseña debe tener:</p>
-            <ul className="text-sm text-gray-600 space-y-1">
-              <li className={`flex items-center gap-2 ${password?.length >= 8 ? 'text-green-600' : ''}`}>
-                {password?.length >= 8 ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
-                Al menos 8 caracteres
-              </li>
-              <li className={`flex items-center gap-2 ${/[A-Z]/.test(password || '') ? 'text-green-600' : ''}`}>
-                {/[A-Z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
-                Una letra mayúscula
-              </li>
-              <li className={`flex items-center gap-2 ${/[a-z]/.test(password || '') ? 'text-green-600' : ''}`}>
-                {/[a-z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
-                Una letra minúscula
-              </li>
-              <li className={`flex items-center gap-2 ${/[0-9]/.test(password || '') ? 'text-green-600' : ''}`}>
-                {/[0-9]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
-                Un número
-              </li>
-            </ul>
-          </div>
-
-          {/* Botón de activación */}
-          <button
-            type="submit"
-            disabled={activando}
-            className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-          >
-            {activando ? (
-              <>
-                <Loader2 className="h-5 w-5 animate-spin" />
-                Activando cuenta...
-              </>
-            ) : (
-              <>
-                <Check className="h-5 w-5" />
-                Activar mi cuenta
-              </>
-            )}
-          </button>
-
-          {/* Info de expiración */}
-          {activacion?.tiempo_restante && (
-            <p className="text-center text-sm text-gray-500">
-              Este enlace expira en {activacion.tiempo_restante}
-            </p>
-          )}
-        </form>
       </div>
-    </div>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Contraseña */}
+        <div className="relative">
+          <FormField
+            name="password"
+            control={control}
+            type={showPassword ? 'text' : 'password'}
+            label="Contraseña"
+            placeholder="Crea una contraseña segura"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+          >
+            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {password && <PasswordStrengthIndicator password={password} />}
+
+        {/* Confirmar contraseña */}
+        <div className="relative">
+          <FormField
+            name="password_confirm"
+            control={control}
+            type={showConfirmPassword ? 'text' : 'password'}
+            label="Confirmar contraseña"
+            placeholder="Repite la contraseña"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+          >
+            {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+          </button>
+        </div>
+
+        {/* Requisitos de contraseña */}
+        <div className="bg-gray-50 rounded-lg p-4">
+          <p className="text-sm font-medium text-gray-700 mb-2">La contraseña debe tener:</p>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li className={`flex items-center gap-2 ${password?.length >= 8 ? 'text-green-600' : ''}`}>
+              {password?.length >= 8 ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+              Al menos 8 caracteres
+            </li>
+            <li className={`flex items-center gap-2 ${/[A-Z]/.test(password || '') ? 'text-green-600' : ''}`}>
+              {/[A-Z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+              Una letra mayúscula
+            </li>
+            <li className={`flex items-center gap-2 ${/[a-z]/.test(password || '') ? 'text-green-600' : ''}`}>
+              {/[a-z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+              Una letra minúscula
+            </li>
+            <li className={`flex items-center gap-2 ${/[0-9]/.test(password || '') ? 'text-green-600' : ''}`}>
+              {/[0-9]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+              Un número
+            </li>
+          </ul>
+        </div>
+
+        {/* Botón de activación */}
+        <Button
+          type="submit"
+          className="w-full"
+          isLoading={activando}
+          disabled={activando}
+        >
+          {activando ? 'Activando cuenta...' : 'Activar mi cuenta'}
+        </Button>
+
+        {/* Info de expiración */}
+        {activacion?.tiempo_restante && (
+          <p className="text-center text-sm text-gray-500">
+            Este enlace expira en {activacion.tiempo_restante}
+          </p>
+        )}
+      </form>
+    </AuthLayout>
   );
 }

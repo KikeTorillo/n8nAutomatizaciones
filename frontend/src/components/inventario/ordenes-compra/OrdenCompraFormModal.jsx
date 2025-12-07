@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useToast } from '@/hooks/useToast';
 import { useCrearOrdenCompra, useActualizarOrdenCompra, useAgregarItemsOrdenCompra } from '@/hooks/useOrdenesCompra';
@@ -248,20 +250,18 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            <FieldWrapper label="Proveedor" error={errors.proveedor_id?.message} required>
-              <select
-                {...register('proveedor_id')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                disabled={esEdicion}
-              >
-                <option value="">Selecciona un proveedor</option>
-                {proveedores.map((prov) => (
-                  <option key={prov.id} value={prov.id}>
-                    {prov.nombre}
-                  </option>
-                ))}
-              </select>
-            </FieldWrapper>
+            <Select
+              label="Proveedor"
+              {...register('proveedor_id')}
+              placeholder="Selecciona un proveedor"
+              options={proveedores.map((prov) => ({
+                value: prov.id.toString(),
+                label: prov.nombre,
+              }))}
+              disabled={esEdicion}
+              error={errors.proveedor_id?.message}
+              required
+            />
 
             <FieldWrapper label="Fecha de Entrega Esperada" error={errors.fecha_entrega_esperada?.message}>
               <input
@@ -303,14 +303,13 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
           </div>
 
           <div className="mt-4">
-            <FieldWrapper label="Notas" error={errors.notas?.message}>
-              <textarea
-                {...register('notas')}
-                rows={2}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Notas adicionales para la orden"
-              />
-            </FieldWrapper>
+            <Textarea
+              label="Notas"
+              {...register('notas')}
+              rows={2}
+              placeholder="Notas adicionales para la orden"
+              error={errors.notas?.message}
+            />
           </div>
         </div>
 

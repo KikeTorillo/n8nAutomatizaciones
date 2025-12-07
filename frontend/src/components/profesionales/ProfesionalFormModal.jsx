@@ -7,6 +7,8 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import FormField from '@/components/forms/FormField';
 import {
   useCrearProfesional,
@@ -579,23 +581,13 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 name="descripcion"
                 control={control}
                 render={({ field }) => (
-                  <div>
-                    <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
-                      Descripción (Opcional)
-                    </label>
-                    <textarea
-                      {...field}
-                      id="descripcion"
-                      rows={3}
-                      placeholder="Información adicional sobre el profesional..."
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    />
-                    {errors.descripcion && (
-                      <p className="mt-1 text-sm text-red-600">
-                        {errors.descripcion.message}
-                      </p>
-                    )}
-                  </div>
+                  <Textarea
+                    {...field}
+                    label="Descripción (Opcional)"
+                    placeholder="Información adicional sobre el profesional..."
+                    rows={3}
+                    error={errors.descripcion?.message}
+                  />
                 )}
               />
 
@@ -675,26 +667,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                     ) : (
                       /* Formulario para nueva invitación (si no hay invitación previa) */
                       <div className="flex gap-2">
-                        <input
-                          type="email"
-                          value={emailInvitacion}
-                          onChange={(e) => setEmailInvitacion(e.target.value)}
-                          placeholder="correo@empleado.com"
-                          className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                        />
-                        <button
+                        <div className="flex-1">
+                          <Input
+                            type="email"
+                            value={emailInvitacion}
+                            onChange={(e) => setEmailInvitacion(e.target.value)}
+                            placeholder="correo@empleado.com"
+                          />
+                        </div>
+                        <Button
                           type="button"
                           onClick={handleEnviarInvitacion}
                           disabled={enviandoInvitacion || !emailInvitacion}
-                          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                          isLoading={enviandoInvitacion}
                         >
-                          {enviandoInvitacion ? (
-                            <RefreshCw className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Send className="h-4 w-4" />
-                          )}
+                          {!enviandoInvitacion && <Send className="h-4 w-4 mr-1" />}
                           Enviar
-                        </button>
+                        </Button>
                       </div>
                     )}
 
@@ -720,54 +709,36 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Módulos habilitados
                   </label>
-                  <div className="space-y-2 bg-gray-50 p-3 rounded-lg">
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={modulosAcceso.agendamiento}
-                        onChange={(e) => setModulosAcceso({
-                          ...modulosAcceso,
-                          agendamiento: e.target.checked
-                        })}
-                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                      />
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Agendamiento</span>
-                        <p className="text-xs text-gray-500">Puede atender citas de clientes</p>
-                      </div>
-                    </label>
+                  <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
+                    <Checkbox
+                      label="Agendamiento"
+                      description="Puede atender citas de clientes"
+                      checked={modulosAcceso.agendamiento}
+                      onChange={(e) => setModulosAcceso({
+                        ...modulosAcceso,
+                        agendamiento: e.target.checked
+                      })}
+                    />
 
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={modulosAcceso.pos}
-                        onChange={(e) => setModulosAcceso({
-                          ...modulosAcceso,
-                          pos: e.target.checked
-                        })}
-                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                      />
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Punto de Venta</span>
-                        <p className="text-xs text-gray-500">Puede registrar ventas como vendedor</p>
-                      </div>
-                    </label>
+                    <Checkbox
+                      label="Punto de Venta"
+                      description="Puede registrar ventas como vendedor"
+                      checked={modulosAcceso.pos}
+                      onChange={(e) => setModulosAcceso({
+                        ...modulosAcceso,
+                        pos: e.target.checked
+                      })}
+                    />
 
-                    <label className="flex items-center gap-3 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={modulosAcceso.inventario}
-                        onChange={(e) => setModulosAcceso({
-                          ...modulosAcceso,
-                          inventario: e.target.checked
-                        })}
-                        className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                      />
-                      <div>
-                        <span className="text-sm font-medium text-gray-900">Inventario</span>
-                        <p className="text-xs text-gray-500">Puede gestionar productos y stock</p>
-                      </div>
-                    </label>
+                    <Checkbox
+                      label="Inventario"
+                      description="Puede gestionar productos y stock"
+                      checked={modulosAcceso.inventario}
+                      onChange={(e) => setModulosAcceso({
+                        ...modulosAcceso,
+                        inventario: e.target.checked
+                      })}
+                    />
                   </div>
                 </div>
               </div>
@@ -777,18 +748,11 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 name="activo"
                 control={control}
                 render={({ field }) => (
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="activo"
-                      checked={field.value}
-                      onChange={(e) => field.onChange(e.target.checked)}
-                      className="h-4 w-4 text-primary-600 border-gray-300 rounded"
-                    />
-                    <label htmlFor="activo" className="text-sm font-medium text-gray-700">
-                      Profesional activo
-                    </label>
-                  </div>
+                  <Checkbox
+                    label="Profesional activo"
+                    checked={field.value}
+                    onChange={(e) => field.onChange(e.target.checked)}
+                  />
                 )}
               />
             </div>

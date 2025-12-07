@@ -2,6 +2,9 @@ import { useState, useEffect } from 'react';
 import { Save, Camera, X, Loader2, User } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
+import Select from '@/components/ui/Select';
 import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -346,19 +349,14 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           Información Adicional
         </h3>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Notas Médicas
-          </label>
-          <textarea
-            name="notas_medicas"
-            value={formData.notas_medicas}
-            onChange={handleChange}
-            rows={3}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Alergias, condiciones médicas relevantes, etc."
-          />
-        </div>
+        <Textarea
+          name="notas_medicas"
+          label="Notas Médicas"
+          value={formData.notas_medicas}
+          onChange={handleChange}
+          rows={3}
+          placeholder="Alergias, condiciones médicas relevantes, etc."
+        />
       </div>
 
       {/* Preferencias */}
@@ -368,25 +366,18 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         </h3>
 
         <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Profesional Preferido
-            </label>
-            <select
-              value={formData.preferencias.profesional_preferido}
-              onChange={(e) =>
-                handlePreferenciasChange('profesional_preferido', e.target.value)
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Sin preferencia</option>
-              {profesionales.map((prof) => (
-                <option key={prof.id} value={prof.id}>
-                  {prof.nombre_completo}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select
+            label="Profesional Preferido"
+            value={formData.preferencias.profesional_preferido}
+            onChange={(e) =>
+              handlePreferenciasChange('profesional_preferido', e.target.value)
+            }
+            placeholder="Sin preferencia"
+            options={profesionales.map((prof) => ({
+              value: prof.id.toString(),
+              label: prof.nombre_completo,
+            }))}
+          />
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -394,20 +385,19 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {servicios.map((servicio) => (
-                <label
+                <div
                   key={servicio.id}
-                  className="flex items-center gap-2 p-2 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                  className="p-2 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                  onClick={() => handleServiciosFavoritosChange(servicio.id)}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
+                    label={servicio.nombre}
                     checked={(formData.preferencias.servicios_favoritos || []).includes(
                       servicio.id
                     )}
                     onChange={() => handleServiciosFavoritosChange(servicio.id)}
-                    className="rounded text-blue-600 focus:ring-blue-500"
                   />
-                  <span className="text-sm text-gray-700">{servicio.nombre}</span>
-                </label>
+                </div>
               ))}
             </div>
           </div>
@@ -421,29 +411,28 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         </h3>
 
         <div className="space-y-3">
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="marketing_permitido"
-              checked={formData.marketing_permitido}
-              onChange={handleChange}
-              className="rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">
-              Permitir envío de mensajes de marketing
-            </span>
-          </label>
+          <Checkbox
+            label="Permitir envío de mensajes de marketing"
+            description="El cliente recibirá promociones y novedades"
+            checked={formData.marketing_permitido}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                marketing_permitido: e.target.checked,
+              }))
+            }
+          />
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              name="activo"
-              checked={formData.activo}
-              onChange={handleChange}
-              className="rounded text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Cliente activo</span>
-          </label>
+          <Checkbox
+            label="Cliente activo"
+            checked={formData.activo}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                activo: e.target.checked,
+              }))
+            }
+          />
         </div>
       </div>
 

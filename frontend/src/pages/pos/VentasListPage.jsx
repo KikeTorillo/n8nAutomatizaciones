@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Receipt, Eye, XCircle, RefreshCw, Filter, Search, Calendar, DollarSign, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import { useToast } from '@/hooks/useToast';
 import { useVentas } from '@/hooks/useVentas';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
@@ -169,122 +171,88 @@ export default function VentasListPage() {
         <div className="bg-white rounded-lg shadow p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Búsqueda por folio */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Buscar por folio
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={filtros.busqueda}
-                  onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                  placeholder="POS-2025-0001"
-                  className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-              </div>
-            </div>
+            <Input
+              label="Buscar por folio"
+              type="text"
+              value={filtros.busqueda}
+              onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
+              placeholder="POS-2025-0001"
+            />
 
             {/* Estado */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estado
-              </label>
-              <select
-                value={filtros.estado}
-                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Todos</option>
-                <option value="cotizacion">Cotización</option>
-                <option value="apartado">Apartado</option>
-                <option value="completada">Completada</option>
-                <option value="cancelada">Cancelada</option>
-                <option value="devolucion_parcial">Devolución Parcial</option>
-                <option value="devolucion_total">Devolución Total</option>
-              </select>
-            </div>
+            <Select
+              label="Estado"
+              value={filtros.estado}
+              onChange={(e) => handleFiltroChange('estado', e.target.value)}
+              placeholder="Todos"
+              options={[
+                { value: 'cotizacion', label: 'Cotización' },
+                { value: 'apartado', label: 'Apartado' },
+                { value: 'completada', label: 'Completada' },
+                { value: 'cancelada', label: 'Cancelada' },
+                { value: 'devolucion_parcial', label: 'Devolución Parcial' },
+                { value: 'devolucion_total', label: 'Devolución Total' },
+              ]}
+            />
 
             {/* Estado de pago */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estado de Pago
-              </label>
-              <select
-                value={filtros.estado_pago}
-                onChange={(e) => handleFiltroChange('estado_pago', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Todos</option>
-                <option value="pendiente">Pendiente</option>
-                <option value="pagado">Pagado</option>
-                <option value="parcial">Parcial</option>
-                <option value="cancelado">Cancelado</option>
-              </select>
-            </div>
+            <Select
+              label="Estado de Pago"
+              value={filtros.estado_pago}
+              onChange={(e) => handleFiltroChange('estado_pago', e.target.value)}
+              placeholder="Todos"
+              options={[
+                { value: 'pendiente', label: 'Pendiente' },
+                { value: 'pagado', label: 'Pagado' },
+                { value: 'parcial', label: 'Parcial' },
+                { value: 'cancelado', label: 'Cancelado' },
+              ]}
+            />
 
             {/* Método de pago */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Método de Pago
-              </label>
-              <select
-                value={filtros.metodo_pago}
-                onChange={(e) => handleFiltroChange('metodo_pago', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Todos</option>
-                <option value="efectivo">Efectivo</option>
-                <option value="tarjeta">Tarjeta</option>
-                <option value="transferencia">Transferencia</option>
-                <option value="qr">QR Mercado Pago</option>
-                <option value="mixto">Mixto</option>
-              </select>
-            </div>
+            <Select
+              label="Método de Pago"
+              value={filtros.metodo_pago}
+              onChange={(e) => handleFiltroChange('metodo_pago', e.target.value)}
+              placeholder="Todos"
+              options={[
+                { value: 'efectivo', label: 'Efectivo' },
+                { value: 'tarjeta', label: 'Tarjeta' },
+                { value: 'transferencia', label: 'Transferencia' },
+                { value: 'qr', label: 'QR Mercado Pago' },
+                { value: 'mixto', label: 'Mixto' },
+              ]}
+            />
 
             {/* Fecha desde */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha Desde
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_desde}
-                onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
+            <Input
+              label="Fecha Desde"
+              type="date"
+              value={filtros.fecha_desde}
+              onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
+            />
 
             {/* Fecha hasta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Fecha Hasta
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_hasta}
-                onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              />
-            </div>
+            <Input
+              label="Fecha Hasta"
+              type="date"
+              value={filtros.fecha_hasta}
+              onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
+            />
 
             {/* Tipo de venta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tipo de Venta
-              </label>
-              <select
-                value={filtros.tipo_venta}
-                onChange={(e) => handleFiltroChange('tipo_venta', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-              >
-                <option value="">Todos</option>
-                <option value="directa">Directa</option>
-                <option value="cita">Cita</option>
-                <option value="apartado">Apartado</option>
-                <option value="cotizacion">Cotización</option>
-              </select>
-            </div>
+            <Select
+              label="Tipo de Venta"
+              value={filtros.tipo_venta}
+              onChange={(e) => handleFiltroChange('tipo_venta', e.target.value)}
+              placeholder="Todos"
+              options={[
+                { value: 'directa', label: 'Directa' },
+                { value: 'cita', label: 'Cita' },
+                { value: 'apartado', label: 'Apartado' },
+                { value: 'cotizacion', label: 'Cotización' },
+              ]}
+            />
           </div>
 
           {/* Botones de acción */}

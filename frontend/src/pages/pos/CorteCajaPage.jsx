@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { DollarSign, Calendar, TrendingUp, CreditCard, Package, Download, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { useToast } from '@/hooks/useToast';
 import { useCorteCaja } from '@/hooks/useVentas';
 import POSNavTabs from '@/components/pos/POSNavTabs';
@@ -106,42 +107,29 @@ export default function CorteCajaPage() {
       {/* Filtros */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha Inicio <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={filtros.fecha_inicio}
-              onChange={(e) => handleFiltroChange('fecha_inicio', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
+          <Input
+            label="Fecha Inicio"
+            type="date"
+            value={filtros.fecha_inicio}
+            onChange={(e) => handleFiltroChange('fecha_inicio', e.target.value)}
+            required
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha Fin <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={filtros.fecha_fin}
-              onChange={(e) => handleFiltroChange('fecha_fin', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
+          <Input
+            label="Fecha Fin"
+            type="date"
+            value={filtros.fecha_fin}
+            onChange={(e) => handleFiltroChange('fecha_fin', e.target.value)}
+            required
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Usuario (Opcional)
-            </label>
-            <input
-              type="text"
-              value={filtros.usuario_id}
-              onChange={(e) => handleFiltroChange('usuario_id', e.target.value)}
-              placeholder="ID del usuario"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
-            />
-          </div>
+          <Input
+            label="Usuario (Opcional)"
+            type="text"
+            value={filtros.usuario_id}
+            onChange={(e) => handleFiltroChange('usuario_id', e.target.value)}
+            placeholder="ID del usuario"
+          />
         </div>
       </div>
 

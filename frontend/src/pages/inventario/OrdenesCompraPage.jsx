@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import Textarea from '@/components/ui/Textarea';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -768,18 +769,13 @@ export default function OrdenesCompraPage() {
             <strong className="text-gray-900">{modalCancelar.orden?.folio}</strong>?
           </p>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Motivo de cancelación (opcional)
-            </label>
-            <textarea
-              value={motivoCancelacion}
-              onChange={(e) => setMotivoCancelacion(e.target.value)}
-              rows={3}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              placeholder="Indica el motivo de la cancelación..."
-            />
-          </div>
+          <Textarea
+            label="Motivo de cancelación (opcional)"
+            value={motivoCancelacion}
+            onChange={(e) => setMotivoCancelacion(e.target.value)}
+            rows={3}
+            placeholder="Indica el motivo de la cancelación..."
+          />
 
           <div className="flex justify-end space-x-3 pt-4 border-t">
             <Button

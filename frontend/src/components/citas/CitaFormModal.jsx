@@ -7,6 +7,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MultiSelect from '@/components/ui/MultiSelect';
+import Textarea from '@/components/ui/Textarea';
 import FormField from '@/components/forms/FormField';
 import { useCrearCita, useActualizarCita } from '@/hooks/useCitas';
 import { useClientes } from '@/hooks/useClientes';
@@ -623,24 +624,14 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 name="notas_cliente"
                 control={control}
                 render={({ field }) => (
-                  <div>
-                    <label
-                      htmlFor="notas_cliente"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Notas del Cliente (Opcional)
-                    </label>
-                    <textarea
-                      {...field}
-                      id="notas_cliente"
-                      rows={3}
-                      placeholder="Preferencias, alergias, solicitudes especiales..."
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    />
-                    {errors.notas_cliente && (
-                      <p className="mt-1 text-sm text-red-600">{errors.notas_cliente.message}</p>
-                    )}
-                  </div>
+                  <Textarea
+                    {...field}
+                    label="Notas del Cliente (Opcional)"
+                    rows={3}
+                    maxLength={500}
+                    placeholder="Preferencias, alergias, solicitudes especiales..."
+                    error={errors.notas_cliente?.message}
+                  />
                 )}
               />
 
@@ -649,24 +640,15 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 name="notas_internas"
                 control={control}
                 render={({ field }) => (
-                  <div>
-                    <label
-                      htmlFor="notas_internas"
-                      className="block text-sm font-medium text-gray-700 mb-1"
-                    >
-                      Notas Internas (Opcional)
-                    </label>
-                    <textarea
-                      {...field}
-                      id="notas_internas"
-                      rows={2}
-                      placeholder="Notas privadas del negocio (no visibles para el cliente)..."
-                      className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                    />
-                    {errors.notas_internas && (
-                      <p className="mt-1 text-sm text-red-600">{errors.notas_internas.message}</p>
-                    )}
-                  </div>
+                  <Textarea
+                    {...field}
+                    label="Notas Internas (Opcional)"
+                    rows={2}
+                    maxLength={500}
+                    placeholder="Notas privadas del negocio (no visibles para el cliente)..."
+                    helper="Solo visible para el personal del negocio"
+                    error={errors.notas_internas?.message}
+                  />
                 )}
               />
             </div>

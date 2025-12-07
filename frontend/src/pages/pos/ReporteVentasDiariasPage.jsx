@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { useToast } from '@/hooks/useToast';
 import { useVentasDiarias } from '@/hooks/useVentas';
 import POSNavTabs from '@/components/pos/POSNavTabs';
@@ -84,43 +85,29 @@ export default function ReporteVentasDiariasPage() {
         {/* Filtros */}
       <div className="bg-white rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Fecha <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="date"
-              value={filtros.fecha}
-              onChange={(e) => handleFiltroChange('fecha', e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
+          <Input
+            label="Fecha"
+            type="date"
+            value={filtros.fecha}
+            onChange={(e) => handleFiltroChange('fecha', e.target.value)}
+            required
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Profesional (Opcional)
-            </label>
-            <input
-              type="text"
-              value={filtros.profesional_id}
-              onChange={(e) => handleFiltroChange('profesional_id', e.target.value)}
-              placeholder="ID del profesional"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
+          <Input
+            label="Profesional (Opcional)"
+            type="text"
+            value={filtros.profesional_id}
+            onChange={(e) => handleFiltroChange('profesional_id', e.target.value)}
+            placeholder="ID del profesional"
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Usuario (Opcional)
-            </label>
-            <input
-              type="text"
-              value={filtros.usuario_id}
-              onChange={(e) => handleFiltroChange('usuario_id', e.target.value)}
-              placeholder="ID del usuario"
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-            />
-          </div>
+          <Input
+            label="Usuario (Opcional)"
+            type="text"
+            value={filtros.usuario_id}
+            onChange={(e) => handleFiltroChange('usuario_id', e.target.value)}
+            placeholder="ID del usuario"
+          />
         </div>
       </div>
 

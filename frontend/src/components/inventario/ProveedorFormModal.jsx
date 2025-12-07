@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { Building2, Phone, MapPin, ChevronDown } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearProveedor, useActualizarProveedor } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
@@ -421,14 +423,13 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
             </div>
 
             {/* Fila 2: Dirección completa */}
-            <FieldWrapper label="Dirección" error={errors.direccion?.message}>
-              <textarea
-                {...register('direccion')}
-                rows={2}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Calle, número, colonia"
-              />
-            </FieldWrapper>
+            <Textarea
+              label="Dirección"
+              {...register('direccion')}
+              rows={2}
+              placeholder="Calle, número, colonia"
+              error={errors.direccion?.message}
+            />
           </div>
         </div>
 
@@ -482,28 +483,19 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
         </div>
 
         {/* NOTAS */}
-        <FieldWrapper label="Notas" error={errors.notas?.message}>
-          <textarea
-            {...register('notas')}
-            rows={3}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            placeholder="Notas adicionales sobre el proveedor"
-          />
-        </FieldWrapper>
+        <Textarea
+          label="Notas"
+          {...register('notas')}
+          rows={3}
+          placeholder="Notas adicionales sobre el proveedor"
+          error={errors.notas?.message}
+        />
 
         {/* ACTIVO */}
-        <FieldWrapper>
-          <label className="flex items-center space-x-2 cursor-pointer">
-            <input
-              type="checkbox"
-              {...register('activo')}
-              className="w-5 h-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm font-medium text-gray-700">
-              Proveedor activo
-            </span>
-          </label>
-        </FieldWrapper>
+        <Checkbox
+          label="Proveedor activo"
+          {...register('activo')}
+        />
 
         {/* Botones */}
         <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4 border-t">

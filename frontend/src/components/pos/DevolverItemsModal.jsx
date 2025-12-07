@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { RefreshCw, AlertTriangle, Package } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Textarea from '@/components/ui/Textarea';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useVenta, useDevolverItems } from '@/hooks/useVentas';
@@ -286,27 +287,20 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
         )}
 
         {/* Motivo de devolución */}
-        <div>
-          <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-1">
-            Motivo de Devolución <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            id="motivo"
-            value={motivo}
-            onChange={(e) => {
-              setMotivo(e.target.value);
-              if (errores.motivo) {
-                setErrores({ ...errores, motivo: null });
-              }
-            }}
-            rows={3}
-            className={`w-full rounded-md shadow-sm focus:ring-orange-500 focus:border-orange-500 ${
-              errores.motivo ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="Describe el motivo de la devolución (ej: Producto defectuoso, Cliente insatisfecho, etc.)"
-          />
-          {errores.motivo && <p className="mt-1 text-sm text-red-600">{errores.motivo}</p>}
-        </div>
+        <Textarea
+          label="Motivo de Devolución"
+          value={motivo}
+          onChange={(e) => {
+            setMotivo(e.target.value);
+            if (errores.motivo) {
+              setErrores({ ...errores, motivo: null });
+            }
+          }}
+          rows={3}
+          placeholder="Describe el motivo de la devolución (ej: Producto defectuoso, Cliente insatisfecho, etc.)"
+          error={errores.motivo}
+          required
+        />
 
         {/* Botones de acción */}
         <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">

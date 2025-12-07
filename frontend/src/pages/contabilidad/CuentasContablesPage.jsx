@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -17,6 +17,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Checkbox from '@/components/ui/Checkbox';
 import {
   useArbolCuentas,
   useCuentasContables,
@@ -391,16 +392,12 @@ function CuentasContablesPage() {
                 onChange={(e) => setNaturalezaFiltro(e.target.value)}
                 options={NATURALEZA_OPTIONS}
               />
-              <div className="flex items-end gap-2">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={soloActivas}
-                    onChange={(e) => setSoloActivas(e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Solo activas</span>
-                </label>
+              <div className="flex items-end">
+                <Checkbox
+                  label="Solo activas"
+                  checked={soloActivas}
+                  onChange={(e) => setSoloActivas(e.target.checked)}
+                />
               </div>
             </div>
           )}
@@ -554,7 +551,7 @@ function CuentaFormModal({ open, onClose, cuenta, onSave, isLoading }) {
   });
 
   // Reset form cuando cambia la cuenta
-  useState(() => {
+  useEffect(() => {
     if (cuenta?.id) {
       setFormData({
         codigo: cuenta.codigo || '',
@@ -599,7 +596,7 @@ function CuentaFormModal({ open, onClose, cuenta, onSave, isLoading }) {
 
   return (
     <Modal
-      open={open}
+      isOpen={open}
       onClose={onClose}
       title={cuenta?.id ? 'Editar Cuenta' : 'Nueva Cuenta'}
       size="md"
@@ -647,24 +644,17 @@ function CuentaFormModal({ open, onClose, cuenta, onSave, isLoading }) {
         </div>
 
         <div className="flex gap-6">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.afectable}
-              onChange={(e) => setFormData({ ...formData, afectable: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Cuenta afectable (permite movimientos)</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.activo}
-              onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-            />
-            <span className="text-sm text-gray-700">Activa</span>
-          </label>
+          <Checkbox
+            label="Cuenta afectable"
+            description="Permite registrar movimientos contables"
+            checked={formData.afectable}
+            onChange={(e) => setFormData({ ...formData, afectable: e.target.checked })}
+          />
+          <Checkbox
+            label="Activa"
+            checked={formData.activo}
+            onChange={(e) => setFormData({ ...formData, activo: e.target.checked })}
+          />
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t">

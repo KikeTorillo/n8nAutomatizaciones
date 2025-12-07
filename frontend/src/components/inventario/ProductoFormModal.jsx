@@ -6,6 +6,8 @@ import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Lo
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearProducto, useActualizarProducto } from '@/hooks/useProductos';
 import { useCategorias } from '@/hooks/useCategorias';
@@ -447,14 +449,13 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             />
           </FieldWrapper>
 
-          <FieldWrapper label="Descripción" error={errors.descripcion?.message}>
-            <textarea
-              {...register('descripcion')}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Descripción detallada del producto"
-            />
-          </FieldWrapper>
+          <Textarea
+            label="Descripción"
+            {...register('descripcion')}
+            rows={3}
+            placeholder="Descripción detallada del producto"
+            error={errors.descripcion?.message}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <FieldWrapper label="SKU" error={errors.sku?.message}>
@@ -477,33 +478,27 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FieldWrapper label="Categoría" error={errors.categoria_id?.message}>
-              <select
-                {...register('categoria_id')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">Sin categoría</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nombre}
-                  </option>
-                ))}
-              </select>
-            </FieldWrapper>
+            <Select
+              label="Categoría"
+              {...register('categoria_id')}
+              placeholder="Sin categoría"
+              options={categorias.map((categoria) => ({
+                value: categoria.id.toString(),
+                label: categoria.nombre,
+              }))}
+              error={errors.categoria_id?.message}
+            />
 
-            <FieldWrapper label="Proveedor" error={errors.proveedor_id?.message}>
-              <select
-                {...register('proveedor_id')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              >
-                <option value="">Sin proveedor</option>
-                {proveedores.map((proveedor) => (
-                  <option key={proveedor.id} value={proveedor.id}>
-                    {proveedor.nombre}
-                  </option>
-                ))}
-              </select>
-            </FieldWrapper>
+            <Select
+              label="Proveedor"
+              {...register('proveedor_id')}
+              placeholder="Sin proveedor"
+              options={proveedores.map((proveedor) => ({
+                value: proveedor.id.toString(),
+                label: proveedor.nombre,
+              }))}
+              error={errors.proveedor_id?.message}
+            />
           </div>
         </div>
 
@@ -664,20 +659,20 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                 />
               </FieldWrapper>
 
-              <FieldWrapper label="Unidad de Medida" error={errors.unidad_medida?.message}>
-                <select
-                  {...register('unidad_medida')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="unidad">Unidad</option>
-                  <option value="caja">Caja</option>
-                  <option value="paquete">Paquete</option>
-                  <option value="pieza">Pieza</option>
-                  <option value="litro">Litro</option>
-                  <option value="kilogramo">Kilogramo</option>
-                  <option value="metro">Metro</option>
-                </select>
-              </FieldWrapper>
+              <Select
+                label="Unidad de Medida"
+                {...register('unidad_medida')}
+                options={[
+                  { value: 'unidad', label: 'Unidad' },
+                  { value: 'caja', label: 'Caja' },
+                  { value: 'paquete', label: 'Paquete' },
+                  { value: 'pieza', label: 'Pieza' },
+                  { value: 'litro', label: 'Litro' },
+                  { value: 'kilogramo', label: 'Kilogramo' },
+                  { value: 'metro', label: 'Metro' },
+                ]}
+                error={errors.unidad_medida?.message}
+              />
             </div>
           </div>
         )}
@@ -690,23 +685,15 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </h3>
 
           <div className="space-y-3">
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('alerta_stock_minimo')}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Alertar cuando llegue al stock mínimo</span>
-            </label>
+            <Checkbox
+              label="Alertar cuando llegue al stock mínimo"
+              {...register('alerta_stock_minimo')}
+            />
 
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('es_perecedero')}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Es perecedero</span>
-            </label>
+            <Checkbox
+              label="Es perecedero"
+              {...register('es_perecedero')}
+            />
 
             {esPerecedero && (
               <FieldWrapper label="Días de Vida Útil" error={errors.dias_vida_util?.message}>
@@ -719,42 +706,29 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               </FieldWrapper>
             )}
 
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('permite_venta')}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Permitir venta directa en POS</span>
-            </label>
+            <Checkbox
+              label="Permitir venta directa en POS"
+              {...register('permite_venta')}
+            />
 
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('permite_uso_servicio')}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Permitir uso en servicios</span>
-            </label>
+            <Checkbox
+              label="Permitir uso en servicios"
+              {...register('permite_uso_servicio')}
+            />
 
-            <label className="flex items-center">
-              <input
-                type="checkbox"
-                {...register('activo')}
-                className="rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span className="ml-2 text-sm text-gray-700">Producto activo</span>
-            </label>
+            <Checkbox
+              label="Producto activo"
+              {...register('activo')}
+            />
           </div>
 
-          <FieldWrapper label="Notas" error={errors.notas?.message}>
-            <textarea
-              {...register('notas')}
-              rows={3}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Notas adicionales sobre el producto"
-            />
-          </FieldWrapper>
+          <Textarea
+            label="Notas"
+            {...register('notas')}
+            rows={3}
+            placeholder="Notas adicionales sobre el producto"
+            error={errors.notas?.message}
+          />
         </div>
 
         {/* Botones */}
