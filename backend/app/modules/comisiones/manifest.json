@@ -1,18 +1,24 @@
 {
   "name": "comisiones",
   "display_name": "Sistema de Comisiones",
-  "version": "1.0.0",
-  "description": "Cálculo automático de comisiones por citas completadas con configuración flexible por servicio",
-  "depends": ["core", "agendamiento"],
-  "dependencies_hard": {
+  "version": "1.1.0",
+  "description": "Cálculo automático de comisiones por citas completadas y ventas POS con configuración flexible por servicio y producto",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
     "agendamiento": {
-      "razon": "Comisiones se calculan automáticamente desde citas completadas (trigger automático). FK comisiones_profesionales.cita_id → citas(id) NOT NULL",
+      "razon": "Permite calcular comisiones de citas completadas (trigger automático)",
       "tablas": ["citas", "profesionales", "clientes", "servicios"],
       "trigger": "calcular_comision_cita() se dispara al completar cita",
-      "eliminar_modulo": "BLOQUEADO - Requiere desactivar comisiones primero"
+      "campo_origen": "origen = 'cita'"
+    },
+    "pos": {
+      "razon": "Permite calcular comisiones de ventas POS (trigger automático)",
+      "tablas": ["ventas_pos", "detalles_venta_pos", "productos"],
+      "trigger": "calcular_comision_venta() se dispara al completar venta",
+      "campo_origen": "origen = 'venta'"
     }
   },
-  "dependencies_optional": {},
   "pricing": {
     "base_mensual": 99,
     "currency": "MXN",
@@ -43,13 +49,16 @@
     "historial_comisiones"
   ],
   "features": [
-    "Cálculo automático por cita completada",
+    "Cálculo automático por cita completada (módulo agendamiento)",
+    "Cálculo automático por venta POS (módulo pos)",
     "Configuración por servicio (porcentaje, monto fijo, mixto)",
+    "Configuración por producto (porcentaje, monto fijo, mixto)",
+    "Campo 'aplica_a': servicio, producto o ambos",
     "Dashboard de comisiones por profesional",
     "Historial completo con auditoría",
     "Exportación CSV/JSON",
     "Estadísticas y gráficas por período",
-    "Detalle JSONB con breakdown por servicio",
+    "Detalle JSONB con breakdown por servicio/producto",
     "RLS: Admin ve todo, empleado solo sus comisiones"
   ],
   "priority": 20,

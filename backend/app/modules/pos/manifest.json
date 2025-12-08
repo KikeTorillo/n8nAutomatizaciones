@@ -14,6 +14,7 @@
   "dependencies_optional": {
     "agendamiento": "Permite asociar ventas a clientes y profesionales del módulo de agendamiento. Si no está activo, ventas sin cliente_id/profesional_id"
   },
+  "used_by": ["comisiones"],
   "pricing": {
     "base_mensual": 149,
     "currency": "MXN",

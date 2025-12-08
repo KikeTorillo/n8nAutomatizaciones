@@ -119,13 +119,15 @@ function ChatbotsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/home')}
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
+            className="text-gray-600 hover:text-gray-900 mb-3"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
-          </button>
+          </Button>
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

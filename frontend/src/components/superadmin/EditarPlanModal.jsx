@@ -9,6 +9,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import Modal from '../ui/Modal';
 import FormField from '../forms/FormField';
+import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
 import { useToast } from '@/hooks/useToast';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
@@ -259,18 +260,12 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
             name="activo"
             control={control}
             render={({ field }) => (
-              <div className="flex items-center space-x-3">
-                <input
-                  type="checkbox"
-                  id="activo"
-                  checked={field.value}
-                  onChange={(e) => field.onChange(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label htmlFor="activo" className="text-sm font-medium text-gray-700">
-                  Plan activo (visible para nuevas organizaciones)
-                </label>
-              </div>
+              <Checkbox
+                id="activo"
+                label="Plan activo (visible para nuevas organizaciones)"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
             )}
           />
         </div>

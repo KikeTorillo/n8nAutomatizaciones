@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Bold, Italic, List, Loader2, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido
@@ -9,8 +13,8 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
     titulo: contenido.titulo || '',
     html: contenido.html || '',
     alineacion: contenido.alineacion || 'left',
-    ancho: contenido.ancho || 'full', // full, medium, narrow
-    padding: contenido.padding || 'normal', // none, small, normal, large
+    ancho: contenido.ancho || 'full',
+    padding: contenido.padding || 'normal',
   });
 
   const [cambios, setCambios] = useState(false);
@@ -31,7 +35,6 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
-  // Funciones para formateo básico
   const insertTag = (openTag, closeTag) => {
     const textarea = document.getElementById('texto-html');
     const start = textarea.selectionStart;
@@ -42,86 +45,97 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, html: newText });
   };
 
+  const anchoOptions = [
+    { value: 'full', label: 'Ancho completo' },
+    { value: 'medium', label: 'Mediano (75%)' },
+    { value: 'narrow', label: 'Angosto (50%)' },
+  ];
+
+  const paddingOptions = [
+    { value: 'none', label: 'Sin espaciado' },
+    { value: 'small', label: 'Pequeño' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'large', label: 'Grande' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Título (opcional)
-        </label>
-        <input
-          type="text"
-          value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-          placeholder="Título de la sección"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </div>
+      <Input
+        label="Título (opcional)"
+        value={form.titulo}
+        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        placeholder="Título de la sección"
+      />
 
       {/* Toolbar de formateo */}
       <div className="flex items-center gap-1 p-2 bg-gray-50 rounded-lg border border-gray-200">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => insertTag('<strong>', '</strong>')}
-          className="p-2 hover:bg-gray-200 rounded transition-colors"
           title="Negrita"
         >
           <Bold className="w-4 h-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => insertTag('<em>', '</em>')}
-          className="p-2 hover:bg-gray-200 rounded transition-colors"
           title="Cursiva"
         >
           <Italic className="w-4 h-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={() => insertTag('<ul>\n<li>', '</li>\n</ul>')}
-          className="p-2 hover:bg-gray-200 rounded transition-colors"
           title="Lista"
         >
           <List className="w-4 h-4" />
-        </button>
+        </Button>
         <div className="h-6 w-px bg-gray-300 mx-1" />
-        <button
+        <Button
           type="button"
+          variant={form.alineacion === 'left' ? 'primary' : 'ghost'}
+          size="sm"
           onClick={() => setForm({ ...form, alineacion: 'left' })}
-          className={`p-2 rounded transition-colors ${form.alineacion === 'left' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-200'}`}
           title="Alinear izquierda"
         >
           <AlignLeft className="w-4 h-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant={form.alineacion === 'center' ? 'primary' : 'ghost'}
+          size="sm"
           onClick={() => setForm({ ...form, alineacion: 'center' })}
-          className={`p-2 rounded transition-colors ${form.alineacion === 'center' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-200'}`}
           title="Centrar"
         >
           <AlignCenter className="w-4 h-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant={form.alineacion === 'right' ? 'primary' : 'ghost'}
+          size="sm"
           onClick={() => setForm({ ...form, alineacion: 'right' })}
-          className={`p-2 rounded transition-colors ${form.alineacion === 'right' ? 'bg-indigo-100 text-indigo-600' : 'hover:bg-gray-200'}`}
           title="Alinear derecha"
         >
           <AlignRight className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
 
       {/* Editor de texto */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Contenido (HTML)
-        </label>
-        <textarea
+        <Textarea
           id="texto-html"
+          label="Contenido (HTML)"
           value={form.html}
           onChange={(e) => setForm({ ...form, html: e.target.value })}
           placeholder="<p>Escribe tu contenido aquí...</p>"
           rows={8}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm"
+          className="font-mono text-sm"
         />
         <p className="text-xs text-gray-500 mt-1">
           Puedes usar etiquetas HTML: &lt;p&gt;, &lt;strong&gt;, &lt;em&gt;, &lt;ul&gt;, &lt;li&gt;, &lt;a&gt;
@@ -129,35 +143,18 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ancho del contenido
-          </label>
-          <select
-            value={form.ancho}
-            onChange={(e) => setForm({ ...form, ancho: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="full">Ancho completo</option>
-            <option value="medium">Mediano (75%)</option>
-            <option value="narrow">Angosto (50%)</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Espaciado
-          </label>
-          <select
-            value={form.padding}
-            onChange={(e) => setForm({ ...form, padding: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="none">Sin espaciado</option>
-            <option value="small">Pequeño</option>
-            <option value="normal">Normal</option>
-            <option value="large">Grande</option>
-          </select>
-        </div>
+        <Select
+          label="Ancho del contenido"
+          value={form.ancho}
+          onChange={(e) => setForm({ ...form, ancho: e.target.value })}
+          options={anchoOptions}
+        />
+        <Select
+          label="Espaciado"
+          value={form.padding}
+          onChange={(e) => setForm({ ...form, padding: e.target.value })}
+          options={paddingOptions}
+        />
       </div>
 
       {/* Preview */}
@@ -185,18 +182,14 @@ function TextoEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

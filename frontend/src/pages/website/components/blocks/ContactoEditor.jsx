@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import { Save, MapPin, Phone, Mail, Clock } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Checkbox from '@/components/ui/Checkbox';
+import Button from '@/components/ui/Button';
 
 /**
  * ContactoEditor - Editor del bloque Contacto
@@ -63,30 +66,18 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Título
-          </label>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Contáctanos"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Subtítulo
-          </label>
-          <input
-            type="text"
-            value={form.subtitulo}
-            onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-            placeholder="Estamos aquí para ayudarte"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
+        <Input
+          label="Título"
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Contáctanos"
+        />
+        <Input
+          label="Subtítulo"
+          value={form.subtitulo}
+          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+          placeholder="Estamos aquí para ayudarte"
+        />
       </div>
 
       {/* Información de contacto */}
@@ -94,58 +85,55 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
         <h4 className="text-sm font-medium text-gray-700">Información de contacto</h4>
 
         <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              <MapPin className="w-3 h-3" />
-              Dirección
-            </label>
-            <input
-              type="text"
-              value={form.direccion}
-              onChange={(e) => setForm({ ...form, direccion: e.target.value })}
-              placeholder="Calle 123, Ciudad"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              <Phone className="w-3 h-3" />
-              Teléfono
-            </label>
-            <input
-              type="text"
-              value={form.telefono}
-              onChange={(e) => setForm({ ...form, telefono: e.target.value })}
-              placeholder="+52 123 456 7890"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              <Mail className="w-3 h-3" />
-              Email
-            </label>
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="contacto@negocio.com"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
-          <div>
-            <label className="flex items-center gap-2 text-xs text-gray-500 mb-1">
-              <Clock className="w-3 h-3" />
-              Horario
-            </label>
-            <input
-              type="text"
-              value={form.horario}
-              onChange={(e) => setForm({ ...form, horario: e.target.value })}
-              placeholder="Lun-Vie 9:00-18:00"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-            />
-          </div>
+          <Input
+            label={
+              <span className="flex items-center gap-1 text-xs">
+                <MapPin className="w-3 h-3" />
+                Dirección
+              </span>
+            }
+            value={form.direccion}
+            onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+            placeholder="Calle 123, Ciudad"
+            inputSize="sm"
+          />
+          <Input
+            label={
+              <span className="flex items-center gap-1 text-xs">
+                <Phone className="w-3 h-3" />
+                Teléfono
+              </span>
+            }
+            value={form.telefono}
+            onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+            placeholder="+52 123 456 7890"
+            inputSize="sm"
+          />
+          <Input
+            type="email"
+            label={
+              <span className="flex items-center gap-1 text-xs">
+                <Mail className="w-3 h-3" />
+                Email
+              </span>
+            }
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            placeholder="contacto@negocio.com"
+            inputSize="sm"
+          />
+          <Input
+            label={
+              <span className="flex items-center gap-1 text-xs">
+                <Clock className="w-3 h-3" />
+                Horario
+              </span>
+            }
+            value={form.horario}
+            onChange={(e) => setForm({ ...form, horario: e.target.value })}
+            placeholder="Lun-Vie 9:00-18:00"
+            inputSize="sm"
+          />
         </div>
       </div>
 
@@ -153,15 +141,11 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       <div className="p-4 bg-gray-50 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-700">Formulario de contacto</h4>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.mostrar_formulario}
-              onChange={(e) => setForm({ ...form, mostrar_formulario: e.target.checked })}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-600">Mostrar</span>
-          </label>
+          <Checkbox
+            label="Mostrar"
+            checked={form.mostrar_formulario}
+            onChange={(e) => setForm({ ...form, mostrar_formulario: e.target.checked })}
+          />
         </div>
 
         {form.mostrar_formulario && (
@@ -169,18 +153,16 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             <p className="text-xs text-gray-500 mb-2">Campos del formulario:</p>
             <div className="flex flex-wrap gap-2">
               {camposDisponibles.map((campo) => (
-                <button
+                <Button
                   key={campo.id}
                   type="button"
+                  variant={form.formulario_campos.includes(campo.id) ? 'primary' : 'outline'}
+                  size="sm"
                   onClick={() => toggleCampo(campo.id)}
-                  className={`px-3 py-1 text-xs rounded-full transition-colors ${
-                    form.formulario_campos.includes(campo.id)
-                      ? 'bg-indigo-100 text-indigo-700 border border-indigo-300'
-                      : 'bg-gray-100 text-gray-600 border border-gray-200'
-                  }`}
+                  className="text-xs"
                 >
                   {campo.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -191,24 +173,20 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       <div className="p-4 bg-gray-50 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
           <h4 className="text-sm font-medium text-gray-700">Mapa de Google</h4>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.mostrar_mapa}
-              onChange={(e) => setForm({ ...form, mostrar_mapa: e.target.checked })}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-600">Mostrar</span>
-          </label>
+          <Checkbox
+            label="Mostrar"
+            checked={form.mostrar_mapa}
+            onChange={(e) => setForm({ ...form, mostrar_mapa: e.target.checked })}
+          />
         </div>
 
         {form.mostrar_mapa && (
-          <input
+          <Input
             type="url"
             value={form.mapa_url}
             onChange={(e) => setForm({ ...form, mapa_url: e.target.value })}
             placeholder="URL del embed de Google Maps"
-            className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+            inputSize="sm"
           />
         )}
       </div>
@@ -261,18 +239,14 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

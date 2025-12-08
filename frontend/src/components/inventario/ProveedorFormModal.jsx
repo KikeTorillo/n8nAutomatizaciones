@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Building2, Phone, MapPin, ChevronDown } from 'lucide-react';
+import { Building2, Phone, MapPin } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Checkbox from '@/components/ui/Checkbox';
-import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearProveedor, useActualizarProveedor } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
 import { usePaises, useEstadosPorPais, useCiudadesPorEstado } from '@/hooks/useUbicaciones';
@@ -257,33 +258,28 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FieldWrapper label="Nombre Comercial" error={errors.nombre?.message} required>
-              <input
-                type="text"
-                {...register('nombre')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: Distribuidora ABC"
-              />
-            </FieldWrapper>
+            <Input
+              label="Nombre Comercial"
+              {...register('nombre')}
+              placeholder="Ej: Distribuidora ABC"
+              error={errors.nombre?.message}
+              required
+            />
 
-            <FieldWrapper label="Razón Social" error={errors.razon_social?.message}>
-              <input
-                type="text"
-                {...register('razon_social')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: ABC Distribuidora S.A. de C.V."
-              />
-            </FieldWrapper>
+            <Input
+              label="Razón Social"
+              {...register('razon_social')}
+              placeholder="Ej: ABC Distribuidora S.A. de C.V."
+              error={errors.razon_social?.message}
+            />
 
-            <FieldWrapper label="RFC" error={errors.rfc?.message}>
-              <input
-                type="text"
-                {...register('rfc')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: XAXX010101000"
-                maxLength={13}
-              />
-            </FieldWrapper>
+            <Input
+              label="RFC"
+              {...register('rfc')}
+              placeholder="Ej: XAXX010101000"
+              maxLength={13}
+              error={errors.rfc?.message}
+            />
           </div>
         </div>
 
@@ -295,32 +291,29 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FieldWrapper label="Teléfono" error={errors.telefono?.message}>
-              <input
-                type="tel"
-                {...register('telefono')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: +52 55 1234 5678"
-              />
-            </FieldWrapper>
+            <Input
+              type="tel"
+              label="Teléfono"
+              {...register('telefono')}
+              placeholder="Ej: +52 55 1234 5678"
+              error={errors.telefono?.message}
+            />
 
-            <FieldWrapper label="Email" error={errors.email?.message}>
-              <input
-                type="email"
-                {...register('email')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="contacto@proveedor.com"
-              />
-            </FieldWrapper>
+            <Input
+              type="email"
+              label="Email"
+              {...register('email')}
+              placeholder="contacto@proveedor.com"
+              error={errors.email?.message}
+            />
 
-            <FieldWrapper label="Sitio Web" error={errors.sitio_web?.message}>
-              <input
-                type="url"
-                {...register('sitio_web')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="https://proveedor.com"
-              />
-            </FieldWrapper>
+            <Input
+              type="url"
+              label="Sitio Web"
+              {...register('sitio_web')}
+              placeholder="https://proveedor.com"
+              error={errors.sitio_web?.message}
+            />
           </div>
         </div>
 
@@ -334,92 +327,72 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           <div className="space-y-4">
             {/* Fila 1: País, Estado, Ciudad, CP */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {/* PAÍS */}
-              <FieldWrapper label="País">
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white"
-                    value={paisIdSeleccionado || ''}
-                    onChange={(e) => {
-                      const paisId = e.target.value ? Number(e.target.value) : null;
-                      setPaisIdSeleccionado(paisId);
-                      setEstadoIdSeleccionado(null);
-                      setCiudadIdSeleccionado(null);
-                    }}
-                    disabled={loadingPaises}
-                  >
-                    <option value="">Seleccionar país</option>
-                    {paises.map((pais) => (
-                      <option key={pais.id} value={pais.id}>
-                        {pais.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-              </FieldWrapper>
+              <Select
+                label="País"
+                value={paisIdSeleccionado || ''}
+                onChange={(e) => {
+                  const paisId = e.target.value ? Number(e.target.value) : null;
+                  setPaisIdSeleccionado(paisId);
+                  setEstadoIdSeleccionado(null);
+                  setCiudadIdSeleccionado(null);
+                }}
+                disabled={loadingPaises}
+                placeholder="Seleccionar país"
+              >
+                <option value="">Seleccionar país</option>
+                {paises.map((pais) => (
+                  <option key={pais.id} value={pais.id}>
+                    {pais.nombre}
+                  </option>
+                ))}
+              </Select>
 
-              {/* ESTADO */}
-              <FieldWrapper label="Estado">
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    value={estadoIdSeleccionado || ''}
-                    onChange={(e) => {
-                      const estadoId = e.target.value ? Number(e.target.value) : null;
-                      setEstadoIdSeleccionado(estadoId);
-                      setCiudadIdSeleccionado(null);
-                    }}
-                    disabled={!paisIdSeleccionado || loadingEstados}
-                  >
-                    <option value="">
-                      {loadingEstados ? 'Cargando...' : 'Seleccionar estado'}
-                    </option>
-                    {estados.map((estado) => (
-                      <option key={estado.id} value={estado.id}>
-                        {estado.nombre_corto || estado.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-              </FieldWrapper>
+              <Select
+                label="Estado"
+                value={estadoIdSeleccionado || ''}
+                onChange={(e) => {
+                  const estadoId = e.target.value ? Number(e.target.value) : null;
+                  setEstadoIdSeleccionado(estadoId);
+                  setCiudadIdSeleccionado(null);
+                }}
+                disabled={!paisIdSeleccionado || loadingEstados}
+              >
+                <option value="">
+                  {loadingEstados ? 'Cargando...' : 'Seleccionar estado'}
+                </option>
+                {estados.map((estado) => (
+                  <option key={estado.id} value={estado.id}>
+                    {estado.nombre_corto || estado.nombre}
+                  </option>
+                ))}
+              </Select>
 
-              {/* CIUDAD */}
-              <FieldWrapper label="Ciudad">
-                <div className="relative">
-                  <select
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent appearance-none bg-white disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    value={ciudadIdSeleccionado || ''}
-                    onChange={(e) => {
-                      const ciudadId = e.target.value ? Number(e.target.value) : null;
-                      setCiudadIdSeleccionado(ciudadId);
-                    }}
-                    disabled={!estadoIdSeleccionado || loadingCiudades}
-                  >
-                    <option value="">
-                      {loadingCiudades ? 'Cargando...' : 'Seleccionar ciudad'}
-                    </option>
-                    {ciudades.map((ciudad) => (
-                      <option key={ciudad.id} value={ciudad.id}>
-                        {ciudad.nombre}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                </div>
-              </FieldWrapper>
+              <Select
+                label="Ciudad"
+                value={ciudadIdSeleccionado || ''}
+                onChange={(e) => {
+                  const ciudadId = e.target.value ? Number(e.target.value) : null;
+                  setCiudadIdSeleccionado(ciudadId);
+                }}
+                disabled={!estadoIdSeleccionado || loadingCiudades}
+              >
+                <option value="">
+                  {loadingCiudades ? 'Cargando...' : 'Seleccionar ciudad'}
+                </option>
+                {ciudades.map((ciudad) => (
+                  <option key={ciudad.id} value={ciudad.id}>
+                    {ciudad.nombre}
+                  </option>
+                ))}
+              </Select>
 
-              {/* CP */}
-              <FieldWrapper label="CP" error={errors.codigo_postal?.message}>
-                <input
-                  type="text"
-                  {...register('codigo_postal')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="44100"
-                  maxLength={10}
-                />
-              </FieldWrapper>
+              <Input
+                label="CP"
+                {...register('codigo_postal')}
+                placeholder="44100"
+                maxLength={10}
+                error={errors.codigo_postal?.message}
+              />
             </div>
 
             {/* Fila 2: Dirección completa */}
@@ -438,47 +411,36 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           <h3 className="text-lg font-medium text-gray-900 mb-4">Términos Comerciales</h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <FieldWrapper
+            <Input
+              type="number"
               label="Días de Crédito"
+              {...register('dias_credito')}
+              min="0"
               error={errors.dias_credito?.message}
-              helperText="0 = Pago de contado"
-            >
-              <input
-                type="number"
-                min="0"
-                {...register('dias_credito')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              />
-            </FieldWrapper>
+              helper="0 = Pago de contado"
+            />
 
-            <FieldWrapper
+            <Input
+              type="number"
               label="Días de Entrega"
+              {...register('dias_entrega_estimados')}
+              min="1"
+              placeholder="Opcional"
               error={errors.dias_entrega_estimados?.message}
-              helperText="Tiempo estimado"
-            >
-              <input
-                type="number"
-                min="1"
-                {...register('dias_entrega_estimados')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Opcional"
-              />
-            </FieldWrapper>
+              helper="Tiempo estimado"
+            />
 
-            <FieldWrapper
+            <Input
+              type="number"
               label="Monto Mínimo de Compra"
+              {...register('monto_minimo_compra')}
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+              prefix="$"
               error={errors.monto_minimo_compra?.message}
-              helperText="Monto mínimo (MXN)"
-            >
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                {...register('monto_minimo_compra')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="0.00"
-              />
-            </FieldWrapper>
+              helper="Monto mínimo (MXN)"
+            />
           </div>
         </div>
 

@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Save, Image, Loader2 } from 'lucide-react';
+import { Save, Image } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Checkbox from '@/components/ui/Checkbox';
+import Button from '@/components/ui/Button';
 
 /**
  * HeroEditor - Editor del bloque Hero
@@ -35,100 +40,70 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
+  const alineacionOptions = [
+    { value: 'left', label: 'Izquierda' },
+    { value: 'center', label: 'Centro' },
+    { value: 'right', label: 'Derecha' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Título principal
-        </label>
-        <input
-          type="text"
-          value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-          placeholder="Bienvenido a nuestro negocio"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </div>
+      <Input
+        label="Título principal"
+        value={form.titulo}
+        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        placeholder="Bienvenido a nuestro negocio"
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Subtítulo
-        </label>
-        <textarea
-          value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-          placeholder="Una descripción breve de lo que hacemos"
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
-        />
-      </div>
+      <Textarea
+        label="Subtítulo"
+        value={form.subtitulo}
+        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        placeholder="Una descripción breve de lo que hacemos"
+        rows={2}
+      />
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Texto del botón
-          </label>
-          <input
-            type="text"
-            value={form.cta_texto}
-            onChange={(e) => setForm({ ...form, cta_texto: e.target.value })}
-            placeholder="Contactar"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            URL del botón
-          </label>
-          <input
-            type="text"
-            value={form.cta_url}
-            onChange={(e) => setForm({ ...form, cta_url: e.target.value })}
-            placeholder="/contacto"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          <Image className="w-4 h-4 inline mr-1" />
-          URL imagen de fondo
-        </label>
-        <input
-          type="url"
-          value={form.imagen_fondo}
-          onChange={(e) => setForm({ ...form, imagen_fondo: e.target.value })}
-          placeholder="https://ejemplo.com/imagen.jpg"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        <Input
+          label="Texto del botón"
+          value={form.cta_texto}
+          onChange={(e) => setForm({ ...form, cta_texto: e.target.value })}
+          placeholder="Contactar"
+        />
+        <Input
+          label="URL del botón"
+          value={form.cta_url}
+          onChange={(e) => setForm({ ...form, cta_url: e.target.value })}
+          placeholder="/contacto"
         />
       </div>
 
+      <Input
+        type="url"
+        label={
+          <span className="flex items-center gap-1">
+            <Image className="w-4 h-4" />
+            URL imagen de fondo
+          </span>
+        }
+        value={form.imagen_fondo}
+        onChange={(e) => setForm({ ...form, imagen_fondo: e.target.value })}
+        placeholder="https://ejemplo.com/imagen.jpg"
+      />
+
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Alineación
-          </label>
-          <select
-            value={form.alineacion}
-            onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="left">Izquierda</option>
-            <option value="center">Centro</option>
-            <option value="right">Derecha</option>
-          </select>
-        </div>
-        <div className="flex items-center">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={form.overlay}
-              onChange={(e) => setForm({ ...form, overlay: e.target.checked })}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            <span className="text-sm text-gray-700">Overlay oscuro</span>
-          </label>
+        <Select
+          label="Alineación"
+          value={form.alineacion}
+          onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
+          options={alineacionOptions}
+        />
+        <div className="flex items-center pt-6">
+          <Checkbox
+            label="Overlay oscuro"
+            checked={form.overlay}
+            onChange={(e) => setForm({ ...form, overlay: e.target.checked })}
+          />
         </div>
       </div>
 
@@ -163,18 +138,14 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

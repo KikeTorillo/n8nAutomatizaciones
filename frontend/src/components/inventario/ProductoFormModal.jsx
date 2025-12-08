@@ -5,10 +5,10 @@ import { z } from 'zod';
 import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Checkbox from '@/components/ui/Checkbox';
-import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearProducto, useActualizarProducto } from '@/hooks/useProductos';
 import { useCategorias } from '@/hooks/useCategorias';
 import { useProveedores } from '@/hooks/useProveedores';
@@ -440,14 +440,13 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             Información Básica
           </h3>
 
-          <FieldWrapper label="Nombre del Producto" error={errors.nombre?.message} required>
-            <input
-              type="text"
-              {...register('nombre')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-              placeholder="Ej: Champú Premium 500ml"
-            />
-          </FieldWrapper>
+          <Input
+            label="Nombre del Producto"
+            {...register('nombre')}
+            placeholder="Ej: Champú Premium 500ml"
+            error={errors.nombre?.message}
+            required
+          />
 
           <Textarea
             label="Descripción"
@@ -458,23 +457,19 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FieldWrapper label="SKU" error={errors.sku?.message}>
-              <input
-                type="text"
-                {...register('sku')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Ej: CHAMP-500"
-              />
-            </FieldWrapper>
+            <Input
+              label="SKU"
+              {...register('sku')}
+              placeholder="Ej: CHAMP-500"
+              error={errors.sku?.message}
+            />
 
-            <FieldWrapper label="Código de Barras" error={errors.codigo_barras?.message}>
-              <input
-                type="text"
-                {...register('codigo_barras')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="EAN8 o EAN13 (8-13 dígitos)"
-              />
-            </FieldWrapper>
+            <Input
+              label="Código de Barras"
+              {...register('codigo_barras')}
+              placeholder="EAN8 o EAN13 (8-13 dígitos)"
+              error={errors.codigo_barras?.message}
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -575,51 +570,48 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FieldWrapper label="Precio de Compra" error={errors.precio_compra?.message}>
-              <input
-                type="number"
-                step="0.01"
-                {...register('precio_compra')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="0.00"
-              />
-            </FieldWrapper>
+            <Input
+              type="number"
+              label="Precio de Compra"
+              {...register('precio_compra')}
+              step="0.01"
+              placeholder="0.00"
+              prefix="$"
+              error={errors.precio_compra?.message}
+            />
 
-            <FieldWrapper label="Precio de Venta" error={errors.precio_venta?.message} required>
-              <input
-                type="number"
-                step="0.01"
-                {...register('precio_venta')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="0.00"
-              />
-            </FieldWrapper>
+            <Input
+              type="number"
+              label="Precio de Venta"
+              {...register('precio_venta')}
+              step="0.01"
+              placeholder="0.00"
+              prefix="$"
+              error={errors.precio_venta?.message}
+              required
+            />
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <FieldWrapper label="Precio de Mayoreo" error={errors.precio_mayoreo?.message}>
-              <input
-                type="number"
-                step="0.01"
-                {...register('precio_mayoreo')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="0.00"
-              />
-            </FieldWrapper>
+            <Input
+              type="number"
+              label="Precio de Mayoreo"
+              {...register('precio_mayoreo')}
+              step="0.01"
+              placeholder="0.00"
+              prefix="$"
+              error={errors.precio_mayoreo?.message}
+            />
 
-            <FieldWrapper
+            <Input
+              type="number"
               label="Cantidad Mínima Mayoreo"
+              {...register('cantidad_mayoreo')}
+              placeholder="0"
               error={errors.cantidad_mayoreo?.message}
-              helperText={precioMayoreo > 0 ? 'Requerido si hay precio de mayoreo' : ''}
-            >
-              <input
-                type="number"
-                {...register('cantidad_mayoreo')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="0"
-                disabled={!precioMayoreo || precioMayoreo === 0}
-              />
-            </FieldWrapper>
+              helper={precioMayoreo > 0 ? 'Requerido si hay precio de mayoreo' : ''}
+              disabled={!precioMayoreo || precioMayoreo === 0}
+            />
           </div>
         </div>
 
@@ -632,32 +624,29 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             </h3>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <FieldWrapper label="Stock Actual" error={errors.stock_actual?.message}>
-                <input
-                  type="number"
-                  {...register('stock_actual')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="0"
-                />
-              </FieldWrapper>
+              <Input
+                type="number"
+                label="Stock Actual"
+                {...register('stock_actual')}
+                placeholder="0"
+                error={errors.stock_actual?.message}
+              />
 
-              <FieldWrapper label="Stock Mínimo" error={errors.stock_minimo?.message}>
-                <input
-                  type="number"
-                  {...register('stock_minimo')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="5"
-                />
-              </FieldWrapper>
+              <Input
+                type="number"
+                label="Stock Mínimo"
+                {...register('stock_minimo')}
+                placeholder="5"
+                error={errors.stock_minimo?.message}
+              />
 
-              <FieldWrapper label="Stock Máximo" error={errors.stock_maximo?.message}>
-                <input
-                  type="number"
-                  {...register('stock_maximo')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="100"
-                />
-              </FieldWrapper>
+              <Input
+                type="number"
+                label="Stock Máximo"
+                {...register('stock_maximo')}
+                placeholder="100"
+                error={errors.stock_maximo?.message}
+              />
 
               <Select
                 label="Unidad de Medida"
@@ -696,14 +685,13 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             />
 
             {esPerecedero && (
-              <FieldWrapper label="Días de Vida Útil" error={errors.dias_vida_util?.message}>
-                <input
-                  type="number"
-                  {...register('dias_vida_util')}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                  placeholder="Ej: 30"
-                />
-              </FieldWrapper>
+              <Input
+                type="number"
+                label="Días de Vida Útil"
+                {...register('dias_vida_util')}
+                placeholder="Ej: 30"
+                error={errors.dias_vida_util?.message}
+              />
             )}
 
             <Checkbox

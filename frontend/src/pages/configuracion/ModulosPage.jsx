@@ -103,11 +103,33 @@ function ModulosPage() {
     );
   };
 
-  // Obtener módulos que dependen de este
-  const getModulosDependientes = (modulo) => {
+  // Obtener módulos que dependen de este (hard dependencies activas)
+  const getModulosDependientesHard = (modulo) => {
     return modulosDisponibles
       .filter((m) => modulosActivos[m.nombre] && m.dependencias?.includes(modulo))
       .map((m) => m.display_name);
+  };
+
+  // Obtener display_name de un módulo por su nombre
+  const getDisplayName = (nombre) => {
+    const m = modulosDisponibles.find((mod) => mod.nombre === nombre);
+    return m?.display_name || nombre;
+  };
+
+  // Obtener módulos con dependencia opcional (usado_por estático, filtrando los que son hard deps)
+  const getModulosOpcionales = (modulo) => {
+    const moduloData = modulosDisponibles.find((m) => m.nombre === modulo.nombre);
+    const usadoPor = moduloData?.usado_por || [];
+    const hardDeps = getModulosDependientesHard(modulo.nombre).map(name => {
+      // Convertir display_name a nombre
+      const m = modulosDisponibles.find(mod => mod.display_name === name);
+      return m?.nombre || name;
+    });
+
+    // Solo los que son opcionales (están en usado_por pero NO son hard deps) y están activos
+    return usadoPor
+      .filter(m => modulosActivos[m] && !hardDeps.includes(m))
+      .map(getDisplayName);
   };
 
   // Handlers
@@ -115,7 +137,7 @@ function ModulosPage() {
     if (activo) {
       // Desactivar
       if (!puedeDesactivar(modulo)) {
-        const dependientes = getModulosDependientes(modulo);
+        const dependientes = getModulosDependientesHard(modulo);
         toast.warning(`No se puede desactivar. Los siguientes módulos dependen de este: ${dependientes.join(', ')}`);
         return;
       }
@@ -166,25 +188,22 @@ function ModulosPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate(-1)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600" />
-              </button>
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  Gestión de Módulos
-                </h1>
-                <p className="text-sm text-gray-500">
-                  Activa o desactiva módulos según tus necesidades
-                </p>
-              </div>
-            </div>
-          </div>
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/home')}
+            className="text-gray-600 hover:text-gray-900 mb-3"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Volver al Inicio
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">
+            Gestión de Módulos
+          </h1>
+          <p className="text-sm text-gray-500 mt-1">
+            Activa o desactiva módulos según tus necesidades
+          </p>
         </div>
       </div>
 
@@ -221,7 +240,8 @@ function ModulosPage() {
               const puedeAct = puedeActivar(modulo.nombre);
               const puedeDesact = puedeDesactivar(modulo.nombre);
               const dependenciasFaltantes = getDependenciasFaltantes(modulo.nombre);
-              const dependientes = getModulosDependientes(modulo.nombre);
+              const dependientesHard = getModulosDependientesHard(modulo.nombre);
+              const dependientesOpcionales = getModulosOpcionales(modulo);
 
               return (
                 <div
@@ -260,12 +280,21 @@ function ModulosPage() {
                           </div>
                         )}
 
-                        {/* Advertencia de módulos dependientes */}
-                        {activo && dependientes.length > 0 && (
-                          <div className="mt-3 flex items-start gap-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
+                        {/* Advertencia de módulos con dependencia HARD (bloquean desactivación) */}
+                        {activo && dependientesHard.length > 0 && (
+                          <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span>
-                              Usado por: {dependientes.join(', ')}
+                              Requerido por: {dependientesHard.join(', ')}
+                            </span>
+                          </div>
+                        )}
+
+                        {/* Info de módulos con dependencia OPCIONAL (no bloquean) */}
+                        {activo && dependientesOpcionales.length > 0 && (
+                          <div className="mt-3 flex items-start gap-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
+                            <span>
+                              Usado opcionalmente por: {dependientesOpcionales.join(', ')}
                             </span>
                           </div>
                         )}

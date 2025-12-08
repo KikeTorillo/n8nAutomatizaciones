@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Image, Loader2, GripVertical } from 'lucide-react';
+import { Save, Plus, Trash2, Image, GripVertical } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Checkbox from '@/components/ui/Checkbox';
+import Button from '@/components/ui/Button';
 
 /**
  * GaleriaEditor - Editor del bloque Galería
@@ -10,8 +14,8 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
     subtitulo: contenido.subtitulo || '',
     imagenes: contenido.imagenes || [],
     columnas: contenido.columnas || 3,
-    espaciado: contenido.espaciado || 'normal', // none, small, normal, large
-    estilo: contenido.estilo || 'grid', // grid, masonry, carousel
+    espaciado: contenido.espaciado || 'normal',
+    estilo: contenido.estilo || 'grid',
     lightbox: contenido.lightbox !== false,
   });
 
@@ -55,93 +59,69 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, imagenes: nuevas });
   };
 
+  const columnasOptions = [
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+    { value: '5', label: '5' },
+  ];
+
+  const espaciadoOptions = [
+    { value: 'none', label: 'Sin espacio' },
+    { value: 'small', label: 'Pequeño' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'large', label: 'Grande' },
+  ];
+
+  const estiloOptions = [
+    { value: 'grid', label: 'Cuadrícula' },
+    { value: 'masonry', label: 'Masonry' },
+    { value: 'carousel', label: 'Carrusel' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Título (opcional)
-          </label>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Nuestra Galería"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Subtítulo (opcional)
-          </label>
-          <input
-            type="text"
-            value={form.subtitulo}
-            onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-            placeholder="Nuestros mejores trabajos"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
+        <Input
+          label="Título (opcional)"
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Nuestra Galería"
+        />
+        <Input
+          label="Subtítulo (opcional)"
+          value={form.subtitulo}
+          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+          placeholder="Nuestros mejores trabajos"
+        />
       </div>
 
       <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Columnas
-          </label>
-          <select
-            value={form.columnas}
-            onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value={2}>2</option>
-            <option value={3}>3</option>
-            <option value={4}>4</option>
-            <option value={5}>5</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Espaciado
-          </label>
-          <select
-            value={form.espaciado}
-            onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="none">Sin espacio</option>
-            <option value="small">Pequeño</option>
-            <option value="normal">Normal</option>
-            <option value="large">Grande</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estilo
-          </label>
-          <select
-            value={form.estilo}
-            onChange={(e) => setForm({ ...form, estilo: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="grid">Cuadrícula</option>
-            <option value="masonry">Masonry</option>
-            <option value="carousel">Carrusel</option>
-          </select>
-        </div>
+        <Select
+          label="Columnas"
+          value={String(form.columnas)}
+          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          options={columnasOptions}
+        />
+        <Select
+          label="Espaciado"
+          value={form.espaciado}
+          onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
+          options={espaciadoOptions}
+        />
+        <Select
+          label="Estilo"
+          value={form.estilo}
+          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          options={estiloOptions}
+        />
       </div>
 
-      <div className="flex items-center gap-4">
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={form.lightbox}
-            onChange={(e) => setForm({ ...form, lightbox: e.target.checked })}
-            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-          />
-          <span className="text-sm text-gray-700">Abrir en lightbox al hacer clic</span>
-        </label>
-      </div>
+      <Checkbox
+        label="Abrir en lightbox al hacer clic"
+        checked={form.lightbox}
+        onChange={(e) => setForm({ ...form, lightbox: e.target.checked })}
+      />
 
       {/* Lista de imágenes */}
       <div>
@@ -149,14 +129,15 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
           <label className="text-sm font-medium text-gray-700">
             Imágenes ({form.imagenes.length})
           </label>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregar}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -164,13 +145,15 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
             <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
               <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
               <p className="text-sm text-gray-500">No hay imágenes</p>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={handleAgregar}
-                className="mt-2 text-sm text-indigo-600 hover:text-indigo-700"
+                className="mt-2"
               >
                 Agregar primera imagen
-              </button>
+              </Button>
             </div>
           ) : (
             form.imagenes.map((imagen, index) => (
@@ -193,29 +176,30 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
                 )}
 
                 <div className="flex-1 space-y-1">
-                  <input
+                  <Input
                     type="url"
                     value={imagen.url}
                     onChange={(e) => handleChange(index, 'url', e.target.value)}
                     placeholder="URL de la imagen"
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={imagen.alt}
                     onChange={(e) => handleChange(index, 'alt', e.target.value)}
                     placeholder="Texto alternativo"
-                    className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
                 </div>
 
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleEliminar(index)}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                  className="text-gray-400 hover:text-red-500"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             ))
           )}
@@ -253,18 +237,14 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

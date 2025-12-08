@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2 } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * FooterEditor - Editor del bloque Footer
@@ -16,7 +20,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
     ],
     redes_sociales: contenido.redes_sociales || [],
     columnas: contenido.columnas || 1,
-    estilo: contenido.estilo || 'oscuro', // oscuro, claro, primario
+    estilo: contenido.estilo || 'oscuro',
   });
 
   const [cambios, setCambios] = useState(false);
@@ -83,104 +87,93 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, redes_sociales: nuevos });
   };
 
-  const redesDisponibles = [
-    'facebook', 'instagram', 'twitter', 'linkedin', 'youtube', 'tiktok', 'whatsapp'
+  const estiloOptions = [
+    { value: 'oscuro', label: 'Oscuro' },
+    { value: 'claro', label: 'Claro' },
+    { value: 'primario', label: 'Color primario' },
+  ];
+
+  const redesOptions = [
+    { value: 'facebook', label: 'Facebook' },
+    { value: 'instagram', label: 'Instagram' },
+    { value: 'twitter', label: 'Twitter' },
+    { value: 'linkedin', label: 'LinkedIn' },
+    { value: 'youtube', label: 'YouTube' },
+    { value: 'tiktok', label: 'TikTok' },
+    { value: 'whatsapp', label: 'WhatsApp' },
   ];
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estilo
-          </label>
-          <select
-            value={form.estilo}
-            onChange={(e) => setForm({ ...form, estilo: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="oscuro">Oscuro</option>
-            <option value="claro">Claro</option>
-            <option value="primario">Color primario</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Logo URL (opcional)
-          </label>
-          <input
-            type="url"
-            value={form.logo}
-            onChange={(e) => setForm({ ...form, logo: e.target.value })}
-            placeholder="https://ejemplo.com/logo.png"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Descripción breve (opcional)
-        </label>
-        <textarea
-          value={form.descripcion}
-          onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
-          placeholder="Breve descripción del negocio"
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+        <Select
+          label="Estilo"
+          value={form.estilo}
+          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          options={estiloOptions}
+        />
+        <Input
+          type="url"
+          label="Logo URL (opcional)"
+          value={form.logo}
+          onChange={(e) => setForm({ ...form, logo: e.target.value })}
+          placeholder="https://ejemplo.com/logo.png"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Texto de copyright
-        </label>
-        <input
-          type="text"
-          value={form.copyright}
-          onChange={(e) => setForm({ ...form, copyright: e.target.value })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        />
-      </div>
+      <Textarea
+        label="Descripción breve (opcional)"
+        value={form.descripcion}
+        onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
+        placeholder="Breve descripción del negocio"
+        rows={2}
+      />
+
+      <Input
+        label="Texto de copyright"
+        value={form.copyright}
+        onChange={(e) => setForm({ ...form, copyright: e.target.value })}
+      />
 
       {/* Links */}
       <div className="p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-medium text-gray-700">Enlaces del menú</h4>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregarLink}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-2">
           {form.links.map((link, index) => (
             <div key={index} className="flex items-center gap-2">
-              <input
-                type="text"
+              <Input
                 value={link.texto}
                 onChange={(e) => handleLinkChange(index, 'texto', e.target.value)}
                 placeholder="Texto"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                inputSize="sm"
               />
-              <input
-                type="text"
+              <Input
                 value={link.url}
                 onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
                 placeholder="/url"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                inputSize="sm"
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => handleEliminarLink(index)}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-400 hover:text-red-500"
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -190,42 +183,42 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       <div className="p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center justify-between mb-3">
           <h4 className="text-sm font-medium text-gray-700">Redes sociales</h4>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregarRed}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-2">
           {form.redes_sociales.map((red, index) => (
             <div key={index} className="flex items-center gap-2">
-              <select
+              <Select
                 value={red.red}
                 onChange={(e) => handleRedChange(index, 'red', e.target.value)}
-                className="w-32 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                {redesDisponibles.map(r => (
-                  <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>
-                ))}
-              </select>
-              <input
+                options={redesOptions}
+                className="w-32"
+              />
+              <Input
                 type="url"
                 value={red.url}
                 onChange={(e) => handleRedChange(index, 'url', e.target.value)}
                 placeholder="URL del perfil"
-                className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                inputSize="sm"
               />
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => handleEliminarRed(index)}
-                className="p-2 text-gray-400 hover:text-red-500 transition-colors"
+                className="text-gray-400 hover:text-red-500"
               >
                 <Trash2 className="w-4 h-4" />
-              </button>
+              </Button>
             </div>
           ))}
         </div>
@@ -260,18 +253,14 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

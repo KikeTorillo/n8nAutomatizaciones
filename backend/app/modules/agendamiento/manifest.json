@@ -6,6 +6,7 @@
   "depends": ["core"],
   "dependencies_hard": {},
   "dependencies_optional": {},
+  "used_by": ["comisiones", "marketplace", "chatbots"],
   "pricing": {
     "base_mensual": 0,
     "currency": "MXN",

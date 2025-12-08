@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, GripVertical, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, GripVertical } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * ServiciosEditor - Editor del bloque Servicios
@@ -53,49 +57,35 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, servicios: nuevosServicios });
   };
 
+  const columnasOptions = [
+    { value: '2', label: '2 columnas' },
+    { value: '3', label: '3 columnas' },
+    { value: '4', label: '4 columnas' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Título de sección
-          </label>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Nuestros Servicios"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Columnas
-          </label>
-          <select
-            value={form.columnas}
-            onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value={2}>2 columnas</option>
-            <option value={3}>3 columnas</option>
-            <option value={4}>4 columnas</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Subtítulo (opcional)
-        </label>
-        <input
-          type="text"
-          value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-          placeholder="Lo que podemos hacer por ti"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        <Input
+          label="Título de sección"
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Nuestros Servicios"
+        />
+        <Select
+          label="Columnas"
+          value={String(form.columnas)}
+          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          options={columnasOptions}
         />
       </div>
+
+      <Input
+        label="Subtítulo (opcional)"
+        value={form.subtitulo}
+        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        placeholder="Lo que podemos hacer por ti"
+      />
 
       {/* Lista de servicios */}
       <div>
@@ -103,14 +93,15 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
           <label className="text-sm font-medium text-gray-700">
             Servicios ({form.servicios.length})
           </label>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregarServicio}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-3">
@@ -122,44 +113,42 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
               <div className="flex items-start gap-2">
                 <GripVertical className="w-5 h-5 text-gray-400 mt-2 cursor-grab" />
                 <div className="flex-1 space-y-2">
-                  <input
-                    type="text"
+                  <Input
                     value={servicio.nombre}
                     onChange={(e) => handleServicioChange(index, 'nombre', e.target.value)}
                     placeholder="Nombre del servicio"
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
-                  <textarea
+                  <Textarea
                     value={servicio.descripcion}
                     onChange={(e) => handleServicioChange(index, 'descripcion', e.target.value)}
                     placeholder="Descripción breve"
                     rows={2}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                   />
                   <div className="grid grid-cols-2 gap-2">
-                    <input
-                      type="text"
+                    <Input
                       value={servicio.icono}
                       onChange={(e) => handleServicioChange(index, 'icono', e.target.value)}
                       placeholder="Icono (ej: Scissors)"
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      inputSize="sm"
                     />
-                    <input
-                      type="text"
+                    <Input
                       value={servicio.precio}
                       onChange={(e) => handleServicioChange(index, 'precio', e.target.value)}
                       placeholder="Precio (opcional)"
-                      className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      inputSize="sm"
                     />
                   </div>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleEliminarServicio(index)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                  className="text-gray-400 hover:text-red-500 hover:bg-red-50"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
             </div>
           ))}
@@ -187,18 +176,14 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

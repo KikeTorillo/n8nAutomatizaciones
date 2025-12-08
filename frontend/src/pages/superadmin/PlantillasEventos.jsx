@@ -7,6 +7,9 @@ import { useState } from 'react';
 import { Plus, Edit, Trash2, Eye, Check, X, Palette } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Textarea from '@/components/ui/Textarea';
+import Checkbox from '@/components/ui/Checkbox';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -232,18 +235,12 @@ function PlantillasEventos() {
                 placeholder="Ej: elegante_dorado"
                 required
               />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de Evento</label>
-                <select
-                  value={formData.tipo_evento}
-                  onChange={(e) => setFormData({ ...formData, tipo_evento: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                >
-                  {TIPOS_EVENTO.map((tipo) => (
-                    <option key={tipo.value} value={tipo.value}>{tipo.label}</option>
-                  ))}
-                </select>
-              </div>
+              <Select
+                label="Tipo de Evento"
+                value={formData.tipo_evento}
+                onChange={(e) => setFormData({ ...formData, tipo_evento: e.target.value })}
+                options={TIPOS_EVENTO}
+              />
               <Input
                 label="Preview URL"
                 value={formData.preview_url}
@@ -252,38 +249,31 @@ function PlantillasEventos() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
-              <textarea
-                value={formData.descripcion}
-                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                rows={2}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="Descripción de la plantilla..."
-              />
-            </div>
+            <Textarea
+              label="Descripción"
+              value={formData.descripcion}
+              onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
+              rows={2}
+              placeholder="Descripción de la plantilla..."
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estructura HTML</label>
-              <textarea
-                value={formData.estructura_html}
-                onChange={(e) => setFormData({ ...formData, estructura_html: e.target.value })}
-                rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
-                placeholder="<div class='invitacion'>...</div>"
-              />
-            </div>
+            <Textarea
+              label="Estructura HTML"
+              value={formData.estructura_html}
+              onChange={(e) => setFormData({ ...formData, estructura_html: e.target.value })}
+              rows={6}
+              className="font-mono text-sm"
+              placeholder="<div class='invitacion'>...</div>"
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Estilos CSS</label>
-              <textarea
-                value={formData.estilos_css}
-                onChange={(e) => setFormData({ ...formData, estilos_css: e.target.value })}
-                rows={6}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
-                placeholder=".invitacion { ... }"
-              />
-            </div>
+            <Textarea
+              label="Estilos CSS"
+              value={formData.estilos_css}
+              onChange={(e) => setFormData({ ...formData, estilos_css: e.target.value })}
+              rows={6}
+              className="font-mono text-sm"
+              placeholder=".invitacion { ... }"
+            />
 
             {/* Editor de Tema */}
             <div className="border-t pt-4 mt-4">
@@ -422,43 +412,28 @@ function PlantillasEventos() {
 
               {/* Fuentes */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuente para Títulos</label>
-                  <select
-                    value={formData.tema.fuente_titulo}
-                    onChange={(e) => handleTemaChange('fuente_titulo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    {FUENTES_DISPONIBLES.map((fuente) => (
-                      <option key={fuente} value={fuente}>{fuente}</option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Fuente para Títulos"
+                  value={formData.tema.fuente_titulo}
+                  onChange={(e) => handleTemaChange('fuente_titulo', e.target.value)}
+                  options={FUENTES_DISPONIBLES.map(f => ({ value: f, label: f }))}
+                />
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Fuente para Texto</label>
-                  <select
-                    value={formData.tema.fuente_cuerpo}
-                    onChange={(e) => handleTemaChange('fuente_cuerpo', e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                  >
-                    {FUENTES_DISPONIBLES.map((fuente) => (
-                      <option key={fuente} value={fuente}>{fuente}</option>
-                    ))}
-                  </select>
-                </div>
+                <Select
+                  label="Fuente para Texto"
+                  value={formData.tema.fuente_cuerpo}
+                  onChange={(e) => handleTemaChange('fuente_cuerpo', e.target.value)}
+                  options={FUENTES_DISPONIBLES.map(f => ({ value: f, label: f }))}
+                />
               </div>
             </div>
 
-            <label className="flex items-center gap-2 mt-4">
-              <input
-                type="checkbox"
-                checked={formData.es_premium}
-                onChange={(e) => setFormData({ ...formData, es_premium: e.target.checked })}
-                className="w-4 h-4 text-red-600 rounded"
-              />
-              <span className="text-sm text-gray-700">Es plantilla Premium</span>
-            </label>
+            <Checkbox
+              label="Es plantilla Premium"
+              checked={formData.es_premium}
+              onChange={(e) => setFormData({ ...formData, es_premium: e.target.checked })}
+              className="mt-4"
+            />
 
             <div className="flex gap-3 mt-4">
               <Button type="submit" disabled={crearPlantilla.isLoading || actualizarPlantilla.isLoading}>

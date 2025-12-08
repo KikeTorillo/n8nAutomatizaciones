@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2 } from 'lucide-react';
+import { Save } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * CtaEditor - Editor del bloque Call To Action
@@ -12,7 +16,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
     boton_url: contenido.boton_url || '',
     boton_secundario_texto: contenido.boton_secundario_texto || '',
     boton_secundario_url: contenido.boton_secundario_url || '',
-    estilo: contenido.estilo || 'primario', // primario, secundario, outline
+    estilo: contenido.estilo || 'primario',
     alineacion: contenido.alineacion || 'center',
   });
 
@@ -37,118 +41,79 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
     setCambios(false);
   };
 
+  const estiloOptions = [
+    { value: 'primario', label: 'Color primario' },
+    { value: 'secundario', label: 'Color secundario' },
+    { value: 'gradiente', label: 'Gradiente' },
+    { value: 'claro', label: 'Fondo claro' },
+  ];
+
+  const alineacionOptions = [
+    { value: 'left', label: 'Izquierda' },
+    { value: 'center', label: 'Centro' },
+    { value: 'right', label: 'Derecha' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Título
-        </label>
-        <input
-          type="text"
-          value={form.titulo}
-          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-          placeholder="¿Listo para empezar?"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+      <Input
+        label="Título"
+        value={form.titulo}
+        onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+        placeholder="¿Listo para empezar?"
+      />
+
+      <Textarea
+        label="Subtítulo (opcional)"
+        value={form.subtitulo}
+        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        placeholder="Contáctanos hoy y recibe una consulta gratuita"
+        rows={2}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Texto del botón principal"
+          value={form.boton_texto}
+          onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
+          placeholder="Contactar"
+        />
+        <Input
+          label="URL del botón"
+          value={form.boton_url}
+          onChange={(e) => setForm({ ...form, boton_url: e.target.value })}
+          placeholder="/contacto"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Subtítulo (opcional)
-        </label>
-        <textarea
-          value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-          placeholder="Contáctanos hoy y recibe una consulta gratuita"
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label="Botón secundario (opcional)"
+          value={form.boton_secundario_texto}
+          onChange={(e) => setForm({ ...form, boton_secundario_texto: e.target.value })}
+          placeholder="Más información"
+        />
+        <Input
+          label="URL secundario"
+          value={form.boton_secundario_url}
+          onChange={(e) => setForm({ ...form, boton_secundario_url: e.target.value })}
+          placeholder="/servicios"
         />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Texto del botón principal
-          </label>
-          <input
-            type="text"
-            value={form.boton_texto}
-            onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
-            placeholder="Contactar"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            URL del botón
-          </label>
-          <input
-            type="text"
-            value={form.boton_url}
-            onChange={(e) => setForm({ ...form, boton_url: e.target.value })}
-            placeholder="/contacto"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Botón secundario (opcional)
-          </label>
-          <input
-            type="text"
-            value={form.boton_secundario_texto}
-            onChange={(e) => setForm({ ...form, boton_secundario_texto: e.target.value })}
-            placeholder="Más información"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            URL secundario
-          </label>
-          <input
-            type="text"
-            value={form.boton_secundario_url}
-            onChange={(e) => setForm({ ...form, boton_secundario_url: e.target.value })}
-            placeholder="/servicios"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estilo de fondo
-          </label>
-          <select
-            value={form.estilo}
-            onChange={(e) => setForm({ ...form, estilo: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="primario">Color primario</option>
-            <option value="secundario">Color secundario</option>
-            <option value="gradiente">Gradiente</option>
-            <option value="claro">Fondo claro</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Alineación
-          </label>
-          <select
-            value={form.alineacion}
-            onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="left">Izquierda</option>
-            <option value="center">Centro</option>
-            <option value="right">Derecha</option>
-          </select>
-        </div>
+        <Select
+          label="Estilo de fondo"
+          value={form.estilo}
+          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          options={estiloOptions}
+        />
+        <Select
+          label="Alineación"
+          value={form.alineacion}
+          onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
+          options={alineacionOptions}
+        />
       </div>
 
       {/* Preview */}
@@ -224,18 +189,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

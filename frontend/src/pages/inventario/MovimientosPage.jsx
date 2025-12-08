@@ -93,13 +93,15 @@ function MovimientosPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header con navegación */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+          className="text-gray-600 hover:text-gray-900 mb-3"
         >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Volver al Inicio</span>
-        </button>
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Volver al Inicio
+        </Button>
 
         <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
         <p className="mt-1 text-sm text-gray-500">

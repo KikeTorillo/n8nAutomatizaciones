@@ -10,6 +10,7 @@ import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 import ClienteSelector from '@/components/pos/ClienteSelector';
+import Button from '@/components/ui/Button';
 
 /**
  * Página principal del punto de venta (POS)
@@ -198,13 +199,15 @@ export default function VentaPOSPage() {
       <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-4">
         {/* Row 1: Botón de regreso + Vendedor */}
         <div className="flex items-center justify-between mb-2">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/home')}
-            className="flex items-center gap-1 sm:gap-2 text-gray-600 hover:text-gray-900 transition-colors"
+            className="text-gray-600 hover:text-gray-900"
           >
-            <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
-            <span className="text-sm sm:text-base font-medium">Volver al Inicio</span>
-          </button>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Volver al Inicio
+          </Button>
 
           {/* Vendedor - siempre visible pero compacto en móvil */}
           {profesionalNombre && (

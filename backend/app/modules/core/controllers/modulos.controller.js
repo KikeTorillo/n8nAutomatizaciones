@@ -29,7 +29,8 @@ const MODULOS_DISPONIBLES = {
     incluido_en_todos: false,
     puede_desactivar: true,
     icono: 'Calendar',
-    orden: 1
+    orden: 1,
+    usado_por: ['comisiones', 'marketplace', 'chatbots']
   },
   inventario: {
     nombre: 'inventario',
@@ -48,7 +49,8 @@ const MODULOS_DISPONIBLES = {
     puede_desactivar: true,
     dependencias: ['inventario'],
     icono: 'ShoppingCart',
-    orden: 30
+    orden: 30,
+    usado_por: ['comisiones']
   },
   marketplace: {
     nombre: 'marketplace',
@@ -63,10 +65,11 @@ const MODULOS_DISPONIBLES = {
   comisiones: {
     nombre: 'comisiones',
     display_name: 'Sistema de Comisiones',
-    descripcion: 'Cálculo automático de comisiones por profesional',
+    descripcion: 'Cálculo automático de comisiones por citas y ventas POS',
     incluido_en_todos: false,
     puede_desactivar: true,
-    dependencias: ['agendamiento'],
+    dependencias: [],
+    dependencias_opcionales: ['agendamiento', 'pos'],
     icono: 'DollarSign',
     orden: 20
   },

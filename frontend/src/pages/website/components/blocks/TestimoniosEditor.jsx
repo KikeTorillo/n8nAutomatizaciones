@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, Star, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, Star } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * TestimoniosEditor - Editor del bloque Testimonios
@@ -11,7 +15,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
     testimonios: contenido.testimonios || [
       { autor: '', cargo: '', texto: '', estrellas: 5, foto: '' }
     ],
-    estilo: contenido.estilo || 'cards', // cards, carousel, simple
+    estilo: contenido.estilo || 'cards',
   });
 
   const [cambios, setCambios] = useState(false);
@@ -53,49 +57,35 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, testimonios: nuevos });
   };
 
+  const estiloOptions = [
+    { value: 'cards', label: 'Tarjetas' },
+    { value: 'carousel', label: 'Carrusel' },
+    { value: 'simple', label: 'Simple' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Título de sección
-          </label>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Lo que dicen nuestros clientes"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estilo de presentación
-          </label>
-          <select
-            value={form.estilo}
-            onChange={(e) => setForm({ ...form, estilo: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="cards">Tarjetas</option>
-            <option value="carousel">Carrusel</option>
-            <option value="simple">Simple</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Subtítulo (opcional)
-        </label>
-        <input
-          type="text"
-          value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-          placeholder="Opiniones reales de clientes satisfechos"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        <Input
+          label="Título de sección"
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Lo que dicen nuestros clientes"
+        />
+        <Select
+          label="Estilo de presentación"
+          value={form.estilo}
+          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          options={estiloOptions}
         />
       </div>
+
+      <Input
+        label="Subtítulo (opcional)"
+        value={form.subtitulo}
+        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        placeholder="Opiniones reales de clientes satisfechos"
+      />
 
       {/* Lista de testimonios */}
       <div>
@@ -103,14 +93,15 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
           <label className="text-sm font-medium text-gray-700">
             Testimonios ({form.testimonios.length})
           </label>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregar}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-3">
@@ -121,38 +112,37 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
             >
               <div className="flex items-start justify-between mb-2">
                 <span className="text-xs text-gray-500">Testimonio {index + 1}</span>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleEliminar(index)}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-gray-400 hover:text-red-500"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-2">
-                <textarea
+                <Textarea
                   value={testimonio.texto}
                   onChange={(e) => handleChange(index, 'texto', e.target.value)}
                   placeholder="El texto del testimonio..."
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                 />
 
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
+                  <Input
                     value={testimonio.autor}
                     onChange={(e) => handleChange(index, 'autor', e.target.value)}
                     placeholder="Nombre del cliente"
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={testimonio.cargo}
                     onChange={(e) => handleChange(index, 'cargo', e.target.value)}
                     placeholder="Cargo o ubicación"
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
                 </div>
 
@@ -176,12 +166,13 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                       </button>
                     ))}
                   </div>
-                  <input
+                  <Input
                     type="url"
                     value={testimonio.foto}
                     onChange={(e) => handleChange(index, 'foto', e.target.value)}
                     placeholder="URL foto (opcional)"
-                    className="flex-1 px-3 py-1 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
+                    className="flex-1"
                   />
                 </div>
               </div>
@@ -223,18 +214,14 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

@@ -1,5 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Save, Plus, Trash2, User, Loader2 } from 'lucide-react';
+import { Save, Plus, Trash2, User } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Textarea from '@/components/ui/Textarea';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * EquipoEditor - Editor del bloque Equipo
@@ -55,49 +59,35 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
     setForm({ ...form, miembros: nuevos });
   };
 
+  const columnasOptions = [
+    { value: '2', label: '2 columnas' },
+    { value: '3', label: '3 columnas' },
+    { value: '4', label: '4 columnas' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Título de sección
-          </label>
-          <input
-            type="text"
-            value={form.titulo}
-            onChange={(e) => setForm({ ...form, titulo: e.target.value })}
-            placeholder="Nuestro Equipo"
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Columnas
-          </label>
-          <select
-            value={form.columnas}
-            onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value={2}>2 columnas</option>
-            <option value={3}>3 columnas</option>
-            <option value={4}>4 columnas</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Subtítulo (opcional)
-        </label>
-        <input
-          type="text"
-          value={form.subtitulo}
-          onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
-          placeholder="Los profesionales que te atenderán"
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        <Input
+          label="Título de sección"
+          value={form.titulo}
+          onChange={(e) => setForm({ ...form, titulo: e.target.value })}
+          placeholder="Nuestro Equipo"
+        />
+        <Select
+          label="Columnas"
+          value={String(form.columnas)}
+          onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
+          options={columnasOptions}
         />
       </div>
+
+      <Input
+        label="Subtítulo (opcional)"
+        value={form.subtitulo}
+        onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
+        placeholder="Los profesionales que te atenderán"
+      />
 
       {/* Lista de miembros */}
       <div>
@@ -105,14 +95,15 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
           <label className="text-sm font-medium text-gray-700">
             Miembros ({form.miembros.length})
           </label>
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             onClick={handleAgregar}
-            className="flex items-center gap-1 text-sm text-indigo-600 hover:text-indigo-700"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 mr-1" />
             Agregar
-          </button>
+          </Button>
         </div>
 
         <div className="space-y-3">
@@ -138,47 +129,46 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
                     {miembro.nombre || `Miembro ${index + 1}`}
                   </span>
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => handleEliminar(index)}
-                  className="p-1 text-gray-400 hover:text-red-500 transition-colors"
+                  className="text-gray-400 hover:text-red-500"
                 >
                   <Trash2 className="w-4 h-4" />
-                </button>
+                </Button>
               </div>
 
               <div className="space-y-2">
                 <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
+                  <Input
                     value={miembro.nombre}
                     onChange={(e) => handleChange(index, 'nombre', e.target.value)}
                     placeholder="Nombre completo"
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
-                  <input
-                    type="text"
+                  <Input
                     value={miembro.cargo}
                     onChange={(e) => handleChange(index, 'cargo', e.target.value)}
                     placeholder="Cargo o especialidad"
-                    className="px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                    inputSize="sm"
                   />
                 </div>
 
-                <input
+                <Input
                   type="url"
                   value={miembro.foto}
                   onChange={(e) => handleChange(index, 'foto', e.target.value)}
                   placeholder="URL de foto"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  inputSize="sm"
                 />
 
-                <textarea
+                <Textarea
                   value={miembro.bio}
                   onChange={(e) => handleChange(index, 'bio', e.target.value)}
                   placeholder="Biografía breve (opcional)"
                   rows={2}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
                 />
               </div>
             </div>
@@ -219,18 +209,14 @@ function EquipoEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import useWebsiteEditor, { useWebsiteBloques } from '@/hooks/useWebsite';
+import Button from '@/components/ui/Button';
 
 // Componentes del editor
 import PageManager from './components/PageManager';
@@ -153,24 +154,18 @@ function WebsiteEditorPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white shadow-sm">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => navigate('/home')}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <ArrowLeft className="w-5 h-5 text-gray-600" />
-                </button>
-                <div>
-                  <h1 className="text-xl font-semibold text-gray-900">Mi Sitio Web</h1>
-                  <p className="text-sm text-gray-500">Crea tu página web pública</p>
-                </div>
-              </div>
-              <Globe2 className="w-8 h-8 text-indigo-600" />
-            </div>
-          </div>
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/home')}
+            className="text-gray-600 hover:text-gray-900 mb-3"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Volver al Inicio
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Mi Sitio Web</h1>
+          <p className="mt-1 text-sm text-gray-500">Crea tu página web pública</p>
         </div>
 
         {/* Empty state */}
@@ -241,12 +236,15 @@ function WebsiteEditorPage() {
       {/* Header del editor */}
       <header className="bg-white border-b border-gray-200 px-4 h-14 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={() => navigate('/home')}
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="text-gray-600 hover:text-gray-900"
           >
-            <ArrowLeft className="w-5 h-5 text-gray-600" />
-          </button>
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Volver
+          </Button>
           <div className="flex items-center gap-2">
             <Globe2 className="w-5 h-5 text-indigo-600" />
             <span className="font-semibold text-gray-900">{config?.nombre_sitio || 'Mi Sitio'}</span>

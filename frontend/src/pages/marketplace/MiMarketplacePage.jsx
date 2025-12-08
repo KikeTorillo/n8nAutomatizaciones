@@ -41,8 +41,25 @@ function MiMarketplacePage() {
   // Si no tiene perfil, mostrar mensaje para crear uno
   if (!perfil) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <div className="bg-white border-b border-gray-200 px-6 py-4">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate('/home')}
+            className="text-gray-600 hover:text-gray-900 mb-3"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1" />
+            Volver al Inicio
+          </Button>
+          <h1 className="text-2xl font-bold text-gray-900">Mi Marketplace</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Gestiona tu perfil público en el directorio
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto p-8">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
             <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -90,9 +107,9 @@ function MiMarketplacePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/home')}
-                className="mb-2 -ml-2"
+                className="text-gray-600 hover:text-gray-900 mb-3"
               >
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                <ArrowLeft className="w-4 h-4 mr-1" />
                 Volver al Inicio
               </Button>
               <h1 className="text-3xl font-bold text-gray-900">Mi Marketplace</h1>

@@ -1,17 +1,20 @@
 import { useState, useEffect } from 'react';
-import { Save, Loader2 } from 'lucide-react';
+import { Save } from 'lucide-react';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
 /**
  * SeparadorEditor - Editor del bloque Separador
  */
 function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
   const [form, setForm] = useState({
-    estilo: contenido.estilo || 'linea', // linea, punteado, gradiente, espacio, ondulado
-    grosor: contenido.grosor || 'normal', // thin, normal, thick
-    ancho: contenido.ancho || 'full', // full, large, medium, small
-    color: contenido.color || '', // vacío = color del tema
-    espaciado: contenido.espaciado || 'normal', // small, normal, large
-    icono: contenido.icono || '', // opcional: icono en el centro
+    estilo: contenido.estilo || 'linea',
+    grosor: contenido.grosor || 'normal',
+    ancho: contenido.ancho || 'full',
+    color: contenido.color || '',
+    espaciado: contenido.espaciado || 'normal',
+    icono: contenido.icono || '',
   });
 
   const [cambios, setCambios] = useState(false);
@@ -105,7 +108,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           </svg>
         );
 
-      default: // linea
+      default:
         return (
           <div
             className={baseClasses}
@@ -117,72 +120,64 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
     }
   };
 
+  const estiloOptions = [
+    { value: 'linea', label: 'Línea sólida' },
+    { value: 'punteado', label: 'Punteado' },
+    { value: 'gradiente', label: 'Gradiente' },
+    { value: 'ondulado', label: 'Ondulado' },
+    { value: 'espacio', label: 'Solo espacio' },
+  ];
+
+  const grosorOptions = [
+    { value: 'thin', label: 'Delgado' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'thick', label: 'Grueso' },
+  ];
+
+  const anchoOptions = [
+    { value: 'full', label: 'Completo' },
+    { value: 'large', label: 'Grande (75%)' },
+    { value: 'medium', label: 'Mediano (50%)' },
+    { value: 'small', label: 'Pequeño (25%)' },
+  ];
+
+  const espaciadoOptions = [
+    { value: 'small', label: 'Pequeño' },
+    { value: 'normal', label: 'Normal' },
+    { value: 'large', label: 'Grande' },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estilo
-          </label>
-          <select
-            value={form.estilo}
-            onChange={(e) => setForm({ ...form, estilo: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="linea">Línea sólida</option>
-            <option value="punteado">Punteado</option>
-            <option value="gradiente">Gradiente</option>
-            <option value="ondulado">Ondulado</option>
-            <option value="espacio">Solo espacio</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Grosor
-          </label>
-          <select
-            value={form.grosor}
-            onChange={(e) => setForm({ ...form, grosor: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            disabled={form.estilo === 'espacio'}
-          >
-            <option value="thin">Delgado</option>
-            <option value="normal">Normal</option>
-            <option value="thick">Grueso</option>
-          </select>
-        </div>
+        <Select
+          label="Estilo"
+          value={form.estilo}
+          onChange={(e) => setForm({ ...form, estilo: e.target.value })}
+          options={estiloOptions}
+        />
+        <Select
+          label="Grosor"
+          value={form.grosor}
+          onChange={(e) => setForm({ ...form, grosor: e.target.value })}
+          options={grosorOptions}
+          disabled={form.estilo === 'espacio'}
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Ancho
-          </label>
-          <select
-            value={form.ancho}
-            onChange={(e) => setForm({ ...form, ancho: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="full">Completo</option>
-            <option value="large">Grande (75%)</option>
-            <option value="medium">Mediano (50%)</option>
-            <option value="small">Pequeño (25%)</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Espaciado vertical
-          </label>
-          <select
-            value={form.espaciado}
-            onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          >
-            <option value="small">Pequeño</option>
-            <option value="normal">Normal</option>
-            <option value="large">Grande</option>
-          </select>
-        </div>
+        <Select
+          label="Ancho"
+          value={form.ancho}
+          onChange={(e) => setForm({ ...form, ancho: e.target.value })}
+          options={anchoOptions}
+        />
+        <Select
+          label="Espaciado vertical"
+          value={form.espaciado}
+          onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
+          options={espaciadoOptions}
+        />
       </div>
 
       <div>
@@ -197,22 +192,22 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
             className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
             disabled={form.estilo === 'espacio'}
           />
-          <input
-            type="text"
+          <Input
             value={form.color}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
             placeholder="Usar color del tema"
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             disabled={form.estilo === 'espacio'}
+            className="flex-1"
           />
           {form.color && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setForm({ ...form, color: '' })}
-              className="text-sm text-gray-500 hover:text-gray-700"
             >
               Resetear
-            </button>
+            </Button>
           )}
         </div>
       </div>
@@ -227,18 +222,14 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Botón guardar */}
       {cambios && (
         <div className="flex justify-end pt-2">
-          <button
+          <Button
             type="submit"
-            disabled={isSaving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
+            variant="primary"
+            isLoading={isSaving}
           >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            <Save className="w-4 h-4 mr-2" />
             Guardar cambios
-          </button>
+          </Button>
         </div>
       )}
     </form>

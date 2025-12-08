@@ -214,13 +214,15 @@ function RecordatoriosPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header con navegación */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-2"
+          className="text-gray-600 hover:text-gray-900 mb-2"
         >
-          <ArrowLeft className="w-4 h-4" />
-          <span className="text-sm">Volver al inicio</span>
-        </button>
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Volver al Inicio
+        </Button>
         <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
       </div>
 
