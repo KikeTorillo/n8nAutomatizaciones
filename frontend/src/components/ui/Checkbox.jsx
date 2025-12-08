@@ -18,8 +18,6 @@ const Checkbox = forwardRef(
       className,
       label,
       description,
-      checked = false,
-      onChange,
       disabled = false,
       error,
       id,
@@ -36,8 +34,6 @@ const Checkbox = forwardRef(
             ref={ref}
             id={checkboxId}
             type="checkbox"
-            checked={checked}
-            onChange={onChange}
             disabled={disabled}
             className={cn(
               'h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-colors',
