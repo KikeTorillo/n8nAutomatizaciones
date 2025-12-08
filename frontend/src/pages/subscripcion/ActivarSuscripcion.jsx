@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { subscripcionesApi } from '@/services/api/endpoints';
+import { subscripcionesApi, planesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import Button from '@/components/ui/Button';
 import { CreditCard, ArrowLeft, CheckCircle, Clock, ExternalLink } from 'lucide-react';
@@ -26,6 +26,16 @@ function ActivarSuscripcion() {
     queryKey: ['suscripcion-actual'],
     queryFn: () => subscripcionesApi.obtenerActual(),
     select: (response) => response.data.data,
+  });
+
+  // Obtener plan Pro (plan destino después del pago)
+  const { data: planPro, isLoading: loadingPlanPro } = useQuery({
+    queryKey: ['plan-pro'],
+    queryFn: () => planesApi.listar(),
+    select: (response) => {
+      const planes = response.data.data || response.data || [];
+      return planes.find(p => p.codigo_plan === 'pro');
+    },
   });
 
   // Mutation para activar pago - Obtiene init_point y redirige a Mercado Pago
@@ -61,7 +71,7 @@ function ActivarSuscripcion() {
     activarPagoMutation.mutate();
   };
 
-  if (loadingTrial || loadingSuscripcion) {
+  if (loadingTrial || loadingSuscripcion || loadingPlanPro) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -72,21 +82,23 @@ function ActivarSuscripcion() {
     );
   }
 
-  // Verificar que el plan sea de pago
-  const esPlanDePago = ['basico', 'profesional'].includes(estadoTrial?.plan_codigo);
-  if (!esPlanDePago) {
+  // Solo mostrar formulario de pago si está en trial (puede upgrade a Pro)
+  const puedeActivarPago = estadoTrial?.plan_codigo === 'trial';
+  if (!puedeActivarPago) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="max-w-md bg-white rounded-lg shadow-sm p-8 text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Tu plan está activo
+            Tu suscripción está activa
           </h2>
           <p className="text-gray-600 mb-6">
-            Este plan no requiere activación de pago.
+            {estadoTrial?.plan_codigo === 'pro'
+              ? 'Ya tienes el plan Pro activo. ¡Disfruta de todas las funciones!'
+              : 'Este plan no requiere activación de pago.'}
           </p>
-          <Button onClick={() => navigate('/dashboard')}>
-            Volver al Dashboard
+          <Button onClick={() => navigate('/home')}>
+            Volver al Inicio
           </Button>
         </div>
       </div>
@@ -95,24 +107,20 @@ function ActivarSuscripcion() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <nav className="bg-white shadow-sm">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            <h1 className="text-xl font-semibold text-gray-900">Activar Suscripción</h1>
-            <Button
-              variant="ghost"
-              onClick={() => navigate('/dashboard')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver
-            </Button>
-          </div>
-        </div>
-      </nav>
-
       {/* Content */}
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header con botón volver */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate('/home')}
+          className="text-gray-600 hover:text-gray-900 mb-3"
+        >
+          <ArrowLeft className="w-4 h-4 mr-1" />
+          Volver al Inicio
+        </Button>
+
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Activar Suscripción</h1>
         {/* Info del Trial */}
         {estadoTrial?.trial_activo && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
@@ -133,13 +141,13 @@ function ActivarSuscripcion() {
 
         {/* Card Principal */}
         <div className="bg-white rounded-lg shadow-sm p-8">
-          {/* Info del Plan */}
+          {/* Info del Plan Pro (destino) */}
           <div className="text-center mb-8 pb-8 border-b">
             <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              Plan {suscripcionActual?.nombre_plan}
+              Plan {planPro?.nombre_plan || 'Pro'}
             </h2>
             <p className="text-5xl font-bold text-primary-600 mb-2">
-              ${suscripcionActual?.precio_actual}
+              ${planPro?.precio_mensual || 249}
               <span className="text-2xl font-normal text-gray-600"> MXN/mes</span>
             </p>
             <p className="text-sm text-gray-600">
@@ -182,7 +190,7 @@ function ActivarSuscripcion() {
                 : 'Continuar a Mercado Pago'}
             </Button>
             <p className="text-xs text-gray-500 text-center">
-              Al continuar, aceptas que se realizará un cargo de ${suscripcionActual?.precio_actual} MXN
+              Al continuar, aceptas que se realizará un cargo de ${planPro?.precio_mensual || 249} MXN
               de forma mensual hasta que canceles la suscripción.
             </p>
           </div>

@@ -113,29 +113,6 @@ router.put('/planes/:id',
     SuperAdminController.actualizarPlan
 );
 
-/**
- * POST /api/v1/superadmin/planes/sync-mercadopago
- *
- * Sincronización manual e inteligente de planes con Mercado Pago
- *
- * Body (opcional):
- * {
- *   "plan_ids": [1, 2, 3]  // IDs específicos a sincronizar
- * }
- *
- * Funcionalidad:
- * - Si plan tiene mp_plan_id: verifica que existe en MP
- * - Si plan NO tiene mp_plan_id: lo crea en MP
- * - Si plan tiene mp_plan_id pero no existe en MP: lo recrea
- *
- * @requires rol: super_admin
- * @returns {Object} Resultado de sincronización con detalles por plan
- */
-router.post('/planes/sync-mercadopago',
-    rateLimiting.apiRateLimit,
-    SuperAdminController.sincronizarPlanesConMercadoPago
-);
-
 // ====================================================================
 // GESTIÓN DE MARKETPLACE
 // ====================================================================

@@ -6,11 +6,13 @@
  * Servicio centralizado para todas las operaciones con Mercado Pago.
  *
  * FUNCIONALIDADES:
- * - Crear planes de suscripción (preapproval_plan)
- * - Crear suscripciones (preapproval)
+ * - Crear suscripciones directas con init_point (sin plan asociado)
  * - Actualizar/cancelar/pausar suscripciones
  * - Obtener información de pagos
  * - Validar webhooks (CRÍTICO para seguridad)
+ *
+ * NOTA: Se usa el método de suscripción directa (sin preapproval_plan)
+ * que genera init_point para redirección a Mercado Pago.
  *
  * SEGURIDAD:
  * - Validación HMAC SHA-256 de webhooks
@@ -20,7 +22,7 @@
  * @module services/mercadopago.service
  */
 
-const { MercadoPagoConfig, PreApprovalPlan, PreApproval, Payment } = require('mercadopago');
+const { MercadoPagoConfig, PreApproval, Payment } = require('mercadopago');
 const crypto = require('crypto');
 const config = require('../config/mercadopago');
 const logger = require('../utils/logger');
@@ -29,7 +31,6 @@ class MercadoPagoService {
   constructor() {
     this._initialized = false;
     this.client = null;
-    this.planClient = null;
     this.subscriptionClient = null;
     this.paymentClient = null;
   }
@@ -60,7 +61,6 @@ class MercadoPagoService {
     });
 
     // Inicializar clientes especializados
-    this.planClient = new PreApprovalPlan(this.client);
     this.subscriptionClient = new PreApproval(this.client);
     this.paymentClient = new Payment(this.client);
 
@@ -73,243 +73,8 @@ class MercadoPagoService {
   }
 
   // ====================================================================
-  // PLANES DE SUSCRIPCIÓN
-  // ====================================================================
-
-  /**
-   * Crear un plan de suscripción en Mercado Pago
-   *
-   * @param {Object} params - Parámetros del plan
-   * @param {string} params.nombre - Nombre del plan
-   * @param {number} params.precio - Precio mensual
-   * @param {Object} params.frecuencia - {tipo: 'months', valor: 1}
-   * @param {string} [params.moneda='MXN'] - Moneda
-   * @param {string} [params.backUrl] - URL de retorno (usa FRONTEND_URL si no se especifica)
-   * @returns {Promise<Object>} Plan creado con { id, ...otrosCampos }
-   */
-  async crearPlan({ nombre, precio, frecuencia, moneda = 'MXN', backUrl }) {
-    this._ensureInitialized();
-    try {
-      logger.info('Creando plan en Mercado Pago', { nombre, precio, frecuencia });
-
-      // Si no se proporciona backUrl, usar FRONTEND_URL del .env
-      // Para sandbox/desarrollo, usar URL de ejemplo si FRONTEND_URL es localhost
-      let urlRetorno = backUrl || process.env.FRONTEND_URL || 'https://www.mercadopago.com';
-
-      // Si es localhost, usar URL de ejemplo válida para sandbox
-      if (urlRetorno.includes('localhost') || urlRetorno.includes('127.0.0.1')) {
-        urlRetorno = 'https://www.mercadopago.com/return';
-      }
-
-      const planData = {
-        reason: nombre,
-        back_url: urlRetorno,
-        auto_recurring: {
-          frequency: frecuencia.valor,          // 1, 2, 3...
-          frequency_type: frecuencia.tipo,      // 'months', 'days', 'years'
-          transaction_amount: precio,
-          currency_id: moneda,
-        }
-      };
-
-      const response = await this.planClient.create({ body: planData });
-
-      logger.info('✅ Plan creado en Mercado Pago', {
-        planId: response.id,
-        nombre,
-        precio
-      });
-
-      return response;
-    } catch (error) {
-      logger.error('❌ Error creando plan en Mercado Pago:', {
-        error: error.message,
-        nombre,
-        precio
-      });
-      throw new Error(`Error creando plan en Mercado Pago: ${error.message}`);
-    }
-  }
-
-  /**
-   * Obtener un plan por ID
-   * NOTA: El método get() del SDK de PreApprovalPlan no funciona correctamente,
-   * por lo que usamos search() y filtramos por ID
-   *
-   * @param {string} planId - ID del plan en Mercado Pago
-   * @returns {Promise<Object>} Datos del plan
-   */
-  async obtenerPlan(planId) {
-    this._ensureInitialized();
-    try {
-      // WORKAROUND: get() no funciona en PreApprovalPlan SDK, usamos search()
-      const todosLosPlanes = await this.listarPlanes();
-      const planEncontrado = todosLosPlanes.find(plan => plan.id === planId);
-
-      if (!planEncontrado) {
-        throw new Error(`Plan con ID ${planId} no encontrado`);
-      }
-
-      // Verificar que el plan esté activo (cuando borras en MP, status cambia a 'cancelled')
-      if (planEncontrado.status !== 'active') {
-        throw new Error(`Plan con ID ${planId} no está activo (status: ${planEncontrado.status})`);
-      }
-
-      return planEncontrado;
-    } catch (error) {
-      logger.error('Error obteniendo plan:', { planId, error: error.message });
-      throw new Error(`Error obteniendo plan: ${error.message}`);
-    }
-  }
-
-  /**
-   * Listar todos los planes de suscripción
-   *
-   * @returns {Promise<Array>} Lista de planes
-   */
-  async listarPlanes() {
-    this._ensureInitialized();
-    try {
-      const response = await this.planClient.search({
-        options: {
-          limit: 100 // Máximo permitido por MP
-        }
-      });
-      return response.results || [];
-    } catch (error) {
-      logger.error('Error listando planes:', { error: error.message });
-      throw new Error(`Error listando planes: ${error.message}`);
-    }
-  }
-
-  /**
-   * Buscar un plan por nombre (case-insensitive)
-   * Solo busca entre planes activos para evitar asociar planes inactivos
-   *
-   * @param {string} nombrePlan - Nombre del plan a buscar
-   * @returns {Promise<Object|null>} Plan encontrado o null
-   */
-  async buscarPlanPorNombre(nombrePlan) {
-    this._ensureInitialized();
-    try {
-      const todosLosPlanes = await this.listarPlanes();
-
-      // FILTRAR SOLO PLANES ACTIVOS (evita tomar planes viejos/inactivos)
-      const planesActivos = todosLosPlanes.filter(plan => plan.status === 'active');
-
-      logger.info(`🔍 Buscando plan "${nombrePlan}" entre ${planesActivos.length} planes activos (${todosLosPlanes.length} totales)`);
-
-      // Normalizar nombre para búsqueda case-insensitive
-      const nombreNormalizado = nombrePlan.toLowerCase().trim();
-
-      const planEncontrado = planesActivos.find(plan =>
-        plan.reason?.toLowerCase().trim() === nombreNormalizado
-      );
-
-      if (planEncontrado) {
-        logger.info(`✅ Plan activo encontrado: ${planEncontrado.id}`);
-      } else {
-        logger.info(`⚠️  No se encontró plan activo con nombre "${nombrePlan}"`);
-      }
-
-      return planEncontrado || null;
-    } catch (error) {
-      logger.error('Error buscando plan por nombre:', { nombrePlan, error: error.message });
-      throw new Error(`Error buscando plan: ${error.message}`);
-    }
-  }
-
-  // ====================================================================
   // SUSCRIPCIONES
   // ====================================================================
-
-  /**
-   * Crear una suscripción en Mercado Pago
-   *
-   * @param {Object} params - Parámetros de la suscripción
-   * @param {string} params.planId - ID del plan en MP
-   * @param {string} params.email - Email del pagador
-   * @param {string} [params.cardTokenId] - Token de tarjeta (opcional - si no se envía, MP genera init_point)
-   * @param {string} params.returnUrl - URL de retorno
-   * @param {string} params.externalReference - Referencia externa (org_X_timestamp)
-   * @returns {Promise<Object>} { id, status, init_point? }
-   */
-  async crearSuscripcion({ planId, email, cardTokenId, returnUrl, externalReference }) {
-    this._ensureInitialized();
-    try {
-      logger.info('Creando suscripción en Mercado Pago', {
-        planId,
-        email,
-        externalReference,
-        hasCardToken: !!cardTokenId,
-        metodo: cardTokenId ? 'con tarjeta' : 'con init_point'
-      });
-
-      const subscriptionData = {
-        preapproval_plan_id: planId,
-        payer_email: email,
-        back_url: returnUrl,
-        external_reference: externalReference,
-        // NO incluir auto_recurring - ya está definido en el plan
-      };
-
-      // Solo agregar card_token_id si se proporciona
-      if (cardTokenId) {
-        subscriptionData.card_token_id = cardTokenId;
-        subscriptionData.status = 'authorized'; // Activar inmediatamente con tarjeta
-      } else {
-        // Sin card_token_id, MP generará init_point para pago pendiente
-        subscriptionData.status = 'pending';
-      }
-
-      let response;
-
-      // Si no hay cardTokenId, usar axios directamente porque el SDK valida que es requerido
-      if (!cardTokenId) {
-        const axios = require('axios');
-
-        const axiosResponse = await axios.post(
-          'https://api.mercadopago.com/preapproval',
-          subscriptionData,
-          {
-            headers: {
-              'Authorization': `Bearer ${config.accessToken}`,
-              'Content-Type': 'application/json',
-              'X-Idempotency-Key': this._generateIdempotencyKey()
-            },
-            timeout: config.timeout
-          }
-        );
-
-        response = axiosResponse.data;
-      } else {
-        // Con card_token_id, usar el SDK normalmente
-        response = await this.subscriptionClient.create({ body: subscriptionData });
-      }
-
-      logger.info('✅ Suscripción creada en Mercado Pago', {
-        subscriptionId: response.id,
-        email,
-        planId,
-        status: response.status,
-        hasInitPoint: !!response.init_point
-      });
-
-      return {
-        id: response.id,
-        status: response.status,
-        init_point: response.init_point // URL para que el usuario complete el pago
-      };
-    } catch (error) {
-      logger.error('❌ Error creando suscripción:', {
-        error: error.message,
-        planId,
-        email,
-        responseData: error.response?.data
-      });
-      throw new Error(`Error creando suscripción: ${error.message}`);
-    }
-  }
 
   /**
    * Crear suscripción SIN plan asociado - Genera init_point para pago pendiente

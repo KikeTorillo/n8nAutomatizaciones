@@ -68,7 +68,6 @@ const SuperAdminLayout = lazy(() => import('@/components/superadmin/SuperAdminLa
 const SuperAdminDashboard = lazy(() => import('@/pages/superadmin/Dashboard'));
 const SuperAdminOrganizaciones = lazy(() => import('@/pages/superadmin/Organizaciones'));
 const SuperAdminPlanes = lazy(() => import('@/pages/superadmin/Planes'));
-const SuperAdminGestionPlanes = lazy(() => import('@/pages/superadmin/GestionPlanes'));
 const MarketplaceGestion = lazy(() => import('@/pages/superadmin/MarketplaceGestion'));
 const PlantillasEventos = lazy(() => import('@/pages/superadmin/PlantillasEventos'));
 
@@ -428,10 +427,6 @@ export const router = createBrowserRouter([
           {
             path: 'planes',
             element: withSuspense(SuperAdminPlanes),
-          },
-          {
-            path: 'planes/mercadopago',
-            element: withSuspense(SuperAdminGestionPlanes),
           },
           {
             path: 'marketplace',

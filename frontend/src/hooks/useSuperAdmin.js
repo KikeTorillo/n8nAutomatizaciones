@@ -119,43 +119,6 @@ export const useSuperAdmin = () => {
     });
 
     /**
-     * Sincronizar planes con Mercado Pago
-     * Permite sincronizar todos los planes o solo algunos específicos
-     */
-    const sincronizarPlanes = useMutation({
-        mutationFn: async (data = {}) => {
-            const { data: response } = await api.post(
-                '/superadmin/planes/sync-mercadopago',
-                data
-            );
-            return response.data;
-        },
-        onSuccess: () => {
-            // Invalidar queries relacionadas para refrescar datos
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'planes'] });
-            queryClient.invalidateQueries({ queryKey: ['superadmin', 'dashboard'] });
-        },
-        onError: (error) => {
-            // Priorizar mensaje del backend si existe
-            const backendMessage = error.response?.data?.message;
-            if (backendMessage) {
-                throw new Error(backendMessage);
-            }
-
-            // Fallback a mensajes genéricos por código de error
-            const errorMessages = {
-                400: 'Datos inválidos',
-                500: 'Error del servidor al sincronizar planes',
-            };
-
-            const statusCode = error.response?.status;
-            const message = errorMessages[statusCode] || error.response?.data?.error || 'Error al sincronizar planes';
-
-            throw new Error(message);
-        }
-    });
-
-    /**
      * ====================================================================
      * GESTIÓN DE ORGANIZACIONES
      * ====================================================================
@@ -273,7 +236,6 @@ export const useSuperAdmin = () => {
 
         // Mutations
         actualizarPlan,
-        sincronizarPlanes,
         cambiarPlanOrganizacion,
         suspenderOrganizacion,
         reactivarOrganizacion

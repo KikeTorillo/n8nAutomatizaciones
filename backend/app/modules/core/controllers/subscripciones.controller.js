@@ -219,22 +219,27 @@ class SubscripcionesController {
         return ResponseHelper.error(res, 'No se encontró suscripción activa', 404);
       }
 
-      // 2. Verificar que tenga un plan de pago y esté en trial
-      const esPlanDePago = ['basico', 'profesional'].includes(suscripcionActual.codigo_plan);
-      if (!esPlanDePago) {
+      // 2. Verificar que esté en trial (puede activar pago para pasar a Pro)
+      const puedeActivarPago = suscripcionActual.codigo_plan === 'trial';
+      if (!puedeActivarPago) {
+        // Si ya está en Pro u otro plan de pago, no necesita activar
+        if (suscripcionActual.codigo_plan === 'pro') {
+          return ResponseHelper.error(res, 'Tu suscripción Pro ya está activa', 400);
+        }
         return ResponseHelper.error(res, 'Este plan no requiere activación de pago', 400);
       }
 
-      // 3. Obtener datos del plan para crear suscripción
+      // 3. Obtener datos del plan PRO (plan destino después del pago)
       const plan = await RLSContextManager.query(organizacionId, async (db) => {
         const result = await db.query(`
           SELECT
+            id,
             nombre_plan,
             precio_mensual,
             moneda
           FROM planes_subscripcion
-          WHERE id = $1 AND activo = true
-        `, [suscripcionActual.plan_id]);
+          WHERE codigo_plan = 'pro' AND activo = true
+        `);
         return result.rows[0];
       });
 

@@ -177,6 +177,54 @@ SELECT cron.schedule(
     $$
 );
 
+-- ────────────────────────────────────────────────────────────────────
+-- JOB 5: SUSPENDER TRIALS EXPIRADOS
+-- ────────────────────────────────────────────────────────────────────
+-- Ejecuta diariamente a las 06:00
+-- Cambia estado de 'trial' a 'suspendida' para subscripciones expiradas
+-- El middleware ya bloquea en tiempo real, esto mantiene la BD consistente
+-- ────────────────────────────────────────────────────────────────────
+
+SELECT cron.schedule(
+    'suspender-trials-expirados',
+    '0 6 * * *',                              -- Todos los días a las 06:00
+    $$DO $BODY$
+    DECLARE
+        v_count INTEGER;
+    BEGIN
+        -- Suspender trials que ya expiraron
+        UPDATE subscripciones
+        SET estado = 'suspendida',
+            actualizado_en = NOW()
+        WHERE estado = 'trial'
+          AND fecha_fin_trial IS NOT NULL
+          AND fecha_fin_trial < NOW()
+          AND activa = TRUE;
+
+        GET DIAGNOSTICS v_count = ROW_COUNT;
+
+        IF v_count > 0 THEN
+            RAISE NOTICE '⏰ Trials suspendidos: % subscripciones', v_count;
+
+            -- Registrar en historial
+            INSERT INTO historial_subscripciones (
+                organizacion_id, subscripcion_id, tipo_evento,
+                plan_anterior, motivo, iniciado_por
+            )
+            SELECT
+                s.organizacion_id,
+                s.id,
+                'suspension',
+                'trial',
+                'Trial expirado automáticamente después de ' || s.dias_trial || ' días',
+                'sistema'
+            FROM subscripciones s
+            WHERE s.estado = 'suspendida'
+              AND s.actualizado_en >= NOW() - INTERVAL '1 minute';
+        END IF;
+    END $BODY$;$$
+);
+
 -- ====================================================================
 -- 📊 VISTAS PARA MONITOREO DE JOBS
 -- ====================================================================
