@@ -211,12 +211,12 @@ function crearDeepSeekNode(nodeIds, deepseekCredentialId) {
 }
 
 /**
- * Crea nodo OpenRouter Chat Model con Qwen3-32B
+ * Crea nodo OpenRouter Chat Model con DeepSeek v3.2
  */
 function crearOpenRouterNode(nodeIds, openrouterCredentialId) {
     return {
         parameters: {
-            model: 'qwen/qwen3-32b',
+            model: 'deepseek/deepseek-v3.2',
             options: {}
         },
         type: '@n8n/n8n-nodes-langchain.lmChatOpenRouter',
@@ -368,7 +368,7 @@ function generarWorkflow({
         noOp: generarNodeId(),
         redis2: generarNodeId(),
         aiAgent: generarNodeId(),
-        openrouter: generarNodeId(),     // ✅ Modelo principal (Qwen3-32B)
+        openrouter: generarNodeId(),     // ✅ Modelo principal (DeepSeek v3.2)
         deepseek: generarNodeId(),       // ✅ Fallback (comentado por ahora)
         postgresMemory: generarNodeId(),
         mcpClient: generarNodeId(),
@@ -384,7 +384,7 @@ function generarWorkflow({
         crearNoOpNode(nodeIds),
         crearRedis2Node(nodeIds, credentials.redis),
         crearAIAgentNode(nodeIds, systemPrompt),
-        crearOpenRouterNode(nodeIds, credentials.openrouter),  // ✅ Modelo principal (Qwen3-32B)
+        crearOpenRouterNode(nodeIds, credentials.openrouter),  // ✅ Modelo principal (DeepSeek v3.2)
         // crearDeepSeekNode(nodeIds, credentials.deepseek),  // ✅ Fallback (comentado por ahora)
         crearPostgresChatMemoryNode(nodeIds, credentials.postgres),
         crearMCPClientNode(nodeIds, mcpCredential)
