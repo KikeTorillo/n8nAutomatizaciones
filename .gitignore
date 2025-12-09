@@ -30,6 +30,7 @@ Thumbs.db
 # Temporal
 tmp/
 temp/
+.playwright-mcp/
 
 node_modules
 .mcp.json
