@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams } from 'react-router-dom';
 import {
   Calendar,
+  CalendarPlus,
   Clock,
   MapPin,
   Gift,
@@ -13,7 +14,9 @@ import {
   PartyPopper,
   ChevronDown,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Download,
+  QrCode
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -47,6 +50,8 @@ function EventoPublicoPage() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
   const [visibleSections, setVisibleSections] = useState(new Set());
+  const [qrImage, setQrImage] = useState(null);
+  const [loadingQR, setLoadingQR] = useState(false);
 
   // Refs para las secciones
   const sectionRefs = {
@@ -179,6 +184,22 @@ function EventoPublicoPage() {
 
     return () => observer.disconnect();
   }, [evento]);
+
+  // Cargar QR cuando el invitado está confirmado y el organizador habilitó el QR
+  useEffect(() => {
+    if (token && invitado?.estado_rsvp === 'confirmado' && evento?.configuracion?.mostrar_qr_invitado === true) {
+      setLoadingQR(true);
+      fetch(`/api/v1/public/evento/${slug}/${token}/qr?formato=base64`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            setQrImage(data.data.qr);
+          }
+        })
+        .catch(console.error)
+        .finally(() => setLoadingQR(false));
+    }
+  }, [token, invitado?.estado_rsvp, evento?.configuracion?.mostrar_qr_invitado, slug]);
 
   // Keyboard navigation for lightbox
   useEffect(() => {
@@ -541,6 +562,63 @@ function EventoPublicoPage() {
               ))}
             </div>
           )}
+
+          {/* Botones Agregar al Calendario */}
+          <div className={`flex flex-wrap justify-center gap-3 mb-8 ${getAnimationClass('inicio')} stagger-5`}>
+            {/* Google Calendar */}
+            <a
+              href={(() => {
+                const fechaEvento = new Date(evento.fecha_evento);
+                let horaInicio = '12:00';
+                if (evento.hora_evento) {
+                  horaInicio = evento.hora_evento.substring(0, 5);
+                }
+                const [horas, minutos] = horaInicio.split(':').map(Number);
+                fechaEvento.setHours(horas, minutos, 0, 0);
+                const fechaFin = new Date(fechaEvento.getTime() + 4 * 60 * 60 * 1000);
+
+                const formatGCal = (d) => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                const ubicacion = ubicaciones.length > 0 ? (ubicaciones[0].direccion || ubicaciones[0].nombre || '') : '';
+
+                const params = new URLSearchParams({
+                  action: 'TEMPLATE',
+                  text: evento.nombre,
+                  dates: `${formatGCal(fechaEvento)}/${formatGCal(fechaFin)}`,
+                  details: `${evento.descripcion || ''}\n\nMás información: ${window.location.href}`,
+                  location: ubicacion,
+                });
+                return `https://calendar.google.com/calendar/render?${params.toString()}`;
+              })()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
+              style={{
+                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
+                color: evento.portada_url ? 'white' : tema.color_primario,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`
+              }}
+            >
+              <CalendarPlus className="w-4 h-4" />
+              Google Calendar
+            </a>
+
+            {/* Descargar .ics */}
+            <a
+              href={`${import.meta.env.VITE_API_URL || ''}/public/evento/${slug}/calendario`}
+              download={`${slug}.ics`}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
+              style={{
+                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
+                color: evento.portada_url ? 'white' : tema.color_primario,
+                backdropFilter: 'blur(10px)',
+                border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`
+              }}
+            >
+              <Download className="w-4 h-4" />
+              Descargar .ics
+            </a>
+          </div>
 
           {/* Badge de confirmación si ya confirmó */}
           {invitado?.estado_rsvp === 'confirmado' && (
@@ -1125,6 +1203,36 @@ function EventoPublicoPage() {
                     <p className="mt-4 text-lg italic" style={{ color: tema.color_texto }}>
                       {configuracion.mensaje_confirmacion}
                     </p>
+                  )}
+
+                  {/* Código QR para check-in (solo si el organizador lo habilitó) */}
+                  {invitado.estado_rsvp === 'confirmado' && configuracion.mostrar_qr_invitado === true && (
+                    <div className="mt-8 pt-6 border-t" style={{ borderColor: tema.color_secundario }}>
+                      <div className="flex items-center justify-center gap-2 mb-4">
+                        <QrCode className="w-5 h-5" style={{ color: tema.color_primario }} />
+                        <p className="font-medium" style={{ color: tema.color_texto }}>
+                          Tu pase de entrada
+                        </p>
+                      </div>
+                      {loadingQR ? (
+                        <div className="flex justify-center py-4">
+                          <LoadingSpinner />
+                        </div>
+                      ) : qrImage ? (
+                        <div className="flex flex-col items-center">
+                          <div className="bg-white p-4 rounded-2xl shadow-lg inline-block">
+                            <img
+                              src={qrImage}
+                              alt="Código QR de entrada"
+                              className="w-48 h-48"
+                            />
+                          </div>
+                          <p className="text-sm mt-4" style={{ color: tema.color_texto_claro }}>
+                            Muestra este código en la entrada
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
                   )}
                 </div>
               )}

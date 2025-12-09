@@ -37,6 +37,7 @@ function EventoFormPage() {
       permitir_felicitaciones: true,
       mostrar_ubicaciones: true,
       mostrar_contador: true,
+      mostrar_qr_invitado: false,
       mensaje_bienvenida: '',
       mensaje_confirmacion: '',
     }
@@ -75,6 +76,7 @@ function EventoFormPage() {
           permitir_felicitaciones: evento.configuracion?.permitir_felicitaciones ?? true,
           mostrar_ubicaciones: evento.configuracion?.mostrar_ubicaciones ?? true,
           mostrar_contador: evento.configuracion?.mostrar_contador ?? true,
+          mostrar_qr_invitado: evento.configuracion?.mostrar_qr_invitado ?? false,
           mensaje_bienvenida: evento.configuracion?.mensaje_bienvenida || '',
           mensaje_confirmacion: evento.configuracion?.mensaje_confirmacion || '',
         }
@@ -677,6 +679,20 @@ function EventoFormPage() {
                   className="w-4 h-4 text-pink-600 rounded"
                 />
                 <span className="text-sm text-gray-700">Mostrar contador regresivo</span>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="config_mostrar_qr_invitado"
+                  checked={formData.configuracion.mostrar_qr_invitado}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-pink-600 rounded"
+                />
+                <div>
+                  <span className="text-sm text-gray-700">Mostrar QR de entrada al invitado</span>
+                  <p className="text-xs text-gray-500">Muestra un código QR cuando el invitado confirma asistencia</p>
+                </div>
               </label>
 
               <div>

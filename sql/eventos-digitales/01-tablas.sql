@@ -189,6 +189,9 @@ CREATE TABLE IF NOT EXISTS invitados_evento (
     ultima_visualizacion TIMESTAMPTZ,
     total_visualizaciones INTEGER DEFAULT 0,
 
+    -- Check-in en evento
+    checkin_at TIMESTAMPTZ,
+
     -- Control
     activo BOOLEAN DEFAULT true,
     creado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -202,6 +205,7 @@ COMMENT ON TABLE invitados_evento IS 'Invitados con RSVP embebido. organizacion_
 COMMENT ON COLUMN invitados_evento.token IS 'Token único de 64 caracteres para URL personalizada del invitado';
 COMMENT ON COLUMN invitados_evento.etiquetas IS 'Etiquetas para categorizar invitados (familia, amigos, trabajo, etc.)';
 COMMENT ON COLUMN invitados_evento.nombres_acompanantes IS 'Nombres de los acompañantes confirmados';
+COMMENT ON COLUMN invitados_evento.checkin_at IS 'Timestamp de cuando el invitado hizo check-in en el evento';
 
 -- ====================================================================
 -- 5. MESA DE REGALOS

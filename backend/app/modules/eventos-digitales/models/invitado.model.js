@@ -510,6 +510,120 @@ class InvitadoModel {
             return result.rows.map(r => r.etiqueta);
         });
     }
+
+    // ========================================================================
+    // CHECK-IN
+    // ========================================================================
+
+    /**
+     * Obtener invitado por token (interno, con RLS)
+     * Para check-in desde panel admin
+     *
+     * @param {string} token - Token único del invitado
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object|null} Invitado con datos del evento
+     */
+    static async obtenerPorTokenInterno(token, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT i.*, e.nombre as evento_nombre, e.slug as evento_slug
+                FROM invitados_evento i
+                JOIN eventos_digitales e ON i.evento_id = e.id
+                WHERE i.token = $1 AND i.activo = true
+            `;
+
+            const result = await db.query(query, [token]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Registrar check-in de un invitado
+     *
+     * @param {number} id - ID del invitado
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object} Invitado actualizado con checkin_at
+     */
+    static async registrarCheckin(id, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                UPDATE invitados_evento
+                SET checkin_at = NOW(),
+                    actualizado_en = NOW()
+                WHERE id = $1
+                RETURNING *
+            `;
+
+            const result = await db.query(query, [id]);
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Obtener estadísticas de check-in del evento
+     *
+     * @param {number} eventoId - ID del evento
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object} Estadísticas de check-in
+     */
+    static async obtenerEstadisticasCheckin(eventoId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    COUNT(*) FILTER (WHERE estado_rsvp = 'confirmado') as total_confirmados,
+                    COUNT(*) FILTER (WHERE checkin_at IS NOT NULL) as total_checkin,
+                    SUM(CASE WHEN estado_rsvp = 'confirmado' THEN COALESCE(num_asistentes, 1) ELSE 0 END) as total_personas_confirmadas,
+                    SUM(CASE WHEN checkin_at IS NOT NULL THEN COALESCE(num_asistentes, 1) ELSE 0 END) as total_personas_checkin,
+                    COUNT(*) FILTER (WHERE estado_rsvp = 'confirmado' AND checkin_at IS NULL) as pendientes_llegada
+                FROM invitados_evento
+                WHERE evento_id = $1 AND activo = true
+            `;
+
+            const result = await db.query(query, [eventoId]);
+            const stats = result.rows[0];
+
+            return {
+                total_confirmados: parseInt(stats.total_confirmados) || 0,
+                total_checkin: parseInt(stats.total_checkin) || 0,
+                total_personas_confirmadas: parseInt(stats.total_personas_confirmadas) || 0,
+                total_personas_checkin: parseInt(stats.total_personas_checkin) || 0,
+                pendientes_llegada: parseInt(stats.pendientes_llegada) || 0,
+                porcentaje_llegada: stats.total_confirmados > 0
+                    ? Math.round((parseInt(stats.total_checkin) / parseInt(stats.total_confirmados)) * 100)
+                    : 0
+            };
+        });
+    }
+
+    /**
+     * Listar últimos check-ins (para dashboard en tiempo real)
+     *
+     * @param {number} eventoId - ID del evento
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} limite - Límite de resultados
+     * @returns {Array} Lista de check-ins recientes
+     */
+    static async listarCheckins(eventoId, organizacionId, limite = 50) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    id,
+                    nombre,
+                    grupo_familiar,
+                    num_asistentes,
+                    checkin_at
+                FROM invitados_evento
+                WHERE evento_id = $1
+                  AND activo = true
+                  AND checkin_at IS NOT NULL
+                ORDER BY checkin_at DESC
+                LIMIT $2
+            `;
+
+            const result = await db.query(query, [eventoId, limite]);
+            return result.rows;
+        });
+    }
 }
 
 module.exports = InvitadoModel;

@@ -68,6 +68,16 @@ router.get('/evento/:slug/regalos',
 );
 
 /**
+ * GET /evento/:slug/calendario
+ * Generar archivo iCalendar (.ics) para agregar al calendario
+ */
+router.get('/evento/:slug/calendario',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.obtenerEventoPublico),
+    asyncHandler(PublicController.generarCalendario)
+);
+
+/**
  * GET /evento/:slug/:token
  * Obtener invitación personalizada por token
  */
@@ -95,6 +105,17 @@ router.get('/evento/:slug/:token/whatsapp',
     rateLimiting.apiRateLimit,
     validate(publicSchemas.obtenerInvitacion),
     asyncHandler(PublicController.generarMensajeWhatsApp)
+);
+
+/**
+ * GET /evento/:slug/:token/qr
+ * Generar QR para la invitación pública
+ * Query: ?formato=png|base64
+ */
+router.get('/evento/:slug/:token/qr',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.obtenerInvitacion),
+    asyncHandler(PublicController.generarQR)
 );
 
 module.exports = router;

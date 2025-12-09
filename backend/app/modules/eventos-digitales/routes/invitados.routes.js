@@ -134,4 +134,55 @@ router.delete('/invitados/:id',
     asyncHandler(InvitadosController.eliminar)
 );
 
+// ============================================================================
+// RUTAS QR + CHECK-IN
+// ============================================================================
+
+/**
+ * GET /eventos/:eventoId/invitados/:invitadoId/qr
+ * Generar QR individual para un invitado
+ * Query: ?formato=png|base64
+ */
+router.get('/eventos/:eventoId/invitados/:invitadoId/qr',
+    ...middlewareComun,
+    asyncHandler(InvitadosController.generarQR)
+);
+
+/**
+ * GET /eventos/:eventoId/qr-masivo
+ * Descargar ZIP con todos los QR del evento
+ */
+router.get('/eventos/:eventoId/qr-masivo',
+    ...middlewareComun,
+    asyncHandler(InvitadosController.generarQRMasivo)
+);
+
+/**
+ * POST /eventos/:eventoId/checkin
+ * Registrar check-in de un invitado
+ * Body: { token: string }
+ */
+router.post('/eventos/:eventoId/checkin',
+    ...middlewareComun,
+    asyncHandler(InvitadosController.registrarCheckin)
+);
+
+/**
+ * GET /eventos/:eventoId/checkin/stats
+ * Obtener estadísticas de check-in del evento
+ */
+router.get('/eventos/:eventoId/checkin/stats',
+    ...middlewareComun,
+    asyncHandler(InvitadosController.obtenerEstadisticasCheckin)
+);
+
+/**
+ * GET /eventos/:eventoId/checkin/lista
+ * Listar últimos check-ins (para dashboard tiempo real)
+ */
+router.get('/eventos/:eventoId/checkin/lista',
+    ...middlewareComun,
+    asyncHandler(InvitadosController.listarCheckins)
+);
+
 module.exports = router;

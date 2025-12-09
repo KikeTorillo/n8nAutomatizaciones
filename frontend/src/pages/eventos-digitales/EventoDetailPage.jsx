@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -21,12 +21,18 @@ import {
   Phone,
   Upload,
   Download,
-  FileText
+  FileText,
+  QrCode,
+  ScanLine,
+  Camera,
+  UserCheck,
+  AlertCircle
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
+import useAuthStore from '@/store/authStore';
 import {
   useEvento,
   useEventoEstadisticas,
@@ -57,6 +63,7 @@ function EventoDetailPage() {
   const navigate = useNavigate();
   const { id } = useParams();
   const toast = useToast();
+  const accessToken = useAuthStore((state) => state.accessToken);
   const [activeTab, setActiveTab] = useState('invitados');
   const [showInvitadoForm, setShowInvitadoForm] = useState(false);
   const [showUbicacionForm, setShowUbicacionForm] = useState(false);
@@ -94,6 +101,20 @@ function EventoDetailPage() {
   // Estado para importación CSV
   const [showImportModal, setShowImportModal] = useState(false);
   const [csvText, setCsvText] = useState('');
+
+  // Estado para modal QR
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [qrData, setQRData] = useState(null);
+  const [loadingQR, setLoadingQR] = useState(false);
+
+  // Estado para Check-in
+  const [scannerActive, setScannerActive] = useState(false);
+  const [checkinStats, setCheckinStats] = useState(null);
+  const [recentCheckins, setRecentCheckins] = useState([]);
+  const [loadingCheckin, setLoadingCheckin] = useState(false);
+  const [lastCheckin, setLastCheckin] = useState(null);
+  const scannerRef = useRef(null);
+  const html5QrCodeRef = useRef(null);
 
   // Forms state
   const [invitadoForm, setInvitadoForm] = useState({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
@@ -160,6 +181,212 @@ function EventoDetailPage() {
     setEditingInvitadoId(null);
     setShowInvitadoForm(false);
   };
+
+  // Funciones para QR
+  const handleVerQR = async (invitado) => {
+    setLoadingQR(true);
+    setShowQRModal(true);
+    try {
+      const response = await fetch(
+        `/api/v1/eventos-digitales/eventos/${id}/invitados/${invitado.id}/qr?formato=base64`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setQRData({ ...data.data, invitado });
+      } else {
+        toast.error('Error al obtener QR');
+        setShowQRModal(false);
+      }
+    } catch (error) {
+      toast.error('Error al obtener QR');
+      setShowQRModal(false);
+    } finally {
+      setLoadingQR(false);
+    }
+  };
+
+  const handleDescargarQR = () => {
+    if (!qrData?.qr) return;
+    const link = document.createElement('a');
+    link.href = qrData.qr;
+    link.download = `qr-${qrData.invitado.nombre.replace(/\s+/g, '-')}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDescargarQRMasivo = async () => {
+    toast.info('Generando ZIP con todos los QR...');
+    try {
+      const response = await fetch(
+        `/api/v1/eventos-digitales/eventos/${id}/qr-masivo`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `qr-${evento.slug}.zip`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        toast.success('QR descargados exitosamente');
+      } else {
+        toast.error('Error al descargar QR');
+      }
+    } catch (error) {
+      toast.error('Error al descargar QR');
+    }
+  };
+
+  // Funciones de Check-in
+  const fetchCheckinStats = async () => {
+    try {
+      const response = await fetch(
+        `/api/v1/eventos-digitales/eventos/${id}/checkin/stats`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setCheckinStats(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching checkin stats:', error);
+    }
+  };
+
+  const fetchRecentCheckins = async () => {
+    try {
+      const response = await fetch(
+        `/api/v1/eventos-digitales/eventos/${id}/checkin/lista`,
+        {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setRecentCheckins(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching recent checkins:', error);
+    }
+  };
+
+  const handleCheckin = async (token) => {
+    setLoadingCheckin(true);
+    try {
+      const response = await fetch(
+        `/api/v1/eventos-digitales/eventos/${id}/checkin`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ token })
+        }
+      );
+      const data = await response.json();
+      if (data.success) {
+        setLastCheckin({ ...data.data, success: true });
+        toast.success(`Check-in exitoso: ${data.data.nombre}`);
+        fetchCheckinStats();
+        fetchRecentCheckins();
+      } else {
+        setLastCheckin({ success: false, mensaje: data.message });
+        toast.error(data.message || 'Error en check-in');
+      }
+    } catch (error) {
+      setLastCheckin({ success: false, mensaje: 'Error de conexión' });
+      toast.error('Error de conexión');
+    } finally {
+      setLoadingCheckin(false);
+    }
+  };
+
+  const startScanner = async () => {
+    try {
+      const { Html5Qrcode } = await import('html5-qrcode');
+      if (html5QrCodeRef.current) {
+        await html5QrCodeRef.current.stop();
+      }
+
+      html5QrCodeRef.current = new Html5Qrcode('qr-scanner');
+      await html5QrCodeRef.current.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        (decodedText) => {
+          // Extraer token de la URL
+          const urlParts = decodedText.split('/');
+          const token = urlParts[urlParts.length - 1];
+          if (token && token.length > 10) {
+            handleCheckin(token);
+            // Pausar brevemente para evitar múltiples lecturas
+            if (html5QrCodeRef.current) {
+              html5QrCodeRef.current.pause(true);
+              setTimeout(() => {
+                if (html5QrCodeRef.current) {
+                  html5QrCodeRef.current.resume();
+                }
+              }, 2000);
+            }
+          }
+        },
+        () => {} // Ignorar errores de escaneo
+      );
+      setScannerActive(true);
+    } catch (error) {
+      toast.error('No se pudo acceder a la cámara');
+      console.error('Scanner error:', error);
+    }
+  };
+
+  const stopScanner = async () => {
+    if (html5QrCodeRef.current) {
+      try {
+        await html5QrCodeRef.current.stop();
+        html5QrCodeRef.current = null;
+      } catch (error) {
+        console.error('Error stopping scanner:', error);
+      }
+    }
+    setScannerActive(false);
+  };
+
+  // Cargar stats de check-in al montar el componente (para el contador del tab)
+  useEffect(() => {
+    if (id && accessToken) {
+      fetchCheckinStats();
+    }
+  }, [id, accessToken]);
+
+  // Cargar datos completos cuando se activa el tab de check-in
+  useEffect(() => {
+    if (activeTab === 'checkin') {
+      fetchCheckinStats();
+      fetchRecentCheckins();
+    }
+    return () => {
+      stopScanner();
+    };
+  }, [activeTab]);
 
   const handleGuardarUbicacion = async (e) => {
     e.preventDefault();
@@ -333,8 +560,12 @@ function EventoDetailPage() {
     );
   }
 
+  const mostrarQR = evento?.configuracion?.mostrar_qr_invitado === true;
+
   const tabs = [
     { id: 'invitados', label: 'Invitados', icon: Users, count: invitadosData?.total || 0 },
+    // Solo mostrar tab de Check-in si el QR está habilitado
+    ...(mostrarQR ? [{ id: 'checkin', label: 'Check-in', icon: ScanLine, count: checkinStats?.total_checkin || 0 }] : []),
     { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, count: ubicaciones?.length || 0 },
     { id: 'regalos', label: 'Mesa de Regalos', icon: Gift, count: regalos?.length || 0 },
     { id: 'felicitaciones', label: 'Felicitaciones', icon: MessageCircle, count: felicitacionesData?.total || 0 },
@@ -495,6 +726,18 @@ function EventoDetailPage() {
                   <Download className="w-4 h-4 mr-2" />
                   {exportarInvitados.isLoading ? 'Exportando...' : 'Exportar CSV'}
                 </Button>
+                {mostrarQR && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDescargarQRMasivo}
+                    disabled={!invitadosData?.invitados?.length}
+                    title="Descargar todos los códigos QR en un ZIP"
+                  >
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Descargar QR
+                  </Button>
+                )}
                 <Button onClick={() => setShowInvitadoForm(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar
@@ -546,6 +789,63 @@ function EventoDetailPage() {
                       Cancelar
                     </Button>
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Modal de visualización QR */}
+            {showQRModal && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="font-medium text-lg">Código QR</h3>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setShowQRModal(false);
+                        setQRData(null);
+                      }}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+
+                  {loadingQR ? (
+                    <div className="flex items-center justify-center py-12">
+                      <LoadingSpinner />
+                    </div>
+                  ) : qrData ? (
+                    <div className="text-center">
+                      <p className="font-medium text-gray-900 mb-4">{qrData.invitado?.nombre}</p>
+                      <div className="bg-white p-4 rounded-lg border inline-block mb-4">
+                        <img
+                          src={qrData.qr}
+                          alt={`QR de ${qrData.invitado?.nombre}`}
+                          className="w-48 h-48 mx-auto"
+                        />
+                      </div>
+                      <p className="text-sm text-gray-500 mb-4 break-all">{qrData.url}</p>
+                      <div className="flex gap-2 justify-center">
+                        <Button onClick={handleDescargarQR}>
+                          <Download className="w-4 h-4 mr-2" />
+                          Descargar
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            navigator.clipboard.writeText(qrData.url);
+                            toast.success('Link copiado');
+                          }}
+                        >
+                          <Copy className="w-4 h-4 mr-2" />
+                          Copiar Link
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500">No se pudo cargar el QR</p>
+                  )}
                 </div>
               </div>
             )}
@@ -631,6 +931,16 @@ function EventoDetailPage() {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
                           <div className="flex items-center justify-end gap-2">
+                            {mostrarQR && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleVerQR(inv)}
+                                title="Ver código QR"
+                              >
+                                <QrCode className="w-4 h-4" />
+                              </Button>
+                            )}
                             <Button
                               variant="outline"
                               size="sm"
@@ -673,6 +983,181 @@ function EventoDetailPage() {
                 <p className="text-gray-500">No hay invitados todavía</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* Tab: Check-in */}
+        {activeTab === 'checkin' && (
+          <div className="space-y-6">
+            {/* Header y Stats */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Panel del Escáner */}
+              <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                    <Camera className="w-5 h-5" />
+                    Escáner de QR
+                  </h2>
+                  {scannerActive ? (
+                    <Button variant="outline" onClick={stopScanner} className="text-red-600">
+                      <X className="w-4 h-4 mr-2" />
+                      Detener
+                    </Button>
+                  ) : (
+                    <Button onClick={startScanner}>
+                      <ScanLine className="w-4 h-4 mr-2" />
+                      Iniciar Escáner
+                    </Button>
+                  )}
+                </div>
+
+                {/* Área del escáner */}
+                <div className="relative">
+                  {/* Placeholder cuando el escáner no está activo */}
+                  {!scannerActive && (
+                    <div className="w-full aspect-video bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center">
+                      <div className="text-center text-gray-400">
+                        <Camera className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <p>Presiona "Iniciar Escáner" para activar la cámara</p>
+                        <p className="text-sm mt-2">Apunta al código QR del invitado</p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Contenedor para html5-qrcode - separado del contenido React */}
+                  <div
+                    id="qr-scanner"
+                    ref={scannerRef}
+                    className={`w-full min-h-[300px] bg-gray-900 rounded-lg ${!scannerActive ? 'hidden' : ''}`}
+                    style={{
+                      position: 'relative',
+                    }}
+                  />
+                  {/* Estilos para el video de html5-qrcode */}
+                  <style>{`
+                    #qr-scanner video {
+                      width: 100% !important;
+                      height: auto !important;
+                      border-radius: 0.5rem;
+                    }
+                    #qr-scanner #qr-shaded-region {
+                      border-width: 50px !important;
+                    }
+                  `}</style>
+                </div>
+
+                {/* Último check-in */}
+                {lastCheckin && (
+                  <div className={`mt-4 p-4 rounded-lg ${lastCheckin.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                    {lastCheckin.success ? (
+                      <div className="flex items-center gap-3">
+                        <UserCheck className="w-8 h-8 text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-800">{lastCheckin.nombre}</p>
+                          <p className="text-sm text-green-600">Check-in registrado correctamente</p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-3">
+                        <AlertCircle className="w-8 h-8 text-red-600" />
+                        <div>
+                          <p className="font-medium text-red-800">Error en check-in</p>
+                          <p className="text-sm text-red-600">{lastCheckin.mensaje}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {loadingCheckin && (
+                  <div className="mt-4 flex items-center justify-center p-4">
+                    <LoadingSpinner />
+                    <span className="ml-2">Procesando check-in...</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Panel de Estadísticas */}
+              <div className="space-y-4">
+                <div className="bg-white rounded-lg shadow-sm p-6 border">
+                  <h3 className="text-lg font-semibold mb-4">Estadísticas</h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Total invitados</span>
+                      <span className="text-2xl font-bold">{invitadosData?.total || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Confirmados</span>
+                      <span className="text-2xl font-bold text-green-600">{checkinStats?.total_confirmados || 0}</span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Check-ins</span>
+                      <span className="text-2xl font-bold text-blue-600">{checkinStats?.total_checkin || 0}</span>
+                    </div>
+                    <div className="pt-4 border-t">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Progreso</span>
+                        <span className="font-medium">
+                          {checkinStats?.total_confirmados ?
+                            Math.round((checkinStats.total_checkin / checkinStats.total_confirmados) * 100) : 0}%
+                        </span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                        <div
+                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          style={{
+                            width: `${checkinStats?.total_confirmados ?
+                              Math.min(100, (checkinStats.total_checkin / checkinStats.total_confirmados) * 100) : 0}%`
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => { fetchCheckinStats(); fetchRecentCheckins(); }}
+                >
+                  Actualizar datos
+                </Button>
+              </div>
+            </div>
+
+            {/* Últimos Check-ins */}
+            <div className="bg-white rounded-lg shadow-sm p-6 border">
+              <h3 className="text-lg font-semibold mb-4">Últimos Check-ins</h3>
+              {recentCheckins.length > 0 ? (
+                <div className="space-y-3">
+                  {recentCheckins.map((checkin, index) => (
+                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                          <UserCheck className="w-5 h-5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium">{checkin.nombre}</p>
+                          {checkin.grupo_familiar && (
+                            <p className="text-sm text-gray-500">{checkin.grupo_familiar}</p>
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {new Date(checkin.checkin_at).toLocaleTimeString('es-ES', {
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>No hay check-ins registrados</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
 

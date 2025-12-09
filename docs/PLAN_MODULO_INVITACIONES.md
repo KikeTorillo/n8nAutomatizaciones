@@ -32,9 +32,16 @@
 
 | Área | Funcionalidad | Prioridad | Estado |
 |------|---------------|-----------|--------|
-| **QR + Check-in** | Sistema completo de QR y control de acceso | Alta | 🔄 En desarrollo |
-| **Calendario** | Botón "Agregar a calendario" (.ics + Google) | Baja | Pendiente |
+| **QR + Check-in** | Sistema completo de QR y control de acceso | Alta | 🔄 Pendiente |
+| **Calendario** | Botón "Agregar a calendario" (.ics + Google) | Baja | ✅ Completado (8 Dic 2025) |
 | **Recordatorios** | Emails automáticos a invitados pendientes | Baja | Pendiente |
+
+### Implementado Recientemente
+
+| Fecha | Funcionalidad | Archivos |
+|-------|---------------|----------|
+| 8 Dic 2025 | Agregar al Calendario | `public.controller.js`, `EventoPublicoPage.jsx` |
+| 8 Dic 2025 | Fix: Invitación muestra ubicaciones/regalos | `public.controller.js` |
 
 ---
 
@@ -190,21 +197,33 @@ npm install html5-qrcode
 
 ---
 
-## Fase 3.2: Agregar a Calendario (Pendiente - Baja Prioridad)
+## Fase 3.2: Agregar a Calendario ✅ COMPLETADO (8 Dic 2025)
 
 ### Objetivo
 
 Permitir a los invitados agregar el evento a su calendario.
 
-### Funcionalidades
+### Funcionalidades Implementadas
 
-- Botón "Agregar a Google Calendar" (link directo)
-- Botón "Descargar .ics" (Apple Calendar, Outlook)
+- ✅ Botón "Google Calendar" (abre Google Calendar con evento pre-llenado)
+- ✅ Botón "Descargar .ics" (Apple Calendar, Outlook, cualquier app)
+- ✅ Recordatorios automáticos en .ics (1 día antes + 2 horas antes)
 
-### Notas
+### Archivos Modificados
 
-Esta funcionalidad se implementará después del sistema QR.
-Es independiente y no bloquea otras funcionalidades.
+| Archivo | Cambio |
+|---------|--------|
+| `backend/.../controllers/public.controller.js` | Método `generarCalendario()` |
+| `backend/.../routes/public.routes.js` | Ruta GET `/evento/:slug/calendario` |
+| `frontend/.../EventoPublicoPage.jsx` | Botones de calendario en hero |
+
+### Endpoint
+
+```
+GET /api/v1/public/evento/:slug/calendario
+Content-Type: text/calendar
+Content-Disposition: attachment; filename="slug.ics"
+```
 
 ---
 
@@ -285,8 +304,9 @@ PUT/DEL     /api/v1/eventos-digitales/plantillas/:id
 GET         /api/v1/public/evento/:slug
 GET         /api/v1/public/evento/:slug/ubicaciones
 GET         /api/v1/public/evento/:slug/regalos
+GET         /api/v1/public/evento/:slug/calendario    # Descarga .ics
 GET         /api/v1/public/evento/:slug/:token
 POST        /api/v1/public/evento/:slug/:token/rsvp
 GET         /api/v1/public/evento/:slug/:token/whatsapp
-GET         /api/v1/public/evento/:slug/:token/qr     # NUEVO
+GET         /api/v1/public/evento/:slug/:token/qr     # PENDIENTE
 ```
