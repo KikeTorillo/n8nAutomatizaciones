@@ -11,7 +11,7 @@ mcpServers: {}
 # ========================================
 llm:
   provider: openai
-  model: qwen/qwen3-32b
+  model: deepseek/deepseek-v3.2
   baseUrl: https://openrouter.ai/api/v1
   apiKey: ${OPENAI_API_KEY}
   maxIterations: 50
