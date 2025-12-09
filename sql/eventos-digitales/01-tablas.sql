@@ -264,6 +264,53 @@ COMMENT ON TABLE felicitaciones_evento IS 'Libro de felicitaciones/visitas del e
 COMMENT ON COLUMN felicitaciones_evento.aprobado IS 'Si false, no se muestra públicamente. Para moderación.';
 
 -- ====================================================================
+-- 7. MESAS DEL EVENTO (Seating Chart)
+-- ====================================================================
+CREATE TABLE IF NOT EXISTS mesas_evento (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos_digitales(id) ON DELETE CASCADE,
+
+    -- Identificación
+    nombre VARCHAR(50) NOT NULL,
+    numero INTEGER,
+
+    -- Tipo y forma visual
+    tipo VARCHAR(20) DEFAULT 'redonda',
+
+    -- Posición en canvas (coordenadas relativas 0-100%)
+    posicion_x DECIMAL(5,2) DEFAULT 50.00,
+    posicion_y DECIMAL(5,2) DEFAULT 50.00,
+
+    -- Rotación en grados (0-360)
+    rotacion INTEGER DEFAULT 0,
+
+    -- Capacidad
+    capacidad INTEGER DEFAULT 8,
+
+    -- Control
+    activo BOOLEAN DEFAULT true,
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    -- Constraints
+    CONSTRAINT tipo_mesa_valido CHECK (tipo IN ('redonda', 'cuadrada', 'rectangular')),
+    CONSTRAINT capacidad_mesa_valida CHECK (capacidad BETWEEN 1 AND 50),
+    CONSTRAINT posicion_x_valida CHECK (posicion_x BETWEEN 0 AND 100),
+    CONSTRAINT posicion_y_valida CHECK (posicion_y BETWEEN 0 AND 100)
+);
+
+COMMENT ON TABLE mesas_evento IS 'Mesas del evento para asignación de invitados (Seating Chart). RLS hereda de eventos_digitales.';
+COMMENT ON COLUMN mesas_evento.tipo IS 'Forma visual de la mesa: redonda, cuadrada, rectangular';
+COMMENT ON COLUMN mesas_evento.posicion_x IS 'Posición X en porcentaje del canvas (0-100)';
+COMMENT ON COLUMN mesas_evento.posicion_y IS 'Posición Y en porcentaje del canvas (0-100)';
+
+-- Agregar campo mesa_id a invitados_evento
+ALTER TABLE invitados_evento
+ADD COLUMN IF NOT EXISTS mesa_id INTEGER REFERENCES mesas_evento(id) ON DELETE SET NULL;
+
+COMMENT ON COLUMN invitados_evento.mesa_id IS 'Mesa asignada al invitado. NULL si no tiene mesa asignada.';
+
+-- ====================================================================
 -- FUNCIÓN PARA GENERAR SLUG ÚNICO
 -- ====================================================================
 CREATE OR REPLACE FUNCTION generar_slug_evento(

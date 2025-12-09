@@ -1017,6 +1017,225 @@ export function useConfirmarRSVP() {
   });
 }
 
+// ==================== QUERIES MESAS (Seating Chart) ====================
+
+/**
+ * Hook para listar mesas de un evento con sus invitados asignados
+ * @param {number} eventoId - ID del evento
+ * @returns {Object} { data: mesas[], isLoading, error }
+ *
+ * @example
+ * const { data: mesas, isLoading } = useMesas(eventoId);
+ */
+export function useMesas(eventoId) {
+  return useQuery({
+    queryKey: ['mesas-evento', eventoId],
+    queryFn: async () => {
+      const response = await eventosDigitalesApi.listarMesas(eventoId);
+      return response.data.data || [];
+    },
+    enabled: !!eventoId,
+    staleTime: 1000 * 30, // 30 segundos
+  });
+}
+
+/**
+ * Hook para obtener estadísticas de ocupación de mesas
+ * @param {number} eventoId - ID del evento
+ * @returns {Object} { data: estadisticas, isLoading, error }
+ *
+ * @example
+ * const { data: stats } = useEstadisticasMesas(eventoId);
+ */
+export function useEstadisticasMesas(eventoId) {
+  return useQuery({
+    queryKey: ['mesas-estadisticas', eventoId],
+    queryFn: async () => {
+      const response = await eventosDigitalesApi.obtenerEstadisticasMesas(eventoId);
+      return response.data.data;
+    },
+    enabled: !!eventoId,
+    staleTime: 1000 * 30, // 30 segundos
+  });
+}
+
+// ==================== MUTATIONS MESAS (Seating Chart) ====================
+
+/**
+ * Hook para crear mesa
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useCrearMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventoId, data }) => {
+      const sanitized = {
+        nombre: data.nombre?.trim(),
+        numero: data.numero || undefined,
+        tipo: data.tipo || 'redonda',
+        posicion_x: data.posicion_x ?? 50,
+        posicion_y: data.posicion_y ?? 50,
+        rotacion: data.rotacion ?? 0,
+        capacidad: data.capacidad ?? 8,
+      };
+      const response = await eventosDigitalesApi.crearMesa(eventoId, sanitized);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al crear mesa');
+    },
+  });
+}
+
+/**
+ * Hook para actualizar mesa
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useActualizarMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventoId, mesaId, data }) => {
+      const sanitized = {
+        nombre: data.nombre?.trim() || undefined,
+        numero: data.numero || undefined,
+        tipo: data.tipo || undefined,
+        posicion_x: data.posicion_x,
+        posicion_y: data.posicion_y,
+        rotacion: data.rotacion,
+        capacidad: data.capacidad,
+      };
+      // Remove undefined values
+      Object.keys(sanitized).forEach(key =>
+        sanitized[key] === undefined && delete sanitized[key]
+      );
+      const response = await eventosDigitalesApi.actualizarMesa(eventoId, mesaId, sanitized);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al actualizar mesa');
+    },
+  });
+}
+
+/**
+ * Hook para eliminar mesa
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useEliminarMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ mesaId, eventoId }) => {
+      const response = await eventosDigitalesApi.eliminarMesa(mesaId);
+      return { ...response.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al eliminar mesa');
+    },
+  });
+}
+
+/**
+ * Hook para actualizar posiciones de múltiples mesas (batch)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useActualizarPosicionesMesas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventoId, posiciones }) => {
+      const response = await eventosDigitalesApi.actualizarPosicionesMesas(eventoId, posiciones);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al actualizar posiciones');
+    },
+  });
+}
+
+/**
+ * Hook para asignar invitado a mesa
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useAsignarInvitadoAMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventoId, mesaId, invitadoId }) => {
+      const response = await eventosDigitalesApi.asignarInvitadoAMesa(eventoId, mesaId, invitadoId);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+
+      const errorMessages = {
+        400: 'La mesa está llena o el invitado ya tiene mesa asignada',
+        404: 'Mesa o invitado no encontrado',
+      };
+
+      const statusCode = error.response?.status;
+      throw new Error(errorMessages[statusCode] || 'Error al asignar invitado');
+    },
+  });
+}
+
+/**
+ * Hook para desasignar invitado de mesa
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useDesasignarInvitadoDeMesa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ invitadoId, eventoId }) => {
+      const response = await eventosDigitalesApi.desasignarInvitado(invitadoId);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['mesas-evento', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['mesas-estadisticas', data.eventoId] });
+      queryClient.invalidateQueries({ queryKey: ['invitados-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al desasignar invitado');
+    },
+  });
+}
+
 // ==================== EXPORT DEFAULT ====================
 
 export default {
@@ -1071,4 +1290,16 @@ export default {
 
   // Mutations Públicos
   useConfirmarRSVP,
+
+  // Queries Mesas (Seating Chart)
+  useMesas,
+  useEstadisticasMesas,
+
+  // Mutations Mesas
+  useCrearMesa,
+  useActualizarMesa,
+  useEliminarMesa,
+  useActualizarPosicionesMesas,
+  useAsignarInvitadoAMesa,
+  useDesasignarInvitadoDeMesa,
 };

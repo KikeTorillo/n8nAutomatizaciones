@@ -112,7 +112,11 @@ class PublicController {
                 estado_rsvp: invitacion.estado_rsvp,
                 num_asistentes: invitacion.num_asistentes,
                 mensaje_rsvp: invitacion.mensaje_rsvp,
-                restricciones_dieteticas: invitacion.restricciones_dieteticas
+                restricciones_dieteticas: invitacion.restricciones_dieteticas,
+                // Mesa asignada (seating chart)
+                mesa_id: invitacion.mesa_id || null,
+                mesa_nombre: invitacion.mesa_nombre || null,
+                mesa_numero: invitacion.mesa_numero || null
             };
 
             return ResponseHelper.success(res, { evento, invitado });

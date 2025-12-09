@@ -1,0 +1,451 @@
+import { useState, useCallback, useEffect } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  rectIntersection,
+  useDroppable,
+} from '@dnd-kit/core';
+import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check } from 'lucide-react';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { useToast } from '@/hooks/useToast';
+import {
+  useMesas,
+  useEstadisticasMesas,
+  useCrearMesa,
+  useActualizarMesa,
+  useEliminarMesa,
+  useActualizarPosicionesMesas,
+  useAsignarInvitadoAMesa,
+  useDesasignarInvitadoDeMesa,
+  useInvitados,
+} from '@/hooks/useEventosDigitales';
+import MesaVisual from './MesaVisual';
+import InvitadoChip from './InvitadoChip';
+
+/**
+ * Editor visual de Seating Chart
+ * Canvas 2D con mesas posicionables y asignación de invitados via drag-drop
+ */
+function SeatingChartEditor({ eventoId }) {
+  const toast = useToast();
+  const [activeId, setActiveId] = useState(null);
+  const [dragType, setDragType] = useState(null); // 'mesa' | 'invitado'
+  const [showCreateMesa, setShowCreateMesa] = useState(false);
+  const [editingMesa, setEditingMesa] = useState(null);
+  const [newMesaData, setNewMesaData] = useState({
+    nombre: '',
+    numero: '',
+    tipo: 'redonda',
+    capacidad: 8,
+  });
+
+  // Queries
+  const { data: mesas = [], isLoading: loadingMesas } = useMesas(eventoId);
+  const { data: estadisticas } = useEstadisticasMesas(eventoId);
+  const { data: invitadosData, isLoading: loadingInvitados } = useInvitados(eventoId, { limite: 200 });
+
+  // Mutations
+  const crearMesa = useCrearMesa();
+  const actualizarMesa = useActualizarMesa();
+  const eliminarMesa = useEliminarMesa();
+  const actualizarPosiciones = useActualizarPosicionesMesas();
+  const asignarInvitado = useAsignarInvitadoAMesa();
+  const desasignarInvitado = useDesasignarInvitadoDeMesa();
+
+  // Sensors para drag-drop
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    })
+  );
+
+  // Canvas droppable para recibir mesas
+  const { setNodeRef: setCanvasRef } = useDroppable({
+    id: 'canvas',
+  });
+
+  // Panel "Sin Mesa" droppable para desasignar invitados
+  const { setNodeRef: setSinMesaRef, isOver: isOverSinMesa } = useDroppable({
+    id: 'sin-mesa',
+  });
+
+  // Filtrar invitados sin mesa asignada
+  const invitadosSinMesa = (invitadosData?.invitados || []).filter(
+    (inv) => !inv.mesa_id && inv.estado_rsvp === 'confirmado'
+  );
+
+  // Manejar inicio de drag
+  const handleDragStart = useCallback((event) => {
+    const { active } = event;
+    setActiveId(active.id);
+
+    // Determinar tipo de elemento siendo arrastrado
+    if (String(active.id).startsWith('mesa-')) {
+      setDragType('mesa');
+    } else if (String(active.id).startsWith('invitado-')) {
+      setDragType('invitado');
+    }
+  }, []);
+
+  // Manejar fin de drag
+  const handleDragEnd = useCallback(async (event) => {
+    const { active, over, delta } = event;
+
+    setActiveId(null);
+    setDragType(null);
+
+    const activeIdStr = String(active.id);
+
+    // Si es un invitado siendo arrastrado
+    if (activeIdStr.startsWith('invitado-')) {
+      const invitadoId = parseInt(activeIdStr.replace('invitado-', ''));
+
+      // Si no hay over o es el canvas, no hacer nada
+      if (!over || over.id === 'canvas') {
+        return;
+      }
+
+      const overIdStr = String(over.id);
+
+      // Caso: Soltar en "Sin Mesa" - desasignar si tenía mesa
+      if (overIdStr === 'sin-mesa') {
+        const invitado = invitadosData?.invitados?.find(i => i.id === invitadoId);
+        if (invitado?.mesa_id) {
+          try {
+            await desasignarInvitado.mutateAsync({ invitadoId, eventoId });
+            toast.success('Invitado desasignado de mesa');
+          } catch (error) {
+            toast.error(error.message);
+          }
+        }
+        return;
+      }
+
+      // Caso: Soltar en una mesa específica
+      if (overIdStr.startsWith('mesa-')) {
+        const mesaId = parseInt(overIdStr.replace('mesa-', ''));
+
+        try {
+          await asignarInvitado.mutateAsync({
+            eventoId,
+            mesaId,
+            invitadoId,
+          });
+          toast.success('Invitado asignado a mesa');
+        } catch (error) {
+          toast.error(error.message);
+        }
+      }
+      return;
+    }
+
+    // Caso: Mover mesa en el canvas (si hay movimiento significativo)
+    if (activeIdStr.startsWith('mesa-') && (Math.abs(delta.x) > 5 || Math.abs(delta.y) > 5)) {
+      const mesaId = parseInt(activeIdStr.replace('mesa-', ''));
+      const mesa = mesas.find((m) => m.id === mesaId);
+
+      if (!mesa) return;
+
+      // Calcular nueva posición en porcentaje
+      const canvas = document.getElementById('seating-canvas');
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const currentX = parseFloat(mesa.posicion_x) || 50;
+      const currentY = parseFloat(mesa.posicion_y) || 50;
+      const newX = Math.max(5, Math.min(95, currentX + (delta.x / rect.width) * 100));
+      const newY = Math.max(5, Math.min(95, currentY + (delta.y / rect.height) * 100));
+
+      try {
+        await actualizarPosiciones.mutateAsync({
+          eventoId,
+          posiciones: [{ id: mesaId, posicion_x: newX, posicion_y: newY }],
+        });
+      } catch (error) {
+        toast.error('Error moviendo mesa');
+      }
+    }
+  }, [mesas, eventoId, asignarInvitado, desasignarInvitado, actualizarPosiciones, toast, invitadosData]);
+
+  // Crear nueva mesa
+  const handleCreateMesa = async () => {
+    if (!newMesaData.nombre.trim()) {
+      toast.error('El nombre de la mesa es requerido');
+      return;
+    }
+
+    try {
+      await crearMesa.mutateAsync({
+        eventoId,
+        data: {
+          ...newMesaData,
+          numero: newMesaData.numero ? parseInt(newMesaData.numero) : undefined,
+        },
+      });
+      toast.success('Mesa creada');
+      setShowCreateMesa(false);
+      setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // Eliminar mesa
+  const handleDeleteMesa = async (mesaId) => {
+    if (!confirm('¿Eliminar esta mesa? Los invitados serán desasignados.')) return;
+
+    try {
+      await eliminarMesa.mutateAsync({ mesaId, eventoId });
+      toast.success('Mesa eliminada');
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // Desasignar invitado de mesa
+  const handleDesasignarInvitado = async (invitadoId) => {
+    try {
+      await desasignarInvitado.mutateAsync({ invitadoId, eventoId });
+      toast.success('Invitado desasignado');
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // Actualizar mesa
+  const handleUpdateMesa = async (mesaId, data) => {
+    try {
+      await actualizarMesa.mutateAsync({ eventoId, mesaId, data });
+      toast.success('Mesa actualizada');
+      setEditingMesa(null);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // Obtener ocupación de una mesa (suma num_asistentes de cada invitado)
+  const getOcupacion = (mesa) => {
+    const asignados = mesa.invitados?.reduce((sum, inv) => sum + (inv.num_asistentes || 1), 0) || 0;
+    const porcentaje = (asignados / mesa.capacidad) * 100;
+    return { asignados, porcentaje };
+  };
+
+  // Color según ocupación
+  const getOcupacionColor = (porcentaje) => {
+    if (porcentaje >= 100) return 'bg-red-500';
+    if (porcentaje >= 75) return 'bg-yellow-500';
+    return 'bg-green-500';
+  };
+
+  if (loadingMesas || loadingInvitados) {
+    return (
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600" />
+      </div>
+    );
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={rectIntersection}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="flex flex-col lg:flex-row gap-4 h-[600px]">
+        {/* Panel lateral - Invitados sin mesa */}
+        <div
+          ref={setSinMesaRef}
+          className={`w-full lg:w-64 flex-shrink-0 bg-white rounded-lg border-2 overflow-hidden transition-colors ${
+            isOverSinMesa ? 'border-pink-400 bg-pink-50' : 'border-gray-200'
+          }`}
+        >
+          <div className="p-3 bg-gray-50 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-600" />
+              <span className="font-medium text-sm">Sin Mesa ({invitadosSinMesa.length})</span>
+            </div>
+          </div>
+          <div className="p-2 overflow-y-auto max-h-[500px]">
+            {invitadosSinMesa.length === 0 ? (
+              <p className="text-sm text-gray-500 text-center py-4">
+                Todos los invitados confirmados tienen mesa
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {invitadosSinMesa.map((invitado) => (
+                  <InvitadoChip
+                    key={invitado.id}
+                    invitado={invitado}
+                    isDraggable
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Canvas principal */}
+        <div className="flex-1 flex flex-col">
+          {/* Toolbar */}
+          <div className="flex items-center justify-between p-3 bg-white rounded-t-lg border border-b-0 border-gray-200">
+            <div className="flex items-center gap-4">
+              <h3 className="font-medium text-gray-900 flex items-center gap-2">
+                <LayoutGrid className="w-5 h-5" />
+                Distribución de Mesas
+              </h3>
+              {estadisticas && (
+                <div className="text-sm text-gray-500">
+                  {estadisticas.total_mesas} mesas • {estadisticas.total_asignados}/{estadisticas.capacidad_total} asientos
+                </div>
+              )}
+            </div>
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => setShowCreateMesa(true)}
+              className="flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Nueva Mesa
+            </Button>
+          </div>
+
+          {/* Canvas de mesas */}
+          <div
+            ref={setCanvasRef}
+            id="seating-canvas"
+            className="flex-1 relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-b-lg border border-gray-200 overflow-hidden"
+          >
+            {/* Grid de fondo */}
+            <div
+              className="absolute inset-0 opacity-30"
+              style={{
+                backgroundImage: 'radial-gradient(circle, #d1d5db 1px, transparent 1px)',
+                backgroundSize: '20px 20px',
+              }}
+            />
+
+            {/* Mesas */}
+            {mesas.map((mesa) => {
+              const { asignados, porcentaje } = getOcupacion(mesa);
+              return (
+                <MesaVisual
+                  key={mesa.id}
+                  mesa={mesa}
+                  asignados={asignados}
+                  porcentaje={porcentaje}
+                  isEditing={editingMesa?.id === mesa.id}
+                  onEdit={() => setEditingMesa(mesa)}
+                  onDelete={() => handleDeleteMesa(mesa.id)}
+                  onDesasignarInvitado={handleDesasignarInvitado}
+                  onSave={(data) => handleUpdateMesa(mesa.id, data)}
+                  onCancelEdit={() => setEditingMesa(null)}
+                />
+              );
+            })}
+
+            {/* Mensaje cuando no hay mesas */}
+            {mesas.length === 0 && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center text-gray-500">
+                  <LayoutGrid className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                  <p>No hay mesas configuradas</p>
+                  <p className="text-sm">Crea una mesa para comenzar</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Modal crear mesa */}
+      {showCreateMesa && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4">Nueva Mesa</h3>
+            <div className="space-y-4">
+              <Input
+                label="Nombre"
+                placeholder="Ej: Mesa Familiar, Mesa VIP"
+                value={newMesaData.nombre}
+                onChange={(e) => setNewMesaData({ ...newMesaData, nombre: e.target.value })}
+              />
+              <Input
+                label="Número (opcional)"
+                type="number"
+                placeholder="Ej: 1, 2, 3..."
+                value={newMesaData.numero}
+                onChange={(e) => setNewMesaData({ ...newMesaData, numero: e.target.value })}
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tipo de mesa
+                </label>
+                <select
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  value={newMesaData.tipo}
+                  onChange={(e) => setNewMesaData({ ...newMesaData, tipo: e.target.value })}
+                >
+                  <option value="redonda">Redonda</option>
+                  <option value="cuadrada">Cuadrada</option>
+                  <option value="rectangular">Rectangular</option>
+                </select>
+              </div>
+              <Input
+                label="Capacidad"
+                type="number"
+                min={1}
+                max={50}
+                value={newMesaData.capacidad}
+                onChange={(e) => setNewMesaData({ ...newMesaData, capacidad: parseInt(e.target.value) || 8 })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowCreateMesa(false);
+                  setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleCreateMesa}
+                loading={crearMesa.isPending}
+              >
+                Crear Mesa
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Drag Overlay */}
+      <DragOverlay>
+        {activeId && dragType === 'invitado' && (
+          <div className="bg-white border-2 border-pink-400 rounded-lg px-3 py-2 shadow-lg">
+            <span className="text-sm font-medium">
+              {invitadosData?.invitados?.find((i) => i.id === parseInt(String(activeId).replace('invitado-', '')))?.nombre}
+            </span>
+          </div>
+        )}
+        {activeId && dragType === 'mesa' && (
+          <div className="w-20 h-20 bg-pink-100 border-2 border-pink-400 rounded-full shadow-lg flex items-center justify-center">
+            <span className="text-xs font-medium">Moviendo...</span>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+export default SeatingChartEditor;

@@ -38,6 +38,7 @@ function EventoFormPage() {
       mostrar_ubicaciones: true,
       mostrar_contador: true,
       mostrar_qr_invitado: false,
+      habilitar_seating_chart: false,
       mensaje_bienvenida: '',
       mensaje_confirmacion: '',
     }
@@ -77,6 +78,7 @@ function EventoFormPage() {
           mostrar_ubicaciones: evento.configuracion?.mostrar_ubicaciones ?? true,
           mostrar_contador: evento.configuracion?.mostrar_contador ?? true,
           mostrar_qr_invitado: evento.configuracion?.mostrar_qr_invitado ?? false,
+          habilitar_seating_chart: evento.configuracion?.habilitar_seating_chart ?? false,
           mensaje_bienvenida: evento.configuracion?.mensaje_bienvenida || '',
           mensaje_confirmacion: evento.configuracion?.mensaje_confirmacion || '',
         }
@@ -692,6 +694,20 @@ function EventoFormPage() {
                 <div>
                   <span className="text-sm text-gray-700">Mostrar QR de entrada al invitado</span>
                   <p className="text-xs text-gray-500">Muestra un código QR cuando el invitado confirma asistencia</p>
+                </div>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  name="config_habilitar_seating_chart"
+                  checked={formData.configuracion.habilitar_seating_chart}
+                  onChange={handleChange}
+                  className="w-4 h-4 text-pink-600 rounded"
+                />
+                <div>
+                  <span className="text-sm text-gray-700">Habilitar asignación de mesas</span>
+                  <p className="text-xs text-gray-500">Permite asignar invitados a mesas y mostrar su ubicación</p>
                 </div>
               </label>
 

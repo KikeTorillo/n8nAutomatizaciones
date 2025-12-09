@@ -108,6 +108,26 @@ COMMENT ON POLICY felicitaciones_evento_tenant_policy ON felicitaciones_evento I
     'Hereda permisos del evento padre mediante subquery';
 
 -- ====================================================================
+-- 6. MESAS - Hereda del evento (Seating Chart)
+-- ====================================================================
+ALTER TABLE mesas_evento ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS mesas_evento_tenant_policy ON mesas_evento;
+CREATE POLICY mesas_evento_tenant_policy ON mesas_evento
+    FOR ALL
+    USING (
+        current_setting('app.bypass_rls', TRUE) = 'true'
+        OR
+        evento_id IN (
+            SELECT id FROM eventos_digitales
+            WHERE organizacion_id = NULLIF(current_setting('app.current_tenant_id', TRUE), '')::INTEGER
+        )
+    );
+
+COMMENT ON POLICY mesas_evento_tenant_policy ON mesas_evento IS
+    'Hereda permisos del evento padre mediante subquery';
+
+-- ====================================================================
 -- VERIFICACIÓN DE POLÍTICAS
 -- ====================================================================
 -- Ejecutar para verificar que las políticas se crearon correctamente:

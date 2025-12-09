@@ -130,6 +130,25 @@ CREATE INDEX IF NOT EXISTS idx_felicitaciones_aprobadas
     WHERE aprobado = true;
 
 -- ====================================================================
+-- MESAS EVENTO (Seating Chart)
+-- ====================================================================
+
+-- Listado por evento
+CREATE INDEX IF NOT EXISTS idx_mesas_evento_evento
+    ON mesas_evento(evento_id)
+    WHERE activo = true;
+
+-- Índice para buscar invitados por mesa
+CREATE INDEX IF NOT EXISTS idx_invitados_evento_mesa
+    ON invitados_evento(mesa_id)
+    WHERE mesa_id IS NOT NULL;
+
+-- Índice compuesto evento + mesa para listados de asignación
+CREATE INDEX IF NOT EXISTS idx_invitados_evento_evento_mesa
+    ON invitados_evento(evento_id, mesa_id)
+    WHERE activo = true;
+
+-- ====================================================================
 -- PLANTILLAS (sin RLS pero con índices útiles)
 -- ====================================================================
 

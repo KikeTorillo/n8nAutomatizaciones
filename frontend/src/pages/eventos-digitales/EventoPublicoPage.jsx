@@ -1234,6 +1234,28 @@ function EventoPublicoPage() {
                       ) : null}
                     </div>
                   )}
+
+                  {/* Mesa asignada (si tiene seating chart habilitado) */}
+                  {invitado.estado_rsvp === 'confirmado' && invitado.mesa_nombre && (
+                    <div className="mt-8 pt-6 border-t" style={{ borderColor: tema.color_secundario }}>
+                      <div className="text-center">
+                        <p className="text-sm mb-2" style={{ color: tema.color_texto_claro }}>
+                          Tu mesa asignada
+                        </p>
+                        <p
+                          className="text-3xl font-bold"
+                          style={{ color: tema.color_primario }}
+                        >
+                          {invitado.mesa_numero ? `Mesa ${invitado.mesa_numero}` : invitado.mesa_nombre}
+                        </p>
+                        {invitado.mesa_numero && invitado.mesa_nombre !== `Mesa ${invitado.mesa_numero}` && (
+                          <p className="text-sm mt-1" style={{ color: tema.color_texto_claro }}>
+                            {invitado.mesa_nombre}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

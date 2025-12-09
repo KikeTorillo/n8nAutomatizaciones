@@ -237,10 +237,14 @@ class InvitadoModel {
                         "fuente_titulo": "Playfair Display",
                         "fuente_cuerpo": "Inter"
                     }'::jsonb) as tema,
-                    p.nombre as plantilla_nombre
+                    p.nombre as plantilla_nombre,
+                    m.id as mesa_id,
+                    m.nombre as mesa_nombre,
+                    m.numero as mesa_numero
                 FROM invitados_evento i
                 JOIN eventos_digitales e ON i.evento_id = e.id
                 LEFT JOIN plantillas_evento p ON e.plantilla_id = p.id
+                LEFT JOIN mesas_evento m ON i.mesa_id = m.id AND m.activo = true
                 WHERE i.token = $1
                   AND i.activo = true
                   AND e.activo = true

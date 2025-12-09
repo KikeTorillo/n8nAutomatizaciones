@@ -86,6 +86,7 @@ const {
     mesaRegalosRoutes,
     felicitacionesRoutes,
     plantillasRoutes,
+    mesasRoutes,
     publicRoutes: eventosPublicRoutes
 } = require('../../../modules/eventos-digitales/routes');
 
@@ -169,6 +170,7 @@ function routerApi(app) {
     router.use('/eventos-digitales', mesaRegalosRoutes);          // Mesa de regalos
     router.use('/eventos-digitales', felicitacionesRoutes);       // Felicitaciones
     router.use('/eventos-digitales', plantillasRoutes);           // Plantillas
+    router.use('/eventos-digitales', mesasRoutes);               // Mesas (Seating Chart)
     router.use('/public', eventosPublicRoutes);                   // Rutas públicas (RSVP)
 
     // Rutas de website (sitio web público) - Dic 2025

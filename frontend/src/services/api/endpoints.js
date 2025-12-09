@@ -2158,6 +2158,77 @@ export const eventosDigitalesApi = {
    */
   eliminarPlantilla: (id) => apiClient.delete(`/eventos-digitales/plantillas/${id}`),
 
+  // ========== Mesas (Seating Chart) ==========
+
+  /**
+   * Crear mesa
+   * @param {number} eventoId
+   * @param {Object} data - { nombre, numero?, tipo?, posicion_x?, posicion_y?, rotacion?, capacidad? }
+   * @returns {Promise<Object>}
+   */
+  crearMesa: (eventoId, data) => apiClient.post(`/eventos-digitales/eventos/${eventoId}/mesas`, data),
+
+  /**
+   * Listar mesas del evento con invitados asignados
+   * @param {number} eventoId
+   * @returns {Promise<Object>}
+   */
+  listarMesas: (eventoId) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/mesas`),
+
+  /**
+   * Obtener mesa por ID
+   * @param {number} mesaId
+   * @returns {Promise<Object>}
+   */
+  obtenerMesa: (mesaId) => apiClient.get(`/eventos-digitales/mesas/${mesaId}`),
+
+  /**
+   * Actualizar mesa
+   * @param {number} eventoId
+   * @param {number} mesaId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarMesa: (eventoId, mesaId, data) => apiClient.put(`/eventos-digitales/eventos/${eventoId}/mesas/${mesaId}`, data),
+
+  /**
+   * Eliminar mesa
+   * @param {number} mesaId
+   * @returns {Promise<Object>}
+   */
+  eliminarMesa: (mesaId) => apiClient.delete(`/eventos-digitales/mesas/${mesaId}`),
+
+  /**
+   * Actualizar posiciones de múltiples mesas (batch)
+   * @param {number} eventoId
+   * @param {Array} posiciones - [{ id, posicion_x, posicion_y, rotacion? }]
+   * @returns {Promise<Object>}
+   */
+  actualizarPosicionesMesas: (eventoId, posiciones) => apiClient.patch(`/eventos-digitales/eventos/${eventoId}/mesas/posiciones`, { posiciones }),
+
+  /**
+   * Asignar invitado a mesa
+   * @param {number} eventoId
+   * @param {number} mesaId
+   * @param {number} invitadoId
+   * @returns {Promise<Object>}
+   */
+  asignarInvitadoAMesa: (eventoId, mesaId, invitadoId) => apiClient.post(`/eventos-digitales/eventos/${eventoId}/mesas/${mesaId}/asignar`, { invitado_id: invitadoId }),
+
+  /**
+   * Desasignar invitado de mesa
+   * @param {number} invitadoId
+   * @returns {Promise<Object>}
+   */
+  desasignarInvitado: (invitadoId) => apiClient.delete(`/eventos-digitales/invitados/${invitadoId}/mesa`),
+
+  /**
+   * Obtener estadísticas de ocupación de mesas
+   * @param {number} eventoId
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasMesas: (eventoId) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/mesas/estadisticas`),
+
   // ========== Rutas Públicas (RSVP) ==========
 
   /**

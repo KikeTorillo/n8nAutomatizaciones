@@ -26,12 +26,14 @@ import {
   ScanLine,
   Camera,
   UserCheck,
-  AlertCircle
+  AlertCircle,
+  LayoutGrid
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
+import { SeatingChartEditor } from './components';
 import useAuthStore from '@/store/authStore';
 import {
   useEvento,
@@ -561,11 +563,14 @@ function EventoDetailPage() {
   }
 
   const mostrarQR = evento?.configuracion?.mostrar_qr_invitado === true;
+  const mostrarSeatingChart = evento?.configuracion?.habilitar_seating_chart === true;
 
   const tabs = [
     { id: 'invitados', label: 'Invitados', icon: Users, count: invitadosData?.total || 0 },
     // Solo mostrar tab de Check-in si el QR está habilitado
     ...(mostrarQR ? [{ id: 'checkin', label: 'Check-in', icon: ScanLine, count: checkinStats?.total_checkin || 0 }] : []),
+    // Solo mostrar tab de Mesas si seating chart está habilitado
+    ...(mostrarSeatingChart ? [{ id: 'mesas', label: 'Mesas', icon: LayoutGrid }] : []),
     { id: 'ubicaciones', label: 'Ubicaciones', icon: MapPin, count: ubicaciones?.length || 0 },
     { id: 'regalos', label: 'Mesa de Regalos', icon: Gift, count: regalos?.length || 0 },
     { id: 'felicitaciones', label: 'Felicitaciones', icon: MessageCircle, count: felicitacionesData?.total || 0 },
@@ -1158,6 +1163,13 @@ function EventoDetailPage() {
                 </div>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Tab: Mesas (Seating Chart) */}
+        {activeTab === 'mesas' && (
+          <div className="space-y-4">
+            <SeatingChartEditor eventoId={parseInt(id)} />
           </div>
         )}
 
