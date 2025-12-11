@@ -22,8 +22,8 @@ class ChatbotConfigModel {
      * @param {string} [chatbotData.n8n_workflow_id] - ID del workflow en n8n
      * @param {string} [chatbotData.n8n_credential_id] - ID de la credential en n8n
      * @param {string} [chatbotData.mcp_credential_id] - ID de la credential MCP en n8n (compartida por org)
-     * @param {string} [chatbotData.ai_model] - Modelo de IA (default: deepseek-chat)
-     * @param {number} [chatbotData.ai_temperature] - Temperatura del modelo (0.0-2.0, default: 0.7)
+     * @param {string} [chatbotData.ai_model] - Modelo de IA (default: qwen3-235b)
+     * @param {number} [chatbotData.ai_temperature] - Temperatura del modelo (0.0-2.0, default: 0.4)
      * @param {string} [chatbotData.system_prompt] - Prompt del sistema para el AI Agent
      * @param {string} [chatbotData.mcp_jwt_token] - Token JWT para autenticación con MCP Server
      * @param {boolean} [chatbotData.activo] - Si el chatbot está activo (default: false, se activa después)
@@ -56,8 +56,8 @@ class ChatbotConfigModel {
                 chatbotData.n8n_workflow_id || null,
                 chatbotData.n8n_credential_id || null,
                 chatbotData.mcp_credential_id || null,
-                chatbotData.ai_model || 'deepseek-chat',
-                chatbotData.ai_temperature !== undefined ? chatbotData.ai_temperature : 0.7,
+                chatbotData.ai_model || 'qwen3-235b',
+                chatbotData.ai_temperature !== undefined ? chatbotData.ai_temperature : 0.4,
                 chatbotData.system_prompt || null,
                 chatbotData.mcp_jwt_token || null,
                 chatbotData.activo !== undefined ? chatbotData.activo : false,

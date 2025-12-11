@@ -28,6 +28,7 @@ const PLATAFORMAS_VALIDAS = [
 // ========== Modelos de IA Soportados ==========
 
 const MODELOS_IA_VALIDOS = [
+    'qwen3-235b',        // ✅ Modelo principal - mejor function calling
     'deepseek-chat',
     'gpt-4',
     'gpt-4-turbo',
@@ -173,12 +174,12 @@ const configurar = {
             otherwise: Joi.object().required()
         }).required(),
 
-        ai_model: Joi.string().valid(...MODELOS_IA_VALIDOS).optional().default('deepseek-chat')
+        ai_model: Joi.string().valid(...MODELOS_IA_VALIDOS).optional().default('qwen3-235b')
             .messages({
                 'any.only': `ai_model debe ser uno de: ${MODELOS_IA_VALIDOS.join(', ')}`
             }),
 
-        ai_temperature: Joi.number().min(0.0).max(2.0).optional().default(0.7)
+        ai_temperature: Joi.number().min(0.0).max(2.0).optional().default(0.4)
             .messages({
                 'number.min': 'ai_temperature debe estar entre 0.0 y 2.0',
                 'number.max': 'ai_temperature debe estar entre 0.0 y 2.0'
