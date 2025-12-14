@@ -1,6 +1,6 @@
 # Módulo de Eventos Digitales (Invitaciones)
 
-**Actualizado**: 9 Diciembre 2025
+**Actualizado**: 13 Diciembre 2025
 **Estado**: En producción
 
 ---
@@ -16,8 +16,124 @@
 | Sistema QR + Check-in con escáner | ✅ |
 | Agregar a calendario (.ics + Google) | ✅ |
 | Seating Chart (asignación invitados a mesas) | ✅ |
+| Seating Chart - UX mobile mejorada | 🔄 Pendiente |
 | Galería compartida (invitados suben fotos) | 🔄 Pendiente |
 | Recordatorios automáticos (emails) | ⏸️ Baja prioridad |
+
+---
+
+## Pendiente: Seating Chart - UX Mobile Mejorada
+
+### Estado Actual
+
+Actualmente el Seating Chart usa `@dnd-kit` con:
+- `PointerSensor` para desktop (drag inmediato)
+- `TouchSensor` con delay de 200ms para mobile
+- `touch-action: none` en elementos draggables
+
+**Limitaciones en mobile:**
+- El delay de 200ms puede sentirse lento
+- Las mesas son pequeñas y difíciles de tocar con precisión
+- No hay feedback visual de "mantener presionado"
+
+### Propuesta: Controles Híbridos (Opción C)
+
+Implementar un sistema híbrido que detecte el dispositivo y ofrezca la mejor UX:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  DESKTOP                         MOBILE                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                              │
+│  • Drag-drop directo             • Tap en mesa → Selecciona  │
+│  • Hover muestra opciones        • Panel inferior aparece:   │
+│                                    ┌──────────────────────┐  │
+│                                    │  ← ↑ ↓ →  [Mover]   │  │
+│                                    │  Mesa: Mesa Novios    │  │
+│                                    │  Posición: 25%, 40%   │  │
+│                                    └──────────────────────┘  │
+│                                                              │
+│                                  • Alternativa: Tap destino  │
+│                                    en canvas = "Mover aquí"  │
+│                                                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Componentes a Crear
+
+#### 1. `MobilePositionPanel.jsx`
+Panel inferior que aparece al seleccionar una mesa en mobile:
+```jsx
+// Props
+{
+  mesa: { id, nombre, posicion_x, posicion_y },
+  onMove: (direction) => void, // 'up' | 'down' | 'left' | 'right'
+  onPositionChange: (x, y) => void,
+  onClose: () => void
+}
+```
+
+Contenido:
+- Nombre de la mesa seleccionada
+- Botones de dirección (flechas) que mueven 5% por click
+- Inputs numéricos para posición exacta (X%, Y%)
+- Botón "Cerrar" o tap fuera para deseleccionar
+
+#### 2. `useIsMobile.js` hook
+```javascript
+const isMobile = useIsMobile(); // true si viewport < 768px o touch device
+```
+
+#### 3. Modificaciones a `SeatingChartEditor.jsx`
+
+```javascript
+// Estado
+const [selectedMesa, setSelectedMesa] = useState(null);
+const isMobile = useIsMobile();
+
+// En mobile: tap selecciona en lugar de iniciar drag
+const handleMesaTap = (mesa) => {
+  if (isMobile) {
+    setSelectedMesa(mesa);
+  }
+};
+
+// Renderizar panel si hay mesa seleccionada
+{isMobile && selectedMesa && (
+  <MobilePositionPanel
+    mesa={selectedMesa}
+    onMove={handleMoveDirection}
+    onClose={() => setSelectedMesa(null)}
+  />
+)}
+```
+
+#### 4. Modificaciones a `MesaVisual.jsx`
+
+- Agregar `onClick` prop para selección en mobile
+- Mostrar indicador visual cuando está seleccionada (ring/borde)
+- Deshabilitar drag en mobile cuando hay mesa seleccionada
+
+### Flujo UX Mobile
+
+1. Usuario toca una mesa
+2. Mesa se resalta (borde rosa/primary)
+3. Panel aparece desde abajo con controles
+4. Usuario puede:
+   - Usar flechas para mover gradualmente
+   - Ingresar posición exacta
+   - Tocar otra mesa para cambiar selección
+   - Tocar fuera o "X" para cerrar
+
+### Estimación
+
+| Tarea | Complejidad |
+|-------|-------------|
+| Hook `useIsMobile` | Baja |
+| Componente `MobilePositionPanel` | Media |
+| Integrar en `SeatingChartEditor` | Media |
+| Modificar `MesaVisual` para selección | Baja |
+| Testing y ajustes UX | Media |
 
 ---
 
