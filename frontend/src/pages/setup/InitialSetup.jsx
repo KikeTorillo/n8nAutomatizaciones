@@ -134,7 +134,7 @@ export default function InitialSetup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-primary-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         {/* Header con bienvenida */}
         <div className="text-center mb-8">
@@ -143,23 +143,23 @@ export default function InitialSetup() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-3">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-gray-100 mb-3">
             ¡Bienvenido! 🎉
           </h1>
-          <p className="text-xl text-gray-600 mb-2">
+          <p className="text-xl text-gray-600 dark:text-gray-400 mb-2">
             Configure su cuenta de Super Administrador
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-500">
             Esta es la configuración inicial del sistema. Solo se realiza una vez.
           </p>
         </div>
 
         {/* Formulario */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             {/* Información Personal */}
-            <div className="pb-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="pb-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Información Personal
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -181,8 +181,8 @@ export default function InitialSetup() {
             </div>
 
             {/* Credenciales de Acceso */}
-            <div className="pb-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">
+            <div className="pb-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                 Credenciales de Acceso
               </h2>
 
@@ -207,7 +207,7 @@ export default function InitialSetup() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -229,7 +229,7 @@ export default function InitialSetup() {
                 <button
                   type="button"
                   onClick={() => setShowPasswordConfirm(!showPasswordConfirm)}
-                  className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
                 >
                   {showPasswordConfirm ? (
                     <EyeOff className="w-5 h-5" />
@@ -241,8 +241,8 @@ export default function InitialSetup() {
             </div>
 
             {/* Requisitos de contraseña */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">
+            <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Requisitos de seguridad de la contraseña:
               </h3>
               <div className="space-y-2">
@@ -279,10 +279,10 @@ export default function InitialSetup() {
           </form>
 
           {/* Nota de seguridad */}
-          <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="mt-6 p-4 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
             <div className="flex">
-              <AlertCircle className="w-5 h-5 text-amber-600 mr-2 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-800">
+              <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-400 mr-2 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800 dark:text-amber-200">
                 <p className="font-medium mb-1">Nota importante de seguridad:</p>
                 <p>
                   Esta cuenta tendrá acceso completo al sistema. Guarde sus credenciales
@@ -302,11 +302,11 @@ function PasswordRequirement({ met, text }) {
   return (
     <div className="flex items-center space-x-2">
       {met ? (
-        <CheckCircle2 className="w-4 h-4 text-green-600" />
+        <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
       ) : (
-        <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+        <div className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-500" />
       )}
-      <span className={`text-sm ${met ? 'text-green-700' : 'text-gray-600'}`}>
+      <span className={`text-sm ${met ? 'text-green-700 dark:text-green-400' : 'text-gray-600 dark:text-gray-400'}`}>
         {text}
       </span>
     </div>
