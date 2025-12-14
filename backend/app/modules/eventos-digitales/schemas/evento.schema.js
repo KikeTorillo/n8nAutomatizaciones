@@ -74,6 +74,8 @@ const eventosSchemas = {
                 mostrar_felicitaciones: Joi.boolean().optional(),
                 permitir_felicitaciones: Joi.boolean().optional(),
                 permitir_acompanantes: Joi.boolean().optional(),
+                mostrar_qr_invitado: Joi.boolean().optional(),
+                habilitar_seating_chart: Joi.boolean().optional(),
                 mensaje_bienvenida: Joi.string().max(500).optional().allow(null, ''),
                 mensaje_confirmacion: Joi.string().max(500).optional().allow(null, '')
             }).optional()
