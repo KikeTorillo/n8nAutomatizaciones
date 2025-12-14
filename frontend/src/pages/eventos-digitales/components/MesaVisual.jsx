@@ -87,6 +87,7 @@ function MesaVisual({
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : isOver ? 50 : 10,
     transition: isDragging ? 'none' : 'box-shadow 0.2s',
+    touchAction: 'none', // Crítico para touch/mobile drag
   };
 
   if (isEditing) {

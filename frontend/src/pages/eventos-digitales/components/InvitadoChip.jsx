@@ -16,13 +16,16 @@ function InvitadoChip({ invitado, isDraggable = true }) {
     disabled: !isDraggable,
   });
 
-  const style = transform
-    ? {
-        transform: `translate(${transform.x}px, ${transform.y}px)`,
-        opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 100 : 1,
-      }
-    : {};
+  const style = {
+    ...(transform
+      ? {
+          transform: `translate(${transform.x}px, ${transform.y}px)`,
+          opacity: isDragging ? 0.5 : 1,
+          zIndex: isDragging ? 100 : 1,
+        }
+      : {}),
+    touchAction: isDraggable ? 'none' : 'auto', // Crítico para touch/mobile drag
+  };
 
   // Número de personas (invitado + acompañantes)
   const numPersonas = invitado.num_asistentes || 1;

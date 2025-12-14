@@ -5,6 +5,7 @@ import {
   useSensor,
   useSensors,
   PointerSensor,
+  TouchSensor,
   rectIntersection,
   useDroppable,
 } from '@dnd-kit/core';
@@ -56,11 +57,17 @@ function SeatingChartEditor({ eventoId }) {
   const asignarInvitado = useAsignarInvitadoAMesa();
   const desasignarInvitado = useDesasignarInvitadoDeMesa();
 
-  // Sensors para drag-drop
+  // Sensors para drag-drop (PointerSensor para desktop, TouchSensor para mobile)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
         distance: 5,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200, // Mantener presionado 200ms antes de iniciar drag
+        tolerance: 5, // Tolerancia de movimiento durante el delay
       },
     })
   );
