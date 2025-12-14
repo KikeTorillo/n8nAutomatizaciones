@@ -12,7 +12,7 @@ import {
 import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -374,15 +374,15 @@ function SeatingChartEditor({ eventoId }) {
         </div>
       </div>
 
-      {/* Modal crear mesa */}
-      <Modal
+      {/* Drawer crear mesa */}
+      <Drawer
         isOpen={showCreateMesa}
         onClose={() => {
           setShowCreateMesa(false);
           setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
         }}
         title="Nueva Mesa"
-        maxWidth="md"
+        subtitle="Configura una nueva mesa para el evento"
       >
         <div className="space-y-4">
           <Input
@@ -441,7 +441,7 @@ function SeatingChartEditor({ eventoId }) {
             Crear Mesa
           </Button>
         </div>
-      </Modal>
+      </Drawer>
 
       {/* Modal confirmar eliminar mesa */}
       <ConfirmDialog

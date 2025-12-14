@@ -1,9 +1,12 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
 /**
  * Componente Modal reutilizable
+ * USO: Confirmaciones y visualización de datos (solo lectura)
+ * NOTA: Para formularios con inputs, usar Drawer en su lugar
+ *
  * @param {boolean} isOpen - Estado del modal
  * @param {function} onClose - Callback para cerrar el modal
  * @param {string} title - Título del modal
@@ -25,118 +28,30 @@ function Modal({
   showCloseButton = true,
   disableClose = false
 }) {
-  const scrollYRef = useRef(0);
-  const modalContentRef = useRef(null);
-
-  // Bloquear scroll del body cuando el modal está abierto (fix iOS)
+  // Bloquear scroll del body cuando el modal está abierto
   useEffect(() => {
     if (isOpen) {
-      // Guardar posición de scroll actual
-      scrollYRef.current = window.scrollY;
-
-      // Enfoque simplificado - solo overflow hidden (evita problemas con teclado iOS)
-      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
     } else {
-      // Restaurar estilos
-      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-
-      // Restaurar posición de scroll
-      window.scrollTo(0, scrollYRef.current);
     }
 
     return () => {
-      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-    };
-  }, [isOpen]);
-
-  // Fix iOS: forzar recálculo de layout cuando el teclado se cierra
-  // El problema: iOS Safari no recalcula touch targets después de cerrar el teclado
-  // Solución: forzar repaint cada vez que un input pierde el foco
-  useEffect(() => {
-    if (!isOpen) return;
-
-    // Detectar si es iOS
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-    if (!isIOS) return;
-
-    // Función agresiva para forzar repaint
-    const forceRepaint = () => {
-      if (!modalContentRef.current) return;
-
-      // Método 1: micro-scroll en el contenedor del modal
-      const scrollContainer = modalContentRef.current.querySelector('.overflow-y-auto');
-      if (scrollContainer) {
-        const currentScroll = scrollContainer.scrollTop;
-        scrollContainer.scrollTop = currentScroll + 1;
-        requestAnimationFrame(() => {
-          scrollContainer.scrollTop = currentScroll;
-        });
-      }
-
-      // Método 2: forzar reflow via getBoundingClientRect
-      modalContentRef.current.getBoundingClientRect();
-
-      // Método 3: toggle de una propiedad CSS para forzar repaint
-      modalContentRef.current.style.transform = 'translateZ(0)';
-      requestAnimationFrame(() => {
-        if (modalContentRef.current) {
-          modalContentRef.current.style.transform = '';
-        }
-      });
-    };
-
-    // Escuchar cuando cualquier input pierde el foco
-    const handleFocusOut = (e) => {
-      const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
-      if (!isFormElement) return;
-
-      // El teclado tarda ~300ms en cerrar completamente en iOS
-      // Disparar el repaint múltiples veces para asegurar
-      setTimeout(forceRepaint, 50);
-      setTimeout(forceRepaint, 150);
-      setTimeout(forceRepaint, 300);
-    };
-
-    // Escuchar cambios de visualViewport (más confiable para detectar teclado)
-    const handleViewportChange = () => {
-      setTimeout(forceRepaint, 50);
-      setTimeout(forceRepaint, 150);
-    };
-
-    // Registrar listeners
-    document.addEventListener('focusout', handleFocusOut, true);
-
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportChange);
-      window.visualViewport.addEventListener('scroll', handleViewportChange);
-    }
-
-    return () => {
-      document.removeEventListener('focusout', handleFocusOut, true);
-      if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportChange);
-        window.visualViewport.removeEventListener('scroll', handleViewportChange);
-      }
     };
   }, [isOpen]);
 
   // Cerrar con ESC
   useEffect(() => {
     const handleEscape = (e) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !disableClose) {
         onClose();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, disableClose]);
 
   const sizeClasses = {
     sm: 'max-w-md',
@@ -156,14 +71,12 @@ function Modal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={disableClose ? undefined : onClose}
-            onTouchMove={(e) => e.preventDefault()}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 touch-none"
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           />
 
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
             <motion.div
-              ref={modalContentRef}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
@@ -199,7 +112,7 @@ function Modal({
               )}
 
               {/* Content */}
-              <div className="overflow-y-auto flex-1 p-6 overscroll-contain">
+              <div className="overflow-y-auto flex-1 p-6">
                 {children}
               </div>
 
