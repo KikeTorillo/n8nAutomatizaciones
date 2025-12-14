@@ -435,7 +435,7 @@ function SeatingChartEditor({ eventoId }) {
           <Button
             type="button"
             variant="primary"
-            onClick={handleCreateMesa}
+            onClick={() => setTimeout(handleCreateMesa, 50)}
             isLoading={crearMesa.isPending}
           >
             Crear Mesa

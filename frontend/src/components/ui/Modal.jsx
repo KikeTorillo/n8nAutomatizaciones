@@ -33,30 +33,24 @@ function Modal({
       // Guardar posición de scroll actual
       scrollYRef.current = window.scrollY;
 
-      // Aplicar estilos para bloquear scroll en iOS
-      document.body.style.position = 'fixed';
-      document.body.style.top = `-${scrollYRef.current}px`;
-      document.body.style.left = '0';
-      document.body.style.right = '0';
+      // Enfoque simplificado - solo overflow hidden (evita problemas con teclado iOS)
+      document.documentElement.style.overflow = 'hidden';
       document.body.style.overflow = 'hidden';
+      document.body.style.touchAction = 'none';
     } else {
       // Restaurar estilos
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
 
       // Restaurar posición de scroll
       window.scrollTo(0, scrollYRef.current);
     }
 
     return () => {
-      document.body.style.position = '';
-      document.body.style.top = '';
-      document.body.style.left = '';
-      document.body.style.right = '';
+      document.documentElement.style.overflow = '';
       document.body.style.overflow = '';
+      document.body.style.touchAction = '';
     };
   }, [isOpen]);
 
