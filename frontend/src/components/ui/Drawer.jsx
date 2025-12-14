@@ -17,13 +17,11 @@ function Drawer({
   title,
   subtitle,
   children,
-  snapPoints = ['85%'],
 }) {
   return (
     <VaulDrawer.Root
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
-      snapPoints={snapPoints}
     >
       <VaulDrawer.Portal>
         {/* Overlay oscuro */}
