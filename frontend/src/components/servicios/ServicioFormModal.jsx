@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -254,11 +254,13 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
   const isLoadingData = isEditMode && loadingServicio;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? 'Editar Servicio' : 'Nuevo Servicio'}
-      maxWidth="3xl"
+      subtitle={isEditMode
+        ? 'Modifica los datos del servicio'
+        : 'Completa la información del servicio'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header con imagen del servicio */}
@@ -303,13 +305,8 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
             )}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {isEditMode ? 'Editar Servicio' : 'Crear Nuevo Servicio'}
-            </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {isEditMode
-                ? 'Modifica los datos del servicio (profesionales se gestionan por separado)'
-                : 'Completa la información del servicio'}
+              Toca la imagen para cambiarla
             </p>
           </div>
         </div>
@@ -620,7 +617,7 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
           </>
         )}
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 
