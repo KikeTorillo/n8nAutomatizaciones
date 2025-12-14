@@ -194,7 +194,7 @@ function PlantillasEventos() {
           <button
             onClick={() => setFiltroTipo('')}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              !filtroTipo ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              !filtroTipo ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             Todas
@@ -204,7 +204,7 @@ function PlantillasEventos() {
               key={tipo.value}
               onClick={() => setFiltroTipo(tipo.value)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                filtroTipo === tipo.value ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                filtroTipo === tipo.value ? 'bg-primary-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {tipo.label}
@@ -215,7 +215,7 @@ function PlantillasEventos() {
 
       {/* Formulario */}
       {showForm && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-2 border-red-200 dark:border-red-800">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-2 border-primary-200 dark:border-primary-800">
           <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
             {editingId ? 'Editar Plantilla' : 'Nueva Plantilla'}
           </h2>

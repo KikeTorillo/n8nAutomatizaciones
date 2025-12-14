@@ -14,7 +14,7 @@ export default function SuperAdminDashboard() {
         return (
             <div className="flex items-center justify-center h-96">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-red-600 dark:border-red-500 mx-auto"></div>
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-primary-600 dark:border-primary-500 mx-auto"></div>
                     <p className="mt-4 text-gray-600 dark:text-gray-400 font-medium">Cargando dashboard...</p>
                 </div>
             </div>
