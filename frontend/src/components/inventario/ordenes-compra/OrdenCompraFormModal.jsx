@@ -11,7 +11,7 @@ import {
   Calendar,
   Search
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
@@ -235,11 +235,11 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={esEdicion ? 'Editar Orden de Compra' : 'Nueva Orden de Compra'}
-      size="4xl"
+      subtitle={esEdicion ? 'Modifica los datos de la orden' : 'Completa la información para crear la orden'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información básica */}
@@ -517,6 +517,6 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Search, User, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -114,13 +114,13 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title="Atención Walk-in"
-      size="md"
+      subtitle="Registro rápido de cliente sin cita previa"
     >
-      <div className="p-6">
+      <div className="space-y-6">
         {/* Progress Indicator */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-2">
@@ -395,7 +395,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
           </div>
         )}
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

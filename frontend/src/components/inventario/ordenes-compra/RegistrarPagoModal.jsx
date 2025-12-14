@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useRegistrarPagoOrdenCompra } from '@/hooks/useOrdenesCompra';
@@ -82,11 +82,11 @@ export default function RegistrarPagoModal({ isOpen, onClose, orden }) {
   if (!orden) return null;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={`Registrar Pago - ${orden.folio}`}
-      size="md"
+      subtitle="Registra un pago parcial o total de la orden"
     >
       <div className="space-y-6">
         {/* Resumen de la orden */}
@@ -193,6 +193,6 @@ export default function RegistrarPagoModal({ isOpen, onClose, orden }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

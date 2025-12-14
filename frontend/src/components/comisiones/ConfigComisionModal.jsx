@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { DollarSign } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -201,11 +201,11 @@ function ConfigComisionModal({
     : `Nueva Comisión por ${isProducto ? 'Producto' : 'Servicio'}`;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={modalTitle}
-      icon={DollarSign}
+      subtitle={isEditMode ? 'Modifica la configuración de comisión' : 'Define el esquema de comisión para el profesional'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Profesional */}
@@ -388,7 +388,7 @@ function ConfigComisionModal({
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

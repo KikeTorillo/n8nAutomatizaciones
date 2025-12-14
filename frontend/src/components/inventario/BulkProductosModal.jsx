@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Upload, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useBulkCrearProductos } from '@/hooks/useProductos';
 import { useToast } from '@/hooks/useToast';
@@ -172,11 +172,11 @@ function BulkProductosModal({ isOpen, onClose }) {
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Carga Masiva de Productos"
-      size="2xl"
+      subtitle="Importa múltiples productos desde un archivo CSV"
     >
       <div className="space-y-6">
         {/* Instrucciones */}
@@ -270,7 +270,7 @@ function BulkProductosModal({ isOpen, onClose }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

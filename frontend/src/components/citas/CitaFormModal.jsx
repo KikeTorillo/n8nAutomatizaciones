@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Calendar, User, Briefcase, Package, Clock, DollarSign } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MultiSelect from '@/components/ui/MultiSelect';
@@ -415,27 +415,13 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   }));
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? 'Editar Cita' : 'Nueva Cita'}
-      size="large"
+      subtitle={isEditMode ? 'Modifica los datos de la cita' : 'Completa la información de la cita'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center">
-            <Calendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {isEditMode ? 'Editar Cita' : 'Crear Nueva Cita'}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {isEditMode ? 'Modifica los datos de la cita' : 'Completa la información de la cita'}
-            </p>
-          </div>
-        </div>
 
         {/* Loading state durante fetch de datos en modo edición */}
         {isLoadingData ? (
@@ -680,7 +666,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
           </>
         )}
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

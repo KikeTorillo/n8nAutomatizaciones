@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { AlertCircle, Calendar, Clock, User, Building, Info } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import FormField from '@/components/forms/FormField';
 import Input from '@/components/ui/Input';
@@ -158,11 +158,11 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
   const hoy = format(new Date(), 'yyyy-MM-dd');
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title={modo === 'crear' ? 'Nuevo Bloqueo de Horario' : 'Editar Bloqueo'}
-      size="lg"
+      subtitle={modo === 'crear' ? 'Configura el período de bloqueo' : 'Modifica el bloqueo existente'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información del bloqueo */}
@@ -415,7 +415,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

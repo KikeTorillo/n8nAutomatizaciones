@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Package, Check, AlertTriangle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
@@ -120,11 +120,11 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   const totalARecibir = recepciones.reduce((sum, r) => sum + r.cantidad, 0);
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={`Recibir Mercancía - ${orden?.folio || ''}`}
-      size="4xl"
+      subtitle="Registra las cantidades recibidas de cada producto"
     >
       {isLoading ? (
         <div className="p-8 text-center text-gray-500 dark:text-gray-400">
@@ -315,6 +315,6 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
           </div>
         </div>
       )}
-    </Modal>
+    </Drawer>
   );
 }

@@ -115,6 +115,14 @@ Usuario (Telegram/WhatsApp) → n8n → AI Agent → MCP Server → Backend API
 - **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
 - **Dark mode**: Usar siempre variantes `dark:` en clases Tailwind
 - **Colores de marca**: Usar `primary-*` (no blue, indigo, purple, etc.)
+- **Formularios móviles**: Usar `Drawer` (no Modal) - evita bug iOS Safari con teclado virtual
+
+### Componentes UI Clave
+| Componente | Uso |
+|------------|-----|
+| `Drawer` | Formularios (bottom sheet, Vaul) |
+| `Modal` | Confirmaciones y visualización |
+| `ConfirmDialog` | Acciones destructivas |
 
 ---
 
@@ -147,4 +155,4 @@ frontend/src/
 
 ---
 
-**Actualizado**: 13 Diciembre 2025
+**Actualizado**: 14 Diciembre 2025

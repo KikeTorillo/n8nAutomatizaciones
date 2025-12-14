@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
 import FieldWrapper from '@/components/forms/FieldWrapper';
@@ -101,11 +101,11 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
   const esStockAlto = stockCalculado >= producto.stock_maximo;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Ajustar Stock Manualmente"
-      size="lg"
+      subtitle={producto ? `Producto: ${producto.nombre}` : 'Ajuste de inventario'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información del Producto */}
@@ -311,7 +311,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

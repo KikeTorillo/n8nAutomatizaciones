@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useAsignarProfesional, useDesasignarProfesional } from '@/hooks/useServicios';
@@ -148,30 +148,13 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
   const isLoading = loadingAsignados || loadingTodos;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Gestionar Servicios"
-      maxWidth="2xl"
+      subtitle={profesional ? `${profesional.nombre} ${profesional.apellidos || ''}` : 'Selecciona los servicios del profesional'}
     >
       <div className="space-y-6">
-        {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white"
-            style={{ backgroundColor: profesional?.color_calendario || '#3b82f6' }}
-          >
-            <Briefcase className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {profesional?.nombre} {profesional?.apellidos}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Selecciona los servicios que puede realizar este profesional
-            </p>
-          </div>
-        </div>
 
         {/* Loading state */}
         {isLoading ? (
@@ -269,7 +252,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

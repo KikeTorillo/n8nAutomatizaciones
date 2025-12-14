@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import PlatformCard from './PlatformCard';
 import TelegramConfigForm from './TelegramConfigForm';
 import WhatsAppConfigForm from './WhatsAppConfigForm';
@@ -102,11 +102,11 @@ function ConfigurarChatbotModal({ isOpen, onClose, onSuccess }) {
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title={selectedPlatform ? `Configurar ${selectedPlatform === 'telegram' ? 'Telegram' : 'WhatsApp'}` : 'Nuevo Chatbot con IA'}
-      size="lg"
+      subtitle="Conecta tu asistente inteligente a tu plataforma favorita"
     >
       <div className="space-y-6">
         {/* Selección de Plataforma */}
@@ -181,7 +181,7 @@ function ConfigurarChatbotModal({ isOpen, onClose, onSuccess }) {
           </div>
         )}
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

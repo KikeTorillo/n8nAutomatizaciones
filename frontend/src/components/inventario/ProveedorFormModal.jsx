@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Building2, Phone, MapPin } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -243,11 +243,11 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={esEdicion ? 'Editar Proveedor' : 'Nuevo Proveedor'}
-      size="2xl"
+      subtitle={esEdicion ? 'Modifica los datos del proveedor' : 'Completa la información del proveedor'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* INFORMACIÓN BÁSICA */}
@@ -474,7 +474,7 @@ function ProveedorFormModal({ isOpen, onClose, proveedor = null, mode = 'create'
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

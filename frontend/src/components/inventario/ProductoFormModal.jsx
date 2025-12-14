@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -426,11 +426,11 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={mode === 'create' ? 'Nuevo Producto' : 'Editar Producto'}
-      size="xl"
+      subtitle={mode === 'create' ? 'Completa la información del producto' : 'Modifica los datos del producto'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información Básica */}
@@ -733,7 +733,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 

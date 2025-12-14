@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Clock, Trash2, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
@@ -150,30 +150,13 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Gestión de Horarios"
-      maxWidth="5xl"
+      subtitle={profesional ? `${profesional.nombre} ${profesional.apellidos || ''}` : 'Configura los horarios de disponibilidad'}
     >
       <div className="space-y-6">
-        {/* Header con info del profesional */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div
-            className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
-            style={{ backgroundColor: profesional?.color_calendario || '#3b82f6' }}
-          >
-            <Calendar className="w-6 h-6" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {profesional?.nombre} {profesional?.apellidos}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Configura los horarios de disponibilidad
-            </p>
-          </div>
-        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Panel izquierdo: Configuración de horarios */}
@@ -393,7 +376,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
         variant="danger"
         isLoading={eliminarMutation.isPending}
       />
-    </Modal>
+    </Drawer>
   );
 }
 

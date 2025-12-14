@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Users, AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { profesionalesApi } from '@/services/api/endpoints';
 import {
@@ -149,27 +149,13 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
   const isLoading = loadingAsignados || loadingTodos;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title="Gestionar Profesionales"
-      maxWidth="2xl"
+      subtitle={servicio ? servicio.nombre : 'Selecciona los profesionales del servicio'}
     >
       <div className="space-y-6">
-        {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
-            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {servicio?.nombre}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Selecciona los profesionales que ofrecen este servicio
-            </p>
-          </div>
-        </div>
 
         {/* Loading state */}
         {isLoading ? (
@@ -268,7 +254,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }
 

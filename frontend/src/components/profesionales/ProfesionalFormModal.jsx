@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw, Camera, X, Loader2 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
@@ -401,16 +401,15 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const isLoadingData = isEditMode && loadingProfesional;
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={isEditMode ? 'Editar Profesional' : 'Nuevo Profesional'}
-      maxWidth="3xl"
+      subtitle={isEditMode ? 'Modifica los datos del profesional' : 'Completa la información del profesional'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Header con foto de perfil */}
+        {/* Foto de perfil */}
         <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
-          {/* Foto de perfil editable */}
           <div className="relative">
             {fotoPreview ? (
               <div className="relative">
@@ -453,15 +452,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
               </div>
             )}
           </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-              {isEditMode ? 'Editar Profesional' : 'Crear Nuevo Profesional'}
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {isEditMode
-                ? 'Modifica los datos del profesional'
-                : 'Completa la información del profesional'}
-            </p>
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Foto de perfil (opcional)
           </div>
         </div>
 
@@ -800,7 +792,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         cancelText="Volver"
         variant="warning"
       />
-    </Modal>
+    </Drawer>
   );
 }
 

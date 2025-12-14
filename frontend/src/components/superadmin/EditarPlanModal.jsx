@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Modal from '../ui/Modal';
+import Drawer from '../ui/Drawer';
 import FormField from '../forms/FormField';
 import Checkbox from '../ui/Checkbox';
 import Button from '../ui/Button';
@@ -139,11 +139,11 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title={`Editar Plan: ${plan?.nombre_plan || ''}`}
-      size="lg"
+      subtitle="Modifica los límites y precios del plan"
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información General */}
@@ -290,6 +290,6 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }

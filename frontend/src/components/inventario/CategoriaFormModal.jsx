@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FolderTree, Tag, Palette } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
@@ -155,11 +155,11 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
   });
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
       title={esEdicion ? 'Editar Categoría' : 'Nueva Categoría'}
-      size="lg"
+      subtitle={esEdicion ? 'Modifica los datos de la categoría' : 'Completa la información de la categoría'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Nombre */}
@@ -289,7 +289,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
           </Button>
         </div>
       </form>
-    </Modal>
+    </Drawer>
   );
 }
 
