@@ -9,7 +9,7 @@ import {
   rectIntersection,
   useDroppable,
 } from '@dnd-kit/core';
-import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check } from 'lucide-react';
+import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check, Move, GripVertical } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Drawer from '@/components/ui/Drawer';
@@ -40,6 +40,7 @@ function SeatingChartEditor({ eventoId }) {
   const [showCreateMesa, setShowCreateMesa] = useState(false);
   const [editingMesa, setEditingMesa] = useState(null);
   const [mesaAEliminar, setMesaAEliminar] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false); // Modo edición para mover mesas
   const [newMesaData, setNewMesaData] = useState({
     nombre: '',
     numero: '',
@@ -60,7 +61,9 @@ function SeatingChartEditor({ eventoId }) {
   const asignarInvitado = useAsignarInvitadoAMesa();
   const desasignarInvitado = useDesasignarInvitadoDeMesa();
 
-  // Sensors para drag-drop (PointerSensor para desktop, TouchSensor para mobile)
+  // Sensors para drag-drop
+  // En modo edición: drag habilitado para mesas e invitados
+  // Fuera de modo edición: solo drag de invitados (asignación a mesas)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -69,8 +72,8 @@ function SeatingChartEditor({ eventoId }) {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 200, // Mantener presionado 200ms antes de iniciar drag
-        tolerance: 5, // Tolerancia de movimiento durante el delay
+        delay: 150,
+        tolerance: 5,
       },
     })
   );
@@ -93,15 +96,22 @@ function SeatingChartEditor({ eventoId }) {
   // Manejar inicio de drag
   const handleDragStart = useCallback((event) => {
     const { active } = event;
+    const activeIdStr = String(active.id);
+
+    // Si es una mesa y NO está en modo edición, cancelar el drag
+    if (activeIdStr.startsWith('mesa-') && !isEditMode) {
+      return;
+    }
+
     setActiveId(active.id);
 
     // Determinar tipo de elemento siendo arrastrado
-    if (String(active.id).startsWith('mesa-')) {
+    if (activeIdStr.startsWith('mesa-')) {
       setDragType('mesa');
-    } else if (String(active.id).startsWith('invitado-')) {
+    } else if (activeIdStr.startsWith('invitado-')) {
       setDragType('invitado');
     }
-  }, []);
+  }, [isEditMode]);
 
   // Manejar fin de drag
   const handleDragEnd = useCallback(async (event) => {
@@ -245,13 +255,6 @@ function SeatingChartEditor({ eventoId }) {
     return { asignados, porcentaje };
   };
 
-  // Color según ocupación
-  const getOcupacionColor = (porcentaje) => {
-    if (porcentaje >= 100) return 'bg-red-500';
-    if (porcentaje >= 75) return 'bg-yellow-500';
-    return 'bg-green-500';
-  };
-
   if (loadingMesas || loadingInvitados) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -303,34 +306,73 @@ function SeatingChartEditor({ eventoId }) {
         {/* Canvas principal */}
         <div className="flex-1 flex flex-col min-h-[300px] lg:min-h-0">
           {/* Toolbar */}
-          <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white dark:bg-gray-800 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700">
+          <div className={`flex flex-wrap items-center justify-between gap-2 p-3 rounded-t-lg border border-b-0 transition-colors ${
+            isEditMode
+              ? 'bg-primary-50 dark:bg-primary-900/20 border-primary-300 dark:border-primary-700'
+              : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
+          }`}>
             <div className="flex items-center gap-2 sm:gap-4">
-              <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 text-sm sm:text-base">
-                <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="hidden xs:inline">Distribución de</span> Mesas
-              </h3>
-              {estadisticas && (
+              {isEditMode ? (
+                <h3 className="font-medium text-primary-700 dark:text-primary-300 flex items-center gap-2 text-sm sm:text-base">
+                  <Move className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">Editando</span> Acomodo
+                </h3>
+              ) : (
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 text-sm sm:text-base">
+                  <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="hidden xs:inline">Distribución de</span> Mesas
+                </h3>
+              )}
+              {estadisticas && !isEditMode && (
                 <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {estadisticas.total_mesas} mesas • {estadisticas.total_asignados}/{estadisticas.capacidad_total} asientos
                 </div>
               )}
             </div>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => setShowCreateMesa(true)}
-              className="flex items-center gap-1 text-xs sm:text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Nueva</span> Mesa
-            </Button>
+            <div className="flex items-center gap-2">
+              {/* Botón modo edición */}
+              <Button
+                variant={isEditMode ? 'primary' : 'outline'}
+                size="sm"
+                onClick={() => setIsEditMode(!isEditMode)}
+                className="flex items-center gap-1 text-xs sm:text-sm"
+              >
+                {isEditMode ? (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span className="hidden sm:inline">Listo</span>
+                  </>
+                ) : (
+                  <>
+                    <GripVertical className="w-4 h-4" />
+                    <span className="hidden sm:inline">Editar Acomodo</span>
+                  </>
+                )}
+              </Button>
+              {/* Botón nueva mesa - solo visible en modo edición */}
+              {isEditMode && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreateMesa(true)}
+                  className="flex items-center gap-1 text-xs sm:text-sm"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span className="hidden sm:inline">Mesa</span>
+                </Button>
+              )}
+            </div>
           </div>
 
           {/* Canvas de mesas */}
           <div
             ref={setCanvasRef}
             id="seating-canvas"
-            className="flex-1 relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-b-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[250px]"
+            className={`flex-1 relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-b-lg border overflow-hidden min-h-[250px] transition-all ${
+              isEditMode
+                ? 'border-primary-300 dark:border-primary-700 ring-2 ring-primary-200 dark:ring-primary-800 touch-none'
+                : 'border-gray-200 dark:border-gray-700'
+            }`}
           >
             {/* Grid de fondo */}
             <div
@@ -351,6 +393,7 @@ function SeatingChartEditor({ eventoId }) {
                   asignados={asignados}
                   porcentaje={porcentaje}
                   isEditing={editingMesa?.id === mesa.id}
+                  isEditMode={isEditMode}
                   onEdit={() => setEditingMesa(mesa)}
                   onDelete={() => setMesaAEliminar(mesa)}
                   onDesasignarInvitado={handleDesasignarInvitado}
@@ -366,8 +409,16 @@ function SeatingChartEditor({ eventoId }) {
                 <div className="text-center text-gray-500 dark:text-gray-400">
                   <LayoutGrid className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No hay mesas configuradas</p>
-                  <p className="text-sm">Crea una mesa para comenzar</p>
+                  <p className="text-sm">Activa "Editar Acomodo" y crea una mesa</p>
                 </div>
+              </div>
+            )}
+
+            {/* Hint en modo edición */}
+            {isEditMode && mesas.length > 0 && (
+              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-primary-600 dark:bg-primary-500 text-white text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
+                <Move className="w-4 h-4" />
+                Arrastra las mesas para reorganizar
               </div>
             )}
           </div>

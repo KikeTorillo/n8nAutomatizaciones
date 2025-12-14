@@ -13,6 +13,7 @@ function MesaVisual({
   asignados,
   porcentaje,
   isEditing,
+  isEditMode = false,
   onEdit,
   onDelete,
   onDesasignarInvitado,
@@ -25,7 +26,7 @@ function MesaVisual({
   });
   const [showInvitados, setShowInvitados] = useState(false);
 
-  // Draggable para mover mesa
+  // Draggable para mover mesa (solo habilitado en modo edición)
   const {
     attributes: dragAttributes,
     listeners: dragListeners,
@@ -34,7 +35,7 @@ function MesaVisual({
     isDragging,
   } = useDraggable({
     id: `mesa-${mesa.id}`,
-    disabled: isEditing,
+    disabled: isEditing || !isEditMode, // Deshabilitado si está editando o no está en modo edición
   });
 
   // Droppable para recibir invitados
@@ -87,7 +88,7 @@ function MesaVisual({
     opacity: isDragging ? 0.5 : 1,
     zIndex: isDragging ? 100 : isOver ? 50 : 10,
     transition: isDragging ? 'none' : 'box-shadow 0.2s',
-    touchAction: 'none', // Crítico para touch/mobile drag
+    touchAction: isEditMode ? 'none' : 'auto', // Solo bloquear touch en modo edición
   };
 
   if (isEditing) {
@@ -138,18 +139,18 @@ function MesaVisual({
     <div
       ref={setNodeRef}
       style={style}
-      {...dragAttributes}
-      {...dragListeners}
+      {...(isEditMode ? { ...dragAttributes, ...dragListeners } : {})}
       className={`
         ${getSize()}
         ${getMesaShape()}
         ${getOcupacionColor()}
-        border-2 cursor-move
+        border-2
         flex flex-col items-center justify-center
         shadow-md hover:shadow-lg
         group
         ${isOver ? 'ring-2 ring-pink-400 ring-offset-2' : ''}
-        ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}
+        ${isEditMode ? (isDragging ? 'cursor-grabbing' : 'cursor-grab') : 'cursor-default'}
+        ${isEditMode ? 'ring-2 ring-primary-300 dark:ring-primary-600' : ''}
       `}
     >
       {/* Contenido de la mesa */}
@@ -163,14 +164,16 @@ function MesaVisual({
       </div>
 
 
-      {/* Botones de acción (hover) */}
-      <div className="absolute -top-2 -right-2 opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+      {/* Botones de acción (siempre visibles en modo edición, hover en modo normal) */}
+      <div className={`absolute -top-2 -right-2 transition-opacity flex gap-1 ${
+        isEditMode ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+      }`}>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
-          className="p-1 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
+          className="p-1.5 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600"
         >
           <Edit2 className="w-3 h-3 text-gray-600 dark:text-gray-300" />
         </button>
@@ -179,7 +182,7 @@ function MesaVisual({
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-red-100 dark:hover:bg-red-900/30"
+          className="p-1.5 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-red-100 dark:hover:bg-red-900/30 border border-gray-200 dark:border-gray-600"
         >
           <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
         </button>
