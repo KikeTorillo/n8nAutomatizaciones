@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 
@@ -25,16 +25,38 @@ function Modal({
   showCloseButton = true,
   disableClose = false
 }) {
-  // Bloquear scroll del body cuando el modal está abierto
+  const scrollYRef = useRef(0);
+
+  // Bloquear scroll del body cuando el modal está abierto (fix iOS)
   useEffect(() => {
     if (isOpen) {
+      // Guardar posición de scroll actual
+      scrollYRef.current = window.scrollY;
+
+      // Aplicar estilos para bloquear scroll en iOS
+      document.body.style.position = 'fixed';
+      document.body.style.top = `-${scrollYRef.current}px`;
+      document.body.style.left = '0';
+      document.body.style.right = '0';
       document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = 'unset';
+      // Restaurar estilos
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
+
+      // Restaurar posición de scroll
+      window.scrollTo(0, scrollYRef.current);
     }
 
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.position = '';
+      document.body.style.top = '';
+      document.body.style.left = '';
+      document.body.style.right = '';
+      document.body.style.overflow = '';
     };
   }, [isOpen]);
 
@@ -68,7 +90,8 @@ function Modal({
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             onClick={disableClose ? undefined : onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onTouchMove={(e) => e.preventDefault()}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 touch-none"
           />
 
           {/* Modal */}
@@ -109,7 +132,7 @@ function Modal({
               )}
 
               {/* Content */}
-              <div className="overflow-y-auto flex-1 p-6">
+              <div className="overflow-y-auto flex-1 p-6 overscroll-contain">
                 {children}
               </div>
 
