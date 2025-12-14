@@ -39,8 +39,13 @@
   }
 
   /* Asegurar que el html también tenga el fondo correcto */
+  /* Nota: No podemos usar dark: porque html ES el elemento con .dark, no tiene ancestro */
   html {
-    @apply bg-gray-50 dark:bg-gray-900;
+    background-color: #f9fafb; /* gray-50 */
+  }
+
+  html.dark {
+    background-color: #111827; /* gray-900 */
   }
 }
 
