@@ -77,10 +77,10 @@ function WhatsAppConfigForm({
   return (
     <div className="space-y-6">
       {/* Info Card */}
-      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+      <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-green-800">
+          <AlertCircle className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-green-800 dark:text-green-200">
             <p className="font-semibold mb-1">¿No tienes una cuenta de WhatsApp Business?</p>
             <p className="mb-2">
               Necesitas crear una cuenta de WhatsApp Business Cloud API en Meta for Developers.
@@ -88,7 +88,7 @@ function WhatsAppConfigForm({
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
-              className="text-green-600 hover:text-green-700 font-medium underline"
+              className="text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 font-medium underline"
             >
               {showInstructions ? 'Ocultar instrucciones' : 'Ver instrucciones'}
             </button>
@@ -98,18 +98,18 @@ function WhatsAppConfigForm({
 
       {/* Instrucciones colapsables */}
       {showInstructions && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-          <h3 className="font-semibold text-gray-900">
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
             Cómo obtener credenciales de WhatsApp Business Cloud API:
           </h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
             <li>
               Ve a{' '}
               <a
                 href="https://developers.facebook.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium inline-flex items-center gap-1"
               >
                 Meta for Developers
                 <ExternalLink className="w-3 h-3" />
@@ -133,8 +133,8 @@ function WhatsAppConfigForm({
               <strong>Business Account ID</strong> desde la configuración de la cuenta
             </li>
           </ol>
-          <div className="bg-yellow-50 border border-yellow-200 rounded p-3 mt-3">
-            <p className="text-xs text-yellow-800">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded p-3 mt-3">
+            <p className="text-xs text-yellow-800 dark:text-yellow-200">
               <strong>Importante:</strong> El Access Token es sensible. Guárdalo de forma segura
               y nunca lo compartas públicamente.
             </p>
@@ -225,17 +225,17 @@ function WhatsAppConfigForm({
 
         {/* Estado de carga */}
         {isLoading && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <LoadingSpinner size="sm" text="Validando credenciales con Meta y configurando workflow..." />
           </div>
         )}
 
         {/* Success state */}
         {isSuccess && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-green-800">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-green-800 dark:text-green-200">
                 <p className="font-semibold mb-1">¡Bot de WhatsApp configurado exitosamente!</p>
                 <p>El workflow de n8n ha sido creado y activado.</p>
               </div>
@@ -244,7 +244,7 @@ function WhatsAppConfigForm({
         )}
 
         {/* Botones de navegación */}
-        <div className="flex justify-end pt-4 border-t gap-2">
+        <div className="flex justify-end pt-4 border-t dark:border-gray-700 gap-2">
           <Button
             type="button"
             variant="ghost"

@@ -89,12 +89,12 @@ function AgendarPublicoPage() {
 
   if (error || !perfil) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 max-w-md w-full text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 max-w-md w-full text-center">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             Negocio no encontrado
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             El negocio que buscas no existe o ha sido desactivado
           </p>
           <Button onClick={() => navigate('/marketplace')}>
@@ -106,13 +106,13 @@ function AgendarPublicoPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <button
             onClick={handleVolverPerfil}
-            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4 transition-colors"
+            className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Volver al perfil
@@ -120,17 +120,17 @@ function AgendarPublicoPage() {
 
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Agendar Cita
               </h1>
-              <p className="text-gray-600 mt-1">{perfil.nombre_comercial}</p>
+              <p className="text-gray-600 dark:text-gray-400 mt-1">{perfil.nombre_comercial}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Stepper */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             {pasos.map((paso, index) => (
@@ -145,7 +145,7 @@ function AgendarPublicoPage() {
                           ? 'bg-green-600 text-white'
                           : paso.numero === pasoActual
                           ? 'bg-primary-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                       }
                     `}
                   >
@@ -160,8 +160,8 @@ function AgendarPublicoPage() {
                       text-xs mt-2 font-medium hidden sm:block
                       ${
                         paso.numero === pasoActual
-                          ? 'text-primary-600'
-                          : 'text-gray-600'
+                          ? 'text-primary-600 dark:text-primary-400'
+                          : 'text-gray-600 dark:text-gray-400'
                       }
                     `}
                   >
@@ -174,7 +174,7 @@ function AgendarPublicoPage() {
                   <div
                     className={`
                       flex-1 h-1 mx-2 transition-colors
-                      ${paso.completado ? 'bg-green-600' : 'bg-gray-200'}
+                      ${paso.completado ? 'bg-green-600' : 'bg-gray-200 dark:bg-gray-700'}
                     `}
                   />
                 )}
@@ -186,7 +186,7 @@ function AgendarPublicoPage() {
 
       {/* Contenido del paso actual */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
           {/* Paso 1: Seleccionar servicios */}
           {pasoActual === 1 && (
             <SelectorServiciosPublico

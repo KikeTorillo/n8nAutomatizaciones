@@ -47,7 +47,7 @@ export default function CarritoVenta({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-6 w-6" />
@@ -60,15 +60,15 @@ export default function CarritoVenta({
       </div>
 
       {/* Items */}
-      <div className="flex-1 overflow-y-auto bg-white">
+      <div className="flex-1 overflow-y-auto bg-white dark:bg-gray-800">
         {items.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full p-8 text-gray-400">
+          <div className="flex flex-col items-center justify-center h-full p-8 text-gray-400 dark:text-gray-500">
             <ShoppingCart className="h-20 w-20 mb-4" />
-            <p className="text-lg font-medium">Carrito vacío</p>
+            <p className="text-lg font-medium text-gray-500 dark:text-gray-400">Carrito vacío</p>
             <p className="text-sm text-center mt-2">Busca y selecciona productos para agregar a la venta</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {items.map((item) => {
               const precioUnitario = parseFloat(item.precio_unitario || item.precio_venta || 0);
               const cantidad = parseInt(item.cantidad || 1);
@@ -76,18 +76,18 @@ export default function CarritoVenta({
               const subtotalItem = (precioUnitario * cantidad) - descuentoItem;
 
               return (
-                <div key={item.id} className="p-4 hover:bg-gray-50 transition-colors">
+                <div key={item.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   {/* Nombre y precio unitario */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h4 className="font-medium text-gray-900">{item.nombre}</h4>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.nombre}</h4>
                       {item.sku && (
-                        <p className="text-xs text-gray-500 font-mono mt-1">SKU: {item.sku}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">SKU: {item.sku}</p>
                       )}
                     </div>
                     <button
                       onClick={() => onEliminarItem(item.id)}
-                      className="ml-2 p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                      className="ml-2 p-1 text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded transition-colors"
                       title="Eliminar del carrito"
                     >
                       <Trash2 className="h-4 w-4" />
@@ -101,16 +101,16 @@ export default function CarritoVenta({
                       <button
                         onClick={() => handleCantidadChange(item.id, cantidad - 1)}
                         disabled={cantidad <= 1}
-                        className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        <Minus className="h-4 w-4 text-gray-600" />
+                        <Minus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                       </button>
 
                       <input
                         type="number"
                         value={cantidad}
                         onChange={(e) => handleCantidadChange(item.id, e.target.value)}
-                        className="w-16 text-center border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                        className="w-16 text-center border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         min="1"
                         max="999"
                       />
@@ -118,36 +118,36 @@ export default function CarritoVenta({
                       <button
                         onClick={() => handleCantidadChange(item.id, cantidad + 1)}
                         disabled={cantidad >= (item.stock_actual || 999)}
-                        className="p-1 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="p-1 rounded bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                       >
-                        <Plus className="h-4 w-4 text-gray-600" />
+                        <Plus className="h-4 w-4 text-gray-600 dark:text-gray-400" />
                       </button>
                     </div>
 
                     {/* Precio unitario */}
-                    <div className="flex-1 text-sm">
-                      <span className="text-gray-500">×</span> {formatearPrecio(precioUnitario)}
+                    <div className="flex-1 text-sm text-gray-900 dark:text-gray-100">
+                      <span className="text-gray-500 dark:text-gray-400">×</span> {formatearPrecio(precioUnitario)}
                     </div>
 
                     {/* Subtotal del item */}
-                    <div className="font-semibold text-blue-600">
+                    <div className="font-semibold text-primary-600 dark:text-primary-400">
                       {formatearPrecio(subtotalItem)}
                     </div>
                   </div>
 
                   {/* Descuento por item */}
                   <div className="mt-2 flex items-center gap-2">
-                    <Percent className="h-4 w-4 text-gray-400" />
+                    <Percent className="h-4 w-4 text-gray-400 dark:text-gray-500" />
                     <input
                       type="number"
                       value={descuentoItem}
                       onChange={(e) => handleDescuentoItemChange(item.id, e.target.value)}
                       placeholder="Descuento $"
-                      className="w-32 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+                      className="w-32 text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       min="0"
                       step="0.01"
                     />
-                    <span className="text-xs text-gray-500">Descuento en pesos</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Descuento en pesos</span>
                   </div>
                 </div>
               );
@@ -158,42 +158,42 @@ export default function CarritoVenta({
 
       {/* Footer con totales */}
       {items.length > 0 && (
-        <div className="bg-gray-50 border-t border-gray-200 p-4 space-y-3">
+        <div className="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 p-4 space-y-3">
           {/* Descuento global */}
-          <div className="flex items-center gap-2 pb-3 border-b border-gray-200">
-            <Percent className="h-5 w-5 text-blue-600" />
-            <label className="text-sm font-medium text-gray-700">Descuento global (%):</label>
+          <div className="flex items-center gap-2 pb-3 border-b border-gray-200 dark:border-gray-700">
+            <Percent className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Descuento global (%):</label>
             <input
               type="number"
               value={descuentoGlobal}
               onChange={(e) => onActualizarDescuentoGlobal(parseFloat(e.target.value) || 0)}
               placeholder="0"
-              className="w-24 text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500"
+              className="w-24 text-sm border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               min="0"
               max="100"
               step="0.1"
             />
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
               {formatearPrecio(montoDescuentoGlobal)}
             </span>
           </div>
 
           {/* Subtotal */}
           <div className="flex justify-between text-base">
-            <span className="text-gray-600">Subtotal:</span>
-            <span className="font-medium">{formatearPrecio(subtotal)}</span>
+            <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">{formatearPrecio(subtotal)}</span>
           </div>
 
           {/* Descuento global */}
           {montoDescuentoGlobal > 0 && (
-            <div className="flex justify-between text-sm text-red-600">
+            <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
               <span>Descuento ({descuentoGlobal}%):</span>
               <span>-{formatearPrecio(montoDescuentoGlobal)}</span>
             </div>
           )}
 
           {/* Total */}
-          <div className="flex justify-between text-2xl font-bold text-blue-600 pt-3 border-t border-gray-300">
+          <div className="flex justify-between text-2xl font-bold text-primary-600 dark:text-primary-400 pt-3 border-t border-gray-300 dark:border-gray-600">
             <span>TOTAL:</span>
             <span>{formatearPrecio(total)}</span>
           </div>

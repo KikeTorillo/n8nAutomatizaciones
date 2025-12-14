@@ -84,21 +84,21 @@ function ProveedoresPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona productos, proveedores y stock
         </p>
       </div>
@@ -112,10 +112,10 @@ function ProveedoresPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
+              <Building2 className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Proveedores</h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Proveedores</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {total} proveedor{total !== 1 ? 'es' : ''} en total
                 </p>
               </div>
@@ -132,20 +132,20 @@ function ProveedoresPage() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Búsqueda */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Buscar
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   value={filtros.busqueda}
                   onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Buscar por nombre, RFC, email..."
                 />
               </div>
@@ -153,14 +153,14 @@ function ProveedoresPage() {
 
             {/* Ciudad */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Ciudad
               </label>
               <input
                 type="text"
                 value={filtros.ciudad}
                 onChange={(e) => handleFiltroChange('ciudad', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="Filtrar por ciudad"
               />
             </div>
@@ -185,27 +185,27 @@ function ProveedoresPage() {
                 type="checkbox"
                 checked={filtros.activo}
                 onChange={(e) => handleFiltroChange('activo', e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">Solo proveedores activos</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Solo proveedores activos</span>
             </label>
           </div>
         </div>
 
         {/* Tabla de Proveedores */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoProveedores ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-3 text-gray-600">Cargando proveedores...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando proveedores...</span>
             </div>
           ) : proveedores.length === 0 ? (
             <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <Building2 className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No hay proveedores
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Comienza agregando tu primer proveedor
               </p>
               <div className="mt-6">
@@ -220,45 +220,45 @@ function ProveedoresPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Proveedor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Contacto
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Ubicación
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Términos
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {proveedores.map((proveedor) => (
-                    <tr key={proveedor.id} className="hover:bg-gray-50">
+                    <tr key={proveedor.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Proveedor */}
                       <td className="px-6 py-4">
                         <div>
-                          <div className="text-sm font-medium text-gray-900">
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {proveedor.nombre}
                           </div>
                           {proveedor.razon_social && (
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               {proveedor.razon_social}
                             </div>
                           )}
                           {proveedor.rfc && (
-                            <div className="text-xs text-gray-400 mt-1">
+                            <div className="text-xs text-gray-400 dark:text-gray-500 mt-1">
                               RFC: {proveedor.rfc}
                             </div>
                           )}
@@ -269,25 +269,25 @@ function ProveedoresPage() {
                       <td className="px-6 py-4">
                         <div className="space-y-1">
                           {proveedor.telefono && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Phone className="h-4 w-4 mr-2 text-gray-400" />
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <Phone className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                               {proveedor.telefono}
                             </div>
                           )}
                           {proveedor.email && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Mail className="h-4 w-4 mr-2 text-gray-400" />
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <Mail className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                               {proveedor.email}
                             </div>
                           )}
                           {proveedor.sitio_web && (
-                            <div className="flex items-center text-sm text-gray-600">
-                              <Globe className="h-4 w-4 mr-2 text-gray-400" />
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <Globe className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
                               <a
                                 href={proveedor.sitio_web}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-indigo-600 hover:text-indigo-800"
+                                className="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
                               >
                                 Ver sitio
                               </a>
@@ -299,8 +299,8 @@ function ProveedoresPage() {
                       {/* Ubicación */}
                       <td className="px-6 py-4">
                         {proveedor.ciudad || proveedor.estado ? (
-                          <div className="flex items-start text-sm text-gray-600">
-                            <MapPin className="h-4 w-4 mr-2 text-gray-400 mt-0.5" />
+                          <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
+                            <MapPin className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500 mt-0.5" />
                             <div>
                               {proveedor.ciudad}
                               {proveedor.ciudad && proveedor.estado && ', '}
@@ -308,27 +308,27 @@ function ProveedoresPage() {
                             </div>
                           </div>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                         )}
                       </td>
 
                       {/* Términos */}
                       <td className="px-6 py-4">
                         <div className="text-sm space-y-1">
-                          <div className="text-gray-600">
+                          <div className="text-gray-600 dark:text-gray-400">
                             <span className="font-medium">Crédito:</span>{' '}
                             {proveedor.dias_credito > 0
                               ? `${proveedor.dias_credito} días`
                               : 'Contado'}
                           </div>
                           {proveedor.dias_entrega_estimados && (
-                            <div className="text-gray-600">
+                            <div className="text-gray-600 dark:text-gray-400">
                               <span className="font-medium">Entrega:</span>{' '}
                               {proveedor.dias_entrega_estimados} días
                             </div>
                           )}
                           {proveedor.monto_minimo_compra && (
-                            <div className="text-gray-600">
+                            <div className="text-gray-600 dark:text-gray-400">
                               <span className="font-medium">Mín:</span> $
                               {proveedor.monto_minimo_compra.toLocaleString('es-MX', {
                                 minimumFractionDigits: 2,
@@ -343,8 +343,8 @@ function ProveedoresPage() {
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                             proveedor.activo
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                           }`}
                         >
                           {proveedor.activo ? 'Activo' : 'Inactivo'}
@@ -397,19 +397,19 @@ function ProveedoresPage() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas eliminar el proveedor{' '}
-            <strong className="text-gray-900">
+            <strong className="text-gray-900 dark:text-gray-100">
               {proveedorSeleccionado?.nombre}
             </strong>
             ?
           </p>
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Esta acción no se puede deshacer.
           </p>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => setModalEliminarAbierto(false)}

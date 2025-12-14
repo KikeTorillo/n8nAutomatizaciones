@@ -249,8 +249,8 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
           </h3>
 
           {esOrganizacional ? (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-              <p className="text-sm text-blue-800">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
+              <p className="text-sm text-primary-800">
                 Este tipo de bloqueo se aplicará a <strong>toda la organización</strong> y afectará a
                 todos los profesionales.
               </p>

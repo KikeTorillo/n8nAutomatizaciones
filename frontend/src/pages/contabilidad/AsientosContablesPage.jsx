@@ -56,9 +56,9 @@ const TIPO_OPTIONS = [
 
 // Colores de estado
 const ESTADO_COLORS = {
-  borrador: 'bg-yellow-100 text-yellow-800',
-  publicado: 'bg-green-100 text-green-800',
-  anulado: 'bg-red-100 text-red-800',
+  borrador: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400',
+  publicado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
+  anulado: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400',
 };
 
 /**
@@ -181,7 +181,7 @@ function AsientosContablesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
@@ -196,8 +196,8 @@ function AsientosContablesPage() {
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Volver a Contabilidad
               </Button>
-              <h1 className="text-2xl font-bold text-gray-900">Asientos Contables</h1>
-              <p className="text-gray-600 mt-1 text-sm">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Asientos Contables</h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
                 Libro diario - Registro de movimientos contables
               </p>
             </div>
@@ -210,7 +210,7 @@ function AsientosContablesPage() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
             {/* Búsqueda */}
             <div className="flex-1">
@@ -251,7 +251,7 @@ function AsientosContablesPage() {
 
           {/* Filtros expandidos */}
           {showFilters && (
-            <div className="mt-4 pt-4 border-t border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Select
                 label="Estado"
                 value={estadoFiltro}
@@ -269,61 +269,61 @@ function AsientosContablesPage() {
         </div>
 
         {/* Tabla de asientos */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
           {isLoading ? (
-            <div className="p-8 text-center text-gray-500">
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
               Cargando asientos...
             </div>
           ) : asientosData?.asientos?.length > 0 ? (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Número
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Fecha
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Concepto
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Tipo
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Debe
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Haber
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Estado
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {asientosData.asientos.map((asiento) => (
-                    <tr key={asiento.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-mono text-sm text-gray-600">
+                    <tr key={asiento.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-4 py-3 font-mono text-sm text-gray-600 dark:text-gray-400">
                         #{asiento.numero_asiento}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
+                      <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">
                         {format(new Date(asiento.fecha), 'dd/MM/yyyy')}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 max-w-xs truncate">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
                         {asiento.concepto}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-500 capitalize">
+                      <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400 capitalize">
                         {asiento.tipo?.replace('_', ' ')}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                         {formatCurrency(asiento.total_debe || 0)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                      <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                         {formatCurrency(asiento.total_haber || 0)}
                       </td>
                       <td className="px-4 py-3 text-center">
@@ -337,7 +337,7 @@ function AsientosContablesPage() {
                         <div className="flex justify-end gap-1">
                           <button
                             onClick={() => handleVerAsiento(asiento)}
-                            className="p-1 text-gray-400 hover:text-blue-600"
+                            className="p-1 text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
                             title="Ver detalle"
                           >
                             <Eye className="w-4 h-4" />
@@ -347,21 +347,21 @@ function AsientosContablesPage() {
                             <>
                               <button
                                 onClick={() => handleEditarAsiento(asiento)}
-                                className="p-1 text-gray-400 hover:text-blue-600"
+                                className="p-1 text-gray-400 dark:text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
                                 title="Editar"
                               >
                                 <Edit2 className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => handlePublicar(asiento)}
-                                className="p-1 text-gray-400 hover:text-green-600"
+                                className="p-1 text-gray-400 dark:text-gray-500 hover:text-green-600 dark:hover:text-green-400"
                                 title="Publicar"
                               >
                                 <Check className="w-4 h-4" />
                               </button>
                               <button
                                 onClick={() => setAsientoEliminar(asiento)}
-                                className="p-1 text-gray-400 hover:text-red-600"
+                                className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                                 title="Eliminar"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -372,7 +372,7 @@ function AsientosContablesPage() {
                           {asiento.estado === 'publicado' && (
                             <button
                               onClick={() => setAsientoAnular(asiento)}
-                              className="p-1 text-gray-400 hover:text-red-600"
+                              className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                               title="Anular"
                             >
                               <X className="w-4 h-4" />
@@ -387,9 +387,9 @@ function AsientosContablesPage() {
             </div>
           ) : (
             <div className="p-8 text-center">
-              <FileSpreadsheet className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No se encontraron asientos</p>
-              <p className="text-sm text-gray-400 mt-1">
+              <FileSpreadsheet className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">No se encontraron asientos</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                 {busqueda ? 'Intenta con otros términos' : 'Crea tu primer asiento contable'}
               </p>
             </div>
@@ -397,8 +397,8 @@ function AsientosContablesPage() {
 
           {/* Paginación */}
           {asientosData?.paginacion && asientosData.paginacion.total_paginas > 1 && (
-            <div className="px-4 py-3 border-t border-gray-200 flex justify-between items-center">
-              <span className="text-sm text-gray-500">
+            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
                 Página {asientosData.paginacion.pagina_actual} de{' '}
                 {asientosData.paginacion.total_paginas}
               </span>
@@ -467,13 +467,13 @@ function AsientosContablesPage() {
         size="md"
       >
         <div className="space-y-4">
-          <div className="flex items-start gap-3 p-4 bg-yellow-50 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg">
+            <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-yellow-800 font-medium">
+              <p className="text-yellow-800 dark:text-yellow-300 font-medium">
                 Anular asiento #{asientoAnular?.numero_asiento}
               </p>
-              <p className="text-yellow-700 text-sm mt-1">
+              <p className="text-yellow-700 dark:text-yellow-400 text-sm mt-1">
                 Un asiento anulado no se puede revertir. Se mantendrá en el historial pero no
                 afectará los saldos contables.
               </p>
@@ -490,7 +490,7 @@ function AsientosContablesPage() {
             error={motivoAnulacion.length > 0 && motivoAnulacion.length < 10 ? 'El motivo debe tener al menos 10 caracteres' : undefined}
           />
 
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => {
@@ -660,40 +660,40 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
         {/* Movimientos */}
         <div>
           <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700">Movimientos</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Movimientos</label>
             <Button type="button" variant="ghost" size="sm" onClick={addMovimiento}>
               <Plus className="w-4 h-4 mr-1" />
               Agregar línea
             </Button>
           </div>
 
-          <div className="border rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Cuenta
                   </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                     Concepto
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-32">
+                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-32">
                     Debe
                   </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase w-32">
+                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-32">
                     Haber
                   </th>
                   <th className="px-3 py-2 w-10"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200">
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {formData.movimientos.map((mov, index) => (
                   <tr key={index}>
                     <td className="px-2 py-2">
                       <select
                         value={mov.cuenta_id}
                         onChange={(e) => updateMovimiento(index, 'cuenta_id', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
                       >
                         <option value="">Seleccionar cuenta</option>
                         {cuentas?.map((c) => (
@@ -709,7 +709,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
                         value={mov.concepto}
                         onChange={(e) => updateMovimiento(index, 'concepto', e.target.value)}
                         placeholder="Concepto específico"
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm focus:ring-1 focus:ring-blue-500"
+                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
                       />
                     </td>
                     <td className="px-2 py-2">
@@ -720,7 +720,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
                         value={mov.debe}
                         onChange={(e) => updateMovimiento(index, 'debe', e.target.value)}
                         disabled={!!mov.haber}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-right bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
                       />
                     </td>
                     <td className="px-2 py-2">
@@ -731,7 +731,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
                         value={mov.haber}
                         onChange={(e) => updateMovimiento(index, 'haber', e.target.value)}
                         disabled={!!mov.debe}
-                        className="w-full px-2 py-1 border border-gray-300 rounded text-sm text-right focus:ring-1 focus:ring-blue-500 disabled:bg-gray-100"
+                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-right bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
                       />
                     </td>
                     <td className="px-2 py-2">
@@ -739,7 +739,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
                         <button
                           type="button"
                           onClick={() => removeMovimiento(index)}
-                          className="p-1 text-gray-400 hover:text-red-600"
+                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -748,15 +748,15 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
                   </tr>
                 ))}
               </tbody>
-              <tfoot className="bg-gray-50">
+              <tfoot className="bg-gray-50 dark:bg-gray-900">
                 <tr>
-                  <td colSpan={2} className="px-3 py-2 text-right font-medium text-gray-700">
+                  <td colSpan={2} className="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
                     Totales:
                   </td>
-                  <td className="px-3 py-2 text-right font-bold text-gray-900">
+                  <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(totalDebe)}
                   </td>
-                  <td className="px-3 py-2 text-right font-bold text-gray-900">
+                  <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
                     {formatCurrency(totalHaber)}
                   </td>
                   <td></td>
@@ -767,7 +767,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
 
           {/* Indicador de cuadre */}
           <div className={`mt-2 px-3 py-2 rounded-lg flex items-center gap-2 ${
-            cuadra ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            cuadra ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
           }`}>
             {cuadra ? (
               <>
@@ -794,7 +794,7 @@ function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
           placeholder="Notas adicionales (opcional)"
         />
 
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button variant="secondary" onClick={onClose} disabled={isLoading}>
             Cancelar
           </Button>
@@ -825,25 +825,25 @@ function AsientoDetailModal({ isOpen, onClose, asiento }) {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={`Asiento #${asiento.numero_asiento}`} size="lg">
       {isLoading ? (
-        <div className="p-4 text-center text-gray-500">Cargando detalle...</div>
+        <div className="p-4 text-center text-gray-500 dark:text-gray-400">Cargando detalle...</div>
       ) : (
         <div className="space-y-4">
           {/* Info general */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <span className="text-xs text-gray-500">Fecha</span>
-              <p className="font-medium">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Fecha</span>
+              <p className="font-medium text-gray-900 dark:text-gray-100">
                 {format(new Date(asientoDetalle?.fecha || asiento.fecha), 'dd/MM/yyyy')}
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">Tipo</span>
-              <p className="font-medium capitalize">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Tipo</span>
+              <p className="font-medium capitalize text-gray-900 dark:text-gray-100">
                 {(asientoDetalle?.tipo || asiento.tipo)?.replace('_', ' ')}
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">Estado</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">Estado</span>
               <p>
                 <span
                   className={`px-2 py-0.5 text-xs rounded-full ${
@@ -855,65 +855,65 @@ function AsientoDetailModal({ isOpen, onClose, asiento }) {
               </p>
             </div>
             <div>
-              <span className="text-xs text-gray-500">Creado por</span>
-              <p className="font-medium text-sm">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Creado por</span>
+              <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
                 {asientoDetalle?.creado_por_nombre || 'Sistema'}
               </p>
             </div>
           </div>
 
           <div>
-            <span className="text-xs text-gray-500">Concepto</span>
-            <p className="font-medium">{asientoDetalle?.concepto || asiento.concepto}</p>
+            <span className="text-xs text-gray-500 dark:text-gray-400">Concepto</span>
+            <p className="font-medium text-gray-900 dark:text-gray-100">{asientoDetalle?.concepto || asiento.concepto}</p>
           </div>
 
           {/* Movimientos */}
           <div>
-            <h4 className="text-sm font-medium text-gray-700 mb-2">Movimientos</h4>
-            <div className="border rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Movimientos</h4>
+            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                       Cuenta
                     </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500">
+                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
                       Concepto
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
                       Debe
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500">
+                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
                       Haber
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                   {asientoDetalle?.movimientos?.map((mov, i) => (
                     <tr key={i}>
                       <td className="px-3 py-2 text-sm">
-                        <span className="font-mono text-gray-600">{mov.cuenta_codigo}</span>
-                        <span className="text-gray-500 ml-2">{mov.cuenta_nombre}</span>
+                        <span className="font-mono text-gray-600 dark:text-gray-400">{mov.cuenta_codigo}</span>
+                        <span className="text-gray-500 dark:text-gray-400 ml-2">{mov.cuenta_nombre}</span>
                       </td>
-                      <td className="px-3 py-2 text-sm text-gray-600">{mov.concepto || '-'}</td>
-                      <td className="px-3 py-2 text-sm text-right font-medium">
+                      <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">{mov.concepto || '-'}</td>
+                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                         {mov.debe > 0 ? formatCurrency(mov.debe) : ''}
                       </td>
-                      <td className="px-3 py-2 text-sm text-right font-medium">
+                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                         {mov.haber > 0 ? formatCurrency(mov.haber) : ''}
                       </td>
                     </tr>
                   ))}
                 </tbody>
-                <tfoot className="bg-gray-50">
+                <tfoot className="bg-gray-50 dark:bg-gray-900">
                   <tr>
-                    <td colSpan={2} className="px-3 py-2 text-right font-medium">
+                    <td colSpan={2} className="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
                       Total:
                     </td>
-                    <td className="px-3 py-2 text-right font-bold">
+                    <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
                       {formatCurrency(asientoDetalle?.total_debe || asiento.total_debe || 0)}
                     </td>
-                    <td className="px-3 py-2 text-right font-bold">
+                    <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
                       {formatCurrency(asientoDetalle?.total_haber || asiento.total_haber || 0)}
                     </td>
                   </tr>
@@ -925,14 +925,14 @@ function AsientoDetailModal({ isOpen, onClose, asiento }) {
           {/* Notas */}
           {(asientoDetalle?.notas || asiento.notas) && (
             <div>
-              <span className="text-xs text-gray-500">Notas</span>
-              <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg mt-1">
+              <span className="text-xs text-gray-500 dark:text-gray-400">Notas</span>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg mt-1">
                 {asientoDetalle?.notas || asiento.notas}
               </p>
             </div>
           )}
 
-          <div className="flex justify-end pt-4 border-t">
+          <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button variant="secondary" onClick={onClose}>
               Cerrar
             </Button>

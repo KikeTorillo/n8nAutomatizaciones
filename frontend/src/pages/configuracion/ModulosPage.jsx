@@ -36,20 +36,22 @@ const ICONOS = {
   marketplace: Globe,
   chatbots: Bot,
   'eventos-digitales': PartyPopper,
+  website: Globe,
 };
 
 /**
- * Colores por módulo
+ * Colores por módulo - Todos usan variaciones de Nexo Purple
  */
 const COLORES = {
-  core: 'bg-gray-100 text-gray-600',
-  agendamiento: 'bg-blue-100 text-blue-600',
-  inventario: 'bg-green-100 text-green-600',
-  pos: 'bg-purple-100 text-purple-600',
-  comisiones: 'bg-yellow-100 text-yellow-600',
-  marketplace: 'bg-pink-100 text-pink-600',
-  chatbots: 'bg-cyan-100 text-cyan-600',
-  'eventos-digitales': 'bg-rose-100 text-rose-600',
+  core: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
+  agendamiento: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
+  inventario: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
+  pos: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
+  comisiones: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
+  marketplace: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
+  chatbots: 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
+  'eventos-digitales': 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
+  website: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
 };
 
 /**
@@ -175,8 +177,8 @@ function ModulosPage() {
   // Loading
   if (loadingDisponibles || loadingActivos) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -185,23 +187,23 @@ function ModulosPage() {
   const modulosOpcionales = modulosDisponibles.filter((m) => m.nombre !== 'core');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900 mb-3"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Gestión de Módulos
           </h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Activa o desactiva módulos según tus necesidades
           </p>
         </div>
@@ -210,13 +212,13 @@ function ModulosPage() {
       {/* Content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Info banner */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8 flex items-start gap-3">
-          <Zap className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+        <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4 mb-8 flex items-start gap-3">
+          <Zap className="w-5 h-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-medium text-blue-900">
+            <h3 className="text-sm font-medium text-primary-900 dark:text-primary-200">
               Personaliza tu experiencia
             </h3>
-            <p className="text-sm text-blue-700 mt-1">
+            <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
               Todos los módulos están incluidos en tu suscripción. Activa solo los que necesitas
               para mantener tu menú organizado.
             </p>
@@ -226,8 +228,8 @@ function ModulosPage() {
         {/* Módulos Disponibles */}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <Package className="w-5 h-5 text-purple-500" />
-            <h2 className="text-lg font-semibold text-gray-900">
+            <Package className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Módulos Disponibles
             </h2>
           </div>
@@ -246,8 +248,8 @@ function ModulosPage() {
               return (
                 <div
                   key={modulo.nombre}
-                  className={`bg-white rounded-xl shadow-sm border p-5 transition-all ${
-                    activo ? 'border-green-300 ring-1 ring-green-100' : 'border-gray-200'
+                  className={`bg-white dark:bg-gray-800 rounded-xl shadow-sm border p-5 transition-all ${
+                    activo ? 'border-green-300 dark:border-green-700 ring-1 ring-green-100 dark:ring-green-900/50' : 'border-gray-200 dark:border-gray-700'
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -256,23 +258,23 @@ function ModulosPage() {
                         <Icono className="w-6 h-6" />
                       </div>
                       <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900">
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">
                           {modulo.display_name}
                         </h3>
-                        <p className="text-sm text-gray-600 mt-1">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                           {modulo.descripcion}
                         </p>
 
                         {/* Dependencias */}
                         {modulo.dependencias?.length > 0 && (
-                          <p className="text-xs text-gray-500 mt-2">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                             Requiere: {modulo.dependencias.join(', ')}
                           </p>
                         )}
 
                         {/* Advertencia de dependencias faltantes */}
                         {!activo && dependenciasFaltantes.length > 0 && (
-                          <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded">
+                          <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 p-2 rounded">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span>
                               Activa primero: {dependenciasFaltantes.join(', ')}
@@ -282,7 +284,7 @@ function ModulosPage() {
 
                         {/* Advertencia de módulos con dependencia HARD (bloquean desactivación) */}
                         {activo && dependientesHard.length > 0 && (
-                          <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 bg-amber-50 p-2 rounded">
+                          <div className="mt-3 flex items-start gap-2 text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-900/30 p-2 rounded">
                             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
                             <span>
                               Requerido por: {dependientesHard.join(', ')}
@@ -292,7 +294,7 @@ function ModulosPage() {
 
                         {/* Info de módulos con dependencia OPCIONAL (no bloquean) */}
                         {activo && dependientesOpcionales.length > 0 && (
-                          <div className="mt-3 flex items-start gap-2 text-xs text-blue-700 bg-blue-50 p-2 rounded">
+                          <div className="mt-3 flex items-start gap-2 text-xs text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 p-2 rounded">
                             <span>
                               Usado opcionalmente por: {dependientesOpcionales.join(', ')}
                             </span>
@@ -312,10 +314,10 @@ function ModulosPage() {
                             (!activo && !puedeAct) ||
                             (activo && !puedeDesact)
                           }
-                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
                             activo
                               ? 'bg-green-500 focus:ring-green-500'
-                              : 'bg-gray-300 focus:ring-gray-500'
+                              : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-500'
                           } ${
                             (!activo && !puedeAct) || (activo && !puedeDesact)
                               ? 'opacity-50 cursor-not-allowed'
@@ -331,8 +333,8 @@ function ModulosPage() {
                       ) : (
                         <span className={`text-xs px-2 py-1 rounded-full ${
                           activo
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-400'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                         }`}>
                           {activo ? 'Activo' : 'Inactivo'}
                         </span>
@@ -346,7 +348,7 @@ function ModulosPage() {
         </div>
 
         {/* Footer info */}
-        <div className="mt-8 text-center text-sm text-gray-500">
+        <div className="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
           <p>
             Los cambios en módulos se aplican inmediatamente.
             {!isAdmin() && ' Contacta a un administrador para modificar los módulos activos.'}

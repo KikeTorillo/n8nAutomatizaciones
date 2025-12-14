@@ -109,28 +109,28 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información del Producto */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <h4 className="text-sm font-medium text-gray-700 mb-3">Producto</h4>
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Producto</h4>
           <div className="space-y-2">
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Nombre:</span>
-              <span className="text-sm font-medium text-gray-900">{producto.nombre}</span>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Nombre:</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{producto.nombre}</span>
             </div>
             {producto.sku && (
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">SKU:</span>
-                <span className="text-sm font-medium text-gray-900">{producto.sku}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">SKU:</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{producto.sku}</span>
               </div>
             )}
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Stock Actual:</span>
-              <span className="text-sm font-bold text-indigo-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Stock Actual:</span>
+              <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                 {producto.stock_actual} {producto.unidad_medida || 'unid'}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-sm text-gray-600">Rango:</span>
-              <span className="text-sm text-gray-900">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Rango:</span>
+              <span className="text-sm text-gray-900 dark:text-gray-100">
                 Min: {producto.stock_minimo} | Max: {producto.stock_maximo}
               </span>
             </div>
@@ -147,8 +147,8 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
             <label
               className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                 tipoMovimiento === 'entrada_ajuste'
-                  ? 'border-green-500 bg-green-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-green-500 bg-green-50 dark:bg-green-900/30'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
             >
               <input
@@ -159,24 +159,24 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
               />
               <TrendingUp
                 className={`h-8 w-8 mb-2 ${
-                  tipoMovimiento === 'entrada_ajuste' ? 'text-green-600' : 'text-gray-400'
+                  tipoMovimiento === 'entrada_ajuste' ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  tipoMovimiento === 'entrada_ajuste' ? 'text-green-900' : 'text-gray-700'
+                  tipoMovimiento === 'entrada_ajuste' ? 'text-green-900 dark:text-green-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Entrada
               </span>
-              <span className="text-xs text-gray-500 mt-1">Aumentar stock</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Aumentar stock</span>
             </label>
 
             <label
               className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                 tipoMovimiento === 'salida_ajuste'
-                  ? 'border-red-500 bg-red-50'
-                  : 'border-gray-300 hover:border-gray-400'
+                  ? 'border-red-500 bg-red-50 dark:bg-red-900/30'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
               }`}
             >
               <input
@@ -187,17 +187,17 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
               />
               <TrendingDown
                 className={`h-8 w-8 mb-2 ${
-                  tipoMovimiento === 'salida_ajuste' ? 'text-red-600' : 'text-gray-400'
+                  tipoMovimiento === 'salida_ajuste' ? 'text-red-600 dark:text-red-400' : 'text-gray-400 dark:text-gray-500'
                 }`}
               />
               <span
                 className={`text-sm font-medium ${
-                  tipoMovimiento === 'salida_ajuste' ? 'text-red-900' : 'text-gray-700'
+                  tipoMovimiento === 'salida_ajuste' ? 'text-red-900 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
                 }`}
               >
                 Salida
               </span>
-              <span className="text-xs text-gray-500 mt-1">Reducir stock</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">Reducir stock</span>
             </label>
           </div>
         </FieldWrapper>
@@ -216,7 +216,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
             min="1"
             step="1"
             {...register('cantidad_ajuste')}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             placeholder="Ej: 10"
           />
         </FieldWrapper>
@@ -225,60 +225,60 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
         <div
           className={`rounded-lg p-4 border-2 ${
             esStockCritico
-              ? 'bg-red-50 border-red-200'
+              ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800'
               : esStockAlto
-              ? 'bg-blue-50 border-blue-200'
-              : 'bg-green-50 border-green-200'
+              ? 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800'
+              : 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800'
           }`}
         >
           <div className="flex items-start">
             <AlertCircle
               className={`h-5 w-5 mt-0.5 mr-3 ${
                 esStockCritico
-                  ? 'text-red-500'
+                  ? 'text-red-500 dark:text-red-400'
                   : esStockAlto
-                  ? 'text-blue-500'
-                  : 'text-green-500'
+                  ? 'text-primary-500 dark:text-primary-400'
+                  : 'text-green-500 dark:text-green-400'
               }`}
             />
             <div className="flex-1">
-              <h4 className="text-sm font-medium text-gray-900 mb-1">
+              <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">
                 Stock Proyectado
               </h4>
               <div className="flex items-baseline space-x-2">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   {producto.stock_actual} {producto.unidad_medida || 'unid'}
                 </span>
                 <span
                   className={`text-lg font-bold ${
                     tipoMovimiento === 'entrada_ajuste'
-                      ? 'text-green-600'
-                      : 'text-red-600'
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-red-600 dark:text-red-400'
                   }`}
                 >
                   {tipoMovimiento === 'entrada_ajuste' ? '+' : '-'}
                   {cantidadAjuste || 0}
                 </span>
-                <span className="text-sm text-gray-600">→</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">→</span>
                 <span
                   className={`text-2xl font-bold ${
                     esStockCritico
-                      ? 'text-red-700'
+                      ? 'text-red-700 dark:text-red-300'
                       : esStockAlto
-                      ? 'text-blue-700'
-                      : 'text-green-700'
+                      ? 'text-primary-700 dark:text-primary-300'
+                      : 'text-green-700 dark:text-green-300'
                   }`}
                 >
                   {stockCalculado} {producto.unidad_medida || 'unid'}
                 </span>
               </div>
               {esStockCritico && (
-                <p className="text-sm text-red-600 mt-2">
+                <p className="text-sm text-red-600 dark:text-red-400 mt-2">
                   ⚠️ El stock quedará por debajo del mínimo ({producto.stock_minimo})
                 </p>
               )}
               {esStockAlto && (
-                <p className="text-sm text-blue-600 mt-2">
+                <p className="text-sm text-primary-600 dark:text-primary-400 mt-2">
                   ℹ️ El stock quedará por encima del máximo ({producto.stock_maximo})
                 </p>
               )}
@@ -298,7 +298,7 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
         />
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

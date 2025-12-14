@@ -103,13 +103,13 @@ function PerfilPublicoPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg p-8 max-w-md w-full text-center">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 max-w-md w-full text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 dark:text-red-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {error.response?.status === 404 ? 'Perfil no encontrado' : 'Error al cargar'}
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             {error.response?.status === 404
               ? 'El negocio que buscas no existe o ha sido desactivado'
               : 'Hubo un problema al cargar el perfil. Intenta nuevamente.'}
@@ -129,7 +129,7 @@ function PerfilPublicoPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* SEO Meta Tags */}
       <SEOHead perfil={perfil} />
 
@@ -170,7 +170,7 @@ function PerfilPublicoPage() {
             <div className="flex flex-col sm:flex-row items-start sm:items-end gap-6">
               {/* Logo */}
               {perfil.logo_url && (
-                <div className="w-32 h-32 bg-white rounded-lg shadow-xl border-4 border-white overflow-hidden flex-shrink-0">
+                <div className="w-32 h-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border-4 border-white dark:border-gray-800 overflow-hidden flex-shrink-0">
                   <img
                     src={perfil.logo_url}
                     alt={perfil.nombre_comercial}
@@ -180,10 +180,10 @@ function PerfilPublicoPage() {
               )}
 
               {/* Info básica */}
-              <div className="flex-1 bg-white rounded-lg shadow-lg p-6">
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="flex-1">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
                       {perfil.nombre_comercial}
                     </h1>
 
@@ -200,13 +200,13 @@ function PerfilPublicoPage() {
                     )}
 
                     {/* Ubicación y categoría */}
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <div className="flex items-center">
                         <MapPin className="w-4 h-4 mr-1" />
                         {perfil.ciudad}
                       </div>
                       {perfil.categoria && (
-                        <span className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-xs font-medium">
+                        <span className="px-3 py-1 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full text-xs font-medium">
                           {perfil.categoria}
                         </span>
                       )}
@@ -226,7 +226,7 @@ function PerfilPublicoPage() {
       </section>
 
       {/* Tabs */}
-      <section className="border-b border-gray-200 bg-white sticky top-0 z-10 shadow-sm">
+      <section className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8 overflow-x-auto">
             {tabs.map((tab) => (
@@ -237,8 +237,8 @@ function PerfilPublicoPage() {
                   py-4 px-2 border-b-2 font-medium text-sm whitespace-nowrap transition-colors
                   ${
                     tabActivo === tab.id
-                      ? 'border-primary-600 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-primary-600 text-primary-600 dark:border-primary-500 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
@@ -258,21 +258,21 @@ function PerfilPublicoPage() {
             {tabActivo === 'informacion' && (
               <div className="space-y-6">
                 {/* Descripción */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                  <h2 className="text-2xl font-bold text-gray-900 mb-4">Sobre nosotros</h2>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                  <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Sobre nosotros</h2>
                   {perfil.descripcion_larga ? (
-                    <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-wrap">
                       {perfil.descripcion_larga}
                     </p>
                   ) : (
-                    <p className="text-gray-500 italic">No hay descripción disponible</p>
+                    <p className="text-gray-500 dark:text-gray-400 italic">No hay descripción disponible</p>
                   )}
                 </div>
 
                 {/* Galería de Imágenes */}
                 {perfil.galeria_urls && perfil.galeria_urls.length > 0 && (
-                  <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Galería</h2>
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Galería</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                       {perfil.galeria_urls.map((url, index) => (
                         <div
@@ -295,8 +295,8 @@ function PerfilPublicoPage() {
 
             {/* Tab: Servicios */}
             {tabActivo === 'servicios' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Servicios</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Servicios</h2>
 
                 {perfil.servicios && perfil.servicios.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -306,7 +306,7 @@ function PerfilPublicoPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 dark:text-gray-400">
                       Este negocio aún no ha agregado servicios a su perfil
                     </p>
                   </div>
@@ -316,8 +316,8 @@ function PerfilPublicoPage() {
 
             {/* Tab: Profesionales */}
             {tabActivo === 'profesionales' && (
-              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Nuestro equipo</h2>
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Nuestro equipo</h2>
 
                 {perfil.profesionales && perfil.profesionales.length > 0 ? (
                   <div className="grid grid-cols-1 gap-4">
@@ -327,7 +327,7 @@ function PerfilPublicoPage() {
                   </div>
                 ) : (
                   <div className="text-center py-12">
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 dark:text-gray-400">
                       Este negocio aún no ha agregado profesionales a su perfil
                     </p>
                   </div>
@@ -359,8 +359,8 @@ function PerfilPublicoPage() {
 
           {/* Sidebar */}
           <aside className="w-full lg:w-80 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Información de contacto</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-24">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información de contacto</h3>
 
               <div className="space-y-4">
                 {/* Teléfono */}
@@ -369,9 +369,9 @@ function PerfilPublicoPage() {
                     <a
                       href={`tel:${perfil.telefono_publico}`}
                       onClick={() => handleClickContacto('telefono')}
-                      className="flex items-center text-gray-700 hover:text-primary-600 transition-colors"
+                      className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     >
-                      <Phone className="w-5 h-5 mr-3 text-gray-400" />
+                      <Phone className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" />
                       <span>{perfil.telefono_publico}</span>
                     </a>
                   </div>
@@ -383,9 +383,9 @@ function PerfilPublicoPage() {
                     <a
                       href={`mailto:${perfil.email_publico}`}
                       onClick={() => handleClickContacto('email')}
-                      className="flex items-center text-gray-700 hover:text-primary-600 transition-colors"
+                      className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     >
-                      <Mail className="w-5 h-5 mr-3 text-gray-400" />
+                      <Mail className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" />
                       <span className="truncate">{perfil.email_publico}</span>
                     </a>
                   </div>
@@ -399,9 +399,9 @@ function PerfilPublicoPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => handleClickContacto('sitio_web')}
-                      className="flex items-center text-gray-700 hover:text-primary-600 transition-colors"
+                      className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     >
-                      <Globe className="w-5 h-5 mr-3 text-gray-400" />
+                      <Globe className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" />
                       <span className="truncate">Sitio web</span>
                     </a>
                   </div>
@@ -415,9 +415,9 @@ function PerfilPublicoPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => handleClickContacto('instagram')}
-                      className="flex items-center text-gray-700 hover:text-primary-600 transition-colors"
+                      className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     >
-                      <Instagram className="w-5 h-5 mr-3 text-gray-400" />
+                      <Instagram className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" />
                       <span>{perfil.instagram}</span>
                     </a>
                   </div>
@@ -431,9 +431,9 @@ function PerfilPublicoPage() {
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={() => handleClickContacto('facebook')}
-                      className="flex items-center text-gray-700 hover:text-primary-600 transition-colors"
+                      className="flex items-center text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                     >
-                      <Facebook className="w-5 h-5 mr-3 text-gray-400" />
+                      <Facebook className="w-5 h-5 mr-3 text-gray-400 dark:text-gray-500" />
                       <span>Facebook</span>
                     </a>
                   </div>
@@ -442,8 +442,8 @@ function PerfilPublicoPage() {
 
               {/* Mapa */}
               {perfil.ciudad && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <h4 className="text-sm font-semibold text-gray-900 mb-3">Ubicación</h4>
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">Ubicación</h4>
                   <MapaUbicacion
                     direccion={perfil.direccion}
                     ciudad={perfil.ciudad}

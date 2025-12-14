@@ -44,7 +44,7 @@ function ConfiguracionComisionesTable({
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="text-sm text-gray-600">Cargando configuraciones...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Cargando configuraciones...</p>
         </div>
       </div>
     );
@@ -53,15 +53,15 @@ function ConfiguracionComisionesTable({
   // Empty state
   if (!configuraciones || configuraciones.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
         <div className="max-w-sm mx-auto">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DollarSign className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             No se encontraron configuraciones
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Crea una nueva configuración para comenzar a registrar comisiones
           </p>
         </div>
@@ -71,32 +71,32 @@ function ConfiguracionComisionesTable({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Profesional
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Servicio
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Tipo
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Valor
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {configuraciones.map((config) => {
                 const esGlobal = !config.servicio_id;
                 const valorDisplay = config.tipo_comision === 'porcentaje'
@@ -106,11 +106,11 @@ function ConfiguracionComisionesTable({
                 return (
                   <tr
                     key={config.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     {/* Profesional */}
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {config.profesional_nombre} {config.profesional_apellidos}
                       </div>
                     </td>
@@ -118,12 +118,12 @@ function ConfiguracionComisionesTable({
                     {/* Servicio */}
                     <td className="px-6 py-4">
                       {esGlobal ? (
-                        <div className="flex items-center text-sm text-gray-500">
+                        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                           <Globe className="w-4 h-4 mr-1" />
                           <span className="italic">Todos los servicios</span>
                         </div>
                       ) : (
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {config.servicio_nombre}
                         </div>
                       )}
@@ -133,8 +133,8 @@ function ConfiguracionComisionesTable({
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         config.tipo_comision === 'porcentaje'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-green-100 text-green-800'
+                          ? 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300'
+                          : 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
                       }`}>
                         {config.tipo_comision === 'porcentaje' ? 'Porcentaje' : 'Monto Fijo'}
                       </span>
@@ -142,7 +142,7 @@ function ConfiguracionComisionesTable({
 
                     {/* Valor */}
                     <td className="px-6 py-4">
-                      <div className="text-sm font-semibold text-gray-900">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {valorDisplay}
                       </div>
                     </td>
@@ -151,8 +151,8 @@ function ConfiguracionComisionesTable({
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                         config.activo
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                       }`}>
                         {config.activo ? (
                           <>
@@ -207,8 +207,8 @@ function ConfiguracionComisionesTable({
 
         {/* Notas si existen */}
         {configuraciones.some(c => c.notas) && (
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-            <p className="text-xs text-gray-500">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               * Algunas configuraciones tienen notas adicionales. Haz clic en Editar para verlas.
             </p>
           </div>

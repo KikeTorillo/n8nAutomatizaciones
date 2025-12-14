@@ -147,7 +147,7 @@ function ExportButtons({ comisiones, filtros, disabled = false }) {
 
   return (
     <div className="flex items-center space-x-3">
-      <span className="text-sm text-gray-600">Exportar:</span>
+      <span className="text-sm text-gray-600 dark:text-gray-400">Exportar:</span>
 
       {/* Botón Excel/CSV */}
       <Button

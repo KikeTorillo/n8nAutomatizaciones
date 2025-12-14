@@ -88,11 +88,11 @@ function EventosPage() {
 
   const getEstadoBadge = (estado) => {
     const badges = {
-      borrador: 'bg-gray-100 text-gray-800',
-      publicado: 'bg-green-100 text-green-800',
-      finalizado: 'bg-blue-100 text-blue-800',
+      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      publicado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
+      finalizado: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getTipoLabel = (tipo) => {
@@ -108,12 +108,12 @@ function EventosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <button
           onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3 transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Volver al Inicio</span>
@@ -121,12 +121,12 @@ function EventosPage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <PartyPopper className="h-6 w-6 sm:h-7 sm:w-7 text-pink-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 dark:bg-pink-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+              <PartyPopper className="h-6 w-6 sm:h-7 sm:w-7 text-pink-600 dark:text-pink-400" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Eventos Digitales</h1>
-              <p className="text-sm text-gray-500 hidden sm:block">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Eventos Digitales</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                 Crea invitaciones digitales para bodas, XV años, bautizos y más
               </p>
             </div>
@@ -143,7 +143,7 @@ function EventosPage() {
       {/* Contenido */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="relative lg:col-span-2">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -159,7 +159,7 @@ function EventosPage() {
             <select
               value={tipoFiltro}
               onChange={(e) => setTipoFiltro(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
             >
               {tiposEvento.map((t) => (
                 <option key={t.value} value={t.value}>{t.label}</option>
@@ -169,7 +169,7 @@ function EventosPage() {
             <select
               value={estadoFiltro}
               onChange={(e) => setEstadoFiltro(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
             >
               {estadosEvento.map((e) => (
                 <option key={e.value} value={e.value}>{e.label}</option>
@@ -189,18 +189,18 @@ function EventosPage() {
               {data.eventos.map((evento) => (
                 <div
                   key={evento.id}
-                  className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                  className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
                 >
                   {/* Imagen/Preview */}
-                  <div className="h-40 bg-gradient-to-br from-pink-100 to-purple-100 flex items-center justify-center">
-                    <PartyPopper className="w-16 h-16 text-pink-300" />
+                  <div className="h-40 bg-gradient-to-br from-pink-100 to-purple-100 dark:from-pink-900/30 dark:to-purple-900/30 flex items-center justify-center">
+                    <PartyPopper className="w-16 h-16 text-pink-300 dark:text-pink-500" />
                   </div>
 
                   <div className="p-4">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="font-semibold text-gray-900 line-clamp-1">{evento.nombre}</h3>
-                        <p className="text-sm text-gray-500">{getTipoLabel(evento.tipo)}</p>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">{evento.nombre}</h3>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{getTipoLabel(evento.tipo)}</p>
                       </div>
                       <span className={`px-2 py-1 text-xs font-medium rounded-full ${getEstadoBadge(evento.estado)}`}>
                         {evento.estado}
@@ -208,7 +208,7 @@ function EventosPage() {
                     </div>
 
                     {/* Info */}
-                    <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                    <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-400 mb-4">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {new Date(evento.fecha_evento).toLocaleDateString('es-ES')}
@@ -260,7 +260,7 @@ function EventosPage() {
                         size="sm"
                         onClick={() => handleEliminar(evento.id, evento.nombre)}
                         disabled={eliminarEvento.isLoading}
-                        className="text-red-600 hover:bg-red-50"
+                        className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
                         <Trash2 className="w-4 h-4" />
                       </Button>
@@ -281,7 +281,7 @@ function EventosPage() {
                 >
                   Anterior
                 </Button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   Página {page} de {data.paginacion.total_paginas}
                 </span>
                 <Button
@@ -296,14 +296,14 @@ function EventosPage() {
             )}
           </>
         ) : (
-          <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-            <div className="w-16 h-16 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
+            <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900/40 rounded-full flex items-center justify-center mx-auto mb-4">
               <PartyPopper className="w-8 h-8 text-pink-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
               No hay eventos todavía
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-gray-600 dark:text-gray-400 mb-4">
               Crea tu primera invitación digital para compartir con tus invitados
             </p>
             <Button onClick={() => navigate('/eventos-digitales/nuevo')}>

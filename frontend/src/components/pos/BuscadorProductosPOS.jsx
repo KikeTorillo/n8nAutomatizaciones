@@ -76,7 +76,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
       {/* Buscador */}
       <div className="relative">
         <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400" />
+          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
         </div>
 
         <input
@@ -86,14 +86,14 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Buscar producto por nombre, SKU o código de barras..."
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg"
+          className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
           autoFocus
         />
 
         {query && (
           <button
             onClick={handleLimpiar}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
+            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -104,38 +104,38 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
       {mostrarResultados && (
         <div
           ref={resultadosRef}
-          className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-xl border border-gray-200 max-h-96 overflow-y-auto"
+          className="absolute z-50 w-full mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 max-h-96 overflow-y-auto"
         >
           {isLoading && (
-            <div className="p-4 text-center text-gray-500">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-500 dark:border-primary-400 mx-auto"></div>
               <p className="mt-2">Buscando productos...</p>
             </div>
           )}
 
           {!isLoading && productos.length === 0 && query.length >= 2 && (
-            <div className="p-4 text-center text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-              <p className="font-medium">No se encontraron productos</p>
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+              <Package className="h-12 w-12 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
+              <p className="font-medium text-gray-900 dark:text-gray-100">No se encontraron productos</p>
               <p className="text-sm">Intenta con otro término de búsqueda</p>
             </div>
           )}
 
           {!isLoading && productos.length > 0 && (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {productos.map((producto) => (
                 <li key={producto.id}>
                   <button
                     onClick={() => handleSeleccionarProducto(producto)}
-                    className="w-full p-4 hover:bg-blue-50 transition-colors text-left flex items-center justify-between group"
+                    className="w-full p-4 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors text-left flex items-center justify-between group"
                   >
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <Package className="h-5 w-5 text-gray-400 group-hover:text-blue-500" />
-                        <span className="font-medium text-gray-900">{producto.nombre}</span>
+                        <Package className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400" />
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{producto.nombre}</span>
                       </div>
 
-                      <div className="mt-1 flex items-center gap-4 text-sm text-gray-500">
+                      <div className="mt-1 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
                         {producto.sku && (
                           <span>SKU: <span className="font-mono">{producto.sku}</span></span>
                         )}
@@ -147,17 +147,17 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
                     </div>
 
                     <div className="ml-4 text-right">
-                      <div className="text-xl font-bold text-blue-600">
+                      <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
                         ${parseFloat(producto.precio_venta || 0).toFixed(2)}
                       </div>
                       {producto.precio_mayoreo && producto.cantidad_mayoreo && (
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           ${parseFloat(producto.precio_mayoreo).toFixed(2)} (≥{producto.cantidad_mayoreo})
                         </div>
                       )}
                     </div>
 
-                    <ShoppingCart className="ml-4 h-6 w-6 text-gray-400 group-hover:text-blue-500 group-hover:scale-110 transition-transform" />
+                    <ShoppingCart className="ml-4 h-6 w-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:scale-110 transition-transform" />
                   </button>
                 </li>
               ))}
@@ -165,7 +165,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
           )}
 
           {query.length < 2 && (
-            <div className="p-4 text-center text-gray-500 text-sm">
+            <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
               Escribe al menos 2 caracteres para buscar
             </div>
           )}

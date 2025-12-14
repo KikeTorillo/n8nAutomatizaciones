@@ -1,0 +1,105 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+
+/**
+ * Store de tema con Zustand
+ * Maneja el tema de la aplicación (light/dark/system)
+ */
+const useThemeStore = create(
+  persist(
+    (set, get) => ({
+      // ========== STATE ==========
+      theme: 'dark', // 'light' | 'dark' | 'system'
+      resolvedTheme: 'dark', // El tema actual resuelto (siempre 'light' o 'dark')
+
+      // ========== ACTIONS ==========
+
+      /**
+       * Establecer tema
+       * @param {'light' | 'dark' | 'system'} theme
+       */
+      setTheme: (theme) => {
+        set({ theme });
+        get().applyTheme();
+      },
+
+      /**
+       * Alternar entre light y dark
+       */
+      toggleTheme: () => {
+        const { theme } = get();
+        const newTheme = theme === 'dark' ? 'light' : 'dark';
+        set({ theme: newTheme });
+        get().applyTheme();
+      },
+
+      /**
+       * Aplicar el tema al DOM
+       */
+      applyTheme: () => {
+        const { theme } = get();
+        let resolved = theme;
+
+        if (theme === 'system') {
+          resolved = window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark'
+            : 'light';
+        }
+
+        // Aplicar clase al HTML
+        const root = document.documentElement;
+        root.classList.remove('light', 'dark');
+        root.classList.add(resolved);
+
+        // Actualizar meta theme-color para mobile
+        const metaThemeColor = document.querySelector('meta[name="theme-color"]');
+        if (metaThemeColor) {
+          metaThemeColor.setAttribute(
+            'content',
+            resolved === 'dark' ? '#111827' : '#ffffff'
+          );
+        }
+
+        set({ resolvedTheme: resolved });
+      },
+
+      /**
+       * Inicializar listener para cambios en preferencia del sistema
+       */
+      initSystemListener: () => {
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        const handleChange = () => {
+          const { theme } = get();
+          if (theme === 'system') {
+            get().applyTheme();
+          }
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+
+        // Aplicar tema inicial
+        get().applyTheme();
+
+        // Retornar cleanup function
+        return () => mediaQuery.removeEventListener('change', handleChange);
+      },
+
+      /**
+       * Verificar si el tema actual es oscuro
+       * @returns {boolean}
+       */
+      isDark: () => {
+        return get().resolvedTheme === 'dark';
+      },
+    }),
+    {
+      name: 'theme-storage',
+      partialize: (state) => ({
+        theme: state.theme,
+      }),
+    }
+  )
+);
+
+export default useThemeStore;

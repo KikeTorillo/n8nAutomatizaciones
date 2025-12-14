@@ -112,8 +112,8 @@ export default function ActivarCuentaPage() {
     return (
       <AuthLayout title="Validando enlace..." subtitle="Por favor espera">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 text-primary-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Validando enlace de activación...</p>
+          <Loader2 className="h-12 w-12 text-primary-600 dark:text-primary-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Validando enlace de activación...</p>
         </div>
       </AuthLayout>
     );
@@ -124,8 +124,8 @@ export default function ActivarCuentaPage() {
     return (
       <AuthLayout title="Enlace no válido" subtitle={error}>
         <div className="text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
           </div>
           <div className="space-y-3">
             <Link to="/registro">
@@ -151,13 +151,13 @@ export default function ActivarCuentaPage() {
       subtitle="Crea tu contraseña para comenzar"
     >
       {/* Info del negocio */}
-      <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg mb-6">
-        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center">
-          <Building2 className="h-6 w-6 text-primary-600" />
+      <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-6">
+        <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+          <Building2 className="h-6 w-6 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
-          <p className="font-semibold text-gray-900">{activacion?.nombre_negocio}</p>
-          <p className="text-sm text-gray-500">{activacion?.email}</p>
+          <p className="font-semibold text-gray-900 dark:text-gray-100">{activacion?.nombre_negocio}</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{activacion?.email}</p>
         </div>
       </div>
 
@@ -175,7 +175,7 @@ export default function ActivarCuentaPage() {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
@@ -196,30 +196,30 @@ export default function ActivarCuentaPage() {
           <button
             type="button"
             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
           </button>
         </div>
 
         {/* Requisitos de contraseña */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <p className="text-sm font-medium text-gray-700 mb-2">La contraseña debe tener:</p>
-          <ul className="text-sm text-gray-600 space-y-1">
-            <li className={`flex items-center gap-2 ${password?.length >= 8 ? 'text-green-600' : ''}`}>
-              {password?.length >= 8 ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">La contraseña debe tener:</p>
+          <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+            <li className={`flex items-center gap-2 ${password?.length >= 8 ? 'text-green-600 dark:text-green-400' : ''}`}>
+              {password?.length >= 8 ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-500" />}
               Al menos 8 caracteres
             </li>
-            <li className={`flex items-center gap-2 ${/[A-Z]/.test(password || '') ? 'text-green-600' : ''}`}>
-              {/[A-Z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+            <li className={`flex items-center gap-2 ${/[A-Z]/.test(password || '') ? 'text-green-600 dark:text-green-400' : ''}`}>
+              {/[A-Z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-500" />}
               Una letra mayúscula
             </li>
-            <li className={`flex items-center gap-2 ${/[a-z]/.test(password || '') ? 'text-green-600' : ''}`}>
-              {/[a-z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+            <li className={`flex items-center gap-2 ${/[a-z]/.test(password || '') ? 'text-green-600 dark:text-green-400' : ''}`}>
+              {/[a-z]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-500" />}
               Una letra minúscula
             </li>
-            <li className={`flex items-center gap-2 ${/[0-9]/.test(password || '') ? 'text-green-600' : ''}`}>
-              {/[0-9]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300" />}
+            <li className={`flex items-center gap-2 ${/[0-9]/.test(password || '') ? 'text-green-600 dark:text-green-400' : ''}`}>
+              {/[0-9]/.test(password || '') ? <Check className="h-4 w-4" /> : <span className="w-4 h-4 rounded-full border border-gray-300 dark:border-gray-500" />}
               Un número
             </li>
           </ul>
@@ -237,7 +237,7 @@ export default function ActivarCuentaPage() {
 
         {/* Info de expiración */}
         {activacion?.tiempo_restante && (
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             Este enlace expira en {activacion.tiempo_restante}
           </p>
         )}

@@ -140,10 +140,10 @@ function WebsiteEditorPage() {
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Cargando editor...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600 mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Cargando editor...</p>
         </div>
       </div>
     );
@@ -152,38 +152,38 @@ function WebsiteEditorPage() {
   // No tiene sitio creado
   if (!tieneSitio && !mostrarCrearSitio) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900 mb-3"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Mi Sitio Web</h1>
-          <p className="mt-1 text-sm text-gray-500">Crea tu página web pública</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Sitio Web</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Crea tu página web pública</p>
         </div>
 
         {/* Empty state */}
         <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8 sm:p-12">
-            <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Globe2 className="w-10 h-10 text-indigo-600" />
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8 sm:p-12">
+            <div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Globe2 className="w-10 h-10 text-primary-600 dark:text-primary-400" />
             </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-3">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-3">
               Crea tu sitio web
             </h2>
-            <p className="text-gray-600 mb-8 max-w-md mx-auto">
+            <p className="text-gray-600 dark:text-gray-400 mb-8 max-w-md mx-auto">
               Diseña una página web profesional para tu negocio con nuestro editor visual.
               Arrastra y suelta bloques para crear tu sitio en minutos.
             </p>
             <button
               onClick={() => setMostrarCrearSitio(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
             >
               <Plus className="w-5 h-5" />
               Crear mi sitio web
@@ -193,25 +193,25 @@ function WebsiteEditorPage() {
           {/* Features */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mt-12">
             <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <FileText className="w-6 h-6 text-green-600" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <FileText className="w-6 h-6 text-primary-700 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900">11 tipos de bloques</h3>
-              <p className="text-sm text-gray-500 mt-1">Hero, servicios, equipo, contacto y más</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">11 tipos de bloques</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Hero, servicios, equipo, contacto y más</p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Palette className="w-6 h-6 text-purple-600" />
+              <div className="w-12 h-12 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Palette className="w-6 h-6 text-primary-500 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900">Personalizable</h3>
-              <p className="text-sm text-gray-500 mt-1">Colores, fuentes y estilos a tu gusto</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">Personalizable</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Colores, fuentes y estilos a tu gusto</p>
             </div>
             <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                <Globe2 className="w-6 h-6 text-blue-600" />
+              <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <Globe2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
-              <h3 className="font-medium text-gray-900">SEO optimizado</h3>
-              <p className="text-sm text-gray-500 mt-1">Meta tags y Open Graph incluidos</p>
+              <h3 className="font-medium text-gray-900 dark:text-gray-100">SEO optimizado</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Meta tags y Open Graph incluidos</p>
             </div>
           </div>
         </div>
@@ -232,28 +232,28 @@ function WebsiteEditorPage() {
 
   // Editor principal
   return (
-    <div className="h-screen flex flex-col bg-gray-100">
+    <div className="h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header del editor */}
-      <header className="bg-white border-b border-gray-200 px-4 h-14 flex items-center justify-between flex-shrink-0">
+      <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 h-14 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver
           </Button>
           <div className="flex items-center gap-2">
-            <Globe2 className="w-5 h-5 text-indigo-600" />
-            <span className="font-semibold text-gray-900">{config?.nombre_sitio || 'Mi Sitio'}</span>
+            <Globe2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+            <span className="font-semibold text-gray-900 dark:text-gray-100">{config?.nombre_sitio || 'Mi Sitio'}</span>
           </div>
           {/* Status badge */}
           <span className={`px-2 py-1 text-xs rounded-full ${
             estaPublicado
-              ? 'bg-green-100 text-green-700'
-              : 'bg-amber-100 text-amber-700'
+              ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400'
+              : 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
           }`}>
             {estaPublicado ? 'Publicado' : 'Borrador'}
           </span>
@@ -265,8 +265,8 @@ function WebsiteEditorPage() {
             onClick={() => setPanelActivo('preview')}
             className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
               panelActivo === 'preview'
-                ? 'bg-indigo-100 text-indigo-700'
-                : 'hover:bg-gray-100 text-gray-600'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
           >
             <Eye className="w-4 h-4" />
@@ -279,7 +279,7 @@ function WebsiteEditorPage() {
               href={`/sitio/${config.slug}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+              className="flex items-center gap-2 px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
             >
               <ExternalLink className="w-4 h-4" />
               <span className="hidden sm:inline">Ver sitio</span>
@@ -292,8 +292,8 @@ function WebsiteEditorPage() {
             disabled={publicarSitio.isPending}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               estaPublicado
-                ? 'bg-amber-100 text-amber-700 hover:bg-amber-200'
-                : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/50'
+                : 'bg-primary-600 text-white hover:bg-primary-700'
             }`}
           >
             {publicarSitio.isPending ? (
@@ -313,13 +313,13 @@ function WebsiteEditorPage() {
       {/* Cuerpo del editor */}
       <div className="flex-1 flex overflow-hidden">
         {/* Panel izquierdo - Navegación */}
-        <aside className="w-14 bg-white border-r border-gray-200 flex flex-col items-center py-4 gap-2">
+        <aside className="w-14 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col items-center py-4 gap-2">
           <button
             onClick={() => setPanelActivo('bloques')}
             className={`p-3 rounded-lg transition-colors ${
               panelActivo === 'bloques'
-                ? 'bg-indigo-100 text-indigo-600'
-                : 'hover:bg-gray-100 text-gray-600'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
             title="Bloques"
           >
@@ -329,8 +329,8 @@ function WebsiteEditorPage() {
             onClick={() => setPanelActivo('paginas')}
             className={`p-3 rounded-lg transition-colors ${
               panelActivo === 'paginas'
-                ? 'bg-indigo-100 text-indigo-600'
-                : 'hover:bg-gray-100 text-gray-600'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
             title="Páginas"
           >
@@ -340,8 +340,8 @@ function WebsiteEditorPage() {
             onClick={() => setPanelActivo('tema')}
             className={`p-3 rounded-lg transition-colors ${
               panelActivo === 'tema'
-                ? 'bg-indigo-100 text-indigo-600'
-                : 'hover:bg-gray-100 text-gray-600'
+                ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400'
             }`}
             title="Tema"
           >
@@ -350,7 +350,7 @@ function WebsiteEditorPage() {
           <div className="flex-1" />
           <button
             onClick={() => navigate('/configuracion')}
-            className="p-3 hover:bg-gray-100 rounded-lg text-gray-600 transition-colors"
+            className="p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-gray-600 dark:text-gray-400 transition-colors"
             title="Configuración"
           >
             <Settings className="w-5 h-5" />
@@ -358,7 +358,7 @@ function WebsiteEditorPage() {
         </aside>
 
         {/* Panel secundario - Contenido según panelActivo */}
-        <aside className="w-72 bg-white border-r border-gray-200 overflow-y-auto flex-shrink-0">
+        <aside className="w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 overflow-y-auto flex-shrink-0">
           {panelActivo === 'bloques' && (
             <BlockPalette
               tiposBloques={tiposBloques}
@@ -395,7 +395,7 @@ function WebsiteEditorPage() {
         </aside>
 
         {/* Area principal - Editor de bloques */}
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50 dark:bg-gray-900">
           <BlockEditor
             pagina={paginaActiva}
             bloques={bloques}
@@ -452,19 +452,19 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl max-w-lg w-full p-6 sm:p-8">
         <div className="text-center mb-6">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Globe2 className="w-8 h-8 text-indigo-600" />
+          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Globe2 className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Crear tu sitio web</h2>
-          <p className="text-gray-600 mt-2">Configura los datos básicos de tu sitio</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Crear tu sitio web</h2>
+          <p className="text-gray-600 dark:text-gray-400 mt-2">Configura los datos básicos de tu sitio</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre del sitio *
             </label>
             <input
@@ -472,17 +472,17 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
               value={form.nombre_sitio}
               onChange={(e) => setForm({ ...form, nombre_sitio: e.target.value })}
               placeholder="Mi Negocio"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               URL del sitio *
             </label>
             <div className="flex items-center">
-              <span className="text-gray-500 bg-gray-100 px-3 py-3 rounded-l-lg border border-r-0 border-gray-300 text-sm">
+              <span className="text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-3 py-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 text-sm">
                 nexo.com/sitio/
               </span>
               <input
@@ -493,15 +493,15 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
                   setForm({ ...form, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '') });
                 }}
                 placeholder="mi-negocio"
-                className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                className="flex-1 px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-r-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 required
               />
             </div>
-            <p className="text-xs text-gray-500 mt-1">Solo letras, números y guiones</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Solo letras, números y guiones</p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Descripción (opcional)
             </label>
             <textarea
@@ -509,7 +509,7 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
               onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
               placeholder="Breve descripción de tu negocio..."
               rows={3}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 resize-none"
+              className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-none"
             />
           </div>
 
@@ -517,14 +517,14 @@ function CrearSitioModal({ onCrear, onCancelar, isLoading }) {
             <button
               type="button"
               onClick={onCancelar}
-              className="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors font-medium"
             >
               Cancelar
             </button>
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? (
                 <>

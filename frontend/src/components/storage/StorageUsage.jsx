@@ -32,7 +32,7 @@ function StorageUsage({
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-4 ${className}`}>
-        <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+        <Loader2 className="h-5 w-5 text-primary-600 animate-spin" />
         <span className="ml-2 text-sm text-gray-600">Cargando...</span>
       </div>
     );
@@ -55,13 +55,13 @@ function StorageUsage({
   const getBarColor = () => {
     if (percentage >= 90) return 'bg-red-500';
     if (percentage >= 75) return 'bg-yellow-500';
-    return 'bg-indigo-500';
+    return 'bg-primary-500';
   };
 
   const getTextColor = () => {
     if (percentage >= 90) return 'text-red-600';
     if (percentage >= 75) return 'text-yellow-600';
-    return 'text-indigo-600';
+    return 'text-primary-600';
   };
 
   // Variante compacta (para sidebar o headers)
@@ -95,7 +95,7 @@ function StorageUsage({
     <div className={`bg-white rounded-lg shadow-sm p-6 ${className}`}>
       {/* Header */}
       <div className="flex items-center space-x-2 mb-4">
-        <HardDrive className="h-5 w-5 text-indigo-600" />
+        <HardDrive className="h-5 w-5 text-primary-600" />
         <h3 className="text-lg font-semibold text-gray-900">Uso de Almacenamiento</h3>
       </div>
 

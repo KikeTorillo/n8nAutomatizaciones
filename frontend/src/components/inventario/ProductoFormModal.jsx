@@ -435,8 +435,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información Básica */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <Package className="h-5 w-5 mr-2 text-indigo-600" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+            <Package className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
             Información Básica
           </h3>
 
@@ -499,8 +499,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
         {/* Imagen del Producto */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <ImageIcon className="h-5 w-5 mr-2 text-pink-600" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+            <ImageIcon className="h-5 w-5 mr-2 text-pink-600 dark:text-pink-400" />
             Imagen del Producto
           </h3>
 
@@ -512,7 +512,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                   <img
                     src={imagenPreview}
                     alt="Preview"
-                    className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
                   />
                   <button
                     type="button"
@@ -523,8 +523,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                   </button>
                 </div>
               ) : (
-                <div className="w-32 h-32 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center">
-                  <ImageIcon className="h-10 w-10 text-gray-400" />
+                <div className="w-32 h-32 bg-gray-100 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center">
+                  <ImageIcon className="h-10 w-10 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
             </div>
@@ -538,24 +538,24 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                     type="file"
                     accept="image/*"
                     onChange={handleImagenChange}
-                    className="block w-full text-sm text-gray-500
+                    className="block w-full text-sm text-gray-500 dark:text-gray-400
                       file:mr-4 file:py-2 file:px-4
                       file:rounded-lg file:border-0
                       file:text-sm file:font-semibold
-                      file:bg-indigo-50 file:text-indigo-700
-                      hover:file:bg-indigo-100
+                      file:bg-primary-50 dark:file:bg-primary-900/40 file:text-primary-700 dark:file:text-primary-300
+                      hover:file:bg-primary-100 dark:hover:file:bg-primary-900/60
                       cursor-pointer"
                     disabled={uploadMutation.isPending}
                   />
                   {uploadMutation.isPending && (
-                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
-                      <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
-                      <span className="ml-2 text-sm text-gray-600">Subiendo...</span>
+                    <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center rounded-lg">
+                      <Loader2 className="h-5 w-5 text-primary-600 dark:text-primary-400 animate-spin" />
+                      <span className="ml-2 text-sm text-gray-600 dark:text-gray-400">Subiendo...</span>
                     </div>
                   )}
                 </div>
               </label>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                 PNG, JPG o WEBP. Máximo 5MB.
               </p>
             </div>
@@ -564,8 +564,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
         {/* Precios */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <DollarSign className="h-5 w-5 mr-2 text-green-600" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+            <DollarSign className="h-5 w-5 mr-2 text-green-600 dark:text-green-400" />
             Precios
           </h3>
 
@@ -618,8 +618,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         {/* Inventario (Solo en crear) */}
         {mode === 'create' && (
           <div className="space-y-4">
-            <h3 className="text-lg font-medium text-gray-900 flex items-center">
-              <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
               Inventario
             </h3>
 
@@ -668,8 +668,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
         {/* Configuración */}
         <div className="space-y-4">
-          <h3 className="text-lg font-medium text-gray-900 flex items-center">
-            <Tag className="h-5 w-5 mr-2 text-purple-600" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+            <Tag className="h-5 w-5 mr-2 text-purple-600 dark:text-purple-400" />
             Configuración
           </h3>
 
@@ -720,7 +720,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         </div>
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

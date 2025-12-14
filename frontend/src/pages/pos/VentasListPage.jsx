@@ -91,24 +91,24 @@ export default function VentasListPage() {
   // Helpers de visualización
   const getBadgeEstado = (estado) => {
     const badges = {
-      cotizacion: 'bg-gray-100 text-gray-800',
-      apartado: 'bg-yellow-100 text-yellow-800',
-      completada: 'bg-green-100 text-green-800',
-      cancelada: 'bg-red-100 text-red-800',
-      devolucion_parcial: 'bg-orange-100 text-orange-800',
-      devolucion_total: 'bg-red-100 text-red-800',
+      cotizacion: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      apartado: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      completada: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+      cancelada: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
+      devolucion_parcial: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+      devolucion_total: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getBadgeEstadoPago = (estadoPago) => {
     const badges = {
-      pendiente: 'bg-yellow-100 text-yellow-800',
-      pagado: 'bg-green-100 text-green-800',
-      parcial: 'bg-orange-100 text-orange-800',
-      cancelado: 'bg-red-100 text-red-800',
+      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      pagado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+      parcial: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+      cancelado: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
     };
-    return badges[estadoPago] || 'bg-gray-100 text-gray-800';
+    return badges[estadoPago] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const formatearMetodoPago = (metodo) => {
@@ -123,21 +123,21 @@ export default function VentasListPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Punto de Venta</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona ventas, historial y reportes
         </p>
       </div>
@@ -150,11 +150,11 @@ export default function VentasListPage() {
         {/* Header de sección */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <Receipt className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <Receipt className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               Historial de Ventas
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Consulta y gestiona las ventas realizadas
             </p>
           </div>
@@ -170,7 +170,7 @@ export default function VentasListPage() {
 
       {/* Panel de filtros */}
       {mostrarFiltros && (
-        <div className="bg-white rounded-lg shadow p-4 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Búsqueda por folio */}
             <Input
@@ -267,58 +267,58 @@ export default function VentasListPage() {
       )}
 
       {/* Tabla de ventas */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
             Cargando ventas...
           </div>
         ) : ventas.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <Receipt className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No se encontraron ventas</p>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <Receipt className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No se encontraron ventas</p>
             <p className="text-sm mt-1">Intenta ajustar los filtros de búsqueda</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Folio
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Fecha
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Cliente
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Método Pago
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Estado Pago
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {ventas.map((venta) => (
-                    <tr key={venta.id} className="hover:bg-gray-50">
+                    <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{venta.folio}</div>
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{venta.folio}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {new Date(venta.fecha_venta).toLocaleDateString('es-MX', {
                             year: 'numeric',
                             month: 'short',
@@ -329,17 +329,17 @@ export default function VentasListPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {venta.cliente_nombre || 'Venta directa'}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           ${parseFloat(venta.total || 0).toFixed(2)}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {formatearMetodoPago(venta.metodo_pago)}
                         </div>
                       </td>
@@ -365,7 +365,7 @@ export default function VentasListPage() {
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => handleVerDetalle(venta.id)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                             title="Ver detalle"
                           >
                             <Eye className="h-5 w-5" />
@@ -374,14 +374,14 @@ export default function VentasListPage() {
                             <>
                               <button
                                 onClick={() => handleDevolver(venta)}
-                                className="text-orange-600 hover:text-orange-900"
+                                className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
                                 title="Procesar devolución"
                               >
                                 <RefreshCw className="h-5 w-5" />
                               </button>
                               <button
                                 onClick={() => handleCancelar(venta)}
-                                className="text-red-600 hover:text-red-900"
+                                className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                                 title="Cancelar venta"
                               >
                                 <XCircle className="h-5 w-5" />
@@ -397,9 +397,9 @@ export default function VentasListPage() {
             </div>
 
             {/* Paginación */}
-            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Mostrando <span className="font-medium">{ventas.length}</span> de{' '}
                   <span className="font-medium">{total}</span> ventas
                 </div>

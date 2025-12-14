@@ -31,14 +31,14 @@ function ClientesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
@@ -47,12 +47,12 @@ function ClientesPage() {
         {/* Header - Mobile First */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <UserCircle className="h-6 w-6 sm:h-7 sm:w-7 text-cyan-600" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+              <UserCircle className="h-6 w-6 sm:h-7 sm:w-7 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Clientes</h1>
-              <p className="text-sm text-gray-500 hidden sm:block">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Clientes</h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                 Gestiona tu base de clientes y atención walk-in
               </p>
             </div>
@@ -81,9 +81,9 @@ function ClientesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Search Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
             <Input
               type="text"
               placeholder="Buscar por nombre, teléfono o email..."

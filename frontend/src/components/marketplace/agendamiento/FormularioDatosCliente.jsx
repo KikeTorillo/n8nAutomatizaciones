@@ -57,10 +57,10 @@ function FormularioDatosCliente({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
           Tus datos
         </h2>
-        <p className="text-gray-600 mt-1">
+        <p className="text-gray-600 dark:text-gray-400 mt-1">
           Necesitamos tu información para confirmar la cita
         </p>
       </div>
@@ -69,7 +69,7 @@ function FormularioDatosCliente({
       <div className="space-y-4">
         {/* Nombre */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <User className="w-4 h-4 inline mr-2" />
             Nombre *
           </label>
@@ -80,13 +80,13 @@ function FormularioDatosCliente({
             required
           />
           {errores.nombre && (
-            <p className="text-sm text-red-600 mt-1">{errores.nombre}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errores.nombre}</p>
           )}
         </div>
 
         {/* Apellidos */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Apellidos
           </label>
           <Input
@@ -98,7 +98,7 @@ function FormularioDatosCliente({
 
         {/* Email */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <Mail className="w-4 h-4 inline mr-2" />
             Email *
           </label>
@@ -110,13 +110,13 @@ function FormularioDatosCliente({
             required
           />
           {errores.email && (
-            <p className="text-sm text-red-600 mt-1">{errores.email}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errores.email}</p>
           )}
         </div>
 
         {/* Teléfono */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <Phone className="w-4 h-4 inline mr-2" />
             Teléfono *
           </label>
@@ -128,23 +128,23 @@ function FormularioDatosCliente({
             required
           />
           {errores.telefono && (
-            <p className="text-sm text-red-600 mt-1">{errores.telefono}</p>
+            <p className="text-sm text-red-600 dark:text-red-400 mt-1">{errores.telefono}</p>
           )}
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
             Incluye código de país (ej: +52)
           </p>
         </div>
       </div>
 
       {/* Nota de privacidad */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-sm text-gray-700">
+      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+        <p className="text-sm text-gray-700 dark:text-gray-300">
           <strong>Privacidad:</strong> Tus datos solo serán utilizados para confirmar y gestionar tu cita.
         </p>
       </div>
 
       {/* Botones */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button
           variant="outline"
           onClick={onAnterior}

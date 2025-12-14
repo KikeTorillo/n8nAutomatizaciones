@@ -48,9 +48,9 @@ export default function SuperAdminLayout() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-100">
+        <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
             {/* Header - Mobile First */}
-            <header className="bg-red-600 text-white shadow-lg">
+            <header className="bg-red-600 dark:bg-red-700 text-white shadow-lg">
                 <div className="container mx-auto px-3 py-3 sm:px-4 sm:py-4">
                     {/* Mobile: Stack, Desktop: Row */}
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -62,7 +62,7 @@ export default function SuperAdminLayout() {
                             <button
                                 onClick={handleLogout}
                                 disabled={logoutMutation.isPending}
-                                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-700 hover:bg-red-800 rounded text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-red-700 dark:bg-red-800 hover:bg-red-800 dark:hover:bg-red-900 rounded text-xs sm:text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
                             >
                                 {logoutMutation.isPending ? 'Cerrando...' : 'Cerrar Sesión'}
                             </button>
@@ -72,36 +72,36 @@ export default function SuperAdminLayout() {
             </header>
 
             {/* Navigation - Scrollable on mobile */}
-            <nav className="bg-white shadow-md border-b overflow-x-auto">
+            <nav className="bg-white dark:bg-gray-800 shadow-md border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
                 <div className="container mx-auto px-2 sm:px-4">
                     <div className="flex min-w-max sm:min-w-0">
                         <Link
                             to="/superadmin"
-                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 dark:hover:border-red-500 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
                             <span className="hidden sm:inline">📊 </span>Dashboard
                         </Link>
                         <Link
                             to="/superadmin/organizaciones"
-                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 dark:hover:border-red-500 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
                             <span className="hidden sm:inline">🏢 </span>Orgs
                         </Link>
                         <Link
                             to="/superadmin/planes"
-                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 dark:hover:border-red-500 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
                             <span className="hidden sm:inline">💳 </span>Planes
                         </Link>
                         <Link
                             to="/superadmin/marketplace"
-                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 dark:hover:border-red-500 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
                             <span className="hidden sm:inline">🛍️ </span>Market
                         </Link>
                         <Link
                             to="/superadmin/plantillas-eventos"
-                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 text-gray-700 hover:text-red-600 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
+                            className="py-3 px-3 sm:py-4 sm:px-4 border-b-2 border-transparent hover:border-red-600 dark:hover:border-red-500 text-gray-700 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-sm sm:text-base font-medium transition-colors whitespace-nowrap"
                         >
                             <span className="hidden sm:inline">🎨 </span>Plantillas
                         </Link>

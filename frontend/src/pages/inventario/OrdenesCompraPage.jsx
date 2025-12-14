@@ -206,22 +206,22 @@ export default function OrdenesCompraPage() {
   // Helpers de visualización
   const getBadgeEstado = (estado) => {
     const badges = {
-      borrador: 'bg-gray-100 text-gray-800',
-      enviada: 'bg-blue-100 text-blue-800',
-      parcial: 'bg-yellow-100 text-yellow-800',
-      recibida: 'bg-green-100 text-green-800',
-      cancelada: 'bg-red-100 text-red-800',
+      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      enviada: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
+      parcial: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      recibida: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+      cancelada: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getBadgeEstadoPago = (estadoPago) => {
     const badges = {
-      pendiente: 'bg-yellow-100 text-yellow-800',
-      parcial: 'bg-orange-100 text-orange-800',
-      pagado: 'bg-green-100 text-green-800',
+      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      parcial: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+      pagado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
     };
-    return badges[estadoPago] || 'bg-gray-100 text-gray-800';
+    return badges[estadoPago] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const formatearEstado = (estado) => {
@@ -245,21 +245,21 @@ export default function OrdenesCompraPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona productos, proveedores y stock
         </p>
       </div>
@@ -272,10 +272,10 @@ export default function OrdenesCompraPage() {
         {/* Header de sección */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
-            <ShoppingCart className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
+            <ShoppingCart className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
             <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900">Órdenes de Compra</h2>
-              <p className="text-sm text-gray-500 hidden sm:block">
+              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Órdenes de Compra</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
                 Gestiona las órdenes de compra a proveedores
               </p>
             </div>
@@ -301,25 +301,25 @@ export default function OrdenesCompraPage() {
       {/* Resumen de totales */}
       {totales && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500">Total Órdenes</div>
-            <div className="text-lg sm:text-2xl font-bold text-gray-900">{totales.cantidad || 0}</div>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Órdenes</div>
+            <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{totales.cantidad || 0}</div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500">Valor Total</div>
-            <div className="text-lg sm:text-2xl font-bold text-indigo-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Valor Total</div>
+            <div className="text-lg sm:text-2xl font-bold text-primary-600 dark:text-primary-400">
               ${parseFloat(totales.valor_total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500">Total Pagado</div>
-            <div className="text-lg sm:text-2xl font-bold text-green-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Pagado</div>
+            <div className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
               ${parseFloat(totales.total_pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500 truncate">Pendiente de Pago</div>
-            <div className="text-lg sm:text-2xl font-bold text-orange-600">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
+            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Pendiente de Pago</div>
+            <div className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
               ${parseFloat(totales.pendiente_pago || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
             </div>
           </div>
@@ -328,34 +328,34 @@ export default function OrdenesCompraPage() {
 
       {/* Panel de filtros */}
       {mostrarFiltros && (
-        <div className="bg-white rounded-lg shadow p-4 space-y-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Búsqueda por folio */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Buscar por folio
               </label>
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   value={filtros.folio}
                   onChange={(e) => handleFiltroChange('folio', e.target.value)}
                   placeholder="OC-2025-0001"
-                  className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="pl-10 w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
             </div>
 
             {/* Proveedor */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Proveedor
               </label>
               <select
                 value={filtros.proveedor_id}
                 onChange={(e) => handleFiltroChange('proveedor_id', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 {proveedores.map((prov) => (
@@ -368,13 +368,13 @@ export default function OrdenesCompraPage() {
 
             {/* Estado */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Estado
               </label>
               <select
                 value={filtros.estado}
                 onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 <option value="borrador">Borrador</option>
@@ -387,13 +387,13 @@ export default function OrdenesCompraPage() {
 
             {/* Estado de pago */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Estado de Pago
               </label>
               <select
                 value={filtros.estado_pago}
                 onChange={(e) => handleFiltroChange('estado_pago', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 <option value="pendiente">Pendiente</option>
@@ -404,27 +404,27 @@ export default function OrdenesCompraPage() {
 
             {/* Fecha desde */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Fecha Desde
               </label>
               <input
                 type="date"
                 value={filtros.fecha_desde}
                 onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             {/* Fecha hasta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Fecha Hasta
               </label>
               <input
                 type="date"
                 value={filtros.fecha_hasta}
                 onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
@@ -439,16 +439,16 @@ export default function OrdenesCompraPage() {
       )}
 
       {/* Tabla de órdenes */}
-      <div className="bg-white rounded-lg shadow overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
             Cargando órdenes de compra...
           </div>
         ) : ordenes.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-300" />
-            <p className="text-lg font-medium">No se encontraron órdenes de compra</p>
+          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+            <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No se encontraron órdenes de compra</p>
             <p className="text-sm mt-1">Crea una nueva orden para comenzar</p>
             <div className="mt-4">
               <Button variant="primary" onClick={handleNuevaOrden} icon={Plus}>
@@ -459,46 +459,46 @@ export default function OrdenesCompraPage() {
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Folio
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Fecha
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Proveedor
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Items
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Total
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Pago
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {ordenes.map((orden) => (
-                    <tr key={orden.id} className="hover:bg-gray-50">
+                    <tr key={orden.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-indigo-600">{orden.folio}</div>
+                        <div className="text-sm font-medium text-primary-600 dark:text-primary-400">{orden.folio}</div>
                         {orden.referencia_proveedor && (
-                          <div className="text-xs text-gray-400">Ref: {orden.referencia_proveedor}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-500">Ref: {orden.referencia_proveedor}</div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {new Date(orden.fecha_orden).toLocaleDateString('es-MX', {
                             year: 'numeric',
                             month: 'short',
@@ -506,26 +506,26 @@ export default function OrdenesCompraPage() {
                           })}
                         </div>
                         {orden.fecha_entrega_esperada && (
-                          <div className="text-xs text-gray-400">
+                          <div className="text-xs text-gray-400 dark:text-gray-500">
                             Entrega: {new Date(orden.fecha_entrega_esperada).toLocaleDateString('es-MX')}
                           </div>
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center">
-                          <Building2 className="h-4 w-4 mr-2 text-gray-400" />
-                          <div className="text-sm text-gray-900">{orden.proveedor_nombre}</div>
+                          <Building2 className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
+                          <div className="text-sm text-gray-900 dark:text-gray-100">{orden.proveedor_nombre}</div>
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">{orden.items_count || 0} productos</div>
+                        <div className="text-sm text-gray-900 dark:text-gray-100">{orden.items_count || 0} productos</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900">
+                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           ${parseFloat(orden.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                         </div>
                         {parseFloat(orden.monto_pagado || 0) > 0 && (
-                          <div className="text-xs text-green-600">
+                          <div className="text-xs text-green-600 dark:text-green-400">
                             Pagado: ${parseFloat(orden.monto_pagado).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                           </div>
                         )}
@@ -553,7 +553,7 @@ export default function OrdenesCompraPage() {
                           {/* Ver detalle */}
                           <button
                             onClick={() => handleVerDetalle(orden.id)}
-                            className="p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded"
+                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             title="Ver detalle"
                           >
                             <Eye className="h-4 w-4" />
@@ -563,7 +563,7 @@ export default function OrdenesCompraPage() {
                           {orden.estado === 'borrador' && (
                             <button
                               onClick={() => handleEditar(orden)}
-                              className="p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded"
+                              className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                               title="Editar"
                             >
                               <Edit className="h-4 w-4" />
@@ -574,7 +574,7 @@ export default function OrdenesCompraPage() {
                           {orden.estado === 'borrador' && (orden.items_count || 0) > 0 && (
                             <button
                               onClick={() => handleAbrirModalEnviar(orden)}
-                              className="p-1.5 text-indigo-600 hover:text-indigo-900 hover:bg-indigo-50 rounded"
+                              className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                               title="Enviar al proveedor"
                             >
                               <Send className="h-4 w-4" />
@@ -585,7 +585,7 @@ export default function OrdenesCompraPage() {
                           {['enviada', 'parcial'].includes(orden.estado) && (
                             <button
                               onClick={() => handleRecibirMercancia(orden)}
-                              className="p-1.5 text-green-600 hover:text-green-900 hover:bg-green-50 rounded"
+                              className="p-1.5 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
                               title="Recibir mercancía"
                             >
                               <Package className="h-4 w-4" />
@@ -598,7 +598,7 @@ export default function OrdenesCompraPage() {
                            orden.estado_pago !== 'pagado' && (
                             <button
                               onClick={() => handleRegistrarPago(orden)}
-                              className="p-1.5 text-emerald-600 hover:text-emerald-900 hover:bg-emerald-50 rounded"
+                              className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded"
                               title="Registrar pago"
                             >
                               <DollarSign className="h-4 w-4" />
@@ -609,7 +609,7 @@ export default function OrdenesCompraPage() {
                           {['borrador', 'enviada', 'parcial'].includes(orden.estado) && (
                             <button
                               onClick={() => handleAbrirModalCancelar(orden)}
-                              className="p-1.5 text-orange-600 hover:text-orange-900 hover:bg-orange-50 rounded"
+                              className="p-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
                               title="Cancelar orden"
                             >
                               <XCircle className="h-4 w-4" />
@@ -620,7 +620,7 @@ export default function OrdenesCompraPage() {
                           {orden.estado === 'borrador' && (
                             <button
                               onClick={() => handleAbrirModalEliminar(orden)}
-                              className="p-1.5 text-red-600 hover:text-red-900 hover:bg-red-50 rounded"
+                              className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                               title="Eliminar"
                             >
                               <Trash2 className="h-4 w-4" />
@@ -635,9 +635,9 @@ export default function OrdenesCompraPage() {
             </div>
 
             {/* Paginación */}
-            <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
               <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700">
+                <div className="text-sm text-gray-700 dark:text-gray-300">
                   Mostrando <span className="font-medium">{ordenes.length}</span> de{' '}
                   <span className="font-medium">{total}</span> órdenes
                 </div>
@@ -698,13 +698,13 @@ export default function OrdenesCompraPage() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas eliminar la orden{' '}
-            <strong className="text-gray-900">{modalEliminar.orden?.folio}</strong>?
+            <strong className="text-gray-900 dark:text-gray-100">{modalEliminar.orden?.folio}</strong>?
           </p>
-          <p className="text-sm text-gray-500">Esta acción no se puede deshacer.</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer.</p>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => setModalEliminar({ isOpen: false, orden: null })}
@@ -730,16 +730,16 @@ export default function OrdenesCompraPage() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Confirmas que deseas enviar la orden{' '}
-            <strong className="text-gray-900">{modalEnviar.orden?.folio}</strong> al proveedor{' '}
-            <strong className="text-gray-900">{modalEnviar.orden?.proveedor_nombre}</strong>?
+            <strong className="text-gray-900 dark:text-gray-100">{modalEnviar.orden?.folio}</strong> al proveedor{' '}
+            <strong className="text-gray-900 dark:text-gray-100">{modalEnviar.orden?.proveedor_nombre}</strong>?
           </p>
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Una vez enviada, no podrás modificar los items de la orden.
           </p>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => setModalEnviar({ isOpen: false, orden: null })}

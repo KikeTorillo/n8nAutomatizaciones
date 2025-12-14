@@ -111,6 +111,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.estilo}
           onChange={(e) => setForm({ ...form, estilo: e.target.value })}
           options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           type="url"
@@ -118,6 +119,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.logo}
           onChange={(e) => setForm({ ...form, logo: e.target.value })}
           placeholder="https://ejemplo.com/logo.png"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -127,18 +129,20 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
         onChange={(e) => setForm({ ...form, descripcion: e.target.value })}
         placeholder="Breve descripción del negocio"
         rows={2}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <Input
         label="Texto de copyright"
         value={form.copyright}
         onChange={(e) => setForm({ ...form, copyright: e.target.value })}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       {/* Links */}
-      <div className="p-4 bg-gray-50 rounded-lg">
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700">Enlaces del menú</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Enlaces del menú</h4>
           <Button
             type="button"
             variant="ghost"
@@ -158,19 +162,21 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
                 onChange={(e) => handleLinkChange(index, 'texto', e.target.value)}
                 placeholder="Texto"
                 inputSize="sm"
+                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Input
                 value={link.url}
                 onChange={(e) => handleLinkChange(index, 'url', e.target.value)}
                 placeholder="/url"
                 inputSize="sm"
+                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => handleEliminarLink(index)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>
@@ -180,9 +186,9 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Redes sociales */}
-      <div className="p-4 bg-gray-50 rounded-lg">
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
         <div className="flex items-center justify-between mb-3">
-          <h4 className="text-sm font-medium text-gray-700">Redes sociales</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Redes sociales</h4>
           <Button
             type="button"
             variant="ghost"
@@ -201,7 +207,7 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
                 value={red.red}
                 onChange={(e) => handleRedChange(index, 'red', e.target.value)}
                 options={redesOptions}
-                className="w-32"
+                className="w-32 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Input
                 type="url"
@@ -209,13 +215,14 @@ function FooterEditor({ contenido, onGuardar, tema, isSaving }) {
                 onChange={(e) => handleRedChange(index, 'url', e.target.value)}
                 placeholder="URL del perfil"
                 inputSize="sm"
+                className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
               />
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => handleEliminarRed(index)}
-                className="text-gray-400 hover:text-red-500"
+                className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
               >
                 <Trash2 className="w-4 h-4" />
               </Button>

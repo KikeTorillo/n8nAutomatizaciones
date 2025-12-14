@@ -3,9 +3,44 @@
 @tailwind utilities;
 
 @layer base {
+  /* Colores base para temas */
+  :root {
+    --background: 255 255 255;
+    --foreground: 17 24 39;
+    --card: 255 255 255;
+    --card-foreground: 17 24 39;
+    --muted: 249 250 251;
+    --muted-foreground: 107 114 128;
+    --border: 229 231 235;
+    --input: 229 231 235;
+    --ring: 117 53 114; /* Nexo Purple #753572 */
+    --primary: 117 53 114;
+  }
+
+  .dark {
+    --background: 17 24 39;
+    --foreground: 249 250 251;
+    --card: 31 41 55;
+    --card-foreground: 249 250 251;
+    --muted: 55 65 81;
+    --muted-foreground: 156 163 175;
+    --border: 55 65 81;
+    --input: 55 65 81;
+    --ring: 201 79 195; /* primary-500 para dark mode */
+    --primary: 163 58 158; /* primary-600 para dark mode */
+  }
+
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: "rlig" 1, "calt" 1;
+    @apply bg-gray-50 text-gray-900;
+    @apply dark:bg-gray-900 dark:text-gray-100;
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  /* Asegurar que el html también tenga el fondo correcto */
+  html {
+    @apply bg-gray-50 dark:bg-gray-900;
   }
 }
 
@@ -15,22 +50,22 @@
   }
 }
 
-/* Scrollbar personalizado */
+/* Scrollbar personalizado - Adaptable a dark mode */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-gray-100;
+  @apply bg-gray-100 dark:bg-gray-800;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-gray-400 rounded;
+  @apply bg-gray-400 dark:bg-gray-600 rounded;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  @apply bg-gray-600;
+  @apply bg-gray-500 dark:bg-gray-500;
 }
 
 /* Animación para toasts */

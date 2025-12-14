@@ -16,11 +16,11 @@ function PreviewPanel({ config, pagina, bloques }) {
   if (!pagina) {
     return (
       <div className="h-full flex flex-col">
-        <div className="p-4 border-b border-gray-200">
-          <h3 className="font-semibold text-gray-900">Vista previa</h3>
+        <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Vista previa</h3>
         </div>
         <div className="flex-1 flex items-center justify-center p-4">
-          <p className="text-sm text-gray-500 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
             Selecciona una página para ver la vista previa
           </p>
         </div>
@@ -31,17 +31,17 @@ function PreviewPanel({ config, pagina, bloques }) {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900 mb-3">Vista previa</h3>
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Vista previa</h3>
 
         {/* Selector de dispositivo */}
-        <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
           <button
             onClick={() => setDispositivo('desktop')}
             className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
               dispositivo === 'desktop'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <Monitor className="w-4 h-4" />
@@ -50,8 +50,8 @@ function PreviewPanel({ config, pagina, bloques }) {
             onClick={() => setDispositivo('tablet')}
             className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
               dispositivo === 'tablet'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <Tablet className="w-4 h-4" />
@@ -60,8 +60,8 @@ function PreviewPanel({ config, pagina, bloques }) {
             onClick={() => setDispositivo('mobile')}
             className={`flex-1 flex items-center justify-center gap-1 px-2 py-1.5 rounded text-xs font-medium transition-colors ${
               dispositivo === 'mobile'
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
             }`}
           >
             <Smartphone className="w-4 h-4" />
@@ -70,7 +70,7 @@ function PreviewPanel({ config, pagina, bloques }) {
       </div>
 
       {/* Preview Area */}
-      <div className="flex-1 overflow-hidden bg-gray-100 p-4">
+      <div className="flex-1 overflow-hidden bg-gray-100 dark:bg-gray-900 p-4">
         <div
           className="h-full bg-white rounded-lg shadow-lg overflow-hidden mx-auto transition-all duration-300"
           style={{ maxWidth: anchos[dispositivo] }}
@@ -120,8 +120,8 @@ function PreviewPanel({ config, pagina, bloques }) {
       </div>
 
       {/* Info */}
-      <div className="p-4 border-t border-gray-200 bg-gray-50">
-        <p className="text-xs text-gray-500 text-center">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
           Vista previa aproximada. El resultado final puede variar.
         </p>
       </div>

@@ -148,22 +148,22 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Header personalizado */}
         <div className="flex items-start gap-3">
-          <div className="bg-orange-100 p-3 rounded-lg">
-            <RefreshCw className="h-6 w-6 text-orange-600" />
+          <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-lg">
+            <RefreshCw className="h-6 w-6 text-orange-600 dark:text-orange-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900">Procesar Devolución</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Folio: <span className="font-semibold text-gray-900">{venta.folio}</span>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Procesar Devolución</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Folio: <span className="font-semibold text-gray-900 dark:text-gray-100">{venta.folio}</span>
             </p>
           </div>
         </div>
 
         {/* Advertencia */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
           <div className="flex gap-3">
-            <AlertTriangle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-blue-800">
+            <AlertTriangle className="h-5 w-5 text-primary-600 dark:text-primary-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-primary-800 dark:text-primary-300">
               <p className="font-semibold mb-1">Información importante:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Selecciona los items y cantidades a devolver</li>
@@ -178,62 +178,62 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
         {/* Selección de items */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <label className="block text-sm font-medium text-gray-700">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
               Items a Devolver <span className="text-red-500">*</span>
             </label>
             <div className="flex gap-2">
               <button
                 type="button"
                 onClick={handleSeleccionarTodo}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium"
               >
                 Seleccionar todo
               </button>
-              <span className="text-gray-300">|</span>
+              <span className="text-gray-300 dark:text-gray-600">|</span>
               <button
                 type="button"
                 onClick={handleLimpiarSeleccion}
-                className="text-sm text-gray-600 hover:text-gray-800 font-medium"
+                className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 font-medium"
               >
                 Limpiar
               </button>
             </div>
           </div>
 
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Producto
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Cantidad Original
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Cantidad a Devolver
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Precio Unit.
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Subtotal Devolución
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {itemsDevolver.map((item) => (
                     <tr key={item.venta_pos_item_id}>
-                      <td className="px-4 py-3 text-sm text-gray-900">
+                      <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                         <div>
                           <p className="font-medium">{item.producto_nombre}</p>
                           {item.producto_sku && (
-                            <p className="text-xs text-gray-500">SKU: {item.producto_sku}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.producto_sku}</p>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-sm text-center text-gray-900">
+                      <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-gray-100">
                         {item.cantidad_original}
                       </td>
                       <td className="px-4 py-3 text-sm text-center">
@@ -245,13 +245,13 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
                           onChange={(e) =>
                             handleCantidadChange(item.venta_pos_item_id, e.target.value)
                           }
-                          className="w-20 px-2 py-1 text-center rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                          className="w-20 px-2 py-1 text-center rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-orange-500 focus:ring-orange-500"
                         />
                       </td>
-                      <td className="px-4 py-3 text-sm text-right text-gray-900">
+                      <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
                         ${parseFloat(item.precio_unitario || 0).toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                      <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
                         ${(item.cantidad_devolver * parseFloat(item.precio_unitario || 0)).toFixed(2)}
                       </td>
                     </tr>
@@ -261,24 +261,24 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
             </div>
           </div>
 
-          {errores.items && <p className="mt-1 text-sm text-red-600">{errores.items}</p>}
+          {errores.items && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errores.items}</p>}
         </div>
 
         {/* Resumen de devolución */}
         {totalItemsSeleccionados > 0 && (
-          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+          <div className="bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Package className="h-5 w-5 text-orange-600" />
-              <h3 className="font-semibold text-gray-900">Resumen de Devolución</h3>
+              <Package className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Resumen de Devolución</h3>
             </div>
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Items a devolver:</span>
-                <span className="font-semibold text-gray-900">{totalItemsSeleccionados}</span>
+                <span className="text-gray-600 dark:text-gray-400">Items a devolver:</span>
+                <span className="font-semibold text-gray-900 dark:text-gray-100">{totalItemsSeleccionados}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Total a reembolsar:</span>
-                <span className="font-semibold text-orange-600">
+                <span className="text-gray-600 dark:text-gray-400">Total a reembolsar:</span>
+                <span className="font-semibold text-orange-600 dark:text-orange-400">
                   ${totalDevolucion.toFixed(2)}
                 </span>
               </div>
@@ -303,7 +303,7 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
         />
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
+        <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
           <Button
             type="button"
             variant="outline"

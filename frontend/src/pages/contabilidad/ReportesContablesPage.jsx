@@ -198,7 +198,7 @@ function ReportesContablesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
@@ -211,15 +211,15 @@ function ReportesContablesPage() {
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver a Contabilidad
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Reportes Financieros</h1>
-          <p className="text-gray-600 mt-1 text-sm">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reportes Financieros</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
             Reportes contables: Balanza, Libro Mayor, Estado de Resultados y Balance General
           </p>
         </div>
 
         {/* Tabs de reportes */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex -mb-px overflow-x-auto">
               {REPORTES.map((reporte) => {
                 const Icon = reporte.icon;
@@ -230,8 +230,8 @@ function ReportesContablesPage() {
                     onClick={() => setReporteActivo(reporte.id)}
                     className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-medium whitespace-nowrap transition-colors ${
                       isActive
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -243,7 +243,7 @@ function ReportesContablesPage() {
           </div>
 
           {/* Filtros */}
-          <div className="p-4 border-b border-gray-200 bg-gray-50">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
             {renderFiltros()}
           </div>
 
@@ -260,15 +260,15 @@ function ReportesContablesPage() {
  */
 function ReporteBalanza({ data, isLoading }) {
   if (isLoading) {
-    return <div className="text-center py-8 text-gray-500">Cargando balanza...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando balanza...</div>;
   }
 
   if (!data?.cuentas?.length) {
     return (
       <div className="text-center py-8">
-        <TrendingUp className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">No hay datos para mostrar</p>
-        <p className="text-sm text-gray-400 mt-1">
+        <TrendingUp className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">No hay datos para mostrar</p>
+        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
           Selecciona un período con movimientos contables
         </p>
       </div>
@@ -278,14 +278,14 @@ function ReporteBalanza({ data, isLoading }) {
   return (
     <div>
       {/* Info del período */}
-      <div className="mb-4 p-3 bg-blue-50 rounded-lg flex items-center justify-between">
+      <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/30 rounded-lg flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-blue-600" />
-          <span className="text-blue-700 font-medium">{data.periodo?.nombre}</span>
+          <Calendar className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+          <span className="text-primary-700 dark:text-primary-300 font-medium">{data.periodo?.nombre}</span>
         </div>
         <span
           className={`px-2 py-0.5 text-xs rounded-full ${
-            data.cuadra ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+            data.cuadra ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400' : 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400'
           }`}
         >
           {data.cuadra ? 'Cuadrada' : 'Descuadrada'}
@@ -293,47 +293,47 @@ function ReporteBalanza({ data, isLoading }) {
       </div>
 
       {/* Tabla */}
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+      <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-900">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Código
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Cuenta
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Saldo Inicial
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Debe
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Haber
               </th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                 Saldo Final
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
             {data.cuentas.map((cuenta) => (
-              <tr key={cuenta.cuenta_id} className="hover:bg-gray-50">
-                <td className="px-4 py-2 font-mono text-sm text-gray-600">{cuenta.codigo}</td>
-                <td className="px-4 py-2 text-sm text-gray-900">{cuenta.nombre}</td>
-                <td className="px-4 py-2 text-sm text-right text-gray-600">
+              <tr key={cuenta.cuenta_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td className="px-4 py-2 font-mono text-sm text-gray-600 dark:text-gray-400">{cuenta.codigo}</td>
+                <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100">{cuenta.nombre}</td>
+                <td className="px-4 py-2 text-sm text-right text-gray-600 dark:text-gray-400">
                   {formatCurrency(cuenta.saldo_inicial || 0)}
                 </td>
-                <td className="px-4 py-2 text-sm text-right font-medium text-gray-900">
+                <td className="px-4 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                   {formatCurrency(cuenta.total_debe || 0)}
                 </td>
-                <td className="px-4 py-2 text-sm text-right font-medium text-gray-900">
+                <td className="px-4 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                   {formatCurrency(cuenta.total_haber || 0)}
                 </td>
                 <td
                   className={`px-4 py-2 text-sm text-right font-bold ${
-                    cuenta.saldo_final >= 0 ? 'text-green-600' : 'text-red-600'
+                    cuenta.saldo_final >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                   }`}
                 >
                   {formatCurrency(cuenta.saldo_final || 0)}
@@ -341,21 +341,21 @@ function ReporteBalanza({ data, isLoading }) {
               </tr>
             ))}
           </tbody>
-          <tfoot className="bg-gray-100">
+          <tfoot className="bg-gray-100 dark:bg-gray-900">
             <tr>
-              <td colSpan={2} className="px-4 py-3 font-bold text-gray-900">
+              <td colSpan={2} className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">
                 TOTALES
               </td>
-              <td className="px-4 py-3 text-right font-bold text-gray-900">
+              <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(data.totales?.saldo_inicial || 0)}
               </td>
-              <td className="px-4 py-3 text-right font-bold text-gray-900">
+              <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(data.totales?.total_debe || 0)}
               </td>
-              <td className="px-4 py-3 text-right font-bold text-gray-900">
+              <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(data.totales?.total_haber || 0)}
               </td>
-              <td className="px-4 py-3 text-right font-bold text-gray-900">
+              <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                 {formatCurrency(data.totales?.saldo_final || 0)}
               </td>
             </tr>
@@ -371,14 +371,14 @@ function ReporteBalanza({ data, isLoading }) {
  */
 function ReporteLibroMayor({ data, isLoading }) {
   if (isLoading) {
-    return <div className="text-center py-8 text-gray-500">Cargando libro mayor...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando libro mayor...</div>;
   }
 
   if (!data?.cuenta) {
     return (
       <div className="text-center py-8">
-        <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Selecciona una cuenta para ver su libro mayor</p>
+        <BookOpen className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">Selecciona una cuenta para ver su libro mayor</p>
       </div>
     );
   }
@@ -386,17 +386,17 @@ function ReporteLibroMayor({ data, isLoading }) {
   return (
     <div>
       {/* Info de la cuenta */}
-      <div className="mb-4 p-4 bg-blue-50 rounded-lg">
+      <div className="mb-4 p-4 bg-primary-50 dark:bg-primary-900/30 rounded-lg">
         <div className="flex justify-between items-start">
           <div>
-            <span className="font-mono text-blue-600">{data.cuenta.codigo}</span>
-            <h3 className="font-bold text-blue-900">{data.cuenta.nombre}</h3>
+            <span className="font-mono text-primary-600 dark:text-primary-400">{data.cuenta.codigo}</span>
+            <h3 className="font-bold text-primary-900 dark:text-primary-200">{data.cuenta.nombre}</h3>
           </div>
           <div className="text-right">
-            <span className="text-sm text-blue-600">Saldo Final</span>
+            <span className="text-sm text-primary-600 dark:text-primary-400">Saldo Final</span>
             <p
               className={`text-xl font-bold ${
-                data.saldo_final >= 0 ? 'text-green-600' : 'text-red-600'
+                data.saldo_final >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
               }`}
             >
               {formatCurrency(data.saldo_final || 0)}
@@ -407,49 +407,49 @@ function ReporteLibroMayor({ data, isLoading }) {
 
       {/* Tabla de movimientos */}
       {data.movimientos?.length > 0 ? (
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+        <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-900">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Fecha
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Asiento
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Concepto
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Debe
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Haber
                 </th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                   Saldo
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200">
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
               {data.movimientos.map((mov, i) => (
-                <tr key={i} className="hover:bg-gray-50">
-                  <td className="px-4 py-2 text-sm text-gray-600">
+                <tr key={i} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">
                     {format(new Date(mov.fecha), 'dd/MM/yyyy')}
                   </td>
-                  <td className="px-4 py-2 text-sm text-gray-600">#{mov.numero_asiento}</td>
-                  <td className="px-4 py-2 text-sm text-gray-900 max-w-xs truncate">
+                  <td className="px-4 py-2 text-sm text-gray-600 dark:text-gray-400">#{mov.numero_asiento}</td>
+                  <td className="px-4 py-2 text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
                     {mov.concepto}
                   </td>
-                  <td className="px-4 py-2 text-sm text-right font-medium">
+                  <td className="px-4 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                     {mov.debe > 0 ? formatCurrency(mov.debe) : ''}
                   </td>
-                  <td className="px-4 py-2 text-sm text-right font-medium">
+                  <td className="px-4 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
                     {mov.haber > 0 ? formatCurrency(mov.haber) : ''}
                   </td>
                   <td
                     className={`px-4 py-2 text-sm text-right font-bold ${
-                      mov.saldo_acumulado >= 0 ? 'text-gray-900' : 'text-red-600'
+                      mov.saldo_acumulado >= 0 ? 'text-gray-900 dark:text-gray-100' : 'text-red-600 dark:text-red-400'
                     }`}
                   >
                     {formatCurrency(mov.saldo_acumulado || 0)}
@@ -457,18 +457,18 @@ function ReporteLibroMayor({ data, isLoading }) {
                 </tr>
               ))}
             </tbody>
-            <tfoot className="bg-gray-100">
+            <tfoot className="bg-gray-100 dark:bg-gray-900">
               <tr>
-                <td colSpan={3} className="px-4 py-3 font-bold text-gray-900">
+                <td colSpan={3} className="px-4 py-3 font-bold text-gray-900 dark:text-gray-100">
                   TOTALES
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900">
+                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(data.totales?.total_debe || 0)}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900">
+                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(data.totales?.total_haber || 0)}
                 </td>
-                <td className="px-4 py-3 text-right font-bold text-gray-900">
+                <td className="px-4 py-3 text-right font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(data.saldo_final || 0)}
                 </td>
               </tr>
@@ -476,7 +476,7 @@ function ReporteLibroMayor({ data, isLoading }) {
           </table>
         </div>
       ) : (
-        <p className="text-center text-gray-500 py-8">
+        <p className="text-center text-gray-500 dark:text-gray-400 py-8">
           No hay movimientos en el período seleccionado
         </p>
       )}
@@ -489,14 +489,14 @@ function ReporteLibroMayor({ data, isLoading }) {
  */
 function ReporteEstadoResultados({ data, isLoading }) {
   if (isLoading) {
-    return <div className="text-center py-8 text-gray-500">Cargando estado de resultados...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando estado de resultados...</div>;
   }
 
   if (!data) {
     return (
       <div className="text-center py-8">
-        <DollarSign className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Selecciona un rango de fechas</p>
+        <DollarSign className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">Selecciona un rango de fechas</p>
       </div>
     );
   }
@@ -508,63 +508,63 @@ function ReporteEstadoResultados({ data, isLoading }) {
     <div className="max-w-2xl mx-auto">
       {/* Ingresos */}
       <div className="mb-6">
-        <h3 className="font-bold text-gray-900 text-lg border-b pb-2 mb-3 flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-green-600" />
+        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg border-b border-gray-200 dark:border-gray-700 pb-2 mb-3 flex items-center gap-2">
+          <TrendingUp className="w-5 h-5 text-green-600 dark:text-green-400" />
           INGRESOS
         </h3>
         {data.ingresos?.cuentas?.length > 0 ? (
           <div className="space-y-2">
             {data.ingresos.cuentas.map((cuenta, i) => (
-              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50">
-                <span className="text-sm text-gray-700">{cuenta.nombre}</span>
-                <span className="font-medium text-green-600">{formatCurrency(cuenta.saldo)}</span>
+              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
+                <span className="font-medium text-green-600 dark:text-green-400">{formatCurrency(cuenta.saldo)}</span>
               </div>
             ))}
-            <div className="flex justify-between items-center py-2 px-2 border-t font-bold">
+            <div className="flex justify-between items-center py-2 px-2 border-t border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-gray-100">
               <span>Total Ingresos</span>
-              <span className="text-green-600">{formatCurrency(data.ingresos.total)}</span>
+              <span className="text-green-600 dark:text-green-400">{formatCurrency(data.ingresos.total)}</span>
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">Sin ingresos registrados</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Sin ingresos registrados</p>
         )}
       </div>
 
       {/* Gastos */}
       <div className="mb-6">
-        <h3 className="font-bold text-gray-900 text-lg border-b pb-2 mb-3 flex items-center gap-2">
-          <TrendingDown className="w-5 h-5 text-red-600" />
+        <h3 className="font-bold text-gray-900 dark:text-gray-100 text-lg border-b border-gray-200 dark:border-gray-700 pb-2 mb-3 flex items-center gap-2">
+          <TrendingDown className="w-5 h-5 text-red-600 dark:text-red-400" />
           GASTOS
         </h3>
         {data.gastos?.cuentas?.length > 0 ? (
           <div className="space-y-2">
             {data.gastos.cuentas.map((cuenta, i) => (
-              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50">
-                <span className="text-sm text-gray-700">{cuenta.nombre}</span>
-                <span className="font-medium text-red-600">{formatCurrency(cuenta.saldo)}</span>
+              <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+                <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
+                <span className="font-medium text-red-600 dark:text-red-400">{formatCurrency(cuenta.saldo)}</span>
               </div>
             ))}
-            <div className="flex justify-between items-center py-2 px-2 border-t font-bold">
+            <div className="flex justify-between items-center py-2 px-2 border-t border-gray-200 dark:border-gray-700 font-bold text-gray-900 dark:text-gray-100">
               <span>Total Gastos</span>
-              <span className="text-red-600">{formatCurrency(data.gastos.total)}</span>
+              <span className="text-red-600 dark:text-red-400">{formatCurrency(data.gastos.total)}</span>
             </div>
           </div>
         ) : (
-          <p className="text-gray-500 text-sm">Sin gastos registrados</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Sin gastos registrados</p>
         )}
       </div>
 
       {/* Resultado */}
       <div
         className={`p-4 rounded-lg ${
-          esGanancia ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
+          esGanancia ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
         }`}
       >
         <div className="flex justify-between items-center">
-          <span className={`font-bold text-lg ${esGanancia ? 'text-green-800' : 'text-red-800'}`}>
+          <span className={`font-bold text-lg ${esGanancia ? 'text-green-800 dark:text-green-300' : 'text-red-800 dark:text-red-300'}`}>
             {esGanancia ? 'UTILIDAD NETA' : 'PÉRDIDA NETA'}
           </span>
-          <span className={`text-2xl font-bold ${esGanancia ? 'text-green-600' : 'text-red-600'}`}>
+          <span className={`text-2xl font-bold ${esGanancia ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
             {formatCurrency(Math.abs(utilidadNeta))}
           </span>
         </div>
@@ -578,36 +578,52 @@ function ReporteEstadoResultados({ data, isLoading }) {
  */
 function ReporteBalanceGeneral({ data, isLoading }) {
   if (isLoading) {
-    return <div className="text-center py-8 text-gray-500">Cargando balance general...</div>;
+    return <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando balance general...</div>;
   }
 
   if (!data) {
     return (
       <div className="text-center py-8">
-        <BarChart3 className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-        <p className="text-gray-500">Selecciona una fecha de corte</p>
+        <BarChart3 className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+        <p className="text-gray-500 dark:text-gray-400">Selecciona una fecha de corte</p>
       </div>
     );
   }
 
+  // Clases de colores para cada sección (usando clases completas para que Tailwind las detecte)
+  const colorClasses = {
+    blue: {
+      title: 'text-primary-800 dark:text-primary-300',
+      total: 'text-primary-600 dark:text-primary-400',
+    },
+    red: {
+      title: 'text-red-800 dark:text-red-300',
+      total: 'text-red-600 dark:text-red-400',
+    },
+    purple: {
+      title: 'text-purple-800 dark:text-purple-300',
+      total: 'text-purple-600 dark:text-purple-400',
+    },
+  };
+
   const renderSeccion = (titulo, cuentas, total, color) => (
     <div className="mb-6">
-      <h3 className={`font-bold text-lg border-b pb-2 mb-3 text-${color}-800`}>{titulo}</h3>
+      <h3 className={`font-bold text-lg border-b border-gray-200 dark:border-gray-700 pb-2 mb-3 ${colorClasses[color].title}`}>{titulo}</h3>
       {cuentas?.length > 0 ? (
         <div className="space-y-1">
           {cuentas.map((cuenta, i) => (
-            <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50">
-              <span className="text-sm text-gray-700">{cuenta.nombre}</span>
-              <span className="font-medium">{formatCurrency(cuenta.saldo)}</span>
+            <div key={i} className="flex justify-between items-center py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
+              <span className="text-sm text-gray-700 dark:text-gray-300">{cuenta.nombre}</span>
+              <span className="font-medium text-gray-900 dark:text-gray-100">{formatCurrency(cuenta.saldo)}</span>
             </div>
           ))}
-          <div className={`flex justify-between items-center py-2 px-2 border-t font-bold text-${color}-600`}>
+          <div className={`flex justify-between items-center py-2 px-2 border-t border-gray-200 dark:border-gray-700 font-bold ${colorClasses[color].total}`}>
             <span>Total {titulo}</span>
             <span>{formatCurrency(total)}</span>
           </div>
         </div>
       ) : (
-        <p className="text-gray-500 text-sm">Sin registros</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm">Sin registros</p>
       )}
     </div>
   );
@@ -615,16 +631,16 @@ function ReporteBalanceGeneral({ data, isLoading }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
       {/* Columna Izquierda: Activos */}
-      <div className="bg-white p-4 rounded-lg border">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         {renderSeccion('ACTIVOS', data.activos?.cuentas, data.activos?.total, 'blue')}
       </div>
 
       {/* Columna Derecha: Pasivos y Capital */}
       <div className="space-y-6">
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           {renderSeccion('PASIVOS', data.pasivos?.cuentas, data.pasivos?.total, 'red')}
         </div>
-        <div className="bg-white p-4 rounded-lg border">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           {renderSeccion('CAPITAL', data.capital?.cuentas, data.capital?.total, 'purple')}
         </div>
       </div>
@@ -634,27 +650,27 @@ function ReporteBalanceGeneral({ data, isLoading }) {
         <div
           className={`p-4 rounded-lg ${
             data.ecuacion_contable?.cuadra
-              ? 'bg-green-50 border border-green-200'
-              : 'bg-red-50 border border-red-200'
+              ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800'
+              : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'
           }`}
         >
-          <h4 className="font-bold text-center mb-3">Ecuación Contable: Activo = Pasivo + Capital</h4>
+          <h4 className="font-bold text-center mb-3 text-gray-900 dark:text-gray-100">Ecuación Contable: Activo = Pasivo + Capital</h4>
           <div className="flex justify-center items-center gap-4 text-lg">
-            <span className="font-bold text-blue-600">
+            <span className="font-bold text-primary-600 dark:text-primary-400">
               {formatCurrency(data.activos?.total || 0)}
             </span>
-            <span>=</span>
-            <span className="font-bold text-red-600">
+            <span className="text-gray-700 dark:text-gray-300">=</span>
+            <span className="font-bold text-red-600 dark:text-red-400">
               {formatCurrency(data.pasivos?.total || 0)}
             </span>
-            <span>+</span>
-            <span className="font-bold text-purple-600">
+            <span className="text-gray-700 dark:text-gray-300">+</span>
+            <span className="font-bold text-purple-600 dark:text-purple-400">
               {formatCurrency(data.capital?.total || 0)}
             </span>
           </div>
           <p
             className={`text-center mt-2 text-sm ${
-              data.ecuacion_contable?.cuadra ? 'text-green-700' : 'text-red-700'
+              data.ecuacion_contable?.cuadra ? 'text-green-700 dark:text-green-400' : 'text-red-700 dark:text-red-400'
             }`}
           >
             {data.ecuacion_contable?.cuadra

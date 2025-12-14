@@ -169,8 +169,8 @@ function NegocioPage() {
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
       </div>
     );
   }
@@ -178,9 +178,9 @@ function NegocioPage() {
   // Error
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error al cargar los datos</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">Error al cargar los datos</p>
           <Button onClick={() => navigate('/configuracion')}>Volver</Button>
         </div>
       </div>
@@ -188,30 +188,30 @@ function NegocioPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900 mb-3"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
           </Button>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
                 Mi Negocio
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                 Información de tu organización
               </p>
             </div>
-            <div className="p-3 bg-indigo-100 rounded-lg">
-              <Building2 className="w-6 h-6 text-indigo-600" />
+            <div className="p-3 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
+              <Building2 className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
         </div>
@@ -222,16 +222,16 @@ function NegocioPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
 
           {/* Logo Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Image className="w-5 h-5 text-gray-500" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Image className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               Logo
             </h2>
 
             <div className="flex items-start gap-6">
               {/* Preview con botón de subir */}
               <div className="flex-shrink-0 relative">
-                <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+                <div className="w-24 h-24 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
                   {logoPreview ? (
                     <img
                       src={logoPreview}
@@ -244,7 +244,7 @@ function NegocioPage() {
                   )}
                 </div>
                 {/* Botón de cámara para subir */}
-                <label className="absolute -bottom-2 -right-2 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+                <label className="absolute -bottom-2 -right-2 bg-primary-600 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 transition-colors shadow-lg">
                   <Camera className="h-4 w-4" />
                   <input
                     type="file"
@@ -266,28 +266,28 @@ function NegocioPage() {
                 )}
                 {/* Loading de subida */}
                 {uploadMutation.isPending && (
-                  <div className="absolute inset-0 bg-white bg-opacity-75 rounded-xl flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                  <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-xl flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-primary-600 dark:text-primary-400 animate-spin" />
                   </div>
                 )}
               </div>
 
               {/* Opciones */}
               <div className="flex-1">
-                <p className="text-sm text-gray-700 mb-3">
+                <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                   Haz clic en el ícono de cámara para subir tu logo, o ingresa una URL directamente.
                 </p>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   URL del logo (opcional)
                 </label>
                 <input
                   type="url"
                   {...register('logo_url')}
                   placeholder="https://ejemplo.com/mi-logo.png"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   disabled={!!logoFile}
                 />
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   PNG, JPG o WEBP. Máximo 5MB. Tamaño recomendado: 200x200px
                 </p>
               </div>
@@ -295,47 +295,47 @@ function NegocioPage() {
           </div>
 
           {/* Información General */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-gray-500" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               Información General
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Nombre comercial <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   {...register('nombre_comercial', { required: true })}
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 ${
-                    errors.nombre_comercial ? 'border-red-300' : 'border-gray-300'
+                  className={`w-full px-3 py-2 border rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 ${
+                    errors.nombre_comercial ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600'
                   }`}
                   placeholder="Mi Negocio S.A."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Razón social
                 </label>
                 <input
                   type="text"
                   {...register('razon_social')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="Mi Negocio S.A. de C.V."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   RFC / NIF
                 </label>
                 <input
                   type="text"
                   {...register('rfc_nif')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 uppercase"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 uppercase"
                   placeholder="XAXX010101000"
                   maxLength={13}
                 />
@@ -344,49 +344,49 @@ function NegocioPage() {
           </div>
 
           {/* Datos de Contacto */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Phone className="w-5 h-5 text-gray-500" />
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Phone className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               Datos de Contacto
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Mail className="w-4 h-4 inline mr-1" />
                   Email de contacto
                 </label>
                 <input
                   type="email"
                   {...register('email_admin')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="contacto@minegocio.com"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Phone className="w-4 h-4 inline mr-1" />
                   Teléfono
                 </label>
                 <input
                   type="tel"
                   {...register('telefono')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="55 1234 5678"
                   maxLength={15}
                 />
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   <Globe className="w-4 h-4 inline mr-1" />
                   Sitio web
                 </label>
                 <input
                   type="url"
                   {...register('sitio_web')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="https://www.minegocio.com"
                 />
               </div>
@@ -429,7 +429,7 @@ function NegocioPage() {
 
           {/* Success message */}
           {updateMutation.isSuccess && (
-            <div className="flex items-center justify-center gap-2 text-green-600 bg-green-50 py-3 rounded-lg">
+            <div className="flex items-center justify-center gap-2 text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 py-3 rounded-lg">
               <CheckCircle className="w-5 h-5" />
               <span>Cambios guardados correctamente</span>
             </div>

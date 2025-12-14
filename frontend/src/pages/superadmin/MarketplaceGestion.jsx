@@ -90,7 +90,7 @@ export default function MarketplaceGestion() {
   if (isLoading && !data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -103,8 +103,8 @@ export default function MarketplaceGestion() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestión de Marketplace</h1>
-          <p className="text-gray-600 mt-1">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Gestión de Marketplace</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
             Administra todos los perfiles del directorio público
           </p>
         </div>
@@ -120,22 +120,22 @@ export default function MarketplaceGestion() {
       </div>
 
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-md">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md border border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setShowFilters(!showFilters)}
-          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+          className="w-full flex items-center justify-between p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           <div className="flex items-center gap-2">
-            <Filter className="w-5 h-5 text-gray-600" />
-            <span className="font-semibold text-gray-900">Filtros</span>
+            <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            <span className="font-semibold text-gray-900 dark:text-gray-100">Filtros</span>
           </div>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-gray-500 dark:text-gray-400">
             {showFilters ? 'Ocultar' : 'Mostrar'}
           </span>
         </button>
 
         {showFilters && (
-          <div className="p-4 border-t border-gray-200 space-y-4">
+          <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Filtro Estado */}
               <Select
@@ -189,56 +189,56 @@ export default function MarketplaceGestion() {
       </div>
 
       {/* Tabla */}
-      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden border border-gray-200 dark:border-gray-700">
         {perfiles.length === 0 ? (
           <div className="text-center py-12">
-            <Store className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <p className="text-gray-500">No se encontraron perfiles con los filtros aplicados</p>
+            <Store className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-500 dark:text-gray-400">No se encontraron perfiles con los filtros aplicados</p>
           </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Negocio
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Ubicación
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Plan
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Rating
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Estado
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {perfiles.map((perfil) => (
                     <tr
                       key={perfil.id}
-                      className="hover:bg-gray-50 transition-colors cursor-pointer"
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
                       onClick={() => handleAbrirPerfil(perfil.slug)}
                     >
                       {/* Negocio */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            <Store className="w-5 h-5 text-primary-700" />
+                          <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <Store className="w-5 h-5 text-primary-700 dark:text-primary-300" />
                           </div>
                           <div>
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 dark:text-gray-100">
                               {perfil.nombre_comercial}
                             </div>
-                            <div className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
                               {perfil.tipo_industria || 'Sin categoría'}
                             </div>
                           </div>
@@ -247,18 +247,18 @@ export default function MarketplaceGestion() {
 
                       {/* Ubicación */}
                       <td className="px-6 py-4 text-sm">
-                        <div className="text-gray-900">{perfil.ciudad}</div>
+                        <div className="text-gray-900 dark:text-gray-100">{perfil.ciudad}</div>
                         {perfil.estado && (
-                          <div className="text-gray-500">{perfil.estado}, {perfil.pais || 'México'}</div>
+                          <div className="text-gray-500 dark:text-gray-400">{perfil.estado}, {perfil.pais || 'México'}</div>
                         )}
                       </td>
 
                       {/* Plan */}
                       <td className="px-6 py-4 text-sm">
-                        <div className="font-medium text-gray-900">
+                        <div className="font-medium text-gray-900 dark:text-gray-100">
                           {perfil.plan_nombre || 'Sin plan'}
                         </div>
-                        <div className="text-gray-500">
+                        <div className="text-gray-500 dark:text-gray-400">
                           Nivel {perfil.nivel_plan || 0}
                         </div>
                       </td>
@@ -271,7 +271,7 @@ export default function MarketplaceGestion() {
                             size="sm"
                             readonly
                           />
-                          <span className="text-sm text-gray-600">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             ({perfil.total_reseñas || 0})
                           </span>
                         </div>
@@ -283,8 +283,8 @@ export default function MarketplaceGestion() {
                           <span
                             className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded ${
                               perfil.activo
-                                ? 'bg-green-100 text-green-800'
-                                : 'bg-red-100 text-red-800'
+                                ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                                : 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
                             }`}
                           >
                             {perfil.activo ? (
@@ -300,7 +300,7 @@ export default function MarketplaceGestion() {
                             )}
                           </span>
                           {!perfil.org_activa && (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-gray-100 text-gray-800">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
                               Org. Inactiva
                             </span>
                           )}
@@ -316,8 +316,8 @@ export default function MarketplaceGestion() {
                             disabled={activarPerfil.isLoading}
                             className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
                               perfil.activo
-                                ? 'bg-red-100 text-red-700 hover:bg-red-200'
-                                : 'bg-green-100 text-green-700 hover:bg-green-200'
+                                ? 'bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-300 hover:bg-red-200 dark:hover:bg-red-900/60'
+                                : 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/60'
                             } disabled:opacity-50 disabled:cursor-not-allowed`}
                           >
                             {perfil.activo ? 'Desactivar' : 'Activar'}
@@ -326,7 +326,7 @@ export default function MarketplaceGestion() {
                           {/* Ver Perfil */}
                           <button
                             onClick={() => handleAbrirPerfil(perfil.slug)}
-                            className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                            className="p-2 text-gray-600 dark:text-gray-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
                             title="Ver perfil público"
                           >
                             <ExternalLink className="w-4 h-4" />
@@ -341,8 +341,8 @@ export default function MarketplaceGestion() {
 
             {/* Paginación */}
             {paginacion.total_paginas > 1 && (
-              <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
-                <div className="text-sm text-gray-600">
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <div className="text-sm text-gray-600 dark:text-gray-400">
                   Mostrando {perfiles.length} de {paginacion.total} perfiles
                 </div>
                 <div className="flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function MarketplaceGestion() {
                   >
                     Anterior
                   </Button>
-                  <span className="text-sm text-gray-600">
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
                     Página {paginacion.pagina_actual} de {paginacion.total_paginas}
                   </span>
                   <Button

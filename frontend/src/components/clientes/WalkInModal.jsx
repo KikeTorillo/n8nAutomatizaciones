@@ -132,7 +132,7 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
                 key={s}
                 className={`
                   h-2 flex-1 rounded-full transition-colors
-                  ${s <= step ? 'bg-blue-600' : 'bg-gray-200'}
+                  ${s <= step ? 'bg-primary-600' : 'bg-gray-200'}
                 `}
               />
             ))}
@@ -230,10 +230,10 @@ function WalkInModal({ isOpen, onClose, onSuccess }) {
         {/* Step 2: Seleccionar Servicio y Profesional */}
         {step === 2 && (
           <div className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
               <div className="flex items-center gap-2">
-                <User className="w-5 h-5 text-blue-600" />
-                <p className="font-semibold text-blue-900">
+                <User className="w-5 h-5 text-primary-600" />
+                <p className="font-semibold text-primary-900">
                   {nombreCliente}
                 </p>
               </div>

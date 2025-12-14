@@ -179,8 +179,8 @@ function PlantillasEventos() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Plantillas de Eventos</h1>
-          <p className="text-gray-600">Gestiona las plantillas de diseño para invitaciones digitales</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Plantillas de Eventos</h1>
+          <p className="text-gray-600 dark:text-gray-400">Gestiona las plantillas de diseño para invitaciones digitales</p>
         </div>
         <Button onClick={() => setShowForm(true)}>
           <Plus className="w-4 h-4 mr-2" />
@@ -189,12 +189,12 @@ function PlantillasEventos() {
       </div>
 
       {/* Filtro por tipo */}
-      <div className="bg-white rounded-lg p-4 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setFiltroTipo('')}
             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-              !filtroTipo ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              !filtroTipo ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
             }`}
           >
             Todas
@@ -204,7 +204,7 @@ function PlantillasEventos() {
               key={tipo.value}
               onClick={() => setFiltroTipo(tipo.value)}
               className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                filtroTipo === tipo.value ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                filtroTipo === tipo.value ? 'bg-red-600 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {tipo.label}
@@ -215,8 +215,8 @@ function PlantillasEventos() {
 
       {/* Formulario */}
       {showForm && (
-        <div className="bg-white rounded-lg shadow-sm p-6 border-2 border-red-200">
-          <h2 className="text-lg font-semibold mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border-2 border-red-200 dark:border-red-800">
+          <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
             {editingId ? 'Editar Plantilla' : 'Nueva Plantilla'}
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -276,8 +276,8 @@ function PlantillasEventos() {
             />
 
             {/* Editor de Tema */}
-            <div className="border-t pt-4 mt-4">
-              <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
                 <Palette className="w-5 h-5" />
                 Tema Visual
               </h3>
@@ -320,91 +320,91 @@ function PlantillasEventos() {
               {/* Colores */}
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Primario</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Primario</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={formData.tema.color_primario}
                       onChange={(e) => handleTemaChange('color_primario', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border"
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
                     />
                     <input
                       type="text"
                       value={formData.tema.color_primario}
                       onChange={(e) => handleTemaChange('color_primario', e.target.value)}
-                      className="w-20 text-xs px-2 py-1 border rounded"
+                      className="w-20 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Secundario</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Secundario</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={formData.tema.color_secundario}
                       onChange={(e) => handleTemaChange('color_secundario', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border"
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
                     />
                     <input
                       type="text"
                       value={formData.tema.color_secundario}
                       onChange={(e) => handleTemaChange('color_secundario', e.target.value)}
-                      className="w-20 text-xs px-2 py-1 border rounded"
+                      className="w-20 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Fondo</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Fondo</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={formData.tema.color_fondo}
                       onChange={(e) => handleTemaChange('color_fondo', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border"
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
                     />
                     <input
                       type="text"
                       value={formData.tema.color_fondo}
                       onChange={(e) => handleTemaChange('color_fondo', e.target.value)}
-                      className="w-20 text-xs px-2 py-1 border rounded"
+                      className="w-20 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Texto</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Texto</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={formData.tema.color_texto}
                       onChange={(e) => handleTemaChange('color_texto', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border"
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
                     />
                     <input
                       type="text"
                       value={formData.tema.color_texto}
                       onChange={(e) => handleTemaChange('color_texto', e.target.value)}
-                      className="w-20 text-xs px-2 py-1 border rounded"
+                      className="w-20 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-gray-700 mb-1">Texto Claro</label>
+                  <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Texto Claro</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="color"
                       value={formData.tema.color_texto_claro}
                       onChange={(e) => handleTemaChange('color_texto_claro', e.target.value)}
-                      className="w-10 h-10 rounded cursor-pointer border"
+                      className="w-10 h-10 rounded cursor-pointer border border-gray-300 dark:border-gray-600"
                     />
                     <input
                       type="text"
                       value={formData.tema.color_texto_claro}
                       onChange={(e) => handleTemaChange('color_texto_claro', e.target.value)}
-                      className="w-20 text-xs px-2 py-1 border rounded"
+                      className="w-20 text-xs px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -455,7 +455,7 @@ function PlantillasEventos() {
           {plantillas.map((plantilla) => {
             const tema = plantilla.tema || TEMA_DEFAULT;
             return (
-              <div key={plantilla.id} className="bg-white rounded-lg shadow-sm overflow-hidden border">
+              <div key={plantilla.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-gray-700">
                 {/* Preview con tema */}
                 <div
                   className="aspect-[4/3] flex flex-col items-center justify-center p-4"
@@ -502,11 +502,11 @@ function PlantillasEventos() {
                 <div className="p-4">
                   <div className="flex items-start justify-between">
                     <div>
-                      <h3 className="font-semibold text-gray-900">{plantilla.nombre}</h3>
-                      <p className="text-sm text-gray-500">{plantilla.codigo}</p>
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{plantilla.nombre}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{plantilla.codigo}</p>
                     </div>
                     {plantilla.es_premium && (
-                      <span className="px-2 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded-full">
+                      <span className="px-2 py-0.5 text-xs bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300 rounded-full">
                         Premium
                       </span>
                     )}
@@ -515,44 +515,44 @@ function PlantillasEventos() {
                   {/* Paleta de colores del tema */}
                   <div className="flex items-center gap-1 mt-2">
                     <div
-                      className="w-5 h-5 rounded-full border"
+                      className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600"
                       style={{ backgroundColor: tema.color_primario }}
                       title="Primario"
                     />
                     <div
-                      className="w-5 h-5 rounded-full border"
+                      className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600"
                       style={{ backgroundColor: tema.color_secundario }}
                       title="Secundario"
                     />
                     <div
-                      className="w-5 h-5 rounded-full border"
+                      className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600"
                       style={{ backgroundColor: tema.color_fondo }}
                       title="Fondo"
                     />
                     <div
-                      className="w-5 h-5 rounded-full border"
+                      className="w-5 h-5 rounded-full border border-gray-300 dark:border-gray-600"
                       style={{ backgroundColor: tema.color_texto }}
                       title="Texto"
                     />
                   </div>
 
                   <div className="flex items-center gap-2 mt-2">
-                    <span className="px-2 py-0.5 text-xs bg-gray-100 text-gray-600 rounded-full">
+                    <span className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 rounded-full">
                       {TIPOS_EVENTO.find(t => t.value === plantilla.tipo_evento)?.label || plantilla.tipo_evento}
                     </span>
                     {plantilla.activo === false && (
-                      <span className="px-2 py-0.5 text-xs bg-red-100 text-red-600 rounded-full">
+                      <span className="px-2 py-0.5 text-xs bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-300 rounded-full">
                         Inactiva
                       </span>
                     )}
                   </div>
 
                   {plantilla.descripcion && (
-                    <p className="text-sm text-gray-600 mt-2 line-clamp-2">{plantilla.descripcion}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-2 line-clamp-2">{plantilla.descripcion}</p>
                   )}
 
                   {/* Actions */}
-                  <div className="flex gap-2 mt-4 pt-4 border-t">
+                  <div className="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <Button
                       variant="outline"
                       size="sm"
@@ -576,9 +576,9 @@ function PlantillasEventos() {
           })}
         </div>
       ) : (
-        <div className="text-center py-12 bg-white rounded-lg">
-          <Palette className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-500">No hay plantillas {filtroTipo && `para ${filtroTipo}`}</p>
+        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <Palette className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">No hay plantillas {filtroTipo && `para ${filtroTipo}`}</p>
           <Button onClick={() => setShowForm(true)} className="mt-4">
             <Plus className="w-4 h-4 mr-2" />
             Crear Primera Plantilla

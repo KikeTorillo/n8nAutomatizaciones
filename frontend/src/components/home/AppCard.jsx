@@ -43,8 +43,8 @@ function AppCard({
       className={`
         relative group w-full p-6 rounded-2xl border-2 transition-all duration-200
         ${enabled
-          ? 'bg-white border-gray-200 hover:border-primary-400 hover:shadow-lg hover:scale-[1.02] cursor-pointer'
-          : 'bg-gray-50 border-gray-200 cursor-not-allowed opacity-60'
+          ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-500 hover:shadow-lg hover:scale-[1.02] cursor-pointer'
+          : 'bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-60'
         }
       `}
     >
@@ -62,7 +62,7 @@ function AppCard({
 
       {/* Ícono bloqueado para apps deshabilitadas */}
       {!enabled && (
-        <span className="absolute top-3 right-3 text-gray-400">
+        <span className="absolute top-3 right-3 text-gray-400 dark:text-gray-500">
           <Lock className="w-4 h-4" />
         </span>
       )}
@@ -72,16 +72,16 @@ function AppCard({
         {/* Ícono */}
         <div className={`
           w-16 h-16 rounded-xl flex items-center justify-center
-          ${enabled ? bgColor : 'bg-gray-200'}
+          ${enabled ? bgColor + ' dark:opacity-90' : 'bg-gray-200 dark:bg-gray-700'}
           ${enabled ? 'group-hover:scale-110' : ''} transition-transform duration-200
         `}>
-          <Icon className={`w-8 h-8 ${enabled ? color : 'text-gray-400'}`} />
+          <Icon className={`w-8 h-8 ${enabled ? color : 'text-gray-400 dark:text-gray-500'}`} />
         </div>
 
         {/* Nombre */}
         <h3 className={`
           font-semibold text-base
-          ${enabled ? 'text-gray-900' : 'text-gray-500'}
+          ${enabled ? 'text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}
         `}>
           {name}
         </h3>
@@ -89,14 +89,14 @@ function AppCard({
         {/* Descripción */}
         <p className={`
           text-sm leading-tight
-          ${enabled ? 'text-gray-500' : 'text-gray-400'}
+          ${enabled ? 'text-gray-500 dark:text-gray-400' : 'text-gray-400 dark:text-gray-500'}
         `}>
           {description}
         </p>
 
         {/* Indicador de plan requerido */}
         {!enabled && (
-          <span className="text-xs text-amber-600 font-medium bg-amber-50 px-2 py-1 rounded-full">
+          <span className="text-xs text-amber-600 dark:text-amber-400 font-medium bg-amber-50 dark:bg-amber-900/30 px-2 py-1 rounded-full">
             Plan Pro
           </span>
         )}

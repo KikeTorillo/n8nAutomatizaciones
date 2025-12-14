@@ -266,33 +266,33 @@ function EventoFormPage() {
 
   if (isEditing && loadingEvento) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <button
           onClick={() => navigate(isEditing ? `/eventos-digitales/${id}` : '/eventos-digitales')}
-          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-3 transition-colors"
+          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3 transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
           <span className="font-medium">Volver</span>
         </button>
 
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 rounded-xl flex items-center justify-center flex-shrink-0">
-            <PartyPopper className="h-6 w-6 sm:h-7 sm:w-7 text-pink-600" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 dark:bg-pink-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
+            <PartyPopper className="h-6 w-6 sm:h-7 sm:w-7 text-pink-600 dark:text-pink-400" />
           </div>
           <div>
-            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
               {isEditing ? 'Editar Evento' : 'Nuevo Evento'}
             </h1>
-            <p className="text-sm text-gray-500 hidden sm:block">
+            <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
               {isEditing ? 'Modifica los datos de tu evento' : 'Crea una invitación digital para tu evento'}
             </p>
           </div>
@@ -303,8 +303,8 @@ function EventoFormPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Información Básica */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Información Básica</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información Básica</h2>
 
             <div className="space-y-4">
               <Input
@@ -317,7 +317,7 @@ function EventoFormPage() {
               />
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tipo de Evento *</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Evento *</label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {tiposEvento.map((tipo) => (
                     <button
@@ -327,8 +327,8 @@ function EventoFormPage() {
                       className={`
                         p-3 rounded-lg border-2 text-center transition-all
                         ${formData.tipo === tipo.value
-                          ? 'border-pink-500 bg-pink-50 text-pink-700'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-pink-500 bg-pink-50 dark:bg-pink-900/30 text-pink-700 dark:text-pink-400'
+                          : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 text-gray-900 dark:text-gray-100'
                         }
                       `}
                     >
@@ -340,13 +340,13 @@ function EventoFormPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
                 <textarea
                   name="descripcion"
                   value={formData.descripcion}
                   onChange={handleChange}
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Cuéntale a tus invitados sobre tu evento..."
                 />
               </div>
@@ -354,8 +354,8 @@ function EventoFormPage() {
           </div>
 
           {/* Fechas */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Fechas</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fechas</h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Input
@@ -387,16 +387,16 @@ function EventoFormPage() {
           </div>
 
           {/* Imágenes */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Imágenes</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Imágenes</h2>
 
             <div className="space-y-6">
               {/* Portada */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Imagen de Portada
                 </label>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   Esta imagen se mostrará como fondo principal de tu invitación
                 </p>
 
@@ -405,7 +405,7 @@ function EventoFormPage() {
                     <img
                       src={formData.portada_url}
                       alt="Portada del evento"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border"
+                      className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                     />
                     <button
                       type="button"
@@ -421,19 +421,19 @@ function EventoFormPage() {
                     onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
                     className={`
                       w-full max-w-md h-48 border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors
-                      ${uploadingPortada ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-pink-400 hover:bg-pink-50'}
+                      ${uploadingPortada ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
                     `}
                   >
                     {uploadingPortada ? (
                       <>
                         <LoadingSpinner size="sm" />
-                        <span className="text-sm text-gray-500">Subiendo...</span>
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Subiendo...</span>
                       </>
                     ) : (
                       <>
-                        <Image className="w-10 h-10 text-gray-400" />
-                        <span className="text-sm text-gray-500">Click para subir portada</span>
-                        <span className="text-xs text-gray-400">PNG, JPG hasta 5MB</span>
+                        <Image className="w-10 h-10 text-gray-400 dark:text-gray-500" />
+                        <span className="text-sm text-gray-500 dark:text-gray-400">Click para subir portada</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">PNG, JPG hasta 5MB</span>
                       </>
                     )}
                   </div>
@@ -449,10 +449,10 @@ function EventoFormPage() {
 
               {/* Galería */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Galería de Fotos
                 </label>
-                <p className="text-sm text-gray-500 mb-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
                   Agrega hasta 10 fotos para mostrar en tu invitación ({formData.galeria_urls.length}/10)
                 </p>
 
@@ -463,7 +463,7 @@ function EventoFormPage() {
                       <img
                         src={url}
                         alt={`Galería ${index + 1}`}
-                        className="w-full h-full object-cover rounded-lg border"
+                        className="w-full h-full object-cover rounded-lg border border-gray-200 dark:border-gray-600"
                       />
                       <button
                         type="button"
@@ -482,15 +482,15 @@ function EventoFormPage() {
                       onClick={() => !uploadingGaleria && galeriaInputRef.current?.click()}
                       className={`
                         aspect-square border-2 border-dashed rounded-lg flex flex-col items-center justify-center gap-1 cursor-pointer transition-colors
-                        ${uploadingGaleria ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-pink-400 hover:bg-pink-50'}
+                        ${uploadingGaleria ? 'border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-700' : 'border-gray-300 dark:border-gray-600 hover:border-pink-400 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20'}
                       `}
                     >
                       {uploadingGaleria ? (
                         <LoadingSpinner size="sm" />
                       ) : (
                         <>
-                          <Plus className="w-6 h-6 text-gray-400" />
-                          <span className="text-xs text-gray-400">Agregar</span>
+                          <Plus className="w-6 h-6 text-gray-400 dark:text-gray-500" />
+                          <span className="text-xs text-gray-400 dark:text-gray-500">Agregar</span>
                         </>
                       )}
                     </div>
@@ -509,9 +509,9 @@ function EventoFormPage() {
 
           {/* Plantilla */}
           {plantillas && plantillas.length > 0 && (
-            <div className="bg-white rounded-lg shadow-sm p-6 border">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Plantilla de Diseño</h2>
-              <p className="text-sm text-gray-500 mb-4">Selecciona un estilo visual para tu invitación</p>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Plantilla de Diseño</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">Selecciona un estilo visual para tu invitación</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {plantillas.map((plantilla) => {
@@ -592,8 +592,8 @@ function EventoFormPage() {
                       </div>
 
                       {/* Info de la plantilla */}
-                      <div className="p-2 bg-white border-t">
-                        <p className="text-sm font-medium text-gray-900 truncate">{plantilla.nombre}</p>
+                      <div className="p-2 bg-white dark:bg-gray-700 border-t border-gray-200 dark:border-gray-600">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{plantilla.nombre}</p>
                         <div className="flex items-center justify-between mt-1">
                           {/* Paleta de colores */}
                           <div className="flex gap-0.5">
@@ -635,8 +635,8 @@ function EventoFormPage() {
           )}
 
           {/* Configuración */}
-          <div className="bg-white rounded-lg shadow-sm p-6 border">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Configuración</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Configuración</h2>
 
             <div className="space-y-4">
               <label className="flex items-center gap-3">
@@ -647,7 +647,7 @@ function EventoFormPage() {
                   onChange={handleChange}
                   className="w-4 h-4 text-pink-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Mostrar mesa de regalos</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar mesa de regalos</span>
               </label>
 
               <label className="flex items-center gap-3">
@@ -658,7 +658,7 @@ function EventoFormPage() {
                   onChange={handleChange}
                   className="w-4 h-4 text-pink-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Permitir felicitaciones públicas</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Permitir felicitaciones públicas</span>
               </label>
 
               <label className="flex items-center gap-3">
@@ -669,7 +669,7 @@ function EventoFormPage() {
                   onChange={handleChange}
                   className="w-4 h-4 text-pink-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Mostrar ubicaciones con mapa</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar ubicaciones con mapa</span>
               </label>
 
               <label className="flex items-center gap-3">
@@ -680,7 +680,7 @@ function EventoFormPage() {
                   onChange={handleChange}
                   className="w-4 h-4 text-pink-600 rounded"
                 />
-                <span className="text-sm text-gray-700">Mostrar contador regresivo</span>
+                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar contador regresivo</span>
               </label>
 
               <label className="flex items-center gap-3">
@@ -692,8 +692,8 @@ function EventoFormPage() {
                   className="w-4 h-4 text-pink-600 rounded"
                 />
                 <div>
-                  <span className="text-sm text-gray-700">Mostrar QR de entrada al invitado</span>
-                  <p className="text-xs text-gray-500">Muestra un código QR cuando el invitado confirma asistencia</p>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar QR de entrada al invitado</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Muestra un código QR cuando el invitado confirma asistencia</p>
                 </div>
               </label>
 
@@ -706,31 +706,31 @@ function EventoFormPage() {
                   className="w-4 h-4 text-pink-600 rounded"
                 />
                 <div>
-                  <span className="text-sm text-gray-700">Habilitar asignación de mesas</span>
-                  <p className="text-xs text-gray-500">Permite asignar invitados a mesas y mostrar su ubicación</p>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Habilitar asignación de mesas</span>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Permite asignar invitados a mesas y mostrar su ubicación</p>
                 </div>
               </label>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje de Bienvenida</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Bienvenida</label>
                 <textarea
                   name="config_mensaje_bienvenida"
                   value={formData.configuracion.mensaje_bienvenida}
                   onChange={handleChange}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Mensaje que verán tus invitados al abrir la invitación"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje de Confirmación</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Confirmación</label>
                 <textarea
                   name="config_mensaje_confirmacion"
                   value={formData.configuracion.mensaje_confirmacion}
                   onChange={handleChange}
                   rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
                   placeholder="Mensaje que verán después de confirmar asistencia"
                 />
               </div>

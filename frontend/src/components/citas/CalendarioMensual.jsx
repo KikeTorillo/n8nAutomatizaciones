@@ -192,7 +192,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
         isLoading={actualizarMutation.isPending}
         advertencias={advertenciasReagendar}
       />
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header con navegación */}
       <CalendarioHeader
         mesActual={mesActual}
@@ -209,7 +209,7 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dia) => (
             <div
               key={dia}
-              className="text-center text-xs font-semibold text-gray-600 py-2 uppercase"
+              className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2 uppercase"
             >
               {dia}
             </div>
@@ -242,42 +242,42 @@ function CalendarioMensual({ onVerCita, onCrearCita }) {
         </div>
 
         {/* Leyenda de estados */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs font-semibold text-gray-600 mb-2">Estados de citas:</p>
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Estados de citas:</p>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-              <span className="text-xs text-gray-600">Pendiente</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Pendiente</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-xs text-gray-600">Confirmada</span>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Confirmada</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-xs text-gray-600">En curso</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">En curso</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-green-500"></div>
-              <span className="text-xs text-gray-600">Completada</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Completada</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-xs text-gray-600">Cancelada</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">Cancelada</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-xs text-gray-600">No Show</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">No Show</span>
             </div>
           </div>
         </div>
 
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando citas...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando citas...</p>
             </div>
           </div>
         )}

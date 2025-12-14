@@ -63,17 +63,17 @@ function MesaVisual({
 
   // Color según ocupación
   const getOcupacionColor = () => {
-    if (porcentaje >= 100) return 'border-red-400 bg-red-50';
-    if (porcentaje >= 75) return 'border-yellow-400 bg-yellow-50';
-    return 'border-green-400 bg-green-50';
+    if (porcentaje >= 100) return 'border-red-400 bg-red-50 dark:bg-red-900/30';
+    if (porcentaje >= 75) return 'border-yellow-400 bg-yellow-50 dark:bg-yellow-900/30';
+    return 'border-green-400 bg-green-50 dark:bg-green-900/30';
   };
 
-  // Tamaño según capacidad
+  // Tamaño según capacidad (responsive: más pequeño en móvil)
   const getSize = () => {
-    if (mesa.capacidad <= 4) return 'w-20 h-20';
-    if (mesa.capacidad <= 8) return 'w-24 h-24';
-    if (mesa.capacidad <= 12) return 'w-28 h-28';
-    return 'w-32 h-32';
+    if (mesa.capacidad <= 4) return 'w-14 h-14 sm:w-20 sm:h-20';
+    if (mesa.capacidad <= 8) return 'w-16 h-16 sm:w-24 sm:h-24';
+    if (mesa.capacidad <= 12) return 'w-18 h-18 sm:w-28 sm:h-28';
+    return 'w-20 h-20 sm:w-32 sm:h-32';
   };
 
   // Estilos de transformación
@@ -96,7 +96,7 @@ function MesaVisual({
           ...style,
           transform: `translate(-50%, -50%)`,
         }}
-        className="bg-white rounded-lg shadow-lg p-4 min-w-[200px] z-50"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 min-w-[200px] z-50 border border-gray-200 dark:border-gray-700"
       >
         <div className="space-y-3">
           <Input
@@ -117,15 +117,15 @@ function MesaVisual({
           <div className="flex justify-end gap-2">
             <button
               onClick={onCancelEdit}
-              className="p-1.5 rounded-lg hover:bg-gray-100"
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
             >
-              <X className="w-4 h-4 text-gray-500" />
+              <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
             </button>
             <button
               onClick={() => onSave(editData)}
-              className="p-1.5 rounded-lg hover:bg-green-100"
+              className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30"
             >
-              <Check className="w-4 h-4 text-green-600" />
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
             </button>
           </div>
         </div>
@@ -152,11 +152,11 @@ function MesaVisual({
       `}
     >
       {/* Contenido de la mesa */}
-      <div className="text-center pointer-events-none select-none">
-        <p className="font-semibold text-xs text-gray-800 truncate max-w-[60px]">
-          {mesa.numero ? `Mesa ${mesa.numero}` : mesa.nombre}
+      <div className="text-center pointer-events-none select-none px-1">
+        <p className="font-semibold text-[9px] sm:text-xs text-gray-800 dark:text-gray-100 truncate max-w-[40px] sm:max-w-[60px]">
+          {mesa.numero ? `M${mesa.numero}` : mesa.nombre}
         </p>
-        <p className="text-[10px] text-gray-600">
+        <p className="text-[8px] sm:text-[10px] text-gray-600 dark:text-gray-300">
           {asignados}/{mesa.capacidad}
         </p>
       </div>
@@ -169,18 +169,18 @@ function MesaVisual({
             e.stopPropagation();
             onEdit();
           }}
-          className="p-1 bg-white rounded-full shadow-md hover:bg-gray-100"
+          className="p-1 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-gray-100 dark:hover:bg-gray-600"
         >
-          <Edit2 className="w-3 h-3 text-gray-600" />
+          <Edit2 className="w-3 h-3 text-gray-600 dark:text-gray-300" />
         </button>
         <button
           onClick={(e) => {
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 bg-white rounded-full shadow-md hover:bg-red-100"
+          className="p-1 bg-white dark:bg-gray-700 rounded-full shadow-md hover:bg-red-100 dark:hover:bg-red-900/30"
         >
-          <Trash2 className="w-3 h-3 text-red-600" />
+          <Trash2 className="w-3 h-3 text-red-600 dark:text-red-400" />
         </button>
       </div>
 
@@ -191,7 +191,7 @@ function MesaVisual({
             e.stopPropagation();
             setShowInvitados(!showInvitados);
           }}
-          className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-gray-700 z-20"
+          className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-gray-800 dark:bg-gray-700 text-white text-[10px] px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-gray-700 dark:hover:bg-gray-600 z-20"
         >
           <Users className="w-3 h-3" />
           {mesa.invitados.length}
@@ -205,26 +205,26 @@ function MesaVisual({
           className="absolute left-1/2 -translate-x-1/2 top-full mt-8 z-50"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="bg-white border border-gray-200 rounded-lg shadow-xl p-3 min-w-[180px]">
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 min-w-[180px]">
             <div className="flex items-center justify-between mb-2">
-              <p className="font-medium text-sm text-gray-800 flex items-center gap-1">
+              <p className="font-medium text-sm text-gray-800 dark:text-gray-100 flex items-center gap-1">
                 <Users className="w-4 h-4" />
                 Invitados ({mesa.invitados.length})
               </p>
               <button
                 onClick={() => setShowInvitados(false)}
-                className="p-1 hover:bg-gray-100 rounded"
+                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
               >
-                <X className="w-4 h-4 text-gray-500" />
+                <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
             <ul className="space-y-1">
               {mesa.invitados.map((inv) => (
-                <li key={inv.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 rounded">
+                <li key={inv.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
                   <div>
-                    <span className="text-sm text-gray-800 truncate block max-w-[120px]">{inv.nombre}</span>
+                    <span className="text-sm text-gray-800 dark:text-gray-100 truncate block max-w-[120px]">{inv.nombre}</span>
                     {inv.num_asistentes > 1 && (
-                      <span className="text-xs text-gray-500">{inv.num_asistentes} personas</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">{inv.num_asistentes} personas</span>
                     )}
                   </div>
                   <button
@@ -232,7 +232,7 @@ function MesaVisual({
                       e.stopPropagation();
                       onDesasignarInvitado(inv.id);
                     }}
-                    className="p-1.5 hover:bg-red-100 rounded text-red-600"
+                    className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
                     title="Quitar de mesa"
                   >
                     <X className="w-4 h-4" />

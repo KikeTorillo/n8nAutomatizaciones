@@ -9,7 +9,7 @@ import { formatearHora, aFormatoISO } from '@/utils/dateHelpers';
 const obtenerColorFondo = (estado) => {
   const colores = {
     pendiente: 'bg-yellow-500',
-    confirmada: 'bg-blue-500',
+    confirmada: 'bg-primary-500',
     en_curso: 'bg-purple-500',
     completada: 'bg-green-500',
     cancelada: 'bg-red-500',
@@ -97,11 +97,11 @@ function CalendarioDia({
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
       className={`
-        min-h-[120px] border border-gray-200 rounded-lg p-2 transition-all
-        ${esDelMesActual ? 'bg-white' : 'bg-gray-50'}
-        ${esHoy ? 'ring-2 ring-primary-500 ring-inset' : ''}
-        ${isDraggingOver && esDelMesActual ? 'ring-2 ring-green-500 bg-green-50' : ''}
-        hover:shadow-md
+        min-h-[120px] border border-gray-200 dark:border-gray-700 rounded-lg p-2 transition-all
+        ${esDelMesActual ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'}
+        ${esHoy ? 'ring-2 ring-primary-500 dark:ring-primary-400 ring-inset' : ''}
+        ${isDraggingOver && esDelMesActual ? 'ring-2 ring-green-500 bg-green-50 dark:bg-green-900/20' : ''}
+        hover:shadow-md dark:hover:shadow-gray-900/50
         relative
         group
       `}
@@ -111,8 +111,8 @@ function CalendarioDia({
         <span
           className={`
             text-sm font-semibold
-            ${esDelMesActual ? 'text-gray-900' : 'text-gray-400'}
-            ${esHoy ? 'text-primary-600' : ''}
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
           `}
         >
           {numeroDia}
@@ -142,7 +142,7 @@ function CalendarioDia({
           // Loading skeleton
           <div className="space-y-1">
             {[1, 2].map((i) => (
-              <div key={i} className="h-5 bg-gray-200 rounded animate-pulse" />
+              <div key={i} className="h-5 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
             ))}
           </div>
         ) : (
@@ -164,8 +164,8 @@ function CalendarioDia({
                     onClick={() => onVerCita(cita)}
                     className={`
                       w-full text-left px-1.5 py-1 rounded text-xs
-                      ${obtenerColorFondo(cita.estado)} bg-opacity-10
-                      hover:bg-opacity-20
+                      ${obtenerColorFondo(cita.estado)} bg-opacity-10 dark:bg-opacity-20
+                      hover:bg-opacity-20 dark:hover:bg-opacity-30
                       border-l-2
                       transition-all
                       truncate
@@ -183,16 +183,16 @@ function CalendarioDia({
                           ${obtenerColorFondo(cita.estado)}
                         `}
                       />
-                      <span className="font-medium text-gray-700 truncate">
+                      <span className="font-medium text-gray-700 dark:text-gray-300 truncate">
                         {formatearHora(cita.hora_inicio)}
                       </span>
-                      <span className="text-gray-600 truncate">
+                      <span className="text-gray-600 dark:text-gray-400 truncate">
                         {cita.cliente_nombre || 'Sin cliente'}
                       </span>
 
                       {/* Indicador de drag disponible */}
                       {esDraggable && (
-                        <Move className="w-3 h-3 text-gray-400 ml-auto opacity-0 group-hover/cita:opacity-100 transition-opacity" />
+                        <Move className="w-3 h-3 text-gray-400 dark:text-gray-500 ml-auto opacity-0 group-hover/cita:opacity-100 transition-opacity" />
                       )}
                     </div>
                   </button>
@@ -202,7 +202,7 @@ function CalendarioDia({
 
             {/* Indicador de más citas */}
             {citasOcultas > 0 && (
-              <div className="text-xs text-gray-500 font-medium text-center py-0.5">
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium text-center py-0.5">
                 +{citasOcultas} más
               </div>
             )}
@@ -210,7 +210,7 @@ function CalendarioDia({
             {/* Badge de cantidad de citas (esquina superior derecha) */}
             {citas.length > 0 && (
               <div className="absolute top-1 right-1">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary-600 rounded-full">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-primary-600 dark:bg-primary-500 rounded-full">
                   {citas.length}
                 </span>
               </div>
@@ -225,10 +225,10 @@ function CalendarioDia({
           onClick={onCrearCita}
           className="
             w-full mt-1 py-1 rounded
-            text-xs font-medium text-primary-600
+            text-xs font-medium text-primary-600 dark:text-primary-400
             opacity-0 group-hover:opacity-100
             transition-all
-            hover:bg-primary-50
+            hover:bg-primary-50 dark:hover:bg-primary-900/30
             flex items-center justify-center gap-1
           "
           title="Agregar otra cita"
@@ -240,7 +240,7 @@ function CalendarioDia({
 
       {/* Empty state para días sin citas */}
       {!isLoading && citas.length === 0 && esDelMesActual && (
-        <div className="flex items-center justify-center h-16 text-gray-400">
+        <div className="flex items-center justify-center h-16 text-gray-400 dark:text-gray-500">
           <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">
             Sin citas
           </span>

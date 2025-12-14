@@ -246,7 +246,7 @@ function SeatingChartEditor({ eventoId }) {
   if (loadingMesas || loadingInvitados) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-600 dark:border-pink-400" />
       </div>
     );
   }
@@ -258,23 +258,23 @@ function SeatingChartEditor({ eventoId }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col lg:flex-row gap-4 h-[600px]">
+      <div className="flex flex-col lg:flex-row gap-4 min-h-[400px] lg:h-[600px]">
         {/* Panel lateral - Invitados sin mesa */}
         <div
           ref={setSinMesaRef}
-          className={`w-full lg:w-64 flex-shrink-0 bg-white rounded-lg border-2 overflow-hidden transition-colors ${
-            isOverSinMesa ? 'border-pink-400 bg-pink-50' : 'border-gray-200'
+          className={`w-full lg:w-64 flex-shrink-0 bg-white dark:bg-gray-800 rounded-lg border-2 overflow-hidden transition-colors ${
+            isOverSinMesa ? 'border-pink-400 bg-pink-50 dark:bg-pink-900/20' : 'border-gray-200 dark:border-gray-700'
           }`}
         >
-          <div className="p-3 bg-gray-50 border-b border-gray-200">
+          <div className="p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
             <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-gray-600" />
-              <span className="font-medium text-sm">Sin Mesa ({invitadosSinMesa.length})</span>
+              <Users className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+              <span className="font-medium text-sm text-gray-900 dark:text-gray-100">Sin Mesa ({invitadosSinMesa.length})</span>
             </div>
           </div>
-          <div className="p-2 overflow-y-auto max-h-[500px]">
+          <div className="p-2 overflow-y-auto max-h-[120px] lg:max-h-[500px]">
             {invitadosSinMesa.length === 0 ? (
-              <p className="text-sm text-gray-500 text-center py-4">
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
                 Todos los invitados confirmados tienen mesa
               </p>
             ) : (
@@ -292,16 +292,16 @@ function SeatingChartEditor({ eventoId }) {
         </div>
 
         {/* Canvas principal */}
-        <div className="flex-1 flex flex-col">
+        <div className="flex-1 flex flex-col min-h-[300px] lg:min-h-0">
           {/* Toolbar */}
-          <div className="flex items-center justify-between p-3 bg-white rounded-t-lg border border-b-0 border-gray-200">
-            <div className="flex items-center gap-4">
-              <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                <LayoutGrid className="w-5 h-5" />
-                Distribución de Mesas
+          <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-white dark:bg-gray-800 rounded-t-lg border border-b-0 border-gray-200 dark:border-gray-700">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2 text-sm sm:text-base">
+                <LayoutGrid className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden xs:inline">Distribución de</span> Mesas
               </h3>
               {estadisticas && (
-                <div className="text-sm text-gray-500">
+                <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">
                   {estadisticas.total_mesas} mesas • {estadisticas.total_asignados}/{estadisticas.capacidad_total} asientos
                 </div>
               )}
@@ -310,10 +310,10 @@ function SeatingChartEditor({ eventoId }) {
               variant="primary"
               size="sm"
               onClick={() => setShowCreateMesa(true)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 text-xs sm:text-sm"
             >
               <Plus className="w-4 h-4" />
-              Nueva Mesa
+              <span className="hidden sm:inline">Nueva</span> Mesa
             </Button>
           </div>
 
@@ -321,7 +321,7 @@ function SeatingChartEditor({ eventoId }) {
           <div
             ref={setCanvasRef}
             id="seating-canvas"
-            className="flex-1 relative bg-gradient-to-br from-gray-50 to-gray-100 rounded-b-lg border border-gray-200 overflow-hidden"
+            className="flex-1 relative bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900 rounded-b-lg border border-gray-200 dark:border-gray-700 overflow-hidden min-h-[250px]"
           >
             {/* Grid de fondo */}
             <div
@@ -354,7 +354,7 @@ function SeatingChartEditor({ eventoId }) {
             {/* Mensaje cuando no hay mesas */}
             {mesas.length === 0 && (
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-gray-500">
+                <div className="text-center text-gray-500 dark:text-gray-400">
                   <LayoutGrid className="w-12 h-12 mx-auto mb-2 opacity-50" />
                   <p>No hay mesas configuradas</p>
                   <p className="text-sm">Crea una mesa para comenzar</p>
@@ -368,8 +368,8 @@ function SeatingChartEditor({ eventoId }) {
       {/* Modal crear mesa */}
       {showCreateMesa && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">Nueva Mesa</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nueva Mesa</h3>
             <div className="space-y-4">
               <Input
                 label="Nombre"
@@ -385,11 +385,11 @@ function SeatingChartEditor({ eventoId }) {
                 onChange={(e) => setNewMesaData({ ...newMesaData, numero: e.target.value })}
               />
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tipo de mesa
                 </label>
                 <select
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   value={newMesaData.tipo}
                   onChange={(e) => setNewMesaData({ ...newMesaData, tipo: e.target.value })}
                 >
@@ -432,15 +432,15 @@ function SeatingChartEditor({ eventoId }) {
       {/* Drag Overlay */}
       <DragOverlay>
         {activeId && dragType === 'invitado' && (
-          <div className="bg-white border-2 border-pink-400 rounded-lg px-3 py-2 shadow-lg">
-            <span className="text-sm font-medium">
+          <div className="bg-white dark:bg-gray-800 border-2 border-pink-400 rounded-lg px-3 py-2 shadow-lg">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {invitadosData?.invitados?.find((i) => i.id === parseInt(String(activeId).replace('invitado-', '')))?.nombre}
             </span>
           </div>
         )}
         {activeId && dragType === 'mesa' && (
-          <div className="w-20 h-20 bg-pink-100 border-2 border-pink-400 rounded-full shadow-lg flex items-center justify-center">
-            <span className="text-xs font-medium">Moviendo...</span>
+          <div className="w-20 h-20 bg-pink-100 dark:bg-pink-900/40 border-2 border-pink-400 rounded-full shadow-lg flex items-center justify-center">
+            <span className="text-xs font-medium text-pink-800 dark:text-pink-300">Moviendo...</span>
           </div>
         )}
       </DragOverlay>

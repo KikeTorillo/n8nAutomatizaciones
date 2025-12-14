@@ -71,12 +71,14 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Nuestros Servicios"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Columnas"
           value={String(form.columnas)}
           onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
           options={columnasOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -85,12 +87,13 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.subtitulo}
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Lo que podemos hacer por ti"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       {/* Lista de servicios */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Servicios ({form.servicios.length})
           </label>
           <Button
@@ -108,7 +111,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
           {form.servicios.map((servicio, index) => (
             <div
               key={index}
-              className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
             >
               <div className="flex items-start gap-2">
                 <GripVertical className="w-5 h-5 text-gray-400 mt-2 cursor-grab" />
@@ -118,12 +121,14 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
                     onChange={(e) => handleServicioChange(index, 'nombre', e.target.value)}
                     placeholder="Nombre del servicio"
                     inputSize="sm"
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Textarea
                     value={servicio.descripcion}
                     onChange={(e) => handleServicioChange(index, 'descripcion', e.target.value)}
                     placeholder="Descripción breve"
                     rows={2}
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Input
@@ -131,12 +136,14 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
                       onChange={(e) => handleServicioChange(index, 'icono', e.target.value)}
                       placeholder="Icono (ej: Scissors)"
                       inputSize="sm"
+                      className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                     />
                     <Input
                       value={servicio.precio}
                       onChange={(e) => handleServicioChange(index, 'precio', e.target.value)}
                       placeholder="Precio (opcional)"
                       inputSize="sm"
+                      className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -145,7 +152,7 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEliminarServicio(index)}
-                  className="text-gray-400 hover:text-red-500 hover:bg-red-50"
+                  className="text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-gray-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -156,18 +163,18 @@ function ServiciosEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         <h4 className="font-bold text-center mb-1" style={{ color: tema?.colores?.texto || '#1F2937' }}>
           {form.titulo}
         </h4>
         {form.subtitulo && (
-          <p className="text-sm text-center text-gray-500 mb-4">{form.subtitulo}</p>
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400 mb-4">{form.subtitulo}</p>
         )}
         <div className={`grid gap-3 grid-cols-${Math.min(form.columnas, form.servicios.length)}`}>
           {form.servicios.slice(0, 4).map((s, i) => (
-            <div key={i} className="p-3 bg-gray-50 rounded-lg text-center">
-              <p className="text-sm font-medium">{s.nombre || 'Servicio'}</p>
-              {s.precio && <p className="text-xs text-indigo-600 mt-1">{s.precio}</p>}
+            <div key={i} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg text-center">
+              <p className="text-sm font-medium dark:text-gray-100">{s.nombre || 'Servicio'}</p>
+              {s.precio && <p className="text-xs text-primary-600 dark:text-primary-400 mt-1">{s.precio}</p>}
             </div>
           ))}
         </div>

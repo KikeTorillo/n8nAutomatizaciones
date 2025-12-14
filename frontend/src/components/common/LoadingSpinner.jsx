@@ -20,13 +20,13 @@ function LoadingSpinner({ size = 'md', className, text }) {
     <div className="flex flex-col items-center justify-center gap-3">
       <Loader2
         className={cn(
-          'animate-spin text-primary-600',
+          'animate-spin text-primary-600 dark:text-primary-400',
           sizes[size],
           className
         )}
       />
       {text && (
-        <p className="text-sm text-gray-600">{text}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400">{text}</p>
       )}
     </div>
   );

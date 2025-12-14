@@ -118,12 +118,14 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Video destacado"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Plataforma"
           value={form.tipo}
           onChange={(e) => setForm({ ...form, tipo: e.target.value })}
           options={tipoOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -137,6 +139,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
           form.tipo === 'vimeo' ? 'https://vimeo.com/...' :
           'https://ejemplo.com/video.mp4'
         }
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <Input
@@ -144,6 +147,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.subtitulo}
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Descripción del video"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -152,18 +156,20 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.ancho}
           onChange={(e) => setForm({ ...form, ancho: e.target.value })}
           options={anchoOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Alineación"
           value={form.alineacion}
           onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
           options={alineacionOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
       {/* Opciones de reproducción */}
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <h4 className="text-sm font-medium text-gray-700 mb-3">Opciones de reproducción</h4>
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Opciones de reproducción</h4>
         <div className="grid grid-cols-2 gap-4">
           <Checkbox
             label="Autoplay"
@@ -189,7 +195,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         {form.titulo && (
           <h4 className="font-bold text-center mb-3" style={{ color: tema?.colores?.texto }}>
             {form.titulo}
@@ -220,7 +226,7 @@ function VideoEditor({ contenido, onGuardar, tema, isSaving }) {
           )}
         </div>
         {form.subtitulo && (
-          <p className="text-sm text-center text-gray-500 mt-3">{form.subtitulo}</p>
+          <p className="text-sm text-center text-gray-500 dark:text-gray-400 mt-3">{form.subtitulo}</p>
         )}
       </div>
 

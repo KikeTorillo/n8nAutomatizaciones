@@ -20,8 +20,8 @@ function AuthLayout({
   maxWidth = 'max-w-md'
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className={`${maxWidth} w-full bg-white rounded-lg shadow-lg p-8`}>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 p-4">
+      <div className={`${maxWidth} w-full bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8`}>
         {/* Logo/Branding */}
         <div className="text-center mb-6">
           <Link to="/" className="inline-block">
@@ -31,11 +31,11 @@ function AuthLayout({
 
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-gray-600">
+            <p className="text-gray-600 dark:text-gray-400">
               {subtitle}
             </p>
           )}

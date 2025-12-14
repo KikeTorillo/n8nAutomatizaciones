@@ -219,7 +219,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               )}
             </div>
             {/* Botón de cámara para subir */}
-            <label className="absolute -bottom-1 -right-1 bg-blue-600 text-white rounded-full p-2 cursor-pointer hover:bg-blue-700 transition-colors shadow-lg">
+            <label className="absolute -bottom-1 -right-1 bg-primary-600 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 transition-colors shadow-lg">
               <Camera className="h-4 w-4" />
               <input
                 type="file"
@@ -242,7 +242,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             {/* Loading de subida */}
             {uploadMutation.isPending && (
               <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
-                <Loader2 className="h-6 w-6 text-blue-600 animate-spin" />
+                <Loader2 className="h-6 w-6 text-primary-600 animate-spin" />
               </div>
             )}
           </div>

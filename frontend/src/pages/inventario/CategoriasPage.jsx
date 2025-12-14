@@ -30,7 +30,7 @@ function NodoCategoria({
     <div>
       {/* Nodo Actual */}
       <div
-        className={`flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg border border-gray-200 mb-2 ${
+        className={`flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 bg-white dark:bg-gray-800 ${
           nivel > 0 ? 'ml-8' : ''
         }`}
       >
@@ -39,12 +39,12 @@ function NodoCategoria({
           {tieneHijos ? (
             <button
               onClick={() => onToggleExpansion(categoria.id)}
-              className="p-1 hover:bg-gray-200 rounded"
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
             >
               {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-600" />
+                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600" />
+                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
               )}
             </button>
           ) : (
@@ -62,27 +62,27 @@ function NodoCategoria({
           {/* Nombre y Descripción */}
           <div className="flex-1">
             <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium text-gray-900">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {categoria.nombre}
               </h3>
               {!categoria.activo && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 rounded">
+                <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded">
                   Inactiva
                 </span>
               )}
               {tieneHijos && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 rounded">
+                <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
                   {categoria.hijos.length} subcategoría{categoria.hijos.length !== 1 ? 's' : ''}
                 </span>
               )}
             </div>
             {categoria.descripcion && (
-              <p className="text-xs text-gray-600 mt-1">{categoria.descripcion}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{categoria.descripcion}</p>
             )}
           </div>
 
           {/* Metadatos */}
-          <div className="text-xs text-gray-500 mr-4">
+          <div className="text-xs text-gray-500 dark:text-gray-400 mr-4">
             Orden: {categoria.orden}
           </div>
         </div>
@@ -218,21 +218,21 @@ function CategoriasPage() {
       }));
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona productos, proveedores y stock
         </p>
       </div>
@@ -246,10 +246,10 @@ function CategoriasPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <FolderTree className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
+              <FolderTree className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Categorías</h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Categorías</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {total} categoría{total !== 1 ? 's' : ''} en total
                 </p>
               </div>
@@ -266,7 +266,7 @@ function CategoriasPage() {
         </div>
 
         {/* Controles - Mobile First */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="flex items-center gap-2">
               <Button
@@ -292,27 +292,27 @@ function CategoriasPage() {
                 type="checkbox"
                 checked={mostrarInactivas}
                 onChange={(e) => setMostrarInactivas(e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">Mostrar inactivas</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar inactivas</span>
             </label>
           </div>
         </div>
 
         {/* Árbol de Categorías */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           {cargandoArbol ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-3 text-gray-600">Cargando categorías...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando categorías...</span>
             </div>
           ) : arbolFiltrado.length === 0 ? (
             <div className="text-center py-12">
-              <FolderTree className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <FolderTree className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No hay categorías
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 Comienza creando tu primera categoría
               </p>
               <div className="mt-6">
@@ -359,17 +359,17 @@ function CategoriasPage() {
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas eliminar la categoría{' '}
-            <strong className="text-gray-900">
+            <strong className="text-gray-900 dark:text-gray-100">
               {categoriaSeleccionada?.nombre}
             </strong>
             ?
           </p>
 
           {categoriaSeleccionada?.hijos?.length > 0 && (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <p className="text-sm text-yellow-800">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
                 ⚠️ Esta categoría tiene{' '}
                 <strong>{categoriaSeleccionada.hijos.length}</strong>{' '}
                 subcategoría{categoriaSeleccionada.hijos.length !== 1 ? 's' : ''}. Las
@@ -378,11 +378,11 @@ function CategoriasPage() {
             </div>
           )}
 
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
             Esta acción no se puede deshacer.
           </p>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => setModalEliminarAbierto(false)}

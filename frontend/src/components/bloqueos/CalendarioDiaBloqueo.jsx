@@ -26,11 +26,11 @@ function CalendarioDiaBloqueo({
   return (
     <div
       className={`
-        min-h-[100px] border border-gray-200 rounded-lg p-2 transition-all
-        ${esDelMesActual ? 'bg-white' : 'bg-gray-50'}
-        ${esHoy ? 'ring-2 ring-primary-500 ring-inset' : ''}
-        ${tieneBloqueoOrganizacional && esDelMesActual ? 'bg-red-50 border-red-200' : ''}
-        hover:shadow-md
+        min-h-[100px] border border-gray-200 dark:border-gray-700 rounded-lg p-2 transition-all
+        ${esDelMesActual ? 'bg-white dark:bg-gray-800' : 'bg-gray-50 dark:bg-gray-900'}
+        ${esHoy ? 'ring-2 ring-primary-500 dark:ring-primary-400 ring-inset' : ''}
+        ${tieneBloqueoOrganizacional && esDelMesActual ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800' : ''}
+        hover:shadow-md dark:hover:shadow-gray-900/50
         relative
         group
       `}
@@ -40,8 +40,8 @@ function CalendarioDiaBloqueo({
         <span
           className={`
             text-sm font-semibold
-            ${esDelMesActual ? 'text-gray-900' : 'text-gray-400'}
-            ${esHoy ? 'text-primary-600' : ''}
+            ${esDelMesActual ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-600'}
+            ${esHoy ? 'text-primary-600 dark:text-primary-400' : ''}
           `}
         >
           {numeroDia}
@@ -50,8 +50,8 @@ function CalendarioDiaBloqueo({
         {/* Badge de bloqueo organizacional o botón crear */}
         {tieneBloqueoOrganizacional && esDelMesActual ? (
           <div className="flex items-center gap-1" title="Bloqueo organizacional">
-            <Building className="w-3 h-3 text-red-600" />
-            <Lock className="w-3 h-3 text-red-600" />
+            <Building className="w-3 h-3 text-red-600 dark:text-red-400" />
+            <Lock className="w-3 h-3 text-red-600 dark:text-red-400" />
           </div>
         ) : (
           /* Botón para crear bloqueo (solo visible cuando NO hay bloqueos) */
@@ -79,7 +79,7 @@ function CalendarioDiaBloqueo({
           // Loading skeleton
           <div className="space-y-1">
             {[1, 2].map((i) => (
-              <div key={i} className="h-5 bg-gray-200 rounded animate-pulse" />
+              <div key={i} className="h-5 bg-gray-200 dark:bg-gray-600 rounded animate-pulse" />
             ))}
           </div>
         ) : (
@@ -123,7 +123,7 @@ function CalendarioDiaBloqueo({
 
             {/* Indicador de más bloqueos */}
             {bloqueosOcultos > 0 && (
-              <div className="text-xs text-gray-500 font-medium text-center py-0.5">
+              <div className="text-xs text-gray-500 dark:text-gray-400 font-medium text-center py-0.5">
                 +{bloqueosOcultos} más
               </div>
             )}
@@ -131,7 +131,7 @@ function CalendarioDiaBloqueo({
             {/* Badge de cantidad de bloqueos (esquina superior derecha) */}
             {bloqueos.length > 0 && (
               <div className="absolute top-1 right-1">
-                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 rounded-full">
+                <span className="inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-600 dark:bg-red-500 rounded-full">
                   {bloqueos.length}
                 </span>
               </div>
@@ -146,10 +146,10 @@ function CalendarioDiaBloqueo({
           onClick={onCrearBloqueo}
           className="
             w-full mt-1 py-1 rounded
-            text-xs font-medium text-red-600
+            text-xs font-medium text-red-600 dark:text-red-400
             opacity-0 group-hover:opacity-100
             transition-all
-            hover:bg-red-50
+            hover:bg-red-50 dark:hover:bg-red-900/30
             flex items-center justify-center gap-1
           "
           title="Agregar otro bloqueo"
@@ -161,7 +161,7 @@ function CalendarioDiaBloqueo({
 
       {/* Empty state para días sin bloqueos */}
       {!isLoading && bloqueos.length === 0 && esDelMesActual && (
-        <div className="flex items-center justify-center h-12 text-gray-400">
+        <div className="flex items-center justify-center h-12 text-gray-400 dark:text-gray-500">
           <span className="text-xs opacity-0 group-hover:opacity-100 transition-opacity">
             Sin bloqueos
           </span>

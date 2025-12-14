@@ -38,21 +38,21 @@ export default function ReporteVentasDiariasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Punto de Venta</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Punto de Venta</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona ventas, historial y reportes
         </p>
       </div>
@@ -65,11 +65,11 @@ export default function ReporteVentasDiariasPage() {
         {/* Header de sección */}
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <BarChart3 className="h-6 w-6 text-blue-600" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <BarChart3 className="h-6 w-6 text-primary-600 dark:text-primary-400" />
               Reporte de Ventas Diarias
             </h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
               Análisis detallado de ventas por día
             </p>
           </div>
@@ -85,7 +85,7 @@ export default function ReporteVentasDiariasPage() {
         </div>
 
         {/* Filtros */}
-      <div className="bg-white rounded-lg shadow p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Input
             label="Fecha"
@@ -115,75 +115,75 @@ export default function ReporteVentasDiariasPage() {
 
       {/* Contenido */}
       {isLoading ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Cargando reporte...</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
+          <p className="text-gray-500 dark:text-gray-400">Cargando reporte...</p>
         </div>
       ) : isError ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center text-red-600">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-red-600 dark:text-red-400">
           <p>Error al cargar el reporte. Verifica la fecha seleccionada.</p>
         </div>
       ) : !reporteData ? (
-        <div className="bg-white rounded-lg shadow p-8 text-center text-gray-500">
-          <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-8 text-center text-gray-500 dark:text-gray-400">
+          <Calendar className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
           <p className="text-lg font-medium">Selecciona una fecha para generar el reporte</p>
         </div>
       ) : (
         <>
           {/* Cards de resumen */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Ventas del Día</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ventas del Día</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                     {resumen.total_ventas || 0}
                   </p>
                 </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <Receipt className="h-6 w-6 text-blue-600" />
+                <div className="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-lg">
+                  <Receipt className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Ingresos</p>
-                  <p className="text-2xl font-bold text-green-600 mt-1">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos</p>
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
                     ${parseFloat(resumen.total_ingresos || 0).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600" />
+                <div className="bg-green-100 dark:bg-green-900/40 p-3 rounded-lg">
+                  <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Ticket Promedio</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ticket Promedio</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                     ${parseFloat(resumen.ticket_promedio || 0).toFixed(2)}
                   </p>
                 </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                <div className="bg-purple-100 dark:bg-purple-900/40 p-3 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Items Vendidos</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Items Vendidos</p>
+                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
                     {resumen.total_items_vendidos || 0}
                   </p>
                 </div>
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <Package className="h-6 w-6 text-orange-600" />
+                <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-lg">
+                  <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />
                 </div>
               </div>
             </div>
@@ -191,10 +191,10 @@ export default function ReporteVentasDiariasPage() {
 
           {/* Gráfica de ventas por hora */}
           {ventasPorHora.length > 0 && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <BarChart3 className="h-5 w-5 text-blue-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary-600 dark:text-primary-400" />
                   Ventas por Hora
                 </h2>
               </div>
@@ -208,17 +208,17 @@ export default function ReporteVentasDiariasPage() {
                     return (
                       <div key={hora.hora} className="space-y-1">
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-medium text-gray-700">{hora.hora}:00 hrs</span>
+                          <span className="font-medium text-gray-700 dark:text-gray-300">{hora.hora}:00 hrs</span>
                           <div className="flex items-center gap-4">
-                            <span className="text-gray-600">{hora.cantidad_ventas} ventas</span>
-                            <span className="font-semibold text-gray-900 w-24 text-right">
+                            <span className="text-gray-600 dark:text-gray-400">{hora.cantidad_ventas} ventas</span>
+                            <span className="font-semibold text-gray-900 dark:text-gray-100 w-24 text-right">
                               ${parseFloat(hora.total || 0).toFixed(2)}
                             </span>
                           </div>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                           <div
-                            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                            className="bg-primary-600 dark:bg-primary-500 h-2 rounded-full transition-all duration-300"
                             style={{ width: `${porcentaje}%` }}
                           ></div>
                         </div>
@@ -229,36 +229,36 @@ export default function ReporteVentasDiariasPage() {
 
                 {/* Tabla detallada */}
                 <div className="mt-6 overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Hora
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Ventas
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Total
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Promedio
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {ventasPorHora.map((hora) => (
                         <tr key={hora.hora}>
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                             {hora.hora}:00 hrs
                           </td>
-                          <td className="px-4 py-3 text-sm text-center text-gray-900">
+                          <td className="px-4 py-3 text-sm text-center text-gray-900 dark:text-gray-100">
                             {hora.cantidad_ventas}
                           </td>
-                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
                             ${parseFloat(hora.total || 0).toFixed(2)}
                           </td>
-                          <td className="px-4 py-3 text-sm text-right text-gray-900">
+                          <td className="px-4 py-3 text-sm text-right text-gray-900 dark:text-gray-100">
                             $
                             {hora.cantidad_ventas > 0
                               ? (parseFloat(hora.total || 0) / hora.cantidad_ventas).toFixed(2)
@@ -275,55 +275,55 @@ export default function ReporteVentasDiariasPage() {
 
           {/* Top productos */}
           {topProductos.length > 0 && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-orange-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-orange-600 dark:text-orange-400" />
                   Productos Más Vendidos del Día
                 </h2>
               </div>
               <div className="p-6">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           #
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Producto
                         </th>
-                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Cantidad
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Total
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {topProductos.map((producto, index) => (
                         <tr
                           key={producto.producto_id}
-                          className={index < 3 ? 'bg-orange-50' : ''}
+                          className={index < 3 ? 'bg-orange-50 dark:bg-orange-900/20' : ''}
                         >
-                          <td className="px-4 py-3 text-sm font-bold text-gray-900">
+                          <td className="px-4 py-3 text-sm font-bold text-gray-900 dark:text-gray-100">
                             {index + 1}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                             <div>
                               <p className="font-medium">{producto.producto_nombre}</p>
                               {producto.producto_sku && (
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                   SKU: {producto.producto_sku}
                                 </p>
                               )}
                             </div>
                           </td>
-                          <td className="px-4 py-3 text-sm text-center font-semibold text-gray-900">
+                          <td className="px-4 py-3 text-sm text-center font-semibold text-gray-900 dark:text-gray-100">
                             {producto.cantidad_vendida}
                           </td>
-                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
                             ${parseFloat(producto.total || 0).toFixed(2)}
                           </td>
                         </tr>
@@ -337,54 +337,54 @@ export default function ReporteVentasDiariasPage() {
 
           {/* Detalle de ventas */}
           {detalle.length > 0 && (
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                  <Receipt className="h-5 w-5 text-gray-600" />
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                  <Receipt className="h-5 w-5 text-gray-600 dark:text-gray-400" />
                   Detalle de Ventas del Día
                 </h2>
               </div>
               <div className="p-6">
                 <div className="overflow-x-auto">
-                  <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
+                  <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead className="bg-gray-50 dark:bg-gray-700">
                       <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Folio
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Hora
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Cliente
                         </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Método Pago
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                           Total
                         </th>
                       </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
+                    <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {detalle.map((venta) => (
-                        <tr key={venta.id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                        <tr key={venta.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                          <td className="px-4 py-3 text-sm font-medium text-gray-900 dark:text-gray-100">
                             {venta.folio}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                             {new Date(venta.fecha_venta).toLocaleTimeString('es-MX', {
                               hour: '2-digit',
                               minute: '2-digit',
                             })}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                             {venta.cliente_nombre || 'Venta directa'}
                           </td>
-                          <td className="px-4 py-3 text-sm text-gray-900">
+                          <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
                             {venta.metodo_pago}
                           </td>
-                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900">
+                          <td className="px-4 py-3 text-sm text-right font-semibold text-gray-900 dark:text-gray-100">
                             ${parseFloat(venta.total || 0).toFixed(2)}
                           </td>
                         </tr>

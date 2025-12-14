@@ -423,15 +423,15 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
-          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
-            <Calendar className="w-6 h-6 text-primary-600" />
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-12 h-12 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center">
+            <Calendar className="w-6 h-6 text-primary-600 dark:text-primary-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {isEditMode ? 'Editar Cita' : 'Crear Nueva Cita'}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {isEditMode ? 'Modifica los datos de la cita' : 'Completa la información de la cita'}
             </p>
           </div>
@@ -441,8 +441,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
         {isLoadingData ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando datos de la cita...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando datos de la cita...</p>
             </div>
           </div>
         ) : (
@@ -451,11 +451,11 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
             <div className="space-y-4">
               {/* Cliente */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cliente {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-center gap-2">
-                  <User className="w-5 h-5 text-gray-400" />
+                  <User className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Controller
                     name="cliente_id"
                     control={control}
@@ -477,11 +477,11 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
               {/* Profesional */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Profesional {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-center gap-2">
-                  <Briefcase className="w-5 h-5 text-gray-400" />
+                  <Briefcase className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                   <Controller
                     name="profesional_id"
                     control={control}
@@ -499,7 +499,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                   <p className="mt-1 text-sm text-red-600">{errors.profesional_id.message}</p>
                 )}
                 {!errors.profesional_id && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     💡 Selecciona un profesional para ver solo sus servicios, o deja vacío para ver todos los servicios disponibles
                   </p>
                 )}
@@ -507,11 +507,11 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
               {/* Servicios (MultiSelect) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Servicios {!isEditMode && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-start gap-2">
-                  <Package className="w-5 h-5 text-gray-400 mt-3" />
+                  <Package className="w-5 h-5 text-gray-400 dark:text-gray-500 mt-3" />
                   <Controller
                     name="servicios_ids"
                     control={control}
@@ -529,7 +529,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                   />
                 </div>
                 {!watchProfesional && (
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Primero selecciona un profesional
                   </p>
                 )}
@@ -542,13 +542,13 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Fecha */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Fecha de la Cita {!isEditMode && <span className="text-red-500">*</span>}
                   </label>
                   <input
                     {...register('fecha_cita')}
                     type="date"
-                    className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                    className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   />
                   {errors.fecha_cita && (
                     <p className="mt-1 text-sm text-red-600">{errors.fecha_cita.message}</p>
@@ -557,15 +557,15 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
                 {/* Hora Inicio */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Hora de Inicio {!isEditMode && <span className="text-red-500">*</span>}
                   </label>
                   <div className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-gray-400" />
+                    <Clock className="w-5 h-5 text-gray-400 dark:text-gray-500" />
                     <input
                       {...register('hora_inicio')}
                       type="time"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                   {errors.hora_inicio && (
@@ -607,13 +607,13 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
               </div>
 
               {/* Precio Total Calculado */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <DollarSign className="w-5 h-5 text-blue-600" />
-                    <span className="text-sm font-medium text-gray-700">Total a Pagar:</span>
+                    <DollarSign className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total a Pagar:</span>
                   </div>
-                  <span className="text-xl font-bold text-primary-600">
+                  <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
                     ${precioCalculado.toLocaleString('es-CO')}
                   </span>
                 </div>
@@ -654,7 +654,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
             </div>
 
             {/* Botones de acción */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button
                 type="button"
                 variant="outline"

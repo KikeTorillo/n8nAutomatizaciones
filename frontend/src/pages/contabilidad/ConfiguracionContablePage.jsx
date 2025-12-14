@@ -65,27 +65,27 @@ function ConfiguracionContablePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
   }
 
   if (!config) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Button variant="ghost" onClick={() => navigate('/contabilidad')} className="mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Volver
           </Button>
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
             <div className="flex items-start gap-4">
-              <AlertTriangle className="w-6 h-6 text-yellow-600 flex-shrink-0" />
+              <AlertTriangle className="w-6 h-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
               <div>
-                <h3 className="font-semibold text-yellow-800 mb-2">Configuración No Disponible</h3>
-                <p className="text-yellow-700 text-sm mb-4">
+                <h3 className="font-semibold text-yellow-800 dark:text-yellow-300 mb-2">Configuración No Disponible</h3>
+                <p className="text-yellow-700 dark:text-yellow-400 text-sm mb-4">
                   Para acceder a la configuración contable, primero debes inicializar el catálogo SAT
                   desde la página principal de contabilidad.
                 </p>
@@ -101,7 +101,7 @@ function ConfiguracionContablePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -110,37 +110,37 @@ function ConfiguracionContablePage() {
             Volver a Contabilidad
           </Button>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Settings className="w-6 h-6 text-blue-600" />
+            <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
+              <Settings className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Configuración Contable</h1>
-              <p className="text-gray-600 text-sm">Asientos automáticos y cuentas del sistema</p>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Configuración Contable</h1>
+              <p className="text-gray-600 dark:text-gray-400 text-sm">Asientos automáticos y cuentas del sistema</p>
             </div>
           </div>
         </div>
 
         {/* Asientos Automáticos */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-6">
             <div className="flex items-start justify-between">
               <div className="flex items-start gap-4">
-                <div className={`p-3 rounded-lg ${asientosAutomaticos ? 'bg-green-100' : 'bg-gray-100'}`}>
-                  <Zap className={`w-6 h-6 ${asientosAutomaticos ? 'text-green-600' : 'text-gray-400'}`} />
+                <div className={`p-3 rounded-lg ${asientosAutomaticos ? 'bg-green-100 dark:bg-green-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                  <Zap className={`w-6 h-6 ${asientosAutomaticos ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`} />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-1">Asientos Automáticos</h3>
-                  <p className="text-gray-600 text-sm mb-3">
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Asientos Automáticos</h3>
+                  <p className="text-gray-600 dark:text-gray-400 text-sm mb-3">
                     Genera asientos contables automáticamente al completar ventas POS y recibir
                     mercancía de órdenes de compra.
                   </p>
 
                   {asientosAutomaticos && (
                     <div className="flex flex-wrap gap-2">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400">
                         POS → Contabilidad
                       </span>
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-400">
                         Compras → Contabilidad
                       </span>
                     </div>
@@ -151,8 +151,8 @@ function ConfiguracionContablePage() {
               <button
                 onClick={handleToggleAsientos}
                 disabled={actualizarConfig.isPending || !todasConfiguradas}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-                  asientosAutomaticos ? 'bg-green-500' : 'bg-gray-300'
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
+                  asientosAutomaticos ? 'bg-green-500' : 'bg-gray-300 dark:bg-gray-600'
                 } ${actualizarConfig.isPending || !todasConfiguradas ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 <span
@@ -164,8 +164,8 @@ function ConfiguracionContablePage() {
             </div>
 
             {!todasConfiguradas && (
-              <div className="mt-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <p className="text-yellow-800 text-sm flex items-center gap-2">
+              <div className="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                <p className="text-yellow-800 dark:text-yellow-300 text-sm flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4" />
                   Configura todas las cuentas esenciales para habilitar asientos automáticos.
                 </p>
@@ -175,45 +175,45 @@ function ConfiguracionContablePage() {
         </div>
 
         {/* Configuración General */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
-          <div className="p-6 border-b border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <Building2 className="w-5 h-5 text-gray-400" />
-              <h3 className="font-semibold text-gray-900">Configuración General</h3>
+              <Building2 className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+              <h3 className="font-semibold text-gray-900 dark:text-gray-100">Configuración General</h3>
             </div>
           </div>
           <div className="p-6">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">País</label>
-                <p className="text-gray-900 font-medium">{config.pais || 'MX'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">País</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium">{config.pais || 'MX'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Moneda</label>
-                <p className="text-gray-900 font-medium">{config.moneda || 'MXN'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Moneda</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium">{config.moneda || 'MXN'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Plan de Cuentas</label>
-                <p className="text-gray-900 font-medium">SAT México (Anexo 24)</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Plan de Cuentas</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium">SAT México (Anexo 24)</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Tasa IVA</label>
-                <p className="text-gray-900 font-medium flex items-center gap-1">
-                  <Percent className="w-4 h-4 text-gray-400" />
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Tasa IVA</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium flex items-center gap-1">
+                  <Percent className="w-4 h-4 text-gray-400 dark:text-gray-500" />
                   {config.tasa_iva || 16}%
                 </p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Método Costeo</label>
-                <p className="text-gray-900 font-medium capitalize">{config.metodo_costeo || 'Promedio'}</p>
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Método Costeo</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium capitalize">{config.metodo_costeo || 'Promedio'}</p>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-500 mb-1">Código SAT</label>
-                <p className="text-gray-900 font-medium flex items-center gap-1">
+                <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Código SAT</label>
+                <p className="text-gray-900 dark:text-gray-100 font-medium flex items-center gap-1">
                   {config.usa_codigo_agrupador_sat ? (
-                    <><CheckCircle2 className="w-4 h-4 text-green-500" /> Activo</>
+                    <><CheckCircle2 className="w-4 h-4 text-green-500 dark:text-green-400" /> Activo</>
                   ) : (
-                    <><XCircle className="w-4 h-4 text-gray-400" /> Inactivo</>
+                    <><XCircle className="w-4 h-4 text-gray-400 dark:text-gray-500" /> Inactivo</>
                   )}
                 </p>
               </div>
@@ -222,12 +222,12 @@ function ConfiguracionContablePage() {
         </div>
 
         {/* Cuentas del Sistema */}
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-6 border-b border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-6 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <BookOpen className="w-5 h-5 text-gray-400" />
-                <h3 className="font-semibold text-gray-900">Cuentas del Sistema</h3>
+                <BookOpen className="w-5 h-5 text-gray-400 dark:text-gray-500" />
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">Cuentas del Sistema</h3>
               </div>
               <Button
                 variant="ghost"
@@ -238,31 +238,31 @@ function ConfiguracionContablePage() {
                 <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
-            <p className="text-gray-600 text-sm mt-1">
+            <p className="text-gray-600 dark:text-gray-400 text-sm mt-1">
               Cuentas utilizadas para generar asientos automáticos
             </p>
           </div>
 
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {cuentasSistema.map((cuenta) => (
               <div key={cuenta.label} className="p-4 flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-gray-900">{cuenta.label}</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">{cuenta.label}</p>
                   {cuenta.codigo ? (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
                       {cuenta.codigo} - {cuenta.nombre}
                     </p>
                   ) : (
-                    <p className="text-sm text-yellow-600 flex items-center gap-1">
+                    <p className="text-sm text-yellow-600 dark:text-yellow-400 flex items-center gap-1">
                       <AlertTriangle className="w-3 h-3" />
                       No configurada
                     </p>
                   )}
                 </div>
                 {cuenta.id ? (
-                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                  <CheckCircle2 className="w-5 h-5 text-green-500 dark:text-green-400" />
                 ) : (
-                  <XCircle className="w-5 h-5 text-gray-300" />
+                  <XCircle className="w-5 h-5 text-gray-300 dark:text-gray-600" />
                 )}
               </div>
             ))}
@@ -270,8 +270,8 @@ function ConfiguracionContablePage() {
         </div>
 
         {/* Información */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-blue-800 text-sm">
+        <div className="mt-6 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+          <p className="text-primary-800 dark:text-primary-300 text-sm">
             <strong>Nota:</strong> Las cuentas del sistema se configuran automáticamente al
             inicializar el catálogo SAT. Si necesitas modificarlas, contacta al administrador.
           </p>

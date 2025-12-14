@@ -66,22 +66,22 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Header personalizado */}
         <div className="flex items-start gap-3">
-          <div className="bg-red-100 p-3 rounded-lg">
-            <XCircle className="h-6 w-6 text-red-600" />
+          <div className="bg-red-100 dark:bg-red-900/40 p-3 rounded-lg">
+            <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-bold text-gray-900">Cancelar Venta</h2>
-            <p className="text-sm text-gray-500 mt-1">
-              Folio: <span className="font-semibold text-gray-900">{venta.folio}</span>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Cancelar Venta</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Folio: <span className="font-semibold text-gray-900 dark:text-gray-100">{venta.folio}</span>
             </p>
           </div>
         </div>
 
         {/* Advertencia */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <div className="flex gap-3">
-            <AlertTriangle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-yellow-800">
+            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-yellow-800 dark:text-yellow-300">
               <p className="font-semibold mb-1">Advertencia importante:</p>
               <ul className="list-disc list-inside space-y-1">
                 <li>Esta acción cancelará la venta permanentemente</li>
@@ -94,16 +94,16 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
         </div>
 
         {/* Información de la venta */}
-        <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Total de la venta:</span>
-            <span className="font-semibold text-gray-900">
+            <span className="text-gray-600 dark:text-gray-400">Total de la venta:</span>
+            <span className="font-semibold text-gray-900 dark:text-gray-100">
               ${parseFloat(venta.total || 0).toFixed(2)}
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Método de pago:</span>
-            <span className="font-medium text-gray-900">
+            <span className="text-gray-600 dark:text-gray-400">Método de pago:</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {venta.metodo_pago === 'efectivo' ? 'Efectivo' :
                venta.metodo_pago === 'tarjeta' ? 'Tarjeta' :
                venta.metodo_pago === 'transferencia' ? 'Transferencia' :
@@ -112,8 +112,8 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
             </span>
           </div>
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Cliente:</span>
-            <span className="font-medium text-gray-900">
+            <span className="text-gray-600 dark:text-gray-400">Cliente:</span>
+            <span className="font-medium text-gray-900 dark:text-gray-100">
               {venta.cliente_nombre || 'Venta directa'}
             </span>
           </div>
@@ -137,7 +137,7 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
         />
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 border-t border-gray-200 pt-4">
+        <div className="flex justify-end gap-3 border-t border-gray-200 dark:border-gray-700 pt-4">
           <Button
             type="button"
             variant="outline"

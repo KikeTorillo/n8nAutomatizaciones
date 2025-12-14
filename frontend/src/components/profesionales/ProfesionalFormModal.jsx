@@ -25,7 +25,7 @@ import { useUploadArchivo } from '@/hooks/useStorage';
  * Colores predefinidos para el calendario
  */
 const COLORES_CALENDARIO = [
-  '#3b82f6', // blue-500
+  '#3b82f6', // primary-500
   '#10b981', // green-500
   '#f59e0b', // amber-500
   '#ef4444', // red-500
@@ -35,7 +35,7 @@ const COLORES_CALENDARIO = [
   '#f97316', // orange-500
   '#14b8a6', // teal-500
   '#a855f7', // purple-500
-  '#6366f1', // indigo-500
+  '#6366f1', // primary-500
   '#84cc16', // lime-500
 ];
 
@@ -407,7 +407,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Header con foto de perfil */}
-        <div className="flex items-center gap-4 pb-4 border-b">
+        <div className="flex items-center gap-4 pb-4 border-b border-gray-200 dark:border-gray-700">
           {/* Foto de perfil editable */}
           <div className="relative">
             {fotoPreview ? (
@@ -435,8 +435,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
               </div>
             )}
             {/* Botón para cambiar foto */}
-            <label className="absolute -bottom-1 -right-1 bg-white border border-gray-300 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 transition-colors shadow-sm">
-              <Camera className="h-3.5 w-3.5 text-gray-600" />
+            <label className="absolute -bottom-1 -right-1 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-full p-1.5 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors shadow-sm">
+              <Camera className="h-3.5 w-3.5 text-gray-600 dark:text-gray-300" />
               <input
                 type="file"
                 accept="image/*"
@@ -446,16 +446,16 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
               />
             </label>
             {uploadMutation.isPending && (
-              <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
-                <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+              <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-full flex items-center justify-center">
+                <Loader2 className="h-5 w-5 text-primary-600 dark:text-primary-400 animate-spin" />
               </div>
             )}
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {isEditMode ? 'Editar Profesional' : 'Crear Nuevo Profesional'}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               {isEditMode
                 ? 'Modifica los datos del profesional'
                 : 'Completa la información del profesional'}
@@ -467,8 +467,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         {isLoadingData ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando datos del profesional...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando datos del profesional...</p>
             </div>
           </div>
         ) : (
@@ -529,20 +529,20 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
               {/* Selector de Color */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Color para Calendario
                 </label>
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setShowColorPicker(!showColorPicker)}
-                    className="w-12 h-12 rounded-full border-2 border-gray-300 hover:border-gray-400 transition-colors flex items-center justify-center"
+                    className="w-12 h-12 rounded-full border-2 border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500 transition-colors flex items-center justify-center"
                     style={{ backgroundColor: selectedColor }}
                   >
                     <Palette className="w-5 h-5 text-white" />
                   </button>
                   <div className="flex-1">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
                       Color seleccionado: <span className="font-mono font-medium">{selectedColor}</span>
                     </p>
                   </div>
@@ -550,7 +550,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
                 {/* Paleta de colores */}
                 {showColorPicker && (
-                  <div className="mt-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <div className="mt-3 p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
                     <div className="grid grid-cols-6 gap-2">
                       {COLORES_CALENDARIO.map((color) => (
                         <button
@@ -559,7 +559,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                           onClick={() => handleColorSelect(color)}
                           className={`w-10 h-10 rounded-full border-2 transition-all hover:scale-110 ${
                             selectedColor === color
-                              ? 'border-gray-900 ring-2 ring-gray-900 ring-offset-2'
+                              ? 'border-gray-900 dark:border-white ring-2 ring-gray-900 dark:ring-white ring-offset-2 dark:ring-offset-gray-800'
                               : 'border-transparent'
                           }`}
                           style={{ backgroundColor: color }}
@@ -570,7 +570,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   </div>
                 )}
                 {errors.color_calendario && (
-                  <p className="mt-1 text-sm text-red-600">
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
                     {errors.color_calendario.message}
                   </p>
                 )}
@@ -592,27 +592,27 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
               />
 
               {/* Nov 2025: Sección Acceso al Sistema y Módulos */}
-              <div className="border-t border-gray-200 pt-4 mt-4">
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
                 <div className="flex items-center gap-2 mb-4">
-                  <Settings className="h-5 w-5 text-gray-500" />
-                  <h4 className="font-medium text-gray-900">Acceso al Sistema</h4>
+                  <Settings className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100">Acceso al Sistema</h4>
                 </div>
 
                 {/* Estado actual: Usuario vinculado, invitación pendiente, o info */}
                 {profesionalData?.usuario_id ? (
-                  <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-700">
+                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                       <CheckCircle className="h-5 w-5" />
                       <span className="font-medium">Usuario vinculado</span>
                     </div>
-                    <p className="text-sm text-green-600 mt-1">
+                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                       {profesionalData.usuario_nombre || profesionalData.usuario_email}
                     </p>
                   </div>
                 ) : isEditMode ? (
                   /* Sección de Invitación (solo en modo edición) */
                   <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       <span className="flex items-center gap-2">
                         <Mail className="h-4 w-4" />
                         Estado de invitación
@@ -621,9 +621,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
                     {/* Mostrar invitación actual si existe */}
                     {invitacionActual && invitacionActual.estado === 'pendiente' ? (
-                      <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2 text-amber-700">
+                          <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
                             <Clock className="h-5 w-5" />
                             <span className="font-medium">Invitación pendiente</span>
                           </div>
@@ -632,7 +632,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                               type="button"
                               onClick={handleReenviarInvitacion}
                               disabled={enviandoInvitacion}
-                              className="p-1 text-amber-600 hover:text-amber-800"
+                              className="p-1 text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300"
                               title="Reenviar"
                             >
                               <RefreshCw className={`h-4 w-4 ${enviandoInvitacion ? 'animate-spin' : ''}`} />
@@ -640,27 +640,27 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                             <button
                               type="button"
                               onClick={handleCancelarInvitacion}
-                              className="p-1 text-red-600 hover:text-red-800"
+                              className="p-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                               title="Cancelar"
                             >
                               <XCircle className="h-4 w-4" />
                             </button>
                           </div>
                         </div>
-                        <p className="text-sm text-amber-600 mt-1">
+                        <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
                           Enviada a: {invitacionActual.email}
                         </p>
-                        <p className="text-xs text-amber-500 mt-1">
+                        <p className="text-xs text-amber-500 dark:text-amber-500 mt-1">
                           Expira: {new Date(invitacionActual.expira_en).toLocaleDateString('es-MX')}
                         </p>
                       </div>
                     ) : invitacionActual && invitacionActual.estado === 'aceptada' ? (
-                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                        <div className="flex items-center gap-2 text-green-700">
+                      <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
                           <CheckCircle className="h-5 w-5" />
                           <span className="font-medium">Invitación aceptada</span>
                         </div>
-                        <p className="text-sm text-green-600 mt-1">
+                        <p className="text-sm text-green-600 dark:text-green-400 mt-1">
                           {invitacionActual.email}
                         </p>
                       </div>
@@ -687,18 +687,18 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                       </div>
                     )}
 
-                    <p className="mt-2 text-xs text-gray-500">
+                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                       El empleado recibirá un email con un enlace para completar su registro.
                     </p>
                   </div>
                 ) : (
                   /* Modo creación: mensaje informativo */
-                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <div className="flex items-center gap-2 text-blue-700">
+                  <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
+                    <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400">
                       <Mail className="h-5 w-5" />
                       <span className="font-medium">Invitación automática</span>
                     </div>
-                    <p className="text-sm text-blue-600 mt-1">
+                    <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
                       Al guardar, se enviará automáticamente un email de invitación al correo ingresado.
                     </p>
                   </div>
@@ -706,10 +706,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
                 {/* Módulos Habilitados */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Módulos habilitados
                   </label>
-                  <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
+                  <div className="space-y-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
                     <Checkbox
                       label="Agendamiento"
                       description="Puede atender citas de clientes"
@@ -758,7 +758,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
             </div>
 
             {/* Botones de acción */}
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button
                 type="button"
                 variant="outline"

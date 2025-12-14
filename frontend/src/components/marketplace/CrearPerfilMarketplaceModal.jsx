@@ -116,25 +116,25 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
         <div
-          className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full"
+          className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary-100 rounded-lg flex items-center justify-center">
-                <Store className="w-5 h-5 text-primary-700" />
+              <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
+                <Store className="w-5 h-5 text-primary-700 dark:text-primary-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
                   Activar Perfil de Marketplace
                 </h2>
-                <p className="text-sm text-gray-600">Paso {paso} de 3</p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Paso {paso} de 3</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -151,7 +151,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                         ? 'bg-green-500 text-white'
                         : paso === num
                           ? 'bg-primary-600 text-white'
-                          : 'bg-gray-200 text-gray-600'
+                          : 'bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}
                   >
                     {paso > num ? <Check className="w-4 h-4" /> : num}
@@ -159,7 +159,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                   {num < 3 && (
                     <div
                       className={`flex-1 h-1 mx-2 rounded ${
-                        paso > num ? 'bg-green-500' : 'bg-gray-200'
+                        paso > num ? 'bg-green-500' : 'bg-gray-200 dark:bg-gray-700'
                       }`}
                     />
                   )}
@@ -173,7 +173,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
             {/* Paso 1: Información Básica + Ubicación */}
             {paso === 1 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   Información Básica
                 </h3>
 
@@ -189,7 +189,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                 />
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Descripción Larga
                   </label>
                   <textarea
@@ -197,7 +197,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                     value={formData.descripcion_larga}
                     onChange={handleChange}
                     rows={4}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Describe tu negocio en detalle..."
                   />
                 </div>
@@ -205,7 +205,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                 {/* Selectores de ubicación en cascada */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Estado *
                     </label>
                     <div className="relative">
@@ -215,7 +215,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                           setEstadoId(e.target.value ? Number(e.target.value) : null);
                           setCiudadId(null); // Reset ciudad al cambiar estado
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                         disabled={loadingEstados}
                       >
                         <option value="">Selecciona un estado</option>
@@ -232,14 +232,14 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Ciudad *
                     </label>
                     <div className="relative">
                       <select
                         value={ciudadId || ''}
                         onChange={(e) => setCiudadId(e.target.value ? Number(e.target.value) : null)}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500"
                         disabled={!estadoId || loadingCiudades}
                       >
                         <option value="">
@@ -263,13 +263,13 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
             {/* Paso 2: Dirección y Contacto */}
             {paso === 2 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                   Dirección y Contacto
                 </h3>
 
                 {/* Mostrar ubicación seleccionada */}
-                <div className="bg-gray-50 rounded-lg p-3 mb-4">
-                  <p className="text-sm text-gray-600">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     <span className="font-medium">Ubicación:</span>{' '}
                     {getCiudadNombre(ciudadId)}, {getEstadoNombre(estadoId)}, México
                   </p>
@@ -327,10 +327,10 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
             {/* Paso 3: Redes Sociales */}
             {paso === 3 && (
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
                   Redes Sociales (Opcional)
                 </h3>
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
                   Agrega tus redes sociales para que tus clientes puedan encontrarte más fácilmente.
                 </p>
 
@@ -362,7 +362,7 @@ function CrearPerfilMarketplaceModal({ isOpen, onClose }) {
             )}
 
             {/* Botones de Navegación */}
-            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200">
+            <div className="flex items-center justify-between mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
               <div>
                 {paso > 1 && (
                   <Button type="button" variant="outline" onClick={handleBack}>

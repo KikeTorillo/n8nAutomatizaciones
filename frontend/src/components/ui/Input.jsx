@@ -30,11 +30,11 @@ const Input = forwardRef(
       lg: 'py-4 text-lg font-semibold',
     };
 
-    const baseStyles = `w-full border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed ${sizeStyles[inputSize]}`;
+    const baseStyles = `w-full border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 ${sizeStyles[inputSize]}`;
 
     const stateStyles = error
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500';
+      : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
 
     const paddingStyles = prefix && suffix
       ? 'px-8'
@@ -47,7 +47,7 @@ const Input = forwardRef(
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -56,7 +56,7 @@ const Input = forwardRef(
         <div className="relative">
           {prefix && (
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <span className="text-gray-500">{prefix}</span>
+              <span className="text-gray-500 dark:text-gray-400">{prefix}</span>
             </div>
           )}
 
@@ -69,13 +69,13 @@ const Input = forwardRef(
 
           {suffix && (
             <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
-              <span className="text-gray-500">{suffix}</span>
+              <span className="text-gray-500 dark:text-gray-400">{suffix}</span>
             </div>
           )}
         </div>
 
         {helper && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helper}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
         )}
 
         {error && (

@@ -69,9 +69,9 @@ function MovimientosPage() {
   // Helpers
   const getTipoMovimientoColor = (tipo) => {
     if (tipo.startsWith('entrada')) {
-      return 'text-green-600 bg-green-100';
+      return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
     }
-    return 'text-red-600 bg-red-100';
+    return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
   };
 
   const getTipoMovimientoLabel = (tipo) => {
@@ -90,21 +90,21 @@ function MovimientosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona productos, proveedores y stock
         </p>
       </div>
@@ -117,10 +117,10 @@ function MovimientosPage() {
         {/* Header de sección */}
         <div className="mb-6">
           <div className="flex items-center space-x-3">
-            <ArrowLeftRight className="h-8 w-8 text-indigo-600" />
+            <ArrowLeftRight className="h-8 w-8 text-primary-600 dark:text-primary-400" />
             <div>
-              <h2 className="text-xl font-bold text-gray-900">Movimientos de Inventario</h2>
-              <p className="text-sm text-gray-600">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Movimientos de Inventario</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
                 {total} movimiento{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
               </p>
             </div>
@@ -128,16 +128,16 @@ function MovimientosPage() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="flex items-center space-x-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-900">Filtros</h3>
+            <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
             {/* Tipo de Movimiento */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tipo
               </label>
               <Select
@@ -163,7 +163,7 @@ function MovimientosPage() {
 
             {/* Categoría */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Categoría
               </label>
               <Select
@@ -178,7 +178,7 @@ function MovimientosPage() {
 
             {/* Producto */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Producto
               </label>
               <Select
@@ -196,7 +196,7 @@ function MovimientosPage() {
 
             {/* Proveedor */}
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Proveedor
               </label>
               <Select
@@ -214,27 +214,27 @@ function MovimientosPage() {
 
             {/* Fecha Desde */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Desde
               </label>
               <input
                 type="date"
                 value={filtros.fecha_desde}
                 onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             {/* Fecha Hasta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hasta
               </label>
               <input
                 type="date"
                 value={filtros.fecha_hasta}
                 onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
@@ -253,62 +253,62 @@ function MovimientosPage() {
         </div>
 
         {/* Tabla de Movimientos */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoMovimientos ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-3 text-gray-600">Cargando movimientos...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando movimientos...</span>
             </div>
           ) : movimientos.length === 0 ? (
             <div className="text-center py-12">
-              <RefreshCw className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <RefreshCw className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No hay movimientos
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 No se encontraron movimientos con los filtros aplicados
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Fecha
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Tipo
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Producto
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Cantidad
                     </th>
-                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Costo Unit.
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Referencia
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Acciones
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {movimientos.map((movimiento) => (
-                    <tr key={movimiento.id} className="hover:bg-gray-50">
+                    <tr key={movimiento.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Fecha */}
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {format(new Date(movimiento.creado_en), 'dd/MM/yyyy', { locale: es })}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {format(new Date(movimiento.creado_en), 'HH:mm', { locale: es })}
                         </div>
                       </td>
@@ -326,11 +326,11 @@ function MovimientosPage() {
 
                       {/* Producto */}
                       <td className="px-6 py-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {movimiento.producto_nombre}
                         </div>
                         {movimiento.producto_sku && (
-                          <div className="text-xs text-gray-500">
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
                             SKU: {movimiento.producto_sku}
                           </div>
                         )}
@@ -340,13 +340,13 @@ function MovimientosPage() {
                       <td className="px-6 py-4 text-center">
                         <div className="flex items-center justify-center space-x-1">
                           {movimiento.cantidad > 0 ? (
-                            <TrendingUp className="h-4 w-4 text-green-600" />
+                            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                           ) : (
-                            <TrendingDown className="h-4 w-4 text-red-600" />
+                            <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
                           )}
                           <span
                             className={`text-sm font-medium ${
-                              movimiento.cantidad > 0 ? 'text-green-600' : 'text-red-600'
+                              movimiento.cantidad > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             }`}
                           >
                             {movimiento.cantidad > 0 ? '+' : ''}
@@ -357,7 +357,7 @@ function MovimientosPage() {
 
                       {/* Stock Resultante */}
                       <td className="px-6 py-4 text-center">
-                        <span className="text-sm font-bold text-indigo-600">
+                        <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                           {movimiento.stock_resultante}
                         </span>
                       </td>
@@ -365,23 +365,23 @@ function MovimientosPage() {
                       {/* Costo Unitario */}
                       <td className="px-6 py-4 text-right">
                         {movimiento.costo_unitario ? (
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
                             ${movimiento.costo_unitario.toLocaleString('es-MX', {
                               minimumFractionDigits: 2,
                             })}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                         )}
                       </td>
 
                       {/* Referencia */}
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
                           {movimiento.referencia || '-'}
                         </div>
                         {movimiento.motivo && (
-                          <div className="text-xs text-gray-500 mt-1">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             {movimiento.motivo}
                           </div>
                         )}

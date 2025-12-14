@@ -57,7 +57,7 @@ export default function SitioPublicoPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mx-auto mb-4" />
+          <Loader2 className="w-10 h-10 animate-spin text-primary-600 mx-auto mb-4" />
           <p className="text-gray-500">Cargando sitio...</p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function SitioPublicoPage() {
                       href={`/sitio/${slug}${p.slug === 'inicio' ? '' : `/${p.slug}`}`}
                       className={`text-sm font-medium transition-colors ${
                         paginaActual?.id === p.id
-                          ? 'text-indigo-600'
+                          ? 'text-primary-600'
                           : 'text-gray-600 hover:text-gray-900'
                       }`}
                       style={paginaActual?.id === p.id ? { color: 'var(--color-primario)' } : {}}

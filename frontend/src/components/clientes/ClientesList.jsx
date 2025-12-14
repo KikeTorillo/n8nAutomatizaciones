@@ -19,15 +19,15 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
 
   if (!clientes || clientes.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
         <div className="max-w-sm mx-auto">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Phone className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             No hay clientes registrados
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
             Comienza agregando tu primer cliente o atiende un cliente walk-in
           </p>
           <Button onClick={() => navigate('/clientes/nuevo')}>
@@ -41,36 +41,36 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
   return (
     <div className="space-y-4">
       {/* Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Cliente
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Contacto
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Citas
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Última Cita
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {clientes.map((cliente) => (
                 <tr
                   key={cliente.id}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
                   onClick={() => navigate(`/clientes/${cliente.id}`)}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -79,21 +79,21 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                         <img
                           src={cliente.foto_url}
                           alt={cliente.nombre}
-                          className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200"
+                          className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
                         />
                       ) : (
-                        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                          <span className="text-blue-600 font-semibold">
+                        <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+                          <span className="text-primary-600 dark:text-primary-400 font-semibold">
                             {cliente.nombre?.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                           {cliente.nombre}
                         </div>
                         {cliente.email && (
-                          <div className="text-sm text-gray-500">
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
                             {cliente.email}
                           </div>
                         )}
@@ -104,14 +104,14 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-col gap-1">
                       {cliente.telefono && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Phone className="w-4 h-4 mr-2 text-gray-400" />
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Phone className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                           {cliente.telefono}
                         </div>
                       )}
                       {cliente.email && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Mail className="w-4 h-4 mr-2 text-gray-400" />
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <Mail className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                           {cliente.email}
                         </div>
                       )}
@@ -119,15 +119,15 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-gray-100">
                       {cliente.total_citas || 0} citas
                     </div>
                   </td>
 
                   <td className="px-6 py-4 whitespace-nowrap">
                     {cliente.ultima_cita ? (
-                      <div className="flex items-center text-sm text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400" />
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
                         {(() => {
                           // Extraer solo la parte de fecha (YYYY-MM-DD) ignorando la hora/timezone
                           const fechaSolo = String(cliente.ultima_cita).split('T')[0];
@@ -138,7 +138,7 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                         })()}
                       </div>
                     ) : (
-                      <span className="text-sm text-gray-400">Sin citas</span>
+                      <span className="text-sm text-gray-400 dark:text-gray-500">Sin citas</span>
                     )}
                   </td>
 
@@ -147,8 +147,8 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                       className={`
                         px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
                         ${cliente.activo
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-gray-100 text-gray-800'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                         }
                       `}
                     >
@@ -177,9 +177,9 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
 
       {/* Pagination */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200 px-6 py-4">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700">
+            <div className="text-sm text-gray-700 dark:text-gray-300">
               Mostrando{' '}
               <span className="font-medium">
                 {(pagination.page - 1) * pagination.limit + 1}
@@ -222,7 +222,7 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                     return (
                       <div key={page} className="flex items-center">
                         {showEllipsis && (
-                          <span className="px-2 text-gray-400">...</span>
+                          <span className="px-2 text-gray-400 dark:text-gray-500">...</span>
                         )}
                         <button
                           onClick={() => onPageChange(page)}
@@ -230,8 +230,8 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                             min-w-[2.5rem] h-10 px-3 rounded-md text-sm font-medium
                             transition-colors
                             ${page === pagination.page
-                              ? 'bg-blue-600 text-white'
-                              : 'text-gray-700 hover:bg-gray-100'
+                              ? 'bg-primary-600 dark:bg-primary-500 text-white'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                             }
                           `}
                         >

@@ -23,32 +23,32 @@ function Toast({ id, message, type = 'info', duration = 5000, onClose }) {
 
   const variants = {
     success: {
-      bg: 'bg-green-50',
-      border: 'border-green-200',
+      bg: 'bg-green-50 dark:bg-green-900/30',
+      border: 'border-green-200 dark:border-green-800',
       icon: CheckCircle,
-      iconColor: 'text-green-600',
-      textColor: 'text-green-800',
+      iconColor: 'text-green-600 dark:text-green-400',
+      textColor: 'text-green-800 dark:text-green-200',
     },
     error: {
-      bg: 'bg-red-50',
-      border: 'border-red-200',
+      bg: 'bg-red-50 dark:bg-red-900/30',
+      border: 'border-red-200 dark:border-red-800',
       icon: AlertCircle,
-      iconColor: 'text-red-600',
-      textColor: 'text-red-800',
+      iconColor: 'text-red-600 dark:text-red-400',
+      textColor: 'text-red-800 dark:text-red-200',
     },
     warning: {
-      bg: 'bg-yellow-50',
-      border: 'border-yellow-200',
+      bg: 'bg-yellow-50 dark:bg-yellow-900/30',
+      border: 'border-yellow-200 dark:border-yellow-800',
       icon: AlertTriangle,
-      iconColor: 'text-yellow-600',
-      textColor: 'text-yellow-800',
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
+      textColor: 'text-yellow-800 dark:text-yellow-200',
     },
     info: {
-      bg: 'bg-blue-50',
-      border: 'border-blue-200',
+      bg: 'bg-primary-50 dark:bg-primary-900/30',
+      border: 'border-primary-200 dark:border-primary-800',
       icon: Info,
-      iconColor: 'text-blue-600',
-      textColor: 'text-blue-800',
+      iconColor: 'text-primary-700 dark:text-primary-400',
+      textColor: 'text-primary-800 dark:text-primary-200',
     },
   };
 

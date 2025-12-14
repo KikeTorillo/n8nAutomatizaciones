@@ -130,9 +130,9 @@ function ServiciosPage() {
     busqueda !== '';
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Breadcrumb */}
           <div className="mb-4">
@@ -140,7 +140,7 @@ function ServiciosPage() {
               variant="ghost"
               size="sm"
               onClick={() => navigate('/home')}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
             >
               <ArrowLeft className="w-4 h-4 mr-1" />
               Volver al Inicio
@@ -150,8 +150,8 @@ function ServiciosPage() {
           {/* Header - Mobile First */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Servicios</h1>
-              <p className="text-sm text-gray-600 mt-1 hidden sm:block">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Servicios</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 hidden sm:block">
                 Gestiona los servicios de tu negocio
               </p>
             </div>
@@ -166,7 +166,7 @@ function ServiciosPage() {
           <div className="mt-6 space-y-4">
             <div className="flex gap-3">
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
                 <Input
                   type="text"
                   placeholder="Buscar por nombre o categoría..."
@@ -181,7 +181,7 @@ function ServiciosPage() {
               <Button
                 variant="outline"
                 onClick={() => setShowFilters(!showFilters)}
-                className={showFilters ? 'bg-primary-50 text-primary-700' : ''}
+                className={showFilters ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400' : ''}
               >
                 <Filter className="w-4 h-4 mr-2" />
                 Filtros
@@ -195,11 +195,11 @@ function ServiciosPage() {
 
             {/* Panel de Filtros */}
             {showFilters && (
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {/* Filtro: Estado */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Estado
                     </label>
                     <Select
@@ -217,7 +217,7 @@ function ServiciosPage() {
 
                   {/* Filtro: Categoría */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Categoría
                     </label>
                     <Input
@@ -233,7 +233,7 @@ function ServiciosPage() {
 
                   {/* Filtro: Precio Mínimo */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Precio Mínimo
                     </label>
                     <Input
@@ -250,7 +250,7 @@ function ServiciosPage() {
 
                   {/* Filtro: Precio Máximo */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Precio Máximo
                     </label>
                     <Input
@@ -295,16 +295,16 @@ function ServiciosPage() {
 
         return (
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 mt-6">
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-r-lg">
               <div className="flex items-start">
                 <div className="flex-shrink-0">
-                  <AlertTriangle className="h-5 w-5 text-yellow-400" />
+                  <AlertTriangle className="h-5 w-5 text-yellow-400 dark:text-yellow-500" />
                 </div>
                 <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-yellow-800">
+                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
                     Atención: {serviciosSinProfesional.length} servicio{serviciosSinProfesional.length !== 1 ? 's' : ''} sin profesionales asignados
                   </h3>
-                  <div className="mt-2 text-sm text-yellow-700">
+                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
                     <p>
                       Los siguientes servicios activos no tienen profesionales asignados.
                       Asigna al menos un profesional a cada servicio para poder crear citas:
@@ -314,7 +314,7 @@ function ServiciosPage() {
                         <li key={servicio.id}>
                           <a
                             href={`#servicio-${servicio.id}`}
-                            className="font-medium underline hover:text-yellow-900"
+                            className="font-medium underline hover:text-yellow-900 dark:hover:text-yellow-200"
                             onClick={(e) => {
                               e.preventDefault();
                               document.getElementById(`servicio-${servicio.id}`)?.scrollIntoView({
@@ -339,7 +339,7 @@ function ServiciosPage() {
                           handleGestionarProfesionales(primerServicio);
                         }
                       }}
-                      className="bg-white hover:bg-yellow-50 text-yellow-800 border-yellow-300"
+                      className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700"
                     >
                       Asignar profesionales al primer servicio
                     </Button>
@@ -399,14 +399,14 @@ function ServiciosPage() {
         <div className="space-y-6">
           {/* Icono de advertencia */}
           <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0">
-              <AlertTriangle className="w-6 h-6 text-amber-600" />
+            <div className="w-12 h-12 bg-amber-100 dark:bg-amber-900/40 rounded-full flex items-center justify-center flex-shrink-0">
+              <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
             </div>
             <div className="flex-1">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 ¿Desactivar servicio?
               </h3>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Esta acción no se puede deshacer fácilmente
               </p>
             </div>
@@ -414,22 +414,22 @@ function ServiciosPage() {
 
           {/* Información del servicio */}
           {servicioAEliminar && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="space-y-2">
                 <div>
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                     Servicio:{' '}
                   </span>
-                  <span className="text-sm text-gray-900">
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
                     {servicioAEliminar.nombre}
                   </span>
                 </div>
                 {servicioAEliminar.categoria && (
                   <div>
-                    <span className="text-sm font-medium text-gray-700">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Categoría:{' '}
                     </span>
-                    <span className="text-sm text-gray-900">
+                    <span className="text-sm text-gray-900 dark:text-gray-100">
                       {servicioAEliminar.categoria}
                     </span>
                   </div>
@@ -439,8 +439,8 @@ function ServiciosPage() {
           )}
 
           {/* Mensaje de advertencia */}
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-            <p className="text-sm text-amber-900">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <p className="text-sm text-amber-900 dark:text-amber-300">
               <strong>Importante:</strong> El servicio será desactivado
               (marcado como inactivo). Las citas existentes con este servicio se
               mantendrán, pero no se podrán crear nuevas citas.
@@ -448,15 +448,15 @@ function ServiciosPage() {
           </div>
 
           {/* Mensaje informativo */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-900">
+          <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+            <p className="text-sm text-primary-900 dark:text-primary-300">
               💡 <strong>Consejo:</strong> Puedes reactivar el servicio
               editándolo y marcándolo como activo nuevamente.
             </p>
           </div>
 
           {/* Botones de acción */}
-          <div className="flex justify-end gap-3 pt-4 border-t">
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               type="button"
               variant="outline"

@@ -7,10 +7,20 @@ import { queryClient } from './queryClient';
 import ToastContainer from '@/components/common/ToastContainer';
 import SetupGuard from '@/components/auth/SetupGuard';
 import useAuthStore from '@/store/authStore';
+import useThemeStore from '@/store/themeStore';
 import { authApi } from '@/services/api/endpoints';
 
 function App() {
   const { isAuthenticated, setUser } = useAuthStore();
+  const initSystemListener = useThemeStore((state) => state.initSystemListener);
+  const applyTheme = useThemeStore((state) => state.applyTheme);
+
+  // Inicializar tema al montar la aplicación
+  useEffect(() => {
+    applyTheme();
+    const cleanup = initSystemListener();
+    return cleanup;
+  }, [applyTheme, initSystemListener]);
 
   // Cargar datos completos del usuario (incluyendo tipo_industria) al iniciar la app
   useEffect(() => {
@@ -33,10 +43,10 @@ function App() {
     <HelmetProvider>
       <QueryClientProvider client={queryClient}>
         <SetupGuard>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
             <Outlet />
             <ToastContainer />
-            <Toaster position="top-center" richColors closeButton />
+            <Toaster position="top-center" richColors closeButton theme="system" />
           </div>
         </SetupGuard>
       </QueryClientProvider>

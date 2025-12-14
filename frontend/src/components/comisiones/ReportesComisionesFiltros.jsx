@@ -33,10 +33,10 @@ function ReportesComisionesFiltros({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
+    <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
       <div className="flex items-center mb-4">
-        <Filter className="w-5 h-5 text-gray-600 mr-2" />
-        <h3 className="text-lg font-semibold text-gray-900">Filtros de Búsqueda</h3>
+        <Filter className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-2" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros de Búsqueda</h3>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -108,7 +108,7 @@ function ReportesComisionesFiltros({
       </div>
 
       {/* Botones */}
-      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200">
+      <div className="flex justify-end space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
         <Button
           type="button"
           variant="secondary"

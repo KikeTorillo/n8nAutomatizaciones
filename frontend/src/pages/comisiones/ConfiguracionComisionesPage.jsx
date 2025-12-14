@@ -71,7 +71,7 @@ function ConfiguracionComisionesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -87,10 +87,10 @@ function ConfiguracionComisionesPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Configuración de Comisiones
               </h1>
-              <p className="text-gray-600 mt-2 text-sm sm:text-base">
+              <p className="text-gray-600 dark:text-gray-400 mt-2 text-sm sm:text-base">
                 Gestiona las reglas de comisión para profesionales
               </p>
             </div>
@@ -120,7 +120,7 @@ function ConfiguracionComisionesPage() {
 
         {/* Tabs Servicios / Productos */}
         <div className="mb-6">
-          <div className="border-b border-gray-200">
+          <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="-mb-px flex" aria-label="Tabs">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
@@ -132,19 +132,19 @@ function ConfiguracionComisionesPage() {
                     className={`
                       flex-1 sm:flex-none group inline-flex items-center justify-center sm:justify-start py-3 sm:py-4 px-2 sm:px-4 border-b-2 font-medium text-xs sm:text-sm
                       ${isActive
-                        ? 'border-blue-500 text-blue-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                       }
                     `}
                   >
                     <Icon
                       className={`
                         mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5
-                        ${isActive ? 'text-blue-500' : 'text-gray-400 group-hover:text-gray-500'}
+                        ${isActive ? 'text-primary-500 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500 group-hover:text-gray-500 dark:group-hover:text-gray-400'}
                       `}
                     />
                     <span>{tab.label}</span>
-                    <span className="hidden sm:inline ml-2 text-xs text-gray-400">
+                    <span className="hidden sm:inline ml-2 text-xs text-gray-400 dark:text-gray-500">
                       ({tab.description})
                     </span>
                   </button>
@@ -156,9 +156,9 @@ function ConfiguracionComisionesPage() {
 
         {/* Filtros */}
         {showFilters && (
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6 border border-gray-200">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-6 border border-gray-200 dark:border-gray-700">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Filtros</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
               <Button
                 variant="ghost"
                 size="sm"
@@ -171,7 +171,7 @@ function ConfiguracionComisionesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Profesional */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Profesional
                 </label>
                 <Select
@@ -189,7 +189,7 @@ function ConfiguracionComisionesPage() {
 
               {/* Estado */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Estado
                 </label>
                 <Select
@@ -203,7 +203,7 @@ function ConfiguracionComisionesPage() {
               </div>
             </div>
 
-            <div className="flex justify-end mt-4 pt-4 border-t border-gray-200">
+            <div className="flex justify-end mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Button
                 variant="secondary"
                 size="sm"
@@ -224,14 +224,14 @@ function ConfiguracionComisionesPage() {
         />
 
         {/* Información adicional - varía según el tab */}
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2">
+        <div className="mt-6 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
             {activeTab === 'servicio'
               ? 'Comisiones por Servicios (Citas)'
               : 'Comisiones por Productos (Ventas POS)'
             }
           </h4>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1 list-disc list-inside">
             {activeTab === 'servicio' ? (
               <>
                 <li>

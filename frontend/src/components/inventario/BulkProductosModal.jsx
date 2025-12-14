@@ -180,12 +180,12 @@ function BulkProductosModal({ isOpen, onClose }) {
     >
       <div className="space-y-6">
         {/* Instrucciones */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <h4 className="text-sm font-medium text-blue-900 mb-2 flex items-center">
+        <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+          <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2 flex items-center">
             <AlertCircle className="h-4 w-4 mr-2" />
             Instrucciones
           </h4>
-          <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
+          <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1 list-disc list-inside">
             <li>Descarga el template CSV y complétalo con tus productos</li>
             <li>Máximo 50 productos por carga</li>
             <li>Campos obligatorios: <strong>nombre</strong>, <strong>precio_venta</strong></li>
@@ -207,25 +207,25 @@ function BulkProductosModal({ isOpen, onClose }) {
 
         {/* Área de Texto para CSV */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Contenido CSV
           </label>
           <textarea
             value={productosTexto}
             onChange={(e) => setProductosTexto(e.target.value)}
             rows={12}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono text-xs"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             placeholder="Pega aquí el contenido de tu CSV..."
           />
-          <p className="text-sm text-gray-500 mt-2">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
             Formato: nombre,descripcion,sku,categoria_id,proveedor_id,precio_compra,precio_venta,stock_actual,stock_minimo,stock_maximo
           </p>
         </div>
 
         {/* Errores de Validación */}
         {erroresValidacion.length > 0 && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <h4 className="text-sm font-medium text-red-900 mb-3 flex items-center">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <h4 className="text-sm font-medium text-red-900 dark:text-red-300 mb-3 flex items-center">
               <XCircle className="h-4 w-4 mr-2" />
               Errores de Validación ({erroresValidacion.length})
             </h4>
@@ -233,7 +233,7 @@ function BulkProductosModal({ isOpen, onClose }) {
               {erroresValidacion.map((error, index) => (
                 <div
                   key={index}
-                  className="text-sm text-red-700 flex items-start"
+                  className="text-sm text-red-700 dark:text-red-300 flex items-start"
                 >
                   <span className="font-medium mr-2">
                     Línea {error.linea}:
@@ -246,7 +246,7 @@ function BulkProductosModal({ isOpen, onClose }) {
         )}
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="secondary"

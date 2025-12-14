@@ -113,10 +113,10 @@ function ConfigurarChatbotModal({ isOpen, onClose, onSuccess }) {
         {!selectedPlatform && (
           <>
             <div className="text-center mb-6">
-              <div className="mx-auto w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mb-4">
-                <Bot className="w-8 h-8 text-primary-600" />
+              <div className="mx-auto w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center mb-4">
+                <Bot className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               </div>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 Selecciona la plataforma donde quieres conectar tu chatbot inteligente
               </p>
             </div>
@@ -145,7 +145,7 @@ function ConfigurarChatbotModal({ isOpen, onClose, onSuccess }) {
             <button
               type="button"
               onClick={handleBack}
-              className="text-sm text-primary-600 hover:text-primary-700 mb-4 inline-flex items-center gap-1"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mb-4 inline-flex items-center gap-1"
             >
               ← Cambiar plataforma
             </button>
@@ -166,7 +166,7 @@ function ConfigurarChatbotModal({ isOpen, onClose, onSuccess }) {
             <button
               type="button"
               onClick={handleBack}
-              className="text-sm text-primary-600 hover:text-primary-700 mb-4 inline-flex items-center gap-1"
+              className="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 mb-4 inline-flex items-center gap-1"
             >
               ← Cambiar plataforma
             </button>

@@ -73,28 +73,28 @@ function ForgotPassword() {
         subtitle="Revisa tu bandeja de entrada"
       >
         <div className="text-center">
-          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
-            <CheckCircle className="h-10 w-10 text-green-600" />
+          <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 dark:bg-green-900/30 mb-4">
+            <CheckCircle className="h-10 w-10 text-green-600 dark:text-green-400" />
           </div>
 
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6 text-left">
-            <p className="text-sm text-gray-700 mb-2">
+          <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4 mb-6 text-left">
+            <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
               Hemos enviado un enlace de recuperación a:
             </p>
-            <p className="font-medium text-gray-900 mb-3">
+            <p className="font-medium text-gray-900 dark:text-gray-100 mb-3">
               {emailDestino}
             </p>
-            <div className="flex items-start text-sm text-gray-600">
+            <div className="flex items-start text-sm text-gray-600 dark:text-gray-400">
               <Mail className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" />
               <span>El enlace expira en 1 hora.</span>
             </div>
           </div>
 
-          <div className="text-left bg-gray-50 rounded-lg p-4 mb-6">
-            <p className="text-sm font-medium text-gray-700 mb-2">
+          <div className="text-left bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Próximos pasos:
             </p>
-            <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+            <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
               <li>Revisa tu bandeja de entrada</li>
               <li>Haz click en el enlace del email</li>
               <li>Crea tu nueva contraseña</li>
@@ -109,7 +109,7 @@ function ForgotPassword() {
           </Link>
 
           <div className="text-center">
-            <p className="text-sm text-gray-600 mb-2">
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
               ¿No recibiste el email?
             </p>
             <button
@@ -117,8 +117,8 @@ function ForgotPassword() {
               disabled={tiempoRestante > 0 || recuperarMutation.isPending}
               className={`text-sm font-medium inline-flex items-center ${
                 tiempoRestante > 0 || recuperarMutation.isPending
-                  ? 'text-gray-400 cursor-not-allowed'
-                  : 'text-primary-600 hover:text-primary-700'
+                  ? 'text-gray-400 dark:text-gray-500 cursor-not-allowed'
+                  : 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300'
               }`}
             >
               <RefreshCw
@@ -142,7 +142,7 @@ function ForgotPassword() {
       footer={
         <Link
           to="/auth/login"
-          className="text-sm text-gray-600 hover:text-gray-900 font-medium inline-flex items-center"
+          className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 font-medium inline-flex items-center"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al login

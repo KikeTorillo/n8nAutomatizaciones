@@ -88,7 +88,7 @@ function ModuleGuard({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
       </div>
     );
   }
@@ -121,19 +121,19 @@ function ModuleGuard({
 
   return (
     <div className="min-h-[400px] flex items-center justify-center p-8">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+      <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-xl shadow-lg dark:shadow-gray-900/50 p-8 text-center">
         {/* Icono */}
-        <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-          <IconoModulo className="w-8 h-8 text-gray-400" />
+        <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-6">
+          <IconoModulo className="w-8 h-8 text-gray-400 dark:text-gray-500" />
         </div>
 
         {/* Título */}
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
           Módulo no disponible
         </h2>
 
         {/* Descripción */}
-        <p className="text-gray-600 mb-6">
+        <p className="text-gray-600 dark:text-gray-400 mb-6">
           El módulo <span className="font-medium">{nombreModulo}</span> no está
           activo en tu plan actual.
           {modulosRequeridos.length > 1 && requiereTodos && (
@@ -163,7 +163,7 @@ function ModuleGuard({
         </div>
 
         {/* Info adicional */}
-        <p className="mt-6 text-xs text-gray-500">
+        <p className="mt-6 text-xs text-gray-500 dark:text-gray-400">
           Contacta a soporte si necesitas ayuda para activar este módulo.
         </p>
       </div>

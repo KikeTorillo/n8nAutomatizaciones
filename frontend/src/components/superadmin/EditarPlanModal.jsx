@@ -148,7 +148,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información General */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
             Información General
           </h3>
 
@@ -171,7 +171,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
 
         {/* Precios */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
             Precios
           </h3>
 
@@ -198,7 +198,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
 
         {/* Límites */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
             Límites de Recursos
           </h3>
 
@@ -252,7 +252,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
 
         {/* Estado */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900 border-b pb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 border-b border-gray-200 dark:border-gray-700 pb-2">
             Estado
           </h3>
 
@@ -271,7 +271,7 @@ export default function EditarPlanModal({ isOpen, onClose, plan }) {
         </div>
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="secondary"

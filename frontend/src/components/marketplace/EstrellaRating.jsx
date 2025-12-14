@@ -91,7 +91,7 @@ function EstrellaRating({
           className={cn(
             sizes[size],
             'transition-all duration-150',
-            'text-gray-300',
+            'text-gray-300 dark:text-gray-600',
             !readonly && 'cursor-pointer hover:scale-110'
           )}
         />
@@ -123,14 +123,14 @@ function EstrellaRating({
 
       {/* Valor numérico */}
       {showValue && rating > 0 && (
-        <span className={cn('ml-2 font-medium text-gray-700', textSizes[size])}>
+        <span className={cn('ml-2 font-medium text-gray-700 dark:text-gray-300', textSizes[size])}>
           {rating.toFixed(1)}
         </span>
       )}
 
       {/* Total de reseñas */}
       {totalReviews !== undefined && totalReviews > 0 && (
-        <span className={cn('ml-1 text-gray-500', textSizes[size])}>
+        <span className={cn('ml-1 text-gray-500 dark:text-gray-400', textSizes[size])}>
           ({totalReviews})
         </span>
       )}

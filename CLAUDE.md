@@ -23,23 +23,31 @@ Tienes acceso a **Cipher** via MCP para memoria persistente. **ÚSALO SIEMPRE**:
 
 | Capa | Tecnologías |
 |------|-------------|
-| **Frontend** | React 18, Vite 7, Tailwind CSS 3, Zustand 5, TanStack Query 5, Zod 4 |
+| **Frontend** | React 18, Vite 7, Tailwind CSS 3, Zustand 5, TanStack Query 5 |
 | **Backend** | Node.js, Express 4, JWT, Joi, Winston |
 | **Database** | PostgreSQL 17, RLS multi-tenant, pg_cron |
-| **IA** | OpenRouter (Qwen3-32B), n8n workflows, MCP Server |
+| **IA** | OpenRouter (DeepSeek v3.2), n8n workflows, MCP Server |
 | **Storage** | MinIO (S3-compatible) |
 | **Infra** | Docker Compose |
 
 ---
 
-## Métricas del Proyecto
+## Diseño Visual
 
-| Área | Cantidad |
-|------|----------|
-| **Backend** | 56 controllers, 52 models, ~117 endpoints, 12 módulos |
-| **Frontend** | 115 componentes, 88 páginas, 32 hooks, 2 stores |
-| **SQL** | 82 tablas, 123 políticas RLS, 120 funciones, 80 triggers |
-| **MCP Server** | 8 herramientas para chatbots IA |
+| Aspecto | Valor |
+|---------|-------|
+| **Color primario** | `#753572` (Nexo Purple) |
+| **Filosofía** | Un solo color de marca (modelo Nubank) |
+| **Dark mode** | ✅ Completo con `themeStore` + `ThemeToggle` |
+| **Tema default** | `dark` |
+
+### Patrones de Color
+```
+Fondos:   bg-gray-50 dark:bg-gray-900 | bg-white dark:bg-gray-800
+Textos:   text-gray-900 dark:text-gray-100 | text-gray-600 dark:text-gray-400
+Bordes:   border-gray-200 dark:border-gray-700
+Marca:    primary-400 a primary-800 (variaciones por contexto)
+```
 
 ---
 
@@ -47,17 +55,17 @@ Tienes acceso a **Cipher** via MCP para memoria persistente. **ÚSALO SIEMPRE**:
 
 | Módulo | Descripción |
 |--------|-------------|
-| **core** | Auth, usuarios, organizaciones, suscripciones, pagos |
-| **agendamiento** | Citas, profesionales, servicios, horarios, chatbots |
-| **inventario** | Productos, categorías, proveedores, alertas, órdenes compra |
-| **eventos-digitales** | Invitaciones, invitados, mesas, QR check-in, seating chart |
-| **contabilidad** | Cuentas contables, asientos, reportes SAT México |
-| **website** | Páginas, bloques, configuración pública |
-| **pos** | Ventas, reportes |
-| **comisiones** | Cálculo, configuración, estadísticas |
+| **core** | Auth, usuarios, organizaciones, suscripciones |
+| **agendamiento** | Citas, profesionales, servicios, horarios |
+| **inventario** | Productos, categorías, proveedores, órdenes compra |
+| **pos** | Ventas, corte caja, reportes |
+| **comisiones** | Cálculo y pago a profesionales |
+| **contabilidad** | Cuentas contables, asientos, reportes SAT |
 | **marketplace** | Perfiles públicos, reseñas, analytics |
+| **chatbots** | Telegram, WhatsApp con IA |
+| **eventos-digitales** | Invitaciones, mesas, QR check-in |
+| **website** | Constructor de páginas con bloques |
 | **storage** | Archivos MinIO, presigned URLs |
-| **recordatorios** | Recordatorios automáticos de citas |
 
 ---
 
@@ -65,7 +73,6 @@ Tienes acceso a **Cipher** via MCP para memoria persistente. **ÚSALO SIEMPRE**:
 
 ```bash
 npm run dev              # Stack completo
-npm run logs             # Logs tiempo real
 docker restart front     # Aplicar cambios frontend
 docker restart back      # Aplicar cambios backend
 ```
@@ -74,52 +81,25 @@ docker restart back      # Aplicar cambios backend
 
 ---
 
-## Middlewares (orden de ejecución)
+## Arquitectura
 
+### Middlewares (orden)
 ```
 auth.authenticateToken → tenant.setTenantContext → controller
 ```
 
-| Middleware | Función |
-|------------|---------|
-| `auth.js` | JWT, roles, optionalAuth, refreshToken |
-| `tenant.js` | RLS context multi-tenant, bypass super_admin |
-| `subscription.js` | Plan activo, límites recursos |
-| `modules.js` | Módulos activos por organización |
-| `validation.js` | Joi validation, sanitización XSS |
-| `rateLimiting.js` | Rate limit por IP/usuario/org/plan |
-
----
-
-## Roles
-
+### Roles
 | Rol | Permisos |
 |-----|----------|
-| `super_admin` | Plataforma completa, bypass middlewares |
+| `super_admin` | Plataforma completa, bypass RLS |
 | `admin/propietario` | CRUD completo en su organización |
 | `empleado` | Solo módulos en `modulos_acceso` |
 | `bot` | READ + CRUD citas (MCP) |
 
----
-
-## MCP Server (Chatbots IA)
-
+### MCP Server (Chatbots)
 ```
-Usuario (Telegram/WhatsApp) → n8n → AI Agent (Qwen3-32B) → MCP Server → Backend API
+Usuario (Telegram/WhatsApp) → n8n → AI Agent → MCP Server → Backend API
 ```
-
-**Tools**: listarServicios, verificarDisponibilidad, buscarCliente, buscarCitasCliente, crearCita, reagendarCita, modificarServiciosCita, confirmarCita
-
----
-
-## Tablas Particionadas
-
-| Tabla | Particionamiento |
-|-------|------------------|
-| `citas` | RANGE (fecha_cita) |
-| `eventos_sistema` | RANGE (creado_en) |
-| `asientos_contables` | RANGE (fecha) |
-| `movimientos_inventario` | RANGE (creado_en) |
 
 ---
 
@@ -129,18 +109,12 @@ Usuario (Telegram/WhatsApp) → n8n → AI Agent (Qwen3-32B) → MCP Server → 
 - **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
 - **withBypass**: Solo para JOINs multi-tabla o super_admin
 - **asyncHandler**: Obligatorio en todas las routes
-- **Variable RLS**: `app.current_tenant_id`
 
 ### Frontend
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 - **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
-- **Limpiar cache**: `queryClient.clear()` en Login/Logout
-
-### Mobile-First
-```jsx
-<div className="flex flex-col sm:flex-row gap-4">
-<Button className="w-full sm:w-auto">
-```
+- **Dark mode**: Usar siempre variantes `dark:` en clases Tailwind
+- **Colores de marca**: Usar `primary-*` (no blue, indigo, purple, etc.)
 
 ---
 
@@ -148,42 +122,29 @@ Usuario (Telegram/WhatsApp) → n8n → AI Agent (Qwen3-32B) → MCP Server → 
 
 | Error | Solución |
 |-------|----------|
-| "Organización no encontrada" | Usar `RLSContextManager.withBypass()` |
+| "Organización no encontrada" | `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
-| RLS policy violation | Verificar `app.current_tenant_id` |
+| Avatar/icono azul | Cambiar fallback a `#753572` |
 
 ---
 
-## Estructura de Archivos
+## Estructura
 
 ```
 backend/app/
 ├── modules/           # 12 módulos de negocio
-│   └── [modulo]/
-│       ├── controllers/
-│       ├── models/
-│       ├── routes/
-│       └── schemas/
 ├── middleware/        # 9 middlewares
-├── utils/             # RLSContextManager, helpers
-└── routes/api/v1/     # Router principal
+└── utils/             # RLSContextManager, helpers
 
 frontend/src/
-├── components/        # 115 componentes reutilizables
-├── pages/             # 88 páginas (22 secciones)
-├── hooks/             # 32 hooks custom
-├── store/             # Zustand (auth, onboarding)
+├── components/        # ~120 componentes
+├── pages/             # ~90 páginas
+├── hooks/             # ~35 hooks
+├── store/             # authStore, themeStore, onboardingStore
 └── services/api/      # Endpoints centralizados
-
-sql/
-├── [modulo]/          # 26 carpetas de módulos
-│   ├── 01-tablas.sql
-│   ├── 02-rls-policies.sql
-│   └── 03-indices.sql
-└── setup/             # Inicialización
 ```
 
 ---
 
-**Actualizado**: 9 Diciembre 2025
+**Actualizado**: 13 Diciembre 2025

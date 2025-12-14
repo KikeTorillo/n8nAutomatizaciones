@@ -131,30 +131,30 @@ function RegistroPage() {
         subtitle="Hemos enviado un enlace de activación"
       >
         <div className="text-center">
-          <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Mail className="h-8 w-8 text-primary-600" />
+          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Mail className="h-8 w-8 text-primary-600 dark:text-primary-400" />
           </div>
 
-          <p className="text-lg font-semibold text-primary-600 mb-6">
+          <p className="text-lg font-semibold text-primary-600 dark:text-primary-400 mb-6">
             {emailEnviado}
           </p>
 
-          <div className="bg-gray-50 rounded-lg p-4 mb-6 text-left">
-            <p className="text-sm font-medium text-gray-700 mb-2">Próximos pasos:</p>
-            <ol className="text-sm text-gray-600 space-y-1 list-decimal list-inside">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 mb-6 text-left">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Próximos pasos:</p>
+            <ol className="text-sm text-gray-600 dark:text-gray-400 space-y-1 list-decimal list-inside">
               <li>Abre el email que te enviamos</li>
               <li>Haz clic en "Activar mi cuenta"</li>
               <li>Crea tu contraseña y ¡listo!</li>
             </ol>
           </div>
 
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             El enlace expira en 24 horas
           </p>
 
           <Link
             to="/auth/login"
-            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+            className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 text-sm font-medium"
           >
             ¿Ya tienes cuenta? Inicia sesión
           </Link>
@@ -170,9 +170,9 @@ function RegistroPage() {
       subtitle="Comienza en menos de 2 minutos"
       maxWidth="max-w-lg"
       footer={
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           ¿Ya tienes cuenta?{' '}
-          <Link to="/auth/login" className="text-primary-600 hover:text-primary-700 font-medium">
+          <Link to="/auth/login" className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium">
             Inicia sesión
           </Link>
         </p>
@@ -220,19 +220,19 @@ function RegistroPage() {
         />
 
         {/* Soy Profesional */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
               {...register('soy_profesional')}
-              className="w-5 h-5 mt-0.5 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              className="w-5 h-5 mt-0.5 rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 dark:bg-gray-600"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-primary-600" />
-                <span className="font-medium text-gray-900">Yo atiendo clientes</span>
+                <UserCheck className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                <span className="font-medium text-gray-900 dark:text-gray-100">Yo atiendo clientes</span>
               </div>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Activa esto si tú también realizarás servicios o ventas.
               </p>
             </div>
@@ -241,7 +241,7 @@ function RegistroPage() {
 
         {/* Ubicación */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Ubicación <span className="text-red-500">*</span>
           </label>
           <SelectorUbicacion
@@ -256,16 +256,16 @@ function RegistroPage() {
 
         {/* Plan */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Plan
           </label>
           {cargandoPlanes ? (
             <div className="flex items-center justify-center py-4">
               <Loader2 className="h-5 w-5 animate-spin text-primary-500" />
-              <span className="ml-2 text-sm text-gray-500">Cargando planes...</span>
+              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Cargando planes...</span>
             </div>
           ) : planes.length === 0 ? (
-            <div className="text-center py-4 text-gray-500 text-sm">
+            <div className="text-center py-4 text-gray-500 dark:text-gray-400 text-sm">
               No hay planes disponibles
             </div>
           ) : (
@@ -282,8 +282,8 @@ function RegistroPage() {
                     key={plan.codigo_plan}
                     className={`relative flex flex-col items-center p-4 border-2 rounded-lg cursor-pointer transition-all ${
                       planSeleccionado === plan.codigo_plan
-                        ? 'border-primary-500 bg-primary-50'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                        : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
                     }`}
                   >
                     <input
@@ -293,12 +293,12 @@ function RegistroPage() {
                       className="sr-only"
                     />
                     <IconoPlan className={`h-6 w-6 mb-2 ${
-                      planSeleccionado === plan.codigo_plan ? 'text-primary-600' : 'text-gray-400'
+                      planSeleccionado === plan.codigo_plan ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400 dark:text-gray-500'
                     }`} />
-                    <span className="block font-semibold text-gray-900">
+                    <span className="block font-semibold text-gray-900 dark:text-gray-100">
                       {plan.nombre || plan.nombre_plan}
                     </span>
-                    <span className="text-sm text-gray-500">{precioTexto}</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">{precioTexto}</span>
                     {planSeleccionado === plan.codigo_plan && (
                       <Check className="absolute top-2 right-2 h-5 w-5 text-primary-500" />
                     )}
@@ -323,11 +323,11 @@ function RegistroPage() {
         </Button>
 
         {/* Términos */}
-        <p className="text-xs text-center text-gray-500">
+        <p className="text-xs text-center text-gray-500 dark:text-gray-400">
           Al crear tu cuenta, aceptas nuestros{' '}
-          <a href="/terminos" className="text-primary-600 hover:underline">Términos de Servicio</a>
+          <a href="/terminos" className="text-primary-600 dark:text-primary-400 hover:underline">Términos de Servicio</a>
           {' '}y{' '}
-          <a href="/privacidad" className="text-primary-600 hover:underline">Política de Privacidad</a>
+          <a href="/privacidad" className="text-primary-600 dark:text-primary-400 hover:underline">Política de Privacidad</a>
         </p>
       </form>
     </AuthLayout>

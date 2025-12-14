@@ -33,27 +33,27 @@ function ConfirmDialog({
   const variants = {
     danger: {
       icon: XCircle,
-      iconColor: 'text-red-600',
-      iconBg: 'bg-red-100',
-      confirmButton: 'bg-red-600 hover:bg-red-700'
+      iconColor: 'text-red-600 dark:text-red-400',
+      iconBg: 'bg-red-100 dark:bg-red-900/30',
+      confirmButton: 'bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-500'
     },
     warning: {
       icon: AlertTriangle,
-      iconColor: 'text-yellow-600',
-      iconBg: 'bg-yellow-100',
-      confirmButton: 'bg-yellow-600 hover:bg-yellow-700'
+      iconColor: 'text-yellow-600 dark:text-yellow-400',
+      iconBg: 'bg-yellow-100 dark:bg-yellow-900/30',
+      confirmButton: 'bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-600 dark:hover:bg-yellow-500'
     },
     success: {
       icon: CheckCircle,
-      iconColor: 'text-green-600',
-      iconBg: 'bg-green-100',
-      confirmButton: 'bg-green-600 hover:bg-green-700'
+      iconColor: 'text-green-600 dark:text-green-400',
+      iconBg: 'bg-green-100 dark:bg-green-900/30',
+      confirmButton: 'bg-green-600 hover:bg-green-700 dark:bg-green-600 dark:hover:bg-green-500'
     },
     info: {
       icon: Info,
-      iconColor: 'text-blue-600',
-      iconBg: 'bg-blue-100',
-      confirmButton: 'bg-blue-600 hover:bg-blue-700'
+      iconColor: 'text-primary-600 dark:text-primary-400',
+      iconBg: 'bg-primary-100 dark:bg-primary-900/30',
+      confirmButton: 'bg-primary-600 hover:bg-primary-700 dark:bg-primary-600 dark:hover:bg-primary-500'
     }
   };
 
@@ -69,12 +69,12 @@ function ConfirmDialog({
         </div>
 
         {/* Título */}
-        <h3 className="text-lg font-medium text-gray-900 mb-2">
+        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
           {title}
         </h3>
 
         {/* Mensaje */}
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
           {message}
         </p>
 

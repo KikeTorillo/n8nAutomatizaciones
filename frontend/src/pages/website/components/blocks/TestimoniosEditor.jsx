@@ -71,12 +71,14 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Lo que dicen nuestros clientes"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Estilo de presentación"
           value={form.estilo}
           onChange={(e) => setForm({ ...form, estilo: e.target.value })}
           options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -85,12 +87,13 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.subtitulo}
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Opiniones reales de clientes satisfechos"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       {/* Lista de testimonios */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Testimonios ({form.testimonios.length})
           </label>
           <Button
@@ -108,16 +111,16 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
           {form.testimonios.map((testimonio, index) => (
             <div
               key={index}
-              className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+              className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
             >
               <div className="flex items-start justify-between mb-2">
-                <span className="text-xs text-gray-500">Testimonio {index + 1}</span>
+                <span className="text-xs text-gray-500 dark:text-gray-400">Testimonio {index + 1}</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEliminar(index)}
-                  className="text-gray-400 hover:text-red-500"
+                  className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -129,6 +132,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                   onChange={(e) => handleChange(index, 'texto', e.target.value)}
                   placeholder="El texto del testimonio..."
                   rows={3}
+                  className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                 />
 
                 <div className="grid grid-cols-2 gap-2">
@@ -137,18 +141,20 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                     onChange={(e) => handleChange(index, 'autor', e.target.value)}
                     placeholder="Nombre del cliente"
                     inputSize="sm"
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Input
                     value={testimonio.cargo}
                     onChange={(e) => handleChange(index, 'cargo', e.target.value)}
                     placeholder="Cargo o ubicación"
                     inputSize="sm"
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>
 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center gap-1">
-                    <span className="text-xs text-gray-500 mr-2">Estrellas:</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400 mr-2">Estrellas:</span>
                     {[1, 2, 3, 4, 5].map((n) => (
                       <button
                         key={n}
@@ -172,7 +178,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                     onChange={(e) => handleChange(index, 'foto', e.target.value)}
                     placeholder="URL foto (opcional)"
                     inputSize="sm"
-                    className="flex-1"
+                    className="flex-1 dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>
               </div>
@@ -182,12 +188,12 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         <h4 className="font-bold text-center mb-4" style={{ color: tema?.colores?.texto }}>
           {form.titulo}
         </h4>
         {form.testimonios[0] && (
-          <div className="bg-gray-50 rounded-lg p-4 text-center">
+          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 text-center">
             <div className="flex justify-center mb-2">
               {[1, 2, 3, 4, 5].map((n) => (
                 <Star
@@ -200,7 +206,7 @@ function TestimoniosEditor({ contenido, onGuardar, tema, isSaving }) {
                 />
               ))}
             </div>
-            <p className="text-sm italic text-gray-600 mb-2">
+            <p className="text-sm italic text-gray-600 dark:text-gray-300 mb-2">
               "{form.testimonios[0].texto || 'Excelente servicio...'}"
             </p>
             <p className="text-xs font-medium" style={{ color: tema?.colores?.primario }}>

@@ -33,7 +33,7 @@ export default function AgendamientoNavTabs() {
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav className="flex border-b border-gray-200 bg-gray-50">
+    <nav className="flex border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         const active = isActive(tab.path);
@@ -46,8 +46,8 @@ export default function AgendamientoNavTabs() {
               flex-1 flex items-center justify-center gap-2 px-3 py-3 text-sm font-medium transition-colors
               border-b-2 -mb-[1px]
               ${active
-                ? 'text-indigo-600 border-indigo-600 bg-white'
-                : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                ? 'text-primary-700 dark:text-primary-400 border-primary-700 dark:border-primary-400 bg-white dark:bg-gray-900'
+                : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
               }
             `}
           >

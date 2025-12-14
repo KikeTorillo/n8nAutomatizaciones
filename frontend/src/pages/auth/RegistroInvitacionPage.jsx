@@ -115,10 +115,10 @@ export default function RegistroInvitacionPage() {
   // Estado: Validando
   if (validando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100">
-        <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-          <Loader2 className="h-12 w-12 text-green-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Validando invitación...</p>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
+          <Loader2 className="h-12 w-12 text-green-600 dark:text-green-400 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-gray-400">Validando invitación...</p>
         </div>
       </div>
     );
@@ -127,16 +127,16 @@ export default function RegistroInvitacionPage() {
   // Estado: Error
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <AlertCircle className="h-8 w-8 text-red-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-red-50 to-rose-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Invitación no válida</h2>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">Invitación no válida</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{error}</p>
           <Link
             to="/auth/login"
-            className="inline-block px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+            className="inline-block px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-lg hover:bg-gray-800 dark:hover:bg-gray-600 transition-colors"
           >
             Ir al inicio de sesión
           </Link>
@@ -148,16 +148,16 @@ export default function RegistroInvitacionPage() {
   // Estado: Registro exitoso
   if (registroExitoso) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="h-8 w-8 text-green-600" />
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">¡Cuenta creada!</h2>
-          <p className="text-gray-600 mb-2">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">¡Cuenta creada!</h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-2">
             Tu cuenta ha sido creada exitosamente.
           </p>
-          <p className="text-gray-500 text-sm mb-6">
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
             Serás redirigido al inicio de sesión en unos segundos...
           </p>
           <Link
@@ -173,8 +173,8 @@ export default function RegistroInvitacionPage() {
 
   // Estado: Formulario de registro
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
         <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6 text-white">
           <div className="flex items-center gap-3 mb-2">
@@ -191,7 +191,7 @@ export default function RegistroInvitacionPage() {
         <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-6">
           {/* Email (readonly) */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
             </label>
             <div className="relative">
@@ -199,20 +199,20 @@ export default function RegistroInvitacionPage() {
                 type="email"
                 value={invitacion.email}
                 disabled
-                className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-lg text-gray-600 cursor-not-allowed"
+                className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
                 <Check className="h-5 w-5 text-green-500" />
               </div>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Este será tu email de acceso
             </p>
           </div>
 
           {/* Nombre */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -222,8 +222,8 @@ export default function RegistroInvitacionPage() {
                 {...register('nombre')}
                 defaultValue={invitacion.nombre_sugerido}
                 placeholder="Tu nombre"
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                  errors.nombre ? 'border-red-500' : 'border-gray-300'
+                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                  errors.nombre ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
             </div>
@@ -234,20 +234,20 @@ export default function RegistroInvitacionPage() {
 
           {/* Apellidos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Apellidos <span className="text-gray-400">(opcional)</span>
             </label>
             <input
               type="text"
               {...register('apellidos')}
               placeholder="Tus apellidos"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </div>
 
           {/* Contraseña */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Contraseña <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -256,14 +256,14 @@ export default function RegistroInvitacionPage() {
                 type={showPassword ? 'text' : 'password'}
                 {...register('password')}
                 placeholder="Crea una contraseña segura"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                  errors.password ? 'border-red-500' : 'border-gray-300'
+                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                  errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -276,7 +276,7 @@ export default function RegistroInvitacionPage() {
 
           {/* Confirmar contraseña */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Confirmar contraseña <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -285,14 +285,14 @@ export default function RegistroInvitacionPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 {...register('confirmarPassword')}
                 placeholder="Repite la contraseña"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                  errors.confirmarPassword ? 'border-red-500' : 'border-gray-300'
+                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                  errors.confirmarPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
@@ -322,7 +322,7 @@ export default function RegistroInvitacionPage() {
           </button>
 
           {/* Info de expiración */}
-          <p className="text-center text-sm text-gray-500">
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
             Esta invitación expira en {invitacion.minutos_restantes > 60
               ? `${Math.floor(invitacion.minutos_restantes / 60)} horas`
               : `${invitacion.minutos_restantes} minutos`

@@ -53,6 +53,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.titulo}
         onChange={(e) => setForm({ ...form, titulo: e.target.value })}
         placeholder="Bienvenido a nuestro negocio"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <Textarea
@@ -61,6 +62,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Una descripción breve de lo que hacemos"
         rows={2}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -69,12 +71,14 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.cta_texto}
           onChange={(e) => setForm({ ...form, cta_texto: e.target.value })}
           placeholder="Contactar"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL del botón"
           value={form.cta_url}
           onChange={(e) => setForm({ ...form, cta_url: e.target.value })}
           placeholder="/contacto"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -89,6 +93,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.imagen_fondo}
         onChange={(e) => setForm({ ...form, imagen_fondo: e.target.value })}
         placeholder="https://ejemplo.com/imagen.jpg"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -97,6 +102,7 @@ function HeroEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.alineacion}
           onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
           options={alineacionOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <div className="flex items-center pt-6">
           <Checkbox

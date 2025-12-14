@@ -56,9 +56,9 @@ function KardexModal({ isOpen, onClose, producto }) {
   // Helpers
   const getTipoMovimientoColor = (tipo) => {
     if (tipo.startsWith('entrada')) {
-      return 'text-green-600 bg-green-100';
+      return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
     }
-    return 'text-red-600 bg-red-100';
+    return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
   };
 
   const getTipoMovimientoLabel = (tipo) => {
@@ -87,27 +87,27 @@ function KardexModal({ isOpen, onClose, producto }) {
     >
       <div className="space-y-6">
         {/* Información del Producto */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
           <div className="grid grid-cols-4 gap-4">
             <div>
-              <span className="text-sm text-gray-600">Producto:</span>
-              <p className="text-sm font-medium text-gray-900">{productoInfo?.nombre}</p>
+              <span className="text-sm text-gray-600 dark:text-gray-400">Producto:</span>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{productoInfo?.nombre}</p>
             </div>
             {productoInfo?.sku && (
               <div>
-                <span className="text-sm text-gray-600">SKU:</span>
-                <p className="text-sm font-medium text-gray-900">{productoInfo.sku}</p>
+                <span className="text-sm text-gray-600 dark:text-gray-400">SKU:</span>
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{productoInfo.sku}</p>
               </div>
             )}
             <div>
-              <span className="text-sm text-gray-600">Stock Actual:</span>
-              <p className="text-lg font-bold text-indigo-600">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Stock Actual:</span>
+              <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
                 {productoInfo?.stock_actual || 0} {productoInfo?.unidad_medida || 'unid'}
               </p>
             </div>
             <div>
-              <span className="text-sm text-gray-600">Rango:</span>
-              <p className="text-sm text-gray-900">
+              <span className="text-sm text-gray-600 dark:text-gray-400">Rango:</span>
+              <p className="text-sm text-gray-900 dark:text-gray-100">
                 Min: {productoInfo?.stock_minimo || 0} | Max: {productoInfo?.stock_maximo || 0}
               </p>
             </div>
@@ -115,19 +115,19 @@ function KardexModal({ isOpen, onClose, producto }) {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white border border-gray-200 rounded-lg p-4">
+        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-3">
-            <Filter className="h-4 w-4 text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-900">Filtros</h3>
+            <Filter className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</h3>
           </div>
 
           <div className="grid grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Tipo de Movimiento</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Tipo de Movimiento</label>
               <select
                 value={filtros.tipo_movimiento}
                 onChange={(e) => setFiltros({ ...filtros, tipo_movimiento: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               >
                 <option value="">Todos</option>
                 <optgroup label="Entradas">
@@ -147,22 +147,22 @@ function KardexModal({ isOpen, onClose, producto }) {
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Desde</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Desde</label>
               <input
                 type="date"
                 value={filtros.fecha_desde}
                 onChange={(e) => setFiltros({ ...filtros, fecha_desde: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             <div>
-              <label className="block text-sm text-gray-700 mb-1">Hasta</label>
+              <label className="block text-sm text-gray-700 dark:text-gray-300 mb-1">Hasta</label>
               <input
                 type="date"
                 value={filtros.fecha_hasta}
                 onChange={(e) => setFiltros({ ...filtros, fecha_hasta: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
@@ -179,59 +179,59 @@ function KardexModal({ isOpen, onClose, producto }) {
         </div>
 
         {/* Tabla de Movimientos */}
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
+        <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-3 text-gray-600">Cargando kardex...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando kardex...</span>
             </div>
           ) : kardex.length === 0 ? (
             <div className="text-center py-12">
-              <FileBarChart className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <FileBarChart className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No hay movimientos
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 No se encontraron movimientos con los filtros aplicados
               </p>
             </div>
           ) : (
             <div className="overflow-x-auto max-h-96 overflow-y-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50 sticky top-0">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                <thead className="bg-gray-50 dark:bg-gray-700 sticky top-0">
                   <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Fecha
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Tipo
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Cantidad
                     </th>
-                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Stock
                     </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Costo Unit.
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Referencia
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                       Motivo
                     </th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                   {kardex.map((movimiento, index) => (
-                    <tr key={index} className="hover:bg-gray-50">
+                    <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       {/* Fecha */}
                       <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
                           {format(new Date(movimiento.creado_en), 'dd/MM/yyyy', { locale: es })}
                         </div>
-                        <div className="text-xs text-gray-500">
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           {format(new Date(movimiento.creado_en), 'HH:mm', { locale: es })}
                         </div>
                       </td>
@@ -251,13 +251,13 @@ function KardexModal({ isOpen, onClose, producto }) {
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center space-x-1">
                           {movimiento.cantidad > 0 ? (
-                            <TrendingUp className="h-4 w-4 text-green-600" />
+                            <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                           ) : (
-                            <TrendingDown className="h-4 w-4 text-red-600" />
+                            <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
                           )}
                           <span
                             className={`text-sm font-medium ${
-                              movimiento.cantidad > 0 ? 'text-green-600' : 'text-red-600'
+                              movimiento.cantidad > 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
                             }`}
                           >
                             {movimiento.cantidad > 0 ? '+' : ''}
@@ -268,7 +268,7 @@ function KardexModal({ isOpen, onClose, producto }) {
 
                       {/* Stock Resultante */}
                       <td className="px-4 py-3 text-center">
-                        <span className="text-sm font-bold text-indigo-600">
+                        <span className="text-sm font-bold text-primary-600 dark:text-primary-400">
                           {movimiento.stock_resultante}
                         </span>
                       </td>
@@ -276,26 +276,26 @@ function KardexModal({ isOpen, onClose, producto }) {
                       {/* Costo Unitario */}
                       <td className="px-4 py-3 text-right">
                         {movimiento.costo_unitario ? (
-                          <span className="text-sm text-gray-900">
+                          <span className="text-sm text-gray-900 dark:text-gray-100">
                             ${movimiento.costo_unitario.toLocaleString('es-MX', {
                               minimumFractionDigits: 2,
                             })}
                           </span>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                         )}
                       </td>
 
                       {/* Referencia */}
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
                           {movimiento.referencia || '-'}
                         </span>
                       </td>
 
                       {/* Motivo */}
                       <td className="px-4 py-3">
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-gray-600 dark:text-gray-400">
                           {movimiento.motivo || '-'}
                         </span>
                       </td>
@@ -308,7 +308,7 @@ function KardexModal({ isOpen, onClose, producto }) {
         </div>
 
         {/* Footer con botones */}
-        <div className="flex justify-between pt-4 border-t">
+        <div className="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             variant="secondary"
             onClick={handleExportarCSV}

@@ -65,12 +65,12 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
 
   return (
     <div className={className}>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 sticky top-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 sticky top-4">
         {/* Header con contador */}
         <div className="flex items-center justify-between mb-6">
-          <h3 className="text-lg font-semibold text-gray-900">Filtros</h3>
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Filtros</h3>
           {filtrosActivos > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300">
               {filtrosActivos}
             </span>
           )}
@@ -80,7 +80,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
         <div className="space-y-6">
           {/* Ciudad */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Ciudad
             </label>
             <Select
@@ -92,7 +92,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
 
           {/* Categoría */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Categoría
             </label>
             <Select
@@ -104,7 +104,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
 
           {/* Rating mínimo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Rating mínimo
             </label>
             <Select
@@ -117,7 +117,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
             {filtros.rating_min && (
               <div className="mt-2 flex items-center">
                 <EstrellaRating rating={parseInt(filtros.rating_min)} size="sm" />
-                <span className="ml-2 text-xs text-gray-500">o superior</span>
+                <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">o superior</span>
               </div>
             )}
           </div>
@@ -125,7 +125,7 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
 
         {/* Botón limpiar filtros */}
         {filtrosActivos > 0 && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="ghost"
               size="sm"
@@ -139,8 +139,8 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
         )}
 
         {/* Info adicional */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-xs text-gray-500 leading-relaxed">
+        <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
             Los resultados se actualizan automáticamente al cambiar los filtros.
           </p>
         </div>

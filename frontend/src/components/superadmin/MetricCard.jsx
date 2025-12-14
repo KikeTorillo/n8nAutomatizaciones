@@ -5,11 +5,11 @@
 
 export default function MetricCard({ title, value, subtitle, icon, color = 'blue', trend }) {
     const colors = {
-        blue: 'bg-blue-50 text-blue-700 border-blue-200',
-        green: 'bg-green-50 text-green-700 border-green-200',
-        purple: 'bg-purple-50 text-purple-700 border-purple-200',
-        yellow: 'bg-yellow-50 text-yellow-700 border-yellow-200',
-        red: 'bg-red-50 text-red-700 border-red-200'
+        blue: 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border-primary-200 dark:border-primary-800',
+        green: 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800',
+        purple: 'bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800',
+        yellow: 'bg-yellow-50 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
+        red: 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-800'
     };
 
     return (
@@ -28,7 +28,7 @@ export default function MetricCard({ title, value, subtitle, icon, color = 'blue
                         </p>
                     )}
                     {trend !== undefined && trend !== null && (
-                        <div className={`text-xs mt-2 font-medium ${trend >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        <div className={`text-xs mt-2 font-medium ${trend >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
                             <span className="inline-flex items-center">
                                 {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}% vs mes anterior
                             </span>

@@ -189,11 +189,11 @@ function ComisionesDashboard() {
   return (
     <div className="space-y-6">
       {/* Filtros */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* Selector de período */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Período
             </label>
             <Select
@@ -209,7 +209,7 @@ function ComisionesDashboard() {
 
           {/* Selector de profesional */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Profesional
             </label>
             <Select
@@ -227,7 +227,7 @@ function ComisionesDashboard() {
 
           {/* Selector de origen */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Origen
             </label>
             <Select
@@ -286,10 +286,10 @@ function ComisionesDashboard() {
       {/* Gráficas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfica de barras - Comisiones por día */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex items-center mb-4">
-            <Calendar className="w-5 h-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Comisiones por Día
             </h3>
           </div>
@@ -305,10 +305,10 @@ function ComisionesDashboard() {
         </div>
 
         {/* Gráfica de barras - Pendientes vs Pagadas */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
           <div className="flex items-center mb-4">
-            <TrendingUp className="w-5 h-5 text-gray-600 mr-2" />
-            <h3 className="text-lg font-semibold text-gray-900">
+            <TrendingUp className="w-5 h-5 text-gray-600 dark:text-gray-400 mr-2" />
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               Estado de Pagos
             </h3>
           </div>

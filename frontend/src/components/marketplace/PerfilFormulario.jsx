@@ -224,38 +224,38 @@ function PerfilFormulario({ perfil, onSuccess }) {
         </div>
 
         {/* Imágenes del Perfil */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Perfil</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Imágenes del Perfil</h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
             {/* Logo */}
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo</p>
               {perfil.logo_url ? (
                 <img
                   src={perfil.logo_url}
                   alt="Logo"
-                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200 dark:border-gray-700"
                 />
               ) : (
-                <div className="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                  <Image className="w-8 h-8 text-gray-400" />
+                <div className="w-24 h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <Image className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
             </div>
 
             {/* Portada */}
             <div>
-              <p className="text-sm font-medium text-gray-700 mb-2">Portada</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Portada</p>
               {perfil.portada_url ? (
                 <img
                   src={perfil.portada_url}
                   alt="Portada"
-                  className="w-full h-32 rounded-lg object-cover border border-gray-200"
+                  className="w-full h-32 rounded-lg object-cover border border-gray-200 dark:border-gray-700"
                 />
               ) : (
-                <div className="w-full h-32 rounded-lg bg-gray-200 flex items-center justify-center">
-                  <Image className="w-8 h-8 text-gray-400" />
+                <div className="w-full h-32 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <Image className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
               )}
             </div>
@@ -263,7 +263,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
 
           {/* Galería */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Galería ({perfil.galeria_urls?.length || 0} imágenes)
             </p>
             {perfil.galeria_urls && perfil.galeria_urls.length > 0 ? (
@@ -273,27 +273,27 @@ function PerfilFormulario({ perfil, onSuccess }) {
                     key={index}
                     src={url}
                     alt={`Galería ${index + 1}`}
-                    className="aspect-square rounded-lg object-cover border border-gray-200"
+                    className="aspect-square rounded-lg object-cover border border-gray-200 dark:border-gray-700"
                   />
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm">Sin imágenes en la galería</p>
+              <p className="text-gray-500 dark:text-gray-400 text-sm">Sin imágenes en la galería</p>
             )}
           </div>
         </div>
 
         {/* Información Básica */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información Básica</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">Descripción Corta</p>
-              <p className="text-gray-900 mt-1">{perfil.descripcion_corta || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción Corta</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.descripcion_corta || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Descripción Larga</p>
-              <p className="text-gray-900 mt-1 whitespace-pre-wrap">
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción Larga</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1 whitespace-pre-wrap">
                 {perfil.descripcion_larga || 'No especificado'}
               </p>
             </div>
@@ -301,81 +301,81 @@ function PerfilFormulario({ perfil, onSuccess }) {
         </div>
 
         {/* SEO */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">SEO</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">SEO</h3>
           <div className="space-y-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">Título SEO</p>
-              <p className="text-gray-900 mt-1">{perfil.meta_titulo || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Título SEO</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.meta_titulo || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Descripción SEO</p>
-              <p className="text-gray-900 mt-1">{perfil.meta_descripcion || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Descripción SEO</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.meta_descripcion || 'No especificado'}</p>
             </div>
           </div>
         </div>
 
         {/* Ubicación */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Ubicación</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">País</p>
-              <p className="text-gray-900 mt-1">{perfil.pais || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">País</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.pais || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Estado/Provincia</p>
-              <p className="text-gray-900 mt-1">{perfil.estado || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Estado/Provincia</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.estado || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Ciudad</p>
-              <p className="text-gray-900 mt-1">{perfil.ciudad || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Ciudad</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.ciudad || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Código Postal</p>
-              <p className="text-gray-900 mt-1">{perfil.codigo_postal || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Código Postal</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.codigo_postal || 'No especificado'}</p>
             </div>
             <div className="md:col-span-2">
-              <p className="text-sm font-medium text-gray-700">Dirección Completa</p>
-              <p className="text-gray-900 mt-1">{perfil.direccion_completa || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Dirección Completa</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.direccion_completa || 'No especificado'}</p>
             </div>
           </div>
         </div>
 
         {/* Contacto Público */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Contacto Público</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Contacto Público</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">Teléfono Público</p>
-              <p className="text-gray-900 mt-1">{perfil.telefono_publico || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Teléfono Público</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.telefono_publico || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Email Público</p>
-              <p className="text-gray-900 mt-1">{perfil.email_publico || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Email Público</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.email_publico || 'No especificado'}</p>
             </div>
             <div className="md:col-span-2">
-              <p className="text-sm font-medium text-gray-700">Sitio Web</p>
-              <p className="text-gray-900 mt-1">{perfil.sitio_web || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Sitio Web</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.sitio_web || 'No especificado'}</p>
             </div>
           </div>
         </div>
 
         {/* Redes Sociales */}
-        <div className="bg-gray-50 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Redes Sociales</h3>
+        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Redes Sociales</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <p className="text-sm font-medium text-gray-700">Instagram</p>
-              <p className="text-gray-900 mt-1">{perfil.instagram || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Instagram</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.instagram || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Facebook</p>
-              <p className="text-gray-900 mt-1">{perfil.facebook || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Facebook</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.facebook || 'No especificado'}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">TikTok</p>
-              <p className="text-gray-900 mt-1">{perfil.tiktok || 'No especificado'}</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">TikTok</p>
+              <p className="text-gray-900 dark:text-gray-100 mt-1">{perfil.tiktok || 'No especificado'}</p>
             </div>
           </div>
         </div>
@@ -387,16 +387,16 @@ function PerfilFormulario({ perfil, onSuccess }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       {/* Imágenes del Perfil */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Imágenes del Perfil</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Imágenes del Perfil</h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           {/* Logo */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Logo</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Logo</p>
             <div className="flex items-center gap-4">
               <div className="relative">
-                <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-white overflow-hidden">
+                <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-700 overflow-hidden">
                   {logoPreview ? (
                     <img
                       src={logoPreview}
@@ -405,10 +405,10 @@ function PerfilFormulario({ perfil, onSuccess }) {
                       onError={() => setLogoPreview(null)}
                     />
                   ) : (
-                    <Image className="w-8 h-8 text-gray-400" />
+                    <Image className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                   )}
                 </div>
-                <label className="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+                <label className="absolute -bottom-1 -right-1 bg-primary-600 dark:bg-primary-500 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors shadow-lg">
                   <Camera className="h-4 w-4" />
                   <input
                     type="file"
@@ -419,12 +419,12 @@ function PerfilFormulario({ perfil, onSuccess }) {
                   />
                 </label>
                 {uploadMutation.isPending && logoFile && (
-                  <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
-                    <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                  <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-full flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 text-primary-600 dark:text-primary-400 animate-spin" />
                   </div>
                 )}
               </div>
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 dark:text-gray-400">
                 <p>Recomendado: 200x200px</p>
                 <p>PNG, JPG. Max 5MB</p>
               </div>
@@ -433,9 +433,9 @@ function PerfilFormulario({ perfil, onSuccess }) {
 
           {/* Portada */}
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Imagen de Portada</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Imagen de Portada</p>
             <div className="relative">
-              <div className="w-full h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-white overflow-hidden">
+              <div className="w-full h-32 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-700 overflow-hidden">
                 {portadaPreview ? (
                   <img
                     src={portadaPreview}
@@ -445,12 +445,12 @@ function PerfilFormulario({ perfil, onSuccess }) {
                   />
                 ) : (
                   <div className="text-center">
-                    <ImagePlus className="w-8 h-8 text-gray-400 mx-auto mb-1" />
-                    <p className="text-xs text-gray-500">1200x400px recomendado</p>
+                    <ImagePlus className="w-8 h-8 text-gray-400 dark:text-gray-500 mx-auto mb-1" />
+                    <p className="text-xs text-gray-500 dark:text-gray-400">1200x400px recomendado</p>
                   </div>
                 )}
               </div>
-              <label className="absolute bottom-2 right-2 bg-indigo-600 text-white rounded-full p-2 cursor-pointer hover:bg-indigo-700 transition-colors shadow-lg">
+              <label className="absolute bottom-2 right-2 bg-primary-600 dark:bg-primary-500 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 dark:hover:bg-primary-600 transition-colors shadow-lg">
                 <Camera className="h-4 w-4" />
                 <input
                   type="file"
@@ -461,8 +461,8 @@ function PerfilFormulario({ perfil, onSuccess }) {
                 />
               </label>
               {uploadMutation.isPending && portadaFile && (
-                <div className="absolute inset-0 bg-white bg-opacity-75 rounded-lg flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 text-indigo-600 animate-spin" />
+                <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-lg flex items-center justify-center">
+                  <Loader2 className="h-6 w-6 text-primary-600 dark:text-primary-400 animate-spin" />
                 </div>
               )}
             </div>
@@ -471,7 +471,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
 
         {/* Galería */}
         <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">Galería de Imágenes</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Galería de Imágenes</p>
           <GaleriaEditor
             imagenes={formData.galeria_urls}
             onChange={handleGaleriaChange}
@@ -481,8 +481,8 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* Información Básica */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información Básica</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Información Básica</h3>
         <div className="space-y-4">
           <Input
             label="Descripción Corta"
@@ -495,7 +495,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descripción Larga
             </label>
             <textarea
@@ -503,7 +503,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
               value={formData.descripcion_larga}
               onChange={handleChange}
               rows={5}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Describe tu negocio en detalle. Esta información aparecerá en tu perfil público."
             />
           </div>
@@ -511,9 +511,9 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* SEO (Opcional) */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">SEO (Opcional)</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">SEO (Opcional)</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Optimiza cómo aparece tu negocio en los resultados de búsqueda de Google
         </p>
         <div className="space-y-4">
@@ -528,7 +528,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Descripción SEO
             </label>
             <textarea
@@ -537,10 +537,10 @@ function PerfilFormulario({ perfil, onSuccess }) {
               onChange={handleChange}
               rows={3}
               maxLength={160}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
               placeholder="Descripción que aparecerá en Google (máx. 160 caracteres)"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               {formData.meta_descripcion.length}/160 caracteres
             </p>
           </div>
@@ -548,12 +548,12 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* Ubicación */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Ubicación</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Selector de Estado */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Estado *
             </label>
             <div className="relative">
@@ -563,7 +563,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
                   setEstadoId(e.target.value ? Number(e.target.value) : null);
                   setCiudadId(null); // Reset ciudad al cambiar estado
                 }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 disabled={loadingEstados}
               >
                 <option value="">Selecciona un estado</option>
@@ -581,14 +581,14 @@ function PerfilFormulario({ perfil, onSuccess }) {
 
           {/* Selector de Ciudad */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Ciudad *
             </label>
             <div className="relative">
               <select
                 value={ciudadId || ''}
                 onChange={(e) => setCiudadId(e.target.value ? Number(e.target.value) : null)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white disabled:bg-gray-100 disabled:text-gray-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 appearance-none bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:text-gray-500 dark:disabled:text-gray-500"
                 disabled={!estadoId || loadingCiudades}
               >
                 <option value="">
@@ -627,9 +627,9 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* Contacto Público */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">Contacto Público</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Contacto Público</h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Esta información será visible en tu perfil público
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -665,8 +665,8 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* Redes Sociales */}
-      <div className="bg-gray-50 rounded-lg p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Redes Sociales</h3>
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Redes Sociales</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <Input
             label="Instagram"
@@ -696,7 +696,7 @@ function PerfilFormulario({ perfil, onSuccess }) {
       </div>
 
       {/* Botones de acción */}
-      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200">
+      <div className="flex items-center justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
         <Button
           type="button"
           variant="outline"

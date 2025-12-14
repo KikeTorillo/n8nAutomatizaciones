@@ -68,7 +68,7 @@ function GaleriaEditor({ imagenes = [], onChange, maxImagenes = 10 }) {
         {imagenes.map((url, index) => (
           <div
             key={index}
-            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 group"
+            className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group"
           >
             <img
               src={url}
@@ -97,16 +97,16 @@ function GaleriaEditor({ imagenes = [], onChange, maxImagenes = 10 }) {
 
         {/* Placeholder de carga */}
         {uploadingIndex !== null && (
-          <div className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50">
-            <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+          <div className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-800">
+            <Loader2 className="h-8 w-8 text-primary-600 dark:text-primary-400 animate-spin" />
           </div>
         )}
 
         {/* Botón para agregar más */}
         {imagenes.length < maxImagenes && uploadingIndex === null && (
-          <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
-            <ImagePlus className="h-8 w-8 text-gray-400 mb-1" />
-            <span className="text-xs text-gray-500">Agregar</span>
+          <label className="aspect-square rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex flex-col items-center justify-center bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+            <ImagePlus className="h-8 w-8 text-gray-400 dark:text-gray-500 mb-1" />
+            <span className="text-xs text-gray-500 dark:text-gray-400">Agregar</span>
             <input
               type="file"
               accept="image/*"
@@ -120,7 +120,7 @@ function GaleriaEditor({ imagenes = [], onChange, maxImagenes = 10 }) {
       </div>
 
       {/* Info */}
-      <div className="flex items-center justify-between text-xs text-gray-500">
+      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
         <span>
           {imagenes.length} de {maxImagenes} imágenes
         </span>

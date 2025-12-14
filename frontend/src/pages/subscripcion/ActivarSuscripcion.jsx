@@ -123,14 +123,14 @@ function ActivarSuscripcion() {
         <h1 className="text-2xl font-bold text-gray-900 mb-6">Activar Suscripción</h1>
         {/* Info del Trial */}
         {estadoTrial?.trial_activo && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-4 mb-6">
             <div className="flex items-start gap-3">
-              <Clock className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+              <Clock className="w-5 h-5 text-primary-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-sm font-semibold text-blue-900">
+                <h3 className="text-sm font-semibold text-primary-900">
                   Trial Activo
                 </h3>
-                <p className="text-sm text-blue-700 mt-1">
+                <p className="text-sm text-primary-700 mt-1">
                   Te quedan {estadoTrial.dias_restantes} {estadoTrial.dias_restantes === 1 ? 'día' : 'días'} de prueba.
                   Activa tu suscripción ahora para evitar interrupciones en el servicio.
                 </p>
@@ -156,18 +156,18 @@ function ActivarSuscripcion() {
           </div>
 
           {/* Descripción del Proceso */}
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+          <div className="bg-primary-50 border border-primary-200 rounded-lg p-6 mb-8">
             <div className="flex items-start gap-3">
-              <ExternalLink className="w-6 h-6 text-blue-600 flex-shrink-0 mt-0.5" />
+              <ExternalLink className="w-6 h-6 text-primary-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                <h3 className="text-lg font-semibold text-primary-900 mb-2">
                   Pago Seguro con Mercado Pago
                 </h3>
-                <p className="text-sm text-blue-700 mb-3">
+                <p className="text-sm text-primary-700 mb-3">
                   Serás redirigido a Mercado Pago para completar tu suscripción de forma segura.
                   Una vez completado el pago, volverás automáticamente a tu panel.
                 </p>
-                <ul className="text-sm text-blue-700 space-y-1">
+                <ul className="text-sm text-primary-700 space-y-1">
                   <li>✓ Proceso 100% seguro y encriptado</li>
                   <li>✓ Puedes pagar con tarjeta de crédito o débito</li>
                   <li>✓ También puedes usar otros métodos de pago disponibles</li>

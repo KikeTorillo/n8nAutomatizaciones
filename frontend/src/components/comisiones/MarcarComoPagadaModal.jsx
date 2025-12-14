@@ -93,27 +93,27 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Info de la comisión */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
           <div className="grid grid-cols-2 gap-3 text-sm">
             <div>
-              <p className="text-gray-500">Profesional:</p>
-              <p className="font-medium text-gray-900">
+              <p className="text-gray-500 dark:text-gray-400">Profesional:</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">
                 {comision.profesional_nombre} {comision.profesional_apellidos}
               </p>
             </div>
             <div>
-              <p className="text-gray-500">Cita:</p>
-              <p className="font-medium text-gray-900 font-mono">{comision.codigo_cita}</p>
+              <p className="text-gray-500 dark:text-gray-400">Cita:</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100 font-mono">{comision.codigo_cita}</p>
             </div>
             <div>
-              <p className="text-gray-500">Monto Comisión:</p>
-              <p className="font-semibold text-green-600 text-lg">
+              <p className="text-gray-500 dark:text-gray-400">Monto Comisión:</p>
+              <p className="font-semibold text-green-600 dark:text-green-400 text-lg">
                 {formatCurrency(parseFloat(comision.monto_comision))}
               </p>
             </div>
             <div>
-              <p className="text-gray-500">Tipo:</p>
-              <p className="font-medium text-gray-900">
+              <p className="text-gray-500 dark:text-gray-400">Tipo:</p>
+              <p className="font-medium text-gray-900 dark:text-gray-100">
                 {comision.tipo_comision === 'porcentaje'
                   ? `${parseFloat(comision.valor_comision)}%`
                   : 'Monto Fijo'}
@@ -124,7 +124,7 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
 
         {/* Fecha de Pago */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Fecha de Pago <span className="text-red-500">*</span>
           </label>
           <Controller
@@ -140,7 +140,7 @@ function MarcarComoPagadaModal({ isOpen, onClose, comision }) {
             )}
           />
           {errors.fecha_pago && (
-            <p className="mt-1 text-sm text-red-600">{errors.fecha_pago.message}</p>
+            <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.fecha_pago.message}</p>
           )}
         </div>
 

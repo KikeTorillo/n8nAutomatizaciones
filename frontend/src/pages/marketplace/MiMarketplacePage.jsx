@@ -41,31 +41,31 @@ function MiMarketplacePage() {
   // Si no tiene perfil, mostrar mensaje para crear uno
   if (!perfil) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900 mb-3"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
           </Button>
-          <h1 className="text-2xl font-bold text-gray-900">Mi Marketplace</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Gestiona tu perfil público en el directorio
           </p>
         </div>
 
         <div className="max-w-4xl mx-auto p-8">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
-            <Store className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
+            <Store className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
               Aún no tienes un perfil de marketplace
             </h2>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Crea tu perfil público para aparecer en el directorio y captar nuevos clientes
             </p>
             <Button size="lg" onClick={() => setMostrarModalCrear(true)}>
@@ -86,10 +86,10 @@ function MiMarketplacePage() {
   // Error al cargar
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 p-8">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-8">
         <div className="max-w-4xl mx-auto">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
-            <p className="text-red-800">Error al cargar el perfil. Intenta nuevamente.</p>
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
+            <p className="text-red-800 dark:text-red-300">Error al cargar el perfil. Intenta nuevamente.</p>
           </div>
         </div>
       </div>
@@ -97,9 +97,9 @@ function MiMarketplacePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -107,13 +107,13 @@ function MiMarketplacePage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate('/home')}
-                className="text-gray-600 hover:text-gray-900 mb-3"
+                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
                 Volver al Inicio
               </Button>
-              <h1 className="text-3xl font-bold text-gray-900">Mi Marketplace</h1>
-              <p className="text-sm text-gray-600 mt-1">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona tu perfil público, reseñas y estadísticas
               </p>
             </div>
@@ -121,11 +121,11 @@ function MiMarketplacePage() {
             {/* Badge de estado */}
             <div className="flex items-center gap-3">
               {perfil.activo ? (
-                <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300 rounded-full text-sm font-medium">
                   ✓ Perfil Activo
                 </span>
               ) : (
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm font-medium">
+                <span className="px-3 py-1 bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 rounded-full text-sm font-medium">
                   ⏳ Pendiente de Activación
                 </span>
               )}
@@ -145,7 +145,7 @@ function MiMarketplacePage() {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="bg-white border-b border-gray-200">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
             {tabs.map((tab) => {
@@ -159,8 +159,8 @@ function MiMarketplacePage() {
                     transition-colors whitespace-nowrap
                     ${
                       tabActivo === tab.id
-                        ? 'border-primary-600 text-primary-600'
-                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                        ? 'border-primary-600 text-primary-600 dark:border-primary-500 dark:text-primary-400'
+                        : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                     }
                   `}
                 >
@@ -177,10 +177,10 @@ function MiMarketplacePage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Tab: Perfil */}
         {tabActivo === 'perfil' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Información del Perfil</h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Información del Perfil</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Actualiza la información pública de tu negocio
               </p>
             </div>
@@ -190,18 +190,18 @@ function MiMarketplacePage() {
 
         {/* Tab: Reseñas */}
         {tabActivo === 'resenas' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Reseñas</h2>
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reseñas</h2>
               <div className="flex items-center gap-6 mt-2">
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {perfil.total_resenas || 0}
                   </span>{' '}
                   reseñas totales
                 </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-semibold text-gray-900">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <span className="font-semibold text-gray-900 dark:text-gray-100">
                     {perfil.rating_promedio ? perfil.rating_promedio.toFixed(1) : '0.0'}
                   </span>
                   /5 rating promedio
@@ -214,10 +214,10 @@ function MiMarketplacePage() {
 
         {/* Tab: Analytics */}
         {tabActivo === 'analytics' && (
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">Analytics</h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Analytics</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Métricas de visibilidad y conversión de tu perfil público
               </p>
             </div>

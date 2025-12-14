@@ -65,13 +65,13 @@ function BloqueoFilters({
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 space-y-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 space-y-4">
       {/* Fila principal: Búsqueda y Tipo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Búsqueda */}
         <div className="md:col-span-2">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
             <Input
               type="text"
               placeholder="Buscar por título o descripción..."
@@ -107,12 +107,12 @@ function BloqueoFilters({
       <div className="flex items-center justify-between">
         <button
           onClick={() => setMostrarAvanzados(!mostrarAvanzados)}
-          className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
         >
           <Filter className="h-4 w-4" />
           <span>Filtros avanzados</span>
           {filtrosActivos > 0 && (
-            <span className="px-2 py-0.5 bg-primary-100 text-primary-700 text-xs font-medium rounded-full">
+            <span className="px-2 py-0.5 bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-medium rounded-full">
               {filtrosActivos}
             </span>
           )}
@@ -127,7 +127,7 @@ function BloqueoFilters({
         {filtrosActivos > 0 && (
           <button
             onClick={onLimpiar}
-            className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700 transition-colors"
+            className="flex items-center gap-2 text-sm text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 transition-colors"
           >
             <X className="h-4 w-4" />
             <span>Limpiar filtros</span>
@@ -137,11 +137,11 @@ function BloqueoFilters({
 
       {/* Filtros avanzados expandibles */}
       {mostrarAvanzados && (
-        <div className="pt-4 border-t border-gray-200 space-y-4">
+        <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {/* Profesional */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Profesional
               </label>
               <Select
@@ -159,7 +159,7 @@ function BloqueoFilters({
 
             {/* Fecha desde */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Desde
               </label>
               <Input
@@ -176,7 +176,7 @@ function BloqueoFilters({
 
             {/* Fecha hasta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hasta
               </label>
               <Input
@@ -204,9 +204,9 @@ function BloqueoFilters({
                   solo_activos: e.target.checked,
                 })
               }
-              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700"
             />
-            <label htmlFor="solo_activos" className="text-sm text-gray-700">
+            <label htmlFor="solo_activos" className="text-sm text-gray-700 dark:text-gray-300">
               Mostrar solo bloqueos activos
             </label>
           </div>
@@ -215,13 +215,13 @@ function BloqueoFilters({
 
       {/* Badges de filtros activos */}
       {filtrosActivos > 0 && (
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200">
+        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
           {filtros.busqueda && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
               Búsqueda: {filtros.busqueda}
               <button
                 onClick={() => onFiltrosChange({ ...filtros, busqueda: '' })}
-                className="hover:text-gray-900"
+                className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -229,11 +229,11 @@ function BloqueoFilters({
           )}
 
           {filtros.tipo_bloqueo_id && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
               Tipo: {obtenerNombreTipo(filtros.tipo_bloqueo_id)}
               <button
                 onClick={() => onFiltrosChange({ ...filtros, tipo_bloqueo_id: '' })}
-                className="hover:text-gray-900"
+                className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -241,11 +241,11 @@ function BloqueoFilters({
           )}
 
           {filtros.profesional_id && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
               Profesional seleccionado
               <button
                 onClick={() => onFiltrosChange({ ...filtros, profesional_id: '' })}
-                className="hover:text-gray-900"
+                className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -253,11 +253,11 @@ function BloqueoFilters({
           )}
 
           {filtros.fecha_desde && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
               Desde: {filtros.fecha_desde}
               <button
                 onClick={() => onFiltrosChange({ ...filtros, fecha_desde: '' })}
-                className="hover:text-gray-900"
+                className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />
               </button>
@@ -265,11 +265,11 @@ function BloqueoFilters({
           )}
 
           {filtros.fecha_hasta && (
-            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
               Hasta: {filtros.fecha_hasta}
               <button
                 onClick={() => onFiltrosChange({ ...filtros, fecha_hasta: '' })}
-                className="hover:text-gray-900"
+                className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />
               </button>

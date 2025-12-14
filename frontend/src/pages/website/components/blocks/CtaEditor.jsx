@@ -61,6 +61,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
         value={form.titulo}
         onChange={(e) => setForm({ ...form, titulo: e.target.value })}
         placeholder="¿Listo para empezar?"
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <Textarea
@@ -69,6 +70,7 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
         onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
         placeholder="Contáctanos hoy y recibe una consulta gratuita"
         rows={2}
+        className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
       />
 
       <div className="grid grid-cols-2 gap-4">
@@ -77,12 +79,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.boton_texto}
           onChange={(e) => setForm({ ...form, boton_texto: e.target.value })}
           placeholder="Contactar"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL del botón"
           value={form.boton_url}
           onChange={(e) => setForm({ ...form, boton_url: e.target.value })}
           placeholder="/contacto"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -92,12 +96,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.boton_secundario_texto}
           onChange={(e) => setForm({ ...form, boton_secundario_texto: e.target.value })}
           placeholder="Más información"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="URL secundario"
           value={form.boton_secundario_url}
           onChange={(e) => setForm({ ...form, boton_secundario_url: e.target.value })}
           placeholder="/servicios"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -107,12 +113,14 @@ function CtaEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.estilo}
           onChange={(e) => setForm({ ...form, estilo: e.target.value })}
           options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Alineación"
           value={form.alineacion}
           onChange={(e) => setForm({ ...form, alineacion: e.target.value })}
           options={alineacionOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 

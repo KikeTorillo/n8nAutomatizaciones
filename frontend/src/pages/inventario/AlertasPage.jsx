@@ -154,38 +154,38 @@ function AlertasPage() {
 
   const getNivelColor = (nivel) => {
     const colors = {
-      info: 'bg-blue-100 text-blue-800 border-blue-200',
-      warning: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      critical: 'bg-red-100 text-red-800 border-red-200',
+      info: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300 border-primary-200 dark:border-primary-800',
+      warning: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
+      critical: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800',
     };
     return colors[nivel] || colors.info;
   };
 
   const getNivelIcon = (nivel) => {
     const colors = {
-      info: 'text-blue-600',
-      warning: 'text-yellow-600',
-      critical: 'text-red-600',
+      info: 'text-primary-600 dark:text-primary-400',
+      warning: 'text-yellow-600 dark:text-yellow-400',
+      critical: 'text-red-600 dark:text-red-400',
     };
     return colors[nivel] || colors.info;
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona productos, proveedores y stock
         </p>
       </div>
@@ -199,10 +199,10 @@ function AlertasPage() {
         <div className="mb-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-8 w-8 text-orange-600" />
+              <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Alertas de Inventario</h2>
-                <p className="text-sm text-gray-600">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Alertas de Inventario</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   {total} alerta{total !== 1 ? 's' : ''} registrada{total !== 1 ? 's' : ''}
                 </p>
               </div>
@@ -211,7 +211,7 @@ function AlertasPage() {
             {/* Acciones Masivas */}
             {alertasSeleccionadas.length > 0 && (
               <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-400">
                   {alertasSeleccionadas.length} seleccionada{alertasSeleccionadas.length !== 1 ? 's' : ''}
                 </span>
                 <Button
@@ -228,16 +228,16 @@ function AlertasPage() {
         </div>
 
         {/* Filtros */}
-        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
           <div className="flex items-center space-x-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-900">Filtros</h3>
+            <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</h3>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {/* Tipo de Alerta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tipo
               </label>
               <Select
@@ -255,7 +255,7 @@ function AlertasPage() {
 
             {/* Nivel */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nivel
               </label>
               <Select
@@ -271,27 +271,27 @@ function AlertasPage() {
 
             {/* Fecha Desde */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Desde
               </label>
               <input
                 type="date"
                 value={filtros.fecha_desde}
                 onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
             {/* Fecha Hasta */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Hasta
               </label>
               <input
                 type="date"
                 value={filtros.fecha_hasta}
                 onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
 
@@ -315,41 +315,41 @@ function AlertasPage() {
                 type="checkbox"
                 checked={filtros.leida}
                 onChange={(e) => handleFiltroChange('leida', e.target.checked)}
-                className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700">Mostrar solo no leídas</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar solo no leídas</span>
             </label>
           </div>
         </div>
 
         {/* Lista de Alertas */}
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoAlertas ? (
             <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
-              <span className="ml-3 text-gray-600">Cargando alertas...</span>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando alertas...</span>
             </div>
           ) : alertas.length === 0 ? (
             <div className="text-center py-12">
-              <AlertCircle className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">
+              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
                 No hay alertas
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
                 No se encontraron alertas con los filtros aplicados
               </p>
             </div>
           ) : (
             <div className="p-4">
               {/* Header de Selección */}
-              <div className="flex items-center space-x-3 mb-4 pb-3 border-b">
+              <div className="flex items-center space-x-3 mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
                 <input
                   type="checkbox"
                   checked={alertasSeleccionadas.length === alertas.length}
                   onChange={handleSeleccionarTodas}
-                  className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                  className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
                 />
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-gray-700 dark:text-gray-300">
                   Seleccionar todas ({alertas.length})
                 </span>
               </div>
@@ -372,7 +372,7 @@ function AlertasPage() {
                         type="checkbox"
                         checked={alertasSeleccionadas.includes(alerta.id)}
                         onChange={() => handleSeleccionarAlerta(alerta.id)}
-                        className="w-5 h-5 mt-1 mr-3 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                        className="w-5 h-5 mt-1 mr-3 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
                         disabled={alerta.leida}
                       />
 
@@ -395,14 +395,14 @@ function AlertasPage() {
                               >
                                 {getTipoAlertaLabel(alerta.tipo_alerta)}
                               </span>
-                              <span className="text-xs text-gray-500">
+                              <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {format(
                                   new Date(alerta.creado_en),
                                   "dd/MM/yyyy 'a las' HH:mm",
                                   { locale: es }
                                 )}
                               </span>
-                              <span className="text-xs text-gray-400">
+                              <span className="text-xs text-gray-400 dark:text-gray-500">
                                 (
                                 {formatDistanceToNow(new Date(alerta.creado_en), {
                                   addSuffix: true,
@@ -411,16 +411,16 @@ function AlertasPage() {
                                 )
                               </span>
                               {alerta.leida && (
-                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 text-gray-700 rounded-full">
+                                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full">
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Leída
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm font-medium text-gray-900">
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                               {alerta.producto_nombre}
                             </p>
-                            <p className="text-sm text-gray-700 mt-1">{alerta.mensaje}</p>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{alerta.mensaje}</p>
                           </div>
 
                           {/* Botón Marcar Leída */}

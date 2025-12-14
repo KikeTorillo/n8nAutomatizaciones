@@ -47,8 +47,8 @@ function DirectorioGrid({
   // Estado de error
   if (error) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-        <div className="text-red-600 mb-4">
+      <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-8 text-center">
+        <div className="text-red-600 dark:text-red-400 mb-4">
           <svg
             className="mx-auto h-12 w-12"
             fill="none"
@@ -63,10 +63,10 @@ function DirectorioGrid({
             />
           </svg>
         </div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
           Error al cargar negocios
         </h3>
-        <p className="text-gray-600">{error.message || 'Intenta nuevamente más tarde'}</p>
+        <p className="text-gray-600 dark:text-gray-400">{error.message || 'Intenta nuevamente más tarde'}</p>
       </div>
     );
   }
@@ -74,12 +74,12 @@ function DirectorioGrid({
   // Estado vacío (sin resultados)
   if (!perfiles || perfiles.length === 0) {
     return (
-      <div className="bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg p-12 text-center">
-        <Store className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 mb-2">
+      <div className="bg-gray-50 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-12 text-center">
+        <Store className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
           No se encontraron negocios
         </h3>
-        <p className="text-gray-600 mb-4">
+        <p className="text-gray-600 dark:text-gray-400 mb-4">
           Intenta ajustar los filtros para ver más resultados
         </p>
       </div>
@@ -95,9 +95,9 @@ function DirectorioGrid({
     <div className={className}>
       {/* Header con contador de resultados */}
       <div className="mb-6">
-        <p className="text-sm text-gray-600">
-          Mostrando <span className="font-semibold">{perfiles.length}</span> de{' '}
-          <span className="font-semibold">{totalRegistros}</span> negocios
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Mostrando <span className="font-semibold text-gray-900 dark:text-gray-100">{perfiles.length}</span> de{' '}
+          <span className="font-semibold text-gray-900 dark:text-gray-100">{totalRegistros}</span> negocios
         </p>
       </div>
 
@@ -110,7 +110,7 @@ function DirectorioGrid({
 
       {/* Paginación */}
       {totalPaginas > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 pt-6">
+        <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-700 pt-6">
           {/* Botón anterior */}
           <Button
             variant="outline"
@@ -124,7 +124,7 @@ function DirectorioGrid({
 
           {/* Indicador de página */}
           <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700">
+            <span className="text-sm text-gray-700 dark:text-gray-300">
               Página <span className="font-semibold">{paginaActual}</span> de{' '}
               <span className="font-semibold">{totalPaginas}</span>
             </span>
@@ -141,7 +141,7 @@ function DirectorioGrid({
                       ${
                         page === paginaActual
                           ? 'bg-primary-600 text-white font-semibold'
-                          : 'text-gray-700 hover:bg-gray-100'
+                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                       }
                     `}
                   >

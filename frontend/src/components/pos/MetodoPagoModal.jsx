@@ -43,24 +43,24 @@ export default function MetodoPagoModal({
   };
 
   const colorClasses = {
-    green: 'bg-green-50 border-green-200 hover:border-green-400',
-    blue: 'bg-blue-50 border-blue-200 hover:border-blue-400',
-    purple: 'bg-purple-50 border-purple-200 hover:border-purple-400',
-    cyan: 'bg-cyan-50 border-cyan-200 hover:border-cyan-400',
+    green: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800 hover:border-green-400 dark:hover:border-green-600',
+    blue: 'bg-primary-50 dark:bg-primary-900/30 border-primary-200 dark:border-primary-800 hover:border-primary-400 dark:hover:border-primary-600',
+    purple: 'bg-purple-50 dark:bg-purple-900/30 border-purple-200 dark:border-purple-800 hover:border-purple-400 dark:hover:border-purple-600',
+    cyan: 'bg-cyan-50 dark:bg-cyan-900/30 border-cyan-200 dark:border-cyan-800 hover:border-cyan-400 dark:hover:border-cyan-600',
   };
 
   const selectedColorClasses = {
-    green: 'ring-2 ring-offset-2 ring-green-500 border-green-600 bg-green-100',
-    blue: 'ring-2 ring-offset-2 ring-blue-500 border-blue-600 bg-blue-100',
-    purple: 'ring-2 ring-offset-2 ring-purple-500 border-purple-600 bg-purple-100',
-    cyan: 'ring-2 ring-offset-2 ring-cyan-500 border-cyan-600 bg-cyan-100',
+    green: 'ring-2 ring-offset-2 dark:ring-offset-gray-800 ring-green-500 border-green-600 dark:border-green-500 bg-green-100 dark:bg-green-900/50',
+    blue: 'ring-2 ring-offset-2 dark:ring-offset-gray-800 ring-primary-500 border-primary-600 dark:border-primary-500 bg-primary-100 dark:bg-primary-900/50',
+    purple: 'ring-2 ring-offset-2 dark:ring-offset-gray-800 ring-purple-500 border-purple-600 dark:border-purple-500 bg-purple-100 dark:bg-purple-900/50',
+    cyan: 'ring-2 ring-offset-2 dark:ring-offset-gray-800 ring-cyan-500 border-cyan-600 dark:border-cyan-500 bg-cyan-100 dark:bg-cyan-900/50',
   };
 
   const iconColorClasses = {
-    green: 'text-green-600',
-    blue: 'text-blue-600',
-    purple: 'text-purple-600',
-    cyan: 'text-cyan-600',
+    green: 'text-green-600 dark:text-green-400',
+    blue: 'text-primary-600 dark:text-primary-400',
+    purple: 'text-purple-600 dark:text-purple-400',
+    cyan: 'text-cyan-600 dark:text-cyan-400',
   };
 
   const footerContent = (
@@ -97,14 +97,14 @@ export default function MetodoPagoModal({
     >
       <div className="space-y-6">
         {/* Total a cobrar */}
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-blue-900 mb-1">Total a cobrar</p>
-          <p className="text-4xl font-bold text-blue-600">${total.toFixed(2)}</p>
+        <div className="bg-primary-50 dark:bg-primary-900/30 border-2 border-primary-200 dark:border-primary-800 rounded-lg p-4">
+          <p className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-1">Total a cobrar</p>
+          <p className="text-4xl font-bold text-primary-600 dark:text-primary-400">${total.toFixed(2)}</p>
         </div>
 
         {/* Métodos de pago */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-3">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
             Selecciona el método de pago
           </label>
           <div className="grid grid-cols-2 gap-3">
@@ -130,7 +130,7 @@ export default function MetodoPagoModal({
                     className="sr-only"
                   />
                   <Icon className={`h-6 w-6 ${iconColorClasses[metodoItem.color]}`} />
-                  <span className="font-medium text-gray-900">{metodoItem.label}</span>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">{metodoItem.label}</span>
                   {isSelected && (
                     <Check className={`ml-auto h-5 w-5 ${iconColorClasses[metodoItem.color]}`} />
                   )}
@@ -190,9 +190,9 @@ export default function MetodoPagoModal({
 
             {/* Cambio */}
             {cambio > 0 && (
-              <div className="mt-4 bg-green-50 border-2 border-green-200 rounded-lg p-3">
-                <p className="text-sm font-medium text-green-900 mb-1">Cambio a entregar</p>
-                <p className="text-2xl font-bold text-green-600">${cambio.toFixed(2)}</p>
+              <div className="mt-4 bg-green-50 dark:bg-green-900/30 border-2 border-green-200 dark:border-green-800 rounded-lg p-3">
+                <p className="text-sm font-medium text-green-900 dark:text-green-300 mb-1">Cambio a entregar</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">${cambio.toFixed(2)}</p>
               </div>
             )}
           </div>

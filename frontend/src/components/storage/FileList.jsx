@@ -104,7 +104,7 @@ function FileList({
   if (isLoading) {
     return (
       <div className={`flex items-center justify-center py-12 ${className}`}>
-        <Loader2 className="h-8 w-8 text-indigo-600 animate-spin" />
+        <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
         <span className="ml-2 text-gray-600">Cargando archivos...</span>
       </div>
     );
@@ -172,14 +172,14 @@ function FileList({
                     <div className="flex space-x-1 bg-white rounded-lg shadow p-1">
                       <button
                         onClick={() => handleView(archivo)}
-                        className="p-1 text-gray-600 hover:text-indigo-600"
+                        className="p-1 text-gray-600 hover:text-primary-600"
                         title="Ver"
                       >
                         <ExternalLink className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDownload(archivo)}
-                        className="p-1 text-gray-600 hover:text-indigo-600"
+                        className="p-1 text-gray-600 hover:text-primary-600"
                         title="Descargar"
                       >
                         <Download className="h-4 w-4" />
@@ -278,14 +278,14 @@ function FileList({
                 <div className="flex items-center space-x-2 ml-4">
                   <button
                     onClick={() => handleView(archivo)}
-                    className="p-2 text-gray-400 hover:text-indigo-600"
+                    className="p-2 text-gray-400 hover:text-primary-600"
                     title="Ver"
                   >
                     <ExternalLink className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleDownload(archivo)}
-                    className="p-2 text-gray-400 hover:text-indigo-600"
+                    className="p-2 text-gray-400 hover:text-primary-600"
                     title="Descargar"
                   >
                     <Download className="h-5 w-5" />

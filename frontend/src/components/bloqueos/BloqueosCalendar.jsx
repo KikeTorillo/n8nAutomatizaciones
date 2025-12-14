@@ -111,7 +111,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header con navegación */}
       <CalendarioHeader
         mesActual={mesActual}
@@ -128,7 +128,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
           {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dia) => (
             <div
               key={dia}
-              className="text-center text-xs font-semibold text-gray-600 py-2 uppercase"
+              className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2 uppercase"
             >
               {dia}
             </div>
@@ -159,46 +159,46 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
         </div>
 
         {/* Leyenda de tipos de bloqueo */}
-        <div className="mt-6 pt-4 border-t border-gray-200">
-          <p className="text-xs font-semibold text-gray-600 mb-2">Tipos de bloqueo:</p>
+        <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 mb-2">Tipos de bloqueo:</p>
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-purple-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.vacaciones}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.vacaciones}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-red-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.feriado}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.feriado}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.mantenimiento}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.mantenimiento}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.evento_especial}</span>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.evento_especial}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.emergencia}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.emergencia}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-indigo-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.personal}</span>
+              <div className="w-3 h-3 rounded-full bg-primary-500"></div>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.personal}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-full bg-gray-500"></div>
-              <span className="text-xs text-gray-600">{LABELS_TIPO_BLOQUEO.organizacional}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-400">{LABELS_TIPO_BLOQUEO.organizacional}</span>
             </div>
           </div>
         </div>
 
         {/* Información adicional */}
-        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
           <div className="flex items-start gap-2">
-            <div className="text-blue-600 text-sm">
+            <div className="text-primary-600 dark:text-primary-300 text-sm">
               <p className="font-medium mb-1">💡 Información útil</p>
-              <ul className="list-disc list-inside text-xs space-y-0.5">
+              <ul className="list-disc list-inside text-xs space-y-0.5 text-primary-700 dark:text-primary-300">
                 <li>Los días con fondo rojo tienen bloqueos organizacionales (afectan a todos)</li>
                 <li>El icono 🕐 indica que el bloqueo es de horario parcial (no todo el día)</li>
                 <li>Haz clic en un bloqueo para ver más detalles</li>
@@ -215,10 +215,10 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
 
         {/* Loading overlay */}
         {isLoading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center">
+          <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando bloqueos...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando bloqueos...</p>
             </div>
           </div>
         )}

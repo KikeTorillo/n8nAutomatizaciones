@@ -155,6 +155,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.estilo}
           onChange={(e) => setForm({ ...form, estilo: e.target.value })}
           options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Grosor"
@@ -162,6 +163,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           onChange={(e) => setForm({ ...form, grosor: e.target.value })}
           options={grosorOptions}
           disabled={form.estilo === 'espacio'}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -171,17 +173,19 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.ancho}
           onChange={(e) => setForm({ ...form, ancho: e.target.value })}
           options={anchoOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Espaciado vertical"
           value={form.espaciado}
           onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
           options={espaciadoOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Color (opcional)
         </label>
         <div className="flex items-center gap-2">
@@ -189,7 +193,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
             type="color"
             value={form.color || colorActual}
             onChange={(e) => setForm({ ...form, color: e.target.value })}
-            className="w-10 h-10 rounded border border-gray-300 cursor-pointer"
+            className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
             disabled={form.estilo === 'espacio'}
           />
           <Input
@@ -197,7 +201,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, color: e.target.value })}
             placeholder="Usar color del tema"
             disabled={form.estilo === 'espacio'}
-            className="flex-1"
+            className="flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
           />
           {form.color && (
             <Button
@@ -213,7 +217,7 @@ function SeparadorEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg">
         <div className={getEspaciadoClass()}>
           {renderSeparador()}
         </div>

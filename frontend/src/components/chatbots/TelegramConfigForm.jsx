@@ -63,10 +63,10 @@ function TelegramConfigForm({
   return (
     <div className="space-y-6">
       {/* Info Card */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
         <div className="flex items-start gap-3">
-          <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
-          <div className="text-sm text-blue-800">
+          <AlertCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
+          <div className="text-sm text-primary-800 dark:text-primary-200">
             <p className="font-semibold mb-1">¿No tienes un bot de Telegram?</p>
             <p className="mb-2">
               Necesitas crear uno con @BotFather antes de continuar.
@@ -74,7 +74,7 @@ function TelegramConfigForm({
             <button
               type="button"
               onClick={() => setShowInstructions(!showInstructions)}
-              className="text-blue-600 hover:text-blue-700 font-medium underline"
+              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium underline"
             >
               {showInstructions ? 'Ocultar instrucciones' : 'Ver instrucciones'}
             </button>
@@ -84,25 +84,25 @@ function TelegramConfigForm({
 
       {/* Instrucciones colapsables */}
       {showInstructions && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-          <h3 className="font-semibold text-gray-900">
+        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">
             Cómo crear un bot con @BotFather:
           </h3>
-          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+          <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 dark:text-gray-300">
             <li>
               Abre Telegram y busca{' '}
               <a
                 href="https://t.me/BotFather"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-primary-600 hover:text-primary-700 font-medium inline-flex items-center gap-1"
+                className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium inline-flex items-center gap-1"
               >
                 @BotFather
                 <ExternalLink className="w-3 h-3" />
               </a>
             </li>
             <li>
-              Envía el comando: <code className="bg-gray-200 px-1 rounded">/newbot</code>
+              Envía el comando: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/newbot</code>
             </li>
             <li>Elige un nombre para tu bot (ej: "Mi Negocio Bot")</li>
             <li>
@@ -110,7 +110,7 @@ function TelegramConfigForm({
             </li>
             <li>
               @BotFather te dará un <strong>token</strong> que se ve así:
-              <code className="block bg-gray-200 px-2 py-1 rounded mt-1 text-xs">
+              <code className="block bg-gray-200 dark:bg-gray-700 px-2 py-1 rounded mt-1 text-xs">
                 123456789:ABCdefGHIjklMNOpqrsTUVwxyz1234567890
               </code>
             </li>
@@ -156,17 +156,17 @@ function TelegramConfigForm({
 
         {/* Estado de carga */}
         {isLoading && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
             <LoadingSpinner size="sm" text="Validando token y configurando workflow..." />
           </div>
         )}
 
         {/* Success state */}
         {isSuccess && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <CheckCircle2 className="w-5 h-5 text-green-600 mt-0.5 flex-shrink-0" />
-              <div className="text-sm text-green-800">
+              <CheckCircle2 className="w-5 h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+              <div className="text-sm text-green-800 dark:text-green-200">
                 <p className="font-semibold mb-1">¡Bot configurado exitosamente!</p>
                 <p>El workflow de n8n ha sido creado y activado.</p>
               </div>
@@ -175,7 +175,7 @@ function TelegramConfigForm({
         )}
 
         {/* Botones de navegación */}
-        <div className="flex justify-end pt-4 border-t gap-2">
+        <div className="flex justify-end pt-4 border-t dark:border-gray-700 gap-2">
           <Button
             type="button"
             variant="ghost"

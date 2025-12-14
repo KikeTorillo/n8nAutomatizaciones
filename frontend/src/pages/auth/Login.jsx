@@ -75,11 +75,11 @@ function Login() {
       title="Iniciar Sesión"
       subtitle="Accede a tu cuenta"
       footer={
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           ¿No tienes cuenta?{' '}
           <Link
             to="/registro"
-            className="text-primary-600 hover:text-primary-700 font-medium"
+            className="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
           >
             Regístrate gratis
           </Link>
@@ -108,7 +108,7 @@ function Login() {
           <button
             type="button"
             onClick={() => setShowPassword(!showPassword)}
-            className="absolute right-3 top-[38px] text-gray-500 hover:text-gray-700"
+            className="absolute right-3 top-[38px] text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
           >
             {showPassword ? (
               <EyeOff className="w-5 h-5" />
@@ -121,7 +121,7 @@ function Login() {
         <div className="text-right">
           <Link
             to="/auth/forgot-password"
-            className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+            className="text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium"
           >
             ¿Olvidaste tu contraseña?
           </Link>

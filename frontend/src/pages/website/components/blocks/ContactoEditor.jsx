@@ -71,18 +71,20 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Contáctanos"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="Subtítulo"
           value={form.subtitulo}
           onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
           placeholder="Estamos aquí para ayudarte"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
       {/* Información de contacto */}
-      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
-        <h4 className="text-sm font-medium text-gray-700">Información de contacto</h4>
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
+        <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Información de contacto</h4>
 
         <div className="grid grid-cols-2 gap-3">
           <Input
@@ -96,6 +98,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, direccion: e.target.value })}
             placeholder="Calle 123, Ciudad"
             inputSize="sm"
+            className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
             label={
@@ -108,6 +111,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, telefono: e.target.value })}
             placeholder="+52 123 456 7890"
             inputSize="sm"
+            className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
             type="email"
@@ -121,6 +125,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             placeholder="contacto@negocio.com"
             inputSize="sm"
+            className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
           <Input
             label={
@@ -133,14 +138,15 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, horario: e.target.value })}
             placeholder="Lun-Vie 9:00-18:00"
             inputSize="sm"
+            className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
         </div>
       </div>
 
       {/* Opciones de formulario */}
-      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-gray-700">Formulario de contacto</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Formulario de contacto</h4>
           <Checkbox
             label="Mostrar"
             checked={form.mostrar_formulario}
@@ -150,7 +156,7 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
 
         {form.mostrar_formulario && (
           <div>
-            <p className="text-xs text-gray-500 mb-2">Campos del formulario:</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Campos del formulario:</p>
             <div className="flex flex-wrap gap-2">
               {camposDisponibles.map((campo) => (
                 <Button
@@ -170,9 +176,9 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Mapa */}
-      <div className="p-4 bg-gray-50 rounded-lg space-y-3">
+      <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
         <div className="flex items-center justify-between">
-          <h4 className="text-sm font-medium text-gray-700">Mapa de Google</h4>
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Mapa de Google</h4>
           <Checkbox
             label="Mostrar"
             checked={form.mostrar_mapa}
@@ -187,12 +193,13 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
             onChange={(e) => setForm({ ...form, mapa_url: e.target.value })}
             placeholder="URL del embed de Google Maps"
             inputSize="sm"
+            className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
           />
         )}
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         <h4 className="font-bold mb-3" style={{ color: tema?.colores?.texto }}>
           {form.titulo}
         </h4>
@@ -220,10 +227,10 @@ function ContactoEditor({ contenido, onGuardar, tema, isSaving }) {
           {form.mostrar_formulario && (
             <div className="space-y-2">
               {form.formulario_campos.includes('nombre') && (
-                <input placeholder="Nombre" className="w-full px-3 py-2 text-xs border rounded" disabled />
+                <input placeholder="Nombre" className="w-full px-3 py-2 text-xs border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded" disabled />
               )}
               {form.formulario_campos.includes('email') && (
-                <input placeholder="Email" className="w-full px-3 py-2 text-xs border rounded" disabled />
+                <input placeholder="Email" className="w-full px-3 py-2 text-xs border dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded" disabled />
               )}
               <button
                 className="w-full py-2 text-white text-xs rounded"

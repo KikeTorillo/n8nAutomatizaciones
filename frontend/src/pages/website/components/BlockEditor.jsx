@@ -130,13 +130,13 @@ function BlockEditor({
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Layout className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Layout className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             Selecciona una página
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             Elige una página del panel de páginas para empezar a editarla
           </p>
         </div>
@@ -147,7 +147,7 @@ function BlockEditor({
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-600 dark:text-primary-400" />
       </div>
     );
   }
@@ -156,13 +156,13 @@ function BlockEditor({
     return (
       <div className="h-full flex items-center justify-center">
         <div className="text-center max-w-sm">
-          <div className="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Layout className="w-8 h-8 text-indigo-600" />
+          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Layout className="w-8 h-8 text-primary-600 dark:text-primary-400" />
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
             Página vacía
           </h3>
-          <p className="text-gray-500 text-sm">
+          <p className="text-gray-500 dark:text-gray-400 text-sm">
             Agrega bloques desde la paleta de la izquierda para construir tu página
           </p>
         </div>
@@ -173,9 +173,9 @@ function BlockEditor({
   return (
     <div className="space-y-4">
       {/* Info de página */}
-      <div className="bg-white rounded-lg p-4 border border-gray-200">
-        <h2 className="font-semibold text-gray-900">{pagina.titulo}</h2>
-        <p className="text-sm text-gray-500">/{pagina.slug || ''}</p>
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+        <h2 className="font-semibold text-gray-900 dark:text-gray-100">{pagina.titulo}</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400">/{pagina.slug || ''}</p>
       </div>
 
       {/* Lista de bloques */}
@@ -271,10 +271,10 @@ function BloqueItem({
       ref={setNodeRef}
       style={style}
       className={`
-        bg-white rounded-lg border-2 transition-all
+        bg-white dark:bg-gray-800 rounded-lg border-2 transition-all
         ${isSelected
-          ? 'border-indigo-400 shadow-md'
-          : 'border-gray-200 hover:border-gray-300'
+          ? 'border-primary-400 dark:border-primary-500 shadow-md'
+          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
         }
         ${isDragging ? 'shadow-lg' : ''}
       `}
@@ -291,7 +291,7 @@ function BloqueItem({
         <button
           {...attributes}
           {...listeners}
-          className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+          className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
           onClick={(e) => e.stopPropagation()}
         >
           <GripVertical className="w-5 h-5" />
@@ -303,14 +303,14 @@ function BloqueItem({
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-900">{config.label}</p>
-          <p className="text-xs text-gray-500">Bloque {index + 1} de {total}</p>
+          <p className="font-medium text-gray-900 dark:text-gray-100">{config.label}</p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Bloque {index + 1} de {total}</p>
         </div>
 
         {/* Acciones rápidas */}
         <div className="flex items-center gap-1">
           {isSaving && (
-            <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />
+            <Loader2 className="w-4 h-4 animate-spin text-primary-600 dark:text-primary-400" />
           )}
 
           <button
@@ -318,7 +318,7 @@ function BloqueItem({
               e.stopPropagation();
               onDuplicar();
             }}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-500 hover:text-gray-700 transition-colors"
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
             title="Duplicar"
           >
             <Copy className="w-4 h-4" />
@@ -329,7 +329,7 @@ function BloqueItem({
               e.stopPropagation();
               handleEliminar();
             }}
-            className="p-1.5 hover:bg-red-50 rounded text-gray-500 hover:text-red-600 transition-colors"
+            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
             title="Eliminar"
           >
             <Trash2 className="w-4 h-4" />
@@ -340,7 +340,7 @@ function BloqueItem({
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="p-1.5 hover:bg-gray-100 rounded text-gray-500 transition-colors"
+            className="p-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-500 dark:text-gray-400 transition-colors"
           >
             {isExpanded ? (
               <ChevronUp className="w-4 h-4" />
@@ -353,7 +353,7 @@ function BloqueItem({
 
       {/* Editor expandido */}
       {isExpanded && EditorComponent && (
-        <div className="border-t border-gray-200 p-4">
+        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
           <EditorComponent
             contenido={bloque.contenido || {}}
             onGuardar={handleGuardar}

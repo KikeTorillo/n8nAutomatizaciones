@@ -158,7 +158,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
     >
       <div className="space-y-6">
         {/* Header con info del profesional */}
-        <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold"
             style={{ backgroundColor: profesional?.color_calendario || '#3b82f6' }}
@@ -166,10 +166,10 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
             <Calendar className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {profesional?.nombre} {profesional?.apellidos}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Configura los horarios de disponibilidad
             </p>
           </div>
@@ -178,12 +178,12 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Panel izquierdo: Configuración de horarios */}
           <div className="space-y-6">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
               <div className="flex items-start gap-2">
-                <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                <AlertCircle className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-blue-900">Nuevo Horario</p>
-                  <p className="text-xs text-blue-700 mt-1">
+                  <p className="text-sm font-medium text-primary-900 dark:text-primary-300">Nuevo Horario</p>
+                  <p className="text-xs text-primary-700 dark:text-primary-400 mt-1">
                     Selecciona los días y horarios en que el profesional estará disponible
                   </p>
                 </div>
@@ -192,7 +192,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
 
             {/* Plantillas rápidas */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Plantillas Rápidas
               </label>
               <div className="grid grid-cols-2 gap-2">
@@ -212,7 +212,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
 
             {/* Selector de días */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Días de la Semana
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -224,7 +224,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                       diasSeleccionados.includes(dia.id)
                         ? 'bg-primary-600 text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
                     {dia.corto}
@@ -236,7 +236,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
             {/* Horarios */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Hora Inicio
                 </label>
                 <Input
@@ -246,7 +246,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Hora Fin
                 </label>
                 <Input
@@ -259,7 +259,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
 
             {/* Tipo de horario */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Tipo de Horario
               </label>
               <Select
@@ -273,7 +273,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
 
             {/* Nombre del horario */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Nombre del Horario (Opcional)
               </label>
               <Input
@@ -299,8 +299,8 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
 
           {/* Panel derecho: Horarios existentes */}
           <div className="space-y-4">
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-              <h4 className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
                 <Clock className="w-4 h-4" />
                 Horarios Configurados
               </h4>
@@ -308,15 +308,15 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
               {/* Loading state */}
               {loadingHorarios ? (
                 <div className="flex items-center justify-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 dark:border-primary-400"></div>
                 </div>
               ) : !horarios || horarios.length === 0 ? (
                 <div className="text-center py-8">
-                  <Clock className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-sm text-gray-600">
+                  <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
                     No hay horarios configurados
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
                     Crea el primer horario usando el formulario
                   </p>
                 </div>
@@ -325,32 +325,32 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
                   {horarios.map((horario) => (
                     <div
                       key={horario.id}
-                      className="bg-white border border-gray-200 rounded-lg p-3 hover:border-primary-300 transition-colors"
+                      className="bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-primary-300 dark:hover:border-primary-500 transition-colors"
                     >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-sm font-semibold text-gray-900">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                               {getDiaNombre(horario.dia_semana)}
                             </span>
                             <span
                               className={`px-2 py-0.5 text-xs font-medium rounded-full ${
                                 horario.tipo_horario === 'premium'
-                                  ? 'bg-amber-100 text-amber-800'
-                                  : 'bg-blue-100 text-blue-800'
+                                  ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-400'
+                                  : 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400'
                               }`}
                             >
                               {horario.tipo_horario === 'premium' ? 'Premium' : 'Regular'}
                             </span>
                           </div>
-                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                          <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                             <Clock className="w-3 h-3" />
                             <span>
                               {horario.hora_inicio.slice(0, 5)} - {horario.hora_fin.slice(0, 5)}
                             </span>
                           </div>
                           {horario.nombre_horario && (
-                            <p className="text-xs text-gray-500 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                               {horario.nombre_horario}
                             </p>
                           )}
@@ -360,7 +360,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
                           size="sm"
                           onClick={() => handleEliminarHorario(horario.id, getDiaNombre(horario.dia_semana))}
                           disabled={eliminarMutation.isPending}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                         >
                           <Trash2 className="w-3 h-3" />
                         </Button>
@@ -374,7 +374,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
         </div>
 
         {/* Footer */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button variant="outline" onClick={onClose}>
             Cerrar
           </Button>

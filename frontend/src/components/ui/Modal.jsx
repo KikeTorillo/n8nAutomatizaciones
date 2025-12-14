@@ -80,26 +80,26 @@ function Modal({
               transition={{ duration: 0.2 }}
               onClick={(e) => e.stopPropagation()}
               className={`
-                bg-white rounded-lg shadow-xl w-full ${sizeClasses[size]}
+                bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full ${sizeClasses[size]}
                 max-h-[90vh] overflow-hidden flex flex-col
               `}
             >
               {/* Header */}
               {title && (
-                <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
                   <div>
-                    <h2 className="text-xl font-semibold text-gray-900">
+                    <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                       {title}
                     </h2>
                     {subtitle && (
-                      <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+                      <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</p>
                     )}
                   </div>
                   {showCloseButton && (
                     <button
                       onClick={onClose}
                       disabled={disableClose}
-                      className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+                      className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors disabled:opacity-50"
                       aria-label="Cerrar modal"
                     >
                       <X className="w-6 h-6" />
@@ -115,7 +115,7 @@ function Modal({
 
               {/* Footer */}
               {footer && (
-                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 bg-gray-50">
+                <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
                   {footer}
                 </div>
               )}

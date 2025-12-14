@@ -36,10 +36,10 @@ const COLORES_PREDEFINIDOS = [
   '#EF4444', // red-500
   '#F59E0B', // amber-500
   '#10B981', // green-500
-  '#3B82F6', // blue-500
+  '#3B82F6', // primary-500
   '#8B5CF6', // violet-500
   '#EC4899', // pink-500
-  '#6366F1', // indigo-500
+  '#6366F1', // primary-500
   '#14B8A6', // teal-500
 ];
 
@@ -167,7 +167,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
           <input
             type="text"
             {...register('nombre')}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             placeholder="Ej: Cuidado Capilar, Productos de Limpieza"
           />
         </FieldWrapper>
@@ -202,11 +202,11 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
             helperText="Nombre del icono Lucide"
           >
             <div className="relative">
-              <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
               <input
                 type="text"
                 {...register('icono')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="Ej: Scissors, Bottle"
               />
             </div>
@@ -222,7 +222,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
               type="number"
               min="0"
               {...register('orden')}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
             />
           </FieldWrapper>
         </div>
@@ -239,7 +239,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
                   onClick={() => setValue('color', color)}
                   className={`w-10 h-10 rounded-lg transition-all ${
                     colorSeleccionado === color
-                      ? 'ring-2 ring-offset-2 ring-indigo-500 scale-110'
+                      ? 'ring-2 ring-offset-2 ring-primary-500 scale-110'
                       : 'hover:scale-105'
                   }`}
                   style={{ backgroundColor: color }}
@@ -251,11 +251,11 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
             {/* Input Color Personalizado */}
             <div className="flex items-center space-x-3">
               <div className="relative flex-1">
-                <Palette className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Palette className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
                 <input
                   type="text"
                   {...register('color')}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent font-mono bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="#RRGGBB"
                 />
               </div>
@@ -263,7 +263,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
                 type="color"
                 value={colorSeleccionado || '#3B82F6'}
                 onChange={(e) => setValue('color', e.target.value.toUpperCase())}
-                className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
+                className="w-12 h-10 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer"
               />
             </div>
           </div>
@@ -276,7 +276,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
         />
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

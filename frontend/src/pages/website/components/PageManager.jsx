@@ -109,17 +109,17 @@ function PageManager({
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center justify-between mb-2">
-          <h3 className="font-semibold text-gray-900">Páginas</h3>
+          <h3 className="font-semibold text-gray-900 dark:text-gray-100">Páginas</h3>
           <button
             onClick={() => setMostrarNueva(true)}
-            className="p-1.5 hover:bg-indigo-100 text-indigo-600 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-600 dark:text-primary-400 rounded-lg transition-colors"
           >
             <Plus className="w-5 h-5" />
           </button>
         </div>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Arrastra para reordenar el menú
         </p>
       </div>
@@ -209,24 +209,24 @@ function PaginaItem({
 
   if (isEditing) {
     return (
-      <div className="p-2 bg-white border border-indigo-200 rounded-lg mb-1">
+      <div className="p-2 bg-white dark:bg-gray-800 border border-primary-200 dark:border-primary-700 rounded-lg mb-1">
         <input
           type="text"
           value={titulo}
           onChange={(e) => setTitulo(e.target.value)}
-          className="w-full px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-2 py-1 text-sm bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
           autoFocus
         />
         <div className="flex justify-end gap-1 mt-2">
           <button
             onClick={onCancelEdit}
-            className="p-1 hover:bg-gray-100 rounded text-gray-600"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded text-gray-600 dark:text-gray-400"
           >
             <X className="w-4 h-4" />
           </button>
           <button
             onClick={() => onSaveEdit({ titulo })}
-            className="p-1 hover:bg-indigo-100 rounded text-indigo-600"
+            className="p-1 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded text-primary-600 dark:text-primary-400"
           >
             <Check className="w-4 h-4" />
           </button>
@@ -242,8 +242,8 @@ function PaginaItem({
       className={`
         group flex items-center gap-2 p-2 rounded-lg mb-1 cursor-pointer transition-colors
         ${isActive
-          ? 'bg-indigo-50 border border-indigo-200'
-          : 'hover:bg-gray-50 border border-transparent'
+          ? 'bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-700'
+          : 'hover:bg-gray-50 dark:hover:bg-gray-700 border border-transparent'
         }
       `}
     >
@@ -251,7 +251,7 @@ function PaginaItem({
       <button
         {...attributes}
         {...listeners}
-        className="p-1 text-gray-400 hover:text-gray-600 cursor-grab active:cursor-grabbing"
+        className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 cursor-grab active:cursor-grabbing"
       >
         <GripVertical className="w-4 h-4" />
       </button>
@@ -260,16 +260,16 @@ function PaginaItem({
       <div className="flex-1 min-w-0" onClick={onSelect}>
         <div className="flex items-center gap-2">
           {pagina.es_inicio ? (
-            <Home className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+            <Home className="w-4 h-4 text-primary-500 dark:text-primary-400 flex-shrink-0" />
           ) : (
-            <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <FileText className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
           )}
-          <span className={`text-sm truncate ${isActive ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+          <span className={`text-sm truncate ${isActive ? 'font-medium text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
             {pagina.titulo}
           </span>
         </div>
         {pagina.slug && (
-          <p className="text-xs text-gray-400 ml-6 truncate">/{pagina.slug}</p>
+          <p className="text-xs text-gray-400 dark:text-gray-500 ml-6 truncate">/{pagina.slug}</p>
         )}
       </div>
 
@@ -280,20 +280,20 @@ function PaginaItem({
             e.stopPropagation();
             onToggleMenu();
           }}
-          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 rounded transition-opacity"
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-opacity"
         >
-          <MoreVertical className="w-4 h-4 text-gray-500" />
+          <MoreVertical className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         </button>
 
         {menuAbierto && (
-          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 w-32">
+          <div className="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 w-32">
             <button
               onClick={(e) => {
                 e.stopPropagation();
                 onEdit();
                 onToggleMenu();
               }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               <Edit3 className="w-4 h-4" />
               Editar
@@ -304,7 +304,7 @@ function PaginaItem({
                   e.stopPropagation();
                   onDelete();
                 }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50"
+                className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
               >
                 <Trash2 className="w-4 h-4" />
                 Eliminar
@@ -353,14 +353,14 @@ function NuevaPaginaForm({ onCrear, onCancelar }) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+    <form onSubmit={handleSubmit} className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
       <div className="mb-3">
         <input
           type="text"
           value={form.titulo}
           onChange={handleTituloChange}
           placeholder="Título de la página"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
           autoFocus
         />
       </div>
@@ -376,21 +376,21 @@ function NuevaPaginaForm({ onCrear, onCancelar }) {
             }));
           }}
           placeholder="url-de-la-pagina"
-          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+          className="w-full px-3 py-2 text-sm bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
         />
       </div>
       <div className="flex gap-2">
         <button
           type="button"
           onClick={onCancelar}
-          className="flex-1 px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors"
+          className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
         >
           Cancelar
         </button>
         <button
           type="submit"
           disabled={isLoading || !form.titulo.trim()}
-          className="flex-1 px-3 py-2 text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+          className="flex-1 px-3 py-2 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
           Crear

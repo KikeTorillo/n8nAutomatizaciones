@@ -243,9 +243,9 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información básica */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-            <Building2 className="h-5 w-5 mr-2 text-gray-600" />
+        <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+            <Building2 className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
             Información de la Orden
           </h3>
 
@@ -267,7 +267,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
               <input
                 type="date"
                 {...register('fecha_entrega_esperada')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </FieldWrapper>
 
@@ -276,7 +276,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                 type="number"
                 min="0"
                 {...register('dias_credito')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </FieldWrapper>
 
@@ -287,7 +287,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                 max="100"
                 step="0.01"
                 {...register('descuento_porcentaje')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="0"
               />
             </FieldWrapper>
@@ -296,7 +296,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
               <input
                 type="text"
                 {...register('referencia_proveedor')}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 placeholder="# Cotización o referencia"
               />
             </FieldWrapper>
@@ -315,31 +315,31 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
 
         {/* Agregar productos (solo al crear) */}
         {!esEdicion && (
-          <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-              <Package className="h-5 w-5 mr-2 text-gray-600" />
+          <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center">
+              <Package className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
               Productos de la Orden
             </h3>
 
             {/* Buscador de productos */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4">
               <div className="md:col-span-5">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Buscar Producto
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <input
                     type="text"
                     value={busquedaProducto}
                     onChange={(e) => setBusquedaProducto(e.target.value)}
-                    className="pl-10 w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    className="pl-10 w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     placeholder="Buscar por nombre o SKU..."
                   />
                 </div>
                 {/* Lista de productos */}
                 {busquedaProducto && productos.length > 0 && !productoSeleccionado && (
-                  <div className="absolute z-10 mt-1 w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-10 mt-1 w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-auto">
                     {productos.map((prod) => (
                       <button
                         key={prod.id}
@@ -349,10 +349,10 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                           setBusquedaProducto(prod.nombre);
                           setPrecioItem(prod.precio_costo || '');
                         }}
-                        className="w-full px-4 py-2 text-left hover:bg-gray-50 border-b last:border-b-0"
+                        className="w-full px-4 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0"
                       >
-                        <div className="font-medium text-sm text-gray-900">{prod.nombre}</div>
-                        <div className="text-xs text-gray-500">
+                        <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{prod.nombre}</div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400">
                           SKU: {prod.sku || 'N/A'} | Stock: {prod.stock_actual || 0} | Costo: ${prod.precio_costo || 0}
                         </div>
                       </button>
@@ -360,14 +360,14 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                   </div>
                 )}
                 {productoSeleccionado && (
-                  <div className="mt-1 text-sm text-green-600">
+                  <div className="mt-1 text-sm text-green-600 dark:text-green-400">
                     Seleccionado: {productoSeleccionado.nombre}
                   </div>
                 )}
               </div>
 
               <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Cantidad
                 </label>
                 <input
@@ -375,12 +375,12 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                   min="1"
                   value={cantidadItem}
                   onChange={(e) => setCantidadItem(parseInt(e.target.value) || 1)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
               </div>
 
               <div className="md:col-span-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Precio Unitario
                 </label>
                 <input
@@ -389,7 +389,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                   step="0.01"
                   value={precioItem}
                   onChange={(e) => setPrecioItem(e.target.value)}
-                  className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                  className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                   placeholder="Precio costo"
                 />
               </div>
@@ -409,32 +409,32 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
 
             {/* Lista de items */}
             {items.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-100">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-100 dark:bg-gray-700">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Producto
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Cantidad
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Precio Unit.
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Subtotal
                       </th>
                       <th className="px-4 py-2 w-10"></th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {items.map((item, index) => (
                       <tr key={index}>
                         <td className="px-4 py-2">
-                          <div className="text-sm font-medium text-gray-900">{item.producto_nombre}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</div>
                           {item.producto_sku && (
-                            <div className="text-xs text-gray-500">SKU: {item.producto_sku}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.producto_sku}</div>
                           )}
                         </td>
                         <td className="px-4 py-2">
@@ -443,7 +443,7 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                             min="1"
                             value={item.cantidad_ordenada}
                             onChange={(e) => handleActualizarCantidad(index, e.target.value)}
-                            className="w-20 text-center rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           />
                         </td>
                         <td className="px-4 py-2">
@@ -453,17 +453,17 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                             step="0.01"
                             value={item.precio_unitario}
                             onChange={(e) => handleActualizarPrecio(index, e.target.value)}
-                            className="w-24 text-right rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                            className="w-24 text-right rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                           />
                         </td>
-                        <td className="px-4 py-2 text-right text-sm font-medium text-gray-900">
+                        <td className="px-4 py-2 text-right text-sm font-medium text-gray-900 dark:text-gray-100">
                           ${(item.cantidad_ordenada * item.precio_unitario).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                         </td>
                         <td className="px-4 py-2">
                           <button
                             type="button"
                             onClick={() => handleEliminarItem(index)}
-                            className="text-red-600 hover:text-red-900"
+                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                           >
                             <Trash2 className="h-4 w-4" />
                           </button>
@@ -471,12 +471,12 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                       </tr>
                     ))}
                   </tbody>
-                  <tfoot className="bg-gray-50">
+                  <tfoot className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <td colSpan={3} className="px-4 py-2 text-right text-sm font-medium text-gray-700">
+                      <td colSpan={3} className="px-4 py-2 text-right text-sm font-medium text-gray-700 dark:text-gray-300">
                         Subtotal:
                       </td>
-                      <td className="px-4 py-2 text-right text-sm font-bold text-gray-900">
+                      <td className="px-4 py-2 text-right text-sm font-bold text-gray-900 dark:text-gray-100">
                         ${subtotal.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                       </td>
                       <td></td>
@@ -485,8 +485,8 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-                <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                <Package className="h-12 w-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p>No hay productos agregados</p>
                 <p className="text-sm">Busca y agrega productos para la orden</p>
               </div>
@@ -495,15 +495,15 @@ export default function OrdenCompraFormModal({ isOpen, onClose, orden = null, mo
         )}
 
         {esEdicion && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">
+          <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <p className="text-sm text-yellow-800 dark:text-yellow-300">
               Para editar los items de la orden, utiliza la vista de detalle de la orden.
             </p>
           </div>
         )}
 
         {/* Botones */}
-        <div className="flex justify-end space-x-3 pt-4 border-t">
+        <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="secondary" onClick={onClose}>
             Cancelar
           </Button>

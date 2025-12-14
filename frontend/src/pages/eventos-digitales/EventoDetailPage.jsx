@@ -27,7 +27,8 @@ import {
   Camera,
   UserCheck,
   AlertCircle,
-  LayoutGrid
+  LayoutGrid,
+  MoreVertical
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -543,7 +544,7 @@ function EventoDetailPage() {
 
   if (loadingEvento) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <LoadingSpinner />
       </div>
     );
@@ -551,9 +552,9 @@ function EventoDetailPage() {
 
   if (!evento) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Evento no encontrado</p>
+          <p className="text-gray-600 dark:text-gray-400">Evento no encontrado</p>
           <Button onClick={() => navigate('/eventos-digitales')} className="mt-4">
             Volver a Eventos
           </Button>
@@ -578,26 +579,26 @@ function EventoDetailPage() {
 
   const getEstadoBadge = (estado) => {
     const badges = {
-      borrador: 'bg-gray-100 text-gray-800',
-      publicado: 'bg-green-100 text-green-800',
-      finalizado: 'bg-blue-100 text-blue-800',
+      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      publicado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
+      finalizado: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getRSVPBadge = (estado) => {
     const badges = {
-      pendiente: 'bg-yellow-100 text-yellow-800',
-      confirmado: 'bg-green-100 text-green-800',
-      rechazado: 'bg-red-100 text-red-800',
+      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400',
+      confirmado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
+      rechazado: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
+      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4 mb-4">
             <Button variant="outline" size="sm" onClick={() => navigate('/eventos-digitales')}>
@@ -608,16 +609,16 @@ function EventoDetailPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 bg-pink-100 rounded-xl flex items-center justify-center">
-                <PartyPopper className="w-8 h-8 text-pink-600" />
+              <div className="w-16 h-16 bg-pink-100 dark:bg-pink-900/40 rounded-xl flex items-center justify-center">
+                <PartyPopper className="w-8 h-8 text-pink-600 dark:text-pink-400" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">{evento.nombre}</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{evento.nombre}</h1>
                 <div className="flex items-center gap-3 mt-1">
                   <span className={`px-2 py-1 text-xs font-medium rounded-full ${getEstadoBadge(evento.estado)}`}>
                     {evento.estado}
                   </span>
-                  <span className="text-sm text-gray-500 flex items-center gap-1">
+                  <span className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
                     {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
                       weekday: 'long',
@@ -659,21 +660,21 @@ function EventoDetailPage() {
           {/* Stats */}
           {estadisticas?.resumen && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-6">
-              <div className="bg-gray-50 rounded-lg p-3">
-                <p className="text-sm text-gray-500">Total Invitados</p>
-                <p className="text-2xl font-bold text-gray-900">{estadisticas.resumen.total_invitados || 0}</p>
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total Invitados</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.resumen.total_invitados || 0}</p>
               </div>
-              <div className="bg-green-50 rounded-lg p-3">
-                <p className="text-sm text-green-600">Confirmados</p>
-                <p className="text-2xl font-bold text-green-700">{estadisticas.resumen.total_confirmados || 0}</p>
+              <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-3">
+                <p className="text-sm text-green-600 dark:text-green-400">Confirmados</p>
+                <p className="text-2xl font-bold text-green-700 dark:text-green-400">{estadisticas.resumen.total_confirmados || 0}</p>
               </div>
-              <div className="bg-red-50 rounded-lg p-3">
-                <p className="text-sm text-red-600">No Asisten</p>
-                <p className="text-2xl font-bold text-red-700">{estadisticas.resumen.total_declinados || 0}</p>
+              <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-3">
+                <p className="text-sm text-red-600 dark:text-red-400">No Asisten</p>
+                <p className="text-2xl font-bold text-red-700 dark:text-red-400">{estadisticas.resumen.total_declinados || 0}</p>
               </div>
-              <div className="bg-yellow-50 rounded-lg p-3">
-                <p className="text-sm text-yellow-600">Pendientes</p>
-                <p className="text-2xl font-bold text-yellow-700">{estadisticas.resumen.total_pendientes || 0}</p>
+              <div className="bg-yellow-50 dark:bg-yellow-900/30 rounded-lg p-3">
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">Pendientes</p>
+                <p className="text-2xl font-bold text-yellow-700 dark:text-yellow-400">{estadisticas.resumen.total_pendientes || 0}</p>
               </div>
             </div>
           )}
@@ -681,29 +682,34 @@ function EventoDetailPage() {
       </div>
 
       {/* Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <nav className="flex gap-6 overflow-x-auto" aria-label="Tabs">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          {/* Gradiente indicador de scroll derecho */}
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-white dark:from-gray-800 to-transparent pointer-events-none z-10 sm:hidden" />
+          <nav className="flex gap-4 sm:gap-6 overflow-x-auto scrollbar-hide pb-px -mb-px" aria-label="Tabs">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`
-                  flex items-center gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors
+                  flex items-center gap-1.5 sm:gap-2 py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap transition-colors flex-shrink-0
                   ${activeTab === tab.id
-                    ? 'border-pink-500 text-pink-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-pink-500 text-pink-600 dark:text-pink-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
-                <tab.icon className="w-5 h-5" />
-                {tab.label}
-                <span className={`
-                  px-2 py-0.5 text-xs rounded-full
-                  ${activeTab === tab.id ? 'bg-pink-100 text-pink-600' : 'bg-gray-100 text-gray-600'}
-                `}>
-                  {tab.count}
-                </span>
+                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="hidden xs:inline sm:inline">{tab.label}</span>
+                <span className="xs:hidden sm:hidden">{tab.label.substring(0, 3)}</span>
+                {tab.count !== undefined && (
+                  <span className={`
+                    px-1.5 sm:px-2 py-0.5 text-xs rounded-full
+                    ${activeTab === tab.id ? 'bg-pink-100 dark:bg-pink-900/40 text-pink-600 dark:text-pink-400' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'}
+                  `}>
+                    {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
@@ -711,12 +717,12 @@ function EventoDetailPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
         {/* Tab: Invitados */}
         {activeTab === 'invitados' && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-              <h2 className="text-lg font-semibold">Lista de Invitados</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Lista de Invitados</h2>
               <div className="flex flex-wrap gap-2">
                 <Button variant="outline" size="sm" onClick={() => setShowImportModal(true)}>
                   <Upload className="w-4 h-4 mr-2" />
@@ -752,9 +758,9 @@ function EventoDetailPage() {
 
             {/* Modal de Importación CSV */}
             {showImportModal && (
-              <div className="bg-white rounded-lg shadow-sm p-4 border">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                 <div className="flex justify-between items-center mb-4">
-                  <h3 className="font-medium flex items-center gap-2">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Importar Invitados desde CSV
                   </h3>
@@ -763,23 +769,23 @@ function EventoDetailPage() {
                   </Button>
                 </div>
                 <div className="space-y-4">
-                  <div className="bg-gray-50 rounded-lg p-3 text-sm text-gray-600">
+                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 text-sm text-gray-600 dark:text-gray-300">
                     <p className="font-medium mb-2">Formato esperado:</p>
-                    <code className="block bg-white p-2 rounded border text-xs">
+                    <code className="block bg-white dark:bg-gray-800 p-2 rounded border border-gray-200 dark:border-gray-600 text-xs">
                       nombre,email,telefono,grupo_familiar,max_acompanantes<br/>
                       Juan Pérez,juan@email.com,5551234567,Familia Pérez,2<br/>
                       María López,maria@email.com,5559876543,,1
                     </code>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Pega aquí el contenido CSV
                     </label>
                     <textarea
                       value={csvText}
                       onChange={(e) => setCsvText(e.target.value)}
                       rows={8}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg font-mono text-sm"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="nombre,email,telefono,grupo_familiar,max_acompanantes&#10;Juan Pérez,juan@email.com,5551234567,Familia Pérez,2"
                     />
                   </div>
@@ -801,9 +807,9 @@ function EventoDetailPage() {
             {/* Modal de visualización QR */}
             {showQRModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-                <div className="bg-white rounded-lg shadow-xl max-w-sm w-full p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-sm w-full p-6">
                   <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-medium text-lg">Código QR</h3>
+                    <h3 className="font-medium text-lg text-gray-900 dark:text-gray-100">Código QR</h3>
                     <Button
                       variant="outline"
                       size="sm"
@@ -822,15 +828,15 @@ function EventoDetailPage() {
                     </div>
                   ) : qrData ? (
                     <div className="text-center">
-                      <p className="font-medium text-gray-900 mb-4">{qrData.invitado?.nombre}</p>
-                      <div className="bg-white p-4 rounded-lg border inline-block mb-4">
+                      <p className="font-medium text-gray-900 dark:text-gray-100 mb-4">{qrData.invitado?.nombre}</p>
+                      <div className="bg-white p-4 rounded-lg border border-gray-200 dark:border-gray-600 inline-block mb-4">
                         <img
                           src={qrData.qr}
                           alt={`QR de ${qrData.invitado?.nombre}`}
                           className="w-48 h-48 mx-auto"
                         />
                       </div>
-                      <p className="text-sm text-gray-500 mb-4 break-all">{qrData.url}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mb-4 break-all">{qrData.url}</p>
                       <div className="flex gap-2 justify-center">
                         <Button onClick={handleDescargarQR}>
                           <Download className="w-4 h-4 mr-2" />
@@ -849,15 +855,15 @@ function EventoDetailPage() {
                       </div>
                     </div>
                   ) : (
-                    <p className="text-center text-gray-500">No se pudo cargar el QR</p>
+                    <p className="text-center text-gray-500 dark:text-gray-400">No se pudo cargar el QR</p>
                   )}
                 </div>
               </div>
             )}
 
             {showInvitadoForm && (
-              <form onSubmit={handleGuardarInvitado} className="bg-white rounded-lg shadow-sm p-4 border">
-                <h3 className="font-medium mb-4">{editingInvitadoId ? 'Editar Invitado' : 'Nuevo Invitado'}</h3>
+              <form onSubmit={handleGuardarInvitado} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">{editingInvitadoId ? 'Editar Invitado' : 'Nuevo Invitado'}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Nombre *"
@@ -898,44 +904,45 @@ function EventoDetailPage() {
             {loadingInvitados ? (
               <LoadingSpinner />
             ) : invitadosData?.invitados?.length > 0 ? (
-              <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <table className="w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Contacto</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">RSVP</th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Asistentes</th>
-                      <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Nombre</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden sm:table-cell">Contacto</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">RSVP</th>
+                      <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase hidden sm:table-cell">Asistentes</th>
+                      <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-20 sm:w-auto"></th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {invitadosData.invitados.map((inv) => (
-                      <tr key={inv.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <p className="font-medium text-gray-900">{inv.nombre}</p>
+                      <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                          <p className="font-medium text-gray-900 dark:text-gray-100 text-sm sm:text-base">{inv.nombre}</p>
                           {inv.grupo_familiar && (
-                            <p className="text-sm text-gray-500">{inv.grupo_familiar}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{inv.grupo_familiar}</p>
                           )}
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                          <div className="text-sm text-gray-600">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                          <div className="text-sm text-gray-600 dark:text-gray-400">
                             {inv.email && <p className="flex items-center gap-1"><Mail className="w-3 h-3" />{inv.email}</p>}
                             {inv.telefono && <p className="flex items-center gap-1"><Phone className="w-3 h-3" />{inv.telefono}</p>}
                           </div>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                           <span className={`px-2 py-1 text-xs font-medium rounded-full ${getRSVPBadge(inv.estado_rsvp)}`}>
                             {inv.estado_rsvp}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                          <span className="text-sm text-gray-600">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden sm:table-cell">
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
                             {inv.num_asistentes || 0} / {inv.max_acompanantes + 1}
                           </span>
                         </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="flex items-center justify-end gap-2">
+                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right">
+                          {/* Desktop: botones visibles */}
+                          <div className="hidden sm:flex items-center justify-end gap-2">
                             {mostrarQR && (
                               <Button
                                 variant="outline"
@@ -970,11 +977,53 @@ function EventoDetailPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => eliminarInvitado.mutate({ id: inv.id, eventoId: id })}
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                               title="Eliminar invitado"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
+                          </div>
+                          {/* Mobile: menú dropdown */}
+                          <div className="sm:hidden relative group">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="px-2"
+                            >
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                            <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20 opacity-0 invisible group-focus-within:opacity-100 group-focus-within:visible transition-all">
+                              {mostrarQR && (
+                                <button
+                                  onClick={() => handleVerQR(inv)}
+                                  className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                >
+                                  <QrCode className="w-4 h-4" /> Ver QR
+                                </button>
+                              )}
+                              <button
+                                onClick={() => {
+                                  const invitacionUrl = `${window.location.origin}/e/${evento.slug}/${inv.token}`;
+                                  navigator.clipboard.writeText(invitacionUrl);
+                                  toast.success('Link copiado');
+                                }}
+                                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Copy className="w-4 h-4" /> Copiar link
+                              </button>
+                              <button
+                                onClick={() => handleEditarInvitado(inv)}
+                                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                              >
+                                <Edit className="w-4 h-4" /> Editar
+                              </button>
+                              <button
+                                onClick={() => eliminarInvitado.mutate({ id: inv.id, eventoId: id })}
+                                className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
+                              >
+                                <Trash2 className="w-4 h-4" /> Eliminar
+                              </button>
+                            </div>
                           </div>
                         </td>
                       </tr>
@@ -983,9 +1032,9 @@ function EventoDetailPage() {
                 </table>
               </div>
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <Users className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No hay invitados todavía</p>
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <Users className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No hay invitados todavía</p>
               </div>
             )}
           </div>
@@ -997,14 +1046,14 @@ function EventoDetailPage() {
             {/* Header y Stats */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Panel del Escáner */}
-              <div className="lg:col-span-2 bg-white rounded-lg shadow-sm p-6 border">
+              <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Camera className="w-5 h-5" />
                     Escáner de QR
                   </h2>
                   {scannerActive ? (
-                    <Button variant="outline" onClick={stopScanner} className="text-red-600">
+                    <Button variant="outline" onClick={stopScanner} className="text-red-600 dark:text-red-400">
                       <X className="w-4 h-4 mr-2" />
                       Detener
                     </Button>
@@ -1052,21 +1101,21 @@ function EventoDetailPage() {
 
                 {/* Último check-in */}
                 {lastCheckin && (
-                  <div className={`mt-4 p-4 rounded-lg ${lastCheckin.success ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                  <div className={`mt-4 p-4 rounded-lg ${lastCheckin.success ? 'bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800'}`}>
                     {lastCheckin.success ? (
                       <div className="flex items-center gap-3">
-                        <UserCheck className="w-8 h-8 text-green-600" />
+                        <UserCheck className="w-8 h-8 text-green-600 dark:text-green-400" />
                         <div>
-                          <p className="font-medium text-green-800">{lastCheckin.nombre}</p>
-                          <p className="text-sm text-green-600">Check-in registrado correctamente</p>
+                          <p className="font-medium text-green-800 dark:text-green-300">{lastCheckin.nombre}</p>
+                          <p className="text-sm text-green-600 dark:text-green-400">Check-in registrado correctamente</p>
                         </div>
                       </div>
                     ) : (
                       <div className="flex items-center gap-3">
-                        <AlertCircle className="w-8 h-8 text-red-600" />
+                        <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                         <div>
-                          <p className="font-medium text-red-800">Error en check-in</p>
-                          <p className="text-sm text-red-600">{lastCheckin.mensaje}</p>
+                          <p className="font-medium text-red-800 dark:text-red-300">Error en check-in</p>
+                          <p className="text-sm text-red-600 dark:text-red-400">{lastCheckin.mensaje}</p>
                         </div>
                       </div>
                     )}
@@ -1076,39 +1125,39 @@ function EventoDetailPage() {
                 {loadingCheckin && (
                   <div className="mt-4 flex items-center justify-center p-4">
                     <LoadingSpinner />
-                    <span className="ml-2">Procesando check-in...</span>
+                    <span className="ml-2 text-gray-600 dark:text-gray-400">Procesando check-in...</span>
                   </div>
                 )}
               </div>
 
               {/* Panel de Estadísticas */}
               <div className="space-y-4">
-                <div className="bg-white rounded-lg shadow-sm p-6 border">
-                  <h3 className="text-lg font-semibold mb-4">Estadísticas</h3>
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Estadísticas</h3>
                   <div className="space-y-4">
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Total invitados</span>
-                      <span className="text-2xl font-bold">{invitadosData?.total || 0}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Total invitados</span>
+                      <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">{invitadosData?.total || 0}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Confirmados</span>
-                      <span className="text-2xl font-bold text-green-600">{checkinStats?.total_confirmados || 0}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Confirmados</span>
+                      <span className="text-2xl font-bold text-green-600 dark:text-green-400">{checkinStats?.total_confirmados || 0}</span>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="text-gray-600">Check-ins</span>
-                      <span className="text-2xl font-bold text-blue-600">{checkinStats?.total_checkin || 0}</span>
+                      <span className="text-gray-600 dark:text-gray-400">Check-ins</span>
+                      <span className="text-2xl font-bold text-primary-600 dark:text-primary-400">{checkinStats?.total_checkin || 0}</span>
                     </div>
-                    <div className="pt-4 border-t">
+                    <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
                       <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Progreso</span>
-                        <span className="font-medium">
+                        <span className="text-gray-600 dark:text-gray-400">Progreso</span>
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
                           {checkinStats?.total_confirmados ?
                             Math.round((checkinStats.total_checkin / checkinStats.total_confirmados) * 100) : 0}%
                         </span>
                       </div>
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
+                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mt-2">
                         <div
-                          className="bg-blue-600 h-2 rounded-full transition-all"
+                          className="bg-primary-600 dark:bg-primary-500 h-2 rounded-full transition-all"
                           style={{
                             width: `${checkinStats?.total_confirmados ?
                               Math.min(100, (checkinStats.total_checkin / checkinStats.total_confirmados) * 100) : 0}%`
@@ -1130,24 +1179,24 @@ function EventoDetailPage() {
             </div>
 
             {/* Últimos Check-ins */}
-            <div className="bg-white rounded-lg shadow-sm p-6 border">
-              <h3 className="text-lg font-semibold mb-4">Últimos Check-ins</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Últimos Check-ins</h3>
               {recentCheckins.length > 0 ? (
                 <div className="space-y-3">
                   {recentCheckins.map((checkin, index) => (
-                    <div key={index} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                    <div key={index} className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                          <UserCheck className="w-5 h-5 text-green-600" />
+                        <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
+                          <UserCheck className="w-5 h-5 text-green-600 dark:text-green-400" />
                         </div>
                         <div>
-                          <p className="font-medium">{checkin.nombre}</p>
+                          <p className="font-medium text-gray-900 dark:text-gray-100">{checkin.nombre}</p>
                           {checkin.grupo_familiar && (
-                            <p className="text-sm text-gray-500">{checkin.grupo_familiar}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{checkin.grupo_familiar}</p>
                           )}
                         </div>
                       </div>
-                      <span className="text-sm text-gray-500">
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
                         {new Date(checkin.checkin_at).toLocaleTimeString('es-ES', {
                           hour: '2-digit',
                           minute: '2-digit'
@@ -1157,7 +1206,7 @@ function EventoDetailPage() {
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-8 text-gray-500">
+                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                   <UserCheck className="w-12 h-12 mx-auto mb-4 opacity-30" />
                   <p>No hay check-ins registrados</p>
                 </div>
@@ -1177,7 +1226,7 @@ function EventoDetailPage() {
         {activeTab === 'ubicaciones' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Ubicaciones del Evento</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ubicaciones del Evento</h2>
               <Button onClick={() => setShowUbicacionForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Ubicación
@@ -1185,8 +1234,8 @@ function EventoDetailPage() {
             </div>
 
             {showUbicacionForm && (
-              <form onSubmit={handleGuardarUbicacion} className="bg-white rounded-lg shadow-sm p-4 border">
-                <h3 className="font-medium mb-4">{editingUbicacionId ? 'Editar Ubicación' : 'Nueva Ubicación'}</h3>
+              <form onSubmit={handleGuardarUbicacion} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">{editingUbicacionId ? 'Editar Ubicación' : 'Nueva Ubicación'}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Nombre *"
@@ -1196,11 +1245,11 @@ function EventoDetailPage() {
                     required
                   />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
                     <select
                       value={ubicacionForm.tipo}
                       onChange={(e) => setUbicacionForm({ ...ubicacionForm, tipo: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="ceremonia">Ceremonia</option>
                       <option value="recepcion">Recepción</option>
@@ -1249,11 +1298,11 @@ function EventoDetailPage() {
             ) : ubicaciones?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {ubicaciones.map((ubi) => (
-                  <div key={ubi.id} className="bg-white rounded-lg shadow-sm p-4 border">
+                  <div key={ubi.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-gray-900">{ubi.nombre}</h3>
-                        <span className="text-xs text-gray-500 uppercase">{ubi.tipo}</span>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{ubi.nombre}</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">{ubi.tipo}</span>
                       </div>
                       <div className="flex gap-1">
                         <Button
@@ -1268,22 +1317,22 @@ function EventoDetailPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => eliminarUbicacion.mutate({ id: ubi.id, eventoId: id })}
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                           title="Eliminar ubicación"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
-                    {ubi.direccion && <p className="text-sm text-gray-600 flex items-center gap-1"><MapPin className="w-4 h-4" />{ubi.direccion}</p>}
+                    {ubi.direccion && <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1"><MapPin className="w-4 h-4" />{ubi.direccion}</p>}
                     {(ubi.hora_inicio || ubi.hora_fin) && (
-                      <p className="text-sm text-gray-600 flex items-center gap-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 flex items-center gap-1">
                         <Clock className="w-4 h-4" />
                         {ubi.hora_inicio}{ubi.hora_inicio && ubi.hora_fin && ' - '}{ubi.hora_fin}
                       </p>
                     )}
                     {ubi.google_maps_url && (
-                      <a href={ubi.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1 mt-2">
+                      <a href={ubi.google_maps_url} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 mt-2">
                         <ExternalLink className="w-4 h-4" />Ver en Google Maps
                       </a>
                     )}
@@ -1291,9 +1340,9 @@ function EventoDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <MapPin className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No hay ubicaciones todavía</p>
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <MapPin className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No hay ubicaciones todavía</p>
               </div>
             )}
           </div>
@@ -1303,7 +1352,7 @@ function EventoDetailPage() {
         {activeTab === 'regalos' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Mesa de Regalos</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Mesa de Regalos</h2>
               <Button onClick={() => setShowRegaloForm(true)}>
                 <Plus className="w-4 h-4 mr-2" />
                 Agregar Regalo
@@ -1311,8 +1360,8 @@ function EventoDetailPage() {
             </div>
 
             {showRegaloForm && (
-              <form onSubmit={handleGuardarRegalo} className="bg-white rounded-lg shadow-sm p-4 border">
-                <h3 className="font-medium mb-4">{editingRegaloId ? 'Editar Regalo' : 'Nuevo Regalo'}</h3>
+              <form onSubmit={handleGuardarRegalo} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4">{editingRegaloId ? 'Editar Regalo' : 'Nuevo Regalo'}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
                     label="Nombre *"
@@ -1322,11 +1371,11 @@ function EventoDetailPage() {
                     required
                   />
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
                     <select
                       value={regaloForm.tipo}
                       onChange={(e) => setRegaloForm({ ...regaloForm, tipo: e.target.value })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     >
                       <option value="producto">Producto</option>
                       <option value="sobre_digital">Sobre Digital</option>
@@ -1347,12 +1396,12 @@ function EventoDetailPage() {
                     placeholder="https://..."
                   />
                   <div className="sm:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Descripción</label>
                     <textarea
                       value={regaloForm.descripcion}
                       onChange={(e) => setRegaloForm({ ...regaloForm, descripcion: e.target.value })}
                       rows={2}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -1372,11 +1421,11 @@ function EventoDetailPage() {
             ) : regalos?.length > 0 ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {regalos.map((regalo) => (
-                  <div key={regalo.id} className="bg-white rounded-lg shadow-sm p-4 border">
+                  <div key={regalo.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <h3 className="font-medium text-gray-900">{regalo.nombre}</h3>
-                        <span className="text-xs text-gray-500 uppercase">{regalo.tipo.replace('_', ' ')}</span>
+                        <h3 className="font-medium text-gray-900 dark:text-gray-100">{regalo.nombre}</h3>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase">{regalo.tipo.replace('_', ' ')}</span>
                       </div>
                       <div className="flex gap-1">
                         <Button
@@ -1391,22 +1440,22 @@ function EventoDetailPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => eliminarRegalo.mutate({ id: regalo.id, eventoId: id })}
-                          className="text-red-600 hover:bg-red-50"
+                          className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                           title="Eliminar regalo"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>
                     </div>
-                    {regalo.descripcion && <p className="text-sm text-gray-600 mb-2">{regalo.descripcion}</p>}
-                    {regalo.precio && <p className="text-lg font-semibold text-pink-600">${regalo.precio.toLocaleString()}</p>}
+                    {regalo.descripcion && <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{regalo.descripcion}</p>}
+                    {regalo.precio && <p className="text-lg font-semibold text-pink-600 dark:text-pink-400">${regalo.precio.toLocaleString()}</p>}
                     {regalo.comprado && (
-                      <span className="inline-flex items-center gap-1 text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full mt-2">
+                      <span className="inline-flex items-center gap-1 text-xs bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400 px-2 py-1 rounded-full mt-2">
                         <Check className="w-3 h-3" />Comprado
                       </span>
                     )}
                     {regalo.url_externa && (
-                      <a href={regalo.url_externa} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 hover:underline flex items-center gap-1 mt-2">
+                      <a href={regalo.url_externa} target="_blank" rel="noopener noreferrer" className="text-sm text-pink-600 dark:text-pink-400 hover:underline flex items-center gap-1 mt-2">
                         <ExternalLink className="w-4 h-4" />Ver producto
                       </a>
                     )}
@@ -1414,9 +1463,9 @@ function EventoDetailPage() {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <Gift className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No hay regalos en la mesa todavía</p>
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <Gift className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No hay regalos en la mesa todavía</p>
               </div>
             )}
           </div>
@@ -1426,7 +1475,7 @@ function EventoDetailPage() {
         {activeTab === 'felicitaciones' && (
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Felicitaciones</h2>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Felicitaciones</h2>
             </div>
 
             {loadingFelicitaciones ? (
@@ -1434,11 +1483,11 @@ function EventoDetailPage() {
             ) : felicitacionesData?.felicitaciones?.length > 0 ? (
               <div className="space-y-4">
                 {felicitacionesData.felicitaciones.map((fel) => (
-                  <div key={fel.id} className="bg-white rounded-lg shadow-sm p-4 border">
+                  <div key={fel.id} className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 border border-gray-200 dark:border-gray-700">
                     <div className="flex justify-between items-start">
                       <div>
-                        <p className="font-medium text-gray-900">{fel.nombre_autor}</p>
-                        <p className="text-sm text-gray-500">{new Date(fel.created_at).toLocaleDateString('es-ES')}</p>
+                        <p className="font-medium text-gray-900 dark:text-gray-100">{fel.nombre_autor}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{new Date(fel.created_at).toLocaleDateString('es-ES')}</p>
                       </div>
                       <div className="flex gap-2">
                         {!fel.aprobada && (
@@ -1447,7 +1496,7 @@ function EventoDetailPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => aprobarFelicitacion.mutate({ id: fel.id, eventoId: id })}
-                              className="text-green-600 hover:bg-green-50"
+                              className="text-green-600 hover:bg-green-50 dark:hover:bg-green-900/30"
                             >
                               <Check className="w-4 h-4" />
                             </Button>
@@ -1455,25 +1504,25 @@ function EventoDetailPage() {
                               variant="outline"
                               size="sm"
                               onClick={() => rechazarFelicitacion.mutate({ id: fel.id, eventoId: id })}
-                              className="text-red-600 hover:bg-red-50"
+                              className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                             >
                               <X className="w-4 h-4" />
                             </Button>
                           </>
                         )}
                         {fel.aprobada && (
-                          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Aprobada</span>
+                          <span className="text-xs bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400 px-2 py-1 rounded-full">Aprobada</span>
                         )}
                       </div>
                     </div>
-                    <p className="text-gray-700 mt-2 italic">"{fel.mensaje}"</p>
+                    <p className="text-gray-700 dark:text-gray-300 mt-2 italic">"{fel.mensaje}"</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-center py-12 bg-white rounded-lg">
-                <MessageCircle className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No hay felicitaciones todavía</p>
+              <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                <MessageCircle className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                <p className="text-gray-500 dark:text-gray-400">No hay felicitaciones todavía</p>
               </div>
             )}
           </div>

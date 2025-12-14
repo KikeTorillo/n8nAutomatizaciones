@@ -145,21 +145,21 @@ function BloqueosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona citas, bloqueos y clientes
         </p>
       </div>
@@ -173,10 +173,10 @@ function BloqueosPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Lock className="h-7 w-7 sm:h-8 sm:w-8 text-indigo-600 flex-shrink-0" />
+              <Lock className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Bloqueos de Horarios</h2>
-                <p className="text-sm text-gray-600 hidden sm:block">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Bloqueos de Horarios</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                   Gestiona bloqueos por vacaciones, feriados y más
                 </p>
               </div>
@@ -191,40 +191,40 @@ function BloqueosPage() {
         {/* Estadísticas - 2 cols mobile, 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
           {/* Total bloqueos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600">Total Bloqueos</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalBloqueos}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Bloqueos</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalBloqueos}</p>
               </div>
             </div>
           </div>
 
           {/* Total días */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600">Total Días</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">{estadisticas.totalDias}</p>
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Días</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalDias}</p>
               </div>
             </div>
           </div>
 
           {/* Ingresos perdidos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-red-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600 truncate">Ingresos Perdidos</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Ingresos Perdidos</p>
+                <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
                   {formatCurrency(estadisticas.ingresosPerdidos)}
                 </p>
               </div>
@@ -232,14 +232,14 @@ function BloqueosPage() {
           </div>
 
           {/* Próximos bloqueos */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-3 sm:p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
             <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600">Próximos 30 días</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900">
+                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Próximos 30 días</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
                   {bloqueosFiltrados.filter((b) => {
                     const hoy = new Date();
                     const fecha = new Date(b.fecha_inicio);
@@ -254,14 +254,14 @@ function BloqueosPage() {
         </div>
 
         {/* Tabs de vistas - Mobile First */}
-        <div className="bg-white rounded-t-lg shadow-sm border border-gray-200 border-b-0">
-          <div className="flex border-b border-gray-200">
+        <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm border border-gray-200 dark:border-gray-700 border-b-0">
+          <div className="flex border-b border-gray-200 dark:border-gray-700">
             <button
               onClick={() => setVistaActiva('todos')}
               className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'todos'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               Todos
@@ -270,8 +270,8 @@ function BloqueosPage() {
               onClick={() => setVistaActiva('profesionales')}
               className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'profesionales'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               <span className="sm:hidden">Profes.</span>
@@ -281,8 +281,8 @@ function BloqueosPage() {
               onClick={() => setVistaActiva('organizacionales')}
               className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
                 vistaActiva === 'organizacionales'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               <span className="sm:hidden">Org.</span>
@@ -292,8 +292,8 @@ function BloqueosPage() {
               onClick={() => setVistaActiva('calendario')}
               className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 ${
                 vistaActiva === 'calendario'
-                  ? 'text-primary-600 border-b-2 border-primary-600'
-                  : 'text-gray-600 hover:text-gray-900'
+                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
               }`}
             >
               <CalendarDays className="h-4 w-4" />
@@ -375,19 +375,19 @@ function BloqueosPage() {
         >
           {bloqueoParaEliminar && (
             <div className="space-y-4">
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-300">
                 ¿Estás seguro de que deseas eliminar el siguiente bloqueo?
               </p>
 
-              <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                <h4 className="font-medium text-gray-900 mb-2">{bloqueoParaEliminar.titulo}</h4>
-                <div className="text-sm text-gray-600 space-y-1">
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{bloqueoParaEliminar.titulo}</h4>
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <p>Tipo: {bloqueoParaEliminar.tipo_bloqueo}</p>
                   <p>
                     Fecha: {bloqueoParaEliminar.fecha_inicio} - {bloqueoParaEliminar.fecha_fin}
                   </p>
                   {bloqueoParaEliminar.citas_afectadas > 0 && (
-                    <p className="text-red-600 font-medium mt-2">
+                    <p className="text-red-600 dark:text-red-400 font-medium mt-2">
                       ⚠️ Este bloqueo afecta {bloqueoParaEliminar.citas_afectadas} citas
                     </p>
                   )}

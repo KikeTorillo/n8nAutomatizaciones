@@ -43,17 +43,17 @@ function ReporteComisionesTable({
       'pendiente': {
         label: 'Pendiente',
         icon: Clock,
-        className: 'bg-orange-100 text-orange-800',
+        className: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
       },
       'pagada': {
         label: 'Pagada',
         icon: CheckCircle,
-        className: 'bg-green-100 text-green-800',
+        className: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
       },
       'cancelada': {
         label: 'Cancelada',
         icon: XCircle,
-        className: 'bg-red-100 text-red-800',
+        className: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
       },
     };
 
@@ -74,7 +74,7 @@ function ReporteComisionesTable({
       <div className="flex items-center justify-center py-12">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-          <p className="text-sm text-gray-600">Cargando comisiones...</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Cargando comisiones...</p>
         </div>
       </div>
     );
@@ -83,15 +83,15 @@ function ReporteComisionesTable({
   // Empty state
   if (!comisiones || comisiones.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-12 text-center">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
         <div className="max-w-sm mx-auto">
-          <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <DollarSign className="w-8 h-8 text-gray-400" />
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <DollarSign className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             No se encontraron comisiones
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-400">
             Intenta ajustar los filtros o el rango de fechas
           </p>
         </div>
@@ -101,26 +101,26 @@ function ReporteComisionesTable({
 
   return (
     <>
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Resumen */}
         {resumen && (
-          <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+          <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-sm text-gray-500">Total</p>
-                <p className="text-lg font-semibold text-gray-900">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                   {formatCurrency(parseFloat(resumen.total || 0))}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Pendientes</p>
-                <p className="text-lg font-semibold text-orange-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pendientes</p>
+                <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
                   {formatCurrency(parseFloat(resumen.total_pendientes || 0))}
                 </p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Pagadas</p>
-                <p className="text-lg font-semibold text-green-600">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Pagadas</p>
+                <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                   {formatCurrency(parseFloat(resumen.total_pagadas || 0))}
                 </p>
               </div>
@@ -130,33 +130,33 @@ function ReporteComisionesTable({
 
         {/* Tabla */}
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Fecha Cita
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Profesional
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Código Cita
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Monto Base
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Comisión
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Estado
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {comisiones.map((comision) => {
                 const montoComision = parseFloat(comision.monto_comision);
                 const montoBase = parseFloat(comision.monto_base);
@@ -164,42 +164,42 @@ function ReporteComisionesTable({
                 return (
                   <tr
                     key={comision.id}
-                    className="hover:bg-gray-50 transition-colors"
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     {/* Fecha */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
                         {formatearFecha(comision.fecha_cita)}
                       </div>
                     </td>
 
                     {/* Profesional */}
                     <td className="px-6 py-4">
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {comision.profesional_nombre} {comision.profesional_apellidos}
                       </div>
                     </td>
 
                     {/* Código Cita */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-600 font-mono">
+                      <div className="text-sm text-gray-600 dark:text-gray-400 font-mono">
                         {comision.codigo_cita}
                       </div>
                     </td>
 
                     {/* Monto Base */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900">
+                      <div className="text-sm text-gray-900 dark:text-gray-100">
                         {formatCurrency(montoBase)}
                       </div>
                     </td>
 
                     {/* Comisión */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-green-600">
+                      <div className="text-sm font-semibold text-green-600 dark:text-green-400">
                         {formatCurrency(montoComision)}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
                         {comision.tipo_comision === 'porcentaje'
                           ? `${parseFloat(comision.valor_comision)}%`
                           : 'Monto fijo'}
@@ -242,9 +242,9 @@ function ReporteComisionesTable({
         </div>
 
         {/* Total de registros */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-          <p className="text-sm text-gray-500 text-center">
-            Total de comisiones: <span className="font-medium text-gray-900">{comisiones.length}</span>
+        <div className="px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
+            Total de comisiones: <span className="font-medium text-gray-900 dark:text-gray-100">{comisiones.length}</span>
           </p>
         </div>
       </div>

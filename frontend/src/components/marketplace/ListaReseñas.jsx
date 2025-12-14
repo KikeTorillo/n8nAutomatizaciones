@@ -98,7 +98,7 @@ function ListaReseñas({ organizacionId }) {
     <div className="space-y-6">
       {/* Filtros */}
       <div className="flex items-center gap-4">
-        <label className="text-sm font-medium text-gray-700">Filtrar por estado:</label>
+        <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Filtrar por estado:</label>
         <div className="flex gap-2">
           {['publicada', 'pendiente', 'oculta', 'reportada'].map((estado) => (
             <button
@@ -107,7 +107,7 @@ function ListaReseñas({ organizacionId }) {
               className={`px-3 py-1 rounded-md text-sm font-medium transition-colors ${
                 filtroEstado === estado
                   ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
               }`}
             >
               {estado.charAt(0).toUpperCase() + estado.slice(1)}
@@ -118,9 +118,9 @@ function ListaReseñas({ organizacionId }) {
 
       {/* Lista de reseñas */}
       {resenas.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg">
-          <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-600">
+        <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+          <MessageCircle className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+          <p className="text-gray-600 dark:text-gray-400">
             No hay reseñas {filtroEstado !== 'publicada' ? `en estado "${filtroEstado}"` : 'aún'}
           </p>
         </div>
@@ -129,31 +129,31 @@ function ListaReseñas({ organizacionId }) {
           {resenas.map((resena) => (
             <div
               key={resena.id}
-              className="bg-white rounded-lg border border-gray-200 p-6 space-y-4"
+              className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6 space-y-4"
             >
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="font-semibold text-gray-900">
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
                       {resena.cliente_nombre || 'Cliente Anónimo'}
                     </span>
                     {renderEstrellas(resena.rating)}
                     <span
                       className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                         resena.estado === 'publicada'
-                          ? 'bg-green-100 text-green-800'
+                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
                           : resena.estado === 'pendiente'
-                            ? 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300'
                             : resena.estado === 'oculta'
-                              ? 'bg-gray-100 text-gray-800'
-                              : 'bg-red-100 text-red-800'
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+                              : 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300'
                       }`}
                     >
                       {resena.estado}
                     </span>
                   </div>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     {new Date(resena.creado_en).toLocaleDateString('es-MX', {
                       year: 'numeric',
                       month: 'long',
@@ -165,18 +165,18 @@ function ListaReseñas({ organizacionId }) {
 
               {/* Título y comentario */}
               {resena.titulo && (
-                <h4 className="font-semibold text-gray-900">{resena.titulo}</h4>
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100">{resena.titulo}</h4>
               )}
               {resena.comentario && (
-                <p className="text-gray-700 whitespace-pre-wrap">{resena.comentario}</p>
+                <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{resena.comentario}</p>
               )}
 
               {/* Respuesta del negocio */}
               {resena.respuesta_negocio && (
-                <div className="bg-gray-50 rounded-lg p-4 border-l-4 border-primary-500">
-                  <p className="text-sm font-medium text-gray-900 mb-1">Respuesta del negocio:</p>
-                  <p className="text-gray-700">{resena.respuesta_negocio}</p>
-                  <p className="text-xs text-gray-500 mt-2">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border-l-4 border-primary-500">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-1">Respuesta del negocio:</p>
+                  <p className="text-gray-700 dark:text-gray-300">{resena.respuesta_negocio}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
                     {new Date(resena.respuesta_fecha).toLocaleDateString('es-MX')}
                   </p>
                 </div>
@@ -189,7 +189,7 @@ function ListaReseñas({ organizacionId }) {
                     value={respuestaTexto}
                     onChange={(e) => setRespuestaTexto(e.target.value)}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Escribe tu respuesta..."
                   />
                   <div className="flex gap-2">
@@ -215,7 +215,7 @@ function ListaReseñas({ organizacionId }) {
               )}
 
               {/* Acciones */}
-              <div className="flex items-center gap-2 pt-2 border-t border-gray-200">
+              <div className="flex items-center gap-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                 {/* Responder */}
                 {!resena.respuesta_negocio && reseñaResponder !== resena.id && (
                   <Button

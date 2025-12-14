@@ -191,21 +191,21 @@ function CitasPage() {
   const citasCompletadas = citasDelDia.filter((c) => c.estado === 'completada').length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-3"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
 
-        <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Gestiona citas, bloqueos y clientes
         </p>
       </div>
@@ -219,10 +219,10 @@ function CitasPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center space-x-3">
-              <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+              <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
               <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900">Gestión de Citas</h2>
-                <p className="text-sm text-gray-600 hidden sm:block">
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Gestión de Citas</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                   Administra y monitorea todas las citas de tu negocio
                 </p>
               </div>
@@ -236,53 +236,53 @@ function CitasPage() {
         {/* Estadísticas Rápidas - 2 cols mobile, 4 cols desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6">
           {/* Total Citas del Día */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Citas Hoy</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 mt-1">{citasDelDia.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Citas Hoy</p>
+                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{citasDelDia.length}</p>
               </div>
-              <div className="bg-primary-100 p-2 sm:p-3 rounded-lg">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600" />
+              <div className="bg-primary-100 dark:bg-primary-900/40 p-2 sm:p-3 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
 
           {/* Pendientes */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Pendientes</p>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-600 mt-1">{citasPendientes}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Pendientes</p>
+                <p className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{citasPendientes}</p>
               </div>
-              <div className="bg-yellow-100 p-2 sm:p-3 rounded-lg">
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600" />
+              <div className="bg-yellow-100 dark:bg-yellow-900/40 p-2 sm:p-3 rounded-lg">
+                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
             </div>
           </div>
 
           {/* En Curso */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">En Curso</p>
-                <p className="text-xl sm:text-2xl font-bold text-blue-600 mt-1">{citasEnCurso}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">En Curso</p>
+                <p className="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{citasEnCurso}</p>
               </div>
-              <div className="bg-blue-100 p-2 sm:p-3 rounded-lg">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
+              <div className="bg-primary-100 dark:bg-primary-900/40 p-2 sm:p-3 rounded-lg">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
               </div>
             </div>
           </div>
 
           {/* Completadas */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600">Completadas</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-600 mt-1">{citasCompletadas}</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Completadas</p>
+                <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{citasCompletadas}</p>
               </div>
-              <div className="bg-green-100 p-2 sm:p-3 rounded-lg">
-                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
+              <div className="bg-green-100 dark:bg-green-900/40 p-2 sm:p-3 rounded-lg">
+                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
             </div>
           </div>
@@ -290,7 +290,7 @@ function CitasPage() {
 
         {/* Sistema de Tabs - Vista Lista / Calendario */}
         <div className="mb-6">
-          <div className="border-b border-gray-200 bg-white rounded-t-lg">
+          <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-lg">
             <nav className="flex space-x-8 px-6" aria-label="Tabs">
               <button
                 onClick={() => setVistaActiva('lista')}
@@ -299,8 +299,8 @@ function CitasPage() {
                   flex items-center gap-2
                   ${
                     vistaActiva === 'lista'
-                      ? 'border-primary-600 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
@@ -314,8 +314,8 @@ function CitasPage() {
                   flex items-center gap-2
                   ${
                     vistaActiva === 'calendario'
-                      ? 'border-primary-600 text-primary-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                   }
                 `}
               >
@@ -422,34 +422,34 @@ function CitasPage() {
         <div className="space-y-4">
           {/* Información de la cita */}
           {citaSeleccionada && (
-            <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-5 h-5 text-orange-500" />
-                <h4 className="font-semibold text-gray-900">¿Estás seguro?</h4>
+                <AlertCircle className="w-5 h-5 text-orange-500 dark:text-orange-400" />
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100">¿Estás seguro?</h4>
               </div>
-              <p className="text-sm text-gray-600">
-                Vas a cancelar la cita <strong>{citaSeleccionada.codigo_cita}</strong> del
-                cliente <strong>{citaSeleccionada.cliente_nombre}</strong>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Vas a cancelar la cita <strong className="text-gray-900 dark:text-gray-100">{citaSeleccionada.codigo_cita}</strong> del
+                cliente <strong className="text-gray-900 dark:text-gray-100">{citaSeleccionada.cliente_nombre}</strong>
               </p>
             </div>
           )}
 
           {/* Motivo de cancelación */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Motivo de cancelación <span className="text-red-500">*</span>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Motivo de cancelación <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <textarea
               value={motivoCancelacion}
               onChange={(e) => setMotivoCancelacion(e.target.value)}
               placeholder="Indica el motivo de la cancelación..."
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
             />
           </div>
 
           {/* Botones */}
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200">
+          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
               onClick={() => {

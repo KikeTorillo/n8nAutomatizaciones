@@ -157,15 +157,15 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
     >
       <div className="space-y-6">
         {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
-          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-            <Users className="w-6 h-6 text-green-600" />
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center">
+            <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {servicio?.nombre}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Selecciona los profesionales que ofrecen este servicio
             </p>
           </div>
@@ -175,8 +175,8 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando profesionales...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando profesionales...</p>
             </div>
           </div>
         ) : (
@@ -186,12 +186,12 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
               <div className="space-y-3">
                 {/* Contador */}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700 font-medium">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                     {selectedProfessionals.length} de {todosProfesionales.length}{' '}
                     profesionales seleccionados
                   </p>
                   {selectedProfessionals.length === 0 && (
-                    <div className="flex items-center gap-1 text-blue-600 text-xs">
+                    <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs">
                       <AlertCircle className="w-3 h-3" />
                       <span>Servicio sin profesionales asignados</span>
                     </div>
@@ -199,7 +199,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                 </div>
 
                 {/* Grid de profesionales */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
                   {todosProfesionales.map((prof) => (
                     <div
                       key={prof.id}
@@ -208,8 +208,8 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                         flex items-center gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all
                         ${
                           selectedProfessionals.includes(prof.id)
-                            ? 'border-green-600 bg-green-50'
-                            : 'border-gray-200 hover:border-green-300'
+                            ? 'border-green-600 dark:border-green-500 bg-green-50 dark:bg-green-900/30'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-green-300 dark:hover:border-green-500'
                         }
                       `}
                     >
@@ -217,7 +217,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                         type="checkbox"
                         checked={selectedProfessionals.includes(prof.id)}
                         onChange={() => {}}
-                        className="h-4 w-4 text-green-600 border-gray-300 rounded"
+                        className="h-4 w-4 text-green-600 border-gray-300 dark:border-gray-600 rounded"
                       />
                       <div
                         className="w-10 h-10 rounded-full flex-shrink-0"
@@ -226,7 +226,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
                         }}
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {prof.nombre_completo}
                         </p>
                       </div>
@@ -236,10 +236,10 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Users className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Users className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   No hay profesionales disponibles. Debes agregar profesionales
                   primero.
                 </p>
@@ -249,7 +249,7 @@ function ProfesionalesServicioModal({ isOpen, onClose, servicio }) {
         )}
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="outline"

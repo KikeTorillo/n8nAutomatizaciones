@@ -114,31 +114,31 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
   const nivelesConfig = {
     muy_debil: {
       color: 'bg-red-500',
-      textColor: 'text-red-600',
+      textColor: 'text-red-600 dark:text-red-400',
       label: 'Muy débil',
       porcentaje: 20,
     },
     debil: {
       color: 'bg-orange-500',
-      textColor: 'text-orange-600',
+      textColor: 'text-orange-600 dark:text-orange-400',
       label: 'Débil',
       porcentaje: 40,
     },
     media: {
       color: 'bg-yellow-500',
-      textColor: 'text-yellow-600',
+      textColor: 'text-yellow-600 dark:text-yellow-400',
       label: 'Media',
       porcentaje: 60,
     },
     fuerte: {
-      color: 'bg-blue-500',
-      textColor: 'text-blue-600',
+      color: 'bg-primary-500',
+      textColor: 'text-primary-600 dark:text-primary-400',
       label: 'Fuerte',
       porcentaje: 80,
     },
     muy_fuerte: {
       color: 'bg-green-500',
-      textColor: 'text-green-600',
+      textColor: 'text-green-600 dark:text-green-400',
       label: 'Muy fuerte',
       porcentaje: 100,
     },
@@ -152,12 +152,12 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
       {/* Barra de progreso */}
       <div className="space-y-1">
         <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600">Fortaleza:</span>
+          <span className="text-gray-600 dark:text-gray-400">Fortaleza:</span>
           <span className={`font-medium ${config.textColor}`}>
             {evaluando ? 'Evaluando...' : config.label}
           </span>
         </div>
-        <div className="w-full bg-gray-200 rounded-full h-2.5">
+        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
           <div
             className={`h-2.5 rounded-full transition-all duration-300 ${config.color}`}
             style={{
@@ -169,36 +169,36 @@ const PasswordStrengthIndicator = ({ password, onChange }) => {
       </div>
 
       {/* Lista de requisitos */}
-      <div className="bg-gray-50 rounded-lg p-3 border border-gray-200">
-        <p className="text-xs font-medium text-gray-700 mb-2">Requisitos:</p>
+      <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600">
+        <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">Requisitos:</p>
         <ul className="text-sm space-y-1">
-          <li className={requisitos.longitud ? 'text-green-600' : 'text-gray-400'}>
+          <li className={requisitos.longitud ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}>
             <span className="mr-2">{requisitos.longitud ? '✓' : '○'}</span>
             Mínimo 8 caracteres
           </li>
-          <li className={requisitos.mayuscula ? 'text-green-600' : 'text-gray-400'}>
+          <li className={requisitos.mayuscula ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}>
             <span className="mr-2">{requisitos.mayuscula ? '✓' : '○'}</span>
             Al menos una mayúscula
           </li>
-          <li className={requisitos.minuscula ? 'text-green-600' : 'text-gray-400'}>
+          <li className={requisitos.minuscula ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}>
             <span className="mr-2">{requisitos.minuscula ? '✓' : '○'}</span>
             Al menos una minúscula
           </li>
-          <li className={requisitos.numero ? 'text-green-600' : 'text-gray-400'}>
+          <li className={requisitos.numero ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}>
             <span className="mr-2">{requisitos.numero ? '✓' : '○'}</span>
             Al menos un número
           </li>
         </ul>
-        <p className="text-xs text-gray-500 mt-2 italic">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2 italic">
           Los caracteres especiales son opcionales pero mejoran la seguridad
         </p>
       </div>
 
       {/* Sugerencias (si las hay) */}
       {evaluacion?.sugerencias && evaluacion.sugerencias.length > 0 && (
-        <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-          <p className="text-xs font-medium text-blue-700 mb-1">Sugerencias:</p>
-          <ul className="text-xs text-blue-600 space-y-1">
+        <div className="bg-primary-50 dark:bg-primary-900/30 rounded-lg p-3 border border-primary-200 dark:border-primary-800">
+          <p className="text-xs font-medium text-primary-700 dark:text-primary-300 mb-1">Sugerencias:</p>
+          <ul className="text-xs text-primary-600 dark:text-primary-400 space-y-1">
             {evaluacion.sugerencias.map((sugerencia, idx) => (
               <li key={idx}>• {sugerencia}</li>
             ))}

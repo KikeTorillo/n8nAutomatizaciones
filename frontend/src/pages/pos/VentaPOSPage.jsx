@@ -194,16 +194,16 @@ export default function VentaPOSPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900">
       {/* Header - Mobile First */}
-      <div className="bg-white border-b border-gray-200 px-3 py-3 sm:px-6 sm:py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-6 sm:py-4">
         {/* Row 1: Botón de regreso + Vendedor */}
         <div className="flex items-center justify-between mb-2">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
@@ -211,7 +211,7 @@ export default function VentaPOSPage() {
 
           {/* Vendedor - siempre visible pero compacto en móvil */}
           {profesionalNombre && (
-            <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-blue-50 text-blue-700 rounded-lg text-xs sm:text-sm">
+            <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-xs sm:text-sm">
               <User className="h-4 w-4" />
               <span className="font-medium hidden sm:inline">Vendedor:</span>
               <span className="font-medium">{profesionalNombre}</span>
@@ -221,8 +221,8 @@ export default function VentaPOSPage() {
 
         {/* Row 2: Título */}
         <div className="mb-2 sm:mb-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Punto de Venta</h1>
-          <p className="text-xs sm:text-sm text-gray-500 hidden sm:block">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">Punto de Venta</h1>
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
             Escanea o busca productos para crear una venta
           </p>
         </div>
@@ -240,7 +240,7 @@ export default function VentaPOSPage() {
           {items.length > 0 && (
             <button
               onClick={handleVaciarCarrito}
-              className="flex items-center gap-1 sm:gap-2 px-2 py-2 sm:px-4 text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-2 px-2 py-2 sm:px-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
             >
               <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
               <span className="hidden sm:inline">Vaciar Carrito</span>
@@ -261,21 +261,21 @@ export default function VentaPOSPage() {
 
             {/* Info de ayuda - simplificada en móvil */}
             {items.length === 0 && (
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 sm:p-6 text-center">
-                <ShoppingCart className="h-10 w-10 sm:h-16 sm:w-16 text-blue-400 mx-auto mb-2 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-blue-900 mb-1 sm:mb-2">
+              <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4 sm:p-6 text-center">
+                <ShoppingCart className="h-10 w-10 sm:h-16 sm:w-16 text-primary-400 dark:text-primary-500 mx-auto mb-2 sm:mb-4" />
+                <h3 className="text-base sm:text-lg font-semibold text-primary-900 dark:text-primary-300 mb-1 sm:mb-2">
                   Comienza a agregar productos
                 </h3>
-                <p className="text-sm text-blue-700 mb-3 sm:mb-4">
+                <p className="text-sm text-primary-700 dark:text-primary-400 mb-3 sm:mb-4">
                   Busca productos por nombre, SKU o escanea el código de barras
                 </p>
                 {/* Atajos de teclado - ocultos en móvil */}
-                <div className="hidden sm:block bg-white rounded-lg p-4 text-left max-w-md mx-auto">
-                  <p className="text-sm text-gray-600 font-medium mb-2">Atajos de teclado:</p>
-                  <ul className="text-sm text-gray-600 space-y-1">
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">Enter</kbd> - Seleccionar producto</li>
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">Esc</kbd> - Cerrar resultados</li>
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 rounded">F2</kbd> - Proceder al pago</li>
+                <div className="hidden sm:block bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
+                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">Atajos de teclado:</p>
+                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> - Seleccionar producto</li>
+                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> - Cerrar resultados</li>
+                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">F2</kbd> - Proceder al pago</li>
                   </ul>
                 </div>
               </div>
@@ -283,18 +283,18 @@ export default function VentaPOSPage() {
 
             {/* Resumen rápido - responsive */}
             {items.length > 0 && (
-              <div className="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg p-3 sm:p-6">
+              <div className="bg-gradient-to-r from-primary-500 to-primary-600 text-white rounded-lg p-3 sm:p-6">
                 <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
                   <div>
-                    <p className="text-blue-100 text-xs sm:text-sm">Items</p>
+                    <p className="text-primary-100 text-xs sm:text-sm">Items</p>
                     <p className="text-xl sm:text-3xl font-bold">{items.length}</p>
                   </div>
                   <div>
-                    <p className="text-blue-100 text-xs sm:text-sm">Subtotal</p>
+                    <p className="text-primary-100 text-xs sm:text-sm">Subtotal</p>
                     <p className="text-lg sm:text-3xl font-bold">${subtotal.toFixed(2)}</p>
                   </div>
                   <div>
-                    <p className="text-blue-100 text-xs sm:text-sm">Total</p>
+                    <p className="text-primary-100 text-xs sm:text-sm">Total</p>
                     <p className="text-lg sm:text-3xl font-bold">${total.toFixed(2)}</p>
                   </div>
                 </div>
@@ -303,7 +303,7 @@ export default function VentaPOSPage() {
           </div>
 
           {/* Columna derecha: Carrito */}
-          <div className="bg-white rounded-lg shadow-lg overflow-hidden flex flex-col lg:h-[calc(100vh-16rem)]">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col lg:h-[calc(100vh-16rem)]">
             <CarritoVenta
               items={items}
               onActualizarCantidad={handleActualizarCantidad}
@@ -315,7 +315,7 @@ export default function VentaPOSPage() {
 
             {/* Botón de pago */}
             {items.length > 0 && (
-              <div className="p-3 sm:p-4 bg-white border-t border-gray-200">
+              <div className="p-3 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
                 <button
                   onClick={handleProcederPago}
                   className="w-full py-3 sm:py-4 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg transition-colors flex items-center justify-center gap-2 sm:gap-3 text-base sm:text-lg shadow-lg hover:shadow-xl"

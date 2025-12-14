@@ -36,7 +36,7 @@ const Checkbox = forwardRef(
             type="checkbox"
             disabled={disabled}
             className={cn(
-              'h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 transition-colors',
+              'h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-700 dark:text-primary-500 focus:ring-primary-500 dark:focus:ring-primary-400 transition-colors dark:bg-gray-800',
               disabled && 'opacity-50 cursor-not-allowed',
               error && 'border-red-500'
             )}
@@ -50,7 +50,7 @@ const Checkbox = forwardRef(
               <label
                 htmlFor={checkboxId}
                 className={cn(
-                  'text-sm font-medium text-gray-900 cursor-pointer',
+                  'text-sm font-medium text-gray-900 dark:text-gray-100 cursor-pointer',
                   disabled && 'opacity-50 cursor-not-allowed'
                 )}
               >
@@ -59,7 +59,7 @@ const Checkbox = forwardRef(
             )}
             {description && (
               <p className={cn(
-                'text-xs text-gray-500 mt-0.5',
+                'text-xs text-gray-500 dark:text-gray-400 mt-0.5',
                 disabled && 'opacity-50'
               )}>
                 {description}

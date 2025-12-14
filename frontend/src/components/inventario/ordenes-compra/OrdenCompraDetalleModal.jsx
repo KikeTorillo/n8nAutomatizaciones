@@ -67,31 +67,31 @@ export default function OrdenCompraDetalleModal({
   // Helpers de visualización
   const getBadgeEstado = (estado) => {
     const badges = {
-      borrador: 'bg-gray-100 text-gray-800',
-      enviada: 'bg-blue-100 text-blue-800',
-      parcial: 'bg-yellow-100 text-yellow-800',
-      recibida: 'bg-green-100 text-green-800',
-      cancelada: 'bg-red-100 text-red-800',
+      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      enviada: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
+      parcial: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      recibida: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
+      cancelada: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getBadgeEstadoPago = (estadoPago) => {
     const badges = {
-      pendiente: 'bg-yellow-100 text-yellow-800',
-      parcial: 'bg-orange-100 text-orange-800',
-      pagado: 'bg-green-100 text-green-800',
+      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      parcial: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
+      pagado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
     };
-    return badges[estadoPago] || 'bg-gray-100 text-gray-800';
+    return badges[estadoPago] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const getBadgeEstadoItem = (estado) => {
     const badges = {
-      pendiente: 'bg-gray-100 text-gray-800',
-      parcial: 'bg-yellow-100 text-yellow-800',
-      completo: 'bg-green-100 text-green-800',
+      pendiente: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+      parcial: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
+      completo: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
     };
-    return badges[estado] || 'bg-gray-100 text-gray-800';
+    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
   };
 
   const formatearEstado = (estado) => {
@@ -211,8 +211,8 @@ export default function OrdenCompraDetalleModal({
       size="4xl"
     >
       {isLoading ? (
-        <div className="p-8 text-center text-gray-500">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400 mx-auto mb-4"></div>
           Cargando detalle de la orden...
         </div>
       ) : orden ? (
@@ -220,51 +220,51 @@ export default function OrdenCompraDetalleModal({
           {/* Información de la orden */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Datos del proveedor */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                 <Building2 className="h-4 w-4 mr-2" />
                 Proveedor
               </h3>
               <div className="space-y-1">
-                <p className="text-lg font-semibold text-gray-900">{orden.proveedor_nombre}</p>
+                <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">{orden.proveedor_nombre}</p>
                 {orden.proveedor_telefono && (
-                  <p className="text-sm text-gray-600">Tel: {orden.proveedor_telefono}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Tel: {orden.proveedor_telefono}</p>
                 )}
                 {orden.proveedor_email && (
-                  <p className="text-sm text-gray-600">{orden.proveedor_email}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">{orden.proveedor_email}</p>
                 )}
               </div>
             </div>
 
             {/* Fechas y estado */}
-            <div className="bg-gray-50 rounded-lg p-4">
-              <h3 className="text-sm font-medium text-gray-500 mb-3 flex items-center">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
+              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 flex items-center">
                 <Calendar className="h-4 w-4 mr-2" />
                 Fechas y Estado
               </h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500">Fecha de Orden</p>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Fecha de Orden</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {new Date(orden.fecha_orden).toLocaleDateString('es-MX')}
                   </p>
                 </div>
                 {orden.fecha_entrega_esperada && (
                   <div>
-                    <p className="text-xs text-gray-500">Entrega Esperada</p>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Entrega Esperada</p>
+                    <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                       {new Date(orden.fecha_entrega_esperada).toLocaleDateString('es-MX')}
                     </p>
                   </div>
                 )}
                 <div>
-                  <p className="text-xs text-gray-500">Estado</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Estado</p>
                   <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getBadgeEstado(orden.estado)}`}>
                     {formatearEstado(orden.estado)}
                   </span>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500">Estado de Pago</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Estado de Pago</p>
                   <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getBadgeEstadoPago(orden.estado_pago)}`}>
                     {orden.estado_pago}
                   </span>
@@ -275,29 +275,29 @@ export default function OrdenCompraDetalleModal({
 
           {/* Resumen financiero */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-white border rounded-lg p-3">
-              <p className="text-xs text-gray-500">Subtotal</p>
-              <p className="text-lg font-semibold text-gray-900">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+              <p className="text-xs text-gray-500 dark:text-gray-400">Subtotal</p>
+              <p className="text-lg font-semibold text-gray-900 dark:text-gray-100">
                 ${parseFloat(orden.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </p>
             </div>
             {parseFloat(orden.descuento_monto || 0) > 0 && (
-              <div className="bg-white border rounded-lg p-3">
-                <p className="text-xs text-gray-500">Descuento</p>
-                <p className="text-lg font-semibold text-red-600">
+              <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Descuento</p>
+                <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                   -${parseFloat(orden.descuento_monto).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                 </p>
               </div>
             )}
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
-              <p className="text-xs text-indigo-600">Total</p>
-              <p className="text-lg font-bold text-indigo-700">
+            <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+              <p className="text-xs text-primary-600 dark:text-primary-400">Total</p>
+              <p className="text-lg font-bold text-primary-700 dark:text-primary-300">
                 ${parseFloat(orden.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </p>
             </div>
-            <div className="bg-green-50 border border-green-200 rounded-lg p-3">
-              <p className="text-xs text-green-600">Pagado</p>
-              <p className="text-lg font-semibold text-green-700">
+            <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+              <p className="text-xs text-green-600 dark:text-green-400">Pagado</p>
+              <p className="text-lg font-semibold text-green-700 dark:text-green-300">
                 ${parseFloat(orden.monto_pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </p>
             </div>
@@ -305,23 +305,23 @@ export default function OrdenCompraDetalleModal({
 
           {/* Información adicional */}
           {(orden.referencia_proveedor || orden.notas || orden.dias_credito > 0) && (
-            <div className="bg-gray-50 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               {orden.referencia_proveedor && (
                 <div>
-                  <p className="text-xs text-gray-500">Referencia Proveedor</p>
-                  <p className="text-sm font-medium text-gray-900">{orden.referencia_proveedor}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Referencia Proveedor</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{orden.referencia_proveedor}</p>
                 </div>
               )}
               {orden.dias_credito > 0 && (
                 <div>
-                  <p className="text-xs text-gray-500">Días de Crédito</p>
-                  <p className="text-sm font-medium text-gray-900">{orden.dias_credito} días</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Días de Crédito</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{orden.dias_credito} días</p>
                 </div>
               )}
               {orden.notas && (
                 <div className="md:col-span-3">
-                  <p className="text-xs text-gray-500">Notas</p>
-                  <p className="text-sm text-gray-900">{orden.notas}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Notas</p>
+                  <p className="text-sm text-gray-900 dark:text-gray-100">{orden.notas}</p>
                 </div>
               )}
             </div>
@@ -330,8 +330,8 @@ export default function OrdenCompraDetalleModal({
           {/* Items de la orden */}
           <div>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-medium text-gray-900 flex items-center">
-                <Package className="h-5 w-5 mr-2 text-gray-600" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
+                <Package className="h-5 w-5 mr-2 text-gray-600 dark:text-gray-400" />
                 Productos ({items.length})
               </h3>
               {esBorrador && (
@@ -348,21 +348,21 @@ export default function OrdenCompraDetalleModal({
 
             {/* Formulario para agregar item */}
             {mostrarAgregarItem && esBorrador && (
-              <div className="bg-blue-50 rounded-lg p-4 mb-4">
+              <div className="bg-primary-50 dark:bg-primary-900/30 rounded-lg p-4 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                   <div className="md:col-span-5 relative">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Buscar Producto
                     </label>
                     <input
                       type="text"
                       value={busquedaProducto}
                       onChange={(e) => setBusquedaProducto(e.target.value)}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Buscar por nombre o SKU..."
                     />
                     {busquedaProducto && productos.length > 0 && !productoSeleccionado && (
-                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-auto">
+                      <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-auto">
                         {productos.map((prod) => (
                           <button
                             key={prod.id}
@@ -372,10 +372,10 @@ export default function OrdenCompraDetalleModal({
                               setBusquedaProducto(prod.nombre);
                               setPrecioItem(prod.precio_costo || '');
                             }}
-                            className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b last:border-b-0"
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b dark:border-gray-700 last:border-b-0"
                           >
-                            <div className="text-sm font-medium text-gray-900">{prod.nombre}</div>
-                            <div className="text-xs text-gray-500">
+                            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{prod.nombre}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">
                               SKU: {prod.sku || 'N/A'} | Costo: ${prod.precio_costo || 0}
                             </div>
                           </button>
@@ -383,30 +383,30 @@ export default function OrdenCompraDetalleModal({
                       </div>
                     )}
                     {productoSeleccionado && (
-                      <p className="mt-1 text-xs text-green-600">
+                      <p className="mt-1 text-xs text-green-600 dark:text-green-400">
                         Seleccionado: {productoSeleccionado.nombre}
                       </p>
                     )}
                   </div>
                   <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cantidad</label>
                     <input
                       type="number"
                       min="1"
                       value={cantidadItem}
                       onChange={(e) => setCantidadItem(parseInt(e.target.value) || 1)}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Precio Unit.</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Precio Unit.</label>
                     <input
                       type="number"
                       min="0"
                       step="0.01"
                       value={precioItem}
                       onChange={(e) => setPrecioItem(e.target.value)}
-                      className="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                      className="w-full rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                       placeholder="Precio costo"
                     />
                   </div>
@@ -426,26 +426,26 @@ export default function OrdenCompraDetalleModal({
 
             {/* Tabla de items */}
             {items.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
+              <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                  <thead className="bg-gray-50 dark:bg-gray-700">
                     <tr>
-                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Producto
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Cantidad
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Recibido
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Precio Unit.
                       </th>
-                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Subtotal
                       </th>
-                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase">
+                      <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                         Estado
                       </th>
                       {esBorrador && (
@@ -453,13 +453,13 @@ export default function OrdenCompraDetalleModal({
                       )}
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                     {items.map((item) => (
                       <tr key={item.id}>
                         <td className="px-4 py-2">
-                          <div className="text-sm font-medium text-gray-900">{item.producto_nombre}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</div>
                           {item.producto_sku && (
-                            <div className="text-xs text-gray-500">SKU: {item.producto_sku}</div>
+                            <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.producto_sku}</div>
                           )}
                         </td>
                         <td className="px-4 py-2 text-center">
@@ -469,14 +469,14 @@ export default function OrdenCompraDetalleModal({
                               min="1"
                               value={cantidadEditando}
                               onChange={(e) => setCantidadEditando(parseInt(e.target.value) || 0)}
-                              className="w-20 text-center rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              className="w-20 text-center rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">{item.cantidad_ordenada}</span>
+                            <span className="text-sm text-gray-900 dark:text-gray-100">{item.cantidad_ordenada}</span>
                           )}
                         </td>
                         <td className="px-4 py-2 text-center">
-                          <span className="text-sm text-gray-900">{item.cantidad_recibida || 0}</span>
+                          <span className="text-sm text-gray-900 dark:text-gray-100">{item.cantidad_recibida || 0}</span>
                         </td>
                         <td className="px-4 py-2 text-right">
                           {itemEditando === item.id ? (
@@ -486,16 +486,16 @@ export default function OrdenCompraDetalleModal({
                               step="0.01"
                               value={precioEditando}
                               onChange={(e) => setPrecioEditando(parseFloat(e.target.value) || 0)}
-                              className="w-24 text-right rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                              className="w-24 text-right rounded-md border-gray-300 dark:border-gray-600 shadow-sm focus:border-primary-500 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                             />
                           ) : (
-                            <span className="text-sm text-gray-900">
+                            <span className="text-sm text-gray-900 dark:text-gray-100">
                               ${parseFloat(item.precio_unitario || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-2 text-right">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             ${parseFloat(item.subtotal || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
                           </span>
                         </td>
@@ -511,14 +511,14 @@ export default function OrdenCompraDetalleModal({
                                 <>
                                   <button
                                     onClick={() => handleGuardarEdicion(item.id)}
-                                    className="p-1 text-green-600 hover:text-green-900"
+                                    className="p-1 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300"
                                     disabled={actualizarItemMutation.isPending}
                                   >
                                     <Check className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={handleCancelarEdicion}
-                                    className="p-1 text-gray-600 hover:text-gray-900"
+                                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-300"
                                   >
                                     <X className="h-4 w-4" />
                                   </button>
@@ -527,13 +527,13 @@ export default function OrdenCompraDetalleModal({
                                 <>
                                   <button
                                     onClick={() => handleIniciarEdicion(item)}
-                                    className="p-1 text-blue-600 hover:text-blue-900"
+                                    className="p-1 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                                   >
                                     <Edit className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleEliminarItem(item.id)}
-                                    className="p-1 text-red-600 hover:text-red-900"
+                                    className="p-1 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                                     disabled={eliminarItemMutation.isPending}
                                   >
                                     <Trash2 className="h-4 w-4" />
@@ -549,15 +549,15 @@ export default function OrdenCompraDetalleModal({
                 </table>
               </div>
             ) : (
-              <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-                <Package className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <div className="text-center py-8 text-gray-500 dark:text-gray-400 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                <Package className="h-12 w-12 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                 <p>No hay productos en esta orden</p>
               </div>
             )}
           </div>
 
           {/* Acciones */}
-          <div className="flex justify-between pt-4 border-t">
+          <div className="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button variant="secondary" onClick={onClose}>
               Cerrar
             </Button>
@@ -588,7 +588,7 @@ export default function OrdenCompraDetalleModal({
           </div>
         </div>
       ) : (
-        <div className="p-8 text-center text-gray-500">
+        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
           No se encontró la orden de compra
         </div>
       )}

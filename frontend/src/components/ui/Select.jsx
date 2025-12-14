@@ -20,16 +20,16 @@ const Select = forwardRef(
     },
     ref
   ) => {
-    const baseStyles = 'w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-white';
+    const baseStyles = 'w-full px-4 py-3 border rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed appearance-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
 
     const stateStyles = error
       ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-      : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500';
+      : 'border-gray-300 dark:border-gray-600 focus:border-primary-500 focus:ring-primary-500';
 
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {label}
             {required && <span className="text-red-500 ml-1">*</span>}
           </label>
@@ -56,7 +56,7 @@ const Select = forwardRef(
           </select>
 
           {/* Flecha personalizada */}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-700 dark:text-gray-300">
             <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path
                 fillRule="evenodd"
@@ -68,7 +68,7 @@ const Select = forwardRef(
         </div>
 
         {helper && !error && (
-          <p className="mt-1 text-sm text-gray-500">{helper}</p>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{helper}</p>
         )}
 
         {error && (

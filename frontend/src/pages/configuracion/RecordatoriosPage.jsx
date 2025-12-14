@@ -48,20 +48,20 @@ const configSchema = z.object({
  */
 function StatCard({ title, value, icon: Icon, color = 'blue', subtitle }) {
   const colors = {
-    blue: 'bg-blue-100 text-blue-600',
-    green: 'bg-green-100 text-green-600',
-    red: 'bg-red-100 text-red-600',
-    yellow: 'bg-yellow-100 text-yellow-600',
-    purple: 'bg-purple-100 text-purple-600',
+    blue: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
+    green: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
+    red: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400',
+    yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400',
+    purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
   };
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-3 sm:p-4">
+    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-xs sm:text-sm text-gray-500 truncate">{title}</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 mt-1">{subtitle}</p>}
+          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{title}</p>
+          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+          {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subtitle}</p>}
         </div>
         <div className={`p-2 sm:p-3 rounded-full flex-shrink-0 ${colors[color]}`}>
           <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -86,13 +86,13 @@ function VariablesDisponibles() {
   ];
 
   return (
-    <div className="bg-gray-50 rounded-lg p-3 sm:p-4 mt-2">
-      <h4 className="text-sm font-medium text-gray-700 mb-2">Variables disponibles:</h4>
+    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 sm:p-4 mt-2">
+      <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Variables disponibles:</h4>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {variables.map((v) => (
           <div key={v.variable} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-            <code className="bg-gray-200 px-2 py-0.5 rounded text-xs w-fit">{v.variable}</code>
-            <span className="text-gray-500 text-xs sm:text-sm">{v.descripcion}</span>
+            <code className="bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-xs w-fit text-gray-800 dark:text-gray-200">{v.variable}</code>
+            <span className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm">{v.descripcion}</span>
           </div>
         ))}
       </div>
@@ -211,19 +211,19 @@ function RecordatoriosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => navigate('/home')}
-          className="text-gray-600 hover:text-gray-900 mb-2"
+          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2"
         >
           <ArrowLeft className="w-4 h-4 mr-1" />
           Volver al Inicio
         </Button>
-        <h1 className="text-2xl font-bold text-gray-900">Agendamiento</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
       </div>
 
       {/* Tabs de navegación */}
@@ -234,11 +234,11 @@ function RecordatoriosPage() {
         {/* Header de sección - Mobile First */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <Bell className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
               Recordatorios Automáticos
             </h2>
-            <p className="text-gray-500 text-sm hidden sm:block">
+            <p className="text-gray-500 dark:text-gray-400 text-sm hidden sm:block">
               Configura los recordatorios de citas para tus clientes
             </p>
           </div>
@@ -286,15 +286,15 @@ function RecordatoriosPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Activación global */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`p-2 rounded-full ${habilitado ? 'bg-green-100' : 'bg-gray-100'}`}>
-                <Bell className={`w-5 h-5 ${habilitado ? 'text-green-600' : 'text-gray-400'}`} />
+              <div className={`p-2 rounded-full ${habilitado ? 'bg-green-100 dark:bg-green-900/40' : 'bg-gray-100 dark:bg-gray-700'}`}>
+                <Bell className={`w-5 h-5 ${habilitado ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'}`} />
               </div>
               <div>
-                <h3 className="font-medium text-gray-900">Recordatorios automáticos</h3>
-                <p className="text-sm text-gray-500">
+                <h3 className="font-medium text-gray-900 dark:text-gray-100">Recordatorios automáticos</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Envía recordatorios automáticos a los clientes antes de sus citas
                 </p>
               </div>
@@ -305,12 +305,12 @@ function RecordatoriosPage() {
                 {...register('habilitado')}
                 className="sr-only peer"
               />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
+              <div className="w-11 h-6 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary-600"></div>
             </label>
           </div>
 
           {!habilitado && (
-            <div className="mt-4 flex items-center gap-2 text-yellow-600 bg-yellow-50 p-3 rounded-lg">
+            <div className="mt-4 flex items-center gap-2 text-yellow-600 dark:text-yellow-400 bg-yellow-50 dark:bg-yellow-900/30 p-3 rounded-lg">
               <AlertTriangle className="w-5 h-5" />
               <span className="text-sm">Los recordatorios están desactivados</span>
             </div>
@@ -318,19 +318,19 @@ function RecordatoriosPage() {
         </div>
 
         {/* Configuración de tiempos */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <Clock className="w-5 h-5 text-gray-500" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <Clock className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             Tiempos de envío
           </h3>
 
           <div className="space-y-4">
             {/* Recordatorio 1 */}
-            <div className={`p-4 rounded-lg border ${recordatorio1Activo ? 'border-primary-200 bg-primary-50' : 'border-gray-200'}`}>
+            <div className={`p-4 rounded-lg border ${recordatorio1Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Recordatorio principal</span>
-                  <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Recordatorio principal</span>
+                  <span className="text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 px-2 py-0.5 rounded">
                     Recomendado
                   </span>
                 </div>
@@ -340,7 +340,7 @@ function RecordatoriosPage() {
                     {...register('recordatorio_1_activo')}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -348,23 +348,23 @@ function RecordatoriosPage() {
                   type="number"
                   {...register('recordatorio_1_horas', { valueAsNumber: true })}
                   disabled={!recordatorio1Activo}
-                  className="w-20 px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                  className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   min="1"
                   max="168"
                 />
-                <span className="text-gray-600">horas antes de la cita</span>
+                <span className="text-gray-600 dark:text-gray-400">horas antes de la cita</span>
               </div>
               {errors.recordatorio_1_horas && (
-                <p className="text-red-500 text-sm mt-1">{errors.recordatorio_1_horas.message}</p>
+                <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.recordatorio_1_horas.message}</p>
               )}
             </div>
 
             {/* Recordatorio 2 */}
-            <div className={`p-4 rounded-lg border ${recordatorio2Activo ? 'border-blue-200 bg-blue-50' : 'border-gray-200'}`}>
+            <div className={`p-4 rounded-lg border ${recordatorio2Activo ? 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/30' : 'border-gray-200 dark:border-gray-700'}`}>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
-                  <span className="font-medium">Recordatorio secundario</span>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Recordatorio secundario</span>
+                  <span className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 px-2 py-0.5 rounded">
                     Opcional
                   </span>
                 </div>
@@ -374,7 +374,7 @@ function RecordatoriosPage() {
                     {...register('recordatorio_2_activo')}
                     className="sr-only peer"
                   />
-                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
+                  <div className="w-9 h-5 bg-gray-200 dark:bg-gray-600 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary-600"></div>
                 </label>
               </div>
               <div className="flex items-center gap-2">
@@ -382,92 +382,92 @@ function RecordatoriosPage() {
                   type="number"
                   {...register('recordatorio_2_horas', { valueAsNumber: true })}
                   disabled={!recordatorio2Activo}
-                  className="w-20 px-3 py-2 border rounded-lg disabled:bg-gray-100"
+                  className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   min="1"
                   max="24"
                 />
-                <span className="text-gray-600">horas antes de la cita</span>
+                <span className="text-gray-600 dark:text-gray-400">horas antes de la cita</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Ventana horaria */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <Settings className="w-5 h-5 text-gray-500" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <Settings className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             Ventana horaria
           </h3>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
             Define el horario en el que se pueden enviar recordatorios (para no molestar de noche)
           </p>
           <div className="flex items-center gap-4">
             <div>
-              <label className="text-sm text-gray-600">Desde</label>
+              <label className="text-sm text-gray-600 dark:text-gray-400">Desde</label>
               <input
                 type="time"
                 {...register('hora_inicio')}
-                className="block w-full px-3 py-2 border rounded-lg mt-1"
+                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
-            <span className="text-gray-400 mt-6">-</span>
+            <span className="text-gray-400 dark:text-gray-500 mt-6">-</span>
             <div>
-              <label className="text-sm text-gray-600">Hasta</label>
+              <label className="text-sm text-gray-600 dark:text-gray-400">Hasta</label>
               <input
                 type="time"
                 {...register('hora_fin')}
-                className="block w-full px-3 py-2 border rounded-lg mt-1"
+                className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mt-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
             </div>
           </div>
         </div>
 
         {/* Plantilla de mensaje */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <MessageSquare className="w-5 h-5 text-gray-500" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <MessageSquare className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             Plantilla del mensaje
           </h3>
           <textarea
             {...register('plantilla_mensaje')}
             rows={8}
-            className="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+            className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
             placeholder="Escribe el mensaje que recibirán tus clientes..."
           />
           {errors.plantilla_mensaje && (
-            <p className="text-red-500 text-sm mt-1">{errors.plantilla_mensaje.message}</p>
+            <p className="text-red-500 dark:text-red-400 text-sm mt-1">{errors.plantilla_mensaje.message}</p>
           )}
           <VariablesDisponibles />
         </div>
 
         {/* Configuración avanzada */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-            <RefreshCw className="w-5 h-5 text-gray-500" />
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+            <RefreshCw className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             Reintentos
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-gray-600">Reintentar hasta</span>
+            <span className="text-gray-600 dark:text-gray-400">Reintentar hasta</span>
             <input
               type="number"
               {...register('max_reintentos', { valueAsNumber: true })}
-              className="w-16 px-3 py-2 border rounded-lg text-center"
+              className="w-16 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-center bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               min="1"
               max="5"
             />
-            <span className="text-gray-600">veces si falla el envío</span>
+            <span className="text-gray-600 dark:text-gray-400">veces si falla el envío</span>
           </div>
         </div>
       </form>
 
       {/* Prueba de envío */}
       {/* Test de envío */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
-        <h3 className="font-medium text-gray-900 mb-4 flex items-center gap-2">
-          <TestTube className="w-5 h-5 text-gray-500" />
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <TestTube className="w-5 h-5 text-gray-500 dark:text-gray-400" />
           Enviar mensaje de prueba
         </h3>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           Envía un mensaje de prueba para verificar que la configuración es correcta
         </p>
         <TestForm

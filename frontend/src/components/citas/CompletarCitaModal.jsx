@@ -58,52 +58,52 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
     <Modal isOpen={isOpen} onClose={handleClose} title="Completar Cita" size="large">
       <div className="space-y-6">
         {/* Header con ícono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
-          <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
-            <CheckCircle2 className="w-6 h-6 text-green-600" />
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="w-12 h-12 rounded-full bg-green-100 dark:bg-green-900/40 flex items-center justify-center">
+            <CheckCircle2 className="w-6 h-6 text-green-600 dark:text-green-400" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">Completar Cita</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Completar Cita</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Agrega notas y calificación del servicio
             </p>
           </div>
         </div>
 
         {/* Información de la cita */}
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-xs text-gray-600">Código de Cita</p>
-              <p className="text-sm font-medium text-gray-900">{cita.codigo_cita}</p>
+              <p className="text-xs text-gray-600 dark:text-gray-400">Código de Cita</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{cita.codigo_cita}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Cliente</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Cliente</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {cita.cliente_nombre || 'Sin nombre'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Fecha</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Fecha</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {formatearFecha(cita.fecha_cita, 'dd/MM/yyyy')}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Hora</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Hora</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {formatearHora(cita.hora_inicio)} - {formatearHora(cita.hora_fin)}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Servicio</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Servicio</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {cita.servicio_nombre || 'Sin servicio'}
               </p>
             </div>
             <div>
-              <p className="text-xs text-gray-600">Profesional</p>
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-xs text-gray-600 dark:text-gray-400">Profesional</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
                 {cita.profesional_nombre || 'Sin asignar'}
               </p>
             </div>
@@ -135,7 +135,7 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
 
         {/* Calificación del Cliente */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
+          <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             <Star className="w-4 h-4" />
             Calificación del Servicio (Opcional)
           </label>
@@ -151,7 +151,7 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
                   className={`w-8 h-8 ${
                     star <= calificacion
                       ? 'fill-yellow-400 text-yellow-400'
-                      : 'text-gray-300'
+                      : 'text-gray-300 dark:text-gray-600'
                   }`}
                 />
               </button>
@@ -160,29 +160,29 @@ function CompletarCitaModal({ isOpen, onClose, cita }) {
               <button
                 type="button"
                 onClick={() => setCalificacion(0)}
-                className="ml-2 text-xs text-gray-500 hover:text-gray-700"
+                className="ml-2 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 Limpiar
               </button>
             )}
           </div>
           {calificacion > 0 && (
-            <p className="mt-2 text-sm text-gray-600">
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Calificación: {calificacion} de 5 estrellas
             </p>
           )}
         </div>
 
         {/* Mensaje informativo */}
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-900">
+        <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+          <p className="text-sm text-primary-900 dark:text-primary-200">
             ℹ️ <strong>Nota:</strong> Al completar la cita, se registrará como finalizada y
             no podrá cambiar de estado. Asegúrate de que toda la información sea correcta.
           </p>
         </div>
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button
             type="button"
             variant="secondary"

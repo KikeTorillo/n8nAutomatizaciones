@@ -44,10 +44,10 @@ function MapaUbicacion({
   if (!direccion && !ciudad) {
     return (
       <div
-        className={`bg-gray-100 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center ${className}`}
+        className={`bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg flex items-center justify-center ${className}`}
         style={{ height: altura }}
       >
-        <div className="text-center text-gray-500">
+        <div className="text-center text-gray-500 dark:text-gray-400">
           <MapPin className="w-8 h-8 mx-auto mb-2" />
           <p className="text-sm">Ubicación no disponible</p>
         </div>
@@ -59,7 +59,7 @@ function MapaUbicacion({
     <div className={className}>
       {/* Mapa embebido */}
       <div
-        className="relative w-full rounded-lg overflow-hidden border border-gray-300 shadow-sm"
+        className="relative w-full rounded-lg overflow-hidden border border-gray-300 dark:border-gray-600 shadow-sm"
         style={{ height: altura }}
       >
         <iframe
@@ -76,11 +76,11 @@ function MapaUbicacion({
 
       {/* Dirección en texto (debajo del mapa) */}
       {direccion && (
-        <div className="mt-3 flex items-start text-sm text-gray-700">
-          <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-gray-500" />
+        <div className="mt-3 flex items-start text-sm text-gray-700 dark:text-gray-300">
+          <MapPin className="w-4 h-4 mr-2 flex-shrink-0 mt-0.5 text-gray-500 dark:text-gray-400" />
           <div>
             <p className="font-medium">{direccion}</p>
-            <p className="text-gray-500">
+            <p className="text-gray-500 dark:text-gray-400">
               {ciudad}
               {pais && `, ${pais}`}
             </p>
@@ -94,7 +94,7 @@ function MapaUbicacion({
           href={`https://www.google.com/maps/search/?api=1&query=${encodedQuery}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center text-sm text-primary-600 hover:text-primary-700 font-medium"
+          className="inline-flex items-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
         >
           Ver en Google Maps →
         </a>

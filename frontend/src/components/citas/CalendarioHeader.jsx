@@ -86,11 +86,11 @@ function CalendarioHeader({ mesActual, onMesAnterior, onMesSiguiente, onHoy, onC
 
       {/* Selector de mes y año (dropdown) */}
       {mostrarSelector && (
-        <div className="absolute z-10 mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 w-80">
+        <div className="absolute z-10 mt-2 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 p-4 w-80">
           <div className="space-y-4">
             {/* Selector de año */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Año</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Año</label>
               <div className="grid grid-cols-5 gap-2">
                 {años.map((año) => (
                   <button
@@ -101,7 +101,7 @@ function CalendarioHeader({ mesActual, onMesAnterior, onMesSiguiente, onHoy, onC
                       ${
                         año === añoActual
                           ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }
                     `}
                   >
@@ -113,7 +113,7 @@ function CalendarioHeader({ mesActual, onMesAnterior, onMesSiguiente, onHoy, onC
 
             {/* Selector de mes */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Mes</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Mes</label>
               <div className="grid grid-cols-3 gap-2">
                 {meses.map((mes, index) => (
                   <button
@@ -124,7 +124,7 @@ function CalendarioHeader({ mesActual, onMesAnterior, onMesSiguiente, onHoy, onC
                       ${
                         index === mesActual.getMonth() && añoActual === mesActual.getFullYear()
                           ? 'bg-primary-600 text-white'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                       }
                     `}
                   >
@@ -135,7 +135,7 @@ function CalendarioHeader({ mesActual, onMesAnterior, onMesSiguiente, onHoy, onC
             </div>
 
             {/* Botón cerrar */}
-            <div className="flex justify-end pt-2 border-t">
+            <div className="flex justify-end pt-2 border-t dark:border-gray-700">
               <Button
                 variant="secondary"
                 size="sm"

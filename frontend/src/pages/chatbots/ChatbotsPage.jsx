@@ -94,11 +94,11 @@ function ChatbotsPage() {
   const getPlatformColor = (plataforma) => {
     switch (plataforma) {
       case 'telegram':
-        return 'bg-blue-100 text-blue-600';
+        return 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400';
       case 'whatsapp_oficial':
-        return 'bg-green-100 text-green-600';
+        return 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400';
       default:
-        return 'bg-gray-100 text-gray-600';
+        return 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400';
     }
   };
 
@@ -115,7 +115,7 @@ function ChatbotsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -123,7 +123,7 @@ function ChatbotsPage() {
             variant="ghost"
             size="sm"
             onClick={() => navigate('/home')}
-            className="text-gray-600 hover:text-gray-900 mb-3"
+            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
           >
             <ArrowLeft className="w-4 h-4 mr-1" />
             Volver al Inicio
@@ -131,8 +131,8 @@ function ChatbotsPage() {
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Chatbots con IA</h1>
-              <p className="mt-2 text-sm sm:text-base text-gray-600">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">Chatbots con IA</h1>
+              <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 Gestiona tus asistentes virtuales inteligentes para agendamiento automático
               </p>
             </div>
@@ -156,8 +156,8 @@ function ChatbotsPage() {
 
         {/* Error State */}
         {error && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-            <p className="text-red-800">
+          <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <p className="text-red-800 dark:text-red-200">
               Error al cargar chatbots: {error.message}
             </p>
           </div>
@@ -165,14 +165,14 @@ function ChatbotsPage() {
 
         {/* Empty State */}
         {!isLoading && !error && data?.chatbots?.length === 0 && (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Bot className="w-8 h-8 text-gray-400" />
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-12 text-center">
+            <div className="mx-auto w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mb-4">
+              <Bot className="w-8 h-8 text-gray-400 dark:text-gray-500" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
               No tienes chatbots configurados
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-400 mb-6">
               Crea tu primer chatbot con inteligencia artificial para automatizar el agendamiento de citas.
             </p>
             <Button onClick={handleNuevoChatbot} className="inline-flex items-center gap-2">
@@ -188,7 +188,7 @@ function ChatbotsPage() {
             {data.chatbots.map((chatbot) => (
               <div
                 key={chatbot.id}
-                className="bg-white rounded-lg shadow-sm border-2 border-gray-200 p-6 hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border-2 border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow"
               >
                 {/* Header con ícono y nombre */}
                 <div className="flex items-start justify-between mb-4">
@@ -197,8 +197,8 @@ function ChatbotsPage() {
                       {getPlatformIcon(chatbot.plataforma)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">{chatbot.nombre}</h3>
-                      <p className="text-sm text-gray-500">
+                      <h3 className="font-semibold text-gray-900 dark:text-gray-100">{chatbot.nombre}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
                         {getPlatformName(chatbot.plataforma)}
                       </p>
                     </div>
@@ -208,8 +208,8 @@ function ChatbotsPage() {
                   <span
                     className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
                       chatbot.activo
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-800'
+                        ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
                     }`}
                   >
                     {chatbot.activo ? 'Activo' : 'Inactivo'}
@@ -219,15 +219,15 @@ function ChatbotsPage() {
                 {/* Información del chatbot */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Modelo IA:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-400">Modelo IA:</span>
+                    <span className="font-medium text-gray-900 dark:text-gray-100">
                       {chatbot.ai_model || 'deepseek-chat'}
                     </span>
                   </div>
                   {chatbot.workflow_id && (
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600">Workflow:</span>
-                      <span className="font-mono text-xs text-gray-500">
+                      <span className="text-gray-600 dark:text-gray-400">Workflow:</span>
+                      <span className="font-mono text-xs text-gray-500 dark:text-gray-400">
                         #{chatbot.workflow_id}
                       </span>
                     </div>
@@ -235,7 +235,7 @@ function ChatbotsPage() {
                 </div>
 
                 {/* Acciones */}
-                <div className="flex gap-2 pt-4 border-t border-gray-200">
+                <div className="flex gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant={chatbot.activo ? 'outline' : 'primary'}
                     size="sm"
@@ -285,22 +285,22 @@ function ChatbotsPage() {
           <div className="space-y-4">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600" />
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
+                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
                 </div>
               </div>
               <div>
-                <p className="text-gray-900 font-medium mb-1">
+                <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">
                   ¿Estás seguro de eliminar este chatbot?
                 </p>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   Esta acción eliminará el chatbot "{chatbotAEliminar?.nombre}" y su workflow asociado en n8n.
                   Esta acción no se puede deshacer.
                 </p>
               </div>
             </div>
 
-            <div className="flex justify-end gap-3 pt-4 border-t">
+            <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
               <Button
                 variant="outline"
                 onClick={() => {

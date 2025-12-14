@@ -35,11 +35,11 @@ const ICONOS_BLOQUES = {
  */
 const COLORES_BLOQUES = {
   hero: { bg: 'bg-purple-100', text: 'text-purple-600' },
-  servicios: { bg: 'bg-blue-100', text: 'text-blue-600' },
+  servicios: { bg: 'bg-primary-100', text: 'text-primary-600' },
   testimonios: { bg: 'bg-amber-100', text: 'text-amber-600' },
   equipo: { bg: 'bg-green-100', text: 'text-green-600' },
   cta: { bg: 'bg-red-100', text: 'text-red-600' },
-  contacto: { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+  contacto: { bg: 'bg-primary-100', text: 'text-primary-600' },
   footer: { bg: 'bg-gray-100', text: 'text-gray-600' },
   texto: { bg: 'bg-slate-100', text: 'text-slate-600' },
   galeria: { bg: 'bg-pink-100', text: 'text-pink-600' },
@@ -104,7 +104,7 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
 
     return (
       <div className="mb-6">
-        <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 px-1">
+        <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-1">
           {titulo}
         </h4>
         <div className="grid grid-cols-2 gap-2">
@@ -125,9 +125,9 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
   return (
     <div className="h-full flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
-        <h3 className="font-semibold text-gray-900">Agregar bloque</h3>
-        <p className="text-xs text-gray-500 mt-1">
+      <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Agregar bloque</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
           Haz clic para agregar al final de la página
         </p>
       </div>
@@ -135,8 +135,8 @@ function BlockPalette({ tiposBloques = [], onAgregarBloque, disabled }) {
       {/* Bloques */}
       <div className="flex-1 overflow-y-auto p-4">
         {disabled && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4 text-center">
-            <p className="text-sm text-amber-700">
+          <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4 text-center">
+            <p className="text-sm text-amber-700 dark:text-amber-400">
               Selecciona una página para agregar bloques
             </p>
           </div>
@@ -164,9 +164,9 @@ function BloqueCard({ tipo, nombre, onClick, disabled }) {
       onClick={onClick}
       disabled={disabled}
       className={`
-        p-3 rounded-lg border border-gray-200 bg-white text-left
-        transition-all hover:border-indigo-300 hover:shadow-sm
-        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 disabled:hover:shadow-none
+        p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-left
+        transition-all hover:border-primary-300 dark:hover:border-primary-600 hover:shadow-sm
+        disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-gray-200 dark:disabled:hover:border-gray-700 disabled:hover:shadow-none
         group
       `}
       title={descripcion}
@@ -174,7 +174,7 @@ function BloqueCard({ tipo, nombre, onClick, disabled }) {
       <div className={`w-8 h-8 ${colores.bg} rounded-lg flex items-center justify-center mb-2 group-hover:scale-110 transition-transform`}>
         <Icono className={`w-4 h-4 ${colores.text}`} />
       </div>
-      <p className="text-xs font-medium text-gray-900">{nombre}</p>
+      <p className="text-xs font-medium text-gray-900 dark:text-gray-100">{nombre}</p>
     </button>
   );
 }

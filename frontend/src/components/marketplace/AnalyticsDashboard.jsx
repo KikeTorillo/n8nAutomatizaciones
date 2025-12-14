@@ -132,10 +132,10 @@ function AnalyticsDashboard({ perfilId }) {
   // Sin datos
   if (!stats) {
     return (
-      <div className="text-center py-12 bg-gray-50 rounded-lg">
-        <TrendingUp className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-        <p className="text-gray-600">No hay datos de analytics aún</p>
-        <p className="text-sm text-gray-500 mt-1">
+      <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+        <TrendingUp className="w-12 h-12 text-gray-400 dark:text-gray-500 mx-auto mb-3" />
+        <p className="text-gray-600 dark:text-gray-400">No hay datos de analytics aún</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
           Las estadísticas aparecerán cuando los usuarios visiten tu perfil público
         </p>
       </div>
@@ -145,25 +145,25 @@ function AnalyticsDashboard({ perfilId }) {
   return (
     <div className="space-y-6">
       {/* Filtros de fecha */}
-      <div className="flex items-center gap-4 bg-gray-50 rounded-lg p-4">
-        <Calendar className="w-5 h-5 text-gray-600" />
+      <div className="flex items-center gap-4 bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+        <Calendar className="w-5 h-5 text-gray-600 dark:text-gray-400" />
         <div className="flex items-center gap-3">
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Desde</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Desde</label>
             <input
               type="date"
               value={fechaInicio}
               onChange={(e) => setFechaInicio(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-gray-700 mb-1">Hasta</label>
+            <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Hasta</label>
             <input
               type="date"
               value={fechaFin}
               onChange={(e) => setFechaFin(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+              className="px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-md text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -172,45 +172,45 @@ function AnalyticsDashboard({ perfilId }) {
       {/* Métricas principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Total Vistas */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Vistas</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_vistas || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Vistas</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{stats.total_vistas || 0}</p>
             </div>
-            <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-              <Eye className="w-6 h-6 text-blue-600" />
+            <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
+              <Eye className="w-6 h-6 text-primary-600 dark:text-primary-400" />
             </div>
           </div>
         </div>
 
         {/* Total Clics */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Clics</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">{stats.total_clics || 0}</p>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Clics</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">{stats.total_clics || 0}</p>
             </div>
-            <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-              <MousePointerClick className="w-6 h-6 text-green-600" />
+            <div className="w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-lg flex items-center justify-center">
+              <MousePointerClick className="w-6 h-6 text-green-600 dark:text-green-400" />
             </div>
           </div>
         </div>
 
         {/* Tasa de Conversión */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Tasa de Conversión</p>
-              <p className="text-3xl font-bold text-gray-900 mt-2">
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Tasa de Conversión</p>
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-2">
                 {stats.total_vistas > 0
                   ? ((stats.total_clics / stats.total_vistas) * 100).toFixed(1)
                   : '0.0'}
                 %
               </p>
             </div>
-            <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-purple-600" />
+            <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-lg flex items-center justify-center">
+              <TrendingUp className="w-6 h-6 text-purple-600 dark:text-purple-400" />
             </div>
           </div>
         </div>
@@ -219,8 +219,8 @@ function AnalyticsDashboard({ perfilId }) {
       {/* Gráficas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Gráfica de Vistas por Día */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Vistas por Día</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Vistas por Día</h3>
           {chartData && chartData.vistas.datasets[0].data.length > 0 ? (
             <Line
               data={chartData.vistas}
@@ -246,13 +246,13 @@ function AnalyticsDashboard({ perfilId }) {
               }}
             />
           ) : (
-            <p className="text-center text-gray-500 py-8">Sin datos en este período</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Sin datos en este período</p>
           )}
         </div>
 
         {/* Gráfica de Clics por Tipo */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Clics por Acción</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Clics por Acción</h3>
           {chartData && chartData.clics.datasets[0].data.length > 0 ? (
             <Bar
               data={chartData.clics}
@@ -274,38 +274,38 @@ function AnalyticsDashboard({ perfilId }) {
               }}
             />
           ) : (
-            <p className="text-center text-gray-500 py-8">Sin datos en este período</p>
+            <p className="text-center text-gray-500 dark:text-gray-400 py-8">Sin datos en este período</p>
           )}
         </div>
       </div>
 
       {/* Tabla de fuentes de tráfico */}
       {stats.fuentes_trafico && stats.fuentes_trafico.length > 0 && (
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Fuentes de Tráfico</h3>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Fuentes de Tráfico</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200">
-                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700">
+                <tr className="border-b border-gray-200 dark:border-gray-700">
+                  <th className="text-left py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">
                     Fuente
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">
+                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">
                     Visitas
                   </th>
-                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-700">%</th>
+                  <th className="text-right py-3 px-4 text-sm font-medium text-gray-700 dark:text-gray-300">%</th>
                 </tr>
               </thead>
               <tbody>
                 {stats.fuentes_trafico.map((fuente, index) => (
-                  <tr key={index} className="border-b border-gray-100">
-                    <td className="py-3 px-4 text-sm text-gray-900">
+                  <tr key={index} className="border-b border-gray-100 dark:border-gray-700">
+                    <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100">
                       {fuente.fuente || 'Directo'}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-900 text-right">
+                    <td className="py-3 px-4 text-sm text-gray-900 dark:text-gray-100 text-right">
                       {fuente.total}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600 text-right">
+                    <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400 text-right">
                       {((fuente.total / stats.total_vistas) * 100).toFixed(1)}%
                     </td>
                   </tr>

@@ -25,27 +25,27 @@ function ServicioCard({ servicio, className = '' }) {
 
   return (
     <div
-      className={`bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md transition-shadow ${className}`}
+      className={`bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 hover:shadow-md transition-shadow ${className}`}
     >
       {/* Nombre del servicio */}
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{nombre}</h3>
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">{nombre}</h3>
 
       {/* Descripción */}
       {descripcion && (
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2">{descripcion}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-2">{descripcion}</p>
       )}
 
       {/* Footer con precio y duración */}
       <div className="flex items-center justify-between text-sm">
         {/* Precio */}
-        <div className="flex items-center text-primary-700 font-semibold">
+        <div className="flex items-center text-primary-700 dark:text-primary-400 font-semibold">
           <DollarSign className="w-4 h-4 mr-1" />
           <span>${precio}</span>
         </div>
 
         {/* Duración */}
         {duracion_minutos && (
-          <div className="flex items-center text-gray-500">
+          <div className="flex items-center text-gray-500 dark:text-gray-400">
             <Clock className="w-4 h-4 mr-1" />
             <span>{duracion_minutos} min</span>
           </div>

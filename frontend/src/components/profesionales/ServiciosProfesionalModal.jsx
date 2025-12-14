@@ -156,7 +156,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
     >
       <div className="space-y-6">
         {/* Header con icono */}
-        <div className="flex items-center gap-3 pb-4 border-b">
+        <div className="flex items-center gap-3 pb-4 border-b border-gray-200 dark:border-gray-700">
           <div
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
             style={{ backgroundColor: profesional?.color_calendario || '#3b82f6' }}
@@ -164,10 +164,10 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
             <Scissors className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
               {profesional?.nombre} {profesional?.apellidos}
             </h3>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-400">
               Selecciona los servicios que puede realizar este profesional
             </p>
           </div>
@@ -177,8 +177,8 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <div className="flex flex-col items-center gap-3">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-              <p className="text-sm text-gray-600">Cargando servicios...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Cargando servicios...</p>
             </div>
           </div>
         ) : (
@@ -188,12 +188,12 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
               <div className="space-y-3">
                 {/* Contador */}
                 <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-700 font-medium">
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
                     {selectedServicios.length} de {todosServicios.length} servicios
                     seleccionados
                   </p>
                   {selectedServicios.length === 0 && (
-                    <div className="flex items-center gap-1 text-blue-600 text-xs">
+                    <div className="flex items-center gap-1 text-primary-600 dark:text-primary-400 text-xs">
                       <AlertCircle className="w-3 h-3" />
                       <span>Profesional sin servicios asignados</span>
                     </div>
@@ -201,7 +201,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
                 </div>
 
                 {/* Grid de servicios */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 border border-gray-200 rounded-lg">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-96 overflow-y-auto p-2 border border-gray-200 dark:border-gray-700 rounded-lg">
                   {todosServicios.map((servicio) => (
                     <div
                       key={servicio.id}
@@ -210,8 +210,8 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
                         flex items-start gap-3 p-3 border-2 rounded-lg cursor-pointer transition-all
                         ${
                           selectedServicios.includes(servicio.id)
-                            ? 'border-primary-600 bg-primary-50'
-                            : 'border-gray-200 hover:border-primary-300'
+                            ? 'border-primary-600 dark:border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                            : 'border-gray-200 dark:border-gray-600 hover:border-primary-300 dark:hover:border-primary-500'
                         }
                       `}
                     >
@@ -219,19 +219,19 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
                         type="checkbox"
                         checked={selectedServicios.includes(servicio.id)}
                         onChange={() => {}}
-                        className="h-4 w-4 text-primary-600 border-gray-300 rounded mt-0.5"
+                        className="h-4 w-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-900 truncate">
+                        <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
                           {servicio.nombre}
                         </p>
                         <div className="flex items-center gap-2 mt-1">
                           {servicio.categoria && (
-                            <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 rounded">
+                            <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400 rounded">
                               {servicio.categoria}
                             </span>
                           )}
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             ${servicio.precio?.toLocaleString()} • {servicio.duracion_minutos}
                             min
                           </span>
@@ -243,10 +243,10 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
               </div>
             ) : (
               <div className="text-center py-8">
-                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Scissors className="w-8 h-8 text-gray-400" />
+                <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Scissors className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-400">
                   No hay servicios disponibles. Debes agregar servicios primero.
                 </p>
               </div>
@@ -255,7 +255,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
         )}
 
         {/* Botones de acción */}
-        <div className="flex justify-end gap-3 pt-4 border-t">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancelar
           </Button>

@@ -87,12 +87,14 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
           value={form.titulo}
           onChange={(e) => setForm({ ...form, titulo: e.target.value })}
           placeholder="Nuestra Galería"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Input
           label="Subtítulo (opcional)"
           value={form.subtitulo}
           onChange={(e) => setForm({ ...form, subtitulo: e.target.value })}
           placeholder="Nuestros mejores trabajos"
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -102,18 +104,21 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
           value={String(form.columnas)}
           onChange={(e) => setForm({ ...form, columnas: parseInt(e.target.value) })}
           options={columnasOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Espaciado"
           value={form.espaciado}
           onChange={(e) => setForm({ ...form, espaciado: e.target.value })}
           options={espaciadoOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
         <Select
           label="Estilo"
           value={form.estilo}
           onChange={(e) => setForm({ ...form, estilo: e.target.value })}
           options={estiloOptions}
+          className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
         />
       </div>
 
@@ -126,7 +131,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
       {/* Lista de imágenes */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium text-gray-700">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Imágenes ({form.imagenes.length})
           </label>
           <Button
@@ -142,9 +147,9 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
 
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {form.imagenes.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+            <div className="text-center py-8 bg-gray-50 dark:bg-gray-700 rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-600">
               <Image className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No hay imágenes</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">No hay imágenes</p>
               <Button
                 type="button"
                 variant="ghost"
@@ -159,7 +164,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
             form.imagenes.map((imagen, index) => (
               <div
                 key={index}
-                className="flex items-start gap-2 p-2 bg-gray-50 rounded-lg border border-gray-200"
+                className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600"
               >
                 <GripVertical className="w-5 h-5 text-gray-400 mt-2 cursor-grab flex-shrink-0" />
 
@@ -170,7 +175,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
                     className="w-16 h-16 object-cover rounded flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center flex-shrink-0">
+                  <div className="w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded flex items-center justify-center flex-shrink-0">
                     <Image className="w-6 h-6 text-gray-400" />
                   </div>
                 )}
@@ -182,12 +187,14 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
                     onChange={(e) => handleChange(index, 'url', e.target.value)}
                     placeholder="URL de la imagen"
                     inputSize="sm"
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                   <Input
                     value={imagen.alt}
                     onChange={(e) => handleChange(index, 'alt', e.target.value)}
                     placeholder="Texto alternativo"
                     inputSize="sm"
+                    className="dark:bg-gray-600 dark:border-gray-500 dark:text-gray-100"
                   />
                 </div>
 
@@ -196,7 +203,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
                   variant="ghost"
                   size="sm"
                   onClick={() => handleEliminar(index)}
-                  className="text-gray-400 hover:text-red-500"
+                  className="text-gray-400 hover:text-red-500 dark:hover:bg-gray-600"
                 >
                   <Trash2 className="w-4 h-4" />
                 </Button>
@@ -207,7 +214,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
       </div>
 
       {/* Preview */}
-      <div className="border border-gray-200 rounded-lg p-4">
+      <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4">
         {form.titulo && (
           <h4 className="font-bold text-center mb-3" style={{ color: tema?.colores?.texto }}>
             {form.titulo}
@@ -220,7 +227,7 @@ function GaleriaEditor({ contenido, onGuardar, tema, isSaving }) {
           {(form.imagenes.length > 0 ? form.imagenes.slice(0, 6) : [1, 2, 3]).map((img, i) => (
             <div
               key={i}
-              className="aspect-square bg-gray-200 rounded overflow-hidden"
+              className="aspect-square bg-gray-200 dark:bg-gray-700 rounded overflow-hidden"
             >
               {typeof img === 'object' && img.url ? (
                 <img src={img.url} alt={img.alt} className="w-full h-full object-cover" />

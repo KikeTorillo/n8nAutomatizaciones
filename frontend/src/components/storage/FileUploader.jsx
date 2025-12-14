@@ -214,8 +214,8 @@ function FileUploader({
           relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
           transition-colors duration-200
           ${isDragging
-            ? 'border-indigo-500 bg-indigo-50'
-            : 'border-gray-300 hover:border-indigo-400 hover:bg-gray-50'
+            ? 'border-primary-500 bg-primary-50'
+            : 'border-gray-300 hover:border-primary-400 hover:bg-gray-50'
           }
         `}
       >
@@ -228,7 +228,7 @@ function FileUploader({
           className="hidden"
         />
 
-        <Upload className={`mx-auto h-12 w-12 ${isDragging ? 'text-indigo-500' : 'text-gray-400'}`} />
+        <Upload className={`mx-auto h-12 w-12 ${isDragging ? 'text-primary-500' : 'text-gray-400'}`} />
 
         <p className="mt-4 text-sm font-medium text-gray-900">
           {isDragging ? 'Suelta los archivos aquí' : 'Arrastra archivos o haz clic para seleccionar'}
@@ -286,7 +286,7 @@ function FileUploader({
                     )}
 
                     {fileItem.status === 'uploading' && (
-                      <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" />
+                      <Loader2 className="h-5 w-5 text-primary-600 animate-spin" />
                     )}
 
                     {fileItem.status === 'success' && (
