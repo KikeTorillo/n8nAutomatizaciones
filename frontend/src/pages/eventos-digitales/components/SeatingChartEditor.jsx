@@ -12,6 +12,7 @@ import {
 import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -374,68 +375,77 @@ function SeatingChartEditor({ eventoId }) {
       </div>
 
       {/* Modal crear mesa */}
-      {showCreateMesa && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">Nueva Mesa</h3>
-            <div className="space-y-4">
-              <Input
-                label="Nombre"
-                placeholder="Ej: Mesa Familiar, Mesa VIP"
-                value={newMesaData.nombre}
-                onChange={(e) => setNewMesaData({ ...newMesaData, nombre: e.target.value })}
-              />
-              <Input
-                label="Número (opcional)"
-                type="number"
-                placeholder="Ej: 1, 2, 3..."
-                value={newMesaData.numero}
-                onChange={(e) => setNewMesaData({ ...newMesaData, numero: e.target.value })}
-              />
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Tipo de mesa
-                </label>
-                <select
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                  value={newMesaData.tipo}
-                  onChange={(e) => setNewMesaData({ ...newMesaData, tipo: e.target.value })}
-                >
-                  <option value="redonda">Redonda</option>
-                  <option value="cuadrada">Cuadrada</option>
-                  <option value="rectangular">Rectangular</option>
-                </select>
-              </div>
-              <Input
-                label="Capacidad"
-                type="number"
-                min={1}
-                max={50}
-                value={newMesaData.capacidad}
-                onChange={(e) => setNewMesaData({ ...newMesaData, capacidad: parseInt(e.target.value) || 8 })}
-              />
-            </div>
-            <div className="flex justify-end gap-2 mt-6">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowCreateMesa(false);
-                  setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
-                }}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleCreateMesa}
-                loading={crearMesa.isPending}
-              >
-                Crear Mesa
-              </Button>
-            </div>
+      <Modal
+        isOpen={showCreateMesa}
+        onClose={() => {
+          setShowCreateMesa(false);
+          setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
+        }}
+        title="Nueva Mesa"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <Input
+            label="Nombre"
+            placeholder="Ej: Mesa Familiar, Mesa VIP"
+            value={newMesaData.nombre}
+            onChange={(e) => setNewMesaData({ ...newMesaData, nombre: e.target.value })}
+          />
+          <Input
+            label="Número (opcional)"
+            type="number"
+            placeholder="Ej: 1, 2, 3..."
+            value={newMesaData.numero}
+            onChange={(e) => setNewMesaData({ ...newMesaData, numero: e.target.value })}
+          />
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Tipo de mesa
+            </label>
+            <select
+              className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              value={newMesaData.tipo}
+              onChange={(e) => setNewMesaData({ ...newMesaData, tipo: e.target.value })}
+            >
+              <option value="redonda">Redonda</option>
+              <option value="cuadrada">Cuadrada</option>
+              <option value="rectangular">Rectangular</option>
+            </select>
           </div>
+          <Input
+            label="Capacidad"
+            type="number"
+            min={1}
+            max={50}
+            value={newMesaData.capacidad}
+            onChange={(e) => setNewMesaData({ ...newMesaData, capacidad: parseInt(e.target.value) || 8 })}
+          />
         </div>
-      )}
+        <div className="flex justify-end gap-2 mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setShowCreateMesa(false);
+              setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
+            }}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => {
+              // Forzar blur para cerrar teclado en iOS antes de ejecutar
+              document.activeElement?.blur();
+              handleCreateMesa();
+            }}
+            isLoading={crearMesa.isPending}
+          >
+            Crear Mesa
+          </Button>
+        </div>
+      </Modal>
 
       {/* Modal confirmar eliminar mesa */}
       <ConfirmDialog
