@@ -57,7 +57,7 @@ function Modal({
 
   // Fix iOS: forzar recálculo de layout cuando el teclado se cierra
   // El problema: iOS Safari no recalcula touch targets después de cerrar el teclado
-  // Solución: forzar un micro-scroll que dispara el repaint del layout
+  // Solución: forzar repaint cada vez que un input pierde el foco
   useEffect(() => {
     if (!isOpen) return;
 
@@ -65,71 +65,64 @@ function Modal({
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
     if (!isIOS) return;
 
-    let lastHeight = window.visualViewport?.height || window.innerHeight;
+    // Función agresiva para forzar repaint
+    const forceRepaint = () => {
+      if (!modalContentRef.current) return;
 
-    const handleViewportResize = () => {
-      const currentHeight = window.visualViewport?.height || window.innerHeight;
-
-      // El teclado se cerró (viewport creció)
-      if (currentHeight > lastHeight) {
-        // Forzar recálculo de layout con micro-scroll
-        // Esto es lo que hace que los touch targets se realineen
+      // Método 1: micro-scroll en el contenedor del modal
+      const scrollContainer = modalContentRef.current.querySelector('.overflow-y-auto');
+      if (scrollContainer) {
+        const currentScroll = scrollContainer.scrollTop;
+        scrollContainer.scrollTop = currentScroll + 1;
         requestAnimationFrame(() => {
-          // Obtener el contenedor scrollable del modal
-          const scrollContainer = modalContentRef.current?.querySelector('.overflow-y-auto');
-          if (scrollContainer) {
-            const currentScroll = scrollContainer.scrollTop;
-            scrollContainer.scrollTop = currentScroll + 1;
-            scrollContainer.scrollTop = currentScroll;
-          }
-
-          // También forzar repaint del modal
-          if (modalContentRef.current) {
-            // getBoundingClientRect fuerza un layout recalculation
-            modalContentRef.current.getBoundingClientRect();
-          }
+          scrollContainer.scrollTop = currentScroll;
         });
       }
 
-      lastHeight = currentHeight;
-    };
+      // Método 2: forzar reflow via getBoundingClientRect
+      modalContentRef.current.getBoundingClientRect();
 
-    // Función para forzar repaint
-    const forceRepaint = () => {
+      // Método 3: toggle de una propiedad CSS para forzar repaint
+      modalContentRef.current.style.transform = 'translateZ(0)';
       requestAnimationFrame(() => {
-        const scrollContainer = modalContentRef.current?.querySelector('.overflow-y-auto');
-        if (scrollContainer) {
-          const currentScroll = scrollContainer.scrollTop;
-          scrollContainer.scrollTop = currentScroll + 1;
-          scrollContainer.scrollTop = currentScroll;
-        }
         if (modalContentRef.current) {
-          modalContentRef.current.getBoundingClientRect();
+          modalContentRef.current.style.transform = '';
         }
       });
     };
 
-    // Backup: también escuchar focusout de inputs (cuando se cierra el teclado al tocar fuera)
+    // Escuchar cuando cualquier input pierde el foco
     const handleFocusOut = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
-        // Delay para dar tiempo al keyboard de cerrar
-        setTimeout(forceRepaint, 100);
-      }
+      const isFormElement = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+      if (!isFormElement) return;
+
+      // El teclado tarda ~300ms en cerrar completamente en iOS
+      // Disparar el repaint múltiples veces para asegurar
+      setTimeout(forceRepaint, 50);
+      setTimeout(forceRepaint, 150);
+      setTimeout(forceRepaint, 300);
     };
 
-    // visualViewport.resize se dispara cuando el teclado abre/cierra en iOS
+    // Escuchar cambios de visualViewport (más confiable para detectar teclado)
+    const handleViewportChange = () => {
+      setTimeout(forceRepaint, 50);
+      setTimeout(forceRepaint, 150);
+    };
+
+    // Registrar listeners
+    document.addEventListener('focusout', handleFocusOut, true);
+
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', handleViewportResize);
+      window.visualViewport.addEventListener('resize', handleViewportChange);
+      window.visualViewport.addEventListener('scroll', handleViewportChange);
     }
 
-    // Agregar listener de focusout como backup
-    document.addEventListener('focusout', handleFocusOut);
-
     return () => {
+      document.removeEventListener('focusout', handleFocusOut, true);
       if (window.visualViewport) {
-        window.visualViewport.removeEventListener('resize', handleViewportResize);
+        window.visualViewport.removeEventListener('resize', handleViewportChange);
+        window.visualViewport.removeEventListener('scroll', handleViewportChange);
       }
-      document.removeEventListener('focusout', handleFocusOut);
     };
   }, [isOpen]);
 
