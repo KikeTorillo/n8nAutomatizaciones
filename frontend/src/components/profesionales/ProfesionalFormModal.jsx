@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw, Camera, X, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
@@ -23,9 +24,11 @@ import { useUploadArchivo } from '@/hooks/useStorage';
 
 /**
  * Colores predefinidos para el calendario
+ * El primero es el color de marca Nexo (#753572) como default
  */
 const COLORES_CALENDARIO = [
-  '#3b82f6', // primary-500
+  '#753572', // Nexo Purple (color de marca - default)
+  '#3b82f6', // blue-500
   '#10b981', // green-500
   '#f59e0b', // amber-500
   '#ef4444', // red-500
@@ -35,7 +38,6 @@ const COLORES_CALENDARIO = [
   '#f97316', // orange-500
   '#14b8a6', // teal-500
   '#a855f7', // purple-500
-  '#6366f1', // primary-500
   '#84cc16', // lime-500
 ];
 
@@ -54,7 +56,7 @@ const profesionalCreateSchema = z.object({
     required_error: 'El email es obligatorio para enviar la invitación',
   }).email('Email inválido').max(100, 'Máximo 100 caracteres'),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
-  color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#3b82f6'),
+  color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#753572'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
   activo: z.boolean().default(true),
 });
@@ -101,6 +103,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
   const [fotoUrl, setFotoUrl] = useState(null);
+  const [confirmarCancelarInvitacion, setConfirmarCancelarInvitacion] = useState(false);
   const uploadMutation = useUploadArchivo();
 
   const isEditMode = mode === 'edit';
@@ -266,11 +269,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const handleCancelarInvitacion = async () => {
     if (!invitacionActual?.id) return;
 
-    if (!window.confirm('¿Cancelar esta invitación?')) return;
-
     try {
       await invitacionesApi.cancelar(invitacionActual.id);
       setInvitacionActual(null);
+      setConfirmarCancelarInvitacion(false);
       toast.success('Invitación cancelada');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error al cancelar invitación');
@@ -639,7 +641,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                             </button>
                             <button
                               type="button"
-                              onClick={handleCancelarInvitacion}
+                              onClick={() => setConfirmarCancelarInvitacion(true)}
                               className="p-1 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
                               title="Cancelar"
                             >
@@ -786,6 +788,18 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           </>
         )}
       </form>
+
+      {/* Modal de confirmación para cancelar invitación */}
+      <ConfirmDialog
+        isOpen={confirmarCancelarInvitacion}
+        onClose={() => setConfirmarCancelarInvitacion(false)}
+        onConfirm={handleCancelarInvitacion}
+        title="Cancelar invitación"
+        message="¿Estás seguro de cancelar esta invitación? El usuario no podrá registrarse con este enlace."
+        confirmText="Cancelar invitación"
+        cancelText="Volver"
+        variant="warning"
+      />
     </Modal>
   );
 }

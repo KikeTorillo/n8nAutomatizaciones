@@ -119,6 +119,9 @@ function EventoDetailPage() {
   const scannerRef = useRef(null);
   const html5QrCodeRef = useRef(null);
 
+  // Estado para menú móvil de invitados (iOS fix)
+  const [menuAbiertoId, setMenuAbiertoId] = useState(null);
+
   // Forms state
   const [invitadoForm, setInvitadoForm] = useState({ nombre: '', email: '', telefono: '', max_acompanantes: 0 });
   const [ubicacionForm, setUbicacionForm] = useState({ nombre: '', tipo: 'ceremonia', direccion: '', hora_inicio: '', hora_fin: '', google_maps_url: '' });
@@ -984,46 +987,69 @@ function EventoDetailPage() {
                             </Button>
                           </div>
                           {/* Mobile: menú dropdown */}
-                          <div className="sm:hidden relative group">
+                          <div className="sm:hidden relative">
                             <Button
                               variant="outline"
                               size="sm"
                               className="px-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setMenuAbiertoId(menuAbiertoId === inv.id ? null : inv.id);
+                              }}
                             >
                               <MoreVertical className="w-4 h-4" />
                             </Button>
-                            <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20 opacity-0 invisible group-focus-within:opacity-100 group-focus-within:visible transition-all">
-                              {mostrarQR && (
-                                <button
-                                  onClick={() => handleVerQR(inv)}
-                                  className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                >
-                                  <QrCode className="w-4 h-4" /> Ver QR
-                                </button>
-                              )}
-                              <button
-                                onClick={() => {
-                                  const invitacionUrl = `${window.location.origin}/e/${evento.slug}/${inv.token}`;
-                                  navigator.clipboard.writeText(invitacionUrl);
-                                  toast.success('Link copiado');
-                                }}
-                                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                              >
-                                <Copy className="w-4 h-4" /> Copiar link
-                              </button>
-                              <button
-                                onClick={() => handleEditarInvitado(inv)}
-                                className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                              >
-                                <Edit className="w-4 h-4" /> Editar
-                              </button>
-                              <button
-                                onClick={() => eliminarInvitado.mutate({ id: inv.id, eventoId: id })}
-                                className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
-                              >
-                                <Trash2 className="w-4 h-4" /> Eliminar
-                              </button>
-                            </div>
+                            {menuAbiertoId === inv.id && (
+                              <>
+                                {/* Overlay para cerrar al tocar fuera */}
+                                <div
+                                  className="fixed inset-0 z-10"
+                                  onClick={() => setMenuAbiertoId(null)}
+                                />
+                                <div className="absolute right-0 top-full mt-1 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-20">
+                                  {mostrarQR && (
+                                    <button
+                                      onClick={() => {
+                                        handleVerQR(inv);
+                                        setMenuAbiertoId(null);
+                                      }}
+                                      className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                    >
+                                      <QrCode className="w-4 h-4" /> Ver QR
+                                    </button>
+                                  )}
+                                  <button
+                                    onClick={() => {
+                                      const invitacionUrl = `${window.location.origin}/e/${evento.slug}/${inv.token}`;
+                                      navigator.clipboard.writeText(invitacionUrl);
+                                      toast.success('Link copiado');
+                                      setMenuAbiertoId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <Copy className="w-4 h-4" /> Copiar link
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      handleEditarInvitado(inv);
+                                      setMenuAbiertoId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                                  >
+                                    <Edit className="w-4 h-4" /> Editar
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      eliminarInvitado.mutate({ id: inv.id, eventoId: id });
+                                      setMenuAbiertoId(null);
+                                    }}
+                                    className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 flex items-center gap-2"
+                                  >
+                                    <Trash2 className="w-4 h-4" /> Eliminar
+                                  </button>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

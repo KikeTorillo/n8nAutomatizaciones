@@ -36,7 +36,7 @@ const Checkbox = forwardRef(
             type="checkbox"
             disabled={disabled}
             className={cn(
-              'h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-primary-700 dark:text-primary-500 focus:ring-primary-500 dark:focus:ring-primary-400 transition-colors dark:bg-gray-800',
+              'h-4 w-4 rounded border-gray-300 dark:border-gray-600 accent-primary-600 dark:accent-primary-500 focus:ring-primary-500 dark:focus:ring-primary-400 transition-colors dark:bg-gray-700',
               disabled && 'opacity-50 cursor-not-allowed',
               error && 'border-red-500'
             )}

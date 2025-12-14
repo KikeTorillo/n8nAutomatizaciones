@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/useSuperAdminMarketplace';
 import { useToast } from '@/hooks/useToast';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import EstrellaRating from '@/components/marketplace/EstrellaRating';
@@ -24,6 +25,7 @@ export default function MarketplaceGestion() {
   });
 
   const [showFilters, setShowFilters] = useState(true);
+  const [confirmarLimpiarAnalytics, setConfirmarLimpiarAnalytics] = useState(false);
 
   // Queries y Mutations
   const { data, isLoading, refetch } = usePerfilesAdmin(filtros);
@@ -70,13 +72,10 @@ export default function MarketplaceGestion() {
   };
 
   const handleLimpiarAnalytics = async () => {
-    if (!confirm('¿Estás seguro de eliminar los datos de analytics mayores a 90 días? Esta acción no se puede deshacer.')) {
-      return;
-    }
-
     try {
       await limpiarAnalytics.mutateAsync({ dias_antiguedad: 90 });
       success('Analytics antiguos eliminados exitosamente');
+      setConfirmarLimpiarAnalytics(false);
     } catch (err) {
       showError(err.message || 'Error al limpiar analytics');
     }
@@ -109,13 +108,12 @@ export default function MarketplaceGestion() {
           </p>
         </div>
         <Button
-          onClick={handleLimpiarAnalytics}
+          onClick={() => setConfirmarLimpiarAnalytics(true)}
           variant="danger"
           className="flex items-center gap-2"
-          disabled={limpiarAnalytics.isLoading}
         >
           <Trash2 className="w-4 h-4" />
-          {limpiarAnalytics.isLoading ? 'Limpiando...' : 'Limpiar Analytics'}
+          Limpiar Analytics
         </Button>
       </div>
 
@@ -371,6 +369,19 @@ export default function MarketplaceGestion() {
           </>
         )}
       </div>
+
+      {/* Modal confirmar limpiar analytics */}
+      <ConfirmDialog
+        isOpen={confirmarLimpiarAnalytics}
+        onClose={() => setConfirmarLimpiarAnalytics(false)}
+        onConfirm={handleLimpiarAnalytics}
+        title="Limpiar Analytics"
+        message="¿Estás seguro de eliminar los datos de analytics mayores a 90 días? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={limpiarAnalytics.isLoading}
+      />
     </div>
   );
 }

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import {
   useOrdenCompra,
@@ -52,6 +53,7 @@ export default function OrdenCompraDetalleModal({
   const [itemEditando, setItemEditando] = useState(null);
   const [cantidadEditando, setCantidadEditando] = useState(0);
   const [precioEditando, setPrecioEditando] = useState(0);
+  const [itemAEliminar, setItemAEliminar] = useState(null);
 
   // Queries
   const { data: productosData } = useProductos({ busqueda: busquedaProducto, activo: true, limit: 50 });
@@ -181,14 +183,15 @@ export default function OrdenCompraDetalleModal({
     setItemEditando(null);
   };
 
-  const handleEliminarItem = (itemId) => {
-    if (!confirm('¿Estás seguro de eliminar este producto de la orden?')) return;
+  const handleEliminarItem = () => {
+    if (!itemAEliminar) return;
 
     eliminarItemMutation.mutate(
-      { ordenId: orden.id, itemId },
+      { ordenId: orden.id, itemId: itemAEliminar },
       {
         onSuccess: () => {
           showToast('Producto eliminado de la orden', 'success');
+          setItemAEliminar(null);
         },
         onError: (error) => {
           showToast(
@@ -532,7 +535,7 @@ export default function OrdenCompraDetalleModal({
                                     <Edit className="h-4 w-4" />
                                   </button>
                                   <button
-                                    onClick={() => handleEliminarItem(item.id)}
+                                    onClick={() => setItemAEliminar(item.id)}
                                     className="p-1 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                                     disabled={eliminarItemMutation.isPending}
                                   >
@@ -592,6 +595,19 @@ export default function OrdenCompraDetalleModal({
           No se encontró la orden de compra
         </div>
       )}
+
+      {/* Modal de confirmación para eliminar item */}
+      <ConfirmDialog
+        isOpen={!!itemAEliminar}
+        onClose={() => setItemAEliminar(null)}
+        onConfirm={handleEliminarItem}
+        title="Eliminar producto"
+        message="¿Estás seguro de eliminar este producto de la orden?"
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={eliminarItemMutation.isPending}
+      />
     </Modal>
   );
 }

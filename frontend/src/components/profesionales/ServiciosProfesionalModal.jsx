@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Scissors, AlertCircle } from 'lucide-react';
+import { Briefcase, AlertCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { serviciosApi } from '@/services/api/endpoints';
@@ -161,7 +161,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
             className="w-12 h-12 rounded-full flex items-center justify-center text-white"
             style={{ backgroundColor: profesional?.color_calendario || '#3b82f6' }}
           >
-            <Scissors className="w-6 h-6" />
+            <Briefcase className="w-6 h-6" />
           </div>
           <div>
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -244,7 +244,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
             ) : (
               <div className="text-center py-8">
                 <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Scissors className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+                  <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
                   No hay servicios disponibles. Debes agregar servicios primero.

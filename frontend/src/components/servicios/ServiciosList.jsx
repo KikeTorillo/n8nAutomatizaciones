@@ -1,4 +1,4 @@
-import { Scissors, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Briefcase, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatCurrency } from '@/lib/utils';
 import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
@@ -34,7 +34,7 @@ function ServiciosList({
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
         <div className="max-w-sm mx-auto">
           <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Scissors className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+            <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
             No se encontraron servicios
@@ -101,7 +101,7 @@ function ServiciosList({
                           />
                         ) : (
                           <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
-                            <Scissors className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                            <Briefcase className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                           </div>
                         )}
                         <div className="ml-4">

@@ -12,6 +12,7 @@ import {
 import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import {
   useMesas,
@@ -37,6 +38,7 @@ function SeatingChartEditor({ eventoId }) {
   const [dragType, setDragType] = useState(null); // 'mesa' | 'invitado'
   const [showCreateMesa, setShowCreateMesa] = useState(false);
   const [editingMesa, setEditingMesa] = useState(null);
+  const [mesaAEliminar, setMesaAEliminar] = useState(null);
   const [newMesaData, setNewMesaData] = useState({
     nombre: '',
     numero: '',
@@ -205,11 +207,10 @@ function SeatingChartEditor({ eventoId }) {
 
   // Eliminar mesa
   const handleDeleteMesa = async (mesaId) => {
-    if (!confirm('¿Eliminar esta mesa? Los invitados serán desasignados.')) return;
-
     try {
       await eliminarMesa.mutateAsync({ mesaId, eventoId });
       toast.success('Mesa eliminada');
+      setMesaAEliminar(null);
     } catch (error) {
       toast.error(error.message);
     }
@@ -350,7 +351,7 @@ function SeatingChartEditor({ eventoId }) {
                   porcentaje={porcentaje}
                   isEditing={editingMesa?.id === mesa.id}
                   onEdit={() => setEditingMesa(mesa)}
-                  onDelete={() => handleDeleteMesa(mesa.id)}
+                  onDelete={() => setMesaAEliminar(mesa)}
                   onDesasignarInvitado={handleDesasignarInvitado}
                   onSave={(data) => handleUpdateMesa(mesa.id, data)}
                   onCancelEdit={() => setEditingMesa(null)}
@@ -435,6 +436,19 @@ function SeatingChartEditor({ eventoId }) {
           </div>
         </div>
       )}
+
+      {/* Modal confirmar eliminar mesa */}
+      <ConfirmDialog
+        isOpen={!!mesaAEliminar}
+        onClose={() => setMesaAEliminar(null)}
+        onConfirm={() => handleDeleteMesa(mesaAEliminar.id)}
+        title="Eliminar Mesa"
+        message={`¿Estás seguro de eliminar la mesa "${mesaAEliminar?.nombre}"? Los invitados asignados serán desasignados.`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={eliminarMesa.isPending}
+      />
 
       {/* Drag Overlay */}
       <DragOverlay>

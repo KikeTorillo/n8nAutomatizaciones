@@ -3,6 +3,7 @@ import { AlertTriangle, XCircle } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useCancelarVenta } from '@/hooks/useVentas';
@@ -18,8 +19,9 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
 
   const [motivo, setMotivo] = useState('');
   const [errores, setErrores] = useState({});
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     // Validaciones
@@ -33,11 +35,11 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
       return;
     }
 
-    // Confirmar acción
-    if (!window.confirm('¿Estás seguro de cancelar esta venta? Esta acción revertirá el stock automáticamente.')) {
-      return;
-    }
+    // Mostrar modal de confirmación
+    setMostrarConfirmacion(true);
+  };
 
+  const handleConfirmarCancelacion = async () => {
     try {
       await cancelarMutation.mutateAsync({
         id: venta.id,
@@ -46,6 +48,7 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
       });
 
       toast.success('Venta cancelada exitosamente. Stock revertido.');
+      setMostrarConfirmacion(false);
       handleClose();
     } catch (error) {
       console.error('Error al cancelar venta:', error);
@@ -156,6 +159,19 @@ export default function CancelarVentaModal({ isOpen, onClose, venta }) {
           </Button>
         </div>
       </form>
+
+      {/* Modal de confirmación final */}
+      <ConfirmDialog
+        isOpen={mostrarConfirmacion}
+        onClose={() => setMostrarConfirmacion(false)}
+        onConfirm={handleConfirmarCancelacion}
+        title="Confirmar cancelación"
+        message="¿Estás seguro de cancelar esta venta? Esta acción revertirá el stock automáticamente y no se puede deshacer."
+        confirmText="Sí, cancelar venta"
+        cancelText="Volver"
+        variant="danger"
+        isLoading={cancelarMutation.isPending}
+      />
     </Modal>
   );
 }

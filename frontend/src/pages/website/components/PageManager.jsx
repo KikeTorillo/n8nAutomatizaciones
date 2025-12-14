@@ -12,6 +12,7 @@ import {
   Loader2,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import {
   DndContext,
   closestCenter,
@@ -44,6 +45,8 @@ function PageManager({
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [menuAbiertoId, setMenuAbiertoId] = useState(null);
+  const [paginaAEliminar, setPaginaAEliminar] = useState(null);
+  const [eliminando, setEliminando] = useState(false);
 
   const reordenarPaginas = useReordenarPaginas();
 
@@ -85,25 +88,32 @@ function PageManager({
     }
   };
 
-  const handleEliminar = async (pagina) => {
+  const handleEliminar = async () => {
+    if (!paginaAEliminar) return;
+
+    setEliminando(true);
+    try {
+      await onEliminar(paginaAEliminar.id);
+      if (paginaActiva?.id === paginaAEliminar.id) {
+        const otraPagina = paginas.find(p => p.id !== paginaAEliminar.id);
+        onSeleccionar(otraPagina);
+      }
+      toast.success('Página eliminada');
+      setPaginaAEliminar(null);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Error al eliminar');
+    } finally {
+      setEliminando(false);
+    }
+    setMenuAbiertoId(null);
+  };
+
+  const handleConfirmarEliminar = (pagina) => {
     if (pagina.es_inicio) {
       toast.error('No puedes eliminar la página de inicio');
       return;
     }
-
-    if (!confirm(`¿Eliminar la página "${pagina.titulo}"?`)) return;
-
-    try {
-      await onEliminar(pagina.id);
-      if (paginaActiva?.id === pagina.id) {
-        const otraPagina = paginas.find(p => p.id !== pagina.id);
-        onSeleccionar(otraPagina);
-      }
-      toast.success('Página eliminada');
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al eliminar');
-    }
-    setMenuAbiertoId(null);
+    setPaginaAEliminar(pagina);
   };
 
   return (
@@ -154,7 +164,7 @@ function PageManager({
                     toast.error(error.response?.data?.message || 'Error');
                   }
                 }}
-                onDelete={() => handleEliminar(pagina)}
+                onDelete={() => handleConfirmarEliminar(pagina)}
                 onToggleMenu={() => setMenuAbiertoId(
                   menuAbiertoId === pagina.id ? null : pagina.id
                 )}
@@ -171,6 +181,19 @@ function PageManager({
           />
         )}
       </div>
+
+      {/* Modal confirmar eliminar página */}
+      <ConfirmDialog
+        isOpen={!!paginaAEliminar}
+        onClose={() => setPaginaAEliminar(null)}
+        onConfirm={handleEliminar}
+        title="Eliminar Página"
+        message={`¿Estás seguro de eliminar la página "${paginaAEliminar?.titulo}"?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={eliminando}
+      />
     </div>
   );
 }

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2, AlertTriangle, ArrowLeft } from 'lucide-react';
+import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2, ArrowLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/useChatbots';
 import { useToast } from '@/hooks/useToast';
@@ -16,11 +16,8 @@ function ChatbotsPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Estados para modal de configuración
+  // Estados para modales
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-
-  // Estados para modal de eliminación
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [chatbotAEliminar, setChatbotAEliminar] = useState(null);
 
   // Fetch chatbots
@@ -56,12 +53,6 @@ function ChatbotsPage() {
     }
   };
 
-  // Handler para abrir modal de eliminación
-  const handleDelete = (chatbot) => {
-    setChatbotAEliminar(chatbot);
-    setIsDeleteModalOpen(true);
-  };
-
   // Handler para confirmar eliminación
   const handleConfirmDelete = async () => {
     if (!chatbotAEliminar) return;
@@ -69,7 +60,6 @@ function ChatbotsPage() {
     try {
       await eliminarMutation.mutateAsync(chatbotAEliminar.id);
       toast.success('Chatbot eliminado exitosamente');
-      setIsDeleteModalOpen(false);
       setChatbotAEliminar(null);
     } catch (error) {
       toast.error(
@@ -249,8 +239,8 @@ function ChatbotsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDelete(chatbot)}
-                    className="text-red-600 hover:bg-red-50 border-red-200"
+                    onClick={() => setChatbotAEliminar(chatbot)}
+                    className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 border-red-200 dark:border-red-800"
                     disabled={eliminarMutation.isPending}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -274,54 +264,17 @@ function ChatbotsPage() {
         )}
 
         {/* Modal de Confirmación de Eliminación */}
-        <Modal
-          isOpen={isDeleteModalOpen}
-          onClose={() => {
-            setIsDeleteModalOpen(false);
-            setChatbotAEliminar(null);
-          }}
-          title="Eliminar Chatbot"
-        >
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="flex-shrink-0">
-                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center">
-                  <AlertTriangle className="w-5 h-5 text-red-600 dark:text-red-400" />
-                </div>
-              </div>
-              <div>
-                <p className="text-gray-900 dark:text-gray-100 font-medium mb-1">
-                  ¿Estás seguro de eliminar este chatbot?
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Esta acción eliminará el chatbot "{chatbotAEliminar?.nombre}" y su workflow asociado en n8n.
-                  Esta acción no se puede deshacer.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-4 border-t dark:border-gray-700">
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsDeleteModalOpen(false);
-                  setChatbotAEliminar(null);
-                }}
-                disabled={eliminarMutation.isPending}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleConfirmDelete}
-                isLoading={eliminarMutation.isPending}
-                disabled={eliminarMutation.isPending}
-              >
-                {eliminarMutation.isPending ? 'Eliminando...' : 'Eliminar Chatbot'}
-              </Button>
-            </div>
-          </div>
-        </Modal>
+        <ConfirmDialog
+          isOpen={!!chatbotAEliminar}
+          onClose={() => setChatbotAEliminar(null)}
+          onConfirm={handleConfirmDelete}
+          title="Eliminar chatbot"
+          message={`Esta acción eliminará el chatbot "${chatbotAEliminar?.nombre}" y su workflow asociado en n8n. Esta acción no se puede deshacer.`}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          variant="danger"
+          isLoading={eliminarMutation.isPending}
+        />
       </div>
     </div>
   );

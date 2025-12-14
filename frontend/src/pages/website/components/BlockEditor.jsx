@@ -19,6 +19,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import {
   DndContext,
   closestCenter,
@@ -226,6 +227,7 @@ function BloqueItem({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
 
   const config = BLOQUES_CONFIG[bloque.tipo] || {
     icon: Layout,
@@ -261,9 +263,8 @@ function BloqueItem({
   };
 
   const handleEliminar = () => {
-    if (confirm(`¿Eliminar bloque "${config.label}"?`)) {
-      onEliminar();
-    }
+    onEliminar();
+    setConfirmarEliminar(false);
   };
 
   return (
@@ -327,7 +328,7 @@ function BloqueItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleEliminar();
+              setConfirmarEliminar(true);
             }}
             className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
             title="Eliminar"
@@ -362,6 +363,18 @@ function BloqueItem({
           />
         </div>
       )}
+
+      {/* Modal confirmar eliminar bloque */}
+      <ConfirmDialog
+        isOpen={confirmarEliminar}
+        onClose={() => setConfirmarEliminar(false)}
+        onConfirm={handleEliminar}
+        title="Eliminar Bloque"
+        message={`¿Estás seguro de eliminar el bloque "${config.label}"?`}
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </div>
   );
 }

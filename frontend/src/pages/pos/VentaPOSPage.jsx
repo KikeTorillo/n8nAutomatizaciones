@@ -11,6 +11,7 @@ import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 import ClienteSelector from '@/components/pos/ClienteSelector';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 /**
  * Página principal del punto de venta (POS)
@@ -45,6 +46,7 @@ export default function VentaPOSPage() {
   const [items, setItems] = useState([]);
   const [descuentoGlobal, setDescuentoGlobal] = useState(0);
   const [mostrarModalPago, setMostrarModalPago] = useState(false);
+  const [mostrarConfirmVaciar, setMostrarConfirmVaciar] = useState(false);
   // Nov 2025: Cliente asociado a la venta (opcional)
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
 
@@ -118,11 +120,10 @@ export default function VentaPOSPage() {
 
   // Handler: Vaciar carrito
   const handleVaciarCarrito = () => {
-    if (window.confirm('¿Estás seguro de vaciar el carrito?')) {
-      setItems([]);
-      setDescuentoGlobal(0);
-      toast.success('Carrito vaciado');
-    }
+    setItems([]);
+    setDescuentoGlobal(0);
+    setMostrarConfirmVaciar(false);
+    toast.success('Carrito vaciado');
   };
 
   // Handler: Proceder al pago
@@ -239,7 +240,7 @@ export default function VentaPOSPage() {
 
           {items.length > 0 && (
             <button
-              onClick={handleVaciarCarrito}
+              onClick={() => setMostrarConfirmVaciar(true)}
               className="flex items-center gap-1 sm:gap-2 px-2 py-2 sm:px-4 text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 hover:bg-red-100 dark:hover:bg-red-900/50 rounded-lg transition-colors text-sm font-medium whitespace-nowrap"
             >
               <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
@@ -336,6 +337,18 @@ export default function VentaPOSPage() {
         total={total}
         onConfirmar={handleConfirmarVenta}
         isLoading={crearVenta.isPending}
+      />
+
+      {/* Modal de confirmación para vaciar carrito */}
+      <ConfirmDialog
+        isOpen={mostrarConfirmVaciar}
+        onClose={() => setMostrarConfirmVaciar(false)}
+        onConfirm={handleVaciarCarrito}
+        title="Vaciar carrito"
+        message="¿Estás seguro de vaciar el carrito? Se eliminarán todos los productos agregados."
+        confirmText="Vaciar"
+        cancelText="Cancelar"
+        variant="warning"
       />
     </div>
   );

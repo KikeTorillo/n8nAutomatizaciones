@@ -6,6 +6,7 @@
 import { useState } from 'react';
 import { Plus, Edit, Trash2, Eye, Check, X, Palette } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
@@ -62,6 +63,7 @@ function PlantillasEventos() {
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState('');
+  const [plantillaAEliminar, setPlantillaAEliminar] = useState(null);
   const [formData, setFormData] = useState({
     nombre: '',
     codigo: '',
@@ -159,16 +161,17 @@ function PlantillasEventos() {
     }
   };
 
-  const handleEliminar = async (id) => {
-    if (!confirm('¿Eliminar esta plantilla?')) return;
+  const handleEliminar = async () => {
+    if (!plantillaAEliminar) return;
 
     try {
-      const result = await eliminarPlantilla.mutateAsync(id);
+      const result = await eliminarPlantilla.mutateAsync(plantillaAEliminar);
       if (result.desactivado) {
         toast.info('Plantilla desactivada (está en uso)');
       } else {
         toast.success('Plantilla eliminada');
       }
+      setPlantillaAEliminar(null);
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al eliminar');
     }
@@ -564,8 +567,8 @@ function PlantillasEventos() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEliminar(plantilla.id)}
-                      className="text-red-600 hover:bg-red-50"
+                      onClick={() => setPlantillaAEliminar(plantilla.id)}
+                      className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -585,6 +588,19 @@ function PlantillasEventos() {
           </Button>
         </div>
       )}
+
+      {/* Modal de confirmación para eliminar */}
+      <ConfirmDialog
+        isOpen={!!plantillaAEliminar}
+        onClose={() => setPlantillaAEliminar(null)}
+        onConfirm={handleEliminar}
+        title="Eliminar plantilla"
+        message="¿Estás seguro de eliminar esta plantilla? Si está en uso, solo será desactivada."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+        isLoading={eliminarPlantilla.isPending}
+      />
     </div>
   );
 }

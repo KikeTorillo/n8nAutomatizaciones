@@ -98,6 +98,8 @@ input[type="datetime-local"] {
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+  min-height: 42px; /* Altura consistente incluso vacío */
+  line-height: 1.5;
 }
 
 /* Asegurar que el contenedor interno de iOS no desborde */
@@ -106,4 +108,5 @@ input[type="time"]::-webkit-date-and-time-value,
 input[type="datetime-local"]::-webkit-date-and-time-value {
   text-align: left;
   min-width: 0;
+  min-height: 1.5em; /* Altura mínima para texto */
 }

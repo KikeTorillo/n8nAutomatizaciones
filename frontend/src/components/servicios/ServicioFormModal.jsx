@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Scissors, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
+import { Briefcase, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -282,7 +282,7 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
               </div>
             ) : (
               <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
-                <Scissors className="w-8 h-8 text-primary-600 dark:text-primary-400" />
+                <Briefcase className="w-8 h-8 text-primary-600 dark:text-primary-400" />
               </div>
             )}
             {/* Botón para cambiar imagen */}

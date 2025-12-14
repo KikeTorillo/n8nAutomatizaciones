@@ -198,15 +198,15 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* Foto del Cliente */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Foto del Cliente
         </h3>
 
         <div className="flex items-center gap-6">
           {/* Preview con botón de subir */}
           <div className="flex-shrink-0 relative">
-            <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center bg-gray-50 overflow-hidden">
+            <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
               {fotoPreview ? (
                 <img
                   src={fotoPreview}
@@ -241,18 +241,18 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             )}
             {/* Loading de subida */}
             {uploadMutation.isPending && (
-              <div className="absolute inset-0 bg-white bg-opacity-75 rounded-full flex items-center justify-center">
-                <Loader2 className="h-6 w-6 text-primary-600 animate-spin" />
+              <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-full flex items-center justify-center">
+                <Loader2 className="h-6 w-6 text-primary-600 dark:text-primary-400 animate-spin" />
               </div>
             )}
           </div>
 
           {/* Instrucciones */}
           <div className="flex-1">
-            <p className="text-sm text-gray-700">
+            <p className="text-sm text-gray-700 dark:text-gray-300">
               Haz clic en el ícono de cámara para subir una foto del cliente.
             </p>
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               PNG, JPG o WEBP. Máximo 5MB.
             </p>
           </div>
@@ -260,14 +260,14 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       </div>
 
       {/* Información Básica */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Información Básica
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Nombre Completo *
             </label>
             <Input
@@ -278,12 +278,12 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               error={errors.nombre_completo}
             />
             {errors.nombre_completo && (
-              <p className="mt-1 text-sm text-red-600">{errors.nombre_completo}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.nombre_completo}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Teléfono *
             </label>
             <Input
@@ -296,12 +296,12 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               error={errors.telefono}
             />
             {errors.telefono && (
-              <p className="mt-1 text-sm text-red-600">{errors.telefono}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.telefono}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Email
             </label>
             <Input
@@ -313,12 +313,12 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               error={errors.email}
             />
             {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Fecha de Nacimiento
             </label>
             <Input
@@ -330,7 +330,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               Dirección
             </label>
             <Input
@@ -344,8 +344,8 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       </div>
 
       {/* Notas Médicas */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Información Adicional
         </h3>
 
@@ -360,8 +360,8 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       </div>
 
       {/* Preferencias */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Preferencias
         </h3>
 
@@ -380,14 +380,14 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Servicios Favoritos
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {servicios.map((servicio) => (
                 <div
                   key={servicio.id}
-                  className="p-2 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer"
+                  className="p-2 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
                   onClick={() => handleServiciosFavoritosChange(servicio.id)}
                 >
                   <Checkbox
@@ -405,8 +405,8 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       </div>
 
       {/* Configuración */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Configuración
         </h3>
 

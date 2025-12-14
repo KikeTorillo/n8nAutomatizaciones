@@ -3,6 +3,7 @@ import { RefreshCw, AlertTriangle, Package } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Textarea from '@/components/ui/Textarea';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useVenta, useDevolverItems } from '@/hooks/useVentas';
@@ -23,6 +24,8 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
   const [itemsDevolver, setItemsDevolver] = useState([]);
   const [motivo, setMotivo] = useState('');
   const [errores, setErrores] = useState({});
+  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
+  const [datosDevolucion, setDatosDevolucion] = useState(null);
 
   // Inicializar items cuando se abra el modal
   useEffect(() => {
@@ -70,7 +73,7 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
     );
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     // Validaciones
@@ -98,25 +101,26 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
       cantidad_devolver: item.cantidad_devolver,
     }));
 
-    // Confirmar acción
     const totalItems = itemsFormateados.reduce((sum, item) => sum + item.cantidad_devolver, 0);
-    if (
-      !window.confirm(
-        `¿Confirmas la devolución de ${totalItems} item(s)? El stock se ajustará automáticamente.`
-      )
-    ) {
-      return;
-    }
+
+    // Guardar datos y mostrar confirmación
+    setDatosDevolucion({ itemsFormateados, totalItems });
+    setMostrarConfirmacion(true);
+  };
+
+  const handleConfirmarDevolucion = async () => {
+    if (!datosDevolucion) return;
 
     try {
       await devolverMutation.mutateAsync({
         id: venta.id,
-        items_devueltos: itemsFormateados,
+        items_devueltos: datosDevolucion.itemsFormateados,
         motivo: motivo.trim(),
         usuario_id: user.id,
       });
 
       toast.success('Devolución procesada exitosamente. Stock ajustado.');
+      setMostrarConfirmacion(false);
       handleClose();
     } catch (error) {
       console.error('Error al procesar devolución:', error);
@@ -323,6 +327,19 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
           </Button>
         </div>
       </form>
+
+      {/* Modal de confirmación final */}
+      <ConfirmDialog
+        isOpen={mostrarConfirmacion}
+        onClose={() => setMostrarConfirmacion(false)}
+        onConfirm={handleConfirmarDevolucion}
+        title="Confirmar devolución"
+        message={`¿Confirmas la devolución de ${datosDevolucion?.totalItems || 0} item(s)? El stock se ajustará automáticamente.`}
+        confirmText="Sí, procesar devolución"
+        cancelText="Volver"
+        variant="warning"
+        isLoading={devolverMutation.isPending}
+      />
     </Modal>
   );
 }
