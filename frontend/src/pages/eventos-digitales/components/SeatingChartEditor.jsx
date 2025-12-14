@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -435,7 +435,7 @@ function SeatingChartEditor({ eventoId }) {
           <Button
             type="button"
             variant="primary"
-            onClick={() => setTimeout(handleCreateMesa, 50)}
+            onClick={handleCreateMesa}
             isLoading={crearMesa.isPending}
           >
             Crear Mesa

@@ -26,6 +26,7 @@ function Modal({
   disableClose = false
 }) {
   const scrollYRef = useRef(0);
+  const modalContentRef = useRef(null);
 
   // Bloquear scroll del body cuando el modal está abierto (fix iOS)
   useEffect(() => {
@@ -52,6 +53,29 @@ function Modal({
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
     };
+  }, [isOpen]);
+
+  // Fix iOS: forzar recálculo de layout cuando el teclado se cierra
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const handleViewportResize = () => {
+      // Forzar repaint del modal para realinear touch targets
+      if (modalContentRef.current) {
+        modalContentRef.current.style.transform = 'translateZ(0)';
+        requestAnimationFrame(() => {
+          if (modalContentRef.current) {
+            modalContentRef.current.style.transform = '';
+          }
+        });
+      }
+    };
+
+    // visualViewport.resize se dispara cuando el teclado abre/cierra en iOS
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleViewportResize);
+      return () => window.visualViewport.removeEventListener('resize', handleViewportResize);
+    }
   }, [isOpen]);
 
   // Cerrar con ESC
@@ -91,6 +115,7 @@ function Modal({
           {/* Modal */}
           <div className="fixed inset-0 flex items-center justify-center p-4 z-50">
             <motion.div
+              ref={modalContentRef}
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
