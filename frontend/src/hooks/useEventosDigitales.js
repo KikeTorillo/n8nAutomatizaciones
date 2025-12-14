@@ -1236,6 +1236,211 @@ export function useDesasignarInvitadoDeMesa() {
   });
 }
 
+// ==================== QUERIES GALERÍA ====================
+
+/**
+ * Hook para listar fotos de la galería de un evento
+ * @param {number} eventoId - ID del evento
+ * @param {Object} params - { estado?, limit?, offset? }
+ * @returns {Object} { data: { fotos, total, estadisticas }, isLoading, error }
+ *
+ * @example
+ * const { data } = useGaleria(eventoId, { estado: 'visible', limit: 50 });
+ */
+export function useGaleria(eventoId, params = {}) {
+  return useQuery({
+    queryKey: ['galeria-evento', eventoId, params],
+    queryFn: async () => {
+      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const response = await eventosDigitalesApi.listarFotos(eventoId, sanitizedParams);
+      return response.data.data;
+    },
+    enabled: !!eventoId,
+    staleTime: 1000 * 30, // 30 segundos
+  });
+}
+
+/**
+ * Hook para obtener galería pública de un evento (sin auth)
+ * @param {string} slug - Slug del evento
+ * @param {number} limit - Límite de fotos
+ * @returns {Object} { data: { fotos, total }, isLoading, error }
+ *
+ * @example
+ * const { data } = useGaleriaPublica('mi-boda-2025');
+ */
+export function useGaleriaPublica(slug, limit = 100) {
+  return useQuery({
+    queryKey: ['galeria-publica', slug, limit],
+    queryFn: async () => {
+      const response = await eventosDigitalesApi.obtenerGaleriaPublica(slug, limit);
+      return response.data.data;
+    },
+    enabled: !!slug,
+    staleTime: 1000 * 60, // 1 minuto
+  });
+}
+
+// ==================== MUTATIONS GALERÍA ====================
+
+/**
+ * Hook para subir foto a la galería (admin/organizador)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useSubirFoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventoId, data }) => {
+      const sanitized = {
+        url: data.url,
+        thumbnail_url: data.thumbnail_url || undefined,
+        caption: data.caption?.trim() || undefined,
+        tamanio_bytes: data.tamanio_bytes || undefined,
+        tipo_mime: data.tipo_mime || undefined,
+      };
+      const response = await eventosDigitalesApi.subirFoto(eventoId, sanitized);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al subir foto');
+    },
+  });
+}
+
+/**
+ * Hook para cambiar estado de foto (visible/oculta)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useCambiarEstadoFoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ fotoId, estado, eventoId }) => {
+      const response = await eventosDigitalesApi.cambiarEstadoFoto(fotoId, estado);
+      return { ...response.data.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al cambiar estado de foto');
+    },
+  });
+}
+
+/**
+ * Hook para eliminar foto (soft delete)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useEliminarFoto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ fotoId, eventoId }) => {
+      const response = await eventosDigitalesApi.eliminarFoto(fotoId);
+      return { ...response.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al eliminar foto');
+    },
+  });
+}
+
+/**
+ * Hook para eliminar foto permanentemente
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useEliminarFotoPermanente() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ fotoId, eventoId }) => {
+      const response = await eventosDigitalesApi.eliminarFotoPermanente(fotoId);
+      return { ...response.data, eventoId };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria-evento', data.eventoId] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al eliminar foto permanentemente');
+    },
+  });
+}
+
+/**
+ * Hook para subir foto como invitado (público)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ *
+ * @example
+ * const subirFoto = useSubirFotoPublica();
+ * subirFoto.mutate({ slug: 'mi-boda', token: 'abc123', file: fileObject, caption: 'Mi foto' });
+ */
+export function useSubirFotoPublica() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ slug, token, file, caption }) => {
+      const response = await eventosDigitalesApi.subirFotoPublica(slug, token, file, caption?.trim() || '');
+      return { ...response.data.data, slug };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['galeria-publica', data.slug] });
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+
+      const errorMessages = {
+        400: 'No está permitido subir fotos en este evento',
+        404: 'Invitación no encontrada',
+        413: 'La imagen es demasiado grande. Máximo 10MB.',
+      };
+
+      const statusCode = error.response?.status;
+      throw new Error(errorMessages[statusCode] || 'Error al subir foto');
+    },
+  });
+}
+
+/**
+ * Hook para reportar foto inapropiada (público)
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ */
+export function useReportarFoto() {
+  return useMutation({
+    mutationFn: async ({ fotoId, motivo }) => {
+      const response = await eventosDigitalesApi.reportarFoto(fotoId, motivo);
+      return response.data;
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error('Error al reportar foto');
+    },
+  });
+}
+
 // ==================== EXPORT DEFAULT ====================
 
 export default {
@@ -1302,4 +1507,16 @@ export default {
   useActualizarPosicionesMesas,
   useAsignarInvitadoAMesa,
   useDesasignarInvitadoDeMesa,
+
+  // Queries Galería
+  useGaleria,
+  useGaleriaPublica,
+
+  // Mutations Galería
+  useSubirFoto,
+  useCambiarEstadoFoto,
+  useEliminarFoto,
+  useEliminarFotoPermanente,
+  useSubirFotoPublica,
+  useReportarFoto,
 };

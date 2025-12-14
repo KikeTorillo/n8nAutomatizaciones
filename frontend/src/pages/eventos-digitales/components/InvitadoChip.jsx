@@ -39,9 +39,8 @@ function InvitadoChip({ invitado, isDraggable = true }) {
       className={`
         inline-flex items-center gap-1.5 px-2 py-1
         bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-md
-        hover:border-pink-300 dark:hover:border-pink-500 hover:bg-pink-50 dark:hover:bg-pink-900/20
         transition-colors text-xs
-        ${isDraggable ? 'cursor-grab active:cursor-grabbing' : ''}
+        ${isDraggable ? 'cursor-grab active:cursor-grabbing ring-2 ring-primary-300 dark:ring-primary-600 hover:ring-primary-400 dark:hover:ring-primary-500' : ''}
         ${isDragging ? 'shadow-lg ring-2 ring-pink-400' : ''}
       `}
     >

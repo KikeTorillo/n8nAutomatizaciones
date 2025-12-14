@@ -311,6 +311,45 @@ ADD COLUMN IF NOT EXISTS mesa_id INTEGER REFERENCES mesas_evento(id) ON DELETE S
 COMMENT ON COLUMN invitados_evento.mesa_id IS 'Mesa asignada al invitado. NULL si no tiene mesa asignada.';
 
 -- ====================================================================
+-- 8. FOTOS DEL EVENTO (Galería Compartida)
+-- ====================================================================
+-- Los invitados pueden subir fotos que se muestran en la página pública
+CREATE TABLE IF NOT EXISTS fotos_evento (
+    id SERIAL PRIMARY KEY,
+    evento_id INTEGER NOT NULL REFERENCES eventos_digitales(id) ON DELETE CASCADE,
+    invitado_id INTEGER REFERENCES invitados_evento(id) ON DELETE SET NULL,
+
+    -- Información de la foto
+    url TEXT NOT NULL,
+    thumbnail_url TEXT,
+    nombre_autor VARCHAR(100),
+    caption VARCHAR(200),
+
+    -- Metadatos
+    tamanio_bytes INTEGER,
+    tipo_mime VARCHAR(50),
+
+    -- Moderación
+    estado VARCHAR(20) DEFAULT 'visible',
+    reportada BOOLEAN DEFAULT false,
+    motivo_reporte TEXT,
+
+    -- Control
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+
+    CONSTRAINT estado_foto_valido CHECK (estado IN ('visible', 'oculta', 'eliminada'))
+);
+
+COMMENT ON TABLE fotos_evento IS 'Galería compartida del evento. Invitados pueden subir fotos. RLS hereda de eventos_digitales.';
+COMMENT ON COLUMN fotos_evento.invitado_id IS 'Invitado que subió la foto. NULL si fue el organizador.';
+COMMENT ON COLUMN fotos_evento.estado IS 'visible: se muestra, oculta: solo organizador ve, eliminada: soft delete';
+COMMENT ON COLUMN fotos_evento.nombre_autor IS 'Nombre del autor si no está registrado como invitado';
+
+-- Índice para consultas frecuentes
+CREATE INDEX IF NOT EXISTS idx_fotos_evento_evento_id ON fotos_evento(evento_id);
+CREATE INDEX IF NOT EXISTS idx_fotos_evento_estado ON fotos_evento(evento_id, estado);
+
+-- ====================================================================
 -- FUNCIÓN PARA GENERAR SLUG ÚNICO
 -- ====================================================================
 CREATE OR REPLACE FUNCTION generar_slug_evento(

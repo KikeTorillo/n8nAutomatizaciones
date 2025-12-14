@@ -17,6 +17,7 @@
 
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 
 // Controllers
 const PublicController = require('../controllers/public.controller');
@@ -30,6 +31,22 @@ const {
     validation: { validate },
     asyncHandler
 } = require('../../../middleware');
+
+// Configuración de multer para uploads públicos de galería
+const uploadGaleria = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 10 * 1024 * 1024 // 10MB máximo
+    },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Tipo de archivo no permitido. Solo se aceptan imágenes JPEG, PNG, WebP o GIF.'), false);
+        }
+    }
+});
 
 // ============================================================================
 // RUTAS PÚBLICAS (SIN AUTENTICACIÓN)
@@ -78,6 +95,17 @@ router.get('/evento/:slug/calendario',
 );
 
 /**
+ * GET /evento/:slug/galeria
+ * Obtener galería pública del evento
+ * IMPORTANTE: Esta ruta debe estar ANTES de /evento/:slug/:token
+ */
+router.get('/evento/:slug/galeria',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.obtenerGaleriaPublica),
+    asyncHandler(PublicController.obtenerGaleria)
+);
+
+/**
  * GET /evento/:slug/:token
  * Obtener invitación personalizada por token
  */
@@ -116,6 +144,31 @@ router.get('/evento/:slug/:token/qr',
     rateLimiting.apiRateLimit,
     validate(publicSchemas.obtenerInvitacion),
     asyncHandler(PublicController.generarQR)
+);
+
+// ============================================================================
+// RUTAS DE GALERÍA PÚBLICA - SUBIDA Y REPORTE
+// ============================================================================
+
+/**
+ * POST /evento/:slug/:token/galeria
+ * Subir foto como invitado (requiere token válido)
+ * Acepta multipart/form-data con campo 'foto'
+ */
+router.post('/evento/:slug/:token/galeria',
+    rateLimiting.heavyOperationRateLimit,
+    uploadGaleria.single('foto'),
+    asyncHandler(PublicController.subirFotoConArchivo)
+);
+
+/**
+ * POST /galeria/:id/reportar
+ * Reportar foto inapropiada
+ */
+router.post('/galeria/:id/reportar',
+    rateLimiting.apiRateLimit,
+    validate(publicSchemas.reportarFoto),
+    asyncHandler(PublicController.reportarFoto)
 );
 
 module.exports = router;

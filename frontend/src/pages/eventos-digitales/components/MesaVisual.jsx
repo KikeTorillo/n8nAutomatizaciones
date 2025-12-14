@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
-import { Edit2, Trash2, X, Check, Users, ChevronDown, ChevronUp } from 'lucide-react';
-import Input from '@/components/ui/Input';
+import { Edit2, Trash2, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import Drawer from '@/components/ui/Drawer';
 
 /**
  * Componente visual de una mesa en el seating chart
@@ -12,18 +12,11 @@ function MesaVisual({
   mesa,
   asignados,
   porcentaje,
-  isEditing,
   isEditMode = false,
   onEdit,
   onDelete,
   onDesasignarInvitado,
-  onSave,
-  onCancelEdit,
 }) {
-  const [editData, setEditData] = useState({
-    nombre: mesa.nombre,
-    capacidad: mesa.capacidad,
-  });
   const [showInvitados, setShowInvitados] = useState(false);
 
   // Draggable para mover mesa (solo habilitado en modo edición)
@@ -35,7 +28,7 @@ function MesaVisual({
     isDragging,
   } = useDraggable({
     id: `mesa-${mesa.id}`,
-    disabled: isEditing || !isEditMode, // Deshabilitado si está editando o no está en modo edición
+    disabled: !isEditMode,
   });
 
   // Droppable para recibir invitados
@@ -90,50 +83,6 @@ function MesaVisual({
     transition: isDragging ? 'none' : 'box-shadow 0.2s',
     touchAction: isEditMode ? 'none' : 'auto', // Solo bloquear touch en modo edición
   };
-
-  if (isEditing) {
-    return (
-      <div
-        style={{
-          ...style,
-          transform: `translate(-50%, -50%)`,
-        }}
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 min-w-[200px] z-50 border border-gray-200 dark:border-gray-700"
-      >
-        <div className="space-y-3">
-          <Input
-            label="Nombre"
-            value={editData.nombre}
-            onChange={(e) => setEditData({ ...editData, nombre: e.target.value })}
-            size="sm"
-          />
-          <Input
-            label="Capacidad"
-            type="number"
-            min={1}
-            max={50}
-            value={editData.capacidad}
-            onChange={(e) => setEditData({ ...editData, capacidad: parseInt(e.target.value) || 8 })}
-            size="sm"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              onClick={onCancelEdit}
-              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-            >
-              <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-            </button>
-            <button
-              onClick={() => onSave(editData)}
-              className="p-1.5 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30"
-            >
-              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -203,50 +152,46 @@ function MesaVisual({
         </button>
       )}
 
-      {/* Panel expandible con lista de invitados */}
-      {showInvitados && mesa.invitados?.length > 0 && (
-        <div
-          className="absolute left-1/2 -translate-x-1/2 top-full mt-8 z-50"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-3 min-w-[180px]">
-            <div className="flex items-center justify-between mb-2">
-              <p className="font-medium text-sm text-gray-800 dark:text-gray-100 flex items-center gap-1">
-                <Users className="w-4 h-4" />
-                Invitados ({mesa.invitados.length})
-              </p>
+      {/* Drawer de invitados */}
+      <Drawer
+        isOpen={showInvitados && mesa.invitados?.length > 0}
+        onClose={() => setShowInvitados(false)}
+        title={mesa.nombre}
+        subtitle={`${mesa.invitados?.length || 0} invitados asignados`}
+      >
+        <ul className="space-y-2">
+          {mesa.invitados?.map((inv) => (
+            <li
+              key={inv.id}
+              className="flex items-center justify-between py-3 px-3 bg-gray-50 dark:bg-gray-700/50 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <div className="min-w-0 flex-1">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100 block truncate">
+                  {inv.nombre}
+                </span>
+                {inv.num_asistentes > 1 && (
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
+                    {inv.num_asistentes} personas
+                  </span>
+                )}
+              </div>
               <button
-                onClick={() => setShowInvitados(false)}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                onClick={() => onDesasignarInvitado(inv.id)}
+                className="ml-2 p-2 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg text-red-600 dark:text-red-400 flex-shrink-0 transition-colors"
+                title="Quitar de mesa"
               >
-                <X className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                <X className="w-5 h-5" />
               </button>
-            </div>
-            <ul className="space-y-1">
-              {mesa.invitados.map((inv) => (
-                <li key={inv.id} className="flex items-center justify-between py-1 px-2 hover:bg-gray-50 dark:hover:bg-gray-700 rounded">
-                  <div>
-                    <span className="text-sm text-gray-800 dark:text-gray-100 truncate block max-w-[120px]">{inv.nombre}</span>
-                    {inv.num_asistentes > 1 && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400">{inv.num_asistentes} personas</span>
-                    )}
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDesasignarInvitado(inv.id);
-                    }}
-                    className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/30 rounded text-red-600 dark:text-red-400"
-                    title="Quitar de mesa"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      )}
+            </li>
+          ))}
+        </ul>
+
+        {mesa.invitados?.length === 0 && (
+          <p className="text-center text-gray-500 dark:text-gray-400 py-8">
+            No hay invitados asignados a esta mesa
+          </p>
+        )}
+      </Drawer>
     </div>
   );
 }

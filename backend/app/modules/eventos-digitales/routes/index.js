@@ -15,6 +15,7 @@ const mesaRegalosRoutes = require('./mesa-regalos.routes');
 const felicitacionesRoutes = require('./felicitaciones.routes');
 const plantillasRoutes = require('./plantillas.routes');
 const mesasRoutes = require('./mesas.routes');
+const galeriaRoutes = require('./galeria.routes');
 const publicRoutes = require('./public.routes');
 
 module.exports = {
@@ -25,5 +26,6 @@ module.exports = {
     felicitacionesRoutes,
     plantillasRoutes,
     mesasRoutes,
+    galeriaRoutes,
     publicRoutes
 };

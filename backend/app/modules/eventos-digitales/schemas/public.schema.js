@@ -137,6 +137,59 @@ const publicSchemas = {
                 'string.max': 'El mensaje no puede exceder 1000 caracteres'
             })
         })
+    },
+
+    // ========================================================================
+    // GALERÍA PÚBLICA
+    // ========================================================================
+
+    /**
+     * Obtener galería pública del evento
+     * GET /api/v1/public/evento/:slug/galeria
+     */
+    obtenerGaleriaPublica: {
+        params: Joi.object({
+            slug: Joi.string().min(3).max(100).required()
+        }),
+        query: Joi.object({
+            limit: Joi.number().integer().min(1).max(200).default(100)
+        })
+    },
+
+    /**
+     * Subir foto como invitado
+     * POST /api/v1/public/evento/:slug/:token/galeria
+     */
+    subirFotoPublica: {
+        params: Joi.object({
+            slug: Joi.string().min(3).max(100).required(),
+            token: Joi.string().length(64).required()
+        }),
+        body: Joi.object({
+            url: Joi.string().uri().max(500).required().messages({
+                'any.required': 'La URL de la foto es requerida',
+                'string.uri': 'URL inválida'
+            }),
+            thumbnail_url: Joi.string().uri().max(500).allow(null, ''),
+            caption: Joi.string().max(200).allow(null, ''),
+            tamanio_bytes: Joi.number().integer().positive().allow(null),
+            tipo_mime: Joi.string().max(50).allow(null, '')
+        })
+    },
+
+    /**
+     * Reportar foto inapropiada
+     * POST /api/v1/public/galeria/:id/reportar
+     */
+    reportarFoto: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            motivo: Joi.string().max(500).required().messages({
+                'any.required': 'Debe indicar el motivo del reporte'
+            })
+        })
     }
 };
 

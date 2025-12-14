@@ -16,7 +16,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  QrCode
+  QrCode,
+  Camera
 } from 'lucide-react';
 import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -25,8 +26,10 @@ import {
   useEventoPublico,
   useInvitacionPublica,
   useConfirmarRSVP,
+  useGaleriaPublica,
 } from '@/hooks/useEventosDigitales';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
+import { GaleriaCompartida } from './components';
 
 /**
  * Página pública del evento digital (RSVP)
@@ -57,6 +60,7 @@ function EventoPublicoPage() {
   const sectionRefs = {
     inicio: useRef(null),
     galeria: useRef(null),
+    fotos: useRef(null),
     ubicaciones: useRef(null),
     regalos: useRef(null),
     felicitaciones: useRef(null),
@@ -330,6 +334,7 @@ function EventoPublicoPage() {
   const sections = [
     { id: 'inicio', label: 'Inicio' },
     ...(galeria.length > 0 ? [{ id: 'galeria', label: 'Galería' }] : []),
+    ...(configuracion.habilitar_galeria_compartida !== false ? [{ id: 'fotos', label: 'Fotos' }] : []),
     ...(configuracion.mostrar_ubicaciones !== false && ubicaciones.length > 0 ? [{ id: 'ubicaciones', label: 'Ubicaciones' }] : []),
     ...(configuracion.mostrar_mesa_regalos !== false && regalos.length > 0 ? [{ id: 'regalos', label: 'Regalos' }] : []),
     ...(configuracion.permitir_felicitaciones !== false ? [{ id: 'felicitaciones', label: 'Felicitaciones' }] : []),
@@ -762,6 +767,48 @@ function EventoPublicoPage() {
                 </div>
               </div>
             )}
+          </section>
+        )}
+
+        {/* Galería Compartida - Fotos de Invitados */}
+        {configuracion.habilitar_galeria_compartida !== false && (
+          <section
+            ref={sectionRefs.fotos}
+            data-section="fotos"
+            className="py-20"
+            style={{ backgroundColor: tema.color_secundario + '20' }}
+          >
+            <div className="max-w-5xl mx-auto px-4">
+              <div className={`text-center mb-12 ${getAnimationClass('fotos')}`}>
+                <h2
+                  className="text-4xl sm:text-5xl font-bold mb-4"
+                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                >
+                  <Camera className="inline-block w-10 h-10 mr-3" style={{ color: tema.color_primario }} />
+                  Fotos del Evento
+                </h2>
+                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                  {token
+                    ? '¡Comparte tus mejores momentos!'
+                    : 'Momentos capturados por los invitados'}
+                </p>
+              </div>
+
+              <div
+                className={`
+                  bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8
+                  ${visibleSections.has('fotos') ? 'animate-fadeIn' : 'opacity-0'}
+                `}
+                style={{ boxShadow: `0 10px 40px ${tema.color_primario}15` }}
+              >
+                <GaleriaCompartida
+                  slug={slug}
+                  token={token}
+                  isAdmin={false}
+                  permitirSubida={configuracion.permitir_subida_invitados !== false}
+                />
+              </div>
+            </div>
           </section>
         )}
 

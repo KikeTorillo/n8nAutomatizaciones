@@ -11,6 +11,8 @@
 const EventoModel = require('../models/evento.model');
 const InvitadoModel = require('../models/invitado.model');
 const MesaRegalosModel = require('../models/mesa-regalos.model');
+const FotoEventoModel = require('../models/foto.model');
+const storageService = require('../../../services/storage');
 const logger = require('../../../utils/logger');
 const { ResponseHelper } = require('../../../utils/helpers');
 const QRCode = require('qrcode');
@@ -433,6 +435,229 @@ class PublicController {
         } catch (error) {
             logger.error('[PublicController.generarQR] Error', { error: error.message });
             return ResponseHelper.error(res, 'Error generando QR', 500);
+        }
+    }
+
+    // ========================================================================
+    // GALERÍA PÚBLICA
+    // ========================================================================
+
+    /**
+     * Obtener galería pública del evento
+     * GET /api/v1/public/evento/:slug/galeria
+     */
+    static async obtenerGaleria(req, res) {
+        try {
+            const { slug } = req.params;
+            const { limit = 100 } = req.query;
+
+            const evento = await EventoModel.obtenerPorSlug(slug);
+
+            if (!evento) {
+                return ResponseHelper.error(res, 'Evento no encontrado', 404);
+            }
+
+            // Verificar si la galería compartida está habilitada
+            if (evento.configuracion?.habilitar_galeria_compartida === false) {
+                return ResponseHelper.success(res, {
+                    fotos: [],
+                    total: 0,
+                    mensaje: 'Galería no habilitada para este evento'
+                });
+            }
+
+            const fotos = await FotoEventoModel.obtenerPublicas(evento.id, parseInt(limit));
+
+            logger.info('[PublicController.obtenerGaleria] Galería consultada', {
+                slug,
+                evento_id: evento.id,
+                total_fotos: fotos.length
+            });
+
+            return ResponseHelper.success(res, {
+                fotos,
+                total: fotos.length
+            });
+
+        } catch (error) {
+            logger.error('[PublicController.obtenerGaleria] Error', { error: error.message });
+            return ResponseHelper.error(res, 'Error obteniendo galería', 500);
+        }
+    }
+
+    /**
+     * Subir foto como invitado
+     * POST /api/v1/public/evento/:slug/:token/galeria
+     */
+    static async subirFoto(req, res) {
+        try {
+            const { slug, token } = req.params;
+            const datos = req.body;
+
+            // Verificar invitado por token
+            const invitado = await InvitadoModel.obtenerPorToken(token);
+
+            if (!invitado) {
+                return ResponseHelper.error(res, 'Invitación no encontrada', 404);
+            }
+
+            if (invitado.evento_slug !== slug) {
+                return ResponseHelper.error(res, 'Invitación no corresponde a este evento', 400);
+            }
+
+            // Obtener evento para verificar configuración
+            const evento = await EventoModel.obtenerPorSlug(slug);
+
+            if (!evento) {
+                return ResponseHelper.error(res, 'Evento no encontrado', 404);
+            }
+
+            // Verificar si la galería compartida está habilitada
+            if (evento.configuracion?.habilitar_galeria_compartida === false) {
+                return ResponseHelper.error(res, 'La galería no está habilitada para este evento', 400);
+            }
+
+            // Verificar si invitados pueden subir fotos
+            if (evento.configuracion?.permitir_subida_invitados === false) {
+                return ResponseHelper.error(res, 'No está permitido subir fotos en este evento', 400);
+            }
+
+            // Crear foto
+            const foto = await FotoEventoModel.crearPublica({
+                ...datos,
+                evento_id: evento.id,
+                invitado_id: invitado.id,
+                nombre_autor: invitado.nombre
+            });
+
+            logger.info('[PublicController.subirFoto] Foto subida por invitado', {
+                slug,
+                evento_id: evento.id,
+                invitado_id: invitado.id,
+                foto_id: foto.id
+            });
+
+            return ResponseHelper.success(res, foto, '¡Foto subida exitosamente!', 201);
+
+        } catch (error) {
+            logger.error('[PublicController.subirFoto] Error', { error: error.message });
+            return ResponseHelper.error(res, 'Error subiendo foto', 500);
+        }
+    }
+
+    /**
+     * Subir foto con archivo (multipart/form-data)
+     * POST /api/v1/public/evento/:slug/:token/galeria
+     * Recibe: campo 'foto' con el archivo, opcionalmente 'caption'
+     */
+    static async subirFotoConArchivo(req, res) {
+        try {
+            const { slug, token } = req.params;
+            const { caption } = req.body;
+
+            // Verificar que se subió un archivo
+            if (!req.file) {
+                return ResponseHelper.error(res, 'No se proporcionó ninguna imagen', 400);
+            }
+
+            // Verificar invitado por token
+            const invitado = await InvitadoModel.obtenerPorToken(token);
+
+            if (!invitado) {
+                return ResponseHelper.error(res, 'Invitación no encontrada', 404);
+            }
+
+            if (invitado.evento_slug !== slug) {
+                return ResponseHelper.error(res, 'Invitación no corresponde a este evento', 400);
+            }
+
+            // Obtener evento para verificar configuración
+            const evento = await EventoModel.obtenerPorSlug(slug);
+
+            if (!evento) {
+                return ResponseHelper.error(res, 'Evento no encontrado', 404);
+            }
+
+            // Verificar si la galería compartida está habilitada
+            if (evento.configuracion?.habilitar_galeria_compartida === false) {
+                return ResponseHelper.error(res, 'La galería no está habilitada para este evento', 400);
+            }
+
+            // Verificar si invitados pueden subir fotos
+            if (evento.configuracion?.permitir_subida_invitados === false) {
+                return ResponseHelper.error(res, 'No está permitido subir fotos en este evento', 400);
+            }
+
+            // Subir archivo a MinIO
+            const uploadResult = await storageService.upload({
+                buffer: req.file.buffer,
+                originalName: req.file.originalname,
+                mimeType: req.file.mimetype,
+                organizacionId: evento.organizacion_id,
+                folder: `eventos/${evento.id}/galeria`,
+                isPublic: true,
+                generateThumbnail: true,
+                entidadTipo: 'foto_evento',
+                entidadId: evento.id
+            });
+
+            // Crear registro de foto
+            const foto = await FotoEventoModel.crearPublica(evento.id, invitado.id, {
+                url: uploadResult.url,
+                thumbnail_url: uploadResult.thumbnailUrl || uploadResult.url,
+                nombre_autor: invitado.nombre,
+                caption: caption || null,
+                tamanio_bytes: req.file.size,
+                tipo_mime: req.file.mimetype
+            });
+
+            logger.info('[PublicController.subirFotoConArchivo] Foto subida por invitado', {
+                slug,
+                evento_id: evento.id,
+                invitado_id: invitado.id,
+                foto_id: foto.id,
+                archivo: req.file.originalname
+            });
+
+            return ResponseHelper.success(res, foto, '¡Foto subida exitosamente!', 201);
+
+        } catch (error) {
+            logger.error('[PublicController.subirFotoConArchivo] Error', { error: error.message, stack: error.stack });
+
+            // Manejar error de multer
+            if (error.message?.includes('Tipo de archivo no permitido')) {
+                return ResponseHelper.error(res, error.message, 400);
+            }
+
+            return ResponseHelper.error(res, 'Error subiendo foto', 500);
+        }
+    }
+
+    /**
+     * Reportar foto inapropiada
+     * POST /api/v1/public/galeria/:id/reportar
+     */
+    static async reportarFoto(req, res) {
+        try {
+            const { id } = req.params;
+            const { motivo } = req.body;
+
+            const foto = await FotoEventoModel.reportar(id, motivo);
+
+            if (!foto) {
+                return ResponseHelper.error(res, 'Foto no encontrada', 404);
+            }
+
+            logger.info('[PublicController.reportarFoto] Foto reportada', {
+                foto_id: id,
+                motivo
+            });
+
+            return ResponseHelper.success(res, { id: parseInt(id) }, 'Reporte enviado. Gracias por ayudarnos a mantener la galería segura.');
+
+        } catch (error) {
+            logger.error('[PublicController.reportarFoto] Error', { error: error.message });
+            return ResponseHelper.error(res, 'Error reportando foto', 500);
         }
     }
 }

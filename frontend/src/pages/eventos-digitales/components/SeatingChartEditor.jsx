@@ -9,7 +9,7 @@ import {
   rectIntersection,
   useDroppable,
 } from '@dnd-kit/core';
-import { Plus, Users, Trash2, Edit2, LayoutGrid, X, Check, Move, GripVertical } from 'lucide-react';
+import { Plus, Users, LayoutGrid, Check, Move, GripVertical } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Drawer from '@/components/ui/Drawer';
@@ -62,8 +62,7 @@ function SeatingChartEditor({ eventoId }) {
   const desasignarInvitado = useDesasignarInvitadoDeMesa();
 
   // Sensors para drag-drop
-  // En modo edición: drag habilitado para mesas e invitados
-  // Fuera de modo edición: solo drag de invitados (asignación a mesas)
+  // Solo habilitado en modo edición (mesas e invitados)
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -72,7 +71,6 @@ function SeatingChartEditor({ eventoId }) {
     }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 150,
         tolerance: 5,
       },
     })
@@ -98,8 +96,8 @@ function SeatingChartEditor({ eventoId }) {
     const { active } = event;
     const activeIdStr = String(active.id);
 
-    // Si es una mesa y NO está en modo edición, cancelar el drag
-    if (activeIdStr.startsWith('mesa-') && !isEditMode) {
+    // Si NO está en modo edición, cancelar cualquier drag
+    if (!isEditMode) {
       return;
     }
 
@@ -295,7 +293,7 @@ function SeatingChartEditor({ eventoId }) {
                   <InvitadoChip
                     key={invitado.id}
                     invitado={invitado}
-                    isDraggable
+                    isDraggable={isEditMode}
                   />
                 ))}
               </div>
@@ -418,7 +416,7 @@ function SeatingChartEditor({ eventoId }) {
             {isEditMode && mesas.length > 0 && (
               <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-primary-600 dark:bg-primary-500 text-white text-xs sm:text-sm px-4 py-2 rounded-full shadow-lg flex items-center gap-2 animate-pulse">
                 <Move className="w-4 h-4" />
-                Arrastra las mesas para reorganizar
+                Arrastra mesas e invitados para organizar
               </div>
             )}
           </div>
@@ -494,6 +492,78 @@ function SeatingChartEditor({ eventoId }) {
         </div>
       </Drawer>
 
+      {/* Drawer editar mesa */}
+      <Drawer
+        isOpen={!!editingMesa}
+        onClose={() => setEditingMesa(null)}
+        title="Editar Mesa"
+        subtitle={`Modificar configuración de ${editingMesa?.nombre || 'la mesa'}`}
+      >
+        {editingMesa && (
+          <>
+            <div className="space-y-4">
+              <Input
+                label="Nombre"
+                placeholder="Ej: Mesa Familiar, Mesa VIP"
+                value={editingMesa.nombre}
+                onChange={(e) => setEditingMesa({ ...editingMesa, nombre: e.target.value })}
+              />
+              <Input
+                label="Número (opcional)"
+                type="number"
+                placeholder="Ej: 1, 2, 3..."
+                value={editingMesa.numero || ''}
+                onChange={(e) => setEditingMesa({ ...editingMesa, numero: e.target.value })}
+              />
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Tipo de mesa
+                </label>
+                <select
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                  value={editingMesa.tipo}
+                  onChange={(e) => setEditingMesa({ ...editingMesa, tipo: e.target.value })}
+                >
+                  <option value="redonda">Redonda</option>
+                  <option value="cuadrada">Cuadrada</option>
+                  <option value="rectangular">Rectangular</option>
+                </select>
+              </div>
+              <Input
+                label="Capacidad"
+                type="number"
+                min={1}
+                max={50}
+                value={editingMesa.capacidad}
+                onChange={(e) => setEditingMesa({ ...editingMesa, capacidad: parseInt(e.target.value) || 8 })}
+              />
+            </div>
+            <div className="flex justify-end gap-2 mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditingMesa(null)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={() => handleUpdateMesa(editingMesa.id, {
+                  nombre: editingMesa.nombre,
+                  numero: editingMesa.numero,
+                  tipo: editingMesa.tipo,
+                  capacidad: editingMesa.capacidad,
+                })}
+                isLoading={actualizarMesa.isPending}
+              >
+                Guardar
+              </Button>
+            </div>
+          </>
+        )}
+      </Drawer>
+
       {/* Modal confirmar eliminar mesa */}
       <ConfirmDialog
         isOpen={!!mesaAEliminar}
@@ -507,18 +577,13 @@ function SeatingChartEditor({ eventoId }) {
         isLoading={eliminarMesa.isPending}
       />
 
-      {/* Drag Overlay */}
+      {/* Drag Overlay - solo para invitados */}
       <DragOverlay>
         {activeId && dragType === 'invitado' && (
           <div className="bg-white dark:bg-gray-800 border-2 border-pink-400 rounded-lg px-3 py-2 shadow-lg">
             <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
               {invitadosData?.invitados?.find((i) => i.id === parseInt(String(activeId).replace('invitado-', '')))?.nombre}
             </span>
-          </div>
-        )}
-        {activeId && dragType === 'mesa' && (
-          <div className="w-20 h-20 bg-pink-100 dark:bg-pink-900/40 border-2 border-pink-400 rounded-full shadow-lg flex items-center justify-center">
-            <span className="text-xs font-medium text-pink-800 dark:text-pink-300">Moviendo...</span>
           </div>
         )}
       </DragOverlay>

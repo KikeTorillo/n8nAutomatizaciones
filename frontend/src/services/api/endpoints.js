@@ -2229,6 +2229,53 @@ export const eventosDigitalesApi = {
    */
   obtenerEstadisticasMesas: (eventoId) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/mesas/estadisticas`),
 
+  // ========== Galería Compartida ==========
+
+  /**
+   * Subir foto a la galería (admin/organizador)
+   * @param {number} eventoId
+   * @param {Object} data - { url, thumbnail_url?, caption?, tamanio_bytes?, tipo_mime? }
+   * @returns {Promise<Object>}
+   */
+  subirFoto: (eventoId, data) => apiClient.post(`/eventos-digitales/eventos/${eventoId}/galeria`, data),
+
+  /**
+   * Listar fotos de la galería
+   * @param {number} eventoId
+   * @param {Object} params - { estado?, limit?, offset? }
+   * @returns {Promise<Object>}
+   */
+  listarFotos: (eventoId, params = {}) => apiClient.get(`/eventos-digitales/eventos/${eventoId}/galeria`, { params }),
+
+  /**
+   * Obtener foto por ID
+   * @param {number} fotoId
+   * @returns {Promise<Object>}
+   */
+  obtenerFoto: (fotoId) => apiClient.get(`/eventos-digitales/galeria/${fotoId}`),
+
+  /**
+   * Cambiar estado de foto (visible/oculta)
+   * @param {number} fotoId
+   * @param {string} estado - 'visible' | 'oculta'
+   * @returns {Promise<Object>}
+   */
+  cambiarEstadoFoto: (fotoId, estado) => apiClient.put(`/eventos-digitales/galeria/${fotoId}/estado`, { estado }),
+
+  /**
+   * Eliminar foto (soft delete)
+   * @param {number} fotoId
+   * @returns {Promise<Object>}
+   */
+  eliminarFoto: (fotoId) => apiClient.delete(`/eventos-digitales/galeria/${fotoId}`),
+
+  /**
+   * Eliminar foto permanentemente
+   * @param {number} fotoId
+   * @returns {Promise<Object>}
+   */
+  eliminarFotoPermanente: (fotoId) => apiClient.delete(`/eventos-digitales/galeria/${fotoId}/permanente`),
+
   // ========== Rutas Públicas (RSVP) ==========
 
   /**
@@ -2285,6 +2332,59 @@ export const eventosDigitalesApi = {
       headers: { 'Content-Type': 'application/json' }
     });
     return publicAxios.get(`/public/evento/${slug}/${token}/whatsapp`);
+  },
+
+  // ========== Galería Pública ==========
+
+  /**
+   * Obtener galería pública del evento (sin auth)
+   * @param {string} slug
+   * @param {number} limit
+   * @returns {Promise<Object>}
+   */
+  obtenerGaleriaPublica: (slug, limit = 100) => {
+    const publicAxios = axios.create({
+      baseURL: '/api/v1',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return publicAxios.get(`/public/evento/${slug}/galeria`, { params: { limit } });
+  },
+
+  /**
+   * Subir foto como invitado (sin auth, requiere token)
+   * Envía archivo como FormData
+   * @param {string} slug
+   * @param {string} token
+   * @param {File} file - Archivo de imagen
+   * @param {string} caption - Descripción opcional
+   * @returns {Promise<Object>}
+   */
+  subirFotoPublica: (slug, token, file, caption = '') => {
+    const formData = new FormData();
+    formData.append('foto', file);
+    if (caption) {
+      formData.append('caption', caption);
+    }
+
+    const publicAxios = axios.create({
+      baseURL: '/api/v1',
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return publicAxios.post(`/public/evento/${slug}/${token}/galeria`, formData);
+  },
+
+  /**
+   * Reportar foto inapropiada (sin auth)
+   * @param {number} fotoId
+   * @param {string} motivo
+   * @returns {Promise<Object>}
+   */
+  reportarFoto: (fotoId, motivo) => {
+    const publicAxios = axios.create({
+      baseURL: '/api/v1',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    return publicAxios.post(`/public/galeria/${fotoId}/reportar`, { motivo });
   },
 };
 
