@@ -435,11 +435,7 @@ function SeatingChartEditor({ eventoId }) {
           <Button
             type="button"
             variant="primary"
-            onClick={() => {
-              // Forzar blur para cerrar teclado en iOS antes de ejecutar
-              document.activeElement?.blur();
-              handleCreateMesa();
-            }}
+            onClick={handleCreateMesa}
             isLoading={crearMesa.isPending}
           >
             Crear Mesa
