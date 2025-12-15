@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2, ArrowLeft } from 'lucide-react';
+import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/useChatbots';
@@ -13,7 +13,6 @@ import ConfigurarChatbotModal from '@/components/chatbots/ConfigurarChatbotModal
  * Permite crear, activar/desactivar y eliminar chatbots de IA
  */
 function ChatbotsPage() {
-  const navigate = useNavigate();
   const toast = useToast();
 
   // Estados para modales
@@ -109,15 +108,7 @@ function ChatbotsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Volver al Inicio
-          </Button>
+          <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Download,
   TrendingUp,
   TrendingDown,
@@ -12,6 +11,7 @@ import {
   FileText,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import {
@@ -37,7 +37,6 @@ const REPORTES = [
  * Página de reportes contables
  */
 function ReportesContablesPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Estado
@@ -202,15 +201,7 @@ function ReportesContablesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/contabilidad')}
-            className="mb-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Contabilidad
-          </Button>
+          <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Reportes Financieros</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
             Reportes contables: Balanza, Libro Mayor, Estado de Resultados y Balance General

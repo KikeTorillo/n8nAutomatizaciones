@@ -4,13 +4,13 @@ import { serviciosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import { useModulos } from '@/hooks/useModulos';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import AlertasWidget from '@/components/inventario/AlertasWidget';
 import { useEstadisticasOrganizacion } from '@/hooks/useEstadisticas';
 import { useCitasDelDia } from '@/hooks/useCitas';
 import {
-  ArrowLeft,
   AlertCircle,
   AlertTriangle,
   CheckCircle,
@@ -49,15 +49,7 @@ function Dashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/home')}
-                className="text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Inicio
-              </Button>
+              <BackButton to="/home" label="Inicio" />
               <div className="h-6 w-px bg-gray-300 dark:bg-gray-600" />
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center">

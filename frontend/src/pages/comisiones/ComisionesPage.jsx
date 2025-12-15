@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { Settings, FileText, ArrowLeft } from 'lucide-react';
+import { Settings, FileText } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import ComisionesDashboard from '@/components/comisiones/ComisionesDashboard';
 
 /**
@@ -17,15 +18,7 @@ function ComisionesPage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/home')}
-                className="mb-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al Inicio
-              </Button>
+              <BackButton to="/home" label="Volver al Inicio" className="mb-2" />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Sistema de Comisiones
               </h1>

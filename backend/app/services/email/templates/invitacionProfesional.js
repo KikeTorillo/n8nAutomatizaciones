@@ -1,6 +1,7 @@
 /**
  * Template HTML para email de invitación a profesionales
  * Nov 2025 - Sistema de Invitaciones Profesional-Usuario
+ * Actualizado Dic 2025 - Branding Nexo
  */
 
 /**
@@ -159,18 +160,18 @@ function generateInvitacionEmail({
         .steps-box {
             margin: 24px 0;
             padding: 20px;
-            background-color: #F0F9FF;
+            background-color: #f5eef5;
             border-radius: 6px;
         }
         .steps-box h3 {
-            color: #1E40AF;
+            color: #5a2958;
             margin-top: 0;
             font-size: 16px;
         }
         .steps-box ol {
             margin: 12px 0;
             padding-left: 24px;
-            color: #1E40AF;
+            color: #5a2958;
         }
         .steps-box li {
             margin: 10px 0;
@@ -186,6 +187,10 @@ function generateInvitacionEmail({
             margin: 8px 0;
             font-size: 13px;
             color: #6B7280;
+        }
+        .email-footer .brand {
+            color: #753572;
+            font-weight: 600;
         }
         .reenvio-badge {
             display: inline-block;
@@ -214,7 +219,7 @@ function generateInvitacionEmail({
 
             <h2>Hola ${nombre},</h2>
 
-            <p>Has sido invitado/a a unirte al equipo de <strong>${organizacion_nombre}</strong> en nuestra plataforma de gestión.</p>
+            <p>Has sido invitado/a a unirte al equipo de <strong>${organizacion_nombre}</strong> en <strong>Nexo</strong>.</p>
 
             <!-- Rol asignado -->
             <div class="highlight-box">
@@ -257,8 +262,8 @@ function generateInvitacionEmail({
 
         <!-- Footer -->
         <div class="email-footer">
-            <p><strong>SaaS Agendamiento</strong></p>
-            <p>Sistema de Gestión de Citas y Agendamiento Empresarial</p>
+            <p><span class="brand">Nexo</span></p>
+            <p>Sistema de Gestión Empresarial</p>
             <p style="margin-top: 16px; font-size: 12px;">
                 Este es un email automático, por favor no respondas a este mensaje.
             </p>
@@ -294,7 +299,7 @@ function generateInvitacionText({
     return `
 ${es_reenvio ? '📨 INVITACIÓN REENVIADA\n\n' : ''}¡Hola ${nombre}!
 
-Has sido invitado/a a unirte al equipo de ${organizacion_nombre} en nuestra plataforma de gestión.
+Has sido invitado/a a unirte al equipo de ${organizacion_nombre} en Nexo.
 
 📋 TU ROL EN EL EQUIPO:
 ${profesional_nombre}
@@ -312,8 +317,8 @@ ${registroUrl}
 Si tienes alguna pregunta, contacta al administrador de ${organizacion_nombre}.
 
 ---
-SaaS Agendamiento
-Sistema de Gestión de Citas y Agendamiento Empresarial
+Nexo
+Sistema de Gestión Empresarial
 
 Este es un email automático, por favor no respondas a este mensaje.
     `.trim();

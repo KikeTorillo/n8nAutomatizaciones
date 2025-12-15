@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
-  ArrowLeft,
   Plus,
   Search,
   Filter,
@@ -15,6 +14,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
@@ -65,7 +65,6 @@ const ESTADO_COLORS = {
  * Página de gestión de asientos contables
  */
 function AsientosContablesPage() {
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Estado de filtros
@@ -187,15 +186,7 @@ function AsientosContablesPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/contabilidad')}
-                className="mb-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver a Contabilidad
-              </Button>
+              <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Asientos Contables</h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
                 Libro diario - Registro de movimientos contables

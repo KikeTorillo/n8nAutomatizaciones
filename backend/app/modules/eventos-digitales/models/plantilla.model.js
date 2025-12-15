@@ -16,7 +16,7 @@ class PlantillaModel {
      * Público - sin necesidad de autenticación
      */
     static async listar(filtros = {}) {
-        const { tipo_evento, es_premium, activo = true } = filtros;
+        const { tipo_evento, categoria, subcategoria, es_premium, activo = true } = filtros;
 
         return await RLSContextManager.withBypass(async (db) => {
             let query = `
@@ -35,6 +35,18 @@ class PlantillaModel {
             if (tipo_evento) {
                 query += ` AND tipo_evento = $${paramIdx}`;
                 params.push(tipo_evento);
+                paramIdx++;
+            }
+
+            if (categoria) {
+                query += ` AND categoria = $${paramIdx}`;
+                params.push(categoria);
+                paramIdx++;
+            }
+
+            if (subcategoria) {
+                query += ` AND subcategoria = $${paramIdx}`;
+                params.push(subcategoria);
                 paramIdx++;
             }
 
@@ -89,6 +101,8 @@ class PlantillaModel {
             tipo_evento,
             descripcion,
             preview_url,
+            categoria,
+            subcategoria,
             tema,
             estructura_html,
             estilos_css,
@@ -100,11 +114,13 @@ class PlantillaModel {
             const result = await db.query(`
                 INSERT INTO plantillas_evento (
                     codigo, nombre, tipo_evento, descripcion, preview_url,
+                    categoria, subcategoria,
                     tema, estructura_html, estilos_css, es_premium, orden
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                 RETURNING *
             `, [
                 codigo, nombre, tipo_evento, descripcion, preview_url,
+                categoria, subcategoria,
                 tema ? JSON.stringify(tema) : null,
                 estructura_html, estilos_css, es_premium, orden
             ]);
@@ -123,6 +139,7 @@ class PlantillaModel {
 
         const camposPermitidos = [
             'nombre', 'tipo_evento', 'descripcion', 'preview_url',
+            'categoria', 'subcategoria',
             'tema', 'estructura_html', 'estilos_css',
             'es_premium', 'activo', 'orden'
         ];

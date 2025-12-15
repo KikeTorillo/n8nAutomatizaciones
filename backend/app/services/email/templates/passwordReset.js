@@ -1,5 +1,6 @@
 /**
  * Template HTML para email de recuperación de contraseña
+ * Actualizado Dic 2025 - Branding Nexo
  */
 
 /**
@@ -36,7 +37,7 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .email-header {
-            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+            background: linear-gradient(135deg, #753572 0%, #5a2958 100%);
             padding: 40px 30px;
             text-align: center;
         }
@@ -69,7 +70,7 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
         .reset-button {
             display: inline-block;
             padding: 14px 32px;
-            background-color: #3B82F6;
+            background-color: #753572;
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 6px;
@@ -78,7 +79,7 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
             transition: background-color 0.3s ease;
         }
         .reset-button:hover {
-            background-color: #2563EB;
+            background-color: #5a2958;
         }
         .alternative-link {
             margin-top: 24px;
@@ -94,7 +95,7 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
             font-size: 13px;
         }
         .alternative-link a {
-            color: #3B82F6;
+            color: #753572;
             text-decoration: none;
         }
         .warning-box {
@@ -120,21 +121,25 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
             font-size: 13px;
             color: #6B7280;
         }
+        .email-footer .brand {
+            color: #753572;
+            font-weight: 600;
+        }
         .security-tips {
             margin-top: 24px;
             padding: 20px;
-            background-color: #F0F9FF;
+            background-color: #f5eef5;
             border-radius: 6px;
         }
         .security-tips h3 {
-            color: #1E40AF;
+            color: #5a2958;
             margin-top: 0;
             font-size: 16px;
         }
         .security-tips ul {
             margin: 12px 0;
             padding-left: 20px;
-            color: #1E40AF;
+            color: #5a2958;
         }
         .security-tips li {
             margin: 8px 0;
@@ -154,7 +159,7 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
         <div class="email-body">
             <h2>Hola ${nombre},</h2>
 
-            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>SaaS Agendamiento</strong>.</p>
+            <p>Recibimos una solicitud para restablecer la contraseña de tu cuenta en <strong>Nexo</strong>.</p>
 
             <p>Para crear una nueva contraseña, haz clic en el siguiente botón:</p>
 
@@ -192,8 +197,8 @@ function generatePasswordResetEmail({ nombre, resetUrl, expirationHours = 1 }) {
 
         <!-- Footer -->
         <div class="email-footer">
-            <p><strong>SaaS Agendamiento</strong></p>
-            <p>Sistema de Gestión de Citas y Agendamiento Empresarial</p>
+            <p><span class="brand">Nexo</span></p>
+            <p>Sistema de Gestión Empresarial</p>
             <p style="margin-top: 16px; font-size: 12px;">
                 Este es un email automático, por favor no respondas a este mensaje.
             </p>
@@ -213,7 +218,7 @@ function generatePasswordResetText({ nombre, resetUrl, expirationHours = 1 }) {
     return `
 Hola ${nombre},
 
-Recibimos una solicitud para restablecer la contraseña de tu cuenta en SaaS Agendamiento.
+Recibimos una solicitud para restablecer la contraseña de tu cuenta en Nexo.
 
 Para crear una nueva contraseña, visita el siguiente enlace:
 ${resetUrl}
@@ -229,8 +234,8 @@ Si NO solicitaste este cambio, puedes ignorar este email de forma segura. Tu con
 - Considera usar un gestor de contraseñas
 
 ---
-SaaS Agendamiento
-Sistema de Gestión de Citas y Agendamiento Empresarial
+Nexo
+Sistema de Gestión Empresarial
 
 Este es un email automático, por favor no respondas a este mensaje.
     `.trim();

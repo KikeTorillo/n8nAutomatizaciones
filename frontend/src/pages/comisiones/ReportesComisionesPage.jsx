@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import ReportesComisionesFiltros from '@/components/comisiones/ReportesComisionesFiltros';
 import ReporteComisionesTable from '@/components/comisiones/ReporteComisionesTable';
 import ExportButtons from '@/components/comisiones/ExportButtons';
@@ -15,7 +14,6 @@ import { startOfMonth, endOfMonth, format } from 'date-fns';
  * Permite filtrar, visualizar y exportar comisiones
  */
 function ReportesComisionesPage() {
-  const navigate = useNavigate();
   const [detalleModalOpen, setDetalleModalOpen] = useState(false);
   const [comisionSeleccionada, setComisionSeleccionada] = useState(null);
 
@@ -74,15 +72,7 @@ function ReportesComisionesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/comisiones')}
-            className="mb-2"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Comisiones
-          </Button>
+          <BackButton to="/comisiones" label="Volver a Comisiones" className="mb-2" />
 
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>

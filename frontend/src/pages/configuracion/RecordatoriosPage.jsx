@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -10,10 +9,10 @@ import {
   useEnviarPrueba,
 } from '@/hooks/useRecordatorios';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import {
   Bell,
-  ArrowLeft,
   Save,
   Send,
   Clock,
@@ -140,8 +139,6 @@ function TestForm({ onEnviar, isLoading }) {
  * Página de Configuración de Recordatorios
  */
 function RecordatoriosPage() {
-  const navigate = useNavigate();
-
   // Queries
   const { data: config, isLoading: loadingConfig } = useConfiguracionRecordatorios();
   const { data: stats, isLoading: loadingStats } = useEstadisticasRecordatorios();
@@ -214,15 +211,7 @@ function RecordatoriosPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/home')}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-2"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Volver al Inicio
-        </Button>
+        <BackButton to="/home" label="Volver al Inicio" className="mb-2" />
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
       </div>
 

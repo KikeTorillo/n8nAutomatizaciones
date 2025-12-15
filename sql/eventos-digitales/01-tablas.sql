@@ -27,7 +27,11 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
     descripcion TEXT,
     preview_url TEXT,
 
-    -- Tema visual de la plantilla
+    -- Categorización para filtros avanzados
+    categoria VARCHAR(50),        -- infantil, elegante, moderno, rustico, tematico
+    subcategoria VARCHAR(50),     -- superheroes, princesas, kpop, unicornios, etc.
+
+    -- Tema visual de la plantilla (ampliado con elementos temáticos)
     tema JSONB DEFAULT '{
         "color_primario": "#ec4899",
         "color_secundario": "#fce7f3",
@@ -35,7 +39,15 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
         "color_texto": "#1f2937",
         "color_texto_claro": "#6b7280",
         "fuente_titulo": "Playfair Display",
-        "fuente_cuerpo": "Inter"
+        "fuente_cuerpo": "Inter",
+        "patron_fondo": "none",
+        "patron_opacidad": 0.1,
+        "decoracion_esquinas": "none",
+        "icono_principal": "none",
+        "animacion_entrada": "fade",
+        "efecto_titulo": "none",
+        "marco_fotos": "none",
+        "stickers": []
     }',
 
     -- HTML/CSS personalizados (opcional, para plantillas avanzadas)
@@ -50,6 +62,9 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
 
     CONSTRAINT tipo_evento_plantilla_valido CHECK (
         tipo_evento IN ('boda', 'xv_anos', 'bautizo', 'cumpleanos', 'corporativo', 'universal')
+    ),
+    CONSTRAINT categoria_valida CHECK (
+        categoria IS NULL OR categoria IN ('infantil', 'juvenil', 'adulto', 'elegante', 'moderno', 'rustico', 'tematico', 'clasico')
     )
 );
 

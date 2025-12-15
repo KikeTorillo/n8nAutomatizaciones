@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
-  ArrowLeft,
   PartyPopper,
   Calendar,
   Users,
@@ -14,6 +13,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -112,13 +112,7 @@ function EventosPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <button
-          onClick={() => navigate('/home')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Volver al Inicio</span>
-        </button>
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
 
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">

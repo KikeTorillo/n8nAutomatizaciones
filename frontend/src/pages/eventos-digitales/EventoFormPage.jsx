@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, PartyPopper, Save, Image, Trash2, Plus, Upload } from 'lucide-react';
+import { PartyPopper, Save, Image, Trash2, Plus, Upload } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Checkbox from '@/components/ui/Checkbox';
+import BackButton from '@/components/ui/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -39,7 +41,6 @@ function EventoFormPage() {
       mostrar_contador: true,
       mostrar_qr_invitado: false,
       habilitar_seating_chart: false,
-      mensaje_bienvenida: '',
       mensaje_confirmacion: '',
     }
   });
@@ -79,7 +80,6 @@ function EventoFormPage() {
           mostrar_contador: evento.configuracion?.mostrar_contador ?? true,
           mostrar_qr_invitado: evento.configuracion?.mostrar_qr_invitado ?? false,
           habilitar_seating_chart: evento.configuracion?.habilitar_seating_chart ?? false,
-          mensaje_bienvenida: evento.configuracion?.mensaje_bienvenida || '',
           mensaje_confirmacion: evento.configuracion?.mensaje_confirmacion || '',
         }
       });
@@ -243,8 +243,8 @@ function EventoFormPage() {
         hora_evento: formData.hora_evento ? formData.hora_evento.substring(0, 5) : undefined,
         fecha_limite_rsvp: formData.fecha_limite_rsvp || undefined,
         plantilla_id: formData.plantilla_id ? parseInt(formData.plantilla_id) : undefined,
-        portada_url: formData.portada_url || undefined,
-        galeria_urls: formData.galeria_urls.length > 0 ? formData.galeria_urls : undefined,
+        portada_url: formData.portada_url || null,
+        galeria_urls: formData.galeria_urls,
         configuracion: formData.configuracion,
       };
 
@@ -276,13 +276,10 @@ function EventoFormPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <button
-          onClick={() => navigate(isEditing ? `/eventos-digitales/${id}` : '/eventos-digitales')}
-          className="flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3 transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span className="font-medium">Volver</span>
-        </button>
+        <BackButton
+          to={isEditing ? `/eventos-digitales/${id}` : '/eventos-digitales'}
+          className="mb-3"
+        />
 
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 sm:w-12 sm:h-12 bg-pink-100 dark:bg-pink-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -401,16 +398,31 @@ function EventoFormPage() {
                 </p>
 
                 {formData.portada_url ? (
-                  <div className="relative inline-block">
+                  <div className="relative inline-block group">
                     <img
                       src={formData.portada_url}
                       alt="Portada del evento"
-                      className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                      className="w-full max-w-md h-48 object-cover rounded-lg border border-gray-200 dark:border-gray-600 cursor-pointer"
+                      onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
                     />
+                    {/* Overlay al hacer hover */}
+                    <div
+                      className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center cursor-pointer"
+                      onClick={() => !uploadingPortada && portadaInputRef.current?.click()}
+                    >
+                      {uploadingPortada ? (
+                        <LoadingSpinner size="sm" />
+                      ) : (
+                        <div className="text-white text-center">
+                          <Upload className="w-8 h-8 mx-auto mb-1" />
+                          <span className="text-sm">Cambiar imagen</span>
+                        </div>
+                      )}
+                    </div>
                     <button
                       type="button"
                       onClick={handleRemovePortada}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
+                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors z-10"
                       title="Eliminar portada"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -639,89 +651,49 @@ function EventoFormPage() {
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Configuración</h2>
 
             <div className="space-y-4">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_mostrar_mesa_regalos"
-                  checked={formData.configuracion.mostrar_mesa_regalos}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar mesa de regalos</span>
-              </label>
+              <Checkbox
+                name="config_mostrar_mesa_regalos"
+                checked={formData.configuracion.mostrar_mesa_regalos}
+                onChange={handleChange}
+                label="Mostrar mesa de regalos"
+              />
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_permitir_felicitaciones"
-                  checked={formData.configuracion.permitir_felicitaciones}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Permitir felicitaciones públicas</span>
-              </label>
+              <Checkbox
+                name="config_permitir_felicitaciones"
+                checked={formData.configuracion.permitir_felicitaciones}
+                onChange={handleChange}
+                label="Permitir felicitaciones públicas"
+              />
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_mostrar_ubicaciones"
-                  checked={formData.configuracion.mostrar_ubicaciones}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar ubicaciones con mapa</span>
-              </label>
+              <Checkbox
+                name="config_mostrar_ubicaciones"
+                checked={formData.configuracion.mostrar_ubicaciones}
+                onChange={handleChange}
+                label="Mostrar ubicaciones con mapa"
+              />
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_mostrar_contador"
-                  checked={formData.configuracion.mostrar_contador}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar contador regresivo</span>
-              </label>
+              <Checkbox
+                name="config_mostrar_contador"
+                checked={formData.configuracion.mostrar_contador}
+                onChange={handleChange}
+                label="Mostrar contador regresivo"
+              />
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_mostrar_qr_invitado"
-                  checked={formData.configuracion.mostrar_qr_invitado}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar QR de entrada al invitado</span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Muestra un código QR cuando el invitado confirma asistencia</p>
-                </div>
-              </label>
+              <Checkbox
+                name="config_mostrar_qr_invitado"
+                checked={formData.configuracion.mostrar_qr_invitado}
+                onChange={handleChange}
+                label="Mostrar QR de entrada al invitado"
+                description="Muestra un código QR cuando el invitado confirma asistencia"
+              />
 
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="config_habilitar_seating_chart"
-                  checked={formData.configuracion.habilitar_seating_chart}
-                  onChange={handleChange}
-                  className="w-4 h-4 text-pink-600 rounded"
-                />
-                <div>
-                  <span className="text-sm text-gray-700 dark:text-gray-300">Habilitar asignación de mesas</span>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Permite asignar invitados a mesas y mostrar su ubicación</p>
-                </div>
-              </label>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Bienvenida</label>
-                <textarea
-                  name="config_mensaje_bienvenida"
-                  value={formData.configuracion.mensaje_bienvenida}
-                  onChange={handleChange}
-                  rows={2}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-pink-500"
-                  placeholder="Mensaje que verán tus invitados al abrir la invitación"
-                />
-              </div>
+              <Checkbox
+                name="config_habilitar_seating_chart"
+                checked={formData.configuracion.habilitar_seating_chart}
+                onChange={handleChange}
+                label="Habilitar asignación de mesas"
+                description="Permite asignar invitados a mesas y mostrar su ubicación"
+              />
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mensaje de Confirmación</label>

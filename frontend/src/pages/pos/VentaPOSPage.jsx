@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, Check, AlertCircle, ArrowLeft, User } from 'lucide-react';
+import { ShoppingCart, Trash2, Check, AlertCircle, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import BackButton from '@/components/ui/BackButton';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useCrearVenta } from '@/hooks/useVentas';
@@ -200,15 +201,7 @@ export default function VentaPOSPage() {
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-3 py-3 sm:px-6 sm:py-4">
         {/* Row 1: Botón de regreso + Vendedor */}
         <div className="flex items-center justify-between mb-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Volver al Inicio
-          </Button>
+          <BackButton to="/home" label="Volver al Inicio" />
 
           {/* Vendedor - siempre visible pero compacto en móvil */}
           {profesionalNombre && (

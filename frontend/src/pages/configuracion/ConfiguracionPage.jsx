@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Settings,
   Building2,
   Puzzle,
   ChevronRight,
   Palette,
 } from 'lucide-react';
+import BackButton from '@/components/ui/BackButton';
 import useAuthStore from '@/store/authStore';
 
 /**
@@ -62,12 +62,7 @@ function ConfiguracionPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <button
-                onClick={() => navigate('/home')}
-                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              </button>
+              <BackButton to="/home" label="Inicio" />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                   Configuración

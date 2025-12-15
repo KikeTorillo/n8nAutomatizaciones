@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, UserPlus, Search, ArrowLeft, UserCircle } from 'lucide-react';
+import { Plus, UserPlus, Search, UserCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import { useClientes } from '@/hooks/useClientes';
 import { useToast } from '@/hooks/useToast';
@@ -34,15 +35,7 @@ function ClientesPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/home')}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Volver al Inicio
-        </Button>
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
 
         {/* Header - Mobile First */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

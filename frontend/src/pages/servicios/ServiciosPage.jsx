@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, X, ArrowLeft, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, X, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
@@ -16,7 +16,6 @@ import { useToast } from '@/hooks/useToast';
  * Implementa CRUD completo con búsqueda, filtros y paginación
  */
 function ServiciosPage() {
-  const navigate = useNavigate();
   const toast = useToast();
   const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
@@ -136,15 +135,7 @@ function ServiciosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           {/* Breadcrumb */}
           <div className="mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/home')}
-              className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1" />
-              Volver al Inicio
-            </Button>
+            <BackButton to="/home" label="Volver al Inicio" />
           </div>
 
           {/* Header - Mobile First */}

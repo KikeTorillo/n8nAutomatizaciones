@@ -1,7 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Plus,
   Search,
   ChevronRight,
@@ -13,6 +11,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
@@ -57,7 +56,6 @@ const TIPO_COLORS = {
  * Página de gestión de cuentas contables (catálogo SAT)
  */
 function CuentasContablesPage() {
-  const navigate = useNavigate();
 
   // Estado de filtros
   const [busqueda, setBusqueda] = useState('');
@@ -309,15 +307,7 @@ function CuentasContablesPage() {
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/contabilidad')}
-                className="mb-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver a Contabilidad
-              </Button>
+              <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
               <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Catálogo de Cuentas</h1>
               <p className="text-gray-600 dark:text-gray-400 mt-1 text-sm">
                 Gestión del catálogo contable basado en SAT México

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Globe2,
   Plus,
   Eye,
@@ -16,7 +15,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import useWebsiteEditor, { useWebsiteBloques } from '@/hooks/useWebsite';
-import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 
 // Componentes del editor
 import PageManager from './components/PageManager';
@@ -155,15 +154,7 @@ function WebsiteEditorPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Volver al Inicio
-          </Button>
+          <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Sitio Web</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Crea tu página web pública</p>
         </div>
@@ -236,15 +227,7 @@ function WebsiteEditorPage() {
       {/* Header del editor */}
       <header className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 h-14 flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Volver
-          </Button>
+          <BackButton to="/home" label="Volver" />
           <div className="flex items-center gap-2">
             <Globe2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             <span className="font-semibold text-gray-900 dark:text-gray-100">{config?.nombre_sitio || 'Mi Sitio'}</span>

@@ -12,7 +12,7 @@ const { generateActivacionEmail, generateActivacionText } = require('./email/tem
 class EmailService {
     constructor() {
         this.frontendUrl = process.env.FRONTEND_URL || 'http://localhost:8080';
-        this.emailFrom = process.env.EMAIL_FROM || '"SaaS Agendamiento" <noreply@agendamiento.com>';
+        this.emailFrom = process.env.EMAIL_FROM || '"Nexo" <noreply@nexo.app>';
     }
 
     /**
@@ -46,7 +46,7 @@ class EmailService {
             const mailOptions = {
                 from: this.emailFrom,
                 to: email,
-                subject: '🔐 Recuperación de Contraseña - SaaS Agendamiento',
+                subject: '🔐 Recuperación de Contraseña - Nexo',
                 text: textContent, // Versión texto plano (fallback)
                 html: htmlContent  // Versión HTML
             };

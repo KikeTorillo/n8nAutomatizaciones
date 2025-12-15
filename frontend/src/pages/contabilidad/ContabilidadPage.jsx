@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   BookOpen,
   FileSpreadsheet,
   BarChart3,
@@ -15,6 +14,7 @@ import {
   Settings,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import { useDashboardContabilidad, useInicializarCatalogoSAT } from '@/hooks/useContabilidad';
 import { formatCurrency } from '@/lib/utils';
 
@@ -93,15 +93,7 @@ function ContabilidadPage() {
         <div className="mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/home')}
-                className="mb-2"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Volver al Inicio
-              </Button>
+              <BackButton to="/home" label="Volver al Inicio" className="mb-2" />
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">
                 Contabilidad
               </h1>

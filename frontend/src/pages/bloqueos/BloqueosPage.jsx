@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, ArrowLeft } from 'lucide-react';
+import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/useBloqueos';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
@@ -10,6 +9,7 @@ import BloqueoFormModal from '@/components/bloqueos/BloqueoFormModal';
 import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
 import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import {
   calcularEstadisticasBloqueos,
@@ -21,8 +21,6 @@ import { formatCurrency } from '@/lib/utils';
  * BloqueosPage - Página principal de gestión de bloqueos de horarios
  */
 function BloqueosPage() {
-  const navigate = useNavigate();
-
   // Estados
   const [vistaActiva, setVistaActiva] = useState('todos'); // 'todos' | 'profesionales' | 'organizacionales'
   const [filtros, setFiltros] = useState({
@@ -148,15 +146,7 @@ function BloqueosPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/home')}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Volver al Inicio
-        </Button>
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

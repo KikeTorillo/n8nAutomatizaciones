@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Settings,
   Zap,
   Building2,
@@ -14,6 +13,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import { useConfiguracionContable, useActualizarConfiguracion } from '@/hooks/useContabilidad';
 
 /**
@@ -75,10 +75,7 @@ function ConfiguracionContablePage() {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Button variant="ghost" onClick={() => navigate('/contabilidad')} className="mb-4">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver
-          </Button>
+          <BackButton to="/contabilidad" label="Volver" className="mb-4" />
 
           <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
             <div className="flex items-start gap-4">
@@ -105,10 +102,7 @@ function ConfiguracionContablePage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="ghost" onClick={() => navigate('/contabilidad')} className="mb-2">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Volver a Contabilidad
-          </Button>
+          <BackButton to="/contabilidad" label="Volver a Contabilidad" className="mb-2" />
           <div className="flex items-center gap-3">
             <div className="p-2 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
               <Settings className="w-6 h-6 text-primary-600 dark:text-primary-400" />

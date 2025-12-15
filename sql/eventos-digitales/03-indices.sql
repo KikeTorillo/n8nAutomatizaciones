@@ -157,6 +157,21 @@ CREATE INDEX IF NOT EXISTS idx_plantillas_evento_tipo
     ON plantillas_evento(tipo_evento)
     WHERE activo = true;
 
+-- Filtro por categoría (infantil, elegante, moderno, etc.)
+CREATE INDEX IF NOT EXISTS idx_plantillas_evento_categoria
+    ON plantillas_evento(categoria)
+    WHERE activo = true AND categoria IS NOT NULL;
+
+-- Filtro por subcategoría (superheroes, princesas, kpop, etc.)
+CREATE INDEX IF NOT EXISTS idx_plantillas_evento_subcategoria
+    ON plantillas_evento(subcategoria)
+    WHERE activo = true AND subcategoria IS NOT NULL;
+
+-- Índice compuesto para filtros combinados
+CREATE INDEX IF NOT EXISTS idx_plantillas_evento_tipo_cat
+    ON plantillas_evento(tipo_evento, categoria)
+    WHERE activo = true;
+
 -- Ordenamiento para listado
 CREATE INDEX IF NOT EXISTS idx_plantillas_evento_orden
     ON plantillas_evento(orden, nombre)

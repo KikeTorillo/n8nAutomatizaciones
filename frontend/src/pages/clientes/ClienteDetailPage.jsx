@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Edit, Phone, Mail, MapPin, Calendar, DollarSign, Heart } from 'lucide-react';
+import { Edit, Phone, Mail, MapPin, Calendar, DollarSign, Heart } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useCliente } from '@/hooks/useClientes';
 import { citasApi } from '@/services/api/endpoints';
@@ -53,14 +54,7 @@ function ClienteDetailPage() {
       <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center gap-4 mb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/clientes')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver
-            </Button>
+            <BackButton to="/clientes" label="Volver" />
           </div>
 
           <div className="flex items-start justify-between">

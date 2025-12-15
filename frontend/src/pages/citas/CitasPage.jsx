@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Plus, TrendingUp, Clock, CheckCircle, AlertCircle, List, CalendarDays, ArrowLeft } from 'lucide-react';
+import { Calendar, Plus, TrendingUp, Clock, CheckCircle, AlertCircle, List, CalendarDays } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
@@ -194,15 +195,7 @@ function CitasPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header con navegación */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate('/home')}
-          className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-        >
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Volver al Inicio
-        </Button>
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
 
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">

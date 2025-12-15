@@ -19,7 +19,6 @@ import {
   QrCode,
   Camera
 } from 'lucide-react';
-import Input from '@/components/ui/Input';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import {
@@ -29,7 +28,15 @@ import {
   useGaleriaPublica,
 } from '@/hooks/useEventosDigitales';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
-import { GaleriaCompartida } from './components';
+import {
+  GaleriaCompartida,
+  PatronFondo,
+  StickersDecorativos,
+  TituloTematico,
+  DecoracionEsquinas,
+  MarcoFoto,
+  IconoPrincipal
+} from './components';
 
 /**
  * Página pública del evento digital (RSVP)
@@ -79,15 +86,25 @@ function EventoPublicoPage() {
   const invitado = token ? eventoPublico?.invitado : null;
 
   // Tema de la plantilla (con defaults)
-  const tema = evento?.tema || {
+  const temaDefault = {
     color_primario: '#ec4899',
     color_secundario: '#fce7f3',
     color_fondo: '#fdf2f8',
     color_texto: '#1f2937',
     color_texto_claro: '#6b7280',
     fuente_titulo: 'Playfair Display',
-    fuente_cuerpo: 'Inter'
+    fuente_cuerpo: 'Inter',
+    // Elementos temáticos
+    patron_fondo: 'none',
+    patron_opacidad: 0.1,
+    decoracion_esquinas: 'none',
+    icono_principal: 'none',
+    animacion_entrada: 'fade',
+    efecto_titulo: 'none',
+    marco_fotos: 'none',
+    stickers: []
   };
+  const tema = { ...temaDefault, ...(evento?.tema || {}) };
 
   // Cargar Google Fonts dinámicamente
   useEffect(() => {
@@ -331,14 +348,17 @@ function EventoPublicoPage() {
   const felicitaciones = evento.felicitaciones?.filter(f => f.aprobada) || [];
   const galeria = evento.galeria_urls || [];
 
+  // Detectar si hay imagen de fondo para ajustar contraste
+  const tieneImagenFondo = !!(evento.portada_url || tema.imagen_fondo);
+
   const sections = [
     { id: 'inicio', label: 'Inicio' },
     ...(galeria.length > 0 ? [{ id: 'galeria', label: 'Galería' }] : []),
-    ...(configuracion.habilitar_galeria_compartida !== false ? [{ id: 'fotos', label: 'Fotos' }] : []),
     ...(configuracion.mostrar_ubicaciones !== false && ubicaciones.length > 0 ? [{ id: 'ubicaciones', label: 'Ubicaciones' }] : []),
     ...(configuracion.mostrar_mesa_regalos !== false && regalos.length > 0 ? [{ id: 'regalos', label: 'Regalos' }] : []),
     ...(configuracion.permitir_felicitaciones !== false ? [{ id: 'felicitaciones', label: 'Felicitaciones' }] : []),
     ...(token ? [{ id: 'rsvp', label: 'Confirmar' }] : []),
+    ...(configuracion.habilitar_galeria_compartida !== false ? [{ id: 'fotos', label: 'Fotos' }] : []),
   ];
 
   // Helper para clases de animación
@@ -428,18 +448,19 @@ function EventoPublicoPage() {
         data-section="inicio"
         className="relative min-h-screen flex flex-col"
       >
-        {/* Background Image */}
-        {evento.portada_url ? (
+        {/* Background Image - prioridad: portada_url > imagen_fondo del tema > gradiente */}
+        {(evento.portada_url || tema.imagen_fondo) ? (
           <div className="absolute inset-0">
             <img
-              src={evento.portada_url}
+              src={evento.portada_url || tema.imagen_fondo}
               alt={evento.nombre}
               className="w-full h-full object-cover"
             />
+            {/* Overlay oscuro para mejor contraste con texto */}
             <div
               className="absolute inset-0"
               style={{
-                background: `linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.5) 50%, ${tema.color_fondo} 100%)`
+                background: `linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, rgba(0,0,0,0.6) 40%, ${tema.color_fondo}dd 80%, ${tema.color_fondo} 100%)`
               }}
             />
           </div>
@@ -452,59 +473,92 @@ function EventoPublicoPage() {
           />
         )}
 
+        {/* Patrón de fondo temático */}
+        <PatronFondo
+          patron={tema.patron_fondo}
+          opacidad={tema.patron_opacidad}
+          colorPrimario={tema.color_primario}
+        />
+
+        {/* Decoraciones de esquinas */}
+        <DecoracionEsquinas tipo={tema.decoracion_esquinas} />
+
+        {/* Stickers flotantes */}
+        <StickersDecorativos stickers={tema.stickers} />
+
         {/* Hero Content */}
         <div className="relative flex-1 flex flex-col items-center justify-center px-4 py-20 text-center">
+          {/* Ícono principal temático */}
+          {tema.icono_principal !== 'none' && (
+            <div className={`mb-6 ${getAnimationClass('inicio')}`}>
+              <IconoPrincipal
+                icono={tema.icono_principal}
+                colorPrimario={tema.color_primario}
+              />
+            </div>
+          )}
+
           {/* Saludo personalizado */}
           {invitado && (
             <p
-              className={`text-lg sm:text-xl mb-4 ${getAnimationClass('inicio')}`}
+              className={`text-lg sm:text-xl mb-2 ${getAnimationClass('inicio')}`}
               style={{
-                color: evento.portada_url ? 'white' : tema.color_primario,
-                textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+                color: tieneImagenFondo ? 'white' : tema.color_primario,
+                textShadow: tieneImagenFondo ? '0 2px 20px rgba(0,0,0,0.9), 0 1px 6px rgba(0,0,0,1)' : 'none'
               }}
             >
               Querido/a <span className="font-semibold">{invitado.nombre}</span>
             </p>
           )}
 
-          {/* Título principal */}
-          <h1
-            className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-6 leading-tight ${getAnimationClass('inicio')} stagger-1`}
-            style={{
-              fontFamily: tema.fuente_titulo,
-              color: evento.portada_url ? 'white' : tema.color_texto,
-              textShadow: evento.portada_url ? '0 4px 20px rgba(0,0,0,0.4)' : 'none'
-            }}
-          >
-            {evento.nombre}
-          </h1>
-
-          {/* Descripción */}
+          {/* Descripción (antes del título para mejor flujo narrativo) */}
           {evento.descripcion && (
             <p
-              className={`text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-8 font-light italic ${getAnimationClass('inicio')} stagger-2`}
+              className={`text-lg sm:text-xl md:text-2xl max-w-2xl mx-auto mb-6 font-light italic ${getAnimationClass('inicio')} stagger-1`}
               style={{
-                color: evento.portada_url ? 'rgba(255,255,255,0.9)' : tema.color_texto_claro,
-                textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+                color: tieneImagenFondo ? 'white' : tema.color_texto_claro,
+                textShadow: tieneImagenFondo ? '0 2px 20px rgba(0,0,0,0.9), 0 1px 6px rgba(0,0,0,1)' : 'none'
               }}
             >
-              {configuracion.mensaje_bienvenida || evento.descripcion}
+              {evento.descripcion}
             </p>
           )}
+
+          {/* Título principal con efecto temático */}
+          <h1
+            className={`text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mb-8 leading-tight ${getAnimationClass('inicio')} stagger-2`}
+            style={{
+              fontFamily: tema.fuente_titulo,
+              color: tieneImagenFondo ? 'white' : tema.color_texto,
+              textShadow: tieneImagenFondo ? '0 4px 40px rgba(0,0,0,1), 0 2px 15px rgba(0,0,0,1), 0 0 60px rgba(0,0,0,0.8)' : 'none'
+            }}
+          >
+            <TituloTematico
+              efecto={tema.efecto_titulo}
+              colorPrimario={tema.color_primario}
+              colorSecundario={tema.color_secundario}
+            >
+              {evento.nombre}
+            </TituloTematico>
+          </h1>
 
           {/* Fecha destacada */}
           <div
             className={`inline-flex items-center gap-3 sm:gap-6 px-6 sm:px-10 py-4 sm:py-5 rounded-full backdrop-blur-sm mb-8 ${getAnimationClass('inicio', 'animate-scaleIn')} stagger-3`}
             style={{
-              backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
-              border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}20`
+              backgroundColor: tieneImagenFondo ? 'rgba(0,0,0,0.4)' : tema.color_secundario,
+              border: `1px solid ${tieneImagenFondo ? 'rgba(255,255,255,0.3)' : tema.color_primario}20`,
+              boxShadow: tieneImagenFondo ? '0 4px 30px rgba(0,0,0,0.5)' : 'none'
             }}
           >
             <div className="flex items-center gap-2">
-              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: evento.portada_url ? 'white' : tema.color_primario }} />
+              <Calendar className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: tieneImagenFondo ? 'white' : tema.color_primario }} />
               <span
-                className="text-base sm:text-lg font-medium"
-                style={{ color: evento.portada_url ? 'white' : tema.color_texto }}
+                className="text-base sm:text-lg font-semibold"
+                style={{
+                  color: tieneImagenFondo ? 'white' : tema.color_texto,
+                  textShadow: tieneImagenFondo ? '0 1px 4px rgba(0,0,0,0.8)' : 'none'
+                }}
               >
                 {new Date(evento.fecha_evento).toLocaleDateString('es-ES', {
                   day: 'numeric',
@@ -517,13 +571,16 @@ function EventoPublicoPage() {
               <>
                 <div
                   className="w-px h-8"
-                  style={{ backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.4)' : tema.color_primario }}
+                  style={{ backgroundColor: tieneImagenFondo ? 'rgba(255,255,255,0.4)' : tema.color_primario }}
                 />
                 <div className="flex items-center gap-2">
-                  <Clock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: evento.portada_url ? 'white' : tema.color_primario }} />
+                  <Clock className="w-5 h-5 sm:w-6 sm:h-6" style={{ color: tieneImagenFondo ? 'white' : tema.color_primario }} />
                   <span
-                    className="text-base sm:text-lg font-medium"
-                    style={{ color: evento.portada_url ? 'white' : tema.color_texto }}
+                    className="text-base sm:text-lg font-semibold"
+                    style={{
+                      color: tieneImagenFondo ? 'white' : tema.color_texto,
+                      textShadow: tieneImagenFondo ? '0 1px 4px rgba(0,0,0,0.8)' : 'none'
+                    }}
                   >
                     {evento.hora_evento}
                   </span>
@@ -549,16 +606,17 @@ function EventoPublicoPage() {
                     className="text-4xl sm:text-5xl md:text-6xl font-bold mb-1"
                     style={{
                       fontFamily: tema.fuente_titulo,
-                      color: evento.portada_url ? 'white' : tema.color_primario,
-                      textShadow: evento.portada_url ? '0 2px 10px rgba(0,0,0,0.3)' : 'none'
+                      color: tieneImagenFondo ? 'white' : tema.color_primario,
+                      textShadow: tieneImagenFondo ? '0 4px 30px rgba(0,0,0,1), 0 2px 10px rgba(0,0,0,0.9)' : 'none'
                     }}
                   >
                     {String(item.value).padStart(2, '0')}
                   </div>
                   <div
-                    className="text-xs sm:text-sm uppercase tracking-wider"
+                    className="text-xs sm:text-sm uppercase tracking-wider font-medium"
                     style={{
-                      color: evento.portada_url ? 'rgba(255,255,255,0.8)' : tema.color_texto_claro
+                      color: tieneImagenFondo ? 'white' : tema.color_texto_claro,
+                      textShadow: tieneImagenFondo ? '0 1px 4px rgba(0,0,0,0.8)' : 'none'
                     }}
                   >
                     {item.label}
@@ -596,12 +654,14 @@ function EventoPublicoPage() {
               })()}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105"
               style={{
-                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
-                color: evento.portada_url ? 'white' : tema.color_primario,
+                backgroundColor: tieneImagenFondo ? 'rgba(0,0,0,0.4)' : tema.color_secundario,
+                color: tieneImagenFondo ? 'white' : tema.color_primario,
                 backdropFilter: 'blur(10px)',
-                border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`
+                border: `1px solid ${tieneImagenFondo ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`,
+                boxShadow: tieneImagenFondo ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+                textShadow: tieneImagenFondo ? '0 1px 3px rgba(0,0,0,0.6)' : 'none'
               }}
             >
               <CalendarPlus className="w-4 h-4" />
@@ -612,12 +672,14 @@ function EventoPublicoPage() {
             <a
               href={`${import.meta.env.VITE_API_URL || ''}/public/evento/${slug}/calendario`}
               download={`${slug}.ics`}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all hover:scale-105"
               style={{
-                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
-                color: evento.portada_url ? 'white' : tema.color_primario,
+                backgroundColor: tieneImagenFondo ? 'rgba(0,0,0,0.4)' : tema.color_secundario,
+                color: tieneImagenFondo ? 'white' : tema.color_primario,
                 backdropFilter: 'blur(10px)',
-                border: `1px solid ${evento.portada_url ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`
+                border: `1px solid ${tieneImagenFondo ? 'rgba(255,255,255,0.3)' : tema.color_primario}30`,
+                boxShadow: tieneImagenFondo ? '0 4px 20px rgba(0,0,0,0.4)' : 'none',
+                textShadow: tieneImagenFondo ? '0 1px 3px rgba(0,0,0,0.6)' : 'none'
               }}
             >
               <Download className="w-4 h-4" />
@@ -630,12 +692,13 @@ function EventoPublicoPage() {
             <div
               className={`inline-flex items-center gap-2 px-6 py-3 rounded-full ${getAnimationClass('inicio', 'animate-scaleIn')} stagger-5`}
               style={{
-                backgroundColor: evento.portada_url ? 'rgba(255,255,255,0.2)' : tema.color_secundario,
-                color: evento.portada_url ? 'white' : tema.color_primario,
-                backdropFilter: 'blur(10px)'
+                backgroundColor: tieneImagenFondo ? 'rgba(0,0,0,0.4)' : tema.color_secundario,
+                color: tieneImagenFondo ? 'white' : tema.color_primario,
+                backdropFilter: 'blur(10px)',
+                boxShadow: tieneImagenFondo ? '0 4px 20px rgba(0,0,0,0.4)' : 'none'
               }}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-2 font-semibold" style={{ textShadow: tieneImagenFondo ? '0 1px 3px rgba(0,0,0,0.6)' : 'none' }}>
                 <Check className="w-5 h-5" />
                 Asistencia Confirmada
               </span>
@@ -647,7 +710,10 @@ function EventoPublicoPage() {
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce cursor-pointer" onClick={scrollToContent}>
           <ChevronDown
             className="w-8 h-8"
-            style={{ color: evento.portada_url ? 'white' : tema.color_primario }}
+            style={{
+              color: tieneImagenFondo ? 'white' : tema.color_primario,
+              filter: tieneImagenFondo ? 'drop-shadow(0 2px 4px rgba(0,0,0,0.8))' : 'none'
+            }}
           />
         </div>
       </section>
@@ -708,27 +774,36 @@ function EventoPublicoPage() {
             {/* Masonry-style grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {galeria.map((url, idx) => (
-                <div
+                <MarcoFoto
                   key={idx}
+                  marco={tema.marco_fotos}
+                  colorPrimario={tema.color_primario}
+                  colorSecundario={tema.color_secundario}
                   className={`
-                    relative overflow-hidden rounded-2xl cursor-pointer group
                     ${idx === 0 ? 'md:col-span-2 md:row-span-2' : ''}
-                    ${idx === 0 ? 'aspect-square md:aspect-auto' : 'aspect-square'}
                     ${visibleSections.has('galeria') ? 'animate-scaleIn' : 'opacity-0'}
                   `}
-                  style={{ animationDelay: `${idx * 0.1}s` }}
-                  onClick={() => openLightbox(idx)}
                 >
-                  <img
-                    src={url}
-                    alt={`Foto ${idx + 1}`}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                  />
                   <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                    style={{ backgroundColor: `${tema.color_primario}30` }}
-                  />
-                </div>
+                    className={`
+                      relative overflow-hidden cursor-pointer group
+                      ${tema.marco_fotos === 'none' ? 'rounded-2xl' : ''}
+                      ${idx === 0 ? 'aspect-square md:aspect-auto' : 'aspect-square'}
+                    `}
+                    style={{ animationDelay: `${idx * 0.1}s` }}
+                    onClick={() => openLightbox(idx)}
+                  >
+                    <img
+                      src={url}
+                      alt={`Foto ${idx + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div
+                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ backgroundColor: `${tema.color_primario}30` }}
+                    />
+                  </div>
+                </MarcoFoto>
               ))}
             </div>
 
@@ -767,48 +842,6 @@ function EventoPublicoPage() {
                 </div>
               </div>
             )}
-          </section>
-        )}
-
-        {/* Galería Compartida - Fotos de Invitados */}
-        {configuracion.habilitar_galeria_compartida !== false && (
-          <section
-            ref={sectionRefs.fotos}
-            data-section="fotos"
-            className="py-20"
-            style={{ backgroundColor: tema.color_secundario + '20' }}
-          >
-            <div className="max-w-5xl mx-auto px-4">
-              <div className={`text-center mb-12 ${getAnimationClass('fotos')}`}>
-                <h2
-                  className="text-4xl sm:text-5xl font-bold mb-4"
-                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-                >
-                  <Camera className="inline-block w-10 h-10 mr-3" style={{ color: tema.color_primario }} />
-                  Fotos del Evento
-                </h2>
-                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
-                  {token
-                    ? '¡Comparte tus mejores momentos!'
-                    : 'Momentos capturados por los invitados'}
-                </p>
-              </div>
-
-              <div
-                className={`
-                  bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8
-                  ${visibleSections.has('fotos') ? 'animate-fadeIn' : 'opacity-0'}
-                `}
-                style={{ boxShadow: `0 10px 40px ${tema.color_primario}15` }}
-              >
-                <GaleriaCompartida
-                  slug={slug}
-                  token={token}
-                  isAdmin={false}
-                  permitirSubida={configuracion.permitir_subida_invitados !== false}
-                />
-              </div>
-            </div>
           </section>
         )}
 
@@ -1014,13 +1047,27 @@ function EventoPublicoPage() {
                 }}
               >
                 <div className="space-y-5">
-                  <Input
-                    label="Tu Nombre"
-                    value={felicitacionForm.nombre_autor}
-                    onChange={(e) => setFelicitacionForm({ ...felicitacionForm, nombre_autor: e.target.value })}
-                    placeholder="Escribe tu nombre"
-                    required
-                  />
+                  <div>
+                    <label
+                      className="block text-sm font-medium mb-2"
+                      style={{ color: tema.color_texto }}
+                    >
+                      Tu Nombre
+                    </label>
+                    <input
+                      type="text"
+                      value={felicitacionForm.nombre_autor}
+                      onChange={(e) => setFelicitacionForm({ ...felicitacionForm, nombre_autor: e.target.value })}
+                      placeholder="Escribe tu nombre"
+                      required
+                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
+                      style={{
+                        borderColor: tema.color_secundario,
+                        backgroundColor: 'white',
+                        color: tema.color_texto
+                      }}
+                    />
+                  </div>
                   <div>
                     <label
                       className="block text-sm font-medium mb-2"
@@ -1035,7 +1082,8 @@ function EventoPublicoPage() {
                       className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
                       style={{
                         borderColor: tema.color_secundario,
-                        '--tw-ring-color': tema.color_primario
+                        backgroundColor: 'white',
+                        color: tema.color_texto
                       }}
                       placeholder="Escribe tus buenos deseos..."
                       required
@@ -1142,7 +1190,11 @@ function EventoPublicoPage() {
                         value={rsvpForm.num_asistentes}
                         onChange={(e) => setRsvpForm({ ...rsvpForm, num_asistentes: parseInt(e.target.value) })}
                         className="w-full px-4 py-3 border-2 rounded-xl"
-                        style={{ borderColor: tema.color_secundario }}
+                        style={{
+                          borderColor: tema.color_secundario,
+                          backgroundColor: 'white',
+                          color: tema.color_texto
+                        }}
                       >
                         {[...Array(invitado.max_acompanantes + 1)].map((_, i) => (
                           <option key={i + 1} value={i + 1}>{i + 1} persona{i > 0 ? 's' : ''}</option>
@@ -1162,7 +1214,11 @@ function EventoPublicoPage() {
                         onChange={(e) => setRsvpForm({ ...rsvpForm, mensaje_rsvp: e.target.value })}
                         rows={3}
                         className="w-full px-4 py-3 border-2 rounded-xl"
-                        style={{ borderColor: tema.color_secundario }}
+                        style={{
+                          borderColor: tema.color_secundario,
+                          backgroundColor: 'white',
+                          color: tema.color_texto
+                        }}
                         placeholder="Un mensaje especial..."
                       />
                     </div>
@@ -1174,10 +1230,17 @@ function EventoPublicoPage() {
                       >
                         Restricciones dietéticas (opcional)
                       </label>
-                      <Input
+                      <input
+                        type="text"
                         value={rsvpForm.restricciones_dieteticas}
                         onChange={(e) => setRsvpForm({ ...rsvpForm, restricciones_dieteticas: e.target.value })}
                         placeholder="Ej: Vegetariano, sin gluten..."
+                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
+                        style={{
+                          borderColor: tema.color_secundario,
+                          backgroundColor: 'white',
+                          color: tema.color_texto
+                        }}
                       />
                     </div>
 
@@ -1305,6 +1368,48 @@ function EventoPublicoPage() {
                   )}
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* Galería Compartida - Fotos de Invitados (al final) */}
+        {configuracion.habilitar_galeria_compartida !== false && (
+          <section
+            ref={sectionRefs.fotos}
+            data-section="fotos"
+            className="py-20"
+            style={{ backgroundColor: tema.color_secundario + '20' }}
+          >
+            <div className="max-w-5xl mx-auto px-4">
+              <div className={`text-center mb-12 ${getAnimationClass('fotos')}`}>
+                <h2
+                  className="text-4xl sm:text-5xl font-bold mb-4"
+                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
+                >
+                  <Camera className="inline-block w-10 h-10 mr-3" style={{ color: tema.color_primario }} />
+                  Fotos del Evento
+                </h2>
+                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
+                  {token
+                    ? '¡Comparte tus mejores momentos!'
+                    : 'Momentos capturados por los invitados'}
+                </p>
+              </div>
+
+              <div
+                className={`
+                  bg-white/80 backdrop-blur-sm rounded-3xl p-6 sm:p-8
+                  ${visibleSections.has('fotos') ? 'animate-fadeIn' : 'opacity-0'}
+                `}
+                style={{ boxShadow: `0 10px 40px ${tema.color_primario}15` }}
+              >
+                <GaleriaCompartida
+                  slug={slug}
+                  token={token}
+                  isAdmin={false}
+                  permitirSubida={configuracion.permitir_subida_invitados !== false}
+                />
+              </div>
             </div>
           </section>
         )}

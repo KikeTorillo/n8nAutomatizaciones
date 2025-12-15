@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Store, FileText, BarChart3, ArrowLeft } from 'lucide-react';
+import { Store, FileText, BarChart3 } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import { useMiPerfilMarketplace } from '@/hooks/useMarketplace';
 import PerfilFormulario from '@/components/marketplace/PerfilFormulario';
 import ListaReseñas from '@/components/marketplace/ListaReseñas';
@@ -15,7 +15,6 @@ import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMar
  * Requiere autenticación: admin o propietario
  */
 function MiMarketplacePage() {
-  const navigate = useNavigate();
   const [tabActivo, setTabActivo] = useState('perfil');
   const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
 
@@ -44,15 +43,7 @@ function MiMarketplacePage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
         {/* Header */}
         <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate('/home')}
-            className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Volver al Inicio
-          </Button>
+          <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
           <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Gestiona tu perfil público en el directorio
@@ -103,15 +94,7 @@ function MiMarketplacePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate('/home')}
-                className="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 mb-3"
-              >
-                <ArrowLeft className="w-4 h-4 mr-1" />
-                Volver al Inicio
-              </Button>
+              <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
               <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Mi Marketplace</h1>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                 Gestiona tu perfil público, reseñas y estadísticas

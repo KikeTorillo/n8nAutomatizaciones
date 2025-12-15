@@ -1,8 +1,7 @@
 /**
  * Template HTML para email de activación de cuenta
  * Nov 2025 - Fase 2: Onboarding Simplificado
- *
- * Basado en: invitacionProfesional.js
+ * Actualizado Dic 2025 - Branding Nexo
  */
 
 /**
@@ -56,7 +55,7 @@ function generateActivacionEmail({
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .email-header {
-            background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+            background: linear-gradient(135deg, #753572 0%, #5a2958 100%);
             padding: 40px 30px;
             text-align: center;
         }
@@ -88,26 +87,26 @@ function generateActivacionEmail({
             margin: 16px 0;
         }
         .highlight-box {
-            background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+            background: linear-gradient(135deg, #f5eef5 0%, #ebe0eb 100%);
             border-radius: 8px;
             padding: 20px;
             margin: 24px 0;
-            border-left: 4px solid #2563EB;
+            border-left: 4px solid #753572;
         }
         .highlight-box h3 {
             margin: 0 0 12px 0;
-            color: #1E40AF;
+            color: #5a2958;
             font-size: 16px;
         }
         .highlight-box p {
             margin: 8px 0;
-            color: #1E40AF;
+            color: #5a2958;
             font-size: 14px;
         }
         .highlight-box .negocio {
             font-size: 18px;
             font-weight: 600;
-            color: #2563EB;
+            color: #753572;
         }
         .button-container {
             text-align: center;
@@ -116,7 +115,7 @@ function generateActivacionEmail({
         .activate-button {
             display: inline-block;
             padding: 16px 40px;
-            background-color: #2563EB;
+            background-color: #753572;
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 8px;
@@ -125,7 +124,7 @@ function generateActivacionEmail({
             transition: background-color 0.3s ease;
         }
         .activate-button:hover {
-            background-color: #1D4ED8;
+            background-color: #5a2958;
         }
         .alternative-link {
             margin-top: 24px;
@@ -141,7 +140,7 @@ function generateActivacionEmail({
             font-size: 13px;
         }
         .alternative-link a {
-            color: #2563EB;
+            color: #753572;
             text-decoration: none;
         }
         .warning-box {
@@ -159,18 +158,18 @@ function generateActivacionEmail({
         .steps-box {
             margin: 24px 0;
             padding: 20px;
-            background-color: #F0F9FF;
+            background-color: #f5eef5;
             border-radius: 6px;
         }
         .steps-box h3 {
-            color: #1E40AF;
+            color: #5a2958;
             margin-top: 0;
             font-size: 16px;
         }
         .steps-box ol {
             margin: 12px 0;
             padding-left: 24px;
-            color: #1E40AF;
+            color: #5a2958;
         }
         .steps-box li {
             margin: 10px 0;
@@ -186,6 +185,10 @@ function generateActivacionEmail({
             margin: 8px 0;
             font-size: 13px;
             color: #6B7280;
+        }
+        .email-footer .brand {
+            color: #753572;
+            font-weight: 600;
         }
         .reenvio-badge {
             display: inline-block;
@@ -214,7 +217,7 @@ function generateActivacionEmail({
 
             <h2>Hola ${nombre},</h2>
 
-            <p>Gracias por registrarte. Tu negocio está casi listo para comenzar.</p>
+            <p>Gracias por registrarte en <strong>Nexo</strong>. Tu negocio está casi listo para comenzar.</p>
 
             <!-- Negocio registrado -->
             <div class="highlight-box">
@@ -256,8 +259,8 @@ function generateActivacionEmail({
 
         <!-- Footer -->
         <div class="email-footer">
-            <p><strong>SaaS Agendamiento</strong></p>
-            <p>Sistema de Gestión de Citas y Agendamiento Empresarial</p>
+            <p><span class="brand">Nexo</span></p>
+            <p>Sistema de Gestión Empresarial</p>
             <p style="margin-top: 16px; font-size: 12px;">
                 Este es un email automático, por favor no respondas a este mensaje.
             </p>
@@ -292,7 +295,7 @@ function generateActivacionText({
     return `
 ${es_reenvio ? '📨 ENLACE REENVIADO\n\n' : ''}¡Hola ${nombre}!
 
-Gracias por registrarte. Tu negocio está casi listo para comenzar.
+Gracias por registrarte en Nexo. Tu negocio está casi listo para comenzar.
 
 🏢 TU NEGOCIO:
 ${nombre_negocio}
@@ -309,8 +312,8 @@ ${activacionUrl}
 Si no creaste esta cuenta, puedes ignorar este mensaje.
 
 ---
-SaaS Agendamiento
-Sistema de Gestión de Citas y Agendamiento Empresarial
+Nexo
+Sistema de Gestión Empresarial
 
 Este es un email automático, por favor no respondas a este mensaje.
     `.trim();

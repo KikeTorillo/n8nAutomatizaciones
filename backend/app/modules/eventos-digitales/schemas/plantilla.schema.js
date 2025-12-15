@@ -5,21 +5,68 @@
  * Validación Joi para endpoints de plantillas.
  *
  * Fecha creación: 4 Diciembre 2025
+ * Actualizado: 14 Diciembre 2025 - Plantillas temáticas
  */
 
 const Joi = require('joi');
 
 const tiposEvento = ['boda', 'xv_anos', 'bautizo', 'cumpleanos', 'corporativo', 'universal', 'otro'];
 
-// Schema para el tema visual
+// Categorías permitidas
+const categorias = ['infantil', 'juvenil', 'adulto', 'elegante', 'moderno', 'rustico', 'tematico', 'clasico'];
+
+// Subcategorías permitidas (temáticas específicas)
+const subcategorias = [
+    // Infantiles
+    'superheroes', 'princesas', 'frozen', 'unicornios', 'dinosaurios',
+    'minecraft', 'kpop', 'futbol', 'espacial', 'sirenas', 'safari', 'circo',
+    // XV Años
+    'paris', 'mascarada', 'jardin_secreto', 'hollywood',
+    // Bodas
+    'dorado', 'floral', 'natural', 'playa', 'vintage',
+    // Generales
+    'minimalista', 'colorido', 'neon', 'pastel'
+];
+
+// Opciones para campos del tema
+const patronesFondo = ['none', 'confetti', 'stars', 'hearts', 'dots', 'stripes', 'bubbles', 'geometric'];
+const decoracionesEsquinas = ['none', 'globos', 'estrellas', 'flores', 'corazones', 'lazos', 'hojas'];
+const iconosPrincipales = ['none', 'cake', 'crown', 'star', 'heart', 'mask', 'gift', 'ring', 'baby', 'balloon'];
+const animacionesEntrada = ['none', 'fade', 'bounce', 'slide', 'zoom', 'flip'];
+const efectosTitulo = ['none', 'sparkle', 'glow', 'shadow', 'gradient', 'outline'];
+const marcosFotos = ['none', 'polaroid', 'comic', 'vintage', 'neon', 'rounded', 'ornate'];
+
+// Schema para el tema visual (ampliado)
 const temaSchema = Joi.object({
+    // Colores
     color_primario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#ec4899'),
     color_secundario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#fce7f3'),
     color_fondo: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#fdf2f8'),
     color_texto: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#1f2937'),
     color_texto_claro: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).default('#6b7280'),
+
+    // Fuentes
     fuente_titulo: Joi.string().max(100).default('Playfair Display'),
-    fuente_cuerpo: Joi.string().max(100).default('Inter')
+    fuente_cuerpo: Joi.string().max(100).default('Inter'),
+
+    // Elementos visuales temáticos
+    patron_fondo: Joi.string().valid(...patronesFondo).default('none'),
+    patron_opacidad: Joi.number().min(0).max(1).default(0.1),
+    decoracion_esquinas: Joi.string().valid(...decoracionesEsquinas).default('none'),
+    icono_principal: Joi.string().valid(...iconosPrincipales).default('none'),
+
+    // Efectos
+    animacion_entrada: Joi.string().valid(...animacionesEntrada).default('fade'),
+    efecto_titulo: Joi.string().valid(...efectosTitulo).default('none'),
+
+    // Fotos
+    marco_fotos: Joi.string().valid(...marcosFotos).default('none'),
+
+    // Stickers/emojis decorativos
+    stickers: Joi.array().items(Joi.string().max(10)).max(10).default([]),
+
+    // Imagen de fondo temática
+    imagen_fondo: Joi.string().uri().max(500).allow(null, '').default(null)
 });
 
 const plantillasSchemas = {
@@ -29,6 +76,8 @@ const plantillasSchemas = {
     listarPlantillas: {
         query: Joi.object({
             tipo_evento: Joi.string().valid(...tiposEvento),
+            categoria: Joi.string().valid(...categorias),
+            subcategoria: Joi.string().valid(...subcategorias),
             es_premium: Joi.string().valid('true', 'false')
         })
     },
@@ -61,6 +110,8 @@ const plantillasSchemas = {
             tipo_evento: Joi.string().valid(...tiposEvento).required(),
             descripcion: Joi.string().max(500).allow(null, ''),
             preview_url: Joi.string().uri().max(500).allow(null, ''),
+            categoria: Joi.string().valid(...categorias).allow(null),
+            subcategoria: Joi.string().valid(...subcategorias).allow(null),
             tema: temaSchema,
             estructura_html: Joi.string().max(50000).allow(null, ''),
             estilos_css: Joi.string().max(50000).allow(null, ''),
@@ -81,6 +132,8 @@ const plantillasSchemas = {
             tipo_evento: Joi.string().valid(...tiposEvento),
             descripcion: Joi.string().max(500).allow(null, ''),
             preview_url: Joi.string().uri().max(500).allow(null, ''),
+            categoria: Joi.string().valid(...categorias).allow(null),
+            subcategoria: Joi.string().valid(...subcategorias).allow(null),
             tema: temaSchema,
             estructura_html: Joi.string().max(50000).allow(null, ''),
             estilos_css: Joi.string().max(50000).allow(null, ''),
@@ -100,4 +153,13 @@ const plantillasSchemas = {
     }
 };
 
+// Exportar también las constantes para uso en frontend
 module.exports = plantillasSchemas;
+module.exports.categorias = categorias;
+module.exports.subcategorias = subcategorias;
+module.exports.patronesFondo = patronesFondo;
+module.exports.decoracionesEsquinas = decoracionesEsquinas;
+module.exports.iconosPrincipales = iconosPrincipales;
+module.exports.animacionesEntrada = animacionesEntrada;
+module.exports.efectosTitulo = efectosTitulo;
+module.exports.marcosFotos = marcosFotos;
