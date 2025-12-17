@@ -267,6 +267,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile.prod
       target: runtime
+      args:
+        VITE_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
     image: saas-frontend:${VERSION:-latest}
     container_name: front
     restart: always

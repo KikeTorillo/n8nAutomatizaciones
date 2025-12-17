@@ -18,6 +18,10 @@ RUN npm ci
 # Copiar código fuente
 COPY . .
 
+# Build args para variables de entorno de Vite (se inyectan en tiempo de build)
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 # Build de producción (genera carpeta /app/dist)
 # Vite optimiza y minifica automáticamente
 RUN npm run build
