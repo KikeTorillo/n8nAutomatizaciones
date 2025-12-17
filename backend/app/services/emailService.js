@@ -8,6 +8,7 @@ const logger = require('../utils/logger');
 const { generatePasswordResetEmail, generatePasswordResetText } = require('./email/templates/passwordReset');
 const { generateInvitacionEmail, generateInvitacionText } = require('./email/templates/invitacionProfesional');
 const { generateActivacionEmail, generateActivacionText } = require('./email/templates/activacionCuenta');
+const { generateMagicLinkEmail, generateMagicLinkText } = require('./email/templates/magicLink');
 
 class EmailService {
     constructor() {
@@ -194,6 +195,62 @@ class EmailService {
 
         } catch (error) {
             logger.error(`❌ Error enviando email de activación a ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
+     * Envía un email de magic link para login sin contraseña
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.email - Email del destinatario
+     * @param {string} params.nombre - Nombre del usuario
+     * @param {string} params.token - Token del magic link
+     * @param {string} params.expira_en - Fecha de expiración
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarMagicLink({
+        email,
+        nombre,
+        token,
+        expira_en
+    }) {
+        try {
+            // Construir URL del magic link
+            const magicLinkUrl = `${this.frontendUrl}/auth/magic-link/${token}`;
+
+            // Generar contenido del email
+            const htmlContent = generateMagicLinkEmail({
+                nombre,
+                magicLinkUrl,
+                expira_en
+            });
+
+            const textContent = generateMagicLinkText({
+                nombre,
+                magicLinkUrl,
+                expira_en
+            });
+
+            // Configuración del email
+            const mailOptions = {
+                from: this.emailFrom,
+                to: email,
+                subject: '🔐 Inicia sesión en Nexo',
+                text: textContent,
+                html: htmlContent
+            };
+
+            // Enviar email
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                logger.info(`📧 Magic link enviado a: ${email}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            logger.error(`❌ Error enviando magic link a ${email}: ${error.message}`);
             throw error;
         }
     }

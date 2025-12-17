@@ -88,7 +88,7 @@ export default function ActivarCuentaPage() {
         password_confirm: data.password_confirm
       });
 
-      const { usuario, accessToken, refreshToken } = response.data.data;
+      const { usuario, accessToken, refreshToken, requiere_onboarding } = response.data.data;
 
       // Login automático
       setAuth({
@@ -98,7 +98,13 @@ export default function ActivarCuentaPage() {
       });
 
       toast.success('¡Cuenta activada exitosamente!');
-      navigate('/home');
+
+      // Flujo unificado (Dic 2025): redirigir a onboarding si no tiene organización
+      if (requiere_onboarding) {
+        navigate('/onboarding');
+      } else {
+        navigate('/home');
+      }
 
     } catch (err) {
       toast.error(err.response?.data?.message || 'Error al activar la cuenta');
@@ -150,13 +156,15 @@ export default function ActivarCuentaPage() {
       title="Activa tu cuenta"
       subtitle="Crea tu contraseña para comenzar"
     >
-      {/* Info del negocio */}
+      {/* Info del usuario/negocio */}
       <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg mb-6">
         <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
           <Building2 className="h-6 w-6 text-primary-600 dark:text-primary-400" />
         </div>
         <div>
-          <p className="font-semibold text-gray-900 dark:text-gray-100">{activacion?.nombre_negocio}</p>
+          <p className="font-semibold text-gray-900 dark:text-gray-100">
+            {activacion?.nombre_negocio || activacion?.nombre || 'Tu cuenta'}
+          </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">{activacion?.email}</p>
         </div>
       </div>

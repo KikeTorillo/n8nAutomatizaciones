@@ -89,6 +89,10 @@ const RegistroInvitacionPage = lazy(() => import('@/pages/auth/RegistroInvitacio
 // Páginas de Activación de Cuenta (Nov 2025 - Fase 2)
 const ActivarCuentaPage = lazy(() => import('@/pages/auth/ActivarCuentaPage'));
 
+// Páginas de OAuth y Magic Links (Dic 2025)
+const MagicLinkVerifyPage = lazy(() => import('@/pages/auth/MagicLinkVerifyPage'));
+const OnboardingPage = lazy(() => import('@/pages/auth/OnboardingPage'));
+
 // Páginas de Eventos Digitales (Dic 2025)
 const EventosPage = lazy(() => import('@/pages/eventos-digitales/EventosPage'));
 const EventoDetailPage = lazy(() => import('@/pages/eventos-digitales/EventoDetailPage'));
@@ -161,6 +165,16 @@ export const router = createBrowserRouter([
       {
         path: 'activar-cuenta/:token',
         element: withSuspense(ActivarCuentaPage),
+      },
+      // Magic Link Verify (Dic 2025)
+      {
+        path: 'auth/magic-link/:token',
+        element: withSuspense(MagicLinkVerifyPage),
+      },
+      // Onboarding para usuarios OAuth sin organización (Dic 2025)
+      {
+        path: 'onboarding',
+        element: withSuspense(OnboardingPage),
       },
       // Ruta de setup inicial (primera vez)
       {

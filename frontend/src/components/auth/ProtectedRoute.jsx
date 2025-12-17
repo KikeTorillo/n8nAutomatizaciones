@@ -69,7 +69,19 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
     return <Navigate to="/login" replace />;
   }
 
-  // Verificación 2: Exclusión de roles (ej: super_admin no va a /home)
+  // Verificación 2: Onboarding pendiente (Dic 2025 - OAuth flow)
+  // Usuarios OAuth sin organización deben completar onboarding primero
+  // super_admin está exento (es usuario de plataforma sin organización)
+  if (
+    user?.rol !== 'super_admin' &&
+    !user?.organizacion_id &&
+    user?.onboarding_completado === false
+  ) {
+    console.info('[ProtectedRoute] Usuario requiere onboarding, redirigiendo...');
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // Verificación 3: Exclusión de roles (ej: super_admin no va a /home)
   if (excludeRoles) {
     const rolesToExclude = Array.isArray(excludeRoles) ? excludeRoles : [excludeRoles];
     if (rolesToExclude.includes(user?.rol)) {
@@ -80,7 +92,7 @@ function ProtectedRoute({ children, requiredRole = null, excludeRoles = null, re
     }
   }
 
-  // Verificación 3: Autorización por rol (si se requiere)
+  // Verificación 4: Autorización por rol (si se requiere)
   if (requiredRole && !hasRoleAccess(user?.rol, requiredRole)) {
     console.warn(
       `[ProtectedRoute] Acceso denegado. Rol: ${user?.rol}, Requerido: ${JSON.stringify(requiredRole)}`

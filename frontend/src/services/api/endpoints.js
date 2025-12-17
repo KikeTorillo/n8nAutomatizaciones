@@ -92,6 +92,46 @@ export const authApi = {
    * @returns {Promise<Object>} { mensaje, email_enviado, expira_en, reenvio_numero }
    */
   reenviarActivacion: (data) => apiClient.post('/auth/reenviar-activacion', data),
+
+  // ===== Magic Links - Dic 2025 =====
+
+  /**
+   * Solicitar magic link para login sin contraseña
+   * @param {Object} data - { email }
+   * @returns {Promise<Object>} { mensaje, email_enviado, expira_en }
+   */
+  solicitarMagicLink: (data) => apiClient.post('/auth/magic-link', data),
+
+  /**
+   * Verificar magic link y obtener tokens
+   * @param {string} token - Token de 64 caracteres
+   * @returns {Promise<Object>} { usuario, organizacion, accessToken, requiere_onboarding }
+   */
+  verificarMagicLink: (token) => apiClient.get(`/auth/magic-link/verify/${token}`),
+
+  // ===== OAuth Google - Dic 2025 =====
+
+  /**
+   * Login/Registro con Google OAuth
+   * @param {Object} data - { credential } - Token ID de Google
+   * @returns {Promise<Object>} { usuario, organizacion, accessToken, es_nuevo, requiere_onboarding }
+   */
+  loginGoogle: (data) => apiClient.post('/auth/oauth/google', data),
+
+  // ===== Onboarding - Dic 2025 =====
+
+  /**
+   * Obtener estado del onboarding
+   * @returns {Promise<Object>} { onboarding_completado, tiene_organizacion, organizacion_id }
+   */
+  onboardingStatus: () => apiClient.get('/auth/onboarding/status'),
+
+  /**
+   * Completar onboarding (crear organización)
+   * @param {Object} data - { nombre_negocio, industria, estado_id, ciudad_id, soy_profesional }
+   * @returns {Promise<Object>} { usuario, organizacion, accessToken }
+   */
+  completarOnboarding: (data) => apiClient.post('/auth/onboarding/complete', data),
 };
 
 // ==================== ORGANIZACIONES ====================
@@ -1580,7 +1620,7 @@ export const posApi = {
     if (options.paper_size) params.append('paper_size', options.paper_size);
     params.append('download', 'false'); // Para visualizar inline
     const queryString = params.toString();
-    return `${import.meta.env.VITE_API_URL || ''}/api/v1/pos/ventas/${id}/ticket?${queryString}`;
+    return `/api/v1/pos/ventas/${id}/ticket?${queryString}`;
   },
 
   // ========== Reportes POS ==========

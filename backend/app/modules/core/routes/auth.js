@@ -44,6 +44,27 @@ router.post('/activar/:token', rateLimiting.heavyOperationRateLimit, validation.
 // Reenviar email de activación
 router.post('/reenviar-activacion', rateLimiting.heavyOperationRateLimit, validation.validate(activacionSchemas.reenviar), AuthController.reenviarActivacion);
 
+// ========== Magic Links - Dic 2025 ==========
+
+// Solicitar magic link (envía email)
+router.post('/magic-link', rateLimiting.heavyOperationRateLimit, validation.validate(activacionSchemas.solicitarMagicLink), AuthController.solicitarMagicLink);
+
+// Verificar magic link y autenticar
+router.get('/magic-link/verify/:token', rateLimiting.apiRateLimit, validation.validate(activacionSchemas.verificarMagicLink), AuthController.verificarMagicLink);
+
+// ========== OAuth Google - Dic 2025 ==========
+
+// Login/Registro con Google
+router.post('/oauth/google', rateLimiting.authRateLimit, validation.validate(activacionSchemas.oauthGoogle), AuthController.oauthGoogle);
+
+// ========== Onboarding - Dic 2025 ==========
+
+// Estado del onboarding (requiere auth)
+router.get('/onboarding/status', auth.authenticateToken, rateLimiting.apiRateLimit, AuthController.onboardingStatus);
+
+// Completar onboarding (requiere auth)
+router.post('/onboarding/complete', auth.authenticateToken, rateLimiting.apiRateLimit, validation.validate(activacionSchemas.onboardingComplete), AuthController.onboardingComplete);
+
 // ========== Rutas Privadas (Autenticadas) ==========
 
 // Sesión

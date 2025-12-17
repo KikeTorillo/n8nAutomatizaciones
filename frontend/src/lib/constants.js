@@ -1,15 +1,3 @@
-// API Configuration
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1';
-export const WHATSAPP_API_URL = import.meta.env.VITE_WHATSAPP_API_URL || 'http://localhost:3000/api/v1/whatsapp';
-
-// App Configuration
-export const APP_NAME = import.meta.env.VITE_APP_NAME || 'SaaS Agendamiento';
-export const APP_VERSION = import.meta.env.VITE_APP_VERSION || '1.0.0';
-
-// Feature Flags
-export const ENABLE_ANALYTICS = import.meta.env.VITE_ENABLE_ANALYTICS === 'true';
-export const ENABLE_DEBUG = import.meta.env.VITE_ENABLE_DEBUG === 'true';
-
 // Roles
 export const ROLES = {
   SUPER_ADMIN: 'super_admin',

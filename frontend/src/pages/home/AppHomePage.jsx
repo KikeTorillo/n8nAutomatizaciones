@@ -53,6 +53,7 @@ function AppHomePage() {
     tieneInventario,
     tienePOS,
     tieneComisiones,
+    tieneContabilidad,
     tieneChatbots,
     tieneMarketplace,
     tieneEventosDigitales,
@@ -185,7 +186,7 @@ function AppHomePage() {
       path: '/contabilidad',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
-      enabled: true, // Siempre disponible
+      enabled: tieneContabilidad,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
     },

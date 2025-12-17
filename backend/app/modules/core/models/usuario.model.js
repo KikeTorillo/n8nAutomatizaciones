@@ -73,7 +73,8 @@ class UsuarioModel {
                 const query = `
                     SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
                            u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
-                           u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta
+                           u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
+                           u.onboarding_completado
                     FROM usuarios u
                     WHERE u.email = $1 AND u.activo = TRUE
                 `;
@@ -139,14 +140,19 @@ class UsuarioModel {
             rol: usuario.rol,
             organizacion_id: usuario.organizacion_id,
             profesional_id: usuario.profesional_id,
-            email_verificado: usuario.email_verificado
+            email_verificado: usuario.email_verificado,
+            onboarding_completado: usuario.onboarding_completado  // Dic 2025 - Flujo unificado
         };
+
+        // Determinar si requiere onboarding (Dic 2025)
+        const requiereOnboarding = !usuario.organizacion_id && usuario.onboarding_completado === false;
 
         return {
             usuario: usuarioSeguro,
             accessToken,
             refreshToken,
-            expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRATION_SECONDS
+            expiresIn: AUTH_CONFIG.ACCESS_TOKEN_EXPIRATION_SECONDS,
+            requiere_onboarding: requiereOnboarding  // Dic 2025 - Flujo unificado
         };
     }
 
@@ -211,6 +217,7 @@ class UsuarioModel {
                 SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
                     u.rol, u.organizacion_id, u.activo, u.email_verificado,
+                    u.onboarding_completado,
                     o.categoria_id,
                     ci.codigo as categoria_codigo,
                     o.nombre_comercial,
@@ -1024,6 +1031,320 @@ class UsuarioModel {
         }
 
         return resultado;
+    }
+
+    // ====================================================================
+    // OAUTH GOOGLE - Dic 2025
+    // ====================================================================
+
+    /**
+     * Buscar usuario por Google ID
+     * @param {string} googleId - ID único de Google
+     * @returns {Promise<Object|null>} Usuario encontrado o null
+     */
+    static async buscarPorGoogleId(googleId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT u.id, u.email, u.nombre, u.apellidos, u.telefono,
+                       u.rol, u.organizacion_id, u.activo, u.email_verificado,
+                       u.google_id, u.avatar_url, u.onboarding_completado,
+                       o.nombre_comercial
+                FROM usuarios u
+                LEFT JOIN organizaciones o ON u.organizacion_id = o.id
+                WHERE u.google_id = $1 AND u.activo = TRUE
+            `;
+
+            const result = await db.query(query, [googleId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Crear usuario desde datos de Google OAuth
+     * NOTA: Este usuario NO tiene organización aún (requiere onboarding)
+     *
+     * @param {Object} googleData - Datos de Google
+     * @param {string} googleData.googleId - ID único de Google
+     * @param {string} googleData.email - Email de Google
+     * @param {string} googleData.nombre - Nombre
+     * @param {string} googleData.apellidos - Apellidos
+     * @param {string} googleData.avatar_url - URL del avatar
+     * @returns {Promise<Object>} Usuario creado
+     */
+    static async crearDesdeGoogle(googleData) {
+        const { googleId, email, nombre, apellidos, avatar_url } = googleData;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            // Verificar que el email no exista
+            const existeEmail = await db.query(
+                'SELECT id FROM usuarios WHERE email = LOWER($1)',
+                [email]
+            );
+
+            if (existeEmail.rows[0]) {
+                throw new Error('Este email ya está registrado. Intenta iniciar sesión.');
+            }
+
+            // Crear usuario sin organización (requiere onboarding)
+            // Rol temporal hasta que complete onboarding y se asigne organización
+            const query = `
+                INSERT INTO usuarios (
+                    email, nombre, apellidos, google_id, avatar_url,
+                    rol, activo, email_verificado, onboarding_completado
+                ) VALUES (
+                    LOWER($1), $2, $3, $4, $5,
+                    'admin', TRUE, TRUE, FALSE
+                )
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                          google_id, avatar_url, activo, email_verificado,
+                          onboarding_completado, creado_en
+            `;
+
+            const result = await db.query(query, [
+                email, nombre, apellidos, googleId, avatar_url
+            ]);
+
+            const usuario = result.rows[0];
+
+            logger.info('[UsuarioModel.crearDesdeGoogle] Usuario creado via OAuth', {
+                usuario_id: usuario.id,
+                email: usuario.email,
+                google_id: googleId
+            });
+
+            return usuario;
+        });
+    }
+
+    /**
+     * Vincular cuenta de Google a usuario existente
+     *
+     * @param {number} userId - ID del usuario
+     * @param {Object} googleData - Datos de Google
+     * @returns {Promise<Object>} Usuario actualizado
+     */
+    static async vincularGoogle(userId, googleData) {
+        const { googleId, avatar_url } = googleData;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            // Verificar que el google_id no esté vinculado a otro usuario
+            const existeGoogle = await db.query(
+                'SELECT id FROM usuarios WHERE google_id = $1 AND id != $2',
+                [googleId, userId]
+            );
+
+            if (existeGoogle.rows[0]) {
+                throw new Error('Esta cuenta de Google ya está vinculada a otro usuario');
+            }
+
+            // Vincular Google al usuario
+            const query = `
+                UPDATE usuarios
+                SET google_id = $1,
+                    avatar_url = COALESCE(avatar_url, $2),
+                    actualizado_en = NOW()
+                WHERE id = $3
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                          google_id, avatar_url, onboarding_completado
+            `;
+
+            const result = await db.query(query, [googleId, avatar_url, userId]);
+
+            if (!result.rows[0]) {
+                throw new Error('Usuario no encontrado');
+            }
+
+            logger.info('[UsuarioModel.vincularGoogle] Google vinculado a usuario existente', {
+                usuario_id: userId,
+                google_id: googleId
+            });
+
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Completar onboarding de usuario OAuth
+     * Crea la organización y vincula al usuario
+     *
+     * @param {number} userId - ID del usuario
+     * @param {Object} orgData - Datos de la organización
+     * @returns {Promise<Object>} Usuario y organización actualizados
+     */
+    static async completarOnboarding(userId, orgData) {
+        const {
+            nombre_negocio,
+            industria,
+            estado_id,
+            ciudad_id,
+            soy_profesional = true,
+            modulos = {}  // Módulos seleccionados por usuario (Dic 2025 - estilo Odoo)
+        } = orgData;
+
+        // Construir módulos activos con core siempre activo
+        const modulosActivos = { core: true };
+
+        // Agregar módulos seleccionados por el usuario
+        Object.entries(modulos).forEach(([key, value]) => {
+            if (value === true) {
+                modulosActivos[key] = true;
+            }
+        });
+
+        // Auto-resolver dependencias
+        // POS requiere inventario
+        if (modulosActivos.pos && !modulosActivos.inventario) {
+            modulosActivos.inventario = true;
+        }
+        // Marketplace requiere agendamiento
+        if (modulosActivos.marketplace && !modulosActivos.agendamiento) {
+            modulosActivos.agendamiento = true;
+        }
+        // Chatbots requiere agendamiento
+        if (modulosActivos.chatbots && !modulosActivos.agendamiento) {
+            modulosActivos.agendamiento = true;
+        }
+
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query('BEGIN');
+
+            try {
+                // 1. Obtener usuario
+                const usuarioResult = await db.query(
+                    'SELECT id, email, nombre, apellidos, onboarding_completado FROM usuarios WHERE id = $1',
+                    [userId]
+                );
+
+                if (!usuarioResult.rows[0]) {
+                    throw new Error('Usuario no encontrado');
+                }
+
+                const usuario = usuarioResult.rows[0];
+
+                if (usuario.onboarding_completado) {
+                    throw new Error('El onboarding ya fue completado');
+                }
+
+                // 2. Resolver categoria_id desde código de industria
+                const categoriaResult = await db.query(
+                    'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
+                    [industria]
+                );
+
+                if (!categoriaResult.rows[0]) {
+                    throw new Error('Industria no válida');
+                }
+                const categoria_id = categoriaResult.rows[0].id;
+
+                // 3. Generar código de tenant único
+                const codigoTenant = `org-${Date.now().toString(36)}`;
+                const slug = nombre_negocio
+                    .toLowerCase()
+                    .normalize('NFD')
+                    .replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[^a-z0-9]+/g, '-')
+                    .replace(/^-|-$/g, '')
+                    .substring(0, 50) + '-' + Math.random().toString(36).substring(2, 6);
+
+                // 4. Crear organización
+                const orgResult = await db.query(`
+                    INSERT INTO organizaciones (
+                        codigo_tenant, slug, nombre_comercial, razon_social,
+                        email_admin, categoria_id, estado_id, ciudad_id,
+                        plan_actual, activo
+                    ) VALUES ($1, $2, $3, $3, $4, $5, $6, $7, 'trial', TRUE)
+                    RETURNING id, codigo_tenant, slug, nombre_comercial
+                `, [codigoTenant, slug, nombre_negocio, usuario.email, categoria_id, estado_id, ciudad_id]);
+
+                const organizacion = orgResult.rows[0];
+
+                // 5. Crear suscripción trial con módulos seleccionados
+                await db.query(`
+                    INSERT INTO subscripciones (
+                        organizacion_id, plan_id, precio_actual, estado,
+                        fecha_inicio, fecha_proximo_pago,
+                        fecha_inicio_trial, fecha_fin_trial, dias_trial,
+                        modulos_activos
+                    )
+                    SELECT
+                        $1,
+                        id,
+                        0.00,
+                        'trial',
+                        CURRENT_DATE,
+                        CURRENT_DATE + INTERVAL '14 days',
+                        NOW(),
+                        NOW() + INTERVAL '14 days',
+                        14,
+                        $2::jsonb
+                    FROM planes_subscripcion
+                    WHERE codigo_plan = 'trial'
+                    LIMIT 1
+                `, [organizacion.id, JSON.stringify(modulosActivos)]);
+
+                // 6. Actualizar usuario con organización
+                await db.query(`
+                    UPDATE usuarios
+                    SET organizacion_id = $1,
+                        onboarding_completado = TRUE,
+                        actualizado_en = NOW()
+                    WHERE id = $2
+                `, [organizacion.id, userId]);
+
+                // 7. Si soy_profesional, crear profesional vinculado
+                if (soy_profesional) {
+                    const nombreCompleto = usuario.nombre +
+                        (usuario.apellidos ? ' ' + usuario.apellidos : '');
+
+                    // Buscar tipo_profesional compatible
+                    const tipoResult = await db.query(`
+                        SELECT id FROM tipos_profesional
+                        WHERE $1 = ANY(industrias_compatibles)
+                          AND activo = TRUE AND es_sistema = TRUE
+                        ORDER BY id LIMIT 1
+                    `, [industria]);
+
+                    const tipoProfesionalId = tipoResult.rows[0]?.id || null;
+
+                    await db.query(`
+                        INSERT INTO profesionales (
+                            organizacion_id, nombre_completo, email,
+                            tipo_profesional_id, usuario_id, activo, modulos_acceso
+                        ) VALUES ($1, $2, $3, $4, $5, TRUE, $6)
+                    `, [
+                        organizacion.id,
+                        nombreCompleto,
+                        usuario.email,
+                        tipoProfesionalId,
+                        userId,
+                        { agendamiento: true, pos: true, inventario: true }
+                    ]);
+                }
+
+                await db.query('COMMIT');
+
+                logger.info('[UsuarioModel.completarOnboarding] Onboarding completado', {
+                    usuario_id: userId,
+                    organizacion_id: organizacion.id
+                });
+
+                return {
+                    usuario: {
+                        id: userId,
+                        email: usuario.email,
+                        nombre: usuario.nombre,
+                        apellidos: usuario.apellidos,
+                        organizacion_id: organizacion.id,
+                        onboarding_completado: true
+                    },
+                    organizacion
+                };
+
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
     }
 }
 

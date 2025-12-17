@@ -11,6 +11,7 @@ const asyncHandler = require('./asyncHandler');
 const subscription = require('./subscription');
 const modules = require('./modules');
 const storage = require('./storage');
+const onboarding = require('./onboarding');
 
 module.exports = {
   // Middleware de manejo de errores async
@@ -90,6 +91,12 @@ module.exports = {
     validateFileSize: storage.validateFileSize,
     ALLOWED_TYPES: storage.ALLOWED_TYPES,
     SIZE_LIMITS: storage.SIZE_LIMITS
+  },
+
+  // Middleware de onboarding (Dic 2025 - OAuth/Magic Links)
+  onboarding: {
+    requireOnboarding: onboarding.requireOnboarding,
+    checkOnboarding: onboarding.checkOnboarding
   }
 };
 

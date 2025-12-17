@@ -7,6 +7,7 @@
 const UsuarioModel = require('../models/usuario.model');
 const OrganizacionModel = require('../models/organizacion.model');
 const ActivacionModel = require('../models/activacion.model');
+const GoogleOAuthService = require('../services/oauth/google.service');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { addToTokenBlacklist } = require('../../../middleware/auth');
@@ -33,7 +34,8 @@ class AuthController {
         const responseData = {
             usuario: resultado.usuario,
             accessToken: resultado.accessToken,
-            expiresIn: resultado.expiresIn
+            expiresIn: resultado.expiresIn,
+            requiere_onboarding: resultado.requiere_onboarding  // Dic 2025 - Flujo unificado
         };
 
         if (process.env.NODE_ENV !== 'production') {
@@ -117,6 +119,7 @@ class AuthController {
                 rol: usuario.rol,
                 organizacion_id: usuario.organizacion_id,
                 email_verificado: usuario.email_verificado,
+                onboarding_completado: usuario.onboarding_completado,  // Dic 2025 - Flujo unificado
                 // Datos de la organización (para filtros de tipos profesionales, etc.)
                 categoria_id: usuario.categoria_id || null,
                 categoria_codigo: usuario.categoria_codigo || null,
@@ -245,26 +248,18 @@ class AuthController {
     });
 
     // ====================================================================
-    // ONBOARDING SIMPLIFICADO - Fase 2 (Nov 2025)
+    // REGISTRO SIMPLIFICADO - Flujo Unificado (Dic 2025)
     // ====================================================================
 
     /**
      * POST /api/v1/auth/registrar
-     * Registro simplificado: crea org + envía email de activación (sin password)
+     * Registro simplificado: solo nombre + email
+     * NO crea organización (igual que Google OAuth)
+     * Usuario completará onboarding después de activar
      * @public
      */
     static registrarSimplificado = asyncHandler(async (req, res) => {
-        const {
-            nombre,
-            email,
-            nombre_negocio,
-            industria,
-            estado_id,
-            ciudad_id,
-            plan,
-            app_seleccionada,
-            soy_profesional = true  // Default true (caso más común en PYMES)
-        } = req.body;
+        const { nombre, email } = req.body;
 
         // 1. Verificar que el email no esté registrado
         const usuarioExistente = await UsuarioModel.buscarPorEmail(email);
@@ -278,59 +273,26 @@ class AuthController {
             return ResponseHelper.error(res, 'Ya existe un registro pendiente para este email. Revisa tu bandeja de entrada.', 409);
         }
 
-        // 3. Resolver categoria_id desde código de industria
-        const RLSContextManager = require('../../../utils/rlsContextManager');
-        const categoriaResult = await RLSContextManager.withBypass(async (client) => {
-            return client.query(
-                'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
-                [industria]
-            );
-        });
-
-        if (categoriaResult.rows.length === 0) {
-            return ResponseHelper.error(res, 'Industria no válida', 400);
-        }
-        const categoria_id = categoriaResult.rows[0].id;
-
-        // 4. Crear organización (sin admin aún)
-        const organizacion = await OrganizacionModel.crear({
-            nombre_comercial: nombre_negocio,
-            razon_social: nombre_negocio,
-            email_admin: email,
-            categoria_id,
-            estado_id,
-            ciudad_id,
-            plan: plan || 'trial',
-            app_seleccionada: plan === 'free' ? app_seleccionada : null
-        });
-
-        // 4.1 Crear suscripción con módulos activos según el plan
-        await OrganizacionModel.crearSubscripcionActiva(
-            organizacion.id,
-            plan || 'trial',
-            14 // días de trial
-        );
-
-        // 5. Crear activación pendiente
+        // 3. Crear activación pendiente (sin organización - flujo unificado)
         const activacion = await ActivacionModel.crear({
-            organizacion_id: organizacion.id,
+            // organizacion_id: null (implícito - flujo unificado)
             email,
             nombre,
-            soy_profesional,  // Auto-crear profesional al activar
+            soy_profesional: true,  // Se configurará en onboarding
             horas_expiracion: 24
         });
 
-        // 5. Enviar email de activación
+        // 4. Enviar email de activación
         await emailService.enviarActivacionCuenta({
             email,
             nombre,
             token: activacion.token,
-            nombre_negocio,
+            nombre_negocio: null,  // Se configurará en onboarding
             expira_en: activacion.expira_en,
             es_reenvio: false
         });
 
-        // 6. Responder (sin exponer token en producción)
+        // 5. Responder (sin exponer token en producción)
         const responseData = {
             mensaje: 'Registro iniciado. Revisa tu email para activar tu cuenta.',
             email_enviado: email,
@@ -367,7 +329,8 @@ class AuthController {
 
     /**
      * POST /api/v1/auth/activar/:token
-     * Activa cuenta creando usuario admin con password
+     * Activa cuenta creando usuario con password
+     * Dic 2025 - Flujo unificado: soporta activación sin organización
      * @public
      */
     static activarCuenta = asyncHandler(async (req, res) => {
@@ -380,8 +343,9 @@ class AuthController {
         // 2. Activar cuenta (crear usuario)
         const resultado = await ActivacionModel.activar(token, password_hash);
 
-        // 2.1 Si soy_profesional, crear profesional vinculado al admin
-        if (resultado.soy_profesional) {
+        // 2.1 Si tiene organización Y soy_profesional, crear profesional vinculado
+        // (Solo aplica al flujo legacy con org pre-creada, no al flujo unificado)
+        if (resultado.organizacion && resultado.soy_profesional) {
             const RLSContextManager = require('../../../utils/rlsContextManager');
 
             await RLSContextManager.withBypass(async (db) => {
@@ -433,7 +397,6 @@ class AuthController {
         }
 
         // 3. Generar tokens JWT para login automático
-        // IMPORTANTE: Usar mismo formato que usuario.model.js para consistencia con middleware auth
         const crypto = require('crypto');
         const jti = crypto.randomBytes(16).toString('hex');
 
@@ -442,7 +405,7 @@ class AuthController {
                 userId: resultado.usuario.id,
                 email: resultado.usuario.email,
                 rol: resultado.usuario.rol,
-                organizacionId: resultado.usuario.organizacion_id,
+                organizacionId: resultado.usuario.organizacion_id,  // null si flujo unificado
                 jti: jti
             },
             process.env.JWT_SECRET,
@@ -465,10 +428,14 @@ class AuthController {
 
         // 5. Responder con datos del usuario y tokens
         const responseData = {
-            usuario: resultado.usuario,
+            usuario: {
+                ...resultado.usuario,
+                onboarding_completado: resultado.usuario.onboarding_completado
+            },
             organizacion: resultado.organizacion,
             accessToken,
-            expiresIn: 3600 // 1 hora en segundos
+            expiresIn: 3600,
+            requiere_onboarding: resultado.requiere_onboarding  // Flujo unificado Dic 2025
         };
 
         if (process.env.NODE_ENV !== 'production') {
@@ -476,6 +443,114 @@ class AuthController {
         }
 
         return ResponseHelper.success(res, responseData, 'Cuenta activada exitosamente', 201);
+    });
+
+    // ====================================================================
+    // MAGIC LINKS - Dic 2025
+    // ====================================================================
+
+    /**
+     * POST /api/v1/auth/magic-link
+     * Solicita un magic link para login sin contraseña
+     * @public
+     */
+    static solicitarMagicLink = asyncHandler(async (req, res) => {
+        const { email } = req.body;
+
+        // 1. Crear magic link (el modelo maneja si el usuario existe o no)
+        const magicLink = await ActivacionModel.crearMagicLink({ email });
+
+        // 2. Si el usuario no existe, retornamos éxito simulado (seguridad)
+        if (magicLink.simulado) {
+            // Por seguridad, no revelamos si el email existe o no
+            return ResponseHelper.success(res, {
+                mensaje: 'Si existe una cuenta con este email, recibirás un enlace para iniciar sesión.',
+                email_enviado: email
+            }, 'Solicitud procesada');
+        }
+
+        // 3. Enviar email con magic link
+        await emailService.enviarMagicLink({
+            email,
+            nombre: magicLink.usuario_nombre,
+            token: magicLink.token,
+            expira_en: magicLink.expira_en
+        });
+
+        // 4. Responder
+        const responseData = {
+            mensaje: 'Si existe una cuenta con este email, recibirás un enlace para iniciar sesión.',
+            email_enviado: email,
+            expira_en: magicLink.expira_en
+        };
+
+        // En desarrollo, incluir token para testing
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.token = magicLink.token;
+        }
+
+        return ResponseHelper.success(res, responseData, 'Magic link enviado');
+    });
+
+    /**
+     * GET /api/v1/auth/magic-link/verify/:token
+     * Verifica magic link y autentica al usuario
+     * @public
+     */
+    static verificarMagicLink = asyncHandler(async (req, res) => {
+        const { token } = req.params;
+
+        // 1. Verificar magic link
+        const resultado = await ActivacionModel.verificarMagicLink(token);
+
+        if (!resultado.valido) {
+            return ResponseHelper.error(res, resultado.error, 400, { valido: false });
+        }
+
+        // 2. Generar tokens JWT
+        const crypto = require('crypto');
+        const jti = crypto.randomBytes(16).toString('hex');
+
+        const accessToken = jwt.sign(
+            {
+                userId: resultado.usuario.id,
+                email: resultado.usuario.email,
+                rol: resultado.usuario.rol,
+                organizacionId: resultado.usuario.organizacion_id,
+                jti: jti
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        );
+
+        // 3. Establecer cookie de refresh
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000 // 7 días
+        });
+
+        // 4. Responder con datos del usuario y tokens
+        const responseData = {
+            usuario: resultado.usuario,
+            organizacion: resultado.organizacion,
+            accessToken,
+            expiresIn: 3600,
+            requiere_onboarding: !resultado.usuario.onboarding_completado
+        };
+
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.refreshToken = refreshToken;
+        }
+
+        return ResponseHelper.success(res, responseData, 'Login exitoso via magic link');
     });
 
     /**
@@ -516,6 +591,194 @@ class AuthController {
             expira_en: nuevaActivacion.expira_en,
             reenvio_numero: nuevaActivacion.reenvios
         }, 'Email reenviado exitosamente');
+    });
+
+    // ====================================================================
+    // OAUTH GOOGLE - Dic 2025
+    // ====================================================================
+
+    /**
+     * POST /api/v1/auth/oauth/google
+     * Autenticación con Google OAuth
+     * - Si el usuario existe (por google_id o email): login
+     * - Si no existe: crear usuario y requerir onboarding
+     * @public
+     */
+    static oauthGoogle = asyncHandler(async (req, res) => {
+        const { credential } = req.body; // Token ID de Google
+
+        // 1. Verificar token con Google
+        const googleData = await GoogleOAuthService.verifyToken(credential);
+
+        // 2. Buscar usuario por Google ID
+        let usuario = await UsuarioModel.buscarPorGoogleId(googleData.googleId);
+        let esNuevo = false;
+
+        if (!usuario) {
+            // 3. Buscar por email (podría existir usuario sin Google vinculado)
+            const usuarioPorEmail = await UsuarioModel.buscarPorEmail(googleData.email);
+
+            if (usuarioPorEmail) {
+                // Usuario existe con este email pero sin Google vinculado
+                // Vincular Google a la cuenta existente
+                usuario = await UsuarioModel.vincularGoogle(usuarioPorEmail.id, googleData);
+            } else {
+                // 4. Crear nuevo usuario desde Google (sin organización aún)
+                usuario = await UsuarioModel.crearDesdeGoogle(googleData);
+                esNuevo = true;
+            }
+        }
+
+        // 5. Generar tokens JWT
+        const crypto = require('crypto');
+        const jti = crypto.randomBytes(16).toString('hex');
+
+        const accessToken = jwt.sign(
+            {
+                userId: usuario.id,
+                email: usuario.email,
+                rol: usuario.rol,
+                organizacionId: usuario.organizacion_id,
+                jti: jti
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { userId: usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        );
+
+        // 6. Establecer cookie de refresh
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        // 7. Responder
+        const responseData = {
+            usuario: {
+                id: usuario.id,
+                email: usuario.email,
+                nombre: usuario.nombre,
+                apellidos: usuario.apellidos,
+                rol: usuario.rol,
+                organizacion_id: usuario.organizacion_id,
+                avatar_url: usuario.avatar_url,
+                onboarding_completado: usuario.onboarding_completado
+            },
+            organizacion: usuario.nombre_comercial ? {
+                nombre_comercial: usuario.nombre_comercial
+            } : null,
+            accessToken,
+            expiresIn: 3600,
+            es_nuevo: esNuevo,
+            requiere_onboarding: !usuario.onboarding_completado
+        };
+
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.refreshToken = refreshToken;
+        }
+
+        return ResponseHelper.success(res, responseData,
+            esNuevo ? 'Cuenta creada con Google' : 'Login exitoso con Google'
+        );
+    });
+
+    // ====================================================================
+    // ONBOARDING - Dic 2025
+    // ====================================================================
+
+    /**
+     * GET /api/v1/auth/onboarding/status
+     * Verifica si el usuario completó el onboarding
+     * @authenticated
+     */
+    static onboardingStatus = asyncHandler(async (req, res) => {
+        const usuario = await UsuarioModel.buscarPorId(req.user.id);
+
+        if (!usuario) {
+            return ResponseHelper.notFound(res, 'Usuario no encontrado');
+        }
+
+        return ResponseHelper.success(res, {
+            onboarding_completado: !!usuario.organizacion_id,
+            tiene_organizacion: !!usuario.organizacion_id,
+            organizacion_id: usuario.organizacion_id
+        }, 'Estado de onboarding');
+    });
+
+    /**
+     * POST /api/v1/auth/onboarding/complete
+     * Completa el onboarding creando la organización
+     * @authenticated
+     */
+    static onboardingComplete = asyncHandler(async (req, res) => {
+        const {
+            nombre_negocio,
+            industria,
+            estado_id,
+            ciudad_id,
+            soy_profesional = true,
+            modulos = {}  // Módulos seleccionados (Dic 2025 - estilo Odoo)
+        } = req.body;
+
+        // Completar onboarding
+        const resultado = await UsuarioModel.completarOnboarding(req.user.id, {
+            nombre_negocio,
+            industria,
+            estado_id,
+            ciudad_id,
+            soy_profesional,
+            modulos
+        });
+
+        // Generar nuevos tokens con organizacion_id actualizada
+        const crypto = require('crypto');
+        const jti = crypto.randomBytes(16).toString('hex');
+
+        const accessToken = jwt.sign(
+            {
+                userId: resultado.usuario.id,
+                email: resultado.usuario.email,
+                rol: 'admin',
+                organizacionId: resultado.organizacion.id,
+                jti: jti
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
+        );
+
+        const refreshToken = jwt.sign(
+            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
+        );
+
+        // Actualizar cookie
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000
+        });
+
+        const responseData = {
+            usuario: resultado.usuario,
+            organizacion: resultado.organizacion,
+            accessToken,
+            expiresIn: 3600
+        };
+
+        if (process.env.NODE_ENV !== 'production') {
+            responseData.refreshToken = refreshToken;
+        }
+
+        return ResponseHelper.success(res, responseData, 'Onboarding completado exitosamente', 201);
     });
 }
 

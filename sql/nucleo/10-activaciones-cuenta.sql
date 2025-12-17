@@ -1,15 +1,23 @@
 -- ====================================================================
 -- TABLA ACTIVACIONES_CUENTA
--- Sistema de activación de cuentas por email
+-- Sistema de activación de cuentas por email + Magic Links
 -- Nov 2025 - Onboarding Simplificado (Fase 2)
+-- Dic 2025 - Magic Links (OAuth/Passwordless) + Flujo Unificado
 -- ====================================================================
 --
--- Flujo:
--- 1. Usuario hace registro con datos básicos (sin password)
--- 2. Se crea organización + esta activación pendiente
+-- Flujo tipo='registro' (24h expiración) - FLUJO UNIFICADO Dic 2025:
+-- 1. Usuario registra con nombre + email (igual que Google OAuth)
+-- 2. Se crea activación SIN organización (organizacion_id = NULL)
 -- 3. Se envía email con link de activación
 -- 4. Usuario crea password en página de activación
--- 5. Se crea usuario admin vinculado a la organización
+-- 5. Se crea usuario SIN organización (onboarding_completado = false)
+-- 6. Usuario es redirigido a /onboarding para configurar negocio
+--
+-- Flujo tipo='magic_link' (15min expiración):
+-- 1. Usuario existente solicita magic link
+-- 2. Se crea activación con tipo='magic_link' (sin org, sin nombre)
+-- 3. Se envía email con link
+-- 4. Usuario hace click, se autentica directamente (sin password)
 --
 -- Patrón reutilizado de: invitaciones_profesionales
 -- ====================================================================
@@ -24,16 +32,21 @@ CREATE TABLE IF NOT EXISTS activaciones_cuenta (
     token VARCHAR(64) UNIQUE NOT NULL,
 
     -- Organización creada (sin admin aún)
-    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id)
+    -- Nullable para magic_link (usuario ya existe con su organización)
+    organizacion_id INTEGER REFERENCES organizaciones(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
     -- Datos del usuario a crear
     email VARCHAR(150) NOT NULL,
-    nombre VARCHAR(150) NOT NULL,
+    nombre VARCHAR(150),                           -- Nullable para magic_link (ya existe usuario)
 
     -- Auto-crear profesional vinculado al admin (Nov 2025)
     soy_profesional BOOLEAN DEFAULT TRUE,
+
+    -- Tipo de activación (Dic 2025 - Magic Links)
+    tipo VARCHAR(20) DEFAULT 'registro'
+        CHECK (tipo IN ('registro', 'magic_link')),
 
     -- Estado de la activación
     estado VARCHAR(20) DEFAULT 'pendiente'
@@ -61,8 +74,10 @@ CREATE TABLE IF NOT EXISTS activaciones_cuenta (
 
     -- Constraints
     CHECK (char_length(email) >= 5),
-    CHECK (char_length(nombre) >= 2),
+    CHECK (nombre IS NULL OR char_length(nombre) >= 2),  -- nombre nullable para magic_link
     CHECK (expira_en > creado_en)
+    -- Nota: organizacion_id es nullable para registro sin org (flujo unificado Dic 2025)
+    -- y para magic_link. Solo nombre es requerido para tipo='registro'
 );
 
 -- ====================================================================
@@ -90,6 +105,10 @@ CREATE INDEX IF NOT EXISTS idx_activaciones_expiracion
 -- Búsqueda por organización
 CREATE INDEX IF NOT EXISTS idx_activaciones_organizacion
     ON activaciones_cuenta (organizacion_id);
+
+-- Filtrar por tipo (Dic 2025 - Magic Links)
+CREATE INDEX IF NOT EXISTS idx_activaciones_tipo
+    ON activaciones_cuenta (tipo);
 
 -- ====================================================================
 -- TRIGGER PARA ACTUALIZAR updated_at
@@ -142,11 +161,12 @@ $$ LANGUAGE plpgsql;
 -- ====================================================================
 -- COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
-COMMENT ON TABLE activaciones_cuenta IS 'Activaciones pendientes para cuentas registradas sin password. Token expira en 24h.';
+COMMENT ON TABLE activaciones_cuenta IS 'Activaciones y magic links. Tipo registro: 24h, crea usuario. Tipo magic_link: 15min, solo autentica.';
 COMMENT ON COLUMN activaciones_cuenta.token IS 'Token único para URL de activación (64 chars hex, crypto.randomBytes(32))';
-COMMENT ON COLUMN activaciones_cuenta.organizacion_id IS 'Organización creada en el registro, esperando activación de admin';
-COMMENT ON COLUMN activaciones_cuenta.email IS 'Email del usuario a crear (será el admin de la organización)';
-COMMENT ON COLUMN activaciones_cuenta.nombre IS 'Nombre completo del usuario (se puede separar en nombre/apellidos al crear)';
-COMMENT ON COLUMN activaciones_cuenta.soy_profesional IS 'Si TRUE, se crea profesional vinculado al usuario admin al activar. Default TRUE (caso común PYMES)';
-COMMENT ON COLUMN activaciones_cuenta.expira_en IS 'Fecha límite para activar (default 24 horas desde creación)';
-COMMENT ON COLUMN activaciones_cuenta.usuario_id IS 'Usuario admin creado al activar. NULL mientras está pendiente.';
+COMMENT ON COLUMN activaciones_cuenta.organizacion_id IS 'Organización creada en el registro. NULL para magic_link (usuario ya tiene org)';
+COMMENT ON COLUMN activaciones_cuenta.email IS 'Email del usuario. Para registro: usuario a crear. Para magic_link: usuario existente';
+COMMENT ON COLUMN activaciones_cuenta.nombre IS 'Nombre completo del usuario. Requerido para registro, NULL para magic_link';
+COMMENT ON COLUMN activaciones_cuenta.soy_profesional IS 'Si TRUE, se crea profesional vinculado al usuario admin al activar. Solo aplica a tipo=registro';
+COMMENT ON COLUMN activaciones_cuenta.tipo IS 'Tipo de activación: registro (24h, crea org+usuario) o magic_link (15min, solo autentica)';
+COMMENT ON COLUMN activaciones_cuenta.expira_en IS 'Fecha límite. Registro: 24h. Magic link: 15min';
+COMMENT ON COLUMN activaciones_cuenta.usuario_id IS 'Usuario creado/autenticado. NULL mientras está pendiente.';

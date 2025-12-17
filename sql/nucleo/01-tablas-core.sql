@@ -108,8 +108,15 @@ CREATE TABLE usuarios (
 
     -- Autenticación
     email VARCHAR(150) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL,
+    password_hash VARCHAR(255),                    -- Nullable: usuarios OAuth no tienen password
     rol rol_usuario NOT NULL DEFAULT 'empleado',
+
+    -- OAuth Google (Dic 2025)
+    google_id VARCHAR(255) UNIQUE,                 -- ID único del usuario en Google
+    avatar_url TEXT,                               -- URL del avatar (de Google o subido)
+
+    -- Estado de onboarding (Dic 2025)
+    onboarding_completado BOOLEAN DEFAULT FALSE,   -- TRUE después de completar wizard inicial
 
     -- Información personal
     nombre VARCHAR(150) NOT NULL,
@@ -151,9 +158,10 @@ CREATE TABLE usuarios (
     CHECK (char_length(nombre) >= 2),
     CHECK (intentos_fallidos >= 0 AND intentos_fallidos <= 10),
     -- Super_admin es usuario de plataforma (sin organización)
+    -- Usuarios OAuth nuevos no tienen organización hasta completar onboarding
     -- Resto de roles REQUIEREN organización obligatoriamente
-    -- Cambio: Nov 2025 - Super admin sin organización
-    CHECK (organizacion_id IS NOT NULL OR rol = 'super_admin')
+    -- Cambio: Dic 2025 - Permitir usuarios en onboarding sin organización
+    CHECK (organizacion_id IS NOT NULL OR rol = 'super_admin' OR onboarding_completado = FALSE)
 );
 
 -- ====================================================================
@@ -170,3 +178,6 @@ COMMENT ON COLUMN organizaciones.fecha_activacion_marketplace IS 'Timestamp de p
 COMMENT ON COLUMN organizaciones.app_seleccionada IS 'App elegida en Plan Free (1 app gratis). NULL si plan Pro (todas las apps). Valores: agendamiento, inventario, pos';
 COMMENT ON COLUMN usuarios.profesional_id IS 'Relación con tabla profesionales. FK se agrega después de crear la tabla';
 COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (org plataforma, acceso admin global), admin/propietario (org), empleado (limitado), cliente (externo), bot (automatización)';
+COMMENT ON COLUMN usuarios.google_id IS 'ID único del usuario en Google OAuth. NULL si no se registró con Google';
+COMMENT ON COLUMN usuarios.avatar_url IS 'URL del avatar del usuario (de Google OAuth o subido manualmente)';
+COMMENT ON COLUMN usuarios.onboarding_completado IS 'TRUE después de completar el wizard de onboarding inicial. Usuarios legacy se marcan TRUE automáticamente';

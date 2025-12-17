@@ -102,6 +102,16 @@ const MODULOS_DISPONIBLES = {
     dependencias: [],
     icono: 'Globe',
     orden: 55
+  },
+  contabilidad: {
+    nombre: 'contabilidad',
+    display_name: 'Contabilidad',
+    descripcion: 'Cuentas contables, asientos y reportes SAT',
+    incluido_en_todos: false,
+    puede_desactivar: true,
+    dependencias: [],
+    icono: 'Calculator',
+    orden: 25
   }
 };
 
