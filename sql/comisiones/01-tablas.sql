@@ -44,6 +44,7 @@ CREATE TABLE configuracion_comisiones (
     -- 🔑 IDENTIFICACIÓN Y RELACIONES
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = config global de org, con valor = config de sucursal
     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
 
     -- 🎯 SCOPE DE APLICACIÓN (servicios o productos)
@@ -144,6 +145,7 @@ CREATE TABLE comisiones_profesionales (
     -- 🔑 IDENTIFICACIÓN Y RELACIONES
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal donde se generó la comisión
     profesional_id INTEGER NOT NULL REFERENCES profesionales(id) ON DELETE CASCADE,
 
     -- 🔀 ORIGEN DE LA COMISIÓN

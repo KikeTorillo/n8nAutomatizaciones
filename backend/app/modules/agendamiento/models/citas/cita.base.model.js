@@ -134,6 +134,7 @@ class CitaBaseModel {
                 organizacion_id: citaData.organizacion_id,
                 cliente_id: citaData.cliente_id,
                 profesional_id: citaData.profesional_id,
+                sucursal_id: citaData.sucursal_id || null, // ✅ Multi-sucursal
                 // ✅ servicio_id ELIMINADO - Ahora se usa citas_servicios (M:N)
                 fecha_cita: fechaCitaNormalizada,
                 hora_inicio: citaData.hora_inicio,
@@ -867,6 +868,13 @@ class CitaBaseModel {
                     c.codigo_cita ILIKE $${paramCount}
                 )`);
                 params.push(`%${filtros.busqueda}%`);
+            }
+
+            // ✅ FEATURE: Multi-sucursal - Filtrar por sucursal_id
+            if (filtros.sucursal_id) {
+                paramCount++;
+                whereConditions.push(`c.sucursal_id = $${paramCount}`);
+                params.push(filtros.sucursal_id);
             }
 
             const whereClause = whereConditions.join(' AND ');

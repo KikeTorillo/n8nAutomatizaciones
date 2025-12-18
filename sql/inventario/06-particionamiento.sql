@@ -44,6 +44,7 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     -- 🔑 IDENTIFICACIÓN
     id BIGSERIAL NOT NULL,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal donde ocurre el movimiento (NULL = sin asignar)
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
 
     -- 📋 TIPO DE MOVIMIENTO
@@ -191,8 +192,19 @@ BEGIN
     ) THEN
         RAISE NOTICE 'Migrando datos desde movimientos_inventario_old...';
 
-        INSERT INTO movimientos_inventario
-        SELECT * FROM movimientos_inventario_old;
+        -- Usar columnas explícitas para evitar problemas si las tablas tienen columnas diferentes
+        INSERT INTO movimientos_inventario (
+            id, organizacion_id, sucursal_id, producto_id, tipo_movimiento,
+            cantidad, stock_antes, stock_despues, costo_unitario, valor_total,
+            proveedor_id, venta_pos_id, cita_id, usuario_id,
+            referencia, motivo, fecha_vencimiento, lote, creado_en
+        )
+        SELECT
+            id, organizacion_id, sucursal_id, producto_id, tipo_movimiento,
+            cantidad, stock_antes, stock_despues, costo_unitario, valor_total,
+            proveedor_id, venta_pos_id, cita_id, usuario_id,
+            referencia, motivo, fecha_vencimiento, lote, creado_en
+        FROM movimientos_inventario_old;
 
         RAISE NOTICE 'Migración completada. Revisar y eliminar movimientos_inventario_old manualmente.';
     ELSE

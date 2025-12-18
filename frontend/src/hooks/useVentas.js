@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi } from '@/services/api/endpoints';
+import useSucursalStore from '@/store/sucursalStore';
 
 // ==================== VENTAS POS ====================
+// ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
 
 /**
  * Hook para listar ventas con filtros
@@ -46,6 +48,8 @@ export function useVenta(ventaId) {
  */
 export function useCrearVenta() {
   const queryClient = useQueryClient();
+  // ✅ Multi-sucursal: Obtener sucursal activa del store
+  const { getSucursalId } = useSucursalStore();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -62,6 +66,8 @@ export function useCrearVenta() {
         fecha_apartado: data.fecha_apartado || undefined,
         fecha_vencimiento_apartado: data.fecha_vencimiento_apartado || undefined,
         notas: data.notas?.trim() || undefined,
+        // ✅ Multi-sucursal: Inyectar sucursal_id automáticamente
+        sucursal_id: data.sucursal_id || getSucursalId() || undefined,
       };
 
       const response = await posApi.crearVenta(sanitized);

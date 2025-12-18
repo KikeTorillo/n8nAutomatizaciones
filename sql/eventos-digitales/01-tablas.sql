@@ -78,6 +78,7 @@ COMMENT ON COLUMN plantillas_evento.tema IS 'Configuración visual: colores prim
 CREATE TABLE IF NOT EXISTS eventos_digitales (
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal que organiza el evento (para negocios multi-sucursal)
     plantilla_id INTEGER REFERENCES plantillas_evento(id) ON DELETE SET NULL,
 
     -- Información básica

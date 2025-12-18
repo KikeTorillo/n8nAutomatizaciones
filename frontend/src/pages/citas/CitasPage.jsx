@@ -34,12 +34,13 @@ function CitasPage() {
   // Estado de vista activa (lista o calendario)
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' o 'calendario'
 
-  // Estado de filtros
+  // Estado de filtros (incluye sucursal_id para multi-sucursal)
   const [filtros, setFiltros] = useState({
     busqueda: '',
     estado: '',
     profesional_id: '',
     servicio_id: '',
+    sucursal_id: '',
     fecha_desde: '',
     fecha_hasta: '',
   });
@@ -97,6 +98,7 @@ function CitasPage() {
       estado: '',
       profesional_id: '',
       servicio_id: '',
+      sucursal_id: '',
       fecha_desde: '',
       fecha_hasta: '',
     });

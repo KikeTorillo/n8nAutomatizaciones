@@ -1,0 +1,59 @@
+{
+  "name": "sucursales",
+  "display_name": "Gestión de Sucursales",
+  "version": "1.0.0",
+  "description": "Sistema multi-sucursal: ubicaciones, asignación de usuarios/profesionales, inventario distribuido, transferencias",
+  "depends": ["core"],
+  "dependencies_hard": {
+    "core": "Requiere módulo de organizaciones y usuarios"
+  },
+  "dependencies_optional": {
+    "inventario": "Permite stock distribuido y transferencias entre sucursales",
+    "agendamiento": "Permite citas asignadas a sucursales"
+  },
+  "pricing": {
+    "base_mensual": 299,
+    "currency": "MXN",
+    "incluido_en": ["empresarial"],
+    "addon_para": ["profesional"],
+    "notes": "Requiere plan Profesional o superior"
+  },
+  "routes": {
+    "sucursales": "/api/v1/sucursales",
+    "transferencias": "/api/v1/sucursales/transferencias"
+  },
+  "resources": {
+    "sucursales": {
+      "table": "sucursales",
+      "limit_field": "limite_sucursales",
+      "notes": "Número de sucursales por organización"
+    },
+    "transferencias": {
+      "table": "transferencias_stock",
+      "limit_field": null,
+      "notes": "Transferencias de inventario"
+    }
+  },
+  "tables": [
+    "sucursales",
+    "usuarios_sucursales",
+    "profesionales_sucursales",
+    "servicios_sucursales",
+    "stock_sucursales",
+    "transferencias_stock",
+    "transferencias_stock_items"
+  ],
+  "features": [
+    "Gestión de múltiples ubicaciones físicas",
+    "Asignación de usuarios y profesionales por sucursal",
+    "Inventario distribuido por ubicación",
+    "Transferencias de stock entre sucursales",
+    "Horarios personalizados por sucursal",
+    "Precios diferenciados de servicios por ubicación",
+    "Reportes segregados por sucursal",
+    "Permisos override por sucursal"
+  ],
+  "priority": 5,
+  "required": false,
+  "can_disable": false
+}

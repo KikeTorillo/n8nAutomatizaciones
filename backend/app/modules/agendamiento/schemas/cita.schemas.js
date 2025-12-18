@@ -33,6 +33,8 @@ const crear = {
         }).optional(),
         // ✅ FEATURE: Agendamiento público - profesional opcional (se asigna automáticamente)
         profesional_id: commonSchemas.id.optional(),
+        // ✅ FEATURE: Multi-sucursal - sucursal opcional
+        sucursal_id: commonSchemas.id.optional(),
         // ✅ FEATURE: Múltiples servicios (backward compatibility con servicio_id)
         servicios_ids: Joi.array()
             .items(commonSchemas.id)
@@ -211,6 +213,8 @@ const listar = {
             .valid('pendiente', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio')
             .optional(),
         busqueda: Joi.string().max(100).optional(),
+        // ✅ FEATURE: Multi-sucursal - Filtrar por sucursal
+        sucursal_id: commonSchemas.id.optional(),
         page: Joi.number().integer().min(1).default(1),
         limit: Joi.number().integer().min(1).max(100).default(20),
         orden: Joi.string().default('fecha_cita'),

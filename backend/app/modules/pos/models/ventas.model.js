@@ -145,9 +145,11 @@ class VentasPOSModel {
             const folio = `POS-${year}-${String(contador).padStart(4, '0')}`;
 
             // Insertar venta con folio generado manualmente
+            // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
             const ventaQuery = `
                 INSERT INTO ventas_pos (
                     organizacion_id,
+                    sucursal_id,
                     folio,
                     tipo_venta,
                     cliente_id,
@@ -168,7 +170,7 @@ class VentasPOSModel {
                     fecha_venta,
                     fecha_apartado,
                     fecha_vencimiento_apartado
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
                 RETURNING *
             `;
 
@@ -186,6 +188,7 @@ class VentasPOSModel {
 
             const ventaValues = [
                 organizacionId,
+                data.sucursal_id || null, // ✅ Multi-sucursal
                 folio,
                 data.tipo_venta || 'directa',
                 data.cliente_id || null,
@@ -429,6 +432,13 @@ class VentasPOSModel {
             if (filtros.folio) {
                 whereConditions.push(`v.folio ILIKE $${paramCounter}`);
                 values.push(`%${filtros.folio}%`);
+                paramCounter++;
+            }
+
+            // ✅ FEATURE: Multi-sucursal - Filtrar por sucursal
+            if (filtros.sucursal_id) {
+                whereConditions.push(`v.sucursal_id = $${paramCounter}`);
+                values.push(filtros.sucursal_id);
                 paramCounter++;
             }
 

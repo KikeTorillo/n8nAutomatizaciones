@@ -311,6 +311,7 @@ BEGIN
         IF v_comision_total > 0 THEN
             INSERT INTO comisiones_profesionales (
                 organizacion_id,
+                sucursal_id,
                 profesional_id,
                 cita_id,
                 fecha_cita,
@@ -322,6 +323,7 @@ BEGIN
                 estado_pago
             ) VALUES (
                 v_organizacion_id,
+                NEW.sucursal_id,  -- Heredar sucursal de la cita
                 v_profesional_id,
                 NEW.id,
                 NEW.fecha_cita,
@@ -628,6 +630,7 @@ BEGIN
         -- Insertar comisión
         INSERT INTO comisiones_profesionales (
             organizacion_id,
+            sucursal_id,
             profesional_id,
             origen,
             venta_id,
@@ -639,6 +642,7 @@ BEGIN
             estado_pago
         ) VALUES (
             NEW.organizacion_id,
+            NEW.sucursal_id,  -- Heredar sucursal de la venta
             v_profesional_id,
             'venta',
             NEW.id,

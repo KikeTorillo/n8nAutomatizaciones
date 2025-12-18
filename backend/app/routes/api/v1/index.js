@@ -97,6 +97,12 @@ const {
 // ========================================
 const { websiteRouter, publicRouter: websitePublicRouter } = require('../../../modules/website/routes');
 
+// ========================================
+// MÓDULO SUCURSALES - Dic 2025
+// Multi-ubicación, transferencias de stock
+// ========================================
+const { sucursalesRoutes } = require('../../../modules/sucursales/routes');
+
 function routerApi(app) {
     const router = express.Router();
 
@@ -178,6 +184,9 @@ function routerApi(app) {
     // Rutas de website (sitio web público) - Dic 2025
     router.use('/website', websiteRouter);                        // Gestión del sitio
     router.use('/public', websitePublicRouter);                   // Sitio público /sitio/:slug
+
+    // Rutas de sucursales (multi-ubicación) - Dic 2025
+    router.use('/sucursales', sucursalesRoutes);                  // Gestión de sucursales y transferencias
 }
 
 module.exports = routerApi;

@@ -110,6 +110,13 @@ const ConfiguracionContablePage = lazy(() => import('@/pages/contabilidad/Config
 const WebsiteEditorPage = lazy(() => import('@/pages/website/WebsiteEditorPage'));
 const SitioPublicoPage = lazy(() => import('@/pages/public/SitioPublicoPage'));
 
+// Páginas de Sucursales (Dic 2025)
+const SucursalesPage = lazy(() => import('@/pages/sucursales/SucursalesPage'));
+const SucursalDetailPage = lazy(() => import('@/pages/sucursales/SucursalDetailPage'));
+const TransferenciasPage = lazy(() => import('@/pages/sucursales/TransferenciasPage'));
+const TransferenciaDetailPage = lazy(() => import('@/pages/sucursales/TransferenciaDetailPage'));
+const DashboardSucursalesPage = lazy(() => import('@/pages/sucursales/DashboardSucursalesPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
@@ -482,6 +489,49 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(RecordatoriosPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Sucursales (Dic 2025)
+      {
+        path: 'sucursales',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(SucursalesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      /// ⚠️ Rutas específicas ANTES de rutas dinámicas (:id)
+      {
+        path: 'sucursales/dashboard',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(DashboardSucursalesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'sucursales/transferencias',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(TransferenciasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'sucursales/transferencias/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(TransferenciaDetailPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'sucursales/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(SucursalDetailPage)}
           </ProtectedRoute>
         ),
       },

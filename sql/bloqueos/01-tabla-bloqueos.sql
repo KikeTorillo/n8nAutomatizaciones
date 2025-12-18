@@ -43,6 +43,7 @@ CREATE TABLE bloqueos_horarios (
     -- 🔑 IDENTIFICADORES PRIMARIOS
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL,
+    sucursal_id INTEGER,                 -- NULL = afecta todas las sucursales (FK se agrega después)
 
     -- 🎯 ALCANCE DEL BLOQUEO
     profesional_id INTEGER,              -- NULL = afecta toda la organización

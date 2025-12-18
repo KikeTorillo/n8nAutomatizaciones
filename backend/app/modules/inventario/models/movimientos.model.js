@@ -59,9 +59,11 @@ class MovimientosInventarioModel {
             const valorTotal = Math.abs(data.cantidad) * costoUnitario;
 
             // Insertar movimiento
+            // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
             const query = `
                 INSERT INTO movimientos_inventario (
                     organizacion_id,
+                    sucursal_id,
                     producto_id,
                     tipo_movimiento,
                     cantidad,
@@ -77,12 +79,13 @@ class MovimientosInventarioModel {
                     motivo,
                     fecha_vencimiento,
                     lote
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
                 RETURNING *
             `;
 
             const values = [
                 organizacionId,
+                data.sucursal_id || null, // ✅ Multi-sucursal
                 data.producto_id,
                 data.tipo_movimiento,
                 data.cantidad,
@@ -235,6 +238,13 @@ class MovimientosInventarioModel {
             if (filtros.proveedor_id) {
                 whereConditions.push(`m.proveedor_id = $${paramCounter}`);
                 values.push(filtros.proveedor_id);
+                paramCounter++;
+            }
+
+            // ✅ FEATURE: Multi-sucursal - Filtrar por sucursal
+            if (filtros.sucursal_id) {
+                whereConditions.push(`m.sucursal_id = $${paramCounter}`);
+                values.push(filtros.sucursal_id);
                 paramCounter++;
             }
 

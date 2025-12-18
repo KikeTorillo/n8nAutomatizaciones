@@ -446,7 +446,9 @@ const inventarioSchemas = {
             referencia: Joi.string().max(100).optional().allow(null, ''),
             motivo: Joi.string().max(500).optional().allow(null, ''),
             fecha_vencimiento: Joi.date().iso().optional().allow(null),
-            lote: Joi.string().max(50).optional().allow(null, '')
+            lote: Joi.string().max(50).optional().allow(null, ''),
+            // ✅ FEATURE: Multi-sucursal
+            sucursal_id: Joi.number().integer().positive().optional().allow(null)
         }).custom((value, helpers) => {
             // Validación: Las entradas deben tener cantidad positiva
             if (value.tipo_movimiento?.startsWith('entrada') && value.cantidad <= 0) {
@@ -480,6 +482,8 @@ const inventarioSchemas = {
             categoria: Joi.string().valid('entrada', 'salida').optional(),
             producto_id: Joi.number().integer().positive().optional(),
             proveedor_id: Joi.number().integer().positive().optional(),
+            // ✅ FEATURE: Multi-sucursal
+            sucursal_id: Joi.number().integer().positive().optional(),
             fecha_desde: Joi.string().isoDate().optional(),
             fecha_hasta: Joi.string().isoDate().optional(),
             limit: Joi.number().integer().min(1).max(100).optional().default(50),

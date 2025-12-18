@@ -112,6 +112,13 @@ CREATE INDEX idx_citas_rango_fechas
     ON citas (organizacion_id, fecha_cita, estado)
     INCLUDE (cliente_id, profesional_id, hora_inicio, hora_fin, precio_total, duracion_total_minutos);
 
+-- 🏢 ÍNDICE 10: FILTRO POR SUCURSAL (MULTI-SUCURSAL)
+-- Propósito: Filtrar citas por sucursal en calendario y reportes
+-- Uso: WHERE organizacion_id = ? AND sucursal_id = ? AND fecha_cita = ?
+CREATE INDEX idx_citas_sucursal
+    ON citas (organizacion_id, sucursal_id, fecha_cita)
+    WHERE sucursal_id IS NOT NULL;
+
 -- ====================================================================
 -- 🔗 ÍNDICES PARA TABLA CITAS_SERVICIOS
 -- ====================================================================

@@ -274,6 +274,7 @@ BEGIN
     -- Crear asiento como BORRADOR (se publicará después de insertar movimientos)
     INSERT INTO asientos_contables (
         organizacion_id,
+        sucursal_id,
         numero_asiento,
         fecha,
         tipo,
@@ -287,6 +288,7 @@ BEGIN
         creado_por
     ) VALUES (
         v_venta.organizacion_id,
+        v_venta.sucursal_id,  -- Heredar sucursal de la venta
         v_numero_asiento,
         v_fecha,
         'venta_pos',
@@ -445,6 +447,7 @@ BEGIN
     -- Crear asiento como BORRADOR (se publicará después de insertar movimientos)
     INSERT INTO asientos_contables (
         organizacion_id,
+        sucursal_id,
         numero_asiento,
         fecha,
         tipo,
@@ -457,6 +460,7 @@ BEGIN
         estado
     ) VALUES (
         v_orden.organizacion_id,
+        v_orden.sucursal_id,  -- Heredar sucursal de la orden de compra
         v_numero_asiento,
         v_fecha,
         'compra',

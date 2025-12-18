@@ -37,6 +37,7 @@ CREATE TABLE planes_subscripcion (
     limite_servicios INTEGER,
     limite_usuarios INTEGER DEFAULT 3,
     limite_citas_mes INTEGER,
+    limite_sucursales INTEGER DEFAULT 1,  -- Número máximo de sucursales. NULL = ilimitado
 
     -- Límites para módulo eventos-digitales
     limite_eventos_activos INTEGER,         -- Eventos activos simultáneos. NULL = ilimitado
@@ -71,6 +72,7 @@ CREATE TABLE planes_subscripcion (
             (limite_servicios IS NULL OR limite_servicios > 0) AND
             (limite_usuarios > 0) AND
             (limite_citas_mes IS NULL OR limite_citas_mes > 0) AND
+            (limite_sucursales IS NULL OR limite_sucursales > 0) AND
             (limite_eventos_activos IS NULL OR limite_eventos_activos > 0) AND
             (limite_invitados_por_evento IS NULL OR limite_invitados_por_evento > 0) AND
             (limite_fotos_galeria_evento IS NULL OR limite_fotos_galeria_evento > 0)

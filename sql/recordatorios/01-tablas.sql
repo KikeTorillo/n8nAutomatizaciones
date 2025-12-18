@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS configuracion_recordatorios (
     -- IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = config global, con valor = config de sucursal
 
     -- ACTIVACIÓN GLOBAL
     habilitado BOOLEAN DEFAULT TRUE,

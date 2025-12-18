@@ -16,6 +16,7 @@
 CREATE TABLE IF NOT EXISTS archivos_storage (
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal a la que pertenece el archivo (NULL = global)
 
     -- ====================================================================
     -- REFERENCIA A ENTIDAD

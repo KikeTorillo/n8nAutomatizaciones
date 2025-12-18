@@ -155,6 +155,7 @@ CREATE TABLE clientes (
     -- 🔑 Identificación y relación
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = cliente compartido, con valor = cliente exclusivo de sucursal
 
     -- 👤 Información personal básica
     nombre VARCHAR(150) NOT NULL,

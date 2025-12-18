@@ -33,7 +33,8 @@
 CREATE TABLE IF NOT EXISTS website_config (
     -- Identificación
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    organizacion_id INTEGER UNIQUE NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = sitio de la org, con valor = sitio de sucursal
 
     -- URL y SEO
     slug VARCHAR(100) UNIQUE NOT NULL,  -- "mi-negocio" para /sitio/mi-negocio

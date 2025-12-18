@@ -590,9 +590,10 @@ class CitaOperacionalModel {
             // 6. Crear cita con horarios calculados según disponibilidad
             // ✅ servicio_id, precio_servicio, descuento, precio_final ELIMINADOS
             // ✅ precio_total, duracion_total_minutos AGREGADOS
+            // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
             const citaInsert = await db.query(`
                 INSERT INTO citas (
-                    organizacion_id, cliente_id, profesional_id,
+                    organizacion_id, cliente_id, profesional_id, sucursal_id,
                     fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
                     zona_horaria, precio_total, duracion_total_minutos,
                     estado, metodo_pago, pagado,
@@ -600,21 +601,22 @@ class CitaOperacionalModel {
                     confirmacion_requerida, recordatorio_enviado,
                     creado_por, ip_origen, origen_cita, origen_aplicacion, creado_en
                 ) VALUES (
-                    $1, $2, $3,
-                    $4, $5::time, $6::time, NOW(), $7,
-                    $8, $9, $10,
-                    $11, $12, $13,
-                    $14, $15,
-                    $16, $17,
-                    $18, $19, $20, $21, NOW()
+                    $1, $2, $3, $4,
+                    $5, $6::time, $7::time, NOW(), $8,
+                    $9, $10, $11,
+                    $12, $13, $14,
+                    $15, $16,
+                    $17, $18,
+                    $19, $20, $21, $22, NOW()
                 ) RETURNING
-                    id, organizacion_id, codigo_cita, cliente_id, profesional_id,
+                    id, organizacion_id, codigo_cita, cliente_id, profesional_id, sucursal_id,
                     fecha_cita, hora_inicio, hora_fin, hora_llegada, hora_inicio_real,
                     precio_total, duracion_total_minutos, estado, origen_cita, creado_en
             `, [
                 organizacionId,
                 clienteId,
                 profesionalId,
+                datosWalkIn.sucursal_id || null, // ✅ Multi-sucursal
                 fechaHoy,
                 horaInicio,        // Calculada según disponibilidad
                 horaFin,           // Calculada según disponibilidad

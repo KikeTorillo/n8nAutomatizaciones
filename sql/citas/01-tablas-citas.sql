@@ -35,6 +35,7 @@ CREATE TABLE citas (
     -- 🔑 IDENTIFICACIÓN Y RELACIONES PRINCIPALES
     id SERIAL,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- FK se agrega después de crear tabla sucursales
     codigo_cita VARCHAR(50) NOT NULL,
 
     -- 👥 REFERENCIAS PRINCIPALES

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS ventas_pos (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal donde se realiza la venta
 
     -- 📝 INFORMACIÓN DE VENTA
     folio VARCHAR(50) NOT NULL, -- Auto-generado: POS-2025-0001

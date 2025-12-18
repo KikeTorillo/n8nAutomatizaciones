@@ -47,6 +47,12 @@ const posSchemas = {
                 'number.base': 'usuario_id debe ser un número'
             }),
 
+            // ✅ FEATURE: Multi-sucursal
+            sucursal_id: Joi.number().integer().positive().optional().allow(null).messages({
+                'number.base': 'sucursal_id debe ser un número',
+                'number.positive': 'sucursal_id debe ser positivo'
+            }),
+
             items: Joi.array()
                 .min(1)
                 .max(100)
@@ -161,6 +167,9 @@ const posSchemas = {
             fecha_hasta: Joi.string().isoDate().optional(),
 
             folio: Joi.string().max(50).optional(),
+
+            // ✅ FEATURE: Multi-sucursal
+            sucursal_id: Joi.number().integer().positive().optional(),
 
             limit: Joi.number().integer().min(1).max(100).optional().default(50),
             offset: Joi.number().integer().min(0).optional().default(0)

@@ -67,6 +67,11 @@ CREATE INDEX IF NOT EXISTS idx_ventas_pos_metodo_pago
 CREATE INDEX IF NOT EXISTS idx_ventas_pos_tipo
     ON ventas_pos(organizacion_id, tipo_venta, fecha_venta DESC);
 
+-- Índice por sucursal (Multi-sucursal: reportes y filtros por ubicación)
+CREATE INDEX IF NOT EXISTS idx_ventas_pos_sucursal
+    ON ventas_pos(organizacion_id, sucursal_id, fecha_venta DESC)
+    WHERE sucursal_id IS NOT NULL;
+
 -- Índice para apartados activos (vencimiento próximo)
 -- NOTA: No incluye filtro temporal (>= CURRENT_DATE) porque CURRENT_DATE no es IMMUTABLE
 -- El filtro por vencimiento debe hacerse en las queries

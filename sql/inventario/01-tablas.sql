@@ -102,6 +102,7 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = producto global, con valor = producto exclusivo de sucursal
 
     -- 📦 INFORMACIÓN BÁSICA
     nombre VARCHAR(200) NOT NULL,
@@ -182,6 +183,7 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal donde ocurre el movimiento
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
 
     -- 📋 TIPO DE MOVIMIENTO

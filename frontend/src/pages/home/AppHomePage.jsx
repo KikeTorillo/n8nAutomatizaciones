@@ -20,12 +20,14 @@ import {
   PartyPopper,
   BookOpen,
   Globe,
+  Building2,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
 import useOnboardingStore from '@/store/onboardingStore';
 import { useModulos } from '@/hooks/useModulos';
 import { useAppNotifications } from '@/hooks/useAppNotifications';
+import { useSucursales, useMetricasSucursales } from '@/hooks/useSucursales';
 import { authApi } from '@/services/api/endpoints';
 
 import AppCard from '@/components/home/AppCard';
@@ -35,6 +37,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import PlanStatusBanner from '@/components/dashboard/PlanStatusBanner';
 import ThemeToggle from '@/components/ui/ThemeToggle';
+import SucursalSelector from '@/components/sucursales/SucursalSelector';
 
 /**
  * AppHomePage - Página principal con App Launcher estilo Odoo
@@ -63,6 +66,12 @@ function AppHomePage() {
 
   // Notificaciones por app
   const notifications = useAppNotifications();
+
+  // Multi-sucursal: verificar si tiene múltiples sucursales activas
+  const { data: sucursales = [] } = useSucursales({ activo: true });
+  const tieneMultiplesSucursales = sucursales.length > 1;
+  const { data: metricasSucursales } = useMetricasSucursales({});
+
 
   // Detectar rol para adaptar la UI
   const esEmpleado = user?.rol === 'empleado';
@@ -239,6 +248,18 @@ function AppHomePage() {
       adminOnly: true, // Solo admin/propietario
     },
     {
+      id: 'sucursales',
+      name: 'Sucursales',
+      description: 'Gestiona tus sucursales',
+      icon: Building2,
+      path: '/sucursales',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: true,
+      badge: 0,
+      adminOnly: true, // Solo admin/propietario
+    },
+    {
       id: 'estadisticas',
       name: 'Estadísticas',
       description: 'Métricas y KPIs del negocio',
@@ -313,6 +334,9 @@ function AppHomePage() {
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
+              {/* Selector de sucursal (solo si hay múltiples) */}
+              <SucursalSelector />
+
               {/* Toggle de tema */}
               <ThemeToggle />
 
@@ -350,6 +374,52 @@ function AppHomePage() {
           <>
             <TrialStatusWidget />
             <PlanStatusBanner />
+
+            {/* Widget Multi-Sucursal - Solo si tiene 2+ sucursales */}
+            {tieneMultiplesSucursales && metricasSucursales && (
+              <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <Building2 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                    <h3 className="font-semibold text-gray-900 dark:text-gray-100">
+                      Resumen Multi-Sucursal
+                    </h3>
+                  </div>
+                  <button
+                    onClick={() => navigate('/sucursales/dashboard')}
+                    className="text-sm text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    Ver Dashboard →
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div className="text-center p-2 bg-gray-50 dark:bg-gray-700/50 rounded">
+                    <p className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                      {sucursales.length}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Sucursales</p>
+                  </div>
+                  <div className="text-center p-2 bg-primary-50 dark:bg-primary-900/20 rounded">
+                    <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                      {new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN', minimumFractionDigits: 0 }).format(metricasSucursales?.ventas?.hoy?.total || 0)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Ventas Hoy</p>
+                  </div>
+                  <div className="text-center p-2 bg-blue-50 dark:bg-blue-900/20 rounded">
+                    <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                      {metricasSucursales?.citas?.hoy?.total || 0}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Citas Hoy</p>
+                  </div>
+                  <div className="text-center p-2 bg-amber-50 dark:bg-amber-900/20 rounded">
+                    <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                      {(metricasSucursales?.transferencias?.pendientes || 0) + (metricasSucursales?.transferencias?.enviadas || 0)}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Transferencias</p>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
 

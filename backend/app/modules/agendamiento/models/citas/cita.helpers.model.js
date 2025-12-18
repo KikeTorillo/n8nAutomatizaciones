@@ -84,9 +84,10 @@ class CitaHelpersModel {
         // ✅ FEATURE: Soporte para múltiples servicios
         // servicio_id, precio_servicio, descuento, precio_final ELIMINADOS
         // precio_total y duracion_total_minutos AGREGADOS
+        // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
         const cita = await db.query(`
             INSERT INTO citas (
-                organizacion_id, cliente_id, profesional_id,
+                organizacion_id, cliente_id, profesional_id, sucursal_id,
                 fecha_cita, hora_inicio, hora_fin, zona_horaria,
                 precio_total, duracion_total_minutos,
                 estado, metodo_pago, pagado,
@@ -94,13 +95,14 @@ class CitaHelpersModel {
                 confirmada_por_cliente, recordatorio_enviado, creado_por,
                 ip_origen, user_agent, origen_aplicacion, creado_en
             ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9,
-                $10, $11, $12, $13, $14, $15,
-                $16, $17, $18, $19, $20, $21, NOW()
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                $11, $12, $13, $14, $15, $16,
+                $17, $18, $19, $20, $21, $22, NOW()
             ) RETURNING *
         `, [
             citaData.organizacion_id, citaData.cliente_id,
-            citaData.profesional_id, citaData.fecha_cita,
+            citaData.profesional_id, citaData.sucursal_id || null,
+            citaData.fecha_cita,
             citaData.hora_inicio, citaData.hora_fin, citaData.zona_horaria,
             citaData.precio_total, citaData.duracion_total_minutos,
             citaData.estado, citaData.metodo_pago, citaData.pagado,

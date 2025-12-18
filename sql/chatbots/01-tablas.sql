@@ -36,6 +36,7 @@ CREATE TABLE chatbot_config (
     -- 🔑 IDENTIFICACIÓN Y RELACIONES
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = bot de la organización, con valor = bot de sucursal específica
 
     -- 📱 IDENTIFICACIÓN DEL CHATBOT
     nombre VARCHAR(255) NOT NULL,

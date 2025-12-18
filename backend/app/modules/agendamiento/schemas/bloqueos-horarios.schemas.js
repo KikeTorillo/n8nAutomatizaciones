@@ -15,6 +15,7 @@ const crear = {
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
         profesional_id: commonSchemas.id.optional().allow(null),
         servicio_id: commonSchemas.id.optional().allow(null),
+        sucursal_id: commonSchemas.id.optional().allow(null), // NULL = afecta todas las sucursales
         tipo_bloqueo_id: commonSchemas.id.required()
             .messages({
                 'any.required': 'tipo_bloqueo_id es requerido',

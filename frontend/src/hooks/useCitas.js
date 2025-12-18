@@ -2,10 +2,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { citasApi } from '@/services/api/endpoints';
 import { useToast } from './useToast';
 import { aFormatoISO } from '@/utils/dateHelpers';
+import useSucursalStore from '@/store/sucursalStore';
 
 /**
  * Hooks personalizados para gestión de citas
  * Sigue el patrón de useServicios.js y useProfesionales.js
+ * ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
  */
 
 // ==================== QUERY HOOKS ====================
@@ -133,6 +135,8 @@ export function useCitasPendientes() {
  */
 export function useCrearCita() {
   const queryClient = useQueryClient();
+  // ✅ Multi-sucursal: Obtener sucursal activa del store
+  const { getSucursalId } = useSucursalStore();
 
   return useMutation({
     mutationFn: async (citaData) => {
@@ -142,6 +146,8 @@ export function useCrearCita() {
         notas_cliente: citaData.notas_cliente?.trim() || undefined,
         notas_internas: citaData.notas_internas?.trim() || undefined,
         descuento: citaData.descuento || 0,
+        // ✅ Multi-sucursal: Inyectar sucursal_id automáticamente si hay una activa
+        sucursal_id: citaData.sucursal_id || getSucursalId() || undefined,
       };
 
       const response = await citasApi.crear(sanitizedData);
@@ -396,10 +402,17 @@ export function useNoShowCita() {
 export function useCrearCitaWalkIn() {
   const queryClient = useQueryClient();
   const { success, error: showError } = useToast();
+  // ✅ Multi-sucursal: Obtener sucursal activa del store
+  const { getSucursalId } = useSucursalStore();
 
   return useMutation({
     mutationFn: async (citaData) => {
-      const response = await citasApi.crearWalkIn(citaData);
+      // ✅ Multi-sucursal: Inyectar sucursal_id automáticamente
+      const dataConSucursal = {
+        ...citaData,
+        sucursal_id: citaData.sucursal_id || getSucursalId() || undefined,
+      };
+      const response = await citasApi.crearWalkIn(dataConSucursal);
       return response.data;
     },
     onSuccess: () => {

@@ -233,6 +233,7 @@ CREATE TABLE asientos_contables (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal del asiento (para reportes segregados)
 
     -- 📋 INFORMACIÓN DEL ASIENTO
     numero_asiento INTEGER NOT NULL,                 -- Secuencial por organización
@@ -342,6 +343,7 @@ CREATE TABLE movimientos_contables (
     -- 🔑 IDENTIFICACIÓN
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal del movimiento
 
     -- 🔗 RELACIÓN CON ASIENTO (FK compuesta por particionamiento)
     asiento_id INTEGER NOT NULL,

@@ -148,7 +148,7 @@ class BloqueosHorariosModel {
 
                 const insertQuery = `
                     INSERT INTO bloqueos_horarios (
-                        organizacion_id, profesional_id, servicio_id,
+                        organizacion_id, sucursal_id, profesional_id, servicio_id,
                         tipo_bloqueo_id, titulo, descripcion,
                         fecha_inicio, fecha_fin,
                         hora_inicio, hora_fin, zona_horaria,
@@ -161,11 +161,11 @@ class BloqueosHorariosModel {
                         creado_por, creado_en
                     )
                     VALUES (
-                        $1, $2, $3, $4, $5, $6, $7, $8,
-                        $9, $10, $11, $12, $13, $14,
-                        $15, $16, $17, $18, $19,
-                        $20, $21, $22, $23, $24,
-                        $25, $26, $27, NOW()
+                        $1, $2, $3, $4, $5, $6, $7, $8, $9,
+                        $10, $11, $12, $13, $14, $15,
+                        $16, $17, $18, $19, $20,
+                        $21, $22, $23, $24, $25,
+                        $26, $27, $28, NOW()
                     )
                     RETURNING id, organizacion_id, profesional_id, tipo_bloqueo_id,
                              titulo, fecha_inicio, fecha_fin, hora_inicio, hora_fin,
@@ -174,6 +174,7 @@ class BloqueosHorariosModel {
 
                 const result = await db.query(insertQuery, [
                     datosBloqueo.organizacion_id,
+                    datosBloqueo.sucursal_id || null,  // NULL = afecta todas las sucursales
                     datosBloqueo.profesional_id || null,
                     datosBloqueo.servicio_id || null,
                     datosBloqueo.tipo_bloqueo_id,

@@ -1,10 +1,12 @@
-import { Search, X, Filter } from 'lucide-react';
+import { Search, X, Filter, Building2 } from 'lucide-react';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
+import useSucursalStore from '@/store/sucursalStore';
 
 /**
  * Componente de filtros para el módulo de citas
+ * ✅ FEATURE: Filtro por sucursal (solo visible si hay múltiples sucursales)
  */
 function CitaFilters({
   filtros,
@@ -13,6 +15,8 @@ function CitaFilters({
   servicios = [],
   onLimpiarFiltros,
 }) {
+  // ✅ Multi-sucursal: Obtener sucursales disponibles
+  const { sucursalesDisponibles, sucursalActiva } = useSucursalStore();
   const [mostrarFiltrosAvanzados, setMostrarFiltrosAvanzados] = useState(false);
 
   // Estados disponibles
@@ -44,6 +48,16 @@ function CitaFilters({
     })),
   ];
 
+  // ✅ Multi-sucursal: Opciones de sucursales
+  const tieneMultiplesSucursales = sucursalesDisponibles.length > 1;
+  const sucursalesOpciones = [
+    { value: '', label: 'Todas las sucursales' },
+    ...sucursalesDisponibles.map((suc) => ({
+      value: suc.id.toString(),
+      label: suc.nombre + (suc.es_matriz ? ' (Matriz)' : ''),
+    })),
+  ];
+
   const handleInputChange = (campo, valor) => {
     onFiltrosChange({
       ...filtros,
@@ -57,6 +71,7 @@ function CitaFilters({
     if (filtros.estado) count++;
     if (filtros.profesional_id) count++;
     if (filtros.servicio_id) count++;
+    if (filtros.sucursal_id) count++;
     if (filtros.fecha_desde) count++;
     if (filtros.fecha_hasta) count++;
     return count;
@@ -96,7 +111,7 @@ function CitaFilters({
         </div>
 
         {/* Estado */}
-        <div className="md:col-span-3">
+        <div className={tieneMultiplesSucursales ? 'md:col-span-2' : 'md:col-span-3'}>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Estado</label>
           <Select
             value={filtros.estado || ''}
@@ -104,6 +119,21 @@ function CitaFilters({
             options={estadosDisponibles}
           />
         </div>
+
+        {/* ✅ Multi-sucursal: Selector de sucursal (solo si hay múltiples) */}
+        {tieneMultiplesSucursales && (
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <Building2 className="w-3.5 h-3.5 inline mr-1" />
+              Sucursal
+            </label>
+            <Select
+              value={filtros.sucursal_id || ''}
+              onChange={(e) => handleInputChange('sucursal_id', e.target.value)}
+              options={sucursalesOpciones}
+            />
+          </div>
+        )}
 
         {/* Botón Filtros Avanzados */}
         <div className="md:col-span-2 flex items-end">
@@ -244,6 +274,19 @@ function CitaFilters({
                     {serviciosOpciones.find((s) => s.value === filtros.servicio_id)?.label}
                     <button
                       onClick={() => handleInputChange('servicio_id', '')}
+                      className="ml-1 hover:text-primary-600 dark:hover:text-primary-200"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                )}
+                {filtros.sucursal_id && (
+                  <span className="inline-flex items-center px-2 py-1 bg-white dark:bg-gray-800 rounded text-xs text-primary-800 dark:text-primary-300 border border-primary-300 dark:border-primary-700">
+                    <Building2 className="w-3 h-3 mr-1" />
+                    Sucursal:{' '}
+                    {sucursalesOpciones.find((s) => s.value === filtros.sucursal_id)?.label}
+                    <button
+                      onClick={() => handleInputChange('sucursal_id', '')}
                       className="ml-1 hover:text-primary-600 dark:hover:text-primary-200"
                     >
                       <X className="w-3 h-3" />

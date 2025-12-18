@@ -39,7 +39,8 @@
 CREATE TABLE marketplace_perfiles (
     -- 🔑 Identificación
     id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER UNIQUE NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- NULL = perfil único de org, con valor = perfil de sucursal
 
     -- 🎯 Estado del Perfil
     activo BOOLEAN DEFAULT false,  -- Admin activa/desactiva manualmente
@@ -109,6 +110,7 @@ CREATE TABLE marketplace_reseñas (
     -- 🔑 Identificación
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal donde se dio el servicio
 
     -- 🔗 Relaciones
     cliente_id INTEGER NOT NULL REFERENCES clientes(id) ON DELETE CASCADE,
@@ -157,6 +159,7 @@ CREATE TABLE marketplace_reseñas (
 CREATE TABLE marketplace_analytics (
     id SERIAL PRIMARY KEY,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
+    sucursal_id INTEGER,  -- Sucursal del perfil visitado
 
     -- 📊 Datos del Evento
     evento_tipo VARCHAR(30) NOT NULL CHECK (evento_tipo IN (

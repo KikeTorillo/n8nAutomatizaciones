@@ -1,7 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { inventarioApi } from '@/services/api/endpoints';
+import useSucursalStore from '@/store/sucursalStore';
 
 // ==================== MOVIMIENTOS DE INVENTARIO ====================
+// ✅ FEATURE: Multi-sucursal - Los hooks inyectan sucursal_id automáticamente
 
 /**
  * Hook para listar movimientos con filtros
@@ -70,6 +72,8 @@ export function useEstadisticasMovimientos(params) {
  */
 export function useRegistrarMovimiento() {
   const queryClient = useQueryClient();
+  // ✅ Multi-sucursal: Obtener sucursal activa del store
+  const { getSucursalId } = useSucursalStore();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -84,6 +88,8 @@ export function useRegistrarMovimiento() {
         motivo: data.motivo?.trim() || undefined,
         fecha_vencimiento: data.fecha_vencimiento || undefined,
         lote: data.lote?.trim() || undefined,
+        // ✅ Multi-sucursal: Inyectar sucursal_id automáticamente
+        sucursal_id: data.sucursal_id || getSucursalId() || undefined,
       };
 
       const response = await inventarioApi.registrarMovimiento(sanitized);
