@@ -42,7 +42,6 @@ const crear = {
             Joi.string().trim().min(1).max(30)
         ).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
-        tipos_profesional_autorizados: Joi.array().optional().allow(null),
         profesionales_ids: Joi.array().items(
             Joi.number().integer().positive() // Sin .required() para permitir array vacío
         ).optional().default([])
@@ -93,7 +92,6 @@ const actualizar = {
         color_servicio: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
         tags: Joi.array().items(Joi.string().trim().min(1).max(30)).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
-        tipos_profesional_autorizados: Joi.array().optional().allow(null),
         activo: Joi.boolean().optional(),
         imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
     }).min(1)
@@ -142,8 +140,7 @@ const crearDesdePlantilla = {
             precio_maximo: commonSchemas.price.optional(),
             duracion_minutos: Joi.number().integer().min(1).max(480).optional(),
             configuracion_especifica: Joi.object().optional(),
-            tags: Joi.array().items(Joi.string().trim()).optional(),
-            tipos_profesional_autorizados: Joi.array().optional()
+            tags: Joi.array().items(Joi.string().trim()).optional()
         }).optional().default({})
     })
 };
@@ -267,9 +264,6 @@ const bulkCrear = {
                         .optional()
                         .allow(null),
                     configuracion_especifica: Joi.object()
-                        .optional()
-                        .allow(null),
-                    tipos_profesional_autorizados: Joi.array()
                         .optional()
                         .allow(null),
                     profesionales_asignados: Joi.array()

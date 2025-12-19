@@ -364,45 +364,6 @@ export const profesionalesApi = {
     apiClient.put(`/profesionales/${profesionalId}/categorias`, { categoria_ids: categoriaIds }),
 };
 
-// ==================== TIPOS PROFESIONAL ====================
-export const tiposProfesionalApi = {
-  /**
-   * Listar tipos de profesional (sistema + personalizados de la org)
-   * @param {Object} params - { solo_sistema, solo_personalizados, tipo_industria, activo }
-   * @returns {Promise<Object>} { tipos, total, filtros_aplicados }
-   */
-  listar: (params = {}) => apiClient.get('/tipos-profesional', { params }),
-
-  /**
-   * Obtener tipo de profesional por ID
-   * @param {number} id
-   * @returns {Promise<Object>}
-   */
-  obtener: (id) => apiClient.get(`/tipos-profesional/${id}`),
-
-  /**
-   * Crear tipo personalizado
-   * @param {Object} data - { codigo, nombre, descripcion, categoria, industrias_compatibles, etc. }
-   * @returns {Promise<Object>}
-   */
-  crear: (data) => apiClient.post('/tipos-profesional', data),
-
-  /**
-   * Actualizar tipo personalizado
-   * @param {number} id
-   * @param {Object} data
-   * @returns {Promise<Object>}
-   */
-  actualizar: (id, data) => apiClient.put(`/tipos-profesional/${id}`, data),
-
-  /**
-   * Eliminar tipo personalizado (soft delete)
-   * @param {number} id
-   * @returns {Promise<Object>}
-   */
-  eliminar: (id) => apiClient.delete(`/tipos-profesional/${id}`),
-};
-
 // ==================== SERVICIOS ====================
 export const serviciosApi = {
   /**
@@ -3183,7 +3144,6 @@ export default {
   planes: planesApi,
   bloqueos: bloqueosApi,
   tiposBloqueo: tiposBloqueoApi,
-  tiposProfesional: tiposProfesionalApi,
   whatsapp: whatsappApi,
   chatbots: chatbotsApi,
   subscripciones: subscripcionesApi,

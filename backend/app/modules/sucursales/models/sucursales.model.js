@@ -398,11 +398,9 @@ class SucursalesModel {
                     p.nombre_completo AS nombre,
                     p.nombre_completo AS profesional_nombre,
                     p.email AS profesional_email,
-                    p.color_calendario,
-                    tp.nombre AS tipo_nombre
+                    p.color_calendario
                 FROM profesionales_sucursales ps
                 JOIN profesionales p ON ps.profesional_id = p.id
-                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
                 WHERE ps.sucursal_id = $1 AND ps.activo = true
                 ORDER BY p.nombre_completo ASC
             `;

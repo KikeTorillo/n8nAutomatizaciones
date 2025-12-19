@@ -2,7 +2,7 @@ const { VentasPOSModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const ModulesCache = require('../../../core/ModulesCache');
-const ProfesionalModel = require('../../agendamiento/models/profesional.model');
+const ProfesionalModel = require('../../profesionales/models/profesional.model');
 const TicketPDFService = require('../../../services/ticketPDF.service');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 

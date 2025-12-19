@@ -56,60 +56,6 @@ CREATE TABLE tipos_bloqueo (
 );
 
 -- ====================================================================
--- TABLA 2: TIPOS_PROFESIONAL
--- ====================================================================
--- Catálogo dinámico de tipos de profesional.
---
--- CARACTERÍSTICAS:
--- • Tipos del sistema (organizacion_id IS NULL) - 33 tipos base
--- • Tipos personalizados por organización
--- • Validación de compatibilidad con industrias
--- • Soft delete para preservar históricos
--- • Protección de tipos del sistema via trigger
--- ====================================================================
-
-CREATE TABLE tipos_profesional (
-    id SERIAL PRIMARY KEY,
-    organizacion_id INTEGER REFERENCES organizaciones(id) ON DELETE CASCADE,
-
-    -- Identificación
-    codigo VARCHAR(50) NOT NULL,
-    nombre VARCHAR(100) NOT NULL,
-    descripcion TEXT,
-
-    -- Clasificación
-    categoria VARCHAR(50),
-    industrias_compatibles TEXT[],
-
-    -- Características
-    requiere_licencia BOOLEAN DEFAULT false,
-    nivel_experiencia_minimo INTEGER DEFAULT 0,
-
-    -- Sistema y personalización
-    es_sistema BOOLEAN DEFAULT false,
-    icono VARCHAR(50),
-    color VARCHAR(7),
-
-    -- Configuración
-    metadata JSONB DEFAULT '{}',
-
-    -- Control
-    activo BOOLEAN DEFAULT true,
-    creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-
-    -- Constraints
-    CONSTRAINT tipos_profesional_codigo_valido CHECK (codigo ~ '^[a-z_]+$'),
-    CONSTRAINT tipos_profesional_categoria_valida CHECK (
-        categoria IN (
-            'barberia', 'salon_belleza', 'estetica', 'spa',
-            'podologia', 'medico', 'academia', 'taller_tecnico',
-            'fitness', 'veterinaria', 'otro'
-        )
-    )
-);
-
--- ====================================================================
 -- 📝 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 
@@ -124,18 +70,3 @@ COMMENT ON COLUMN tipos_bloqueo.es_sistema IS
 
 COMMENT ON COLUMN tipos_bloqueo.codigo IS
 'Código único del tipo (minúsculas, números, guiones bajos). Usado para mapear colores/iconos en frontend.';
-
-COMMENT ON TABLE tipos_profesional IS
-'Catálogo dinámico de tipos de profesional. Soporta tipos del sistema (globales) y tipos personalizados por organización.';
-
-COMMENT ON COLUMN tipos_profesional.organizacion_id IS
-'NULL = tipo del sistema (visible para todas las organizaciones). NOT NULL = tipo personalizado de la organización';
-
-COMMENT ON COLUMN tipos_profesional.es_sistema IS
-'true = tipo del sistema, protegido por trigger. No se puede eliminar, desactivar ni modificar el código.';
-
-COMMENT ON COLUMN tipos_profesional.codigo IS
-'Código único del tipo (minúsculas, guiones bajos). Usado como identificador programático.';
-
-COMMENT ON COLUMN tipos_profesional.industrias_compatibles IS
-'Array de industrias donde este tipo es aplicable. Usado para validar compatibilidad con organizacion.tipo_industria.';

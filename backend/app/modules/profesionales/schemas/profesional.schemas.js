@@ -103,12 +103,7 @@ const crear = {
             .optional()
             .allow(null),
 
-        // === INFORMACIÓN PROFESIONAL (LEGACY) ===
-        tipo_profesional_id: Joi.number()
-            .integer()
-            .positive()
-            .optional()
-            .allow(null),
+        // === INFORMACIÓN PROFESIONAL ===
         licencias_profesionales: Joi.object()
             .optional()
             .default({}),
@@ -190,10 +185,6 @@ const bulkCrear = {
                     telefono: commonSchemas.mexicanPhone
                         .optional()
                         .allow(null, ''),
-                    tipo_profesional_id: Joi.number()
-                        .integer()
-                        .positive()
-                        .required(),
                     color_calendario: Joi.string()
                         .pattern(/^#[0-9A-Fa-f]{6}$/)
                         .optional()
@@ -283,8 +274,7 @@ const actualizar = {
         fecha_baja: Joi.date().iso().allow(null),
         motivo_baja: Joi.string().max(LIMITES.MOTIVO_MAX).allow(null),
 
-        // === INFORMACIÓN PROFESIONAL (LEGACY) ===
-        tipo_profesional_id: Joi.number().integer().positive().allow(null),
+        // === INFORMACIÓN PROFESIONAL ===
         licencias_profesionales: Joi.object(),
         años_experiencia: Joi.number().integer().min(LIMITES.EXPERIENCIA_MIN).max(LIMITES.EXPERIENCIA_MAX),
         idiomas: Joi.array().items(Joi.string()),
@@ -325,7 +315,6 @@ const listar = {
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
         activo: Joi.string().valid('true', 'false').optional(),
         disponible_online: Joi.string().valid('true', 'false').optional(),
-        tipo_profesional_id: Joi.number().integer().positive().optional(),
         busqueda: Joi.string().min(2).max(100).trim().optional(),
 
         // Filtros de módulo (Nov 2025)
@@ -362,21 +351,7 @@ const obtenerPorId = {
     })
 };
 
-// GET /profesionales/tipo/:tipoId
-const buscarPorTipo = {
-    params: Joi.object({
-        tipoId: Joi.number()
-            .integer()
-            .positive()
-            .required()
-    }),
-    query: Joi.object({
-        organizacion_id: commonSchemas.id.optional(), // Solo super_admin
-        activos: Joi.string()
-            .valid('true', 'false')
-            .default('true')
-    })
-};
+// Schema buscarPorTipo eliminado - usar listar con filtro de categorías
 
 // PATCH /profesionales/:id/estado
 const cambiarEstado = {
@@ -622,7 +597,6 @@ module.exports = {
     actualizar,
     listar,
     obtenerPorId,
-    buscarPorTipo,
     cambiarEstado,
     actualizarMetricas,
     eliminar,

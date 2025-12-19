@@ -26,7 +26,6 @@ import {
   GENEROS,
   ESTADOS_CIVILES
 } from '@/hooks/useProfesionales';
-import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -58,10 +57,6 @@ const COLORES_CALENDARIO = [
 const profesionalCreateSchema = z.object({
   // === Datos Básicos ===
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres'),
-  tipo_profesional_id: z.number({
-    required_error: 'Debes seleccionar un tipo de profesional',
-    invalid_type_error: 'Tipo inválido',
-  }).int().positive('Debes seleccionar un tipo de profesional'),
   email: z.string({
     required_error: 'El email es obligatorio para enviar la invitación',
   }).email('Email inválido').max(100, 'Máximo 100 caracteres'),
@@ -97,7 +92,6 @@ const profesionalCreateSchema = z.object({
 const profesionalEditSchema = z.object({
   // === Datos Básicos ===
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres').optional(),
-  tipo_profesional_id: z.number().int().positive().optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').optional(),
@@ -164,9 +158,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
 
-  // Fetch tipos de profesional (dinámicos desde DB)
-  const { data: tiposProfesional = [], isLoading: loadingTipos } = useTiposProfesional({ activo: true });
-
   // Fetch datos del profesional en modo edición
   const { data: profesionalData, isLoading: loadingProfesional } = useProfesional(profesionalId);
 
@@ -206,7 +197,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       : {
           // Datos básicos
           nombre_completo: '',
-          tipo_profesional_id: undefined,
           email: '',
           telefono: '',
           color_calendario: COLORES_CALENDARIO[0],
@@ -241,7 +231,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         // Modo creación: resetear a valores vacíos
         reset({
           nombre_completo: '',
-          tipo_profesional_id: undefined,
           email: '',
           telefono: '',
           color_calendario: COLORES_CALENDARIO[0],
@@ -274,7 +263,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       reset({
         // Datos básicos
         nombre_completo: profesionalData.nombre_completo || '',
-        tipo_profesional_id: profesionalData.tipo_profesional_id || undefined,
         email: profesionalData.email || '',
         telefono: profesionalData.telefono || '',
         color_calendario: profesionalData.color_calendario || COLORES_CALENDARIO[0],
@@ -458,7 +446,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       const sanitized = {
         // Datos básicos
         nombre_completo: data.nombre_completo?.trim(),
-        tipo_profesional_id: data.tipo_profesional_id,
         email: data.email?.trim() || undefined,
         telefono: data.telefono?.trim() || undefined,
         color_calendario: data.color_calendario,
@@ -647,28 +634,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                 label="Nombre Completo"
                 placeholder="Ej: María García López"
                 required={!isEditMode}
-              />
-
-              {/* Tipo de Profesional - Select dinámico desde DB */}
-              <Controller
-                name="tipo_profesional_id"
-                control={control}
-                render={({ field: { value, onChange, ...field } }) => (
-                  <Select
-                    {...field}
-                    label="Tipo de Profesional"
-                    value={value?.toString() || ''}
-                    onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
-                    options={tiposProfesional.map((tipo) => ({
-                      value: tipo.id.toString(),
-                      label: `${tipo.nombre}${tipo.es_sistema ? '' : ' (Personalizado)'}`,
-                    }))}
-                    placeholder={loadingTipos ? 'Cargando tipos...' : 'Selecciona un tipo de profesional'}
-                    disabled={loadingTipos}
-                    required={!isEditMode}
-                    error={errors.tipo_profesional_id?.message}
-                  />
-                )}
               />
 
               {/* Email y Teléfono */}

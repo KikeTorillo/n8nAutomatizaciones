@@ -580,7 +580,6 @@ class UsuarioModel {
                     u.bloqueado_hasta, u.creado_en, u.actualizado_en,
                     p.id as profesional_id,
                     p.nombre_completo as profesional_nombre,
-                    p.tipo_profesional_id,
                     -- Calcular estado de bloqueo
                     CASE
                         WHEN u.bloqueado_hasta IS NULL THEN FALSE
@@ -1296,26 +1295,15 @@ class UsuarioModel {
                     const nombreCompleto = usuario.nombre +
                         (usuario.apellidos ? ' ' + usuario.apellidos : '');
 
-                    // Buscar tipo_profesional compatible
-                    const tipoResult = await db.query(`
-                        SELECT id FROM tipos_profesional
-                        WHERE $1 = ANY(industrias_compatibles)
-                          AND activo = TRUE AND es_sistema = TRUE
-                        ORDER BY id LIMIT 1
-                    `, [industria]);
-
-                    const tipoProfesionalId = tipoResult.rows[0]?.id || null;
-
                     await db.query(`
                         INSERT INTO profesionales (
                             organizacion_id, nombre_completo, email,
-                            tipo_profesional_id, usuario_id, activo, modulos_acceso
-                        ) VALUES ($1, $2, $3, $4, $5, TRUE, $6)
+                            usuario_id, activo, modulos_acceso
+                        ) VALUES ($1, $2, $3, $4, TRUE, $5)
                     `, [
                         organizacion.id,
                         nombreCompleto,
                         usuario.email,
-                        tipoProfesionalId,
                         userId,
                         { agendamiento: true, pos: true, inventario: true }
                     ]);

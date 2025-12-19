@@ -44,34 +44,8 @@ WITH CHECK (
 );
 
 -- ====================================================================
--- RLS PARA TIPOS_PROFESIONAL
--- ====================================================================
-
-ALTER TABLE tipos_profesional ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY tipos_profesional_tenant_isolation ON tipos_profesional
-USING (
-    (current_setting('app.current_user_role', true) = 'super_admin') OR
-    (organizacion_id IS NULL) OR
-    (organizacion_id = COALESCE(
-        (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer, 0
-    )) OR
-    (current_setting('app.bypass_rls', true) = 'true')
-)
-WITH CHECK (
-    (current_setting('app.current_user_role', true) = 'super_admin') OR
-    (organizacion_id = COALESCE(
-        (NULLIF(current_setting('app.current_tenant_id', true), ''))::integer, 0
-    )) OR
-    (current_setting('app.bypass_rls', true) = 'true')
-);
-
--- ====================================================================
 -- 📝 COMENTARIOS PARA DOCUMENTACIÓN
 -- ====================================================================
 
 COMMENT ON POLICY tipos_bloqueo_tenant_isolation ON tipos_bloqueo IS
-'Aislamiento multi-tenant: tipos del sistema (NULL) visibles para todos, tipos personalizados solo para su organización';
-
-COMMENT ON POLICY tipos_profesional_tenant_isolation ON tipos_profesional IS
 'Aislamiento multi-tenant: tipos del sistema (NULL) visibles para todos, tipos personalizados solo para su organización';

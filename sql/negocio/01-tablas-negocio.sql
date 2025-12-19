@@ -24,8 +24,6 @@
 -- • tipo → Solo clasificación organizacional (reportes, organigrama)
 -- • modulos_acceso → ★ CONTROL PRINCIPAL de funcionalidades ★
 -- • categorias (M:N) → Especialidad, nivel, certificaciones
---
--- ⚠️ IMPORTANTE: tipo_profesional_id se mantiene como LEGACY
 -- ────────────────────────────────────────────────────────────────────
 CREATE TABLE profesionales (
     -- 🔑 CLAVE PRIMARIA
@@ -81,9 +79,8 @@ CREATE TABLE profesionales (
     motivo_baja TEXT,                          -- Razón de baja
 
     -- ====================================================================
-    -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL (LEGACY + NUEVO)
+    -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL
     -- ====================================================================
-    tipo_profesional_id INTEGER REFERENCES tipos_profesional(id), -- [LEGACY] Tipo según catálogo
     licencias_profesionales JSONB DEFAULT '{}', -- Licencias y certificaciones
     años_experiencia INTEGER DEFAULT 0,        -- Años de experiencia laboral
     idiomas TEXT[] DEFAULT ARRAY['es']::TEXT[], -- Idiomas que habla
@@ -187,10 +184,6 @@ COMMENT ON COLUMN profesionales.estado IS
 
 COMMENT ON COLUMN profesionales.modulos_acceso IS
 '★ Control principal de acceso. Determina qué módulos puede usar el empleado.';
-
-COMMENT ON COLUMN profesionales.tipo_profesional_id IS
-'[LEGACY] Tipo de profesional del catálogo. Se mantiene por compatibilidad.
-Para nuevas implementaciones, usar categorias_profesional (M:N).';
 
 -- ====================================================================
 -- 🧑‍💼 TABLA CLIENTES - BASE DE DATOS DE CLIENTES
@@ -312,12 +305,6 @@ CREATE TABLE servicios (
 
     -- 🖼️ IMAGEN (Dic 2025 - Storage MinIO)
     imagen_url TEXT,                                      -- URL de la imagen del servicio
-
-    -- ====================================================================
-    -- 🎯 SECCIÓN: COMPATIBILIDAD CON PROFESIONALES
-    -- ====================================================================
-    tipos_profesional_autorizados INTEGER[] DEFAULT NULL,  -- IDs de tipos de profesional que pueden brindar este servicio (FK a tipos_profesional.id)
-                                                           -- NULL = todos los profesionales de la organización
 
     -- ====================================================================
     -- ⚙️ SECCIÓN: CONTROL Y ESTADO

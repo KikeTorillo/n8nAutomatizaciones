@@ -15,7 +15,6 @@ import {
   TIPOS_EMPLEADO,
   ESTADOS_LABORALES
 } from '@/hooks/useProfesionales';
-import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { useToast } from '@/hooks/useToast';
 
@@ -31,14 +30,11 @@ function ProfesionalesPage() {
   // Filtros (Dic 2025: ampliados con nuevos campos)
   const [filtros, setFiltros] = useState({
     activo: '',
-    tipo_profesional_id: '',
     estado: '', // Estado laboral (activo, vacaciones, etc.)
     tipo: '', // Tipo empleado (operativo, administrativo, etc.)
     departamento_id: '', // Departamento
   });
 
-  // Fetch tipos de profesional para filtros
-  const { data: tiposProfesional = [] } = useTiposProfesional({ activo: true });
   // Fetch departamentos para filtros (Dic 2025)
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
 
@@ -57,7 +53,6 @@ function ProfesionalesPage() {
   const { data: profesionales, isLoading } = useProfesionales({
     busqueda,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
-    tipo_profesional_id: filtros.tipo_profesional_id ? parseInt(filtros.tipo_profesional_id, 10) : undefined,
     estado: filtros.estado || undefined,
     tipo: filtros.tipo || undefined,
     departamento_id: filtros.departamento_id ? parseInt(filtros.departamento_id, 10) : undefined,
@@ -70,7 +65,6 @@ function ProfesionalesPage() {
   const handleLimpiarFiltros = () => {
     setFiltros({
       activo: '',
-      tipo_profesional_id: '',
       estado: '',
       tipo: '',
       departamento_id: '',
@@ -126,7 +120,6 @@ function ProfesionalesPage() {
   // Verificar si hay filtros activos (Dic 2025: nuevos filtros)
   const hasFiltrosActivos =
     filtros.activo !== '' ||
-    filtros.tipo_profesional_id !== '' ||
     filtros.estado !== '' ||
     filtros.tipo !== '' ||
     filtros.departamento_id !== '' ||
@@ -204,29 +197,6 @@ function ProfesionalesPage() {
                       <option value="">Todos</option>
                       <option value="true">Activos</option>
                       <option value="false">Inactivos</option>
-                    </Select>
-                  </div>
-
-                  {/* Filtro: Tipo de Profesional (legacy) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Tipo de Profesional
-                    </label>
-                    <Select
-                      value={filtros.tipo_profesional_id}
-                      onChange={(e) =>
-                        setFiltros({
-                          ...filtros,
-                          tipo_profesional_id: e.target.value,
-                        })
-                      }
-                    >
-                      <option value="">Todos los tipos</option>
-                      {tiposProfesional.map((tipo) => (
-                        <option key={tipo.id} value={tipo.id}>
-                          {tipo.nombre} {tipo.es_sistema ? '' : '(Personalizado)'}
-                        </option>
-                      ))}
                     </Select>
                   </div>
 

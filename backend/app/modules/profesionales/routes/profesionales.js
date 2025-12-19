@@ -132,14 +132,7 @@ router.patch('/:id/modulos',
 );
 
 // ========== Rutas Autenticadas ==========
-
-router.get('/tipo/:tipoId',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
-    validation.validate(schemas.buscarPorTipo),
-    ProfesionalController.buscarPorTipo
-);
+// Ruta /tipo/:tipoId eliminada - usar GET / con filtro de categorías
 
 router.get('/',
     auth.authenticateToken,

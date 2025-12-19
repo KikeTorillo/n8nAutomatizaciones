@@ -1,0 +1,41 @@
+{
+  "name": "profesionales",
+  "display_name": "Gestión de Profesionales",
+  "version": "1.0.0",
+  "description": "Módulo central de profesionales: CRUD, jerarquías, categorías y asignaciones",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "used_by": ["agendamiento", "pos", "comisiones", "sucursales"],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base del sistema, incluido en todos los planes"
+  },
+  "routes": {
+    "profesionales": "/api/v1/profesionales"
+  },
+  "resources": {
+    "profesionales": {
+      "table": "profesionales",
+      "limit_field": "limite_profesionales",
+      "notes": "Limitado por plan"
+    }
+  },
+  "tables": [
+    "profesionales",
+    "profesionales_categorias"
+  ],
+  "features": [
+    "CRUD completo de profesionales",
+    "Jerarquía organizacional (supervisor/subordinados)",
+    "Categorías flexibles M:N",
+    "Tipos de empleado (operativo, administrativo, gerencial, ventas)",
+    "Módulos de acceso configurables",
+    "Color de calendario personalizado"
+  ],
+  "priority": 0,
+  "required": true,
+  "can_disable": false
+}

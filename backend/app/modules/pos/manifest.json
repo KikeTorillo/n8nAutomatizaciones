@@ -3,7 +3,7 @@
   "display_name": "Punto de Venta (POS)",
   "version": "1.0.0",
   "description": "Terminal de punto de venta con gestión de ventas, caja y reportes en tiempo real",
-  "depends": ["core", "inventario"],
+  "depends": ["core", "inventario", "profesionales"],
   "dependencies_hard": {
     "inventario": {
       "razon": "FK ventas_pos_items.producto_id → productos(id) NOT NULL. Cada item de venta requiere un producto del inventario",
@@ -12,7 +12,7 @@
     }
   },
   "dependencies_optional": {
-    "agendamiento": "Permite asociar ventas a clientes y profesionales del módulo de agendamiento. Si no está activo, ventas sin cliente_id/profesional_id"
+    "agendamiento": "Permite asociar ventas a clientes del módulo de agendamiento"
   },
   "used_by": ["comisiones"],
   "pricing": {

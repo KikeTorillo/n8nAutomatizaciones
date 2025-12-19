@@ -90,7 +90,6 @@ class ProfesionalController {
         const filtros = {
             activo: req.query.activo !== undefined ? req.query.activo === 'true' : null,
             disponible_online: req.query.disponible_online !== undefined ? req.query.disponible_online === 'true' : null,
-            tipo_profesional_id: req.query.tipo_profesional_id ? parseInt(req.query.tipo_profesional_id) : null,
             busqueda: req.query.busqueda || null,
             modulo: req.query.modulo || null, // Nov 2025: filtrar por módulo habilitado
             con_usuario: req.query.con_usuario !== undefined ? req.query.con_usuario === 'true' : null, // Nov 2025
@@ -197,24 +196,7 @@ class ProfesionalController {
         return ResponseHelper.success(res, { id: parseInt(id) }, 'Profesional eliminado exitosamente');
     });
 
-    static buscarPorTipo = asyncHandler(async (req, res) => {
-        const { tipoId } = req.params;
-        const tipoProfesionalId = parseInt(tipoId);
-        const soloActivos = req.query.activos !== 'false';
-
-        const profesionales = await ProfesionalModel.buscarPorTipo(
-            req.tenant.organizacionId,
-            tipoProfesionalId,
-            soloActivos
-        );
-
-        return ResponseHelper.success(res, {
-            tipo_profesional_id: tipoProfesionalId,
-            solo_activos: soloActivos,
-            profesionales,
-            total: profesionales.length
-        }, 'Profesionales por tipo obtenidos exitosamente');
-    });
+    // Método buscarPorTipo eliminado - usar listar con filtro de categorías
 
     static actualizarMetricas = asyncHandler(async (req, res) => {
         const { id } = req.params;

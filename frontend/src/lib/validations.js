@@ -124,15 +124,6 @@ export const professionalSchema = z.object({
     .max(100, 'El nombre no puede superar 100 caracteres')
     .trim(),
 
-  // 🔄 Migrado de ENUM string a ID integer (tabla tipos_profesional)
-  tipo_profesional_id: z
-    .number({
-      required_error: 'Debes seleccionar un tipo de profesional',
-      invalid_type_error: 'El tipo debe ser un número válido',
-    })
-    .int('Debe ser un número entero')
-    .positive('Debes seleccionar un tipo de profesional'),
-
   telefono: z
     .string()
     .regex(phoneRegex, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)')

@@ -2,8 +2,8 @@
   "name": "agendamiento",
   "display_name": "Sistema de Agendamiento",
   "version": "1.0.0",
-  "description": "Módulo base de agendamiento: profesionales, servicios, clientes, citas, horarios y bloqueos",
-  "depends": ["core"],
+  "description": "Módulo de agendamiento: servicios, clientes, citas, horarios y bloqueos",
+  "depends": ["core", "profesionales"],
   "dependencies_hard": {},
   "dependencies_optional": {},
   "used_by": ["comisiones", "marketplace", "chatbots"],
@@ -14,22 +14,15 @@
     "notes": "Módulo base del sistema, incluido en todos los planes"
   },
   "routes": {
-    "profesionales": "/api/v1/profesionales",
     "servicios": "/api/v1/servicios",
     "citas": "/api/v1/citas",
     "horarios-profesionales": "/api/v1/horarios-profesionales",
     "disponibilidad": "/api/v1/disponibilidad",
     "bloqueos-horarios": "/api/v1/bloqueos-horarios",
-    "tipos-profesional": "/api/v1/tipos-profesional",
     "tipos-bloqueo": "/api/v1/tipos-bloqueo",
     "chatbots": "/api/v1/chatbots"
   },
   "resources": {
-    "profesionales": {
-      "table": "profesionales",
-      "limit_field": "limite_profesionales",
-      "notes": "Limitado por plan"
-    },
     "servicios": {
       "table": "servicios",
       "limit_field": "limite_servicios",
@@ -47,8 +40,6 @@
     }
   },
   "tables": [
-    "profesionales",
-    "tipos_profesional",
     "servicios",
     "servicios_profesionales",
     "clientes",
@@ -60,7 +51,6 @@
     "tipos_bloqueo"
   ],
   "features": [
-    "Gestión de profesionales y especialidades",
     "Catálogo de servicios con precios",
     "Base de datos de clientes",
     "Agendamiento de citas múltiples servicios",

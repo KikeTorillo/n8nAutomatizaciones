@@ -123,14 +123,11 @@ class InvitacionModel {
                 SELECT
                     i.*,
                     p.nombre_completo AS profesional_nombre,
-                    p.tipo_profesional_id,
-                    tp.nombre AS tipo_profesional_nombre,
                     o.nombre_comercial AS organizacion_nombre,
                     o.logo_url AS organizacion_logo
                 FROM invitaciones_profesionales i
                 JOIN profesionales p ON i.profesional_id = p.id
                 JOIN organizaciones o ON i.organizacion_id = o.id
-                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
                 WHERE i.token = $1
             `, [token]);
 
@@ -168,7 +165,6 @@ class InvitacionModel {
                     email: invitacion.email,
                     nombre_sugerido: invitacion.nombre_sugerido,
                     profesional_nombre: invitacion.profesional_nombre,
-                    tipo_profesional: invitacion.tipo_profesional_nombre,
                     organizacion_nombre: invitacion.organizacion_nombre,
                     organizacion_logo: invitacion.organizacion_logo,
                     expira_en: invitacion.expira_en,

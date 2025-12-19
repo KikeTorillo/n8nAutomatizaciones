@@ -27,13 +27,7 @@
 CREATE INDEX idx_profesionales_org_activo
     ON profesionales (organizacion_id, activo) WHERE activo = TRUE;
 
--- 🎭 ÍNDICE 2: BÚSQUEDA POR TIPO PROFESIONAL
--- Propósito: Filtrar profesionales por especialidad en organización
--- Uso: WHERE organizacion_id = ? AND tipo_profesional_id = ? AND activo = TRUE
-CREATE INDEX idx_profesionales_tipo_org
-    ON profesionales (organizacion_id, tipo_profesional_id, activo) WHERE activo = TRUE;
-
--- 📧 ÍNDICE 3: EMAIL ÚNICO POR ORGANIZACIÓN
+-- 📧 ÍNDICE 2: EMAIL ÚNICO POR ORGANIZACIÓN
 -- Propósito: Validar email único dentro de cada organización
 -- Uso: Constraint de unicidad multi-tenant
 CREATE UNIQUE INDEX idx_profesionales_email_org

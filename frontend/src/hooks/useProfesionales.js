@@ -3,7 +3,7 @@ import { profesionalesApi } from '@/services/api/endpoints';
 
 /**
  * Hook para listar profesionales con filtros
- * @param {Object} params - { activo, tipo_profesional, busqueda, etc. }
+ * @param {Object} params - { activo, busqueda, estado, tipo, departamento_id, etc. }
  */
 export function useProfesionales(params = {}) {
   return useQuery({
