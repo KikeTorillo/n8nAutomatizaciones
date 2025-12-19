@@ -1,30 +1,14 @@
 -- ====================================================================
 -- MÓDULO NEGOCIO: TRIGGERS AUTOMÁTICOS
 -- ====================================================================
--- Triggers de mantenimiento y validación para las tablas del modelo
--- de negocio.
+-- Triggers de mantenimiento para las tablas de servicios.
+-- Refactorizado Dic 2025: triggers de profesionales movidos a su módulo.
 --
 -- TRIGGERS INCLUIDOS:
--- • trigger_actualizar_profesionales - Timestamps en profesionales
 -- • trigger_actualizar_timestamp_servicios - Timestamps en servicios
 -- • trigger_actualizar_timestamp_servicios_profesionales - Timestamps en relaciones
 -- • trigger_poblar_organizacion_id_servicios_profesionales - Multi-tenant
---
--- Migrado de: sql/schema/09-triggers.sql
--- Fecha migración: 17 Noviembre 2025
 -- ====================================================================
-
--- ====================================================================
--- 👨‍💼 TRIGGERS PARA TABLA PROFESIONALES
--- ====================================================================
--- Timestamps automáticos
--- ────────────────────────────────────────────────────────────────────
-
--- TRIGGER: ACTUALIZACIÓN AUTOMÁTICA DE TIMESTAMPS
--- Actualiza campo actualizado_en automáticamente
-CREATE TRIGGER trigger_actualizar_profesionales
-    BEFORE UPDATE ON profesionales
-    FOR EACH ROW EXECUTE FUNCTION actualizar_timestamp();
 
 -- ====================================================================
 -- 🎯 TRIGGERS PARA TABLA SERVICIOS
@@ -59,11 +43,6 @@ CREATE TRIGGER trigger_actualizar_timestamp_servicios_profesionales
 -- ====================================================================
 -- 📝 DOCUMENTACIÓN DE TRIGGERS
 -- ====================================================================
--- Comentarios explicativos para cada trigger implementado
--- ────────────────────────────────────────────────────────────────────
-
-COMMENT ON TRIGGER trigger_actualizar_profesionales ON profesionales IS
-'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp()';
 
 COMMENT ON TRIGGER trigger_actualizar_timestamp_servicios ON servicios IS
 'Actualiza automáticamente el campo actualizado_en usando función actualizar_timestamp_servicios()';

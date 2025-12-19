@@ -3,42 +3,34 @@
 -- ====================================================================
 --
 -- PROPÓSITO:
--- Configuración de pg_cron para mantenimiento automático del sistema.
+-- Configuración de jobs pg_cron para mantenimiento automático del sistema.
 --
 -- COMPONENTES:
--- • Instalación extensión pg_cron
 -- • 4 jobs programados (particiones, archivado, vacuum)
 -- • 2 vistas de monitoreo
 -- • 1 función de estado de jobs
 --
+-- NOTA: La extensión pg_cron se crea en:
+--   sql/core/fundamentos/01-extensiones.sql
+-- Esto es necesario para que el healthcheck de Docker pase temprano.
+--
 -- REQUISITOS PREVIOS:
--- 1. Instalar pg_cron en el sistema:
---    - Debian/Ubuntu: apt-get install postgresql-17-cron
---    - Docker: agregar al Dockerfile o usar imagen con pg_cron
---
--- 2. Configurar postgresql.conf:
---    shared_preload_libraries = 'pg_cron'
---
--- 3. Configurar cron.database_name en Dockerfile.postgres apuntando
---    a la base de datos principal donde se instala todo el schema.
+-- 1. pg_cron instalado (Dockerfile.postgres)
+-- 2. shared_preload_libraries = 'pg_cron' en postgresql.conf
+-- 3. cron.database_name configurado en Dockerfile.postgres
 --
 -- ORDEN DE CARGA: #12 (después de triggers)
--- VERSIÓN: 1.0.0
--- FECHA: 17 Noviembre 2025
+-- VERSIÓN: 1.1.0 (Dic 2025 - extensión movida a fundamentos)
 -- ====================================================================
 
 -- ====================================================================
--- 📦 INSTALACIÓN DE LA EXTENSIÓN PG_CRON
+-- 📦 VERIFICACIÓN DE EXTENSIÓN PG_CRON
 -- ====================================================================
--- Crear la extensión si no existe
--- NOTA: Debe ejecutarse como superusuario (postgres)
+-- La extensión ya fue creada en fundamentos/01-extensiones.sql
+-- Este CREATE es redundante pero seguro (IF NOT EXISTS)
 -- ────────────────────────────────────────────────────────────────────
 
 CREATE EXTENSION IF NOT EXISTS pg_cron;
-
-COMMENT ON EXTENSION pg_cron IS
-'Extensión para programar jobs cron dentro de PostgreSQL.
-Permite ejecutar funciones SQL de forma programada sin depender del cron del sistema.';
 
 -- ====================================================================
 -- ⏰ CONFIGURACIÓN DE ZONA HORARIA PARA PG_CRON

@@ -7,10 +7,24 @@
 -- Orden: 01
 --
 -- Contenido:
+-- - pg_cron (jobs automáticos - DEBE SER PRIMERO para healthcheck)
 -- - pg_trgm (búsqueda fuzzy y similitud de texto)
 -- - unaccent (normalización de texto sin acentos)
 -- - pgcrypto (funciones criptográficas)
 -- ====================================================================
+
+-- ====================================================================
+-- ⏰ EXTENSIÓN: PG_CRON (CRÍTICA - HEALTHCHECK)
+-- ====================================================================
+-- Jobs automáticos para mantenimiento del sistema
+-- IMPORTANTE: Debe crearse primero para que el healthcheck de Docker pase
+-- La tabla cron.job se crea automáticamente al instalar la extensión
+-- Los jobs específicos se configuran en sql/mantenimiento/06-pg-cron.sql
+-- ────────────────────────────────────────────────────────────────────
+CREATE EXTENSION IF NOT EXISTS pg_cron;
+
+COMMENT ON EXTENSION pg_cron IS
+'Extensión para jobs programados (cron). Creada temprano para healthcheck Docker.';
 
 -- ====================================================================
 -- 🔍 EXTENSIÓN: PG_TRGM
