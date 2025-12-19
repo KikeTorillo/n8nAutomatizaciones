@@ -165,4 +165,68 @@ router.patch('/:id/metricas',
     ProfesionalController.actualizarMetricas
 );
 
+// ========== Rutas Jerarquía Organizacional (Dic 2025) ==========
+
+// Obtener subordinados de un profesional
+router.get('/:id/subordinados',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.obtenerSubordinados),
+    ProfesionalController.obtenerSubordinados
+);
+
+// Obtener cadena de supervisores de un profesional
+router.get('/:id/supervisores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.obtenerSupervisores),
+    ProfesionalController.obtenerSupervisores
+);
+
+// ========== Rutas Categorías de Profesional (Dic 2025) ==========
+
+// Obtener categorías de un profesional
+router.get('/:id/categorias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.obtenerCategoriasProfesional),
+    ProfesionalController.obtenerCategorias
+);
+
+// Asignar categoría a un profesional
+router.post('/:id/categorias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.asignarCategoria),
+    ProfesionalController.asignarCategoria
+);
+
+// Eliminar categoría de un profesional
+router.delete('/:id/categorias/:categoriaId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.eliminarCategoria),
+    ProfesionalController.eliminarCategoria
+);
+
+// Sincronizar categorías de un profesional (reemplaza todas)
+router.put('/:id/categorias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    rateLimiting.apiRateLimit,
+    validation.validate(schemas.sincronizarCategorias),
+    ProfesionalController.sincronizarCategorias
+);
+
 module.exports = router;

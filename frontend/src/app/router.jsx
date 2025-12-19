@@ -79,6 +79,10 @@ const ConfiguracionPage = lazy(() => import('@/pages/configuracion/Configuracion
 const NegocioPage = lazy(() => import('@/pages/configuracion/NegocioPage'));
 const ModulosPage = lazy(() => import('@/pages/configuracion/ModulosPage'));
 const RecordatoriosPage = lazy(() => import('@/pages/configuracion/RecordatoriosPage'));
+const DepartamentosPage = lazy(() => import('@/pages/configuracion/DepartamentosPage'));
+const PuestosPage = lazy(() => import('@/pages/configuracion/PuestosPage'));
+const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/CategoriasPage'));
+const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -481,6 +485,39 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ModulosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/departamentos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(DepartamentosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/puestos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(PuestosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/categorias',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(CategoriasConfigPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Organigrama (Dic 2025)
+      {
+        path: 'configuracion/organigrama',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(OrganigramaPage)}
           </ProtectedRoute>
         ),
       },

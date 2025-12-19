@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw, Camera, X, Loader2 } from 'lucide-react';
+import {
+  User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw,
+  Camera, X, Loader2, Building2, Briefcase, UserCheck, Tag, Calendar, MapPin, Phone, ChevronDown
+} from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
@@ -15,12 +18,19 @@ import {
   useCrearProfesional,
   useActualizarProfesional,
   useProfesional,
-  useActualizarModulos
+  useActualizarModulos,
+  useSincronizarCategorias,
+  TIPOS_EMPLEADO,
+  ESTADOS_LABORALES,
+  TIPOS_CONTRATACION,
+  GENEROS,
+  ESTADOS_CIVILES
 } from '@/hooks/useProfesionales';
 import { useTiposProfesional } from '@/hooks/useTiposProfesional';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
 import { useUploadArchivo } from '@/hooks/useStorage';
+import { DepartamentoSelect, PuestoSelect, SupervisorSelect, CategoriasSelect } from '@/components/organizacion';
 
 /**
  * Colores predefinidos para el calendario
@@ -43,15 +53,15 @@ const COLORES_CALENDARIO = [
 
 /**
  * Schema de validación Zod para CREAR profesional
- * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
+ * Dic 2025: Ampliado con campos de gestión de empleados
  */
 const profesionalCreateSchema = z.object({
+  // === Datos Básicos ===
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres'),
   tipo_profesional_id: z.number({
     required_error: 'Debes seleccionar un tipo de profesional',
     invalid_type_error: 'Tipo inválido',
   }).int().positive('Debes seleccionar un tipo de profesional'),
-  // Email obligatorio para enviar invitación al crear
   email: z.string({
     required_error: 'El email es obligatorio para enviar la invitación',
   }).email('Email inválido').max(100, 'Máximo 100 caracteres'),
@@ -59,13 +69,33 @@ const profesionalCreateSchema = z.object({
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#753572'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
   activo: z.boolean().default(true),
+
+  // === Datos Personales (Dic 2025) ===
+  codigo: z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
+  genero: z.enum(['masculino', 'femenino', 'otro', 'no_especificado']).optional(),
+  estado_civil: z.enum(['soltero', 'casado', 'divorciado', 'viudo', 'union_libre']).optional(),
+  direccion: z.string().max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
+  contacto_emergencia_nombre: z.string().max(100).optional().or(z.literal('')),
+  contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+
+  // === Clasificación Laboral (Dic 2025) ===
+  tipo: z.enum(['operativo', 'administrativo', 'gerencial', 'ventas']).optional(),
+  estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).default('activo'),
+  tipo_contratacion: z.enum(['tiempo_completo', 'medio_tiempo', 'temporal', 'contrato', 'freelance']).optional(),
+  fecha_contratacion: z.string().optional().or(z.literal('')),
+
+  // === Estructura Organizacional (Dic 2025) ===
+  departamento_id: z.number().int().positive().optional().nullable(),
+  puesto_id: z.number().int().positive().optional().nullable(),
+  supervisor_id: z.number().int().positive().optional().nullable(),
 });
 
 /**
  * Schema de validación Zod para EDITAR profesional
- * 🔄 Migrado: tipo_profesional (string) → tipo_profesional_id (integer)
+ * Dic 2025: Ampliado con campos de gestión de empleados
  */
 const profesionalEditSchema = z.object({
+  // === Datos Básicos ===
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres').optional(),
   tipo_profesional_id: z.number().int().positive().optional(),
   email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
@@ -73,10 +103,25 @@ const profesionalEditSchema = z.object({
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').optional(),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
   activo: z.boolean().optional(),
-}).refine((data) => {
-  return Object.keys(data).some(key => data[key] !== undefined && data[key] !== '');
-}, {
-  message: 'Debes modificar al menos un campo',
+
+  // === Datos Personales (Dic 2025) ===
+  codigo: z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
+  genero: z.enum(['masculino', 'femenino', 'otro', 'no_especificado']).optional(),
+  estado_civil: z.enum(['soltero', 'casado', 'divorciado', 'viudo', 'union_libre']).optional(),
+  direccion: z.string().max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
+  contacto_emergencia_nombre: z.string().max(100).optional().or(z.literal('')),
+  contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+
+  // === Clasificación Laboral (Dic 2025) ===
+  tipo: z.enum(['operativo', 'administrativo', 'gerencial', 'ventas']).optional(),
+  estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).optional(),
+  tipo_contratacion: z.enum(['tiempo_completo', 'medio_tiempo', 'temporal', 'contrato', 'freelance']).optional(),
+  fecha_contratacion: z.string().optional().or(z.literal('')),
+
+  // === Estructura Organizacional (Dic 2025) ===
+  departamento_id: z.number().int().positive().optional().nullable(),
+  puesto_id: z.number().int().positive().optional().nullable(),
+  supervisor_id: z.number().int().positive().optional().nullable(),
 });
 
 /**
@@ -105,6 +150,16 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [fotoUrl, setFotoUrl] = useState(null);
   const [confirmarCancelarInvitacion, setConfirmarCancelarInvitacion] = useState(false);
   const uploadMutation = useUploadArchivo();
+
+  // Dic 2025: Secciones colapsables y categorías
+  const [seccionesAbiertas, setSeccionesAbiertas] = useState({
+    datosPersonales: false,
+    clasificacion: true,
+    organizacion: true,
+    acceso: true,
+  });
+  const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
+  const sincronizarCategoriasMutation = useSincronizarCategorias();
 
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
@@ -142,21 +197,42 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
     handleSubmit,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(isEditMode ? profesionalEditSchema : profesionalCreateSchema),
     defaultValues: isEditMode
       ? {}
       : {
+          // Datos básicos
           nombre_completo: '',
-          tipo_profesional_id: undefined, // Integer ID (requerido en create)
+          tipo_profesional_id: undefined,
           email: '',
           telefono: '',
           color_calendario: COLORES_CALENDARIO[0],
           descripcion: '',
           activo: true,
+          // Datos personales (Dic 2025)
+          codigo: '',
+          genero: undefined,
+          estado_civil: undefined,
+          direccion: '',
+          contacto_emergencia_nombre: '',
+          contacto_emergencia_telefono: '',
+          // Clasificación laboral (Dic 2025)
+          tipo: undefined,
+          estado: 'activo',
+          tipo_contratacion: undefined,
+          fecha_contratacion: '',
+          // Estructura organizacional (Dic 2025)
+          departamento_id: undefined,
+          puesto_id: undefined,
+          supervisor_id: undefined,
         },
   });
+
+  // Watch para departamento (filtrar puestos)
+  const departamentoSeleccionado = watch('departamento_id');
 
   // Reset formulario cuando cambia el modo (create/edit)
   useEffect(() => {
@@ -171,8 +247,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           color_calendario: COLORES_CALENDARIO[0],
           descripcion: '',
           activo: true,
+          // Nuevos campos Dic 2025
+          codigo: '',
+          genero: undefined,
+          estado_civil: undefined,
+          direccion: '',
+          contacto_emergencia_nombre: '',
+          contacto_emergencia_telefono: '',
+          tipo: undefined,
+          estado: 'activo',
+          tipo_contratacion: undefined,
+          fecha_contratacion: '',
+          departamento_id: undefined,
+          puesto_id: undefined,
+          supervisor_id: undefined,
         });
         setSelectedColor(COLORES_CALENDARIO[0]);
+        setCategoriasSeleccionadas([]);
       }
     }
   }, [isOpen, isEditMode, profesionalId, reset]);
@@ -181,13 +272,30 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   useEffect(() => {
     if (isEditMode && profesionalData && isOpen) {
       reset({
+        // Datos básicos
         nombre_completo: profesionalData.nombre_completo || '',
-        tipo_profesional_id: profesionalData.tipo_profesional_id || undefined, // Integer ID
+        tipo_profesional_id: profesionalData.tipo_profesional_id || undefined,
         email: profesionalData.email || '',
         telefono: profesionalData.telefono || '',
         color_calendario: profesionalData.color_calendario || COLORES_CALENDARIO[0],
-        descripcion: profesionalData.biografia || '', // Backend usa 'biografia'
+        descripcion: profesionalData.biografia || '',
         activo: profesionalData.activo !== undefined ? profesionalData.activo : true,
+        // Datos personales (Dic 2025)
+        codigo: profesionalData.codigo || '',
+        genero: profesionalData.genero || undefined,
+        estado_civil: profesionalData.estado_civil || undefined,
+        direccion: profesionalData.direccion || '',
+        contacto_emergencia_nombre: profesionalData.contacto_emergencia_nombre || '',
+        contacto_emergencia_telefono: profesionalData.contacto_emergencia_telefono || '',
+        // Clasificación laboral (Dic 2025)
+        tipo: profesionalData.tipo || undefined,
+        estado: profesionalData.estado || 'activo',
+        tipo_contratacion: profesionalData.tipo_contratacion || undefined,
+        fecha_contratacion: profesionalData.fecha_contratacion?.split('T')[0] || '',
+        // Estructura organizacional (Dic 2025)
+        departamento_id: profesionalData.departamento_id || undefined,
+        puesto_id: profesionalData.puesto_id || undefined,
+        supervisor_id: profesionalData.supervisor_id || undefined,
       });
       setSelectedColor(profesionalData.color_calendario || COLORES_CALENDARIO[0]);
 
@@ -207,6 +315,13 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         setFotoPreview(null);
       }
       setFotoFile(null);
+
+      // Dic 2025: Cargar categorías
+      if (profesionalData.categorias && Array.isArray(profesionalData.categorias)) {
+        setCategoriasSeleccionadas(profesionalData.categorias.map(c => c.id));
+      } else {
+        setCategoriasSeleccionadas([]);
+      }
     }
   }, [isEditMode, profesionalData, isOpen, reset]);
 
@@ -218,12 +333,27 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       setShowColorPicker(false);
       setEmailInvitacion('');
       setInvitacionActual(null);
-      // Dic 2025: Limpiar foto
+      // Dic 2025: Limpiar foto y categorías
       setFotoFile(null);
       setFotoPreview(null);
       setFotoUrl(null);
+      setCategoriasSeleccionadas([]);
+      setSeccionesAbiertas({
+        datosPersonales: false,
+        clasificacion: true,
+        organizacion: true,
+        acceso: true,
+      });
     }
   }, [isOpen, reset]);
+
+  // Toggle para secciones colapsables
+  const toggleSeccion = (seccion) => {
+    setSeccionesAbiertas(prev => ({
+      ...prev,
+      [seccion]: !prev[seccion]
+    }));
+  };
 
   // Handler para enviar invitación
   const handleEnviarInvitacion = async () => {
@@ -326,13 +456,30 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
       // Sanitizar campos opcionales vacíos
       const sanitized = {
+        // Datos básicos
         nombre_completo: data.nombre_completo?.trim(),
-        tipo_profesional_id: data.tipo_profesional_id, // Integer ID (requerido)
+        tipo_profesional_id: data.tipo_profesional_id,
         email: data.email?.trim() || undefined,
         telefono: data.telefono?.trim() || undefined,
         color_calendario: data.color_calendario,
-        biografia: data.descripcion?.trim() || undefined, // Backend usa 'biografia'
+        biografia: data.descripcion?.trim() || undefined,
         activo: data.activo,
+        // Datos personales (Dic 2025)
+        codigo: data.codigo?.trim() || undefined,
+        genero: data.genero || undefined,
+        estado_civil: data.estado_civil || undefined,
+        direccion: data.direccion?.trim() || undefined,
+        contacto_emergencia_nombre: data.contacto_emergencia_nombre?.trim() || undefined,
+        contacto_emergencia_telefono: data.contacto_emergencia_telefono?.trim() || undefined,
+        // Clasificación laboral (Dic 2025)
+        tipo: data.tipo || undefined,
+        estado: data.estado || 'activo',
+        tipo_contratacion: data.tipo_contratacion || undefined,
+        fecha_contratacion: data.fecha_contratacion || undefined,
+        // Estructura organizacional (Dic 2025)
+        departamento_id: data.departamento_id || null,
+        puesto_id: data.puesto_id || null,
+        supervisor_id: data.supervisor_id || null,
         // Nov 2025: Incluir módulos
         modulos_acceso: modulosAcceso,
         // Dic 2025: Incluir foto
@@ -357,11 +504,35 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           });
         }
 
+        // Dic 2025: Sincronizar categorías si cambiaron
+        const categoriasOriginales = (profesionalData.categorias || []).map(c => c.id).sort();
+        const categoriasNuevas = [...categoriasSeleccionadas].sort();
+        const categoriasCambiaron = JSON.stringify(categoriasOriginales) !== JSON.stringify(categoriasNuevas);
+
+        if (categoriasCambiaron) {
+          await sincronizarCategoriasMutation.mutateAsync({
+            profesionalId,
+            categoriaIds: categoriasSeleccionadas
+          });
+        }
+
         toast.success('Profesional actualizado exitosamente');
       } else {
         // Modo creación: crear profesional y enviar invitación automáticamente
         const resultado = await crearMutation.mutateAsync(sanitized);
         const nuevoProfesionalId = resultado.data?.id || resultado.id;
+
+        // Sincronizar categorías si hay alguna seleccionada
+        if (nuevoProfesionalId && categoriasSeleccionadas.length > 0) {
+          try {
+            await sincronizarCategoriasMutation.mutateAsync({
+              profesionalId: nuevoProfesionalId,
+              categoriaIds: categoriasSeleccionadas
+            });
+          } catch (catErr) {
+            console.error('Error sincronizando categorías:', catErr);
+          }
+        }
 
         // Enviar invitación automáticamente
         if (nuevoProfesionalId && data.email?.trim()) {
@@ -373,7 +544,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
             });
             toast.success('Profesional creado e invitación enviada');
           } catch (invErr) {
-            // El profesional se creó pero falló la invitación
             console.error('Error enviando invitación:', invErr);
             toast.warning('Profesional creado, pero hubo un error al enviar la invitación. Puedes reenviarla desde la edición.');
           }
@@ -388,10 +558,11 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       setModulosAcceso({ agendamiento: true, pos: false, inventario: false });
       setEmailInvitacion('');
       setInvitacionActual(null);
-      // Dic 2025: Limpiar foto
+      // Dic 2025: Limpiar foto y categorías
       setFotoFile(null);
       setFotoPreview(null);
       setFotoUrl(null);
+      setCategoriasSeleccionadas([]);
     } catch (error) {
       toast.error(error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} profesional`);
     }
@@ -584,6 +755,274 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   />
                 )}
               />
+
+              {/* ========== SECCIÓN: Clasificación Laboral (Dic 2025) ========== */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeccion('clasificacion')}
+                  className="w-full flex items-center justify-between gap-2 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Briefcase className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Clasificación Laboral</h4>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.clasificacion ? 'rotate-180' : ''}`} />
+                </button>
+
+                {seccionesAbiertas.clasificacion && (
+                  <div className="space-y-4 pl-7">
+                    {/* Código de empleado */}
+                    <FormField
+                      name="codigo"
+                      control={control}
+                      label="Código de Empleado"
+                      placeholder="EMP-001"
+                      helperText="Identificador único interno (opcional)"
+                    />
+
+                    {/* Tipo de empleado y Estado laboral */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Controller
+                        name="tipo"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Tipo de Empleado"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value || undefined)}
+                            options={Object.entries(TIPOS_EMPLEADO).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            placeholder="Selecciona tipo"
+                            error={errors.tipo?.message}
+                          />
+                        )}
+                      />
+
+                      <Controller
+                        name="estado"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Estado Laboral"
+                            value={value || 'activo'}
+                            onChange={(e) => onChange(e.target.value || 'activo')}
+                            options={Object.entries(ESTADOS_LABORALES).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            error={errors.estado?.message}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    {/* Tipo de contratación y Fecha */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Controller
+                        name="tipo_contratacion"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Tipo de Contratación"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value || undefined)}
+                            options={Object.entries(TIPOS_CONTRATACION).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            placeholder="Selecciona tipo"
+                            error={errors.tipo_contratacion?.message}
+                          />
+                        )}
+                      />
+
+                      <FormField
+                        name="fecha_contratacion"
+                        control={control}
+                        type="date"
+                        label="Fecha de Contratación"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ========== SECCIÓN: Estructura Organizacional (Dic 2025) ========== */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeccion('organizacion')}
+                  className="w-full flex items-center justify-between gap-2 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Estructura Organizacional</h4>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.organizacion ? 'rotate-180' : ''}`} />
+                </button>
+
+                {seccionesAbiertas.organizacion && (
+                  <div className="space-y-4 pl-7">
+                    {/* Departamento y Puesto */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Controller
+                        name="departamento_id"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <DepartamentoSelect
+                            {...field}
+                            value={value?.toString() || ''}
+                            onChange={(e) => {
+                              const newVal = e.target.value ? parseInt(e.target.value, 10) : undefined;
+                              onChange(newVal);
+                              // Limpiar puesto si cambia departamento
+                              if (newVal !== value) {
+                                setValue('puesto_id', undefined);
+                              }
+                            }}
+                            error={errors.departamento_id?.message}
+                          />
+                        )}
+                      />
+
+                      <Controller
+                        name="puesto_id"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <PuestoSelect
+                            {...field}
+                            value={value?.toString() || ''}
+                            onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                            departamentoId={departamentoSeleccionado}
+                            error={errors.puesto_id?.message}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    {/* Supervisor */}
+                    <Controller
+                      name="supervisor_id"
+                      control={control}
+                      render={({ field: { value, onChange, ...field } }) => (
+                        <SupervisorSelect
+                          {...field}
+                          value={value?.toString() || ''}
+                          onChange={(e) => onChange(e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                          excludeId={profesionalId}
+                          departamentoId={departamentoSeleccionado}
+                          error={errors.supervisor_id?.message}
+                        />
+                      )}
+                    />
+
+                    {/* Categorías */}
+                    <CategoriasSelect
+                      label="Categorías"
+                      value={categoriasSeleccionadas}
+                      onChange={setCategoriasSeleccionadas}
+                      helper="Asigna especialidades, niveles, áreas o certificaciones"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ========== SECCIÓN: Datos Personales (Dic 2025) - Colapsada ========== */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeccion('datosPersonales')}
+                  className="w-full flex items-center justify-between gap-2 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <User className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Datos Personales</h4>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">(Opcional)</span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.datosPersonales ? 'rotate-180' : ''}`} />
+                </button>
+
+                {seccionesAbiertas.datosPersonales && (
+                  <div className="space-y-4 pl-7">
+                    {/* Género y Estado Civil */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <Controller
+                        name="genero"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Género"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value || undefined)}
+                            options={Object.entries(GENEROS).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            placeholder="Selecciona género"
+                          />
+                        )}
+                      />
+
+                      <Controller
+                        name="estado_civil"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Estado Civil"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value || undefined)}
+                            options={Object.entries(ESTADOS_CIVILES).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            placeholder="Selecciona estado civil"
+                          />
+                        )}
+                      />
+                    </div>
+
+                    {/* Dirección */}
+                    <FormField
+                      name="direccion"
+                      control={control}
+                      label="Dirección"
+                      placeholder="Calle, número, colonia, ciudad..."
+                    />
+
+                    {/* Contacto de Emergencia */}
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Phone className="h-4 w-4 text-gray-500" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Contacto de Emergencia</span>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          name="contacto_emergencia_nombre"
+                          control={control}
+                          label="Nombre"
+                          placeholder="Nombre del contacto"
+                        />
+                        <FormField
+                          name="contacto_emergencia_telefono"
+                          control={control}
+                          type="tel"
+                          label="Teléfono"
+                          placeholder="5512345678"
+                          maxLength={10}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Nov 2025: Sección Acceso al Sistema y Módulos */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">

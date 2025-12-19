@@ -1,0 +1,41 @@
+{
+  "name": "contabilidad",
+  "display_name": "Contabilidad",
+  "version": "1.0.0",
+  "description": "Sistema contable: catálogo SAT, asientos contables, reportes financieros",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 299,
+    "currency": "MXN",
+    "incluido_en": ["empresarial"],
+    "addon_para": ["profesional"],
+    "notes": "Contabilidad completa con catálogo SAT"
+  },
+  "routes": {
+    "contabilidad": "/api/v1/contabilidad"
+  },
+  "resources": {
+    "asientos": {
+      "table": "asientos_contables",
+      "limit_field": null,
+      "notes": "Tabla particionada por fecha"
+    },
+    "cuentas": {
+      "table": "cuentas_contables",
+      "limit_field": null,
+      "notes": "Catálogo de cuentas"
+    }
+  },
+  "features": [
+    "Catálogo de cuentas SAT",
+    "Asientos contables con partida doble",
+    "Reportes: balance general, estado de resultados",
+    "Cierre de períodos contables",
+    "Particionamiento por fecha para rendimiento"
+  ],
+  "priority": 50,
+  "required": false,
+  "can_disable": true
+}

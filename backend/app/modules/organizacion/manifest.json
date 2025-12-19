@@ -1,0 +1,55 @@
+{
+  "name": "organizacion",
+  "display_name": "Estructura Organizacional",
+  "version": "1.0.0",
+  "description": "Gestión de estructura organizacional: departamentos, puestos y categorías de profesional",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "used_by": ["agendamiento"],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo de gestión organizacional, incluido en todos los planes"
+  },
+  "routes": {
+    "departamentos": "/api/v1/departamentos",
+    "puestos": "/api/v1/puestos",
+    "categorias-profesional": "/api/v1/categorias-profesional"
+  },
+  "resources": {
+    "departamentos": {
+      "table": "departamentos",
+      "limit_field": null,
+      "notes": "Sin límite por plan"
+    },
+    "puestos": {
+      "table": "puestos",
+      "limit_field": null,
+      "notes": "Sin límite por plan"
+    },
+    "categorias_profesional": {
+      "table": "categorias_profesional",
+      "limit_field": null,
+      "notes": "Sin límite por plan"
+    }
+  },
+  "tables": [
+    "departamentos",
+    "puestos",
+    "categorias_profesional",
+    "profesionales_categorias"
+  ],
+  "features": [
+    "Gestión de departamentos jerárquicos",
+    "Catálogo de puestos de trabajo",
+    "Categorías flexibles para profesionales (especialidad, nivel, área, certificación)",
+    "Asignación de gerentes a departamentos",
+    "Rangos salariales por puesto",
+    "Árbol visual de departamentos"
+  ],
+  "priority": 5,
+  "required": false,
+  "can_disable": false
+}

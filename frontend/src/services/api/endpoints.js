@@ -298,6 +298,70 @@ export const profesionalesApi = {
    */
   actualizarModulos: (profesionalId, modulosAcceso) =>
     apiClient.patch(`/profesionales/${profesionalId}/modulos`, { modulos_acceso: modulosAcceso }),
+
+  // ========== Gestión Empleados - Dic 2025 ==========
+
+  /**
+   * Listar profesionales por estado laboral
+   * @param {string} estado - 'activo' | 'vacaciones' | 'incapacidad' | 'suspendido' | 'baja'
+   * @param {Object} params - Filtros adicionales
+   */
+  listarPorEstado: (estado, params = {}) =>
+    apiClient.get('/profesionales', { params: { estado, ...params } }),
+
+  /**
+   * Listar profesionales por departamento
+   * @param {number} departamentoId
+   * @param {Object} params - Filtros adicionales
+   */
+  listarPorDepartamento: (departamentoId, params = {}) =>
+    apiClient.get('/profesionales', { params: { departamento_id: departamentoId, ...params } }),
+
+  /**
+   * Obtener subordinados de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { directos_solo?: boolean }
+   */
+  obtenerSubordinados: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/subordinados`, { params }),
+
+  /**
+   * Obtener cadena de supervisores de un profesional
+   * @param {number} profesionalId
+   */
+  obtenerCadenaSupervisores: (profesionalId) =>
+    apiClient.get(`/profesionales/${profesionalId}/supervisores`),
+
+  /**
+   * Obtener categorías de un profesional
+   * @param {number} profesionalId
+   */
+  obtenerCategorias: (profesionalId) =>
+    apiClient.get(`/profesionales/${profesionalId}/categorias`),
+
+  /**
+   * Asignar categoría a un profesional
+   * @param {number} profesionalId
+   * @param {number} categoriaId
+   */
+  asignarCategoria: (profesionalId, categoriaId) =>
+    apiClient.post(`/profesionales/${profesionalId}/categorias`, { categoria_id: categoriaId }),
+
+  /**
+   * Eliminar categoría de un profesional
+   * @param {number} profesionalId
+   * @param {number} categoriaId
+   */
+  eliminarCategoria: (profesionalId, categoriaId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/categorias/${categoriaId}`),
+
+  /**
+   * Sincronizar categorías de un profesional (reemplaza todas)
+   * @param {number} profesionalId
+   * @param {Array<number>} categoriaIds - Array de IDs de categorías
+   */
+  sincronizarCategorias: (profesionalId, categoriaIds) =>
+    apiClient.put(`/profesionales/${profesionalId}/categorias`, { categoria_ids: categoriaIds }),
 };
 
 // ==================== TIPOS PROFESIONAL ====================
@@ -2989,6 +3053,122 @@ export const sucursalesApi = {
    * @returns {Promise<Object>}
    */
   cancelarTransferencia: (id) => apiClient.post(`/sucursales/transferencias/${id}/cancelar`),
+};
+
+// ==================== ORGANIZACIÓN (Dic 2025) ====================
+
+/**
+ * API de Departamentos
+ * Gestión de estructura departamental jerárquica
+ */
+export const departamentosApi = {
+  /**
+   * Crear departamento
+   * @param {Object} data - { nombre, descripcion?, codigo?, parent_id?, gerente_id?, activo? }
+   */
+  crear: (data) => apiClient.post('/departamentos', data),
+
+  /**
+   * Listar departamentos
+   * @param {Object} params - { activo?, parent_id?, limit?, offset? }
+   */
+  listar: (params = {}) => apiClient.get('/departamentos', { params }),
+
+  /**
+   * Obtener árbol jerárquico de departamentos
+   */
+  obtenerArbol: () => apiClient.get('/departamentos/arbol'),
+
+  /**
+   * Obtener departamento por ID
+   */
+  obtener: (id) => apiClient.get(`/departamentos/${id}`),
+
+  /**
+   * Actualizar departamento
+   */
+  actualizar: (id, data) => apiClient.put(`/departamentos/${id}`, data),
+
+  /**
+   * Eliminar departamento (soft delete)
+   */
+  eliminar: (id) => apiClient.delete(`/departamentos/${id}`),
+};
+
+/**
+ * API de Puestos
+ * Gestión de puestos de trabajo
+ */
+export const puestosApi = {
+  /**
+   * Crear puesto
+   * @param {Object} data - { nombre, descripcion?, codigo?, departamento_id?, salario_minimo?, salario_maximo?, activo? }
+   */
+  crear: (data) => apiClient.post('/puestos', data),
+
+  /**
+   * Listar puestos
+   * @param {Object} params - { activo?, departamento_id?, limit?, offset? }
+   */
+  listar: (params = {}) => apiClient.get('/puestos', { params }),
+
+  /**
+   * Obtener puesto por ID
+   */
+  obtener: (id) => apiClient.get(`/puestos/${id}`),
+
+  /**
+   * Actualizar puesto
+   */
+  actualizar: (id, data) => apiClient.put(`/puestos/${id}`, data),
+
+  /**
+   * Eliminar puesto (soft delete)
+   */
+  eliminar: (id) => apiClient.delete(`/puestos/${id}`),
+};
+
+/**
+ * API de Categorías de Profesional
+ * Categorías flexibles: especialidad, nivel, área, certificación
+ */
+export const categoriasProfesionalApi = {
+  /**
+   * Crear categoría
+   * @param {Object} data - { nombre, descripcion?, tipo_categoria?, color?, icono?, orden?, activo? }
+   */
+  crear: (data) => apiClient.post('/categorias-profesional', data),
+
+  /**
+   * Listar categorías
+   * @param {Object} params - { activo?, tipo_categoria?, agrupado?, limit?, offset? }
+   */
+  listar: (params = {}) => apiClient.get('/categorias-profesional', { params }),
+
+  /**
+   * Listar categorías agrupadas por tipo
+   */
+  listarAgrupadas: () => apiClient.get('/categorias-profesional', { params: { agrupado: 'true' } }),
+
+  /**
+   * Obtener categoría por ID
+   */
+  obtener: (id) => apiClient.get(`/categorias-profesional/${id}`),
+
+  /**
+   * Obtener profesionales de una categoría
+   */
+  obtenerProfesionales: (id) => apiClient.get(`/categorias-profesional/${id}/profesionales`),
+
+  /**
+   * Actualizar categoría
+   */
+  actualizar: (id, data) => apiClient.put(`/categorias-profesional/${id}`, data),
+
+  /**
+   * Eliminar categoría (soft delete)
+   */
+  eliminar: (id) => apiClient.delete(`/categorias-profesional/${id}`),
 };
 
 export default {

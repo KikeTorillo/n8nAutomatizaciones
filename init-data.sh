@@ -4,7 +4,7 @@ set -e;
 echo "🚀 Inicializando ecosistema completo de bases de datos..."
 echo "📁 Usando arquitectura 100% modular:"
 echo "   ├── setup/           - Configuración inicial (usuarios, DBs, permisos)"
-echo "   ├── [17 módulos]/    - 17 módulos SQL independientes (incl. Website Dic 2025)"
+echo "   ├── [18 módulos]/    - 18 módulos SQL independientes (incl. Organización Dic 2025)"
 echo "   └── data/            - Datos iniciales y plantillas"
 
 # Definir directorio de scripts SQL
@@ -102,6 +102,18 @@ echo "       🔄 Triggers automáticos..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/negocio/05-triggers.sql"
 echo "       📨 Sistema de invitaciones (profesionales)..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/negocio/06-invitaciones.sql"
+echo ""
+echo "    🏛️ MÓDULO: Organización (Estructura Organizacional - Dic 2025)"
+echo "       📋 Tablas organización (4 tablas: departamentos, puestos, categorias_profesional, profesionales_categorias)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/organizacion/01-tablas.sql"
+echo "       📊 Índices especializados (nuevos campos profesionales)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/organizacion/02-indices.sql"
+echo "       🔗 Foreign Keys diferidas (departamentos, puestos, supervisores)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/organizacion/03-foreign-keys.sql"
+echo "       ⚡ Funciones PL/pgSQL (6 funciones: jerarquía, subordinados, validaciones)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/organizacion/04-funciones.sql"
+echo "       🛡️ Políticas RLS (8 políticas multi-tenant)..."
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/organizacion/05-rls-policies.sql"
 echo ""
 echo "    📅 MÓDULO: Agendamiento (nueva estructura modular)"
 echo "       📋 Tablas agendamiento (horarios_profesionales)..."
@@ -325,7 +337,7 @@ echo "    💳 ACTUALIZACIÓN: Límites de planes para Inventario + POS"
 echo "       📋 Agregando columnas de límites a planes_subscripcion..."
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" -f "$SQL_DIR/core/schema/UPDATE_planes_subscripcion_inventario_pos.sql"
 echo ""
-echo "✅ Migración completa a arquitectura modular finalizada (17 módulos independientes)"
+echo "✅ Migración completa a arquitectura modular finalizada (18 módulos independientes)"
 echo ""
 
 # 3. Insertar plantillas de servicios - ELIMINADO (sistema de plantillas removido)
@@ -378,7 +390,7 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
         pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as "Tamaño"
     FROM pg_tables
     WHERE schemaname = 'public'
-    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios', 'pagos', 'metodos_pago', 'website_config')
+    AND tablename IN ('usuarios', 'organizaciones', 'profesionales', 'clientes', 'servicios', 'citas', 'horarios_disponibilidad', 'horarios_profesionales', 'subscripciones', 'historial_subscripciones', 'eventos_sistema', 'bloqueos_horarios', 'pagos', 'metodos_pago', 'website_config', 'departamentos', 'puestos', 'categorias_profesional')
     ORDER BY tablename;
 EOSQL
 
@@ -455,12 +467,13 @@ echo "⚙️ CONFIGURACIÓN:"
 echo "  └── Tabla 'db_connections_config' creada con configuraciones de conexión"
 echo ""
 echo "📁 ESTRUCTURA MODULAR:"
-echo "  ├── Arquitectura 100% modular con 17 módulos SQL independientes"
+echo "  ├── Arquitectura 100% modular con 18 módulos SQL independientes"
 echo "  ├── Migración completa (17 Nov 2025): directorio schema/ legacy eliminado"
 echo "  ├── Nuevo módulo Marketplace (17 Nov 2025): Directorio público SEO-optimizado"
 echo "  ├── Nuevos módulos Inventario + POS (20 Nov 2025): Fase 0 completada"
 echo "  ├── Nuevo módulo Ubicaciones (24 Nov 2025): Catálogo geográfico México"
 echo "  ├── Nuevo módulo Website (6 Dic 2025): Sitio web público por organización"
+echo "  ├── Nuevo módulo Organización (18 Dic 2025): Estructura organizacional (departamentos, puestos, categorías)"
 echo "  ├── Máxima mantenibilidad (100-500 líneas por archivo)"
 echo "  ├── Mejoras post-auditoría aplicadas (Oct 2025): Calificación 9.5/10"
 echo "  ├── Documentación completa en sql/README.md"

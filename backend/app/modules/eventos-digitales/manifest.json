@@ -1,12 +1,27 @@
 {
   "name": "eventos-digitales",
+  "display_name": "Eventos Digitales",
   "version": "1.0.0",
   "description": "Módulo de Eventos Digitales - Invitaciones para bodas, XV años, bautizos, cumpleaños y eventos corporativos",
   "author": "Nexo Team",
   "depends": ["core"],
+  "pricing": {
+    "base_mensual": 199,
+    "currency": "MXN",
+    "incluido_en": ["profesional", "empresarial"],
+    "addon_para": ["basico"],
+    "notes": "Invitaciones digitales ilimitadas"
+  },
   "routes": {
-    "eventos": "/api/v1/eventos-digitales",
-    "public": "/api/v1/public/evento"
+    "eventosRoutes": "/api/v1/eventos-digitales",
+    "invitadosRoutes": "/api/v1/eventos-digitales",
+    "ubicacionesRoutes": "/api/v1/eventos-digitales",
+    "mesaRegalosRoutes": "/api/v1/eventos-digitales",
+    "felicitacionesRoutes": "/api/v1/eventos-digitales",
+    "plantillasRoutes": "/api/v1/eventos-digitales",
+    "mesasRoutes": "/api/v1/eventos-digitales",
+    "galeriaRoutes": "/api/v1/eventos-digitales",
+    "publicRoutes": "/api/v1/public"
   },
   "models": [
     "evento",

@@ -209,6 +209,114 @@ Cada plataforma tiene sus propios requisitos de configuración
 y credenciales en la tabla chatbot_credentials.';
 
 -- ====================================================================
+-- 👷 ENUM TIPO_EMPLEADO - CLASIFICACIÓN ORGANIZACIONAL
+-- ====================================================================
+-- Clasificación para reportes y organigrama.
+-- ⚠️ NO restringe funcionalidades (eso lo hace modulos_acceso)
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE tipo_empleado AS ENUM (
+    'operativo',          -- Personal de campo/servicio
+                          -- • Atiende clientes directamente
+                          -- • Ejecuta servicios o ventas
+
+    'administrativo',     -- Personal de oficina
+                          -- • Gestión, contabilidad, RRHH
+                          -- • No atiende clientes directamente
+
+    'gerencial',          -- Supervisores, gerentes
+                          -- • Tiene subordinados a cargo
+                          -- • Responsable de áreas/equipos
+
+    'ventas'              -- Vendedores, rutas
+                          -- • Enfocado en ventas/comercial
+                          -- • Puede tener metas de ventas
+);
+
+COMMENT ON TYPE tipo_empleado IS
+'Clasificación organizacional de empleados. Solo para reportes y organigrama.
+NO restringe funcionalidades - eso lo controla modulos_acceso en profesionales.';
+
+-- ====================================================================
+-- 📋 ENUM ESTADO_LABORAL - ESTADO DEL EMPLEADO
+-- ====================================================================
+-- Estados del ciclo laboral del empleado.
+-- Impacta en disponibilidad para citas y acceso al sistema.
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE estado_laboral AS ENUM (
+    'activo',             -- Trabajando normalmente
+                          -- • Puede atender citas
+                          -- • Acceso completo según rol
+
+    'vacaciones',         -- En período vacacional
+                          -- • No disponible para citas
+                          -- • Sin acceso temporal al sistema
+
+    'incapacidad',        -- Incapacidad médica
+                          -- • No disponible para citas
+                          -- • Puede tener acceso limitado
+
+    'suspendido',         -- Suspensión temporal
+                          -- • No disponible para citas
+                          -- • Sin acceso al sistema
+
+    'baja'                -- Ya no trabaja en la organización
+                          -- • Registro histórico
+                          -- • Sin acceso al sistema
+                          -- • Requiere fecha_baja
+);
+
+COMMENT ON TYPE estado_laboral IS
+'Estados del ciclo laboral del empleado. Impacta disponibilidad y acceso.
+Estado "baja" requiere fecha_baja obligatoria.';
+
+-- ====================================================================
+-- 📄 ENUM TIPO_CONTRATACION - TIPO DE CONTRATO
+-- ====================================================================
+-- Modalidad de contratación del empleado.
+-- Para gestión de nómina y RRHH.
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE tipo_contratacion AS ENUM (
+    'tiempo_completo',    -- Jornada completa (40+ hrs/semana)
+                          -- • Beneficios completos
+                          -- • Salario fijo mensual
+
+    'medio_tiempo',       -- Media jornada (20 hrs/semana aprox)
+                          -- • Beneficios proporcionales
+                          -- • Horario reducido
+
+    'temporal',           -- Contrato temporal
+                          -- • Fecha de término definida
+                          -- • Para cubrir ausencias o proyectos
+
+    'contrato',           -- Por contrato/proyecto
+                          -- • Entregables específicos
+                          -- • Duración definida
+
+    'freelance'           -- Independiente
+                          -- • Honorarios por servicio
+                          -- • Sin relación laboral formal
+);
+
+COMMENT ON TYPE tipo_contratacion IS
+'Modalidad de contratación del empleado. Para gestión de nómina y RRHH.';
+
+-- ====================================================================
+-- 👤 ENUM GENERO - GÉNERO DEL EMPLEADO
+-- ====================================================================
+-- Género para información personal del empleado.
+-- Opcional, con opción de no especificar.
+-- ────────────────────────────────────────────────────────────────────
+CREATE TYPE genero AS ENUM (
+    'masculino',          -- Masculino
+    'femenino',           -- Femenino
+    'otro',               -- Otro / No binario
+    'no_especificado'     -- Prefiere no especificar (default)
+);
+
+COMMENT ON TYPE genero IS
+'Género del empleado. Campo opcional con default "no_especificado".';
+
+-- ====================================================================
 -- 📝 NOTAS FINALES
 -- ====================================================================
 -- • Estos ENUMs son UNIVERSALES para cualquier SaaS

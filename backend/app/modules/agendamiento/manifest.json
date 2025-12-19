@@ -16,13 +16,13 @@
   "routes": {
     "profesionales": "/api/v1/profesionales",
     "servicios": "/api/v1/servicios",
-    "clientes": "/api/v1/clientes",
     "citas": "/api/v1/citas",
-    "horarios": "/api/v1/horarios-profesionales",
+    "horarios-profesionales": "/api/v1/horarios-profesionales",
     "disponibilidad": "/api/v1/disponibilidad",
-    "bloqueos": "/api/v1/bloqueos-horarios",
-    "tipos_profesional": "/api/v1/tipos-profesional",
-    "tipos_bloqueo": "/api/v1/tipos-bloqueo"
+    "bloqueos-horarios": "/api/v1/bloqueos-horarios",
+    "tipos-profesional": "/api/v1/tipos-profesional",
+    "tipos-bloqueo": "/api/v1/tipos-bloqueo",
+    "chatbots": "/api/v1/chatbots"
   },
   "resources": {
     "profesionales": {

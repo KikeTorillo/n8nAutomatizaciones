@@ -1,192 +1,40 @@
+/**
+ * @fileoverview API v1 Routes - Auto-registro dinámico
+ * @description Usa RouteLoader para cargar rutas automáticamente desde manifests
+ * @version 2.0.0
+ * @date Diciembre 2025
+ *
+ * ARQUITECTURA:
+ * - RouteLoader descubre módulos con manifest.json
+ * - Cada manifest define sus rutas en el campo "routes"
+ * - Rutas legacy se mantienen para compatibilidad
+ *
+ * Para agregar un nuevo módulo:
+ * 1. Crear manifest.json con campo "routes"
+ * 2. Crear routes/index.js que exporte los routers
+ * 3. El RouteLoader lo detectará automáticamente
+ */
+
 const express = require('express');
+const RouteLoader = require('../../../core/RouteLoader');
 
-// ========================================
-// MÓDULO CORE - Migrado a modules/core
-// ========================================
-const authRouter = require('../../../modules/core/routes/auth');
-const setupRouter = require('../../../modules/core/routes/setup');
-const superadminRouter = require('../../../modules/core/routes/superadmin');
-const organizacionesRouter = require('../../../modules/core/routes/organizaciones');
-const usuariosRouter = require('../../../modules/core/routes/usuarios');
-const planesRouter = require('../../../modules/core/routes/planes');
-const pagosRouter = require('../../../modules/core/routes/pagos');
-const webhooksRouter = require('../../../modules/core/routes/webhooks');
-const subscripcionesRouter = require('../../../modules/core/routes/subscripciones');
-const modulosRouter = require('../../../modules/core/routes/modulos');
-const ubicacionesRouter = require('../../../modules/core/routes/ubicaciones');
-const invitacionesRouter = require('./invitaciones');
-
-// ========================================
-// PENDIENTE DE MIGRAR (mercadopago faltó)
-// ========================================
-const mercadopagoRouter = require('./mercadopago');
-
-// ========================================
-// MÓDULO CORE - Clientes (Nov 2025 - Migrado desde Agendamiento)
-// ========================================
-const clientesRouter = require('./clientes');
-
-// ========================================
-// MÓDULO AGENDAMIENTO - Migrado a modules/agendamiento
-// ========================================
-const profesionalesRouter = require('../../../modules/agendamiento/routes/profesionales');
-const serviciosRouter = require('../../../modules/agendamiento/routes/servicios');
-const citasRouter = require('../../../modules/agendamiento/routes/citas');
-const bloqueosHorariosRouter = require('../../../modules/agendamiento/routes/bloqueos-horarios');
-const tiposBloqueoRouter = require('../../../modules/agendamiento/routes/tipos-bloqueo');
-const tiposProfesionalRouter = require('../../../modules/agendamiento/routes/tipos-profesional');
-const horariosProfesionalesRouter = require('../../../modules/agendamiento/routes/horarios-profesionales');
-const chatbotsRouter = require('../../../modules/agendamiento/routes/chatbots');
-const disponibilidadRouter = require('../../../modules/agendamiento/routes/disponibilidad');
-
-// ========================================
-// MÓDULO INVENTARIO - Migrado a modules/inventario
-// ========================================
-const inventarioRouter = require('../../../modules/inventario/routes');
-
-// ========================================
-// MÓDULO POS - Migrado a modules/pos
-// ========================================
-const posRouter = require('../../../modules/pos/routes');
-
-// ========================================
-// MÓDULO MARKETPLACE - Migrado a modules/marketplace
-// ========================================
-const marketplaceRouter = require('../../../modules/marketplace/routes');
-
-// ========================================
-// MÓDULO COMISIONES - Migrado a modules/comisiones
-// ========================================
-const comisionesRouter = require('../../../modules/comisiones/routes');
-
-// ========================================
-// MÓDULO CONTABILIDAD - Dic 2025
-// Catálogo SAT, asientos, reportes financieros
-// ========================================
-const contabilidadRouter = require('../../../modules/contabilidad/routes');
-
-// ========================================
-// MÓDULO RECORDATORIOS - Nov 2025
-// ========================================
-const recordatoriosRouter = require('../../../modules/recordatorios/routes/recordatorios.routes');
-
-// ========================================
-// MÓDULO STORAGE - Dic 2025
-// ========================================
-const storageRouter = require('../../../modules/storage/routes');
-
-// ========================================
-// MÓDULO EVENTOS DIGITALES - Dic 2025
-// Invitaciones para bodas, XV años, bautizos, etc.
-// ========================================
-const {
-    eventosRoutes,
-    invitadosRoutes,
-    ubicacionesRoutes: eventosUbicacionesRoutes,
-    mesaRegalosRoutes,
-    felicitacionesRoutes,
-    plantillasRoutes,
-    mesasRoutes,
-    galeriaRoutes,
-    publicRoutes: eventosPublicRoutes
-} = require('../../../modules/eventos-digitales/routes');
-
-// ========================================
-// MÓDULO WEBSITE - Dic 2025
-// Sitio web público por organización
-// ========================================
-const { websiteRouter, publicRouter: websitePublicRouter } = require('../../../modules/website/routes');
-
-// ========================================
-// MÓDULO SUCURSALES - Dic 2025
-// Multi-ubicación, transferencias de stock
-// ========================================
-const { sucursalesRoutes } = require('../../../modules/sucursales/routes');
-
+/**
+ * Configura todas las rutas de la API v1
+ * @param {Express.Application} app - Aplicación Express
+ */
 function routerApi(app) {
-    const router = express.Router();
+  const router = express.Router();
 
-    app.use('/api/v1', router);
+  // Montar en /api/v1
+  app.use('/api/v1', router);
 
-    // Rutas de autenticación y gestión de contraseñas
-    router.use('/auth', authRouter);
+  // Cargar todas las rutas dinámicamente
+  RouteLoader.registerAllRoutes(router);
 
-    // Rutas de setup inicial (creación de super admin)
-    router.use('/setup', setupRouter);
-
-    // Rutas de super administrador (protegidas)
-    router.use('/superadmin', superadminRouter);
-
-    // Rutas públicas
-    router.use('/planes', planesRouter);
-    router.use('/ubicaciones', ubicacionesRouter);  // Catálogos geográficos (Nov 2025)
-
-    // Rutas de módulos (gestión de módulos activos)
-    router.use('/modulos', modulosRouter);
-
-    // Rutas de recursos
-    router.use('/organizaciones', organizacionesRouter);
-    router.use('/profesionales', profesionalesRouter);
-    router.use('/clientes', clientesRouter);
-    router.use('/servicios', serviciosRouter);
-    router.use('/horarios-profesionales', horariosProfesionalesRouter);
-    router.use('/bloqueos-horarios', bloqueosHorariosRouter);
-    router.use('/tipos-bloqueo', tiposBloqueoRouter);
-    router.use('/tipos-profesional', tiposProfesionalRouter);
-    router.use('/citas', citasRouter);
-    router.use('/disponibilidad', disponibilidadRouter);
-
-    // Rutas de chatbots de IA
-    router.use('/chatbots', chatbotsRouter);
-
-    // Rutas de comisiones profesionales
-    router.use('/comisiones', comisionesRouter);
-
-    // Rutas de contabilidad (catálogo SAT, asientos, reportes) - Dic 2025
-    router.use('/contabilidad', contabilidadRouter);
-
-    // Rutas de recordatorios automáticos
-    router.use('/recordatorios', recordatoriosRouter);
-
-    // Rutas de marketplace público
-    router.use('/marketplace', marketplaceRouter);
-
-    // Rutas de inventario y punto de venta
-    router.use('/inventario', inventarioRouter);
-    router.use('/pos', posRouter);
-
-    // Rutas de gestión de usuarios
-    router.use('/usuarios', usuariosRouter);
-
-    // Rutas de invitaciones (Nov 2025 - Sistema Profesional-Usuario)
-    router.use('/invitaciones', invitacionesRouter);
-
-    // Rutas de pagos y webhooks (Mercado Pago)
-    router.use('/pagos', pagosRouter);
-    router.use('/webhooks', webhooksRouter);
-    router.use('/subscripciones', subscripcionesRouter);
-    router.use('/mercadopago', mercadopagoRouter);
-
-    // Rutas de storage (MinIO) - Dic 2025
-    router.use('/storage', storageRouter);
-
-    // Rutas de eventos digitales (invitaciones) - Dic 2025
-    router.use('/eventos-digitales', eventosRoutes);              // Gestión de eventos
-    router.use('/eventos-digitales', invitadosRoutes);            // Gestión de invitados
-    router.use('/eventos-digitales', eventosUbicacionesRoutes);   // Ubicaciones de eventos
-    router.use('/eventos-digitales', mesaRegalosRoutes);          // Mesa de regalos
-    router.use('/eventos-digitales', felicitacionesRoutes);       // Felicitaciones
-    router.use('/eventos-digitales', plantillasRoutes);           // Plantillas
-    router.use('/eventos-digitales', mesasRoutes);               // Mesas (Seating Chart)
-    router.use('/eventos-digitales', galeriaRoutes);             // Galería compartida
-    router.use('/public', eventosPublicRoutes);                   // Rutas públicas (RSVP)
-
-    // Rutas de website (sitio web público) - Dic 2025
-    router.use('/website', websiteRouter);                        // Gestión del sitio
-    router.use('/public', websitePublicRouter);                   // Sitio público /sitio/:slug
-
-    // Rutas de sucursales (multi-ubicación) - Dic 2025
-    router.use('/sucursales', sucursalesRoutes);                  // Gestión de sucursales y transferencias
+  // En desarrollo, imprimir resumen
+  if (process.env.NODE_ENV !== 'production') {
+    RouteLoader.printSummary();
+  }
 }
 
 module.exports = routerApi;

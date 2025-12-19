@@ -1,11 +1,26 @@
 const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
-const { FORMAS_PAGO, LIMITES } = require('../constants/profesionales.constants');
+const {
+    FORMAS_PAGO,
+    TIPOS_EMPLEADO,
+    ESTADOS_LABORALES,
+    TIPOS_CONTRATACION,
+    GENEROS,
+    ESTADOS_CIVILES,
+    LIMITES
+} = require('../constants/profesionales.constants');
 
 // POST /profesionales
 const crear = {
     body: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin lo envía
+
+        // === IDENTIFICACIÓN ===
+        codigo: Joi.string()
+            .max(LIMITES.CODIGO_MAX)
+            .optional()
+            .allow(null)
+            .trim(),
         nombre_completo: Joi.string()
             .min(LIMITES.NOMBRE_MIN)
             .max(LIMITES.NOMBRE_MAX)
@@ -19,6 +34,12 @@ const crear = {
         telefono: commonSchemas.mexicanPhone
             .optional()
             .allow(null),
+        foto_url: Joi.string()
+            .uri()
+            .optional()
+            .allow(null),
+
+        // === INFORMACIÓN PERSONAL ===
         fecha_nacimiento: Joi.date()
             .iso()
             .max('now')
@@ -29,10 +50,65 @@ const crear = {
             .optional()
             .allow(null)
             .trim(),
+        genero: Joi.string()
+            .valid(...GENEROS)
+            .optional()
+            .default('no_especificado'),
+        direccion: Joi.string()
+            .max(LIMITES.DIRECCION_MAX)
+            .optional()
+            .allow(null),
+        estado_civil: Joi.string()
+            .valid(...ESTADOS_CIVILES)
+            .optional()
+            .allow(null),
+        contacto_emergencia_nombre: Joi.string()
+            .max(100)
+            .optional()
+            .allow(null),
+        contacto_emergencia_telefono: commonSchemas.mexicanPhone
+            .optional()
+            .allow(null),
+
+        // === CLASIFICACIÓN ORGANIZACIONAL ===
+        tipo: Joi.string()
+            .valid(...TIPOS_EMPLEADO)
+            .optional()
+            .default('operativo'),
+        estado: Joi.string()
+            .valid(...ESTADOS_LABORALES)
+            .optional()
+            .default('activo'),
+        tipo_contratacion: Joi.string()
+            .valid(...TIPOS_CONTRATACION)
+            .optional()
+            .default('tiempo_completo'),
+
+        // === JERARQUÍA ===
+        supervisor_id: commonSchemas.id.optional().allow(null),
+        departamento_id: commonSchemas.id.optional().allow(null),
+        puesto_id: commonSchemas.id.optional().allow(null),
+
+        // === FECHAS LABORALES ===
+        fecha_ingreso: Joi.date()
+            .iso()
+            .optional()
+            .allow(null),
+        fecha_baja: Joi.date()
+            .iso()
+            .optional()
+            .allow(null),
+        motivo_baja: Joi.string()
+            .max(LIMITES.MOTIVO_MAX)
+            .optional()
+            .allow(null),
+
+        // === INFORMACIÓN PROFESIONAL (LEGACY) ===
         tipo_profesional_id: Joi.number()
             .integer()
             .positive()
-            .required(),
+            .optional()
+            .allow(null),
         licencias_profesionales: Joi.object()
             .optional()
             .default({}),
@@ -46,16 +122,17 @@ const crear = {
             .items(Joi.string())
             .optional()
             .default(['es']),
+
+        // === CONFIGURACIÓN DE AGENDAMIENTO ===
+        disponible_online: Joi.boolean()
+            .optional()
+            .default(false),
         color_calendario: Joi.string()
             .pattern(/^#[0-9A-Fa-f]{6}$/)
             .optional()
-            .default('#3498db')
-            .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #3498db)' }),
+            .default('#753572')
+            .messages({ 'string.pattern.base': 'Color debe ser hexadecimal válido (ej: #753572)' }),
         biografia: Joi.string()
-            .optional()
-            .allow(null),
-        foto_url: Joi.string()
-            .uri()
             .optional()
             .allow(null),
         configuracion_horarios: Joi.object()
@@ -64,29 +141,33 @@ const crear = {
         configuracion_servicios: Joi.object()
             .optional()
             .default({}),
+
+        // === COMPENSACIÓN ===
+        salario_base: Joi.number()
+            .min(0)
+            .optional()
+            .allow(null),
         comision_porcentaje: Joi.number()
             .min(LIMITES.COMISION_MIN)
             .max(LIMITES.COMISION_MAX)
             .optional()
             .default(0),
-        salario_base: Joi.number()
-            .min(0)
-            .optional()
-            .allow(null),
         forma_pago: Joi.string()
             .valid(...FORMAS_PAGO)
             .optional()
             .default('comision'),
+
+        // === CONTROL DE ACCESO ===
+        modulos_acceso: Joi.object({
+            agendamiento: Joi.boolean().optional(),
+            pos: Joi.boolean().optional(),
+            inventario: Joi.boolean().optional()
+        }).optional().default({ agendamiento: true, pos: false, inventario: false }),
+
+        // === LEGACY ===
         activo: Joi.boolean()
             .optional()
-            .default(true),
-        disponible_online: Joi.boolean()
-            .optional()
-            .default(true),
-        fecha_ingreso: Joi.date()
-            .iso()
-            .optional()
-            .allow(null)
+            .default(true)
     })
 };
 
@@ -171,62 +252,70 @@ const actualizar = {
         id: commonSchemas.id
     }),
     body: Joi.object({
-        nombre_completo: Joi.string()
-            .min(LIMITES.NOMBRE_MIN)
-            .max(LIMITES.NOMBRE_MAX)
-            .trim(),
-        email: Joi.string()
-            .email()
-            .max(LIMITES.NOMBRE_MAX)
-            .allow(null),
-        telefono: commonSchemas.mexicanPhone
-            .allow(null),
-        fecha_nacimiento: Joi.date()
-            .iso()
-            .max('now')
-            .allow(null),
-        documento_identidad: Joi.string()
-            .max(LIMITES.DOCUMENTO_MAX)
-            .trim()
-            .allow(null),
-        tipo_profesional_id: Joi.number()
-            .integer()
-            .positive(),
+        // === IDENTIFICACIÓN ===
+        codigo: Joi.string().max(LIMITES.CODIGO_MAX).trim().allow(null),
+        nombre_completo: Joi.string().min(LIMITES.NOMBRE_MIN).max(LIMITES.NOMBRE_MAX).trim(),
+        email: Joi.string().email().max(LIMITES.NOMBRE_MAX).allow(null),
+        telefono: commonSchemas.mexicanPhone.allow(null),
+        foto_url: Joi.string().uri().allow(null),
+
+        // === INFORMACIÓN PERSONAL ===
+        fecha_nacimiento: Joi.date().iso().max('now').allow(null),
+        documento_identidad: Joi.string().max(LIMITES.DOCUMENTO_MAX).trim().allow(null),
+        genero: Joi.string().valid(...GENEROS),
+        direccion: Joi.string().max(LIMITES.DIRECCION_MAX).allow(null),
+        estado_civil: Joi.string().valid(...ESTADOS_CIVILES).allow(null),
+        contacto_emergencia_nombre: Joi.string().max(100).allow(null),
+        contacto_emergencia_telefono: commonSchemas.mexicanPhone.allow(null),
+
+        // === CLASIFICACIÓN ORGANIZACIONAL ===
+        tipo: Joi.string().valid(...TIPOS_EMPLEADO),
+        estado: Joi.string().valid(...ESTADOS_LABORALES),
+        tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION),
+
+        // === JERARQUÍA ===
+        supervisor_id: commonSchemas.id.allow(null),
+        departamento_id: commonSchemas.id.allow(null),
+        puesto_id: commonSchemas.id.allow(null),
+
+        // === FECHAS LABORALES ===
+        fecha_ingreso: Joi.date().iso().allow(null),
+        fecha_baja: Joi.date().iso().allow(null),
+        motivo_baja: Joi.string().max(LIMITES.MOTIVO_MAX).allow(null),
+
+        // === INFORMACIÓN PROFESIONAL (LEGACY) ===
+        tipo_profesional_id: Joi.number().integer().positive().allow(null),
         licencias_profesionales: Joi.object(),
-        años_experiencia: Joi.number()
-            .integer()
-            .min(LIMITES.EXPERIENCIA_MIN)
-            .max(LIMITES.EXPERIENCIA_MAX),
-        idiomas: Joi.array()
-            .items(Joi.string()),
-        color_calendario: Joi.string()
-            .pattern(/^#[0-9A-Fa-f]{6}$/),
-        biografia: Joi.string()
-            .allow(null),
-        foto_url: Joi.string()
-            .uri()
-            .allow(null),
+        años_experiencia: Joi.number().integer().min(LIMITES.EXPERIENCIA_MIN).max(LIMITES.EXPERIENCIA_MAX),
+        idiomas: Joi.array().items(Joi.string()),
+
+        // === CONFIGURACIÓN DE AGENDAMIENTO ===
+        disponible_online: Joi.boolean(),
+        color_calendario: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/),
+        biografia: Joi.string().allow(null),
         configuracion_horarios: Joi.object(),
         configuracion_servicios: Joi.object(),
-        comision_porcentaje: Joi.number()
-            .min(LIMITES.COMISION_MIN)
-            .max(LIMITES.COMISION_MAX),
-        salario_base: Joi.number()
-            .min(0)
-            .allow(null),
-        forma_pago: Joi.string()
-            .valid(...FORMAS_PAGO),
+
+        // === COMPENSACIÓN ===
+        salario_base: Joi.number().min(0).allow(null),
+        comision_porcentaje: Joi.number().min(LIMITES.COMISION_MIN).max(LIMITES.COMISION_MAX),
+        forma_pago: Joi.string().valid(...FORMAS_PAGO),
+
+        // === CONTROL DE ACCESO ===
+        modulos_acceso: Joi.object({
+            agendamiento: Joi.boolean().optional(),
+            pos: Joi.boolean().optional(),
+            inventario: Joi.boolean().optional()
+        }),
+        usuario_id: Joi.number().integer().positive().optional().allow(null),
+
+        // === LEGACY ===
         activo: Joi.boolean(),
-        disponible_online: Joi.boolean(),
-        fecha_salida: Joi.date()
-            .iso()
-            .allow(null),
-        motivo_inactividad: Joi.string()
-            .max(LIMITES.MOTIVO_MAX)
-            .allow(null)
-    }).min(1), // Al menos un campo debe estar presente
+        fecha_salida: Joi.date().iso().allow(null),
+        motivo_inactividad: Joi.string().max(LIMITES.MOTIVO_MAX).allow(null)
+    }).min(1),
     query: Joi.object({
-        organizacion_id: commonSchemas.id.optional() // Solo super_admin
+        organizacion_id: commonSchemas.id.optional()
     })
 };
 
@@ -234,37 +323,32 @@ const actualizar = {
 const listar = {
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional(), // Solo super_admin
-        activo: Joi.string()
-            .valid('true', 'false')
-            .optional(),
-        disponible_online: Joi.string()
-            .valid('true', 'false')
-            .optional(),
-        tipo_profesional_id: Joi.number()
-            .integer()
-            .positive()
-            .optional(),
-        busqueda: Joi.string()
-            .min(2)
-            .max(100)
-            .trim()
-            .optional(),
-        // Nov 2025 - Modelo Unificado
-        modulo: Joi.string()
-            .valid('agendamiento', 'pos', 'inventario')
-            .optional(),
-        con_usuario: Joi.string()
-            .valid('true', 'false')
-            .optional(),
-        limit: Joi.number()
-            .integer()
-            .min(1)
-            .max(50)
-            .default(20),
-        offset: Joi.number()
-            .integer()
-            .min(0)
-            .default(0)
+        activo: Joi.string().valid('true', 'false').optional(),
+        disponible_online: Joi.string().valid('true', 'false').optional(),
+        tipo_profesional_id: Joi.number().integer().positive().optional(),
+        busqueda: Joi.string().min(2).max(100).trim().optional(),
+
+        // Filtros de módulo (Nov 2025)
+        modulo: Joi.string().valid('agendamiento', 'pos', 'inventario').optional(),
+        con_usuario: Joi.string().valid('true', 'false').optional(),
+
+        // Filtros de clasificación (Dic 2025)
+        // tipo puede ser string o array para filtrar múltiples tipos (ej: supervisores)
+        tipo: Joi.alternatives().try(
+            Joi.string().valid(...TIPOS_EMPLEADO),
+            Joi.array().items(Joi.string().valid(...TIPOS_EMPLEADO))
+        ).optional(),
+        estado: Joi.string().valid(...ESTADOS_LABORALES).optional(),
+        tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION).optional(),
+
+        // Filtros de jerarquía (Dic 2025)
+        departamento_id: Joi.number().integer().positive().optional(),
+        puesto_id: Joi.number().integer().positive().optional(),
+        supervisor_id: Joi.number().integer().positive().optional(),
+
+        // Paginación
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
     })
 };
 
@@ -439,6 +523,99 @@ const listarPorModulo = {
     })
 };
 
+// ====================================================================
+// SCHEMAS PARA JERARQUÍA ORGANIZACIONAL (Dic 2025)
+// ====================================================================
+
+// GET /profesionales/:id/subordinados
+const obtenerSubordinados = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        max_nivel: Joi.number().integer().min(1).max(10).optional().default(10),
+        solo_directos: Joi.string().valid('true', 'false').optional()
+    })
+};
+
+// GET /profesionales/:id/supervisores
+const obtenerSupervisores = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA CATEGORÍAS DE PROFESIONAL (Dic 2025)
+// ====================================================================
+
+// GET /profesionales/:id/categorias
+const obtenerCategoriasProfesional = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// POST /profesionales/:id/categorias
+const asignarCategoria = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        categoria_id: Joi.number()
+            .integer()
+            .positive()
+            .required()
+            .messages({
+                'any.required': 'El ID de la categoría es requerido',
+                'number.positive': 'El ID de la categoría debe ser positivo'
+            }),
+        notas: Joi.string()
+            .max(500)
+            .optional()
+            .allow(null, '')
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:id/categorias/:categoriaId
+const eliminarCategoria = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        categoriaId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:id/categorias (sync)
+const sincronizarCategorias = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        categoria_ids: Joi.array()
+            .items(Joi.number().integer().positive())
+            .default([])
+            .messages({
+                'array.base': 'categoria_ids debe ser un array de IDs'
+            })
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
 module.exports = {
     crear,
     bulkCrear,
@@ -455,5 +632,13 @@ module.exports = {
     buscarPorUsuario,
     vincularUsuario,
     actualizarModulos,
-    listarPorModulo
+    listarPorModulo,
+    // Dic 2025 - Jerarquía
+    obtenerSubordinados,
+    obtenerSupervisores,
+    // Dic 2025 - Categorías
+    obtenerCategoriasProfesional,
+    asignarCategoria,
+    eliminarCategoria,
+    sincronizarCategorias
 };

@@ -1,16 +1,18 @@
 /**
  * @fileoverview Routes del Módulo Core
- * @description Re-exporta las rutas core existentes (PoC)
+ * @description Exporta todas las rutas del módulo core
+ * @version 2.0.0
+ * @date Diciembre 2025
  */
 
-const authRouter = require('../../../routes/api/v1/auth');
-const organizacionesRouter = require('../../../routes/api/v1/organizaciones');
-const usuariosRouter = require('../../../routes/api/v1/usuarios');
-const planesRouter = require('../../../routes/api/v1/planes');
-const subscripcionesRouter = require('../../../routes/api/v1/subscripciones');
-const pagosRouter = require('../../../routes/api/v1/pagos');
-const webhooksRouter = require('../../../routes/api/v1/webhooks');
-const superadminRouter = require('../../../routes/api/v1/superadmin');
+const authRouter = require('./auth');
+const organizacionesRouter = require('./organizaciones');
+const usuariosRouter = require('./usuarios');
+const planesRouter = require('./planes');
+const subscripcionesRouter = require('./subscripciones');
+const pagosRouter = require('./pagos');
+const webhooksRouter = require('./webhooks');
+const superadminRouter = require('./superadmin');
 
 module.exports = {
   auth: authRouter,

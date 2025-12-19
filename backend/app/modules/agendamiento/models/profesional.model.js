@@ -18,46 +18,61 @@ class ProfesionalModel {
 
             const query = `
                 INSERT INTO profesionales (
-                    organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                    documento_identidad, tipo_profesional_id, licencias_profesionales,
-                    años_experiencia, idiomas, color_calendario, biografia, foto_url,
-                    configuracion_horarios, configuracion_servicios, comision_porcentaje,
-                    salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
-                    usuario_id, modulos_acceso
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
-                RETURNING id, organizacion_id, nombre_completo, email, telefono, fecha_nacimiento,
-                         documento_identidad, tipo_profesional_id, licencias_profesionales,
-                         años_experiencia, idiomas, color_calendario, biografia, foto_url,
-                         configuracion_horarios, configuracion_servicios, comision_porcentaje,
-                         salario_base, forma_pago, activo, disponible_online, fecha_ingreso,
-                         calificacion_promedio, total_citas_completadas, total_clientes_atendidos,
-                         usuario_id, modulos_acceso, creado_en, actualizado_en
+                    organizacion_id, codigo, nombre_completo, email, telefono, foto_url,
+                    fecha_nacimiento, documento_identidad, genero, direccion, estado_civil,
+                    contacto_emergencia_nombre, contacto_emergencia_telefono,
+                    tipo, estado, tipo_contratacion,
+                    supervisor_id, departamento_id, puesto_id,
+                    fecha_ingreso, tipo_profesional_id, licencias_profesionales,
+                    años_experiencia, idiomas, disponible_online, color_calendario,
+                    biografia, configuracion_horarios, configuracion_servicios,
+                    salario_base, comision_porcentaje, forma_pago,
+                    modulos_acceso, usuario_id, activo
+                ) VALUES (
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+                    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
+                    $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
+                    $31, $32, $33, $34, $35
+                )
+                RETURNING *
             `;
 
             const values = [
                 profesionalData.organizacion_id,
+                profesionalData.codigo || null,
                 profesionalData.nombre_completo,
                 profesionalData.email || null,
                 profesionalData.telefono || null,
+                profesionalData.foto_url || null,
                 profesionalData.fecha_nacimiento || null,
                 profesionalData.documento_identidad || null,
-                profesionalData.tipo_profesional_id,
+                profesionalData.genero || 'no_especificado',
+                profesionalData.direccion || null,
+                profesionalData.estado_civil || null,
+                profesionalData.contacto_emergencia_nombre || null,
+                profesionalData.contacto_emergencia_telefono || null,
+                profesionalData.tipo || 'operativo',
+                profesionalData.estado || 'activo',
+                profesionalData.tipo_contratacion || 'tiempo_completo',
+                profesionalData.supervisor_id || null,
+                profesionalData.departamento_id || null,
+                profesionalData.puesto_id || null,
+                profesionalData.fecha_ingreso || null,
+                profesionalData.tipo_profesional_id || null,
                 profesionalData.licencias_profesionales || {},
                 profesionalData.años_experiencia || 0,
                 profesionalData.idiomas || ['es'],
-                profesionalData.color_calendario || '#3498db',
+                profesionalData.disponible_online !== undefined ? profesionalData.disponible_online : false,
+                profesionalData.color_calendario || '#753572',
                 profesionalData.biografia || null,
-                profesionalData.foto_url || null,
                 profesionalData.configuracion_horarios || {},
                 profesionalData.configuracion_servicios || {},
-                profesionalData.comision_porcentaje || 0.00,
                 profesionalData.salario_base || null,
+                profesionalData.comision_porcentaje || 0,
                 profesionalData.forma_pago || 'comision',
-                profesionalData.activo !== undefined ? profesionalData.activo : true,
-                profesionalData.disponible_online !== undefined ? profesionalData.disponible_online : true,
-                profesionalData.fecha_ingreso,
+                profesionalData.modulos_acceso || { agendamiento: true, pos: false, inventario: false },
                 profesionalData.usuario_id || null,
-                profesionalData.modulos_acceso || { agendamiento: true, pos: false, inventario: false }
+                profesionalData.activo !== undefined ? profesionalData.activo : true
             ];
 
             try {
@@ -198,7 +213,7 @@ class ProfesionalModel {
                     prof.email || null,
                     prof.telefono || null,
                     prof.tipo_profesional_id,
-                    prof.color_calendario || '#3B82F6',
+                    prof.color_calendario || '#753572',
                     prof.fecha_nacimiento || null,
                     prof.documento_identidad || null,
                     prof.licencias_profesionales || {},
@@ -311,6 +326,13 @@ class ProfesionalModel {
                 busqueda = null,
                 modulo = null, // Filtrar por módulo habilitado: 'agendamiento', 'pos', 'inventario'
                 con_usuario = null, // Filtrar profesionales con/sin usuario vinculado
+                // Dic 2025: Filtros de clasificación y jerarquía
+                tipo = null, // puede ser string o array
+                estado = null,
+                tipo_contratacion = null,
+                departamento_id = null,
+                puesto_id = null,
+                supervisor_id = null,
                 limite = 50,
                 offset = 0
             } = filtros;
@@ -376,6 +398,51 @@ class ProfesionalModel {
                 query += ` AND p.usuario_id IS NULL`;
             }
 
+            // Dic 2025: Filtros de clasificación organizacional
+            if (tipo) {
+                // tipo puede ser string o array
+                // Nota: tipo es ENUM tipo_empleado, cast a text para comparar con array
+                if (Array.isArray(tipo)) {
+                    query += ` AND p.tipo::text = ANY($${contador}::text[])`;
+                    values.push(tipo);
+                } else {
+                    query += ` AND p.tipo = $${contador}`;
+                    values.push(tipo);
+                }
+                contador++;
+            }
+
+            if (estado) {
+                query += ` AND p.estado = $${contador}`;
+                values.push(estado);
+                contador++;
+            }
+
+            if (tipo_contratacion) {
+                query += ` AND p.tipo_contratacion = $${contador}`;
+                values.push(tipo_contratacion);
+                contador++;
+            }
+
+            // Dic 2025: Filtros de jerarquía
+            if (departamento_id) {
+                query += ` AND p.departamento_id = $${contador}`;
+                values.push(departamento_id);
+                contador++;
+            }
+
+            if (puesto_id) {
+                query += ` AND p.puesto_id = $${contador}`;
+                values.push(puesto_id);
+                contador++;
+            }
+
+            if (supervisor_id) {
+                query += ` AND p.supervisor_id = $${contador}`;
+                values.push(supervisor_id);
+                contador++;
+            }
+
             query += ` GROUP BY p.id, tp.id, u.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
             values.push(limite, offset);
 
@@ -404,13 +471,28 @@ class ProfesionalModel {
             }
 
             const camposPermitidos = [
-                'nombre_completo', 'email', 'telefono', 'fecha_nacimiento',
-                'documento_identidad', 'tipo_profesional_id', 'licencias_profesionales',
-                'años_experiencia', 'idiomas', 'color_calendario', 'biografia',
-                'foto_url', 'configuracion_horarios', 'configuracion_servicios',
-                'comision_porcentaje', 'salario_base', 'forma_pago', 'activo',
-                'disponible_online', 'fecha_salida', 'motivo_inactividad',
-                'usuario_id', 'modulos_acceso' // Nov 2025 - Modelo Unificado
+                // Identificación
+                'codigo', 'nombre_completo', 'email', 'telefono', 'foto_url',
+                // Información personal
+                'fecha_nacimiento', 'documento_identidad', 'genero', 'direccion',
+                'estado_civil', 'contacto_emergencia_nombre', 'contacto_emergencia_telefono',
+                // Clasificación organizacional
+                'tipo', 'estado', 'tipo_contratacion',
+                // Jerarquía
+                'supervisor_id', 'departamento_id', 'puesto_id',
+                // Fechas laborales
+                'fecha_ingreso', 'fecha_baja', 'motivo_baja',
+                // Información profesional
+                'tipo_profesional_id', 'licencias_profesionales', 'años_experiencia', 'idiomas',
+                // Configuración de agendamiento
+                'disponible_online', 'color_calendario', 'biografia',
+                'configuracion_horarios', 'configuracion_servicios',
+                // Compensación
+                'salario_base', 'comision_porcentaje', 'forma_pago',
+                // Control de acceso
+                'modulos_acceso', 'usuario_id',
+                // Legacy
+                'activo', 'fecha_salida', 'motivo_inactividad'
             ];
 
             const campos = [];
@@ -777,6 +859,197 @@ class ProfesionalModel {
 
             const result = await db.query(query, [organizacionId]);
             return result.rows;
+        });
+    }
+
+    // ====================================================================
+    // MÉTODOS PARA JERARQUÍA ORGANIZACIONAL (Dic 2025)
+    // ====================================================================
+
+    /**
+     * Lista profesionales por estado laboral
+     */
+    static async listarPorEstado(organizacionId, estado, limite = 50, offset = 0) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT p.*,
+                       tp.nombre as tipo_nombre,
+                       d.nombre as departamento_nombre,
+                       pu.nombre as puesto_nombre,
+                       sup.nombre_completo as supervisor_nombre
+                FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                LEFT JOIN profesionales sup ON p.supervisor_id = sup.id
+                WHERE p.organizacion_id = $1 AND p.estado = $2
+                ORDER BY p.nombre_completo
+                LIMIT $3 OFFSET $4
+            `;
+            const result = await db.query(query, [organizacionId, estado, limite, offset]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Lista profesionales por departamento
+     */
+    static async listarPorDepartamento(organizacionId, departamentoId, soloActivos = true) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            let query = `
+                SELECT p.*,
+                       tp.nombre as tipo_nombre,
+                       pu.nombre as puesto_nombre,
+                       sup.nombre_completo as supervisor_nombre
+                FROM profesionales p
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                LEFT JOIN profesionales sup ON p.supervisor_id = sup.id
+                WHERE p.organizacion_id = $1 AND p.departamento_id = $2
+            `;
+
+            if (soloActivos) {
+                query += ` AND p.estado = 'activo'`;
+            }
+
+            query += ` ORDER BY p.nombre_completo`;
+
+            const result = await db.query(query, [organizacionId, departamentoId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Obtiene subordinados directos e indirectos usando función SQL
+     */
+    static async obtenerSubordinados(organizacionId, profesionalId, maxNivel = 10) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT p.*, s.nivel,
+                       tp.nombre as tipo_nombre,
+                       d.nombre as departamento_nombre,
+                       pu.nombre as puesto_nombre
+                FROM get_subordinados($1, $2) s
+                JOIN profesionales p ON s.profesional_id = p.id
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                WHERE p.organizacion_id = $3
+                ORDER BY s.nivel, p.nombre_completo
+            `;
+            const result = await db.query(query, [profesionalId, maxNivel, organizacionId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Obtiene la cadena de supervisores hacia arriba
+     */
+    static async obtenerCadenaSupervisores(organizacionId, profesionalId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT p.*, s.nivel,
+                       tp.nombre as tipo_nombre,
+                       d.nombre as departamento_nombre,
+                       pu.nombre as puesto_nombre
+                FROM get_cadena_supervisores($1) s
+                JOIN profesionales p ON s.profesional_id = p.id
+                LEFT JOIN tipos_profesional tp ON p.tipo_profesional_id = tp.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                WHERE p.organizacion_id = $2
+                ORDER BY s.nivel
+            `;
+            const result = await db.query(query, [profesionalId, organizacionId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Valida que asignar supervisor no cree ciclo
+     */
+    static async validarSupervisorSinCiclo(organizacionId, profesionalId, nuevoSupervisorId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `SELECT validar_supervisor_sin_ciclo($1, $2) as valido`;
+            const result = await db.query(query, [profesionalId, nuevoSupervisorId]);
+            return result.rows[0]?.valido || false;
+        });
+    }
+
+    // ====================================================================
+    // MÉTODOS PARA CATEGORÍAS DE PROFESIONAL (Dic 2025)
+    // ====================================================================
+
+    /**
+     * Obtiene las categorías asignadas a un profesional
+     */
+    static async obtenerCategorias(organizacionId, profesionalId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT c.*, pc.fecha_asignacion, pc.notas
+                FROM profesionales_categorias pc
+                JOIN categorias_profesional c ON pc.categoria_id = c.id
+                WHERE pc.profesional_id = $1 AND c.organizacion_id = $2
+                ORDER BY c.tipo_categoria, c.orden, c.nombre
+            `;
+            const result = await db.query(query, [profesionalId, organizacionId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Asigna una categoría a un profesional
+     */
+    static async asignarCategoria(organizacionId, profesionalId, categoriaId, notas = null) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                INSERT INTO profesionales_categorias (profesional_id, categoria_id, notas)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (profesional_id, categoria_id) DO UPDATE SET notas = $3
+                RETURNING *
+            `;
+            const result = await db.query(query, [profesionalId, categoriaId, notas]);
+            return result.rows[0];
+        });
+    }
+
+    /**
+     * Elimina una categoría de un profesional
+     */
+    static async eliminarCategoria(organizacionId, profesionalId, categoriaId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                DELETE FROM profesionales_categorias
+                WHERE profesional_id = $1 AND categoria_id = $2
+                RETURNING *
+            `;
+            const result = await db.query(query, [profesionalId, categoriaId]);
+            return result.rowCount > 0;
+        });
+    }
+
+    /**
+     * Sincroniza categorías de un profesional (reemplaza todas)
+     */
+    static async sincronizarCategorias(organizacionId, profesionalId, categoriaIds) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Eliminar categorías actuales
+            await db.query(
+                'DELETE FROM profesionales_categorias WHERE profesional_id = $1',
+                [profesionalId]
+            );
+
+            // Insertar nuevas categorías
+            if (categoriaIds && categoriaIds.length > 0) {
+                const insertQuery = `
+                    INSERT INTO profesionales_categorias (profesional_id, categoria_id)
+                    SELECT $1, unnest($2::integer[])
+                `;
+                await db.query(insertQuery, [profesionalId, categoriaIds]);
+            }
+
+            // Retornar categorías actualizadas
+            return await this.obtenerCategorias(organizacionId, profesionalId);
         });
     }
 

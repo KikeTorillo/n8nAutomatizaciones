@@ -1,0 +1,44 @@
+{
+  "name": "website",
+  "display_name": "Sitio Web Personalizado",
+  "version": "1.0.0",
+  "description": "Constructor de sitio web público para la organización",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
+    "marketplace": "Permite mostrar reseñas del marketplace en el sitio"
+  },
+  "pricing": {
+    "base_mensual": 99,
+    "currency": "MXN",
+    "incluido_en": ["profesional", "empresarial"],
+    "addon_para": ["basico"],
+    "notes": "Sitio web con dominio personalizado"
+  },
+  "routes": {
+    "websiteRouter": "/api/v1/website",
+    "publicRouter": "/api/v1/public"
+  },
+  "resources": {
+    "paginas": {
+      "table": "website_paginas",
+      "limit_field": null,
+      "notes": "Sin límite de páginas"
+    },
+    "bloques": {
+      "table": "website_bloques",
+      "limit_field": null,
+      "notes": "Bloques de contenido"
+    }
+  },
+  "features": [
+    "Constructor de páginas con bloques",
+    "Temas personalizables",
+    "Dominio personalizado opcional",
+    "Integración con agendamiento para reservas",
+    "SEO optimizado"
+  ],
+  "priority": 40,
+  "required": false,
+  "can_disable": true
+}

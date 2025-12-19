@@ -15,16 +15,17 @@
 -- ====================================================================
 
 -- ====================================================================
--- 👷 TABLA PROFESIONALES - PERSONAL ESPECIALIZADO
+-- 👷 TABLA PROFESIONALES - GESTIÓN UNIFICADA DE EMPLEADOS
 -- ====================================================================
--- Almacena toda la información de los profesionales que brindan servicios
--- en cada organización, con validaciones inteligentes según industria.
+-- Tabla unificada de empleados. Soporta todos los tipos de colaboradores:
+-- operativos, administrativos, gerenciales, ventas.
 --
--- 🔧 CARACTERÍSTICAS TÉCNICAS:
--- • Validación automática tipo_profesional vs industria_organización
--- • Email único por organización (no global)
--- • JSONB flexible para licencias y configuraciones específicas
--- • Color personalizado para calendario visual
+-- 🔧 MODELO DE CONTROL:
+-- • tipo → Solo clasificación organizacional (reportes, organigrama)
+-- • modulos_acceso → ★ CONTROL PRINCIPAL de funcionalidades ★
+-- • categorias (M:N) → Especialidad, nivel, certificaciones
+--
+-- ⚠️ IMPORTANTE: tipo_profesional_id se mantiene como LEGACY
 -- ────────────────────────────────────────────────────────────────────
 CREATE TABLE profesionales (
     -- 🔑 CLAVE PRIMARIA
@@ -35,105 +36,161 @@ CREATE TABLE profesionales (
                                                -- REFERENCES organizaciones(id) ON DELETE CASCADE
 
     -- ====================================================================
-    -- 👨‍💼 SECCIÓN: INFORMACIÓN PERSONAL
+    -- 🆔 SECCIÓN: IDENTIFICACIÓN
     -- ====================================================================
+    codigo VARCHAR(20),                        -- Código interno (EMP001, VEN003)
     nombre_completo VARCHAR(150) NOT NULL,     -- Nombre completo del profesional
     email VARCHAR(150),                        -- Email personal (único por organización)
     telefono VARCHAR(20),                      -- Teléfono de contacto
-    fecha_nacimiento DATE,                     -- Para validar mayoría de edad
-    documento_identidad VARCHAR(30),           -- Cédula, DNI, Pasaporte, etc.
-
-    -- ====================================================================
-    -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL
-    -- ====================================================================
-    tipo_profesional_id INTEGER NOT NULL REFERENCES tipos_profesional(id), -- Tipo específico según industria (FK a tipos_profesional)
-
-    licencias_profesionales JSONB DEFAULT '{}', -- Licencias y certificaciones
-                                               -- Ej: {"cedula_profesional": "12345", "certificado_barberia": "ABC123"}
-
-    años_experiencia INTEGER DEFAULT 0,        -- Años de experiencia laboral
-    idiomas TEXT[] DEFAULT ARRAY['es']::TEXT[], -- Idiomas que habla
-                                               -- Ej: ['es', 'en', 'fr']
-
-    -- ====================================================================
-    -- ⚙️ SECCIÓN: CONFIGURACIÓN DE TRABAJO
-    -- ====================================================================
-    color_calendario VARCHAR(7) DEFAULT '#3498db', -- Color hex para calendario visual
-                                                   -- Ej: '#e74c3c', '#2ecc71', '#f39c12'
-    biografia TEXT,                            -- Descripción profesional para clientes
     foto_url TEXT,                             -- URL de foto de perfil
 
-    configuracion_horarios JSONB DEFAULT '{}', -- Horarios personalizados de trabajo
-                                               -- Ej: {"lunes": {"inicio": "09:00", "fin": "18:00"}}
-
-    configuracion_servicios JSONB DEFAULT '{}', -- Configuración específica de servicios
-                                                -- Ej: {"tiempo_extra_limpieza": 10, "max_citas_dia": 12}
-
     -- ====================================================================
-    -- 💰 SECCIÓN: INFORMACIÓN COMERCIAL
+    -- 👤 SECCIÓN: INFORMACIÓN PERSONAL (estilo Odoo)
     -- ====================================================================
-    comision_porcentaje DECIMAL(5,2) DEFAULT 0.00, -- % de comisión por servicio
-                                                    -- Ej: 15.50 para 15.5%
-    salario_base DECIMAL(10,2),                -- Salario base mensual (opcional)
-    forma_pago VARCHAR(20) DEFAULT 'comision',  -- 'comision', 'salario', 'mixto'
+    fecha_nacimiento DATE,                     -- Para validar mayoría de edad
+    documento_identidad VARCHAR(30),           -- Cédula, DNI, Pasaporte, etc.
+    genero genero DEFAULT 'no_especificado',   -- Género del empleado
+    direccion TEXT,                            -- Dirección de domicilio
+    estado_civil VARCHAR(20),                  -- soltero, casado, divorciado, viudo, union_libre
+    contacto_emergencia_nombre VARCHAR(100),   -- Nombre del contacto de emergencia
+    contacto_emergencia_telefono VARCHAR(20),  -- Teléfono del contacto de emergencia
 
     -- ====================================================================
-    -- 🎛️ SECCIÓN: CONTROL Y ESTADO
+    -- 🏷️ SECCIÓN: CLASIFICACIÓN ORGANIZACIONAL
     -- ====================================================================
-    activo BOOLEAN DEFAULT TRUE,               -- Profesional activo para agendar
-    disponible_online BOOLEAN DEFAULT TRUE,    -- Visible para agendamiento online
-    fecha_ingreso DATE DEFAULT CURRENT_DATE,   -- Fecha de contratación
-    fecha_salida DATE,                         -- Fecha de salida (si aplica)
-    motivo_inactividad TEXT,                   -- Razón de inactividad temporal
-
-    -- ====================================================================
-    -- 📊 SECCIÓN: MÉTRICAS Y CALIFICACIONES
-    -- ====================================================================
-    calificacion_promedio DECIMAL(3,2) DEFAULT 5.00, -- Calificación promedio (1.00-5.00)
-    total_citas_completadas INTEGER DEFAULT 0,  -- Contador de citas finalizadas
-    total_clientes_atendidos INTEGER DEFAULT 0, -- Contador de clientes únicos
-
-    -- ====================================================================
-    -- 🔗 SECCIÓN: VINCULACIÓN CON USUARIO Y MÓDULOS (Nov 2025)
-    -- ====================================================================
-    -- Permite reutilizar el profesional en múltiples módulos (POS, Comisiones)
-    -- y controlar granularmente a qué módulos tiene acceso.
+    -- ⚠️ Solo para reportes y organigrama. NO restringe funcionalidades.
+    -- Las funcionalidades se controlan con modulos_acceso.
     -- ────────────────────────────────────────────────────────────────────
-    usuario_id INTEGER UNIQUE,                  -- Usuario del sistema vinculado (opcional)
-                                               -- FK se agrega después de CREATE TABLE usuarios
-                                               -- NULL = profesional sin acceso al sistema
-                                               -- Si tiene valor = puede hacer login y auto-asignarse
+    tipo tipo_empleado NOT NULL DEFAULT 'operativo',  -- Clasificación organizacional
+    estado estado_laboral NOT NULL DEFAULT 'activo',  -- Estado laboral actual
+    tipo_contratacion tipo_contratacion DEFAULT 'tiempo_completo', -- Modalidad de contrato
 
+    -- ====================================================================
+    -- 🌳 SECCIÓN: JERARQUÍA ORGANIZACIONAL
+    -- ====================================================================
+    supervisor_id INTEGER,                     -- Jefe directo (FK a profesionales)
+    departamento_id INTEGER,                   -- Departamento asignado (FK a departamentos)
+    puesto_id INTEGER,                         -- Puesto de trabajo (FK a puestos)
+    -- NOTA: Sucursales via profesionales_sucursales (M:N existente)
+
+    -- ====================================================================
+    -- 📅 SECCIÓN: FECHAS LABORALES
+    -- ====================================================================
+    fecha_ingreso DATE DEFAULT CURRENT_DATE,   -- Fecha de contratación
+    fecha_baja DATE,                           -- Fecha de baja (si estado='baja')
+    motivo_baja TEXT,                          -- Razón de baja
+
+    -- ====================================================================
+    -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL (LEGACY + NUEVO)
+    -- ====================================================================
+    tipo_profesional_id INTEGER REFERENCES tipos_profesional(id), -- [LEGACY] Tipo según catálogo
+    licencias_profesionales JSONB DEFAULT '{}', -- Licencias y certificaciones
+    años_experiencia INTEGER DEFAULT 0,        -- Años de experiencia laboral
+    idiomas TEXT[] DEFAULT ARRAY['es']::TEXT[], -- Idiomas que habla
+    -- NOTA: Especialidades/categorías via profesionales_categorias (M:N)
+
+    -- ====================================================================
+    -- ⚙️ SECCIÓN: CONFIGURACIÓN DE AGENDAMIENTO
+    -- ====================================================================
+    -- Solo aplica si modulos_acceso.agendamiento = true
+    -- ────────────────────────────────────────────────────────────────────
+    disponible_online BOOLEAN DEFAULT false,   -- Visible para booking público
+    color_calendario VARCHAR(7) DEFAULT '#753572', -- Color hex (marca Nexo)
+    biografia TEXT,                            -- Descripción profesional para clientes
+    configuracion_horarios JSONB DEFAULT '{}', -- Horarios personalizados
+    configuracion_servicios JSONB DEFAULT '{}', -- Config específica de servicios
+
+    -- ====================================================================
+    -- 💰 SECCIÓN: COMPENSACIÓN
+    -- ====================================================================
+    salario_base DECIMAL(10,2),                -- Salario base mensual
+    comision_porcentaje DECIMAL(5,2) DEFAULT 0, -- % de comisión por servicio
+    forma_pago VARCHAR(20) DEFAULT 'comision', -- 'comision', 'salario', 'mixto'
+
+    -- ====================================================================
+    -- 🎛️ SECCIÓN: CONTROL DE ACCESO A MÓDULOS (★ CONTROL PRINCIPAL ★)
+    -- ====================================================================
+    -- Determina QUÉ puede hacer el empleado. NO depende del campo tipo.
+    -- ────────────────────────────────────────────────────────────────────
     modulos_acceso JSONB DEFAULT '{"agendamiento": true, "pos": false, "inventario": false}',
-                                               -- Módulos habilitados para este profesional
                                                -- agendamiento: puede atender citas
-                                               -- pos: puede registrar ventas (vendedor)
+                                               -- pos: puede registrar ventas
                                                -- inventario: puede gestionar stock
+
+    -- ====================================================================
+    -- 🔗 SECCIÓN: VINCULACIÓN CON USUARIO
+    -- ====================================================================
+    usuario_id INTEGER UNIQUE,                  -- Usuario del sistema vinculado
+                                               -- FK se agrega después de CREATE TABLE usuarios
+
+    -- ====================================================================
+    -- 📊 SECCIÓN: MÉTRICAS (se actualizan automáticamente)
+    -- ====================================================================
+    calificacion_promedio DECIMAL(3,2) DEFAULT 5.00,
+    total_citas_completadas INTEGER DEFAULT 0,
+    total_clientes_atendidos INTEGER DEFAULT 0,
+
+    -- ====================================================================
+    -- 🕒 SECCIÓN: LEGACY (compatibilidad)
+    -- ====================================================================
+    activo BOOLEAN DEFAULT TRUE,               -- [LEGACY] Usar estado en su lugar
+    fecha_salida DATE,                         -- [LEGACY] Usar fecha_baja en su lugar
+    motivo_inactividad TEXT,                   -- [LEGACY] Usar motivo_baja en su lugar
 
     -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS
     -- ====================================================================
-    creado_en TIMESTAMPTZ DEFAULT NOW(),       -- Fecha de registro
-    actualizado_en TIMESTAMPTZ DEFAULT NOW(),  -- Última modificación
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
     -- ====================================================================
-    -- ✅ SECCIÓN: VALIDACIONES Y CONSTRAINTS
+    -- ✅ SECCIÓN: CONSTRAINTS
     -- ====================================================================
-    CHECK (char_length(nombre_completo) >= 3),  -- Nombre mínimo 3 caracteres
-    CHECK (años_experiencia >= 0 AND años_experiencia <= 70), -- Experiencia válida
-    CHECK (comision_porcentaje >= 0 AND comision_porcentaje <= 100), -- Comisión válida
-    CHECK (calificacion_promedio >= 1.00 AND calificacion_promedio <= 5.00), -- Rating válido
-    CHECK (color_calendario ~ '^#[0-9A-Fa-f]{6}$'), -- Color hex válido
-    CHECK (
-        -- Solo mayores de edad (18 años)
+    CONSTRAINT uk_profesionales_codigo_org UNIQUE (organizacion_id, codigo),
+    CONSTRAINT uk_profesionales_email_org UNIQUE (organizacion_id, email),
+
+    -- Validaciones de datos
+    CONSTRAINT chk_profesionales_nombre CHECK (char_length(nombre_completo) >= 3),
+    CONSTRAINT chk_profesionales_experiencia CHECK (años_experiencia >= 0 AND años_experiencia <= 70),
+    CONSTRAINT chk_profesionales_comision CHECK (comision_porcentaje >= 0 AND comision_porcentaje <= 100),
+    CONSTRAINT chk_profesionales_calificacion CHECK (calificacion_promedio >= 1.00 AND calificacion_promedio <= 5.00),
+    CONSTRAINT chk_profesionales_color CHECK (color_calendario ~ '^#[0-9A-Fa-f]{6}$'),
+
+    -- Validación de baja
+    CONSTRAINT chk_profesionales_baja CHECK (
+        (estado = 'baja' AND fecha_baja IS NOT NULL) OR (estado != 'baja')
+    ),
+
+    -- Validación de edad
+    CONSTRAINT chk_profesionales_mayor_edad CHECK (
         fecha_nacimiento IS NULL OR
         fecha_nacimiento <= CURRENT_DATE - INTERVAL '18 years'
     ),
-    CHECK (
-        -- Validar fecha_salida posterior a fecha_ingreso
-        fecha_salida IS NULL OR fecha_salida >= fecha_ingreso
+
+    -- Validación de fechas
+    CONSTRAINT chk_profesionales_fechas CHECK (
+        fecha_baja IS NULL OR fecha_baja >= fecha_ingreso
     )
 );
+
+-- Comentarios de documentación
+COMMENT ON TABLE profesionales IS
+'Tabla unificada de empleados. Usa modulos_acceso para control de funcionalidades
+y categorias_profesional (M:N) para clasificación flexible.';
+
+COMMENT ON COLUMN profesionales.tipo IS
+'Clasificación organizacional (operativo, administrativo, gerencial, ventas).
+Solo para reportes y organigrama. NO restringe funcionalidades.';
+
+COMMENT ON COLUMN profesionales.estado IS
+'Estado laboral actual. Impacta disponibilidad y acceso al sistema.';
+
+COMMENT ON COLUMN profesionales.modulos_acceso IS
+'★ Control principal de acceso. Determina qué módulos puede usar el empleado.';
+
+COMMENT ON COLUMN profesionales.tipo_profesional_id IS
+'[LEGACY] Tipo de profesional del catálogo. Se mantiene por compatibilidad.
+Para nuevas implementaciones, usar categorias_profesional (M:N).';
 
 -- ====================================================================
 -- 🧑‍💼 TABLA CLIENTES - BASE DE DATOS DE CLIENTES

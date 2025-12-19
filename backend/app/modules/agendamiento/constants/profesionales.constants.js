@@ -70,6 +70,31 @@ const TIPOS_PROFESIONAL = [
 const FORMAS_PAGO = ['comision', 'salario', 'mixto'];
 
 /**
+ * Tipos de empleado (clasificación organizacional) - Dic 2025
+ */
+const TIPOS_EMPLEADO = ['operativo', 'administrativo', 'gerencial', 'ventas'];
+
+/**
+ * Estados laborales - Dic 2025
+ */
+const ESTADOS_LABORALES = ['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja'];
+
+/**
+ * Tipos de contratación - Dic 2025
+ */
+const TIPOS_CONTRATACION = ['tiempo_completo', 'medio_tiempo', 'temporal', 'contrato', 'freelance'];
+
+/**
+ * Géneros - Dic 2025
+ */
+const GENEROS = ['masculino', 'femenino', 'otro', 'no_especificado'];
+
+/**
+ * Estados civiles
+ */
+const ESTADOS_CIVILES = ['soltero', 'casado', 'divorciado', 'viudo', 'union_libre'];
+
+/**
  * Límites de validación
  */
 const LIMITES = {
@@ -82,11 +107,18 @@ const LIMITES = {
     COMISION_MAX: 100,
     CALIFICACION_MIN: 1.0,
     CALIFICACION_MAX: 5.0,
-    MOTIVO_MAX: 500
+    MOTIVO_MAX: 500,
+    CODIGO_MAX: 20,
+    DIRECCION_MAX: 500
 };
 
 module.exports = {
     TIPOS_PROFESIONAL,
     FORMAS_PAGO,
+    TIPOS_EMPLEADO,
+    ESTADOS_LABORALES,
+    TIPOS_CONTRATACION,
+    GENEROS,
+    ESTADOS_CIVILES,
     LIMITES
 };

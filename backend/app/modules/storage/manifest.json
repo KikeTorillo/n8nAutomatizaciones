@@ -1,0 +1,35 @@
+{
+  "name": "storage",
+  "display_name": "Almacenamiento de Archivos",
+  "version": "1.0.0",
+  "description": "Sistema de almacenamiento de archivos con MinIO (S3-compatible)",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Incluido en todos los planes, límites por espacio"
+  },
+  "routes": {
+    "storage": "/api/v1/storage"
+  },
+  "resources": {
+    "archivos": {
+      "table": "archivos",
+      "limit_field": "limite_storage_mb",
+      "notes": "Almacenamiento en MB por organización"
+    }
+  },
+  "features": [
+    "Upload de archivos a MinIO",
+    "Presigned URLs para descarga segura",
+    "Organización por carpetas/buckets",
+    "Límites de espacio por plan",
+    "Integración con todos los módulos"
+  ],
+  "priority": 2,
+  "required": true,
+  "can_disable": false
+}

@@ -266,3 +266,213 @@ export function useActualizarModulos() {
     },
   });
 }
+
+// ====================================================================
+// HOOKS PARA GESTIÓN DE EMPLEADOS - FILTROS (Dic 2025)
+// ====================================================================
+
+/**
+ * Hook para listar profesionales por estado laboral
+ * @param {string} estado - 'activo' | 'vacaciones' | 'incapacidad' | 'suspendido' | 'baja'
+ * @param {Object} options - Filtros adicionales
+ */
+export function useProfesionalesPorEstado(estado, options = {}) {
+  return useQuery({
+    queryKey: ['profesionales', { estado, ...options }],
+    queryFn: async () => {
+      const response = await profesionalesApi.listarPorEstado(estado, options);
+      return response.data.data?.profesionales || [];
+    },
+    enabled: !!estado,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Hook para listar profesionales por departamento
+ * @param {number} departamentoId
+ * @param {Object} options - Filtros adicionales
+ */
+export function useProfesionalesPorDepartamento(departamentoId, options = {}) {
+  return useQuery({
+    queryKey: ['profesionales', { departamento_id: departamentoId, ...options }],
+    queryFn: async () => {
+      const response = await profesionalesApi.listarPorDepartamento(departamentoId, options);
+      return response.data.data?.profesionales || [];
+    },
+    enabled: !!departamentoId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ====================================================================
+// HOOKS PARA JERARQUÍA ORGANIZACIONAL (Dic 2025)
+// ====================================================================
+
+/**
+ * Hook para obtener subordinados de un profesional
+ * @param {number} profesionalId
+ * @param {Object} options - { directos_solo?: boolean }
+ */
+export function useSubordinados(profesionalId, options = {}) {
+  return useQuery({
+    queryKey: ['profesional-subordinados', profesionalId, options],
+    queryFn: async () => {
+      const response = await profesionalesApi.obtenerSubordinados(profesionalId, options);
+      return response.data.data?.subordinados || [];
+    },
+    enabled: !!profesionalId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Hook para obtener cadena de supervisores de un profesional
+ * @param {number} profesionalId
+ */
+export function useCadenaSupervisores(profesionalId) {
+  return useQuery({
+    queryKey: ['profesional-supervisores', profesionalId],
+    queryFn: async () => {
+      const response = await profesionalesApi.obtenerCadenaSupervisores(profesionalId);
+      return response.data.data?.supervisores || [];
+    },
+    enabled: !!profesionalId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+// ====================================================================
+// HOOKS PARA CATEGORÍAS DE PROFESIONAL (M:N) (Dic 2025)
+// ====================================================================
+
+/**
+ * Hook para obtener categorías de un profesional
+ * @param {number} profesionalId
+ */
+export function useCategoriasDeProfesional(profesionalId) {
+  return useQuery({
+    queryKey: ['profesional-categorias', profesionalId],
+    queryFn: async () => {
+      const response = await profesionalesApi.obtenerCategorias(profesionalId);
+      return response.data.data?.categorias || [];
+    },
+    enabled: !!profesionalId,
+    staleTime: 1000 * 60 * 5,
+  });
+}
+
+/**
+ * Hook para asignar categoría a un profesional
+ */
+export function useAsignarCategoria() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ profesionalId, categoriaId }) => {
+      const response = await profesionalesApi.asignarCategoria(profesionalId, categoriaId);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
+      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
+      queryClient.invalidateQueries(['categoria-profesionales']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) throw new Error(backendMessage);
+      throw new Error(error.response?.status === 409
+        ? 'El profesional ya tiene asignada esta categoría'
+        : 'Error al asignar categoría');
+    },
+  });
+}
+
+/**
+ * Hook para eliminar categoría de un profesional
+ */
+export function useEliminarCategoriaDeProf() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ profesionalId, categoriaId }) => {
+      await profesionalesApi.eliminarCategoria(profesionalId, categoriaId);
+      return { profesionalId, categoriaId };
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
+      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
+      queryClient.invalidateQueries(['categoria-profesionales']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      throw new Error(backendMessage || 'Error al eliminar categoría');
+    },
+  });
+}
+
+/**
+ * Hook para sincronizar categorías de un profesional (reemplaza todas)
+ */
+export function useSincronizarCategorias() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ profesionalId, categoriaIds }) => {
+      const response = await profesionalesApi.sincronizarCategorias(profesionalId, categoriaIds);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['profesional-categorias', variables.profesionalId]);
+      queryClient.invalidateQueries(['profesional', variables.profesionalId]);
+      queryClient.invalidateQueries(['categoria-profesionales']);
+      queryClient.invalidateQueries(['categorias-profesional']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      throw new Error(backendMessage || 'Error al sincronizar categorías');
+    },
+  });
+}
+
+// ====================================================================
+// CONSTANTES PARA GESTIÓN DE EMPLEADOS
+// ====================================================================
+
+export const TIPOS_EMPLEADO = {
+  operativo: { label: 'Operativo', color: 'blue' },
+  administrativo: { label: 'Administrativo', color: 'purple' },
+  gerencial: { label: 'Gerencial', color: 'amber' },
+  ventas: { label: 'Ventas', color: 'green' },
+};
+
+export const ESTADOS_LABORALES = {
+  activo: { label: 'Activo', color: 'green' },
+  vacaciones: { label: 'Vacaciones', color: 'blue' },
+  incapacidad: { label: 'Incapacidad', color: 'yellow' },
+  suspendido: { label: 'Suspendido', color: 'red' },
+  baja: { label: 'Baja', color: 'gray' },
+};
+
+export const TIPOS_CONTRATACION = {
+  tiempo_completo: { label: 'Tiempo completo', color: 'green' },
+  medio_tiempo: { label: 'Medio tiempo', color: 'blue' },
+  temporal: { label: 'Temporal', color: 'yellow' },
+  contrato: { label: 'Por contrato', color: 'purple' },
+  freelance: { label: 'Freelance', color: 'gray' },
+};
+
+export const GENEROS = {
+  masculino: { label: 'Masculino' },
+  femenino: { label: 'Femenino' },
+  otro: { label: 'Otro' },
+  no_especificado: { label: 'No especificado' },
+};
+
+export const ESTADOS_CIVILES = {
+  soltero: { label: 'Soltero/a' },
+  casado: { label: 'Casado/a' },
+  divorciado: { label: 'Divorciado/a' },
+  viudo: { label: 'Viudo/a' },
+  union_libre: { label: 'Unión libre' },
+};
