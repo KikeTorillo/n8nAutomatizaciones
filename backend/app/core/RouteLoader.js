@@ -49,10 +49,7 @@ class RouteLoader {
    */
   static LEGACY_ROUTES = {
     // Rutas que aún están en routes/api/v1/ y no en modules/
-    clientes: {
-      path: '/clientes',
-      file: '../routes/api/v1/clientes'
-    },
+    // clientes: migrado a modules/clientes (Dic 2025)
     invitaciones: {
       path: '/invitaciones',
       file: '../routes/api/v1/invitaciones'

@@ -1,0 +1,39 @@
+{
+  "name": "clientes",
+  "display_name": "Gestión de Clientes",
+  "version": "1.0.0",
+  "description": "Módulo central de clientes: CRUD, búsqueda fuzzy, vista 360°",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "used_by": ["agendamiento", "pos", "comisiones", "marketplace", "recordatorios"],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base del sistema, incluido en todos los planes"
+  },
+  "routes": {
+    "clientes": "/api/v1/clientes"
+  },
+  "resources": {
+    "clientes": {
+      "table": "clientes",
+      "limit_field": "limite_clientes",
+      "notes": "Limitado por plan"
+    }
+  },
+  "tables": [
+    "clientes"
+  ],
+  "features": [
+    "CRUD completo de clientes",
+    "Búsqueda fuzzy por teléfono y nombre (IA)",
+    "Vista 360° con estadísticas",
+    "Integración Telegram/WhatsApp",
+    "Marketing permitido configurable"
+  ],
+  "priority": 0,
+  "required": true,
+  "can_disable": false
+}

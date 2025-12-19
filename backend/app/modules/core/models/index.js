@@ -1,11 +1,10 @@
 /**
  * @fileoverview Exports centralizados de Models del módulo CORE
- * @version 2.0.0
- * @updated Nov 2025 - Agregado ClienteModel (migración desde Agendamiento)
+ * @version 2.1.0
+ * @updated Dic 2025 - ClienteModel movido a su propio módulo clientes/
  */
 
 module.exports = {
-  ClienteModel: require('./cliente.model'),
   OrganizacionModel: require('./organizacion.model'),
   PlanesModel: require('./planes.model'),
   SubscripcionModel: require('./subscripcion.model'),

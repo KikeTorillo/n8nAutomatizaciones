@@ -2,8 +2,8 @@
   "name": "agendamiento",
   "display_name": "Sistema de Agendamiento",
   "version": "1.0.0",
-  "description": "Módulo de agendamiento: servicios, clientes, citas, horarios y bloqueos",
-  "depends": ["core", "profesionales"],
+  "description": "Módulo de agendamiento: servicios, citas, horarios y bloqueos",
+  "depends": ["core", "profesionales", "clientes"],
   "dependencies_hard": {},
   "dependencies_optional": {},
   "used_by": ["comisiones", "marketplace", "chatbots"],
@@ -28,11 +28,6 @@
       "limit_field": "limite_servicios",
       "notes": "Limitado por plan"
     },
-    "clientes": {
-      "table": "clientes",
-      "limit_field": "limite_clientes",
-      "notes": "Limitado por plan"
-    },
     "citas": {
       "table": "citas",
       "limit_field": "limite_citas_mes",
@@ -42,7 +37,6 @@
   "tables": [
     "servicios",
     "servicios_profesionales",
-    "clientes",
     "horarios_profesionales",
     "disponibilidad_excepciones",
     "citas",
@@ -52,13 +46,11 @@
   ],
   "features": [
     "Catálogo de servicios con precios",
-    "Base de datos de clientes",
     "Agendamiento de citas múltiples servicios",
     "Horarios personalizados por profesional",
     "Verificación de disponibilidad en tiempo real",
     "Bloqueos de horarios (vacaciones, ausencias)",
     "Historial completo de citas",
-    "Búsqueda fuzzy de clientes",
     "Setup checklist inteligente"
   ],
   "priority": 1,

@@ -489,3 +489,182 @@ No se requieren cambios en SQL.
 - **Sin breaking changes**: Los endpoints públicos no cambian
 - **Backward compatible**: Frontend no requiere modificaciones
 - **Mejor arquitectura**: Alineado con patrones de Odoo y buenas prácticas
+
+---
+
+## Refactorización: Módulo Clientes Independiente
+
+### Estado: 📋 Planificado
+
+**Fecha planificación**: 19 Diciembre 2025
+
+---
+
+### Contexto y Justificación
+
+#### Estado Actual (disperso)
+
+| Ubicación | Archivo | Estado |
+|-----------|---------|--------|
+| `core/models/` | cliente.model.js | ✅ Implementación real |
+| `core/controllers/` | cliente.controller.js | ✅ Implementación real |
+| `routes/api/v1/` | clientes.js | ⚠️ Legacy (fuera de módulos) |
+| `schemas/` | cliente.schemas.js | ⚠️ Legacy (fuera de módulos) |
+| `agendamiento/models/` | cliente.model.js | 🗑️ Re-export deprecado |
+| `agendamiento/controllers/` | cliente.controller.js | 🗑️ Re-export deprecado |
+| `agendamiento/routes/` | clientes.js | 🗑️ Re-export deprecado |
+| `agendamiento/schemas/` | cliente.schemas.js | 🗑️ Re-export deprecado |
+| `models/` | cliente.model.js | 🗑️ Re-export deprecado |
+
+#### Módulos que dependen de clientes
+
+| Módulo | Uso |
+|--------|-----|
+| **POS** | `ventas_pos.cliente_id` |
+| **Agendamiento** | `citas.cliente_id` |
+| **Recordatorios** | Notificaciones a clientes |
+| **Comisiones** | Reportes por cliente |
+| **Marketplace** | Reseñas de clientes |
+| **Chatbots/MCP** | Búsqueda fuzzy (IA) |
+
+#### Código a Eliminar (5 archivos deprecados)
+
+```
+ELIMINAR (re-exports sin uso):
+├── agendamiento/models/cliente.model.js
+├── agendamiento/controllers/cliente.controller.js
+├── agendamiento/routes/clientes.js
+├── agendamiento/schemas/cliente.schemas.js
+└── models/cliente.model.js
+```
+
+---
+
+### Nueva Estructura Propuesta
+
+```
+backend/app/modules/
+├── clientes/                           # NUEVO MÓDULO
+│   ├── manifest.json                   # CREAR
+│   ├── controllers/
+│   │   └── cliente.controller.js       # Mover desde core/
+│   ├── models/
+│   │   └── cliente.model.js            # Mover desde core/
+│   ├── routes/
+│   │   ├── index.js                    # CREAR
+│   │   └── clientes.js                 # Mover desde routes/api/v1/
+│   └── schemas/
+│       └── cliente.schemas.js          # Mover desde schemas/
+│
+├── core/                               # LIMPIAR
+│   ├── models/
+│   │   └── (sin cliente.model.js)
+│   └── controllers/
+│       └── (sin cliente.controller.js)
+│
+└── agendamiento/                       # LIMPIAR
+    └── (sin archivos de cliente)
+```
+
+---
+
+### Checklist de Implementación
+
+#### Fase 1: Crear Módulo Clientes
+- [ ] Crear directorio `backend/app/modules/clientes/`
+- [ ] Crear subdirectorios: `controllers/`, `models/`, `routes/`, `schemas/`
+- [ ] Crear `clientes/manifest.json`
+- [ ] Crear `clientes/routes/index.js`
+
+#### Fase 2: Mover Archivos Reales
+- [ ] Mover `core/models/cliente.model.js` → `clientes/models/`
+- [ ] Mover `core/controllers/cliente.controller.js` → `clientes/controllers/`
+- [ ] Mover `routes/api/v1/clientes.js` → `clientes/routes/`
+- [ ] Mover `schemas/cliente.schemas.js` → `clientes/schemas/`
+
+#### Fase 3: Eliminar Archivos Deprecados
+- [ ] Eliminar `agendamiento/models/cliente.model.js`
+- [ ] Eliminar `agendamiento/controllers/cliente.controller.js`
+- [ ] Eliminar `agendamiento/routes/clientes.js`
+- [ ] Eliminar `agendamiento/schemas/cliente.schemas.js`
+- [ ] Eliminar `models/cliente.model.js`
+
+#### Fase 4: Actualizar Imports
+- [ ] `models/index.js` - Cambiar import a clientes/
+- [ ] `core/models/index.js` - Quitar ClienteModel
+- [ ] `agendamiento/controllers/citas/cita.base.controller.js` - Actualizar import
+- [ ] `__tests__/integration/modelos-crud.test.js` - Actualizar import
+
+#### Fase 5: Actualizar RouteLoader
+- [ ] Quitar `clientes` de LEGACY_ROUTES en `core/RouteLoader.js`
+
+#### Fase 6: Actualizar Manifests
+- [ ] `agendamiento/manifest.json` - Agregar `clientes` a depends, quitar de tables/resources
+
+#### Fase 7: Validación
+- [ ] Reiniciar backend
+- [ ] Verificar endpoint `/api/v1/clientes` funciona
+- [ ] Probar CRUD de clientes
+- [ ] Ejecutar tests
+
+---
+
+### Imports a Actualizar
+
+| Archivo | Import Actual | Import Nuevo |
+|---------|---------------|--------------|
+| `models/index.js` | `../modules/core/models/cliente.model` | `../modules/clientes/models/cliente.model` |
+| `cita.base.controller.js` | `../../../core/models/cliente.model` | `../../../clientes/models/cliente.model` |
+| `modelos-crud.test.js` | `../../models/cliente.model` | `../../modules/clientes/models/cliente.model` |
+
+---
+
+### Estimación de Impacto
+
+| Métrica | Valor |
+|---------|-------|
+| Archivos a mover | 4 |
+| Archivos a eliminar | 5 |
+| Archivos a modificar | ~8 |
+| Líneas de código muerto eliminadas | ~35 |
+| Riesgo | Bajo |
+
+---
+
+### Contenido de manifest.json
+
+```json
+{
+  "name": "clientes",
+  "display_name": "Gestión de Clientes",
+  "version": "1.0.0",
+  "description": "Módulo central de clientes: CRUD, búsqueda fuzzy, vista 360°",
+  "depends": ["core"],
+  "used_by": ["agendamiento", "pos", "comisiones", "marketplace", "recordatorios"],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true
+  },
+  "routes": {
+    "clientes": "/api/v1/clientes"
+  },
+  "resources": {
+    "clientes": {
+      "table": "clientes",
+      "limit_field": "limite_clientes"
+    }
+  },
+  "tables": ["clientes"],
+  "features": [
+    "CRUD completo de clientes",
+    "Búsqueda fuzzy por teléfono y nombre (IA)",
+    "Vista 360° con estadísticas",
+    "Integración Telegram/WhatsApp",
+    "Marketing permitido configurable"
+  ],
+  "priority": 0,
+  "required": true,
+  "can_disable": false
+}
+```
