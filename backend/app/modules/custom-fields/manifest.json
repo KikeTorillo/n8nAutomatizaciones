@@ -1,0 +1,69 @@
+{
+  "name": "custom-fields",
+  "display_name": "Campos Personalizados",
+  "version": "1.0.0",
+  "description": "Sistema de campos personalizados dinámicos para extender entidades del sistema",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
+    "storage": "Para campos de tipo archivo"
+  },
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "limits": {
+      "basico": 5,
+      "profesional": 20,
+      "empresarial": 100
+    },
+    "notes": "Límite de definiciones de campos por entidad según plan"
+  },
+  "routes": {
+    "custom-fields": "/api/v1/custom-fields"
+  },
+  "resources": {
+    "definiciones": {
+      "table": "custom_fields_definiciones",
+      "notes": "Definiciones de campos personalizados"
+    },
+    "valores": {
+      "table": "custom_fields_valores",
+      "notes": "Valores de campos personalizados por entidad"
+    }
+  },
+  "features": [
+    "Definición de campos personalizados por tipo de entidad",
+    "12 tipos de datos soportados",
+    "Validaciones configurables",
+    "Ordenamiento y agrupación por secciones",
+    "Integración con formularios existentes",
+    "API JSONB para frontend"
+  ],
+  "entity_types": [
+    "cliente",
+    "profesional",
+    "servicio",
+    "producto",
+    "cita",
+    "evento_digital",
+    "invitado_evento"
+  ],
+  "data_types": [
+    "texto",
+    "texto_largo",
+    "numero",
+    "fecha",
+    "hora",
+    "booleano",
+    "select",
+    "multiselect",
+    "email",
+    "telefono",
+    "url",
+    "archivo"
+  ],
+  "priority": 3,
+  "required": false,
+  "can_disable": true
+}

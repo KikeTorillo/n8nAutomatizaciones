@@ -1,9 +1,10 @@
 # Plan de Desarrollo: Correcciones BD + Custom Fields + Notificaciones
 
 **Fecha:** Diciembre 2025
-**Estado:** Planificado
+**Estado:** Fase 2 Completada - Fase 3 Pendiente
 **Prioridad:** Alta
-**Última Auditoría:** 19 Diciembre 2025
+**Ultima Auditoria:** 19 Diciembre 2025
+**Ultima Actualizacion:** 20 Diciembre 2025
 
 ---
 
@@ -877,11 +878,13 @@ frontend/src/
 - [x] Particionar movimientos_inventario (6 meses iniciales)
 - [ ] Ejecutar script de verificación post-correcciones (en deploy)
 
-### Fase 2 - Custom Fields
-- [ ] Crear estructura SQL custom-fields
-- [ ] Implementar backend custom-fields
-- [ ] Implementar frontend CustomFieldsBuilder + CustomFieldsForm
-- [ ] Integrar en formularios existentes
+### Fase 2 - Custom Fields ✅ COMPLETADA (20 Dic 2025)
+- [x] Crear estructura SQL custom-fields (5 archivos: tablas, indices, RLS, funciones, triggers)
+- [x] Registrar modulo en init-data.sh
+- [x] Implementar backend custom-fields (manifest, controller, routes, schemas)
+- [x] Implementar frontend hooks (useCustomFields.js + endpoints)
+- [x] Implementar frontend CustomFieldsBuilder + CustomFieldsForm
+- [ ] Integrar en formularios existentes (pendiente: agregar a ClienteForm, ServicioForm, etc.)
 - [ ] Testing
 
 ### Fase 3 - Notificaciones
