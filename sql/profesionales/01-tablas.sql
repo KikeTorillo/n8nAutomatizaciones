@@ -26,8 +26,7 @@ CREATE TABLE profesionales (
     id SERIAL PRIMARY KEY,
 
     -- 🏢 RELACIÓN MULTI-TENANT (CRÍTICA)
-    organizacion_id INTEGER NOT NULL,           -- FK obligatoria a organizaciones
-                                               -- REFERENCES organizaciones(id) ON DELETE CASCADE
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
 
     -- ====================================================================
     -- 🆔 SECCIÓN: IDENTIFICACIÓN
@@ -129,6 +128,12 @@ CREATE TABLE profesionales (
     activo BOOLEAN DEFAULT TRUE,               -- [LEGACY] Usar estado en su lugar
     fecha_salida DATE,                         -- [LEGACY] Usar fecha_baja en su lugar
     motivo_inactividad TEXT,                   -- [LEGACY] Usar motivo_baja en su lugar
+
+    -- ====================================================================
+    -- 🗑️ SECCIÓN: SOFT DELETE (Dic 2025)
+    -- ====================================================================
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,     -- NULL = activo, con valor = eliminado
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
 
     -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS

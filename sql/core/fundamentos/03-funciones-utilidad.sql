@@ -75,3 +75,51 @@ $$ LANGUAGE plpgsql IMMUTABLE;
 
 COMMENT ON FUNCTION normalizar_telefono(TEXT) IS
 'Normaliza números telefónicos removiendo caracteres especiales y códigos de país. Optimizada para búsquedas fuzzy en modelos de cliente';
+
+-- ====================================================================
+-- 🎨 FUNCIÓN: IS_VALID_HEX_COLOR
+-- ====================================================================
+-- Valida que un string sea un color hexadecimal válido (#RRGGBB).
+-- Soporta mayúsculas y minúsculas (case-insensitive).
+--
+-- 🎯 PROPÓSITO:
+-- • Unificar validación de colores en todo el sistema
+-- • Reemplazar CHECKs inconsistentes en diferentes tablas
+-- • Permitir tanto #ffffff como #FFFFFF
+--
+-- 📋 VALIDACIONES:
+-- • NULL                    → TRUE (NULL es válido)
+-- • "#FFFFFF"               → TRUE
+-- • "#ffffff"               → TRUE
+-- • "#FfFfFf"               → TRUE
+-- • "FFFFFF" (sin #)        → FALSE
+-- • "#FFF" (3 dígitos)      → FALSE
+-- • "#GGGGGG" (no hex)      → FALSE
+--
+-- 🔄 USADO POR:
+-- • profesionales.color_calendario
+-- • servicios.color (pendiente migración)
+-- • categorias_productos.color (pendiente migración)
+--
+-- ⚡ PERFORMANCE: IMMUTABLE - Permite uso en índices y CHECKs
+-- ────────────────────────────────────────────────────────────────────
+-- Corrección de auditoría: Dic 2025
+-- ────────────────────────────────────────────────────────────────────
+CREATE OR REPLACE FUNCTION is_valid_hex_color(color VARCHAR)
+RETURNS BOOLEAN AS $$
+BEGIN
+    -- NULL es válido (campo opcional)
+    IF color IS NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    -- Validar formato #RRGGBB (case-insensitive)
+    -- ~* es el operador de regex case-insensitive en PostgreSQL
+    RETURN color ~* '^#[0-9A-F]{6}$';
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+COMMENT ON FUNCTION is_valid_hex_color(VARCHAR) IS
+'Valida formato de color hexadecimal #RRGGBB (case-insensitive).
+Retorna TRUE si el color es válido o NULL. Retorna FALSE si el formato es incorrecto.
+Uso en CHECKs: CHECK (is_valid_hex_color(color_campo))';

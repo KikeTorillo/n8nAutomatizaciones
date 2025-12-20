@@ -27,6 +27,10 @@ CREATE TABLE IF NOT EXISTS categorias_productos (
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT true,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -78,6 +82,10 @@ CREATE TABLE IF NOT EXISTS proveedores (
 
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
 
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -146,6 +154,10 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT true,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -175,13 +187,13 @@ COMMENT ON COLUMN productos.precio_mayoreo IS 'Precio especial para ventas de ca
 COMMENT ON COLUMN productos.es_perecedero IS 'Indica si el producto tiene fecha de vencimiento';
 
 -- ============================================================================
--- TABLA: movimientos_inventario
+-- TABLA: movimientos_inventario (PARTICIONADA POR MES)
 -- Descripción: Registro de todos los movimientos de stock (entradas/salidas)
--- NOTA: Esta tabla será PARTICIONADA por fecha (ver 06-particionamiento.sql)
+-- Particionamiento: Por rango de creado_en (mensual) para mejor performance
 -- ============================================================================
 CREATE TABLE IF NOT EXISTS movimientos_inventario (
-    -- 🔑 IDENTIFICACIÓN
-    id SERIAL PRIMARY KEY,
+    -- 🔑 IDENTIFICACIÓN (PK compuesta para particionamiento)
+    id SERIAL,
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
     sucursal_id INTEGER,  -- Sucursal donde ocurre el movimiento
     producto_id INTEGER NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
@@ -224,7 +236,10 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     lote VARCHAR(50), -- Número de lote del producto
 
     -- 📅 TIMESTAMPS
-    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    creado_en TIMESTAMPTZ DEFAULT NOW() NOT NULL,
+
+    -- 🔑 PRIMARY KEY COMPUESTA (requerida para particionamiento)
+    PRIMARY KEY (id, creado_en),
 
     -- ✅ CONSTRAINTS
     CHECK (
@@ -235,14 +250,46 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     CHECK (stock_despues >= 0), -- El stock nunca puede ser negativo
     CHECK (costo_unitario IS NULL OR costo_unitario >= 0),
     CHECK (valor_total IS NULL OR valor_total >= 0)
-);
+) PARTITION BY RANGE (creado_en);
 
-COMMENT ON TABLE movimientos_inventario IS 'Registro completo de movimientos de inventario (kardex) - TABLA PARTICIONADA';
+COMMENT ON TABLE movimientos_inventario IS 'Registro completo de movimientos de inventario (kardex). PARTICIONADA por mes para mejor performance en queries históricos.';
 COMMENT ON COLUMN movimientos_inventario.cantidad IS 'Positivo para entradas, negativo para salidas';
 COMMENT ON COLUMN movimientos_inventario.stock_antes IS 'Stock del producto antes de este movimiento';
 COMMENT ON COLUMN movimientos_inventario.stock_despues IS 'Stock del producto después de este movimiento (= stock_antes + cantidad)';
 COMMENT ON COLUMN movimientos_inventario.tipo_movimiento IS 'Tipo de movimiento: entrada_* (positivo) o salida_* (negativo)';
 COMMENT ON COLUMN movimientos_inventario.referencia IS 'Número de factura, orden de compra u otro documento de respaldo';
+
+-- ============================================================================
+-- PARTICIONES INICIALES: movimientos_inventario (6 meses)
+-- ============================================================================
+-- Crear particiones para los próximos 6 meses
+-- pg_cron creará automáticamente las futuras (ver sql/mantenimiento/)
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2025_11 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2025-11-01') TO ('2025-12-01');
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2025_12 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2025-12-01') TO ('2026-01-01');
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_01 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_02 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_03 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
+
+CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_04 PARTITION OF movimientos_inventario
+    FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
+
+COMMENT ON TABLE movimientos_inventario_2025_11 IS 'Partición Nov 2025';
+COMMENT ON TABLE movimientos_inventario_2025_12 IS 'Partición Dic 2025';
+COMMENT ON TABLE movimientos_inventario_2026_01 IS 'Partición Ene 2026';
+COMMENT ON TABLE movimientos_inventario_2026_02 IS 'Partición Feb 2026';
+COMMENT ON TABLE movimientos_inventario_2026_03 IS 'Partición Mar 2026';
+COMMENT ON TABLE movimientos_inventario_2026_04 IS 'Partición Abr 2026';
 
 -- ============================================================================
 -- TABLA: alertas_inventario
