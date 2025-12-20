@@ -25,7 +25,8 @@ CREATE INDEX idx_clientes_organizacion_id ON clientes(organizacion_id);
 -- 📧 ÍNDICE 2: BÚSQUEDA POR EMAIL
 -- Propósito: Validación de emails únicos y búsqueda rápida
 -- Uso: WHERE email = ? AND email IS NOT NULL
-CREATE INDEX idx_clientes_email ON clientes(email) WHERE email IS NOT NULL;
+CREATE INDEX idx_clientes_email ON clientes(email)
+    WHERE email IS NOT NULL AND eliminado_en IS NULL;
 
 -- 📞 ÍNDICE 3: BÚSQUEDA POR TELÉFONO
 -- Propósito: Identificación rápida por teléfono
@@ -37,9 +38,10 @@ CREATE INDEX idx_clientes_telefono ON clientes(telefono);
 -- Uso: Validación de unicidad que permite múltiples clientes walk-in sin teléfono
 -- Ventaja: Índice parcial que solo indexa registros con teléfono != NULL
 -- CRÍTICO: Permite múltiples clientes con telefono=NULL en la misma org (walk-ins)
+-- 🗑️ Excluye registros eliminados para permitir reutilización de teléfonos
 CREATE UNIQUE INDEX idx_clientes_unique_telefono_por_org
     ON clientes (organizacion_id, telefono)
-    WHERE telefono IS NOT NULL;
+    WHERE telefono IS NOT NULL AND eliminado_en IS NULL;
 
 -- 📱 ÍNDICE 5: BÚSQUEDA POR TELEGRAM CHAT ID
 -- Propósito: Identificación instantánea de clientes por Telegram (sin pedir teléfono)
@@ -47,7 +49,7 @@ CREATE UNIQUE INDEX idx_clientes_unique_telefono_por_org
 -- Performance: Búsqueda O(1) en tabla con millones de registros
 CREATE INDEX idx_clientes_telegram
     ON clientes(telegram_chat_id)
-    WHERE telegram_chat_id IS NOT NULL;
+    WHERE telegram_chat_id IS NOT NULL AND eliminado_en IS NULL;
 
 -- 📱 ÍNDICE 6: BÚSQUEDA POR WHATSAPP PHONE
 -- Propósito: Identificación instantánea de clientes por WhatsApp Business
@@ -55,7 +57,7 @@ CREATE INDEX idx_clientes_telegram
 -- Performance: Búsqueda O(1) en tabla con millones de registros
 CREATE INDEX idx_clientes_whatsapp
     ON clientes(whatsapp_phone)
-    WHERE whatsapp_phone IS NOT NULL;
+    WHERE whatsapp_phone IS NOT NULL AND eliminado_en IS NULL;
 
 -- 🔍 ÍNDICE 7: BÚSQUEDA FUZZY DE TELÉFONOS (TRIGRAMA)
 -- Propósito: Soporte para búsqueda fuzzy de teléfonos en ClienteModel.buscarPorTelefono()
@@ -74,7 +76,7 @@ CREATE INDEX idx_clientes_search_combined
             COALESCE(telefono, '') || ' ' ||
             COALESCE(email, '')
         )
-    ) WHERE activo = TRUE;
+    ) WHERE eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_clientes_search_combined IS
 'Índice GIN compuesto para búsqueda full-text en clientes.
@@ -95,29 +97,29 @@ CREATE INDEX idx_clientes_nombre_trgm ON clientes USING GIN(nombre gin_trgm_ops)
 
 -- ✅ ÍNDICE 10: CLIENTES ACTIVOS (PARCIAL)
 -- Propósito: Filtrar solo clientes activos (query más común)
--- Uso: WHERE organizacion_id = ? AND activo = TRUE
+-- Uso: WHERE organizacion_id = ? AND activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_clientes_activos ON clientes(organizacion_id, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- 👨‍⚕️ ÍNDICE 11: PROFESIONAL PREFERIDO
 -- Propósito: Consultas de preferencias de clientes
 -- Uso: WHERE profesional_preferido_id = ?
 CREATE INDEX idx_clientes_profesional_preferido ON clientes(profesional_preferido_id)
-    WHERE profesional_preferido_id IS NOT NULL;
+    WHERE profesional_preferido_id IS NOT NULL AND eliminado_en IS NULL;
 
 -- 📢 ÍNDICE 12: MARKETING PERMITIDO
 -- Propósito: Campañas de marketing y comunicaciones
--- Uso: WHERE organizacion_id = ? AND marketing_permitido = TRUE AND activo = TRUE
+-- Uso: WHERE organizacion_id = ? AND marketing_permitido = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_clientes_marketing ON clientes(organizacion_id, marketing_permitido)
-    WHERE marketing_permitido = true AND activo = true;
+    WHERE marketing_permitido = TRUE AND eliminado_en IS NULL;
 
 -- 📊 ÍNDICE 13: COVERING INDEX PARA CLIENTES ACTIVOS
 -- Propósito: Dashboard de clientes activos con datos básicos
--- Uso: SELECT nombre, telefono, email FROM clientes WHERE organizacion_id = ? AND activo = TRUE
+-- Uso: SELECT nombre, telefono, email FROM clientes WHERE organizacion_id = ? AND activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX IF NOT EXISTS idx_clientes_activos_covering
     ON clientes (organizacion_id, activo, creado_en)
     INCLUDE (nombre, telefono, email, profesional_preferido_id, como_conocio)
-    WHERE activo = TRUE;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_clientes_activos_covering IS
 'Índice covering para dashboard de clientes activos.

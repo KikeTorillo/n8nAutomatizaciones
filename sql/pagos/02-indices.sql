@@ -63,7 +63,7 @@ CREATE INDEX idx_metodos_pago_org ON metodos_pago(organizacion_id);
 
 -- 2. Filtrado de métodos activos por organización
 CREATE INDEX idx_metodos_pago_activo ON metodos_pago(organizacion_id, activo)
-WHERE activo = TRUE;
+WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- 3. Búsqueda del método principal por organización
 CREATE INDEX idx_metodos_pago_principal ON metodos_pago(organizacion_id)

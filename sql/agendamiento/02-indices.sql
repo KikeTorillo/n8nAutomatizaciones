@@ -24,39 +24,39 @@
 -- ====================================================================
 
 -- Índice principal para búsquedas por profesional
--- Uso: WHERE profesional_id = ? AND activo = TRUE
+-- Uso: WHERE profesional_id = ? AND eliminado_en IS NULL
 -- Performance: O(log n) para horarios de un profesional
 CREATE INDEX idx_horarios_profesionales_profesional
-    ON horarios_profesionales(profesional_id, activo) WHERE activo = TRUE;
+    ON horarios_profesionales(profesional_id, activo) WHERE eliminado_en IS NULL;
 
 -- Índice para búsquedas por día de semana
--- Uso: WHERE dia_semana = ? AND activo = TRUE AND permite_citas = TRUE
+-- Uso: WHERE dia_semana = ? AND activo = TRUE AND permite_citas = TRUE AND eliminado_en IS NULL
 -- Caso: Mostrar profesionales disponibles los lunes
 CREATE INDEX idx_horarios_profesionales_dia_activo
     ON horarios_profesionales(dia_semana, activo, permite_citas)
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- Índice para horarios con vigencia temporal
--- Uso: WHERE fecha_inicio <= ? AND (fecha_fin IS NULL OR fecha_fin >= ?)
+-- Uso: WHERE fecha_inicio <= ? AND (fecha_fin IS NULL OR fecha_fin >= ?) AND eliminado_en IS NULL
 -- Caso: Filtrar horarios vigentes en una fecha específica
 CREATE INDEX idx_horarios_profesionales_vigencia
     ON horarios_profesionales(fecha_inicio, fecha_fin, activo)
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- Índice para horarios premium
--- Uso: WHERE profesional_id = ? AND precio_premium > 0
+-- Uso: WHERE profesional_id = ? AND precio_premium > 0 AND eliminado_en IS NULL
 -- Caso: Identificar slots con recargo adicional
 CREATE INDEX idx_horarios_profesionales_premium
     ON horarios_profesionales(profesional_id, precio_premium)
-    WHERE activo = TRUE AND precio_premium > 0;
+    WHERE eliminado_en IS NULL AND precio_premium > 0;
 
 -- Índice compuesto para generación de disponibilidad
--- Uso: WHERE profesional_id = ? AND dia_semana = ? AND permite_citas = TRUE AND activo = TRUE
+-- Uso: WHERE profesional_id = ? AND dia_semana = ? AND permite_citas = TRUE AND eliminado_en IS NULL
 -- Caso: Generar calendario semanal de un profesional
 -- Performance crítica: Query más frecuente del módulo
 CREATE INDEX idx_horarios_profesionales_generacion
     ON horarios_profesionales(profesional_id, dia_semana, permite_citas, activo)
-    WHERE activo = TRUE AND permite_citas = TRUE;
+    WHERE eliminado_en IS NULL AND permite_citas = TRUE;
 
 -- ====================================================================
 -- 📝 COMENTARIOS DE ÍNDICES

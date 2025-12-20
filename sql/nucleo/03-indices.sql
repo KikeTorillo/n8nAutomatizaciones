@@ -4,8 +4,13 @@
 -- Índices optimizados para tablas core y subscripciones.
 -- Estrategia: Covering indexes + índices parciales + GIN compuestos
 --
+-- 🗑️ PATRÓN SOFT DELETE (Dic 2025):
+-- Todos los índices parciales usan `eliminado_en IS NULL` como filtro
+-- para excluir registros eliminados lógicamente.
+--
 -- Migrado de: sql/schema/07-indexes.sql
 -- Fecha migración: 16 Noviembre 2025
+-- Actualizado: Diciembre 2025 - Soft delete consistente
 -- ====================================================================
 
 -- ====================================================================
@@ -13,14 +18,14 @@
 -- ====================================================================
 
 -- Propósito: Login de usuarios (consulta MÁS frecuente del sistema)
--- Índice parcial que solo indexa usuarios activos
+-- Índice parcial que solo indexa usuarios NO eliminados
 CREATE UNIQUE INDEX idx_usuarios_email_unique
-    ON usuarios (email) WHERE activo = TRUE;
+    ON usuarios (email) WHERE eliminado_en IS NULL;
 
 -- Propósito: Listar usuarios por organización y filtrar por rol
 -- Covering index para evitar table lookups
 CREATE INDEX idx_usuarios_org_rol_activo
-    ON usuarios (organizacion_id, rol, activo) WHERE activo = TRUE;
+    ON usuarios (organizacion_id, rol, activo) WHERE eliminado_en IS NULL;
 
 -- Propósito: Vincular usuarios con sus perfiles profesionales
 -- Índice parcial solo para usuarios que SÍ tienen profesional_id
@@ -49,50 +54,50 @@ CREATE INDEX idx_usuarios_verificacion_email_token
 -- Dashboard de actividad de usuarios
 CREATE INDEX idx_usuarios_dashboard
     ON usuarios (organizacion_id, ultimo_login, activo)
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- Propósito: Búsqueda fuzzy de usuarios por nombre
 -- Índice GIN para búsquedas full-text en español
 CREATE INDEX idx_usuarios_nombre_gin
     ON usuarios USING gin(to_tsvector('spanish', nombre || ' ' || COALESCE(apellidos, '')))
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- Propósito: Listar usuarios activos vinculados a organizaciones
 -- Para queries que filtran por organización
 CREATE INDEX IF NOT EXISTS idx_usuarios_organizacion_activos
     ON usuarios(organizacion_id)
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- Propósito: Búsqueda eficiente de usuarios bot
 -- Índice parcial para usuarios con rol=bot activos (1 por organización)
 CREATE INDEX IF NOT EXISTS idx_usuarios_rol_org
     ON usuarios(rol, organizacion_id)
-    WHERE rol = 'bot' AND activo = TRUE;
+    WHERE rol = 'bot' AND eliminado_en IS NULL;
 
 -- ====================================================================
 -- ÍNDICES PARA ORGANIZACIONES
 -- ====================================================================
 
 -- Propósito: Login y lookups por código de tenant
--- Índice parcial solo para organizaciones activas
+-- Índice parcial solo para organizaciones NO eliminadas
 CREATE UNIQUE INDEX idx_organizaciones_codigo_tenant
-    ON organizaciones (codigo_tenant) WHERE activo = TRUE;
+    ON organizaciones (codigo_tenant) WHERE eliminado_en IS NULL;
 
 -- Propósito: URLs personalizadas para organizaciones
 -- Índice parcial solo para slugs activos no nulos
 CREATE UNIQUE INDEX idx_organizaciones_slug
-    ON organizaciones (slug) WHERE activo = TRUE AND slug IS NOT NULL;
+    ON organizaciones (slug) WHERE eliminado_en IS NULL AND slug IS NOT NULL;
 
 -- Propósito: Reportes y estadísticas por categoría de organización (Nov 2025: migrado a tabla dinámica)
 -- Agrupaciones y filtros por categoría
 CREATE INDEX idx_organizaciones_categoria
-    ON organizaciones (categoria_id, activo) WHERE activo = TRUE;
+    ON organizaciones (categoria_id, activo) WHERE eliminado_en IS NULL;
 
 -- Propósito: Filtrar organizaciones con perfil de marketplace activo
 -- Para reportes y estadísticas de marketplace (Nov 2025)
 CREATE INDEX idx_organizaciones_marketplace
     ON organizaciones(tiene_perfil_marketplace)
-    WHERE tiene_perfil_marketplace = TRUE;
+    WHERE tiene_perfil_marketplace = TRUE AND eliminado_en IS NULL;
 
 -- ====================================================================
 -- ÍNDICES PARA PLANES_SUBSCRIPCION

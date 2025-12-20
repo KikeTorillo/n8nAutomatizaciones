@@ -61,6 +61,10 @@ CREATE TABLE clientes (
     activo BOOLEAN DEFAULT TRUE,
     marketing_permitido BOOLEAN DEFAULT TRUE,
 
+    -- 🗑️ Soft Delete (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,     -- NULL = activo, con valor = eliminado
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- 🕒 Timestamps de auditoría
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),

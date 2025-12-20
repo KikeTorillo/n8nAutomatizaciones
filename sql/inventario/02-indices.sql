@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_categorias_productos_nombre
 -- Índice para categorías activas (consulta frecuente)
 CREATE INDEX IF NOT EXISTS idx_categorias_productos_activas
     ON categorias_productos(organizacion_id, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice para jerarquía (buscar hijos de una categoría padre)
 CREATE INDEX IF NOT EXISTS idx_categorias_productos_padre
@@ -46,7 +46,7 @@ CREATE INDEX IF NOT EXISTS idx_proveedores_nombre
 -- Índice para proveedores activos
 CREATE INDEX IF NOT EXISTS idx_proveedores_activos
     ON proveedores(organizacion_id, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice para búsqueda por RFC (México)
 CREATE INDEX IF NOT EXISTS idx_proveedores_rfc
@@ -79,7 +79,7 @@ CREATE INDEX IF NOT EXISTS idx_productos_codigo_barras
 -- Índice para productos activos
 CREATE INDEX IF NOT EXISTS idx_productos_activos
     ON productos(organizacion_id, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice por categoría (filtrado frecuente)
 CREATE INDEX IF NOT EXISTS idx_productos_categoria
@@ -94,22 +94,22 @@ CREATE INDEX IF NOT EXISTS idx_productos_proveedor
 -- Índice compuesto para filtros frecuentes (categoría + activo)
 CREATE INDEX IF NOT EXISTS idx_productos_categoria_activo
     ON productos(organizacion_id, categoria_id, activo)
-    WHERE activo = true AND categoria_id IS NOT NULL;
+    WHERE activo = TRUE AND categoria_id IS NOT NULL AND eliminado_en IS NULL;
 
 -- Índice para productos con stock bajo (alertas)
 CREATE INDEX IF NOT EXISTS idx_productos_stock_bajo
     ON productos(organizacion_id, stock_actual, stock_minimo)
-    WHERE stock_actual <= stock_minimo AND activo = true;
+    WHERE stock_actual <= stock_minimo AND activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice para productos agotados
 CREATE INDEX IF NOT EXISTS idx_productos_agotados
     ON productos(organizacion_id)
-    WHERE stock_actual = 0 AND activo = true;
+    WHERE stock_actual = 0 AND activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice para productos perecederos
 CREATE INDEX IF NOT EXISTS idx_productos_perecederos
     ON productos(organizacion_id, es_perecedero)
-    WHERE es_perecedero = true AND activo = true;
+    WHERE es_perecedero = TRUE AND activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice GIN para búsqueda full-text en nombre (español)
 CREATE INDEX IF NOT EXISTS idx_productos_nombre_gin

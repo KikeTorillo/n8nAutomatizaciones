@@ -4,6 +4,10 @@
 -- Índices optimizados para la tabla profesionales.
 -- Extraído de sql/negocio/ para modularización (Dic 2025)
 --
+-- 🗑️ PATRÓN SOFT DELETE (Dic 2025):
+-- Todos los índices parciales usan `eliminado_en IS NULL` como filtro
+-- para excluir registros eliminados lógicamente.
+--
 -- CARACTERÍSTICAS:
 -- • Índices multi-tenant para aislamiento por organización
 -- • Índices GIN para búsqueda full-text en español
@@ -19,29 +23,29 @@
 
 -- 🏢 ÍNDICE 1: MULTI-TENANT PRINCIPAL
 -- Propósito: Consultas principales filtradas por organización
--- Uso: WHERE organizacion_id = ? AND activo = TRUE
+-- Uso: WHERE organizacion_id = ? AND eliminado_en IS NULL
 CREATE INDEX idx_profesionales_org_activo
-    ON profesionales (organizacion_id, activo) WHERE activo = TRUE;
+    ON profesionales (organizacion_id, activo) WHERE eliminado_en IS NULL;
 
 -- 📧 ÍNDICE 2: EMAIL ÚNICO POR ORGANIZACIÓN
 -- Propósito: Validar email único dentro de cada organización
 -- Uso: Constraint de unicidad multi-tenant
 CREATE UNIQUE INDEX idx_profesionales_email_org
     ON profesionales (organizacion_id, email)
-    WHERE email IS NOT NULL AND activo = TRUE;
+    WHERE email IS NOT NULL AND eliminado_en IS NULL;
 
 -- 📋 ÍNDICE 3: BÚSQUEDA EN LICENCIAS Y CERTIFICACIONES
 -- Propósito: Filtrar por licencias específicas (útil para médicos, etc.)
 -- Uso: WHERE licencias_profesionales ? 'cedula_profesional'
 CREATE INDEX idx_profesionales_licencias_gin
-    ON profesionales USING gin(licencias_profesionales) WHERE activo = TRUE;
+    ON profesionales USING gin(licencias_profesionales) WHERE eliminado_en IS NULL;
 
 -- 🌟 ÍNDICE 4: RANKING Y DISPONIBILIDAD
 -- Propósito: Ordenar profesionales por calificación y disponibilidad
 -- Uso: ORDER BY calificacion_promedio DESC, disponible_online DESC
 CREATE INDEX idx_profesionales_ranking
     ON profesionales (organizacion_id, disponible_online, calificacion_promedio DESC, activo)
-    WHERE activo = TRUE;
+    WHERE eliminado_en IS NULL;
 
 -- 📝 ÍNDICE 5: BÚSQUEDA FULL-TEXT COMBINADA
 -- Propósito: Búsqueda avanzada en múltiples campos

@@ -64,6 +64,10 @@ CREATE TABLE configuracion_comisiones (
     valor_comision DECIMAL(10, 2) NOT NULL CHECK (valor_comision >= 0),
     activo BOOLEAN DEFAULT true,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- 📝 METADATA
     notas TEXT,
     creado_en TIMESTAMPTZ DEFAULT NOW(),

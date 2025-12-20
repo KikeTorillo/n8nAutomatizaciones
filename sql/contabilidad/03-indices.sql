@@ -27,7 +27,7 @@
 -- Búsqueda por organización y estado activo (muy frecuente)
 CREATE INDEX idx_cuentas_org_activo
     ON cuentas_contables(organizacion_id, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- Búsqueda por tipo de cuenta (para reportes)
 CREATE INDEX idx_cuentas_org_tipo
@@ -55,7 +55,7 @@ CREATE INDEX idx_cuentas_sistema
 -- Filtro de cuentas afectables (que permiten movimientos)
 CREATE INDEX idx_cuentas_afectable
     ON cuentas_contables(organizacion_id)
-    WHERE afectable = true AND activo = true;
+    WHERE afectable = TRUE AND activo = TRUE AND eliminado_en IS NULL;
 
 -- Índice covering para listado de cuentas
 CREATE INDEX idx_cuentas_listado

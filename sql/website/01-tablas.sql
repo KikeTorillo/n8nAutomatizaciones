@@ -65,6 +65,10 @@ CREATE TABLE IF NOT EXISTS website_config (
     publicado BOOLEAN DEFAULT false,
     fecha_publicacion TIMESTAMP WITH TIME ZONE,
 
+    -- 🗑️ Soft Delete (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- Timestamps
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP

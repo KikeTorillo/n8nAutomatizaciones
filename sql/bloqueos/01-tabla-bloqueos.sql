@@ -94,6 +94,10 @@ CREATE TABLE bloqueos_horarios (
     aprobado_por INTEGER,                        -- Usuario que aprobó el bloqueo
     fecha_aprobacion TIMESTAMP WITH TIME ZONE,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER,
+
     -- 🕐 TIMESTAMPS AUTOMÁTICOS
     creado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     actualizado_en TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

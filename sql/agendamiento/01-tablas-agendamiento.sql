@@ -91,6 +91,12 @@ CREATE TABLE horarios_profesionales (
     creado_automaticamente BOOLEAN DEFAULT FALSE,       -- Si fue generado por el sistema
 
     -- ====================================================================
+    -- 🗑️ SECCIÓN: SOFT DELETE (Dic 2025)
+    -- ====================================================================
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,              -- NULL = activo, con valor = eliminado
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
+    -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS DE AUDITORÍA
     -- ====================================================================
     creado_en TIMESTAMPTZ DEFAULT NOW(),

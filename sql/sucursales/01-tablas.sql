@@ -72,6 +72,10 @@ CREATE TABLE sucursales (
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT TRUE,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),

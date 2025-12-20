@@ -10,7 +10,7 @@
 -- INDICES: sucursales
 -- ====================================================================
 CREATE INDEX idx_sucursales_org ON sucursales(organizacion_id);
-CREATE INDEX idx_sucursales_activas ON sucursales(organizacion_id) WHERE activo = TRUE;
+CREATE INDEX idx_sucursales_activas ON sucursales(organizacion_id) WHERE activo = TRUE AND eliminado_en IS NULL;
 CREATE INDEX idx_sucursales_estado ON sucursales(estado_id) WHERE estado_id IS NOT NULL;
 CREATE INDEX idx_sucursales_ciudad ON sucursales(ciudad_id) WHERE ciudad_id IS NOT NULL;
 

@@ -51,7 +51,12 @@ CREATE TABLE IF NOT EXISTS archivos_storage (
     -- ====================================================================
     -- CONTROL
     -- ====================================================================
-    activo BOOLEAN DEFAULT true,                -- Soft delete
+    activo BOOLEAN DEFAULT true,                -- Legacy soft delete
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,      -- NULL = activo, con valor = eliminado
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
@@ -78,10 +83,10 @@ ON archivos_storage(entidad_tipo, entidad_id);
 CREATE INDEX IF NOT EXISTS idx_archivos_storage_bucket
 ON archivos_storage(bucket);
 
--- Índice compuesto para listados por org + activo
+-- Índice compuesto para listados por org + activo (con filtro soft delete)
 CREATE INDEX IF NOT EXISTS idx_archivos_storage_org_activo
 ON archivos_storage(organizacion_id, activo)
-WHERE activo = true;
+WHERE eliminado_en IS NULL;
 
 -- ====================================================================
 -- ROW LEVEL SECURITY

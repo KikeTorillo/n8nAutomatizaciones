@@ -57,6 +57,11 @@ CREATE TABLE IF NOT EXISTS plantillas_evento (
     es_premium BOOLEAN DEFAULT false,
     activo BOOLEAN DEFAULT true,
     orden INTEGER DEFAULT 0,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
@@ -115,6 +120,10 @@ CREATE TABLE IF NOT EXISTS eventos_digitales (
     estado VARCHAR(20) DEFAULT 'borrador',
     activo BOOLEAN DEFAULT true,
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -161,6 +170,11 @@ CREATE TABLE IF NOT EXISTS ubicaciones_evento (
     -- Control
     orden INTEGER DEFAULT 0,
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT tipo_ubicacion_valido CHECK (
@@ -210,6 +224,11 @@ CREATE TABLE IF NOT EXISTS invitados_evento (
 
     -- Control
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
@@ -247,6 +266,11 @@ CREATE TABLE IF NOT EXISTS mesa_regalos_evento (
     -- Control
     orden INTEGER DEFAULT 0,
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
 
     CONSTRAINT tipo_regalo_valido CHECK (tipo IN ('producto', 'sobre_digital', 'link_externo'))
@@ -305,6 +329,11 @@ CREATE TABLE IF NOT EXISTS mesas_evento (
 
     -- Control
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 

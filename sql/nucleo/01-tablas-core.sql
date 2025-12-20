@@ -69,6 +69,11 @@ CREATE TABLE organizaciones (
     suspendido BOOLEAN DEFAULT FALSE,
     motivo_suspension TEXT,
 
+    -- 🗑️ Soft Delete (Dic 2025)
+    -- NULL = registro activo, con valor = registro eliminado
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER,  -- FK a usuarios se agrega después (dependencia circular)
+
     -- Metadatos
     metadata JSONB DEFAULT '{}',
     notas_internas TEXT,
@@ -134,6 +139,10 @@ CREATE TABLE usuarios (
     intentos_fallidos INTEGER DEFAULT 0,
     bloqueado_hasta TIMESTAMPTZ,
 
+    -- 🗑️ Soft Delete (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- Recuperación de contraseña
     token_reset_password VARCHAR(255),
     token_reset_expira TIMESTAMPTZ,
@@ -181,3 +190,9 @@ COMMENT ON COLUMN usuarios.rol IS 'Rol RBAC: super_admin (org plataforma, acceso
 COMMENT ON COLUMN usuarios.google_id IS 'ID único del usuario en Google OAuth. NULL si no se registró con Google';
 COMMENT ON COLUMN usuarios.avatar_url IS 'URL del avatar del usuario (de Google OAuth o subido manualmente)';
 COMMENT ON COLUMN usuarios.onboarding_completado IS 'TRUE después de completar el wizard de onboarding inicial. Usuarios legacy se marcan TRUE automáticamente';
+
+-- Comentarios Soft Delete
+COMMENT ON COLUMN organizaciones.eliminado_en IS 'Timestamp de eliminación lógica. NULL = registro activo. Con valor = registro eliminado (soft delete)';
+COMMENT ON COLUMN organizaciones.eliminado_por IS 'ID del usuario que eliminó el registro. FK diferida por dependencia circular con usuarios';
+COMMENT ON COLUMN usuarios.eliminado_en IS 'Timestamp de eliminación lógica. NULL = registro activo. Con valor = registro eliminado (soft delete)';
+COMMENT ON COLUMN usuarios.eliminado_por IS 'ID del usuario que realizó la eliminación lógica';

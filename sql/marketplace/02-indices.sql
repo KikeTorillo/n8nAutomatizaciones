@@ -41,17 +41,17 @@ CREATE INDEX idx_marketplace_perfiles_estado
 
 -- 🎯 ÍNDICE 4: PERFILES ACTIVOS (PARCIAL)
 -- Propósito: Solo perfiles activados manualmente
--- Uso: WHERE activo = TRUE
+-- Uso: WHERE activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_marketplace_perfiles_activo
     ON marketplace_perfiles(activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- 👁️ ÍNDICE 5: VISIBLES EN DIRECTORIO (PARCIAL)
 -- Propósito: Solo perfiles visibles en búsquedas
--- Uso: WHERE visible_en_directorio = TRUE
+-- Uso: WHERE visible_en_directorio = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_marketplace_perfiles_visible
     ON marketplace_perfiles(visible_en_directorio)
-    WHERE visible_en_directorio = true;
+    WHERE visible_en_directorio = TRUE AND eliminado_en IS NULL;
 
 -- 🔍 ÍNDICE 6: BÚSQUEDA POR SLUG (ÚNICO)
 -- Propósito: Lookup rápido por URL amigable
@@ -68,24 +68,24 @@ CREATE INDEX idx_marketplace_search
 
 -- 📍 ÍNDICE 8: CIUDAD + ESTADO (COMPUESTO NORMALIZADO)
 -- Propósito: Búsquedas combinadas por ubicación geográfica
--- Uso: WHERE ciudad_id = ? AND activo = TRUE AND visible_en_directorio = TRUE
+-- Uso: WHERE ciudad_id = ? AND activo = TRUE AND visible_en_directorio = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_marketplace_ciudad_estado
     ON marketplace_perfiles(ciudad_id, estado_id, activo, visible_en_directorio)
-    WHERE activo = true AND visible_en_directorio = true;
+    WHERE activo = TRUE AND visible_en_directorio = TRUE AND eliminado_en IS NULL;
 
 -- ⭐ ÍNDICE 9: ORDENAMIENTO POR RATING
 -- Propósito: Listar negocios mejor valorados
 -- Uso: ORDER BY rating_promedio DESC
 CREATE INDEX idx_marketplace_perfiles_rating
     ON marketplace_perfiles(rating_promedio DESC, total_reseñas DESC)
-    WHERE activo = true AND visible_en_directorio = true;
+    WHERE activo = TRUE AND visible_en_directorio = TRUE AND eliminado_en IS NULL;
 
 -- 📅 ÍNDICE 10: ORDENAMIENTO POR FECHA DE PUBLICACIÓN
 -- Propósito: Negocios más recientes
 -- Uso: ORDER BY publicado_en DESC
 CREATE INDEX idx_marketplace_perfiles_reciente
     ON marketplace_perfiles(publicado_en DESC)
-    WHERE activo = true AND publicado_en IS NOT NULL;
+    WHERE activo = TRUE AND publicado_en IS NOT NULL AND eliminado_en IS NULL;
 
 -- ====================================================================
 -- ÍNDICES PARA marketplace_reseñas (7 índices)
@@ -181,10 +181,10 @@ CREATE INDEX idx_marketplace_analytics_fuente
 
 -- 🎯 ÍNDICE 1: CATEGORÍAS ACTIVAS (PARCIAL)
 -- Propósito: Solo categorías activas para directorio
--- Uso: WHERE activo = TRUE
+-- Uso: WHERE activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX idx_marketplace_categorias_activo
     ON marketplace_categorias(activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 -- 📊 ÍNDICE 2: ORDENAMIENTO POR ORDEN
 -- Propósito: Listar categorías en orden específico

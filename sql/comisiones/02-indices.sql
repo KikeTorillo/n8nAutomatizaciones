@@ -64,10 +64,10 @@ Usado por función obtener_configuracion_comision() en trigger.';
 
 -- ÍNDICE 4: CONFIGURACIONES ACTIVAS (PARCIAL)
 -- Propósito: Listar solo configuraciones activas
--- Uso: WHERE activo = TRUE
+-- Uso: WHERE activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX IF NOT EXISTS idx_config_comisiones_activo
     ON configuracion_comisiones(activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_config_comisiones_activo IS
 'Índice parcial para configuraciones activas.
@@ -184,10 +184,10 @@ Usado por función obtener_configuracion_comision_producto() en trigger.';
 
 -- ÍNDICE 7: APLICA_A + ACTIVO (COMPUESTO)
 -- Propósito: Filtrar configs activas por scope (servicio/producto/ambos)
--- Uso: WHERE aplica_a = ? AND activo = TRUE
+-- Uso: WHERE aplica_a = ? AND activo = TRUE AND eliminado_en IS NULL
 CREATE INDEX IF NOT EXISTS idx_config_comisiones_aplica
     ON configuracion_comisiones(organizacion_id, profesional_id, aplica_a, activo)
-    WHERE activo = true;
+    WHERE activo = TRUE AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_config_comisiones_aplica IS
 'Índice compuesto para filtrar configs activas por scope.

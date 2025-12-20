@@ -87,6 +87,10 @@ CREATE TABLE marketplace_perfiles (
     rating_promedio DECIMAL(3, 2) DEFAULT 0.00 CHECK (rating_promedio >= 0 AND rating_promedio <= 5),
     total_citas_completadas INTEGER DEFAULT 0,
 
+    -- 🗑️ Soft Delete (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- ⏰ Metadata
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -207,6 +211,10 @@ CREATE TABLE marketplace_categorias (
     -- 🎯 Estado
     activo BOOLEAN DEFAULT true,
     orden INTEGER DEFAULT 0,  -- Para ordenar en UI
+
+    -- 🗑️ Soft Delete (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
 
     -- ⏰ Metadata
     creado_en TIMESTAMPTZ DEFAULT NOW()

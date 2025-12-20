@@ -35,7 +35,7 @@
 
 CREATE INDEX idx_bloqueos_organizacion_periodo
 ON bloqueos_horarios (organizacion_id, fecha_inicio, fecha_fin, activo)
-WHERE activo = true;
+WHERE eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_organizacion_periodo IS
 'Índice principal para consultas de bloqueos por organización y período. Partial index en activo=true.';
@@ -50,7 +50,7 @@ COMMENT ON INDEX idx_bloqueos_organizacion_periodo IS
 
 CREATE INDEX idx_bloqueos_profesional_fechas
 ON bloqueos_horarios (profesional_id, fecha_inicio, fecha_fin)
-WHERE profesional_id IS NOT NULL AND activo = true;
+WHERE profesional_id IS NOT NULL AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_profesional_fechas IS
 'Índice para consultas de bloqueos por profesional específico. Partial index en profesional_id NOT NULL.';
@@ -65,7 +65,7 @@ COMMENT ON INDEX idx_bloqueos_profesional_fechas IS
 
 CREATE INDEX idx_bloqueos_sucursal_fechas
 ON bloqueos_horarios (organizacion_id, sucursal_id, fecha_inicio, fecha_fin)
-WHERE sucursal_id IS NOT NULL AND activo = true;
+WHERE sucursal_id IS NOT NULL AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_sucursal_fechas IS
 'Índice para consultas de bloqueos por sucursal específica. Partial index en sucursal_id NOT NULL.';
@@ -80,7 +80,7 @@ COMMENT ON INDEX idx_bloqueos_sucursal_fechas IS
 
 CREATE INDEX idx_bloqueos_organizacionales
 ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, fecha_inicio)
-WHERE profesional_id IS NULL AND activo = true;
+WHERE profesional_id IS NULL AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_organizacionales IS
 'Índice para bloqueos organizacionales (sin profesional específico). Partial index en profesional_id IS NULL.';
@@ -95,7 +95,7 @@ COMMENT ON INDEX idx_bloqueos_organizacionales IS
 
 CREATE INDEX idx_bloqueos_tipo_fechas
 ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, fecha_inicio, fecha_fin)
-WHERE activo = true;
+WHERE eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_tipo_fechas IS
 'Índice para búsquedas y reportes por tipo de bloqueo. Incluye fechas para consultas combinadas.';
@@ -110,7 +110,7 @@ COMMENT ON INDEX idx_bloqueos_tipo_fechas IS
 
 CREATE INDEX idx_bloqueos_recurrentes
 ON bloqueos_horarios (organizacion_id, es_recurrente, fecha_fin_recurrencia)
-WHERE es_recurrente = true AND activo = true;
+WHERE es_recurrente = TRUE AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_recurrentes IS
 'Índice para bloqueos recurrentes. Partial index en es_recurrente=true. Incluye fecha_fin_recurrencia.';
@@ -125,7 +125,7 @@ COMMENT ON INDEX idx_bloqueos_recurrentes IS
 
 CREATE INDEX idx_bloqueos_notificaciones
 ON bloqueos_horarios (organizacion_id, notificar_afectados, fecha_inicio)
-WHERE notificar_afectados = true AND activo = true;
+WHERE notificar_afectados = TRUE AND eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_notificaciones IS
 'Índice para sistema de notificaciones. Partial index en notificar_afectados=true.';
@@ -145,7 +145,7 @@ ON bloqueos_horarios USING gin(
         COALESCE(descripcion, '') || ' ' ||
         COALESCE(notas_internas, '')
     )
-) WHERE activo = true;
+) WHERE eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_search IS
 'Índice GIN para búsqueda de texto completo en título, descripción y notas. Configurado para español.';
@@ -160,7 +160,7 @@ COMMENT ON INDEX idx_bloqueos_search IS
 
 CREATE INDEX idx_bloqueos_metricas
 ON bloqueos_horarios (organizacion_id, tipo_bloqueo_id, creado_en, citas_afectadas, ingresos_perdidos)
-WHERE activo = true;
+WHERE eliminado_en IS NULL;
 
 COMMENT ON INDEX idx_bloqueos_metricas IS
 'Índice para reportes de métricas. Incluye citas_afectadas e ingresos_perdidos para análisis.';

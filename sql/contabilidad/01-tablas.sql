@@ -93,6 +93,11 @@ CREATE TABLE cuentas_contables (
 
     -- 📅 TIMESTAMPS
     activo BOOLEAN DEFAULT true,
+
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
     creado_por INTEGER REFERENCES usuarios(id),

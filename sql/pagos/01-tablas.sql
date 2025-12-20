@@ -132,6 +132,10 @@ CREATE TABLE metodos_pago (
     activo BOOLEAN DEFAULT TRUE,
     es_principal BOOLEAN DEFAULT FALSE,                  -- Solo un método puede ser principal
 
+    -- 🗑️ SOFT DELETE (Dic 2025)
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
     -- ====================================================================
     -- ⏰ SECCIÓN: AUDITORÍA
     -- ====================================================================

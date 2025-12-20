@@ -69,6 +69,12 @@ CREATE TABLE servicios (
     activo BOOLEAN DEFAULT TRUE,               -- Estado activo/inactivo
 
     -- ====================================================================
+    -- 🗑️ SECCIÓN: SOFT DELETE (Dic 2025)
+    -- ====================================================================
+    eliminado_en TIMESTAMPTZ DEFAULT NULL,     -- NULL = activo, con valor = eliminado
+    eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+
+    -- ====================================================================
     -- 🕒 SECCIÓN: TIMESTAMPS DE AUDITORÍA
     -- ====================================================================
     creado_en TIMESTAMPTZ DEFAULT NOW(),       -- Fecha de creación
