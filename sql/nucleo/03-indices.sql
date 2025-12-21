@@ -190,3 +190,26 @@ CRÍTICO para performance de RLS (set app.current_tenant_id).';
 COMMENT ON INDEX idx_subscripciones_proximo_pago IS
 'Índice para job automático de facturación (pg_cron).
 Solo indexa subscripciones activas con auto-renovación habilitada.';
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Optimización para JOINs con columnas de auditoría (eliminado_por, actualizado_por)
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- 🗑️ ÍNDICE: USUARIOS ELIMINADOS POR
+-- Propósito: JOINs eficientes para auditoría de eliminaciones
+CREATE INDEX idx_usuarios_eliminado_por
+    ON usuarios(eliminado_por) WHERE eliminado_por IS NOT NULL;
+
+-- ✏️ ÍNDICE: SUBSCRIPCIONES ACTUALIZADAS POR
+-- Propósito: Auditoría de cambios en subscripciones
+CREATE INDEX idx_subscripciones_actualizado_por
+    ON subscripciones(actualizado_por) WHERE actualizado_por IS NOT NULL;
+
+-- 👤 ÍNDICE: HISTORIAL SUBSCRIPCIONES - USUARIO RESPONSABLE
+-- Propósito: Tracking de quién realizó cambios en subscripciones
+CREATE INDEX idx_historial_sub_usuario_resp
+    ON historial_subscripciones(usuario_responsable) WHERE usuario_responsable IS NOT NULL;
+

@@ -110,6 +110,11 @@ CREATE INDEX IF NOT EXISTS idx_activaciones_organizacion
 CREATE INDEX IF NOT EXISTS idx_activaciones_tipo
     ON activaciones_cuenta (tipo);
 
+-- Vincular activaciones con usuarios creados (Dic 2025)
+CREATE INDEX IF NOT EXISTS idx_activaciones_usuario
+    ON activaciones_cuenta (usuario_id)
+    WHERE usuario_id IS NOT NULL;
+
 -- ====================================================================
 -- TRIGGER PARA ACTUALIZAR updated_at
 -- ====================================================================
