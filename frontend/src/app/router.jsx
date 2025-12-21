@@ -121,6 +121,10 @@ const TransferenciasPage = lazy(() => import('@/pages/sucursales/TransferenciasP
 const TransferenciaDetailPage = lazy(() => import('@/pages/sucursales/TransferenciaDetailPage'));
 const DashboardSucursalesPage = lazy(() => import('@/pages/sucursales/DashboardSucursalesPage'));
 
+// Páginas de Notificaciones (Dic 2025)
+const NotificacionesPage = lazy(() => import('@/pages/notificaciones/NotificacionesPage'));
+const NotificacionesPreferenciasPage = lazy(() => import('@/pages/notificaciones/NotificacionesPreferenciasPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
@@ -611,6 +615,24 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ConfiguracionContablePage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Notificaciones (Dic 2025)
+      {
+        path: 'notificaciones',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(NotificacionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'notificaciones/preferencias',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(NotificacionesPreferenciasPage)}
           </ProtectedRoute>
         ),
       },

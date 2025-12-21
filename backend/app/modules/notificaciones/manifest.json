@@ -1,0 +1,59 @@
+{
+  "name": "notificaciones",
+  "display_name": "Centro de Notificaciones",
+  "version": "1.0.0",
+  "description": "Sistema de notificaciones persistentes in-app con historial y preferencias",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {
+    "agendamiento": "Para notificaciones de citas",
+    "inventario": "Para notificaciones de stock",
+    "marketplace": "Para notificaciones de resenas"
+  },
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Incluido en todos los planes"
+  },
+  "routes": {
+    "notificaciones": "/api/v1/notificaciones"
+  },
+  "resources": {
+    "notificaciones": {
+      "table": "notificaciones",
+      "notes": "Notificaciones individuales por usuario"
+    },
+    "preferencias": {
+      "table": "notificaciones_preferencias",
+      "notes": "Preferencias de canales por tipo"
+    },
+    "plantillas": {
+      "table": "notificaciones_plantillas",
+      "notes": "Plantillas personalizables por org"
+    }
+  },
+  "features": [
+    "Centro de notificaciones in-app",
+    "Historial de notificaciones",
+    "Marcar como leida/no leida",
+    "Archivar notificaciones",
+    "Preferencias por tipo de notificacion",
+    "Triggers automaticos para citas, stock, resenas",
+    "Limpieza automatica de expiradas"
+  ],
+  "notification_types": [
+    "cita_nueva",
+    "cita_cancelada",
+    "cita_modificada",
+    "cita_recordatorio",
+    "stock_bajo",
+    "stock_agotado",
+    "pago_recibido",
+    "resena_nueva",
+    "sistema_bienvenida"
+  ],
+  "priority": 4,
+  "required": false,
+  "can_disable": true
+}
