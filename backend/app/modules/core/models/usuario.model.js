@@ -69,12 +69,15 @@ class UsuarioModel {
         const db = await getDb();
 
         try {
-            return await RLSHelper.withLoginEmail(db, email, async (db) => {
+            // Usar bypass para acceder a usuarios_sucursales durante login
+            return await RLSHelper.withContext(db, { loginEmail: email, bypass: true }, async (db) => {
                 const query = `
                     SELECT u.id, u.email, u.password_hash, u.nombre, u.apellidos, u.telefono,
                            u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
                            u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
-                           u.onboarding_completado
+                           u.onboarding_completado,
+                           (SELECT us.sucursal_id FROM usuarios_sucursales us
+                            WHERE us.usuario_id = u.id LIMIT 1) as sucursal_id
                     FROM usuarios u
                     WHERE u.email = $1 AND u.activo = TRUE
                 `;
@@ -167,6 +170,7 @@ class UsuarioModel {
             email: usuario.email,
             rol: usuario.rol,
             organizacionId: usuario.organizacion_id,
+            sucursalId: usuario.sucursal_id || null, // Sucursal principal del usuario
             jti: jti // JWT ID único
         };
 

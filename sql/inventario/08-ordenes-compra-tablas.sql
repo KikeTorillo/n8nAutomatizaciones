@@ -19,12 +19,13 @@ CREATE TABLE IF NOT EXISTS ordenes_compra (
     proveedor_id INTEGER NOT NULL REFERENCES proveedores(id),
 
     -- 📊 ESTADO DEL CICLO DE COMPRA
-    estado VARCHAR(20) DEFAULT 'borrador' CHECK (estado IN (
-        'borrador',     -- En edición, no enviada
-        'enviada',      -- Enviada al proveedor, esperando entrega
-        'parcial',      -- Recepción parcial de productos
-        'recibida',     -- Completamente recibida
-        'cancelada'     -- Cancelada
+    estado VARCHAR(30) DEFAULT 'borrador' CHECK (estado IN (
+        'borrador',              -- En edición, no enviada
+        'pendiente_aprobacion',  -- Esperando aprobación de supervisor (Dic 2025)
+        'enviada',               -- Enviada al proveedor, esperando entrega
+        'parcial',               -- Recepción parcial de productos
+        'recibida',              -- Completamente recibida
+        'cancelada'              -- Cancelada
     )),
 
     -- 📅 FECHAS CLAVE
@@ -79,7 +80,7 @@ CREATE TABLE IF NOT EXISTS ordenes_compra (
 
 COMMENT ON TABLE ordenes_compra IS 'Órdenes de compra a proveedores con seguimiento de recepción y pago';
 COMMENT ON COLUMN ordenes_compra.folio IS 'Folio único auto-generado: OC-YYYY-####';
-COMMENT ON COLUMN ordenes_compra.estado IS 'Ciclo: borrador → enviada → parcial/recibida | cancelada';
+COMMENT ON COLUMN ordenes_compra.estado IS 'Ciclo: borrador → [pendiente_aprobacion] → enviada → parcial/recibida | cancelada';
 COMMENT ON COLUMN ordenes_compra.dias_credito IS 'Días de crédito para pago (heredado del proveedor por defecto)';
 COMMENT ON COLUMN ordenes_compra.referencia_proveedor IS 'Número de orden o factura del proveedor';
 

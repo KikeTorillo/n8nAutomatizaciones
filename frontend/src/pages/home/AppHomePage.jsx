@@ -20,6 +20,7 @@ import {
   BookOpen,
   Globe,
   Building2,
+  ClipboardCheck,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -258,6 +259,18 @@ function AppHomePage() {
       enabled: true,
       badge: 0,
       adminOnly: true, // Solo admin/propietario
+    },
+    {
+      id: 'aprobaciones',
+      name: 'Aprobaciones',
+      description: 'Solicitudes pendientes',
+      icon: ClipboardCheck,
+      path: '/aprobaciones',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: true,
+      badge: notifications.aprobaciones,
+      badgeColor: 'bg-amber-500',
     },
     {
       id: 'estadisticas',

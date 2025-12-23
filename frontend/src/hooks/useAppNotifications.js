@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { citasApi, inventarioApi, posApi } from '@/services/api/endpoints';
+import { citasApi, inventarioApi, posApi, workflowsApi } from '@/services/api/endpoints';
 import { useModulos } from './useModulos';
 
 /**
@@ -54,6 +54,17 @@ export function useAppNotifications() {
     refetchInterval: 5 * 60 * 1000,
   });
 
+  // Aprobaciones pendientes (workflows)
+  const { data: aprobacionesCount } = useQuery({
+    queryKey: ['app-notifications', 'aprobaciones-pendientes'],
+    queryFn: async () => {
+      const response = await workflowsApi.contarPendientes();
+      return response.data.data?.total || 0;
+    },
+    staleTime: 30 * 1000, // 30 segundos
+    refetchInterval: 60 * 1000, // Refetch cada minuto
+  });
+
   // Calcular badges
   const citasPendientes = citasData?.filter(
     (c) => c.estado === 'programada' || c.estado === 'confirmada'
@@ -63,11 +74,14 @@ export function useAppNotifications() {
 
   const ventasHoy = ventasData?.length || 0;
 
+  const aprobacionesPendientes = aprobacionesCount || 0;
+
   return {
     // Badges por app
     agendamiento: citasPendientes,
     inventario: alertasActivas,
     pos: ventasHoy,
+    aprobaciones: aprobacionesPendientes,
     comisiones: 0, // Por ahora sin notificaciones
     chatbots: 0,
     marketplace: 0,
@@ -78,7 +92,7 @@ export function useAppNotifications() {
     ventasData,
 
     // Total de notificaciones
-    total: citasPendientes + alertasActivas,
+    total: citasPendientes + alertasActivas + aprobacionesPendientes,
   };
 }
 

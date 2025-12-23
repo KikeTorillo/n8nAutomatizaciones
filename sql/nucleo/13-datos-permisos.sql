@@ -254,5 +254,40 @@ SELECT 'bot', id, 'true'::JSONB FROM permisos_catalogo WHERE codigo = 'clientes.
 
 
 -- ====================================================================
+-- PERMISOS DE WORKFLOWS DE APROBACIÓN (Dic 2025)
+-- ====================================================================
+
+INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
+VALUES
+    ('workflows.aprobar', 'workflows', 'operacion', 'Aprobar solicitudes',
+     'Permite aprobar solicitudes de workflow asignadas',
+     'booleano', 'false', 850),
+
+    ('workflows.ver_todas', 'workflows', 'operacion', 'Ver todas las aprobaciones',
+     'Permite ver todas las aprobaciones de la organización',
+     'booleano', 'false', 851),
+
+    ('workflows.gestionar', 'workflows', 'configuracion', 'Gestionar workflows',
+     'Permite crear y modificar definiciones de workflows',
+     'booleano', 'false', 852)
+
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Asignar permisos de workflows a admin
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'admin', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('workflows.aprobar', 'workflows.ver_todas', 'workflows.gestionar')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+-- Asignar permisos de workflows a propietario
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'propietario', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('workflows.aprobar', 'workflows.ver_todas', 'workflows.gestionar')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+
+-- ====================================================================
 -- FIN: DATOS INICIALES DE PERMISOS
 -- ====================================================================

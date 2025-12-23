@@ -1,0 +1,58 @@
+{
+  "name": "workflows",
+  "display_name": "Workflows de Aprobación",
+  "version": "1.0.0",
+  "description": "Motor de workflows de aprobación configurable. Permite definir flujos de aprobación para órdenes de compra, descuentos y otras entidades del sistema.",
+
+  "depends": ["core", "notificaciones"],
+  "dependencies_hard": {
+    "core": {
+      "razon": "Autenticación y multi-tenancy",
+      "tablas": ["usuarios", "organizaciones"]
+    },
+    "notificaciones": {
+      "razon": "Envío de notificaciones a aprobadores",
+      "tablas": ["notificaciones"]
+    }
+  },
+  "dependencies_optional": {
+    "inventario": "Aprobación de órdenes de compra",
+    "pos": "Aprobación de descuentos (futuro)"
+  },
+  "used_by": ["inventario"],
+
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en": ["basico", "profesional", "empresarial"],
+    "notas": "Incluido en todos los planes"
+  },
+
+  "routes": {
+    "workflows": "/api/v1/workflows"
+  },
+
+  "resources": {},
+
+  "tables": [
+    "workflow_definiciones",
+    "workflow_pasos",
+    "workflow_transiciones",
+    "workflow_instancias",
+    "workflow_historial",
+    "workflow_delegaciones"
+  ],
+
+  "features": [
+    "Definición de workflows por organización",
+    "Pasos configurables: inicio, aprobación, condición, acción, fin",
+    "Bandeja de aprobaciones pendientes",
+    "Historial de decisiones (audit trail)",
+    "Integración con notificaciones",
+    "Delegaciones por ausencia/vacaciones"
+  ],
+
+  "priority": 45,
+  "required": false,
+  "can_disable": false
+}

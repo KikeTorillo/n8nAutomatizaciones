@@ -5,7 +5,7 @@
  * @module modules/notificaciones/services/notificaciones.service
  */
 
-const RLSContextManager = require('../../../utils/RLSContextManager');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 
 class NotificacionesService {

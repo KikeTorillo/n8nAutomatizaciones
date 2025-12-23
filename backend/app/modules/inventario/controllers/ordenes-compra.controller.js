@@ -166,14 +166,21 @@ class OrdenesCompraController {
     /**
      * Enviar orden al proveedor
      * PATCH /api/v1/inventario/ordenes-compra/:id/enviar
+     * Si requiere aprobación, la orden pasa a 'pendiente_aprobacion'
      */
     static enviar = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
 
-        const orden = await OrdenesCompraModel.enviar(parseInt(id), organizacionId);
+        const orden = await OrdenesCompraModel.enviar(parseInt(id), usuarioId, organizacionId);
 
-        return ResponseHelper.success(res, orden, 'Orden enviada exitosamente');
+        // Mensaje diferenciado según si requiere aprobación
+        const mensaje = orden.requiere_aprobacion
+            ? 'Orden enviada a aprobación. Recibirás una notificación cuando sea procesada.'
+            : 'Orden enviada exitosamente';
+
+        return ResponseHelper.success(res, orden, mensaje);
     });
 
     /**

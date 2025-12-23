@@ -12,6 +12,7 @@ const subscription = require('./subscription');
 const modules = require('./modules');
 const storage = require('./storage');
 const onboarding = require('./onboarding');
+const permisos = require('./permisos');
 
 module.exports = {
   // Middleware de manejo de errores async
@@ -97,6 +98,18 @@ module.exports = {
   onboarding: {
     requireOnboarding: onboarding.requireOnboarding,
     checkOnboarding: onboarding.checkOnboarding
+  },
+
+  // Middleware de permisos (Dic 2025 - Sistema Normalizado)
+  permisos: {
+    verificarPermiso: permisos.verificarPermiso,
+    verificarAlgunPermiso: permisos.verificarAlgunPermiso,
+    verificarTodosPermisos: permisos.verificarTodosPermisos,
+    verificarLimiteNumerico: permisos.verificarLimiteNumerico,
+    tienePermiso: permisos.tienePermiso,
+    obtenerValorNumerico: permisos.obtenerValorNumerico,
+    invalidarCacheUsuario: permisos.invalidarCacheUsuario,
+    invalidarTodoCache: permisos.invalidarTodoCache
   }
 };
 

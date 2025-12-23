@@ -126,6 +126,9 @@ const DashboardSucursalesPage = lazy(() => import('@/pages/sucursales/DashboardS
 const NotificacionesPage = lazy(() => import('@/pages/notificaciones/NotificacionesPage'));
 const NotificacionesPreferenciasPage = lazy(() => import('@/pages/notificaciones/NotificacionesPreferenciasPage'));
 
+// Páginas de Aprobaciones (Dic 2025)
+const AprobacionesPage = lazy(() => import('@/pages/aprobaciones/AprobacionesPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
@@ -643,6 +646,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(NotificacionesPreferenciasPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Aprobaciones (Dic 2025)
+      {
+        path: 'aprobaciones',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(AprobacionesPage)}
           </ProtectedRoute>
         ),
       },

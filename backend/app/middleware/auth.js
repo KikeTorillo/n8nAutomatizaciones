@@ -253,6 +253,7 @@ const authenticateToken = async (req, res, next) => {
             telefono: usuario.telefono,
             rol: usuario.rol,
             organizacion_id: usuario.organizacion_id,
+            sucursal_id: decoded.sucursalId || null, // Sucursal del JWT
             activo: usuario.activo,
             email_verificado: usuario.email_verificado,
             creado_en: usuario.creado_en,

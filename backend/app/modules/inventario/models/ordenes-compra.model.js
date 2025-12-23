@@ -1,5 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
+const { WorkflowEngine } = require('../../workflows/services');
 
 /**
  * Model para gestión de Órdenes de Compra
@@ -552,51 +553,122 @@ class OrdenesCompraModel {
 
     /**
      * Enviar orden al proveedor
+     * Si requiere aprobación, cambia a 'pendiente_aprobacion' e inicia workflow
+     * Si no requiere aprobación, cambia a 'enviada' directamente
      */
-    static async enviar(id, organizacionId) {
-        return await RLSContextManager.transaction(organizacionId, async (db) => {
-            logger.info('[OrdenesCompraModel.enviar] Iniciando', { orden_id: id });
-
-            // Verificar que la orden existe y tiene items
-            const ordenQuery = await db.query(
-                `SELECT oc.id, oc.estado, oc.folio, COUNT(oci.id) as total_items
-                 FROM ordenes_compra oc
-                 LEFT JOIN ordenes_compra_items oci ON oci.orden_compra_id = oc.id
-                 WHERE oc.id = $1
-                 GROUP BY oc.id`,
-                [id]
-            );
-
-            if (ordenQuery.rows.length === 0) {
-                throw new Error('Orden de compra no encontrada');
-            }
-
-            const orden = ordenQuery.rows[0];
-
-            if (orden.estado !== 'borrador') {
-                throw new Error('Solo se pueden enviar órdenes en estado borrador');
-            }
-
-            if (parseInt(orden.total_items) === 0) {
-                throw new Error('No se puede enviar una orden sin items');
-            }
-
+    static async enviar(id, usuarioId, organizacionId) {
+        // Primero, obtener datos de la orden para evaluar workflow
+        const ordenPrevia = await RLSContextManager.withBypass(async (db) => {
             const query = `
-                UPDATE ordenes_compra
-                SET estado = 'enviada', enviada_en = NOW(), actualizado_en = NOW()
-                WHERE id = $1
-                RETURNING *
+                SELECT oc.id, oc.estado, oc.folio, oc.total, oc.proveedor_id,
+                       p.nombre as proveedor_nombre,
+                       COUNT(oci.id) as total_items
+                FROM ordenes_compra oc
+                LEFT JOIN proveedores p ON p.id = oc.proveedor_id
+                LEFT JOIN ordenes_compra_items oci ON oci.orden_compra_id = oc.id
+                WHERE oc.id = $1 AND oc.organizacion_id = $2
+                GROUP BY oc.id, p.nombre
             `;
+            return await db.query(query, [id, organizacionId]);
+        });
 
-            const result = await db.query(query, [id]);
+        if (ordenPrevia.rows.length === 0) {
+            throw new Error('Orden de compra no encontrada');
+        }
 
-            logger.info('[OrdenesCompraModel.enviar] Orden enviada', {
+        const orden = ordenPrevia.rows[0];
+
+        if (orden.estado !== 'borrador') {
+            throw new Error('Solo se pueden enviar órdenes en estado borrador');
+        }
+
+        if (parseInt(orden.total_items) === 0) {
+            throw new Error('No se puede enviar una orden sin items');
+        }
+
+        logger.info('[OrdenesCompraModel.enviar] Iniciando', {
+            orden_id: id,
+            total: orden.total,
+            usuario_id: usuarioId
+        });
+
+        // Evaluar si requiere aprobación
+        const workflowAplicable = await WorkflowEngine.evaluarRequiereAprobacion(
+            'orden_compra',
+            id,
+            { total: parseFloat(orden.total) },
+            usuarioId,
+            organizacionId
+        );
+
+        if (workflowAplicable) {
+            // Requiere aprobación: iniciar workflow
+            logger.info('[OrdenesCompraModel.enviar] Requiere aprobación', {
                 orden_id: id,
-                folio: orden.folio
+                workflow_id: workflowAplicable.id
             });
 
-            return result.rows[0];
-        });
+            return await RLSContextManager.transaction(organizacionId, async (db) => {
+                // Cambiar estado a pendiente_aprobacion
+                const updateQuery = `
+                    UPDATE ordenes_compra
+                    SET estado = 'pendiente_aprobacion', actualizado_en = NOW()
+                    WHERE id = $1
+                    RETURNING *
+                `;
+
+                const result = await db.query(updateQuery, [id]);
+                const ordenActualizada = result.rows[0];
+
+                // Iniciar instancia de workflow (DENTRO de esta transacción para consistencia)
+                await WorkflowEngine.iniciarWorkflow(
+                    workflowAplicable.id,
+                    'orden_compra',
+                    id,
+                    {
+                        folio: orden.folio,
+                        total: orden.total,
+                        proveedor_nombre: orden.proveedor_nombre
+                    },
+                    usuarioId,
+                    organizacionId,
+                    db // Pasar conexión para evitar transacción anidada
+                );
+
+                logger.info('[OrdenesCompraModel.enviar] Orden pendiente de aprobación', {
+                    orden_id: id,
+                    folio: orden.folio
+                });
+
+                return {
+                    ...ordenActualizada,
+                    requiere_aprobacion: true,
+                    mensaje: 'La orden requiere aprobación antes de ser enviada al proveedor'
+                };
+            });
+        } else {
+            // No requiere aprobación: enviar directamente
+            return await RLSContextManager.transaction(organizacionId, async (db) => {
+                const query = `
+                    UPDATE ordenes_compra
+                    SET estado = 'enviada', enviada_en = NOW(), actualizado_en = NOW()
+                    WHERE id = $1
+                    RETURNING *
+                `;
+
+                const result = await db.query(query, [id]);
+
+                logger.info('[OrdenesCompraModel.enviar] Orden enviada directamente', {
+                    orden_id: id,
+                    folio: orden.folio
+                });
+
+                return {
+                    ...result.rows[0],
+                    requiere_aprobacion: false
+                };
+            });
+        }
     }
 
     /**
