@@ -13,7 +13,7 @@
 
 const express = require('express');
 const AprobacionesController = require('../controllers');
-const { auth, tenant, rateLimiting, validation, modules, permisos } = require('../../../middleware');
+const { auth, tenant, rateLimiting, validation, modules } = require('../../../middleware');
 const workflowsSchemas = require('../schemas/workflows.schemas');
 
 const router = express.Router();
@@ -68,13 +68,15 @@ router.get('/instancias/:id',
 /**
  * POST /api/v1/workflows/instancias/:id/aprobar
  * Aprobar una solicitud
+ * Nota: No usa permisos.verificarPermiso porque:
+ * 1. Las aprobaciones son a nivel organización, no sucursal
+ * 2. WorkflowEngine.aprobar() ya verifica permisos con puede_aprobar_workflow()
  */
 router.post('/instancias/:id/aprobar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    permisos.verificarPermiso('workflows.aprobar'),
     rateLimiting.apiRateLimit,
     validate(workflowsSchemas.aprobar),
     AprobacionesController.aprobar
@@ -83,13 +85,13 @@ router.post('/instancias/:id/aprobar',
 /**
  * POST /api/v1/workflows/instancias/:id/rechazar
  * Rechazar una solicitud
+ * Nota: No usa permisos.verificarPermiso - WorkflowEngine ya verifica permisos
  */
 router.post('/instancias/:id/rechazar',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    permisos.verificarPermiso('workflows.aprobar'),
     rateLimiting.apiRateLimit,
     validate(workflowsSchemas.rechazar),
     AprobacionesController.rechazar
@@ -132,13 +134,13 @@ router.get('/delegaciones',
 /**
  * POST /api/v1/workflows/delegaciones
  * Crear nueva delegación
+ * Nota: Delegaciones son a nivel organización, no requiere verificar sucursal
  */
 router.post('/delegaciones',
     auth.authenticateToken,
     tenant.setTenantContext,
     modules.requireModule('workflows'),
     tenant.verifyTenantActive,
-    permisos.verificarPermiso('workflows.aprobar'),
     rateLimiting.apiRateLimit,
     validate(workflowsSchemas.crearDelegacion),
     AprobacionesController.crearDelegacion

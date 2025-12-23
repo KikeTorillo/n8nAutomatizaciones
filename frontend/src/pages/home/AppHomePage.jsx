@@ -62,6 +62,7 @@ function AppHomePage() {
     tieneMarketplace,
     tieneEventosDigitales,
     tieneWebsite,
+    tieneWorkflows,
     esPlanFree,
   } = useModulos();
 
@@ -268,9 +269,10 @@ function AppHomePage() {
       path: '/aprobaciones',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
-      enabled: true,
+      enabled: tieneWorkflows,
       badge: notifications.aprobaciones,
       badgeColor: 'bg-amber-500',
+      adminOnly: true, // Solo admin/propietario
     },
     {
       id: 'estadisticas',

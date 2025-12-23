@@ -208,7 +208,8 @@ CREATE TABLE subscripciones (
     -- Módulos activos para esta organización
     -- Estructura: {"core": true, "agendamiento": true, "inventario": true, ...}
     -- core siempre debe estar activo (validado por trigger)
-    modulos_activos JSONB NOT NULL DEFAULT '{"core": true, "agendamiento": true}'::jsonb,
+    -- Actualizado Dic 2025: Incluye workflows para aprobaciones de OC
+    modulos_activos JSONB NOT NULL DEFAULT '{"core": true, "agendamiento": true, "inventario": true, "pos": true, "workflows": true}'::jsonb,
 
     -- ====================================================================
     -- ⏰ SECCIÓN: TIMESTAMPS DE AUDITORÍA

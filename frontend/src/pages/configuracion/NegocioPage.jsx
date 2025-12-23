@@ -15,10 +15,12 @@ import {
   Image,
   Camera,
   X,
+  Coins,
+  Clock,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
-import { organizacionesApi } from '@/services/api/endpoints';
+import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import Button from '@/components/ui/Button';
@@ -57,10 +59,21 @@ function NegocioPage() {
       telefono: '',
       sitio_web: '',
       logo_url: '',
+      moneda: 'MXN',
+      zona_horaria: 'America/Mexico_City',
     },
   });
 
   const logoUrl = watch('logo_url');
+
+  // Query para obtener monedas disponibles
+  const { data: monedasData } = useQuery({
+    queryKey: ['monedas'],
+    queryFn: () => monedasApi.listar(),
+    staleTime: 1000 * 60 * 60, // 1 hora
+  });
+
+  const monedas = monedasData?.data?.data || [];
 
   // Query para obtener datos de la organización
   const { data, isLoading, error } = useQuery({
@@ -81,6 +94,8 @@ function NegocioPage() {
         telefono: org.telefono || '',
         sitio_web: org.sitio_web || '',
         logo_url: org.logo_url || '',
+        moneda: org.moneda || 'MXN',
+        zona_horaria: org.zona_horaria || 'America/Mexico_City',
       });
       setLogoPreview(org.logo_url);
     }
@@ -381,6 +396,67 @@ function NegocioPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   placeholder="https://www.minegocio.com"
                 />
+              </div>
+            </div>
+          </div>
+
+          {/* Configuración Regional */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Coins className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Configuración Regional
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Coins className="w-4 h-4 inline mr-1" />
+                  Moneda
+                </label>
+                <select
+                  {...register('moneda')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  {monedas.length > 0 ? (
+                    monedas.map((m) => (
+                      <option key={m.codigo} value={m.codigo}>
+                        {m.simbolo} {m.codigo} - {m.nombre}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="MXN">$ MXN - Peso Mexicano</option>
+                      <option value="COP">$ COP - Peso Colombiano</option>
+                      <option value="USD">$ USD - Dólar Estadounidense</option>
+                    </>
+                  )}
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Moneda para mostrar precios y totales
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Zona horaria
+                </label>
+                <select
+                  {...register('zona_horaria')}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                >
+                  <option value="America/Mexico_City">Ciudad de México (GMT-6)</option>
+                  <option value="America/Bogota">Bogotá (GMT-5)</option>
+                  <option value="America/Lima">Lima (GMT-5)</option>
+                  <option value="America/Santiago">Santiago (GMT-3)</option>
+                  <option value="America/Buenos_Aires">Buenos Aires (GMT-3)</option>
+                  <option value="America/New_York">Nueva York (GMT-5)</option>
+                  <option value="America/Los_Angeles">Los Ángeles (GMT-8)</option>
+                  <option value="Europe/Madrid">Madrid (GMT+1)</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Afecta horarios de citas y reportes
+                </p>
               </div>
             </div>
           </div>

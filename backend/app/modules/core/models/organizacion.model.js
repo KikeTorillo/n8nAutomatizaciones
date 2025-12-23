@@ -670,7 +670,8 @@ class OrganizacionModel {
                     pos: true,
                     comisiones: true,
                     marketplace: true,
-                    chatbots: true
+                    chatbots: true,
+                    workflows: true
                 };
             }
 

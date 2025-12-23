@@ -112,6 +112,16 @@ const MODULOS_DISPONIBLES = {
     dependencias: [],
     icono: 'Calculator',
     orden: 25
+  },
+  workflows: {
+    nombre: 'workflows',
+    display_name: 'Workflows de Aprobación',
+    descripcion: 'Flujos de aprobación para órdenes de compra y otras entidades',
+    incluido_en_todos: false,
+    puede_desactivar: true,
+    dependencias: ['inventario'],
+    icono: 'ClipboardCheck',
+    orden: 15
   }
 };
 

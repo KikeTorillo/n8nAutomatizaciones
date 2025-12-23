@@ -18,6 +18,7 @@ import {
   Calculator,
   AlertTriangle,
   Sparkles,
+  ClipboardCheck,
 } from 'lucide-react';
 
 /**
@@ -38,6 +39,13 @@ const MODULOS_ONBOARDING = [
     descripcion: 'Productos, proveedores y stock',
     icono: Package,
     dependencias: [],
+  },
+  {
+    nombre: 'workflows',
+    display_name: 'Aprobaciones',
+    descripcion: 'Flujos de aprobación para compras',
+    icono: ClipboardCheck,
+    dependencias: ['inventario'],
   },
   {
     nombre: 'pos',
@@ -96,6 +104,7 @@ const MODULOS_ONBOARDING = [
 const COLORES = {
   agendamiento: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
   inventario: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
+  workflows: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
   pos: 'bg-primary-50 dark:bg-primary-900/30 text-primary-500 dark:text-primary-400',
   comisiones: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
   contabilidad: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',

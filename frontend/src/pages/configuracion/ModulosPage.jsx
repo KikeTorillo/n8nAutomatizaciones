@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   Zap,
   PartyPopper,
+  ClipboardCheck,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 
@@ -35,6 +36,7 @@ const ICONOS = {
   chatbots: Bot,
   'eventos-digitales': PartyPopper,
   website: Globe,
+  workflows: ClipboardCheck,
 };
 
 /**
@@ -50,6 +52,7 @@ const COLORES = {
   chatbots: 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   'eventos-digitales': 'bg-primary-50 dark:bg-primary-900/30 text-primary-400 dark:text-primary-300',
   website: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
+  workflows: 'bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300',
 };
 
 /**

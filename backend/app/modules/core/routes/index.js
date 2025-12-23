@@ -13,6 +13,7 @@ const subscripcionesRouter = require('./subscripciones');
 const pagosRouter = require('./pagos');
 const webhooksRouter = require('./webhooks');
 const superadminRouter = require('./superadmin');
+const monedasRouter = require('./monedas.routes');
 
 module.exports = {
   auth: authRouter,
@@ -22,5 +23,6 @@ module.exports = {
   subscripciones: subscripcionesRouter,
   pagos: pagosRouter,
   webhooks: webhooksRouter,
-  superadmin: superadminRouter
+  superadmin: superadminRouter,
+  monedas: monedasRouter
 };

@@ -225,7 +225,9 @@ class UsuarioModel {
                     o.categoria_id,
                     ci.codigo as categoria_codigo,
                     o.nombre_comercial,
-                    o.plan_actual
+                    o.plan_actual,
+                    o.moneda,
+                    o.zona_horaria
                 FROM usuarios u
                 LEFT JOIN organizaciones o ON u.organizacion_id = o.id
                 LEFT JOIN categorias ci ON o.categoria_id = ci.id

@@ -124,7 +124,10 @@ class AuthController {
                 categoria_id: usuario.categoria_id || null,
                 categoria_codigo: usuario.categoria_codigo || null,
                 nombre_comercial: usuario.nombre_comercial || null,
-                plan_actual: usuario.plan_actual || null
+                plan_actual: usuario.plan_actual || null,
+                // Multi-moneda (Fase 4 - Dic 2025)
+                moneda: usuario.moneda || 'MXN',
+                zona_horaria: usuario.zona_horaria || 'America/Mexico_City'
             }
         };
 
