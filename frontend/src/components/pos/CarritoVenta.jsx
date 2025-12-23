@@ -1,8 +1,12 @@
-import { Plus, Minus, Trash2, ShoppingCart, Percent } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { monedasApi } from '@/services/api/endpoints';
+import { useCurrency } from '@/hooks/useCurrency';
 
 /**
  * Componente de carrito de venta para POS
  * Muestra items, cantidades, descuentos y totales
+ * Dic 2025: Conversión multi-moneda en tiempo real
  */
 export default function CarritoVenta({
   items,
@@ -10,8 +14,21 @@ export default function CarritoVenta({
   onEliminarItem,
   onActualizarDescuentoItem,
   descuentoGlobal = 0,
-  onActualizarDescuentoGlobal
+  onActualizarDescuentoGlobal,
+  monedaSecundaria = 'USD' // Moneda para mostrar equivalente
 }) {
+  const { code: monedaOrg } = useCurrency();
+
+  // Obtener tasa de cambio para moneda secundaria
+  const { data: tasaResponse } = useQuery({
+    queryKey: ['tasa-cambio', monedaOrg, monedaSecundaria],
+    queryFn: () => monedasApi.obtenerTasaActual(monedaOrg, monedaSecundaria),
+    staleTime: 1000 * 60 * 5, // 5 minutos
+    enabled: monedaOrg !== monedaSecundaria,
+  });
+
+  const tasaCambio = tasaResponse?.data?.data?.tasa || null;
+
   // Calcular subtotal
   const subtotal = items.reduce((sum, item) => {
     const precioUnitario = parseFloat(item.precio_unitario || item.precio_venta || 0);
@@ -28,6 +45,15 @@ export default function CarritoVenta({
 
   const formatearPrecio = (precio) => {
     return `$${parseFloat(precio || 0).toFixed(2)}`;
+  };
+
+  // Calcular equivalente en moneda secundaria
+  const totalEquivalente = tasaCambio ? total * parseFloat(tasaCambio) : null;
+
+  const formatearEquivalente = (monto) => {
+    if (!monto) return null;
+    // USD usa 2 decimales
+    return `≈ $${parseFloat(monto).toFixed(2)} ${monedaSecundaria}`;
   };
 
   const handleCantidadChange = (itemId, nuevaCantidad) => {
@@ -197,6 +223,14 @@ export default function CarritoVenta({
             <span>TOTAL:</span>
             <span>{formatearPrecio(total)}</span>
           </div>
+
+          {/* Equivalente en moneda secundaria */}
+          {totalEquivalente && (
+            <div className="flex items-center justify-end gap-1 text-sm text-gray-500 dark:text-gray-400">
+              <Globe className="h-3.5 w-3.5" />
+              <span>{formatearEquivalente(totalEquivalente)}</span>
+            </div>
+          )}
         </div>
       )}
     </div>

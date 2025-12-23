@@ -3,17 +3,19 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Briefcase, ImageIcon, Camera, X, Loader2 } from 'lucide-react';
+import { Briefcase, ImageIcon, Camera, X, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Checkbox from '@/components/ui/Checkbox';
 import FormField from '@/components/forms/FormField';
-import { profesionalesApi } from '@/services/api/endpoints';
+import { profesionalesApi, monedasApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
+import { useCurrency } from '@/hooks/useCurrency';
 
 /**
  * Schema de validación Zod para CREAR servicio
@@ -80,6 +82,7 @@ const servicioEditSchema = z.object({
 function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }) {
   const toast = useToast();
   const [selectedProfessionals, setSelectedProfessionals] = useState([]);
+  const { code: monedaOrg } = useCurrency();
 
   // Dic 2025: Estado para imagen del servicio
   const [imagenFile, setImagenFile] = useState(null);
@@ -87,8 +90,21 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
   const [imagenUrl, setImagenUrl] = useState(null);
   const uploadMutation = useUploadArchivo();
 
+  // Estado para precios multi-moneda
+  const [preciosMoneda, setPreciosMoneda] = useState([]);
+  const [mostrarPreciosMoneda, setMostrarPreciosMoneda] = useState(false);
+
   const isEditMode = mode === 'edit';
   const servicioId = servicio?.id;
+
+  // Query para obtener monedas disponibles
+  const { data: monedasResponse } = useQuery({
+    queryKey: ['monedas'],
+    queryFn: () => monedasApi.listar(),
+    staleTime: 1000 * 60 * 10, // 10 min
+  });
+  const todasLasMonedas = monedasResponse?.data?.data || [];
+  const monedasDisponibles = todasLasMonedas.filter(m => m.codigo !== monedaOrg);
 
   // Fetch datos del servicio en modo edición
   const { data: servicioData, isLoading: loadingServicio } = useServicio(servicioId, {
@@ -152,6 +168,20 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
         setImagenPreview(null);
       }
       setImagenFile(null);
+
+      // Cargar precios multi-moneda si existen
+      if (servicioData.precios_moneda && servicioData.precios_moneda.length > 0) {
+        setPreciosMoneda(servicioData.precios_moneda.map(p => ({
+          moneda: p.moneda,
+          precio: p.precio || '',
+          precio_minimo: p.precio_minimo || '',
+          precio_maximo: p.precio_maximo || ''
+        })));
+        setMostrarPreciosMoneda(true);
+      } else {
+        setPreciosMoneda([]);
+        setMostrarPreciosMoneda(false);
+      }
     }
   }, [isEditMode, servicioData, isOpen, reset]);
 
@@ -164,6 +194,9 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
       setImagenFile(null);
       setImagenPreview(null);
       setImagenUrl(null);
+      // Limpiar precios multi-moneda
+      setPreciosMoneda([]);
+      setMostrarPreciosMoneda(false);
     }
   }, [isOpen, reset]);
 
@@ -201,6 +234,31 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
     setValue('profesionales_ids', newSelected);
   };
 
+  // Handlers para precios multi-moneda
+  const agregarPrecioMoneda = () => {
+    const monedasUsadas = preciosMoneda.map(p => p.moneda);
+    const monedaDisponible = monedasDisponibles.find(m => !monedasUsadas.includes(m.codigo));
+
+    if (monedaDisponible) {
+      setPreciosMoneda([...preciosMoneda, {
+        moneda: monedaDisponible.codigo,
+        precio: '',
+        precio_minimo: '',
+        precio_maximo: ''
+      }]);
+    }
+  };
+
+  const eliminarPrecioMoneda = (index) => {
+    setPreciosMoneda(preciosMoneda.filter((_, i) => i !== index));
+  };
+
+  const actualizarPrecioMoneda = (index, campo, valor) => {
+    const nuevosPrecios = [...preciosMoneda];
+    nuevosPrecios[index][campo] = valor;
+    setPreciosMoneda(nuevosPrecios);
+  };
+
   // Handler de submit
   const onSubmit = async (data) => {
     try {
@@ -228,6 +286,22 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
         sanitized.imagen_url = null;
       }
 
+      // Agregar precios multi-moneda si existen
+      if (preciosMoneda.length > 0) {
+        const preciosValidos = preciosMoneda
+          .filter(p => p.moneda && p.precio)
+          .map(p => ({
+            moneda: p.moneda,
+            precio: parseFloat(p.precio),
+            precio_minimo: p.precio_minimo ? parseFloat(p.precio_minimo) : null,
+            precio_maximo: p.precio_maximo ? parseFloat(p.precio_maximo) : null
+          }));
+
+        if (preciosValidos.length > 0) {
+          sanitized.precios_moneda = preciosValidos;
+        }
+      }
+
       if (isEditMode) {
         // Modo edición
         await actualizarMutation.mutateAsync({ id: servicioId, data: sanitized });
@@ -245,6 +319,9 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
       setImagenFile(null);
       setImagenPreview(null);
       setImagenUrl(null);
+      // Limpiar precios multi-moneda
+      setPreciosMoneda([]);
+      setMostrarPreciosMoneda(false);
     } catch (error) {
       toast.error(error.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} servicio`);
     }
@@ -508,6 +585,115 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                   )}
                 />
               </div>
+
+              {/* Precios en otras monedas - Colapsable */}
+              {monedasDisponibles.length > 0 && (
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setMostrarPreciosMoneda(!mostrarPreciosMoneda)}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+                  >
+                    <span className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                      <Globe className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                      Precios en otras monedas
+                      {preciosMoneda.length > 0 && (
+                        <span className="ml-2 px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full">
+                          {preciosMoneda.length}
+                        </span>
+                      )}
+                    </span>
+                    {mostrarPreciosMoneda ? (
+                      <ChevronUp className="h-4 w-4 text-gray-500" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-gray-500" />
+                    )}
+                  </button>
+
+                  {mostrarPreciosMoneda && (
+                    <div className="p-4 space-y-4">
+                      {preciosMoneda.map((precio, index) => {
+                        const monedaInfo = monedasDisponibles.find(m => m.codigo === precio.moneda);
+                        const monedasUsadas = preciosMoneda.map(p => p.moneda);
+                        const opcionesMoneda = monedasDisponibles.filter(
+                          m => m.codigo === precio.moneda || !monedasUsadas.includes(m.codigo)
+                        );
+
+                        return (
+                          <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                            <div className="flex items-center justify-between mb-3">
+                              <Select
+                                value={precio.moneda}
+                                onChange={(e) => actualizarPrecioMoneda(index, 'moneda', e.target.value)}
+                                options={opcionesMoneda.map(m => ({
+                                  value: m.codigo,
+                                  label: `${m.codigo} - ${m.nombre}`
+                                }))}
+                                className="w-48"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => eliminarPrecioMoneda(index)}
+                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                              <Input
+                                type="number"
+                                label="Precio"
+                                value={precio.precio}
+                                onChange={(e) => actualizarPrecioMoneda(index, 'precio', e.target.value)}
+                                step="0.01"
+                                placeholder="0.00"
+                                prefix={monedaInfo?.simbolo || '$'}
+                                required
+                              />
+                              <Input
+                                type="number"
+                                label="P. Mínimo"
+                                value={precio.precio_minimo}
+                                onChange={(e) => actualizarPrecioMoneda(index, 'precio_minimo', e.target.value)}
+                                step="0.01"
+                                placeholder="0.00"
+                                prefix={monedaInfo?.simbolo || '$'}
+                              />
+                              <Input
+                                type="number"
+                                label="P. Máximo"
+                                value={precio.precio_maximo}
+                                onChange={(e) => actualizarPrecioMoneda(index, 'precio_maximo', e.target.value)}
+                                step="0.01"
+                                placeholder="0.00"
+                                prefix={monedaInfo?.simbolo || '$'}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {preciosMoneda.length < monedasDisponibles.length && (
+                        <button
+                          type="button"
+                          onClick={agregarPrecioMoneda}
+                          className="flex items-center justify-center w-full py-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 border border-dashed border-primary-300 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Agregar precio en otra moneda
+                        </button>
+                      )}
+
+                      {preciosMoneda.length === 0 && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                          No hay precios en otras monedas configurados.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Multi-select de Profesionales - Solo en modo create */}
               {!isEditMode && (

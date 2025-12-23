@@ -49,7 +49,16 @@ const crear = {
                 'array.base': 'profesionales_ids debe ser un array de IDs'
             }),
         activo: Joi.boolean().optional().default(true),
-        imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
+        imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
+        // Precios multi-moneda (Fase 4)
+        precios_moneda: Joi.array().items(
+            Joi.object({
+                moneda: Joi.string().length(3).required(),
+                precio: Joi.number().positive().required(),
+                precio_minimo: Joi.number().positive().optional().allow(null),
+                precio_maximo: Joi.number().positive().optional().allow(null)
+            })
+        ).optional()
     })
 };
 
@@ -93,7 +102,16 @@ const actualizar = {
         tags: Joi.array().items(Joi.string().trim().min(1).max(30)).optional().allow(null),
         configuracion_especifica: Joi.object().optional().allow(null),
         activo: Joi.boolean().optional(),
-        imagen_url: Joi.string().uri().max(500).optional().allow(null, '')
+        imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
+        // Precios multi-moneda (Fase 4)
+        precios_moneda: Joi.array().items(
+            Joi.object({
+                moneda: Joi.string().length(3).required(),
+                precio: Joi.number().positive().required(),
+                precio_minimo: Joi.number().positive().optional().allow(null),
+                precio_maximo: Joi.number().positive().optional().allow(null)
+            })
+        ).optional()
     }).min(1)
 };
 

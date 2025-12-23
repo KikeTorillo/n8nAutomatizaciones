@@ -4,8 +4,112 @@ const logger = require('../../../utils/logger');
 /**
  * Model para CRUD de productos
  * Maneja catálogo de productos con control de stock y precios
+ * Soporta precios multi-moneda (Fase 4)
  */
 class ProductosModel {
+
+    // =========================================================================
+    // MÉTODOS DE PRECIOS MULTI-MONEDA
+    // =========================================================================
+
+    /**
+     * Guardar precios en múltiples monedas para un producto
+     * @param {number} productoId - ID del producto
+     * @param {Array} precios - Array de { moneda, precio_compra, precio_venta, precio_mayoreo }
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} db - Cliente de transacción (opcional)
+     */
+    static async guardarPreciosMoneda(productoId, precios, organizacionId, db = null) {
+        const ejecutar = async (client) => {
+            if (!precios || !Array.isArray(precios) || precios.length === 0) {
+                return [];
+            }
+
+            const resultados = [];
+
+            for (const precio of precios) {
+                if (!precio.moneda || !precio.precio_venta) continue;
+
+                // Upsert: insertar o actualizar si ya existe
+                const query = `
+                    INSERT INTO precios_producto_moneda (
+                        producto_id, moneda, precio_compra, precio_venta, precio_mayoreo,
+                        organizacion_id, activo
+                    ) VALUES ($1, $2, $3, $4, $5, $6, true)
+                    ON CONFLICT (producto_id, moneda)
+                    DO UPDATE SET
+                        precio_compra = EXCLUDED.precio_compra,
+                        precio_venta = EXCLUDED.precio_venta,
+                        precio_mayoreo = EXCLUDED.precio_mayoreo,
+                        actualizado_en = NOW()
+                    RETURNING *
+                `;
+
+                const values = [
+                    productoId,
+                    precio.moneda,
+                    precio.precio_compra || null,
+                    precio.precio_venta,
+                    precio.precio_mayoreo || null,
+                    organizacionId
+                ];
+
+                const result = await client.query(query, values);
+                resultados.push(result.rows[0]);
+            }
+
+            return resultados;
+        };
+
+        if (db) {
+            return await ejecutar(db);
+        }
+
+        return await RLSContextManager.transaction(organizacionId, ejecutar);
+    }
+
+    /**
+     * Obtener precios en todas las monedas para un producto
+     */
+    static async obtenerPreciosMoneda(productoId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    ppm.*,
+                    m.nombre as moneda_nombre,
+                    m.simbolo as moneda_simbolo,
+                    m.locale as moneda_locale
+                FROM precios_producto_moneda ppm
+                JOIN monedas m ON m.codigo = ppm.moneda
+                WHERE ppm.producto_id = $1 AND ppm.activo = true
+                ORDER BY m.orden
+            `;
+
+            const result = await db.query(query, [productoId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Eliminar un precio de moneda específico
+     */
+    static async eliminarPrecioMoneda(productoId, moneda, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            const query = `
+                UPDATE precios_producto_moneda
+                SET activo = false, actualizado_en = NOW()
+                WHERE producto_id = $1 AND moneda = $2
+                RETURNING *
+            `;
+
+            const result = await db.query(query, [productoId, moneda]);
+            return result.rows[0];
+        });
+    }
+
+    // =========================================================================
+    // MÉTODOS CRUD PRINCIPALES
+    // =========================================================================
 
     /**
      * Crear nuevo producto
@@ -125,17 +229,28 @@ class ProductosModel {
             ];
 
             const result = await db.query(query, values);
+            const producto = result.rows[0];
 
             logger.info('[ProductosModel.crear] Producto creado', {
-                producto_id: result.rows[0].id
+                producto_id: producto.id
             });
 
-            return result.rows[0];
+            // Guardar precios multi-moneda si se proporcionan
+            if (data.precios_moneda && Array.isArray(data.precios_moneda)) {
+                await ProductosModel.guardarPreciosMoneda(
+                    producto.id,
+                    data.precios_moneda,
+                    organizacionId,
+                    db
+                );
+            }
+
+            return producto;
         });
     }
 
     /**
-     * Obtener producto por ID
+     * Obtener producto por ID (incluye precios multi-moneda)
      */
     static async obtenerPorId(id, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
@@ -159,7 +274,28 @@ class ProductosModel {
             `;
 
             const result = await db.query(query, [id]);
-            return result.rows[0] || null;
+            const producto = result.rows[0] || null;
+
+            if (producto) {
+                // Obtener precios en otras monedas
+                const preciosQuery = `
+                    SELECT
+                        ppm.moneda,
+                        ppm.precio_compra,
+                        ppm.precio_venta,
+                        ppm.precio_mayoreo,
+                        m.nombre as moneda_nombre,
+                        m.simbolo as moneda_simbolo
+                    FROM precios_producto_moneda ppm
+                    JOIN monedas m ON m.codigo = ppm.moneda
+                    WHERE ppm.producto_id = $1 AND ppm.activo = true
+                    ORDER BY m.orden
+                `;
+                const preciosResult = await db.query(preciosQuery, [id]);
+                producto.precios_moneda = preciosResult.rows;
+            }
+
+            return producto;
         });
     }
 
@@ -381,28 +517,52 @@ class ProductosModel {
                 }
             });
 
-            if (updates.length === 0) {
+            // Si solo hay precios_moneda y no hay otros campos, no es error
+            const tienePrecios = data.precios_moneda && Array.isArray(data.precios_moneda);
+
+            if (updates.length === 0 && !tienePrecios) {
                 throw new Error('No hay campos para actualizar');
             }
 
-            // Agregar ID al final
-            values.push(id);
+            let producto;
 
-            const query = `
-                UPDATE productos
-                SET ${updates.join(', ')},
-                    actualizado_en = NOW()
-                WHERE id = $${paramCounter}
-                RETURNING *
-            `;
+            // Solo ejecutar UPDATE si hay campos del producto a actualizar
+            if (updates.length > 0) {
+                // Agregar ID al final
+                values.push(id);
 
-            const result = await db.query(query, values);
+                const query = `
+                    UPDATE productos
+                    SET ${updates.join(', ')},
+                        actualizado_en = NOW()
+                    WHERE id = $${paramCounter}
+                    RETURNING *
+                `;
+
+                const result = await db.query(query, values);
+                producto = result.rows[0];
+            } else {
+                // Solo actualizar precios, obtener producto actual
+                const existente = await db.query('SELECT * FROM productos WHERE id = $1', [id]);
+                producto = existente.rows[0];
+            }
+
+            // Guardar precios multi-moneda si se proporcionan
+            if (tienePrecios) {
+                await ProductosModel.guardarPreciosMoneda(
+                    id,
+                    data.precios_moneda,
+                    organizacionId,
+                    db
+                );
+            }
 
             logger.info('[ProductosModel.actualizar] Producto actualizado', {
-                producto_id: id
+                producto_id: id,
+                precios_moneda: tienePrecios ? data.precios_moneda.length : 0
             });
 
-            return result.rows[0];
+            return producto;
         });
     }
 

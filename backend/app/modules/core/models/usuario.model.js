@@ -77,8 +77,10 @@ class UsuarioModel {
                            u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
                            u.onboarding_completado,
                            (SELECT us.sucursal_id FROM usuarios_sucursales us
-                            WHERE us.usuario_id = u.id LIMIT 1) as sucursal_id
+                            WHERE us.usuario_id = u.id LIMIT 1) as sucursal_id,
+                           o.moneda, o.zona_horaria
                     FROM usuarios u
+                    LEFT JOIN organizaciones o ON o.id = u.organizacion_id
                     WHERE u.email = $1 AND u.activo = TRUE
                 `;
 
@@ -144,7 +146,10 @@ class UsuarioModel {
             organizacion_id: usuario.organizacion_id,
             profesional_id: usuario.profesional_id,
             email_verificado: usuario.email_verificado,
-            onboarding_completado: usuario.onboarding_completado  // Dic 2025 - Flujo unificado
+            onboarding_completado: usuario.onboarding_completado,  // Dic 2025 - Flujo unificado
+            // Multi-moneda (Fase 4 - Dic 2025)
+            moneda: usuario.moneda || 'MXN',
+            zona_horaria: usuario.zona_horaria || 'America/Mexico_City'
         };
 
         // Determinar si requiere onboarding (Dic 2025)

@@ -7,10 +7,21 @@ const logger = require('../../../utils/logger');
 
 class ServicioController {
     static crear = asyncHandler(async (req, res) => {
+        const { precios_moneda, ...servicioData } = req.body;
+
         const nuevoServicio = await ServicioModel.crear({
-            ...req.body,
+            ...servicioData,
             organizacion_id: req.tenant.organizacionId
         });
+
+        // Guardar precios multi-moneda si se proporcionan
+        if (precios_moneda && Array.isArray(precios_moneda) && precios_moneda.length > 0) {
+            nuevoServicio.precios_moneda = await ServicioModel.guardarPreciosMoneda(
+                nuevoServicio.id,
+                precios_moneda,
+                req.tenant.organizacionId
+            );
+        }
 
         return ResponseHelper.success(res, nuevoServicio, 'Servicio creado exitosamente', 201);
     });
@@ -79,6 +90,12 @@ class ServicioController {
             return ResponseHelper.error(res, 'Servicio no encontrado', 404);
         }
 
+        // Obtener precios multi-moneda
+        servicio.precios_moneda = await ServicioModel.obtenerPreciosMoneda(
+            servicio.id,
+            req.tenant.organizacionId
+        );
+
         return ResponseHelper.success(res, servicio, 'Servicio obtenido exitosamente');
     });
 
@@ -126,7 +143,7 @@ class ServicioController {
 
     static actualizar = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const servicioData = { ...req.body };
+        const { precios_moneda, ...servicioData } = req.body;
         delete servicioData.organizacion_id;
 
         const servicioActualizado = await ServicioModel.actualizar(
@@ -137,6 +154,15 @@ class ServicioController {
 
         if (!servicioActualizado) {
             return ResponseHelper.error(res, 'Servicio no encontrado', 404);
+        }
+
+        // Guardar precios multi-moneda si se proporcionan
+        if (precios_moneda && Array.isArray(precios_moneda) && precios_moneda.length > 0) {
+            servicioActualizado.precios_moneda = await ServicioModel.guardarPreciosMoneda(
+                parseInt(id),
+                precios_moneda,
+                req.tenant.organizacionId
+            );
         }
 
         return ResponseHelper.success(res, servicioActualizado, 'Servicio actualizado exitosamente');

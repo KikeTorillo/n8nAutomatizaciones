@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2 } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -14,6 +15,8 @@ import { useCategorias } from '@/hooks/useCategorias';
 import { useProveedores } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
+import { useCurrency } from '@/hooks/useCurrency';
+import { monedasApi, inventarioApi } from '@/services/api/endpoints';
 
 /**
  * Schema de validación Zod para CREAR producto - COMPLETO
@@ -152,11 +155,34 @@ const productoEditSchema = z
 function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }) {
   const { success: showSuccess, error: showError } = useToast();
   const esEdicion = mode === 'edit' && producto;
+  const { code: monedaOrg, symbol: simboloOrg } = useCurrency();
 
   // Estado para imagen
   const [imagenFile, setImagenFile] = useState(null);
   const [imagenPreview, setImagenPreview] = useState(null);
   const [imagenUrl, setImagenUrl] = useState(null);
+
+  // Estado para precios multi-moneda
+  const [preciosMoneda, setPreciosMoneda] = useState([]);
+  const [mostrarPreciosMoneda, setMostrarPreciosMoneda] = useState(false);
+
+  // Query para obtener monedas disponibles
+  const { data: monedasResponse } = useQuery({
+    queryKey: ['monedas'],
+    queryFn: () => monedasApi.listar(),
+    staleTime: 1000 * 60 * 10, // 10 min
+  });
+  // monedasResponse.data contiene { success, data: [...monedas] }
+  const todasLasMonedas = monedasResponse?.data?.data || [];
+  const monedasDisponibles = todasLasMonedas.filter(m => m.codigo !== monedaOrg);
+
+  // Query para obtener producto completo con precios_moneda al editar
+  const { data: productoCompleto, isLoading: cargandoProducto } = useQuery({
+    queryKey: ['producto', producto?.id],
+    queryFn: () => inventarioApi.obtenerProducto(producto.id),
+    enabled: mode === 'edit' && !!producto?.id,
+    staleTime: 0, // Siempre refetch al abrir modal
+  });
 
   // Hook para subir archivos
   const uploadMutation = useUploadArchivo();
@@ -271,6 +297,9 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         setImagenPreview(null);
       }
       setImagenFile(null);
+      // Los precios multi-moneda se cargan en un useEffect separado (productoCompleto)
+      setPreciosMoneda([]);
+      setMostrarPreciosMoneda(false);
     } else {
       reset({
         nombre: '',
@@ -299,17 +328,26 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       setImagenFile(null);
       setImagenPreview(null);
       setImagenUrl(null);
+      // Limpiar precios multi-moneda
+      setPreciosMoneda([]);
+      setMostrarPreciosMoneda(false);
     }
   }, [esEdicion, producto, reset]);
 
-  // Debug: Log when form is ready
+  // Cargar precios multi-moneda cuando productoCompleto está listo (al editar)
   useEffect(() => {
-    if (isOpen) {
-      console.log('📝 Modal abierto, modo:', mode);
-      console.log('📝 Producto:', producto);
-      console.log('📝 Mutations ready:', { crear: !!crearMutation, actualizar: !!actualizarMutation });
+    // Estructura: productoCompleto.data = respuesta axios, .data = objeto JSON con success/data
+    const preciosData = productoCompleto?.data?.data?.precios_moneda;
+    if (esEdicion && preciosData && preciosData.length > 0) {
+      setPreciosMoneda(preciosData.map(p => ({
+        moneda: p.moneda,
+        precio_compra: p.precio_compra || '',
+        precio_venta: p.precio_venta || '',
+        precio_mayoreo: p.precio_mayoreo || ''
+      })));
+      setMostrarPreciosMoneda(true);
     }
-  }, [isOpen, mode, producto, crearMutation, actualizarMutation]);
+  }, [esEdicion, productoCompleto]);
 
   // Manejar éxito de las mutaciones
   useEffect(() => {
@@ -374,9 +412,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
   // Submit handler
   const onSubmit = async (data) => {
-    console.log('🚀 onSubmit ejecutado con data:', data);
-    console.log('🚀 Errores de validación:', errors);
-
     try {
       let urlImagenFinal = imagenUrl;
 
@@ -414,6 +449,22 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         datosSanitizados.proveedor_id = parseInt(datosSanitizados.proveedor_id);
       }
 
+      // Agregar precios multi-moneda si existen
+      if (preciosMoneda.length > 0) {
+        const preciosValidos = preciosMoneda
+          .filter(p => p.moneda && p.precio_venta)
+          .map(p => ({
+            moneda: p.moneda,
+            precio_compra: p.precio_compra ? parseFloat(p.precio_compra) : null,
+            precio_venta: parseFloat(p.precio_venta),
+            precio_mayoreo: p.precio_mayoreo ? parseFloat(p.precio_mayoreo) : null
+          }));
+
+        if (preciosValidos.length > 0) {
+          datosSanitizados.precios_moneda = preciosValidos;
+        }
+      }
+
       if (mode === 'create') {
         crearMutation.mutate(datosSanitizados);
       } else {
@@ -423,6 +474,32 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       showError('Error al subir la imagen');
       console.error('Error subiendo imagen:', error);
     }
+  };
+
+  // Handlers para precios multi-moneda
+  const agregarPrecioMoneda = () => {
+    // Encontrar primera moneda no usada
+    const monedasUsadas = preciosMoneda.map(p => p.moneda);
+    const monedaDisponible = monedasDisponibles.find(m => !monedasUsadas.includes(m.codigo));
+
+    if (monedaDisponible) {
+      setPreciosMoneda([...preciosMoneda, {
+        moneda: monedaDisponible.codigo,
+        precio_compra: '',
+        precio_venta: '',
+        precio_mayoreo: ''
+      }]);
+    }
+  };
+
+  const eliminarPrecioMoneda = (index) => {
+    setPreciosMoneda(preciosMoneda.filter((_, i) => i !== index));
+  };
+
+  const actualizarPrecioMoneda = (index, campo, valor) => {
+    const nuevosPrecios = [...preciosMoneda];
+    nuevosPrecios[index][campo] = valor;
+    setPreciosMoneda(nuevosPrecios);
   };
 
   return (
@@ -613,6 +690,115 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               disabled={!precioMayoreo || precioMayoreo === 0}
             />
           </div>
+
+          {/* Precios en otras monedas - Colapsable */}
+          {monedasDisponibles.length > 0 && (
+            <div className="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMostrarPreciosMoneda(!mostrarPreciosMoneda)}
+                className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-750 transition-colors"
+              >
+                <span className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300">
+                  <Globe className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                  Precios en otras monedas
+                  {preciosMoneda.length > 0 && (
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded-full">
+                      {preciosMoneda.length}
+                    </span>
+                  )}
+                </span>
+                {mostrarPreciosMoneda ? (
+                  <ChevronUp className="h-4 w-4 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500" />
+                )}
+              </button>
+
+              {mostrarPreciosMoneda && (
+                <div className="p-4 space-y-4">
+                  {preciosMoneda.map((precio, index) => {
+                    const monedaInfo = monedasDisponibles.find(m => m.codigo === precio.moneda);
+                    const monedasUsadas = preciosMoneda.map(p => p.moneda);
+                    const opcionesMoneda = monedasDisponibles.filter(
+                      m => m.codigo === precio.moneda || !monedasUsadas.includes(m.codigo)
+                    );
+
+                    return (
+                      <div key={index} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-3">
+                          <Select
+                            value={precio.moneda}
+                            onChange={(e) => actualizarPrecioMoneda(index, 'moneda', e.target.value)}
+                            options={opcionesMoneda.map(m => ({
+                              value: m.codigo,
+                              label: `${m.codigo} - ${m.nombre}`
+                            }))}
+                            className="w-48"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => eliminarPrecioMoneda(index)}
+                            className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20 rounded"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-3">
+                          <Input
+                            type="number"
+                            label="P. Compra"
+                            value={precio.precio_compra}
+                            onChange={(e) => actualizarPrecioMoneda(index, 'precio_compra', e.target.value)}
+                            step="0.01"
+                            placeholder="0.00"
+                            prefix={monedaInfo?.simbolo || '$'}
+                          />
+                          <Input
+                            type="number"
+                            label="P. Venta"
+                            value={precio.precio_venta}
+                            onChange={(e) => actualizarPrecioMoneda(index, 'precio_venta', e.target.value)}
+                            step="0.01"
+                            placeholder="0.00"
+                            prefix={monedaInfo?.simbolo || '$'}
+                            required
+                          />
+                          <Input
+                            type="number"
+                            label="P. Mayoreo"
+                            value={precio.precio_mayoreo}
+                            onChange={(e) => actualizarPrecioMoneda(index, 'precio_mayoreo', e.target.value)}
+                            step="0.01"
+                            placeholder="0.00"
+                            prefix={monedaInfo?.simbolo || '$'}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {preciosMoneda.length < monedasDisponibles.length && (
+                    <button
+                      type="button"
+                      onClick={agregarPrecioMoneda}
+                      className="flex items-center justify-center w-full py-2 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 border border-dashed border-primary-300 dark:border-primary-700 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+                    >
+                      <Plus className="h-4 w-4 mr-1" />
+                      Agregar precio en otra moneda
+                    </button>
+                  )}
+
+                  {preciosMoneda.length === 0 && (
+                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      No hay precios en otras monedas configurados.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Inventario (Solo en crear) */}

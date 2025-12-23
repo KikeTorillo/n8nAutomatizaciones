@@ -104,14 +104,28 @@ ALTER TABLE precios_servicio_moneda ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY precios_servicio_tenant ON precios_servicio_moneda
     FOR ALL
-    USING (organizacion_id = current_setting('app.current_organization_id', true)::INTEGER);
+    USING (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    )
+    WITH CHECK (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 -- RLS para precios de productos
 ALTER TABLE precios_producto_moneda ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY precios_producto_tenant ON precios_producto_moneda
     FOR ALL
-    USING (organizacion_id = current_setting('app.current_organization_id', true)::INTEGER);
+    USING (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    )
+    WITH CHECK (
+        organizacion_id::text = current_setting('app.current_tenant_id', true)
+        OR current_setting('app.bypass_rls', true) = 'true'
+    );
 
 -- =====================================================================
 -- FUNCIÓN: Obtener tasa de cambio más reciente

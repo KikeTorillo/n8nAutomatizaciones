@@ -33,9 +33,9 @@
 
 ### Pendiente para completar fase
 
-- [ ] **Precios multi-moneda en productos**: Usar tabla `precios_producto_moneda` en formularios
-- [ ] **Precios multi-moneda en servicios**: Usar tabla `precios_servicio_moneda` en formularios
-- [ ] **Conversión en POS**: Mostrar equivalente en moneda secundaria
+- [x] **Precios multi-moneda en productos**: UI colapsable + CRUD en formulario productos
+- [x] **Precios multi-moneda en servicios**: UI colapsable + CRUD en formulario servicios
+- [x] **Conversión en POS**: Mostrar equivalente en USD debajo del total (CarritoVenta.jsx)
 - [ ] **Tasas automáticas** (opcional): Integrar API Banxico/BCE para actualización diaria
 
 ### Archivos clave
@@ -43,10 +43,14 @@
 ```
 sql/nucleo/15-tablas-monedas.sql
 backend/app/modules/core/models/monedas.model.js
-backend/app/modules/core/controllers/monedas.controller.js
+backend/app/modules/core/models/usuario.model.js (buscarPorEmail incluye moneda)
+backend/app/modules/inventario/models/productos.model.js (guardarPreciosMoneda, obtenerPreciosMoneda)
+backend/app/modules/agendamiento/models/servicio.model.js (guardarPreciosMoneda, obtenerPreciosMoneda)
+frontend/src/components/inventario/ProductoFormModal.jsx (UI precios multi-moneda)
+frontend/src/components/servicios/ServicioFormModal.jsx (UI precios multi-moneda)
+frontend/src/components/pos/CarritoVenta.jsx (conversión a USD en tiempo real)
 frontend/src/utils/currency.js
 frontend/src/hooks/useCurrency.js
-frontend/src/pages/configuracion/NegocioPage.jsx (selector moneda/timezone)
 ```
 
 ---

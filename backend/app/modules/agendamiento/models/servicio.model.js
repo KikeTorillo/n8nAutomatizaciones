@@ -635,6 +635,107 @@ class ServicioModel {
         });
     }
 
+    // =====================================================================
+    // PRECIOS MULTI-MONEDA (Fase 4)
+    // =====================================================================
+
+    /**
+     * Guarda precios en múltiples monedas para un servicio
+     * Usa UPSERT para insertar o actualizar precios existentes
+     *
+     * @param {number} servicioId - ID del servicio
+     * @param {Array} preciosMoneda - Array de objetos { moneda, precio, precio_minimo?, precio_maximo? }
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} - Precios guardados
+     */
+    static async guardarPreciosMoneda(servicioId, preciosMoneda, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            const preciosGuardados = [];
+
+            for (const precioData of preciosMoneda) {
+                const query = `
+                    INSERT INTO precios_servicio_moneda (
+                        servicio_id, moneda, precio, precio_minimo, precio_maximo,
+                        organizacion_id, activo
+                    ) VALUES ($1, $2, $3, $4, $5, $6, true)
+                    ON CONFLICT (servicio_id, moneda)
+                    DO UPDATE SET
+                        precio = EXCLUDED.precio,
+                        precio_minimo = EXCLUDED.precio_minimo,
+                        precio_maximo = EXCLUDED.precio_maximo,
+                        activo = true,
+                        actualizado_en = NOW()
+                    RETURNING id, servicio_id, moneda, precio, precio_minimo, precio_maximo, activo
+                `;
+
+                const values = [
+                    servicioId,
+                    precioData.moneda,
+                    precioData.precio,
+                    precioData.precio_minimo || null,
+                    precioData.precio_maximo || null,
+                    organizacionId
+                ];
+
+                const result = await db.query(query, values);
+                preciosGuardados.push(result.rows[0]);
+            }
+
+            return preciosGuardados;
+        });
+    }
+
+    /**
+     * Obtiene los precios en múltiples monedas de un servicio
+     *
+     * @param {number} servicioId - ID del servicio
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} - Array de precios con info de moneda
+     */
+    static async obtenerPreciosMoneda(servicioId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    psm.id,
+                    psm.moneda,
+                    psm.precio,
+                    psm.precio_minimo,
+                    psm.precio_maximo,
+                    m.nombre as moneda_nombre,
+                    m.simbolo as moneda_simbolo,
+                    m.decimales as moneda_decimales
+                FROM precios_servicio_moneda psm
+                JOIN monedas m ON psm.moneda = m.codigo
+                WHERE psm.servicio_id = $1 AND psm.activo = true
+                ORDER BY m.orden
+            `;
+
+            const result = await db.query(query, [servicioId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Elimina (desactiva) un precio multi-moneda específico
+     *
+     * @param {number} servicioId - ID del servicio
+     * @param {string} moneda - Código de moneda
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<boolean>} - true si se eliminó
+     */
+    static async eliminarPrecioMoneda(servicioId, moneda, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                UPDATE precios_servicio_moneda
+                SET activo = false, actualizado_en = NOW()
+                WHERE servicio_id = $1 AND moneda = $2
+            `;
+
+            const result = await db.query(query, [servicioId, moneda]);
+            return result.rowCount > 0;
+        });
+    }
+
     /**
      * Obtiene estadísticas de asignaciones servicio-profesional
      * Calcula métricas de servicios sin profesionales y viceversa

@@ -8,6 +8,20 @@
 
 const Joi = require('joi');
 
+// Schema reutilizable para precios en múltiples monedas
+const precioMonedaSchema = Joi.object({
+    moneda: Joi.string().length(3).uppercase().required().messages({
+        'any.required': 'El código de moneda es requerido',
+        'string.length': 'El código de moneda debe tener 3 caracteres'
+    }),
+    precio_compra: Joi.number().min(0).optional().allow(null),
+    precio_venta: Joi.number().min(0.01).required().messages({
+        'any.required': 'El precio de venta es requerido',
+        'number.min': 'El precio de venta debe ser mayor a 0'
+    }),
+    precio_mayoreo: Joi.number().min(0).optional().allow(null)
+});
+
 const inventarioSchemas = {
     // ========================================================================
     // CATEGORÍAS DE PRODUCTOS
@@ -213,7 +227,10 @@ const inventarioSchemas = {
 
             notas: Joi.string().max(500).optional().allow(null, ''),
             imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
-            activo: Joi.boolean().optional().default(true)
+            activo: Joi.boolean().optional().default(true),
+
+            // Precios multi-moneda (Fase 4)
+            precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).custom((value, helpers) => {
             // Validación: Si especifica precio_mayoreo, debe especificar cantidad_mayoreo
             if ((value.precio_mayoreo && !value.cantidad_mayoreo) ||
@@ -271,7 +288,10 @@ const inventarioSchemas = {
             permite_uso_servicio: Joi.boolean().optional(),
             notas: Joi.string().max(500).optional().allow(null, ''),
             imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
-            activo: Joi.boolean().optional()
+            activo: Joi.boolean().optional(),
+
+            // Precios multi-moneda (Fase 4)
+            precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).min(1)
     },
 
