@@ -190,3 +190,21 @@ COMMENT ON INDEX idx_citas_servicios_servicio_id IS
 
 COMMENT ON INDEX idx_citas_servicios_covering IS
 'Covering index con campos más consultados. Permite Index-Only Scan para cálculos de totales.';
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Optimización para JOINs con columnas de auditoría
+-- Se propagan automáticamente a particiones
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- ✏️ ÍNDICE: CITAS CREADAS POR
+-- Propósito: Auditoría de quién creó las citas
+CREATE INDEX idx_citas_creado_por
+    ON citas(creado_por);
+
+-- ✏️ ÍNDICE: CITAS ACTUALIZADAS POR
+-- Propósito: Auditoría de quién modificó las citas
+CREATE INDEX idx_citas_actualizado_por
+    ON citas(actualizado_por) WHERE actualizado_por IS NOT NULL;

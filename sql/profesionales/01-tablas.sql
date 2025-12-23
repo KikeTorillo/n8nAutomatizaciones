@@ -100,14 +100,14 @@ CREATE TABLE profesionales (
     forma_pago VARCHAR(20) DEFAULT 'comision', -- 'comision', 'salario', 'mixto'
 
     -- ====================================================================
-    -- 🎛️ SECCIÓN: CONTROL DE ACCESO A MÓDULOS (★ CONTROL PRINCIPAL ★)
+    -- 🎛️ SECCIÓN: CONTROL DE ACCESO A MÓDULOS
     -- ====================================================================
-    -- Determina QUÉ puede hacer el empleado. NO depende del campo tipo.
+    -- NOTA: Los permisos se gestionan via tablas normalizadas (Fase 3B):
+    -- - permisos_catalogo: Catálogo de permisos disponibles
+    -- - permisos_rol: Permisos por rol (plantilla)
+    -- - permisos_usuario_sucursal: Override por usuario/sucursal
+    -- Consultar con función: obtener_permiso(usuario_id, sucursal_id, codigo)
     -- ────────────────────────────────────────────────────────────────────
-    modulos_acceso JSONB DEFAULT '{"agendamiento": true, "pos": false, "inventario": false}',
-                                               -- agendamiento: puede atender citas
-                                               -- pos: puede registrar ventas
-                                               -- inventario: puede gestionar stock
 
     -- ====================================================================
     -- 🔗 SECCIÓN: VINCULACIÓN CON USUARIO
@@ -173,8 +173,9 @@ CREATE TABLE profesionales (
 
 -- Comentarios de documentación
 COMMENT ON TABLE profesionales IS
-'Tabla unificada de empleados. Usa modulos_acceso para control de funcionalidades
-y categorias_profesional (M:N) para clasificación flexible.';
+'Tabla unificada de empleados. Los permisos se gestionan via sistema normalizado
+(permisos_catalogo, permisos_rol, permisos_usuario_sucursal).
+Clasificación flexible via categorias_profesional (M:N).';
 
 COMMENT ON COLUMN profesionales.tipo IS
 'Clasificación organizacional (operativo, administrativo, gerencial, ventas).
@@ -182,9 +183,6 @@ Solo para reportes y organigrama. NO restringe funcionalidades.';
 
 COMMENT ON COLUMN profesionales.estado IS
 'Estado laboral actual. Impacta disponibilidad y acceso al sistema.';
-
-COMMENT ON COLUMN profesionales.modulos_acceso IS
-'★ Control principal de acceso. Determina qué módulos puede usar el empleado.';
 
 -- ====================================================================
 -- 🔗 FOREIGN KEYS DIFERIDAS (profesionales → usuarios)

@@ -76,3 +76,35 @@ COMMENT ON INDEX idx_horarios_profesionales_premium IS
 
 COMMENT ON INDEX idx_horarios_profesionales_generacion IS
 'Índice compuesto para generación de disponibilidad. Performance crítica para calendario.';
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Optimización para JOINs con columnas de auditoría
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- 🏢 ÍNDICE: HORARIOS - ORGANIZACIÓN
+-- Propósito: FK hacia organizaciones para RLS
+CREATE INDEX idx_horarios_prof_org
+    ON horarios_profesionales(organizacion_id);
+
+-- 🗑️ ÍNDICE: HORARIOS ELIMINADOS POR
+-- Propósito: JOINs eficientes para auditoría de eliminaciones
+CREATE INDEX idx_horarios_prof_eliminado_por
+    ON horarios_profesionales(eliminado_por) WHERE eliminado_por IS NOT NULL;
+
+-- ✏️ ÍNDICE: HORARIOS CREADOS POR
+-- Propósito: Auditoría de quién creó los horarios
+CREATE INDEX idx_horarios_prof_creado_por
+    ON horarios_profesionales(creado_por);
+
+-- ✏️ ÍNDICE: HORARIOS ACTUALIZADOS POR
+-- Propósito: Auditoría de quién modificó los horarios
+CREATE INDEX idx_horarios_prof_actualizado_por
+    ON horarios_profesionales(actualizado_por) WHERE actualizado_por IS NOT NULL;
+
+-- 👨‍💼 ÍNDICE: DEPARTAMENTOS - GERENTE
+-- Propósito: FK hacia profesionales (gerente del departamento)
+CREATE INDEX idx_departamentos_gerente
+    ON departamentos(gerente_id) WHERE gerente_id IS NOT NULL;

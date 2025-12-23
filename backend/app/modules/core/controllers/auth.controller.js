@@ -354,21 +354,21 @@ class AuthController {
                     (resultado.usuario.apellidos ? ' ' + resultado.usuario.apellidos : '');
 
                 // Crear profesional vinculado al usuario admin
+                // ACTUALIZADO Dic 2025: modulos_acceso eliminado
+                // Los permisos se asignan via permisos_rol según el rol del usuario
                 await db.query(`
                     INSERT INTO profesionales (
                         organizacion_id,
                         nombre_completo,
                         email,
                         usuario_id,
-                        activo,
-                        modulos_acceso
-                    ) VALUES ($1, $2, $3, $4, TRUE, $5)
+                        activo
+                    ) VALUES ($1, $2, $3, $4, TRUE)
                 `, [
                     resultado.organizacion.id,
                     nombreCompleto,
                     resultado.usuario.email,
-                    resultado.usuario.id,
-                    { agendamiento: true, pos: true, inventario: true }
+                    resultado.usuario.id
                 ]);
             });
         }

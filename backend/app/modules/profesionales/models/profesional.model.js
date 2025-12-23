@@ -27,12 +27,12 @@ class ProfesionalModel {
                     años_experiencia, idiomas, disponible_online, color_calendario,
                     biografia, configuracion_horarios, configuracion_servicios,
                     salario_base, comision_porcentaje, forma_pago,
-                    modulos_acceso, usuario_id, activo
+                    usuario_id, activo
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                     $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
                     $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-                    $31, $32, $33, $34
+                    $31, $32, $33
                 )
                 RETURNING *
             `;
@@ -69,7 +69,6 @@ class ProfesionalModel {
                 profesionalData.salario_base || null,
                 profesionalData.comision_porcentaje || 0,
                 profesionalData.forma_pago || 'comision',
-                profesionalData.modulos_acceso || { agendamiento: true, pos: false, inventario: false },
                 profesionalData.usuario_id || null,
                 profesionalData.activo !== undefined ? profesionalData.activo : true
             ];
@@ -278,7 +277,7 @@ class ProfesionalModel {
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
-                       p.usuario_id, p.modulos_acceso,
+                       p.usuario_id,
                        p.creado_en, p.actualizado_en,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
                        u.nombre as usuario_nombre, u.email as usuario_email,
@@ -332,7 +331,7 @@ class ProfesionalModel {
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
-                       p.usuario_id, p.modulos_acceso,
+                       p.usuario_id,
                        p.creado_en, p.actualizado_en,
                        u.nombre as usuario_nombre, u.email as usuario_email,
                        COUNT(sp.servicio_id) as total_servicios_asignados
@@ -363,9 +362,11 @@ class ProfesionalModel {
                 contador++;
             }
 
-            // Filtrar por módulo habilitado (Nov 2025)
+            // Filtrar por módulo habilitado - DEPRECADO
+            // Los permisos ahora se gestionan via sistema normalizado (permisos_catalogo, permisos_rol)
+            // TODO: Implementar filtro usando obtener_permiso() cuando sea necesario
             if (modulo) {
-                query += ` AND p.modulos_acceso->>'${modulo}' = 'true'`;
+                console.warn('DEPRECADO: Filtro por modulo ya no usa modulos_acceso. Usar sistema de permisos normalizado.');
             }
 
             // Filtrar por usuario vinculado (Nov 2025)
@@ -466,10 +467,11 @@ class ProfesionalModel {
                 'configuracion_horarios', 'configuracion_servicios',
                 // Compensación
                 'salario_base', 'comision_porcentaje', 'forma_pago',
-                // Control de acceso
-                'modulos_acceso', 'usuario_id',
+                // Vinculación con usuario
+                'usuario_id',
                 // Legacy
                 'activo', 'fecha_salida', 'motivo_inactividad'
+                // NOTA: modulos_acceso eliminado - usar sistema de permisos normalizado
             ];
 
             const campos = [];
@@ -674,7 +676,7 @@ class ProfesionalModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
-                       p.usuario_id, p.modulos_acceso,
+                       p.usuario_id,
                        p.activo, p.disponible_online
                 FROM profesionales p
                 WHERE p.usuario_id = $1 AND p.organizacion_id = $2 AND p.activo = TRUE
@@ -712,7 +714,7 @@ class ProfesionalModel {
                 UPDATE profesionales
                 SET usuario_id = $1, actualizado_en = NOW()
                 WHERE id = $2 AND organizacion_id = $3
-                RETURNING id, nombre_completo, usuario_id, modulos_acceso, actualizado_en
+                RETURNING id, nombre_completo, usuario_id, actualizado_en
             `;
 
             const result = await db.query(query, [usuarioId, profesionalId, organizacionId]);
@@ -726,60 +728,24 @@ class ProfesionalModel {
     }
 
     /**
-     * Actualiza los módulos habilitados para un profesional
-     * @param {number} profesionalId - ID del profesional
-     * @param {number} organizacionId - ID de la organización
-     * @param {Object} modulosAcceso - Objeto con módulos habilitados
-     * @returns {Promise<Object>} Profesional actualizado
+     * @deprecated Los permisos ahora se gestionan via sistema normalizado
+     * Usar permisos_catalogo, permisos_rol, permisos_usuario_sucursal
+     * Ver: sql/nucleo/11-tablas-permisos.sql, sql/nucleo/12-funciones-permisos.sql
      */
     static async actualizarModulos(profesionalId, organizacionId, modulosAcceso) {
-        return await RLSContextManager.query(organizacionId, async (db) => {
-            const query = `
-                UPDATE profesionales
-                SET modulos_acceso = $1, actualizado_en = NOW()
-                WHERE id = $2 AND organizacion_id = $3
-                RETURNING id, nombre_completo, usuario_id, modulos_acceso, actualizado_en
-            `;
-
-            const result = await db.query(query, [modulosAcceso, profesionalId, organizacionId]);
-
-            if (result.rows.length === 0) {
-                throw new Error('Profesional no encontrado en la organización');
-            }
-
-            return result.rows[0];
-        });
+        console.warn('DEPRECADO: actualizarModulos() ya no es válido. Usar sistema de permisos normalizado.');
+        throw new Error('Método deprecado. Los permisos se gestionan via permisos_catalogo/permisos_rol/permisos_usuario_sucursal');
     }
 
     /**
-     * Lista profesionales con acceso a un módulo específico
-     * @param {number} organizacionId - ID de la organización
-     * @param {string} modulo - Nombre del módulo ('agendamiento', 'pos', 'inventario')
-     * @param {boolean} soloActivos - Filtrar solo profesionales activos
-     * @returns {Promise<Array>} Lista de profesionales
+     * @deprecated Los permisos ahora se gestionan via sistema normalizado
+     * Para obtener usuarios con un permiso específico, usar:
+     * SELECT u.* FROM usuarios u
+     * WHERE tiene_permiso(u.id, sucursal_id, 'pos.acceso') = true
      */
     static async listarPorModulo(organizacionId, modulo, soloActivos = true) {
-        return await RLSContextManager.query(organizacionId, async (db) => {
-            let query = `
-                SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
-                       p.usuario_id, p.modulos_acceso,
-                       p.activo, p.disponible_online,
-                       u.nombre as usuario_nombre, u.email as usuario_email
-                FROM profesionales p
-                LEFT JOIN usuarios u ON p.usuario_id = u.id
-                WHERE p.organizacion_id = $1
-                    AND p.modulos_acceso->>'${modulo}' = 'true'
-            `;
-
-            if (soloActivos) {
-                query += ' AND p.activo = TRUE';
-            }
-
-            query += ' ORDER BY p.nombre_completo ASC';
-
-            const result = await db.query(query, [organizacionId]);
-            return result.rows;
-        });
+        console.warn('DEPRECADO: listarPorModulo() ya no es válido. Usar sistema de permisos normalizado.');
+        throw new Error('Método deprecado. Usar función SQL tiene_permiso() para filtrar por permisos');
     }
 
     /**

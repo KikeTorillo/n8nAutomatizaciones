@@ -145,7 +145,12 @@ class ModulosController {
    * GET /api/v1/modulos/activos
    * Obtiene los módulos activos de la organización del usuario autenticado
    * Incluye información del plan para modelo Free/Pro (Nov 2025)
-   * Para empleados: filtra por modulos_acceso del profesional vinculado
+   *
+   * ACTUALIZADO Dic 2025:
+   * modulos_acceso fue eliminado. Los permisos ahora se gestionan via
+   * sistema normalizado (permisos_catalogo, permisos_rol, permisos_usuario_sucursal)
+   * Por ahora, todos los usuarios tienen acceso a los módulos de su suscripción.
+   * TODO: Implementar filtrado via tiene_permiso() SQL
    */
   static async obtenerActivos(req, res) {
     try {
@@ -160,42 +165,11 @@ class ModulosController {
       // Obtener módulos activos de la suscripción (con cache)
       let modulosActivos = await ModulesCache.get(organizacionId);
 
-      // Si el usuario es empleado, filtrar por modulos_acceso del profesional vinculado
-      let profesionalModulos = null;
+      // ACTUALIZADO Dic 2025: modulos_acceso eliminado
+      // Por ahora, empleados tienen acceso a todos los módulos de la suscripción
+      // TODO: Implementar filtrado via permisos_usuario_sucursal
       if (userRole === 'empleado') {
-        try {
-          const profesionalResult = await RLSContextManager.withBypass(async (db) => {
-            return await db.query(`
-              SELECT modulos_acceso
-              FROM profesionales
-              WHERE usuario_id = $1 AND organizacion_id = $2
-            `, [userId, organizacionId]);
-          });
-
-          if (profesionalResult.rows.length > 0) {
-            profesionalModulos = profesionalResult.rows[0].modulos_acceso || {};
-
-            // Intersectar: un módulo está activo solo si:
-            // 1. Está activo en la suscripción de la org Y
-            // 2. El profesional tiene acceso a él
-            const modulosFiltrados = { core: true }; // Core siempre activo
-
-            for (const [modulo, activo] of Object.entries(modulosActivos)) {
-              if (modulo === 'core') continue;
-
-              // Mapeo de módulos: en profesionales se usa 'agendamiento', 'pos', 'inventario'
-              const moduloKey = modulo === 'agendamiento' ? 'agendamiento' : modulo;
-              const tieneAcceso = profesionalModulos[moduloKey] === true;
-
-              modulosFiltrados[modulo] = activo && tieneAcceso;
-            }
-
-            modulosActivos = modulosFiltrados;
-            logger.info(`[ModulosController] Módulos filtrados para empleado ${userId}: ${JSON.stringify(modulosActivos)}`);
-          }
-        } catch (profError) {
-          logger.warn('[ModulosController] Error obteniendo módulos del profesional:', profError.message);
-        }
+        logger.info(`[ModulosController] Empleado ${userId}: acceso a módulos de suscripción (permisos granulares pendiente)`);
       }
 
       // Obtener información del plan y app_seleccionada (Modelo Free/Pro Nov 2025)

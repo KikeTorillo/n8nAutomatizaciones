@@ -84,9 +84,9 @@ CREATE TABLE IF NOT EXISTS activaciones_cuenta (
 -- ÍNDICES
 -- ====================================================================
 
--- Búsqueda por token (para validación de URL) - crítico para performance
-CREATE INDEX IF NOT EXISTS idx_activaciones_token
-    ON activaciones_cuenta (token);
+-- NOTA: idx_activaciones_token NO se crea porque el constraint UNIQUE
+-- en la columna token (línea 32) ya crea automáticamente un índice btree.
+-- El índice se llama activaciones_cuenta_token_key.
 
 -- Búsqueda por email (para verificar duplicados)
 CREATE INDEX IF NOT EXISTS idx_activaciones_email

@@ -100,23 +100,11 @@ Uso principal: Auto-asignación de vendedor en POS.
 Query: SELECT * FROM profesionales WHERE usuario_id = ?
 Performance: O(1), índice parcial solo incluye registros con usuario vinculado.';
 
--- 🎛️ ÍNDICE 8: BÚSQUEDA EN MÓDULOS HABILITADOS
--- Propósito: Filtrar profesionales por módulo habilitado (POS, Inventario, etc.)
--- Uso: WHERE modulos_acceso->>'pos' = 'true' AND activo = TRUE
--- Performance: GIN permite queries eficientes en JSONB
-CREATE INDEX idx_profesionales_modulos_gin
-    ON profesionales USING GIN (modulos_acceso)
-    WHERE activo = TRUE;
+-- 🔐 ÍNDICE 8: ELIMINADO (Dic 2025)
+-- El campo modulos_acceso fue migrado al sistema de permisos normalizados.
+-- Ver: sql/nucleo/11-tablas-permisos.sql para el nuevo sistema.
 
-COMMENT ON INDEX idx_profesionales_modulos_gin IS
-'Índice GIN para búsquedas en módulos habilitados por profesional.
-Queries ejemplo:
-  - Profesionales con acceso a POS: WHERE modulos_acceso->>''pos'' = ''true''
-  - Profesionales con acceso a agendamiento: WHERE modulos_acceso->>''agendamiento'' = ''true''
-  - Profesionales multi-módulo: WHERE modulos_acceso ?& array[''pos'', ''agendamiento'']
-Performance: <5ms para tablas con miles de profesionales.';
-
--- 🏛️ ÍNDICE 9: JERARQUÍA - BÚSQUEDA POR SUPERVISOR
+-- 🏛️ ÍNDICE 8: JERARQUÍA - BÚSQUEDA POR SUPERVISOR
 -- Propósito: Encontrar subordinados directos de un supervisor
 -- Uso: WHERE supervisor_id = ?
 CREATE INDEX idx_profesionales_supervisor
@@ -140,3 +128,14 @@ CREATE INDEX idx_profesionales_departamento
 CREATE INDEX idx_profesionales_puesto
     ON profesionales (puesto_id)
     WHERE puesto_id IS NOT NULL;
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- 🗑️ ÍNDICE: PROFESIONALES ELIMINADOS POR
+-- Propósito: JOINs eficientes para auditoría de eliminaciones
+CREATE INDEX idx_profesionales_eliminado_por
+    ON profesionales(eliminado_por) WHERE eliminado_por IS NOT NULL;

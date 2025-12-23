@@ -105,8 +105,8 @@ class InvitacionController {
             },
             profesional: {
                 id: resultado.profesional.id,
-                nombre: resultado.profesional.nombre_completo,
-                modulos_acceso: resultado.profesional.modulos_acceso
+                nombre: resultado.profesional.nombre_completo
+                // NOTA: modulos_acceso eliminado - permisos se obtienen via sistema normalizado
             },
             mensaje: 'Cuenta creada exitosamente. Ya puedes iniciar sesión.'
         }, 'Registro completado', 201);

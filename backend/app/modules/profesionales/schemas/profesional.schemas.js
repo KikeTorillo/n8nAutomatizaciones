@@ -153,11 +153,8 @@ const crear = {
             .default('comision'),
 
         // === CONTROL DE ACCESO ===
-        modulos_acceso: Joi.object({
-            agendamiento: Joi.boolean().optional(),
-            pos: Joi.boolean().optional(),
-            inventario: Joi.boolean().optional()
-        }).optional().default({ agendamiento: true, pos: false, inventario: false }),
+        // NOTA: modulos_acceso eliminado (Dic 2025)
+        // Los permisos se gestionan via permisos_catalogo, permisos_rol, permisos_usuario_sucursal
 
         // === LEGACY ===
         activo: Joi.boolean()
@@ -291,12 +288,8 @@ const actualizar = {
         comision_porcentaje: Joi.number().min(LIMITES.COMISION_MIN).max(LIMITES.COMISION_MAX),
         forma_pago: Joi.string().valid(...FORMAS_PAGO),
 
-        // === CONTROL DE ACCESO ===
-        modulos_acceso: Joi.object({
-            agendamiento: Joi.boolean().optional(),
-            pos: Joi.boolean().optional(),
-            inventario: Joi.boolean().optional()
-        }),
+        // === VINCULACIÓN CON USUARIO ===
+        // NOTA: modulos_acceso eliminado (Dic 2025) - usar sistema de permisos normalizado
         usuario_id: Joi.number().integer().positive().optional().allow(null),
 
         // === LEGACY ===
@@ -467,16 +460,14 @@ const vincularUsuario = {
 };
 
 // PATCH /profesionales/:id/modulos
+// @deprecated Dic 2025 - Usar sistema de permisos normalizado
 const actualizarModulos = {
     params: Joi.object({
         id: commonSchemas.id
     }),
     body: Joi.object({
-        modulos_acceso: Joi.object({
-            agendamiento: Joi.boolean().optional(),
-            pos: Joi.boolean().optional(),
-            inventario: Joi.boolean().optional()
-        }).required()
+        // Schema mantenido por compatibilidad, pero endpoint devuelve 410 Gone
+        _deprecated: Joi.string().optional()
     }),
     query: Joi.object({
         organizacion_id: commonSchemas.id.optional()
@@ -484,6 +475,7 @@ const actualizarModulos = {
 };
 
 // GET /profesionales/por-modulo/:modulo
+// @deprecated Dic 2025 - Usar sistema de permisos normalizado
 const listarPorModulo = {
     params: Joi.object({
         modulo: Joi.string()

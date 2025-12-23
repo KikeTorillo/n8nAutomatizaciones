@@ -24,23 +24,23 @@ CREATE INDEX idx_profesionales_org_estado ON profesionales(organizacion_id, esta
 CREATE INDEX idx_profesionales_codigo ON profesionales(organizacion_id, codigo)
     WHERE codigo IS NOT NULL;
 
--- Empleados con acceso a agendamiento (para booking)
-CREATE INDEX idx_profesionales_agendamiento ON profesionales(organizacion_id)
-    WHERE estado = 'activo' AND (modulos_acceso->>'agendamiento')::boolean = true;
-
--- Empleados con acceso a POS
-CREATE INDEX idx_profesionales_pos ON profesionales(organizacion_id)
-    WHERE estado = 'activo' AND (modulos_acceso->>'pos')::boolean = true;
-
--- Empleados con acceso a inventario
-CREATE INDEX idx_profesionales_inventario ON profesionales(organizacion_id)
-    WHERE estado = 'activo' AND (modulos_acceso->>'inventario')::boolean = true;
+-- ====================================================================
+-- 🔐 ÍNDICES DE ACCESO A MÓDULOS (ELIMINADOS - Dic 2025)
+-- ====================================================================
+-- Los índices idx_profesionales_agendamiento, idx_profesionales_pos,
+-- idx_profesionales_inventario fueron eliminados.
+--
+-- El control de acceso a módulos ahora se hace mediante el sistema
+-- de permisos normalizados. Ver: sql/nucleo/11-tablas-permisos.sql
+--
+-- Para verificar si un usuario tiene acceso a un módulo:
+--   SELECT tiene_permiso(usuario_id, sucursal_id, 'agendamiento.acceso');
+--   SELECT tiene_permiso(usuario_id, sucursal_id, 'pos.acceso');
+--   SELECT tiene_permiso(usuario_id, sucursal_id, 'inventario.acceso');
+-- ====================================================================
 
 -- ====================================================================
 -- 📝 COMENTARIOS
 -- ====================================================================
-COMMENT ON INDEX idx_profesionales_agendamiento IS
-'Empleados activos con modulos_acceso.agendamiento=true. Para queries de disponibilidad.';
-
 COMMENT ON INDEX idx_profesionales_codigo IS
 'Búsqueda rápida por código de empleado dentro de organización.';

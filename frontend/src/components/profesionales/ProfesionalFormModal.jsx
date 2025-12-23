@@ -18,7 +18,6 @@ import {
   useCrearProfesional,
   useActualizarProfesional,
   useProfesional,
-  useActualizarModulos,
   useSincronizarCategorias,
   TIPOS_EMPLEADO,
   ESTADOS_LABORALES,
@@ -128,12 +127,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [selectedColor, setSelectedColor] = useState(COLORES_CALENDARIO[0]);
   const [showColorPicker, setShowColorPicker] = useState(false);
 
-  // Nov 2025: Estado para módulos e invitación
-  const [modulosAcceso, setModulosAcceso] = useState({
-    agendamiento: true,
-    pos: false,
-    inventario: false
-  });
+  // Estado para invitación
   const [emailInvitacion, setEmailInvitacion] = useState('');
   const [invitacionActual, setInvitacionActual] = useState(null);
   const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
@@ -164,7 +158,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Hooks de mutación
   const crearMutation = useCrearProfesional();
   const actualizarMutation = useActualizarProfesional();
-  const actualizarModulosMutation = useActualizarModulos();
 
   // Cargar invitación actual en modo edición
   useEffect(() => {
@@ -286,13 +279,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         supervisor_id: profesionalData.supervisor_id || undefined,
       });
       setSelectedColor(profesionalData.color_calendario || COLORES_CALENDARIO[0]);
-
-      // Nov 2025: Cargar módulos
-      setModulosAcceso(profesionalData.modulos_acceso || {
-        agendamiento: true,
-        pos: false,
-        inventario: false
-      });
 
       // Dic 2025: Cargar foto existente
       if (profesionalData.foto_url) {
@@ -467,10 +453,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         departamento_id: data.departamento_id || null,
         puesto_id: data.puesto_id || null,
         supervisor_id: data.supervisor_id || null,
-        // Nov 2025: Incluir módulos
-        modulos_acceso: modulosAcceso,
         // Dic 2025: Incluir foto
         foto_url: urlFotoFinal || undefined,
+        // NOTA: modulos_acceso eliminado - permisos se gestionan via Configuración > Permisos
       };
 
       // Si se eliminó la foto existente
@@ -481,15 +466,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       if (isEditMode) {
         // Modo edición: actualizar datos básicos
         await actualizarMutation.mutateAsync({ id: profesionalId, data: sanitized });
-
-        // Nov 2025: Si cambiaron los módulos, actualizarlos
-        const modulosCambiaron = JSON.stringify(profesionalData?.modulos_acceso) !== JSON.stringify(modulosAcceso);
-        if (modulosCambiaron) {
-          await actualizarModulosMutation.mutateAsync({
-            profesionalId,
-            modulosAcceso
-          });
-        }
 
         // Dic 2025: Sincronizar categorías si cambiaron
         const categoriasOriginales = (profesionalData.categorias || []).map(c => c.id).sort();
@@ -542,7 +518,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       onClose();
       reset();
       setSelectedColor(COLORES_CALENDARIO[0]);
-      setModulosAcceso({ agendamiento: true, pos: false, inventario: false });
       setEmailInvitacion('');
       setInvitacionActual(null);
       // Dic 2025: Limpiar foto y categorías
@@ -1102,42 +1077,15 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   </div>
                 )}
 
-                {/* Módulos Habilitados */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Módulos habilitados
-                  </label>
-                  <div className="space-y-3 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
-                    <Checkbox
-                      label="Agendamiento"
-                      description="Puede atender citas de clientes"
-                      checked={modulosAcceso.agendamiento}
-                      onChange={(e) => setModulosAcceso({
-                        ...modulosAcceso,
-                        agendamiento: e.target.checked
-                      })}
-                    />
-
-                    <Checkbox
-                      label="Punto de Venta"
-                      description="Puede registrar ventas como vendedor"
-                      checked={modulosAcceso.pos}
-                      onChange={(e) => setModulosAcceso({
-                        ...modulosAcceso,
-                        pos: e.target.checked
-                      })}
-                    />
-
-                    <Checkbox
-                      label="Inventario"
-                      description="Puede gestionar productos y stock"
-                      checked={modulosAcceso.inventario}
-                      onChange={(e) => setModulosAcceso({
-                        ...modulosAcceso,
-                        inventario: e.target.checked
-                      })}
-                    />
-                  </div>
+                {/* Nota sobre permisos - Sistema Normalizado Dic 2025 */}
+                <div className="p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <strong className="text-gray-700 dark:text-gray-300">Permisos y acceso a módulos:</strong>{' '}
+                    Una vez creado el profesional, puedes configurar sus permisos específicos desde{' '}
+                    <span className="font-medium text-primary-600 dark:text-primary-400">
+                      Configuración → Permisos
+                    </span>.
+                  </p>
                 </div>
               </div>
 

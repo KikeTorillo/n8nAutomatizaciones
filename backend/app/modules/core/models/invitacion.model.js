@@ -250,7 +250,7 @@ class InvitacionModel {
 
             // Obtener datos del profesional actualizado
             const profesionalResult = await db.query(`
-                SELECT id, nombre_completo, modulos_acceso
+                SELECT id, nombre_completo
                 FROM profesionales
                 WHERE id = $1
             `, [invitacion.profesional_id]);

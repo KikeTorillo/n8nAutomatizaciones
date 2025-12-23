@@ -114,11 +114,9 @@ CREATE TABLE usuarios_sucursales (
     -- 👔 ROL EN SUCURSAL
     es_gerente BOOLEAN DEFAULT FALSE,
 
-    -- 🔐 PERMISOS OVERRIDE (opcional)
-    -- NULL = usa rol base del usuario
-    -- Con valor = override para esta sucursal específica
-    rol_sucursal rol_usuario DEFAULT NULL,
-    permisos_override JSONB DEFAULT '{}',
+    -- 🔐 PERMISOS
+    -- NOTA: Los permisos se gestionan via tabla permisos_usuario_sucursal (Fase 3B)
+    -- Consultar con función: obtener_permiso(usuario_id, sucursal_id, codigo)
 
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT TRUE,
@@ -131,9 +129,8 @@ CREATE TABLE usuarios_sucursales (
 );
 
 COMMENT ON TABLE usuarios_sucursales IS 'Asignación de usuarios a sucursales. Permite multi-sucursal por usuario.';
-COMMENT ON COLUMN usuarios_sucursales.es_gerente IS 'TRUE si el usuario es gerente de esta sucursal';
-COMMENT ON COLUMN usuarios_sucursales.rol_sucursal IS 'Override del rol base del usuario para esta sucursal. NULL = usar rol base.';
-COMMENT ON COLUMN usuarios_sucursales.permisos_override IS 'Permisos específicos adicionales para esta sucursal';
+COMMENT ON COLUMN usuarios_sucursales.es_gerente IS 'TRUE si el usuario es gerente de esta sucursal.';
+-- NOTA: Permisos granulares se gestionan via permisos_usuario_sucursal (Fase 3B)
 
 -- ====================================================================
 -- TABLA: profesionales_sucursales

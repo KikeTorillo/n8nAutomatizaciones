@@ -83,6 +83,7 @@ const DepartamentosPage = lazy(() => import('@/pages/configuracion/Departamentos
 const PuestosPage = lazy(() => import('@/pages/configuracion/PuestosPage'));
 const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/CategoriasPage'));
 const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
+const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -522,6 +523,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(OrganigramaPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Permisos (Dic 2025 - Sistema Normalizado)
+      {
+        path: 'configuracion/permisos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(PermisosPage)}
           </ProtectedRoute>
         ),
       },

@@ -288,34 +288,32 @@ class ProfesionalController {
     });
 
     /**
-     * Actualizar módulos habilitados para un profesional
+     * @deprecated ENDPOINT DEPRECADO - Dic 2025
+     * Los permisos ahora se gestionan via sistema normalizado
+     * Usar: POST /api/permisos/usuario-sucursal para asignar permisos
      * PATCH /profesionales/:id/modulos
      */
     static actualizarModulos = asyncHandler(async (req, res) => {
-        const { id } = req.params;
-        const { modulos_acceso } = req.body;
-
-        const profesional = await ProfesionalModel.actualizarModulos(
-            parseInt(id),
-            req.tenant.organizacionId,
-            modulos_acceso
+        return ResponseHelper.error(
+            res,
+            'Endpoint deprecado. Los permisos ahora se gestionan via /api/permisos. ' +
+            'Ver documentación de permisos_catalogo, permisos_rol, permisos_usuario_sucursal.',
+            410 // 410 Gone
         );
-
-        return ResponseHelper.success(res, profesional, 'Módulos actualizados exitosamente');
     });
 
     /**
-     * Listar profesionales por módulo habilitado
+     * @deprecated ENDPOINT DEPRECADO - Dic 2025
+     * Para filtrar por permisos, usar consultas SQL con tiene_permiso()
      * GET /profesionales/por-modulo/:modulo
      */
     static listarPorModulo = asyncHandler(async (req, res) => {
-        const { modulo } = req.params;
-        const soloActivos = req.query.activos !== 'false';
-
-        const modulosValidos = ['agendamiento', 'pos', 'inventario'];
-        if (!modulosValidos.includes(modulo)) {
-            return ResponseHelper.error(res, `Módulo inválido. Valores permitidos: ${modulosValidos.join(', ')}`, 400);
-        }
+        return ResponseHelper.error(
+            res,
+            'Endpoint deprecado. Usar filtros con sistema de permisos normalizado. ' +
+            'Consultar permisos via /api/permisos/verificar o función SQL tiene_permiso().',
+            410 // 410 Gone
+        );
 
         const profesionales = await ProfesionalModel.listarPorModulo(
             req.tenant.organizacionId,

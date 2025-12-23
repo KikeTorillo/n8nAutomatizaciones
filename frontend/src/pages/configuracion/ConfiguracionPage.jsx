@@ -9,6 +9,7 @@ import {
   Briefcase,
   Tags,
   Network,
+  Shield,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 import useAuthStore from '@/store/authStore';
@@ -80,6 +81,16 @@ function ConfiguracionPage() {
       description: 'Visualiza la estructura jerárquica del equipo',
       icon: Network,
       path: '/configuracion/organigrama',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: esAdmin,
+    },
+    {
+      id: 'permisos',
+      name: 'Permisos',
+      description: 'Gestiona los permisos por rol y usuario',
+      icon: Shield,
+      path: '/configuracion/permisos',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: esAdmin,

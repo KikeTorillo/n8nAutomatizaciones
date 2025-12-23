@@ -1295,17 +1295,18 @@ class UsuarioModel {
                     const nombreCompleto = usuario.nombre +
                         (usuario.apellidos ? ' ' + usuario.apellidos : '');
 
+                    // ACTUALIZADO Dic 2025: modulos_acceso eliminado
+                    // Los permisos se asignan via permisos_rol según el rol del usuario
                     await db.query(`
                         INSERT INTO profesionales (
                             organizacion_id, nombre_completo, email,
-                            usuario_id, activo, modulos_acceso
-                        ) VALUES ($1, $2, $3, $4, TRUE, $5)
+                            usuario_id, activo
+                        ) VALUES ($1, $2, $3, $4, TRUE)
                     `, [
                         organizacion.id,
                         nombreCompleto,
                         usuario.email,
-                        userId,
-                        { agendamiento: true, pos: true, inventario: true }
+                        userId
                     ]);
                 }
 

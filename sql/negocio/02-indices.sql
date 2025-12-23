@@ -105,3 +105,24 @@ CREATE INDEX idx_servicios_profesionales_profesional
 -- Uso: WHERE organizacion_id = ?
 CREATE INDEX idx_servicios_profesionales_org
     ON servicios_profesionales (organizacion_id);
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- 🗑️ ÍNDICE: SERVICIOS ELIMINADOS POR
+-- Propósito: JOINs eficientes para auditoría de eliminaciones
+CREATE INDEX idx_servicios_eliminado_por
+    ON servicios(eliminado_por) WHERE eliminado_por IS NOT NULL;
+
+-- 👤 ÍNDICE: INVITACIONES PROFESIONALES - USUARIO ID
+-- Propósito: Vincular invitaciones con usuarios que las aceptaron
+CREATE INDEX idx_invitaciones_prof_usuario
+    ON invitaciones_profesionales(usuario_id) WHERE usuario_id IS NOT NULL;
+
+-- ✏️ ÍNDICE: INVITACIONES PROFESIONALES - CREADO POR
+-- Propósito: Auditoría de quién creó las invitaciones
+CREATE INDEX idx_invitaciones_prof_creado_por
+    ON invitaciones_profesionales(creado_por);

@@ -16,6 +16,7 @@ const express = require('express');
 const POSController = require('../controllers');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const posSchemas = require('../schemas/pos.schemas');
+const { verificarPermiso, verificarLimiteNumerico } = require('../../../middleware/permisos');
 
 const router = express.Router();
 const validate = validation.validate;
@@ -43,6 +44,7 @@ router.post('/ventas',
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
     subscription.checkResourceLimit('ventas_pos_mes'),
+    verificarPermiso('pos.crear_ventas'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.crearVenta),
     POSController.crearVenta
@@ -60,6 +62,7 @@ router.post('/ventas',
 router.get('/corte-caja',
     auth.authenticateToken,
     tenant.setTenantContext,
+    verificarPermiso('pos.corte_caja'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.corteCaja),
     POSController.generarCorteCaja
@@ -94,6 +97,7 @@ router.get('/ventas/:id',
 router.get('/ventas',
     auth.authenticateToken,
     tenant.setTenantContext,
+    verificarPermiso('pos.ver_historial'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.listarVentas),
     POSController.listarVentas
@@ -147,6 +151,7 @@ router.post('/ventas/:id/cancelar',
     tenant.setTenantContext,
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
+    verificarPermiso('pos.anular_ventas'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.cancelarVenta),
     POSController.cancelarVenta
@@ -167,6 +172,7 @@ router.post('/ventas/:id/devolver',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
+    verificarPermiso('pos.devolver_productos'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.devolverItems),
     POSController.devolverItems
@@ -218,6 +224,7 @@ router.delete('/ventas/:id',
     tenant.setTenantContext,
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
+    verificarPermiso('pos.anular_ventas'),
     rateLimiting.apiRateLimit,
     validate(posSchemas.eliminarVenta),
     POSController.eliminarVenta

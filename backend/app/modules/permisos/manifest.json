@@ -1,0 +1,38 @@
+{
+  "name": "permisos",
+  "display_name": "Sistema de Permisos",
+  "version": "1.0.0",
+  "description": "Sistema normalizado de permisos con catálogo, roles y overrides por usuario/sucursal",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base de permisos, siempre activo"
+  },
+  "routes": {
+    "permisos": "/api/v1/permisos"
+  },
+  "resources": {
+    "permisos_catalogo": {
+      "table": "permisos_catalogo",
+      "limit_field": null,
+      "notes": "Catálogo maestro de permisos"
+    },
+    "permisos_rol": {
+      "table": "permisos_rol",
+      "limit_field": null,
+      "notes": "Permisos asignados a roles"
+    },
+    "permisos_usuario_sucursal": {
+      "table": "permisos_usuario_sucursal",
+      "limit_field": null,
+      "notes": "Overrides de permisos por usuario/sucursal"
+    }
+  },
+  "priority": 1,
+  "required": true,
+  "can_disable": false
+}

@@ -126,3 +126,14 @@ COMMENT ON INDEX idx_clientes_activos_covering IS
 Optimiza queries que muestran listas de clientes con sus datos básicos.
 Reduce I/O en ~50% al evitar acceso a tabla principal.
 NOTA: total_citas y ultima_visita se calculan dinámicamente mediante JOINs con tabla citas.';
+
+-- ====================================================================
+-- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
+-- ====================================================================
+-- Agregados: Auditoría Dic 2025
+-- ====================================================================
+
+-- 🗑️ ÍNDICE: CLIENTES ELIMINADOS POR
+-- Propósito: JOINs eficientes para auditoría de eliminaciones
+CREATE INDEX idx_clientes_eliminado_por
+    ON clientes(eliminado_por) WHERE eliminado_por IS NOT NULL;

@@ -29,7 +29,10 @@ class VentasPOSController {
         if (usuarioId && !ventaData.profesional_id) {
             const profesional = await ProfesionalModel.buscarPorUsuario(usuarioId, organizacionId);
 
-            if (profesional && profesional.modulos_acceso?.pos === true) {
+            // ACTUALIZADO Dic 2025: modulos_acceso eliminado
+            // Por ahora, si tiene profesional vinculado, se asigna automáticamente
+            // TODO: Verificar permiso 'pos.acceso' via sistema normalizado
+            if (profesional) {
                 ventaData.profesional_id = profesional.id;
             }
         }

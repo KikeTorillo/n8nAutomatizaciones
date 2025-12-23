@@ -370,8 +370,9 @@ CREATE TABLE movimientos_contables (
     tercero_tipo VARCHAR(20) CHECK (tercero_tipo IN ('cliente', 'proveedor')),
     tercero_id INTEGER,                              -- ID de cliente o proveedor
 
-    -- 📊 CENTRO DE COSTO (por ubicación)
-    ciudad_id INTEGER REFERENCES ciudades(id),       -- Ciudad/sucursal del movimiento
+    -- 📊 CENTRO DE COSTO
+    -- NOTA: centro_costo_id se agregará cuando se implemente Fase 2B del plan de gaps
+    -- centro_costo_id INTEGER REFERENCES centros_costo(id) ON DELETE SET NULL,
 
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),

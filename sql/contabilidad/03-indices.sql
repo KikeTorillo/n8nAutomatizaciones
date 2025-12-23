@@ -144,10 +144,8 @@ CREATE INDEX idx_movimientos_tercero
     ON movimientos_contables(tercero_tipo, tercero_id)
     WHERE tercero_id IS NOT NULL;
 
--- Búsqueda por ciudad (centro de costo)
-CREATE INDEX idx_movimientos_ciudad
-    ON movimientos_contables(ciudad_id)
-    WHERE ciudad_id IS NOT NULL;
+-- 🔐 ÍNDICE ciudad_id ELIMINADO (Dic 2025)
+-- El campo ciudad_id fue removido. Usar centro_costo_id en su lugar.
 
 -- Índice covering para libro mayor (evita table lookup)
 CREATE INDEX idx_movimientos_libro_mayor
