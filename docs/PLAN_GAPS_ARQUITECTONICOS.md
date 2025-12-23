@@ -11,47 +11,12 @@
 | 1 | Workflows de Aprobación | ✅ Completado | E2E validado |
 | 2 | Gestión de Módulos | ✅ Completado | 9 módulos con dependencias |
 | 3 | Permisos Normalizados | ✅ Completado | 65+ permisos, 4 roles |
-| 4 | Multi-Moneda | 🟡 **En progreso** | Infraestructura lista, pendiente integración |
+| 4 | Multi-Moneda | ✅ Completado | Precios, conversión POS, tasas manuales |
 | 5 | Webhooks Salientes | ⬜ Pendiente | - |
 | 6 | Internacionalización | ⬜ Pendiente | BD preparada |
 | 7 | Reportes Multi-Sucursal | ⬜ Pendiente | - |
 | 8 | Centros de Costo | ⬜ Pendiente | - |
 | 9 | API Pública | ⬜ Futuro | Baja prioridad |
-
----
-
-## Fase 4: Multi-Moneda (En Progreso)
-
-### Completado
-
-| Componente | Descripción |
-|------------|-------------|
-| SQL | 4 tablas: `monedas`, `tasas_cambio`, `precios_servicio_moneda`, `precios_producto_moneda` |
-| Backend | API `/api/v1/monedas` con 6 endpoints (listar, tasas, conversión) |
-| Frontend | `formatCurrency()` dinámico, hook `useCurrency()`, selector en configuración |
-| Monedas | MXN, COP, USD activas (+ ARS, CLP, PEN, EUR en catálogo) |
-
-### Pendiente para completar fase
-
-- [x] **Precios multi-moneda en productos**: UI colapsable + CRUD en formulario productos
-- [x] **Precios multi-moneda en servicios**: UI colapsable + CRUD en formulario servicios
-- [x] **Conversión en POS**: Mostrar equivalente en USD debajo del total (CarritoVenta.jsx)
-- [ ] **Tasas automáticas** (opcional): Integrar API Banxico/BCE para actualización diaria
-
-### Archivos clave
-
-```
-sql/nucleo/15-tablas-monedas.sql
-backend/app/modules/core/models/monedas.model.js
-backend/app/modules/core/models/usuario.model.js (buscarPorEmail incluye moneda)
-backend/app/modules/inventario/models/productos.model.js (guardarPreciosMoneda, obtenerPreciosMoneda)
-backend/app/modules/agendamiento/models/servicio.model.js (guardarPreciosMoneda, obtenerPreciosMoneda)
-frontend/src/components/inventario/ProductoFormModal.jsx (UI precios multi-moneda)
-frontend/src/components/servicios/ServicioFormModal.jsx (UI precios multi-moneda)
-frontend/src/components/pos/CarritoVenta.jsx (conversión a USD en tiempo real)
-frontend/src/utils/currency.js
-frontend/src/hooks/useCurrency.js
-```
 
 ---
 
@@ -68,6 +33,29 @@ Activar/desactivar módulos por organización con validación de dependencias.
 ### Fase 3: Permisos Normalizados
 Catálogo de permisos con asignación por rol y overrides por usuario/sucursal.
 - `sql/nucleo/11-tablas-permisos.sql` | `backend/app/modules/permisos/` | `frontend/src/pages/configuracion/PermisosPage.jsx`
+
+### Fase 4: Multi-Moneda
+Soporte completo para múltiples monedas con conversión en tiempo real.
+
+**Funcionalidades:**
+- Catálogo de monedas: MXN, COP, USD activas (+4 en catálogo)
+- Precios multi-moneda en productos y servicios (UI colapsable)
+- Conversión en POS: equivalente USD debajo del total
+- Tasas de cambio manuales (automáticas opcional futuro)
+- Login incluye moneda/zona_horaria de organización
+
+**Archivos clave:**
+```
+sql/nucleo/15-tablas-monedas.sql
+backend/app/modules/core/models/monedas.model.js
+backend/app/modules/core/models/usuario.model.js
+backend/app/modules/inventario/models/productos.model.js
+backend/app/modules/agendamiento/models/servicio.model.js
+frontend/src/components/inventario/ProductoFormModal.jsx
+frontend/src/components/servicios/ServicioFormModal.jsx
+frontend/src/components/pos/CarritoVenta.jsx
+frontend/src/hooks/useCurrency.js
+```
 
 ---
 
