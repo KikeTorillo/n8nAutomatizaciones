@@ -1,6 +1,6 @@
 # Plan de Gaps Arquitectónicos - Nexo ERP
 
-> **Última Revisión**: 23 Diciembre 2025
+> **Última Revisión**: 23 Diciembre 2025 (noche)
 
 ---
 
@@ -24,7 +24,10 @@
 
 ### Fase 1: Workflows de Aprobación
 Sistema de aprobaciones para órdenes de compra basado en límites por rol.
-- `sql/workflows/` | `backend/app/modules/workflows/` | `frontend/src/pages/aprobaciones/`
+- Condición: `total > limite_aprobacion` del usuario
+- Flujos validados E2E: aprobación → enviada, rechazo → borrador
+- Bandeja de aprobaciones con historial filtrable
+- `workflowAdapter.js` para desacoplar integración
 
 ### Fase 2: Gestión de Módulos
 Activar/desactivar módulos por organización con validación de dependencias.
@@ -32,30 +35,17 @@ Activar/desactivar módulos por organización con validación de dependencias.
 
 ### Fase 3: Permisos Normalizados
 Catálogo de permisos con asignación por rol y overrides por usuario/sucursal.
-- `sql/nucleo/11-tablas-permisos.sql` | `backend/app/modules/permisos/` | `frontend/src/pages/configuracion/PermisosPage.jsx`
+- Permisos booleanos: toggle on/off
+- Permisos numéricos: input editable (limite_aprobacion, max_descuento)
+- Guardado inmediato al perder foco o Enter
 
 ### Fase 4: Multi-Moneda
 Soporte completo para múltiples monedas con conversión en tiempo real.
-
-**Funcionalidades:**
-- Catálogo de monedas: MXN, COP, USD activas (+4 en catálogo)
-- Precios multi-moneda en productos y servicios (UI colapsable)
+- Catálogo: MXN, COP, USD activas (+4 en catálogo)
+- Precios multi-moneda en productos/servicios (UI colapsable)
 - Conversión en POS: equivalente USD debajo del total
 - Tasas de cambio manuales (automáticas opcional futuro)
-- Login incluye moneda/zona_horaria de organización
-
-**Archivos clave:**
-```
-sql/nucleo/15-tablas-monedas.sql
-backend/app/modules/core/models/monedas.model.js
-backend/app/modules/core/models/usuario.model.js
-backend/app/modules/inventario/models/productos.model.js
-backend/app/modules/agendamiento/models/servicio.model.js
-frontend/src/components/inventario/ProductoFormModal.jsx
-frontend/src/components/servicios/ServicioFormModal.jsx
-frontend/src/components/pos/CarritoVenta.jsx
-frontend/src/hooks/useCurrency.js
-```
+- `useCurrency.js` hook para formateo
 
 ---
 
@@ -83,3 +73,15 @@ OpenAPI/Swagger + API Keys para integraciones externas. Baja prioridad.
 - **RLS**: Usar `RLSContextManager.query()`. Solo `withBypass()` para JOINs multi-tabla o super_admin.
 - **HMR**: No funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
 - **Multi-Tenant**: 122 políticas RLS, 4 tablas particionadas.
+
+### Adapters de Servicios
+Patrón para desacoplar módulos sin dependencias directas (lazy loading):
+
+| Adapter | Uso |
+|---------|-----|
+| `clienteAdapter` | Crear/buscar clientes desde agendamiento público |
+| `workflowAdapter` | Evaluar aprobaciones desde órdenes de compra |
+| `organizacionAdapter` | Acceso a datos de organización desde chatbots |
+| `profesionalAdapter` | Buscar profesionales desde marketplace |
+| `notificacionAdapter` | Enviar notificaciones desde cualquier módulo |
+| `chatbotConfigAdapter` | Config de chatbots desde notificaciones |
