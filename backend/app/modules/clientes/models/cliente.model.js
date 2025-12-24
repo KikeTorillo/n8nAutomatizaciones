@@ -24,12 +24,12 @@ class ClienteModel {
                 INSERT INTO clientes (
                     organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+                    direccion, como_conocio, activo, marketing_permitido, foto_url, lista_precios_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url,
+                    direccion, como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
                     creado_en, actualizado_en
             `;
 
@@ -48,7 +48,8 @@ class ClienteModel {
                 clienteData.como_conocio || null,
                 clienteData.activo !== undefined ? clienteData.activo : true,
                 clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true,
-                clienteData.foto_url || null
+                clienteData.foto_url || null,
+                clienteData.lista_precios_id || null
             ];
 
             try {
@@ -91,12 +92,15 @@ class ClienteModel {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
-                    id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
-                    fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url,
-                    creado_en, actualizado_en
-                FROM clientes
-                WHERE id = $1
+                    c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.telegram_chat_id, c.whatsapp_phone,
+                    c.fecha_nacimiento, c.profesional_preferido_id, c.notas_especiales, c.alergias,
+                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url, c.lista_precios_id,
+                    c.creado_en, c.actualizado_en,
+                    lp.codigo as lista_precios_codigo,
+                    lp.nombre as lista_precios_nombre
+                FROM clientes c
+                LEFT JOIN listas_precios lp ON lp.id = c.lista_precios_id
+                WHERE c.id = $1
             `;
 
             const result = await db.query(query, [id]);
@@ -204,7 +208,8 @@ class ClienteModel {
             const camposActualizables = [
                 'nombre', 'email', 'telefono', 'fecha_nacimiento',
                 'profesional_preferido_id', 'notas_especiales', 'alergias',
-                'direccion', 'como_conocio', 'activo', 'marketing_permitido', 'foto_url'
+                'direccion', 'como_conocio', 'activo', 'marketing_permitido', 'foto_url',
+                'lista_precios_id'
             ];
 
             const setClauses = [];
@@ -233,7 +238,7 @@ class ClienteModel {
                     id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
                     profesional_preferido_id, notas_especiales, alergias,
                     direccion, como_conocio, activo, marketing_permitido, foto_url,
-                    creado_en, actualizado_en
+                    lista_precios_id, creado_en, actualizado_en
             `;
 
             try {

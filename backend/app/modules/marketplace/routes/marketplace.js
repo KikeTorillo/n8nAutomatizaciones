@@ -65,6 +65,26 @@ router.put('/perfiles/:id',
 );
 
 /**
+ * GET /api/v1/marketplace/perfiles/admin
+ * Listar TODOS los perfiles para super_admin (activos e inactivos)
+ * @requires auth - solo super_admin
+ * Query params:
+ * - activo: Filtrar por estado (true|false) - opcional
+ * - ciudad: Filtrar por ciudad - opcional
+ * - rating_min: Rating mínimo (0-5) - opcional
+ * - pagina: Número de página (default: 1)
+ * - limite: Registros por página (default: 20, max: 100)
+ * @returns {Object} Lista paginada de perfiles con datos de organización
+ */
+router.get('/perfiles/admin',
+    auth.authenticateToken,
+    auth.requireRole(['super_admin']),
+    rateLimiting.apiRateLimit,
+    validate(marketplaceSchemas.listarPerfilesAdmin),
+    PerfilesMarketplaceController.listarParaAdmin
+);
+
+/**
  * PATCH /api/v1/marketplace/perfiles/:id/activar
  * Activar/Desactivar perfil (solo super_admin)
  * @requires auth - solo super_admin

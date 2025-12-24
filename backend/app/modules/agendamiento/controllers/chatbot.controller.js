@@ -13,7 +13,7 @@
  */
 
 const ChatbotConfigModel = require('../models/chatbot-config.model');
-const OrganizacionModel = require('../../../modules/core/models/organizacion.model');
+const organizacionAdapter = require('../../../services/organizacionAdapter');
 const N8nService = require('../../../services/n8nService');
 const N8nCredentialService = require('../../../services/n8nCredentialService');
 const N8nGlobalCredentialsService = require('../../../services/n8nGlobalCredentialsService');
@@ -131,7 +131,7 @@ class ChatbotController {
 
         try {
             // Verificar si la organización ya tiene credential MCP
-            const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
+            const organizacion = await organizacionAdapter.obtenerPorId(organizacionId);
 
             if (organizacion.mcp_credential_id) {
                 // Reutilizar credential existente
@@ -145,7 +145,7 @@ class ChatbotController {
                 mcpCredentialCreada = true;
 
                 // Guardar ID en tabla organizaciones
-                await OrganizacionModel.actualizar(organizacionId, {
+                await organizacionAdapter.actualizar(organizacionId, {
                     mcp_credential_id: mcpCredentialId
                 });
 
@@ -200,7 +200,7 @@ class ChatbotController {
                 if (mcpCredentialCreada) {
                     try {
                         await N8nMcpCredentialsService.eliminar(mcpCredentialId);
-                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        await organizacionAdapter.actualizar(organizacionId, { mcp_credential_id: null });
                         logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
                     } catch (rollbackMcpError) {
                         logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
@@ -258,7 +258,7 @@ class ChatbotController {
                 if (mcpCredentialCreada) {
                     try {
                         await N8nMcpCredentialsService.eliminar(mcpCredentialId);
-                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        await organizacionAdapter.actualizar(organizacionId, { mcp_credential_id: null });
                         logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
                     } catch (rollbackMcpError) {
                         logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
@@ -360,7 +360,7 @@ class ChatbotController {
                 if (mcpCredentialCreada) {
                     try {
                         await N8nMcpCredentialsService.eliminar(mcpCredentialId);
-                        await OrganizacionModel.actualizar(organizacionId, { mcp_credential_id: null });
+                        await organizacionAdapter.actualizar(organizacionId, { mcp_credential_id: null });
                         logger.info(`[ChatbotController] Rollback: credential MCP ${mcpCredentialId} eliminada (recién creada)`);
                     } catch (rollbackMcpError) {
                         logger.error('[ChatbotController] Error en rollback de credential MCP:', rollbackMcpError.message);
@@ -718,7 +718,7 @@ class ChatbotController {
                     logger.info(`[ChatbotController] Credential MCP ${chatbot.mcp_credential_id} eliminada (último chatbot de org ${organizacionId})`);
 
                     // Limpiar campo en tabla organizaciones
-                    await OrganizacionModel.actualizar(organizacionId, {
+                    await organizacionAdapter.actualizar(organizacionId, {
                         mcp_credential_id: null
                     });
                     logger.info(`[ChatbotController] Campo mcp_credential_id limpiado en org ${organizacionId}`);

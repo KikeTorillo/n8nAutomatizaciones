@@ -122,11 +122,9 @@ CREATE TABLE IF NOT EXISTS productos (
     categoria_id INTEGER REFERENCES categorias_productos(id) ON DELETE SET NULL,
     proveedor_id INTEGER REFERENCES proveedores(id) ON DELETE SET NULL,
 
-    -- 💰 PRECIOS
+    -- 💰 PRECIOS (Dic 2025: precio_mayoreo eliminado, usar listas_precios)
     precio_compra DECIMAL(10, 2) DEFAULT 0, -- Costo de adquisición
-    precio_venta DECIMAL(10, 2) NOT NULL, -- Precio de venta al público
-    precio_mayoreo DECIMAL(10, 2), -- Precio para venta en mayoreo (opcional)
-    cantidad_mayoreo INTEGER, -- Cantidad mínima para aplicar precio mayoreo
+    precio_venta DECIMAL(10, 2) NOT NULL, -- Precio base de venta al público
 
     -- 📊 STOCK
     stock_actual INTEGER NOT NULL DEFAULT 0,
@@ -167,15 +165,10 @@ CREATE TABLE IF NOT EXISTS productos (
     UNIQUE(organizacion_id, codigo_barras),
     CHECK (precio_compra >= 0),
     CHECK (precio_venta > 0),
-    CHECK (precio_mayoreo IS NULL OR precio_mayoreo > 0),
-    CHECK (precio_mayoreo IS NULL OR precio_mayoreo < precio_venta), -- Mayoreo debe ser menor que normal
-    CHECK (cantidad_mayoreo IS NULL OR cantidad_mayoreo > 1),
     CHECK (stock_actual >= 0),
     CHECK (stock_minimo >= 0),
     CHECK (stock_maximo >= stock_minimo),
-    CHECK (dias_vida_util IS NULL OR dias_vida_util > 0),
-    CHECK ((precio_mayoreo IS NULL AND cantidad_mayoreo IS NULL) OR
-           (precio_mayoreo IS NOT NULL AND cantidad_mayoreo IS NOT NULL)) -- Ambos o ninguno
+    CHECK (dias_vida_util IS NULL OR dias_vida_util > 0)
 );
 
 COMMENT ON TABLE productos IS 'Catálogo de productos con control de stock, precios y alertas automáticas';
@@ -183,7 +176,6 @@ COMMENT ON COLUMN productos.sku IS 'Stock Keeping Unit - código interno único 
 COMMENT ON COLUMN productos.codigo_barras IS 'Código de barras estándar (EAN13, Code128, etc.)';
 COMMENT ON COLUMN productos.stock_actual IS 'Cantidad actual en inventario (nunca puede ser negativo)';
 COMMENT ON COLUMN productos.stock_minimo IS 'Genera alerta cuando stock <= este valor';
-COMMENT ON COLUMN productos.precio_mayoreo IS 'Precio especial para ventas de cantidad >= cantidad_mayoreo';
 COMMENT ON COLUMN productos.es_perecedero IS 'Indica si el producto tiene fecha de vencimiento';
 
 -- ============================================================================

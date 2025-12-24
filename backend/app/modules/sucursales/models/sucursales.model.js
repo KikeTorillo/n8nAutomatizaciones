@@ -306,18 +306,18 @@ class SucursalesModel {
 
     /**
      * Asignar usuario a sucursal
+     * NOTA: rol_sucursal y permisos_override fueron migrados al sistema
+     * normalizado de permisos (permisos_usuario_sucursal) en Fase 3
      */
     static async asignarUsuario(sucursalId, usuarioId, data, organizacionId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             const query = `
                 INSERT INTO usuarios_sucursales (
-                    usuario_id, sucursal_id, es_gerente, rol_sucursal, permisos_override, activo
-                ) VALUES ($1, $2, $3, $4, $5, $6)
+                    usuario_id, sucursal_id, es_gerente, activo
+                ) VALUES ($1, $2, $3, $4)
                 ON CONFLICT (usuario_id, sucursal_id)
                 DO UPDATE SET
                     es_gerente = EXCLUDED.es_gerente,
-                    rol_sucursal = EXCLUDED.rol_sucursal,
-                    permisos_override = EXCLUDED.permisos_override,
                     activo = EXCLUDED.activo
                 RETURNING *
             `;
@@ -326,8 +326,6 @@ class SucursalesModel {
                 usuarioId,
                 sucursalId,
                 data.es_gerente || false,
-                data.rol_sucursal || null,
-                JSON.stringify(data.permisos_override || {}),
                 data.activo !== undefined ? data.activo : true
             ];
 
@@ -412,15 +410,15 @@ class SucursalesModel {
 
     /**
      * Obtener sucursales de un usuario
+     * NOTA: rol_sucursal y permisos_override fueron migrados al sistema
+     * normalizado de permisos (permisos_usuario_sucursal) en Fase 3
      */
     static async obtenerSucursalesUsuario(usuarioId, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const query = `
                 SELECT
                     s.*,
-                    us.es_gerente,
-                    us.rol_sucursal,
-                    us.permisos_override
+                    us.es_gerente
                 FROM sucursales s
                 JOIN usuarios_sucursales us ON s.id = us.sucursal_id
                 WHERE us.usuario_id = $1 AND us.activo = true AND s.activo = true

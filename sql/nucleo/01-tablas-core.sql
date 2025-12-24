@@ -157,6 +157,8 @@ CREATE TABLE usuarios (
     configuracion_ui JSONB DEFAULT '{}',
     zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
     idioma VARCHAR(5) DEFAULT 'es',
+    -- NOTA: La moneda se determina por sucursal (si tiene override) o por organización (fallback)
+    -- Ver: sucursales.moneda y organizaciones.moneda
 
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),

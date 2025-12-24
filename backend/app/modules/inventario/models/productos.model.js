@@ -15,7 +15,7 @@ class ProductosModel {
     /**
      * Guardar precios en múltiples monedas para un producto
      * @param {number} productoId - ID del producto
-     * @param {Array} precios - Array de { moneda, precio_compra, precio_venta, precio_mayoreo }
+     * @param {Array} precios - Array de { moneda, precio_compra, precio_venta }
      * @param {number} organizacionId - ID de la organización
      * @param {Object} db - Cliente de transacción (opcional)
      */
@@ -33,14 +33,13 @@ class ProductosModel {
                 // Upsert: insertar o actualizar si ya existe
                 const query = `
                     INSERT INTO precios_producto_moneda (
-                        producto_id, moneda, precio_compra, precio_venta, precio_mayoreo,
+                        producto_id, moneda, precio_compra, precio_venta,
                         organizacion_id, activo
-                    ) VALUES ($1, $2, $3, $4, $5, $6, true)
+                    ) VALUES ($1, $2, $3, $4, $5, true)
                     ON CONFLICT (producto_id, moneda)
                     DO UPDATE SET
                         precio_compra = EXCLUDED.precio_compra,
                         precio_venta = EXCLUDED.precio_venta,
-                        precio_mayoreo = EXCLUDED.precio_mayoreo,
                         actualizado_en = NOW()
                     RETURNING *
                 `;
@@ -50,7 +49,6 @@ class ProductosModel {
                     precio.moneda,
                     precio.precio_compra || null,
                     precio.precio_venta,
-                    precio.precio_mayoreo || null,
                     organizacionId
                 ];
 
@@ -184,8 +182,6 @@ class ProductosModel {
                     proveedor_id,
                     precio_compra,
                     precio_venta,
-                    precio_mayoreo,
-                    cantidad_mayoreo,
                     stock_actual,
                     stock_minimo,
                     stock_maximo,
@@ -198,7 +194,7 @@ class ProductosModel {
                     notas,
                     imagen_url,
                     activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                 RETURNING *
             `;
 
@@ -212,8 +208,6 @@ class ProductosModel {
                 data.proveedor_id || null,
                 data.precio_compra !== undefined ? data.precio_compra : 0,
                 data.precio_venta,
-                data.precio_mayoreo || null,
-                data.cantidad_mayoreo || null,
                 data.stock_actual !== undefined ? data.stock_actual : 0,
                 data.stock_minimo !== undefined ? data.stock_minimo : 5,
                 data.stock_maximo !== undefined ? data.stock_maximo : 100,
@@ -283,7 +277,6 @@ class ProductosModel {
                         ppm.moneda,
                         ppm.precio_compra,
                         ppm.precio_venta,
-                        ppm.precio_mayoreo,
                         m.nombre as moneda_nombre,
                         m.simbolo as moneda_simbolo
                     FROM precios_producto_moneda ppm
@@ -498,9 +491,10 @@ class ProductosModel {
             }
 
             // Construir query de actualización dinámica
+            // Dic 2025: precio_mayoreo eliminado, usar listas_precios
             const camposActualizables = [
                 'nombre', 'descripcion', 'sku', 'codigo_barras', 'categoria_id', 'proveedor_id',
-                'precio_compra', 'precio_venta', 'precio_mayoreo', 'cantidad_mayoreo',
+                'precio_compra', 'precio_venta',
                 'stock_minimo', 'stock_maximo', 'unidad_medida', 'alerta_stock_minimo',
                 'es_perecedero', 'dias_vida_util', 'permite_venta', 'permite_uso_servicio',
                 'notas', 'imagen_url', 'activo'
@@ -648,15 +642,16 @@ class ProductosModel {
             const productosCreados = [];
 
             for (const producto of productos) {
+                // Dic 2025: precio_mayoreo eliminado, usar listas_precios
                 const query = `
                     INSERT INTO productos (
                         organizacion_id, nombre, descripcion, sku, codigo_barras,
                         categoria_id, proveedor_id, precio_compra, precio_venta,
-                        precio_mayoreo, cantidad_mayoreo, stock_actual, stock_minimo,
-                        stock_maximo, unidad_medida, alerta_stock_minimo, es_perecedero,
-                        dias_vida_util, permite_venta, permite_uso_servicio, notas, imagen_url, activo
+                        stock_actual, stock_minimo, stock_maximo, unidad_medida,
+                        alerta_stock_minimo, es_perecedero, dias_vida_util,
+                        permite_venta, permite_uso_servicio, notas, imagen_url, activo
                     )
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
                     RETURNING *
                 `;
 
@@ -670,8 +665,6 @@ class ProductosModel {
                     producto.proveedor_id || null,
                     producto.precio_compra || 0,
                     producto.precio_venta,
-                    producto.precio_mayoreo || null,
-                    producto.cantidad_mayoreo || null,
                     producto.stock_actual || 0,
                     producto.stock_minimo || 5,
                     producto.stock_maximo || 100,

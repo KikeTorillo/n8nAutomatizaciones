@@ -77,8 +77,16 @@ class UsuarioModel {
                            u.ultimo_login, u.intentos_fallidos, u.bloqueado_hasta,
                            u.onboarding_completado,
                            (SELECT us.sucursal_id FROM usuarios_sucursales us
-                            WHERE us.usuario_id = u.id LIMIT 1) as sucursal_id,
-                           o.moneda, o.zona_horaria
+                            WHERE us.usuario_id = u.id AND us.activo = TRUE LIMIT 1) as sucursal_id,
+                           -- Moneda: sucursal override > organización (Dic 2025)
+                           COALESCE(
+                               (SELECT s.moneda FROM sucursales s
+                                JOIN usuarios_sucursales us ON us.sucursal_id = s.id
+                                WHERE us.usuario_id = u.id AND us.activo = TRUE
+                                AND s.moneda IS NOT NULL LIMIT 1),
+                               o.moneda
+                           ) as moneda,
+                           o.zona_horaria
                     FROM usuarios u
                     LEFT JOIN organizaciones o ON o.id = u.organizacion_id
                     WHERE u.email = $1 AND u.activo = TRUE

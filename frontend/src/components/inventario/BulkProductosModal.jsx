@@ -76,9 +76,9 @@ function BulkProductosModal({ isOpen, onClose }) {
             let valor = valores[index];
 
             // Convertir tipos de datos
-            if (['categoria_id', 'proveedor_id', 'stock_actual', 'stock_minimo', 'stock_maximo', 'cantidad_mayoreo', 'dias_vida_util'].includes(key)) {
+            if (['categoria_id', 'proveedor_id', 'stock_actual', 'stock_minimo', 'stock_maximo', 'dias_vida_util'].includes(key)) {
               valor = valor ? parseInt(valor) : undefined;
-            } else if (['precio_compra', 'precio_venta', 'precio_mayoreo'].includes(key)) {
+            } else if (['precio_compra', 'precio_venta'].includes(key)) {
               valor = valor ? parseFloat(valor) : undefined;
             } else if (['alerta_stock_minimo', 'es_perecedero', 'permite_venta', 'permite_uso_servicio', 'activo'].includes(key)) {
               valor = valor === 'true' || valor === '1' || valor === 'TRUE';

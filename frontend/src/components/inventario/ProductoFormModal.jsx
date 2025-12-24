@@ -34,17 +34,9 @@ const productoCreateSchema = z
     categoria_id: z.string().optional(),
     proveedor_id: z.string().optional(),
 
-    // Precios
+    // Precios (Dic 2025: precio_mayoreo eliminado, usar listas_precios)
     precio_compra: z.coerce.number().min(0, 'El precio de compra no puede ser negativo').optional(),
     precio_venta: z.coerce.number().min(0.01, 'El precio de venta debe ser mayor a 0'),
-    precio_mayoreo: z.preprocess(
-      (val) => (val === 0 || val === '0' || val === '') ? undefined : val,
-      z.coerce.number().min(0, 'El precio de mayoreo no puede ser negativo').optional()
-    ),
-    cantidad_mayoreo: z.preprocess(
-      (val) => (val === 0 || val === '0' || val === '') ? undefined : val,
-      z.coerce.number().min(1, 'La cantidad mínima debe ser al menos 1').optional()
-    ),
 
     // Inventario
     stock_actual: z.coerce.number().min(0, 'El stock actual no puede ser negativo').default(10),
@@ -64,19 +56,6 @@ const productoCreateSchema = z
     activo: z.boolean().default(true),
     notas: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
   })
-  .refine(
-    (data) => {
-      // Si precio_mayoreo existe, cantidad_mayoreo debe existir
-      if (data.precio_mayoreo && data.precio_mayoreo > 0 && !data.cantidad_mayoreo) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'Si defines precio de mayoreo, debes especificar la cantidad mínima',
-      path: ['cantidad_mayoreo'],
-    }
-  )
   .refine(
     (data) => {
       // stock_maximo debe ser mayor que stock_minimo
@@ -99,19 +78,6 @@ const productoCreateSchema = z
       message: 'Si el producto es perecedero, debes especificar los días de vida útil',
       path: ['dias_vida_util'],
     }
-  )
-  .refine(
-    (data) => {
-      // precio_mayoreo debe ser menor que precio_venta
-      if (data.precio_mayoreo && data.precio_mayoreo >= data.precio_venta) {
-        return false;
-      }
-      return true;
-    },
-    {
-      message: 'El precio de mayoreo debe ser menor al precio de venta',
-      path: ['precio_mayoreo'],
-    }
   );
 
 /**
@@ -127,8 +93,7 @@ const productoEditSchema = z
     proveedor_id: z.string().optional(),
     precio_compra: z.coerce.number().min(0, 'El precio de compra no puede ser negativo').optional(),
     precio_venta: z.coerce.number().min(0.01, 'El precio de venta debe ser mayor a 0').optional(),
-    precio_mayoreo: z.coerce.number().min(0, 'El precio de mayoreo no puede ser negativo').optional(),
-    cantidad_mayoreo: z.coerce.number().min(0).optional(),
+    // Dic 2025: precio_mayoreo eliminado, usar listas_precios
     stock_minimo: z.coerce.number().min(0, 'El stock mínimo no puede ser negativo').optional(),
     stock_maximo: z.coerce.number().min(1, 'El stock máximo debe ser al menos 1').optional(),
     unidad_medida: z.string().max(20, 'Máximo 20 caracteres').optional(),
@@ -221,8 +186,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             proveedor_id: producto.proveedor_id?.toString() || '',
             precio_compra: producto.precio_compra || 0,
             precio_venta: producto.precio_venta || 0,
-            precio_mayoreo: producto.precio_mayoreo || 0,
-            cantidad_mayoreo: producto.cantidad_mayoreo || 0,
             stock_minimo: producto.stock_minimo || 5,
             stock_maximo: producto.stock_maximo || 100,
             unidad_medida: producto.unidad_medida || 'unidad',
@@ -243,8 +206,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             proveedor_id: '',
             precio_compra: 0,
             precio_venta: 0,
-            precio_mayoreo: 0,
-            cantidad_mayoreo: 0,
             stock_actual: 10,
             stock_minimo: 5,
             stock_maximo: 100,
@@ -261,7 +222,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
   // Watch campos dinámicos
   const esPerecedero = watch('es_perecedero');
-  const precioMayoreo = watch('precio_mayoreo');
 
   // Cargar datos al editar
   useEffect(() => {
@@ -275,8 +235,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         proveedor_id: producto.proveedor_id?.toString() || '',
         precio_compra: producto.precio_compra || 0,
         precio_venta: producto.precio_venta || 0,
-        precio_mayoreo: producto.precio_mayoreo || 0,
-        cantidad_mayoreo: producto.cantidad_mayoreo || 0,
         stock_minimo: producto.stock_minimo || 5,
         stock_maximo: producto.stock_maximo || 100,
         unidad_medida: producto.unidad_medida || 'unidad',
@@ -310,8 +268,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         proveedor_id: '',
         precio_compra: 0,
         precio_venta: 0,
-        precio_mayoreo: 0,
-        cantidad_mayoreo: 0,
         stock_actual: 10,
         stock_minimo: 5,
         stock_maximo: 100,
@@ -342,8 +298,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       setPreciosMoneda(preciosData.map(p => ({
         moneda: p.moneda,
         precio_compra: p.precio_compra || '',
-        precio_venta: p.precio_venta || '',
-        precio_mayoreo: p.precio_mayoreo || ''
+        precio_venta: p.precio_venta || ''
       })));
       setMostrarPreciosMoneda(true);
     }
@@ -456,8 +411,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           .map(p => ({
             moneda: p.moneda,
             precio_compra: p.precio_compra ? parseFloat(p.precio_compra) : null,
-            precio_venta: parseFloat(p.precio_venta),
-            precio_mayoreo: p.precio_mayoreo ? parseFloat(p.precio_mayoreo) : null
+            precio_venta: parseFloat(p.precio_venta)
           }));
 
         if (preciosValidos.length > 0) {
@@ -486,8 +440,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       setPreciosMoneda([...preciosMoneda, {
         moneda: monedaDisponible.codigo,
         precio_compra: '',
-        precio_venta: '',
-        precio_mayoreo: ''
+        precio_venta: ''
       }]);
     }
   };
@@ -669,28 +622,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Input
-              type="number"
-              label="Precio de Mayoreo"
-              {...register('precio_mayoreo')}
-              step="0.01"
-              placeholder="0.00"
-              prefix="$"
-              error={errors.precio_mayoreo?.message}
-            />
-
-            <Input
-              type="number"
-              label="Cantidad Mínima Mayoreo"
-              {...register('cantidad_mayoreo')}
-              placeholder="0"
-              error={errors.cantidad_mayoreo?.message}
-              helper={precioMayoreo > 0 ? 'Requerido si hay precio de mayoreo' : ''}
-              disabled={!precioMayoreo || precioMayoreo === 0}
-            />
-          </div>
-
           {/* Precios en otras monedas - Colapsable */}
           {monedasDisponibles.length > 0 && (
             <div className="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -745,7 +676,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                           </button>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                           <Input
                             type="number"
                             label="P. Compra"
@@ -764,15 +695,6 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                             placeholder="0.00"
                             prefix={monedaInfo?.simbolo || '$'}
                             required
-                          />
-                          <Input
-                            type="number"
-                            label="P. Mayoreo"
-                            value={precio.precio_mayoreo}
-                            onChange={(e) => actualizarPrecioMoneda(index, 'precio_mayoreo', e.target.value)}
-                            step="0.01"
-                            placeholder="0.00"
-                            prefix={monedaInfo?.simbolo || '$'}
                           />
                         </div>
                       </div>

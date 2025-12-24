@@ -328,7 +328,7 @@ class MonedasModel {
         const db = await getDb();
         try {
             const query = `
-                SELECT id, producto_id, moneda, precio_compra, precio_venta, precio_mayoreo, activo
+                SELECT id, producto_id, moneda, precio_compra, precio_venta, activo
                 FROM precios_producto_moneda
                 WHERE producto_id = $1 AND moneda = $2 AND organizacion_id = $3
             `;
@@ -348,17 +348,16 @@ class MonedasModel {
     static async guardarPrecioProducto(datos, organizacionId) {
         const db = await getDb();
         try {
-            const { producto_id, moneda, precio_compra, precio_venta, precio_mayoreo } = datos;
+            const { producto_id, moneda, precio_compra, precio_venta } = datos;
 
             const query = `
                 INSERT INTO precios_producto_moneda
-                    (producto_id, moneda, precio_compra, precio_venta, precio_mayoreo, organizacion_id)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                    (producto_id, moneda, precio_compra, precio_venta, organizacion_id)
+                VALUES ($1, $2, $3, $4, $5)
                 ON CONFLICT (producto_id, moneda)
                 DO UPDATE SET
                     precio_compra = $3,
                     precio_venta = $4,
-                    precio_mayoreo = $5,
                     actualizado_en = NOW()
                 RETURNING *
             `;
@@ -368,7 +367,6 @@ class MonedasModel {
                 moneda.toUpperCase(),
                 precio_compra,
                 precio_venta,
-                precio_mayoreo,
                 organizacionId
             ]);
 

@@ -21,6 +21,7 @@
 
 const RecordatoriosModel = require('../models/recordatorios.model');
 const RecordatorioService = require('../services/recordatorioService');
+const chatbotConfigAdapter = require('../../../services/chatbotConfigAdapter');
 const { ResponseHelper } = require('../../../utils/helpers');
 const asyncHandler = require('../../../middleware/asyncHandler');
 const logger = require('../../../utils/logger');
@@ -167,10 +168,8 @@ class RecordatoriosController {
       return ResponseHelper.error(res, 'Teléfono es requerido', 400);
     }
 
-    // Obtener configuración del chatbot para saber qué plataforma usar
-    const ChatbotConfigModel = require('../../agendamiento/models/chatbot-config.model');
-    const resultado = await ChatbotConfigModel.listarPorOrganizacion(organizacionId, { activo: true });
-    const chatbots = resultado?.chatbots || [];
+    // Obtener configuración del chatbot para saber qué plataforma usar (via adapter)
+    const chatbots = await chatbotConfigAdapter.listarChatbotsActivos(organizacionId);
 
     if (chatbots.length === 0) {
       return ResponseHelper.error(

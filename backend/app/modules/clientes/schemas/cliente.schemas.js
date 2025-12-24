@@ -130,6 +130,12 @@ const crear = {
             .optional()
             .default(true),
         profesional_preferido_id: commonSchemas.id.optional(),
+        lista_precios_id: commonSchemas.id
+            .optional()
+            .allow(null)
+            .messages({
+                'number.base': 'ID de lista de precios debe ser un número'
+            }),
         activo: Joi.boolean()
             .optional()
             .default(true),
@@ -200,6 +206,9 @@ const actualizar = {
             .allow(null),
         marketing_permitido: Joi.boolean(),
         profesional_preferido_id: commonSchemas.id.optional(),
+        lista_precios_id: commonSchemas.id
+            .optional()
+            .allow(null),
         activo: Joi.boolean(),
         foto_url: Joi.string()
             .uri()

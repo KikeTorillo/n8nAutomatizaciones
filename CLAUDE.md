@@ -6,15 +6,15 @@
 
 ## Nexo - Sistema de Gestión Empresarial
 
-Plataforma ERP SaaS Multi-Tenant para el mercado latinoamericano con IA Conversacional integrada.
+Plataforma ERP SaaS Multi-Tenant para LATAM con IA Conversacional.
 
 ---
 
 ## Memoria Persistente (Cipher)
 
-Tienes acceso a **Cipher** via MCP para memoria persistente. **ÚSALO SIEMPRE**:
-- **Guardar**: Bugs, decisiones arquitectónicas, patrones importantes
-- **Consultar**: Antes de responder preguntas sobre el proyecto
+Usar **Cipher** via MCP:
+- **Guardar**: Bugs, decisiones arquitectónicas, patrones
+- **Consultar**: Antes de responder preguntas del proyecto
 - **Actualizar**: Después de cambios significativos
 
 ---
@@ -26,75 +26,49 @@ Tienes acceso a **Cipher** via MCP para memoria persistente. **ÚSALO SIEMPRE**:
 | **Frontend** | React 18.3, Vite 7.1, Tailwind 3.4, Zustand 5, TanStack Query 5 |
 | **Backend** | Node.js 18+, Express 4.18, JWT, Joi 17, Winston 3 |
 | **Database** | PostgreSQL 17, RLS multi-tenant, pg_cron |
-| **IA** | OpenRouter (DeepSeek), n8n workflows, MCP Server (8 tools) |
-| **Storage** | MinIO (S3-compatible) |
-| **Cache** | Redis 7 |
-| **Vectors** | Qdrant + Ollama (embeddings) |
+| **IA** | OpenRouter (DeepSeek), n8n workflows, MCP Server |
 
 ---
 
-## Servicios Docker (11)
+## Servicios Docker
 
 | Servicio | Puerto | Descripción |
 |----------|--------|-------------|
-| postgres | 5432 | PostgreSQL 17 + pg_cron |
-| redis | 6379 | Cache y cola n8n |
 | backend | 3000 | API Express |
 | frontend | 8080 | React + Vite |
+| postgres | 5432 | PostgreSQL 17 + pg_cron |
+| redis | 6379 | Cache y cola n8n |
 | mcp-server | 3100 | Tools para AI Agent |
 | n8n-main | 5678 | Orquestador workflows |
-| n8n-worker | - | Worker de cola |
 | minio | 9000/9001 | Object storage |
-| qdrant | 6333/6334 | Vector DB |
-| ollama | 11434 | LLM local |
-| pgadmin | 8001 | Admin BD |
+| qdrant | 6333 | Vector DB |
 
 ---
 
-## Diseño Visual
+## Capacidades Arquitectónicas
 
-| Aspecto | Valor |
-|---------|-------|
-| **Color primario** | `#753572` (primary-700) |
-| **Dark mode** | Default `dark`, via `themeStore` |
+### Workflows de Aprobación
+Sistema de aprobaciones para órdenes de compra basado en límites por rol.
+- Motor: `backend/app/modules/workflows/services/workflow.engine.js`
+- UI: `frontend/src/pages/aprobaciones/AprobacionesPage.jsx`
+- Tablas: `workflow_definiciones`, `workflow_instancias`, `workflow_historial`
 
-```
-Fondos:   bg-gray-50 dark:bg-gray-900 | bg-white dark:bg-gray-800
-Textos:   text-gray-900 dark:text-gray-100 | text-gray-600 dark:text-gray-400
-Bordes:   border-gray-200 dark:border-gray-700
-Marca:    primary-400 a primary-800
-```
+### Gestión de Módulos
+11 módulos activables/desactivables por organización con validación de dependencias.
+- Controller: `backend/app/modules/core/controllers/modulos.controller.js`
+- Dependencias: pos→inventario, marketplace→agendamiento, chatbots→agendamiento
 
----
+### Permisos Normalizados
+65+ permisos con override por usuario/sucursal. Reemplaza `modulos_acceso` legacy.
+- Tablas: `permisos_catalogo`, `permisos_rol`, `permisos_usuario_sucursal`
+- Función SQL: `tiene_permiso(usuario_id, sucursal_id, codigo_permiso)`
+- API: `/api/v1/permisos/verificar/:codigo`
 
-## Módulos Backend (12)
-
-| Módulo | Descripción |
-|--------|-------------|
-| **core** | Auth (JWT + OAuth Google + Magic Links), usuarios, organizaciones, suscripciones |
-| **agendamiento** | Profesionales, servicios, horarios |
-| **inventario** | Productos, categorías, proveedores, órdenes compra |
-| **pos** | Ventas, corte caja, reportes |
-| **comisiones** | Cálculo y pago a profesionales |
-| **contabilidad** | Cuentas, asientos (particionados), reportes |
-| **marketplace** | Perfiles públicos, reseñas, analytics |
-| **eventos-digitales** | Invitaciones, mesas, QR check-in, seating chart |
-| **website** | Constructor de páginas con bloques |
-| **storage** | Archivos MinIO, presigned URLs |
-| **recordatorios** | Notificaciones de citas |
-| **chatbots** | Integración Telegram/WhatsApp |
-
----
-
-## Base de Datos
-
-| Métrica | Valor |
-|---------|-------|
-| Tablas | 68 |
-| Particionadas | 4 (citas, asientos, eventos, movimientos) |
-| Políticas RLS | 122 |
-| Funciones | 120 |
-| Triggers | 79 |
+### Multi-Moneda
+Soporte para MXN, COP, USD con conversión en tiempo real.
+- Hook: `frontend/src/hooks/useCurrency.js`
+- Tablas: `monedas`, `tasas_cambio`, `precios_producto_moneda`, `precios_servicio_moneda`
+- POS muestra equivalente USD debajo del total
 
 ---
 
@@ -112,13 +86,6 @@ docker restart front     # Aplicar cambios frontend
 # Base de datos
 npm run db:connect       # psql directo
 npm run clean:data       # Reset completo (DESTRUCTIVO)
-
-# Tests
-npm run test:quick       # Tests rápidos
-npm run test:backend     # Suite completa
-
-# Cipher
-npm run cipher:status    # Estado de memoria
 ```
 
 **Nota**: HMR NO funciona en Docker. Reiniciar contenedor + Ctrl+Shift+R.
@@ -127,24 +94,23 @@ npm run cipher:status    # Estado de memoria
 
 ## Arquitectura
 
-### Middlewares (orden)
+### Middlewares
 ```
 auth.authenticateToken → tenant.setTenantContext → controller
 ```
 
 ### Roles
-| Rol | Permisos |
-|-----|----------|
-| `super_admin` | Plataforma completa, bypass RLS |
+| Rol | Descripción |
+|-----|-------------|
+| `super_admin` | Bypass RLS, acceso total plataforma |
 | `admin/propietario` | CRUD completo en su organización |
-| `empleado` | Solo módulos en `modulos_acceso` |
+| `empleado` | Permisos via `permisos_usuario_sucursal` |
 | `bot` | READ + CRUD citas (MCP) |
 
-### MCP Server (8 herramientas)
+### MCP Server (8 tools)
 ```
 Usuario → Telegram/WhatsApp → n8n → AI Agent → MCP Server → Backend API
 ```
-Tools: buscarCliente, buscarCitasCliente, crearCita, reagendarCita, confirmarCita, listarServicios, verificarDisponibilidad, modificarServiciosCita
 
 ---
 
@@ -152,20 +118,20 @@ Tools: buscarCliente, buscarCitasCliente, crearCita, reagendarCita, confirmarCit
 
 ### Backend
 - **RLS SIEMPRE**: `RLSContextManager.query()` o `.transaction()`
-- **withBypass**: Solo para JOINs multi-tabla o super_admin
-- **asyncHandler**: Obligatorio en todas las routes
+- **withBypass**: Solo JOINs multi-tabla o super_admin
+- **asyncHandler**: Obligatorio en routes
 
 ### Frontend
 - **Sanitizar opcionales**: Joi rechaza `""`, usar `undefined`
 - **Invalidar queries**: `queryClient.invalidateQueries()` tras mutaciones
 - **Dark mode**: Siempre variantes `dark:` en Tailwind
-- **Colores**: Solo `primary-*` (nunca blue, indigo, purple)
+- **Colores**: Solo `primary-*` (nunca blue, indigo, purple) - primario: `#753572`
 - **Formularios móviles**: Usar `Drawer` (no Modal) - bug iOS Safari
 
 ### Componentes UI
 | Componente | Uso |
 |------------|-----|
-| `Drawer` | Formularios (bottom sheet, Vaul) |
+| `Drawer` | Formularios (bottom sheet) |
 | `Modal` | Confirmaciones y visualización |
 | `ConfirmDialog` | Acciones destructivas |
 
@@ -178,7 +144,6 @@ Tools: buscarCliente, buscarCitasCliente, crearCita, reagendarCita, confirmarCit
 | "Organización no encontrada" | `RLSContextManager.withBypass()` |
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
-| Avatar/icono azul | Fallback a `#753572` |
 
 ---
 
@@ -186,22 +151,22 @@ Tools: buscarCliente, buscarCitasCliente, crearCita, reagendarCita, confirmarCit
 
 ```
 backend/app/
-├── modules/        # 12 módulos (48 archivos routes)
+├── modules/        # 13 módulos (workflows, permisos incluidos)
 ├── middleware/     # 9 middlewares
 └── utils/          # RLSContextManager, RLSHelper, logger
 
 frontend/src/
-├── components/     # 126 componentes
-├── pages/          # 96 páginas
-├── hooks/          # 33 hooks
-├── store/          # authStore, themeStore, onboardingStore
-└── services/api/   # client.js, endpoints.js
+├── components/     # 130+ componentes
+├── pages/          # 100+ páginas
+├── hooks/          # 35+ hooks (useCurrency, useWorkflows, usePermisos)
+└── store/          # authStore, themeStore
 
 sql/
-├── 18 módulos      # 127 archivos SQL
-└── README.md       # Documentación esquema
+├── nucleo/         # Permisos, monedas, core
+├── workflows/      # Sistema de aprobaciones
+└── 18 módulos      # 130+ archivos SQL
 ```
 
 ---
 
-**Actualizado**: 17 Diciembre 2025
+**Actualizado**: 23 Diciembre 2025

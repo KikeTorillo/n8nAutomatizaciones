@@ -5,6 +5,13 @@
  *
  * Hook para obtener la moneda del usuario y funciones de formateo.
  * Fase 4 - Multi-Moneda (Dic 2025)
+ *
+ * JERARQUÍA DE MONEDA (modelo Odoo):
+ * 1. Sucursal del usuario (si tiene override) - para sucursales en otros países
+ * 2. Organización (fallback) - moneda base del negocio
+ *
+ * La moneda se determina en el backend (usuario.model.js buscarPorEmail)
+ * y se envía como `user.moneda` en el login.
  */
 
 import { useMemo } from 'react';
@@ -20,7 +27,7 @@ import {
  * Hook para manejo de moneda en componentes
  *
  * @returns {Object} Objeto con:
- *   - code: Código de moneda del usuario (MXN, COP, etc.)
+ *   - code: Código de moneda efectiva (sucursal override > organización)
  *   - config: Configuración completa de la moneda
  *   - symbol: Símbolo de la moneda ($, €, etc.)
  *   - locale: Locale para formateo (es-MX, es-CO, etc.)
@@ -33,7 +40,7 @@ import {
 export function useCurrency() {
   const user = useAuthStore((state) => state.user);
 
-  // Obtener código de moneda del usuario o usar default
+  // Moneda viene del backend: COALESCE(sucursal.moneda, organizacion.moneda)
   const currencyCode = user?.moneda || DEFAULT_CURRENCY;
 
   // Memoizar la configuración para evitar recálculos

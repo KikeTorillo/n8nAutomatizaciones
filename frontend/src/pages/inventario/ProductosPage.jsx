@@ -393,11 +393,6 @@ function ProductosPage() {
                           <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             ${parseFloat(producto.precio_venta || 0).toFixed(2)}
                           </div>
-                          {producto.precio_mayoreo && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
-                              Mayor: ${parseFloat(producto.precio_mayoreo).toFixed(2)}
-                            </div>
-                          )}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <span

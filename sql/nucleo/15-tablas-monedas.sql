@@ -81,7 +81,7 @@ CREATE TABLE IF NOT EXISTS precios_producto_moneda (
     moneda VARCHAR(3) NOT NULL REFERENCES monedas(codigo),
     precio_compra DECIMAL(10,2),
     precio_venta DECIMAL(10,2) NOT NULL,
-    precio_mayoreo DECIMAL(10,2),
+    -- Dic 2025: precio_mayoreo eliminado, usar listas_precios
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id),
     activo BOOLEAN DEFAULT true,
     creado_en TIMESTAMPTZ DEFAULT NOW(),

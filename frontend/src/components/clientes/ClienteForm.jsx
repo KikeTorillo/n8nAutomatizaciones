@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Save, Camera, X, Loader2, User } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import { Save, Camera, X, Loader2, User, Tag } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -9,6 +10,7 @@ import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { useToast } from '@/hooks/useToast';
+import { listasPreciosApi } from '@/services/api/endpoints';
 
 /**
  * Formulario reutilizable para crear/editar clientes
@@ -26,6 +28,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
     notas_medicas: '',
     marketing_permitido: true,
     activo: true,
+    lista_precios_id: '',
     preferencias: {
       profesional_preferido: '',
       servicios_favoritos: [],
@@ -40,6 +43,14 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   // Cargar datos de profesionales y servicios para preferencias
   const { data: profesionales = [] } = useProfesionales();
   const { data: servicios = [] } = useServiciosDashboard();
+
+  // Cargar listas de precios disponibles
+  const { data: listasPreciosData } = useQuery({
+    queryKey: ['listas-precios', { soloActivas: true }],
+    queryFn: () => listasPreciosApi.listar({ soloActivas: true }),
+    staleTime: 1000 * 60 * 5, // 5 min
+  });
+  const listasPrecios = listasPreciosData?.data?.data || [];
 
   // Si hay un cliente, cargar sus datos
   // ⚠️ IMPORTANTE: Mapear campos del backend a frontend
@@ -58,6 +69,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         notas_medicas: cliente.alergias || '', // Backend devuelve "alergias"
         marketing_permitido: cliente.marketing_permitido ?? true,
         activo: cliente.activo ?? true,
+        lista_precios_id: cliente.lista_precios_id?.toString() || '',
         preferencias: {
           profesional_preferido: cliente.profesional_preferido_id || '', // Backend devuelve "profesional_preferido_id"
           servicios_favoritos: [], // Este campo NO existe en backend
@@ -181,6 +193,9 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         alergias: formData.notas_medicas?.trim() || undefined, // Backend espera "alergias"
         marketing_permitido: formData.marketing_permitido,
         activo: formData.activo,
+        lista_precios_id: formData.lista_precios_id
+          ? parseInt(formData.lista_precios_id)
+          : null, // null para quitar asignación
         profesional_preferido_id: formData.preferencias.profesional_preferido
           ? parseInt(formData.preferencias.profesional_preferido)
           : undefined,
@@ -359,7 +374,7 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         />
       </div>
 
-      {/* Preferencias */}
+      {/* Preferencias y Precios */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Preferencias
@@ -378,6 +393,31 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
               label: prof.nombre_completo,
             }))}
           />
+
+          {/* Lista de Precios */}
+          {listasPrecios.length > 0 && (
+            <div>
+              <Select
+                label={
+                  <span className="flex items-center gap-1">
+                    <Tag className="h-4 w-4 text-primary-500" />
+                    Lista de Precios
+                  </span>
+                }
+                name="lista_precios_id"
+                value={formData.lista_precios_id}
+                onChange={handleChange}
+                placeholder="Sin lista asignada (precios estándar)"
+                options={listasPrecios.map((lista) => ({
+                  value: lista.id.toString(),
+                  label: `${lista.codigo} - ${lista.nombre}${lista.descuento_global_pct > 0 ? ` (${lista.descuento_global_pct}% dto.)` : ''}`,
+                }))}
+              />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                Asigna una lista de precios para aplicar descuentos automáticos en el POS
+              </p>
+            </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

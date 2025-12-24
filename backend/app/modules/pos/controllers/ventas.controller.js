@@ -2,7 +2,7 @@ const { VentasPOSModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const ModulesCache = require('../../../core/ModulesCache');
-const ProfesionalModel = require('../../profesionales/models/profesional.model');
+const profesionalAdapter = require('../../../services/profesionalAdapter');
 const TicketPDFService = require('../../../services/ticketPDF.service');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 
@@ -27,7 +27,7 @@ class VentasPOSController {
         let ventaData = { ...req.body };
 
         if (usuarioId && !ventaData.profesional_id) {
-            const profesional = await ProfesionalModel.buscarPorUsuario(usuarioId, organizacionId);
+            const profesional = await profesionalAdapter.buscarPorUsuario(usuarioId, organizacionId);
 
             // ACTUALIZADO Dic 2025: modulos_acceso eliminado
             // Por ahora, si tiene profesional vinculado, se asigna automáticamente

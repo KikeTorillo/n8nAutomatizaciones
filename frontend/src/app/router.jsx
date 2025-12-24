@@ -47,6 +47,9 @@ const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
 const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
 const OrdenesCompraPage = lazy(() => import('@/pages/inventario/OrdenesCompraPage'));
 
+// Páginas de Precios (Fase 5)
+const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
+
 // Páginas de Punto de Venta (POS)
 const VentaPOSPage = lazy(() => import('@/pages/pos/VentaPOSPage'));
 const VentasListPage = lazy(() => import('@/pages/pos/VentasListPage'));
@@ -84,6 +87,7 @@ const PuestosPage = lazy(() => import('@/pages/configuracion/PuestosPage'));
 const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/CategoriasPage'));
 const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
 const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
+const MonedasPage = lazy(() => import('@/pages/configuracion/MonedasPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -405,6 +409,15 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      // Listas de Precios (Fase 5)
+      {
+        path: 'listas-precios',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ListasPreciosPage)}
+          </ProtectedRoute>
+        ),
+      },
       // Rutas de Punto de Venta (POS)
       {
         path: 'pos/venta',
@@ -535,6 +548,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(PermisosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Monedas (Dic 2025 - Fase 5)
+      {
+        path: 'configuracion/monedas',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(MonedasPage)}
           </ProtectedRoute>
         ),
       },

@@ -57,6 +57,11 @@ CREATE TABLE sucursales (
     email VARCHAR(150),
     whatsapp VARCHAR(20),
 
+    -- 💰 CONFIGURACION REGIONAL (Dic 2025 - Multi-Moneda)
+    -- NULL = heredar moneda de la organización
+    -- Con valor = override para sucursales en otros países
+    moneda VARCHAR(3) DEFAULT NULL,
+
     -- ⏰ CONFIGURACION DE HORARIOS
     zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City',
     horario_apertura TIME DEFAULT '09:00',
@@ -98,6 +103,7 @@ COMMENT ON COLUMN sucursales.codigo IS 'Código único dentro de la organizació
 COMMENT ON COLUMN sucursales.es_matriz IS 'TRUE para la sucursal principal. Solo puede haber una por organización.';
 COMMENT ON COLUMN sucursales.inventario_compartido IS 'TRUE = usa stock global de la org. FALSE = stock independiente por sucursal.';
 COMMENT ON COLUMN sucursales.servicios_heredados IS 'TRUE = hereda servicios de la org. FALSE = servicios propios.';
+COMMENT ON COLUMN sucursales.moneda IS 'Override de moneda para sucursales en otros países. NULL = heredar de organización.';
 
 -- ====================================================================
 -- TABLA: usuarios_sucursales

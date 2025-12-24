@@ -1,0 +1,42 @@
+{
+  "name": "precios",
+  "display_name": "Listas de Precios",
+  "version": "1.0.0",
+  "description": "Gestión de listas de precios estilo Odoo con soporte multi-moneda",
+  "depends": ["core", "inventario", "clientes"],
+  "dependencies_hard": {
+    "inventario": "Requiere productos para definir precios",
+    "clientes": "Requiere clientes para asignar listas"
+  },
+  "routes": {
+    "listasPrecios": "/api/v1/listas-precios"
+  },
+  "resources": {
+    "listas_precios": {
+      "table": "listas_precios",
+      "limit_field": null,
+      "notes": "Listas de precios de la organización"
+    },
+    "listas_precios_items": {
+      "table": "listas_precios_items",
+      "limit_field": null,
+      "notes": "Reglas de precio por producto/categoría"
+    }
+  },
+  "tables": [
+    "listas_precios",
+    "listas_precios_items"
+  ],
+  "features": [
+    "Listas de precios múltiples",
+    "Precios por producto o categoría",
+    "Descuentos por cantidad (qty breaks)",
+    "Descuentos globales por lista",
+    "Asignación de listas a clientes",
+    "Resolución automática de precio en POS",
+    "Soporte multi-moneda"
+  ],
+  "priority": 15,
+  "required": false,
+  "can_disable": true
+}

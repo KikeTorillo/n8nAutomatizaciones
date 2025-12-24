@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { ShoppingCart, Trash2, Check, AlertCircle, User } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import BackButton from '@/components/ui/BackButton';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
@@ -13,6 +14,7 @@ import POSNavTabs from '@/components/pos/POSNavTabs';
 import ClienteSelector from '@/components/pos/ClienteSelector';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { listasPreciosApi } from '@/services/api/endpoints';
 
 /**
  * Página principal del punto de venta (POS)
@@ -50,6 +52,82 @@ export default function VentaPOSPage() {
   const [mostrarConfirmVaciar, setMostrarConfirmVaciar] = useState(false);
   // Nov 2025: Cliente asociado a la venta (opcional)
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
+  // Dic 2025: Estado para recálculo de precios
+  const [recalculandoPrecios, setRecalculandoPrecios] = useState(false);
+
+  // Dic 2025: Función para obtener precio inteligente de un producto
+  const obtenerPrecioInteligente = useCallback(async (productoId, cantidad = 1) => {
+    try {
+      const params = {
+        cantidad,
+        ...(clienteSeleccionado?.id && { clienteId: clienteSeleccionado.id }),
+        ...(user?.sucursal_id && { sucursalId: user.sucursal_id })
+      };
+
+      const response = await listasPreciosApi.obtenerPrecio(productoId, params);
+      return response?.data?.data || null;
+    } catch (error) {
+      console.warn('[POS] Error obteniendo precio inteligente:', error);
+      return null;
+    }
+  }, [clienteSeleccionado, user?.sucursal_id]);
+
+  // Dic 2025: Recalcular todos los precios cuando cambia el cliente
+  const recalcularPreciosCarrito = useCallback(async () => {
+    if (items.length === 0) return;
+
+    setRecalculandoPrecios(true);
+    try {
+      // Usar el endpoint bulk para eficiencia
+      const itemsParaAPI = items.map(item => ({
+        productoId: item.producto_id,
+        cantidad: item.cantidad
+      }));
+
+      const response = await listasPreciosApi.obtenerPreciosCarrito({
+        items: itemsParaAPI,
+        clienteId: clienteSeleccionado?.id || null,
+        sucursalId: user?.sucursal_id || null
+      });
+
+      const preciosResueltos = response?.data?.data || [];
+
+      // Actualizar items con los nuevos precios
+      // Nota: la función bulk retorna precio_unitario y descuento_pct
+      setItems(prevItems => prevItems.map(item => {
+        const precioResuelto = preciosResueltos.find(p => p.producto_id === item.producto_id);
+        if (precioResuelto) {
+          return {
+            ...item,
+            precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
+            precio_original: item.precio_venta, // Guardar precio base
+            fuente_precio: precioResuelto.fuente,
+            fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
+            descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
+            lista_codigo: precioResuelto.lista_codigo
+          };
+        }
+        return item;
+      }));
+
+      if (clienteSeleccionado) {
+        toast.success(`Precios actualizados para ${clienteSeleccionado.nombre}`);
+      }
+    } catch (error) {
+      console.error('[POS] Error recalculando precios:', error);
+      toast.error('Error al recalcular precios');
+    } finally {
+      setRecalculandoPrecios(false);
+    }
+  }, [items, clienteSeleccionado, user?.sucursal_id, toast]);
+
+  // Recalcular precios cuando cambia el cliente
+  useEffect(() => {
+    if (items.length > 0) {
+      recalcularPreciosCarrito();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clienteSeleccionado?.id]);
 
   // Calcular total
   const subtotal = items.reduce((sum, item) => {
@@ -63,44 +141,98 @@ export default function VentaPOSPage() {
   const total = subtotal - montoDescuentoGlobal;
 
   // Handler: Agregar producto al carrito
-  const handleProductoSeleccionado = (producto) => {
+  // Dic 2025: Integración con listas de precios inteligentes
+  const handleProductoSeleccionado = async (producto) => {
     // Verificar si el producto ya está en el carrito
     const itemExistente = items.find(item => item.producto_id === producto.id);
 
     if (itemExistente) {
-      // Incrementar cantidad
+      // Incrementar cantidad y recalcular precio por qty breaks
+      const nuevaCantidad = itemExistente.cantidad + 1;
+
+      // Obtener precio actualizado por cantidad
+      const precioResuelto = await obtenerPrecioInteligente(producto.id, nuevaCantidad);
+
       setItems(items.map(item =>
         item.producto_id === producto.id
-          ? { ...item, cantidad: item.cantidad + 1 }
+          ? {
+              ...item,
+              cantidad: nuevaCantidad,
+              // Actualizar precio si hay qty break
+              ...(precioResuelto && {
+                precio_unitario: parseFloat(precioResuelto.precio),
+                fuente_precio: precioResuelto.fuente,
+                fuente_detalle: precioResuelto.fuente_detalle,
+                descuento_lista: parseFloat(precioResuelto.descuento_aplicado || 0),
+                lista_codigo: precioResuelto.lista_codigo
+              })
+            }
           : item
       ));
       toast.success(`Cantidad de "${producto.nombre}" aumentada`);
     } else {
-      // Agregar nuevo item
+      // Obtener precio inteligente para el nuevo producto
+      const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
+
+      // Agregar nuevo item con precio resuelto
       const nuevoItem = {
         id: Date.now(), // ID temporal para el carrito
         producto_id: producto.id,
         nombre: producto.nombre,
         sku: producto.sku,
-        precio_venta: producto.precio_venta,
-        precio_unitario: producto.precio_venta,
+        precio_venta: producto.precio_venta, // Precio base
+        precio_original: producto.precio_venta,
+        precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
         cantidad: 1,
         descuento_monto: 0,
         stock_actual: producto.stock_actual,
+        // Dic 2025: Info de lista de precios
+        fuente_precio: precioResuelto?.fuente || 'precio_producto',
+        fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
+        descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
+        lista_codigo: precioResuelto?.lista_codigo || null
       };
 
       setItems([...items, nuevoItem]);
-      toast.success(`"${producto.nombre}" agregado al carrito`);
+
+      // Mostrar toast con info del precio
+      if (precioResuelto?.fuente === 'lista_precios' && precioResuelto.descuento_aplicado > 0) {
+        toast.success(`"${producto.nombre}" agregado (${precioResuelto.lista_codigo}: -${precioResuelto.descuento_aplicado}%)`);
+      } else {
+        toast.success(`"${producto.nombre}" agregado al carrito`);
+      }
     }
   };
 
   // Handler: Actualizar cantidad de item
-  const handleActualizarCantidad = (itemId, nuevaCantidad) => {
-    setItems(items.map(item =>
-      item.id === itemId
-        ? { ...item, cantidad: nuevaCantidad }
-        : item
+  // Dic 2025: Recalcula precio cuando cambia cantidad (qty breaks)
+  const handleActualizarCantidad = async (itemId, nuevaCantidad) => {
+    const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    // Primero actualizar la cantidad
+    setItems(prevItems => prevItems.map(i =>
+      i.id === itemId ? { ...i, cantidad: nuevaCantidad } : i
     ));
+
+    // Luego obtener el precio actualizado por cantidad
+    const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
+
+    if (precioResuelto) {
+      setItems(prevItems => prevItems.map(i =>
+        i.id === itemId
+          ? {
+              ...i,
+              cantidad: nuevaCantidad,
+              precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
+              fuente_precio: precioResuelto.fuente,
+              fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
+              descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
+              lista_codigo: precioResuelto.lista_codigo
+            }
+          : i
+      ));
+    }
   };
 
   // Handler: Actualizar descuento de item
@@ -305,6 +437,8 @@ export default function VentaPOSPage() {
               onActualizarDescuentoItem={handleActualizarDescuentoItem}
               descuentoGlobal={descuentoGlobal}
               onActualizarDescuentoGlobal={setDescuentoGlobal}
+              recalculandoPrecios={recalculandoPrecios}
+              clienteSeleccionado={clienteSeleccionado}
             />
 
             {/* Botón de pago */}

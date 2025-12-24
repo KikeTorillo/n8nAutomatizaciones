@@ -18,8 +18,8 @@ const precioMonedaSchema = Joi.object({
     precio_venta: Joi.number().min(0.01).required().messages({
         'any.required': 'El precio de venta es requerido',
         'number.min': 'El precio de venta debe ser mayor a 0'
-    }),
-    precio_mayoreo: Joi.number().min(0).optional().allow(null)
+    })
+    // Dic 2025: precio_mayoreo eliminado, usar listas_precios
 });
 
 const inventarioSchemas = {
@@ -208,9 +208,7 @@ const inventarioSchemas = {
                 'any.required': 'El precio_venta es requerido',
                 'number.min': 'El precio_venta debe ser mayor a 0'
             }),
-
-            precio_mayoreo: Joi.number().min(0).optional().allow(null),
-            cantidad_mayoreo: Joi.number().integer().min(2).optional().allow(null),
+            // Dic 2025: precio_mayoreo eliminado, usar listas_precios
 
             stock_actual: Joi.number().integer().min(0).optional().default(0),
             stock_minimo: Joi.number().integer().min(0).optional().default(5),
@@ -232,21 +230,6 @@ const inventarioSchemas = {
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).custom((value, helpers) => {
-            // Validación: Si especifica precio_mayoreo, debe especificar cantidad_mayoreo
-            if ((value.precio_mayoreo && !value.cantidad_mayoreo) ||
-                (!value.precio_mayoreo && value.cantidad_mayoreo)) {
-                return helpers.error('any.custom', {
-                    message: 'precio_mayoreo y cantidad_mayoreo deben especificarse juntos'
-                });
-            }
-
-            // Validación: precio_mayoreo debe ser menor que precio_venta
-            if (value.precio_mayoreo && value.precio_mayoreo >= value.precio_venta) {
-                return helpers.error('any.custom', {
-                    message: 'precio_mayoreo debe ser menor que precio_venta'
-                });
-            }
-
             // Validación: stock_maximo debe ser mayor o igual que stock_minimo
             if (value.stock_minimo > value.stock_maximo) {
                 return helpers.error('any.custom', {
@@ -276,8 +259,7 @@ const inventarioSchemas = {
             proveedor_id: Joi.number().integer().positive().optional().allow(null),
             precio_compra: Joi.number().min(0).optional(),
             precio_venta: Joi.number().min(0.01).optional(),
-            precio_mayoreo: Joi.number().min(0).optional().allow(null),
-            cantidad_mayoreo: Joi.number().integer().min(2).optional().allow(null),
+            // Dic 2025: precio_mayoreo eliminado, usar listas_precios
             stock_minimo: Joi.number().integer().min(0).optional(),
             stock_maximo: Joi.number().integer().min(1).optional(),
             unidad_medida: Joi.string().max(20).optional(),
@@ -312,8 +294,7 @@ const inventarioSchemas = {
                         proveedor_id: Joi.number().integer().positive().optional().allow(null),
                         precio_compra: Joi.number().min(0).optional().default(0),
                         precio_venta: Joi.number().min(0.01).required(),
-                        precio_mayoreo: Joi.number().min(0).optional().allow(null),
-                        cantidad_mayoreo: Joi.number().integer().min(2).optional().allow(null),
+                        // Dic 2025: precio_mayoreo eliminado, usar listas_precios
                         stock_actual: Joi.number().integer().min(0).optional().default(0),
                         stock_minimo: Joi.number().integer().min(0).optional().default(5),
                         stock_maximo: Joi.number().integer().min(1).optional().default(100),

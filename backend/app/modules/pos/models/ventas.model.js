@@ -72,7 +72,7 @@ class VentasPOSModel {
             for (const item of data.items) {
                 // SELECT FOR UPDATE para lock optimista
                 const productoQuery = await db.query(
-                    `SELECT id, nombre, sku, precio_venta, precio_mayoreo, cantidad_mayoreo,
+                    `SELECT id, nombre, sku, precio_venta,
                             stock_actual, permite_venta, activo
                      FROM productos
                      WHERE id = $1 AND organizacion_id = $2
@@ -109,7 +109,7 @@ class VentasPOSModel {
             let subtotal = 0;
             const itemsConPrecios = data.items.map(item => {
                 const productoQuery = db.query(
-                    `SELECT nombre, sku, precio_venta, precio_mayoreo, cantidad_mayoreo
+                    `SELECT nombre, sku, precio_venta
                      FROM productos WHERE id = $1`,
                     [item.producto_id]
                 );
@@ -219,20 +219,15 @@ class VentasPOSModel {
             for (const item of data.items) {
                 // Obtener datos del producto para snapshot
                 const prodQuery = await db.query(
-                    `SELECT nombre, sku, precio_venta, precio_mayoreo, cantidad_mayoreo
+                    `SELECT nombre, sku, precio_venta
                      FROM productos WHERE id = $1`,
                     [item.producto_id]
                 );
 
                 const producto = prodQuery.rows[0];
 
-                // Calcular precio unitario (mayoreo si aplica)
+                // Calcular precio unitario (Dic 2025: precio mayoreo ahora viene de listas_precios)
                 let precioUnitario = item.precio_unitario || producto.precio_venta;
-                if (!item.precio_unitario && producto.precio_mayoreo && producto.cantidad_mayoreo) {
-                    if (item.cantidad >= producto.cantidad_mayoreo) {
-                        precioUnitario = producto.precio_mayoreo;
-                    }
-                }
 
                 const descuentoMonto = item.descuento_monto || 0;
                 const descuentoPorcentaje = item.descuento_porcentaje || 0;

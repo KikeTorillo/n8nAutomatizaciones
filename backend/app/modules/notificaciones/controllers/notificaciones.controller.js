@@ -38,9 +38,8 @@ class NotificacionesController {
       SELECT * FROM obtener_feed_notificaciones($1, $2, $3, $4, $5)
     `;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(
-        organizacionId,
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(
         query,
         [usuarioId, solo_no_leidas === 'true' || solo_no_leidas === true, categoria, parseInt(limit), parseInt(offset)]
       );
@@ -63,8 +62,8 @@ class NotificacionesController {
 
     const query = `SELECT contar_notificaciones_no_leidas($1) as count`;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [usuarioId]);
     });
 
     return ResponseHelper.success(res, {
@@ -83,8 +82,8 @@ class NotificacionesController {
 
     const query = `SELECT marcar_notificacion_leida($1, $2) as success`;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [id, usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [id, usuarioId]);
     });
 
     if (!result.rows[0]?.success) {
@@ -104,8 +103,8 @@ class NotificacionesController {
 
     const query = `SELECT marcar_todas_notificaciones_leidas($1) as count`;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [usuarioId]);
     });
 
     const count = result.rows[0]?.count || 0;
@@ -128,8 +127,8 @@ class NotificacionesController {
 
     const query = `SELECT archivar_notificacion($1, $2) as success`;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [id, usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [id, usuarioId]);
     });
 
     if (!result.rows[0]?.success) {
@@ -154,8 +153,8 @@ class NotificacionesController {
       RETURNING id
     `;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [id, usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [id, usuarioId]);
     });
 
     if (result.rows.length === 0) {
@@ -220,8 +219,8 @@ class NotificacionesController {
 
     const query = `SELECT * FROM obtener_preferencias_notificaciones($1)`;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, [usuarioId]);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query, [usuarioId]);
     });
 
     // Agrupar por categoria
@@ -285,8 +284,8 @@ class NotificacionesController {
       ORDER BY categoria, orden
     `;
 
-    const result = await RLSContextManager.withBypass(async () => {
-      return await RLSContextManager.query(organizacionId, query, []);
+    const result = await RLSContextManager.withBypass(async (db) => {
+      return await db.query(query);
     });
 
     // Agrupar por categoria

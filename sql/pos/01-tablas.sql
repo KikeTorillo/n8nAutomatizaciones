@@ -149,7 +149,7 @@ CREATE TABLE IF NOT EXISTS ventas_pos_items (
 
 COMMENT ON TABLE ventas_pos_items IS 'Items (productos) de cada venta con snapshot de datos y cálculos';
 COMMENT ON COLUMN ventas_pos_items.nombre_producto IS 'Snapshot del nombre - no cambia si renombran el producto';
-COMMENT ON COLUMN ventas_pos_items.precio_unitario IS 'Precio al momento de la venta (puede ser precio_venta o precio_mayoreo)';
+COMMENT ON COLUMN ventas_pos_items.precio_unitario IS 'Precio al momento de la venta (viene de listas_precios o precio_venta base)';
 COMMENT ON COLUMN ventas_pos_items.precio_final IS 'Precio después de descuentos por item';
 COMMENT ON COLUMN ventas_pos_items.subtotal IS 'Total del item: cantidad × precio_final';
 COMMENT ON COLUMN ventas_pos_items.aplica_comision IS 'Indica si este item genera comisión para el vendedor';

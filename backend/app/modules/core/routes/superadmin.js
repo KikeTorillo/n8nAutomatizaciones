@@ -7,12 +7,9 @@
 
 const express = require('express');
 const SuperAdminController = require('../controllers/superadmin.controller');
-const { PerfilesMarketplaceController } = require('../../marketplace/controllers');
-const { auth, rateLimiting, validation } = require('../../../middleware');
-const marketplaceSchemas = require('../../marketplace/schemas/marketplace.schemas');
+const { auth, rateLimiting } = require('../../../middleware');
 
 const router = express.Router();
-const validate = validation.validate;
 
 // ====================================================================
 // PROTEGER TODAS LAS RUTAS
@@ -114,36 +111,11 @@ router.put('/planes/:id',
 );
 
 // ====================================================================
-// GESTIÓN DE MARKETPLACE
-// ====================================================================
-/**
- * GET /api/v1/superadmin/marketplace/perfiles
- *
- * Listar TODOS los perfiles de marketplace (activos e inactivos)
- * Incluye datos de organización (nombre, plan, estado)
- *
- * Query params:
- * - activo: Filtrar por estado (true|false) - opcional
- * - ciudad: Filtrar por ciudad - opcional
- * - rating_min: Rating mínimo (0-5) - opcional
- * - pagina: Número de página (default: 1)
- * - limite: Registros por página (default: 20, max: 100)
- *
- * @requires rol: super_admin
- * @returns {Object} Lista paginada de perfiles con datos de organización
- */
-router.get('/marketplace/perfiles',
-    rateLimiting.apiRateLimit,
-    validate(marketplaceSchemas.listarPerfilesAdmin),
-    PerfilesMarketplaceController.listarParaAdmin
-);
-
-// ====================================================================
 // NOTA: Rutas de suspender/reactivar/cambiar plan de organizaciones
 // ya existen en /api/v1/organizaciones con protección super_admin
 //
-// NOTA: Rutas de activar/desactivar perfiles de marketplace y limpiar
-// analytics ya existen en /api/v1/marketplace con protección super_admin
+// NOTA: Rutas de marketplace (perfiles, activar, analytics)
+// están en /api/v1/marketplace con protección super_admin
 // ====================================================================
 
 module.exports = router;

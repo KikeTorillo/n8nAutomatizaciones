@@ -150,11 +150,6 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
                       <div className="text-xl font-bold text-primary-600 dark:text-primary-400">
                         ${parseFloat(producto.precio_venta || 0).toFixed(2)}
                       </div>
-                      {producto.precio_mayoreo && producto.cantidad_mayoreo && (
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          ${parseFloat(producto.precio_mayoreo).toFixed(2)} (≥{producto.cantidad_mayoreo})
-                        </div>
-                      )}
                     </div>
 
                     <ShoppingCart className="ml-4 h-6 w-6 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400 group-hover:scale-110 transition-transform" />

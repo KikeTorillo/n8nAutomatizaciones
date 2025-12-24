@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart } from 'lucide-react';
+import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart, Tag } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo de Inventario
@@ -47,6 +47,12 @@ const tabs = [
     label: 'Reportes',
     path: '/inventario/reportes',
     icon: BarChart3,
+  },
+  {
+    id: 'listas-precios',
+    label: 'Listas Precios',
+    path: '/listas-precios',
+    icon: Tag,
   },
 ];
 

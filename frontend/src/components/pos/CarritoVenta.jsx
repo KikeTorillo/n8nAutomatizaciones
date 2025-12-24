@@ -1,4 +1,4 @@
-import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe } from 'lucide-react';
+import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe, Tag, RefreshCw, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -6,7 +6,7 @@ import { useCurrency } from '@/hooks/useCurrency';
 /**
  * Componente de carrito de venta para POS
  * Muestra items, cantidades, descuentos y totales
- * Dic 2025: Conversión multi-moneda en tiempo real
+ * Dic 2025: Conversión multi-moneda + Listas de precios inteligentes
  */
 export default function CarritoVenta({
   items,
@@ -15,14 +15,16 @@ export default function CarritoVenta({
   onActualizarDescuentoItem,
   descuentoGlobal = 0,
   onActualizarDescuentoGlobal,
-  monedaSecundaria = 'USD' // Moneda para mostrar equivalente
+  monedaSecundaria = 'USD', // Moneda para mostrar equivalente
+  recalculandoPrecios = false, // Dic 2025: Estado de recálculo
+  clienteSeleccionado = null  // Dic 2025: Cliente para mostrar en header
 }) {
   const { code: monedaOrg } = useCurrency();
 
   // Obtener tasa de cambio para moneda secundaria
   const { data: tasaResponse } = useQuery({
     queryKey: ['tasa-cambio', monedaOrg, monedaSecundaria],
-    queryFn: () => monedasApi.obtenerTasaActual(monedaOrg, monedaSecundaria),
+    queryFn: () => monedasApi.obtenerTasa(monedaOrg, monedaSecundaria),
     staleTime: 1000 * 60 * 5, // 5 minutos
     enabled: monedaOrg !== monedaSecundaria,
   });
@@ -78,11 +80,27 @@ export default function CarritoVenta({
           <div className="flex items-center gap-2">
             <ShoppingCart className="h-6 w-6" />
             <h3 className="text-lg font-semibold">Carrito de Venta</h3>
+            {/* Dic 2025: Indicador de recálculo */}
+            {recalculandoPrecios && (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            )}
           </div>
           <div className="bg-white/20 px-3 py-1 rounded-full">
             <span className="font-semibold">{items.length} {items.length === 1 ? 'item' : 'items'}</span>
           </div>
         </div>
+        {/* Dic 2025: Mostrar cliente si hay uno seleccionado */}
+        {clienteSeleccionado && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-white/80">
+            <User className="h-3.5 w-3.5" />
+            <span>Precios para: <strong className="text-white">{clienteSeleccionado.nombre}</strong></span>
+            {clienteSeleccionado.lista_codigo && (
+              <span className="bg-white/20 px-2 py-0.5 rounded text-xs">
+                {clienteSeleccionado.lista_codigo}
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Items */}
@@ -97,18 +115,47 @@ export default function CarritoVenta({
           <div className="divide-y divide-gray-200 dark:divide-gray-700">
             {items.map((item) => {
               const precioUnitario = parseFloat(item.precio_unitario || item.precio_venta || 0);
+              const precioOriginal = parseFloat(item.precio_original || item.precio_venta || 0);
               const cantidad = parseInt(item.cantidad || 1);
               const descuentoItem = parseFloat(item.descuento_monto || 0);
               const subtotalItem = (precioUnitario * cantidad) - descuentoItem;
+              // Dic 2025: Info de lista de precios
+              const tieneDescuentoLista = item.descuento_lista > 0;
+              const tienePrecioEspecial = item.fuente_precio === 'lista_precios' || item.fuente_precio === 'precio_fijo';
 
               return (
                 <div key={item.id} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   {/* Nombre y precio unitario */}
-                  <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h4 className="font-medium text-gray-900 dark:text-gray-100">{item.nombre}</h4>
-                      {item.sku && (
-                        <p className="text-xs text-gray-500 dark:text-gray-400 font-mono mt-1">SKU: {item.sku}</p>
+                      <div className="flex items-center gap-2 mt-1 flex-wrap">
+                        {item.sku && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">SKU: {item.sku}</span>
+                        )}
+                        {/* Dic 2025: Badge de lista de precios */}
+                        {tienePrecioEspecial && item.lista_codigo && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded text-xs font-medium">
+                            <Tag className="h-3 w-3" />
+                            {item.lista_codigo}
+                            {tieneDescuentoLista && (
+                              <span className="text-green-600 dark:text-green-300">
+                                -{item.descuento_lista}%
+                              </span>
+                            )}
+                          </span>
+                        )}
+                      </div>
+                      {/* Dic 2025: Mostrar precio original tachado si hay descuento */}
+                      {tieneDescuentoLista && precioOriginal > precioUnitario && (
+                        <div className="flex items-center gap-2 mt-1 text-xs">
+                          <span className="text-gray-400 dark:text-gray-500 line-through">
+                            ${precioOriginal.toFixed(2)}
+                          </span>
+                          <span className="text-green-600 dark:text-green-400 font-medium">
+                            ${precioUnitario.toFixed(2)}
+                          </span>
+                        </div>
                       )}
                     </div>
                     <button

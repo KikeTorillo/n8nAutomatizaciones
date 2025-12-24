@@ -92,8 +92,6 @@ export function useCrearProducto() {
         codigo_barras: data.codigo_barras?.trim() || undefined,
         categoria_id: data.categoria_id || undefined,
         proveedor_id: data.proveedor_id || undefined,
-        precio_mayoreo: data.precio_mayoreo || undefined,
-        cantidad_mayoreo: data.cantidad_mayoreo || undefined,
         dias_vida_util: data.dias_vida_util || undefined,
         notas: data.notas?.trim() || undefined,
       };
@@ -178,8 +176,6 @@ export function useActualizarProducto() {
         codigo_barras: data.codigo_barras?.trim() || undefined,
         categoria_id: data.categoria_id || undefined,
         proveedor_id: data.proveedor_id || undefined,
-        precio_mayoreo: data.precio_mayoreo || undefined,
-        cantidad_mayoreo: data.cantidad_mayoreo || undefined,
         dias_vida_util: data.dias_vida_util || undefined,
         notas: data.notas?.trim() || undefined,
       };
