@@ -1,6 +1,6 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
-const { WorkflowEngine } = require('../../workflows/services');
+const workflowAdapter = require('../../../services/workflowAdapter');
 
 /**
  * Model para gestión de Órdenes de Compra
@@ -592,8 +592,8 @@ class OrdenesCompraModel {
             usuario_id: usuarioId
         });
 
-        // Evaluar si requiere aprobación
-        const workflowAplicable = await WorkflowEngine.evaluarRequiereAprobacion(
+        // Evaluar si requiere aprobación (via adapter para evitar acoplamiento)
+        const workflowAplicable = await workflowAdapter.evaluarRequiereAprobacion(
             'orden_compra',
             id,
             { total: parseFloat(orden.total) },
@@ -620,8 +620,8 @@ class OrdenesCompraModel {
                 const result = await db.query(updateQuery, [id]);
                 const ordenActualizada = result.rows[0];
 
-                // Iniciar instancia de workflow (DENTRO de esta transacción para consistencia)
-                await WorkflowEngine.iniciarWorkflow(
+                // Iniciar instancia de workflow (via adapter, DENTRO de transacción)
+                await workflowAdapter.iniciarWorkflow(
                     workflowAplicable.id,
                     'orden_compra',
                     id,

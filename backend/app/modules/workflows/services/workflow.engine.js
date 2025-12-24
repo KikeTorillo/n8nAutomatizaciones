@@ -12,7 +12,7 @@
  */
 
 const RLSContextManager = require('../../../utils/rlsContextManager');
-const NotificacionesService = require('../../notificaciones/services/notificaciones.service');
+const notificacionAdapter = require('../../../services/notificacionAdapter');
 const logger = require('../../../utils/logger');
 
 class WorkflowEngine {
@@ -476,7 +476,7 @@ class WorkflowEngine {
             // Crear notificaciones
             const usuarioIds = aprobadores.map(a => a.usuario_id);
 
-            await NotificacionesService.crearMasiva({
+            await notificacionAdapter.crearMasiva({
                 organizacionId,
                 usuarioIds,
                 tipo: 'aprobacion_pendiente',
@@ -534,7 +534,7 @@ class WorkflowEngine {
 
             const esAprobado = resultado === 'aprobado';
 
-            await NotificacionesService.crear({
+            await notificacionAdapter.crear({
                 organizacionId,
                 usuarioId: instancia.iniciado_por,
                 tipo: esAprobado ? 'aprobacion_completada' : 'aprobacion_rechazada',

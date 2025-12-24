@@ -33,6 +33,7 @@ function PermisosPage() {
   const [rolSeleccionado, setRolSeleccionado] = useState('empleado');
   const [modulosExpandidos, setModulosExpandidos] = useState(new Set(['pos', 'agendamiento', 'inventario']));
   const [searchTerm, setSearchTerm] = useState('');
+  const [valoresEditando, setValoresEditando] = useState({});
 
   // Roles disponibles
   const roles = [
@@ -143,6 +144,68 @@ function PermisosPage() {
   const handleTogglePermiso = (permisoId, valorActual) => {
     const nuevoValor = valorActual === true ? false : true;
     actualizarPermisoMutation.mutate({ permisoId, valor: nuevoValor });
+  };
+
+  // Manejar cambio de valor numérico (mientras edita)
+  const handleNumericoChange = (permisoId, valor) => {
+    setValoresEditando(prev => ({
+      ...prev,
+      [permisoId]: valor
+    }));
+  };
+
+  // Guardar valor numérico al perder foco o presionar Enter
+  const handleNumericoGuardar = (permisoId, valorOriginal) => {
+    const valorEditado = valoresEditando[permisoId];
+
+    // Si no hay cambio o es undefined, no hacer nada
+    if (valorEditado === undefined || valorEditado === String(valorOriginal ?? 0)) {
+      setValoresEditando(prev => {
+        const next = { ...prev };
+        delete next[permisoId];
+        return next;
+      });
+      return;
+    }
+
+    const valorNumerico = parseInt(valorEditado, 10);
+    if (isNaN(valorNumerico) || valorNumerico < 0) {
+      toast.error('El valor debe ser un número válido mayor o igual a 0');
+      setValoresEditando(prev => {
+        const next = { ...prev };
+        delete next[permisoId];
+        return next;
+      });
+      return;
+    }
+
+    actualizarPermisoMutation.mutate(
+      { permisoId, valor: valorNumerico },
+      {
+        onSuccess: () => {
+          setValoresEditando(prev => {
+            const next = { ...prev };
+            delete next[permisoId];
+            return next;
+          });
+        }
+      }
+    );
+  };
+
+  // Manejar tecla Enter en input numérico
+  const handleNumericoKeyDown = (e, permisoId, valorOriginal) => {
+    if (e.key === 'Enter') {
+      e.target.blur();
+      handleNumericoGuardar(permisoId, valorOriginal);
+    } else if (e.key === 'Escape') {
+      setValoresEditando(prev => {
+        const next = { ...prev };
+        delete next[permisoId];
+        return next;
+      });
+      e.target.blur();
+    }
   };
 
   // Nombres amigables para módulos
@@ -354,16 +417,28 @@ function PermisosPage() {
                           </button>
                         )}
 
-                        {/* Para permisos numéricos */}
+                        {/* Para permisos numéricos - Input editable */}
                         {permiso.tipo_valor === 'numerico' && (
                           <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-600 dark:text-gray-400">
-                              {valorActual ?? 0}
-                            </span>
-                            <span className="text-xs text-gray-400">
-                              {permiso.codigo.includes('max_descuento') ? '%' : ''}
-                              {permiso.codigo.includes('limite') ? '$' : ''}
-                            </span>
+                            {permiso.codigo.includes('limite') && (
+                              <span className="text-sm text-gray-400">$</span>
+                            )}
+                            <input
+                              type="number"
+                              min="0"
+                              value={valoresEditando[permiso.id] ?? valorActual ?? 0}
+                              onChange={(e) => handleNumericoChange(permiso.id, e.target.value)}
+                              onBlur={() => handleNumericoGuardar(permiso.id, valorActual)}
+                              onKeyDown={(e) => handleNumericoKeyDown(e, permiso.id, valorActual)}
+                              disabled={actualizarPermisoMutation.isPending}
+                              className="w-24 px-2 py-1 text-right text-sm border border-gray-300 dark:border-gray-600 rounded-md
+                                bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+                                focus:ring-2 focus:ring-primary-500 focus:border-primary-500
+                                disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                            {permiso.codigo.includes('max_descuento') && (
+                              <span className="text-sm text-gray-400">%</span>
+                            )}
                           </div>
                         )}
                       </div>

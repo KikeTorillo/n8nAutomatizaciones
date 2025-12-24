@@ -1,6 +1,5 @@
 const CitaModel = require('../../models/citas');
-// Dic 2025: ClienteModel ahora en su propio módulo clientes/
-const ClienteModel = require('../../../clientes/models/cliente.model');
+const clienteAdapter = require('../../../../services/clienteAdapter');
 const { ResponseHelper } = require('../../../../utils/helpers');
 const { asyncHandler } = require('../../../../middleware');
 const RLSContextManager = require('../../../../utils/rlsContextManager');
@@ -33,9 +32,9 @@ class CitaBaseController {
                 }
             }
 
-            // Si no se encontró por email, buscar por teléfono
+            // Si no se encontró por email, buscar por teléfono (via adapter)
             if (!clienteId && clienteInfo.telefono) {
-                const resultadoBusqueda = await ClienteModel.buscarPorTelefono(
+                const resultadoBusqueda = await clienteAdapter.buscarPorTelefono(
                     clienteInfo.telefono,
                     organizacionId,
                     { exacto: true }
@@ -46,9 +45,9 @@ class CitaBaseController {
                 }
             }
 
-            // Si no existe, crear nuevo cliente
+            // Si no existe, crear nuevo cliente (via adapter)
             if (!clienteId) {
-                const nuevoCliente = await ClienteModel.crear({
+                const nuevoCliente = await clienteAdapter.crear({
                     organizacion_id: organizacionId,
                     nombre: clienteInfo.nombre,
                     apellidos: clienteInfo.apellidos || null,
