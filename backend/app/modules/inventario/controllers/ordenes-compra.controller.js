@@ -294,6 +294,69 @@ class OrdenesCompraController {
 
         return ResponseHelper.success(res, estadisticas, 'Estadísticas obtenidas exitosamente');
     });
+
+    // ========================================================================
+    // AUTO-GENERACIÓN DE OC (Dic 2025 - Fase 2 Gaps)
+    // ========================================================================
+
+    /**
+     * Generar OC desde producto con stock bajo
+     * POST /api/v1/inventario/ordenes-compra/generar-desde-producto/:productoId
+     */
+    static generarDesdeProducto = asyncHandler(async (req, res) => {
+        const { productoId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        const orden = await OrdenesCompraModel.generarDesdeAlerta(
+            parseInt(productoId),
+            usuarioId,
+            organizacionId
+        );
+
+        return ResponseHelper.success(
+            res,
+            orden,
+            'Orden de compra generada exitosamente desde alerta de stock',
+            201
+        );
+    });
+
+    /**
+     * Generar OCs automáticas para todos los productos con stock bajo
+     * POST /api/v1/inventario/ordenes-compra/auto-generar
+     */
+    static autoGenerarOCs = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        const resultado = await OrdenesCompraModel.generarOCsAutomaticas(
+            organizacionId,
+            usuarioId
+        );
+
+        return ResponseHelper.success(
+            res,
+            resultado,
+            `${resultado.ordenes_creadas} orden(es) de compra generada(s) automáticamente`
+        );
+    });
+
+    /**
+     * Obtener sugerencias de OC (productos con stock bajo)
+     * GET /api/v1/inventario/ordenes-compra/sugerencias
+     */
+    static obtenerSugerenciasOC = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const sugerencias = await OrdenesCompraModel.obtenerSugerenciasOC(organizacionId);
+
+        return ResponseHelper.success(
+            res,
+            sugerencias,
+            'Sugerencias de OC obtenidas exitosamente'
+        );
+    });
 }
 
 module.exports = OrdenesCompraController;

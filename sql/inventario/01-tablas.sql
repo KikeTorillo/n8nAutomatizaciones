@@ -143,6 +143,13 @@ CREATE TABLE IF NOT EXISTS productos (
     permite_venta BOOLEAN DEFAULT true, -- Se puede vender en POS
     permite_uso_servicio BOOLEAN DEFAULT true, -- Se puede usar en servicios
 
+    -- 🔄 AUTO-GENERACIÓN OC (Dic 2025 - Fase 2)
+    auto_generar_oc BOOLEAN DEFAULT false, -- Generar OC automáticamente cuando stock <= stock_minimo
+    cantidad_oc_sugerida INTEGER DEFAULT 50, -- Cantidad sugerida para OC automática
+
+    -- 🔢 NÚMEROS DE SERIE (Dic 2025 - Fase 5)
+    requiere_numero_serie BOOLEAN DEFAULT false, -- Requiere tracking por número de serie
+
     -- 📝 NOTAS
     notas TEXT,
 

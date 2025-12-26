@@ -1096,6 +1096,240 @@ class OrdenesCompraModel {
             return result.rows;
         });
     }
+
+    // ========================================================================
+    // AUTO-GENERACIÓN DE OC (Dic 2025 - Fase 2)
+    // ========================================================================
+
+    /**
+     * Generar OC desde alerta de stock bajo
+     * Crea una orden de compra borrador con los productos con stock bajo
+     * @param {number} productoId - ID del producto con stock bajo
+     * @param {number} usuarioId - Usuario que genera la OC
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Object} Orden de compra creada
+     */
+    static async generarDesdeAlerta(productoId, usuarioId, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[OrdenesCompraModel.generarDesdeAlerta] Iniciando', {
+                producto_id: productoId,
+                usuario_id: usuarioId
+            });
+
+            // Obtener producto con proveedor
+            const productoQuery = await db.query(
+                `SELECT p.id, p.nombre, p.sku, p.proveedor_id, p.precio_compra,
+                        p.stock_actual, p.stock_minimo, p.stock_maximo,
+                        p.cantidad_oc_sugerida, p.auto_generar_oc,
+                        prov.nombre as proveedor_nombre
+                 FROM productos p
+                 LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
+                 WHERE p.id = $1 AND p.organizacion_id = $2 AND p.activo = true`,
+                [productoId, organizacionId]
+            );
+
+            if (productoQuery.rows.length === 0) {
+                throw new Error('Producto no encontrado');
+            }
+
+            const producto = productoQuery.rows[0];
+
+            if (!producto.proveedor_id) {
+                throw new Error(`El producto "${producto.nombre}" no tiene proveedor asignado`);
+            }
+
+            // Calcular cantidad sugerida
+            // Prioridad: cantidad_oc_sugerida > (stock_maximo - stock_actual) > 50
+            let cantidadSugerida = producto.cantidad_oc_sugerida || 50;
+            if (producto.stock_maximo) {
+                const diferencia = producto.stock_maximo - producto.stock_actual;
+                if (diferencia > 0) {
+                    cantidadSugerida = Math.max(cantidadSugerida, diferencia);
+                }
+            }
+
+            // Crear la orden de compra
+            const ordenData = {
+                proveedor_id: producto.proveedor_id,
+                usuario_id: usuarioId,
+                notas: `OC generada automáticamente por alerta de stock bajo del producto: ${producto.nombre} (${producto.sku || 'Sin SKU'})`,
+                items: [{
+                    producto_id: producto.id,
+                    cantidad_ordenada: cantidadSugerida,
+                    precio_unitario: producto.precio_compra || 0
+                }]
+            };
+
+            const ordenCreada = await this.crear(ordenData, organizacionId);
+
+            logger.info('[OrdenesCompraModel.generarDesdeAlerta] OC creada', {
+                orden_id: ordenCreada.id,
+                folio: ordenCreada.folio,
+                producto: producto.nombre,
+                cantidad: cantidadSugerida
+            });
+
+            return {
+                ...ordenCreada,
+                producto_origen: {
+                    id: producto.id,
+                    nombre: producto.nombre,
+                    sku: producto.sku,
+                    stock_actual: producto.stock_actual,
+                    stock_minimo: producto.stock_minimo
+                }
+            };
+        });
+    }
+
+    /**
+     * Generar OC automáticas para todos los productos con stock bajo y auto_generar_oc = true
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} usuarioId - Usuario del sistema (para auditoría)
+     * @returns {Array} Lista de OCs generadas
+     */
+    static async generarOCsAutomaticas(organizacionId, usuarioId = null) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[OrdenesCompraModel.generarOCsAutomaticas] Iniciando', {
+                organizacion_id: organizacionId
+            });
+
+            // Obtener productos con stock bajo y auto_generar_oc activo
+            const productosQuery = await db.query(
+                `SELECT p.id, p.nombre, p.sku, p.proveedor_id, p.precio_compra,
+                        p.stock_actual, p.stock_minimo, p.stock_maximo,
+                        p.cantidad_oc_sugerida
+                 FROM productos p
+                 WHERE p.organizacion_id = $1
+                   AND p.activo = true
+                   AND p.auto_generar_oc = true
+                   AND p.proveedor_id IS NOT NULL
+                   AND p.stock_actual <= p.stock_minimo
+                   AND NOT EXISTS (
+                       -- No generar si ya hay una OC pendiente para este producto
+                       SELECT 1 FROM ordenes_compra_items oci
+                       JOIN ordenes_compra oc ON oc.id = oci.orden_compra_id
+                       WHERE oci.producto_id = p.id
+                         AND oc.estado IN ('borrador', 'pendiente_aprobacion', 'enviada', 'parcial')
+                         AND oc.organizacion_id = $1
+                   )`,
+                [organizacionId]
+            );
+
+            if (productosQuery.rows.length === 0) {
+                logger.info('[OrdenesCompraModel.generarOCsAutomaticas] No hay productos para generar OCs');
+                return [];
+            }
+
+            // Agrupar productos por proveedor
+            const productosPorProveedor = {};
+            for (const producto of productosQuery.rows) {
+                if (!productosPorProveedor[producto.proveedor_id]) {
+                    productosPorProveedor[producto.proveedor_id] = [];
+                }
+                productosPorProveedor[producto.proveedor_id].push(producto);
+            }
+
+            const ordenesCreadas = [];
+
+            // Crear una OC por proveedor con todos sus productos
+            for (const [proveedorId, productos] of Object.entries(productosPorProveedor)) {
+                const items = productos.map(p => {
+                    let cantidad = p.cantidad_oc_sugerida || 50;
+                    if (p.stock_maximo) {
+                        const diferencia = p.stock_maximo - p.stock_actual;
+                        if (diferencia > 0) {
+                            cantidad = Math.max(cantidad, diferencia);
+                        }
+                    }
+                    return {
+                        producto_id: p.id,
+                        cantidad_ordenada: cantidad,
+                        precio_unitario: p.precio_compra || 0
+                    };
+                });
+
+                const nombresProductos = productos.map(p => p.nombre).join(', ');
+
+                const ordenData = {
+                    proveedor_id: parseInt(proveedorId),
+                    usuario_id: usuarioId,
+                    notas: `OC auto-generada por alerta de stock bajo. Productos: ${nombresProductos}`,
+                    items
+                };
+
+                // Usar el método crear existente
+                const ordenCreada = await this.crear(ordenData, organizacionId);
+
+                ordenesCreadas.push({
+                    ...ordenCreada,
+                    productos_incluidos: productos.length
+                });
+
+                logger.info('[OrdenesCompraModel.generarOCsAutomaticas] OC creada', {
+                    orden_id: ordenCreada.id,
+                    folio: ordenCreada.folio,
+                    proveedor_id: proveedorId,
+                    productos: productos.length
+                });
+            }
+
+            logger.info('[OrdenesCompraModel.generarOCsAutomaticas] Proceso completado', {
+                ordenes_creadas: ordenesCreadas.length
+            });
+
+            return ordenesCreadas;
+        });
+    }
+
+    /**
+     * Obtener sugerencias de OC (productos con stock bajo)
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Array} Lista de productos sugeridos para OC
+     */
+    static async obtenerSugerenciasOC(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    p.id,
+                    p.nombre,
+                    p.sku,
+                    p.stock_actual,
+                    p.stock_minimo,
+                    p.stock_maximo,
+                    p.precio_compra,
+                    p.cantidad_oc_sugerida,
+                    p.auto_generar_oc,
+                    p.proveedor_id,
+                    prov.nombre as proveedor_nombre,
+                    CASE
+                        WHEN p.stock_maximo IS NOT NULL AND p.stock_maximo > p.stock_actual
+                        THEN GREATEST(COALESCE(p.cantidad_oc_sugerida, 50), p.stock_maximo - p.stock_actual)
+                        ELSE COALESCE(p.cantidad_oc_sugerida, 50)
+                    END as cantidad_sugerida,
+                    CASE
+                        WHEN EXISTS (
+                            SELECT 1 FROM ordenes_compra_items oci
+                            JOIN ordenes_compra oc ON oc.id = oci.orden_compra_id
+                            WHERE oci.producto_id = p.id
+                              AND oc.estado IN ('borrador', 'pendiente_aprobacion', 'enviada', 'parcial')
+                        ) THEN true
+                        ELSE false
+                    END as tiene_oc_pendiente
+                FROM productos p
+                LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
+                WHERE p.organizacion_id = $1
+                  AND p.activo = true
+                  AND p.stock_actual <= p.stock_minimo
+                ORDER BY
+                    p.proveedor_id NULLS LAST,
+                    (p.stock_minimo - p.stock_actual) DESC
+            `;
+
+            const result = await db.query(query, [organizacionId]);
+            return result.rows;
+        });
+    }
 }
 
 module.exports = OrdenesCompraModel;

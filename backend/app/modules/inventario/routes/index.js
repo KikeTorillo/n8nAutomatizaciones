@@ -6,6 +6,4 @@
 
 const inventarioRouter = require('./inventario');
 
-module.exports = {
-  inventario: inventarioRouter
-};
+module.exports = inventarioRouter;

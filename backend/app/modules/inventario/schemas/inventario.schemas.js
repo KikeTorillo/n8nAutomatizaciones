@@ -857,6 +857,404 @@ const inventarioSchemas = {
         params: Joi.object({
             id: Joi.number().integer().positive().required()
         })
+    },
+
+    /**
+     * Schema para generar OC desde producto
+     * POST /api/v1/inventario/ordenes-compra/generar-desde-producto/:productoId
+     */
+    generarOCDesdeProducto: {
+        params: Joi.object({
+            productoId: Joi.number().integer().positive().required().messages({
+                'any.required': 'El productoId es requerido',
+                'number.positive': 'productoId debe ser un número positivo'
+            })
+        })
+    },
+
+    // ========================================================================
+    // RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps)
+    // ========================================================================
+
+    /**
+     * Schema para crear reserva de stock
+     * POST /api/v1/inventario/reservas
+     */
+    crearReserva: {
+        body: Joi.object({
+            producto_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'El producto_id es requerido',
+                'number.positive': 'producto_id debe ser un número positivo'
+            }),
+
+            cantidad: Joi.number().integer().min(1).required().messages({
+                'any.required': 'La cantidad es requerida',
+                'number.min': 'La cantidad debe ser al menos 1'
+            }),
+
+            tipo_origen: Joi.string()
+                .valid('venta_pos', 'orden_venta', 'cita_servicio', 'transferencia')
+                .required()
+                .messages({
+                    'any.required': 'El tipo_origen es requerido',
+                    'any.only': 'tipo_origen debe ser: venta_pos, orden_venta, cita_servicio o transferencia'
+                }),
+
+            origen_id: Joi.number().integer().positive().optional().allow(null),
+            sucursal_id: Joi.number().integer().positive().optional().allow(null),
+            minutos_expiracion: Joi.number().integer().min(1).max(120).optional().default(15)
+        })
+    },
+
+    /**
+     * Schema para crear múltiples reservas
+     * POST /api/v1/inventario/reservas/multiple
+     */
+    crearReservaMultiple: {
+        body: Joi.object({
+            items: Joi.array().items(
+                Joi.object({
+                    producto_id: Joi.number().integer().positive().required(),
+                    cantidad: Joi.number().integer().min(1).required()
+                })
+            ).min(1).max(50).required().messages({
+                'any.required': 'El array de items es requerido',
+                'array.min': 'Debe incluir al menos 1 item',
+                'array.max': 'No puede reservar más de 50 items a la vez'
+            }),
+
+            tipo_origen: Joi.string()
+                .valid('venta_pos', 'orden_venta', 'cita_servicio', 'transferencia')
+                .required(),
+
+            origen_id: Joi.number().integer().positive().optional().allow(null),
+            sucursal_id: Joi.number().integer().positive().optional().allow(null)
+        })
+    },
+
+    /**
+     * Schema para listar reservas
+     * GET /api/v1/inventario/reservas
+     */
+    listarReservas: {
+        query: Joi.object({
+            estado: Joi.string().valid('activa', 'confirmada', 'expirada', 'cancelada').optional(),
+            producto_id: Joi.number().integer().positive().optional(),
+            sucursal_id: Joi.number().integer().positive().optional(),
+            tipo_origen: Joi.string().valid('venta_pos', 'orden_venta', 'cita_servicio', 'transferencia').optional(),
+            origen_id: Joi.number().integer().positive().optional(),
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para confirmar reserva
+     * PATCH /api/v1/inventario/reservas/:id/confirmar
+     */
+    confirmarReserva: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para confirmar múltiples reservas
+     * POST /api/v1/inventario/reservas/confirmar-multiple
+     */
+    confirmarReservaMultiple: {
+        body: Joi.object({
+            reserva_ids: Joi.array()
+                .items(Joi.number().integer().positive())
+                .min(1)
+                .max(50)
+                .required()
+                .messages({
+                    'any.required': 'reserva_ids es requerido',
+                    'array.min': 'Debe incluir al menos un ID de reserva',
+                    'array.max': 'No puede confirmar más de 50 reservas a la vez'
+                })
+        })
+    },
+
+    /**
+     * Schema para cancelar reserva
+     * DELETE /api/v1/inventario/reservas/:id
+     */
+    cancelarReserva: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para cancelar reservas por origen
+     * DELETE /api/v1/inventario/reservas/origen/:tipoOrigen/:origenId
+     */
+    cancelarReservaPorOrigen: {
+        params: Joi.object({
+            tipoOrigen: Joi.string()
+                .valid('venta_pos', 'orden_venta', 'cita_servicio', 'transferencia')
+                .required(),
+            origenId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para obtener stock disponible de un producto
+     * GET /api/v1/inventario/productos/:id/stock-disponible
+     */
+    stockDisponible: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            sucursal_id: Joi.number().integer().positive().optional()
+        })
+    },
+
+    /**
+     * Schema para obtener stock disponible de múltiples productos
+     * POST /api/v1/inventario/productos/stock-disponible
+     */
+    stockDisponibleMultiple: {
+        body: Joi.object({
+            producto_ids: Joi.array()
+                .items(Joi.number().integer().positive())
+                .min(1)
+                .max(100)
+                .required()
+                .messages({
+                    'any.required': 'producto_ids es requerido',
+                    'array.min': 'Debe incluir al menos un ID de producto',
+                    'array.max': 'No puede consultar más de 100 productos a la vez'
+                }),
+            sucursal_id: Joi.number().integer().positive().optional().allow(null)
+        })
+    },
+
+    /**
+     * Schema para verificar disponibilidad
+     * GET /api/v1/inventario/productos/:id/verificar-disponibilidad
+     */
+    verificarDisponibilidad: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            cantidad: Joi.number().integer().min(1).required().messages({
+                'any.required': 'La cantidad es requerida',
+                'number.min': 'La cantidad debe ser al menos 1'
+            }),
+            sucursal_id: Joi.number().integer().positive().optional()
+        })
+    },
+
+    /**
+     * Schema para extender reserva
+     * PATCH /api/v1/inventario/reservas/:id/extender
+     */
+    extenderReserva: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            minutos_adicionales: Joi.number().integer().min(1).max(60).optional().default(15)
+        })
+    },
+
+    // ========================================================================
+    // UBICACIONES DE ALMACÉN (Dic 2025 - Fase 3 Gaps)
+    // ========================================================================
+
+    /**
+     * Schema para crear ubicación
+     * POST /api/v1/inventario/ubicaciones
+     */
+    crearUbicacion: {
+        body: Joi.object({
+            sucursal_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'La sucursal es requerida',
+                'number.positive': 'sucursal_id debe ser un número positivo'
+            }),
+
+            codigo: Joi.string().max(30).required().messages({
+                'any.required': 'El código es requerido',
+                'string.max': 'El código no puede exceder 30 caracteres'
+            }),
+
+            nombre: Joi.string().max(100).optional().allow(null, ''),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+
+            tipo: Joi.string().valid('zona', 'pasillo', 'estante', 'bin').required().messages({
+                'any.required': 'El tipo es requerido',
+                'any.only': 'Tipo debe ser: zona, pasillo, estante o bin'
+            }),
+
+            parent_id: Joi.number().integer().positive().optional().allow(null),
+            capacidad_maxima: Joi.number().integer().min(1).optional().allow(null),
+            peso_maximo_kg: Joi.number().min(0).optional().allow(null),
+            volumen_m3: Joi.number().min(0).optional().allow(null),
+
+            es_picking: Joi.boolean().optional().default(false),
+            es_recepcion: Joi.boolean().optional().default(false),
+            es_despacho: Joi.boolean().optional().default(false),
+            es_cuarentena: Joi.boolean().optional().default(false),
+            es_devolucion: Joi.boolean().optional().default(false),
+
+            temperatura_min: Joi.number().optional().allow(null),
+            temperatura_max: Joi.number().optional().allow(null),
+            humedad_controlada: Joi.boolean().optional().default(false),
+
+            orden: Joi.number().integer().min(0).optional().default(0),
+            color: Joi.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().allow(null, ''),
+            icono: Joi.string().max(50).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para actualizar ubicación
+     * PUT /api/v1/inventario/ubicaciones/:id
+     */
+    actualizarUbicacion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            codigo: Joi.string().max(30).optional(),
+            nombre: Joi.string().max(100).optional().allow(null, ''),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+            tipo: Joi.string().valid('zona', 'pasillo', 'estante', 'bin').optional(),
+            parent_id: Joi.number().integer().positive().optional().allow(null),
+            capacidad_maxima: Joi.number().integer().min(1).optional().allow(null),
+            peso_maximo_kg: Joi.number().min(0).optional().allow(null),
+            volumen_m3: Joi.number().min(0).optional().allow(null),
+            es_picking: Joi.boolean().optional(),
+            es_recepcion: Joi.boolean().optional(),
+            es_despacho: Joi.boolean().optional(),
+            es_cuarentena: Joi.boolean().optional(),
+            es_devolucion: Joi.boolean().optional(),
+            temperatura_min: Joi.number().optional().allow(null),
+            temperatura_max: Joi.number().optional().allow(null),
+            humedad_controlada: Joi.boolean().optional(),
+            orden: Joi.number().integer().min(0).optional(),
+            color: Joi.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().allow(null, ''),
+            icono: Joi.string().max(50).optional().allow(null, ''),
+            activo: Joi.boolean().optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para listar ubicaciones
+     * GET /api/v1/inventario/ubicaciones
+     */
+    listarUbicaciones: {
+        query: Joi.object({
+            sucursal_id: Joi.number().integer().positive().optional(),
+            tipo: Joi.string().valid('zona', 'pasillo', 'estante', 'bin').optional(),
+            parent_id: Joi.alternatives().try(
+                Joi.number().integer().positive(),
+                Joi.string().valid('null')
+            ).optional(),
+            es_picking: Joi.boolean().optional(),
+            es_recepcion: Joi.boolean().optional(),
+            activo: Joi.boolean().optional(),
+            bloqueada: Joi.boolean().optional(),
+            busqueda: Joi.string().max(100).optional(),
+            limit: Joi.number().integer().min(1).max(500).optional().default(100),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para bloquear/desbloquear ubicación
+     * PATCH /api/v1/inventario/ubicaciones/:id/bloquear
+     */
+    toggleBloqueoUbicacion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            bloqueada: Joi.boolean().required(),
+            motivo_bloqueo: Joi.string().max(500).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para agregar stock a ubicación
+     * POST /api/v1/inventario/ubicaciones/:id/stock
+     */
+    agregarStockUbicacion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            producto_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'El producto_id es requerido'
+            }),
+            cantidad: Joi.number().integer().min(1).required().messages({
+                'any.required': 'La cantidad es requerida',
+                'number.min': 'La cantidad debe ser al menos 1'
+            }),
+            lote: Joi.string().max(50).optional().allow(null, ''),
+            fecha_vencimiento: Joi.string().isoDate().optional().allow(null)
+        })
+    },
+
+    /**
+     * Schema para mover stock entre ubicaciones
+     * POST /api/v1/inventario/ubicaciones/mover-stock
+     */
+    moverStockUbicacion: {
+        body: Joi.object({
+            producto_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'El producto_id es requerido'
+            }),
+            ubicacion_origen_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'La ubicación de origen es requerida'
+            }),
+            ubicacion_destino_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'La ubicación de destino es requerida'
+            }),
+            cantidad: Joi.number().integer().min(1).required().messages({
+                'any.required': 'La cantidad es requerida',
+                'number.min': 'La cantidad debe ser al menos 1'
+            }),
+            lote: Joi.string().max(50).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para obtener árbol de ubicaciones
+     * GET /api/v1/inventario/ubicaciones/arbol/:sucursalId
+     */
+    obtenerArbolUbicaciones: {
+        params: Joi.object({
+            sucursalId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para obtener ubicaciones disponibles
+     * GET /api/v1/inventario/ubicaciones/disponibles/:sucursalId
+     */
+    obtenerUbicacionesDisponibles: {
+        params: Joi.object({
+            sucursalId: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            cantidad: Joi.number().integer().min(1).optional().default(1)
+        })
+    },
+
+    /**
+     * Schema para obtener estadísticas de ubicaciones
+     * GET /api/v1/inventario/ubicaciones/estadisticas/:sucursalId
+     */
+    obtenerEstadisticasUbicaciones: {
+        params: Joi.object({
+            sucursalId: Joi.number().integer().positive().required()
+        })
     }
 };
 

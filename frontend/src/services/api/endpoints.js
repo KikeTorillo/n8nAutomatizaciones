@@ -1462,6 +1462,197 @@ export const inventarioApi = {
    * @returns {Promise<Object>} { resumen_alertas }
    */
   obtenerResumenAlertas: () => apiClient.get('/inventario/reportes/alertas'),
+
+  // ========== Reservas de Stock (Dic 2025 - Fase 1 Gaps) ==========
+
+  /**
+   * Obtener stock disponible de un producto (stock_actual - reservas_activas)
+   * @param {number} productoId
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Object>} { producto_id, stock_disponible }
+   */
+  obtenerStockDisponible: (productoId, params = {}) =>
+    apiClient.get(`/inventario/productos/${productoId}/stock-disponible`, { params }),
+
+  /**
+   * Obtener stock disponible de múltiples productos
+   * @param {Object} data - { producto_ids: [...], sucursal_id? }
+   * @returns {Promise<Object>} { [producto_id]: { nombre, stock_actual, stock_disponible } }
+   */
+  obtenerStockDisponibleMultiple: (data) =>
+    apiClient.post('/inventario/productos/stock-disponible', data),
+
+  /**
+   * Verificar si hay stock suficiente para una cantidad
+   * @param {number} productoId
+   * @param {Object} params - { cantidad, sucursal_id? }
+   * @returns {Promise<Object>} { disponible, suficiente, faltante }
+   */
+  verificarDisponibilidad: (productoId, params) =>
+    apiClient.get(`/inventario/productos/${productoId}/verificar-disponibilidad`, { params }),
+
+  /**
+   * Crear reserva de stock
+   * @param {Object} data - { producto_id, cantidad, tipo_origen, origen_id?, sucursal_id?, minutos_expiracion? }
+   * @returns {Promise<Object>} Reserva creada
+   */
+  crearReserva: (data) => apiClient.post('/inventario/reservas', data),
+
+  /**
+   * Crear múltiples reservas
+   * @param {Object} data - { items: [{ producto_id, cantidad }], tipo_origen, origen_id?, sucursal_id? }
+   * @returns {Promise<Object>} { reservas: [...] }
+   */
+  crearReservasMultiple: (data) => apiClient.post('/inventario/reservas/multiple', data),
+
+  /**
+   * Listar reservas con filtros
+   * @param {Object} params - { estado?, producto_id?, sucursal_id?, tipo_origen?, origen_id?, limit?, offset? }
+   * @returns {Promise<Object>} { reservas: [...] }
+   */
+  listarReservas: (params = {}) => apiClient.get('/inventario/reservas', { params }),
+
+  /**
+   * Obtener reserva por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerReserva: (id) => apiClient.get(`/inventario/reservas/${id}`),
+
+  /**
+   * Confirmar reserva (descuenta stock real)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  confirmarReserva: (id) => apiClient.patch(`/inventario/reservas/${id}/confirmar`),
+
+  /**
+   * Confirmar múltiples reservas
+   * @param {Object} data - { reserva_ids: [...] }
+   * @returns {Promise<Object>} { confirmadas: [...], total }
+   */
+  confirmarReservasMultiple: (data) => apiClient.post('/inventario/reservas/confirmar-multiple', data),
+
+  /**
+   * Extender tiempo de expiración de una reserva
+   * @param {number} id
+   * @param {Object} data - { minutos_adicionales? }
+   * @returns {Promise<Object>}
+   */
+  extenderReserva: (id, data = {}) => apiClient.patch(`/inventario/reservas/${id}/extender`, data),
+
+  /**
+   * Cancelar reserva individual
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  cancelarReserva: (id) => apiClient.delete(`/inventario/reservas/${id}`),
+
+  /**
+   * Cancelar reservas por origen
+   * @param {string} tipoOrigen - 'venta_pos' | 'orden_venta' | 'cita_servicio' | 'transferencia'
+   * @param {number} origenId
+   * @returns {Promise<Object>} { canceladas: [...], total }
+   */
+  cancelarReservasPorOrigen: (tipoOrigen, origenId) =>
+    apiClient.delete(`/inventario/reservas/origen/${tipoOrigen}/${origenId}`),
+
+  // ========== Ubicaciones de Almacén WMS (Dic 2025 - Fase 3 Gaps) ==========
+
+  /**
+   * Crear nueva ubicación de almacén
+   * @param {Object} data - { sucursal_id, codigo, nombre?, tipo, parent_id?, capacidad_maxima?, es_picking?, es_recepcion?, ... }
+   * @returns {Promise<Object>} Ubicación creada
+   */
+  crearUbicacion: (data) => apiClient.post('/inventario/ubicaciones', data),
+
+  /**
+   * Obtener ubicación por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}`),
+
+  /**
+   * Listar ubicaciones con filtros
+   * @param {Object} params - { sucursal_id?, tipo?, parent_id?, es_picking?, es_recepcion?, activo?, bloqueada?, busqueda?, limit?, offset? }
+   * @returns {Promise<Object>} { ubicaciones, total }
+   */
+  listarUbicaciones: (params = {}) => apiClient.get('/inventario/ubicaciones', { params }),
+
+  /**
+   * Obtener árbol jerárquico de ubicaciones de una sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Array>} Árbol de ubicaciones
+   */
+  obtenerArbolUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/arbol/${sucursalId}`),
+
+  /**
+   * Actualizar ubicación
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarUbicacion: (id, data) => apiClient.put(`/inventario/ubicaciones/${id}`, data),
+
+  /**
+   * Eliminar ubicación (solo si no tiene stock ni sub-ubicaciones)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarUbicacion: (id) => apiClient.delete(`/inventario/ubicaciones/${id}`),
+
+  /**
+   * Bloquear/Desbloquear ubicación
+   * @param {number} id
+   * @param {Object} data - { bloqueada: boolean, motivo_bloqueo?: string }
+   * @returns {Promise<Object>}
+   */
+  toggleBloqueoUbicacion: (id, data) => apiClient.patch(`/inventario/ubicaciones/${id}/bloquear`, data),
+
+  /**
+   * Obtener stock de una ubicación
+   * @param {number} id
+   * @returns {Promise<Array>} Productos en la ubicación
+   */
+  obtenerStockUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}/stock`),
+
+  /**
+   * Agregar stock a una ubicación
+   * @param {number} ubicacionId
+   * @param {Object} data - { producto_id, cantidad, lote?, fecha_vencimiento? }
+   * @returns {Promise<Object>}
+   */
+  agregarStockUbicacion: (ubicacionId, data) => apiClient.post(`/inventario/ubicaciones/${ubicacionId}/stock`, data),
+
+  /**
+   * Mover stock entre ubicaciones
+   * @param {Object} data - { producto_id, ubicacion_origen_id, ubicacion_destino_id, cantidad, lote? }
+   * @returns {Promise<Object>}
+   */
+  moverStockUbicacion: (data) => apiClient.post('/inventario/ubicaciones/mover-stock', data),
+
+  /**
+   * Obtener ubicaciones disponibles para almacenar
+   * @param {number} sucursalId
+   * @param {Object} params - { cantidad? }
+   * @returns {Promise<Array>}
+   */
+  obtenerUbicacionesDisponibles: (sucursalId, params = {}) => apiClient.get(`/inventario/ubicaciones/disponibles/${sucursalId}`, { params }),
+
+  /**
+   * Obtener estadísticas de ubicaciones de una sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/estadisticas/${sucursalId}`),
+
+  /**
+   * Obtener ubicaciones donde está un producto
+   * @param {number} productoId
+   * @returns {Promise<Array>}
+   */
+  obtenerUbicacionesProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/ubicaciones`),
 };
 
 // ==================== ÓRDENES DE COMPRA ====================
@@ -1588,6 +1779,124 @@ export const ordenesCompraApi = {
    * @returns {Promise<Object>}
    */
   estadisticasPorProveedor: (params) => apiClient.get('/inventario/ordenes-compra/reportes/por-proveedor', { params }),
+
+  // ========== Auto-generación de OC (Dic 2025 - Fase 2 Gaps) ==========
+
+  /**
+   * Obtener sugerencias de OC (productos con stock bajo)
+   * @returns {Promise<Object>} { productos: [...] }
+   */
+  obtenerSugerenciasOC: () => apiClient.get('/inventario/ordenes-compra/sugerencias'),
+
+  /**
+   * Generar OC desde un producto con stock bajo
+   * @param {number} productoId
+   * @returns {Promise<Object>} Orden de compra creada
+   */
+  generarOCDesdeProducto: (productoId) => apiClient.post(`/inventario/ordenes-compra/generar-desde-producto/${productoId}`),
+
+  /**
+   * Generar OCs automáticas para todos los productos con stock bajo
+   * @returns {Promise<Object>} { ordenes_creadas, errores }
+   */
+  autoGenerarOCs: () => apiClient.post('/inventario/ordenes-compra/auto-generar'),
+
+  // ========== Ubicaciones de Almacén - WMS (Dic 2025 - Fase 3 Gaps) ==========
+
+  /**
+   * Crear nueva ubicación de almacén
+   * @param {Object} data - { sucursal_id, codigo, nombre?, tipo, parent_id?, capacidad_maxima?, es_picking?, es_recepcion?, ... }
+   * @returns {Promise<Object>} Ubicación creada
+   */
+  crearUbicacion: (data) => apiClient.post('/inventario/ubicaciones', data),
+
+  /**
+   * Obtener ubicación por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}`),
+
+  /**
+   * Listar ubicaciones con filtros
+   * @param {Object} params - { sucursal_id?, tipo?, parent_id?, es_picking?, es_recepcion?, activo?, bloqueada?, busqueda?, limit?, offset? }
+   * @returns {Promise<Object>} { ubicaciones, total }
+   */
+  listarUbicaciones: (params = {}) => apiClient.get('/inventario/ubicaciones', { params }),
+
+  /**
+   * Obtener árbol jerárquico de ubicaciones de una sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Array>} Árbol de ubicaciones
+   */
+  obtenerArbolUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/arbol/${sucursalId}`),
+
+  /**
+   * Actualizar ubicación
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarUbicacion: (id, data) => apiClient.put(`/inventario/ubicaciones/${id}`, data),
+
+  /**
+   * Eliminar ubicación (solo si no tiene stock ni sub-ubicaciones)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarUbicacion: (id) => apiClient.delete(`/inventario/ubicaciones/${id}`),
+
+  /**
+   * Bloquear/Desbloquear ubicación
+   * @param {number} id
+   * @param {Object} data - { bloqueada: boolean, motivo_bloqueo?: string }
+   * @returns {Promise<Object>}
+   */
+  toggleBloqueoUbicacion: (id, data) => apiClient.patch(`/inventario/ubicaciones/${id}/bloquear`, data),
+
+  /**
+   * Obtener stock de una ubicación
+   * @param {number} id
+   * @returns {Promise<Array>} Productos en la ubicación
+   */
+  obtenerStockUbicacion: (id) => apiClient.get(`/inventario/ubicaciones/${id}/stock`),
+
+  /**
+   * Agregar stock a una ubicación
+   * @param {number} ubicacionId
+   * @param {Object} data - { producto_id, cantidad, lote?, fecha_vencimiento? }
+   * @returns {Promise<Object>}
+   */
+  agregarStockUbicacion: (ubicacionId, data) => apiClient.post(`/inventario/ubicaciones/${ubicacionId}/stock`, data),
+
+  /**
+   * Mover stock entre ubicaciones
+   * @param {Object} data - { producto_id, ubicacion_origen_id, ubicacion_destino_id, cantidad, lote? }
+   * @returns {Promise<Object>}
+   */
+  moverStockUbicacion: (data) => apiClient.post('/inventario/ubicaciones/mover-stock', data),
+
+  /**
+   * Obtener ubicaciones disponibles para almacenar
+   * @param {number} sucursalId
+   * @param {Object} params - { cantidad? }
+   * @returns {Promise<Array>}
+   */
+  obtenerUbicacionesDisponibles: (sucursalId, params = {}) => apiClient.get(`/inventario/ubicaciones/disponibles/${sucursalId}`, { params }),
+
+  /**
+   * Obtener estadísticas de ubicaciones de una sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasUbicaciones: (sucursalId) => apiClient.get(`/inventario/ubicaciones/estadisticas/${sucursalId}`),
+
+  /**
+   * Obtener ubicaciones donde está un producto
+   * @param {number} productoId
+   * @returns {Promise<Array>}
+   */
+  obtenerUbicacionesProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/ubicaciones`),
 };
 
 // ==================== PUNTO DE VENTA (POS) ====================

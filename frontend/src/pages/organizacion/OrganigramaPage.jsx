@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import {
   Users,
   User,
@@ -54,8 +54,8 @@ function OrganigramaPage() {
   const [filtroDepartamento, setFiltroDepartamento] = useState('');
 
   // Inicialmente expandir todo
-  useState(() => {
-    if (arbol.length > 0) {
+  useEffect(() => {
+    if (arbol.length > 0 && expandedNodes.size === 0) {
       const allIds = new Set();
       const collectIds = (nodes) => {
         nodes.forEach(n => {

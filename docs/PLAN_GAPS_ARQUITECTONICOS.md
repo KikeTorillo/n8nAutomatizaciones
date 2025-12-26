@@ -1,6 +1,6 @@
 # Plan de Gaps Arquitectónicos - Nexo ERP
 
-> **Última Revisión**: 26 Diciembre 2025 - Fase 5.2 corregida
+> **Última Revisión**: 26 Diciembre 2025
 
 ---
 
@@ -8,14 +8,15 @@
 
 | Fase | Nombre | Estado | Notas |
 |------|--------|--------|-------|
-| 1 | Workflows de Aprobación | ✅ Completado | ~4,200 líneas |
+| 1 | Workflows de Aprobación | ✅ Completado | 6 tablas |
 | 2 | Gestión de Módulos | ✅ Completado | 11 módulos con dependencias |
-| 3 | Permisos Normalizados | ✅ Completado | 72 permisos, 5 roles |
-| 4 | Multi-Moneda | ✅ Completado | Precios, conversión POS |
+| 3 | Permisos Normalizados | ✅ Completado | 86 permisos, 13 módulos |
+| 4 | Multi-Moneda | ✅ Completado | 7 monedas |
 | 5 | Listas de Precios | ✅ Completado | Modelo Odoo |
-| 5.1 | Roles en Invitaciones | ✅ Completado | Selector rol al crear profesional |
-| 5.2 | Gestión de Usuarios | ✅ Completado | Vincular/desvincular profesional funcional |
-| 5.3 | Configuración POS | ✅ Completado | Requerir profesional para ventas |
+| 5.1-5.3 | Usuarios/Profesionales/POS | ✅ Completado | Modelo bidireccional |
+| **INV-1** | **Reservas de Stock** | ✅ Completado | Evita sobreventa |
+| **INV-2** | **Auto-generación OC** | ✅ Completado | Stock bajo → OC automática |
+| **INV-3** | **Ubicaciones WMS** | ✅ Completado | Zona→Pasillo→Estante→Bin |
 | 6 | Webhooks Salientes | ⬜ Pendiente | - |
 | 7 | Internacionalización | ⬜ Pendiente | BD preparada |
 | 8 | Reportes Multi-Sucursal | ⬜ Pendiente | - |
@@ -24,99 +25,101 @@
 
 ---
 
-## Fases Completadas (Resumen)
+## Comparativa vs Odoo 17
 
-### Fase 1-4: Core Funcional
-- **Workflows**: Aprobaciones OC basadas en límites por rol
-- **Módulos**: 11 módulos activables con dependencias
-- **Permisos**: 72 permisos normalizados, función SQL `tiene_permiso()`
-- **Multi-Moneda**: MXN/COP/USD, jerarquía sucursal→organización
+### Paridad Actual
 
-### Fase 5: Listas de Precios (Dic 2025)
-Sistema estilo Odoo con prioridad: Producto > Categoría > Global.
-- Items con precio fijo o descuento porcentual
-- `obtener_precio_producto()` resuelve precio final en POS
-- Descuentos NO acumulativos (modelo Odoo)
+| Módulo | Nexo vs Odoo | Ventaja Nexo |
+|--------|--------------|--------------|
+| Usuarios | 85% | OAuth nativo, soft delete auditado |
+| Profesionales | 90% | 5 estados laborales, comisiones integradas |
+| Departamentos | 95% | Código único por org |
+| Puestos | 80% | Rango salarial integrado |
+| **Permisos** | **95%** | **RLS PostgreSQL, numéricos, vigencia temporal** |
+| **Inventario** | **80%** | **Kardex, alertas, reservas, OC auto, WMS** |
 
-### Fase 5.1: Roles en Invitaciones (25 Dic 2025)
-Selector de rol (empleado/propietario/admin) al crear profesional con invitación.
+### Gaps vs Odoo (Priorizado)
 
-### Fase 5.2: Gestión de Usuarios (26 Dic 2025)
+#### 🔴 Alta Prioridad
+| Gap | Módulo | Estado | Esfuerzo |
+|-----|--------|--------|----------|
+| ~~Ubicaciones almacén~~ | Inventario | ✅ Completado | - |
+| Valoración FIFO/AVCO | Inventario | ⬜ Pendiente | Alto |
+| 2FA/MFA | Usuarios | ⬜ Pendiente | Alto |
+| CRUD granular | Permisos | ⬜ Pendiente | Alto |
 
-**Página `/configuracion/usuarios`**:
-- Listar usuarios con filtros (rol, estado, búsqueda)
-- Crear usuarios directos (sin profesional)
-- Cambiar rol, activar/desactivar usuario
-- Vincular/desvincular profesional a usuario
+#### 🟡 Media Prioridad
+| Gap | Módulo | Estado | Esfuerzo |
+|-----|--------|--------|----------|
+| Transferencias internas | Inventario | ⬜ Pendiente | Medio |
+| ~~Auto-generación OC~~ | Inventario | ✅ Completado | - |
+| Números de serie | Inventario | ⬜ Pendiente | Alto |
+| ~~Reservas de stock~~ | Inventario | ✅ Completado | - |
+| hr.contract | RRHH | ⬜ Pendiente | Alto |
+| Horarios normalizados | RRHH | ⬜ Pendiente | Medio |
+| Auditoría cambios | Core | ⬜ Pendiente | Medio |
 
-**Modelo de datos** (estilo Odoo):
-- `usuarios` = acceso al sistema (`res.users`)
-- `profesionales` = datos laborales (`hr.employee`)
-- Relación bidireccional: `usuarios.profesional_id` ↔ `profesionales.usuario_id`
-
-**Bug crítico corregido**:
-- `RLSContextManager.withBypass({ useTransaction: true })` NO persistía cambios
-- Solución: Remover `useTransaction: true`, usar auto-commit por query
-
-### Fase 5.3: Configuración POS (26 Dic 2025)
-
-**Nueva configuración organizacional**:
-- Toggle "Requerir profesional para ventas" en Configuración > Mi Negocio
-- Columna `pos_requiere_profesional BOOLEAN` en tabla `organizaciones`
-- Si está activado, usuarios sin profesional vinculado reciben error 403
-
-**Flujo de validación**:
-1. Usuario intenta crear venta en POS
-2. Backend auto-asigna `profesional_id` si usuario tiene uno vinculado
-3. Si no tiene profesional y config está activa → Error con mensaje claro
-4. Mensaje: "Para realizar ventas necesitas tener un perfil de profesional vinculado"
-
-**Archivos modificados**:
-| Archivo | Cambio |
-|---------|--------|
-| `organizacion.constants.js` | Campo en SELECT_FIELDS y CAMPOS_ACTUALIZABLES |
-| `organizacion.schemas.js` | Validación Joi para boolean |
-| `ventas.controller.js` | Validación pre-creación de venta |
-| `NegocioPage.jsx` | Toggle UI + fix boolean trim() |
-
-**Bugs corregidos en esta fase**:
-- `BuscadorProductosPOS.jsx`: crash al buscar (productos?.length)
-- `VentaPOSPage.jsx`: mensaje error genérico (message vs mensaje)
-- `invitacionProfesional.js`: colores email verde → Nexo purple #753572
+#### 🟢 Baja Prioridad
+| Gap | Módulo | Estado | Esfuerzo |
+|-----|--------|--------|----------|
+| App móvil/Barcode | Inventario | ⬜ Pendiente | Alto |
+| Caducidad/Lotes | Inventario | ⬜ Pendiente | Medio |
+| API Keys usuario | Usuarios | ⬜ Pendiente | Medio |
+| Portal usuario | Usuarios | ⬜ Pendiente | Medio |
 
 ---
 
-## Fases Futuras
+## Arquitectura Actual
 
-| Fase | Descripción |
-|------|-------------|
-| 6. Webhooks | Notificar sistemas externos (cita.creada, venta.completada) |
-| 7. i18n | Multi-idioma con i18next (BD preparada) |
-| 8. Reportes | Vistas materializadas multi-sucursal con pg_cron |
-| 9. Centros de Costo | Análisis de rentabilidad |
-| 10. API Pública | OpenAPI/Swagger + API Keys |
+### Modelo Usuario-Profesional (estilo Odoo)
+```
+usuarios.profesional_id ↔ profesionales.usuario_id
+```
+- Relación bidireccional opcional
+- Usuario sin profesional = admin puro, contador
+- Profesional sin usuario = empleado sin acceso sistema
+
+### Sistema de Permisos (Ventaja vs Odoo)
+```
+permisos_catalogo (86) → permisos_rol (5 roles) → permisos_usuario_sucursal (overrides)
+                                                          ↓
+                                                  RLS PostgreSQL (122 políticas)
+```
+- **Permisos numéricos**: `pos.max_descuento`, `inventario.limite_aprobacion`
+- **Vigencia temporal**: `fecha_inicio/fecha_fin` en overrides
+- **Granularidad**: Por usuario + sucursal específica
+
+### Jerarquía Organizacional
+```
+departamentos (recursivo via parent_id)
+    └── puestos (con salario_min/max)
+        └── profesionales (con supervisor_id)
+```
 
 ---
 
 ## Notas Técnicas
 
 ### RLS Multi-Tenant
-- Usar `RLSContextManager.query()` siempre
-- `withBypass()` solo para JOINs multi-tabla o super_admin
-- **⚠️ NUNCA usar `{ useTransaction: true }` con `withBypass()`** - los cambios no persisten
-- Sin `useTransaction`, cada query hace auto-commit (comportamiento correcto)
-- 122 políticas RLS activas
+- `RLSContextManager.query()` siempre
+- `withBypass()` solo para JOINs o super_admin
+- **⚠️ NUNCA `{ useTransaction: true }` con `withBypass()`**
 
-### Adapters de Servicios
-Patrón para desacoplar módulos sin dependencias directas:
-- `clienteAdapter`, `workflowAdapter`, `profesionalAdapter`
-- `notificacionAdapter`, `chatbotConfigAdapter`
+### Bugs Corregidos (Dic 2025)
+- `OrganigramaPage.jsx`: `useState` → `useEffect` para expandir nodos
+- `pos_requiere_profesional`: Columna agregada a organizaciones
+- `ubicaciones.model.js`: Patrón RLSContextManager corregido (`query(orgId, callback)` no `query(sql, params, orgId)`)
 
-### Docker
-- HMR NO funciona, usar `docker restart <contenedor>` + Ctrl+Shift+R
+---
 
-### Estadísticas
-- 19 módulos backend
-- 60+ páginas frontend
-- 130+ componentes UI
-- 35+ hooks React
+## Métricas
+
+| Métrica | Valor |
+|---------|-------|
+| Módulos backend | 19 |
+| Permisos | 86 en 13 módulos |
+| Políticas RLS | 122 |
+| Monedas | 7 |
+| Páginas frontend | 100+ |
+| Hooks React | 37+ |
+| Tablas inventario | 15 (incluye reservas, ubicaciones) |

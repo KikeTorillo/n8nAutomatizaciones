@@ -5,8 +5,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import BackButton from '@/components/ui/BackButton';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
+import useSucursalStore from '@/store/sucursalStore';
 import { useCrearVenta } from '@/hooks/useVentas';
 import { useAccesoModulo } from '@/hooks/useAccesoModulo';
+import {
+  useCrearReserva,
+  useCancelarReserva,
+  useConfirmarReservasMultiple
+} from '@/hooks/useInventario';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
@@ -27,8 +33,14 @@ import { listasPreciosApi } from '@/services/api/endpoints';
 export default function VentaPOSPage() {
   const navigate = useNavigate();
   const { user } = useAuthStore();
+  const { getSucursalId } = useSucursalStore();
   const toast = useToast();
   const crearVenta = useCrearVenta();
+
+  // Dic 2025: Hooks para reservas de stock (evitar sobreventa)
+  const crearReserva = useCrearReserva();
+  const cancelarReserva = useCancelarReserva();
+  const confirmarReservas = useConfirmarReservasMultiple();
 
   // Nov 2025: Obtener profesional vinculado y validar acceso a POS
   const {
@@ -141,7 +153,7 @@ export default function VentaPOSPage() {
   const total = subtotal - montoDescuentoGlobal;
 
   // Handler: Agregar producto al carrito
-  // Dic 2025: Integración con listas de precios inteligentes
+  // Dic 2025: Integración con listas de precios inteligentes + reservas de stock
   const handleProductoSeleccionado = async (producto) => {
     // Verificar si el producto ya está en el carrito
     const itemExistente = items.find(item => item.producto_id === producto.id);
@@ -150,88 +162,126 @@ export default function VentaPOSPage() {
       // Incrementar cantidad y recalcular precio por qty breaks
       const nuevaCantidad = itemExistente.cantidad + 1;
 
-      // Obtener precio actualizado por cantidad
-      const precioResuelto = await obtenerPrecioInteligente(producto.id, nuevaCantidad);
+      try {
+        // Cancelar reserva anterior y crear nueva con cantidad actualizada
+        if (itemExistente.reserva_id) {
+          await cancelarReserva.mutateAsync(itemExistente.reserva_id);
+        }
+        const nuevaReserva = await crearReserva.mutateAsync({
+          producto_id: producto.id,
+          cantidad: nuevaCantidad,
+          tipo_origen: 'venta_pos'
+        });
 
-      setItems(items.map(item =>
-        item.producto_id === producto.id
-          ? {
-              ...item,
-              cantidad: nuevaCantidad,
-              // Actualizar precio si hay qty break
-              ...(precioResuelto && {
-                precio_unitario: parseFloat(precioResuelto.precio),
-                fuente_precio: precioResuelto.fuente,
-                fuente_detalle: precioResuelto.fuente_detalle,
-                descuento_lista: parseFloat(precioResuelto.descuento_aplicado || 0),
-                lista_codigo: precioResuelto.lista_codigo
-              })
-            }
-          : item
-      ));
-      toast.success(`Cantidad de "${producto.nombre}" aumentada`);
+        // Obtener precio actualizado por cantidad
+        const precioResuelto = await obtenerPrecioInteligente(producto.id, nuevaCantidad);
+
+        setItems(items.map(item =>
+          item.producto_id === producto.id
+            ? {
+                ...item,
+                cantidad: nuevaCantidad,
+                reserva_id: nuevaReserva.id,
+                // Actualizar precio si hay qty break
+                ...(precioResuelto && {
+                  precio_unitario: parseFloat(precioResuelto.precio),
+                  fuente_precio: precioResuelto.fuente,
+                  fuente_detalle: precioResuelto.fuente_detalle,
+                  descuento_lista: parseFloat(precioResuelto.descuento_aplicado || 0),
+                  lista_codigo: precioResuelto.lista_codigo
+                })
+              }
+            : item
+        ));
+        toast.success(`Cantidad de "${producto.nombre}" aumentada`);
+      } catch (error) {
+        toast.error(error.message || 'Stock insuficiente');
+        return;
+      }
     } else {
-      // Obtener precio inteligente para el nuevo producto
-      const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
+      try {
+        // Crear reserva de stock para el nuevo producto
+        const reserva = await crearReserva.mutateAsync({
+          producto_id: producto.id,
+          cantidad: 1,
+          tipo_origen: 'venta_pos'
+        });
 
-      // Agregar nuevo item con precio resuelto
-      const nuevoItem = {
-        id: Date.now(), // ID temporal para el carrito
-        producto_id: producto.id,
-        nombre: producto.nombre,
-        sku: producto.sku,
-        precio_venta: producto.precio_venta, // Precio base
-        precio_original: producto.precio_venta,
-        precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
-        cantidad: 1,
-        descuento_monto: 0,
-        stock_actual: producto.stock_actual,
-        // Dic 2025: Info de lista de precios
-        fuente_precio: precioResuelto?.fuente || 'precio_producto',
-        fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
-        descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
-        lista_codigo: precioResuelto?.lista_codigo || null
-      };
+        // Obtener precio inteligente para el nuevo producto
+        const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
 
-      setItems([...items, nuevoItem]);
+        // Agregar nuevo item con precio resuelto y reserva_id
+        const nuevoItem = {
+          id: Date.now(), // ID temporal para el carrito
+          producto_id: producto.id,
+          reserva_id: reserva.id, // Guardar ID de reserva
+          nombre: producto.nombre,
+          sku: producto.sku,
+          precio_venta: producto.precio_venta, // Precio base
+          precio_original: producto.precio_venta,
+          precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
+          cantidad: 1,
+          descuento_monto: 0,
+          stock_actual: producto.stock_actual,
+          // Dic 2025: Info de lista de precios
+          fuente_precio: precioResuelto?.fuente || 'precio_producto',
+          fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
+          descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
+          lista_codigo: precioResuelto?.lista_codigo || null
+        };
 
-      // Mostrar toast con info del precio
-      if (precioResuelto?.fuente === 'lista_precios' && precioResuelto.descuento_aplicado > 0) {
-        toast.success(`"${producto.nombre}" agregado (${precioResuelto.lista_codigo}: -${precioResuelto.descuento_aplicado}%)`);
-      } else {
-        toast.success(`"${producto.nombre}" agregado al carrito`);
+        setItems([...items, nuevoItem]);
+
+        // Mostrar toast con info del precio
+        if (precioResuelto?.fuente === 'lista_precios' && precioResuelto.descuento_aplicado > 0) {
+          toast.success(`"${producto.nombre}" agregado (${precioResuelto.lista_codigo}: -${precioResuelto.descuento_aplicado}%)`);
+        } else {
+          toast.success(`"${producto.nombre}" agregado al carrito`);
+        }
+      } catch (error) {
+        toast.error(error.message || 'Stock insuficiente para este producto');
       }
     }
   };
 
   // Handler: Actualizar cantidad de item
-  // Dic 2025: Recalcula precio cuando cambia cantidad (qty breaks)
+  // Dic 2025: Recalcula precio cuando cambia cantidad (qty breaks) + actualiza reserva
   const handleActualizarCantidad = async (itemId, nuevaCantidad) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
-    // Primero actualizar la cantidad
-    setItems(prevItems => prevItems.map(i =>
-      i.id === itemId ? { ...i, cantidad: nuevaCantidad } : i
-    ));
+    try {
+      // Cancelar reserva anterior y crear nueva con cantidad actualizada
+      if (item.reserva_id) {
+        await cancelarReserva.mutateAsync(item.reserva_id);
+      }
+      const nuevaReserva = await crearReserva.mutateAsync({
+        producto_id: item.producto_id,
+        cantidad: nuevaCantidad,
+        tipo_origen: 'venta_pos'
+      });
 
-    // Luego obtener el precio actualizado por cantidad
-    const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
+      // Obtener el precio actualizado por cantidad
+      const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
 
-    if (precioResuelto) {
       setItems(prevItems => prevItems.map(i =>
         i.id === itemId
           ? {
               ...i,
               cantidad: nuevaCantidad,
-              precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
-              fuente_precio: precioResuelto.fuente,
-              fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
-              descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
-              lista_codigo: precioResuelto.lista_codigo
+              reserva_id: nuevaReserva.id,
+              ...(precioResuelto && {
+                precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
+                fuente_precio: precioResuelto.fuente,
+                fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
+                descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
+                lista_codigo: precioResuelto.lista_codigo
+              })
             }
           : i
       ));
+    } catch (error) {
+      toast.error(error.message || 'Stock insuficiente para esta cantidad');
     }
   };
 
@@ -245,14 +295,34 @@ export default function VentaPOSPage() {
   };
 
   // Handler: Eliminar item del carrito
-  const handleEliminarItem = (itemId) => {
+  // Dic 2025: Cancela la reserva de stock
+  const handleEliminarItem = async (itemId) => {
     const item = items.find(i => i.id === itemId);
+    if (!item) return;
+
+    // Cancelar reserva si existe
+    if (item.reserva_id) {
+      try {
+        await cancelarReserva.mutateAsync(item.reserva_id);
+      } catch (error) {
+        console.warn('Error al cancelar reserva:', error);
+      }
+    }
+
     setItems(items.filter(i => i.id !== itemId));
     toast.success(`"${item.nombre}" eliminado del carrito`);
   };
 
   // Handler: Vaciar carrito
-  const handleVaciarCarrito = () => {
+  // Dic 2025: Cancela todas las reservas de stock
+  const handleVaciarCarrito = async () => {
+    // Cancelar todas las reservas activas
+    const cancelaciones = items
+      .filter(item => item.reserva_id)
+      .map(item => cancelarReserva.mutateAsync(item.reserva_id).catch(() => {}));
+
+    await Promise.all(cancelaciones);
+
     setItems([]);
     setDescuentoGlobal(0);
     setMostrarConfirmVaciar(false);
@@ -270,16 +340,18 @@ export default function VentaPOSPage() {
   };
 
   // Handler: Confirmar venta
+  // Dic 2025: Confirma las reservas de stock al completar la venta
   const handleConfirmarVenta = async (datosPago) => {
     try {
-      // Preparar items para el backend
+      // Preparar items para el backend (incluir reserva_id)
       const itemsBackend = items.map(item => ({
         producto_id: item.producto_id,
         cantidad: item.cantidad,
         precio_unitario: parseFloat(item.precio_unitario),
         descuento_monto: parseFloat(item.descuento_monto || 0),
         aplica_comision: true,
-        notas: ''
+        notas: '',
+        reserva_id: item.reserva_id || undefined
       }));
 
       // Calcular descuento global en monto
@@ -289,6 +361,8 @@ export default function VentaPOSPage() {
       const datosVenta = {
         tipo_venta: 'directa',
         usuario_id: user.id,
+        // Dic 2025: Incluir sucursal para permisos
+        sucursalId: getSucursalId() || 1,
         // Nov 2025: Incluir cliente si está seleccionado
         cliente_id: clienteSeleccionado?.id || undefined,
         items: itemsBackend,
@@ -300,8 +374,21 @@ export default function VentaPOSPage() {
         notas: ''
       };
 
-      // Crear venta
+      // Crear venta PRIMERO (antes de confirmar reservas)
       const resultado = await crearVenta.mutateAsync(datosVenta);
+
+      // Solo si la venta fue exitosa, confirmar las reservas de stock
+      const reservaIds = items
+        .filter(item => item.reserva_id)
+        .map(item => item.reserva_id);
+
+      if (reservaIds.length > 0) {
+        try {
+          await confirmarReservas.mutateAsync(reservaIds);
+        } catch (err) {
+          console.warn('Error al confirmar reservas (venta ya creada):', err);
+        }
+      }
 
       // Mostrar éxito
       toast.success(`¡Venta ${resultado.folio} creada exitosamente!`, {

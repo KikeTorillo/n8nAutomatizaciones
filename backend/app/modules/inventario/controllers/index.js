@@ -10,6 +10,8 @@ const MovimientosInventarioController = require('./movimientos.controller');
 const AlertasInventarioController = require('./alertas.controller');
 const ReportesInventarioController = require('./reportes.controller');
 const OrdenesCompraController = require('./ordenes-compra.controller');
+const ReservasController = require('./reservas.controller');
+const UbicacionesAlmacenController = require('./ubicaciones.controller');
 
 /**
  * Controller principal que combina todos los módulos especializados
@@ -235,6 +237,126 @@ class InventarioMainController {
 
     static obtenerEstadisticasComprasPorProveedor(req, res) {
         return OrdenesCompraController.estadisticasPorProveedor(req, res);
+    }
+
+    static generarOCDesdeProducto(req, res) {
+        return OrdenesCompraController.generarDesdeProducto(req, res);
+    }
+
+    static autoGenerarOCs(req, res) {
+        return OrdenesCompraController.autoGenerarOCs(req, res);
+    }
+
+    static obtenerSugerenciasOC(req, res) {
+        return OrdenesCompraController.obtenerSugerenciasOC(req, res);
+    }
+
+    // ===================================================================
+    // 🔒 ENDPOINTS RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps)
+    // ===================================================================
+
+    static crearReserva(req, res) {
+        return ReservasController.crear(req, res);
+    }
+
+    static crearReservaMultiple(req, res) {
+        return ReservasController.crearMultiple(req, res);
+    }
+
+    static obtenerReservaPorId(req, res) {
+        return ReservasController.obtenerPorId(req, res);
+    }
+
+    static listarReservas(req, res) {
+        return ReservasController.listar(req, res);
+    }
+
+    static confirmarReserva(req, res) {
+        return ReservasController.confirmar(req, res);
+    }
+
+    static confirmarReservaMultiple(req, res) {
+        return ReservasController.confirmarMultiple(req, res);
+    }
+
+    static cancelarReserva(req, res) {
+        return ReservasController.cancelar(req, res);
+    }
+
+    static cancelarReservaPorOrigen(req, res) {
+        return ReservasController.cancelarPorOrigen(req, res);
+    }
+
+    static stockDisponible(req, res) {
+        return ReservasController.stockDisponible(req, res);
+    }
+
+    static stockDisponibleMultiple(req, res) {
+        return ReservasController.stockDisponibleMultiple(req, res);
+    }
+
+    static verificarDisponibilidad(req, res) {
+        return ReservasController.verificarDisponibilidad(req, res);
+    }
+
+    static extenderReserva(req, res) {
+        return ReservasController.extenderExpiracion(req, res);
+    }
+
+    // ===================================================================
+    // 📍 ENDPOINTS UBICACIONES DE ALMACÉN (Dic 2025 - Fase 3 Gaps)
+    // ===================================================================
+
+    static crearUbicacion(req, res) {
+        return UbicacionesAlmacenController.crear(req, res);
+    }
+
+    static obtenerUbicacionPorId(req, res) {
+        return UbicacionesAlmacenController.obtenerPorId(req, res);
+    }
+
+    static listarUbicaciones(req, res) {
+        return UbicacionesAlmacenController.listar(req, res);
+    }
+
+    static obtenerArbolUbicaciones(req, res) {
+        return UbicacionesAlmacenController.obtenerArbol(req, res);
+    }
+
+    static actualizarUbicacion(req, res) {
+        return UbicacionesAlmacenController.actualizar(req, res);
+    }
+
+    static eliminarUbicacion(req, res) {
+        return UbicacionesAlmacenController.eliminar(req, res);
+    }
+
+    static toggleBloqueoUbicacion(req, res) {
+        return UbicacionesAlmacenController.toggleBloqueo(req, res);
+    }
+
+    static obtenerStockUbicacion(req, res) {
+        return UbicacionesAlmacenController.obtenerStock(req, res);
+    }
+
+    static obtenerUbicacionesProducto(req, res) {
+        return UbicacionesAlmacenController.obtenerUbicacionesProducto(req, res);
+    }
+
+    static obtenerUbicacionesDisponibles(req, res) {
+        return UbicacionesAlmacenController.obtenerDisponibles(req, res);
+    }
+
+    static agregarStockUbicacion(req, res) {
+        return UbicacionesAlmacenController.agregarStock(req, res);
+    }
+
+    static moverStockUbicacion(req, res) {
+        return UbicacionesAlmacenController.moverStock(req, res);
+    }
+
+    static obtenerEstadisticasUbicaciones(req, res) {
+        return UbicacionesAlmacenController.obtenerEstadisticas(req, res);
     }
 }
 

@@ -1,10 +1,14 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const ReservasModel = require('../../inventario/models/reservas.model');
 const logger = require('../../../utils/logger');
 
 /**
  * Model para ventas POS (Punto de Venta)
  * IMPORTANTE: Usa locks optimistas (SELECT FOR UPDATE) para evitar race conditions
  * Los triggers automáticos generan: folio, totales, descuento de stock
+ *
+ * ACTUALIZADO Dic 2025: Integración con sistema de reservas de stock
+ * para evitar sobreventa en ventas concurrentes multi-cajero
  */
 class VentasPOSModel {
 
@@ -1298,6 +1302,318 @@ class VentasPOSModel {
                 mensaje: 'Venta eliminada y stock revertido exitosamente'
             };
         });
+    }
+
+    // =========================================================================
+    // MÉTODOS DE RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps Inventario)
+    // =========================================================================
+
+    /**
+     * Validar stock disponible para items del carrito
+     * Considera reservas activas de otros cajeros
+     * @param {Array} items - Array de { producto_id, cantidad }
+     * @param {number} organizacionId - ID de la organización
+     * @param {number|null} sucursalId - ID de sucursal (opcional)
+     * @returns {Object} { valido: boolean, errores: [], stockMap: {} }
+     */
+    static async validarStockDisponible(items, organizacionId, sucursalId = null) {
+        const productosIds = items.map(i => i.producto_id);
+
+        // Obtener stock disponible (real - reservas activas)
+        const stockMap = await ReservasModel.stockDisponibleMultiple(
+            productosIds,
+            organizacionId,
+            sucursalId
+        );
+
+        const errores = [];
+        let valido = true;
+
+        for (const item of items) {
+            const stockInfo = stockMap[item.producto_id];
+
+            if (!stockInfo) {
+                errores.push({
+                    producto_id: item.producto_id,
+                    error: 'Producto no encontrado'
+                });
+                valido = false;
+                continue;
+            }
+
+            if (stockInfo.stock_disponible < item.cantidad) {
+                errores.push({
+                    producto_id: item.producto_id,
+                    nombre: stockInfo.nombre,
+                    stock_disponible: stockInfo.stock_disponible,
+                    cantidad_solicitada: item.cantidad,
+                    error: `Stock insuficiente. Disponible: ${stockInfo.stock_disponible}`
+                });
+                valido = false;
+            }
+        }
+
+        return { valido, errores, stockMap };
+    }
+
+    /**
+     * Crear reservas para items del carrito
+     * Llamar cuando el usuario agrega productos al carrito
+     * @param {Array} items - Array de { producto_id, cantidad }
+     * @param {number} organizacionId - ID de la organización
+     * @param {number|null} sucursalId - ID de sucursal
+     * @param {number|null} usuarioId - ID del usuario/cajero
+     * @returns {Array} Array de reservas creadas con sus IDs
+     */
+    static async crearReservasCarrito(items, organizacionId, sucursalId = null, usuarioId = null) {
+        logger.info('[VentasPOSModel.crearReservasCarrito] Creando reservas', {
+            organizacion_id: organizacionId,
+            total_items: items.length
+        });
+
+        try {
+            const reservas = await ReservasModel.crearMultiple(
+                items,
+                'venta_pos',
+                null, // origen_id: null porque la venta aún no existe
+                organizacionId,
+                sucursalId,
+                usuarioId
+            );
+
+            logger.info('[VentasPOSModel.crearReservasCarrito] Reservas creadas', {
+                total: reservas.length
+            });
+
+            return reservas;
+        } catch (error) {
+            logger.error('[VentasPOSModel.crearReservasCarrito] Error', {
+                error: error.message
+            });
+            throw error;
+        }
+    }
+
+    /**
+     * Confirmar reservas al completar venta
+     * Llamar después de crear la venta exitosamente
+     * @param {Array<number>} reservaIds - IDs de las reservas a confirmar
+     * @param {number} organizacionId - ID de la organización
+     */
+    static async confirmarReservasVenta(reservaIds, organizacionId) {
+        if (!reservaIds || reservaIds.length === 0) {
+            return [];
+        }
+
+        logger.info('[VentasPOSModel.confirmarReservasVenta] Confirmando', {
+            total: reservaIds.length
+        });
+
+        const confirmadas = await ReservasModel.confirmarMultiple(reservaIds, organizacionId);
+
+        logger.info('[VentasPOSModel.confirmarReservasVenta] Confirmadas', {
+            total: confirmadas.length
+        });
+
+        return confirmadas;
+    }
+
+    /**
+     * Cancelar reservas de un carrito abandonado
+     * @param {Array<number>} reservaIds - IDs de las reservas a cancelar
+     * @param {number} organizacionId - ID de la organización
+     */
+    static async cancelarReservasCarrito(reservaIds, organizacionId) {
+        if (!reservaIds || reservaIds.length === 0) {
+            return 0;
+        }
+
+        logger.info('[VentasPOSModel.cancelarReservasCarrito] Cancelando', {
+            total: reservaIds.length
+        });
+
+        let canceladas = 0;
+        for (const reservaId of reservaIds) {
+            const resultado = await ReservasModel.cancelar(reservaId, organizacionId);
+            if (resultado) canceladas++;
+        }
+
+        logger.info('[VentasPOSModel.cancelarReservasCarrito] Canceladas', {
+            total: canceladas
+        });
+
+        return canceladas;
+    }
+
+    /**
+     * Crear venta con reservas pre-existentes
+     * Flujo optimizado: reservas ya creadas, solo confirmar
+     * @param {Object} data - Datos de la venta (igual que crear)
+     * @param {Array<number>} reservaIds - IDs de reservas a confirmar
+     * @param {number} organizacionId - ID de la organización
+     */
+    static async crearConReservas(data, reservaIds, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[VentasPOSModel.crearConReservas] Iniciando venta con reservas', {
+                organizacion_id: organizacionId,
+                total_items: data.items?.length || 0,
+                total_reservas: reservaIds?.length || 0
+            });
+
+            // Confirmar reservas primero (esto valida stock y lo descuenta)
+            if (reservaIds && reservaIds.length > 0) {
+                for (const reservaId of reservaIds) {
+                    const query = `SELECT confirmar_reserva_stock($1) as resultado`;
+                    const result = await db.query(query, [reservaId]);
+
+                    if (!result.rows[0].resultado) {
+                        throw new Error(`No se pudo confirmar la reserva ${reservaId}`);
+                    }
+                }
+
+                logger.info('[VentasPOSModel.crearConReservas] Reservas confirmadas', {
+                    total: reservaIds.length
+                });
+            }
+
+            // Ahora crear la venta normal (sin validar stock, ya fue descontado)
+            // NOTA: Usamos una versión simplificada que no valida stock
+            const venta = await this.crearSinValidarStock(data, organizacionId, db);
+
+            return venta;
+        });
+    }
+
+    /**
+     * Crear venta sin validar stock (para uso con reservas)
+     * SOLO USAR INTERNAMENTE después de confirmar reservas
+     * @private
+     */
+    static async crearSinValidarStock(data, organizacionId, db) {
+        // Validar que hay items
+        if (!data.items || data.items.length === 0) {
+            throw new Error('La venta debe tener al menos un item');
+        }
+
+        // Generar folio
+        const year = new Date().getFullYear();
+        const folioQuery = await db.query(
+            `SELECT COALESCE(MAX(CAST(SUBSTRING(folio FROM 'POS-\\d{4}-(\\d+)') AS INTEGER)), 0) + 1 AS contador
+             FROM ventas_pos
+             WHERE organizacion_id = $1 AND folio LIKE $2`,
+            [organizacionId, `POS-${year}-%`]
+        );
+        const contador = folioQuery.rows[0].contador;
+        const folio = `POS-${year}-${String(contador).padStart(4, '0')}`;
+
+        // Calcular totales
+        let subtotal = 0;
+
+        // Insertar venta
+        const montoRecibido = data.monto_pagado !== undefined ? data.monto_pagado : 0;
+        const ventaQuery = `
+            INSERT INTO ventas_pos (
+                organizacion_id, sucursal_id, folio, tipo_venta,
+                cliente_id, cita_id, profesional_id, usuario_id,
+                subtotal, descuento_porcentaje, descuento_monto,
+                impuestos, total, metodo_pago, estado_pago,
+                monto_pagado, monto_pendiente, notas, estado, fecha_venta
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20)
+            RETURNING *
+        `;
+
+        // Calcular subtotal de items
+        for (const item of data.items) {
+            const prodQuery = await db.query(
+                `SELECT precio_venta FROM productos WHERE id = $1`,
+                [item.producto_id]
+            );
+            const precioUnitario = item.precio_unitario || prodQuery.rows[0]?.precio_venta || 0;
+            const descuentoMonto = item.descuento_monto || 0;
+            subtotal += item.cantidad * (precioUnitario - descuentoMonto);
+        }
+
+        const descuentoVenta = data.descuento_monto || 0;
+        const impuestos = data.impuestos || 0;
+        const total = subtotal - descuentoVenta + impuestos;
+        const montoPagado = Math.min(montoRecibido, total);
+        const montoPendiente = Math.max(0, total - montoPagado);
+        let estadoPago = 'pendiente';
+        if (montoRecibido >= total) estadoPago = 'pagado';
+        else if (montoRecibido > 0) estadoPago = 'parcial';
+
+        const ventaValues = [
+            organizacionId,
+            data.sucursal_id || null,
+            folio,
+            data.tipo_venta || 'directa',
+            data.cliente_id || null,
+            data.cita_id || null,
+            data.profesional_id || null,
+            data.usuario_id,
+            subtotal,
+            data.descuento_porcentaje || 0,
+            descuentoVenta,
+            impuestos,
+            total,
+            data.metodo_pago,
+            estadoPago,
+            montoPagado,
+            montoPendiente,
+            data.notas || null,
+            data.tipo_venta === 'cotizacion' ? 'cotizacion' : 'completada',
+            new Date()
+        ];
+
+        const resultVenta = await db.query(ventaQuery, ventaValues);
+        const venta = resultVenta.rows[0];
+
+        // Insertar items
+        const itemsInsertados = [];
+        for (const item of data.items) {
+            const prodQuery = await db.query(
+                `SELECT nombre, sku, precio_venta FROM productos WHERE id = $1`,
+                [item.producto_id]
+            );
+            const producto = prodQuery.rows[0];
+            const precioUnitario = item.precio_unitario || producto.precio_venta;
+            const descuentoMonto = item.descuento_monto || 0;
+            const descuentoPorcentaje = item.descuento_porcentaje || 0;
+            const precioFinal = descuentoMonto > 0
+                ? precioUnitario - descuentoMonto
+                : precioUnitario * (1 - descuentoPorcentaje / 100);
+            const itemSubtotal = item.cantidad * precioFinal;
+
+            const itemQuery = `
+                INSERT INTO ventas_pos_items (
+                    venta_pos_id, producto_id, nombre_producto, sku, cantidad,
+                    precio_unitario, descuento_porcentaje, descuento_monto,
+                    precio_final, subtotal, aplica_comision, notas
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                RETURNING *
+            `;
+
+            const itemValues = [
+                venta.id, item.producto_id, producto.nombre, producto.sku,
+                item.cantidad, precioUnitario, descuentoPorcentaje, descuentoMonto,
+                precioFinal, itemSubtotal,
+                item.aplica_comision !== undefined ? item.aplica_comision : true,
+                item.notas || null
+            ];
+
+            const resultItem = await db.query(itemQuery, itemValues);
+            itemsInsertados.push(resultItem.rows[0]);
+        }
+
+        logger.info('[VentasPOSModel.crearSinValidarStock] Venta creada', {
+            venta_id: venta.id,
+            folio: venta.folio
+        });
+
+        return {
+            ...venta,
+            items: itemsInsertados
+        };
     }
 }
 

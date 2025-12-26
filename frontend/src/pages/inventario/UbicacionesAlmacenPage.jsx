@@ -1,0 +1,738 @@
+import { useState, useMemo } from 'react';
+import {
+  MapPin,
+  Plus,
+  Edit,
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  Lock,
+  Unlock,
+  Package,
+  ArrowRightLeft,
+  BarChart3,
+  Search,
+  Filter,
+  RefreshCw,
+} from 'lucide-react';
+import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
+import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
+import { useToast } from '@/hooks/useToast';
+import useSucursalStore from '@/store/sucursalStore';
+import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import {
+  useArbolUbicaciones,
+  useEstadisticasUbicaciones,
+  useStockUbicacion,
+  useCrearUbicacion,
+  useActualizarUbicacion,
+  useEliminarUbicacion,
+  useToggleBloqueoUbicacion,
+  useMoverStockUbicacion,
+} from '@/hooks/useInventario';
+import UbicacionFormDrawer from '@/components/inventario/ubicaciones/UbicacionFormDrawer';
+import MoverStockDrawer from '@/components/inventario/ubicaciones/MoverStockDrawer';
+
+// Tipos de ubicación con íconos y colores
+const TIPOS_UBICACION = {
+  zona: { label: 'Zona', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300' },
+  pasillo: { label: 'Pasillo', color: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300' },
+  estante: { label: 'Estante', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
+  bin: { label: 'Bin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
+};
+
+/**
+ * Componente para renderizar nodo del árbol de ubicaciones
+ */
+function NodoUbicacion({
+  ubicacion,
+  nivel = 0,
+  onEditar,
+  onEliminar,
+  onToggleBloqueo,
+  onVerStock,
+  onMoverStock,
+  onCrearHijo,
+  expandido,
+  onToggleExpansion,
+}) {
+  const tieneHijos = ubicacion.children && ubicacion.children.length > 0;
+  const isExpanded = expandido[ubicacion.id];
+  const tipoInfo = TIPOS_UBICACION[ubicacion.tipo] || { label: ubicacion.tipo, color: 'bg-gray-100 text-gray-700' };
+
+  return (
+    <div>
+      {/* Nodo Actual */}
+      <div
+        className={`flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border mb-2 ${
+          ubicacion.bloqueada
+            ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+        }`}
+        style={{ marginLeft: `${nivel * 2}rem` }}
+      >
+        <div className="flex items-center space-x-3 flex-1 min-w-0">
+          {/* Toggle Expansión */}
+          {tieneHijos ? (
+            <button
+              onClick={() => onToggleExpansion(ubicacion.id)}
+              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded flex-shrink-0"
+            >
+              {isExpanded ? (
+                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              ) : (
+                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+              )}
+            </button>
+          ) : (
+            <div className="w-6 flex-shrink-0" />
+          )}
+
+          {/* Color/Icono */}
+          {ubicacion.color ? (
+            <div
+              className="w-4 h-4 rounded flex-shrink-0"
+              style={{ backgroundColor: ubicacion.color }}
+            />
+          ) : (
+            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+          )}
+
+          {/* Info Principal */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-2 flex-wrap">
+              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                {ubicacion.codigo}
+              </h3>
+              <span className={`px-2 py-0.5 text-xs font-medium rounded ${tipoInfo.color}`}>
+                {tipoInfo.label}
+              </span>
+              {ubicacion.bloqueada && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded flex items-center gap-1">
+                  <Lock className="h-3 w-3" /> Bloqueada
+                </span>
+              )}
+              {ubicacion.es_picking && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded">
+                  Picking
+                </span>
+              )}
+              {ubicacion.es_recepcion && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300 rounded">
+                  Recepción
+                </span>
+              )}
+              {tieneHijos && (
+                <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
+                  {ubicacion.children.length} sub-ubicaciones
+                </span>
+              )}
+            </div>
+            {ubicacion.nombre && (
+              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{ubicacion.nombre}</p>
+            )}
+          </div>
+
+          {/* Capacidad */}
+          {ubicacion.capacidad_maxima > 0 && (
+            <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden sm:block">
+              <span className={ubicacion.capacidad_ocupada / ubicacion.capacidad_maxima > 0.9 ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
+                {ubicacion.capacidad_ocupada || 0}/{ubicacion.capacidad_maxima}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Acciones */}
+        <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+          {ubicacion.tipo !== 'zona' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onVerStock(ubicacion)}
+              icon={Package}
+              title="Ver Stock"
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onToggleBloqueo(ubicacion)}
+            icon={ubicacion.bloqueada ? Unlock : Lock}
+            title={ubicacion.bloqueada ? 'Desbloquear' : 'Bloquear'}
+          />
+          {ubicacion.tipo !== 'bin' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onCrearHijo(ubicacion)}
+              icon={Plus}
+              title="Crear Sub-ubicación"
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEditar(ubicacion)}
+            icon={Edit}
+            title="Editar"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => onEliminar(ubicacion)}
+            icon={Trash2}
+            title="Eliminar"
+            className="text-red-600 hover:text-red-700 dark:text-red-400"
+          />
+        </div>
+      </div>
+
+      {/* Hijos */}
+      {tieneHijos && isExpanded && (
+        <div>
+          {ubicacion.children.map((hijo) => (
+            <NodoUbicacion
+              key={hijo.id}
+              ubicacion={hijo}
+              nivel={nivel + 1}
+              onEditar={onEditar}
+              onEliminar={onEliminar}
+              onToggleBloqueo={onToggleBloqueo}
+              onVerStock={onVerStock}
+              onMoverStock={onMoverStock}
+              onCrearHijo={onCrearHijo}
+              expandido={expandido}
+              onToggleExpansion={onToggleExpansion}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Card de Estadísticas
+ */
+function EstadisticaCard({ label, value, icon: Icon, color = 'primary' }) {
+  const colorClasses = {
+    primary: 'bg-primary-100 text-primary-600 dark:bg-primary-900/40 dark:text-primary-400',
+    green: 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400',
+    yellow: 'bg-yellow-100 text-yellow-600 dark:bg-yellow-900/40 dark:text-yellow-400',
+    red: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400',
+    blue: 'bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400',
+  };
+
+  return (
+    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{label}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
+        </div>
+        <div className={`p-3 rounded-lg ${colorClasses[color]}`}>
+          <Icon className="h-6 w-6" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Modal para ver stock de una ubicación
+ */
+function StockUbicacionModal({ ubicacion, isOpen, onClose }) {
+  const { data: stockData, isLoading } = useStockUbicacion(ubicacion?.id);
+  const stock = stockData || [];
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={`Stock en ${ubicacion?.codigo || ''}`}
+      size="lg"
+    >
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : stock.length === 0 ? (
+          <div className="text-center py-8">
+            <Package className="mx-auto h-12 w-12 text-gray-400" />
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              No hay productos en esta ubicación
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-900">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Producto
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    SKU
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Cantidad
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Lote
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {stock.map((item, idx) => (
+                  <tr key={idx}>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100">
+                      {item.producto_nombre}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {item.sku}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-900 dark:text-gray-100 text-right font-medium">
+                      {item.cantidad}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
+                      {item.lote || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+          <Button variant="secondary" onClick={onClose}>
+            Cerrar
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  );
+}
+
+/**
+ * Página principal de Gestión de Ubicaciones de Almacén
+ */
+function UbicacionesAlmacenPage() {
+  const { success: showSuccess, error: showError } = useToast();
+  const { getSucursalId } = useSucursalStore();
+  const sucursalId = getSucursalId();
+
+  // Estado
+  const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
+  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState(null);
+  const [parentSeleccionado, setParentSeleccionado] = useState(null);
+  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  const [modalStockAbierto, setModalStockAbierto] = useState(false);
+  const [moverStockDrawerOpen, setMoverStockDrawerOpen] = useState(false);
+  const [expandido, setExpandido] = useState({});
+  const [busqueda, setBusqueda] = useState('');
+
+  // Queries
+  const { data: arbolData, isLoading: cargandoArbol, refetch } = useArbolUbicaciones(sucursalId);
+  const arbol = arbolData || [];
+  const { data: estadisticas, isLoading: cargandoStats } = useEstadisticasUbicaciones(sucursalId);
+
+  // Mutations
+  const eliminarMutation = useEliminarUbicacion();
+  const toggleBloqueoMutation = useToggleBloqueoUbicacion();
+
+  // Handlers
+  const handleNuevaUbicacion = () => {
+    setUbicacionSeleccionada(null);
+    setParentSeleccionado(null);
+    setIsFormDrawerOpen(true);
+  };
+
+  const handleCrearHijo = (parent) => {
+    setUbicacionSeleccionada(null);
+    setParentSeleccionado(parent);
+    setIsFormDrawerOpen(true);
+  };
+
+  const handleEditarUbicacion = (ubicacion) => {
+    setUbicacionSeleccionada(ubicacion);
+    setParentSeleccionado(null);
+    setIsFormDrawerOpen(true);
+  };
+
+  const handleAbrirModalEliminar = (ubicacion) => {
+    setUbicacionSeleccionada(ubicacion);
+    setModalEliminarAbierto(true);
+  };
+
+  const handleEliminar = () => {
+    eliminarMutation.mutate(ubicacionSeleccionada.id, {
+      onSuccess: () => {
+        showSuccess('Ubicación eliminada correctamente');
+        setModalEliminarAbierto(false);
+        setUbicacionSeleccionada(null);
+      },
+      onError: (err) => {
+        showError(err.response?.data?.message || 'Error al eliminar ubicación');
+      },
+    });
+  };
+
+  const handleToggleBloqueo = (ubicacion) => {
+    toggleBloqueoMutation.mutate(
+      {
+        id: ubicacion.id,
+        bloqueada: !ubicacion.bloqueada,
+        motivo_bloqueo: !ubicacion.bloqueada ? 'Bloqueado manualmente' : null,
+      },
+      {
+        onSuccess: () => {
+          showSuccess(ubicacion.bloqueada ? 'Ubicación desbloqueada' : 'Ubicación bloqueada');
+        },
+        onError: (err) => {
+          showError(err.response?.data?.message || 'Error al cambiar estado');
+        },
+      }
+    );
+  };
+
+  const handleVerStock = (ubicacion) => {
+    setUbicacionSeleccionada(ubicacion);
+    setModalStockAbierto(true);
+  };
+
+  const handleMoverStock = () => {
+    setMoverStockDrawerOpen(true);
+  };
+
+  const handleToggleExpansion = (ubicacionId) => {
+    setExpandido((prev) => ({
+      ...prev,
+      [ubicacionId]: !prev[ubicacionId],
+    }));
+  };
+
+  const handleExpandirTodas = () => {
+    const nuevosExpandidos = {};
+    const expandirRecursivo = (ubicaciones) => {
+      ubicaciones.forEach((u) => {
+        if (u.children && u.children.length > 0) {
+          nuevosExpandidos[u.id] = true;
+          expandirRecursivo(u.children);
+        }
+      });
+    };
+    expandirRecursivo(arbol);
+    setExpandido(nuevosExpandidos);
+  };
+
+  const handleContraerTodas = () => {
+    setExpandido({});
+  };
+
+  // Filtrar por búsqueda
+  const arbolFiltrado = useMemo(() => {
+    if (!busqueda.trim()) return arbol;
+
+    const busquedaLower = busqueda.toLowerCase();
+    const filtrarRecursivo = (ubicaciones) => {
+      return ubicaciones
+        .map((u) => {
+          const coincide =
+            u.codigo.toLowerCase().includes(busquedaLower) ||
+            (u.nombre && u.nombre.toLowerCase().includes(busquedaLower));
+          const hijosFiltrados = u.children ? filtrarRecursivo(u.children) : [];
+
+          if (coincide || hijosFiltrados.length > 0) {
+            return { ...u, children: hijosFiltrados };
+          }
+          return null;
+        })
+        .filter(Boolean);
+    };
+
+    return filtrarRecursivo(arbol);
+  }, [arbol, busqueda]);
+
+  // Contar totales
+  const contarUbicaciones = (ubicaciones) => {
+    let total = ubicaciones.length;
+    ubicaciones.forEach((u) => {
+      if (u.children) {
+        total += contarUbicaciones(u.children);
+      }
+    });
+    return total;
+  };
+  const totalUbicaciones = contarUbicaciones(arbol);
+
+  if (!sucursalId) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <MapPin className="mx-auto h-12 w-12 text-gray-400" />
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+            Sin sucursal asignada
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+            Debes tener una sucursal asignada para ver las ubicaciones.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+          Gestiona productos, proveedores y stock
+        </p>
+      </div>
+
+      {/* Tabs */}
+      <InventarioNavTabs />
+
+      {/* Contenido */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Header de Sección */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center space-x-3">
+              <MapPin className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
+                  Ubicaciones de Almacén
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {totalUbicaciones} ubicacion{totalUbicaciones !== 1 ? 'es' : ''} en total
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                variant="secondary"
+                onClick={handleMoverStock}
+                icon={ArrowRightLeft}
+                className="flex-1 sm:flex-none"
+              >
+                Mover Stock
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleNuevaUbicacion}
+                icon={Plus}
+                className="flex-1 sm:flex-none"
+              >
+                Nueva Ubicación
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Estadísticas */}
+        {!cargandoStats && estadisticas && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+            <EstadisticaCard
+              label="Zonas"
+              value={estadisticas.zonas || 0}
+              icon={MapPin}
+              color="blue"
+            />
+            <EstadisticaCard
+              label="Activas"
+              value={estadisticas.activas || 0}
+              icon={Package}
+              color="green"
+            />
+            <EstadisticaCard
+              label="Bloqueadas"
+              value={estadisticas.bloqueadas || 0}
+              icon={Lock}
+              color="red"
+            />
+            <EstadisticaCard
+              label="% Ocupación"
+              value={`${estadisticas.porcentaje_ocupacion || 0}%`}
+              icon={BarChart3}
+              color={estadisticas.porcentaje_ocupacion > 80 ? 'yellow' : 'primary'}
+            />
+          </div>
+        )}
+
+        {/* Controles */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            {/* Búsqueda */}
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por código o nombre..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+              />
+            </div>
+
+            {/* Botones */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => refetch()}
+                icon={RefreshCw}
+              >
+                Actualizar
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleExpandirTodas}
+              >
+                Expandir
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleContraerTodas}
+              >
+                Contraer
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Árbol de Ubicaciones */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
+          {cargandoArbol ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando ubicaciones...</span>
+            </div>
+          ) : arbolFiltrado.length === 0 ? (
+            <div className="text-center py-12">
+              <MapPin className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
+                {busqueda ? 'Sin resultados' : 'No hay ubicaciones'}
+              </h3>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                {busqueda
+                  ? 'No se encontraron ubicaciones con ese criterio'
+                  : 'Comienza creando tu primera zona de almacén'}
+              </p>
+              {!busqueda && (
+                <div className="mt-6">
+                  <Button variant="primary" onClick={handleNuevaUbicacion} icon={Plus}>
+                    Nueva Ubicación
+                  </Button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-1">
+              {arbolFiltrado.map((ubicacion) => (
+                <NodoUbicacion
+                  key={ubicacion.id}
+                  ubicacion={ubicacion}
+                  nivel={0}
+                  onEditar={handleEditarUbicacion}
+                  onEliminar={handleAbrirModalEliminar}
+                  onToggleBloqueo={handleToggleBloqueo}
+                  onVerStock={handleVerStock}
+                  onMoverStock={handleMoverStock}
+                  onCrearHijo={handleCrearHijo}
+                  expandido={expandido}
+                  onToggleExpansion={handleToggleExpansion}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Drawer de Formulario */}
+      <UbicacionFormDrawer
+        isOpen={isFormDrawerOpen}
+        onClose={() => {
+          setIsFormDrawerOpen(false);
+          setUbicacionSeleccionada(null);
+          setParentSeleccionado(null);
+        }}
+        ubicacion={ubicacionSeleccionada}
+        parent={parentSeleccionado}
+        sucursalId={sucursalId}
+      />
+
+      {/* Drawer de Mover Stock */}
+      <MoverStockDrawer
+        isOpen={moverStockDrawerOpen}
+        onClose={() => setMoverStockDrawerOpen(false)}
+        sucursalId={sucursalId}
+      />
+
+      {/* Modal de Stock */}
+      <StockUbicacionModal
+        ubicacion={ubicacionSeleccionada}
+        isOpen={modalStockAbierto}
+        onClose={() => {
+          setModalStockAbierto(false);
+          setUbicacionSeleccionada(null);
+        }}
+      />
+
+      {/* Modal de Eliminación */}
+      <Modal
+        isOpen={modalEliminarAbierto}
+        onClose={() => setModalEliminarAbierto(false)}
+        title="Eliminar Ubicación"
+        size="md"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            ¿Estás seguro de que deseas eliminar la ubicación{' '}
+            <strong className="text-gray-900 dark:text-gray-100">
+              {ubicacionSeleccionada?.codigo}
+            </strong>
+            ?
+          </p>
+
+          {ubicacionSeleccionada?.children?.length > 0 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                Esta ubicación tiene sub-ubicaciones. Debes eliminarlas primero.
+              </p>
+            </div>
+          )}
+
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Solo se puede eliminar si no tiene stock ni sub-ubicaciones.
+          </p>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="secondary" onClick={() => setModalEliminarAbierto(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={handleEliminar}
+              isLoading={eliminarMutation.isPending}
+              disabled={ubicacionSeleccionada?.children?.length > 0}
+            >
+              Eliminar
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+export default UbicacionesAlmacenPage;

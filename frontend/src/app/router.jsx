@@ -46,6 +46,7 @@ const MovimientosPage = lazy(() => import('@/pages/inventario/MovimientosPage'))
 const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
 const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
 const OrdenesCompraPage = lazy(() => import('@/pages/inventario/OrdenesCompraPage'));
+const UbicacionesAlmacenPage = lazy(() => import('@/pages/inventario/UbicacionesAlmacenPage'));
 
 // Páginas de Precios (Fase 5)
 const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
@@ -412,10 +413,28 @@ export const router = createBrowserRouter([
       },
       // Listas de Precios (Fase 5)
       {
+        path: 'inventario/listas-precios',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ListasPreciosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Alias legacy para compatibilidad
+      {
         path: 'listas-precios',
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(ListasPreciosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Ubicaciones de Almacén - WMS (Fase 3 Gaps)
+      {
+        path: 'inventario/ubicaciones',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(UbicacionesAlmacenPage)}
           </ProtectedRoute>
         ),
       },

@@ -55,6 +55,10 @@ const productoCreateSchema = z
     permite_uso_servicio: z.boolean().default(true),
     activo: z.boolean().default(true),
     notas: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
+
+    // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
+    auto_generar_oc: z.boolean().default(false),
+    cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').default(50),
   })
   .refine(
     (data) => {
@@ -104,6 +108,9 @@ const productoEditSchema = z
     permite_uso_servicio: z.boolean().optional(),
     notas: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
     activo: z.boolean().optional(),
+    // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
+    auto_generar_oc: z.boolean().optional(),
+    cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').optional(),
   })
   .refine(
     (data) => {
@@ -196,6 +203,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             permite_uso_servicio: producto.permite_uso_servicio ?? true,
             notas: producto.notas || '',
             activo: producto.activo ?? true,
+            auto_generar_oc: producto.auto_generar_oc || false,
+            cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
           }
         : {
             nombre: '',
@@ -217,11 +226,14 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             permite_uso_servicio: true,
             notas: '',
             activo: true,
+            auto_generar_oc: false,
+            cantidad_oc_sugerida: 50,
           },
   });
 
   // Watch campos dinámicos
   const esPerecedero = watch('es_perecedero');
+  const autoGenerarOC = watch('auto_generar_oc');
 
   // Cargar datos al editar
   useEffect(() => {
@@ -245,6 +257,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         permite_uso_servicio: producto.permite_uso_servicio ?? true,
         notas: producto.notas || '',
         activo: producto.activo ?? true,
+        auto_generar_oc: producto.auto_generar_oc || false,
+        cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
       });
       // Cargar imagen existente
       if (producto.imagen_url) {
@@ -279,6 +293,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         permite_uso_servicio: true,
         notas: '',
         activo: true,
+        auto_generar_oc: false,
+        cantidad_oc_sugerida: 50,
       });
       // Limpiar imagen
       setImagenFile(null);
@@ -816,6 +832,29 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               label="Producto activo"
               {...register('activo')}
             />
+
+            {/* Auto-generación de OC (Dic 2025 - Fase 2 Gaps) */}
+            <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+              <Checkbox
+                label="Auto-generar OC cuando llegue a stock mínimo"
+                {...register('auto_generar_oc')}
+              />
+              {autoGenerarOC && (
+                <div className="mt-2 ml-6">
+                  <Input
+                    type="number"
+                    label="Cantidad sugerida para OC"
+                    {...register('cantidad_oc_sugerida')}
+                    placeholder="50"
+                    error={errors.cantidad_oc_sugerida?.message}
+                    className="max-w-xs"
+                  />
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Cantidad que se agregará automáticamente al crear la OC
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
 
           <Textarea

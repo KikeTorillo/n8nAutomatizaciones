@@ -9,6 +9,7 @@ import {
   X,
   CheckCircle,
   CheckCheck,
+  ShoppingCart,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
@@ -19,6 +20,7 @@ import {
   useAlertas,
   useMarcarAlertaLeida,
   useMarcarVariasAlertasLeidas,
+  useGenerarOCDesdeProducto,
 } from '@/hooks/useInventario';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,6 +52,7 @@ function AlertasPage() {
   // Mutations
   const marcarUnaMutation = useMarcarAlertaLeida();
   const marcarVariasMutation = useMarcarVariasAlertasLeidas();
+  const generarOCMutation = useGenerarOCDesdeProducto();
 
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
@@ -125,6 +128,28 @@ function AlertasPage() {
         },
       }
     );
+  };
+
+  const handleGenerarOC = (productoId, productoNombre) => {
+    generarOCMutation.mutate(productoId, {
+      onSuccess: (orden) => {
+        showToast(
+          `Orden de compra ${orden.folio} creada para "${productoNombre}"`,
+          'success'
+        );
+      },
+      onError: (error) => {
+        showToast(
+          error.response?.data?.mensaje || 'Error al generar orden de compra',
+          'error'
+        );
+      },
+    });
+  };
+
+  // Helper para verificar si es alerta de stock
+  const esAlertaStock = (tipo) => {
+    return tipo === 'stock_minimo' || tipo === 'stock_agotado';
   };
 
   // Helpers
@@ -413,18 +438,35 @@ function AlertasPage() {
                             <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{alerta.mensaje}</p>
                           </div>
 
-                          {/* Botón Marcar Leída */}
-                          {!alerta.leida && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleMarcarLeida(alerta.id)}
-                              icon={CheckCircle}
-                              isLoading={marcarUnaMutation.isPending}
-                            >
-                              Marcar Leída
-                            </Button>
-                          )}
+                          {/* Botones de acciones */}
+                          <div className="flex items-center space-x-2">
+                            {/* Botón Generar OC (solo para alertas de stock) */}
+                            {esAlertaStock(alerta.tipo_alerta) && (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => handleGenerarOC(alerta.producto_id, alerta.producto_nombre)}
+                                icon={ShoppingCart}
+                                isLoading={generarOCMutation.isPending}
+                                title="Generar Orden de Compra"
+                              >
+                                Generar OC
+                              </Button>
+                            )}
+
+                            {/* Botón Marcar Leída */}
+                            {!alerta.leida && (
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => handleMarcarLeida(alerta.id)}
+                                icon={CheckCircle}
+                                isLoading={marcarUnaMutation.isPending}
+                              >
+                                Marcar Leída
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>

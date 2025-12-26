@@ -537,6 +537,46 @@ router.get('/ordenes-compra/reportes/por-proveedor',
 );
 
 /**
+ * GET /api/v1/inventario/ordenes-compra/sugerencias
+ * Obtener productos sugeridos para generar OC (stock bajo)
+ */
+router.get('/ordenes-compra/sugerencias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    InventarioController.obtenerSugerenciasOC
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/auto-generar
+ * Generar OCs automáticas para todos los productos con stock bajo
+ */
+router.post('/ordenes-compra/auto-generar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    InventarioController.autoGenerarOCs
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/generar-desde-producto/:productoId
+ * Generar OC desde un producto específico con stock bajo
+ */
+router.post('/ordenes-compra/generar-desde-producto/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.generarOCDesdeProducto),
+    InventarioController.generarOCDesdeProducto
+);
+
+/**
  * GET /api/v1/inventario/ordenes-compra/:id
  * Obtener orden por ID con items y recepciones
  */
@@ -687,6 +727,346 @@ router.post('/ordenes-compra/:id/pago',
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.registrarPagoOrdenCompra),
     InventarioController.registrarPagoOrdenCompra
+);
+
+// ===================================================================
+// RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps)
+// Evita sobreventa en ventas concurrentes
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/reservas
+ * Crear nueva reserva de stock
+ */
+router.post('/reservas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearReserva),
+    InventarioController.crearReserva
+);
+
+/**
+ * POST /api/v1/inventario/reservas/multiple
+ * Crear múltiples reservas en una transacción
+ */
+router.post('/reservas/multiple',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearReservaMultiple),
+    InventarioController.crearReservaMultiple
+);
+
+/**
+ * POST /api/v1/inventario/reservas/confirmar-multiple
+ * Confirmar múltiples reservas
+ */
+router.post('/reservas/confirmar-multiple',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.confirmarReservaMultiple),
+    InventarioController.confirmarReservaMultiple
+);
+
+/**
+ * GET /api/v1/inventario/reservas/:id
+ * Obtener reserva por ID
+ */
+router.get('/reservas/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.obtenerReservaPorId
+);
+
+/**
+ * GET /api/v1/inventario/reservas
+ * Listar reservas con filtros
+ */
+router.get('/reservas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarReservas),
+    InventarioController.listarReservas
+);
+
+/**
+ * PATCH /api/v1/inventario/reservas/:id/confirmar
+ * Confirmar reserva (descuenta stock real)
+ */
+router.patch('/reservas/:id/confirmar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.confirmarReserva),
+    InventarioController.confirmarReserva
+);
+
+/**
+ * PATCH /api/v1/inventario/reservas/:id/extender
+ * Extender tiempo de expiración de una reserva
+ */
+router.patch('/reservas/:id/extender',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.extenderReserva),
+    InventarioController.extenderReserva
+);
+
+/**
+ * DELETE /api/v1/inventario/reservas/origen/:tipoOrigen/:origenId
+ * Cancelar reservas por origen (ej: todas las de una venta)
+ */
+router.delete('/reservas/origen/:tipoOrigen/:origenId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarReservaPorOrigen),
+    InventarioController.cancelarReservaPorOrigen
+);
+
+/**
+ * DELETE /api/v1/inventario/reservas/:id
+ * Cancelar reserva individual
+ */
+router.delete('/reservas/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarReserva),
+    InventarioController.cancelarReserva
+);
+
+// ===================================================================
+// STOCK DISPONIBLE (endpoints adicionales en productos)
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/productos/:id/stock-disponible
+ * Obtener stock disponible de un producto (real - reservado)
+ */
+router.get('/productos/:id/stock-disponible',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.stockDisponible),
+    InventarioController.stockDisponible
+);
+
+/**
+ * GET /api/v1/inventario/productos/:id/verificar-disponibilidad
+ * Verificar si hay stock suficiente para una cantidad
+ */
+router.get('/productos/:id/verificar-disponibilidad',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.verificarDisponibilidad),
+    InventarioController.verificarDisponibilidad
+);
+
+/**
+ * POST /api/v1/inventario/productos/stock-disponible
+ * Obtener stock disponible de múltiples productos
+ */
+router.post('/productos/stock-disponible',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.stockDisponibleMultiple),
+    InventarioController.stockDisponibleMultiple
+);
+
+// ===================================================================
+// UBICACIONES DE ALMACÉN - WMS (Dic 2025 - Fase 3 Gaps)
+// Sistema jerárquico: zona → pasillo → estante → bin
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/ubicaciones
+ * Crear nueva ubicación de almacén
+ */
+router.post('/ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearUbicacion),
+    InventarioController.crearUbicacion
+);
+
+/**
+ * POST /api/v1/inventario/ubicaciones/mover-stock
+ * Mover stock entre ubicaciones
+ */
+router.post('/ubicaciones/mover-stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.moverStockUbicacion),
+    InventarioController.moverStockUbicacion
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones/arbol/:sucursalId
+ * Obtener árbol jerárquico de ubicaciones de una sucursal
+ */
+router.get('/ubicaciones/arbol/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerArbolUbicaciones),
+    InventarioController.obtenerArbolUbicaciones
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones/disponibles/:sucursalId
+ * Obtener ubicaciones disponibles para almacenar en una sucursal
+ */
+router.get('/ubicaciones/disponibles/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerUbicacionesDisponibles),
+    InventarioController.obtenerUbicacionesDisponibles
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones/estadisticas/:sucursalId
+ * Obtener estadísticas de uso de ubicaciones de una sucursal
+ */
+router.get('/ubicaciones/estadisticas/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerEstadisticasUbicaciones),
+    InventarioController.obtenerEstadisticasUbicaciones
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones/:id
+ * Obtener ubicación por ID
+ */
+router.get('/ubicaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.obtenerUbicacionPorId
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones/:id/stock
+ * Obtener productos almacenados en una ubicación
+ */
+router.get('/ubicaciones/:id/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.obtenerStockUbicacion
+);
+
+/**
+ * GET /api/v1/inventario/ubicaciones
+ * Listar ubicaciones con filtros
+ */
+router.get('/ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarUbicaciones),
+    InventarioController.listarUbicaciones
+);
+
+/**
+ * PUT /api/v1/inventario/ubicaciones/:id
+ * Actualizar ubicación
+ */
+router.put('/ubicaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarUbicacion),
+    InventarioController.actualizarUbicacion
+);
+
+/**
+ * PATCH /api/v1/inventario/ubicaciones/:id/bloquear
+ * Bloquear/Desbloquear ubicación
+ */
+router.patch('/ubicaciones/:id/bloquear',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.toggleBloqueoUbicacion),
+    InventarioController.toggleBloqueoUbicacion
+);
+
+/**
+ * POST /api/v1/inventario/ubicaciones/:id/stock
+ * Agregar stock a una ubicación
+ */
+router.post('/ubicaciones/:id/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.agregarStockUbicacion),
+    InventarioController.agregarStockUbicacion
+);
+
+/**
+ * DELETE /api/v1/inventario/ubicaciones/:id
+ * Eliminar ubicación (solo si no tiene stock ni sub-ubicaciones)
+ */
+router.delete('/ubicaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.eliminarUbicacion
+);
+
+/**
+ * GET /api/v1/inventario/productos/:productoId/ubicaciones
+ * Obtener ubicaciones donde está almacenado un producto
+ */
+router.get('/productos/:productoId/ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    InventarioController.obtenerUbicacionesProducto
 );
 
 module.exports = router;

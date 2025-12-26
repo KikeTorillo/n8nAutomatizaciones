@@ -87,6 +87,10 @@ CREATE TABLE organizaciones (
     -- Valores: 'agendamiento', 'inventario', 'pos'
     app_seleccionada VARCHAR(50) DEFAULT NULL,
 
+    -- 💰 Configuración POS (Dic 2025)
+    -- Si TRUE, solo usuarios con profesional vinculado pueden crear ventas
+    pos_requiere_profesional BOOLEAN DEFAULT FALSE,
+
     -- Timestamps
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
