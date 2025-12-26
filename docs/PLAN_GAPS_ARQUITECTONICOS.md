@@ -1,6 +1,6 @@
 # Plan de Gaps Arquitectónicos - Nexo ERP
 
-> **Última Revisión**: 26 Diciembre 2025 - Fase 5.2: ✅ Gestión de Usuarios Completada
+> **Última Revisión**: 26 Diciembre 2025 - Fase 5.3: ✅ Configuración POS Completada
 
 ---
 
@@ -15,6 +15,7 @@
 | 5 | Listas de Precios | ✅ Completado | Modelo Odoo, prioridad por especificidad |
 | 5.1 | Roles en Invitaciones | ✅ Completado | Selector rol al crear profesional |
 | 5.2 | Gestión de Usuarios | ✅ Completado | Página usuarios, cambio de roles |
+| 5.3 | Configuración POS | ✅ Completado | Requerir profesional para ventas |
 | 6 | Webhooks Salientes | ⬜ Pendiente | - |
 | 7 | Internacionalización | ⬜ Pendiente | BD preparada |
 | 8 | Reportes Multi-Sucursal | ⬜ Pendiente | - |
@@ -59,12 +60,31 @@ Selector de rol (empleado/propietario/admin) al crear profesional con invitació
 - Selector para cambiar rol en tiempo real
 - Query retorna `usuario_rol` del JOIN con usuarios
 
-**Archivos principales**:
-| Tipo | Archivos |
-|------|----------|
-| Backend | `usuario.model.js`, `usuario.controller.js`, `usuarios.js` (rutas) |
-| Frontend | `UsuariosPage.jsx`, `UsuarioFormDrawer.jsx`, `useUsuarios.js` |
-| SQL | `06-invitaciones.sql` (columna `apellidos_sugerido`) |
+### Fase 5.3: Configuración POS (26 Dic 2025)
+
+**Nueva configuración organizacional**:
+- Toggle "Requerir profesional para ventas" en Configuración > Mi Negocio
+- Columna `pos_requiere_profesional BOOLEAN` en tabla `organizaciones`
+- Si está activado, usuarios sin profesional vinculado reciben error 403
+
+**Flujo de validación**:
+1. Usuario intenta crear venta en POS
+2. Backend auto-asigna `profesional_id` si usuario tiene uno vinculado
+3. Si no tiene profesional y config está activa → Error con mensaje claro
+4. Mensaje: "Para realizar ventas necesitas tener un perfil de profesional vinculado"
+
+**Archivos modificados**:
+| Archivo | Cambio |
+|---------|--------|
+| `organizacion.constants.js` | Campo en SELECT_FIELDS y CAMPOS_ACTUALIZABLES |
+| `organizacion.schemas.js` | Validación Joi para boolean |
+| `ventas.controller.js` | Validación pre-creación de venta |
+| `NegocioPage.jsx` | Toggle UI + fix boolean trim() |
+
+**Bugs corregidos en esta fase**:
+- `BuscadorProductosPOS.jsx`: crash al buscar (productos?.length)
+- `VentaPOSPage.jsx`: mensaje error genérico (message vs mensaje)
+- `invitacionProfesional.js`: colores email verde → Nexo purple #753572
 
 ---
 
