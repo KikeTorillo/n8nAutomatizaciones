@@ -1,7 +1,7 @@
 /**
  * Template HTML para email de invitación a profesionales
  * Nov 2025 - Sistema de Invitaciones Profesional-Usuario
- * Actualizado Dic 2025 - Branding Nexo
+ * Actualizado Dic 2025 - Branding Nexo (color primario #753572)
  */
 
 /**
@@ -57,7 +57,7 @@ function generateInvitacionEmail({
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         .email-header {
-            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            background: linear-gradient(135deg, #753572 0%, #5a2958 100%);
             padding: 40px 30px;
             text-align: center;
         }
@@ -89,26 +89,26 @@ function generateInvitacionEmail({
             margin: 16px 0;
         }
         .highlight-box {
-            background: linear-gradient(135deg, #ECFDF5 0%, #D1FAE5 100%);
+            background: linear-gradient(135deg, #f5eef5 0%, #e8dde7 100%);
             border-radius: 8px;
             padding: 20px;
             margin: 24px 0;
-            border-left: 4px solid #10B981;
+            border-left: 4px solid #753572;
         }
         .highlight-box h3 {
             margin: 0 0 12px 0;
-            color: #065F46;
+            color: #5a2958;
             font-size: 16px;
         }
         .highlight-box p {
             margin: 8px 0;
-            color: #047857;
+            color: #753572;
             font-size: 14px;
         }
         .highlight-box .role {
             font-size: 18px;
             font-weight: 600;
-            color: #059669;
+            color: #753572;
         }
         .button-container {
             text-align: center;
@@ -117,7 +117,7 @@ function generateInvitacionEmail({
         .register-button {
             display: inline-block;
             padding: 16px 40px;
-            background-color: #10B981;
+            background-color: #753572;
             color: #ffffff !important;
             text-decoration: none;
             border-radius: 8px;
@@ -126,7 +126,7 @@ function generateInvitacionEmail({
             transition: background-color 0.3s ease;
         }
         .register-button:hover {
-            background-color: #059669;
+            background-color: #5a2958;
         }
         .alternative-link {
             margin-top: 24px;
@@ -142,7 +142,7 @@ function generateInvitacionEmail({
             font-size: 13px;
         }
         .alternative-link a {
-            color: #10B981;
+            color: #753572;
             text-decoration: none;
         }
         .warning-box {

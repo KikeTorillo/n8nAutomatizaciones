@@ -144,7 +144,9 @@ const actualizar = {
             .allow(null),
         suspendido: Joi.boolean(),
         motivo_suspension: Joi.string()
-            .allow(null)
+            .allow(null),
+        // Configuración POS (Dic 2025)
+        pos_requiere_profesional: Joi.boolean()
     }).min(1)
 };
 

@@ -17,6 +17,7 @@ import {
   X,
   Coins,
   Clock,
+  ShoppingCart,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -61,6 +62,7 @@ function NegocioPage() {
       logo_url: '',
       moneda: 'MXN',
       zona_horaria: 'America/Mexico_City',
+      pos_requiere_profesional: false,
     },
   });
 
@@ -96,6 +98,7 @@ function NegocioPage() {
         logo_url: org.logo_url || '',
         moneda: org.moneda || 'MXN',
         zona_horaria: org.zona_horaria || 'America/Mexico_City',
+        pos_requiere_profesional: org.pos_requiere_profesional || false,
       });
       setLogoPreview(org.logo_url);
     }
@@ -159,10 +162,16 @@ function NegocioPage() {
         logoUrlFinal = resultado?.url || resultado;
       }
 
-      // Limpiar campos vacíos a null
+      // Limpiar campos vacíos a null (manejar strings y booleans)
       const cleanData = {};
       Object.entries(formData).forEach(([key, value]) => {
-        cleanData[key] = value?.trim() || null;
+        if (typeof value === 'boolean') {
+          cleanData[key] = value;
+        } else if (typeof value === 'string') {
+          cleanData[key] = value.trim() || null;
+        } else {
+          cleanData[key] = value ?? null;
+        }
       });
 
       // Actualizar logo_url con la URL subida
@@ -457,6 +466,36 @@ function NegocioPage() {
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                   Afecta horarios de citas y reportes
                 </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Configuración POS */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <ShoppingCart className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Punto de Venta
+            </h2>
+
+            <div className="space-y-4">
+              <div className="flex items-start justify-between p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                <div className="flex-1 pr-4">
+                  <label className="font-medium text-gray-900 dark:text-gray-100">
+                    Requerir profesional para ventas
+                  </label>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Si está activado, solo usuarios con un profesional vinculado podrán realizar ventas en el POS.
+                    Útil para negocios que calculan comisiones por vendedor.
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
+                  <input
+                    type="checkbox"
+                    {...register('pos_requiere_profesional')}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-primary-600"></div>
+                </label>
               </div>
             </div>
           </div>

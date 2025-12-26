@@ -60,6 +60,8 @@ const SELECT_FIELDS = [
     'zona_horaria',
     'idioma',
     'moneda',
+    // Configuración POS (Dic 2025)
+    'pos_requiere_profesional',
     'creado_en',
     'actualizado_en'
 ];
@@ -90,7 +92,9 @@ const CAMPOS_ACTUALIZABLES = [
     'notas_internas',
     'activo',
     'suspendido',
-    'motivo_suspension'
+    'motivo_suspension',
+    // Configuración POS (Dic 2025)
+    'pos_requiere_profesional'
 ];
 
 module.exports = {

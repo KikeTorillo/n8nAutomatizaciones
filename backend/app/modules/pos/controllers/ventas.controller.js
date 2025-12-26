@@ -5,6 +5,7 @@ const ModulesCache = require('../../../core/ModulesCache');
 const profesionalAdapter = require('../../../services/profesionalAdapter');
 const TicketPDFService = require('../../../services/ticketPDF.service');
 const RLSContextManager = require('../../../utils/rlsContextManager');
+const OrganizacionModel = require('../../core/models/organizacion.model');
 
 /**
  * Controller para gestión de ventas POS
@@ -18,6 +19,7 @@ class VentasPOSController {
      *
      * Nov 2025: Auto-asigna profesional_id si el usuario tiene
      * un profesional vinculado con acceso al módulo POS
+     * Dic 2025: Valida configuración pos_requiere_profesional
      */
     static crear = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -25,15 +27,26 @@ class VentasPOSController {
 
         // Nov 2025: Auto-asignar profesional si el usuario tiene uno vinculado
         let ventaData = { ...req.body };
+        let profesional = null;
 
         if (usuarioId && !ventaData.profesional_id) {
-            const profesional = await profesionalAdapter.buscarPorUsuario(usuarioId, organizacionId);
+            profesional = await profesionalAdapter.buscarPorUsuario(usuarioId, organizacionId);
 
-            // ACTUALIZADO Dic 2025: modulos_acceso eliminado
-            // Por ahora, si tiene profesional vinculado, se asigna automáticamente
-            // TODO: Verificar permiso 'pos.acceso' via sistema normalizado
             if (profesional) {
                 ventaData.profesional_id = profesional.id;
+            }
+        }
+
+        // Dic 2025: Verificar si la organización requiere profesional para ventas
+        if (!ventaData.profesional_id) {
+            const organizacion = await OrganizacionModel.obtenerPorId(organizacionId);
+            if (organizacion?.pos_requiere_profesional) {
+                return ResponseHelper.error(
+                    res,
+                    'Para realizar ventas necesitas tener un perfil de profesional vinculado. Contacta al administrador.',
+                    403,
+                    { codigo: 'POS_REQUIERE_PROFESIONAL' }
+                );
             }
         }
 
