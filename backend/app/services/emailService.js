@@ -136,6 +136,80 @@ class EmailService {
     }
 
     /**
+     * Envía un email de invitación para usuario directo (sin profesional)
+     * Dic 2025: Nuevo flujo para usuarios que no están vinculados a profesionales
+     * @param {Object} params - Parámetros del email
+     * @param {string} params.email - Email del destinatario
+     * @param {string} params.nombre - Nombre del usuario
+     * @param {string} params.token - Token de invitación
+     * @param {string} params.organizacion_nombre - Nombre de la organización
+     * @param {string} params.rol - Rol asignado al usuario
+     * @param {string} params.expira_en - Fecha de expiración
+     * @returns {Promise<Object>} Resultado del envío
+     */
+    async enviarInvitacionUsuarioDirecto({
+        email,
+        nombre,
+        token,
+        organizacion_nombre,
+        rol,
+        expira_en
+    }) {
+        try {
+            // Construir URL de registro (misma que invitación profesional)
+            const registroUrl = `${this.frontendUrl}/registro-invitacion/${token}`;
+
+            // Mapear rol a texto legible
+            const rolTexto = {
+                'admin': 'Administrador',
+                'propietario': 'Propietario',
+                'empleado': 'Empleado'
+            }[rol] || 'Usuario';
+
+            // Generar contenido del email (reutilizamos template de invitación)
+            const htmlContent = generateInvitacionEmail({
+                nombre,
+                registroUrl,
+                organizacion_nombre,
+                profesional_nombre: `${nombre} (${rolTexto})`,
+                expira_en,
+                es_reenvio: false
+            });
+
+            const textContent = generateInvitacionText({
+                nombre,
+                registroUrl,
+                organizacion_nombre,
+                profesional_nombre: `${nombre} (${rolTexto})`,
+                expira_en,
+                es_reenvio: false
+            });
+
+            // Configuración del email
+            const mailOptions = {
+                from: this.emailFrom,
+                to: email,
+                subject: `👋 Invitación para unirte a ${organizacion_nombre}`,
+                text: textContent,
+                html: htmlContent
+            };
+
+            // Enviar email
+            const result = await this._sendEmail(mailOptions);
+
+            if (result.success) {
+                logger.info(`📧 Invitación de usuario directo enviada a: ${email}`);
+            }
+
+            return result;
+
+        } catch (error) {
+            logger.error(`❌ Error enviando invitación de usuario directo a ${email}: ${error.message}`);
+            throw error;
+        }
+    }
+
+    /**
      * Envía un email de activación de cuenta
      * @param {Object} params - Parámetros del email
      * @param {string} params.email - Email del destinatario

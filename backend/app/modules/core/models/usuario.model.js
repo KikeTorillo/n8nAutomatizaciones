@@ -1181,6 +1181,361 @@ class UsuarioModel {
         });
     }
 
+    // ====================================================================
+    // GESTIÓN DE USUARIOS ESTILO ODOO - Dic 2025
+    // ====================================================================
+
+    /**
+     * Crear usuario directamente sin profesional (contador, auditor, etc.)
+     * Similar a res.users en Odoo
+     *
+     * @param {Object} userData - Datos del usuario
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} creadoPor - ID del usuario que crea
+     * @returns {Promise<Object>} Usuario creado
+     */
+    static async crearUsuarioDirecto(userData, organizacionId, creadoPor) {
+        const {
+            email,
+            password,
+            nombre,
+            apellidos,
+            telefono,
+            rol = 'empleado',
+            profesional_id = null,
+            activo = true
+        } = userData;
+
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query('BEGIN');
+
+            try {
+                // Verificar que el email no exista
+                const existeEmail = await db.query(
+                    'SELECT id FROM usuarios WHERE email = LOWER($1)',
+                    [email]
+                );
+
+                if (existeEmail.rows[0]) {
+                    throw new Error('Este email ya está registrado en el sistema');
+                }
+
+                // Si se especifica profesional_id, verificar que exista y no tenga usuario
+                if (profesional_id) {
+                    const profesional = await db.query(`
+                        SELECT id, usuario_id, nombre_completo
+                        FROM profesionales
+                        WHERE id = $1 AND organizacion_id = $2
+                    `, [profesional_id, organizacionId]);
+
+                    if (!profesional.rows[0]) {
+                        throw new Error('Profesional no encontrado');
+                    }
+
+                    if (profesional.rows[0].usuario_id) {
+                        throw new Error('Este profesional ya tiene un usuario vinculado');
+                    }
+                }
+
+                // Hashear password
+                const password_hash = await bcrypt.hash(password, AUTH_CONFIG.BCRYPT_SALT_ROUNDS);
+
+                // Crear usuario
+                const usuarioResult = await db.query(`
+                    INSERT INTO usuarios (
+                        organizacion_id, email, password_hash, nombre, apellidos,
+                        telefono, rol, profesional_id, activo, email_verificado
+                    ) VALUES ($1, LOWER($2), $3, $4, $5, $6, $7, $8, $9, TRUE)
+                    RETURNING id, organizacion_id, email, nombre, apellidos, telefono,
+                              rol, profesional_id, activo, email_verificado, creado_en
+                `, [
+                    organizacionId, email, password_hash, nombre, apellidos || null,
+                    telefono || null, rol, profesional_id, activo
+                ]);
+
+                const usuario = usuarioResult.rows[0];
+                logger.info('[crearUsuarioDirecto] INSERT ejecutado, usuario:', { id: usuario.id, email: usuario.email });
+
+                // Si hay profesional_id, vincular profesional al usuario
+                if (profesional_id) {
+                    await db.query(`
+                        UPDATE profesionales
+                        SET usuario_id = $1, actualizado_en = NOW()
+                        WHERE id = $2
+                    `, [usuario.id, profesional_id]);
+                }
+
+                await db.query('COMMIT');
+                logger.info('[crearUsuarioDirecto] COMMIT ejecutado');
+
+                logger.info('[UsuarioModel.crearUsuarioDirecto] Usuario creado', {
+                    usuario_id: usuario.id,
+                    email: usuario.email,
+                    con_profesional: !!profesional_id
+                });
+
+                return usuario;
+
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
+    }
+
+    /**
+     * Cambiar estado activo de usuario y profesional vinculado
+     * Cuando se desactiva un usuario, también se desactiva su profesional
+     *
+     * @param {number} userId - ID del usuario
+     * @param {boolean} activo - Nuevo estado
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} adminId - ID del admin que hace el cambio
+     * @returns {Promise<Object>} Usuario actualizado
+     */
+    static async cambiarEstadoActivo(userId, activo, organizacionId, adminId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query('BEGIN');
+
+            try {
+                // Obtener usuario con su profesional vinculado
+                const usuarioResult = await db.query(`
+                    SELECT u.id, u.email, u.nombre, u.activo as estado_anterior,
+                           u.profesional_id,
+                           p.id as prof_id, p.nombre_completo as prof_nombre
+                    FROM usuarios u
+                    LEFT JOIN profesionales p ON u.profesional_id = p.id
+                    WHERE u.id = $1 AND u.organizacion_id = $2
+                `, [userId, organizacionId]);
+
+                if (!usuarioResult.rows[0]) {
+                    throw new Error('Usuario no encontrado en la organización');
+                }
+
+                const usuario = usuarioResult.rows[0];
+
+                // No permitir desactivar al propio usuario
+                if (userId === adminId && !activo) {
+                    throw new Error('No puedes desactivar tu propia cuenta');
+                }
+
+                // Actualizar usuario
+                await db.query(`
+                    UPDATE usuarios
+                    SET activo = $1, actualizado_en = NOW()
+                    WHERE id = $2
+                `, [activo, userId]);
+
+                // Si tiene profesional vinculado, actualizar estado del profesional
+                let profesionalActualizado = null;
+                if (usuario.profesional_id) {
+                    if (!activo) {
+                        // Desactivar: poner en baja
+                        await db.query(`
+                            UPDATE profesionales
+                            SET estado = 'baja', fecha_baja = NOW(), actualizado_en = NOW()
+                            WHERE id = $1
+                        `, [usuario.profesional_id]);
+                    } else {
+                        // Activar: volver a activo
+                        await db.query(`
+                            UPDATE profesionales
+                            SET estado = 'activo', fecha_baja = NULL, actualizado_en = NOW()
+                            WHERE id = $1
+                        `, [usuario.profesional_id]);
+                    }
+
+                    profesionalActualizado = {
+                        id: usuario.profesional_id,
+                        nombre: usuario.prof_nombre,
+                        estado: activo ? 'activo' : 'baja'
+                    };
+                }
+
+                // Registrar evento
+                await RLSHelper.registrarEvento(db, {
+                    organizacion_id: organizacionId,
+                    evento_tipo: activo ? 'usuario_activado' : 'usuario_desactivado',
+                    entidad_tipo: 'usuario',
+                    entidad_id: userId,
+                    descripcion: `Usuario ${activo ? 'activado' : 'desactivado'}${profesionalActualizado ? ' junto con su profesional' : ''}`,
+                    metadatos: {
+                        email: usuario.email,
+                        estado_anterior: usuario.estado_anterior,
+                        estado_nuevo: activo,
+                        profesional_afectado: profesionalActualizado,
+                        admin_id: adminId
+                    },
+                    usuario_id: adminId
+                });
+
+                await db.query('COMMIT');
+
+                return {
+                    usuario: {
+                        id: userId,
+                        email: usuario.email,
+                        nombre: usuario.nombre,
+                        activo: activo,
+                        estado_anterior: usuario.estado_anterior
+                    },
+                    profesional: profesionalActualizado,
+                    cambio: {
+                        realizado_por: adminId,
+                        timestamp: new Date().toISOString()
+                    }
+                };
+
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
+    }
+
+    /**
+     * Vincular o desvincular profesional a usuario
+     *
+     * @param {number} userId - ID del usuario
+     * @param {number|null} profesionalId - ID del profesional o null para desvincular
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} adminId - ID del admin que hace el cambio
+     * @returns {Promise<Object>} Usuario actualizado
+     */
+    static async vincularProfesional(userId, profesionalId, organizacionId, adminId) {
+        return await RLSContextManager.withBypass(async (db) => {
+            await db.query('BEGIN');
+
+            try {
+                // Obtener usuario actual
+                const usuarioResult = await db.query(`
+                    SELECT id, email, nombre, profesional_id
+                    FROM usuarios
+                    WHERE id = $1 AND organizacion_id = $2
+                `, [userId, organizacionId]);
+
+                if (!usuarioResult.rows[0]) {
+                    throw new Error('Usuario no encontrado en la organización');
+                }
+
+                const usuario = usuarioResult.rows[0];
+                const profesionalAnterior = usuario.profesional_id;
+
+                // Si se está vinculando un nuevo profesional
+                if (profesionalId) {
+                    // Verificar que el profesional exista y no tenga usuario
+                    const profesionalResult = await db.query(`
+                        SELECT id, nombre_completo, usuario_id
+                        FROM profesionales
+                        WHERE id = $1 AND organizacion_id = $2
+                    `, [profesionalId, organizacionId]);
+
+                    if (!profesionalResult.rows[0]) {
+                        throw new Error('Profesional no encontrado');
+                    }
+
+                    if (profesionalResult.rows[0].usuario_id && profesionalResult.rows[0].usuario_id !== userId) {
+                        throw new Error('Este profesional ya tiene un usuario vinculado');
+                    }
+                }
+
+                // Si había profesional anterior, desvincular
+                if (profesionalAnterior && profesionalAnterior !== profesionalId) {
+                    await db.query(`
+                        UPDATE profesionales
+                        SET usuario_id = NULL, actualizado_en = NOW()
+                        WHERE id = $1
+                    `, [profesionalAnterior]);
+                }
+
+                // Actualizar usuario con nuevo profesional_id
+                await db.query(`
+                    UPDATE usuarios
+                    SET profesional_id = $1, actualizado_en = NOW()
+                    WHERE id = $2
+                `, [profesionalId, userId]);
+
+                // Si hay nuevo profesional, vincularlo
+                if (profesionalId) {
+                    await db.query(`
+                        UPDATE profesionales
+                        SET usuario_id = $1, actualizado_en = NOW()
+                        WHERE id = $2
+                    `, [userId, profesionalId]);
+                }
+
+                // Obtener datos del nuevo profesional para respuesta
+                let nuevoProfesional = null;
+                if (profesionalId) {
+                    const profResult = await db.query(
+                        'SELECT id, nombre_completo FROM profesionales WHERE id = $1',
+                        [profesionalId]
+                    );
+                    nuevoProfesional = profResult.rows[0];
+                }
+
+                // Registrar evento
+                await RLSHelper.registrarEvento(db, {
+                    organizacion_id: organizacionId,
+                    evento_tipo: profesionalId ? 'usuario_profesional_vinculado' : 'usuario_profesional_desvinculado',
+                    entidad_tipo: 'usuario',
+                    entidad_id: userId,
+                    descripcion: profesionalId
+                        ? `Profesional vinculado a usuario`
+                        : `Profesional desvinculado de usuario`,
+                    metadatos: {
+                        email: usuario.email,
+                        profesional_anterior: profesionalAnterior,
+                        profesional_nuevo: profesionalId,
+                        admin_id: adminId
+                    },
+                    usuario_id: adminId
+                });
+
+                await db.query('COMMIT');
+
+                return {
+                    usuario: {
+                        id: userId,
+                        email: usuario.email,
+                        nombre: usuario.nombre,
+                        profesional_id: profesionalId
+                    },
+                    profesional: nuevoProfesional,
+                    profesional_anterior: profesionalAnterior,
+                    cambio: {
+                        realizado_por: adminId,
+                        timestamp: new Date().toISOString()
+                    }
+                };
+
+            } catch (error) {
+                await db.query('ROLLBACK');
+                throw error;
+            }
+        });
+    }
+
+    /**
+     * Obtener profesionales sin usuario vinculado (para selector)
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} Lista de profesionales sin usuario
+     */
+    static async obtenerProfesionalesSinUsuario(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(`
+                SELECT id, nombre_completo, email, estado
+                FROM profesionales
+                WHERE usuario_id IS NULL
+                  AND estado = 'activo'
+                ORDER BY nombre_completo
+            `);
+
+            return result.rows;
+        });
+    }
+
     /**
      * Completar onboarding de usuario OAuth
      * Crea la organización y vincula al usuario

@@ -2,7 +2,7 @@ const Joi = require('joi');
 const { commonSchemas } = require('../../../middleware/validation');
 const {
     FORMAS_PAGO,
-    TIPOS_EMPLEADO,
+    ROLES_SUPERVISORES,
     ESTADOS_LABORALES,
     TIPOS_CONTRATACION,
     GENEROS,
@@ -70,11 +70,7 @@ const crear = {
             .optional()
             .allow(null),
 
-        // === CLASIFICACIÓN ORGANIZACIONAL ===
-        tipo: Joi.string()
-            .valid(...TIPOS_EMPLEADO)
-            .optional()
-            .default('operativo'),
+        // === CLASIFICACIÓN LABORAL ===
         estado: Joi.string()
             .valid(...ESTADOS_LABORALES)
             .optional()
@@ -256,8 +252,7 @@ const actualizar = {
         contacto_emergencia_nombre: Joi.string().max(100).allow(null),
         contacto_emergencia_telefono: commonSchemas.mexicanPhone.allow(null),
 
-        // === CLASIFICACIÓN ORGANIZACIONAL ===
-        tipo: Joi.string().valid(...TIPOS_EMPLEADO),
+        // === CLASIFICACIÓN LABORAL ===
         estado: Joi.string().valid(...ESTADOS_LABORALES),
         tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION),
 
@@ -315,10 +310,10 @@ const listar = {
         con_usuario: Joi.string().valid('true', 'false').optional(),
 
         // Filtros de clasificación (Dic 2025)
-        // tipo puede ser string o array para filtrar múltiples tipos (ej: supervisores)
-        tipo: Joi.alternatives().try(
-            Joi.string().valid(...TIPOS_EMPLEADO),
-            Joi.array().items(Joi.string().valid(...TIPOS_EMPLEADO))
+        // rol_usuario puede ser string o array para filtrar por rol del usuario vinculado (ej: supervisores)
+        rol_usuario: Joi.alternatives().try(
+            Joi.string().valid(...ROLES_SUPERVISORES, 'empleado', 'bot'),
+            Joi.array().items(Joi.string().valid(...ROLES_SUPERVISORES, 'empleado', 'bot'))
         ).optional(),
         estado: Joi.string().valid(...ESTADOS_LABORALES).optional(),
         tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION).optional(),

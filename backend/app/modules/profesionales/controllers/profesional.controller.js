@@ -94,7 +94,7 @@ class ProfesionalController {
             modulo: req.query.modulo || null, // Nov 2025: filtrar por módulo habilitado
             con_usuario: req.query.con_usuario !== undefined ? req.query.con_usuario === 'true' : null, // Nov 2025
             // Dic 2025: Filtros de clasificación y jerarquía
-            tipo: req.query.tipo || null, // puede ser string o array
+            rol_usuario: req.query.rol_usuario || null, // puede ser string o array (admin, propietario para supervisores)
             estado: req.query.estado || null,
             tipo_contratacion: req.query.tipo_contratacion || null,
             departamento_id: req.query.departamento_id ? parseInt(req.query.departamento_id) : null,

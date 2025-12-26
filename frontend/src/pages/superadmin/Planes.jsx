@@ -40,25 +40,29 @@ export default function SuperAdminPlanes() {
                         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4">{plan.descripcion}</p>
 
                         <div className="space-y-2 mb-4">
-                            <div className="flex justify-between">
-                                <span className="text-gray-700 dark:text-gray-300">Precio Mensual:</span>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">${plan.precio_mensual}</span>
+                            {/* Usuarios - Principal (el que cobra) */}
+                            <div className="flex justify-between items-center p-2 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                                <span className="text-primary-700 dark:text-primary-300 font-medium">Usuarios:</span>
+                                <span className="font-bold text-primary-800 dark:text-primary-200 text-lg">{plan.limite_usuarios || '∞'}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-700 dark:text-gray-300">Profesionales:</span>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">{plan.limite_profesionales || '∞'}</span>
+                                <span className="text-gray-700 dark:text-gray-300">Precio/usuario/mes:</span>
+                                <span className="font-semibold text-gray-900 dark:text-gray-100">${plan.precio_por_usuario || plan.precio_mensual || 0}</span>
                             </div>
                             <div className="flex justify-between">
-                                <span className="text-gray-700 dark:text-gray-300">Servicios:</span>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">{plan.limite_servicios || '∞'}</span>
+                                <span className="text-gray-700 dark:text-gray-300">Sucursales:</span>
+                                <span className="font-semibold text-gray-900 dark:text-gray-100">{plan.limite_sucursales || '∞'}</span>
                             </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-700 dark:text-gray-300">Clientes:</span>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">{plan.limite_clientes || '∞'}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-gray-700 dark:text-gray-300">Citas/mes:</span>
-                                <span className="font-semibold text-gray-900 dark:text-gray-100">{plan.limite_citas_mes || '∞'}</span>
+                            {/* Límites secundarios (referencia) */}
+                            <div className="pt-2 mt-2 border-t border-gray-100 dark:border-gray-700">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">Otros límites:</p>
+                                <div className="flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                    <span>Prof: {plan.limite_profesionales || '∞'}</span>
+                                    <span>•</span>
+                                    <span>Serv: {plan.limite_servicios || '∞'}</span>
+                                    <span>•</span>
+                                    <span>Citas: {plan.limite_citas_mes || '∞'}</span>
+                                </div>
                             </div>
                         </div>
 

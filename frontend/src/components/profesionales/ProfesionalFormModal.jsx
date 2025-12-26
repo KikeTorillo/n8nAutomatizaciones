@@ -19,12 +19,12 @@ import {
   useActualizarProfesional,
   useProfesional,
   useSincronizarCategorias,
-  TIPOS_EMPLEADO,
   ESTADOS_LABORALES,
   TIPOS_CONTRATACION,
   GENEROS,
   ESTADOS_CIVILES
 } from '@/hooks/useProfesionales';
+import { useCambiarRolUsuario, ROLES_USUARIO } from '@/hooks/useUsuarios';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -47,6 +47,16 @@ const COLORES_CALENDARIO = [
   '#14b8a6', // teal-500
   '#a855f7', // purple-500
   '#84cc16', // lime-500
+];
+
+/**
+ * Roles disponibles para asignar en invitación
+ * Dic 2025: Selector de rol en formulario de profesional
+ */
+const ROLES_INVITACION = [
+  { value: 'empleado', label: 'Empleado', description: 'Acceso limitado según permisos asignados' },
+  { value: 'propietario', label: 'Propietario', description: 'Acceso operativo completo' },
+  { value: 'admin', label: 'Administrador', description: 'Acceso total a la organización' },
 ];
 
 /**
@@ -73,7 +83,6 @@ const profesionalCreateSchema = z.object({
   contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
 
   // === Clasificación Laboral (Dic 2025) ===
-  tipo: z.enum(['operativo', 'administrativo', 'gerencial', 'ventas']).optional(),
   estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).default('activo'),
   tipo_contratacion: z.enum(['tiempo_completo', 'medio_tiempo', 'temporal', 'contrato', 'freelance']).optional(),
   fecha_contratacion: z.string().optional().or(z.literal('')),
@@ -82,6 +91,9 @@ const profesionalCreateSchema = z.object({
   departamento_id: z.number().int().positive().optional().nullable(),
   puesto_id: z.number().int().positive().optional().nullable(),
   supervisor_id: z.number().int().positive().optional().nullable(),
+
+  // === Acceso al Sistema (Dic 2025) ===
+  rol_invitacion: z.enum(['empleado', 'propietario', 'admin']).default('empleado'),
 });
 
 /**
@@ -106,7 +118,6 @@ const profesionalEditSchema = z.object({
   contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
 
   // === Clasificación Laboral (Dic 2025) ===
-  tipo: z.enum(['operativo', 'administrativo', 'gerencial', 'ventas']).optional(),
   estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).optional(),
   tipo_contratacion: z.enum(['tiempo_completo', 'medio_tiempo', 'temporal', 'contrato', 'freelance']).optional(),
   fecha_contratacion: z.string().optional().or(z.literal('')),
@@ -158,6 +169,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   // Hooks de mutación
   const crearMutation = useCrearProfesional();
   const actualizarMutation = useActualizarProfesional();
+  const cambiarRolMutation = useCambiarRolUsuario();
 
   // Cargar invitación actual en modo edición
   useEffect(() => {
@@ -203,7 +215,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           contacto_emergencia_nombre: '',
           contacto_emergencia_telefono: '',
           // Clasificación laboral (Dic 2025)
-          tipo: undefined,
           estado: 'activo',
           tipo_contratacion: undefined,
           fecha_contratacion: '',
@@ -211,6 +222,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           departamento_id: undefined,
           puesto_id: undefined,
           supervisor_id: undefined,
+          // Acceso al sistema (Dic 2025)
+          rol_invitacion: 'empleado',
         },
   });
 
@@ -236,13 +249,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           direccion: '',
           contacto_emergencia_nombre: '',
           contacto_emergencia_telefono: '',
-          tipo: undefined,
           estado: 'activo',
           tipo_contratacion: undefined,
           fecha_contratacion: '',
           departamento_id: undefined,
           puesto_id: undefined,
           supervisor_id: undefined,
+          // Acceso al sistema (Dic 2025)
+          rol_invitacion: 'empleado',
         });
         setSelectedColor(COLORES_CALENDARIO[0]);
         setCategoriasSeleccionadas([]);
@@ -269,7 +283,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         contacto_emergencia_nombre: profesionalData.contacto_emergencia_nombre || '',
         contacto_emergencia_telefono: profesionalData.contacto_emergencia_telefono || '',
         // Clasificación laboral (Dic 2025)
-        tipo: profesionalData.tipo || undefined,
         estado: profesionalData.estado || 'activo',
         tipo_contratacion: profesionalData.tipo_contratacion || undefined,
         fecha_contratacion: profesionalData.fecha_contratacion?.split('T')[0] || '',
@@ -445,7 +458,6 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         contacto_emergencia_nombre: data.contacto_emergencia_nombre?.trim() || undefined,
         contacto_emergencia_telefono: data.contacto_emergencia_telefono?.trim() || undefined,
         // Clasificación laboral (Dic 2025)
-        tipo: data.tipo || undefined,
         estado: data.estado || 'activo',
         tipo_contratacion: data.tipo_contratacion || undefined,
         fecha_contratacion: data.fecha_contratacion || undefined,
@@ -497,13 +509,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           }
         }
 
-        // Enviar invitación automáticamente
+        // Enviar invitación automáticamente con rol seleccionado (Dic 2025)
         if (nuevoProfesionalId && data.email?.trim()) {
           try {
             await invitacionesApi.crear({
               profesional_id: nuevoProfesionalId,
               email: data.email.trim(),
-              nombre_sugerido: data.nombre_completo?.trim()
+              nombre_sugerido: data.nombre_completo?.trim(),
+              rol: data.rol_invitacion || 'empleado'
             });
             toast.success('Profesional creado e invitación enviada');
           } catch (invErr) {
@@ -721,45 +734,24 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                       helperText="Identificador único interno (opcional)"
                     />
 
-                    {/* Tipo de empleado y Estado laboral */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <Controller
-                        name="tipo"
-                        control={control}
-                        render={({ field: { value, onChange, ...field } }) => (
-                          <Select
-                            {...field}
-                            label="Tipo de Empleado"
-                            value={value || ''}
-                            onChange={(e) => onChange(e.target.value || undefined)}
-                            options={Object.entries(TIPOS_EMPLEADO).map(([key, val]) => ({
-                              value: key,
-                              label: val.label,
-                            }))}
-                            placeholder="Selecciona tipo"
-                            error={errors.tipo?.message}
-                          />
-                        )}
-                      />
-
-                      <Controller
-                        name="estado"
-                        control={control}
-                        render={({ field: { value, onChange, ...field } }) => (
-                          <Select
-                            {...field}
-                            label="Estado Laboral"
-                            value={value || 'activo'}
-                            onChange={(e) => onChange(e.target.value || 'activo')}
-                            options={Object.entries(ESTADOS_LABORALES).map(([key, val]) => ({
-                              value: key,
-                              label: val.label,
-                            }))}
-                            error={errors.estado?.message}
-                          />
-                        )}
-                      />
-                    </div>
+                    {/* Estado laboral */}
+                    <Controller
+                      name="estado"
+                      control={control}
+                      render={({ field: { value, onChange, ...field } }) => (
+                        <Select
+                          {...field}
+                          label="Estado Laboral"
+                          value={value || 'activo'}
+                          onChange={(e) => onChange(e.target.value || 'activo')}
+                          options={Object.entries(ESTADOS_LABORALES).map(([key, val]) => ({
+                            value: key,
+                            label: val.label,
+                          }))}
+                          error={errors.estado?.message}
+                        />
+                      )}
+                    />
 
                     {/* Tipo de contratación y Fecha */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -973,14 +965,79 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
                 {/* Estado actual: Usuario vinculado, invitación pendiente, o info */}
                 {profesionalData?.usuario_id ? (
-                  <div className="mb-4 p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
-                    <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
-                      <CheckCircle className="h-5 w-5" />
-                      <span className="font-medium">Usuario vinculado</span>
+                  <div className="mb-4 space-y-4">
+                    {/* Info de usuario vinculado */}
+                    <div className="p-3 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg">
+                      <div className="flex items-center gap-2 text-green-700 dark:text-green-400">
+                        <CheckCircle className="h-5 w-5" />
+                        <span className="font-medium">Usuario vinculado</span>
+                      </div>
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-1">
+                        {profesionalData.usuario_nombre || profesionalData.usuario_email}
+                      </p>
                     </div>
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-1">
-                      {profesionalData.usuario_nombre || profesionalData.usuario_email}
-                    </p>
+
+                    {/* Selector de rol del usuario (Dic 2025) */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <span className="flex items-center gap-2">
+                          <UserCheck className="h-4 w-4" />
+                          Rol del usuario
+                        </span>
+                      </label>
+                      <div className="space-y-2">
+                        {ROLES_INVITACION.map((rol) => (
+                          <label
+                            key={rol.value}
+                            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                              profesionalData.usuario_rol === rol.value
+                                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-600'
+                                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                            }`}
+                          >
+                            <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                              profesionalData.usuario_rol === rol.value
+                                ? 'border-primary-600 bg-primary-600'
+                                : 'border-gray-300 dark:border-gray-500'
+                            }`}>
+                              {profesionalData.usuario_rol === rol.value && (
+                                <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                              )}
+                            </div>
+                            <input
+                              type="radio"
+                              name="rol_usuario_edicion"
+                              value={rol.value}
+                              checked={profesionalData.usuario_rol === rol.value}
+                              onChange={async (e) => {
+                                try {
+                                  await cambiarRolMutation.mutateAsync({
+                                    id: profesionalData.usuario_id,
+                                    rol: e.target.value
+                                  });
+                                  toast.success(`Rol cambiado a ${ROLES_USUARIO[e.target.value]?.label}`);
+                                } catch (err) {
+                                  toast.error(err.message || 'Error al cambiar rol');
+                                }
+                              }}
+                              disabled={cambiarRolMutation.isPending}
+                              className="sr-only"
+                            />
+                            <div className="flex-1">
+                              <span className="font-medium text-gray-900 dark:text-gray-100">
+                                {rol.label}
+                              </span>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                {rol.description}
+                              </p>
+                            </div>
+                            {cambiarRolMutation.isPending && profesionalData.usuario_rol !== rol.value && (
+                              <Loader2 className="h-4 w-4 animate-spin text-primary-600" />
+                            )}
+                          </label>
+                        ))}
+                      </div>
+                    </div>
                   </div>
                 ) : isEditMode ? (
                   /* Sección de Invitación (solo en modo edición) */
@@ -1065,15 +1122,71 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                     </p>
                   </div>
                 ) : (
-                  /* Modo creación: mensaje informativo */
-                  <div className="mb-4 p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
-                    <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400">
-                      <Mail className="h-5 w-5" />
-                      <span className="font-medium">Invitación automática</span>
+                  /* Modo creación: mensaje informativo y selector de rol */
+                  <div className="mb-4 space-y-4">
+                    <div className="p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
+                      <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400">
+                        <Mail className="h-5 w-5" />
+                        <span className="font-medium">Invitación automática</span>
+                      </div>
+                      <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
+                        Al guardar, se enviará automáticamente un email de invitación al correo ingresado.
+                      </p>
                     </div>
-                    <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
-                      Al guardar, se enviará automáticamente un email de invitación al correo ingresado.
-                    </p>
+
+                    {/* Selector de Rol (Dic 2025) */}
+                    <Controller
+                      name="rol_invitacion"
+                      control={control}
+                      render={({ field: { value, onChange, ...field } }) => (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            <span className="flex items-center gap-2">
+                              <UserCheck className="h-4 w-4" />
+                              Rol del usuario
+                            </span>
+                          </label>
+                          <div className="space-y-2">
+                            {ROLES_INVITACION.map((rol) => (
+                              <label
+                                key={rol.value}
+                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                  value === rol.value
+                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-600'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                }`}
+                              >
+                                <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                  value === rol.value
+                                    ? 'border-primary-600 bg-primary-600'
+                                    : 'border-gray-300 dark:border-gray-500'
+                                }`}>
+                                  {value === rol.value && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                  )}
+                                </div>
+                                <input
+                                  type="radio"
+                                  {...field}
+                                  value={rol.value}
+                                  checked={value === rol.value}
+                                  onChange={(e) => onChange(e.target.value)}
+                                  className="sr-only"
+                                />
+                                <div className="flex-1">
+                                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                                    {rol.label}
+                                  </span>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                    {rol.description}
+                                  </p>
+                                </div>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    />
                   </div>
                 )}
 

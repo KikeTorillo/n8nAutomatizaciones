@@ -3,7 +3,7 @@ import { profesionalesApi } from '@/services/api/endpoints';
 
 /**
  * Hook para listar profesionales con filtros
- * @param {Object} params - { activo, busqueda, estado, tipo, departamento_id, etc. }
+ * @param {Object} params - { activo, busqueda, estado, departamento_id, rol_usuario, etc. }
  */
 export function useProfesionales(params = {}) {
   return useQuery({
@@ -438,13 +438,10 @@ export function useSincronizarCategorias() {
 // ====================================================================
 // CONSTANTES PARA GESTIÓN DE EMPLEADOS
 // ====================================================================
-
-export const TIPOS_EMPLEADO = {
-  operativo: { label: 'Operativo', color: 'blue' },
-  administrativo: { label: 'Administrativo', color: 'purple' },
-  gerencial: { label: 'Gerencial', color: 'amber' },
-  ventas: { label: 'Ventas', color: 'green' },
-};
+// NOTA (Dic 2025): TIPOS_EMPLEADO eliminado.
+// La capacidad de supervisar se determina por el ROL del usuario
+// (admin/propietario pueden supervisar, empleado no).
+// ====================================================================
 
 export const ESTADOS_LABORALES = {
   activo: { label: 'Activo', color: 'green' },

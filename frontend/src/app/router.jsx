@@ -88,6 +88,7 @@ const CategoriasConfigPage = lazy(() => import('@/pages/configuracion/Categorias
 const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'));
 const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
 const MonedasPage = lazy(() => import('@/pages/configuracion/MonedasPage'));
+const UsuariosPage = lazy(() => import('@/pages/configuracion/UsuariosPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -404,7 +405,7 @@ export const router = createBrowserRouter([
       {
         path: 'inventario/ordenes-compra',
         element: (
-          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
             {withSuspense(OrdenesCompraPage)}
           </ProtectedRoute>
         ),
@@ -548,6 +549,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(PermisosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Usuarios (Dic 2025 - Gestión estilo Odoo)
+      {
+        path: 'configuracion/usuarios',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(UsuariosPage)}
           </ProtectedRoute>
         ),
       },

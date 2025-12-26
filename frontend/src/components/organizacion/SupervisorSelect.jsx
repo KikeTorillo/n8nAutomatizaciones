@@ -5,7 +5,10 @@ import { UserCheck } from 'lucide-react';
 
 /**
  * Selector de Supervisor
- * Muestra profesionales que pueden ser supervisores (gerenciales/administrativos)
+ * Muestra profesionales que pueden ser supervisores.
+ * La capacidad de supervisar se determina por el ROL del usuario vinculado:
+ * - admin y propietario pueden supervisar
+ * - empleado NO puede supervisar
  *
  * @param {number} excludeId - ID de profesional a excluir (evita seleccionarse a sí mismo)
  * @param {number} departamentoId - Filtrar por departamento (opcional)
@@ -34,8 +37,9 @@ const SupervisorSelect = forwardRef(
       const p = {};
       if (soloActivos) p.estado = 'activo';
       if (departamentoId) p.departamento_id = departamentoId;
-      // Filtrar por tipos que pueden ser supervisores
-      p.tipo = ['gerencial', 'administrativo'];
+      // Solo profesionales con usuario vinculado y rol que permite supervisar
+      p.con_usuario = true;
+      p.rol_usuario = ['admin', 'propietario'];
       return p;
     }, [soloActivos, departamentoId]);
 

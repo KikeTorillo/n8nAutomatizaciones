@@ -209,32 +209,13 @@ Cada plataforma tiene sus propios requisitos de configuración
 y credenciales en la tabla chatbot_credentials.';
 
 -- ====================================================================
--- 👷 ENUM TIPO_EMPLEADO - CLASIFICACIÓN ORGANIZACIONAL
+-- 👷 ENUM TIPO_EMPLEADO - ELIMINADO (Dic 2025)
 -- ====================================================================
--- Clasificación para reportes y organigrama.
--- ⚠️ NO restringe funcionalidades (eso lo hace modulos_acceso)
--- ────────────────────────────────────────────────────────────────────
-CREATE TYPE tipo_empleado AS ENUM (
-    'operativo',          -- Personal de campo/servicio
-                          -- • Atiende clientes directamente
-                          -- • Ejecuta servicios o ventas
-
-    'administrativo',     -- Personal de oficina
-                          -- • Gestión, contabilidad, RRHH
-                          -- • No atiende clientes directamente
-
-    'gerencial',          -- Supervisores, gerentes
-                          -- • Tiene subordinados a cargo
-                          -- • Responsable de áreas/equipos
-
-    'ventas'              -- Vendedores, rutas
-                          -- • Enfocado en ventas/comercial
-                          -- • Puede tener metas de ventas
-);
-
-COMMENT ON TYPE tipo_empleado IS
-'Clasificación organizacional de empleados. Solo para reportes y organigrama.
-NO restringe funcionalidades - eso lo controla modulos_acceso en profesionales.';
+-- NOTA: Este ENUM fue eliminado porque no tenía función práctica.
+-- La jerarquía de supervisión ahora se determina por el ROL del usuario:
+--   - admin/propietario pueden supervisar
+--   - empleado no puede supervisar
+-- ====================================================================
 
 -- ====================================================================
 -- 📋 ENUM ESTADO_LABORAL - ESTADO DEL EMPLEADO

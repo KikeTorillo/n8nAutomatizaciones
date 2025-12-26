@@ -11,11 +11,9 @@
 -- 📊 ÍNDICES ADICIONALES PARA PROFESIONALES (campos de organización)
 -- ====================================================================
 -- Estos índices complementan los del módulo profesionales con campos
--- específicos del módulo organización (tipo, estado, código)
+-- específicos del módulo organización (estado, código)
+-- NOTA: Índice por tipo eliminado (Dic 2025) - columna ya no existe
 -- ────────────────────────────────────────────────────────────────────
-
--- Índice por tipo de empleado
-CREATE INDEX idx_profesionales_org_tipo ON profesionales(organizacion_id, tipo);
 
 -- Índice por estado laboral
 CREATE INDEX idx_profesionales_org_estado ON profesionales(organizacion_id, estado);

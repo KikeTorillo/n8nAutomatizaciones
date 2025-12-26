@@ -1,4 +1,6 @@
 const UsuarioModel = require('../models/usuario.model');
+const InvitacionModel = require('../models/invitacion.model');
+const emailService = require('../../../services/emailService');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 
@@ -139,6 +141,127 @@ class UsuarioController {
         }
 
         return ResponseHelper.success(res, estadoBloqueo, 'Estado de bloqueo obtenido exitosamente');
+    });
+
+    // ====================================================================
+    // GESTIÓN DE USUARIOS ESTILO ODOO - Dic 2025
+    // ====================================================================
+
+    /**
+     * Crear invitación para usuario directo (sin profesional)
+     * POST /usuarios/directo
+     * Dic 2025: Cambiado para usar sistema de invitaciones
+     */
+    static crearDirecto = asyncHandler(async (req, res) => {
+        // Solo admin/propietario pueden crear usuarios
+        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+            return ResponseHelper.error(res, 'No tienes permisos para crear usuarios', 403);
+        }
+
+        const { email, nombre, apellidos, rol } = req.body;
+
+        // Crear invitación para usuario directo
+        const invitacion = await InvitacionModel.crearParaUsuarioDirecto({
+            organizacion_id: req.tenant.organizacionId,
+            email,
+            nombre,
+            apellidos,
+            rol: rol || 'empleado',
+            creado_por: req.user.id
+        });
+
+        // Enviar email de invitación
+        try {
+            await emailService.enviarInvitacionUsuarioDirecto({
+                email: invitacion.email,
+                nombre: invitacion.nombre_sugerido,
+                token: invitacion.token,
+                organizacion_nombre: req.user.nombre_comercial || 'la organización',
+                rol: invitacion.rol,
+                expira_en: invitacion.expira_en
+            });
+        } catch (emailError) {
+            console.error('Error enviando email de invitación:', emailError);
+            // No fallamos la operación, la invitación se creó
+        }
+
+        return ResponseHelper.success(res, {
+            invitacion: {
+                id: invitacion.id,
+                email: invitacion.email,
+                nombre: invitacion.nombre_sugerido,
+                rol: invitacion.rol,
+                estado: invitacion.estado,
+                expira_en: invitacion.expira_en
+            },
+            mensaje: 'Se ha enviado un correo de invitación al usuario'
+        }, 'Invitación enviada exitosamente', 201);
+    });
+
+    /**
+     * Cambiar estado activo de usuario (y profesional vinculado)
+     * PATCH /usuarios/:id/estado
+     */
+    static cambiarEstado = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { activo } = req.body;
+
+        // Solo admin/propietario pueden cambiar estado
+        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+            return ResponseHelper.error(res, 'No tienes permisos para cambiar el estado de usuarios', 403);
+        }
+
+        const resultado = await UsuarioModel.cambiarEstadoActivo(
+            parseInt(id),
+            activo,
+            req.tenant.organizacionId,
+            req.user.userId
+        );
+
+        const mensaje = activo
+            ? 'Usuario activado exitosamente'
+            : 'Usuario desactivado exitosamente';
+
+        return ResponseHelper.success(res, resultado, mensaje);
+    });
+
+    /**
+     * Vincular o desvincular profesional a usuario
+     * PATCH /usuarios/:id/vincular-profesional
+     */
+    static vincularProfesional = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { profesional_id } = req.body;
+
+        // Solo admin/propietario pueden vincular profesionales
+        if (!['admin', 'propietario', 'super_admin'].includes(req.user.rol)) {
+            return ResponseHelper.error(res, 'No tienes permisos para vincular profesionales', 403);
+        }
+
+        const resultado = await UsuarioModel.vincularProfesional(
+            parseInt(id),
+            profesional_id,
+            req.tenant.organizacionId,
+            req.user.userId
+        );
+
+        const mensaje = profesional_id
+            ? 'Profesional vinculado exitosamente'
+            : 'Profesional desvinculado exitosamente';
+
+        return ResponseHelper.success(res, resultado, mensaje);
+    });
+
+    /**
+     * Obtener profesionales sin usuario vinculado (para selector)
+     * GET /usuarios/profesionales-disponibles
+     */
+    static obtenerProfesionalesDisponibles = asyncHandler(async (req, res) => {
+        const profesionales = await UsuarioModel.obtenerProfesionalesSinUsuario(
+            req.tenant.organizacionId
+        );
+
+        return ResponseHelper.success(res, profesionales, 'Profesionales disponibles obtenidos exitosamente');
     });
 }
 

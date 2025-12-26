@@ -70,9 +70,10 @@ const TIPOS_PROFESIONAL = [
 const FORMAS_PAGO = ['comision', 'salario', 'mixto'];
 
 /**
- * Tipos de empleado (clasificación organizacional) - Dic 2025
+ * Roles que pueden supervisar - Dic 2025
+ * La capacidad de supervisar se determina por el ROL del usuario vinculado
  */
-const TIPOS_EMPLEADO = ['operativo', 'administrativo', 'gerencial', 'ventas'];
+const ROLES_SUPERVISORES = ['admin', 'propietario'];
 
 /**
  * Estados laborales - Dic 2025
@@ -115,7 +116,7 @@ const LIMITES = {
 module.exports = {
     TIPOS_PROFESIONAL,
     FORMAS_PAGO,
-    TIPOS_EMPLEADO,
+    ROLES_SUPERVISORES,
     ESTADOS_LABORALES,
     TIPOS_CONTRATACION,
     GENEROS,

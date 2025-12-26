@@ -13,13 +13,12 @@
 -- ====================================================================
 -- 👷 TABLA PROFESIONALES - GESTIÓN UNIFICADA DE EMPLEADOS
 -- ====================================================================
--- Tabla unificada de empleados. Soporta todos los tipos de colaboradores:
--- operativos, administrativos, gerenciales, ventas.
+-- Tabla unificada de empleados/profesionales que brindan servicios.
 --
 -- 🔧 MODELO DE CONTROL:
--- • tipo → Solo clasificación organizacional (reportes, organigrama)
--- • modulos_acceso → ★ CONTROL PRINCIPAL de funcionalidades ★
+-- • ROL del usuario vinculado → Define permisos y capacidad de supervisar
 -- • categorias (M:N) → Especialidad, nivel, certificaciones
+-- • estado → Estado laboral (activo, vacaciones, baja, etc.)
 -- ────────────────────────────────────────────────────────────────────
 CREATE TABLE profesionales (
     -- 🔑 CLAVE PRIMARIA
@@ -49,12 +48,12 @@ CREATE TABLE profesionales (
     contacto_emergencia_telefono VARCHAR(20),  -- Teléfono del contacto de emergencia
 
     -- ====================================================================
-    -- 🏷️ SECCIÓN: CLASIFICACIÓN ORGANIZACIONAL
+    -- 🏷️ SECCIÓN: CLASIFICACIÓN LABORAL
     -- ====================================================================
-    -- ⚠️ Solo para reportes y organigrama. NO restringe funcionalidades.
-    -- Las funcionalidades se controlan con modulos_acceso.
+    -- Estado laboral y tipo de contratación del empleado.
+    -- ⚠️ NOTA: La capacidad de supervisar se determina por el ROL del usuario
+    -- vinculado (admin/propietario pueden supervisar, empleado no).
     -- ────────────────────────────────────────────────────────────────────
-    tipo tipo_empleado NOT NULL DEFAULT 'operativo',  -- Clasificación organizacional
     estado estado_laboral NOT NULL DEFAULT 'activo',  -- Estado laboral actual
     tipo_contratacion tipo_contratacion DEFAULT 'tiempo_completo', -- Modalidad de contrato
 
@@ -175,11 +174,8 @@ CREATE TABLE profesionales (
 COMMENT ON TABLE profesionales IS
 'Tabla unificada de empleados. Los permisos se gestionan via sistema normalizado
 (permisos_catalogo, permisos_rol, permisos_usuario_sucursal).
+La capacidad de supervisar se determina por el ROL del usuario vinculado.
 Clasificación flexible via categorias_profesional (M:N).';
-
-COMMENT ON COLUMN profesionales.tipo IS
-'Clasificación organizacional (operativo, administrativo, gerencial, ventas).
-Solo para reportes y organigrama. NO restringe funcionalidades.';
 
 COMMENT ON COLUMN profesionales.estado IS
 'Estado laboral actual. Impacta disponibilidad y acceso al sistema.';

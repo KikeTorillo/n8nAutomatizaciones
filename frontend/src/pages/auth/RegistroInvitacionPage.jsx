@@ -10,15 +10,9 @@ import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicat
 
 /**
  * Schema de validación para registro por invitación
+ * Solo valida contraseña (nombre/apellidos vienen de la invitación)
  */
 const registroSchema = z.object({
-  nombre: z.string()
-    .min(2, 'El nombre debe tener al menos 2 caracteres')
-    .max(150, 'El nombre es muy largo'),
-  apellidos: z.string()
-    .max(150, 'Los apellidos son muy largos')
-    .optional()
-    .or(z.literal('')),
   password: z.string()
     .min(8, 'La contraseña debe tener al menos 8 caracteres')
     .regex(/[A-Z]/, 'Debe incluir al menos una mayúscula')
@@ -56,8 +50,6 @@ export default function RegistroInvitacionPage() {
   } = useForm({
     resolver: zodResolver(registroSchema),
     defaultValues: {
-      nombre: '',
-      apellidos: '',
       password: '',
       confirmarPassword: ''
     }
@@ -91,9 +83,10 @@ export default function RegistroInvitacionPage() {
   const onSubmit = async (data) => {
     setRegistrando(true);
     try {
+      // Usar nombre/apellidos de la invitación (campos deshabilitados)
       await invitacionesApi.aceptar(token, {
-        nombre: data.nombre,
-        apellidos: data.apellidos || undefined,
+        nombre: invitacion.nombre_sugerido,
+        apellidos: invitacion.apellidos_sugerido || undefined,
         password: data.password
       });
 
@@ -115,9 +108,9 @@ export default function RegistroInvitacionPage() {
   // Estado: Validando
   if (validando) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg text-center">
-          <Loader2 className="h-12 w-12 text-green-600 dark:text-green-400 animate-spin mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 text-primary-600 dark:text-primary-400 animate-spin mx-auto mb-4" />
           <p className="text-gray-600 dark:text-gray-400">Validando invitación...</p>
         </div>
       </div>
@@ -148,10 +141,10 @@ export default function RegistroInvitacionPage() {
   // Estado: Registro exitoso
   if (registroExitoso) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 p-4">
         <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Check className="h-8 w-8 text-green-600 dark:text-green-400" />
+          <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="h-8 w-8 text-primary-600 dark:text-primary-400" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">¡Cuenta creada!</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-2">
@@ -162,7 +155,7 @@ export default function RegistroInvitacionPage() {
           </p>
           <Link
             to="/auth/login"
-            className="inline-block px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
           >
             Iniciar sesión ahora
           </Link>
@@ -173,17 +166,20 @@ export default function RegistroInvitacionPage() {
 
   // Estado: Formulario de registro
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6 text-white">
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 px-8 py-6 text-white">
           <div className="flex items-center gap-3 mb-2">
             <Building2 className="h-6 w-6" />
             <span className="font-medium">{invitacion.organizacion_nombre}</span>
           </div>
           <h1 className="text-2xl font-bold">Completa tu registro</h1>
-          <p className="text-green-100 mt-1">
-            Has sido invitado como <strong>{invitacion.profesional_nombre}</strong>
+          <p className="text-primary-100 mt-1">
+            {invitacion.profesional_nombre
+              ? <>Has sido invitado como <strong>{invitacion.profesional_nombre}</strong></>
+              : <>Has sido invitado a unirte al equipo</>
+            }
           </p>
         </div>
 
@@ -202,7 +198,7 @@ export default function RegistroInvitacionPage() {
                 className="w-full px-4 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed"
               />
               <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                <Check className="h-5 w-5 text-green-500" />
+                <Check className="h-5 w-5 text-primary-500" />
               </div>
             </div>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -210,39 +206,25 @@ export default function RegistroInvitacionPage() {
             </p>
           </div>
 
-          {/* Nombre */}
+          {/* Nombre (pre-llenado desde invitación) */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nombre <span className="text-red-500">*</span>
+              Nombre
             </label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
               <input
                 type="text"
-                {...register('nombre')}
-                defaultValue={invitacion.nombre_sugerido}
-                placeholder="Tu nombre"
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
-                  errors.nombre ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
-                }`}
+                value={invitacion.apellidos_sugerido
+                  ? `${invitacion.nombre_sugerido} ${invitacion.apellidos_sugerido}`
+                  : invitacion.nombre_sugerido}
+                disabled
+                className="w-full pl-10 pr-10 py-3 bg-gray-100 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 cursor-not-allowed"
               />
+              <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                <Check className="h-5 w-5 text-primary-500" />
+              </div>
             </div>
-            {errors.nombre && (
-              <p className="text-red-500 text-sm mt-1">{errors.nombre.message}</p>
-            )}
-          </div>
-
-          {/* Apellidos */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Apellidos <span className="text-gray-400">(opcional)</span>
-            </label>
-            <input
-              type="text"
-              {...register('apellidos')}
-              placeholder="Tus apellidos"
-              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
           </div>
 
           {/* Contraseña */}
@@ -256,7 +238,7 @@ export default function RegistroInvitacionPage() {
                 type={showPassword ? 'text' : 'password'}
                 {...register('password')}
                 placeholder="Crea una contraseña segura"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
                   errors.password ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
@@ -285,7 +267,7 @@ export default function RegistroInvitacionPage() {
                 type={showConfirmPassword ? 'text' : 'password'}
                 {...register('confirmarPassword')}
                 placeholder="Repite la contraseña"
-                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
+                className={`w-full pl-10 pr-12 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 ${
                   errors.confirmarPassword ? 'border-red-500' : 'border-gray-300 dark:border-gray-600'
                 }`}
               />
@@ -306,7 +288,7 @@ export default function RegistroInvitacionPage() {
           <button
             type="submit"
             disabled={registrando}
-            className="w-full py-4 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full py-4 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {registrando ? (
               <>

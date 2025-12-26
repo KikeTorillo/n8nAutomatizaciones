@@ -26,6 +26,7 @@ class InvitacionModel {
      * @param {string} data.email - Email del invitado
      * @param {string} data.nombre_sugerido - Nombre sugerido (del profesional)
      * @param {number} data.creado_por - ID del usuario que crea la invitación
+     * @param {string} [data.rol='empleado'] - Rol a asignar al usuario (Dic 2025)
      * @param {number} [data.dias_expiracion=7] - Días hasta expiración
      * @returns {Promise<Object>} Invitación creada con token
      */
@@ -36,8 +37,15 @@ class InvitacionModel {
             email,
             nombre_sugerido,
             creado_por,
+            rol = 'empleado', // Dic 2025: Rol configurable
             dias_expiracion = 7
         } = data;
+
+        // Validar rol permitido
+        const rolesPermitidos = ['empleado', 'propietario', 'admin'];
+        if (!rolesPermitidos.includes(rol)) {
+            throw new Error(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
+        }
 
         const token = this.generarToken();
 
@@ -81,7 +89,7 @@ class InvitacionModel {
                 throw new Error('Este email ya está registrado en el sistema');
             }
 
-            // Crear invitación
+            // Crear invitación (Dic 2025: incluye rol)
             const invitacionResult = await db.query(`
                 INSERT INTO invitaciones_profesionales (
                     token,
@@ -89,16 +97,17 @@ class InvitacionModel {
                     profesional_id,
                     email,
                     nombre_sugerido,
+                    rol,
                     creado_por,
                     expira_en,
                     enviado_en
                 ) VALUES (
-                    $1, $2, $3, LOWER($4), $5, $6,
+                    $1, $2, $3, LOWER($4), $5, $6, $7,
                     NOW() + INTERVAL '${dias_expiracion} days',
                     NOW()
                 )
                 RETURNING *
-            `, [token, organizacion_id, profesional_id, email, nombre_sugerido || profesional.nombre_completo, creado_por]);
+            `, [token, organizacion_id, profesional_id, email, nombre_sugerido || profesional.nombre_completo, rol, creado_por]);
 
             const invitacion = invitacionResult.rows[0];
 
@@ -106,6 +115,87 @@ class InvitacionModel {
                 ...invitacion,
                 profesional_nombre: profesional.nombre_completo
             };
+        });
+    }
+
+    /**
+     * Crear invitación para usuario directo (sin profesional)
+     * Dic 2025: Soporte para usuarios como contadores, auditores, etc.
+     * @param {Object} data - Datos de la invitación
+     * @param {number} data.organizacion_id - ID de la organización
+     * @param {string} data.email - Email del invitado
+     * @param {string} data.nombre - Nombre del usuario
+     * @param {string} [data.apellidos] - Apellidos del usuario
+     * @param {string} [data.rol='empleado'] - Rol a asignar
+     * @param {number} data.creado_por - ID del usuario que crea
+     * @param {number} [data.dias_expiracion=7] - Días hasta expiración
+     * @returns {Promise<Object>} Invitación creada con token
+     */
+    static async crearParaUsuarioDirecto(data) {
+        const {
+            organizacion_id,
+            email,
+            nombre,
+            apellidos,
+            rol = 'empleado',
+            creado_por,
+            dias_expiracion = 7
+        } = data;
+
+        // Validar rol permitido
+        const rolesPermitidos = ['empleado', 'propietario', 'admin'];
+        if (!rolesPermitidos.includes(rol)) {
+            throw new Error(`Rol inválido: ${rol}. Roles permitidos: ${rolesPermitidos.join(', ')}`);
+        }
+
+        const token = this.generarToken();
+
+        return RLSContextManager.query(organizacion_id, async (db) => {
+            // Verificar si ya existe invitación pendiente para este email
+            const existenteResult = await db.query(`
+                SELECT id, estado, expira_en
+                FROM invitaciones_profesionales
+                WHERE email = LOWER($1)
+                  AND estado = 'pendiente'
+                  AND tipo_invitacion = 'usuario_directo'
+            `, [email]);
+
+            if (existenteResult.rows[0]) {
+                throw new Error('Ya existe una invitación pendiente para este email');
+            }
+
+            // Verificar que el email no esté registrado como usuario
+            const emailExistenteResult = await db.query(`
+                SELECT id FROM usuarios WHERE email = LOWER($1)
+            `, [email]);
+
+            if (emailExistenteResult.rows[0]) {
+                throw new Error('Este email ya está registrado en el sistema');
+            }
+
+            // Crear invitación para usuario directo (nombre y apellidos separados)
+            const invitacionResult = await db.query(`
+                INSERT INTO invitaciones_profesionales (
+                    token,
+                    organizacion_id,
+                    profesional_id,
+                    tipo_invitacion,
+                    email,
+                    nombre_sugerido,
+                    apellidos_sugerido,
+                    rol,
+                    creado_por,
+                    expira_en,
+                    enviado_en
+                ) VALUES (
+                    $1, $2, NULL, 'usuario_directo', LOWER($3), $4, $5, $6, $7,
+                    NOW() + INTERVAL '${dias_expiracion} days',
+                    NOW()
+                )
+                RETURNING *
+            `, [token, organizacion_id, email, nombre, apellidos || null, rol, creado_por]);
+
+            return invitacionResult.rows[0];
         });
     }
 
@@ -119,6 +209,7 @@ class InvitacionModel {
             // Marcar expiradas primero
             await db.query(`SELECT marcar_invitaciones_expiradas()`);
 
+            // LEFT JOIN para soportar invitaciones sin profesional
             const invitacionResult = await db.query(`
                 SELECT
                     i.*,
@@ -126,7 +217,7 @@ class InvitacionModel {
                     o.nombre_comercial AS organizacion_nombre,
                     o.logo_url AS organizacion_logo
                 FROM invitaciones_profesionales i
-                JOIN profesionales p ON i.profesional_id = p.id
+                LEFT JOIN profesionales p ON i.profesional_id = p.id
                 JOIN organizaciones o ON i.organizacion_id = o.id
                 WHERE i.token = $1
             `, [token]);
@@ -164,6 +255,8 @@ class InvitacionModel {
                     id: invitacion.id,
                     email: invitacion.email,
                     nombre_sugerido: invitacion.nombre_sugerido,
+                    apellidos_sugerido: invitacion.apellidos_sugerido,
+                    tipo_invitacion: invitacion.tipo_invitacion || 'profesional',
                     profesional_nombre: invitacion.profesional_nombre,
                     organizacion_nombre: invitacion.organizacion_nombre,
                     organizacion_logo: invitacion.organizacion_logo,
@@ -207,7 +300,8 @@ class InvitacionModel {
                 throw new Error('La invitación ha expirado');
             }
 
-            // Crear usuario con rol empleado
+            // Crear usuario con rol de la invitación (Dic 2025: rol configurable)
+            const rolAsignado = invitacion.rol || 'empleado';
             const usuarioResult = await db.query(`
                 INSERT INTO usuarios (
                     organizacion_id,
@@ -219,7 +313,7 @@ class InvitacionModel {
                     activo,
                     email_verificado
                 ) VALUES (
-                    $1, LOWER($2), $3, $4, $5, 'empleado', TRUE, TRUE
+                    $1, LOWER($2), $3, $4, $5, $6, TRUE, TRUE
                 )
                 RETURNING id, email, nombre, apellidos, rol, organizacion_id, activo, creado_en
             `, [
@@ -227,17 +321,31 @@ class InvitacionModel {
                 invitacion.email,
                 datosUsuario.password_hash,
                 datosUsuario.nombre,
-                datosUsuario.apellidos || null
+                datosUsuario.apellidos || null,
+                rolAsignado
             ]);
 
             const usuario = usuarioResult.rows[0];
 
-            // Vincular profesional al usuario
-            await db.query(`
-                UPDATE profesionales
-                SET usuario_id = $1, actualizado_en = NOW()
-                WHERE id = $2
-            `, [usuario.id, invitacion.profesional_id]);
+            let profesional = null;
+
+            // Solo vincular profesional si existe (tipo_invitacion = 'profesional')
+            if (invitacion.profesional_id) {
+                await db.query(`
+                    UPDATE profesionales
+                    SET usuario_id = $1, actualizado_en = NOW()
+                    WHERE id = $2
+                `, [usuario.id, invitacion.profesional_id]);
+
+                // Obtener datos del profesional actualizado
+                const profesionalResult = await db.query(`
+                    SELECT id, nombre_completo
+                    FROM profesionales
+                    WHERE id = $1
+                `, [invitacion.profesional_id]);
+
+                profesional = profesionalResult.rows[0];
+            }
 
             // Marcar invitación como aceptada
             await db.query(`
@@ -248,19 +356,11 @@ class InvitacionModel {
                 WHERE id = $2
             `, [usuario.id, invitacion.id]);
 
-            // Obtener datos del profesional actualizado
-            const profesionalResult = await db.query(`
-                SELECT id, nombre_completo
-                FROM profesionales
-                WHERE id = $1
-            `, [invitacion.profesional_id]);
-
-            const profesional = profesionalResult.rows[0];
-
             return {
                 usuario,
-                profesional,
-                organizacion_id: invitacion.organizacion_id
+                profesional, // null si tipo_invitacion = 'usuario_directo'
+                organizacion_id: invitacion.organizacion_id,
+                tipo_invitacion: invitacion.tipo_invitacion || 'profesional'
             };
         });
     }

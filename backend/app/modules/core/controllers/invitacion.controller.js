@@ -16,9 +16,10 @@ class InvitacionController {
     /**
      * POST /invitaciones
      * Crear y enviar invitación a un profesional
+     * Dic 2025: Agregado campo rol para definir nivel de acceso
      */
     static crear = asyncHandler(async (req, res) => {
-        const { profesional_id, email, nombre_sugerido } = req.body;
+        const { profesional_id, email, nombre_sugerido, rol } = req.body;
         const organizacion_id = req.user.organizacion_id;
         const creado_por = req.user.id;
 
@@ -27,6 +28,7 @@ class InvitacionController {
             profesional_id,
             email,
             nombre_sugerido,
+            rol: rol || 'empleado', // Dic 2025: Rol configurable
             creado_por
         });
 
@@ -50,6 +52,7 @@ class InvitacionController {
                 id: invitacion.id,
                 email: invitacion.email,
                 estado: invitacion.estado,
+                rol: invitacion.rol, // Dic 2025: Incluir rol asignado
                 expira_en: invitacion.expira_en,
                 profesional_nombre: invitacion.profesional_nombre
             }
@@ -96,20 +99,27 @@ class InvitacionController {
             password_hash
         });
 
-        return ResponseHelper.success(res, {
+        // Construir respuesta (profesional puede ser null para usuario_directo)
+        const respuesta = {
             usuario: {
                 id: resultado.usuario.id,
                 email: resultado.usuario.email,
                 nombre: resultado.usuario.nombre,
                 rol: resultado.usuario.rol
             },
-            profesional: {
+            tipo_invitacion: resultado.tipo_invitacion,
+            mensaje: 'Cuenta creada exitosamente. Ya puedes iniciar sesión.'
+        };
+
+        // Solo incluir profesional si existe (tipo_invitacion = 'profesional')
+        if (resultado.profesional) {
+            respuesta.profesional = {
                 id: resultado.profesional.id,
                 nombre: resultado.profesional.nombre_completo
-                // NOTA: modulos_acceso eliminado - permisos se obtienen via sistema normalizado
-            },
-            mensaje: 'Cuenta creada exitosamente. Ya puedes iniciar sesión.'
-        }, 'Registro completado', 201);
+            };
+        }
+
+        return ResponseHelper.success(res, respuesta, 'Registro completado', 201);
     });
 
     /**

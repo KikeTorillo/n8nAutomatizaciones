@@ -21,7 +21,7 @@ class ProfesionalModel {
                     organizacion_id, codigo, nombre_completo, email, telefono, foto_url,
                     fecha_nacimiento, documento_identidad, genero, direccion, estado_civil,
                     contacto_emergencia_nombre, contacto_emergencia_telefono,
-                    tipo, estado, tipo_contratacion,
+                    estado, tipo_contratacion,
                     supervisor_id, departamento_id, puesto_id,
                     fecha_ingreso, licencias_profesionales,
                     años_experiencia, idiomas, disponible_online, color_calendario,
@@ -30,9 +30,9 @@ class ProfesionalModel {
                     usuario_id, activo
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
-                    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20,
-                    $21, $22, $23, $24, $25, $26, $27, $28, $29, $30,
-                    $31, $32, $33
+                    $11, $12, $13, $14, $15, $16, $17, $18, $19,
+                    $20, $21, $22, $23, $24, $25, $26, $27, $28,
+                    $29, $30, $31, $32
                 )
                 RETURNING *
             `;
@@ -51,7 +51,6 @@ class ProfesionalModel {
                 profesionalData.estado_civil || null,
                 profesionalData.contacto_emergencia_nombre || null,
                 profesionalData.contacto_emergencia_telefono || null,
-                profesionalData.tipo || 'operativo',
                 profesionalData.estado || 'activo',
                 profesionalData.tipo_contratacion || 'tiempo_completo',
                 profesionalData.supervisor_id || null,
@@ -278,16 +277,28 @@ class ProfesionalModel {
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.usuario_id,
+                       -- Dic 2025: Campos de clasificación y jerarquía
+                       p.codigo, p.estado, p.tipo_contratacion,
+                       p.supervisor_id, p.departamento_id, p.puesto_id,
+                       p.genero, p.estado_civil, p.direccion,
+                       p.contacto_emergencia_nombre, p.contacto_emergencia_telefono,
                        p.creado_en, p.actualizado_en,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
-                       u.nombre as usuario_nombre, u.email as usuario_email,
+                       u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
+                       -- Dic 2025: JOINs para nombres de relaciones
+                       sup.nombre_completo as supervisor_nombre,
+                       d.nombre as departamento_nombre,
+                       pu.nombre as puesto_nombre,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 JOIN organizaciones o ON p.organizacion_id = o.id
                 LEFT JOIN usuarios u ON p.usuario_id = u.id
+                LEFT JOIN profesionales sup ON p.supervisor_id = sup.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
-                GROUP BY p.id, o.id, u.id
+                GROUP BY p.id, o.id, u.id, sup.id, d.id, pu.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
@@ -311,12 +322,13 @@ class ProfesionalModel {
                 modulo = null, // Filtrar por módulo habilitado: 'agendamiento', 'pos', 'inventario'
                 con_usuario = null, // Filtrar profesionales con/sin usuario vinculado
                 // Dic 2025: Filtros de clasificación y jerarquía
-                tipo = null, // puede ser string o array
                 estado = null,
                 tipo_contratacion = null,
                 departamento_id = null,
                 puesto_id = null,
                 supervisor_id = null,
+                // Filtro para supervisores (Dic 2025): usar rol_usuario
+                rol_usuario = null, // Filtrar por rol del usuario vinculado (admin, propietario, empleado)
                 limite = 50,
                 offset = 0
             } = filtros;
@@ -332,11 +344,19 @@ class ProfesionalModel {
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
                        p.usuario_id,
+                       -- Dic 2025: Campos de clasificación y jerarquía
+                       p.codigo, p.estado, p.tipo_contratacion,
+                       p.supervisor_id, p.departamento_id, p.puesto_id,
                        p.creado_en, p.actualizado_en,
-                       u.nombre as usuario_nombre, u.email as usuario_email,
+                       u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
+                       -- Dic 2025: JOINs para nombres de relaciones
+                       d.nombre as departamento_nombre,
+                       pu.nombre as puesto_nombre,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 LEFT JOIN usuarios u ON p.usuario_id = u.id
+                LEFT JOIN departamentos d ON p.departamento_id = d.id
+                LEFT JOIN puestos pu ON p.puesto_id = pu.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.organizacion_id = $1
             `;
@@ -376,16 +396,16 @@ class ProfesionalModel {
                 query += ` AND p.usuario_id IS NULL`;
             }
 
-            // Dic 2025: Filtros de clasificación organizacional
-            if (tipo) {
-                // tipo puede ser string o array
-                // Nota: tipo es ENUM tipo_empleado, cast a text para comparar con array
-                if (Array.isArray(tipo)) {
-                    query += ` AND p.tipo::text = ANY($${contador}::text[])`;
-                    values.push(tipo);
+            // Dic 2025: Filtro por rol del usuario vinculado (para supervisores)
+            if (rol_usuario) {
+                // rol_usuario puede ser string o array
+                // Filtra profesionales cuyo usuario vinculado tenga el rol especificado
+                if (Array.isArray(rol_usuario)) {
+                    query += ` AND u.rol::text = ANY($${contador}::text[])`;
+                    values.push(rol_usuario);
                 } else {
-                    query += ` AND p.tipo = $${contador}`;
-                    values.push(tipo);
+                    query += ` AND u.rol = $${contador}`;
+                    values.push(rol_usuario);
                 }
                 contador++;
             }
@@ -421,7 +441,7 @@ class ProfesionalModel {
                 contador++;
             }
 
-            query += ` GROUP BY p.id, u.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
+            query += ` GROUP BY p.id, u.id, d.id, pu.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
             values.push(limite, offset);
 
             const result = await db.query(query, values);
@@ -454,8 +474,8 @@ class ProfesionalModel {
                 // Información personal
                 'fecha_nacimiento', 'documento_identidad', 'genero', 'direccion',
                 'estado_civil', 'contacto_emergencia_nombre', 'contacto_emergencia_telefono',
-                // Clasificación organizacional
-                'tipo', 'estado', 'tipo_contratacion',
+                // Clasificación laboral
+                'estado', 'tipo_contratacion',
                 // Jerarquía
                 'supervisor_id', 'departamento_id', 'puesto_id',
                 // Fechas laborales
@@ -502,7 +522,12 @@ class ProfesionalModel {
                          comision_porcentaje, salario_base, forma_pago,
                          activo, disponible_online, fecha_ingreso, fecha_salida,
                          motivo_inactividad, calificacion_promedio,
-                         total_citas_completadas, total_clientes_atendidos, actualizado_en
+                         total_citas_completadas, total_clientes_atendidos,
+                         codigo, estado, tipo_contratacion,
+                         supervisor_id, departamento_id, puesto_id,
+                         genero, estado_civil, direccion,
+                         contacto_emergencia_nombre, contacto_emergencia_telefono,
+                         actualizado_en
             `;
 
             valores.push(id, organizacionId);

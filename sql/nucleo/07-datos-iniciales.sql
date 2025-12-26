@@ -36,7 +36,7 @@ INSERT INTO planes_subscripcion (
 ('trial', 'Trial',
  'Período de prueba de 14 días. Acceso completo para evaluar.',
  0.00, NULL, NULL, 'MXN',
- 3, 50, 10, 2, 50, 1,  -- Límites para trial (1 sucursal)
+ NULL, NULL, NULL, 10, NULL, 1,  -- Trial: sin límites excepto 10 usuarios y 1 sucursal
  1, 50, 5,  -- Eventos: 1 activo, 50 invitados, 5 fotos galería
  '{
    "soporte_email": true,

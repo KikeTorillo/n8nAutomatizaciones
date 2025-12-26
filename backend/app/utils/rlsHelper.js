@@ -113,33 +113,34 @@ class RLSHelper {
 
     /**
      * Registrar evento de auditoría en el sistema
+     * Dic 2025: Corregido para usar nombres de columnas correctos
      * @param {Object} db - Cliente de base de datos
      * @param {Object} eventoData - Datos del evento
      * @param {number} eventoData.organizacion_id - ID de la organización
-     * @param {string} eventoData.evento_tipo - Tipo de evento
-     * @param {string} eventoData.entidad_tipo - Tipo de entidad afectada
-     * @param {number} eventoData.entidad_id - ID de la entidad
+     * @param {string} eventoData.tipo_evento - Tipo de evento (enum tipo_evento_sistema)
+     * @param {string} [eventoData.subtipo_evento] - Subtipo de evento (opcional)
      * @param {string} eventoData.descripcion - Descripción del evento
-     * @param {Object} eventoData.metadatos - Metadatos adicionales
-     * @param {number} eventoData.usuario_id - ID del usuario que generó el evento
+     * @param {Object} [eventoData.metadata] - Metadatos adicionales (objeto JSON)
+     * @param {number} [eventoData.usuario_id] - ID del usuario que generó el evento
+     * @param {string} [eventoData.gravedad='info'] - Gravedad: debug, info, warning, error, critical
      */
     static async registrarEvento(db, eventoData) {
         try {
             const query = `
                 INSERT INTO eventos_sistema (
-                    organizacion_id, evento_tipo, entidad_tipo, entidad_id,
-                    descripcion, metadata, usuario_id
+                    organizacion_id, tipo_evento, subtipo_evento,
+                    descripcion, metadata, usuario_id, gravedad
                 ) VALUES ($1, $2, $3, $4, $5, $6, $7)
             `;
 
             await db.query(query, [
                 eventoData.organizacion_id,
-                eventoData.evento_tipo,
-                eventoData.entidad_tipo,
-                eventoData.entidad_id,
+                eventoData.tipo_evento,
+                eventoData.subtipo_evento || null,
                 eventoData.descripcion,
-                JSON.stringify(eventoData.metadatos),
-                eventoData.usuario_id
+                JSON.stringify(eventoData.metadata || {}),
+                eventoData.usuario_id || null,
+                eventoData.gravedad || 'info'
             ]);
         } catch (error) {
             logger.warn('No se pudo registrar evento en auditoría:', error.message);

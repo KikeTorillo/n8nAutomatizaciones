@@ -38,6 +38,15 @@ const invitacionSchemas = {
                 .optional()
                 .messages({
                     'string.min': 'Nombre debe tener al menos 2 caracteres'
+                }),
+
+            // Dic 2025: Rol a asignar al usuario
+            rol: Joi.string()
+                .valid('empleado', 'propietario', 'admin')
+                .default('empleado')
+                .optional()
+                .messages({
+                    'any.only': 'Rol inválido. Valores permitidos: empleado, propietario, admin'
                 })
         }),
         query: Joi.object(),

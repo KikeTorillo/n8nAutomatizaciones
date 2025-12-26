@@ -34,19 +34,29 @@ CREATE TABLE IF NOT EXISTS invitaciones_profesionales (
         ON DELETE CASCADE
         ON UPDATE CASCADE,
 
-    -- Profesional al que se vinculará el usuario
-    profesional_id INTEGER NOT NULL REFERENCES profesionales(id)
+    -- Profesional al que se vinculará el usuario (NULL para usuarios directos)
+    profesional_id INTEGER REFERENCES profesionales(id)
         ON DELETE CASCADE
         ON UPDATE CASCADE,
+
+    -- Tipo de invitación (Dic 2025: soporte usuarios directos)
+    tipo_invitacion VARCHAR(20) DEFAULT 'profesional'
+        CHECK (tipo_invitacion IN ('profesional', 'usuario_directo')),
 
     -- Email del invitado (debe coincidir al registrarse)
     email VARCHAR(150) NOT NULL,
 
-    -- Nombre sugerido (del profesional, editable al registrarse)
+    -- Nombre sugerido (del profesional o usuario directo)
     nombre_sugerido VARCHAR(150),
+
+    -- Apellidos sugeridos (Dic 2025: para usuarios directos)
+    apellidos_sugerido VARCHAR(150),
 
     -- Estado de la invitación
     estado estado_invitacion DEFAULT 'pendiente',
+
+    -- Rol a asignar al usuario (Dic 2025)
+    rol VARCHAR(20) DEFAULT 'empleado' CHECK (rol IN ('empleado', 'propietario', 'admin')),
 
     -- Usuario creado al aceptar (NULL hasta que se acepte)
     usuario_id INTEGER REFERENCES usuarios(id)
@@ -162,9 +172,11 @@ CREATE POLICY invitaciones_org_isolation ON invitaciones_profesionales
 -- ====================================================================
 -- COMENTARIOS
 -- ====================================================================
-COMMENT ON TABLE invitaciones_profesionales IS 'Invitaciones para que empleados se registren y vinculen a profesionales';
+COMMENT ON TABLE invitaciones_profesionales IS 'Invitaciones para que usuarios se registren (con o sin profesional)';
 COMMENT ON COLUMN invitaciones_profesionales.token IS 'Token único para URL de registro (64 chars hex)';
-COMMENT ON COLUMN invitaciones_profesionales.profesional_id IS 'Profesional al que se vinculará el usuario al aceptar';
+COMMENT ON COLUMN invitaciones_profesionales.profesional_id IS 'Profesional a vincular (NULL si tipo_invitacion=usuario_directo)';
+COMMENT ON COLUMN invitaciones_profesionales.tipo_invitacion IS 'profesional: vinculado a profesional, usuario_directo: usuario sin profesional';
 COMMENT ON COLUMN invitaciones_profesionales.email IS 'Email al que se envía la invitación (debe coincidir al registrarse)';
-COMMENT ON COLUMN invitaciones_profesionales.nombre_sugerido IS 'Nombre del profesional, sugerido pero editable';
+COMMENT ON COLUMN invitaciones_profesionales.nombre_sugerido IS 'Nombre del profesional o usuario';
+COMMENT ON COLUMN invitaciones_profesionales.apellidos_sugerido IS 'Apellidos del usuario (solo para usuario_directo)';
 COMMENT ON COLUMN invitaciones_profesionales.expira_en IS 'Fecha límite para aceptar (default 7 días)';

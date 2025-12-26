@@ -11,6 +11,7 @@ import {
   Network,
   Shield,
   Coins,
+  Users,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 import useAuthStore from '@/store/authStore';
@@ -24,7 +25,7 @@ function ConfiguracionPage() {
   const { user } = useAuthStore();
   const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
 
-  // Secciones de configuración - Todas usan variaciones de Nexo Purple
+  // Secciones de configuración - Dic 2025: Nuevo orden con Usuarios después de Mi Negocio
   const secciones = [
     {
       id: 'negocio',
@@ -32,6 +33,26 @@ function ConfiguracionPage() {
       description: 'Logo, nombre, datos de contacto y fiscales',
       icon: Building2,
       path: '/configuracion/negocio',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: esAdmin,
+    },
+    {
+      id: 'usuarios',
+      name: 'Usuarios',
+      description: 'Gestiona el acceso al sistema',
+      icon: Users,
+      path: '/configuracion/usuarios',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: esAdmin,
+    },
+    {
+      id: 'permisos',
+      name: 'Permisos',
+      description: 'Gestiona los permisos por rol y usuario',
+      icon: Shield,
+      path: '/configuracion/permisos',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: esAdmin,
@@ -82,16 +103,6 @@ function ConfiguracionPage() {
       description: 'Visualiza la estructura jerárquica del equipo',
       icon: Network,
       path: '/configuracion/organigrama',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
-      enabled: esAdmin,
-    },
-    {
-      id: 'permisos',
-      name: 'Permisos',
-      description: 'Gestiona los permisos por rol y usuario',
-      icon: Shield,
-      path: '/configuracion/permisos',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: esAdmin,

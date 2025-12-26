@@ -73,4 +73,47 @@ router.patch('/:id/desbloquear',
     UsuarioController.desbloquear
 );
 
+// ========== Gestión de Usuarios Estilo Odoo - Dic 2025 ==========
+
+// Crear usuario directo (sin invitación)
+router.post('/directo',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    subscription.checkActiveSubscription,
+    subscription.checkResourceLimit('usuarios'),
+    auth.requireAdminRole,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuarioSchemas.crearDirecto),
+    UsuarioController.crearDirecto
+);
+
+// Obtener profesionales sin usuario (para selector)
+router.get('/profesionales-disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(usuarioSchemas.obtenerProfesionalesDisponibles),
+    UsuarioController.obtenerProfesionalesDisponibles
+);
+
+// Cambiar estado activo de usuario
+router.patch('/:id/estado',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    auth.requireAdminRole,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuarioSchemas.cambiarEstado),
+    UsuarioController.cambiarEstado
+);
+
+// Vincular/desvincular profesional a usuario
+router.patch('/:id/vincular-profesional',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    auth.requireAdminRole,
+    rateLimiting.heavyOperationRateLimit,
+    validation.validate(usuarioSchemas.vincularProfesional),
+    UsuarioController.vincularProfesional
+);
+
 module.exports = router;

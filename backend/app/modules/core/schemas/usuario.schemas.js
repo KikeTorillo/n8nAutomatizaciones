@@ -145,6 +145,86 @@ const desbloquear = {
     })
 };
 
+// ====================================================================
+// GESTIÓN DE USUARIOS ESTILO ODOO - Dic 2025
+// ====================================================================
+
+/**
+ * Schema para invitar usuario directo (sin profesional)
+ * POST /usuarios/directo
+ * Dic 2025: Cambiado para usar sistema de invitaciones (sin password)
+ */
+const crearDirecto = {
+    body: Joi.object({
+        email: commonSchemas.emailRequired,
+        nombre: Joi.string()
+            .min(2)
+            .max(150)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre debe tener al menos 2 caracteres',
+                'any.required': 'El nombre es obligatorio'
+            }),
+        apellidos: Joi.string()
+            .max(150)
+            .optional()
+            .trim()
+            .allow(''),
+        rol: Joi.string()
+            .valid('admin', 'propietario', 'empleado')
+            .optional()
+            .default('empleado')
+    })
+};
+
+/**
+ * Schema para cambiar estado activo de usuario
+ * PATCH /usuarios/:id/estado
+ */
+const cambiarEstado = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        activo: Joi.boolean()
+            .required()
+            .messages({
+                'any.required': 'El campo activo es obligatorio',
+                'boolean.base': 'El campo activo debe ser verdadero o falso'
+            })
+    })
+};
+
+/**
+ * Schema para vincular/desvincular profesional a usuario
+ * PATCH /usuarios/:id/vincular-profesional
+ */
+const vincularProfesional = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        profesional_id: Joi.number()
+            .integer()
+            .positive()
+            .allow(null)
+            .required()
+            .messages({
+                'number.base': 'El ID de profesional debe ser un número o null',
+                'any.required': 'El campo profesional_id es obligatorio (usar null para desvincular)'
+            })
+    })
+};
+
+/**
+ * Schema para obtener profesionales sin usuario
+ * GET /usuarios/profesionales-disponibles
+ */
+const obtenerProfesionalesDisponibles = {
+    query: Joi.object({})
+};
+
 module.exports = {
     crear,
     listar,
@@ -153,5 +233,10 @@ module.exports = {
     verificarBloqueo,
     actualizar,
     cambiarRol,
-    desbloquear
+    desbloquear,
+    // Nuevos - Dic 2025
+    crearDirecto,
+    cambiarEstado,
+    vincularProfesional,
+    obtenerProfesionalesDisponibles
 };

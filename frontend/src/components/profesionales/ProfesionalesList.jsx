@@ -103,7 +103,7 @@ function ProfesionalesList({
                     {profesional.nombre_completo || 'Sin nombre'}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                    {profesional.tipo_nombre || 'Sin tipo especificado'}
+                    {profesional.puesto_nombre || profesional.departamento_nombre || 'Sin puesto asignado'}
                   </p>
 
                   {/* Badge de estado */}

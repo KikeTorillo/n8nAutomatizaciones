@@ -12,7 +12,6 @@ import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfe
 import {
   useProfesionales,
   useEliminarProfesional,
-  TIPOS_EMPLEADO,
   ESTADOS_LABORALES
 } from '@/hooks/useProfesionales';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
@@ -31,7 +30,6 @@ function ProfesionalesPage() {
   const [filtros, setFiltros] = useState({
     activo: '',
     estado: '', // Estado laboral (activo, vacaciones, etc.)
-    tipo: '', // Tipo empleado (operativo, administrativo, etc.)
     departamento_id: '', // Departamento
   });
 
@@ -54,7 +52,6 @@ function ProfesionalesPage() {
     busqueda,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
     estado: filtros.estado || undefined,
-    tipo: filtros.tipo || undefined,
     departamento_id: filtros.departamento_id ? parseInt(filtros.departamento_id, 10) : undefined,
   });
 
@@ -66,7 +63,6 @@ function ProfesionalesPage() {
     setFiltros({
       activo: '',
       estado: '',
-      tipo: '',
       departamento_id: '',
     });
     setBusqueda('');
@@ -121,7 +117,6 @@ function ProfesionalesPage() {
   const hasFiltrosActivos =
     filtros.activo !== '' ||
     filtros.estado !== '' ||
-    filtros.tipo !== '' ||
     filtros.departamento_id !== '' ||
     busqueda !== '';
 
@@ -213,26 +208,6 @@ function ProfesionalesPage() {
                     >
                       <option value="">Todos los estados</option>
                       {Object.entries(ESTADOS_LABORALES).map(([key, val]) => (
-                        <option key={key} value={key}>
-                          {val.label}
-                        </option>
-                      ))}
-                    </Select>
-                  </div>
-
-                  {/* Filtro: Tipo de Empleado (Dic 2025) */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Tipo de Empleado
-                    </label>
-                    <Select
-                      value={filtros.tipo}
-                      onChange={(e) =>
-                        setFiltros({ ...filtros, tipo: e.target.value })
-                      }
-                    >
-                      <option value="">Todos</option>
-                      {Object.entries(TIPOS_EMPLEADO).map(([key, val]) => (
                         <option key={key} value={key}>
                           {val.label}
                         </option>
