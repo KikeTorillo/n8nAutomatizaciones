@@ -610,7 +610,7 @@ class UsuarioModel {
                         ELSE 0
                     END as minutos_restantes_bloqueo
                 FROM usuarios u
-                LEFT JOIN profesionales p ON u.profesional_id = p.id
+                LEFT JOIN profesionales p ON p.usuario_id = u.id
                 WHERE ${whereClause}
                 ORDER BY u.${orderBySeguro} ${orderDirSeguro}
                 LIMIT $${paramCounter} OFFSET $${paramCounter + 1}
@@ -646,84 +646,69 @@ class UsuarioModel {
     }
 
     static async cambiarRol(userId, nuevoRol, orgId, adminId) {
-        // ✅ Usar RLSContextManager.withBypass() para gestión automática completa
         return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
+            // Validar que el usuario existe y pertenece a la organización
+            const usuarioQuery = `
+                SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
+                FROM usuarios
+                WHERE id = $1 AND organizacion_id = $2 AND activo = true
+            `;
+            const usuarioResult = await db.query(usuarioQuery, [userId, orgId]);
 
-            try {
-                // Validar que el usuario existe y pertenece a la organización
-                const usuarioQuery = `
-                    SELECT id, email, nombre, apellidos, rol, organizacion_id, activo
-                    FROM usuarios
-                    WHERE id = $1 AND organizacion_id = $2 AND activo = true
-                `;
-                const usuarioResult = await db.query(usuarioQuery, [userId, orgId]);
-
-                if (usuarioResult.rows.length === 0) {
-                    throw new Error('Usuario no encontrado en la organización especificada');
-                }
-
-                const usuario = usuarioResult.rows[0];
-                const rolAnterior = usuario.rol;
-
-                // Validar que el nuevo rol es válido
-                const rolesValidos = ['admin', 'propietario', 'empleado', 'cliente'];
-                if (!rolesValidos.includes(nuevoRol)) {
-                    throw new Error(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
-                }
-
-                // Validar que no sea el mismo rol
-                if (rolAnterior === nuevoRol) {
-                    throw new Error('El usuario ya tiene este rol asignado');
-                }
-
-                // Actualizar rol del usuario
-                const updateQuery = `
-                    UPDATE usuarios
-                    SET
-                        rol = $1,
-                        actualizado_en = NOW()
-                    WHERE id = $2 AND organizacion_id = $3
-                    RETURNING id, email, nombre, apellidos, rol, organizacion_id,
-                             activo, email_verificado, creado_en, actualizado_en
-                `;
-
-                const updateResult = await db.query(updateQuery, [nuevoRol, userId, orgId]);
-
-                await RLSHelper.registrarEvento(db, {
-                    organizacion_id: orgId,
-                    evento_tipo: 'usuario_rol_cambiado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: userId,
-                    descripcion: `Rol de usuario cambiado de ${rolAnterior} a ${nuevoRol}`,
-                    metadatos: {
-                        usuario_email: usuario.email,
-                        rol_anterior: rolAnterior,
-                        rol_nuevo: nuevoRol,
-                        admin_id: adminId,
-                        timestamp: new Date().toISOString()
-                    },
-                    usuario_id: adminId
-                });
-
-                const resultado = {
-                    usuario: updateResult.rows[0],
-                    cambio: {
-                        rol_anterior: rolAnterior,
-                        rol_nuevo: nuevoRol,
-                        realizado_por: adminId,
-                        timestamp: new Date().toISOString()
-                    }
-                };
-
-                await db.query('COMMIT');
-                return resultado;
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
+            if (usuarioResult.rows.length === 0) {
+                throw new Error('Usuario no encontrado en la organización especificada');
             }
-        });
+
+            const usuario = usuarioResult.rows[0];
+            const rolAnterior = usuario.rol;
+
+            // Validar que el nuevo rol es válido
+            const rolesValidos = ['admin', 'propietario', 'empleado', 'cliente'];
+            if (!rolesValidos.includes(nuevoRol)) {
+                throw new Error(`Rol no válido. Opciones: ${rolesValidos.join(', ')}`);
+            }
+
+            // Validar que no sea el mismo rol
+            if (rolAnterior === nuevoRol) {
+                throw new Error('El usuario ya tiene este rol asignado');
+            }
+
+            // Actualizar rol del usuario
+            const updateQuery = `
+                UPDATE usuarios
+                SET
+                    rol = $1,
+                    actualizado_en = NOW()
+                WHERE id = $2 AND organizacion_id = $3
+                RETURNING id, email, nombre, apellidos, rol, organizacion_id,
+                         activo, email_verificado, creado_en, actualizado_en
+            `;
+
+            const updateResult = await db.query(updateQuery, [nuevoRol, userId, orgId]);
+
+            await RLSHelper.registrarEvento(db, {
+                organizacion_id: orgId,
+                tipo_evento: 'usuario_rol_cambiado',
+                descripcion: `Rol de usuario cambiado de ${rolAnterior} a ${nuevoRol}`,
+                metadata: {
+                    usuario_email: usuario.email,
+                    rol_anterior: rolAnterior,
+                    rol_nuevo: nuevoRol,
+                    admin_id: adminId
+                },
+                usuario_id: adminId
+            });
+
+            return {
+                usuario: updateResult.rows[0],
+                cambio: {
+                    rol_anterior: rolAnterior,
+                    rol_nuevo: nuevoRol,
+                    realizado_por: adminId,
+                    timestamp: new Date().toISOString()
+                }
+            };
+        }); // Sin useTransaction - auto-commit cada query
     }
 
     static async resetPassword(email, ipAddress = null) {
@@ -1295,102 +1280,89 @@ class UsuarioModel {
      */
     static async cambiarEstadoActivo(userId, activo, organizacionId, adminId) {
         return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
+            // Obtener usuario con su profesional vinculado (relación: profesionales.usuario_id → usuarios.id)
+            const usuarioResult = await db.query(`
+                SELECT u.id, u.email, u.nombre, u.activo as estado_anterior,
+                       p.id as prof_id, p.nombre_completo as prof_nombre
+                FROM usuarios u
+                LEFT JOIN profesionales p ON p.usuario_id = u.id
+                WHERE u.id = $1 AND u.organizacion_id = $2
+            `, [userId, organizacionId]);
 
-            try {
-                // Obtener usuario con su profesional vinculado
-                const usuarioResult = await db.query(`
-                    SELECT u.id, u.email, u.nombre, u.activo as estado_anterior,
-                           u.profesional_id,
-                           p.id as prof_id, p.nombre_completo as prof_nombre
-                    FROM usuarios u
-                    LEFT JOIN profesionales p ON u.profesional_id = p.id
-                    WHERE u.id = $1 AND u.organizacion_id = $2
-                `, [userId, organizacionId]);
-
-                if (!usuarioResult.rows[0]) {
-                    throw new Error('Usuario no encontrado en la organización');
-                }
-
-                const usuario = usuarioResult.rows[0];
-
-                // No permitir desactivar al propio usuario
-                if (userId === adminId && !activo) {
-                    throw new Error('No puedes desactivar tu propia cuenta');
-                }
-
-                // Actualizar usuario
-                await db.query(`
-                    UPDATE usuarios
-                    SET activo = $1, actualizado_en = NOW()
-                    WHERE id = $2
-                `, [activo, userId]);
-
-                // Si tiene profesional vinculado, actualizar estado del profesional
-                let profesionalActualizado = null;
-                if (usuario.profesional_id) {
-                    if (!activo) {
-                        // Desactivar: poner en baja
-                        await db.query(`
-                            UPDATE profesionales
-                            SET estado = 'baja', fecha_baja = NOW(), actualizado_en = NOW()
-                            WHERE id = $1
-                        `, [usuario.profesional_id]);
-                    } else {
-                        // Activar: volver a activo
-                        await db.query(`
-                            UPDATE profesionales
-                            SET estado = 'activo', fecha_baja = NULL, actualizado_en = NOW()
-                            WHERE id = $1
-                        `, [usuario.profesional_id]);
-                    }
-
-                    profesionalActualizado = {
-                        id: usuario.profesional_id,
-                        nombre: usuario.prof_nombre,
-                        estado: activo ? 'activo' : 'baja'
-                    };
-                }
-
-                // Registrar evento
-                await RLSHelper.registrarEvento(db, {
-                    organizacion_id: organizacionId,
-                    evento_tipo: activo ? 'usuario_activado' : 'usuario_desactivado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: userId,
-                    descripcion: `Usuario ${activo ? 'activado' : 'desactivado'}${profesionalActualizado ? ' junto con su profesional' : ''}`,
-                    metadatos: {
-                        email: usuario.email,
-                        estado_anterior: usuario.estado_anterior,
-                        estado_nuevo: activo,
-                        profesional_afectado: profesionalActualizado,
-                        admin_id: adminId
-                    },
-                    usuario_id: adminId
-                });
-
-                await db.query('COMMIT');
-
-                return {
-                    usuario: {
-                        id: userId,
-                        email: usuario.email,
-                        nombre: usuario.nombre,
-                        activo: activo,
-                        estado_anterior: usuario.estado_anterior
-                    },
-                    profesional: profesionalActualizado,
-                    cambio: {
-                        realizado_por: adminId,
-                        timestamp: new Date().toISOString()
-                    }
-                };
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
+            if (!usuarioResult.rows[0]) {
+                throw new Error('Usuario no encontrado en la organización');
             }
-        });
+
+            const usuario = usuarioResult.rows[0];
+
+            // No permitir desactivar al propio usuario
+            if (userId === adminId && !activo) {
+                throw new Error('No puedes desactivar tu propia cuenta');
+            }
+
+            // Actualizar usuario
+            await db.query(`
+                UPDATE usuarios
+                SET activo = $1, actualizado_en = NOW()
+                WHERE id = $2
+            `, [activo, userId]);
+
+            // Si tiene profesional vinculado, actualizar estado del profesional
+            let profesionalActualizado = null;
+            if (usuario.prof_id) {
+                if (!activo) {
+                    // Desactivar: poner en baja
+                    await db.query(`
+                        UPDATE profesionales
+                        SET estado = 'baja', fecha_baja = NOW(), actualizado_en = NOW()
+                        WHERE id = $1
+                    `, [usuario.prof_id]);
+                } else {
+                    // Activar: volver a activo
+                    await db.query(`
+                        UPDATE profesionales
+                        SET estado = 'activo', fecha_baja = NULL, actualizado_en = NOW()
+                        WHERE id = $1
+                    `, [usuario.prof_id]);
+                }
+
+                profesionalActualizado = {
+                    id: usuario.prof_id,
+                    nombre: usuario.prof_nombre,
+                    estado: activo ? 'activo' : 'baja'
+                };
+            }
+
+            // Registrar evento
+            await RLSHelper.registrarEvento(db, {
+                organizacion_id: organizacionId,
+                tipo_evento: activo ? 'usuario_activado' : 'usuario_desactivado',
+                descripcion: `Usuario ${activo ? 'activado' : 'desactivado'}${profesionalActualizado ? ' junto con su profesional' : ''}`,
+                metadata: {
+                    email: usuario.email,
+                    estado_anterior: usuario.estado_anterior,
+                    estado_nuevo: activo,
+                    profesional_afectado: profesionalActualizado,
+                    admin_id: adminId
+                },
+                usuario_id: adminId
+            });
+
+            return {
+                usuario: {
+                    id: userId,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    activo: activo,
+                    estado_anterior: usuario.estado_anterior
+                },
+                profesional: profesionalActualizado,
+                cambio: {
+                    realizado_por: adminId,
+                    timestamp: new Date().toISOString()
+                }
+            };
+        }); // Sin useTransaction - auto-commit cada query
     }
 
     /**
@@ -1404,116 +1376,105 @@ class UsuarioModel {
      */
     static async vincularProfesional(userId, profesionalId, organizacionId, adminId) {
         return await RLSContextManager.withBypass(async (db) => {
-            await db.query('BEGIN');
+            // Obtener usuario actual
+            const usuarioResult = await db.query(`
+                SELECT id, email, nombre
+                FROM usuarios
+                WHERE id = $1 AND organizacion_id = $2
+            `, [userId, organizacionId]);
 
-            try {
-                // Obtener usuario actual
-                const usuarioResult = await db.query(`
-                    SELECT id, email, nombre, profesional_id
-                    FROM usuarios
-                    WHERE id = $1 AND organizacion_id = $2
-                `, [userId, organizacionId]);
-
-                if (!usuarioResult.rows[0]) {
-                    throw new Error('Usuario no encontrado en la organización');
-                }
-
-                const usuario = usuarioResult.rows[0];
-                const profesionalAnterior = usuario.profesional_id;
-
-                // Si se está vinculando un nuevo profesional
-                if (profesionalId) {
-                    // Verificar que el profesional exista y no tenga usuario
-                    const profesionalResult = await db.query(`
-                        SELECT id, nombre_completo, usuario_id
-                        FROM profesionales
-                        WHERE id = $1 AND organizacion_id = $2
-                    `, [profesionalId, organizacionId]);
-
-                    if (!profesionalResult.rows[0]) {
-                        throw new Error('Profesional no encontrado');
-                    }
-
-                    if (profesionalResult.rows[0].usuario_id && profesionalResult.rows[0].usuario_id !== userId) {
-                        throw new Error('Este profesional ya tiene un usuario vinculado');
-                    }
-                }
-
-                // Si había profesional anterior, desvincular
-                if (profesionalAnterior && profesionalAnterior !== profesionalId) {
-                    await db.query(`
-                        UPDATE profesionales
-                        SET usuario_id = NULL, actualizado_en = NOW()
-                        WHERE id = $1
-                    `, [profesionalAnterior]);
-                }
-
-                // Actualizar usuario con nuevo profesional_id
-                await db.query(`
-                    UPDATE usuarios
-                    SET profesional_id = $1, actualizado_en = NOW()
-                    WHERE id = $2
-                `, [profesionalId, userId]);
-
-                // Si hay nuevo profesional, vincularlo
-                if (profesionalId) {
-                    await db.query(`
-                        UPDATE profesionales
-                        SET usuario_id = $1, actualizado_en = NOW()
-                        WHERE id = $2
-                    `, [userId, profesionalId]);
-                }
-
-                // Obtener datos del nuevo profesional para respuesta
-                let nuevoProfesional = null;
-                if (profesionalId) {
-                    const profResult = await db.query(
-                        'SELECT id, nombre_completo FROM profesionales WHERE id = $1',
-                        [profesionalId]
-                    );
-                    nuevoProfesional = profResult.rows[0];
-                }
-
-                // Registrar evento
-                await RLSHelper.registrarEvento(db, {
-                    organizacion_id: organizacionId,
-                    evento_tipo: profesionalId ? 'usuario_profesional_vinculado' : 'usuario_profesional_desvinculado',
-                    entidad_tipo: 'usuario',
-                    entidad_id: userId,
-                    descripcion: profesionalId
-                        ? `Profesional vinculado a usuario`
-                        : `Profesional desvinculado de usuario`,
-                    metadatos: {
-                        email: usuario.email,
-                        profesional_anterior: profesionalAnterior,
-                        profesional_nuevo: profesionalId,
-                        admin_id: adminId
-                    },
-                    usuario_id: adminId
-                });
-
-                await db.query('COMMIT');
-
-                return {
-                    usuario: {
-                        id: userId,
-                        email: usuario.email,
-                        nombre: usuario.nombre,
-                        profesional_id: profesionalId
-                    },
-                    profesional: nuevoProfesional,
-                    profesional_anterior: profesionalAnterior,
-                    cambio: {
-                        realizado_por: adminId,
-                        timestamp: new Date().toISOString()
-                    }
-                };
-
-            } catch (error) {
-                await db.query('ROLLBACK');
-                throw error;
+            if (!usuarioResult.rows[0]) {
+                throw new Error('Usuario no encontrado en la organización');
             }
-        });
+
+            const usuario = usuarioResult.rows[0];
+
+            // Buscar profesional actualmente vinculado (relación está en profesionales.usuario_id)
+            const profActualResult = await db.query(`
+                SELECT id, nombre_completo
+                FROM profesionales
+                WHERE usuario_id = $1 AND organizacion_id = $2
+            `, [userId, organizacionId]);
+
+            const profesionalAnteriorId = profActualResult.rows[0]?.id || null;
+
+            // Si se está vinculando un nuevo profesional
+            if (profesionalId) {
+                // Verificar que el profesional exista y no tenga usuario
+                const profesionalResult = await db.query(`
+                    SELECT id, nombre_completo, usuario_id
+                    FROM profesionales
+                    WHERE id = $1 AND organizacion_id = $2
+                `, [profesionalId, organizacionId]);
+
+                if (!profesionalResult.rows[0]) {
+                    throw new Error('Profesional no encontrado');
+                }
+
+                if (profesionalResult.rows[0].usuario_id && profesionalResult.rows[0].usuario_id !== userId) {
+                    throw new Error('Este profesional ya tiene un usuario vinculado');
+                }
+            }
+
+            // Si había profesional anterior, desvincular
+            if (profesionalAnteriorId && profesionalAnteriorId !== profesionalId) {
+                await db.query(`
+                    UPDATE profesionales
+                    SET usuario_id = NULL, actualizado_en = NOW()
+                    WHERE id = $1
+                `, [profesionalAnteriorId]);
+            }
+
+            // Si hay nuevo profesional, vincularlo
+            if (profesionalId) {
+                await db.query(`
+                    UPDATE profesionales
+                    SET usuario_id = $1, actualizado_en = NOW()
+                    WHERE id = $2
+                `, [userId, profesionalId]);
+            }
+
+            // Obtener datos del nuevo profesional para respuesta
+            let nuevoProfesional = null;
+            if (profesionalId) {
+                const profResult = await db.query(
+                    'SELECT id, nombre_completo, usuario_id FROM profesionales WHERE id = $1',
+                    [profesionalId]
+                );
+                nuevoProfesional = profResult.rows[0];
+            }
+
+            // Registrar evento (usa campos correctos para RLSHelper.registrarEvento)
+            await RLSHelper.registrarEvento(db, {
+                organizacion_id: organizacionId,
+                tipo_evento: profesionalId ? 'usuario_profesional_vinculado' : 'usuario_profesional_desvinculado',
+                descripcion: profesionalId
+                    ? `Profesional vinculado a usuario`
+                    : `Profesional desvinculado de usuario`,
+                metadata: {
+                    email: usuario.email,
+                    profesional_anterior: profesionalAnteriorId,
+                    profesional_nuevo: profesionalId,
+                    admin_id: adminId
+                },
+                usuario_id: adminId
+            });
+
+            return {
+                usuario: {
+                    id: userId,
+                    email: usuario.email,
+                    nombre: usuario.nombre,
+                    profesional_id: profesionalId
+                },
+                profesional: nuevoProfesional,
+                profesional_anterior: profesionalAnteriorId,
+                cambio: {
+                    realizado_por: adminId,
+                    timestamp: new Date().toISOString()
+                }
+            };
+        }); // Sin useTransaction - auto-commit cada query
     }
 
     /**
@@ -1530,6 +1491,29 @@ class UsuarioModel {
                 WHERE usuario_id IS NULL
                   AND estado = 'activo'
                 ORDER BY nombre_completo
+            `);
+
+            return result.rows;
+        });
+    }
+
+    /**
+     * Obtener usuarios sin profesional vinculado (para vincular al crear profesional)
+     * Dic 2025: Para flujo de crear profesional y vincular a usuario existente
+     *
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} Lista de usuarios sin profesional vinculado
+     */
+    static async obtenerUsuariosSinProfesional(organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(`
+                SELECT u.id, u.nombre, u.apellidos, u.email, u.rol
+                FROM usuarios u
+                LEFT JOIN profesionales p ON p.usuario_id = u.id
+                WHERE p.id IS NULL
+                  AND u.activo = true
+                  AND u.rol != 'bot'
+                ORDER BY u.nombre, u.apellidos
             `);
 
             return result.rows;

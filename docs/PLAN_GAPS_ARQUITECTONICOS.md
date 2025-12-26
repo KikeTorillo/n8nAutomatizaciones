@@ -1,6 +1,6 @@
 # Plan de Gaps Arquitectónicos - Nexo ERP
 
-> **Última Revisión**: 26 Diciembre 2025 - Fase 5.3: ✅ Configuración POS Completada
+> **Última Revisión**: 26 Diciembre 2025 - Fase 5.2 corregida
 
 ---
 
@@ -8,13 +8,13 @@
 
 | Fase | Nombre | Estado | Notas |
 |------|--------|--------|-------|
-| 1 | Workflows de Aprobación | ✅ Completado | ~4,200 líneas, E2E validado |
+| 1 | Workflows de Aprobación | ✅ Completado | ~4,200 líneas |
 | 2 | Gestión de Módulos | ✅ Completado | 11 módulos con dependencias |
 | 3 | Permisos Normalizados | ✅ Completado | 72 permisos, 5 roles |
 | 4 | Multi-Moneda | ✅ Completado | Precios, conversión POS |
-| 5 | Listas de Precios | ✅ Completado | Modelo Odoo, prioridad por especificidad |
+| 5 | Listas de Precios | ✅ Completado | Modelo Odoo |
 | 5.1 | Roles en Invitaciones | ✅ Completado | Selector rol al crear profesional |
-| 5.2 | Gestión de Usuarios | ✅ Completado | Página usuarios, cambio de roles |
+| 5.2 | Gestión de Usuarios | ✅ Completado | Vincular/desvincular profesional funcional |
 | 5.3 | Configuración POS | ✅ Completado | Requerir profesional para ventas |
 | 6 | Webhooks Salientes | ⬜ Pendiente | - |
 | 7 | Internacionalización | ⬜ Pendiente | BD preparada |
@@ -44,21 +44,19 @@ Selector de rol (empleado/propietario/admin) al crear profesional con invitació
 ### Fase 5.2: Gestión de Usuarios (26 Dic 2025)
 
 **Página `/configuracion/usuarios`**:
-- Listar usuarios de la organización con filtros
-- Crear usuarios directos (sin profesional vinculado)
-- Cambiar rol de usuarios existentes
-- Toggle activar/desactivar usuario
+- Listar usuarios con filtros (rol, estado, búsqueda)
+- Crear usuarios directos (sin profesional)
+- Cambiar rol, activar/desactivar usuario
+- Vincular/desvincular profesional a usuario
 
-**Invitaciones para usuarios directos**:
-- Tipo `usuario_directo` vs `profesional`
-- Admin ingresa nombre/apellidos al crear invitación
-- Registro muestra campos pre-llenados (solo pide contraseña)
-- Columna `apellidos_sugerido` agregada a `invitaciones_profesionales`
+**Modelo de datos** (estilo Odoo):
+- `usuarios` = acceso al sistema (`res.users`)
+- `profesionales` = datos laborales (`hr.employee`)
+- Relación bidireccional: `usuarios.profesional_id` ↔ `profesionales.usuario_id`
 
-**Edición de profesional con usuario vinculado**:
-- Muestra usuario vinculado y su rol actual
-- Selector para cambiar rol en tiempo real
-- Query retorna `usuario_rol` del JOIN con usuarios
+**Bug crítico corregido**:
+- `RLSContextManager.withBypass({ useTransaction: true })` NO persistía cambios
+- Solución: Remover `useTransaction: true`, usar auto-commit por query
 
 ### Fase 5.3: Configuración POS (26 Dic 2025)
 
@@ -105,6 +103,8 @@ Selector de rol (empleado/propietario/admin) al crear profesional con invitació
 ### RLS Multi-Tenant
 - Usar `RLSContextManager.query()` siempre
 - `withBypass()` solo para JOINs multi-tabla o super_admin
+- **⚠️ NUNCA usar `{ useTransaction: true }` con `withBypass()`** - los cambios no persisten
+- Sin `useTransaction`, cada query hace auto-commit (comportamiento correcto)
 - 122 políticas RLS activas
 
 ### Adapters de Servicios

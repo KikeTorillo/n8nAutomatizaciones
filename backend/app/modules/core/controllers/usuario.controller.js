@@ -242,7 +242,7 @@ class UsuarioController {
             parseInt(id),
             profesional_id,
             req.tenant.organizacionId,
-            req.user.userId
+            req.user.id
         );
 
         const mensaje = profesional_id
@@ -262,6 +262,19 @@ class UsuarioController {
         );
 
         return ResponseHelper.success(res, profesionales, 'Profesionales disponibles obtenidos exitosamente');
+    });
+
+    /**
+     * Obtener usuarios sin profesional vinculado (para vincular al crear profesional)
+     * GET /usuarios/sin-profesional
+     * Dic 2025: Para flujo de crear profesional y vincular a usuario existente
+     */
+    static obtenerUsuariosSinProfesional = asyncHandler(async (req, res) => {
+        const usuarios = await UsuarioModel.obtenerUsuariosSinProfesional(
+            req.tenant.organizacionId
+        );
+
+        return ResponseHelper.success(res, usuarios, 'Usuarios sin profesional obtenidos exitosamente');
     });
 }
 

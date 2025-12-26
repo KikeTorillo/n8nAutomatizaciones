@@ -33,6 +33,23 @@ router.get('/bloqueados',
     UsuarioController.obtenerBloqueados
 );
 
+// Obtener profesionales sin usuario (para selector) - DEBE estar antes de /:id
+router.get('/profesionales-disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(usuarioSchemas.obtenerProfesionalesDisponibles),
+    UsuarioController.obtenerProfesionalesDisponibles
+);
+
+// Obtener usuarios sin profesional (para vincular al crear profesional) - Dic 2025
+router.get('/sin-profesional',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    UsuarioController.obtenerUsuariosSinProfesional
+);
+
 router.get('/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
@@ -85,15 +102,6 @@ router.post('/directo',
     rateLimiting.heavyOperationRateLimit,
     validation.validate(usuarioSchemas.crearDirecto),
     UsuarioController.crearDirecto
-);
-
-// Obtener profesionales sin usuario (para selector)
-router.get('/profesionales-disponibles',
-    auth.authenticateToken,
-    tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
-    validation.validate(usuarioSchemas.obtenerProfesionalesDisponibles),
-    UsuarioController.obtenerProfesionalesDisponibles
 );
 
 // Cambiar estado activo de usuario

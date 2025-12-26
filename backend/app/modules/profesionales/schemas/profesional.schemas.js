@@ -155,7 +155,12 @@ const crear = {
         // === LEGACY ===
         activo: Joi.boolean()
             .optional()
-            .default(true)
+            .default(true),
+
+        // === VINCULACIÓN A USUARIO EXISTENTE (Dic 2025) ===
+        usuario_id: commonSchemas.id
+            .optional()
+            .allow(null)
     })
 };
 

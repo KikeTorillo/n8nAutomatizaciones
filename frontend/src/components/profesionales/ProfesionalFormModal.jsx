@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw,
-  Camera, X, Loader2, Building2, Briefcase, UserCheck, Tag, Calendar, MapPin, Phone, ChevronDown
+  Camera, X, Loader2, Building2, Briefcase, UserCheck, Tag, Calendar, MapPin, Phone, ChevronDown, Link2
 } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
@@ -24,7 +24,7 @@ import {
   GENEROS,
   ESTADOS_CIVILES
 } from '@/hooks/useProfesionales';
-import { useCambiarRolUsuario, ROLES_USUARIO } from '@/hooks/useUsuarios';
+import { useCambiarRolUsuario, useUsuariosSinProfesional, ROLES_USUARIO } from '@/hooks/useUsuarios';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
 import { useUploadArchivo } from '@/hooks/useStorage';
@@ -66,9 +66,8 @@ const ROLES_INVITACION = [
 const profesionalCreateSchema = z.object({
   // === Datos Básicos ===
   nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres'),
-  email: z.string({
-    required_error: 'El email es obligatorio para enviar la invitación',
-  }).email('Email inválido').max(100, 'Máximo 100 caracteres'),
+  // Email: opcional si se vincula a usuario existente (Dic 2025)
+  email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#753572'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -143,6 +142,10 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const [invitacionActual, setInvitacionActual] = useState(null);
   const [enviandoInvitacion, setEnviandoInvitacion] = useState(false);
 
+  // Dic 2025: Modo de acceso al crear (invitacion vs vincular usuario existente)
+  const [modoAcceso, setModoAcceso] = useState('invitacion'); // 'invitacion' | 'vincular_usuario'
+  const [usuarioSeleccionado, setUsuarioSeleccionado] = useState(null);
+
   // Dic 2025: Estado para foto de perfil
   const [fotoFile, setFotoFile] = useState(null);
   const [fotoPreview, setFotoPreview] = useState(null);
@@ -170,6 +173,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const crearMutation = useCrearProfesional();
   const actualizarMutation = useActualizarProfesional();
   const cambiarRolMutation = useCambiarRolUsuario();
+
+  // Dic 2025: Usuarios sin profesional (para vincular)
+  const { data: usuariosSinProfesional = [], isLoading: loadingUsuarios } = useUsuariosSinProfesional();
 
   // Cargar invitación actual en modo edición
   useEffect(() => {
@@ -320,11 +326,13 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
       setShowColorPicker(false);
       setEmailInvitacion('');
       setInvitacionActual(null);
-      // Dic 2025: Limpiar foto y categorías
+      // Dic 2025: Limpiar foto, categorías y modo acceso
       setFotoFile(null);
       setFotoPreview(null);
       setFotoUrl(null);
       setCategoriasSeleccionadas([]);
+      setModoAcceso('invitacion');
+      setUsuarioSeleccionado(null);
       setSeccionesAbiertas({
         datosPersonales: false,
         clasificacion: true,
@@ -429,6 +437,18 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
   // Handler de submit
   const onSubmit = async (data) => {
+    // Dic 2025: Validar según modo de acceso
+    if (!isEditMode) {
+      if (modoAcceso === 'invitacion' && !data.email?.trim()) {
+        toast.error('El email es obligatorio para enviar la invitación');
+        return;
+      }
+      if (modoAcceso === 'vincular_usuario' && !usuarioSeleccionado) {
+        toast.error('Selecciona un usuario para vincular');
+        return;
+      }
+    }
+
     try {
       // Dic 2025: Subir foto si hay una nueva
       let urlFotoFinal = fotoUrl;
@@ -493,7 +513,12 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
         toast.success('Profesional actualizado exitosamente');
       } else {
-        // Modo creación: crear profesional y enviar invitación automáticamente
+        // Modo creación: crear profesional
+        // Dic 2025: Si se vincula a usuario existente, pasar usuario_id
+        if (modoAcceso === 'vincular_usuario' && usuarioSeleccionado) {
+          sanitized.usuario_id = usuarioSeleccionado;
+        }
+
         const resultado = await crearMutation.mutateAsync(sanitized);
         const nuevoProfesionalId = resultado.data?.id || resultado.id;
 
@@ -509,8 +534,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           }
         }
 
-        // Enviar invitación automáticamente con rol seleccionado (Dic 2025)
-        if (nuevoProfesionalId && data.email?.trim()) {
+        // Dic 2025: Solo enviar invitación si el modo es 'invitacion'
+        if (modoAcceso === 'invitacion' && nuevoProfesionalId && data.email?.trim()) {
           try {
             await invitacionesApi.crear({
               profesional_id: nuevoProfesionalId,
@@ -523,6 +548,8 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
             console.error('Error enviando invitación:', invErr);
             toast.warning('Profesional creado, pero hubo un error al enviar la invitación. Puedes reenviarla desde la edición.');
           }
+        } else if (modoAcceso === 'vincular_usuario' && usuarioSeleccionado) {
+          toast.success('Profesional creado y vinculado al usuario');
         } else {
           toast.success('Profesional creado exitosamente');
         }
@@ -1122,71 +1149,157 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                     </p>
                   </div>
                 ) : (
-                  /* Modo creación: mensaje informativo y selector de rol */
+                  /* Modo creación: opciones de acceso (Dic 2025) */
                   <div className="mb-4 space-y-4">
-                    <div className="p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
-                      <div className="flex items-center gap-2 text-primary-700 dark:text-primary-400">
-                        <Mail className="h-5 w-5" />
-                        <span className="font-medium">Invitación automática</span>
+                    {/* Selector de modo de acceso */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        ¿Cómo dar acceso al sistema?
+                      </label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModoAcceso('invitacion');
+                            setUsuarioSeleccionado(null);
+                          }}
+                          className={`p-3 rounded-lg border text-left transition-colors ${
+                            modoAcceso === 'invitacion'
+                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Mail className={`h-5 w-5 ${modoAcceso === 'invitacion' ? 'text-primary-600' : 'text-gray-400'}`} />
+                            <span className={`font-medium ${modoAcceso === 'invitacion' ? 'text-primary-700 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                              Invitación
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Enviar email de registro</p>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setModoAcceso('vincular_usuario')}
+                          className={`p-3 rounded-lg border text-left transition-colors ${
+                            modoAcceso === 'vincular_usuario'
+                              ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2">
+                            <Link2 className={`h-5 w-5 ${modoAcceso === 'vincular_usuario' ? 'text-primary-600' : 'text-gray-400'}`} />
+                            <span className={`font-medium ${modoAcceso === 'vincular_usuario' ? 'text-primary-700 dark:text-primary-400' : 'text-gray-700 dark:text-gray-300'}`}>
+                              Vincular
+                            </span>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-1">Usuario ya existente</p>
+                        </button>
                       </div>
-                      <p className="text-sm text-primary-600 dark:text-primary-400 mt-1">
-                        Al guardar, se enviará automáticamente un email de invitación al correo ingresado.
-                      </p>
                     </div>
 
-                    {/* Selector de Rol (Dic 2025) */}
-                    <Controller
-                      name="rol_invitacion"
-                      control={control}
-                      render={({ field: { value, onChange, ...field } }) => (
+                    {/* Contenido según modo seleccionado */}
+                    {modoAcceso === 'invitacion' ? (
+                      <>
+                        <div className="p-3 bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg">
+                          <p className="text-sm text-primary-600 dark:text-primary-400">
+                            Se enviará un email de invitación al correo ingresado arriba.
+                          </p>
+                        </div>
+
+                        {/* Selector de Rol */}
+                        <Controller
+                          name="rol_invitacion"
+                          control={control}
+                          render={({ field: { value, onChange, ...field } }) => (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                <span className="flex items-center gap-2">
+                                  <UserCheck className="h-4 w-4" />
+                                  Rol del usuario
+                                </span>
+                              </label>
+                              <div className="space-y-2">
+                                {ROLES_INVITACION.map((rol) => (
+                                  <label
+                                    key={rol.value}
+                                    className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                                      value === rol.value
+                                        ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-600'
+                                        : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+                                    }`}
+                                  >
+                                    <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                                      value === rol.value
+                                        ? 'border-primary-600 bg-primary-600'
+                                        : 'border-gray-300 dark:border-gray-500'
+                                    }`}>
+                                      {value === rol.value && (
+                                        <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                                      )}
+                                    </div>
+                                    <input
+                                      type="radio"
+                                      {...field}
+                                      value={rol.value}
+                                      checked={value === rol.value}
+                                      onChange={(e) => onChange(e.target.value)}
+                                      className="sr-only"
+                                    />
+                                    <div className="flex-1">
+                                      <span className="font-medium text-gray-900 dark:text-gray-100">
+                                        {rol.label}
+                                      </span>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                        {rol.description}
+                                      </p>
+                                    </div>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        />
+                      </>
+                    ) : (
+                      /* Modo vincular usuario existente */
+                      <div className="space-y-3">
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+                          <p className="text-sm text-blue-600 dark:text-blue-400">
+                            Vincula este profesional a un usuario que ya tiene acceso al sistema.
+                          </p>
+                        </div>
+
                         <div>
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            <span className="flex items-center gap-2">
-                              <UserCheck className="h-4 w-4" />
-                              Rol del usuario
-                            </span>
+                            Seleccionar usuario
                           </label>
-                          <div className="space-y-2">
-                            {ROLES_INVITACION.map((rol) => (
-                              <label
-                                key={rol.value}
-                                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                                  value === rol.value
-                                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 dark:border-primary-600'
-                                    : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
-                                }`}
-                              >
-                                <div className={`mt-1 h-4 w-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                                  value === rol.value
-                                    ? 'border-primary-600 bg-primary-600'
-                                    : 'border-gray-300 dark:border-gray-500'
-                                }`}>
-                                  {value === rol.value && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                                  )}
-                                </div>
-                                <input
-                                  type="radio"
-                                  {...field}
-                                  value={rol.value}
-                                  checked={value === rol.value}
-                                  onChange={(e) => onChange(e.target.value)}
-                                  className="sr-only"
-                                />
-                                <div className="flex-1">
-                                  <span className="font-medium text-gray-900 dark:text-gray-100">
-                                    {rol.label}
-                                  </span>
-                                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                                    {rol.description}
-                                  </p>
-                                </div>
-                              </label>
-                            ))}
-                          </div>
+                          {loadingUsuarios ? (
+                            <div className="flex items-center gap-2 p-3 text-gray-500">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              <span className="text-sm">Cargando usuarios...</span>
+                            </div>
+                          ) : usuariosSinProfesional.length === 0 ? (
+                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg text-sm text-gray-500">
+                              No hay usuarios disponibles sin profesional vinculado.
+                            </div>
+                          ) : (
+                            <select
+                              value={usuarioSeleccionado || ''}
+                              onChange={(e) => setUsuarioSeleccionado(e.target.value ? parseInt(e.target.value) : null)}
+                              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            >
+                              <option value="">Selecciona un usuario...</option>
+                              {usuariosSinProfesional.map((usuario) => (
+                                <option key={usuario.id} value={usuario.id}>
+                                  {usuario.nombre} {usuario.apellidos} ({usuario.email}) - {ROLES_USUARIO[usuario.rol]?.label || usuario.rol}
+                                </option>
+                              ))}
+                            </select>
+                          )}
                         </div>
-                      )}
-                    />
+                      </div>
+                    )}
                   </div>
                 )}
 

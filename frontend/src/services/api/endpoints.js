@@ -256,6 +256,13 @@ export const usuariosApi = {
    * @returns {Promise<Object>}
    */
   profesionalesDisponibles: () => apiClient.get('/usuarios/profesionales-disponibles'),
+
+  /**
+   * Obtener usuarios sin profesional vinculado (para vincular al crear profesional)
+   * Dic 2025: Para flujo de crear profesional y vincular a usuario existente
+   * @returns {Promise<Object>}
+   */
+  sinProfesional: () => apiClient.get('/usuarios/sin-profesional'),
 };
 
 // ==================== PROFESIONALES ====================

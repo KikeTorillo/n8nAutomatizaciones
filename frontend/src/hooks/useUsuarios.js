@@ -73,6 +73,21 @@ export function useProfesionalesSinUsuario() {
   });
 }
 
+/**
+ * Hook para obtener usuarios sin profesional vinculado
+ * Dic 2025: Para vincular usuario existente al crear profesional
+ */
+export function useUsuariosSinProfesional() {
+  return useQuery({
+    queryKey: ['usuarios-sin-profesional'],
+    queryFn: async () => {
+      const response = await usuariosApi.sinProfesional();
+      return response.data.data || [];
+    },
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+}
+
 // ====================================================================
 // MUTATIONS
 // ====================================================================
