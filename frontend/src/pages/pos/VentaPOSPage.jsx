@@ -323,7 +323,7 @@ export default function VentaPOSPage() {
 
     } catch (error) {
       console.error('Error al crear venta:', error);
-      toast.error(error.response?.data?.mensaje || 'Error al crear la venta');
+      toast.error(error.response?.data?.message || 'Error al crear la venta');
     }
   };
 

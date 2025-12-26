@@ -61,7 +61,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
 
   const handleKeyDown = (e) => {
     // Enter: seleccionar primer producto si solo hay uno
-    if (e.key === 'Enter' && productos.length === 1) {
+    if (e.key === 'Enter' && productos?.length === 1) {
       e.preventDefault();
       handleSeleccionarProducto(productos[0]);
     }
@@ -113,7 +113,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
             </div>
           )}
 
-          {!isLoading && productos.length === 0 && query.length >= 2 && (
+          {!isLoading && productos?.length === 0 && query.length >= 2 && (
             <div className="p-4 text-center text-gray-500 dark:text-gray-400">
               <Package className="h-12 w-12 mx-auto mb-2 text-gray-400 dark:text-gray-500" />
               <p className="font-medium text-gray-900 dark:text-gray-100">No se encontraron productos</p>
@@ -121,7 +121,7 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
             </div>
           )}
 
-          {!isLoading && productos.length > 0 && (
+          {!isLoading && productos?.length > 0 && (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {productos.map((producto) => (
                 <li key={producto.id}>
