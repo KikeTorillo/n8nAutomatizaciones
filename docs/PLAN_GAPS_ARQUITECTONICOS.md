@@ -28,7 +28,7 @@
 | Órdenes Compra | ✅ |
 | Recepción Mercancía | ✅ |
 | Números de Serie | ✅ |
-| Alertas | ⏳ |
+| Alertas | ✅ Stock proyectado implementado |
 | Ubicaciones | ⏳ |
 | Valoración | ⏳ |
 
@@ -62,6 +62,35 @@
 | Historial/Corte/Reportes POS vacíos | Agregado `sucursalId` en queries y rutas |
 | Checkbox NS no se guarda | Campos agregados al INSERT de productos |
 | Recepción sin campos NS | Alias `producto_nombre`, `producto_sku` en query |
+| Botón "Generar OC" no funcionaba | `inventarioApi` → `ordenesCompraApi` en hook |
+
+---
+
+## Gap INV-ALERTAS: Stock Proyectado ✅ RESUELTO
+
+**Problema**: Al generar OC desde una alerta de stock bajo, la alerta persiste y permite crear OCs duplicadas.
+
+**Solución implementada** (Opción A - estilo Odoo):
+
+1. **Función SQL** `calcular_stock_proyectado()`:
+   - Calcula: `stock_proyectado = stock_actual + OC_pendientes - reservas_activas`
+   - Detecta si existe OC pendiente y retorna el folio
+
+2. **Vista** `v_alertas_con_stock_proyectado`:
+   - Enriquece alertas con info de stock proyectado
+   - Campo `necesita_accion`: false si stock_proyectado >= stock_minimo
+
+3. **Backend**:
+   - Endpoint `/inventario/alertas` usa vista con proyección
+   - Endpoint `generarOCDesdeProducto` valida y rechaza si ya existe OC pendiente (HTTP 409)
+
+4. **Frontend**:
+   - Muestra stock actual, en camino (+OC), stock proyectado
+   - Badge con folio de OC pendiente
+   - Botón "Generar OC" oculto si tiene OC pendiente
+   - Filtro "Solo las que necesitan acción"
+
+**Archivo SQL**: `sql/inventario/16-stock-proyectado.sql`
 
 ---
 

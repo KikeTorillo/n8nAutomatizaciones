@@ -10,6 +10,8 @@ import {
   CheckCircle,
   CheckCheck,
   ShoppingCart,
+  Package,
+  TrendingUp,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
@@ -37,6 +39,7 @@ function AlertasPage() {
     tipo_alerta: '',
     nivel: '',
     soloNoLeidas: false, // false = mostrar todas, true = solo no leídas
+    soloNecesitanAccion: false, // Solo mostrar alertas que NO tienen OC pendiente
     producto_id: '',
     fecha_desde: '',
     fecha_hasta: '',
@@ -55,12 +58,13 @@ function AlertasPage() {
     fecha_desde: filtros.fecha_desde,
     fecha_hasta: filtros.fecha_hasta,
     ...(filtros.soloNoLeidas ? { leida: false } : {}),
+    ...(filtros.soloNecesitanAccion ? { solo_necesitan_accion: true } : {}),
   };
 
   // Queries
   const { data: alertasData, isLoading: cargandoAlertas } = useAlertas(queryParams);
   const alertas = alertasData?.alertas || [];
-  const total = alertasData?.total || 0;
+  const total = alertasData?.contadores?.total || alertas.length;
 
   // Mutations
   const marcarUnaMutation = useMarcarAlertaLeida();
@@ -77,6 +81,7 @@ function AlertasPage() {
       tipo_alerta: '',
       nivel: '',
       soloNoLeidas: false,
+      soloNecesitanAccion: false,
       producto_id: '',
       fecha_desde: '',
       fecha_hasta: '',
@@ -144,6 +149,7 @@ function AlertasPage() {
   };
 
   const handleGenerarOC = (productoId, productoNombre) => {
+    console.log('handleGenerarOC called:', { productoId, productoNombre });
     generarOCMutation.mutate(productoId, {
       onSuccess: (orden) => {
         showToast(
@@ -336,8 +342,8 @@ function AlertasPage() {
             </div>
           </div>
 
-          {/* Toggle Leídas */}
-          <div className="mt-4">
+          {/* Toggles */}
+          <div className="mt-4 flex flex-wrap gap-6">
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
@@ -345,7 +351,17 @@ function AlertasPage() {
                 onChange={(e) => handleFiltroChange('soloNoLeidas', e.target.checked)}
                 className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
               />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar solo no leídas</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">Solo no leídas</span>
+            </label>
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={filtros.soloNecesitanAccion}
+                onChange={(e) => handleFiltroChange('soloNecesitanAccion', e.target.checked)}
+                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">Solo las que necesitan acción</span>
+              <span className="text-xs text-gray-500 dark:text-gray-400">(sin OC pendiente)</span>
             </label>
           </div>
         </div>
@@ -446,25 +462,58 @@ function AlertasPage() {
                               )}
                             </div>
                             <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                              {alerta.producto_nombre}
+                              {alerta.nombre_producto}
                             </p>
                             <p className="text-sm text-gray-700 dark:text-gray-300 mt-1">{alerta.mensaje}</p>
+
+                            {/* Info de Stock Proyectado (solo alertas de stock) */}
+                            {esAlertaStock(alerta.tipo_alerta) && (
+                              <div className="mt-2 flex flex-wrap items-center gap-3 text-xs">
+                                <span className="text-gray-600 dark:text-gray-400">
+                                  Stock: <span className="font-semibold">{alerta.stock_actual}</span> / Mín: <span className="font-semibold">{alerta.stock_minimo}</span>
+                                </span>
+                                {alerta.oc_pendientes > 0 && (
+                                  <span className="text-emerald-600 dark:text-emerald-400">
+                                    <TrendingUp className="inline h-3 w-3 mr-1" />
+                                    En camino: <span className="font-semibold">+{alerta.oc_pendientes}</span>
+                                  </span>
+                                )}
+                                {alerta.stock_proyectado !== undefined && (
+                                  <span className="text-primary-600 dark:text-primary-400 font-medium">
+                                    Stock proyectado: {alerta.stock_proyectado}
+                                  </span>
+                                )}
+                                {/* Badge OC Pendiente */}
+                                {alerta.tiene_oc_pendiente && (
+                                  <span className="inline-flex items-center px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-800 dark:text-emerald-300 rounded-full">
+                                    <Package className="h-3 w-3 mr-1" />
+                                    OC: {alerta.oc_pendiente_folio}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           {/* Botones de acciones */}
                           <div className="flex items-center space-x-2">
-                            {/* Botón Generar OC (solo para alertas de stock) */}
-                            {esAlertaStock(alerta.tipo_alerta) && (
+                            {/* Botón Generar OC (solo para alertas de stock SIN OC pendiente) */}
+                            {esAlertaStock(alerta.tipo_alerta) && !alerta.tiene_oc_pendiente && (
                               <Button
                                 variant="primary"
                                 size="sm"
-                                onClick={() => handleGenerarOC(alerta.producto_id, alerta.producto_nombre)}
+                                onClick={() => handleGenerarOC(alerta.producto_id, alerta.nombre_producto)}
                                 icon={ShoppingCart}
                                 isLoading={generarOCMutation.isPending}
                                 title="Generar Orden de Compra"
                               >
                                 Generar OC
                               </Button>
+                            )}
+                            {/* Mensaje de OC existente */}
+                            {esAlertaStock(alerta.tipo_alerta) && alerta.tiene_oc_pendiente && (
+                              <span className="text-xs text-emerald-600 dark:text-emerald-400 italic">
+                                Ya existe OC pendiente
+                              </span>
                             )}
 
                             {/* Botón Marcar Leída */}

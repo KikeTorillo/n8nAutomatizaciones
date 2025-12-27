@@ -197,6 +197,124 @@ class AlertasInventarioModel {
     }
 
     /**
+     * Listar alertas con información de stock proyectado
+     * Permite filtrar solo las que necesitan acción (no tienen OC pendiente)
+     */
+    static async listarConProyeccion(filtros, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            let whereConditions = ['v.organizacion_id = $1'];
+            let values = [organizacionId];
+            let paramCounter = 2;
+
+            // Filtro por tipo de alerta
+            if (filtros.tipo_alerta) {
+                whereConditions.push(`v.tipo_alerta = $${paramCounter}`);
+                values.push(filtros.tipo_alerta);
+                paramCounter++;
+            }
+
+            // Filtro por nivel
+            if (filtros.nivel) {
+                whereConditions.push(`v.nivel = $${paramCounter}`);
+                values.push(filtros.nivel);
+                paramCounter++;
+            }
+
+            // Filtro por estado leída
+            if (filtros.leida !== undefined) {
+                whereConditions.push(`v.leida = $${paramCounter}`);
+                values.push(filtros.leida);
+                paramCounter++;
+            }
+
+            // Filtro por producto
+            if (filtros.producto_id) {
+                whereConditions.push(`v.producto_id = $${paramCounter}`);
+                values.push(filtros.producto_id);
+                paramCounter++;
+            }
+
+            // Filtro solo las que necesitan acción (no tienen OC pendiente cubriendo el stock)
+            if (filtros.solo_necesitan_accion) {
+                whereConditions.push('v.necesita_accion = true');
+            }
+
+            const query = `
+                SELECT
+                    v.*,
+                    c.nombre AS nombre_categoria
+                FROM v_alertas_con_stock_proyectado v
+                LEFT JOIN productos p ON p.id = v.producto_id
+                LEFT JOIN categorias_productos c ON c.id = p.categoria_id
+                WHERE ${whereConditions.join(' AND ')}
+                ORDER BY
+                    CASE
+                        WHEN v.nivel = 'critical' THEN 1
+                        WHEN v.nivel = 'warning' THEN 2
+                        ELSE 3
+                    END,
+                    v.leida ASC,
+                    v.creado_en DESC
+                LIMIT $${paramCounter}
+                OFFSET $${paramCounter + 1}
+            `;
+
+            values.push(filtros.limit || 50);
+            values.push(filtros.offset || 0);
+
+            const result = await db.query(query, values);
+
+            // Obtener contadores con proyección
+            const contadoresQuery = `
+                SELECT
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE leida = false) as sin_leer,
+                    COUNT(*) FILTER (WHERE nivel = 'critical') as critical,
+                    COUNT(*) FILTER (WHERE nivel = 'warning') as warning,
+                    COUNT(*) FILTER (WHERE nivel = 'info') as info,
+                    COUNT(*) FILTER (WHERE necesita_accion = true) as necesitan_accion,
+                    COUNT(*) FILTER (WHERE tiene_oc_pendiente = true) as con_oc_pendiente
+                FROM v_alertas_con_stock_proyectado v
+                WHERE v.organizacion_id = $1
+            `;
+
+            const contadoresResult = await db.query(contadoresQuery, [organizacionId]);
+
+            return {
+                alertas: result.rows,
+                contadores: contadoresResult.rows[0],
+                limit: filtros.limit || 50,
+                offset: filtros.offset || 0
+            };
+        });
+    }
+
+    /**
+     * Verificar si un producto ya tiene OC pendiente
+     */
+    static async tieneOCPendiente(productoId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(
+                'SELECT * FROM calcular_stock_proyectado($1, $2, NULL)',
+                [productoId, organizacionId]
+            );
+
+            if (result.rows.length === 0) {
+                return { tiene_oc_pendiente: false, folio: null, oc_pendientes: 0, stock_proyectado: 0 };
+            }
+
+            const row = result.rows[0];
+            return {
+                tiene_oc_pendiente: row.tiene_oc_pendiente,
+                folio: row.oc_pendiente_folio,
+                oc_pendientes: row.oc_pendientes,
+                stock_proyectado: row.stock_proyectado,
+                stock_actual: row.stock_actual
+            };
+        });
+    }
+
+    /**
      * Obtener dashboard de alertas
      */
     static async obtenerDashboard(organizacionId) {

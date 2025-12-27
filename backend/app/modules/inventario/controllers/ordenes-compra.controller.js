@@ -1,4 +1,4 @@
-const { OrdenesCompraModel } = require('../models');
+const { OrdenesCompraModel, AlertasInventarioModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const logger = require('../../../utils/logger');
@@ -309,14 +309,35 @@ class OrdenesCompraController {
     /**
      * Generar OC desde producto con stock bajo
      * POST /api/v1/inventario/ordenes-compra/generar-desde-producto/:productoId
+     *
+     * IMPORTANTE: Verifica si ya existe una OC pendiente para este producto
+     * y retorna error con información de la OC existente si es el caso.
      */
     static generarDesdeProducto = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
         const organizacionId = req.tenant.organizacionId;
         const usuarioId = req.user.id;
+        const productoIdInt = parseInt(productoId);
+
+        // Verificar si ya existe OC pendiente para este producto
+        const stockProyectado = await AlertasInventarioModel.tieneOCPendiente(
+            productoIdInt,
+            organizacionId
+        );
+
+        if (stockProyectado.tiene_oc_pendiente) {
+            return ResponseHelper.error(
+                res,
+                `Ya existe una OC pendiente (${stockProyectado.folio}) para este producto. ` +
+                `Stock actual: ${stockProyectado.stock_actual}, ` +
+                `En camino: ${stockProyectado.oc_pendientes}, ` +
+                `Stock proyectado: ${stockProyectado.stock_proyectado}`,
+                409  // Conflict
+            );
+        }
 
         const orden = await OrdenesCompraModel.generarDesdeAlerta(
-            parseInt(productoId),
+            productoIdInt,
             usuarioId,
             organizacionId
         );

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { inventarioApi } from '@/services/api/endpoints';
+import { inventarioApi, ordenesCompraApi } from '@/services/api/endpoints';
 import useSucursalStore from '@/store/sucursalStore';
 
 // ==================== MOVIMIENTOS DE INVENTARIO ====================
@@ -538,7 +538,7 @@ export function useGenerarOCDesdeProducto() {
 
   return useMutation({
     mutationFn: async (productoId) => {
-      const response = await inventarioApi.generarOCDesdeProducto(productoId);
+      const response = await ordenesCompraApi.generarOCDesdeProducto(productoId);
       return response.data.data;
     },
     onSuccess: () => {
@@ -557,7 +557,7 @@ export function useAutoGenerarOCs() {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await inventarioApi.autoGenerarOCs();
+      const response = await ordenesCompraApi.autoGenerarOCs();
       return response.data.data;
     },
     onSuccess: () => {

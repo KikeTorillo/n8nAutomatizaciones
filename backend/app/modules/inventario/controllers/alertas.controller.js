@@ -9,8 +9,10 @@ const { asyncHandler } = require('../../../middleware');
 class AlertasInventarioController {
 
     /**
-     * Listar alertas con filtros
+     * Listar alertas con filtros y stock proyectado
      * GET /api/v1/inventario/alertas
+     * Query params:
+     *   - solo_necesitan_accion: true/false - Filtrar solo alertas que necesitan acción (sin OC pendiente)
      */
     static listar = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -22,11 +24,13 @@ class AlertasInventarioController {
             producto_id: req.query.producto_id ? parseInt(req.query.producto_id) : undefined,
             fecha_desde: req.query.fecha_desde || undefined,
             fecha_hasta: req.query.fecha_hasta || undefined,
+            solo_necesitan_accion: req.query.solo_necesitan_accion === 'true',
             limit: req.query.limit ? parseInt(req.query.limit) : 50,
             offset: req.query.offset ? parseInt(req.query.offset) : 0
         };
 
-        const alertas = await AlertasInventarioModel.listar(filtros, organizacionId);
+        // Usar la nueva versión con stock proyectado
+        const alertas = await AlertasInventarioModel.listarConProyeccion(filtros, organizacionId);
 
         return ResponseHelper.success(res, alertas, 'Alertas obtenidas exitosamente');
     });
