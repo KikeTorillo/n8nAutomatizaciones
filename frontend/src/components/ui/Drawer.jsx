@@ -22,6 +22,7 @@ function Drawer({
     <VaulDrawer.Root
       open={isOpen}
       onOpenChange={(open) => !open && onClose()}
+      modal={true}
     >
       <VaulDrawer.Portal>
         {/* Overlay oscuro */}

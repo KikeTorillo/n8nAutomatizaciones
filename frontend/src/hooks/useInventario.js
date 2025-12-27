@@ -683,9 +683,9 @@ export function useCrearUbicacion() {
       return response.data.data;
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries(['ubicaciones']);
-      queryClient.invalidateQueries(['ubicaciones-arbol', variables.sucursal_id]);
-      queryClient.invalidateQueries(['ubicaciones-estadisticas', variables.sucursal_id]);
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-arbol', variables.sucursal_id] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-estadisticas', variables.sucursal_id] });
     },
   });
 }
@@ -702,9 +702,9 @@ export function useActualizarUbicacion() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['ubicaciones']);
-      queryClient.invalidateQueries(['ubicacion', data.id]);
-      queryClient.invalidateQueries(['ubicaciones-arbol', data.sucursal_id]);
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicacion', data.id] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-arbol', data.sucursal_id] });
     },
   });
 }
@@ -721,9 +721,9 @@ export function useEliminarUbicacion() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['ubicaciones']);
-      queryClient.invalidateQueries(['ubicaciones-arbol', data.sucursal_id]);
-      queryClient.invalidateQueries(['ubicaciones-estadisticas', data.sucursal_id]);
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-arbol', data.sucursal_id] });
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones-estadisticas', data.sucursal_id] });
     },
   });
 }
@@ -740,8 +740,8 @@ export function useToggleBloqueoUbicacion() {
       return response.data.data;
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['ubicaciones']);
-      queryClient.invalidateQueries(['ubicacion', data.id]);
+      queryClient.invalidateQueries({ queryKey: ['ubicaciones'] });
+      queryClient.invalidateQueries({ queryKey: ['ubicacion', data.id] });
     },
   });
 }

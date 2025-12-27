@@ -328,6 +328,7 @@ function UbicacionesAlmacenPage() {
 
   // Estado
   const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
+  const [drawerKey, setDrawerKey] = useState(0); // Key para forzar remount de Vaul
   const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState(null);
   const [parentSeleccionado, setParentSeleccionado] = useState(null);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
@@ -660,11 +661,13 @@ function UbicacionesAlmacenPage() {
 
       {/* Drawer de Formulario */}
       <UbicacionFormDrawer
+        key={drawerKey}
         isOpen={isFormDrawerOpen}
         onClose={() => {
           setIsFormDrawerOpen(false);
           setUbicacionSeleccionada(null);
           setParentSeleccionado(null);
+          setDrawerKey(k => k + 1); // Forzar remount para evitar bug de Vaul
         }}
         ubicacion={ubicacionSeleccionada}
         parent={parentSeleccionado}
