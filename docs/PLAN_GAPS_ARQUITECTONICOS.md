@@ -27,7 +27,8 @@
 | Órdenes Compra + Recepción | ✅ |
 | Números de Serie/Lotes | ✅ |
 | Alertas + Stock Proyectado | ✅ |
-| Ubicaciones, Valoración | ⏳ Pendiente |
+| Ubicaciones (WMS jerárquico) | ✅ |
+| Valoración FIFO/AVCO | ⏳ Pendiente |
 
 ### POS ✅
 
@@ -70,6 +71,7 @@ Búsqueda, Carrito, Multi-moneda, Venta NS, Historial, Corte Caja, Reportes
 | Recepción sin nombre producto | Alias en query |
 | Botón Generar OC roto | `ordenesCompraApi` en hook |
 | OCs duplicadas desde alertas | Stock proyectado (`sql/inventario/16-stock-proyectado.sql`) |
+| Drawer ubicaciones no cierra | Key dinámica + React Query v5 `{ queryKey }` |
 
 ---
 
