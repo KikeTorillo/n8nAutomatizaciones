@@ -11,39 +11,29 @@
 | 1-5 | Core (Workflows, Módulos, Permisos, Multi-Moneda) | ✅ |
 | 5.1-5.3 | Usuarios, Profesionales, Config POS | ✅ |
 | INV-1 a INV-5 | Inventario (Reservas, OC, WMS, FIFO/AVCO, NS/Lotes) | ✅ |
+| INV-6 | Stock Proyectado (estilo Odoo) | ✅ |
 | POS | Punto de Venta completo | ✅ |
 | 6-10 | Webhooks, i18n, Reportes Multi-Sucursal, Centros Costo, API Pública | ⬜ |
 
 ---
 
-## Validación E2E - 27 Dic 2025
+## Validación E2E
 
-### Inventario
-
-| Submódulo | Estado |
-|-----------|--------|
-| Categorías | ✅ |
-| Proveedores | ✅ |
-| Productos | ✅ |
-| Órdenes Compra | ✅ |
-| Recepción Mercancía | ✅ |
-| Números de Serie | ✅ |
-| Alertas | ✅ Stock proyectado implementado |
-| Ubicaciones | ⏳ |
-| Valoración | ⏳ |
-
-### POS
+### Inventario ✅
 
 | Submódulo | Estado |
 |-----------|--------|
-| Búsqueda productos | ✅ |
-| Carrito + Multi-moneda | ✅ |
-| Venta con NS | ✅ |
-| Historial | ✅ |
-| Corte de Caja | ✅ |
-| Reportes | ✅ |
+| Categorías, Proveedores, Productos | ✅ |
+| Órdenes Compra + Recepción | ✅ |
+| Números de Serie/Lotes | ✅ |
+| Alertas + Stock Proyectado | ✅ |
+| Ubicaciones, Valoración | ⏳ Pendiente |
 
-### Pendientes
+### POS ✅
+
+Búsqueda, Carrito, Multi-moneda, Venta NS, Historial, Corte Caja, Reportes
+
+### Pendientes Validación
 
 | Módulo | Prioridad |
 |--------|-----------|
@@ -51,46 +41,6 @@
 | Aprobaciones (workflows OC) | Media |
 | Clientes + historial | Baja |
 | Agendamiento | Baja |
-
----
-
-## Bugs Corregidos (Dic 2025)
-
-| Bug | Fix |
-|-----|-----|
-| Doble descuento stock en ventas | `confirmar_reserva_stock` ya no descuenta; solo el trigger |
-| Historial/Corte/Reportes POS vacíos | Agregado `sucursalId` en queries y rutas |
-| Checkbox NS no se guarda | Campos agregados al INSERT de productos |
-| Recepción sin campos NS | Alias `producto_nombre`, `producto_sku` en query |
-| Botón "Generar OC" no funcionaba | `inventarioApi` → `ordenesCompraApi` en hook |
-
----
-
-## Gap INV-ALERTAS: Stock Proyectado ✅ RESUELTO
-
-**Problema**: Al generar OC desde una alerta de stock bajo, la alerta persiste y permite crear OCs duplicadas.
-
-**Solución implementada** (Opción A - estilo Odoo):
-
-1. **Función SQL** `calcular_stock_proyectado()`:
-   - Calcula: `stock_proyectado = stock_actual + OC_pendientes - reservas_activas`
-   - Detecta si existe OC pendiente y retorna el folio
-
-2. **Vista** `v_alertas_con_stock_proyectado`:
-   - Enriquece alertas con info de stock proyectado
-   - Campo `necesita_accion`: false si stock_proyectado >= stock_minimo
-
-3. **Backend**:
-   - Endpoint `/inventario/alertas` usa vista con proyección
-   - Endpoint `generarOCDesdeProducto` valida y rechaza si ya existe OC pendiente (HTTP 409)
-
-4. **Frontend**:
-   - Muestra stock actual, en camino (+OC), stock proyectado
-   - Badge con folio de OC pendiente
-   - Botón "Generar OC" oculto si tiene OC pendiente
-   - Filtro "Solo las que necesitan acción"
-
-**Archivo SQL**: `sql/inventario/16-stock-proyectado.sql`
 
 ---
 
@@ -110,6 +60,19 @@
 
 ---
 
+## Bugs Corregidos (Dic 2025)
+
+| Bug | Fix |
+|-----|-----|
+| Doble descuento stock ventas | Trigger único, `confirmar_reserva_stock` no descuenta |
+| POS vacío (historial/corte/reportes) | `sucursalId` en queries |
+| Checkbox NS no persiste | Campos en INSERT productos |
+| Recepción sin nombre producto | Alias en query |
+| Botón Generar OC roto | `ordenesCompraApi` en hook |
+| OCs duplicadas desde alertas | Stock proyectado (`sql/inventario/16-stock-proyectado.sql`) |
+
+---
+
 ## Métricas
 
 | Métrica | Valor |
@@ -125,6 +88,7 @@
 
 ```
 RLS: RLSContextManager.query(orgId, cb) | withBypass() solo JOINs multi-tabla
-Permisos: catalogo → rol → usuario_sucursal (overrides) + usarSucursalDeQuery en rutas GET
+Permisos: catalogo → rol → usuario_sucursal (overrides)
 BD: docker exec postgres_db psql -U admin -d postgres
+Stock Proyectado: stock_actual + OC_pendientes - reservas_activas
 ```
