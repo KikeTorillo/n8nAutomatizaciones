@@ -40,6 +40,21 @@
 
 ---
 
+## Próxima Sesión - Inventario Avanzado
+
+Gaps para igualar Odoo Inventory (~30% restante):
+
+| Feature | Descripción | Prioridad |
+|---------|-------------|-----------|
+| Fechas vencimiento | Campo `fecha_vencimiento` en lotes, alertas FEFO | Alta |
+| Reabastecimiento automático | Reglas min/max por producto, generación OC automática | Alta |
+| Trazabilidad completa | Historial upstream/downstream de NS/Lotes | Media |
+| Rutas de operación | Configurar flujos (compra, transferencia, dropship) | Media |
+| Estrategias remoción | FEFO (First Expired First Out) para perecederos | Media |
+| Barcode scanner | Integración móvil para picking/recepción | Baja |
+
+---
+
 ## Métricas
 
 | Métrica | Valor |
