@@ -56,6 +56,9 @@ const productoCreateSchema = z
     activo: z.boolean().default(true),
     notas: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
 
+    // Números de serie (Dic 2025 - Fase 3 Gaps)
+    requiere_numero_serie: z.boolean().default(false),
+
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().default(false),
     cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').default(50),
@@ -108,6 +111,8 @@ const productoEditSchema = z
     permite_uso_servicio: z.boolean().optional(),
     notas: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
     activo: z.boolean().optional(),
+    // Números de serie (Dic 2025 - Fase 3 Gaps)
+    requiere_numero_serie: z.boolean().optional(),
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().optional(),
     cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').optional(),
@@ -203,6 +208,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             permite_uso_servicio: producto.permite_uso_servicio ?? true,
             notas: producto.notas || '',
             activo: producto.activo ?? true,
+            requiere_numero_serie: producto.requiere_numero_serie || false,
             auto_generar_oc: producto.auto_generar_oc || false,
             cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
           }
@@ -226,6 +232,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             permite_uso_servicio: true,
             notas: '',
             activo: true,
+            requiere_numero_serie: false,
             auto_generar_oc: false,
             cantidad_oc_sugerida: 50,
           },
@@ -257,6 +264,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         permite_uso_servicio: producto.permite_uso_servicio ?? true,
         notas: producto.notas || '',
         activo: producto.activo ?? true,
+        requiere_numero_serie: producto.requiere_numero_serie || false,
         auto_generar_oc: producto.auto_generar_oc || false,
         cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
       });
@@ -293,6 +301,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         permite_uso_servicio: true,
         notas: '',
         activo: true,
+        requiere_numero_serie: false,
         auto_generar_oc: false,
         cantidad_oc_sugerida: 50,
       });
@@ -832,6 +841,17 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               label="Producto activo"
               {...register('activo')}
             />
+
+            {/* Números de serie (Dic 2025 - Fase 3 Gaps) */}
+            <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+              <Checkbox
+                label="Requiere número de serie / lote"
+                {...register('requiere_numero_serie')}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-6 mt-1">
+                Al recibir mercancía de este producto, se solicitarán los números de serie
+              </p>
+            </div>
 
             {/* Auto-generación de OC (Dic 2025 - Fase 2 Gaps) */}
             <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">

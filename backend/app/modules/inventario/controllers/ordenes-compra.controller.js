@@ -1,6 +1,7 @@
 const { OrdenesCompraModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const logger = require('../../../utils/logger');
 
 /**
  * Controller para gestión de Órdenes de Compra
@@ -214,6 +215,12 @@ class OrdenesCompraController {
         const { id } = req.params;
         const { recepciones } = req.body;
         const organizacionId = req.tenant.organizacionId;
+
+        // DEBUG: Ver payload de recepciones con números de serie
+        logger.info('[DEBUG] recibirMercancia payload:', {
+            ordenId: id,
+            recepciones: JSON.stringify(recepciones, null, 2)
+        });
 
         const resultado = await OrdenesCompraModel.recibirMercancia(
             parseInt(id),

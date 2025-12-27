@@ -32,10 +32,11 @@ function AlertasPage() {
   const { showToast } = useToast();
 
   // Estado de filtros
+  // NOTA: soloNoLeidas controla el checkbox, luego se convierte a leida para el backend
   const [filtros, setFiltros] = useState({
     tipo_alerta: '',
     nivel: '',
-    leida: false,
+    soloNoLeidas: false, // false = mostrar todas, true = solo no leídas
     producto_id: '',
     fecha_desde: '',
     fecha_hasta: '',
@@ -44,8 +45,20 @@ function AlertasPage() {
   // Estado de selección
   const [alertasSeleccionadas, setAlertasSeleccionadas] = useState([]);
 
+  // Preparar parámetros para el backend
+  // soloNoLeidas: true → leida: false (filtrar solo no leídas)
+  // soloNoLeidas: false → no enviar leida (mostrar todas)
+  const queryParams = {
+    tipo_alerta: filtros.tipo_alerta,
+    nivel: filtros.nivel,
+    producto_id: filtros.producto_id,
+    fecha_desde: filtros.fecha_desde,
+    fecha_hasta: filtros.fecha_hasta,
+    ...(filtros.soloNoLeidas ? { leida: false } : {}),
+  };
+
   // Queries
-  const { data: alertasData, isLoading: cargandoAlertas } = useAlertas(filtros);
+  const { data: alertasData, isLoading: cargandoAlertas } = useAlertas(queryParams);
   const alertas = alertasData?.alertas || [];
   const total = alertasData?.total || 0;
 
@@ -63,7 +76,7 @@ function AlertasPage() {
     setFiltros({
       tipo_alerta: '',
       nivel: '',
-      leida: false,
+      soloNoLeidas: false,
       producto_id: '',
       fecha_desde: '',
       fecha_hasta: '',
@@ -328,8 +341,8 @@ function AlertasPage() {
             <label className="flex items-center space-x-2 cursor-pointer">
               <input
                 type="checkbox"
-                checked={filtros.leida}
-                onChange={(e) => handleFiltroChange('leida', e.target.checked)}
+                checked={filtros.soloNoLeidas}
+                onChange={(e) => handleFiltroChange('soloNoLeidas', e.target.checked)}
                 className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
               />
               <span className="text-sm text-gray-700 dark:text-gray-300">Mostrar solo no leídas</span>

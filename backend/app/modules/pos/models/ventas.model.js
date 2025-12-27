@@ -275,6 +275,19 @@ class VentasPOSModel {
 
                 const resultItem = await db.query(itemQuery, itemValues);
                 itemsInsertados.push(resultItem.rows[0]);
+
+                // Dic 2025: Marcar número de serie como vendido (INV-5)
+                if (item.numero_serie_id) {
+                    await db.query(
+                        `SELECT vender_numero_serie($1, $2, $3)`,
+                        [item.numero_serie_id, venta.id, data.cliente_id || null]
+                    );
+
+                    logger.info('[VentasPOSModel.crear] NS marcado como vendido', {
+                        numero_serie_id: item.numero_serie_id,
+                        venta_id: venta.id
+                    });
+                }
             }
 
             // NOTA: La comisión se calcula automáticamente por el trigger DEFERRED

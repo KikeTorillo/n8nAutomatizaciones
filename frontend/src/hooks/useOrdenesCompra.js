@@ -296,11 +296,14 @@ export function useRecibirMercancia() {
     mutationFn: async ({ ordenId, recepciones }) => {
       const sanitizedRecepciones = recepciones.map(r => ({
         item_id: r.item_id,
+        producto_id: r.producto_id,
         cantidad: r.cantidad,
         precio_unitario_real: r.precio_unitario_real || undefined,
         fecha_vencimiento: r.fecha_vencimiento || undefined,
         lote: r.lote?.trim() || undefined,
         notas: r.notas?.trim() || undefined,
+        // Números de serie para productos que lo requieren
+        numeros_serie: r.numeros_serie?.length > 0 ? r.numeros_serie : undefined,
       }));
 
       const response = await ordenesCompraApi.recibirMercancia(ordenId, { recepciones: sanitizedRecepciones });

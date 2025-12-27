@@ -227,6 +227,9 @@ const inventarioSchemas = {
             imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
             activo: Joi.boolean().optional().default(true),
 
+            // Dic 2025: Números de serie / Lotes
+            requiere_numero_serie: Joi.boolean().optional().default(false),
+
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).custom((value, helpers) => {
@@ -271,6 +274,9 @@ const inventarioSchemas = {
             notas: Joi.string().max(500).optional().allow(null, ''),
             imagen_url: Joi.string().uri().max(500).optional().allow(null, ''),
             activo: Joi.boolean().optional(),
+
+            // Dic 2025: Números de serie / Lotes
+            requiere_numero_serie: Joi.boolean().optional(),
 
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
@@ -805,6 +811,7 @@ const inventarioSchemas = {
                     item_id: Joi.number().integer().positive().required().messages({
                         'any.required': 'item_id es requerido'
                     }),
+                    producto_id: Joi.number().integer().positive().optional(),
                     cantidad: Joi.number().integer().min(1).required().messages({
                         'any.required': 'cantidad es requerida',
                         'number.min': 'cantidad debe ser al menos 1'
@@ -812,7 +819,17 @@ const inventarioSchemas = {
                     precio_unitario_real: Joi.number().min(0).optional(),
                     fecha_vencimiento: Joi.string().isoDate().optional().allow(null),
                     lote: Joi.string().max(50).optional().allow(null, ''),
-                    notas: Joi.string().max(500).optional().allow(null, '')
+                    notas: Joi.string().max(500).optional().allow(null, ''),
+                    // Números de serie para productos que lo requieren (Dic 2025 - INV-5)
+                    numeros_serie: Joi.array().items(
+                        Joi.object({
+                            numero_serie: Joi.string().max(100).required().messages({
+                                'any.required': 'El número de serie es requerido'
+                            }),
+                            lote: Joi.string().max(50).optional().allow(null, ''),
+                            fecha_vencimiento: Joi.string().isoDate().optional().allow(null)
+                        })
+                    ).optional()
                 })
             ).min(1).max(100).required().messages({
                 'any.required': 'Debe incluir al menos una recepción',

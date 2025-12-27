@@ -137,7 +137,9 @@ export default function OrdenesCompraPage() {
       showWarning('Solo se pueden enviar órdenes en estado borrador');
       return;
     }
-    if (!orden.items_count || orden.items_count === 0) {
+    // Verificar items: puede venir como items_count (listado) o items array (detalle)
+    const tieneItems = orden.items_count > 0 || orden.items?.length > 0;
+    if (!tieneItems) {
       showWarning('La orden debe tener al menos un item para enviar');
       return;
     }

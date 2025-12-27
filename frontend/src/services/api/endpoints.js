@@ -1653,6 +1653,226 @@ export const inventarioApi = {
    * @returns {Promise<Array>}
    */
   obtenerUbicacionesProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/ubicaciones`),
+
+  // ========== Valoracion FIFO/AVCO (Dic 2025 - Gap Alta Prioridad) ==========
+
+  /**
+   * Obtener configuracion de valoracion de la organizacion
+   * @returns {Promise<Object>} { metodo_valoracion, incluir_gastos_envio, redondeo_decimales }
+   */
+  obtenerConfiguracionValoracion: () => apiClient.get('/inventario/valoracion/configuracion'),
+
+  /**
+   * Actualizar configuracion de valoracion
+   * @param {Object} data - { metodo_valoracion?, incluir_gastos_envio?, redondeo_decimales? }
+   * @returns {Promise<Object>}
+   */
+  actualizarConfiguracionValoracion: (data) => apiClient.put('/inventario/valoracion/configuracion', data),
+
+  /**
+   * Obtener resumen comparativo de todos los metodos para dashboard
+   * @returns {Promise<Object>} { metodo_configurado, promedio, fifo, avco, comparativa }
+   */
+  obtenerResumenValoracion: () => apiClient.get('/inventario/valoracion/resumen'),
+
+  /**
+   * Obtener valor total del inventario segun metodo
+   * @param {Object} params - { metodo?: 'fifo'|'avco'|'promedio', categoria_id?, sucursal_id? }
+   * @returns {Promise<Object>}
+   */
+  obtenerValorTotal: (params = {}) => apiClient.get('/inventario/valoracion/total', { params }),
+
+  /**
+   * Comparar valoracion de productos por los 3 metodos
+   * @param {Object} params - { producto_id? } - Opcional, para un producto especifico
+   * @returns {Promise<Array>}
+   */
+  obtenerComparativaValoracion: (params = {}) => apiClient.get('/inventario/valoracion/comparativa', { params }),
+
+  /**
+   * Reporte de valoracion agrupado por categorias
+   * @param {Object} params - { metodo? }
+   * @returns {Promise<Array>}
+   */
+  obtenerReporteValoracionCategorias: (params = {}) => apiClient.get('/inventario/valoracion/reporte/categorias', { params }),
+
+  /**
+   * Productos con mayor diferencia entre metodos
+   * @param {Object} params - { limite?: number }
+   * @returns {Promise<Array>}
+   */
+  obtenerReporteDiferenciasValoracion: (params = {}) => apiClient.get('/inventario/valoracion/reporte/diferencias', { params }),
+
+  /**
+   * Valoracion detallada de un producto con todos los metodos
+   * @param {number} productoId
+   * @returns {Promise<Object>}
+   */
+  obtenerValoracionProducto: (productoId) => apiClient.get(`/inventario/valoracion/producto/${productoId}`),
+
+  /**
+   * Valoracion FIFO de un producto
+   * @param {number} productoId
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Object>}
+   */
+  obtenerValoracionFIFO: (productoId, params = {}) => apiClient.get(`/inventario/valoracion/producto/${productoId}/fifo`, { params }),
+
+  /**
+   * Valoracion AVCO de un producto
+   * @param {number} productoId
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Object>}
+   */
+  obtenerValoracionAVCO: (productoId, params = {}) => apiClient.get(`/inventario/valoracion/producto/${productoId}/avco`, { params }),
+
+  /**
+   * Capas de inventario FIFO detalladas con trazabilidad
+   * @param {number} productoId
+   * @returns {Promise<Array>}
+   */
+  obtenerCapasFIFO: (productoId) => apiClient.get(`/inventario/valoracion/producto/${productoId}/capas`),
+
+  // ========== Numeros de Serie / Lotes (Dic 2025 - Gap Media Prioridad) ==========
+
+  /**
+   * Listar numeros de serie con filtros
+   * @param {Object} params - { producto_id?, sucursal_id?, ubicacion_id?, estado?, lote?, fecha_vencimiento_desde?, fecha_vencimiento_hasta?, busqueda?, page?, limit? }
+   * @returns {Promise<Object>}
+   */
+  listarNumerosSerie: (params = {}) => apiClient.get('/inventario/numeros-serie', { params }),
+
+  /**
+   * Buscar numeros de serie
+   * @param {string} termino
+   * @returns {Promise<Array>}
+   */
+  buscarNumeroSerie: (termino) => apiClient.get('/inventario/numeros-serie/buscar', { params: { q: termino } }),
+
+  /**
+   * Obtener numero de serie por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerNumeroSerie: (id) => apiClient.get(`/inventario/numeros-serie/${id}`),
+
+  /**
+   * Obtener historial de movimientos de un numero de serie
+   * @param {number} id
+   * @returns {Promise<Array>}
+   */
+  obtenerHistorialNumeroSerie: (id) => apiClient.get(`/inventario/numeros-serie/${id}/historial`),
+
+  /**
+   * Crear numero de serie individual
+   * @param {Object} data - { producto_id, numero_serie, lote?, fecha_vencimiento?, sucursal_id?, ubicacion_id?, costo_unitario?, proveedor_id?, orden_compra_id?, notas? }
+   * @returns {Promise<Object>}
+   */
+  crearNumeroSerie: (data) => apiClient.post('/inventario/numeros-serie', data),
+
+  /**
+   * Crear multiples numeros de serie (recepcion masiva)
+   * @param {Object} data - { items: [...] }
+   * @returns {Promise<Object>}
+   */
+  crearNumerosSerieMultiple: (data) => apiClient.post('/inventario/numeros-serie/bulk', data),
+
+  /**
+   * Obtener numeros de serie disponibles de un producto
+   * @param {number} productoId
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Array>}
+   */
+  obtenerNumerosSerieDisponibles: (productoId, params = {}) => apiClient.get(`/inventario/numeros-serie/producto/${productoId}/disponibles`, { params }),
+
+  /**
+   * Obtener resumen de numeros de serie por producto
+   * @param {number} productoId
+   * @returns {Promise<Array>}
+   */
+  obtenerResumenNumeroSerieProducto: (productoId) => apiClient.get(`/inventario/numeros-serie/producto/${productoId}/resumen`),
+
+  /**
+   * Obtener productos que requieren numero de serie
+   * @returns {Promise<Array>}
+   */
+  obtenerProductosConSerie: () => apiClient.get('/inventario/numeros-serie/productos-con-serie'),
+
+  /**
+   * Obtener estadisticas generales de numeros de serie
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasNumerosSerie: () => apiClient.get('/inventario/numeros-serie/estadisticas'),
+
+  /**
+   * Obtener numeros de serie proximos a vencer
+   * @param {number} dias
+   * @returns {Promise<Array>}
+   */
+  obtenerProximosVencer: (dias = 30) => apiClient.get('/inventario/numeros-serie/proximos-vencer', { params: { dias } }),
+
+  /**
+   * Verificar si existe un numero de serie
+   * @param {number} productoId
+   * @param {string} numeroSerie
+   * @returns {Promise<Object>}
+   */
+  verificarExistenciaNumeroSerie: (productoId, numeroSerie) => apiClient.get('/inventario/numeros-serie/existe', { params: { producto_id: productoId, numero_serie: numeroSerie } }),
+
+  /**
+   * Vender numero de serie
+   * @param {number} id
+   * @param {Object} data - { venta_id, cliente_id? }
+   * @returns {Promise<Object>}
+   */
+  venderNumeroSerie: (id, data) => apiClient.post(`/inventario/numeros-serie/${id}/vender`, data),
+
+  /**
+   * Transferir numero de serie
+   * @param {number} id
+   * @param {Object} data - { sucursal_destino_id, ubicacion_destino_id?, notas? }
+   * @returns {Promise<Object>}
+   */
+  transferirNumeroSerie: (id, data) => apiClient.post(`/inventario/numeros-serie/${id}/transferir`, data),
+
+  /**
+   * Devolver numero de serie
+   * @param {number} id
+   * @param {Object} data - { sucursal_id, ubicacion_id?, motivo }
+   * @returns {Promise<Object>}
+   */
+  devolverNumeroSerie: (id, data) => apiClient.post(`/inventario/numeros-serie/${id}/devolver`, data),
+
+  /**
+   * Marcar numero de serie como defectuoso
+   * @param {number} id
+   * @param {Object} data - { motivo }
+   * @returns {Promise<Object>}
+   */
+  marcarNumeroSerieDefectuoso: (id, data) => apiClient.post(`/inventario/numeros-serie/${id}/defectuoso`, data),
+
+  /**
+   * Reservar numero de serie
+   * @param {number} id
+   * @param {Object} data - { notas? }
+   * @returns {Promise<Object>}
+   */
+  reservarNumeroSerie: (id, data = {}) => apiClient.post(`/inventario/numeros-serie/${id}/reservar`, data),
+
+  /**
+   * Liberar reserva de numero de serie
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  liberarReservaNumeroSerie: (id) => apiClient.post(`/inventario/numeros-serie/${id}/liberar`),
+
+  /**
+   * Actualizar garantia de numero de serie
+   * @param {number} id
+   * @param {Object} data - { tiene_garantia, fecha_inicio_garantia?, fecha_fin_garantia? }
+   * @returns {Promise<Object>}
+   */
+  actualizarGarantiaNumeroSerie: (id, data) => apiClient.put(`/inventario/numeros-serie/${id}/garantia`, data),
 };
 
 // ==================== ÓRDENES DE COMPRA ====================

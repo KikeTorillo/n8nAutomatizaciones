@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -18,6 +18,7 @@ import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 import ClienteSelector from '@/components/pos/ClienteSelector';
+import SeleccionarNSModal from '@/components/pos/SeleccionarNSModal';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { listasPreciosApi } from '@/services/api/endpoints';
@@ -66,6 +67,23 @@ export default function VentaPOSPage() {
   const [clienteSeleccionado, setClienteSeleccionado] = useState(null);
   // Dic 2025: Estado para recálculo de precios
   const [recalculandoPrecios, setRecalculandoPrecios] = useState(false);
+  // Dic 2025: Estado para selección de números de serie (INV-5)
+  const [mostrarModalNS, setMostrarModalNS] = useState(false);
+  const [productoParaNS, setProductoParaNS] = useState(null);
+  const pendingNSCallback = useRef(null);
+
+  // Fix Dic 2025: Cleanup de reservas huérfanas al desmontar el componente
+  useEffect(() => {
+    return () => {
+      const reservasActivas = items.filter(item => item.reserva_id);
+      if (reservasActivas.length > 0) {
+        reservasActivas.forEach(item => {
+          cancelarReserva.mutateAsync(item.reserva_id).catch(() => {});
+        });
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Dic 2025: Función para obtener precio inteligente de un producto
   const obtenerPrecioInteligente = useCallback(async (productoId, cantidad = 1) => {
@@ -153,25 +171,47 @@ export default function VentaPOSPage() {
   const total = subtotal - montoDescuentoGlobal;
 
   // Handler: Agregar producto al carrito
-  // Dic 2025: Integración con listas de precios inteligentes + reservas de stock
+  // Dic 2025: Integración con listas de precios inteligentes + reservas de stock + números de serie
   const handleProductoSeleccionado = async (producto) => {
     // Verificar si el producto ya está en el carrito
     const itemExistente = items.find(item => item.producto_id === producto.id);
 
+    // Si el producto requiere número de serie y no está en el carrito, mostrar modal de selección
+    if (producto.requiere_numero_serie && !itemExistente) {
+      setProductoParaNS(producto);
+      setMostrarModalNS(true);
+      return;
+    }
+
+    // Si ya está en el carrito y requiere NS, no permitir incrementar (cada NS es único)
+    if (producto.requiere_numero_serie && itemExistente) {
+      toast.warning(`"${producto.nombre}" requiere seleccionar otro número de serie`);
+      setProductoParaNS(producto);
+      setMostrarModalNS(true);
+      return;
+    }
+
     if (itemExistente) {
       // Incrementar cantidad y recalcular precio por qty breaks
       const nuevaCantidad = itemExistente.cantidad + 1;
+      const reservaAnteriorId = itemExistente.reserva_id;
 
       try {
-        // Cancelar reserva anterior y crear nueva con cantidad actualizada
-        if (itemExistente.reserva_id) {
-          await cancelarReserva.mutateAsync(itemExistente.reserva_id);
-        }
+        // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior
         const nuevaReserva = await crearReserva.mutateAsync({
           producto_id: producto.id,
           cantidad: nuevaCantidad,
           tipo_origen: 'venta_pos'
         });
+
+        // Solo si la nueva reserva fue exitosa, cancelar la anterior
+        if (reservaAnteriorId) {
+          try {
+            await cancelarReserva.mutateAsync(reservaAnteriorId);
+          } catch (cancelError) {
+            console.warn('[POS] Error cancelando reserva anterior:', cancelError);
+          }
+        }
 
         // Obtener precio actualizado por cantidad
         const precioResuelto = await obtenerPrecioInteligente(producto.id, nuevaCantidad);
@@ -195,71 +235,104 @@ export default function VentaPOSPage() {
         ));
         toast.success(`Cantidad de "${producto.nombre}" aumentada`);
       } catch (error) {
+        // Si falla la nueva reserva, el item mantiene su reserva anterior intacta
         toast.error(error.message || 'Stock insuficiente');
         return;
       }
     } else {
-      try {
-        // Crear reserva de stock para el nuevo producto
-        const reserva = await crearReserva.mutateAsync({
-          producto_id: producto.id,
-          cantidad: 1,
-          tipo_origen: 'venta_pos'
-        });
+      await agregarProductoAlCarrito(producto, null);
+    }
+  };
 
-        // Obtener precio inteligente para el nuevo producto
-        const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
+  // Handler interno para agregar producto al carrito (con o sin NS)
+  const agregarProductoAlCarrito = async (producto, numeroSerie = null) => {
+    try {
+      // Crear reserva de stock para el nuevo producto
+      const reserva = await crearReserva.mutateAsync({
+        producto_id: producto.id,
+        cantidad: 1,
+        tipo_origen: 'venta_pos'
+      });
 
-        // Agregar nuevo item con precio resuelto y reserva_id
-        const nuevoItem = {
-          id: Date.now(), // ID temporal para el carrito
-          producto_id: producto.id,
-          reserva_id: reserva.id, // Guardar ID de reserva
-          nombre: producto.nombre,
-          sku: producto.sku,
-          precio_venta: producto.precio_venta, // Precio base
-          precio_original: producto.precio_venta,
-          precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
-          cantidad: 1,
-          descuento_monto: 0,
-          stock_actual: producto.stock_actual,
-          // Dic 2025: Info de lista de precios
-          fuente_precio: precioResuelto?.fuente || 'precio_producto',
-          fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
-          descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
-          lista_codigo: precioResuelto?.lista_codigo || null
-        };
+      // Obtener precio inteligente para el nuevo producto
+      const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
 
-        setItems([...items, nuevoItem]);
+      // Agregar nuevo item con precio resuelto y reserva_id
+      const nuevoItem = {
+        id: Date.now(), // ID temporal para el carrito
+        producto_id: producto.id,
+        reserva_id: reserva.id, // Guardar ID de reserva
+        nombre: producto.nombre,
+        sku: producto.sku,
+        precio_venta: producto.precio_venta, // Precio base
+        precio_original: producto.precio_venta,
+        precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
+        cantidad: 1,
+        descuento_monto: 0,
+        stock_actual: producto.stock_actual,
+        // Dic 2025: Info de lista de precios
+        fuente_precio: precioResuelto?.fuente || 'precio_producto',
+        fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
+        descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
+        lista_codigo: precioResuelto?.lista_codigo || null,
+        // Dic 2025: Número de serie (INV-5)
+        requiere_numero_serie: producto.requiere_numero_serie || false,
+        numero_serie: numeroSerie // { id, numero_serie, lote, fecha_vencimiento } o null
+      };
 
-        // Mostrar toast con info del precio
-        if (precioResuelto?.fuente === 'lista_precios' && precioResuelto.descuento_aplicado > 0) {
-          toast.success(`"${producto.nombre}" agregado (${precioResuelto.lista_codigo}: -${precioResuelto.descuento_aplicado}%)`);
-        } else {
-          toast.success(`"${producto.nombre}" agregado al carrito`);
-        }
-      } catch (error) {
-        toast.error(error.message || 'Stock insuficiente para este producto');
+      setItems(prev => [...prev, nuevoItem]);
+
+      // Mostrar toast con info del precio
+      if (numeroSerie) {
+        toast.success(`"${producto.nombre}" (NS: ${numeroSerie.numero_serie}) agregado`);
+      } else if (precioResuelto?.fuente === 'lista_precios' && precioResuelto.descuento_aplicado > 0) {
+        toast.success(`"${producto.nombre}" agregado (${precioResuelto.lista_codigo}: -${precioResuelto.descuento_aplicado}%)`);
+      } else {
+        toast.success(`"${producto.nombre}" agregado al carrito`);
       }
+    } catch (error) {
+      toast.error(error.message || 'Stock insuficiente para este producto');
+    }
+  };
+
+  // Handler para cuando se selecciona NS del modal
+  const handleNSSeleccionado = async (numerosSeleccionados) => {
+    if (productoParaNS && numerosSeleccionados.length > 0) {
+      // Agregar cada NS como un item separado
+      for (const ns of numerosSeleccionados) {
+        await agregarProductoAlCarrito(productoParaNS, ns);
+      }
+      setProductoParaNS(null);
     }
   };
 
   // Handler: Actualizar cantidad de item
   // Dic 2025: Recalcula precio cuando cambia cantidad (qty breaks) + actualiza reserva
+  // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior para evitar race condition
   const handleActualizarCantidad = async (itemId, nuevaCantidad) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
+    const reservaAnteriorId = item.reserva_id;
+
     try {
-      // Cancelar reserva anterior y crear nueva con cantidad actualizada
-      if (item.reserva_id) {
-        await cancelarReserva.mutateAsync(item.reserva_id);
-      }
+      // PRIMERO: Crear nueva reserva con cantidad actualizada
+      // Esto valida que hay stock suficiente ANTES de cancelar la anterior
       const nuevaReserva = await crearReserva.mutateAsync({
         producto_id: item.producto_id,
         cantidad: nuevaCantidad,
         tipo_origen: 'venta_pos'
       });
+
+      // SEGUNDO: Solo si la nueva reserva fue exitosa, cancelar la anterior
+      if (reservaAnteriorId) {
+        try {
+          await cancelarReserva.mutateAsync(reservaAnteriorId);
+        } catch (cancelError) {
+          // Si falla la cancelación, loguear pero continuar (la reserva anterior expirará)
+          console.warn('[POS] Error cancelando reserva anterior:', cancelError);
+        }
+      }
 
       // Obtener el precio actualizado por cantidad
       const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
@@ -281,6 +354,7 @@ export default function VentaPOSPage() {
           : i
       ));
     } catch (error) {
+      // Si la nueva reserva falla, el item mantiene su reserva anterior intacta
       toast.error(error.message || 'Stock insuficiente para esta cantidad');
     }
   };
@@ -340,10 +414,28 @@ export default function VentaPOSPage() {
   };
 
   // Handler: Confirmar venta
-  // Dic 2025: Confirma las reservas de stock al completar la venta
+  // Dic 2025: Confirma las reservas de stock al completar la venta + marca NS como vendidos
+  // Fix Dic 2025: Confirmar reservas ANTES de crear venta para garantizar atomicidad
   const handleConfirmarVenta = async (datosPago) => {
+    // Obtener IDs de reservas a confirmar
+    const reservaIds = items
+      .filter(item => item.reserva_id)
+      .map(item => item.reserva_id);
+
     try {
-      // Preparar items para el backend (incluir reserva_id)
+      // PASO 1: Confirmar reservas PRIMERO (descuenta stock)
+      // Esto garantiza que el stock está disponible antes de crear la venta
+      if (reservaIds.length > 0) {
+        const resultadoReservas = await confirmarReservas.mutateAsync(reservaIds);
+
+        // Validar que todas las reservas se confirmaron
+        if (resultadoReservas.confirmadas?.length !== reservaIds.length) {
+          const noConfirmadas = reservaIds.length - (resultadoReservas.confirmadas?.length || 0);
+          throw new Error(`No se pudieron confirmar ${noConfirmadas} reserva(s). Stock insuficiente.`);
+        }
+      }
+
+      // PASO 2: Preparar items para el backend (incluir reserva_id y número de serie)
       const itemsBackend = items.map(item => ({
         producto_id: item.producto_id,
         cantidad: item.cantidad,
@@ -351,7 +443,10 @@ export default function VentaPOSPage() {
         descuento_monto: parseFloat(item.descuento_monto || 0),
         aplica_comision: true,
         notas: '',
-        reserva_id: item.reserva_id || undefined
+        reserva_id: item.reserva_id || undefined,
+        // Dic 2025: Número de serie (INV-5)
+        numero_serie_id: item.numero_serie?.id || undefined,
+        numero_serie: item.numero_serie?.numero_serie || undefined
       }));
 
       // Calcular descuento global en monto
@@ -371,24 +466,13 @@ export default function VentaPOSPage() {
         metodo_pago: datosPago.metodo_pago,
         monto_pagado: datosPago.monto_pagado,
         impuestos: 0,
-        notas: ''
+        notas: '',
+        // Indicar que las reservas ya fueron confirmadas
+        reservas_confirmadas: true
       };
 
-      // Crear venta PRIMERO (antes de confirmar reservas)
+      // PASO 3: Crear venta (reservas ya confirmadas, stock ya descontado)
       const resultado = await crearVenta.mutateAsync(datosVenta);
-
-      // Solo si la venta fue exitosa, confirmar las reservas de stock
-      const reservaIds = items
-        .filter(item => item.reserva_id)
-        .map(item => item.reserva_id);
-
-      if (reservaIds.length > 0) {
-        try {
-          await confirmarReservas.mutateAsync(reservaIds);
-        } catch (err) {
-          console.warn('Error al confirmar reservas (venta ya creada):', err);
-        }
-      }
 
       // Mostrar éxito
       toast.success(`¡Venta ${resultado.folio} creada exitosamente!`, {
@@ -409,8 +493,13 @@ export default function VentaPOSPage() {
       setMostrarModalPago(false);
 
     } catch (error) {
-      console.error('Error al crear venta:', error);
-      toast.error(error.response?.data?.message || 'Error al crear la venta');
+      console.error('Error al procesar venta:', error);
+
+      // Si el error fue en la confirmación de reservas, las reservas siguen activas
+      // Si el error fue en la creación de venta, las reservas ya se confirmaron (stock descontado)
+      // TODO: En producción, considerar crear movimiento de ajuste si venta falla post-confirmación
+
+      toast.error(error.response?.data?.message || error.message || 'Error al procesar la venta');
     }
   };
 
@@ -563,6 +652,18 @@ export default function VentaPOSPage() {
         confirmText="Vaciar"
         cancelText="Cancelar"
         variant="warning"
+      />
+
+      {/* Modal de selección de número de serie (Dic 2025 - INV-5) */}
+      <SeleccionarNSModal
+        isOpen={mostrarModalNS}
+        onClose={() => {
+          setMostrarModalNS(false);
+          setProductoParaNS(null);
+        }}
+        producto={productoParaNS}
+        cantidad={1}
+        onSeleccionar={handleNSSeleccionado}
       />
     </div>
   );

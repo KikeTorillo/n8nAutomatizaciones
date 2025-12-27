@@ -208,7 +208,10 @@ COMMENT ON FUNCTION crear_reserva_stock IS 'Crea una reserva de stock validando 
 
 -- ============================================================================
 -- FUNCIÓN: confirmar_reserva_stock
--- Descripción: Confirma una reserva y descuenta el stock real
+-- Descripción: Confirma una reserva (NO descuenta stock - eso lo hace el trigger de venta)
+-- Fix 27 Dic 2025: Removido UPDATE de stock para evitar doble descuento.
+--                  El trigger calcular_totales_venta_pos es responsable de descontar
+--                  stock y crear el movimiento de inventario.
 -- ============================================================================
 CREATE OR REPLACE FUNCTION confirmar_reserva_stock(
     p_reserva_id INTEGER
@@ -237,19 +240,11 @@ BEGIN
         RAISE EXCEPTION 'Reserva expirada';
     END IF;
 
-    -- Descontar stock del producto
-    UPDATE productos
-    SET stock_actual = stock_actual - v_reserva.cantidad,
-        actualizado_en = NOW()
-    WHERE id = v_reserva.producto_id;
-
-    -- Si hay sucursal, también descontar de stock_sucursales
-    IF v_reserva.sucursal_id IS NOT NULL THEN
-        UPDATE stock_sucursales
-        SET cantidad = cantidad - v_reserva.cantidad
-        WHERE producto_id = v_reserva.producto_id
-        AND sucursal_id = v_reserva.sucursal_id;
-    END IF;
+    -- ⚠️ FIX: NO descontar stock aquí
+    -- El trigger calcular_totales_venta_pos se encarga de:
+    -- 1. Descontar stock_actual del producto
+    -- 2. Crear el movimiento de inventario con stock_antes/stock_despues
+    -- Si descotáramos aquí, habría DOBLE DESCUENTO
 
     -- Marcar reserva como confirmada
     UPDATE reservas_stock
@@ -261,7 +256,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-COMMENT ON FUNCTION confirmar_reserva_stock IS 'Confirma una reserva y descuenta el stock real del producto';
+COMMENT ON FUNCTION confirmar_reserva_stock IS 'Confirma una reserva. El descuento de stock lo hace el trigger de venta para evitar doble descuento.';
 
 -- ============================================================================
 -- FUNCIÓN: cancelar_reserva_stock

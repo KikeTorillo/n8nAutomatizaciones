@@ -10,8 +10,11 @@ import useSucursalStore from '@/store/sucursalStore';
  * @param {Object} params - { estado?, estado_pago?, tipo_venta?, cliente_id?, profesional_id?, metodo_pago?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
  */
 export function useVentas(params = {}) {
+  const { getSucursalId } = useSucursalStore();
+  const sucursalId = getSucursalId();
+
   return useQuery({
-    queryKey: ['ventas', params],
+    queryKey: ['ventas', params, sucursalId],
     queryFn: async () => {
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
@@ -20,10 +23,16 @@ export function useVentas(params = {}) {
         return acc;
       }, {});
 
+      // Fix 27-Dic-2025: Agregar sucursalId para permisos
+      if (sucursalId) {
+        sanitizedParams.sucursalId = sucursalId;
+      }
+
       const response = await posApi.listarVentas(sanitizedParams);
       return response.data.data || { ventas: [], total: 0 };
     },
     staleTime: 1000 * 60 * 2, // 2 minutos
+    enabled: !!sucursalId, // Solo ejecutar si hay sucursal
   });
 }
 
@@ -271,8 +280,11 @@ export function useEliminarVenta() {
  * @param {Object} params - { fecha_inicio, fecha_fin, usuario_id? }
  */
 export function useCorteCaja(params) {
+  const { getSucursalId } = useSucursalStore();
+  const sucursalId = getSucursalId();
+
   return useQuery({
-    queryKey: ['corte-caja', params],
+    queryKey: ['corte-caja', params, sucursalId],
     queryFn: async () => {
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
         if (value !== '' && value !== null && value !== undefined) {
@@ -281,10 +293,15 @@ export function useCorteCaja(params) {
         return acc;
       }, {});
 
+      // Fix 27-Dic-2025: Agregar sucursalId para permisos
+      if (sucursalId) {
+        sanitizedParams.sucursalId = sucursalId;
+      }
+
       const response = await posApi.obtenerCorteCaja(sanitizedParams);
       return response.data.data || { resumen: {}, totales_por_metodo: [], ventas_por_hora: [], top_productos: [] };
     },
-    enabled: !!params.fecha_inicio && !!params.fecha_fin,
+    enabled: !!params.fecha_inicio && !!params.fecha_fin && !!sucursalId,
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
 }

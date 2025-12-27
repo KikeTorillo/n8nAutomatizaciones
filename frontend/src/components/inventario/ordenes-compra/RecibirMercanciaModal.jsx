@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Package, Check, AlertTriangle } from 'lucide-react';
+import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
+import { useVerificarExistencia } from '@/hooks/useNumerosSerie';
 
 /**
  * Modal para registrar recepción de mercancía
@@ -21,6 +22,9 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   // Mutation
   const recibirMutation = useRecibirMercancia();
 
+  // Estado para expandir sección de números de serie
+  const [expandedNS, setExpandedNS] = useState({});
+
   // Inicializar recepciones cuando se carga la orden
   useEffect(() => {
     if (ordenDetalle?.items) {
@@ -28,8 +32,10 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
         .filter(item => (item.cantidad_ordenada - (item.cantidad_recibida || 0)) > 0)
         .map(item => ({
           item_id: item.id,
+          producto_id: item.producto_id,
           producto_nombre: item.producto_nombre,
           producto_sku: item.producto_sku,
+          requiere_numero_serie: item.requiere_numero_serie || false,
           cantidad_ordenada: item.cantidad_ordenada,
           cantidad_recibida: item.cantidad_recibida || 0,
           cantidad_pendiente: item.cantidad_ordenada - (item.cantidad_recibida || 0),
@@ -38,6 +44,7 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
           fecha_vencimiento: '',
           lote: '',
           notas: '',
+          numeros_serie: [], // Array de NS para productos que lo requieren
         }));
       setRecepciones(recepcionesIniciales);
     }
@@ -48,7 +55,35 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
     const cantidadNum = parseInt(cantidad) || 0;
     const maxPermitido = nuevasRecepciones[index].cantidad_pendiente;
     nuevasRecepciones[index].cantidad = Math.min(Math.max(0, cantidadNum), maxPermitido);
+
+    // Si requiere NS, ajustar el array de números de serie
+    if (nuevasRecepciones[index].requiere_numero_serie) {
+      const currentNS = nuevasRecepciones[index].numeros_serie;
+      const targetCount = nuevasRecepciones[index].cantidad;
+
+      if (currentNS.length < targetCount) {
+        // Agregar entradas vacías
+        for (let i = currentNS.length; i < targetCount; i++) {
+          currentNS.push({ numero_serie: '', lote: '', fecha_vencimiento: '' });
+        }
+      } else if (currentNS.length > targetCount) {
+        // Remover excedentes
+        nuevasRecepciones[index].numeros_serie = currentNS.slice(0, targetCount);
+      }
+    }
+
     setRecepciones(nuevasRecepciones);
+  };
+
+  // Manejo de números de serie
+  const handleNumeroSerieChange = (itemIndex, nsIndex, field, value) => {
+    const nuevasRecepciones = [...recepciones];
+    nuevasRecepciones[itemIndex].numeros_serie[nsIndex][field] = value;
+    setRecepciones(nuevasRecepciones);
+  };
+
+  const toggleExpandNS = (itemId) => {
+    setExpandedNS(prev => ({ ...prev, [itemId]: !prev[itemId] }));
   };
 
   const handlePrecioChange = (index, precio) => {
@@ -76,23 +111,68 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
   };
 
   const handleRecibirTodo = () => {
-    const nuevasRecepciones = recepciones.map(r => ({
-      ...r,
-      cantidad: r.cantidad_pendiente,
-    }));
+    const nuevasRecepciones = recepciones.map(r => {
+      const nuevaRecepcion = {
+        ...r,
+        cantidad: r.cantidad_pendiente,
+      };
+      // Si requiere NS, crear entradas vacías para cada unidad
+      if (r.requiere_numero_serie) {
+        nuevaRecepcion.numeros_serie = Array.from(
+          { length: r.cantidad_pendiente },
+          () => ({ numero_serie: '', lote: '', fecha_vencimiento: '' })
+        );
+      }
+      return nuevaRecepcion;
+    });
     setRecepciones(nuevasRecepciones);
   };
 
   const handleSubmit = () => {
+    // Validar números de serie para productos que los requieren
+    const itemsConNSIncompletos = recepciones.filter(r =>
+      r.cantidad > 0 &&
+      r.requiere_numero_serie &&
+      r.numeros_serie.some(ns => !ns.numero_serie?.trim())
+    );
+
+    if (itemsConNSIncompletos.length > 0) {
+      showToast(
+        `Faltan números de serie para: ${itemsConNSIncompletos.map(i => i.producto_nombre).join(', ')}`,
+        'warning'
+      );
+      return;
+    }
+
+    // Validar números de serie duplicados
+    const todosNS = recepciones
+      .filter(r => r.requiere_numero_serie && r.cantidad > 0)
+      .flatMap(r => r.numeros_serie.map(ns => ({ producto_id: r.producto_id, ns: ns.numero_serie?.trim() })));
+
+    const duplicados = todosNS.filter((item, idx) =>
+      todosNS.findIndex(x => x.producto_id === item.producto_id && x.ns === item.ns) !== idx
+    );
+
+    if (duplicados.length > 0) {
+      showToast('Hay números de serie duplicados', 'error');
+      return;
+    }
+
     const recepcionesAEnviar = recepciones
       .filter(r => r.cantidad > 0)
       .map(r => ({
         item_id: r.item_id,
+        producto_id: r.producto_id,
         cantidad: r.cantidad,
         precio_unitario_real: r.precio_unitario_real || undefined,
         fecha_vencimiento: r.fecha_vencimiento || undefined,
         lote: r.lote?.trim() || undefined,
         notas: r.notas?.trim() || undefined,
+        numeros_serie: r.requiere_numero_serie ? r.numeros_serie.map(ns => ({
+          numero_serie: ns.numero_serie?.trim(),
+          lote: ns.lote?.trim() || r.lote?.trim() || undefined,
+          fecha_vencimiento: ns.fecha_vencimiento || r.fecha_vencimiento || undefined,
+        })) : undefined,
       }));
 
     if (recepcionesAEnviar.length === 0) {
@@ -196,7 +276,14 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
                 {recepciones.map((item, index) => (
                   <tr key={item.item_id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
-                      <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</div>
+                        {item.requiere_numero_serie && (
+                          <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300" title="Requiere número de serie">
+                            <Hash size={10} className="mr-0.5" />NS
+                          </span>
+                        )}
+                      </div>
                       {item.producto_sku && (
                         <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.producto_sku}</div>
                       )}
@@ -244,6 +331,83 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
               </tbody>
             </table>
           </div>
+
+          {/* Sección de números de serie */}
+          {recepciones.some(r => r.cantidad > 0 && r.requiere_numero_serie) && (
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+              <h4 className="text-sm font-medium text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                <Hash size={16} />
+                Números de Serie Requeridos
+              </h4>
+              <div className="space-y-4">
+                {recepciones
+                  .filter(r => r.cantidad > 0 && r.requiere_numero_serie)
+                  .map((item) => {
+                    const originalIndex = recepciones.findIndex(r => r.item_id === item.item_id);
+                    const isExpanded = expandedNS[item.item_id];
+                    const nsCompletos = item.numeros_serie.filter(ns => ns.numero_serie?.trim()).length;
+                    const nsTotal = item.cantidad;
+
+                    return (
+                      <div key={item.item_id} className="bg-white dark:bg-gray-800 rounded-lg border border-purple-200 dark:border-purple-700 overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpandNS(item.item_id)}
+                          className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                          <div className="flex items-center gap-3">
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{item.producto_nombre}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full ${
+                              nsCompletos === nsTotal
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400'
+                                : 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-400'
+                            }`}>
+                              {nsCompletos}/{nsTotal} NS
+                            </span>
+                          </div>
+                          {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                        </button>
+
+                        {isExpanded && (
+                          <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                            <div className="mt-3 space-y-2">
+                              {item.numeros_serie.map((ns, nsIndex) => (
+                                <div key={nsIndex} className="flex items-center gap-2">
+                                  <span className="text-xs text-gray-500 dark:text-gray-400 w-6">{nsIndex + 1}.</span>
+                                  <input
+                                    type="text"
+                                    value={ns.numero_serie}
+                                    onChange={(e) => handleNumeroSerieChange(originalIndex, nsIndex, 'numero_serie', e.target.value)}
+                                    className="flex-1 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                    placeholder="Número de serie *"
+                                  />
+                                  <input
+                                    type="text"
+                                    value={ns.lote}
+                                    onChange={(e) => handleNumeroSerieChange(originalIndex, nsIndex, 'lote', e.target.value)}
+                                    className="w-24 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                    placeholder="Lote"
+                                  />
+                                  <input
+                                    type="date"
+                                    value={ns.fecha_vencimiento}
+                                    onChange={(e) => handleNumeroSerieChange(originalIndex, nsIndex, 'fecha_vencimiento', e.target.value)}
+                                    className="w-32 rounded-md border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-sm"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                              * El número de serie es obligatorio. Lote y fecha de vencimiento son opcionales.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          )}
 
           {/* Campos adicionales por item (expandible) */}
           {recepciones.some(r => r.cantidad > 0) && (

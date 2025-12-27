@@ -72,11 +72,16 @@ function AjustarStockModal({ isOpen, onClose, producto }) {
 
   // Submit handler
   const onSubmit = (data) => {
+    // Convertir cantidad a negativa para salidas (el backend espera valor negativo)
+    const cantidadFinal = data.tipo_movimiento === 'salida_ajuste'
+      ? -Math.abs(data.cantidad_ajuste)
+      : Math.abs(data.cantidad_ajuste);
+
     ajustarMutation.mutate(
       {
         id: producto.id,
         tipo_movimiento: data.tipo_movimiento,
-        cantidad_ajuste: data.cantidad_ajuste,
+        cantidad_ajuste: cantidadFinal,
         motivo: data.motivo,
       },
       {

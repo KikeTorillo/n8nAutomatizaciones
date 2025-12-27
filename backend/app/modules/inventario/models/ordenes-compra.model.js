@@ -121,8 +121,11 @@ class OrdenesCompraModel {
             const itemsQuery = `
                 SELECT
                     oci.*,
+                    oci.nombre_producto AS producto_nombre,
+                    oci.sku AS producto_sku,
                     pr.stock_actual,
-                    pr.precio_compra AS precio_compra_actual
+                    pr.precio_compra AS precio_compra_actual,
+                    pr.requiere_numero_serie
                 FROM ordenes_compra_items oci
                 LEFT JOIN productos pr ON pr.id = oci.producto_id
                 WHERE oci.orden_compra_id = $1
@@ -823,6 +826,10 @@ class OrdenesCompraModel {
                 const stockAntes = parseInt(item.stock_actual);
                 const stockDespues = stockAntes + recepcion.cantidad;
 
+                // Calcular valores para el movimiento
+                const costoUnitario = recepcion.precio_unitario_real || item.precio_unitario || 0;
+                const valorTotal = recepcion.cantidad * costoUnitario;
+
                 // Crear movimiento de inventario
                 const movimientoQuery = await db.query(
                     `INSERT INTO movimientos_inventario (
@@ -847,22 +854,23 @@ class OrdenesCompraModel {
                         'entrada_compra',
                         $2,
                         $3,
-                        $2 * $3,
                         $4,
                         $5,
-                        oc.proveedor_id,
                         $6,
+                        oc.proveedor_id,
                         $7,
-                        'Recepción de orden de compra',
                         $8,
-                        $9
+                        'Recepción de orden de compra',
+                        $9,
+                        $10
                     FROM ordenes_compra oc
-                    WHERE oc.id = $10
+                    WHERE oc.id = $11
                     RETURNING id`,
                     [
                         item.producto_id,
                         recepcion.cantidad,
-                        recepcion.precio_unitario_real || item.precio_unitario,
+                        costoUnitario,
+                        valorTotal,
                         stockAntes,
                         stockDespues,
                         usuarioId,
@@ -891,6 +899,40 @@ class OrdenesCompraModel {
                          WHERE id = $2`,
                         [recepcion.precio_unitario_real, item.producto_id]
                     );
+                }
+
+                // Procesar números de serie si existen
+                if (recepcion.numeros_serie && recepcion.numeros_serie.length > 0) {
+                    for (const ns of recepcion.numeros_serie) {
+                        if (ns.numero_serie?.trim()) {
+                            // Registrar número de serie usando la función SQL
+                            // Parámetros: org_id, prod_id, ns, lote, fecha_venc, sucursal_id, ubicacion_id, costo, proveedor_id, oc_id, usuario_id, notas
+                            await db.query(
+                                `SELECT registrar_numero_serie(
+                                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12
+                                )`,
+                                [
+                                    organizacionId,
+                                    recepcion.producto_id,
+                                    ns.numero_serie.trim(),
+                                    ns.lote?.trim() || recepcion.lote || null,
+                                    ns.fecha_vencimiento || recepcion.fecha_vencimiento || null,
+                                    null, // sucursal_id - puede ser null
+                                    null, // ubicacion_id - puede ser null
+                                    recepcion.precio_unitario_real || item.precio_unitario,
+                                    null, // proveedor_id - se obtiene de la OC internamente
+                                    ordenId, // orden_compra_id
+                                    usuarioId,
+                                    null // notas
+                                ]
+                            );
+                        }
+                    }
+
+                    logger.info('[OrdenesCompraModel.recibirMercancia] NS registrados', {
+                        producto_id: recepcion.producto_id,
+                        cantidad_ns: recepcion.numeros_serie.length
+                    });
                 }
 
                 // Registrar en historial de recepciones
@@ -928,6 +970,52 @@ class OrdenesCompraModel {
                     movimiento_id: movimientoId
                 });
             }
+
+            // Verificar si todos los items de la orden están completos
+            const itemsPendientesQuery = await db.query(
+                `SELECT COUNT(*) as pendientes
+                 FROM ordenes_compra_items
+                 WHERE orden_compra_id = $1
+                   AND estado != 'cancelado'
+                   AND cantidad_recibida < cantidad_ordenada`,
+                [ordenId]
+            );
+
+            const itemsPendientes = parseInt(itemsPendientesQuery.rows[0].pendientes);
+
+            // Actualizar estado de la orden según items pendientes
+            let nuevoEstado = 'parcial';
+            if (itemsPendientes === 0) {
+                nuevoEstado = 'recibida';
+            }
+
+            // Actualizar estado de la orden
+            // Nota: fecha_recepcion se actualiza separadamente para evitar conflicto de tipos en $1
+            await db.query(
+                `UPDATE ordenes_compra
+                 SET estado = $1,
+                     actualizado_en = NOW()
+                 WHERE id = $2`,
+                [nuevoEstado, ordenId]
+            );
+
+            // Si la orden está completamente recibida, actualizar fecha_recepcion
+            if (nuevoEstado === 'recibida') {
+                await db.query(
+                    `UPDATE ordenes_compra SET fecha_recepcion = NOW() WHERE id = $1`,
+                    [ordenId]
+                );
+            }
+
+            // También actualizar estado de los items completados
+            await db.query(
+                `UPDATE ordenes_compra_items
+                 SET estado = 'completo', actualizado_en = NOW()
+                 WHERE orden_compra_id = $1
+                   AND cantidad_recibida >= cantidad_ordenada
+                   AND estado != 'completo'`,
+                [ordenId]
+            );
 
             logger.info('[OrdenesCompraModel.recibirMercancia] Recepción completada', {
                 orden_id: ordenId,

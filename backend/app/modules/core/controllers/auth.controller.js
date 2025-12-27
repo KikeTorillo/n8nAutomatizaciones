@@ -717,27 +717,10 @@ class AuthController {
             modulos
         });
 
-        // Generar nuevos tokens con organizacion_id actualizada
-        const crypto = require('crypto');
-        const jti = crypto.randomBytes(16).toString('hex');
-
-        const accessToken = jwt.sign(
-            {
-                userId: resultado.usuario.id,
-                email: resultado.usuario.email,
-                rol: 'admin',
-                organizacionId: resultado.organizacion.id,
-                jti: jti
-            },
-            process.env.JWT_SECRET,
-            { expiresIn: process.env.JWT_EXPIRES_IN || '1h' }
-        );
-
-        const refreshToken = jwt.sign(
-            { userId: resultado.usuario.id, type: 'refresh', jti: crypto.randomBytes(16).toString('hex') },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' }
-        );
+        // Generar nuevos tokens con organizacion_id y sucursal_id actualizados
+        // Fix Dic 2025: Consultar usuario actualizado para obtener sucursal_id (asignada por trigger)
+        const usuarioActualizado = await UsuarioModel.buscarPorEmail(resultado.usuario.email);
+        const { accessToken, refreshToken } = UsuarioModel.generarTokens(usuarioActualizado);
 
         // Actualizar cookie
         res.cookie('refreshToken', refreshToken, {

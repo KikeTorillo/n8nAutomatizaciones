@@ -193,8 +193,11 @@ class ProductosModel {
                     permite_uso_servicio,
                     notas,
                     imagen_url,
-                    activo
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21)
+                    activo,
+                    requiere_numero_serie,
+                    auto_generar_oc,
+                    cantidad_oc_sugerida
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
                 RETURNING *
             `;
 
@@ -219,7 +222,10 @@ class ProductosModel {
                 data.permite_uso_servicio !== undefined ? data.permite_uso_servicio : true,
                 data.notas || null,
                 data.imagen_url || null,
-                data.activo !== undefined ? data.activo : true
+                data.activo !== undefined ? data.activo : true,
+                data.requiere_numero_serie !== undefined ? data.requiere_numero_serie : false,
+                data.auto_generar_oc !== undefined ? data.auto_generar_oc : false,
+                data.cantidad_oc_sugerida !== undefined ? data.cantidad_oc_sugerida : 50
             ];
 
             const result = await db.query(query, values);
@@ -492,12 +498,14 @@ class ProductosModel {
 
             // Construir query de actualización dinámica
             // Dic 2025: precio_mayoreo eliminado, usar listas_precios
+            // Dic 2025: requiere_numero_serie, auto_generar_oc, cantidad_oc_sugerida agregados
             const camposActualizables = [
                 'nombre', 'descripcion', 'sku', 'codigo_barras', 'categoria_id', 'proveedor_id',
                 'precio_compra', 'precio_venta',
                 'stock_minimo', 'stock_maximo', 'unidad_medida', 'alerta_stock_minimo',
                 'es_perecedero', 'dias_vida_util', 'permite_venta', 'permite_uso_servicio',
-                'notas', 'imagen_url', 'activo'
+                'notas', 'imagen_url', 'activo', 'requiere_numero_serie',
+                'auto_generar_oc', 'cantidad_oc_sugerida'
             ];
             const updates = [];
             const values = [];
@@ -752,6 +760,7 @@ class ProductosModel {
 
     /**
      * Búsqueda avanzada de productos (full-text search + código de barras)
+     * Dic 2025: Incluye requiere_numero_serie para integración POS
      */
     static async buscar(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
@@ -760,6 +769,7 @@ class ProductosModel {
             let query = `
                 SELECT
                     p.*,
+                    p.requiere_numero_serie,
                     c.nombre AS nombre_categoria,
                     prov.nombre AS nombre_proveedor
                 FROM productos p

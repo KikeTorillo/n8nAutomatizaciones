@@ -194,8 +194,24 @@ class MovimientosInventarioModel {
 
             const countResult = await db.query(countQuery, values.slice(0, values.length - 2));
 
+            // Obtener información del producto
+            const productoQuery = `
+                SELECT
+                    id,
+                    nombre,
+                    sku,
+                    stock_actual,
+                    stock_minimo,
+                    stock_maximo,
+                    unidad_medida
+                FROM productos
+                WHERE id = $1
+            `;
+            const productoResult = await db.query(productoQuery, [productoId]);
+
             return {
-                movimientos: result.rows,
+                kardex: result.rows,
+                producto: productoResult.rows[0] || null,
                 total: parseInt(countResult.rows[0].total),
                 limit: filtros.limit || 100,
                 offset: filtros.offset || 0

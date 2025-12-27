@@ -1069,4 +1069,375 @@ router.get('/productos/:productoId/ubicaciones',
     InventarioController.obtenerUbicacionesProducto
 );
 
+// ===================================================================
+// VALORACION DE INVENTARIO - FIFO/AVCO (Dic 2025 - Gap Alta Prioridad)
+// Metodos contables de valoracion de inventario
+// ===================================================================
+
+const ValoracionController = require('../controllers/valoracion.controller');
+
+/**
+ * GET /api/v1/inventario/valoracion/configuracion
+ * Obtener configuracion de valoracion de la organizacion
+ */
+router.get('/valoracion/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.obtenerConfiguracion
+);
+
+/**
+ * PUT /api/v1/inventario/valoracion/configuracion
+ * Actualizar metodo de valoracion preferido
+ */
+router.put('/valoracion/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ValoracionController.actualizarConfiguracion
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/resumen
+ * Resumen comparativo de todos los metodos para dashboard
+ */
+router.get('/valoracion/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.resumen
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/total
+ * Valor total del inventario segun metodo seleccionado
+ * Query params: metodo (fifo|avco|promedio), categoria_id, sucursal_id
+ */
+router.get('/valoracion/total',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.valorTotal
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/comparativa
+ * Comparar valoracion de todos los productos por los 3 metodos
+ * Query params: producto_id (opcional, para un producto especifico)
+ */
+router.get('/valoracion/comparativa',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.comparativa
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/reporte/categorias
+ * Reporte de valoracion agrupado por categorias
+ */
+router.get('/valoracion/reporte/categorias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.reportePorCategorias
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/reporte/diferencias
+ * Productos con mayor diferencia entre metodos
+ * Query params: limite (default 10)
+ */
+router.get('/valoracion/reporte/diferencias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.reporteDiferencias
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/producto/:id
+ * Valoracion detallada de un producto con todos los metodos
+ */
+router.get('/valoracion/producto/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.valorProducto
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/producto/:id/fifo
+ * Valoracion FIFO de un producto
+ */
+router.get('/valoracion/producto/:id/fifo',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.valorFIFO
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/producto/:id/avco
+ * Valoracion AVCO de un producto
+ */
+router.get('/valoracion/producto/:id/avco',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.valorAVCO
+);
+
+/**
+ * GET /api/v1/inventario/valoracion/producto/:id/capas
+ * Capas de inventario FIFO detalladas con trazabilidad
+ */
+router.get('/valoracion/producto/:id/capas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ValoracionController.capasProducto
+);
+
+// ===================================================================
+// NUMEROS DE SERIE / LOTES (Dic 2025 - Gap Media Prioridad)
+// Tracking individual de productos con trazabilidad completa
+// ===================================================================
+
+const NumerosSerieController = require('../controllers/numeros-serie.controller');
+
+/**
+ * GET /api/v1/inventario/numeros-serie/estadisticas
+ * Estadísticas generales de números de serie
+ */
+router.get('/numeros-serie/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerEstadisticas
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/buscar
+ * Búsqueda rápida de números de serie
+ * Query params: q (término de búsqueda)
+ */
+router.get('/numeros-serie/buscar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.buscar
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/proximos-vencer
+ * Números de serie próximos a vencer
+ * Query params: dias (default 30)
+ */
+router.get('/numeros-serie/proximos-vencer',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerProximosVencer
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/productos-con-serie
+ * Productos que requieren número de serie
+ */
+router.get('/numeros-serie/productos-con-serie',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerProductosConSerie
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/existe
+ * Verificar si existe un número de serie
+ * Query params: producto_id, numero_serie
+ */
+router.get('/numeros-serie/existe',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.verificarExistencia
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/bulk
+ * Crear múltiples números de serie (recepción masiva)
+ */
+router.post('/numeros-serie/bulk',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.crearMultiple
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie
+ * Crear número de serie individual
+ */
+router.post('/numeros-serie',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.crear
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/producto/:productoId/disponibles
+ * Números de serie disponibles para un producto
+ * Query params: sucursal_id (opcional)
+ */
+router.get('/numeros-serie/producto/:productoId/disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerDisponibles
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/producto/:productoId/resumen
+ * Resumen de números de serie por producto
+ */
+router.get('/numeros-serie/producto/:productoId/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerResumenProducto
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/:id/historial
+ * Historial de movimientos de un número de serie
+ */
+router.get('/numeros-serie/:id/historial',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerHistorial
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/vender
+ * Marcar número de serie como vendido
+ */
+router.post('/numeros-serie/:id/vender',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.vender
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/transferir
+ * Transferir número de serie entre sucursales/ubicaciones
+ */
+router.post('/numeros-serie/:id/transferir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.transferir
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/devolver
+ * Procesar devolución de cliente
+ */
+router.post('/numeros-serie/:id/devolver',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.devolver
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/defectuoso
+ * Marcar como defectuoso
+ */
+router.post('/numeros-serie/:id/defectuoso',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.marcarDefectuoso
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/reservar
+ * Reservar número de serie
+ */
+router.post('/numeros-serie/:id/reservar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.reservar
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/:id/liberar
+ * Liberar reserva de número de serie
+ */
+router.post('/numeros-serie/:id/liberar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.liberarReserva
+);
+
+/**
+ * PUT /api/v1/inventario/numeros-serie/:id/garantia
+ * Actualizar información de garantía
+ */
+router.put('/numeros-serie/:id/garantia',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.actualizarGarantia
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/:id
+ * Obtener número de serie por ID
+ */
+router.get('/numeros-serie/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerPorId
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie
+ * Listar números de serie con filtros
+ */
+router.get('/numeros-serie',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.listar
+);
+
 module.exports = router;

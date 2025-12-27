@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -9,6 +9,15 @@ import {
   useRotacionInventario,
   useResumenAlertas,
 } from '@/hooks/useInventario';
+import {
+  useResumenValoracion,
+  useConfiguracionValoracion,
+  useActualizarConfiguracionValoracion,
+  useComparativaValoracion,
+  METODOS_VALORACION,
+  DESCRIPCIONES_METODOS,
+  formatearValor,
+} from '@/hooks/useValoracion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -17,6 +26,7 @@ import { es } from 'date-fns/locale';
  */
 const TABS = [
   { id: 'valor', label: 'Valor de Inventario', icon: DollarSign },
+  { id: 'valoracion', label: 'FIFO/AVCO', icon: Calculator },
   { id: 'abc', label: 'Análisis ABC', icon: BarChart3 },
   { id: 'rotacion', label: 'Rotación', icon: TrendingUp },
   { id: 'alertas', label: 'Resumen Alertas', icon: AlertCircle },
@@ -158,6 +168,258 @@ function ReporteValorInventario() {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/**
+ * Reporte: Valoracion FIFO/AVCO
+ * Gap Alta Prioridad - Dic 2025
+ */
+function ReporteValoracionFIFOAVCO() {
+  const { data: resumen, isLoading: loadingResumen } = useResumenValoracion();
+  const { data: config, isLoading: loadingConfig } = useConfiguracionValoracion();
+  const { data: comparativa, isLoading: loadingComparativa } = useComparativaValoracion();
+  const actualizarConfig = useActualizarConfiguracionValoracion();
+
+  const [metodoSeleccionado, setMetodoSeleccionado] = useState(null);
+
+  // Cuando carga la config, establecer el metodo actual
+  if (config?.metodo_valoracion && metodoSeleccionado === null) {
+    setMetodoSeleccionado(config.metodo_valoracion);
+  }
+
+  const handleCambiarMetodo = async (nuevoMetodo) => {
+    setMetodoSeleccionado(nuevoMetodo);
+    await actualizarConfig.mutateAsync({ metodo_valoracion: nuevoMetodo });
+  };
+
+  if (loadingResumen || loadingConfig) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+        <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando valoracion...</span>
+      </div>
+    );
+  }
+
+  const promedio = resumen?.promedio || {};
+  const fifo = resumen?.fifo || {};
+  const avco = resumen?.avco || {};
+  const diferencias = resumen?.comparativa || {};
+
+  return (
+    <div className="space-y-6">
+      {/* Selector de Metodo */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-2">
+            <Settings className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              Metodo de Valoracion Preferido
+            </h3>
+          </div>
+          <span className="text-xs px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded">
+            Actual: {METODOS_VALORACION[config?.metodo_valoracion] || 'Promedio'}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {Object.entries(METODOS_VALORACION).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => handleCambiarMetodo(key)}
+              disabled={actualizarConfig.isPending}
+              className={`p-3 rounded-lg border text-left transition-all ${
+                metodoSeleccionado === key
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+                  : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
+              }`}
+            >
+              <p className="font-medium text-sm text-gray-900 dark:text-gray-100">{label}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                {DESCRIPCIONES_METODOS[key]}
+              </p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Resumen Comparativo */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Promedio Simple */}
+        <div className={`p-4 rounded-lg border ${
+          metodoSeleccionado === 'promedio'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio Simple</p>
+            {metodoSeleccionado === 'promedio' && (
+              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {formatearValor(promedio.valor_total)}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {promedio.total_productos || 0} productos / {promedio.total_unidades || 0} unidades
+          </p>
+        </div>
+
+        {/* FIFO */}
+        <div className={`p-4 rounded-lg border ${
+          metodoSeleccionado === 'fifo'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">FIFO</p>
+            {metodoSeleccionado === 'fifo' && (
+              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {formatearValor(fifo.valor_total)}
+          </p>
+          <p className={`text-xs mt-1 ${
+            parseFloat(diferencias.diferencia_fifo_promedio) >= 0
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-red-600 dark:text-red-400'
+          }`}>
+            {parseFloat(diferencias.diferencia_fifo_promedio) >= 0 ? '+' : ''}
+            {formatearValor(diferencias.diferencia_fifo_promedio)} vs Promedio
+          </p>
+        </div>
+
+        {/* AVCO */}
+        <div className={`p-4 rounded-lg border ${
+          metodoSeleccionado === 'avco'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">AVCO</p>
+            {metodoSeleccionado === 'avco' && (
+              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {formatearValor(avco.valor_total)}
+          </p>
+          <p className={`text-xs mt-1 ${
+            parseFloat(diferencias.diferencia_avco_promedio) >= 0
+              ? 'text-green-600 dark:text-green-400'
+              : 'text-red-600 dark:text-red-400'
+          }`}>
+            {parseFloat(diferencias.diferencia_avco_promedio) >= 0 ? '+' : ''}
+            {formatearValor(diferencias.diferencia_avco_promedio)} vs Promedio
+          </p>
+        </div>
+      </div>
+
+      {/* Tabla Comparativa por Producto */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center space-x-2">
+          <Layers className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            Comparativa por Producto
+          </h3>
+        </div>
+
+        {loadingComparativa ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+          </div>
+        ) : !comparativa || comparativa.length === 0 ? (
+          <div className="text-center py-12">
+            <Calculator className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
+            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+              No hay productos con stock para valorar
+            </p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Producto
+                  </th>
+                  <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Stock
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Promedio
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    FIFO
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    AVCO
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                    Dif. FIFO
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {comparativa.slice(0, 15).map((prod, idx) => (
+                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    <td className="px-4 py-3">
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
+                        {prod.nombre_producto}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-gray-600 dark:text-gray-400">
+                        {prod.stock_actual}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatearValor(prod.valor_promedio)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatearValor(prod.valor_fifo)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatearValor(prod.valor_avco)}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <span className={`text-sm font-medium ${
+                        parseFloat(prod.diferencia_fifo_promedio) >= 0
+                          ? 'text-green-600 dark:text-green-400'
+                          : 'text-red-600 dark:text-red-400'
+                      }`}>
+                        {parseFloat(prod.diferencia_fifo_promedio) >= 0 ? '+' : ''}
+                        {formatearValor(prod.diferencia_fifo_promedio)}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
+        <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
+          Metodos de Valoracion
+        </h4>
+        <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1">
+          <li><strong>FIFO:</strong> Los primeros productos comprados son los primeros en venderse. Ideal para productos perecederos.</li>
+          <li><strong>AVCO:</strong> Costo promedio ponderado de todas las compras. Suaviza variaciones de precio.</li>
+          <li><strong>Promedio:</strong> Usa el precio de compra actual del producto. Metodo simple pero menos preciso para contabilidad.</li>
+        </ul>
+      </div>
     </div>
   );
 }
@@ -571,6 +833,7 @@ function ReportesInventarioPage() {
           {/* Contenido del Tab */}
           <div className="p-6">
             {tabActivo === 'valor' && <ReporteValorInventario />}
+            {tabActivo === 'valoracion' && <ReporteValoracionFIFOAVCO />}
             {tabActivo === 'abc' && <ReporteAnalisisABC />}
             {tabActivo === 'rotacion' && <ReporteRotacion />}
             {tabActivo === 'alertas' && <ReporteAlertas />}

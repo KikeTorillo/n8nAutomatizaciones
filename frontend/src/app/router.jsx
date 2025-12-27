@@ -47,6 +47,7 @@ const AlertasPage = lazy(() => import('@/pages/inventario/AlertasPage'));
 const ReportesInventarioPage = lazy(() => import('@/pages/inventario/ReportesInventarioPage'));
 const OrdenesCompraPage = lazy(() => import('@/pages/inventario/OrdenesCompraPage'));
 const UbicacionesAlmacenPage = lazy(() => import('@/pages/inventario/UbicacionesAlmacenPage'));
+const NumerosSeriesPage = lazy(() => import('@/pages/inventario/NumerosSeriesPage'));
 
 // Páginas de Precios (Fase 5)
 const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
@@ -435,6 +436,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
             {withSuspense(UbicacionesAlmacenPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Números de Serie / Lotes (Dic 2025 - Gap Media Prioridad)
+      {
+        path: 'inventario/numeros-serie',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(NumerosSeriesPage)}
           </ProtectedRoute>
         ),
       },
