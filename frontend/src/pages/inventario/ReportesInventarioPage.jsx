@@ -245,28 +245,8 @@ function ReporteValoracionFIFOAVCO() {
         </div>
       </div>
 
-      {/* Resumen Comparativo */}
+      {/* Resumen Comparativo - Mismo orden que selector: FIFO, AVCO, Promedio */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Promedio Simple */}
-        <div className={`p-4 rounded-lg border ${
-          metodoSeleccionado === 'promedio'
-            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
-            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-        }`}>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio Simple</p>
-            {metodoSeleccionado === 'promedio' && (
-              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
-            )}
-          </div>
-          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {formatearValor(promedio.valor_total)}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {promedio.total_productos || 0} productos / {promedio.total_unidades || 0} unidades
-          </p>
-        </div>
-
         {/* FIFO */}
         <div className={`p-4 rounded-lg border ${
           metodoSeleccionado === 'fifo'
@@ -314,6 +294,26 @@ function ReporteValoracionFIFOAVCO() {
           }`}>
             {parseFloat(diferencias.diferencia_avco_promedio) >= 0 ? '+' : ''}
             {formatearValor(diferencias.diferencia_avco_promedio)} vs Promedio
+          </p>
+        </div>
+
+        {/* Promedio Simple */}
+        <div className={`p-4 rounded-lg border ${
+          metodoSeleccionado === 'promedio'
+            ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30'
+            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
+        }`}>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio Simple</p>
+            {metodoSeleccionado === 'promedio' && (
+              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+            )}
+          </div>
+          <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+            {formatearValor(promedio.valor_total)}
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            {promedio.total_productos || 0} productos / {promedio.total_unidades || 0} unidades
           </p>
         </div>
       </div>
@@ -409,17 +409,6 @@ function ReporteValoracionFIFOAVCO() {
         )}
       </div>
 
-      {/* Info */}
-      <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">
-          Metodos de Valoracion
-        </h4>
-        <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1">
-          <li><strong>FIFO:</strong> Los primeros productos comprados son los primeros en venderse. Ideal para productos perecederos.</li>
-          <li><strong>AVCO:</strong> Costo promedio ponderado de todas las compras. Suaviza variaciones de precio.</li>
-          <li><strong>Promedio:</strong> Usa el precio de compra actual del producto. Metodo simple pero menos preciso para contabilidad.</li>
-        </ul>
-      </div>
     </div>
   );
 }
