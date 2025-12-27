@@ -28,7 +28,7 @@
 | Números de Serie/Lotes | ✅ |
 | Alertas + Stock Proyectado | ✅ |
 | Ubicaciones (WMS jerárquico) | ✅ |
-| Valoración FIFO/AVCO | ⏳ Pendiente |
+| Valoración FIFO/AVCO | ✅ |
 
 ### POS ✅
 
