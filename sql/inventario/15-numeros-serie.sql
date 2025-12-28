@@ -97,6 +97,9 @@ CREATE INDEX IF NOT EXISTS idx_ns_estado ON numeros_serie(estado);
 CREATE INDEX IF NOT EXISTS idx_ns_lote ON numeros_serie(lote) WHERE lote IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_ns_vencimiento ON numeros_serie(fecha_vencimiento) WHERE fecha_vencimiento IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_ns_sucursal ON numeros_serie(sucursal_id);
+-- Índice FEFO: Optimizado para despacho por vencimiento (First Expired First Out)
+CREATE INDEX IF NOT EXISTS idx_ns_fefo_despacho ON numeros_serie(producto_id, sucursal_id, fecha_vencimiento ASC NULLS LAST)
+    WHERE estado = 'disponible';
 CREATE INDEX IF NOT EXISTS idx_ns_ubicacion ON numeros_serie(ubicacion_id) WHERE ubicacion_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_ns_orden_compra ON numeros_serie(orden_compra_id) WHERE orden_compra_id IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_ns_numero ON numeros_serie(numero_serie);
@@ -599,6 +602,247 @@ CREATE TRIGGER trg_actualizar_ns
     BEFORE UPDATE ON numeros_serie
     FOR EACH ROW
     EXECUTE FUNCTION trigger_actualizar_timestamp_ns();
+
+-- ============================================================================
+-- FUNCION: obtener_trazabilidad_completa
+-- Descripcion: Trazabilidad upstream/downstream de un numero de serie
+-- Retorna: Origen (proveedor/OC), movimientos, destino (cliente/venta)
+-- ============================================================================
+CREATE OR REPLACE FUNCTION obtener_trazabilidad_completa(
+    p_numero_serie_id INTEGER,
+    p_organizacion_id INTEGER
+)
+RETURNS TABLE (
+    -- Info del NS
+    ns_id INTEGER,
+    numero_serie VARCHAR(100),
+    lote VARCHAR(50),
+    estado VARCHAR(20),
+    fecha_vencimiento DATE,
+    -- Producto
+    producto_id INTEGER,
+    producto_nombre VARCHAR(200),
+    producto_sku VARCHAR(50),
+    -- Origen (upstream)
+    origen_tipo VARCHAR(50),
+    origen_proveedor_id INTEGER,
+    origen_proveedor_nombre VARCHAR(200),
+    origen_oc_id INTEGER,
+    origen_oc_folio VARCHAR(50),
+    origen_fecha TIMESTAMPTZ,
+    -- Ubicacion actual
+    sucursal_id INTEGER,
+    sucursal_nombre VARCHAR(200),
+    ubicacion_id INTEGER,
+    ubicacion_codigo VARCHAR(50),
+    -- Destino (downstream) - si fue vendido/transferido
+    destino_tipo VARCHAR(50),
+    destino_cliente_id INTEGER,
+    destino_cliente_nombre VARCHAR(200),
+    destino_venta_id INTEGER,
+    destino_fecha TIMESTAMPTZ,
+    -- Garantia
+    tiene_garantia BOOLEAN,
+    fecha_fin_garantia DATE,
+    -- Costos
+    costo_unitario NUMERIC(12,2),
+    -- Metadata
+    dias_en_inventario INTEGER,
+    total_movimientos BIGINT
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        ns.id AS ns_id,
+        ns.numero_serie,
+        ns.lote,
+        ns.estado,
+        ns.fecha_vencimiento,
+        -- Producto
+        p.id AS producto_id,
+        p.nombre AS producto_nombre,
+        p.sku AS producto_sku,
+        -- Origen
+        CASE
+            WHEN ns.orden_compra_id IS NOT NULL THEN 'orden_compra'
+            WHEN ns.proveedor_id IS NOT NULL THEN 'proveedor_directo'
+            ELSE 'manual'
+        END AS origen_tipo,
+        ns.proveedor_id AS origen_proveedor_id,
+        prov.nombre AS origen_proveedor_nombre,
+        ns.orden_compra_id AS origen_oc_id,
+        oc.folio AS origen_oc_folio,
+        ns.fecha_entrada AS origen_fecha,
+        -- Ubicacion actual
+        ns.sucursal_id,
+        s.nombre AS sucursal_nombre,
+        ns.ubicacion_id,
+        ua.codigo AS ubicacion_codigo,
+        -- Destino
+        CASE
+            WHEN ns.estado = 'vendido' THEN 'venta'
+            WHEN ns.estado = 'transferido' THEN 'transferencia'
+            WHEN ns.estado = 'devuelto' THEN 'devolucion'
+            WHEN ns.estado = 'defectuoso' THEN 'baja'
+            ELSE NULL
+        END AS destino_tipo,
+        ns.cliente_id AS destino_cliente_id,
+        c.nombre AS destino_cliente_nombre,
+        ns.venta_id AS destino_venta_id,
+        ns.fecha_salida AS destino_fecha,
+        -- Garantia
+        ns.tiene_garantia,
+        ns.fecha_fin_garantia,
+        -- Costos
+        ns.costo_unitario,
+        -- Metadata
+        EXTRACT(DAY FROM (COALESCE(ns.fecha_salida, NOW()) - ns.fecha_entrada))::INTEGER AS dias_en_inventario,
+        (SELECT COUNT(*) FROM numeros_serie_historial WHERE numero_serie_id = ns.id) AS total_movimientos
+    FROM numeros_serie ns
+    JOIN productos p ON p.id = ns.producto_id
+    LEFT JOIN proveedores prov ON prov.id = ns.proveedor_id
+    LEFT JOIN ordenes_compra oc ON oc.id = ns.orden_compra_id
+    LEFT JOIN sucursales s ON s.id = ns.sucursal_id
+    LEFT JOIN ubicaciones_almacen ua ON ua.id = ns.ubicacion_id
+    LEFT JOIN clientes c ON c.id = ns.cliente_id
+    WHERE ns.id = p_numero_serie_id
+      AND ns.organizacion_id = p_organizacion_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+COMMENT ON FUNCTION obtener_trazabilidad_completa IS 'Obtiene trazabilidad completa upstream/downstream de un numero de serie';
+
+-- ============================================================================
+-- FUNCION: obtener_timeline_ns
+-- Descripcion: Timeline cronologico de todos los movimientos de un NS
+-- ============================================================================
+CREATE OR REPLACE FUNCTION obtener_timeline_ns(
+    p_numero_serie_id INTEGER,
+    p_organizacion_id INTEGER
+)
+RETURNS TABLE (
+    evento_id INTEGER,
+    fecha TIMESTAMPTZ,
+    accion VARCHAR(50),
+    descripcion TEXT,
+    estado_anterior VARCHAR(20),
+    estado_nuevo VARCHAR(20),
+    sucursal_origen VARCHAR(200),
+    sucursal_destino VARCHAR(200),
+    ubicacion_origen VARCHAR(50),
+    ubicacion_destino VARCHAR(50),
+    referencia_tipo VARCHAR(50),
+    referencia_id INTEGER,
+    usuario_nombre VARCHAR(200),
+    notas TEXT,
+    icono VARCHAR(50),
+    color VARCHAR(20)
+) AS $$
+BEGIN
+    RETURN QUERY
+    -- Evento inicial: entrada al sistema
+    SELECT
+        0 AS evento_id,
+        ns.fecha_entrada AS fecha,
+        'entrada'::VARCHAR(50) AS accion,
+        CASE
+            WHEN ns.orden_compra_id IS NOT NULL THEN
+                'Recepción de OC ' || COALESCE(oc.folio, '#' || ns.orden_compra_id::TEXT)
+            WHEN ns.proveedor_id IS NOT NULL THEN
+                'Ingreso directo de ' || COALESCE(prov.nombre, 'proveedor')
+            ELSE
+                'Registro manual'
+        END AS descripcion,
+        NULL::VARCHAR(20) AS estado_anterior,
+        'disponible'::VARCHAR(20) AS estado_nuevo,
+        NULL::VARCHAR(200) AS sucursal_origen,
+        s.nombre AS sucursal_destino,
+        NULL::VARCHAR(50) AS ubicacion_origen,
+        ua.codigo AS ubicacion_destino,
+        CASE WHEN ns.orden_compra_id IS NOT NULL THEN 'orden_compra' ELSE NULL END AS referencia_tipo,
+        ns.orden_compra_id AS referencia_id,
+        u.nombre AS usuario_nombre,
+        NULL::TEXT AS notas,
+        'package'::VARCHAR(50) AS icono,
+        'green'::VARCHAR(20) AS color
+    FROM numeros_serie ns
+    LEFT JOIN ordenes_compra oc ON oc.id = ns.orden_compra_id
+    LEFT JOIN proveedores prov ON prov.id = ns.proveedor_id
+    LEFT JOIN sucursales s ON s.id = ns.sucursal_id
+    LEFT JOIN ubicaciones_almacen ua ON ua.id = ns.ubicacion_id
+    LEFT JOIN usuarios u ON u.id = ns.creado_por
+    WHERE ns.id = p_numero_serie_id
+      AND ns.organizacion_id = p_organizacion_id
+
+    UNION ALL
+
+    -- Eventos del historial
+    SELECT
+        h.id AS evento_id,
+        h.creado_en AS fecha,
+        h.accion,
+        CASE h.accion
+            WHEN 'venta' THEN 'Vendido en POS'
+            WHEN 'transferencia' THEN 'Transferido a ' || COALESCE(sn.nombre, 'otra sucursal')
+            WHEN 'devolucion_cliente' THEN 'Devolución de cliente'
+            WHEN 'devolucion_proveedor' THEN 'Devuelto a proveedor'
+            WHEN 'reserva' THEN 'Reservado para venta'
+            WHEN 'liberacion' THEN 'Liberado de reserva'
+            WHEN 'defectuoso' THEN 'Marcado como defectuoso'
+            WHEN 'ajuste' THEN 'Ajuste de inventario'
+            WHEN 'reparacion' THEN 'Enviado a reparación'
+            WHEN 'garantia' THEN 'Reclamación de garantía'
+            ELSE h.accion
+        END AS descripcion,
+        h.estado_anterior,
+        h.estado_nuevo,
+        sa.nombre AS sucursal_origen,
+        sn.nombre AS sucursal_destino,
+        uba.codigo AS ubicacion_origen,
+        ubn.codigo AS ubicacion_destino,
+        h.referencia_tipo,
+        h.referencia_id,
+        uh.nombre AS usuario_nombre,
+        h.notas,
+        CASE h.accion
+            WHEN 'venta' THEN 'shopping-cart'
+            WHEN 'transferencia' THEN 'truck'
+            WHEN 'devolucion_cliente' THEN 'rotate-ccw'
+            WHEN 'devolucion_proveedor' THEN 'package-x'
+            WHEN 'reserva' THEN 'lock'
+            WHEN 'liberacion' THEN 'unlock'
+            WHEN 'defectuoso' THEN 'alert-triangle'
+            WHEN 'ajuste' THEN 'edit'
+            WHEN 'reparacion' THEN 'tool'
+            WHEN 'garantia' THEN 'shield'
+            ELSE 'circle'
+        END AS icono,
+        CASE h.accion
+            WHEN 'venta' THEN 'blue'
+            WHEN 'transferencia' THEN 'purple'
+            WHEN 'devolucion_cliente' THEN 'orange'
+            WHEN 'devolucion_proveedor' THEN 'red'
+            WHEN 'reserva' THEN 'yellow'
+            WHEN 'liberacion' THEN 'gray'
+            WHEN 'defectuoso' THEN 'red'
+            WHEN 'ajuste' THEN 'gray'
+            ELSE 'gray'
+        END AS color
+    FROM numeros_serie_historial h
+    JOIN numeros_serie ns ON ns.id = h.numero_serie_id
+    LEFT JOIN sucursales sa ON sa.id = h.sucursal_anterior_id
+    LEFT JOIN sucursales sn ON sn.id = h.sucursal_nueva_id
+    LEFT JOIN ubicaciones_almacen uba ON uba.id = h.ubicacion_anterior_id
+    LEFT JOIN ubicaciones_almacen ubn ON ubn.id = h.ubicacion_nueva_id
+    LEFT JOIN usuarios uh ON uh.id = h.usuario_id
+    WHERE h.numero_serie_id = p_numero_serie_id
+      AND ns.organizacion_id = p_organizacion_id
+
+    ORDER BY fecha ASC, evento_id ASC;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+COMMENT ON FUNCTION obtener_timeline_ns IS 'Timeline cronologico de todos los movimientos de un numero de serie';
 
 -- ============================================================================
 -- FIN: NUMEROS DE SERIE Y LOTES

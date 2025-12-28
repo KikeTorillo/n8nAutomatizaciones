@@ -385,6 +385,28 @@ class OrdenesCompraController {
             'Sugerencias de OC obtenidas exitosamente'
         );
     });
+
+    /**
+     * Generar reabastecimiento usando rutas de operación
+     * POST /api/v1/inventario/ordenes-compra/reabastecimiento-rutas
+     *
+     * Evalúa la mejor ruta para cada producto (compra, transferencia, dropship)
+     * y genera OCs o solicitudes de transferencia según corresponda.
+     */
+    static generarReabastecimientoConRutas = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+        const { sucursal_id } = req.query;
+
+        const resultado = await OrdenesCompraModel.generarReabastecimientoConRutas(
+            organizacionId,
+            sucursal_id ? parseInt(sucursal_id) : null,
+            usuarioId
+        );
+
+        const mensaje = `Generado: ${resultado.ordenes_compra.length} OC(s), ${resultado.transferencias.length} transferencia(s)`;
+        return ResponseHelper.success(res, resultado, mensaje, 201);
+    });
 }
 
 module.exports = OrdenesCompraController;

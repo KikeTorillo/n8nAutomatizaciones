@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
 import { useVerificarExistencia } from '@/hooks/useNumerosSerie';
+import BarcodeScanner from '@/components/common/BarcodeScanner';
 
 /**
  * Modal para registrar recepción de mercancía
@@ -24,6 +25,11 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
 
   // Estado para expandir sección de números de serie
   const [expandedNS, setExpandedNS] = useState({});
+
+  // Estado del scanner
+  const [showScanner, setShowScanner] = useState(false);
+  const [scanMode, setScanMode] = useState('producto'); // 'producto' o 'ns'
+  const [scanTargetItem, setScanTargetItem] = useState(null); // Para NS específico
 
   // Inicializar recepciones cuando se carga la orden
   useEffect(() => {
@@ -126,6 +132,69 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
       return nuevaRecepcion;
     });
     setRecepciones(nuevasRecepciones);
+  };
+
+  // Manejo de escaneo
+  const handleScan = (code) => {
+    if (scanMode === 'producto') {
+      // Buscar producto por SKU escaneado
+      const itemIndex = recepciones.findIndex(
+        r => r.producto_sku?.toLowerCase() === code.toLowerCase()
+      );
+
+      if (itemIndex >= 0) {
+        const item = recepciones[itemIndex];
+        if (item.cantidad < item.cantidad_pendiente) {
+          // Incrementar cantidad en 1
+          handleCantidadChange(itemIndex, item.cantidad + 1);
+          showToast(`+1 ${item.producto_nombre}`, 'success');
+        } else {
+          showToast(`${item.producto_nombre} ya tiene la cantidad máxima`, 'warning');
+        }
+      } else {
+        showToast(`Producto con SKU "${code}" no está en esta orden`, 'error');
+      }
+    } else if (scanMode === 'ns' && scanTargetItem !== null) {
+      // Agregar número de serie escaneado
+      const item = recepciones[scanTargetItem];
+      if (item && item.requiere_numero_serie) {
+        // Buscar primer NS vacío
+        const nsIndex = item.numeros_serie.findIndex(ns => !ns.numero_serie?.trim());
+        if (nsIndex >= 0) {
+          // Verificar que no esté duplicado
+          const yaExiste = item.numeros_serie.some(ns => ns.numero_serie === code);
+          if (yaExiste) {
+            showToast(`NS "${code}" ya fue escaneado`, 'warning');
+          } else {
+            handleNumeroSerieChange(scanTargetItem, nsIndex, 'numero_serie', code);
+            showToast(`NS ${nsIndex + 1}/${item.cantidad}: ${code}`, 'success');
+
+            // Si completó todos los NS, cerrar scanner
+            const nsCompletos = item.numeros_serie.filter(ns => ns.numero_serie?.trim()).length + 1;
+            if (nsCompletos >= item.cantidad) {
+              showToast(`Todos los NS de ${item.producto_nombre} escaneados`, 'success');
+              setShowScanner(false);
+              setScanTargetItem(null);
+            }
+          }
+        } else {
+          showToast('Ya se escanearon todos los números de serie', 'info');
+        }
+      }
+    }
+  };
+
+  const openScannerForProduct = () => {
+    setScanMode('producto');
+    setScanTargetItem(null);
+    setShowScanner(true);
+  };
+
+  const openScannerForNS = (itemIndex) => {
+    setScanMode('ns');
+    setScanTargetItem(itemIndex);
+    setExpandedNS(prev => ({ ...prev, [recepciones[itemIndex].item_id]: true }));
+    setShowScanner(true);
   };
 
   const handleSubmit = () => {
@@ -237,12 +306,41 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
             </div>
           </div>
 
-          {/* Botón recibir todo */}
-          <div className="flex justify-end">
+          {/* Botones de acción rápida */}
+          <div className="flex justify-between items-center">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={openScannerForProduct}
+              icon={ScanLine}
+            >
+              Escanear Productos
+            </Button>
             <Button variant="outline" size="sm" onClick={handleRecibirTodo}>
               Marcar todo como recibido
             </Button>
           </div>
+
+          {/* Scanner Modal */}
+          {showScanner && (
+            <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+              <div className="w-full max-w-lg">
+                <BarcodeScanner
+                  onScan={handleScan}
+                  onClose={() => {
+                    setShowScanner(false);
+                    setScanTargetItem(null);
+                  }}
+                  title={scanMode === 'producto' ? 'Escanear Producto' : 'Escanear Número de Serie'}
+                  subtitle={scanMode === 'producto'
+                    ? 'Escanea el código de barras del producto'
+                    : `Escaneando NS para: ${recepciones[scanTargetItem]?.producto_nombre || ''}`
+                  }
+                  formats={scanMode === 'producto' ? 'PRODUCTOS' : 'INVENTARIO'}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Tabla de items */}
           <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -370,6 +468,17 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
 
                         {isExpanded && (
                           <div className="px-4 pb-4 border-t border-gray-200 dark:border-gray-700">
+                            {/* Botón escanear NS */}
+                            {nsCompletos < nsTotal && (
+                              <button
+                                type="button"
+                                onClick={() => openScannerForNS(originalIndex)}
+                                className="mt-3 mb-2 w-full py-2 px-3 bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-purple-200 dark:hover:bg-purple-900/60 transition-colors"
+                              >
+                                <ScanLine size={16} />
+                                Escanear Números de Serie ({nsTotal - nsCompletos} pendientes)
+                              </button>
+                            )}
                             <div className="mt-3 space-y-2">
                               {item.numeros_serie.map((ns, nsIndex) => (
                                 <div key={nsIndex} className="flex items-center gap-2">

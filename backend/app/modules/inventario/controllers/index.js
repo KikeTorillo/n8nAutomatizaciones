@@ -251,6 +251,10 @@ class InventarioMainController {
         return OrdenesCompraController.obtenerSugerenciasOC(req, res);
     }
 
+    static generarReabastecimientoConRutas(req, res) {
+        return OrdenesCompraController.generarReabastecimientoConRutas(req, res);
+    }
+
     // ===================================================================
     // 🔒 ENDPOINTS RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps)
     // ===================================================================

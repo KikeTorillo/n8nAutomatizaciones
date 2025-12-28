@@ -595,3 +595,187 @@ exports.actualizarGarantia = async (req, res, next) => {
         next(error);
     }
 };
+
+// ==================== FEFO - DESPACHO ====================
+
+/**
+ * Obtener NS para despacho usando estrategia FEFO
+ * GET /numeros-serie/fefo/:productoId
+ */
+exports.obtenerParaDespachoFEFO = async (req, res, next) => {
+    try {
+        const { productoId } = req.params;
+        const { cantidad = 1, sucursal_id } = req.query;
+
+        const numerosSerieDisponibles = await NumerosSerieModel.obtenerParaDespachoFEFO(
+            parseInt(productoId),
+            parseInt(cantidad),
+            req.tenant.organizacionId,
+            sucursal_id ? parseInt(sucursal_id) : null
+        );
+
+        res.json({
+            success: true,
+            data: numerosSerieDisponibles,
+            meta: {
+                solicitados: parseInt(cantidad),
+                disponibles: numerosSerieDisponibles.length,
+                mensaje: numerosSerieDisponibles.length < parseInt(cantidad)
+                    ? `Solo hay ${numerosSerieDisponibles.length} NS disponibles de ${cantidad} solicitados`
+                    : 'NS ordenados por FEFO (primeros en vencer, primeros en salir)'
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Reservar NS para despacho FEFO
+ * POST /numeros-serie/fefo/reservar
+ */
+exports.reservarParaDespachoFEFO = async (req, res, next) => {
+    try {
+        const { ns_ids, referencia } = req.body;
+
+        if (!ns_ids || !Array.isArray(ns_ids) || ns_ids.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere un array de IDs de números de serie (ns_ids)'
+            });
+        }
+
+        if (!referencia) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere una referencia (ej: "VENTA-123")'
+            });
+        }
+
+        await NumerosSerieModel.reservarParaDespacho(
+            ns_ids.map(id => parseInt(id)),
+            referencia,
+            req.tenant.organizacionId,
+            req.user.id
+        );
+
+        res.json({
+            success: true,
+            message: `${ns_ids.length} números de serie reservados para ${referencia}`,
+            data: { ns_ids, referencia }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Obtener alertas de vencimiento con niveles de urgencia
+ * GET /numeros-serie/alertas-vencimiento
+ */
+exports.obtenerAlertasVencimiento = async (req, res, next) => {
+    try {
+        const { sucursal_id } = req.query;
+
+        const alertas = await NumerosSerieModel.obtenerAlertasVencimiento(
+            req.tenant.organizacionId,
+            sucursal_id ? parseInt(sucursal_id) : null
+        );
+
+        res.json({
+            success: true,
+            data: alertas
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// ==================== TRAZABILIDAD ====================
+
+/**
+ * Obtener trazabilidad completa de un NS
+ * GET /numeros-serie/:id/trazabilidad
+ */
+exports.obtenerTrazabilidad = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const trazabilidad = await NumerosSerieModel.obtenerTrazabilidadCompleta(
+            parseInt(id),
+            req.tenant.organizacionId
+        );
+
+        if (!trazabilidad) {
+            return res.status(404).json({
+                success: false,
+                message: 'Número de serie no encontrado'
+            });
+        }
+
+        res.json({
+            success: true,
+            data: trazabilidad
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Obtener timeline de movimientos de un NS
+ * GET /numeros-serie/:id/timeline
+ */
+exports.obtenerTimeline = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+
+        const timeline = await NumerosSerieModel.obtenerTimeline(
+            parseInt(id),
+            req.tenant.organizacionId
+        );
+
+        res.json({
+            success: true,
+            data: timeline,
+            meta: {
+                total_eventos: timeline.length
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+/**
+ * Buscar NS con trazabilidad resumida
+ * GET /numeros-serie/buscar-trazabilidad
+ */
+exports.buscarConTrazabilidad = async (req, res, next) => {
+    try {
+        const { q } = req.query;
+
+        if (!q || q.length < 2) {
+            return res.status(400).json({
+                success: false,
+                message: 'Se requiere un término de búsqueda (mínimo 2 caracteres)'
+            });
+        }
+
+        const resultados = await NumerosSerieModel.buscarConTrazabilidad(
+            q,
+            req.tenant.organizacionId
+        );
+
+        res.json({
+            success: true,
+            data: resultados,
+            meta: {
+                busqueda: q,
+                total: resultados.length
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};

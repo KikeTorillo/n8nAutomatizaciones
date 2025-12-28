@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageIcon } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageIcon, ScanLine } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
@@ -14,6 +14,7 @@ import { useProveedores } from '@/hooks/useProveedores';
 import ProductoFormModal from '@/components/inventario/ProductoFormModal';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';
+import BarcodeScanner from '@/components/common/BarcodeScanner';
 
 /**
  * Página principal de Gestión de Productos
@@ -38,6 +39,9 @@ function ProductosPage() {
   const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+
+  // Estado del scanner
+  const [showScanner, setShowScanner] = useState(false);
 
   // Queries
   const { data: productosData, isLoading: cargandoProductos } = useProductos(filtros);
@@ -67,6 +71,13 @@ function ProductosPage() {
       stock_bajo: false,
       stock_agotado: false,
     });
+  };
+
+  // Handler de escaneo
+  const handleScan = (code) => {
+    setShowScanner(false);
+    handleFiltroChange('busqueda', code);
+    showSuccess(`Buscando: ${code}`);
   };
 
   // Handlers de acciones
@@ -191,13 +202,23 @@ function ProductosPage() {
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Buscar
               </label>
-              <input
-                type="text"
-                placeholder="Nombre, SKU o código..."
-                value={filtros.busqueda}
-                onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nombre, SKU o código..."
+                  value={filtros.busqueda}
+                  onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  title="Escanear código de barras"
+                >
+                  <ScanLine className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
             </div>
 
             {/* Categoría */}
@@ -277,6 +298,21 @@ function ProductosPage() {
             </Button>
           </div>
         </div>
+
+        {/* Scanner Modal */}
+        {showScanner && (
+          <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
+            <div className="w-full max-w-lg">
+              <BarcodeScanner
+                onScan={handleScan}
+                onClose={() => setShowScanner(false)}
+                title="Buscar Producto"
+                subtitle="Escanea el código de barras del producto"
+                formats="PRODUCTOS"
+              />
+            </div>
+          </div>
+        )}
 
         {/* Tabla de Productos */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">

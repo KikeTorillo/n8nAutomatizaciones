@@ -35,23 +35,65 @@
 | Permisos CRUD granular | Alta |
 | Auditoría de cambios | Media |
 | Contratos laborales (hr.contract) | Media |
-| App móvil/Barcode scanner | Baja |
 | API Keys por usuario | Baja |
 
 ---
 
-## Próxima Sesión - Inventario Avanzado
+## Inventario Avanzado - Implementado 27 Dic 2025
 
-Gaps para igualar Odoo Inventory (~30% restante):
+| Feature | Estado | Endpoints |
+|---------|--------|-----------|
+| Fechas vencimiento | ✅ | `GET /numeros-serie/alertas-vencimiento` |
+| Reabastecimiento automático | ✅ | `POST /ordenes-compra/auto-generar` (usa stock_proyectado) |
+| FEFO (First Expired First Out) | ✅ | `GET /numeros-serie/fefo/:productoId` |
+| Lead time proveedor | ✅ | Campo `lead_time_dias` en productos |
+| Trazabilidad completa | ✅ | `GET /numeros-serie/:id/trazabilidad`, `GET /numeros-serie/:id/timeline` |
+| Rutas de operación | ✅ | CRUD rutas, reglas, transferencias |
 
-| Feature | Descripción | Prioridad |
-|---------|-------------|-----------|
-| Fechas vencimiento | Campo `fecha_vencimiento` en lotes, alertas FEFO | Alta |
-| Reabastecimiento automático | Reglas min/max por producto, generación OC automática | Alta |
-| Trazabilidad completa | Historial upstream/downstream de NS/Lotes | Media |
-| Rutas de operación | Configurar flujos (compra, transferencia, dropship) | Media |
-| Estrategias remoción | FEFO (First Expired First Out) para perecederos | Media |
-| Barcode scanner | Integración móvil para picking/recepción | Baja |
+### Endpoints Trazabilidad
+
+| Endpoint | Descripción |
+|----------|-------------|
+| `GET /numeros-serie/:id/trazabilidad` | Origen (upstream) → estado actual → destino (downstream) |
+| `GET /numeros-serie/:id/timeline` | Timeline cronológico con iconos y colores |
+| `GET /numeros-serie/buscar-trazabilidad?q=` | Búsqueda de NS con trazabilidad resumida |
+
+### Endpoints Rutas de Operación
+
+| Endpoint | Descripción |
+|----------|-------------|
+| `POST /rutas-operacion` | Crear ruta (compra, transferencia, dropship, fabricacion) |
+| `GET /rutas-operacion` | Listar rutas (?tipo=, ?activo=) |
+| `GET /rutas-operacion/:id` | Obtener detalle de ruta |
+| `PUT /rutas-operacion/:id` | Actualizar ruta |
+| `DELETE /rutas-operacion/:id` | Eliminar ruta |
+| `POST /rutas-operacion/init` | Crear rutas default |
+| `POST /productos/:id/rutas` | Asignar ruta a producto |
+| `GET /productos/:id/rutas` | Obtener rutas de producto |
+| `DELETE /productos/:id/rutas/:rutaId` | Quitar ruta de producto |
+| `GET /productos/:id/mejor-ruta` | Determinar mejor ruta (?sucursal_id=) |
+| `POST /reglas-reabastecimiento` | Crear regla automatización |
+| `GET /reglas-reabastecimiento` | Listar reglas |
+| `POST /transferencias` | Crear solicitud transferencia |
+| `GET /transferencias` | Listar solicitudes |
+| `POST /transferencias/:id/aprobar` | Aprobar solicitud |
+| `POST /transferencias/:id/rechazar` | Rechazar solicitud |
+| `POST /transferencias/:id/enviar` | Marcar en tránsito |
+| `POST /transferencias/:id/recibir` | Completar transferencia |
+| `POST /ordenes-compra/reabastecimiento-rutas` | Generar OCs/transferencias con rutas |
+
+### Barcode Scanner - Implementado y Validado 27 Dic 2025
+
+| Componente | Descripción |
+|------------|-------------|
+| `useBarcodeScanner.js` | Hook reutilizable con soporte EAN-13, QR, Code-128 |
+| `BarcodeScanner.jsx` | Componente UI con cámara, beep, guía visual |
+| Recepción OC | Escanear productos y números de serie |
+| Productos | Búsqueda rápida por código de barras |
+
+**Validación**: Prueba completa OC-2025-0001 con 3 NS registrados exitosamente.
+
+**Bug Fix**: Corregido error "Cannot stop scanner" verificando estado con `getState()` antes de `stop()`.
 
 ---
 
@@ -61,8 +103,8 @@ Gaps para igualar Odoo Inventory (~30% restante):
 |---------|-------|
 | Módulos backend | 20 |
 | Permisos catálogo | 86 |
-| Políticas RLS | 124+ |
-| Tablas BD | 130+ |
+| Políticas RLS | 140+ |
+| Tablas BD | 135+ |
 
 ---
 

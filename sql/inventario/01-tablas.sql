@@ -146,6 +146,7 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 🔄 AUTO-GENERACIÓN OC (Dic 2025 - Fase 2)
     auto_generar_oc BOOLEAN DEFAULT false, -- Generar OC automáticamente cuando stock <= stock_minimo
     cantidad_oc_sugerida INTEGER DEFAULT 50, -- Cantidad sugerida para OC automática
+    lead_time_dias INTEGER DEFAULT 7, -- Días de entrega del proveedor (para reabastecimiento)
 
     -- 🔢 NÚMEROS DE SERIE (Dic 2025 - Fase 5)
     requiere_numero_serie BOOLEAN DEFAULT false, -- Requiere tracking por número de serie

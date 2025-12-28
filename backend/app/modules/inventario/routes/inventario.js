@@ -13,6 +13,7 @@
 
 const express = require('express');
 const InventarioController = require('../controllers');
+const RutasOperacionController = require('../controllers/rutas-operacion.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
 
@@ -559,6 +560,21 @@ router.post('/ordenes-compra/auto-generar',
     subscription.checkActiveSubscription,
     rateLimiting.apiRateLimit,
     InventarioController.autoGenerarOCs
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/reabastecimiento-rutas
+ * Generar reabastecimiento usando rutas de operación
+ * Query: ?sucursal_id=X (opcional)
+ */
+router.post('/ordenes-compra/reabastecimiento-rutas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    InventarioController.generarReabastecimientoConRutas
 );
 
 /**
@@ -1245,6 +1261,55 @@ router.get('/numeros-serie/proximos-vencer',
 );
 
 /**
+ * GET /api/v1/inventario/numeros-serie/alertas-vencimiento
+ * Alertas de vencimiento con niveles de urgencia (vencido, crítico, urgente, próximo)
+ * Query params: sucursal_id (opcional)
+ */
+router.get('/numeros-serie/alertas-vencimiento',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerAlertasVencimiento
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/fefo/:productoId
+ * Obtener NS para despacho usando estrategia FEFO (First Expired First Out)
+ * Query params: cantidad (default 1), sucursal_id (opcional)
+ */
+router.get('/numeros-serie/fefo/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerParaDespachoFEFO
+);
+
+/**
+ * POST /api/v1/inventario/numeros-serie/fefo/reservar
+ * Reservar NS para despacho FEFO (usado en proceso de venta)
+ * Body: { ns_ids: [1, 2, 3], referencia: "VENTA-123" }
+ */
+router.post('/numeros-serie/fefo/reservar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.reservarParaDespachoFEFO
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/buscar-trazabilidad
+ * Buscar NS por número o lote con trazabilidad resumida
+ * Query params: q (término de búsqueda, min 2 chars)
+ */
+router.get('/numeros-serie/buscar-trazabilidad',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.buscarConTrazabilidad
+);
+
+/**
  * GET /api/v1/inventario/numeros-serie/productos-con-serie
  * Productos que requieren número de serie
  */
@@ -1325,6 +1390,28 @@ router.get('/numeros-serie/:id/historial',
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     NumerosSerieController.obtenerHistorial
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/:id/trazabilidad
+ * Trazabilidad completa: origen (upstream) → estado actual → destino (downstream)
+ */
+router.get('/numeros-serie/:id/trazabilidad',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerTrazabilidad
+);
+
+/**
+ * GET /api/v1/inventario/numeros-serie/:id/timeline
+ * Timeline cronológico de todos los movimientos del NS
+ */
+router.get('/numeros-serie/:id/timeline',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    NumerosSerieController.obtenerTimeline
 );
 
 /**
@@ -1438,6 +1525,278 @@ router.get('/numeros-serie',
     tenant.setTenantContext,
     rateLimiting.apiRateLimit,
     NumerosSerieController.listar
+);
+
+// ===================================================================
+// RUTAS DE OPERACIÓN
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/rutas-operacion/init
+ * Crear rutas por defecto para la organización
+ */
+router.post('/rutas-operacion/init',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.crearRutasDefault
+);
+
+/**
+ * GET /api/v1/inventario/rutas-operacion
+ * Listar rutas de operación
+ */
+router.get('/rutas-operacion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.listarRutas
+);
+
+/**
+ * POST /api/v1/inventario/rutas-operacion
+ * Crear ruta de operación
+ */
+router.post('/rutas-operacion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.crearRuta
+);
+
+/**
+ * GET /api/v1/inventario/rutas-operacion/:id
+ * Obtener ruta por ID
+ */
+router.get('/rutas-operacion/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.obtenerRuta
+);
+
+/**
+ * PUT /api/v1/inventario/rutas-operacion/:id
+ * Actualizar ruta
+ */
+router.put('/rutas-operacion/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.actualizarRuta
+);
+
+/**
+ * DELETE /api/v1/inventario/rutas-operacion/:id
+ * Eliminar ruta
+ */
+router.delete('/rutas-operacion/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.eliminarRuta
+);
+
+// ===================================================================
+// PRODUCTOS-RUTAS
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/productos/:productoId/rutas
+ * Obtener rutas asignadas a un producto
+ */
+router.get('/productos/:productoId/rutas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.obtenerRutasDeProducto
+);
+
+/**
+ * POST /api/v1/inventario/productos/:productoId/rutas
+ * Asignar ruta a producto
+ */
+router.post('/productos/:productoId/rutas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.asignarRutaAProducto
+);
+
+/**
+ * DELETE /api/v1/inventario/productos/:productoId/rutas/:rutaId
+ * Quitar ruta de producto
+ */
+router.delete('/productos/:productoId/rutas/:rutaId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.quitarRutaDeProducto
+);
+
+/**
+ * GET /api/v1/inventario/productos/:productoId/determinar-ruta
+ * Determinar mejor ruta de reabastecimiento
+ */
+router.get('/productos/:productoId/determinar-ruta',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.determinarRutaReabastecimiento
+);
+
+// ===================================================================
+// REGLAS DE REABASTECIMIENTO
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/reglas-reabastecimiento
+ * Listar reglas de reabastecimiento
+ */
+router.get('/reglas-reabastecimiento',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.listarReglas
+);
+
+/**
+ * POST /api/v1/inventario/reglas-reabastecimiento
+ * Crear regla de reabastecimiento
+ */
+router.post('/reglas-reabastecimiento',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.crearRegla
+);
+
+/**
+ * GET /api/v1/inventario/reglas-reabastecimiento/:id
+ * Obtener regla por ID
+ */
+router.get('/reglas-reabastecimiento/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.obtenerRegla
+);
+
+/**
+ * PUT /api/v1/inventario/reglas-reabastecimiento/:id
+ * Actualizar regla
+ */
+router.put('/reglas-reabastecimiento/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.actualizarRegla
+);
+
+/**
+ * DELETE /api/v1/inventario/reglas-reabastecimiento/:id
+ * Eliminar regla
+ */
+router.delete('/reglas-reabastecimiento/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.eliminarRegla
+);
+
+// ===================================================================
+// TRANSFERENCIAS
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/transferencias
+ * Listar solicitudes de transferencia
+ */
+router.get('/transferencias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.listarSolicitudesTransferencia
+);
+
+/**
+ * POST /api/v1/inventario/transferencias
+ * Crear solicitud de transferencia
+ */
+router.post('/transferencias',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.crearSolicitudTransferencia
+);
+
+/**
+ * GET /api/v1/inventario/transferencias/:id
+ * Obtener solicitud con items
+ */
+router.get('/transferencias/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.obtenerSolicitudTransferencia
+);
+
+/**
+ * POST /api/v1/inventario/transferencias/:id/aprobar
+ * Aprobar solicitud de transferencia
+ */
+router.post('/transferencias/:id/aprobar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.aprobarSolicitud
+);
+
+/**
+ * POST /api/v1/inventario/transferencias/:id/rechazar
+ * Rechazar solicitud de transferencia
+ */
+router.post('/transferencias/:id/rechazar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.rechazarSolicitud
+);
+
+/**
+ * POST /api/v1/inventario/transferencias/:id/enviar
+ * Marcar transferencia como enviada
+ */
+router.post('/transferencias/:id/enviar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.enviarTransferencia
+);
+
+/**
+ * POST /api/v1/inventario/transferencias/:id/recibir
+ * Marcar transferencia como recibida
+ */
+router.post('/transferencias/:id/recibir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    RutasOperacionController.recibirTransferencia
 );
 
 module.exports = router;

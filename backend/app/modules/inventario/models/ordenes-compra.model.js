@@ -1,6 +1,7 @@
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 const workflowAdapter = require('../../../services/workflowAdapter');
+const RutasOperacionModel = require('./rutas-operacion.model');
 
 /**
  * Model para gestión de Órdenes de Compra
@@ -1282,25 +1283,24 @@ class OrdenesCompraModel {
                 organizacion_id: organizacionId
             });
 
-            // Obtener productos con stock bajo y auto_generar_oc activo
+            // Obtener productos con stock proyectado bajo y auto_generar_oc activo
+            // Stock proyectado = stock_actual + oc_pendientes - reservas_activas
             const productosQuery = await db.query(
-                `SELECT p.id, p.nombre, p.sku, p.proveedor_id, p.precio_compra,
-                        p.stock_actual, p.stock_minimo, p.stock_maximo,
-                        p.cantidad_oc_sugerida
+                `SELECT
+                    p.id, p.nombre, p.sku, p.proveedor_id, p.precio_compra,
+                    p.stock_actual, p.stock_minimo, p.stock_maximo,
+                    p.cantidad_oc_sugerida, p.lead_time_dias,
+                    sp.stock_proyectado,
+                    sp.oc_pendientes,
+                    sp.reservas_activas
                  FROM productos p
+                 CROSS JOIN LATERAL calcular_stock_proyectado(p.id, p.organizacion_id, NULL) sp
                  WHERE p.organizacion_id = $1
                    AND p.activo = true
                    AND p.auto_generar_oc = true
                    AND p.proveedor_id IS NOT NULL
-                   AND p.stock_actual <= p.stock_minimo
-                   AND NOT EXISTS (
-                       -- No generar si ya hay una OC pendiente para este producto
-                       SELECT 1 FROM ordenes_compra_items oci
-                       JOIN ordenes_compra oc ON oc.id = oci.orden_compra_id
-                       WHERE oci.producto_id = p.id
-                         AND oc.estado IN ('borrador', 'pendiente_aprobacion', 'enviada', 'parcial')
-                         AND oc.organizacion_id = $1
-                   )`,
+                   AND sp.stock_proyectado <= p.stock_minimo
+                   AND sp.tiene_oc_pendiente = false`,
                 [organizacionId]
             );
 
@@ -1338,11 +1338,12 @@ class OrdenesCompraModel {
                 });
 
                 const nombresProductos = productos.map(p => p.nombre).join(', ');
+                const leadTimeDias = Math.max(...productos.map(p => p.lead_time_dias || 7));
 
                 const ordenData = {
                     proveedor_id: parseInt(proveedorId),
                     usuario_id: usuarioId,
-                    notas: `OC auto-generada por alerta de stock bajo. Productos: ${nombresProductos}`,
+                    notas: `OC auto-generada por stock proyectado bajo. Lead time: ${leadTimeDias} días. Productos: ${nombresProductos}`,
                     items
                 };
 
@@ -1377,6 +1378,7 @@ class OrdenesCompraModel {
      */
     static async obtenerSugerenciasOC(organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
+            // Usa stock proyectado = stock_actual + oc_pendientes - reservas_activas
             const query = `
                 SELECT
                     p.id,
@@ -1388,34 +1390,236 @@ class OrdenesCompraModel {
                     p.precio_compra,
                     p.cantidad_oc_sugerida,
                     p.auto_generar_oc,
+                    p.lead_time_dias,
                     p.proveedor_id,
                     prov.nombre as proveedor_nombre,
+                    sp.stock_proyectado,
+                    sp.oc_pendientes,
+                    sp.reservas_activas,
+                    sp.tiene_oc_pendiente,
+                    sp.oc_pendiente_folio,
                     CASE
-                        WHEN p.stock_maximo IS NOT NULL AND p.stock_maximo > p.stock_actual
-                        THEN GREATEST(COALESCE(p.cantidad_oc_sugerida, 50), p.stock_maximo - p.stock_actual)
+                        WHEN p.stock_maximo IS NOT NULL AND p.stock_maximo > sp.stock_proyectado
+                        THEN GREATEST(COALESCE(p.cantidad_oc_sugerida, 50), p.stock_maximo - sp.stock_proyectado)
                         ELSE COALESCE(p.cantidad_oc_sugerida, 50)
-                    END as cantidad_sugerida,
-                    CASE
-                        WHEN EXISTS (
-                            SELECT 1 FROM ordenes_compra_items oci
-                            JOIN ordenes_compra oc ON oc.id = oci.orden_compra_id
-                            WHERE oci.producto_id = p.id
-                              AND oc.estado IN ('borrador', 'pendiente_aprobacion', 'enviada', 'parcial')
-                        ) THEN true
-                        ELSE false
-                    END as tiene_oc_pendiente
+                    END as cantidad_sugerida
                 FROM productos p
+                CROSS JOIN LATERAL calcular_stock_proyectado(p.id, p.organizacion_id, NULL) sp
                 LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
                 WHERE p.organizacion_id = $1
                   AND p.activo = true
-                  AND p.stock_actual <= p.stock_minimo
+                  AND sp.stock_proyectado <= p.stock_minimo
                 ORDER BY
                     p.proveedor_id NULLS LAST,
-                    (p.stock_minimo - p.stock_actual) DESC
+                    (p.stock_minimo - sp.stock_proyectado) DESC
             `;
 
             const result = await db.query(query, [organizacionId]);
             return result.rows;
+        });
+    }
+
+    /**
+     * Generar reabastecimiento usando rutas de operación
+     * Evalúa la mejor ruta para cada producto (compra, transferencia, dropship)
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} sucursalId - Sucursal destino (opcional)
+     * @param {number} usuarioId - Usuario del sistema
+     * @returns {Object} Resumen de OCs y transferencias generadas
+     */
+    static async generarReabastecimientoConRutas(organizacionId, sucursalId = null, usuarioId = null) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[OrdenesCompraModel.generarReabastecimientoConRutas] Iniciando', {
+                organizacion_id: organizacionId,
+                sucursal_id: sucursalId
+            });
+
+            // Obtener productos con stock proyectado bajo
+            const productosQuery = await db.query(
+                `SELECT
+                    p.id, p.nombre, p.sku, p.proveedor_id, p.precio_compra,
+                    p.stock_actual, p.stock_minimo, p.stock_maximo,
+                    p.cantidad_oc_sugerida, p.lead_time_dias,
+                    sp.stock_proyectado,
+                    sp.oc_pendientes,
+                    sp.reservas_activas
+                 FROM productos p
+                 CROSS JOIN LATERAL calcular_stock_proyectado(p.id, p.organizacion_id, $2) sp
+                 WHERE p.organizacion_id = $1
+                   AND p.activo = true
+                   AND sp.stock_proyectado <= p.stock_minimo
+                   AND sp.tiene_oc_pendiente = false`,
+                [organizacionId, sucursalId]
+            );
+
+            if (productosQuery.rows.length === 0) {
+                logger.info('[OrdenesCompraModel.generarReabastecimientoConRutas] No hay productos para reabastecer');
+                return { ordenes_compra: [], transferencias: [], resumen: { total_productos: 0 } };
+            }
+
+            const productosParaCompra = {};  // Agrupados por proveedor
+            const productosParaTransferencia = {}; // Agrupados por sucursal_origen
+
+            // Evaluar la mejor ruta para cada producto
+            for (const producto of productosQuery.rows) {
+                const rutas = await RutasOperacionModel.determinarRutaReabastecimiento(
+                    producto.id,
+                    sucursalId,
+                    organizacionId
+                );
+
+                const mejorRuta = rutas.length > 0 ? rutas[0] : null;
+
+                if (!mejorRuta) {
+                    // Sin ruta definida, usar proveedor default del producto
+                    if (producto.proveedor_id) {
+                        if (!productosParaCompra[producto.proveedor_id]) {
+                            productosParaCompra[producto.proveedor_id] = [];
+                        }
+                        productosParaCompra[producto.proveedor_id].push({
+                            ...producto,
+                            lead_time: producto.lead_time_dias || 7
+                        });
+                    }
+                    continue;
+                }
+
+                if (mejorRuta.tipo === 'compra' || mejorRuta.tipo === 'dropship') {
+                    const proveedorId = mejorRuta.proveedor_override_id ||
+                                        mejorRuta.proveedor_default_id ||
+                                        producto.proveedor_id;
+
+                    if (proveedorId) {
+                        if (!productosParaCompra[proveedorId]) {
+                            productosParaCompra[proveedorId] = [];
+                        }
+                        productosParaCompra[proveedorId].push({
+                            ...producto,
+                            ruta_id: mejorRuta.ruta_id,
+                            lead_time: mejorRuta.lead_time_override || mejorRuta.lead_time_dias || producto.lead_time_dias || 7
+                        });
+                    }
+                } else if (mejorRuta.tipo === 'transferencia') {
+                    const sucursalOrigenId = mejorRuta.sucursal_origen_override_id ||
+                                             mejorRuta.sucursal_origen_id;
+
+                    if (sucursalOrigenId && sucursalId && sucursalOrigenId !== sucursalId) {
+                        if (!productosParaTransferencia[sucursalOrigenId]) {
+                            productosParaTransferencia[sucursalOrigenId] = [];
+                        }
+                        productosParaTransferencia[sucursalOrigenId].push({
+                            ...producto,
+                            ruta_id: mejorRuta.ruta_id,
+                            sucursal_destino_id: sucursalId
+                        });
+                    }
+                }
+            }
+
+            const ordenesCreadas = [];
+            const transferenciasCreadas = [];
+
+            // Generar OCs por proveedor
+            for (const [proveedorId, productos] of Object.entries(productosParaCompra)) {
+                const items = productos.map(p => {
+                    let cantidad = p.cantidad_oc_sugerida || 50;
+                    if (p.stock_maximo) {
+                        const diferencia = p.stock_maximo - p.stock_actual;
+                        if (diferencia > 0) {
+                            cantidad = Math.max(cantidad, diferencia);
+                        }
+                    }
+                    return {
+                        producto_id: p.id,
+                        cantidad_ordenada: cantidad,
+                        precio_unitario: p.precio_compra || 0
+                    };
+                });
+
+                const leadTimeDias = Math.max(...productos.map(p => p.lead_time || 7));
+                const rutasUsadas = [...new Set(productos.filter(p => p.ruta_id).map(p => p.ruta_id))];
+
+                const ordenData = {
+                    proveedor_id: parseInt(proveedorId),
+                    usuario_id: usuarioId,
+                    notas: `OC auto-generada con rutas de operación. Lead time: ${leadTimeDias} días.${rutasUsadas.length > 0 ? ` Rutas: ${rutasUsadas.join(', ')}` : ''}`,
+                    items
+                };
+
+                const ordenCreada = await this.crear(ordenData, organizacionId);
+                ordenesCreadas.push({
+                    ...ordenCreada,
+                    productos_incluidos: productos.length,
+                    rutas_usadas: rutasUsadas
+                });
+
+                logger.info('[generarReabastecimientoConRutas] OC creada', {
+                    orden_id: ordenCreada.id,
+                    folio: ordenCreada.folio,
+                    proveedor_id: proveedorId,
+                    productos: productos.length
+                });
+            }
+
+            // Generar solicitudes de transferencia por sucursal origen
+            for (const [sucursalOrigenId, productos] of Object.entries(productosParaTransferencia)) {
+                const items = productos.map(p => {
+                    let cantidad = p.cantidad_oc_sugerida || 50;
+                    if (p.stock_maximo) {
+                        const diferencia = p.stock_maximo - p.stock_actual;
+                        if (diferencia > 0) {
+                            cantidad = Math.max(cantidad, diferencia);
+                        }
+                    }
+                    return {
+                        producto_id: p.id,
+                        cantidad: cantidad,
+                        notas: `Stock actual: ${p.stock_actual}, Stock mínimo: ${p.stock_minimo}`
+                    };
+                });
+
+                const rutasUsadas = [...new Set(productos.filter(p => p.ruta_id).map(p => p.ruta_id))];
+
+                const transferencia = await RutasOperacionModel.crearSolicitudTransferencia(
+                    {
+                        sucursal_origen_id: parseInt(sucursalOrigenId),
+                        sucursal_destino_id: sucursalId,
+                        notas: `Transferencia auto-generada por stock bajo. Rutas: ${rutasUsadas.join(', ')}`,
+                        items
+                    },
+                    organizacionId,
+                    usuarioId
+                );
+
+                transferenciasCreadas.push({
+                    ...transferencia,
+                    productos_incluidos: productos.length,
+                    rutas_usadas: rutasUsadas
+                });
+
+                logger.info('[generarReabastecimientoConRutas] Transferencia creada', {
+                    transferencia_id: transferencia.id,
+                    folio: transferencia.folio,
+                    sucursal_origen: sucursalOrigenId,
+                    sucursal_destino: sucursalId,
+                    productos: productos.length
+                });
+            }
+
+            logger.info('[generarReabastecimientoConRutas] Proceso completado', {
+                ordenes_compra: ordenesCreadas.length,
+                transferencias: transferenciasCreadas.length
+            });
+
+            return {
+                ordenes_compra: ordenesCreadas,
+                transferencias: transferenciasCreadas,
+                resumen: {
+                    total_productos: productosQuery.rows.length,
+                    productos_oc: Object.values(productosParaCompra).flat().length,
+                    productos_transferencia: Object.values(productosParaTransferencia).flat().length
+                }
+            };
         });
     }
 }
