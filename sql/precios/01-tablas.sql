@@ -52,11 +52,15 @@ CREATE TABLE listas_precios (
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
     -- ✅ CONSTRAINTS
-    CONSTRAINT uq_lista_precios_codigo_org UNIQUE(organizacion_id, codigo),
     CONSTRAINT chk_descuento_global_rango CHECK (descuento_global_pct >= 0 AND descuento_global_pct <= 100),
     CONSTRAINT chk_codigo_length CHECK (char_length(codigo) >= 2),
     CONSTRAINT chk_nombre_length CHECK (char_length(nombre) >= 2)
 );
+
+-- Código único por organización (solo registros no eliminados - permite reutilizar códigos tras soft delete)
+CREATE UNIQUE INDEX uq_lista_precios_codigo_org
+ON listas_precios(organizacion_id, codigo)
+WHERE eliminado_en IS NULL;
 
 -- Solo una lista default por organización (constraint parcial)
 CREATE UNIQUE INDEX idx_lista_precios_default_unica

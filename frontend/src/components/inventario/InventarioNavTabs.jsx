@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart, Tag, MapPin, Hash } from 'lucide-react';
+import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo de Inventario
@@ -66,6 +66,18 @@ const tabs = [
     path: '/inventario/numeros-serie',
     icon: Hash,
   },
+  {
+    id: 'rutas-operacion',
+    label: 'Rutas',
+    path: '/inventario/rutas-operacion',
+    icon: Route,
+  },
+  {
+    id: 'transferencias',
+    label: 'Transferencias',
+    path: '/sucursales/transferencias',
+    icon: ArrowRightLeft,
+  },
 ];
 
 export default function InventarioNavTabs() {
@@ -73,7 +85,8 @@ export default function InventarioNavTabs() {
   const navigate = useNavigate();
 
   const isActive = (path) => {
-    return location.pathname === path;
+    // Match exact path or sub-paths (e.g., /sucursales/transferencias/123)
+    return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
   return (

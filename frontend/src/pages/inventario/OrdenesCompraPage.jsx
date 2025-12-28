@@ -13,6 +13,11 @@ import {
   Search,
   Calendar,
   Building2,
+  Zap,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
+  TrendingDown,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
@@ -27,6 +32,7 @@ import {
   useCancelarOrdenCompra,
 } from '@/hooks/useOrdenesCompra';
 import { useProveedores } from '@/hooks/useProveedores';
+import { useSugerenciasOC, useAutoGenerarOCs } from '@/hooks/useInventario';
 import OrdenCompraFormModal from '@/components/inventario/ordenes-compra/OrdenCompraFormModal';
 import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/OrdenCompraDetalleModal';
 import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';
@@ -62,6 +68,8 @@ export default function OrdenesCompraPage() {
   const [modalCancelar, setModalCancelar] = useState({ isOpen: false, orden: null });
   const [modalEnviar, setModalEnviar] = useState({ isOpen: false, orden: null });
   const [motivoCancelacion, setMotivoCancelacion] = useState('');
+  const [modalAutoGenerar, setModalAutoGenerar] = useState(false);
+  const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
 
   // Queries
   const { data: ordenesData, isLoading } = useOrdenesCompra(filtros);
@@ -72,8 +80,12 @@ export default function OrdenesCompraPage() {
   const { data: proveedoresData } = useProveedores({ activo: true, limit: 100 });
   const proveedores = proveedoresData?.proveedores || [];
 
+  // Sugerencias de reabastecimiento
+  const { data: sugerencias = [], isLoading: loadingSugerencias } = useSugerenciasOC();
+
   // Mutations
   const eliminarMutation = useEliminarOrdenCompra();
+  const autoGenerarMutation = useAutoGenerarOCs();
   const enviarMutation = useEnviarOrdenCompra();
   const cancelarMutation = useCancelarOrdenCompra();
 
@@ -203,6 +215,28 @@ export default function OrdenesCompraPage() {
     setModalPago({ isOpen: true, orden });
   };
 
+  // Handler para auto-generar OCs
+  const handleAutoGenerar = () => {
+    if (sugerencias.length === 0) {
+      showInfo('No hay productos con stock bajo que requieran reabastecimiento');
+      return;
+    }
+    setModalAutoGenerar(true);
+  };
+
+  const confirmarAutoGenerar = () => {
+    autoGenerarMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        showSuccess(`Se crearon ${data.ordenes_creadas || 0} orden(es) de compra automáticamente`);
+        setModalAutoGenerar(false);
+        setMostrarSugerencias(false);
+      },
+      onError: (error) => {
+        showError(error.response?.data?.mensaje || 'Error al generar órdenes automáticas');
+      },
+    });
+  };
+
   // Helpers de visualización
   const getBadgeEstado = (estado) => {
     const badges = {
@@ -283,12 +317,99 @@ export default function OrdenesCompraPage() {
               <span className="hidden sm:inline">{mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros</span>
               <span className="sm:hidden">Filtros</span>
             </Button>
+            <Button
+              variant="outline"
+              onClick={handleAutoGenerar}
+              icon={Zap}
+              className="flex-1 sm:flex-none text-sm relative"
+              title="Generar OCs automáticamente para productos con stock bajo"
+            >
+              <span className="hidden sm:inline">Auto-generar</span>
+              <span className="sm:hidden">Auto</span>
+              {sugerencias.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {sugerencias.length}
+                </span>
+              )}
+            </Button>
             <Button variant="primary" onClick={handleNuevaOrden} icon={Plus} className="flex-1 sm:flex-none text-sm">
               <span className="hidden sm:inline">Nueva Orden</span>
               <span className="sm:hidden">Nueva</span>
             </Button>
           </div>
       </div>
+
+      {/* Alerta de productos con stock bajo */}
+      {sugerencias.length > 0 && (
+        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+          <div
+            className="flex items-center justify-between cursor-pointer"
+            onClick={() => setMostrarSugerencias(!mostrarSugerencias)}
+          >
+            <div className="flex items-center gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              <div>
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                  {sugerencias.length} producto(s) con stock bajo
+                </h3>
+                <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                  Requieren reabastecimiento
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="warning"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleAutoGenerar();
+                }}
+                icon={Zap}
+              >
+                Generar OCs
+              </Button>
+              {mostrarSugerencias ? (
+                <ChevronUp className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              ) : (
+                <ChevronDown className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
+              )}
+            </div>
+          </div>
+
+          {/* Lista de sugerencias expandible */}
+          {mostrarSugerencias && (
+            <div className="mt-4 space-y-2 max-h-60 overflow-y-auto">
+              {sugerencias.map((item) => (
+                <div
+                  key={item.producto_id}
+                  className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {item.producto_nombre}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        SKU: {item.sku} | Proveedor: {item.proveedor_nombre || 'Sin asignar'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-semibold text-red-600 dark:text-red-400">
+                      Stock: {item.stock_actual} / Mín: {item.stock_minimo}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Sugerido: {item.cantidad_sugerida} unidades
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Resumen de totales */}
       {totales && (
@@ -785,6 +906,56 @@ export default function OrdenesCompraPage() {
               icon={XCircle}
             >
               Cancelar Orden
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Modal de Auto-generar OCs */}
+      <Modal
+        isOpen={modalAutoGenerar}
+        onClose={() => setModalAutoGenerar(false)}
+        title="Generar Órdenes de Compra Automáticamente"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+            <Zap className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+            <div>
+              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
+                Se generarán órdenes de compra para {sugerencias.length} producto(s)
+              </p>
+              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                Se crearán OCs en estado borrador agrupadas por proveedor
+              </p>
+            </div>
+          </div>
+
+          <div className="max-h-48 overflow-y-auto space-y-2">
+            {sugerencias.map((item) => (
+              <div
+                key={item.producto_id}
+                className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded"
+              >
+                <span className="text-sm text-gray-900 dark:text-gray-100">{item.producto_nombre}</span>
+                <span className="text-sm font-medium text-primary-600 dark:text-primary-400">
+                  +{item.cantidad_sugerida} uds
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <Button variant="secondary" onClick={() => setModalAutoGenerar(false)}>
+              Cancelar
+            </Button>
+            <Button
+              variant="primary"
+              onClick={confirmarAutoGenerar}
+              isLoading={autoGenerarMutation.isPending}
+              icon={Zap}
+            >
+              Generar Órdenes
             </Button>
           </div>
         </div>

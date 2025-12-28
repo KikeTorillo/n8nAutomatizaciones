@@ -197,8 +197,8 @@ function ProductosPage() {
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Búsqueda */}
-            <div>
+            {/* Búsqueda con Scanner */}
+            <div className="relative z-10">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Buscar
               </label>
@@ -208,15 +208,15 @@ function ProductosPage() {
                   placeholder="Nombre, SKU o código..."
                   value={filtros.busqueda}
                   onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                   type="button"
                   onClick={() => setShowScanner(true)}
-                  className="p-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="relative z-20 flex-shrink-0 p-2.5 border-2 border-primary-500 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors bg-white dark:bg-gray-700"
                   title="Escanear código de barras"
                 >
-                  <ScanLine className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  <ScanLine className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                 </button>
               </div>
             </div>

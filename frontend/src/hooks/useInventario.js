@@ -784,3 +784,340 @@ export function useMoverStockUbicacion() {
     },
   });
 }
+
+// ==============================================================================
+// RUTAS DE OPERACIÓN (Dic 2025 - Gap Inventario Avanzado)
+// ==============================================================================
+
+/**
+ * Hook para listar rutas de operación
+ * @param {Object} filtros - { tipo?, activo? }
+ */
+export function useRutasOperacion(filtros = {}) {
+  return useQuery({
+    queryKey: ['rutas-operacion', filtros],
+    queryFn: async () => {
+      const response = await inventarioApi.listarRutas(filtros);
+      return response.data.data;
+    },
+    keepPreviousData: true,
+  });
+}
+
+/**
+ * Hook para obtener ruta por ID
+ */
+export function useRutaOperacion(id) {
+  return useQuery({
+    queryKey: ['ruta-operacion', id],
+    queryFn: async () => {
+      const response = await inventarioApi.obtenerRuta(id);
+      return response.data.data;
+    },
+    enabled: !!id,
+  });
+}
+
+/**
+ * Hook para inicializar rutas por defecto
+ */
+export function useInicializarRutas() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async () => {
+      const response = await inventarioApi.inicializarRutas();
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['rutas-operacion']);
+    },
+  });
+}
+
+/**
+ * Hook para crear ruta de operación
+ */
+export function useCrearRuta() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await inventarioApi.crearRuta(data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['rutas-operacion']);
+    },
+  });
+}
+
+/**
+ * Hook para actualizar ruta de operación
+ */
+export function useActualizarRuta() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }) => {
+      const response = await inventarioApi.actualizarRuta(id, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['rutas-operacion']);
+      queryClient.invalidateQueries(['ruta-operacion', variables.id]);
+    },
+  });
+}
+
+/**
+ * Hook para eliminar ruta de operación
+ */
+export function useEliminarRuta() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await inventarioApi.eliminarRuta(id);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['rutas-operacion']);
+    },
+  });
+}
+
+/**
+ * Hook para obtener rutas asignadas a un producto
+ */
+export function useRutasProducto(productoId) {
+  return useQuery({
+    queryKey: ['producto-rutas', productoId],
+    queryFn: async () => {
+      const response = await inventarioApi.obtenerRutasProducto(productoId);
+      return response.data.data || [];
+    },
+    enabled: !!productoId,
+  });
+}
+
+/**
+ * Hook para asignar ruta a producto
+ */
+export function useAsignarRutaProducto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productoId, ...data }) => {
+      const response = await inventarioApi.asignarRutaProducto(productoId, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['producto-rutas', variables.productoId]);
+    },
+  });
+}
+
+/**
+ * Hook para quitar ruta de producto
+ */
+export function useQuitarRutaProducto() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ productoId, rutaId }) => {
+      const response = await inventarioApi.quitarRutaProducto(productoId, rutaId);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['producto-rutas', variables.productoId]);
+    },
+  });
+}
+
+// ==============================================================================
+// REGLAS DE REABASTECIMIENTO
+// ==============================================================================
+
+/**
+ * Hook para listar reglas de reabastecimiento
+ */
+export function useReglasReabastecimiento(filtros = {}) {
+  return useQuery({
+    queryKey: ['reglas-reabastecimiento', filtros],
+    queryFn: async () => {
+      const response = await inventarioApi.listarReglasReabastecimiento(filtros);
+      return response.data.data;
+    },
+    keepPreviousData: true,
+  });
+}
+
+/**
+ * Hook para crear regla de reabastecimiento
+ */
+export function useCrearReglaReabastecimiento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await inventarioApi.crearReglaReabastecimiento(data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reglas-reabastecimiento']);
+    },
+  });
+}
+
+/**
+ * Hook para actualizar regla de reabastecimiento
+ */
+export function useActualizarReglaReabastecimiento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, ...data }) => {
+      const response = await inventarioApi.actualizarReglaReabastecimiento(id, data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reglas-reabastecimiento']);
+    },
+  });
+}
+
+/**
+ * Hook para eliminar regla de reabastecimiento
+ */
+export function useEliminarReglaReabastecimiento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await inventarioApi.eliminarReglaReabastecimiento(id);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['reglas-reabastecimiento']);
+    },
+  });
+}
+
+// ==============================================================================
+// TRANSFERENCIAS ENTRE SUCURSALES
+// ==============================================================================
+
+/**
+ * Hook para listar transferencias
+ */
+export function useTransferenciasInventario(filtros = {}) {
+  return useQuery({
+    queryKey: ['transferencias-inventario', filtros],
+    queryFn: async () => {
+      const response = await inventarioApi.listarTransferencias(filtros);
+      return response.data.data;
+    },
+    keepPreviousData: true,
+  });
+}
+
+/**
+ * Hook para obtener transferencia por ID
+ */
+export function useTransferenciaInventario(id) {
+  return useQuery({
+    queryKey: ['transferencia-inventario', id],
+    queryFn: async () => {
+      const response = await inventarioApi.obtenerTransferencia(id);
+      return response.data.data;
+    },
+    enabled: !!id,
+  });
+}
+
+/**
+ * Hook para crear transferencia
+ */
+export function useCrearTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await inventarioApi.crearTransferencia(data);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['transferencias-inventario']);
+    },
+  });
+}
+
+/**
+ * Hook para aprobar transferencia
+ */
+export function useAprobarTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await inventarioApi.aprobarTransferencia(id);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['transferencias-inventario']);
+    },
+  });
+}
+
+/**
+ * Hook para rechazar transferencia
+ */
+export function useRechazarTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, motivo }) => {
+      const response = await inventarioApi.rechazarTransferencia(id, { motivo });
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['transferencias-inventario']);
+    },
+  });
+}
+
+/**
+ * Hook para enviar transferencia
+ */
+export function useEnviarTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await inventarioApi.enviarTransferencia(id);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['transferencias-inventario']);
+    },
+  });
+}
+
+/**
+ * Hook para recibir transferencia
+ */
+export function useRecibirTransferencia() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id) => {
+      const response = await inventarioApi.recibirTransferencia(id);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['transferencias-inventario']);
+      queryClient.invalidateQueries(['productos']);
+    },
+  });
+}
