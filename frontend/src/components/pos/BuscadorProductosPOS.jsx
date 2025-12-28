@@ -124,7 +124,8 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
           {!isLoading && productos?.length > 0 && (
             <ul className="divide-y divide-gray-200 dark:divide-gray-700">
               {productos.map((producto) => (
-                <li key={producto.id}>
+                // Dic 2025: Key único para variantes (v-id) y productos (p-id)
+                <li key={producto.es_variante ? `v-${producto.variante_id}` : `p-${producto.producto_id}`}>
                   <button
                     onClick={() => handleSeleccionarProducto(producto)}
                     className="w-full p-4 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors text-left flex items-center justify-between group"
@@ -133,6 +134,11 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
                       <div className="flex items-center gap-2">
                         <Package className="h-5 w-5 text-gray-400 dark:text-gray-500 group-hover:text-primary-500 dark:group-hover:text-primary-400" />
                         <span className="font-medium text-gray-900 dark:text-gray-100">{producto.nombre}</span>
+                        {producto.es_variante && (
+                          <span className="px-1.5 py-0.5 text-xs bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+                            Variante
+                          </span>
+                        )}
                       </div>
 
                       <div className="mt-1 flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">

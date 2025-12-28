@@ -172,9 +172,12 @@ export default function VentaPOSPage() {
 
   // Handler: Agregar producto al carrito
   // Dic 2025: Integración con listas de precios inteligentes + reservas de stock + números de serie
+  // Dic 2025: Soporte para variantes de producto
   const handleProductoSeleccionado = async (producto) => {
-    // Verificar si el producto ya está en el carrito
-    const itemExistente = items.find(item => item.producto_id === producto.id);
+    // Dic 2025: Buscar item existente por variante_id o producto_id
+    const itemExistente = producto.es_variante
+      ? items.find(item => item.variante_id === producto.variante_id)
+      : items.find(item => item.producto_id === producto.producto_id && !item.variante_id);
 
     // Si el producto requiere número de serie y no está en el carrito, mostrar modal de selección
     if (producto.requiere_numero_serie && !itemExistente) {
@@ -197,31 +200,49 @@ export default function VentaPOSPage() {
       const reservaAnteriorId = itemExistente.reserva_id;
 
       try {
-        // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior
-        const nuevaReserva = await crearReserva.mutateAsync({
-          producto_id: producto.id,
-          cantidad: nuevaCantidad,
-          tipo_origen: 'venta_pos'
-        });
+        let nuevaReservaId = null;
 
-        // Solo si la nueva reserva fue exitosa, cancelar la anterior
-        if (reservaAnteriorId) {
-          try {
-            await cancelarReserva.mutateAsync(reservaAnteriorId);
-          } catch (cancelError) {
-            console.warn('[POS] Error cancelando reserva anterior:', cancelError);
+        // Dic 2025: Las variantes NO usan reservas (stock en tabla separada)
+        if (producto.es_variante) {
+          // Validación simple de stock para variantes
+          if (nuevaCantidad > producto.stock_actual) {
+            toast.error(`Stock insuficiente. Disponible: ${producto.stock_actual}`);
+            return;
+          }
+          nuevaReservaId = null; // Sin reserva para variantes
+        } else {
+          // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior
+          const nuevaReserva = await crearReserva.mutateAsync({
+            producto_id: producto.producto_id,
+            cantidad: nuevaCantidad,
+            tipo_origen: 'venta_pos'
+          });
+          nuevaReservaId = nuevaReserva.id;
+
+          // Solo si la nueva reserva fue exitosa, cancelar la anterior
+          if (reservaAnteriorId) {
+            try {
+              await cancelarReserva.mutateAsync(reservaAnteriorId);
+            } catch (cancelError) {
+              console.warn('[POS] Error cancelando reserva anterior:', cancelError);
+            }
           }
         }
 
         // Obtener precio actualizado por cantidad
-        const precioResuelto = await obtenerPrecioInteligente(producto.id, nuevaCantidad);
+        const precioResuelto = await obtenerPrecioInteligente(producto.producto_id, nuevaCantidad);
 
-        setItems(items.map(item =>
-          item.producto_id === producto.id
+        // Actualizar item (buscar por variante_id si es variante)
+        setItems(items.map(item => {
+          const esElMismo = producto.es_variante
+            ? item.variante_id === producto.variante_id
+            : item.producto_id === producto.producto_id && !item.variante_id;
+
+          return esElMismo
             ? {
                 ...item,
                 cantidad: nuevaCantidad,
-                reserva_id: nuevaReserva.id,
+                reserva_id: nuevaReservaId,
                 // Actualizar precio si hay qty break
                 ...(precioResuelto && {
                   precio_unitario: parseFloat(precioResuelto.precio),
@@ -231,8 +252,8 @@ export default function VentaPOSPage() {
                   lista_codigo: precioResuelto.lista_codigo
                 })
               }
-            : item
-        ));
+            : item;
+        }));
         toast.success(`Cantidad de "${producto.nombre}" aumentada`);
       } catch (error) {
         // Si falla la nueva reserva, el item mantiene su reserva anterior intacta
@@ -245,23 +266,33 @@ export default function VentaPOSPage() {
   };
 
   // Handler interno para agregar producto al carrito (con o sin NS)
+  // Dic 2025: Soporte para variantes de producto
   const agregarProductoAlCarrito = async (producto, numeroSerie = null) => {
     try {
-      // Crear reserva de stock para el nuevo producto
-      const reserva = await crearReserva.mutateAsync({
-        producto_id: producto.id,
-        cantidad: 1,
-        tipo_origen: 'venta_pos'
-      });
+      let reservaId = null;
 
-      // Obtener precio inteligente para el nuevo producto
-      const precioResuelto = await obtenerPrecioInteligente(producto.id, 1);
+      // Dic 2025: Las variantes no usan sistema de reservas (stock en tabla separada)
+      // Solo crear reserva para productos normales (sin variantes)
+      if (!producto.es_variante) {
+        const reserva = await crearReserva.mutateAsync({
+          producto_id: producto.producto_id,
+          cantidad: 1,
+          tipo_origen: 'venta_pos'
+        });
+        reservaId = reserva.id;
+      }
+
+      // Obtener precio inteligente para el producto
+      const precioResuelto = await obtenerPrecioInteligente(producto.producto_id, 1);
 
       // Agregar nuevo item con precio resuelto y reserva_id
+      // Dic 2025: Incluir variante_id si es variante
       const nuevoItem = {
         id: Date.now(), // ID temporal para el carrito
-        producto_id: producto.id,
-        reserva_id: reserva.id, // Guardar ID de reserva
+        producto_id: producto.producto_id,
+        variante_id: producto.es_variante ? producto.variante_id : null, // Dic 2025
+        es_variante: producto.es_variante || false, // Dic 2025
+        reserva_id: reservaId, // null para variantes
         nombre: producto.nombre,
         sku: producto.sku,
         precio_venta: producto.precio_venta, // Precio base
@@ -435,9 +466,10 @@ export default function VentaPOSPage() {
         }
       }
 
-      // PASO 2: Preparar items para el backend (incluir reserva_id y número de serie)
+      // PASO 2: Preparar items para el backend (incluir reserva_id, variante_id y número de serie)
       const itemsBackend = items.map(item => ({
         producto_id: item.producto_id,
+        variante_id: item.variante_id || undefined, // Dic 2025: variantes
         cantidad: item.cantidad,
         precio_unitario: parseFloat(item.precio_unitario),
         descuento_monto: parseFloat(item.descuento_monto || 0),

@@ -14,8 +14,11 @@
 const express = require('express');
 const InventarioController = require('../controllers');
 const RutasOperacionController = require('../controllers/rutas-operacion.controller');
+const AtributosController = require('../controllers/atributos.controller');
+const VariantesController = require('../controllers/variantes.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
+const variantesSchemas = require('../schemas/variantes.schemas');
 
 const router = express.Router();
 const validate = validation.validate;
@@ -1797,6 +1800,258 @@ router.post('/transferencias/:id/recibir',
     modules.requireModule('inventario'),
     rateLimiting.apiRateLimit,
     RutasOperacionController.recibirTransferencia
+);
+
+// ===================================================================
+// ATRIBUTOS DE PRODUCTO (Dic 2025 - Variantes)
+// Tipos de atributos para variantes: Color, Talla, Material, etc.
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/atributos/defecto
+ * Crear atributos por defecto (Color, Talla)
+ */
+router.post('/atributos/defecto',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    AtributosController.crearDefecto
+);
+
+/**
+ * POST /api/v1/inventario/atributos
+ * Crear nuevo atributo
+ */
+router.post('/atributos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.crearAtributo),
+    AtributosController.crear
+);
+
+/**
+ * GET /api/v1/inventario/atributos
+ * Listar atributos
+ */
+router.get('/atributos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    AtributosController.listar
+);
+
+/**
+ * GET /api/v1/inventario/atributos/:id
+ * Obtener atributo con valores
+ */
+router.get('/atributos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    AtributosController.obtenerPorId
+);
+
+/**
+ * PUT /api/v1/inventario/atributos/:id
+ * Actualizar atributo
+ */
+router.put('/atributos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.actualizarAtributo),
+    AtributosController.actualizar
+);
+
+/**
+ * DELETE /api/v1/inventario/atributos/:id
+ * Eliminar atributo
+ */
+router.delete('/atributos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    AtributosController.eliminar
+);
+
+/**
+ * POST /api/v1/inventario/atributos/:id/valores
+ * Agregar valor a atributo
+ */
+router.post('/atributos/:id/valores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.crearValor),
+    AtributosController.agregarValor
+);
+
+/**
+ * GET /api/v1/inventario/atributos/:id/valores
+ * Obtener valores de un atributo
+ */
+router.get('/atributos/:id/valores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    AtributosController.obtenerValores
+);
+
+/**
+ * PUT /api/v1/inventario/valores/:valorId
+ * Actualizar valor de atributo
+ */
+router.put('/valores/:valorId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.actualizarValor),
+    AtributosController.actualizarValor
+);
+
+/**
+ * DELETE /api/v1/inventario/valores/:valorId
+ * Eliminar valor de atributo
+ */
+router.delete('/valores/:valorId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    AtributosController.eliminarValor
+);
+
+// ===================================================================
+// VARIANTES DE PRODUCTO (Dic 2025 - Variantes)
+// Combinaciones con stock y precios independientes
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/variantes/buscar
+ * Buscar variante por SKU o codigo de barras
+ */
+router.get('/variantes/buscar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.buscarVariante),
+    VariantesController.buscar
+);
+
+/**
+ * GET /api/v1/inventario/variantes/:id
+ * Obtener variante por ID
+ */
+router.get('/variantes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    VariantesController.obtenerPorId
+);
+
+/**
+ * PUT /api/v1/inventario/variantes/:id
+ * Actualizar variante
+ */
+router.put('/variantes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.actualizarVariante),
+    VariantesController.actualizar
+);
+
+/**
+ * PATCH /api/v1/inventario/variantes/:id/stock
+ * Ajustar stock de variante
+ */
+router.patch('/variantes/:id/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.ajustarStock),
+    VariantesController.ajustarStock
+);
+
+/**
+ * DELETE /api/v1/inventario/variantes/:id
+ * Eliminar variante
+ */
+router.delete('/variantes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    VariantesController.eliminar
+);
+
+/**
+ * GET /api/v1/inventario/productos/:productoId/variantes
+ * Listar variantes de un producto
+ */
+router.get('/productos/:productoId/variantes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    VariantesController.listar
+);
+
+/**
+ * GET /api/v1/inventario/productos/:productoId/variantes/resumen
+ * Resumen de stock por variantes
+ */
+router.get('/productos/:productoId/variantes/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    VariantesController.obtenerResumen
+);
+
+/**
+ * POST /api/v1/inventario/productos/:productoId/variantes
+ * Crear variante individual
+ */
+router.post('/productos/:productoId/variantes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.crearVariante),
+    VariantesController.crear
+);
+
+/**
+ * POST /api/v1/inventario/productos/:productoId/variantes/generar
+ * Generar variantes automaticamente desde combinaciones
+ */
+router.post('/productos/:productoId/variantes/generar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(variantesSchemas.generarVariantes),
+    VariantesController.generar
 );
 
 module.exports = router;

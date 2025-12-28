@@ -160,6 +160,9 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 📊 ESTADO
     activo BOOLEAN DEFAULT true,
 
+    -- 🎨 VARIANTES (Dic 2025)
+    tiene_variantes BOOLEAN DEFAULT false, -- Si tiene variantes con stock independiente
+
     -- 🗑️ SOFT DELETE (Dic 2025)
     eliminado_en TIMESTAMPTZ DEFAULT NULL,
     eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
@@ -227,6 +230,7 @@ CREATE TABLE IF NOT EXISTS movimientos_inventario (
     proveedor_id INTEGER REFERENCES proveedores(id),
     venta_pos_id INTEGER, -- FK a ventas_pos (sin FK formal - se valida en backend)
     cita_id INTEGER, -- FK a citas (tabla particionada - sin FK formal)
+    variante_id INTEGER, -- FK a variantes_producto (sin REFERENCES - tabla nueva)
     usuario_id INTEGER REFERENCES usuarios(id),
 
     -- 📝 METADATA

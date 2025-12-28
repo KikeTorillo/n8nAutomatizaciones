@@ -77,7 +77,7 @@ class VentasPOSModel {
                 // SELECT FOR UPDATE para lock optimista
                 const productoQuery = await db.query(
                     `SELECT id, nombre, sku, precio_venta,
-                            stock_actual, permite_venta, activo
+                            stock_actual, permite_venta, activo, tiene_variantes
                      FROM productos
                      WHERE id = $1 AND organizacion_id = $2
                      FOR UPDATE`,
@@ -98,13 +98,42 @@ class VentasPOSModel {
                     throw new Error(`Producto "${producto.nombre}" no está disponible para venta`);
                 }
 
-                // Validar stock suficiente (solo si tipo_venta != 'cotizacion')
+                // Dic 2025: Validar stock de VARIANTE si aplica
                 if (data.tipo_venta !== 'cotizacion') {
-                    if (producto.stock_actual < item.cantidad) {
-                        throw new Error(
-                            `Stock insuficiente para "${producto.nombre}". ` +
-                            `Disponible: ${producto.stock_actual}, Solicitado: ${item.cantidad}`
+                    if (item.variante_id) {
+                        // Verificar stock de la variante
+                        const varianteQuery = await db.query(
+                            `SELECT id, nombre_variante, stock_actual, activo
+                             FROM variantes_producto
+                             WHERE id = $1 AND producto_id = $2
+                             FOR UPDATE`,
+                            [item.variante_id, item.producto_id]
                         );
+
+                        if (varianteQuery.rows.length === 0) {
+                            throw new Error(`Variante con ID ${item.variante_id} no encontrada`);
+                        }
+
+                        const variante = varianteQuery.rows[0];
+
+                        if (!variante.activo) {
+                            throw new Error(`Variante "${variante.nombre_variante}" está inactiva`);
+                        }
+
+                        if (variante.stock_actual < item.cantidad) {
+                            throw new Error(
+                                `Stock insuficiente para "${variante.nombre_variante}". ` +
+                                `Disponible: ${variante.stock_actual}, Solicitado: ${item.cantidad}`
+                            );
+                        }
+                    } else if (!producto.tiene_variantes) {
+                        // Solo verificar stock del producto si NO tiene variantes
+                        if (producto.stock_actual < item.cantidad) {
+                            throw new Error(
+                                `Stock insuficiente para "${producto.nombre}". ` +
+                                `Disponible: ${producto.stock_actual}, Solicitado: ${item.cantidad}`
+                            );
+                        }
                     }
                 }
             }
@@ -221,14 +250,37 @@ class VentasPOSModel {
             // Insertar items de la venta
             const itemsInsertados = [];
             for (const item of data.items) {
-                // Obtener datos del producto para snapshot
-                const prodQuery = await db.query(
-                    `SELECT nombre, sku, precio_venta
-                     FROM productos WHERE id = $1`,
-                    [item.producto_id]
-                );
+                let producto;
+                let nombreSnapshot;
+                let skuSnapshot;
 
-                const producto = prodQuery.rows[0];
+                // Dic 2025: Soporte para variantes de producto
+                if (item.variante_id) {
+                    // Obtener datos de la variante
+                    const varQuery = await db.query(
+                        `SELECT
+                            v.nombre_variante AS nombre,
+                            v.sku,
+                            COALESCE(v.precio_venta, p.precio_venta) AS precio_venta
+                         FROM variantes_producto v
+                         JOIN productos p ON p.id = v.producto_id
+                         WHERE v.id = $1`,
+                        [item.variante_id]
+                    );
+                    producto = varQuery.rows[0];
+                    nombreSnapshot = producto.nombre;
+                    skuSnapshot = producto.sku;
+                } else {
+                    // Obtener datos del producto para snapshot
+                    const prodQuery = await db.query(
+                        `SELECT nombre, sku, precio_venta
+                         FROM productos WHERE id = $1`,
+                        [item.producto_id]
+                    );
+                    producto = prodQuery.rows[0];
+                    nombreSnapshot = producto.nombre;
+                    skuSnapshot = producto.sku;
+                }
 
                 // Calcular precio unitario (Dic 2025: precio mayoreo ahora viene de listas_precios)
                 let precioUnitario = item.precio_unitario || producto.precio_venta;
@@ -244,6 +296,7 @@ class VentasPOSModel {
                     INSERT INTO ventas_pos_items (
                         venta_pos_id,
                         producto_id,
+                        variante_id,
                         nombre_producto,
                         sku,
                         cantidad,
@@ -254,15 +307,16 @@ class VentasPOSModel {
                         subtotal,
                         aplica_comision,
                         notas
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
                     RETURNING *
                 `;
 
                 const itemValues = [
                     venta.id,
                     item.producto_id,
-                    producto.nombre,
-                    producto.sku,
+                    item.variante_id || null,  // Dic 2025: variante_id
+                    nombreSnapshot,
+                    skuSnapshot,
                     item.cantidad,
                     precioUnitario,
                     descuentoPorcentaje,
@@ -275,6 +329,10 @@ class VentasPOSModel {
 
                 const resultItem = await db.query(itemQuery, itemValues);
                 itemsInsertados.push(resultItem.rows[0]);
+
+                // NOTA: El trigger SQL calcular_totales_venta_pos() decrementa
+                // automáticamente el stock de variantes y productos cuando la
+                // venta está 'completada'. No duplicar aquí.
 
                 // Dic 2025: Marcar número de serie como vendido (INV-5)
                 if (item.numero_serie_id) {

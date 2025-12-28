@@ -45,8 +45,8 @@ BEGIN
         RETURN NEW;
     END IF;
 
-    -- Obtener datos del profesional
-    SELECT p.id, p.nombre, p.usuario_id, p.organizacion_id
+    -- Obtener datos del profesional (FIX: usar nombre_completo, no nombre)
+    SELECT p.id, p.nombre_completo, p.usuario_id, p.organizacion_id
     INTO v_profesional
     FROM profesionales p
     WHERE p.id = NEW.profesional_id;
@@ -79,8 +79,8 @@ BEGIN
                 TO_CHAR(NEW.hora_inicio, 'HH24:MI'),
             'info',
             'calendar-plus',
-            '/citas/' || NEW.id,
-            'Ver cita',
+            '/citas',
+            'Ver citas',
             'cita',
             NEW.id
         );
@@ -115,8 +115,8 @@ DECLARE
 BEGIN
     -- Solo cuando cambia a cancelada
     IF OLD.estado != 'cancelada' AND NEW.estado = 'cancelada' THEN
-        -- Obtener datos
-        SELECT p.id, p.nombre, p.usuario_id, p.organizacion_id
+        -- Obtener datos (FIX: usar nombre_completo, no nombre)
+        SELECT p.id, p.nombre_completo, p.usuario_id, p.organizacion_id
         INTO v_profesional
         FROM profesionales p
         WHERE p.id = NEW.profesional_id;
@@ -138,8 +138,8 @@ BEGIN
                     TO_CHAR(NEW.hora_inicio, 'HH24:MI'),
                 'warning',
                 'calendar-x',
-                '/citas/' || NEW.id,
-                'Ver detalles',
+                '/citas',
+                'Ver citas',
                 'cita',
                 NEW.id
             );
@@ -202,8 +202,8 @@ BEGIN
                     CASE WHEN NEW.stock_actual <= 0 THEN '' ELSE ' (minimo: ' || NEW.stock_minimo || ')' END,
                 CASE WHEN NEW.stock_actual <= 0 THEN 'error' ELSE 'warning' END,
                 CASE WHEN NEW.stock_actual <= 0 THEN 'package-x' ELSE 'package-minus' END,
-                '/inventario/productos/' || NEW.id,
-                'Ver producto',
+                '/inventario/productos',
+                'Ver productos',
                 'producto',
                 NEW.id
             );

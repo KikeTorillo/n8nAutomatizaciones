@@ -98,29 +98,52 @@ BEGIN
                 FOR item IN
                     SELECT * FROM ventas_pos_items WHERE venta_pos_id = v_venta_pos_id
                 LOOP
-                    -- ✅ Lock optimista: Evitar race conditions
-                    SELECT stock_actual INTO v_stock_actual
-                    FROM productos
-                    WHERE id = item.producto_id
-                    FOR UPDATE;
+                    -- Dic 2025: Soporte para variantes de producto
+                    IF item.variante_id IS NOT NULL THEN
+                        -- ✅ Lock optimista para VARIANTE
+                        SELECT stock_actual INTO v_stock_actual
+                        FROM variantes_producto
+                        WHERE id = item.variante_id
+                        FOR UPDATE;
 
-                    -- Validar stock suficiente
-                    IF v_stock_actual < item.cantidad THEN
-                        PERFORM set_config('app.bypass_rls', 'false', true);
-                        RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
-                            item.producto_id, v_stock_actual, item.cantidad;
+                        -- Validar stock de variante
+                        IF v_stock_actual < item.cantidad THEN
+                            PERFORM set_config('app.bypass_rls', 'false', true);
+                            RAISE EXCEPTION 'Stock insuficiente para variante ID %: disponible %, requerido %',
+                                item.variante_id, v_stock_actual, item.cantidad;
+                        END IF;
+
+                        -- Actualizar stock de la variante
+                        UPDATE variantes_producto
+                        SET stock_actual = stock_actual - item.cantidad,
+                            actualizado_en = NOW()
+                        WHERE id = item.variante_id;
+                    ELSE
+                        -- ✅ Lock optimista: Evitar race conditions (producto normal)
+                        SELECT stock_actual INTO v_stock_actual
+                        FROM productos
+                        WHERE id = item.producto_id
+                        FOR UPDATE;
+
+                        -- Validar stock suficiente
+                        IF v_stock_actual < item.cantidad THEN
+                            PERFORM set_config('app.bypass_rls', 'false', true);
+                            RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
+                                item.producto_id, v_stock_actual, item.cantidad;
+                        END IF;
+
+                        -- Actualizar stock del producto
+                        UPDATE productos
+                        SET stock_actual = stock_actual - item.cantidad,
+                            actualizado_en = NOW()
+                        WHERE id = item.producto_id;
                     END IF;
-
-                    -- Actualizar stock del producto
-                    UPDATE productos
-                    SET stock_actual = stock_actual - item.cantidad,
-                        actualizado_en = NOW()
-                    WHERE id = item.producto_id;
 
                     -- Registrar movimiento de inventario
                     INSERT INTO movimientos_inventario (
                         organizacion_id,
                         producto_id,
+                        variante_id,
                         tipo_movimiento,
                         cantidad,
                         stock_antes,
@@ -134,6 +157,7 @@ BEGIN
                     SELECT
                         v_organizacion_id,
                         item.producto_id,
+                        item.variante_id,
                         'salida_venta',
                         -item.cantidad, -- Negativo porque es salida
                         v_stock_actual, -- Stock antes (con lock)
@@ -198,29 +222,52 @@ BEGIN
         FOR item IN
             SELECT * FROM ventas_pos_items WHERE venta_pos_id = NEW.id
         LOOP
-            -- ✅ Lock optimista: Evitar race conditions
-            SELECT stock_actual INTO v_stock_actual
-            FROM productos
-            WHERE id = item.producto_id
-            FOR UPDATE;
+            -- Dic 2025: Soporte para variantes de producto
+            IF item.variante_id IS NOT NULL THEN
+                -- ✅ Lock optimista para VARIANTE
+                SELECT stock_actual INTO v_stock_actual
+                FROM variantes_producto
+                WHERE id = item.variante_id
+                FOR UPDATE;
 
-            -- Validar stock suficiente
-            IF v_stock_actual < item.cantidad THEN
-                PERFORM set_config('app.bypass_rls', 'false', true);
-                RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
-                    item.producto_id, v_stock_actual, item.cantidad;
+                -- Validar stock de variante
+                IF v_stock_actual < item.cantidad THEN
+                    PERFORM set_config('app.bypass_rls', 'false', true);
+                    RAISE EXCEPTION 'Stock insuficiente para variante ID %: disponible %, requerido %',
+                        item.variante_id, v_stock_actual, item.cantidad;
+                END IF;
+
+                -- Actualizar stock de la variante
+                UPDATE variantes_producto
+                SET stock_actual = stock_actual - item.cantidad,
+                    actualizado_en = NOW()
+                WHERE id = item.variante_id;
+            ELSE
+                -- ✅ Lock optimista: Evitar race conditions (producto normal)
+                SELECT stock_actual INTO v_stock_actual
+                FROM productos
+                WHERE id = item.producto_id
+                FOR UPDATE;
+
+                -- Validar stock suficiente
+                IF v_stock_actual < item.cantidad THEN
+                    PERFORM set_config('app.bypass_rls', 'false', true);
+                    RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
+                        item.producto_id, v_stock_actual, item.cantidad;
+                END IF;
+
+                -- Actualizar stock del producto
+                UPDATE productos
+                SET stock_actual = stock_actual - item.cantidad,
+                    actualizado_en = NOW()
+                WHERE id = item.producto_id;
             END IF;
-
-            -- Actualizar stock del producto
-            UPDATE productos
-            SET stock_actual = stock_actual - item.cantidad,
-                actualizado_en = NOW()
-            WHERE id = item.producto_id;
 
             -- Registrar movimiento de inventario
             INSERT INTO movimientos_inventario (
                 organizacion_id,
                 producto_id,
+                variante_id,
                 tipo_movimiento,
                 cantidad,
                 stock_antes,
@@ -234,6 +281,7 @@ BEGIN
             SELECT
                 NEW.organizacion_id,
                 item.producto_id,
+                item.variante_id,
                 'salida_venta',
                 -item.cantidad, -- Negativo porque es salida
                 v_stock_actual, -- Stock antes (con lock)

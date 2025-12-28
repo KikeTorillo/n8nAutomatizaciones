@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp, Layers } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { useCurrency } from '@/hooks/useCurrency';
 import { monedasApi, inventarioApi } from '@/services/api/endpoints';
+import { GenerarVariantesModal, VariantesGrid } from './variantes';
 
 /**
  * Schema de validación Zod para CREAR producto - COMPLETO
@@ -58,6 +59,9 @@ const productoCreateSchema = z
 
     // Números de serie (Dic 2025 - Fase 3 Gaps)
     requiere_numero_serie: z.boolean().default(false),
+
+    // Variantes de producto (Dic 2025)
+    tiene_variantes: z.boolean().default(false),
 
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().default(false),
@@ -113,6 +117,8 @@ const productoEditSchema = z
     activo: z.boolean().optional(),
     // Números de serie (Dic 2025 - Fase 3 Gaps)
     requiere_numero_serie: z.boolean().optional(),
+    // Variantes de producto (Dic 2025)
+    tiene_variantes: z.boolean().optional(),
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().optional(),
     cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').optional(),
@@ -142,6 +148,9 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
   // Estado para precios multi-moneda
   const [preciosMoneda, setPreciosMoneda] = useState([]);
   const [mostrarPreciosMoneda, setMostrarPreciosMoneda] = useState(false);
+
+  // Estado para modal de variantes
+  const [mostrarModalVariantes, setMostrarModalVariantes] = useState(false);
 
   // Query para obtener monedas disponibles
   const { data: monedasResponse } = useQuery({
@@ -209,6 +218,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             notas: producto.notas || '',
             activo: producto.activo ?? true,
             requiere_numero_serie: producto.requiere_numero_serie || false,
+            tiene_variantes: producto.tiene_variantes || false,
             auto_generar_oc: producto.auto_generar_oc || false,
             cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
           }
@@ -233,6 +243,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             notas: '',
             activo: true,
             requiere_numero_serie: false,
+            tiene_variantes: false,
             auto_generar_oc: false,
             cantidad_oc_sugerida: 50,
           },
@@ -241,6 +252,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
   // Watch campos dinámicos
   const esPerecedero = watch('es_perecedero');
   const autoGenerarOC = watch('auto_generar_oc');
+  const tieneVariantes = watch('tiene_variantes');
 
   // Cargar datos al editar
   useEffect(() => {
@@ -265,6 +277,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         notas: producto.notas || '',
         activo: producto.activo ?? true,
         requiere_numero_serie: producto.requiere_numero_serie || false,
+        tiene_variantes: producto.tiene_variantes || false,
         auto_generar_oc: producto.auto_generar_oc || false,
         cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
       });
@@ -302,6 +315,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         notas: '',
         activo: true,
         requiere_numero_serie: false,
+        tiene_variantes: false,
         auto_generar_oc: false,
         cantidad_oc_sugerida: 50,
       });
@@ -853,6 +867,41 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
               </p>
             </div>
 
+            {/* Variantes de producto (Dic 2025) */}
+            <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+              <Checkbox
+                label="Este producto tiene variantes"
+                {...register('tiene_variantes')}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 ml-6 mt-1">
+                Permite crear combinaciones (ej: Camiseta Roja M, Camiseta Azul L) con stock independiente
+              </p>
+
+              {/* Sección de gestión de variantes (solo en edición y si tiene_variantes) */}
+              {esEdicion && tieneVariantes && (
+                <div className="mt-4 ml-0 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
+                      <Layers className="h-4 w-4 mr-2 text-primary-600 dark:text-primary-400" />
+                      Variantes del Producto
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setMostrarModalVariantes(true)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Generar Variantes
+                    </button>
+                  </div>
+                  <VariantesGrid
+                    productoId={producto?.id}
+                    onGenerarVariantes={() => setMostrarModalVariantes(true)}
+                  />
+                </div>
+              )}
+            </div>
+
             {/* Auto-generación de OC (Dic 2025 - Fase 2 Gaps) */}
             <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
               <Checkbox
@@ -900,6 +949,17 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </Button>
         </div>
       </form>
+
+      {/* Modal para generar variantes */}
+      {esEdicion && producto && (
+        <GenerarVariantesModal
+          isOpen={mostrarModalVariantes}
+          onClose={() => setMostrarModalVariantes(false)}
+          productoId={producto.id}
+          productoNombre={producto.nombre}
+          productoSku={producto.sku}
+        />
+      )}
     </Drawer>
   );
 }

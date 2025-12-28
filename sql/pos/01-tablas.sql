@@ -115,6 +115,7 @@ CREATE TABLE IF NOT EXISTS ventas_pos_items (
 
     -- 📦 PRODUCTO
     producto_id INTEGER NOT NULL REFERENCES productos(id),
+    variante_id INTEGER, -- FK a variantes_producto (si aplica)
     nombre_producto VARCHAR(200) NOT NULL, -- Snapshot del nombre (no cambia si renombran producto)
     sku VARCHAR(50), -- Snapshot del SKU
 

@@ -230,6 +230,9 @@ const inventarioSchemas = {
             // Dic 2025: Números de serie / Lotes
             requiere_numero_serie: Joi.boolean().optional().default(false),
 
+            // Dic 2025: Variantes de producto
+            tiene_variantes: Joi.boolean().optional().default(false),
+
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).custom((value, helpers) => {
@@ -277,6 +280,9 @@ const inventarioSchemas = {
 
             // Dic 2025: Números de serie / Lotes
             requiere_numero_serie: Joi.boolean().optional(),
+
+            // Dic 2025: Variantes de producto
+            tiene_variantes: Joi.boolean().optional(),
 
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()

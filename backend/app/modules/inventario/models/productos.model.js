@@ -195,9 +195,10 @@ class ProductosModel {
                     imagen_url,
                     activo,
                     requiere_numero_serie,
+                    tiene_variantes,
                     auto_generar_oc,
                     cantidad_oc_sugerida
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
                 RETURNING *
             `;
 
@@ -224,6 +225,7 @@ class ProductosModel {
                 data.imagen_url || null,
                 data.activo !== undefined ? data.activo : true,
                 data.requiere_numero_serie !== undefined ? data.requiere_numero_serie : false,
+                data.tiene_variantes !== undefined ? data.tiene_variantes : false,
                 data.auto_generar_oc !== undefined ? data.auto_generar_oc : false,
                 data.cantidad_oc_sugerida !== undefined ? data.cantidad_oc_sugerida : 50
             ];
@@ -356,12 +358,11 @@ class ProductosModel {
                 whereConditions.push(`p.stock_actual <= p.stock_minimo`);
             }
 
-            // Filtro por stock agotado
+            // Filtro por stock agotado (solo filtra cuando se pide explícitamente ver agotados)
             if (filtros.stock_agotado === true) {
                 whereConditions.push(`p.stock_actual = 0`);
-            } else if (filtros.stock_agotado === false) {
-                whereConditions.push(`p.stock_actual > 0`);
             }
+            // Nota: stock_agotado=false o undefined no agrega filtro (muestra todos)
 
             // Filtro por permite venta
             if (filtros.permite_venta !== undefined) {
@@ -504,7 +505,7 @@ class ProductosModel {
                 'precio_compra', 'precio_venta',
                 'stock_minimo', 'stock_maximo', 'unidad_medida', 'alerta_stock_minimo',
                 'es_perecedero', 'dias_vida_util', 'permite_venta', 'permite_uso_servicio',
-                'notas', 'imagen_url', 'activo', 'requiere_numero_serie',
+                'notas', 'imagen_url', 'activo', 'requiere_numero_serie', 'tiene_variantes',
                 'auto_generar_oc', 'cantidad_oc_sugerida'
             ];
             const updates = [];
@@ -761,79 +762,118 @@ class ProductosModel {
     /**
      * Búsqueda avanzada de productos (full-text search + código de barras)
      * Dic 2025: Incluye requiere_numero_serie para integración POS
+     * Dic 2025: Busca también en variantes_producto (variantes primero)
      */
     static async buscar(filtros, organizacionId) {
         return await RLSContextManager.query(organizacionId, async (db) => {
             const { q, tipo_busqueda, categoria_id, proveedor_id, solo_activos, solo_con_stock, limit } = filtros;
 
-            let query = `
-                SELECT
-                    p.*,
-                    p.requiere_numero_serie,
-                    c.nombre AS nombre_categoria,
-                    prov.nombre AS nombre_proveedor
-                FROM productos p
-                LEFT JOIN categorias_productos c ON c.id = p.categoria_id
-                LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
-                WHERE p.organizacion_id = $1
+            // Búsqueda unificada: Variantes + Productos sin variantes
+            // Las variantes aparecen primero si coinciden exactamente por SKU/barcode
+            const query = `
+                WITH busqueda AS (
+                    -- 1. Buscar en VARIANTES primero
+                    SELECT
+                        v.id AS variante_id,
+                        p.id AS producto_id,
+                        v.nombre_variante AS nombre,
+                        p.descripcion,
+                        v.sku,
+                        v.codigo_barras,
+                        p.categoria_id,
+                        p.proveedor_id,
+                        COALESCE(v.precio_compra, p.precio_compra) AS precio_compra,
+                        COALESCE(v.precio_venta, p.precio_venta) AS precio_venta,
+                        v.stock_actual,
+                        v.stock_minimo,
+                        v.stock_maximo,
+                        p.unidad_medida,
+                        p.permite_venta,
+                        p.requiere_numero_serie,
+                        COALESCE(v.imagen_url, p.imagen_url) AS imagen_url,
+                        v.activo,
+                        true AS es_variante,
+                        c.nombre AS nombre_categoria,
+                        prov.nombre AS nombre_proveedor,
+                        CASE
+                            WHEN v.sku = $2 OR v.codigo_barras = $2 THEN 0  -- Coincidencia exacta
+                            ELSE 1
+                        END AS orden_relevancia
+                    FROM variantes_producto v
+                    JOIN productos p ON p.id = v.producto_id
+                    LEFT JOIN categorias_productos c ON c.id = p.categoria_id
+                    LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
+                    WHERE v.organizacion_id = $1
+                        AND v.activo = true
+                        AND p.tiene_variantes = true
+                        AND (
+                            v.nombre_variante ILIKE $3
+                            OR v.sku ILIKE $3
+                            OR v.sku = $2
+                            OR v.codigo_barras = $2
+                        )
+                        ${solo_con_stock ? 'AND v.stock_actual > 0' : ''}
+                        ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
+                        ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
+
+                    UNION ALL
+
+                    -- 2. Buscar en PRODUCTOS (sin variantes o producto base)
+                    SELECT
+                        NULL AS variante_id,
+                        p.id AS producto_id,
+                        p.nombre,
+                        p.descripcion,
+                        p.sku,
+                        p.codigo_barras,
+                        p.categoria_id,
+                        p.proveedor_id,
+                        p.precio_compra,
+                        p.precio_venta,
+                        p.stock_actual,
+                        p.stock_minimo,
+                        p.stock_maximo,
+                        p.unidad_medida,
+                        p.permite_venta,
+                        p.requiere_numero_serie,
+                        p.imagen_url,
+                        p.activo,
+                        false AS es_variante,
+                        c.nombre AS nombre_categoria,
+                        prov.nombre AS nombre_proveedor,
+                        CASE
+                            WHEN p.sku = $2 OR p.codigo_barras = $2 THEN 0
+                            ELSE 2  -- Productos después de variantes
+                        END AS orden_relevancia
+                    FROM productos p
+                    LEFT JOIN categorias_productos c ON c.id = p.categoria_id
+                    LEFT JOIN proveedores prov ON prov.id = p.proveedor_id
+                    WHERE p.organizacion_id = $1
+                        AND p.tiene_variantes = false  -- Solo productos SIN variantes
+                        ${solo_activos ? 'AND p.activo = true' : ''}
+                        AND (
+                            p.nombre ILIKE $3
+                            OR p.sku ILIKE $3
+                            OR p.sku = $2
+                            OR p.codigo_barras = $2
+                        )
+                        ${solo_con_stock ? 'AND p.stock_actual > 0' : ''}
+                        ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
+                        ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
+                )
+                SELECT * FROM busqueda
+                ORDER BY orden_relevancia, nombre
+                LIMIT $4
             `;
 
-            const values = [organizacionId];
-            let valueIndex = 2;
-
-            // Búsqueda según tipo
-            if (tipo_busqueda === 'nombre' || tipo_busqueda === 'all') {
-                query += ` AND p.nombre ILIKE $${valueIndex}`;
-                values.push(`%${q}%`);
-                valueIndex++;
-            }
-
-            if (tipo_busqueda === 'sku' || tipo_busqueda === 'all') {
-                if (tipo_busqueda === 'all') {
-                    query += ` OR p.sku ILIKE $${valueIndex - 1}`;
-                } else {
-                    query += ` AND p.sku ILIKE $${valueIndex}`;
-                    values.push(`%${q}%`);
-                    valueIndex++;
-                }
-            }
-
-            if (tipo_busqueda === 'codigo_barras' || tipo_busqueda === 'all') {
-                if (tipo_busqueda === 'all') {
-                    query += ` OR p.codigo_barras = $${valueIndex - 1}`;
-                } else {
-                    query += ` AND p.codigo_barras = $${valueIndex}`;
-                    values.push(q);
-                    valueIndex++;
-                }
-            }
-
-            // Filtros adicionales
-            if (categoria_id) {
-                query += ` AND p.categoria_id = $${valueIndex}`;
-                values.push(categoria_id);
-                valueIndex++;
-            }
-
-            if (proveedor_id) {
-                query += ` AND p.proveedor_id = $${valueIndex}`;
-                values.push(proveedor_id);
-                valueIndex++;
-            }
-
-            if (solo_activos) {
-                query += ` AND p.activo = true`;
-            }
-
-            if (solo_con_stock) {
-                query += ` AND p.stock_actual > 0`;
-            }
-
-            query += ` ORDER BY p.nombre ASC LIMIT $${valueIndex}`;
-            values.push(limit);
+            const values = [
+                organizacionId,
+                q,              // Para coincidencia exacta SKU/barcode
+                `%${q}%`,       // Para ILIKE
+                limit || 20
+            ];
 
             const result = await db.query(query, values);
-
             return result.rows;
         });
     }

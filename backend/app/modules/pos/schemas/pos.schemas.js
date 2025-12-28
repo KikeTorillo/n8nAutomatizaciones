@@ -62,6 +62,12 @@ const posSchemas = {
                             'any.required': 'producto_id es requerido en cada item'
                         }),
 
+                        // Dic 2025: Soporte para variantes de producto
+                        variante_id: Joi.number().integer().positive().optional().allow(null).messages({
+                            'number.base': 'variante_id debe ser un número',
+                            'number.positive': 'variante_id debe ser positivo'
+                        }),
+
                         cantidad: Joi.number().integer().min(1).required().messages({
                             'any.required': 'cantidad es requerida en cada item',
                             'number.min': 'cantidad debe ser al menos 1'
