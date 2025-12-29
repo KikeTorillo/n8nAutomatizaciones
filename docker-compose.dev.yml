@@ -30,11 +30,12 @@ services:
     networks:
       - backend_network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admin -d postgres && psql -U admin -d postgres -c 'SELECT 1 FROM usuarios LIMIT 1;' > /dev/null 2>&1 && psql -U admin -d postgres -c 'SELECT COUNT(*) FROM cron.job;' > /dev/null 2>&1"]
+      # Verifica: pg_isready + usuarios + cron.job + reservas_stock (última tabla del init)
+      test: ["CMD-SHELL", "pg_isready -U admin -d postgres && psql -U admin -d postgres -c 'SELECT 1 FROM usuarios LIMIT 1;' > /dev/null 2>&1 && psql -U admin -d postgres -c 'SELECT COUNT(*) FROM cron.job;' > /dev/null 2>&1 && psql -U admin -d postgres -c 'SELECT 1 FROM reservas_stock LIMIT 1;' > /dev/null 2>&1"]
       interval: 15s
       timeout: 10s
-      retries: 10
-      start_period: 90s
+      retries: 15
+      start_period: 120s
 
   redis:
     image: redis:7

@@ -72,41 +72,51 @@ class VentasPOSModel {
                 }
             }
 
-            // Validar productos y stock ANTES de insertar (con lock optimista)
-            for (const item of data.items) {
-                // SELECT FOR UPDATE para lock optimista
-                const productoQuery = await db.query(
-                    `SELECT id, nombre, sku, precio_venta,
-                            stock_actual, permite_venta, activo, tiene_variantes
-                     FROM productos
-                     WHERE id = $1 AND organizacion_id = $2
-                     FOR UPDATE`,
-                    [item.producto_id, organizacionId]
-                );
+            // ================================================================
+            // VALIDACIÓN Y RESERVA ATÓMICA DE STOCK
+            // Arquitectura Superior v2.0 - Dic 2025
+            // Usa crear_reserva_atomica con SKIP LOCKED para concurrencia
+            // ================================================================
+            const reservasCreadas = [];
 
-                if (productoQuery.rows.length === 0) {
-                    throw new Error(`Producto con ID ${item.producto_id} no encontrado`);
-                }
+            try {
+                for (const item of data.items) {
+                    // Validar producto existe y está activo
+                    const productoQuery = await db.query(
+                        `SELECT id, nombre, sku, precio_venta,
+                                stock_actual, permite_venta, activo, tiene_variantes
+                         FROM productos
+                         WHERE id = $1 AND organizacion_id = $2
+                         FOR UPDATE`,
+                        [item.producto_id, organizacionId]
+                    );
 
-                const producto = productoQuery.rows[0];
+                    if (productoQuery.rows.length === 0) {
+                        throw new Error(`Producto con ID ${item.producto_id} no encontrado`);
+                    }
 
-                if (!producto.activo) {
-                    throw new Error(`Producto "${producto.nombre}" está inactivo`);
-                }
+                    const producto = productoQuery.rows[0];
 
-                if (!producto.permite_venta) {
-                    throw new Error(`Producto "${producto.nombre}" no está disponible para venta`);
-                }
+                    if (!producto.activo) {
+                        throw new Error(`Producto "${producto.nombre}" está inactivo`);
+                    }
 
-                // Dic 2025: Validar stock de VARIANTE si aplica
-                if (data.tipo_venta !== 'cotizacion') {
+                    if (!producto.permite_venta) {
+                        throw new Error(`Producto "${producto.nombre}" no está disponible para venta`);
+                    }
+
+                    // Para cotizaciones no necesitamos reservar stock
+                    if (data.tipo_venta === 'cotizacion') {
+                        continue;
+                    }
+
+                    // Crear reserva atómica usando la función SQL con SKIP LOCKED
                     if (item.variante_id) {
-                        // Verificar stock de la variante
+                        // Validar que la variante existe y está activa
                         const varianteQuery = await db.query(
                             `SELECT id, nombre_variante, stock_actual, activo
                              FROM variantes_producto
-                             WHERE id = $1 AND producto_id = $2
-                             FOR UPDATE`,
+                             WHERE id = $1 AND producto_id = $2`,
                             [item.variante_id, item.producto_id]
                         );
 
@@ -120,22 +130,104 @@ class VentasPOSModel {
                             throw new Error(`Variante "${variante.nombre_variante}" está inactiva`);
                         }
 
-                        if (variante.stock_actual < item.cantidad) {
+                        // Crear reserva atómica para VARIANTE
+                        const reservaResult = await db.query(
+                            `SELECT * FROM crear_reserva_atomica(
+                                $1::INTEGER,   -- organizacion_id
+                                $2::INTEGER,   -- cantidad
+                                'venta_pos',   -- tipo_origen
+                                NULL,          -- producto_id (null para variante)
+                                $3::INTEGER,   -- variante_id
+                                NULL,          -- origen_id (se actualizará después)
+                                NULL,          -- origen_referencia
+                                $4::INTEGER,   -- sucursal_id
+                                $5::INTEGER,   -- usuario_id
+                                15             -- minutos_expiracion
+                            )`,
+                            [organizacionId, item.cantidad, item.variante_id, data.sucursal_id, data.usuario_id]
+                        );
+
+                        const reserva = reservaResult.rows[0];
+
+                        if (!reserva.exito) {
                             throw new Error(
-                                `Stock insuficiente para "${variante.nombre_variante}". ` +
-                                `Disponible: ${variante.stock_actual}, Solicitado: ${item.cantidad}`
+                                `${reserva.mensaje} para variante "${variante.nombre_variante}"`
                             );
                         }
+
+                        reservasCreadas.push({
+                            reserva_id: reserva.reserva_id,
+                            producto_id: item.producto_id,
+                            variante_id: item.variante_id,
+                            cantidad: item.cantidad,
+                            nombre: variante.nombre_variante
+                        });
+
                     } else if (!producto.tiene_variantes) {
-                        // Solo verificar stock del producto si NO tiene variantes
-                        if (producto.stock_actual < item.cantidad) {
+                        // Crear reserva atómica para PRODUCTO (sin variantes)
+                        // Orden: org, cantidad, tipo, producto_id, variante_id, origen_id, origen_ref, sucursal, usuario, mins
+                        const reservaResult = await db.query(
+                            `SELECT * FROM crear_reserva_atomica(
+                                $1::INTEGER,   -- organizacion_id
+                                $2::INTEGER,   -- cantidad
+                                'venta_pos',   -- tipo_origen
+                                $3::INTEGER,   -- producto_id
+                                NULL,          -- variante_id (null para producto)
+                                NULL,          -- origen_id (se actualizará después)
+                                NULL,          -- origen_referencia
+                                $4::INTEGER,   -- sucursal_id
+                                $5::INTEGER,   -- usuario_id
+                                15             -- minutos_expiracion
+                            )`,
+                            [organizacionId, item.cantidad, item.producto_id, data.sucursal_id, data.usuario_id]
+                        );
+
+                        const reserva = reservaResult.rows[0];
+
+                        if (!reserva.exito) {
                             throw new Error(
-                                `Stock insuficiente para "${producto.nombre}". ` +
-                                `Disponible: ${producto.stock_actual}, Solicitado: ${item.cantidad}`
+                                `${reserva.mensaje} para producto "${producto.nombre}"`
                             );
+                        }
+
+                        reservasCreadas.push({
+                            reserva_id: reserva.reserva_id,
+                            producto_id: item.producto_id,
+                            variante_id: null,
+                            cantidad: item.cantidad,
+                            nombre: producto.nombre
+                        });
+                    }
+                }
+
+                logger.info('[VentasPOSModel.crear] Reservas creadas exitosamente', {
+                    total_reservas: reservasCreadas.length,
+                    reservas: reservasCreadas.map(r => ({ id: r.reserva_id, nombre: r.nombre, cantidad: r.cantidad }))
+                });
+
+            } catch (error) {
+                // Si hay error, liberar todas las reservas creadas
+                if (reservasCreadas.length > 0) {
+                    logger.warn('[VentasPOSModel.crear] Error en validación, liberando reservas', {
+                        reservas_a_liberar: reservasCreadas.length,
+                        error: error.message
+                    });
+
+                    for (const reserva of reservasCreadas) {
+                        try {
+                            await db.query(
+                                `SELECT liberar_reserva($1, 'Error en creación de venta: ' || $2)`,
+                                [reserva.reserva_id, error.message]
+                            );
+                        } catch (liberarError) {
+                            logger.error('[VentasPOSModel.crear] Error liberando reserva', {
+                                reserva_id: reserva.reserva_id,
+                                error: liberarError.message
+                            });
                         }
                     }
                 }
+                throw error;
             }
 
             // Calcular totales
@@ -351,16 +443,56 @@ class VentasPOSModel {
             // NOTA: La comisión se calcula automáticamente por el trigger DEFERRED
             // trigger_calcular_comision_venta que se ejecuta al COMMIT de la transacción
 
+            // ================================================================
+            // CONFIRMAR RESERVAS DE STOCK
+            // Las reservas se crearon al inicio, ahora las confirmamos
+            // El descuento real de stock lo hace el trigger de venta
+            // ================================================================
+            if (reservasCreadas.length > 0 && data.tipo_venta !== 'cotizacion') {
+                for (const reserva of reservasCreadas) {
+                    try {
+                        // Actualizar origen_id ahora que tenemos el ID de la venta
+                        await db.query(
+                            `UPDATE reservas_stock
+                             SET origen_id = $1,
+                                 origen_referencia = $2
+                             WHERE id = $3`,
+                            [venta.id, venta.folio, reserva.reserva_id]
+                        );
+
+                        // Confirmar la reserva
+                        await db.query(
+                            `SELECT confirmar_reserva_stock($1, $2)`,
+                            [reserva.reserva_id, data.usuario_id]
+                        );
+                    } catch (confirmarError) {
+                        logger.error('[VentasPOSModel.crear] Error confirmando reserva', {
+                            reserva_id: reserva.reserva_id,
+                            venta_id: venta.id,
+                            error: confirmarError.message
+                        });
+                        // No lanzar error aquí, la venta ya está creada
+                    }
+                }
+
+                logger.info('[VentasPOSModel.crear] Reservas confirmadas', {
+                    total_confirmadas: reservasCreadas.length,
+                    venta_id: venta.id
+                });
+            }
+
             logger.info('[VentasPOSModel.crear] Venta creada exitosamente', {
                 venta_id: venta.id,
                 folio: venta.folio,
                 total: venta.total,
-                items: itemsInsertados.length
+                items: itemsInsertados.length,
+                reservas_confirmadas: reservasCreadas.length
             });
 
             return {
                 ...venta,
-                items: itemsInsertados
+                items: itemsInsertados,
+                reservas: reservasCreadas
             };
         });
     }

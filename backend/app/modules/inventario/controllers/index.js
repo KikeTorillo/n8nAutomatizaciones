@@ -256,7 +256,8 @@ class InventarioMainController {
     }
 
     // ===================================================================
-    // 🔒 ENDPOINTS RESERVAS DE STOCK (Dic 2025 - Fase 1 Gaps)
+    // 🔒 ENDPOINTS RESERVAS DE STOCK (v2.0 - Arquitectura Superior)
+    // Soporta variantes de producto + concurrencia SKIP LOCKED
     // ===================================================================
 
     static crearReserva(req, res) {
@@ -275,6 +276,10 @@ class InventarioMainController {
         return ReservasController.listar(req, res);
     }
 
+    static resumenReservas(req, res) {
+        return ReservasController.resumen(req, res);
+    }
+
     static confirmarReserva(req, res) {
         return ReservasController.confirmar(req, res);
     }
@@ -283,8 +288,16 @@ class InventarioMainController {
         return ReservasController.confirmarMultiple(req, res);
     }
 
+    static liberarReserva(req, res) {
+        return ReservasController.liberar(req, res);
+    }
+
     static cancelarReserva(req, res) {
         return ReservasController.cancelar(req, res);
+    }
+
+    static liberarReservaPorOrigen(req, res) {
+        return ReservasController.liberarPorOrigen(req, res);
     }
 
     static cancelarReservaPorOrigen(req, res) {
@@ -295,12 +308,20 @@ class InventarioMainController {
         return ReservasController.stockDisponible(req, res);
     }
 
+    static stockInfoCompleto(req, res) {
+        return ReservasController.stockInfoCompleto(req, res);
+    }
+
     static stockDisponibleMultiple(req, res) {
         return ReservasController.stockDisponibleMultiple(req, res);
     }
 
     static verificarDisponibilidad(req, res) {
         return ReservasController.verificarDisponibilidad(req, res);
+    }
+
+    static stockTiempoReal(req, res) {
+        return ReservasController.stockTiempoReal(req, res);
     }
 
     static extenderReserva(req, res) {
