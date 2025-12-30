@@ -17,6 +17,9 @@ const RutasOperacionController = require('../controllers/rutas-operacion.control
 const AtributosController = require('../controllers/atributos.controller');
 const VariantesController = require('../controllers/variantes.controller');
 const SnapshotsController = require('../controllers/snapshots.controller');
+const ReordenController = require('../controllers/reorden.controller');
+const LandedCostsController = require('../controllers/landed-costs.controller');
+const DropshipController = require('../controllers/dropship.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const { asyncHandler } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
@@ -748,6 +751,133 @@ router.post('/ordenes-compra/:id/pago',
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.registrarPagoOrdenCompra),
     InventarioController.registrarPagoOrdenCompra
+);
+
+// ===================================================================
+// LANDED COSTS - Costos en Destino (Dic 2025)
+// Agregar costos adicionales (flete, arancel, seguro) a OC
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id/costos
+ * Listar costos adicionales de una OC
+ */
+router.get('/ordenes-compra/:id/costos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.listarCostos)
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id/costos/resumen
+ * Obtener resumen de costos de una OC
+ */
+router.get('/ordenes-compra/:id/costos/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.obtenerResumen)
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id/costos/:costoId
+ * Obtener un costo adicional por ID
+ */
+router.get('/ordenes-compra/:id/costos/:costoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.obtenerCosto)
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/costos
+ * Crear costo adicional
+ */
+router.post('/ordenes-compra/:id/costos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearCostoAdicional),
+    asyncHandler(LandedCostsController.crearCosto)
+);
+
+/**
+ * PUT /api/v1/inventario/ordenes-compra/:id/costos/:costoId
+ * Actualizar costo adicional
+ */
+router.put('/ordenes-compra/:id/costos/:costoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarCostoAdicional),
+    asyncHandler(LandedCostsController.actualizarCosto)
+);
+
+/**
+ * DELETE /api/v1/inventario/ordenes-compra/:id/costos/:costoId
+ * Eliminar costo adicional
+ */
+router.delete('/ordenes-compra/:id/costos/:costoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.eliminarCosto)
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/costos/:costoId/distribuir
+ * Distribuir un costo adicional a los items
+ */
+router.post('/ordenes-compra/:id/costos/:costoId/distribuir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.distribuirCosto)
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id/costos/:costoId/distribucion
+ * Obtener detalle de distribucion de un costo
+ */
+router.get('/ordenes-compra/:id/costos/:costoId/distribucion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.obtenerDistribucion)
+);
+
+/**
+ * POST /api/v1/inventario/ordenes-compra/:id/distribuir-costos
+ * Distribuir todos los costos pendientes de una OC
+ */
+router.post('/ordenes-compra/:id/distribuir-costos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.distribuirTodos)
+);
+
+/**
+ * GET /api/v1/inventario/ordenes-compra/:id/costos-por-items
+ * Obtener costos totales desglosados por item
+ */
+router.get('/ordenes-compra/:id/costos-por-items',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(LandedCostsController.obtenerCostosPorItems)
 );
 
 // ===================================================================
@@ -2073,6 +2203,19 @@ router.get('/snapshots/fechas',
 );
 
 /**
+ * GET /api/v1/inventario/snapshots/historico/:productoId
+ * Obtener historico de stock de un producto para grafico de pronostico
+ * @param productoId - ID del producto
+ * @query dias - Dias de historico (default: 30)
+ */
+router.get('/snapshots/historico/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.historicoProducto)
+);
+
+/**
  * GET /api/v1/inventario/snapshots
  * Listar snapshots disponibles
  */
@@ -2360,6 +2503,274 @@ router.delete('/ajustes-masivos/:id',
     rateLimiting.apiRateLimit,
     validate(inventarioSchemas.cancelarAjusteMasivo),
     AjustesMasivosController.cancelar
+);
+
+// ===================================================================
+// REORDEN AUTOMATICO (Dic 2025)
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/reorden/dashboard
+ * Obtener metricas del dashboard de reorden
+ */
+router.get('/reorden/dashboard',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ReordenController.obtenerDashboard
+);
+
+/**
+ * GET /api/v1/inventario/reorden/productos-bajo-minimo
+ * Listar productos que necesitan reabastecimiento
+ */
+router.get('/reorden/productos-bajo-minimo',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarProductosBajoMinimo),
+    ReordenController.productosBajoMinimo
+);
+
+/**
+ * GET /api/v1/inventario/reorden/rutas
+ * Listar rutas de operacion disponibles
+ */
+router.get('/reorden/rutas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ReordenController.listarRutas
+);
+
+/**
+ * GET /api/v1/inventario/reorden/reglas
+ * Listar reglas de reabastecimiento
+ */
+router.get('/reorden/reglas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarReglasReorden),
+    ReordenController.listarReglas
+);
+
+/**
+ * GET /api/v1/inventario/reorden/reglas/:id
+ * Obtener regla por ID
+ */
+router.get('/reorden/reglas/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    ReordenController.obtenerRegla
+);
+
+/**
+ * POST /api/v1/inventario/reorden/reglas
+ * Crear nueva regla de reabastecimiento
+ */
+router.post('/reorden/reglas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearReglaReorden),
+    ReordenController.crearRegla
+);
+
+/**
+ * PUT /api/v1/inventario/reorden/reglas/:id
+ * Actualizar regla de reabastecimiento
+ */
+router.put('/reorden/reglas/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarReglaReorden),
+    ReordenController.actualizarRegla
+);
+
+/**
+ * DELETE /api/v1/inventario/reorden/reglas/:id
+ * Eliminar regla de reabastecimiento
+ */
+router.delete('/reorden/reglas/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    ReordenController.eliminarRegla
+);
+
+/**
+ * POST /api/v1/inventario/reorden/ejecutar
+ * Ejecutar evaluacion de reorden manualmente
+ */
+router.post('/reorden/ejecutar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.heavyOperationRateLimit,
+    ReordenController.ejecutarManual
+);
+
+/**
+ * GET /api/v1/inventario/reorden/logs
+ * Listar historial de ejecuciones de reorden
+ */
+router.get('/reorden/logs',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarLogsReorden),
+    ReordenController.listarLogs
+);
+
+/**
+ * GET /api/v1/inventario/reorden/logs/:id
+ * Obtener detalle de un log de ejecucion
+ */
+router.get('/reorden/logs/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerPorId),
+    ReordenController.obtenerLog
+);
+
+// ===================================================================
+// DROPSHIPPING (Dic 2025)
+// Flujo: Venta dropship -> OC automatica -> Proveedor envia a cliente
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/dropship/estadisticas
+ * Obtener estadisticas de dropship
+ */
+router.get('/dropship/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    DropshipController.obtenerEstadisticas
+);
+
+/**
+ * GET /api/v1/inventario/dropship/configuracion
+ * Obtener configuracion dropship de la organizacion
+ */
+router.get('/dropship/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    DropshipController.obtenerConfiguracion
+);
+
+/**
+ * PATCH /api/v1/inventario/dropship/configuracion
+ * Actualizar configuracion dropship
+ */
+router.patch('/dropship/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarConfigDropship),
+    DropshipController.actualizarConfiguracion
+);
+
+/**
+ * GET /api/v1/inventario/dropship/pendientes
+ * Listar ventas pendientes de generar OC dropship
+ */
+router.get('/dropship/pendientes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    DropshipController.obtenerVentasPendientes
+);
+
+/**
+ * POST /api/v1/inventario/dropship/desde-venta/:ventaId
+ * Crear OC dropship desde una venta
+ */
+router.post('/dropship/desde-venta/:ventaId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    DropshipController.crearDesdeVenta
+);
+
+/**
+ * GET /api/v1/inventario/dropship/ordenes
+ * Listar OC dropship
+ */
+router.get('/dropship/ordenes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    DropshipController.listarOrdenes
+);
+
+/**
+ * GET /api/v1/inventario/dropship/ordenes/:id
+ * Obtener detalle de OC dropship
+ */
+router.get('/dropship/ordenes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    DropshipController.obtenerOrden
+);
+
+/**
+ * PATCH /api/v1/inventario/dropship/ordenes/:id/confirmar-entrega
+ * Confirmar que el cliente recibio el envio
+ */
+router.patch('/dropship/ordenes/:id/confirmar-entrega',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    DropshipController.confirmarEntrega
+);
+
+/**
+ * PATCH /api/v1/inventario/dropship/ordenes/:id/cancelar
+ * Cancelar OC dropship
+ */
+router.patch('/dropship/ordenes/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    DropshipController.cancelar
 );
 
 module.exports = router;

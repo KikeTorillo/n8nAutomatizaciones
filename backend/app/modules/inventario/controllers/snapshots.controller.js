@@ -118,6 +118,37 @@ class SnapshotsController {
     }
 
     /**
+     * GET /api/v1/inventario/snapshots/historico/:productoId
+     * Obtener historico de stock de un producto para grafico de pronostico
+     * @param productoId - ID del producto
+     * @query dias - Dias de historico (default: 30)
+     */
+    static async historicoProducto(req, res) {
+        const { productoId } = req.params;
+        const { dias } = req.query;
+        const organizacionId = req.tenant.organizacionId;
+
+        if (!productoId || isNaN(parseInt(productoId))) {
+            return ResponseHelper.error(res, 'ID de producto invalido', 400);
+        }
+
+        try {
+            const resultado = await SnapshotsModel.obtenerHistoricoProducto(
+                organizacionId,
+                parseInt(productoId),
+                parseInt(dias) || 30
+            );
+
+            return ResponseHelper.success(res, resultado, 'Historico de producto obtenido');
+        } catch (error) {
+            if (error.message === 'Producto no encontrado') {
+                return ResponseHelper.error(res, error.message, 404);
+            }
+            throw error;
+        }
+    }
+
+    /**
      * POST /api/v1/inventario/snapshots
      * Generar snapshot manualmente
      * @body fecha - Fecha del snapshot (default: hoy)

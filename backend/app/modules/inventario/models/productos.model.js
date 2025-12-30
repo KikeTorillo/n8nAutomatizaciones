@@ -197,8 +197,9 @@ class ProductosModel {
                     requiere_numero_serie,
                     tiene_variantes,
                     auto_generar_oc,
-                    cantidad_oc_sugerida
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25)
+                    cantidad_oc_sugerida,
+                    ruta_preferida
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24, $25, $26)
                 RETURNING *
             `;
 
@@ -227,7 +228,8 @@ class ProductosModel {
                 data.requiere_numero_serie !== undefined ? data.requiere_numero_serie : false,
                 data.tiene_variantes !== undefined ? data.tiene_variantes : false,
                 data.auto_generar_oc !== undefined ? data.auto_generar_oc : false,
-                data.cantidad_oc_sugerida !== undefined ? data.cantidad_oc_sugerida : 50
+                data.cantidad_oc_sugerida !== undefined ? data.cantidad_oc_sugerida : 50,
+                data.ruta_preferida || 'normal'
             ];
 
             const result = await db.query(query, values);
@@ -499,14 +501,14 @@ class ProductosModel {
 
             // Construir query de actualización dinámica
             // Dic 2025: precio_mayoreo eliminado, usar listas_precios
-            // Dic 2025: requiere_numero_serie, auto_generar_oc, cantidad_oc_sugerida agregados
+            // Dic 2025: requiere_numero_serie, auto_generar_oc, cantidad_oc_sugerida, ruta_preferida agregados
             const camposActualizables = [
                 'nombre', 'descripcion', 'sku', 'codigo_barras', 'categoria_id', 'proveedor_id',
                 'precio_compra', 'precio_venta',
                 'stock_minimo', 'stock_maximo', 'unidad_medida', 'alerta_stock_minimo',
                 'es_perecedero', 'dias_vida_util', 'permite_venta', 'permite_uso_servicio',
                 'notas', 'imagen_url', 'activo', 'requiere_numero_serie', 'tiene_variantes',
-                'auto_generar_oc', 'cantidad_oc_sugerida'
+                'auto_generar_oc', 'cantidad_oc_sugerida', 'ruta_preferida'
             ];
             const updates = [];
             const values = [];

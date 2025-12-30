@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp, Layers } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp, Layers, Truck } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -66,6 +66,9 @@ const productoCreateSchema = z
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().default(false),
     cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').default(50),
+
+    // Dropshipping (Dic 2025 - Fase 1 Gaps)
+    ruta_preferida: z.enum(['normal', 'dropship', 'fabricar']).default('normal'),
   })
   .refine(
     (data) => {
@@ -122,6 +125,9 @@ const productoEditSchema = z
     // Auto-generación OC (Dic 2025 - Fase 2 Gaps)
     auto_generar_oc: z.boolean().optional(),
     cantidad_oc_sugerida: z.coerce.number().min(1, 'Mínimo 1 unidad').optional(),
+
+    // Dropshipping (Dic 2025 - Fase 1 Gaps)
+    ruta_preferida: z.enum(['normal', 'dropship', 'fabricar']).optional(),
   })
   .refine(
     (data) => {
@@ -221,6 +227,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             tiene_variantes: producto.tiene_variantes || false,
             auto_generar_oc: producto.auto_generar_oc || false,
             cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
+            ruta_preferida: producto.ruta_preferida || 'normal',
           }
         : {
             nombre: '',
@@ -246,6 +253,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             tiene_variantes: false,
             auto_generar_oc: false,
             cantidad_oc_sugerida: 50,
+            ruta_preferida: 'normal',
           },
   });
 
@@ -280,6 +288,7 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
         tiene_variantes: producto.tiene_variantes || false,
         auto_generar_oc: producto.auto_generar_oc || false,
         cantidad_oc_sugerida: producto.cantidad_oc_sugerida || 50,
+        ruta_preferida: producto.ruta_preferida || 'normal',
       });
       // Cargar imagen existente
       if (producto.imagen_url) {
@@ -923,6 +932,28 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
                   </p>
                 </div>
               )}
+            </div>
+
+            {/* Dropshipping (Dic 2025 - Fase 1 Gaps) */}
+            <div className="pt-3 mt-3 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex items-center gap-2 mb-2">
+                <Truck className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Ruta de Abastecimiento
+                </span>
+              </div>
+              <Select
+                {...register('ruta_preferida')}
+                options={[
+                  { value: 'normal', label: 'Normal - Stock en almacén' },
+                  { value: 'dropship', label: 'Dropship - Proveedor envía directo al cliente' },
+                  { value: 'fabricar', label: 'Fabricar bajo pedido' },
+                ]}
+                error={errors.ruta_preferida?.message}
+              />
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Dropship: Al vender este producto, se genera automáticamente una OC para que el proveedor envíe directamente al cliente final
+              </p>
             </div>
           </div>
 

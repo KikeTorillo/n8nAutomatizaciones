@@ -57,6 +57,15 @@ CREATE TABLE IF NOT EXISTS ordenes_compra (
     notas TEXT,
     referencia_proveedor VARCHAR(100),  -- Número de orden del proveedor
 
+    -- 🚚 DROPSHIPPING (Dic 2025)
+    -- Nota: FK a ventas_pos se agrega en 26-dropshipping.sql (POS se carga después)
+    es_dropship BOOLEAN DEFAULT false,           -- Indica si es orden dropship
+    venta_pos_id INTEGER,                        -- Venta origen (FK agregada después)
+    cliente_id INTEGER REFERENCES clientes(id) ON DELETE SET NULL,     -- Cliente final
+    cliente_nombre VARCHAR(150),                 -- Nombre del cliente (snapshot)
+    cliente_telefono VARCHAR(20),                -- Telefono del cliente
+    direccion_envio_cliente TEXT,                -- Direccion de envio directo
+
     -- 📅 TIMESTAMPS
     creado_en TIMESTAMPTZ DEFAULT NOW(),
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),

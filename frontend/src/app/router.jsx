@@ -54,6 +54,9 @@ const ConteosPage = lazy(() => import('@/pages/inventario/ConteosPage'));
 const ConteoDetallePage = lazy(() => import('@/pages/inventario/ConteoDetallePage'));
 const AjustesMasivosPage = lazy(() => import('@/pages/inventario/AjustesMasivosPage'));
 const AjusteMasivoDetallePage = lazy(() => import('@/pages/inventario/AjusteMasivoDetallePage'));
+const ReordenPage = lazy(() => import('@/pages/inventario/ReordenPage'));
+const ReglasReordenPage = lazy(() => import('@/pages/inventario/ReglasReordenPage'));
+const DropshipPage = lazy(() => import('@/pages/inventario/DropshipPage'));
 
 // Páginas de Precios (Fase 5)
 const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
@@ -502,6 +505,32 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(InventarioHistoricoPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Reorden Automático (Dic 2025)
+      {
+        path: 'inventario/reorden',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReordenPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/reorden/reglas',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ReglasReordenPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Dropshipping (Dic 2025)
+      {
+        path: 'inventario/dropship',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(DropshipPage)}
           </ProtectedRoute>
         ),
       },

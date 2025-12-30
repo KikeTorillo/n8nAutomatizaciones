@@ -101,12 +101,22 @@ class ReservasModel {
                     ? `variante_${item.variante_id}`
                     : `producto_${item.producto_id}`;
 
+                // Query con información adicional del producto (nombre, ruta_preferida)
+                // para dropshipping y mensajes de error
                 const query = `
                     SELECT
                         $1::INTEGER as producto_id,
                         $2::INTEGER as variante_id,
                         stock_disponible($1, $2, $3) as stock_disponible,
-                        stock_reservado($1, $2, $3) as stock_reservado
+                        stock_reservado($1, $2, $3) as stock_reservado,
+                        COALESCE(
+                            (SELECT nombre FROM productos WHERE id = COALESCE($1, (SELECT producto_id FROM producto_variantes WHERE id = $2))),
+                            'Producto'
+                        ) as nombre,
+                        COALESCE(
+                            (SELECT ruta_preferida FROM productos WHERE id = COALESCE($1, (SELECT producto_id FROM producto_variantes WHERE id = $2))),
+                            'normal'
+                        ) as ruta_preferida
                 `;
 
                 const result = await db.query(query, [

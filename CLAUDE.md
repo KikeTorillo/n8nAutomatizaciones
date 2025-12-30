@@ -50,6 +50,18 @@ Usar **Cipher** via MCP:
 
 > **Nota**: Odoo es solo para desarrollo/comparación. `npm run clean:data` NO borra datos de Odoo.
 
+### Credenciales Odoo 19 (análisis competitivo)
+| Campo | Valor |
+|-------|-------|
+| URL | http://localhost:8069 |
+| Email | admin |
+| Password | admin |
+| BD Postgres | odoo:odoo@odoo-postgres:5432/odoo |
+| Idioma | Español (América Latina) |
+| Módulos instalados | Ventas, CRM, Compras, Inventario, PdV, Facturación, Empleados, Calendario, Contactos, Conversaciones |
+
+> **Nota**: Si la BD se reinició, acceder a http://localhost:8069/web/database/manager para crear/restaurar.
+
 ---
 
 ## Comandos
@@ -273,9 +285,12 @@ sql/
 | Prioridad | Feature |
 |-----------|---------|
 | Alta | 2FA/MFA, Integraciones Carriers |
-| Media | Auditoría cambios, Landed Costs, Reorden automático |
+| Media | Auditoría cambios, Landed Costs |
 | Baja | API Keys por usuario, Kitting/BOM |
+
+### Implementados Recientemente (Dic 2025)
+- ✅ **Reorden Automático**: Reglas configurables por producto/categoría/proveedor, evaluación pg_cron 6:00 AM, generación automática de OC
 
 ---
 
-**Actualizado**: 29 Diciembre 2025
+**Actualizado**: 30 Diciembre 2025

@@ -327,6 +327,7 @@ DECLARE
     v_intentos INTEGER := 0;
     v_max_intentos INTEGER := 3;
     v_producto_id_final INTEGER;
+    v_ruta_preferida VARCHAR(20);  -- Dropship: saltar validación de stock
 BEGIN
     -- ========================================================================
     -- VALIDACIÓN DE PARÁMETROS
@@ -356,6 +357,10 @@ BEGIN
     ELSE
         v_producto_id_final := p_producto_id;
     END IF;
+
+    -- Obtener ruta_preferida del producto (dropship no requiere stock)
+    SELECT COALESCE(ruta_preferida, 'normal') INTO v_ruta_preferida
+    FROM productos WHERE id = v_producto_id_final;
 
     -- ========================================================================
     -- LOOP DE REINTENTOS CON SKIP LOCKED (Superior a Odoo NOWAIT)
@@ -418,7 +423,9 @@ BEGIN
     );
     v_disponible := GREATEST(COALESCE(v_stock_actual, 0) - v_reservado, 0);
 
-    IF v_disponible < p_cantidad THEN
+    -- DROPSHIP: Productos con ruta_preferida='dropship' no requieren validación de stock
+    -- El proveedor envía directamente al cliente, no necesitamos stock en almacén
+    IF v_ruta_preferida != 'dropship' AND v_disponible < p_cantidad THEN
         RETURN QUERY SELECT FALSE, NULL::INTEGER,
             format('Stock insuficiente. Disponible: %s, Solicitado: %s', v_disponible, p_cantidad)::TEXT,
             v_disponible, v_disponible;

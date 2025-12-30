@@ -163,6 +163,10 @@ CREATE TABLE IF NOT EXISTS productos (
     -- 🎨 VARIANTES (Dic 2025)
     tiene_variantes BOOLEAN DEFAULT false, -- Si tiene variantes con stock independiente
 
+    -- 🚚 RUTA DE ABASTECIMIENTO (Dic 2025)
+    ruta_preferida VARCHAR(20) DEFAULT 'normal' CHECK (ruta_preferida IN ('normal', 'dropship', 'fabricar')),
+    -- normal = stock propio, dropship = proveedor envía directo, fabricar = producción interna
+
     -- 🗑️ SOFT DELETE (Dic 2025)
     eliminado_en TIMESTAMPTZ DEFAULT NULL,
     eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
@@ -346,6 +350,35 @@ RETURNS DATE AS $$
 $$ LANGUAGE SQL IMMUTABLE;
 
 COMMENT ON FUNCTION extraer_fecha_immutable IS 'Función IMMUTABLE para extraer DATE de TIMESTAMPTZ - usada en índice único idx_alertas_unique_tipo_dia';
+
+-- ============================================================================
+-- TABLA: configuracion_inventario
+-- Descripción: Configuración del módulo de inventario por organización
+-- ============================================================================
+CREATE TABLE IF NOT EXISTS configuracion_inventario (
+    -- 🔑 IDENTIFICACIÓN
+    id SERIAL PRIMARY KEY,
+    organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE UNIQUE,
+
+    -- 📊 VALORACIÓN
+    metodo_valoracion VARCHAR(20) DEFAULT 'promedio' CHECK (metodo_valoracion IN ('fifo', 'lifo', 'promedio')),
+
+    -- ⚙️ CONFIGURACIÓN GENERAL
+    permitir_stock_negativo BOOLEAN DEFAULT false,
+    alerta_stock_minimo BOOLEAN DEFAULT true,
+    dias_alerta_vencimiento INTEGER DEFAULT 30,
+
+    -- 🚚 DROPSHIPPING (Dic 2025)
+    dropship_auto_generar_oc BOOLEAN DEFAULT true, -- true = genera OC automáticamente, false = manual
+
+    -- 📅 TIMESTAMPS
+    creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW()
+);
+
+COMMENT ON TABLE configuracion_inventario IS 'Configuración del módulo de inventario por organización';
+COMMENT ON COLUMN configuracion_inventario.metodo_valoracion IS 'Método de valoración: FIFO, LIFO o Promedio Ponderado';
+COMMENT ON COLUMN configuracion_inventario.dropship_auto_generar_oc IS 'Si true, genera OC automáticamente al vender producto dropship';
 
 -- ============================================================================
 -- FIN: TABLAS DE INVENTARIO

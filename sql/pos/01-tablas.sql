@@ -69,6 +69,11 @@ CREATE TABLE IF NOT EXISTS ventas_pos (
         'devolucion_total'     -- Devolución completa
     )),
 
+    -- 🚚 DROPSHIPPING (Dic 2025)
+    es_dropship BOOLEAN DEFAULT false,       -- Indica si tiene items dropship
+    direccion_envio TEXT,                    -- Direccion de envio del cliente
+    requiere_oc_dropship BOOLEAN DEFAULT false, -- Indica si requiere generar OC dropship
+
     -- 📅 TIMESTAMPS
     fecha_venta TIMESTAMPTZ DEFAULT NOW(),
     fecha_apartado DATE, -- Si tipo_venta = apartado

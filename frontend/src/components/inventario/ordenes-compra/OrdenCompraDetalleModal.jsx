@@ -23,6 +23,7 @@ import {
   useEliminarItemOrdenCompra,
 } from '@/hooks/useOrdenesCompra';
 import { useProductos } from '@/hooks/useProductos';
+import LandedCostsSection from './LandedCostsSection';
 
 /**
  * Modal para ver detalle de una orden de compra
@@ -558,6 +559,14 @@ export default function OrdenCompraDetalleModal({
               </div>
             )}
           </div>
+
+          {/* Costos Adicionales (Landed Costs) - Solo para órdenes enviadas o parciales */}
+          {['enviada', 'parcial', 'recibida'].includes(orden.estado) && (
+            <LandedCostsSection
+              ordenCompraId={orden.id}
+              readOnly={orden.estado === 'recibida'}
+            />
+          )}
 
           {/* Acciones */}
           <div className="flex justify-between pt-4 border-t border-gray-200 dark:border-gray-700">

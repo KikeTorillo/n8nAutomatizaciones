@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft, Clock, ClipboardList, FileSpreadsheet } from 'lucide-react';
+import { Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3, ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft, Clock, ClipboardList, FileSpreadsheet, RefreshCw, Send } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo de Inventario
@@ -47,6 +47,18 @@ const tabs = [
     label: 'Órdenes Compra',
     path: '/inventario/ordenes-compra',
     icon: ShoppingCart,
+  },
+  {
+    id: 'reorden',
+    label: 'Reorden',
+    path: '/inventario/reorden',
+    icon: RefreshCw,
+  },
+  {
+    id: 'dropship',
+    label: 'Dropship',
+    path: '/inventario/dropship',
+    icon: Send,
   },
   {
     id: 'alertas',

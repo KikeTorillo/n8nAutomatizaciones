@@ -2198,6 +2198,15 @@ export const inventarioApi = {
   generarSnapshot: (data = {}) => apiClient.post('/inventario/snapshots', data),
 
   /**
+   * Obtener historico de stock de un producto para grafico de pronostico
+   * @param {number} productoId - ID del producto
+   * @param {Object} params - { dias? } (default: 30)
+   * @returns {Promise<Object>} { snapshots[], producto, oc_pendientes[], proyeccion[], metricas }
+   */
+  obtenerHistoricoProducto: (productoId, params = {}) =>
+    apiClient.get(`/inventario/snapshots/historico/${productoId}`, { params }),
+
+  /**
    * Consultar stock en fecha especifica
    * @param {string} fecha - Fecha en formato YYYY-MM-DD
    * @param {Object} params - { producto_id?, categoria_id?, solo_con_stock?, limit?, offset? }
@@ -4744,6 +4753,227 @@ export const ajustesMasivosApi = {
   descargarPlantilla: () => apiClient.get('/inventario/ajustes-masivos/plantilla', { responseType: 'blob' }),
 };
 
+// ==================== LANDED COSTS - Costos en Destino (Dic 2025) ====================
+export const landedCostsApi = {
+  /**
+   * Listar costos adicionales de una OC
+   * @param {number} ordenCompraId
+   * @returns {Promise<Array>} Lista de costos adicionales
+   */
+  listar: (ordenCompraId) => apiClient.get(`/inventario/ordenes-compra/${ordenCompraId}/costos`),
+
+  /**
+   * Obtener resumen de costos de una OC
+   * @param {number} ordenCompraId
+   * @returns {Promise<Object>} { por_tipo, totales }
+   */
+  obtenerResumen: (ordenCompraId) => apiClient.get(`/inventario/ordenes-compra/${ordenCompraId}/costos/resumen`),
+
+  /**
+   * Obtener un costo adicional por ID
+   * @param {number} ordenCompraId
+   * @param {number} costoId
+   */
+  obtener: (ordenCompraId, costoId) => apiClient.get(`/inventario/ordenes-compra/${ordenCompraId}/costos/${costoId}`),
+
+  /**
+   * Crear costo adicional
+   * @param {number} ordenCompraId
+   * @param {Object} data - { tipo_costo, monto_total, metodo_distribucion, ... }
+   */
+  crear: (ordenCompraId, data) => apiClient.post(`/inventario/ordenes-compra/${ordenCompraId}/costos`, data),
+
+  /**
+   * Actualizar costo adicional
+   * @param {number} ordenCompraId
+   * @param {number} costoId
+   * @param {Object} data
+   */
+  actualizar: (ordenCompraId, costoId, data) =>
+    apiClient.put(`/inventario/ordenes-compra/${ordenCompraId}/costos/${costoId}`, data),
+
+  /**
+   * Eliminar costo adicional
+   * @param {number} ordenCompraId
+   * @param {number} costoId
+   */
+  eliminar: (ordenCompraId, costoId) =>
+    apiClient.delete(`/inventario/ordenes-compra/${ordenCompraId}/costos/${costoId}`),
+
+  /**
+   * Distribuir un costo adicional a los items
+   * @param {number} ordenCompraId
+   * @param {number} costoId
+   */
+  distribuir: (ordenCompraId, costoId) =>
+    apiClient.post(`/inventario/ordenes-compra/${ordenCompraId}/costos/${costoId}/distribuir`),
+
+  /**
+   * Obtener detalle de distribucion de un costo
+   * @param {number} ordenCompraId
+   * @param {number} costoId
+   */
+  obtenerDistribucion: (ordenCompraId, costoId) =>
+    apiClient.get(`/inventario/ordenes-compra/${ordenCompraId}/costos/${costoId}/distribucion`),
+
+  /**
+   * Distribuir todos los costos pendientes de una OC
+   * @param {number} ordenCompraId
+   */
+  distribuirTodos: (ordenCompraId) =>
+    apiClient.post(`/inventario/ordenes-compra/${ordenCompraId}/distribuir-costos`),
+
+  /**
+   * Obtener costos totales desglosados por item
+   * @param {number} ordenCompraId
+   */
+  obtenerCostosPorItems: (ordenCompraId) =>
+    apiClient.get(`/inventario/ordenes-compra/${ordenCompraId}/costos-por-items`),
+};
+
+// ==================== DROPSHIPPING (Dic 2025) ====================
+export const dropshipApi = {
+  /**
+   * Obtener estadisticas de dropship
+   * @returns {Promise<Object>} { borradores, enviadas, entregadas, canceladas, ... }
+   */
+  obtenerEstadisticas: () => apiClient.get('/inventario/dropship/estadisticas'),
+
+  /**
+   * Obtener configuracion dropship de la organizacion
+   * @returns {Promise<Object>} { dropship_auto_generar_oc }
+   */
+  obtenerConfiguracion: () => apiClient.get('/inventario/dropship/configuracion'),
+
+  /**
+   * Actualizar configuracion dropship
+   * @param {Object} data - { dropship_auto_generar_oc: boolean }
+   */
+  actualizarConfiguracion: (data) => apiClient.patch('/inventario/dropship/configuracion', data),
+
+  /**
+   * Obtener ventas pendientes de generar OC dropship
+   * @returns {Promise<Array>} Lista de ventas pendientes
+   */
+  obtenerVentasPendientes: () => apiClient.get('/inventario/dropship/pendientes'),
+
+  /**
+   * Crear OC dropship desde una venta
+   * @param {number} ventaId - ID de la venta
+   * @returns {Promise<Object>} Resultado con OCs creadas
+   */
+  crearDesdeVenta: (ventaId) => apiClient.post(`/inventario/dropship/desde-venta/${ventaId}`),
+
+  /**
+   * Listar OC dropship
+   * @param {Object} params - { estado?, proveedor_id?, fecha_desde?, fecha_hasta? }
+   * @returns {Promise<Array>} Lista de OC dropship
+   */
+  listarOrdenes: (params = {}) => apiClient.get('/inventario/dropship/ordenes', { params }),
+
+  /**
+   * Obtener detalle de OC dropship
+   * @param {number} id - ID de la OC
+   * @returns {Promise<Object>} Detalle de la OC con items
+   */
+  obtenerOrden: (id) => apiClient.get(`/inventario/dropship/ordenes/${id}`),
+
+  /**
+   * Confirmar entrega de OC dropship
+   * @param {number} id - ID de la OC
+   * @param {Object} data - { notas? }
+   * @returns {Promise<Object>} Resultado
+   */
+  confirmarEntrega: (id, data = {}) => apiClient.patch(`/inventario/dropship/ordenes/${id}/confirmar-entrega`, data),
+
+  /**
+   * Cancelar OC dropship
+   * @param {number} id - ID de la OC
+   * @param {Object} data - { motivo? }
+   * @returns {Promise<Object>} Resultado
+   */
+  cancelar: (id, data = {}) => apiClient.patch(`/inventario/dropship/ordenes/${id}/cancelar`, data),
+};
+
+// ==================== REORDEN AUTOMATICO (Dic 2025) ====================
+export const reordenApi = {
+  /**
+   * Obtener dashboard de reorden con metricas
+   * @returns {Promise<Object>} { metricas, reglas, job }
+   */
+  obtenerDashboard: () => apiClient.get('/inventario/reorden/dashboard'),
+
+  /**
+   * Listar productos que necesitan reabastecimiento
+   * @param {Object} params - { solo_sin_oc?, categoria_id?, proveedor_id?, limit? }
+   * @returns {Promise<Array>} Productos bajo minimo
+   */
+  productosBajoMinimo: (params = {}) => apiClient.get('/inventario/reorden/productos-bajo-minimo', { params }),
+
+  /**
+   * Listar rutas de operacion disponibles
+   * @param {Object} params - { tipo?, activo? }
+   * @returns {Promise<Array>} Rutas
+   */
+  listarRutas: (params = {}) => apiClient.get('/inventario/reorden/rutas', { params }),
+
+  /**
+   * Listar reglas de reabastecimiento
+   * @param {Object} params - { activo?, producto_id? }
+   * @returns {Promise<Array>} Reglas
+   */
+  listarReglas: (params = {}) => apiClient.get('/inventario/reorden/reglas', { params }),
+
+  /**
+   * Obtener regla por ID
+   * @param {number} id
+   * @returns {Promise<Object>} Regla
+   */
+  obtenerRegla: (id) => apiClient.get(`/inventario/reorden/reglas/${id}`),
+
+  /**
+   * Crear nueva regla de reabastecimiento
+   * @param {Object} data - Datos de la regla
+   * @returns {Promise<Object>} Regla creada
+   */
+  crearRegla: (data) => apiClient.post('/inventario/reorden/reglas', data),
+
+  /**
+   * Actualizar regla de reabastecimiento
+   * @param {number} id
+   * @param {Object} data - Datos a actualizar
+   * @returns {Promise<Object>} Regla actualizada
+   */
+  actualizarRegla: (id, data) => apiClient.put(`/inventario/reorden/reglas/${id}`, data),
+
+  /**
+   * Eliminar regla de reabastecimiento
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarRegla: (id) => apiClient.delete(`/inventario/reorden/reglas/${id}`),
+
+  /**
+   * Ejecutar evaluacion de reorden manualmente
+   * @returns {Promise<Object>} { reglas_evaluadas, ordenes_generadas, errores, detalles }
+   */
+  ejecutarManual: () => apiClient.post('/inventario/reorden/ejecutar'),
+
+  /**
+   * Listar historial de ejecuciones de reorden
+   * @param {Object} params - { tipo?, fecha_desde?, fecha_hasta?, limit?, offset? }
+   * @returns {Promise<Array>} Logs de ejecucion
+   */
+  listarLogs: (params = {}) => apiClient.get('/inventario/reorden/logs', { params }),
+
+  /**
+   * Obtener detalle de un log de ejecucion
+   * @param {number} id
+   * @returns {Promise<Object>} Log con detalles
+   */
+  obtenerLog: (id) => apiClient.get(`/inventario/reorden/logs/${id}`),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -4782,4 +5012,7 @@ export default {
   listasPrecios: listasPreciosApi,
   conteos: conteosApi,
   ajustesMasivos: ajustesMasivosApi,
+  reorden: reordenApi,
+  landedCosts: landedCostsApi,
+  dropship: dropshipApi,
 };

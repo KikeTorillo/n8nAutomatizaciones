@@ -233,6 +233,13 @@ const inventarioSchemas = {
             // Dic 2025: Variantes de producto
             tiene_variantes: Joi.boolean().optional().default(false),
 
+            // Dic 2025: Dropshipping - Fase 1 Gaps
+            ruta_preferida: Joi.string().valid('normal', 'dropship', 'fabricar').optional().default('normal'),
+
+            // Dic 2025: Auto-generación OC - Fase 2 Gaps
+            auto_generar_oc: Joi.boolean().optional().default(false),
+            cantidad_oc_sugerida: Joi.number().integer().min(1).optional().default(50),
+
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
         }).custom((value, helpers) => {
@@ -283,6 +290,13 @@ const inventarioSchemas = {
 
             // Dic 2025: Variantes de producto
             tiene_variantes: Joi.boolean().optional(),
+
+            // Dic 2025: Dropshipping - Fase 1 Gaps
+            ruta_preferida: Joi.string().valid('normal', 'dropship', 'fabricar').optional(),
+
+            // Dic 2025: Auto-generación OC - Fase 2 Gaps
+            auto_generar_oc: Joi.boolean().optional(),
+            cantidad_oc_sugerida: Joi.number().integer().min(1).optional(),
 
             // Precios multi-moneda (Fase 4)
             precios_moneda: Joi.array().items(precioMonedaSchema).max(10).optional()
@@ -1554,6 +1568,236 @@ const inventarioSchemas = {
     cancelarAjusteMasivo: {
         params: Joi.object({
             id: Joi.number().integer().positive().required()
+        })
+    },
+
+    // ========================================================================
+    // REORDEN AUTOMATICO (Dic 2025)
+    // ========================================================================
+
+    /**
+     * Schema para crear regla de reabastecimiento
+     * POST /api/v1/inventario/reorden/reglas
+     */
+    crearReglaReorden: {
+        body: Joi.object({
+            nombre: Joi.string().max(100).required().messages({
+                'any.required': 'El nombre de la regla es requerido',
+                'string.max': 'El nombre no puede exceder 100 caracteres'
+            }),
+
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+
+            // Aplicacion (solo uno puede estar definido)
+            producto_id: Joi.number().integer().positive().optional().allow(null),
+            categoria_id: Joi.number().integer().positive().optional().allow(null),
+            sucursal_id: Joi.number().integer().positive().optional().allow(null),
+
+            // Ruta de operacion a usar
+            ruta_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'La ruta de operacion es requerida'
+            }),
+
+            // Condiciones de activacion
+            stock_minimo_trigger: Joi.number().integer().min(0).required().messages({
+                'any.required': 'El stock minimo trigger es requerido',
+                'number.min': 'El stock minimo trigger debe ser mayor o igual a 0'
+            }),
+            usar_stock_proyectado: Joi.boolean().optional().default(true),
+
+            // Cantidad a ordenar
+            cantidad_fija: Joi.number().integer().min(1).optional().allow(null),
+            cantidad_hasta_maximo: Joi.boolean().optional().default(false),
+            cantidad_minima: Joi.number().integer().min(1).optional().default(1),
+            cantidad_maxima: Joi.number().integer().min(1).optional().allow(null),
+            multiplo_de: Joi.number().integer().min(1).optional().default(1),
+
+            // Programacion
+            dias_semana: Joi.array()
+                .items(Joi.number().integer().min(1).max(7))
+                .optional()
+                .default([1, 2, 3, 4, 5])
+                .messages({
+                    'array.includes': 'Los dias deben ser numeros entre 1 (Lunes) y 7 (Domingo)'
+                }),
+            hora_ejecucion: Joi.string()
+                .pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/)
+                .optional()
+                .default('08:00:00'),
+            frecuencia_horas: Joi.number().integer().min(1).max(168).optional().default(24),
+
+            activo: Joi.boolean().optional().default(true),
+            prioridad: Joi.number().integer().min(0).optional().default(0)
+        }).custom((value, helpers) => {
+            // Validar que no tenga producto_id Y categoria_id a la vez
+            if (value.producto_id && value.categoria_id) {
+                return helpers.error('any.custom', {
+                    message: 'No puede especificar producto_id y categoria_id a la vez'
+                });
+            }
+            return value;
+        })
+    },
+
+    /**
+     * Schema para actualizar regla de reabastecimiento
+     * PUT /api/v1/inventario/reorden/reglas/:id
+     */
+    actualizarReglaReorden: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            nombre: Joi.string().max(100).optional(),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+            ruta_id: Joi.number().integer().positive().optional(),
+            stock_minimo_trigger: Joi.number().integer().min(0).optional(),
+            usar_stock_proyectado: Joi.boolean().optional(),
+            cantidad_fija: Joi.number().integer().min(1).optional().allow(null),
+            cantidad_hasta_maximo: Joi.boolean().optional(),
+            cantidad_minima: Joi.number().integer().min(1).optional(),
+            cantidad_maxima: Joi.number().integer().min(1).optional().allow(null),
+            multiplo_de: Joi.number().integer().min(1).optional(),
+            dias_semana: Joi.array().items(Joi.number().integer().min(1).max(7)).optional(),
+            frecuencia_horas: Joi.number().integer().min(1).max(168).optional(),
+            activo: Joi.boolean().optional(),
+            prioridad: Joi.number().integer().min(0).optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para listar reglas de reabastecimiento
+     * GET /api/v1/inventario/reorden/reglas
+     */
+    listarReglasReorden: {
+        query: Joi.object({
+            activo: Joi.boolean().optional(),
+            producto_id: Joi.number().integer().positive().optional()
+        })
+    },
+
+    /**
+     * Schema para listar logs de reorden
+     * GET /api/v1/inventario/reorden/logs
+     */
+    listarLogsReorden: {
+        query: Joi.object({
+            tipo: Joi.string().valid('job_cron', 'manual').optional(),
+            fecha_desde: Joi.date().iso().optional(),
+            fecha_hasta: Joi.date().iso().optional(),
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para listar productos bajo minimo
+     * GET /api/v1/inventario/reorden/productos-bajo-minimo
+     */
+    listarProductosBajoMinimo: {
+        query: Joi.object({
+            solo_sin_oc: Joi.boolean().optional().default(true),
+            categoria_id: Joi.number().integer().positive().optional(),
+            proveedor_id: Joi.number().integer().positive().optional(),
+            limit: Joi.number().integer().min(1).max(500).optional().default(100)
+        })
+    },
+
+    // ========================================================================
+    // LANDED COSTS - Costos en Destino (Dic 2025)
+    // ========================================================================
+
+    /**
+     * Schema para crear costo adicional
+     * POST /api/v1/inventario/ordenes-compra/:id/costos
+     */
+    crearCostoAdicional: {
+        body: Joi.object({
+            tipo_costo: Joi.string()
+                .valid('flete', 'arancel', 'seguro', 'manipulacion', 'almacenaje', 'otro')
+                .required()
+                .messages({
+                    'any.required': 'El tipo de costo es requerido',
+                    'any.only': 'Tipo de costo invalido'
+                }),
+
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+
+            referencia_externa: Joi.string().max(100).optional().allow(null, ''),
+
+            monto_total: Joi.number()
+                .positive()
+                .precision(2)
+                .required()
+                .messages({
+                    'any.required': 'El monto total es requerido',
+                    'number.positive': 'El monto debe ser mayor a 0'
+                }),
+
+            moneda: Joi.string().length(3).uppercase().optional().default('MXN'),
+
+            tipo_cambio: Joi.number().positive().precision(4).optional().default(1),
+
+            metodo_distribucion: Joi.string()
+                .valid('valor', 'cantidad', 'peso', 'volumen')
+                .optional()
+                .default('valor')
+                .messages({
+                    'any.only': 'Metodo de distribucion invalido'
+                }),
+
+            proveedor_servicio_id: Joi.number().integer().positive().optional().allow(null),
+
+            proveedor_servicio_nombre: Joi.string().max(200).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para actualizar costo adicional
+     * PUT /api/v1/inventario/ordenes-compra/:id/costos/:costoId
+     */
+    actualizarCostoAdicional: {
+        body: Joi.object({
+            tipo_costo: Joi.string()
+                .valid('flete', 'arancel', 'seguro', 'manipulacion', 'almacenaje', 'otro')
+                .optional(),
+
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+
+            referencia_externa: Joi.string().max(100).optional().allow(null, ''),
+
+            monto_total: Joi.number().positive().precision(2).optional(),
+
+            moneda: Joi.string().length(3).uppercase().optional(),
+
+            tipo_cambio: Joi.number().positive().precision(4).optional(),
+
+            metodo_distribucion: Joi.string()
+                .valid('valor', 'cantidad', 'peso', 'volumen')
+                .optional(),
+
+            proveedor_servicio_id: Joi.number().integer().positive().optional().allow(null),
+
+            proveedor_servicio_nombre: Joi.string().max(200).optional().allow(null, '')
+        }).min(1).messages({
+            'object.min': 'Debe proporcionar al menos un campo para actualizar'
+        })
+    },
+
+    // ========================================================================
+    // DROPSHIPPING (Dic 2025)
+    // ========================================================================
+
+    /**
+     * Schema para actualizar configuracion dropship
+     * PATCH /api/v1/inventario/dropship/configuracion
+     */
+    actualizarConfigDropship: {
+        body: Joi.object({
+            dropship_auto_generar_oc: Joi.boolean().required().messages({
+                'any.required': 'Debe indicar si la generacion automatica esta activa'
+            })
         })
     }
 };

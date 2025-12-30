@@ -454,7 +454,7 @@ services:
   # Si la BD no está inicializada, ejecutar primero:
   # docker compose -f docker-compose.dev.yml run --rm odoo -- -i base -d odoo
   odoo:
-    image: odoo:17.0
+    image: odoo:19.0
     container_name: odoo_dev
     restart: unless-stopped
     depends_on:

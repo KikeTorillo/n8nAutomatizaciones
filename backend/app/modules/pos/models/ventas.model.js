@@ -1559,11 +1559,15 @@ class VentasPOSModel {
      * @returns {Object} { valido: boolean, errores: [], stockMap: {} }
      */
     static async validarStockDisponible(items, organizacionId, sucursalId = null) {
-        const productosIds = items.map(i => i.producto_id);
+        // Transformar items para incluir producto_id en formato correcto
+        const itemsFormateados = items.map(i => ({
+            producto_id: i.producto_id,
+            variante_id: i.variante_id || null
+        }));
 
-        // Obtener stock disponible (real - reservas activas)
+        // Obtener stock disponible (real - reservas activas) con ruta_preferida
         const stockMap = await ReservasModel.stockDisponibleMultiple(
-            productosIds,
+            itemsFormateados,
             organizacionId,
             sucursalId
         );
@@ -1572,7 +1576,12 @@ class VentasPOSModel {
         let valido = true;
 
         for (const item of items) {
-            const stockInfo = stockMap[item.producto_id];
+            // Generar la key correcta según el modelo de reservas
+            const key = item.variante_id
+                ? `variante_${item.variante_id}`
+                : `producto_${item.producto_id}`;
+
+            const stockInfo = stockMap[key];
 
             if (!stockInfo) {
                 errores.push({
@@ -1581,6 +1590,16 @@ class VentasPOSModel {
                 });
                 valido = false;
                 continue;
+            }
+
+            // DROPSHIP: Productos con ruta_preferida='dropship' no requieren stock
+            // El proveedor envía directamente al cliente
+            if (stockInfo.ruta_preferida === 'dropship') {
+                logger.debug('[VentasPOSModel.validarStockDisponible] Producto dropship, sin validación de stock', {
+                    producto_id: item.producto_id,
+                    nombre: stockInfo.nombre
+                });
+                continue; // Saltar validación de stock para productos dropship
             }
 
             if (stockInfo.stock_disponible < item.cantidad) {
