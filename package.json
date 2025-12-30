@@ -22,6 +22,8 @@
     "status": "docker compose -f docker-compose.dev.yml ps",
     "clean": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && docker system prune -f",
     "clean:data": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis && docker system prune -f",
+    "odoo:init": "docker compose -f docker-compose.dev.yml up -d odoo-postgres && sleep 5 && docker compose -f docker-compose.dev.yml run --rm odoo -- -i base -d odoo --stop-after-init && docker compose -f docker-compose.dev.yml up -d odoo",
+    "odoo:clean": "docker compose -f docker-compose.dev.yml stop odoo odoo-postgres && sudo rm -rf ./data/odoo-postgres ./data/odoo-data && echo 'Odoo limpiado'",
     "clean:data:ai": "docker compose -f docker-compose.dev.yml down --volumes --remove-orphans && sudo rm -rf ./data/postgres ./data/n8n ./data/pgadmin ./data/redis ./data/qdrant && docker system prune -f",
     "clean:tables": "docker exec postgres_db psql -U admin -d postgres -c \"DELETE FROM chatbot_credentials; DELETE FROM chatbot_config; DELETE FROM citas; DELETE FROM servicios_profesionales; DELETE FROM bloqueos_horarios; DELETE FROM horarios_profesionales; DELETE FROM servicios; DELETE FROM profesionales; DELETE FROM clientes; DELETE FROM usuarios; DELETE FROM historial_subscripciones; DELETE FROM subscripciones; DELETE FROM organizaciones; DELETE FROM metricas_uso_organizacion; SELECT 'Tablas limpiadas' as status;\"",
     "fresh:clean": "npm run clean:data && docker compose -f docker-compose.dev.yml up -d --build",
