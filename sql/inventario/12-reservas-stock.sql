@@ -465,12 +465,12 @@ BEGIN
     RETURN QUERY SELECT
         TRUE,
         v_reserva_id,
-        'Reserva creada exitosamente'::TEXT,
+        format('Reserva %s creada exitosamente', v_reserva_id)::TEXT,
         v_disponible,
-        (v_disponible - p_cantidad);
+        CASE WHEN v_ruta_preferida = 'dropship' THEN v_disponible ELSE v_disponible - p_cantidad END;
 
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 COMMENT ON FUNCTION crear_reserva_atomica IS 'Crea reserva con validación atómica y SKIP LOCKED para concurrencia segura. Superior a Odoo.';
 
