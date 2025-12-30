@@ -422,6 +422,53 @@ services:
       retries: 3
       start_period: 10s
 
+  # ========================================
+  # ODOO - Competencia para comparación
+  # ========================================
+  # Solo para desarrollo - análisis de gaps vs Odoo
+  # UI: http://localhost:8069
+  # Usuario inicial: admin / admin (se configura en primer acceso)
+  odoo-postgres:
+    image: postgres:15
+    container_name: odoo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: odoo
+      TZ: ${TZ}
+    volumes:
+      - ./data/odoo-postgres:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - backend_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d odoo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  odoo:
+    image: odoo:17.0
+    container_name: odoo_dev
+    restart: unless-stopped
+    depends_on:
+      odoo-postgres:
+        condition: service_healthy
+    ports:
+      - "8069:8069"
+    environment:
+      - HOST=odoo-postgres
+      - USER=odoo
+      - PASSWORD=odoo
+    volumes:
+      - ./data/odoo-data:/var/lib/odoo
+      - ./data/odoo-addons:/mnt/extra-addons
+    networks:
+      - backend_network
+
 # Volúmenes persistentes
 volumes:
   minio_data:

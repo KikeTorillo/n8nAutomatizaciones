@@ -30,7 +30,7 @@ Usar **Cipher** via MCP:
 
 ---
 
-## Servicios Docker (11 contenedores)
+## Servicios Docker (13 contenedores)
 
 | Servicio | Puerto | Descripción |
 |----------|--------|-------------|
@@ -45,6 +45,10 @@ Usar **Cipher** via MCP:
 | qdrant | 6333 | Vector DB (embeddings) |
 | ollama | 11434 | LLM local |
 | pgadmin | 8001 | Administración BD |
+| **odoo** | 8069 | Competencia (análisis gaps) |
+| odoo-postgres | 5433 | BD exclusiva para Odoo |
+
+> **Nota**: Odoo es solo para desarrollo/comparación. `npm run clean:data` NO borra datos de Odoo.
 
 ---
 
