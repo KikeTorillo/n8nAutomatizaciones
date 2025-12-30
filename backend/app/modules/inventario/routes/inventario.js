@@ -16,7 +16,9 @@ const InventarioController = require('../controllers');
 const RutasOperacionController = require('../controllers/rutas-operacion.controller');
 const AtributosController = require('../controllers/atributos.controller');
 const VariantesController = require('../controllers/variantes.controller');
+const SnapshotsController = require('../controllers/snapshots.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
+const { asyncHandler } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
 const variantesSchemas = require('../schemas/variantes.schemas');
 
@@ -2052,6 +2054,312 @@ router.post('/productos/:productoId/variantes/generar',
     rateLimiting.apiRateLimit,
     validate(variantesSchemas.generarVariantes),
     VariantesController.generar
+);
+
+// ===================================================================
+// INVENTORY AT DATE - SNAPSHOTS (Dic 2025)
+// Consulta historica del inventario en fechas pasadas
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/snapshots/fechas
+ * Obtener fechas disponibles para selector
+ */
+router.get('/snapshots/fechas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.fechasDisponibles)
+);
+
+/**
+ * GET /api/v1/inventario/snapshots
+ * Listar snapshots disponibles
+ */
+router.get('/snapshots',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.listar)
+);
+
+/**
+ * POST /api/v1/inventario/snapshots
+ * Generar snapshot manualmente
+ */
+router.post('/snapshots',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    auth.requireRole(['super_admin', 'admin', 'propietario']),
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.generar)
+);
+
+/**
+ * GET /api/v1/inventario/at-date
+ * Consultar stock en fecha especifica
+ * @query fecha - Fecha en formato YYYY-MM-DD (requerido)
+ * @query producto_id - Filtrar por producto (opcional)
+ * @query categoria_id - Filtrar por categoria (opcional)
+ * @query solo_con_stock - Solo productos con stock > 0 (opcional)
+ */
+router.get('/at-date',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.stockEnFecha)
+);
+
+/**
+ * GET /api/v1/inventario/comparar
+ * Comparar inventario entre dos fechas
+ * @query fecha_desde - Fecha inicial (requerido)
+ * @query fecha_hasta - Fecha final (requerido)
+ * @query solo_cambios - Solo productos con cambios (default: true)
+ */
+router.get('/comparar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    asyncHandler(SnapshotsController.comparar)
+);
+
+// ===================================================================
+// CONTEOS DE INVENTARIO - CONTEO FÍSICO (Dic 2025)
+// Verificación física del stock con ajustes automáticos
+// ===================================================================
+
+const ConteosController = require('../controllers/conteos.controller');
+const AjustesMasivosController = require('../controllers/ajustes-masivos.controller');
+
+/**
+ * GET /api/v1/inventario/conteos/estadisticas
+ * Estadísticas de conteos por período
+ */
+router.get('/conteos/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.estadisticasConteos),
+    ConteosController.obtenerEstadisticas
+);
+
+/**
+ * POST /api/v1/inventario/conteos
+ * Crear nuevo conteo de inventario
+ */
+router.post('/conteos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearConteo),
+    ConteosController.crear
+);
+
+/**
+ * GET /api/v1/inventario/conteos/:id/buscar-item
+ * Buscar item por código de barras o SKU
+ */
+router.get('/conteos/:id/buscar-item',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.buscarItemConteo),
+    ConteosController.buscarItem
+);
+
+/**
+ * GET /api/v1/inventario/conteos/:id
+ * Obtener conteo por ID con items
+ */
+router.get('/conteos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerConteoPorId),
+    ConteosController.obtenerPorId
+);
+
+/**
+ * GET /api/v1/inventario/conteos
+ * Listar conteos con filtros
+ */
+router.get('/conteos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarConteos),
+    ConteosController.listar
+);
+
+/**
+ * POST /api/v1/inventario/conteos/:id/iniciar
+ * Iniciar conteo (genera items y cambia a en_proceso)
+ */
+router.post('/conteos/:id/iniciar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.iniciarConteo),
+    ConteosController.iniciar
+);
+
+/**
+ * PUT /api/v1/inventario/conteos/items/:itemId
+ * Registrar cantidad contada para un item
+ */
+router.put('/conteos/items/:itemId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.registrarConteoItem),
+    ConteosController.registrarConteo
+);
+
+/**
+ * POST /api/v1/inventario/conteos/:id/completar
+ * Completar conteo (validar que todos estén contados)
+ */
+router.post('/conteos/:id/completar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.completarConteo),
+    ConteosController.completar
+);
+
+/**
+ * POST /api/v1/inventario/conteos/:id/aplicar-ajustes
+ * Aplicar ajustes de inventario basados en el conteo
+ */
+router.post('/conteos/:id/aplicar-ajustes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.aplicarAjustesConteo),
+    ConteosController.aplicarAjustes
+);
+
+/**
+ * POST /api/v1/inventario/conteos/:id/cancelar
+ * Cancelar conteo
+ */
+router.post('/conteos/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarConteo),
+    ConteosController.cancelar
+);
+
+// ===================================================================
+// AJUSTES MASIVOS DE INVENTARIO (Dic 2025)
+// Importación masiva de ajustes via CSV
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/ajustes-masivos/plantilla
+ * Descargar plantilla CSV
+ */
+router.get('/ajustes-masivos/plantilla',
+    auth.authenticateToken,
+    AjustesMasivosController.descargarPlantilla
+);
+
+/**
+ * POST /api/v1/inventario/ajustes-masivos
+ * Crear ajuste masivo desde items parseados
+ */
+router.post('/ajustes-masivos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearAjusteMasivo),
+    AjustesMasivosController.crear
+);
+
+/**
+ * GET /api/v1/inventario/ajustes-masivos
+ * Listar ajustes masivos con filtros
+ */
+router.get('/ajustes-masivos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.listarAjustesMasivos),
+    AjustesMasivosController.listar
+);
+
+/**
+ * GET /api/v1/inventario/ajustes-masivos/:id
+ * Obtener ajuste masivo por ID
+ */
+router.get('/ajustes-masivos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.obtenerAjusteMasivo),
+    AjustesMasivosController.obtenerPorId
+);
+
+/**
+ * POST /api/v1/inventario/ajustes-masivos/:id/validar
+ * Validar items del ajuste masivo
+ */
+router.post('/ajustes-masivos/:id/validar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.validarAjusteMasivo),
+    AjustesMasivosController.validar
+);
+
+/**
+ * POST /api/v1/inventario/ajustes-masivos/:id/aplicar
+ * Aplicar ajustes de inventario
+ */
+router.post('/ajustes-masivos/:id/aplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.heavyOperationRateLimit,
+    validate(inventarioSchemas.aplicarAjusteMasivo),
+    AjustesMasivosController.aplicar
+);
+
+/**
+ * DELETE /api/v1/inventario/ajustes-masivos/:id
+ * Cancelar/eliminar ajuste masivo
+ */
+router.delete('/ajustes-masivos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarAjusteMasivo),
+    AjustesMasivosController.cancelar
 );
 
 module.exports = router;

@@ -232,15 +232,17 @@ class VentasPOSModel {
 
             // Calcular totales
             let subtotal = 0;
+            logger.info('[VentasPOSModel.crear] DEBUG - Items recibidos:', {
+                items: data.items.map(i => ({ producto_id: i.producto_id, precio_unitario: i.precio_unitario, tipo: typeof i.precio_unitario }))
+            });
             const itemsConPrecios = data.items.map(item => {
-                const productoQuery = db.query(
-                    `SELECT nombre, sku, precio_venta
-                     FROM productos WHERE id = $1`,
-                    [item.producto_id]
-                );
-
-                // Por ahora usar precio_venta (el trigger calculará el precio correcto)
                 const precioUnitario = item.precio_unitario || 0;
+                logger.info('[VentasPOSModel.crear] DEBUG - Procesando item:', {
+                    producto_id: item.producto_id,
+                    precio_unitario_raw: item.precio_unitario,
+                    precio_unitario_parsed: precioUnitario,
+                    tipo: typeof item.precio_unitario
+                });
                 const descuentoMonto = item.descuento_monto || 0;
                 const precioFinal = precioUnitario - descuentoMonto;
                 const itemSubtotal = item.cantidad * precioFinal;
@@ -257,6 +259,14 @@ class VentasPOSModel {
             const descuentoVenta = data.descuento_monto || 0;
             const impuestos = data.impuestos || 0;
             const total = subtotal - descuentoVenta + impuestos;
+
+            logger.info('[VentasPOSModel.crear] DEBUG - Totales calculados:', {
+                subtotal,
+                descuentoVenta,
+                impuestos,
+                total,
+                monto_pagado: data.monto_pagado
+            });
 
             // Generar folio manualmente (evita problemas con trigger)
             const year = new Date().getFullYear();
@@ -311,6 +321,10 @@ class VentasPOSModel {
                 estadoPago = 'parcial';
             }
 
+            // FIX Dic 2025: Insertar inicialmente con monto_pagado = 0
+            // El trigger calcular_totales_venta_pos() recalcula el total después de cada item
+            // Si insertamos con monto_pagado > 0, el constraint monto_pagado <= total falla
+            // cuando el total parcial (1 item) es menor que el monto_pagado total
             const ventaValues = [
                 organizacionId,
                 data.sucursal_id || null, // ✅ Multi-sucursal
@@ -326,9 +340,9 @@ class VentasPOSModel {
                 impuestos,
                 total,
                 data.metodo_pago,
-                estadoPago,
-                montoPagado,
-                montoPendiente,
+                'pendiente',  // estado_pago inicial (se actualiza después)
+                0,            // monto_pagado = 0 (se actualiza después de items)
+                total,        // monto_pendiente = total (se actualiza después)
                 data.notas || null,
                 data.tipo_venta === 'cotizacion' ? 'cotizacion' : 'completada',
                 new Date(),
@@ -337,7 +351,7 @@ class VentasPOSModel {
             ];
 
             const resultVenta = await db.query(ventaQuery, ventaValues);
-            const venta = resultVenta.rows[0];
+            let venta = resultVenta.rows[0];
 
             // Insertar items de la venta
             const itemsInsertados = [];
@@ -438,6 +452,31 @@ class VentasPOSModel {
                         venta_id: venta.id
                     });
                 }
+            }
+
+            // ================================================================
+            // FIX Dic 2025: ACTUALIZAR MONTO PAGADO
+            // Ahora que todos los items están insertados y el trigger calculó
+            // el total correcto, actualizamos monto_pagado y estado_pago
+            // ================================================================
+            if (data.tipo_venta !== 'cotizacion') {
+                const updatePagoResult = await db.query(
+                    `UPDATE ventas_pos
+                     SET monto_pagado = $1,
+                         monto_pendiente = $2,
+                         estado_pago = $3
+                     WHERE id = $4
+                     RETURNING *`,
+                    [montoPagado, montoPendiente, estadoPago, venta.id]
+                );
+                venta = updatePagoResult.rows[0];
+
+                logger.info('[VentasPOSModel.crear] Pago actualizado después de items', {
+                    venta_id: venta.id,
+                    monto_pagado: montoPagado,
+                    estado_pago: estadoPago,
+                    total_final: venta.total
+                });
             }
 
             // NOTA: La comisión se calcula automáticamente por el trigger DEFERRED

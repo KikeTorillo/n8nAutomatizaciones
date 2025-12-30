@@ -49,6 +49,11 @@ const OrdenesCompraPage = lazy(() => import('@/pages/inventario/OrdenesCompraPag
 const UbicacionesAlmacenPage = lazy(() => import('@/pages/inventario/UbicacionesAlmacenPage'));
 const NumerosSeriesPage = lazy(() => import('@/pages/inventario/NumerosSeriesPage'));
 const RutasOperacionPage = lazy(() => import('@/pages/inventario/RutasOperacionPage'));
+const InventarioHistoricoPage = lazy(() => import('@/pages/inventario/InventarioHistoricoPage'));
+const ConteosPage = lazy(() => import('@/pages/inventario/ConteosPage'));
+const ConteoDetallePage = lazy(() => import('@/pages/inventario/ConteoDetallePage'));
+const AjustesMasivosPage = lazy(() => import('@/pages/inventario/AjustesMasivosPage'));
+const AjusteMasivoDetallePage = lazy(() => import('@/pages/inventario/AjusteMasivoDetallePage'));
 
 // Páginas de Precios (Fase 5)
 const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
@@ -389,6 +394,40 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      // Conteos de Inventario (Dic 2025)
+      {
+        path: 'inventario/conteos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(ConteosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/conteos/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(ConteoDetallePage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Ajustes Masivos de Inventario (Dic 2025)
+      {
+        path: 'inventario/ajustes-masivos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(AjustesMasivosPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/ajustes-masivos/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(AjusteMasivoDetallePage)}
+          </ProtectedRoute>
+        ),
+      },
       {
         path: 'inventario/alertas',
         element: (
@@ -454,6 +493,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(RutasOperacionPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Inventario Histórico (Dic 2025)
+      {
+        path: 'inventario/historico',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(InventarioHistoricoPage)}
           </ProtectedRoute>
         ),
       },

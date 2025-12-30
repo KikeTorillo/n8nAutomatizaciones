@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
-import { Search, Package, ShoppingCart, X } from 'lucide-react';
+import { Search, Package, ShoppingCart, X, ScanBarcode } from 'lucide-react';
 import { useBuscarProductos } from '@/hooks/useProductos';
+import BarcodeScanner from '@/components/common/BarcodeScanner';
+import { extractProductCode } from '@/utils/gs1Parser';
 
 /**
  * Buscador de productos para POS
- * Soporta búsqueda por nombre, SKU y código de barras
+ * Soporta búsqueda por nombre, SKU, código de barras y escáner GS1
+ * Dic 2025: Integración con escáner de cámara y parser GS1
  */
 export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
   const [query, setQuery] = useState('');
   const [mostrarResultados, setMostrarResultados] = useState(false);
+  const [mostrarScanner, setMostrarScanner] = useState(false);
+  const [ultimoGS1, setUltimoGS1] = useState(null); // Datos GS1 del último escaneo
   const inputRef = useRef(null);
   const resultadosRef = useRef(null);
 
@@ -71,34 +76,89 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
     }
   };
 
+  // Dic 2025: Handler para escaneo de códigos de barras
+  const handleScan = (code, scanData) => {
+    // Extraer código de producto (maneja GS1 automáticamente)
+    const codigoProducto = extractProductCode(code);
+
+    // Guardar datos GS1 si existen (lote, vencimiento, etc.)
+    if (scanData?.gs1) {
+      setUltimoGS1(scanData.gs1);
+    } else {
+      setUltimoGS1(null);
+    }
+
+    // Buscar con el código extraído
+    setQuery(codigoProducto);
+    setMostrarScanner(false);
+
+    // Focus en el input para ver resultados
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 100);
+  };
+
   return (
     <div className="relative">
-      {/* Buscador */}
-      <div className="relative">
-        <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-          <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+      {/* Buscador con botón de escáner */}
+      <div className="flex gap-2">
+        <div className="relative flex-1">
+          <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+            <Search className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+          </div>
+
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Buscar producto por nombre, SKU o código de barras..."
+            className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
+            autoFocus
+          />
+
+          {query && (
+            <button
+              onClick={handleLimpiar}
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Buscar producto por nombre, SKU o código de barras..."
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
-          autoFocus
-        />
-
-        {query && (
-          <button
-            onClick={handleLimpiar}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="h-5 w-5" />
-          </button>
-        )}
+        {/* Botón de escáner */}
+        <button
+          onClick={() => setMostrarScanner(true)}
+          className="px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center gap-2 font-medium shadow-sm"
+          title="Escanear código de barras"
+        >
+          <ScanBarcode className="h-5 w-5" />
+          <span className="hidden sm:inline">Escanear</span>
+        </button>
       </div>
+
+      {/* Info GS1 del último escaneo */}
+      {ultimoGS1 && (
+        <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg text-sm">
+          <div className="flex items-center justify-between">
+            <span className="text-blue-700 dark:text-blue-300 font-medium">Código GS1 detectado:</span>
+            <button
+              onClick={() => setUltimoGS1(null)}
+              className="text-blue-500 hover:text-blue-700"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex flex-wrap gap-3 mt-1 text-blue-600 dark:text-blue-400">
+            {ultimoGS1.lot && <span>Lote: <strong>{ultimoGS1.lot}</strong></span>}
+            {ultimoGS1.expirationDateFormatted && <span>Vence: <strong>{ultimoGS1.expirationDateFormatted}</strong></span>}
+            {ultimoGS1.serial && <span>Serie: <strong>{ultimoGS1.serial}</strong></span>}
+            {ultimoGS1.productionDateFormatted && <span>Producción: <strong>{ultimoGS1.productionDateFormatted}</strong></span>}
+          </div>
+        </div>
+      )}
 
       {/* Resultados */}
       {mostrarResultados && (
@@ -170,6 +230,22 @@ export default function BuscadorProductosPOS({ onProductoSeleccionado }) {
               Escribe al menos 2 caracteres para buscar
             </div>
           )}
+        </div>
+      )}
+
+      {/* Modal de escáner */}
+      {mostrarScanner && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+          <div className="w-full max-w-lg">
+            <BarcodeScanner
+              onScan={handleScan}
+              onClose={() => setMostrarScanner(false)}
+              title="Escanear Producto"
+              subtitle="Apunta la cámara al código de barras (soporta GS1-128)"
+              formats="PRODUCTOS"
+              showLastScan={true}
+            />
+          </div>
         </div>
       )}
     </div>

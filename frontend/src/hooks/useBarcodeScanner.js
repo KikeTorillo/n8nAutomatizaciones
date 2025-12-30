@@ -13,6 +13,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { parseGS1 } from '@/utils/gs1Parser';
 
 // Formatos soportados por html5-qrcode
 export const BARCODE_FORMATS = {
@@ -68,6 +69,7 @@ export const FORMAT_PRESETS = {
  * @param {Object} options.qrbox - Tamaño del área de escaneo
  * @param {number} options.pauseAfterScan - Ms de pausa después de escanear (default: 1500)
  * @param {boolean} options.beepOnScan - Reproducir sonido al escanear (default: true)
+ * @param {boolean} options.parseGS1Enabled - Parsear códigos GS1-128 automáticamente (default: true)
  */
 export function useBarcodeScanner(options = {}) {
     const {
@@ -77,7 +79,8 @@ export function useBarcodeScanner(options = {}) {
         fps = 10,
         qrbox = { width: 280, height: 150 },
         pauseAfterScan = 1500,
-        beepOnScan = true
+        beepOnScan = true,
+        parseGS1Enabled = true
     } = options;
 
     const [isActive, setIsActive] = useState(false);
@@ -171,15 +174,20 @@ export function useBarcodeScanner(options = {}) {
                 config,
                 (decodedText, decodedResult) => {
                     // Código escaneado exitosamente
+                    // Parsear GS1 si está habilitado
+                    const gs1Data = parseGS1Enabled ? parseGS1(decodedText) : null;
+
                     const scanData = {
-                        code: decodedText,
+                        code: gs1Data?.gtin || decodedText,  // Código producto (GTIN extraído o raw)
+                        raw: decodedText,                      // Código original completo
+                        gs1: gs1Data?.isGS1 ? gs1Data : null,  // Datos GS1 completos si aplica
                         format: decodedResult?.result?.format?.formatName || 'UNKNOWN',
                         timestamp: new Date().toISOString()
                     };
 
                     setLastScan(scanData);
                     playBeep();
-                    onScan?.(decodedText, scanData);
+                    onScan?.(scanData.code, scanData);
 
                     // Pausar para evitar múltiples lecturas
                     if (html5QrCodeRef.current && pauseAfterScan > 0) {
@@ -208,7 +216,7 @@ export function useBarcodeScanner(options = {}) {
             setError(errorMsg);
             onError?.(err);
         }
-    }, [formats, fps, qrbox, selectedCamera, pauseAfterScan, playBeep, onScan, onError]);
+    }, [formats, fps, qrbox, selectedCamera, pauseAfterScan, playBeep, onScan, onError, parseGS1Enabled]);
 
     // Detener scanner
     const stopScanner = useCallback(async () => {

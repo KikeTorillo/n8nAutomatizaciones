@@ -2174,6 +2174,46 @@ export const inventarioApi = {
    * @returns {Promise<Object>}
    */
   eliminarVariante: (id) => apiClient.delete(`/inventario/variantes/${id}`),
+
+  // ========== Inventory at Date - Snapshots (Dic 2025) ==========
+
+  /**
+   * Listar snapshots disponibles
+   * @param {Object} params - { limit?, offset? }
+   * @returns {Promise<Object>} { snapshots[] }
+   */
+  listarSnapshots: (params = {}) => apiClient.get('/inventario/snapshots', { params }),
+
+  /**
+   * Obtener fechas disponibles para selector
+   * @returns {Promise<Object>} { fechas[] }
+   */
+  obtenerFechasDisponibles: () => apiClient.get('/inventario/snapshots/fechas'),
+
+  /**
+   * Generar snapshot manualmente
+   * @param {Object} data - { fecha?, descripcion? }
+   * @returns {Promise<Object>}
+   */
+  generarSnapshot: (data = {}) => apiClient.post('/inventario/snapshots', data),
+
+  /**
+   * Consultar stock en fecha especifica
+   * @param {string} fecha - Fecha en formato YYYY-MM-DD
+   * @param {Object} params - { producto_id?, categoria_id?, solo_con_stock?, limit?, offset? }
+   * @returns {Promise<Object>} { fecha, productos[], totales }
+   */
+  obtenerStockEnFecha: (fecha, params = {}) => apiClient.get('/inventario/at-date', { params: { fecha, ...params } }),
+
+  /**
+   * Comparar inventario entre dos fechas
+   * @param {string} fechaDesde - Fecha inicial YYYY-MM-DD
+   * @param {string} fechaHasta - Fecha final YYYY-MM-DD
+   * @param {boolean} soloCambios - Solo productos con cambios (default: true)
+   * @returns {Promise<Object>} { fecha_desde, fecha_hasta, productos[], resumen }
+   */
+  compararInventario: (fechaDesde, fechaHasta, soloCambios = true) =>
+    apiClient.get('/inventario/comparar', { params: { fecha_desde: fechaDesde, fecha_hasta: fechaHasta, solo_cambios: soloCambios } }),
 };
 
 // ==================== ÓRDENES DE COMPRA ====================
@@ -4567,6 +4607,143 @@ export const listasPreciosApi = {
   asignarClientesBulk: (listaId, clienteIds) => apiClient.post(`/listas-precios/${listaId}/asignar-clientes`, { clienteIds }),
 };
 
+// ==================== CONTEOS DE INVENTARIO (Dic 2025) ====================
+export const conteosApi = {
+  /**
+   * Listar conteos con filtros
+   * @param {Object} params - { sucursal_id?, estado?, tipo_conteo?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
+   * @returns {Promise<Object>} { conteos, totales }
+   */
+  listar: (params) => apiClient.get('/inventario/conteos', { params }),
+
+  /**
+   * Obtener conteo por ID con items
+   * @param {number} id
+   * @returns {Promise<Object>} Conteo con items y resumen
+   */
+  obtenerPorId: (id) => apiClient.get(`/inventario/conteos/${id}`),
+
+  /**
+   * Crear nuevo conteo de inventario
+   * @param {Object} data - { tipo_conteo, sucursal_id?, filtros?, fecha_programada?, usuario_contador_id?, usuario_supervisor_id?, notas? }
+   * @returns {Promise<Object>} Conteo creado (estado: borrador)
+   */
+  crear: (data) => apiClient.post('/inventario/conteos', data),
+
+  /**
+   * Iniciar conteo (genera items según filtros)
+   * Cambia estado: borrador → en_proceso
+   * @param {number} id
+   * @returns {Promise<Object>} Conteo con items generados
+   */
+  iniciar: (id) => apiClient.post(`/inventario/conteos/${id}/iniciar`),
+
+  /**
+   * Registrar cantidad contada para un item
+   * @param {number} itemId - ID del item del conteo
+   * @param {Object} data - { cantidad_contada, notas? }
+   * @returns {Promise<Object>} Item actualizado
+   */
+  registrarConteo: (itemId, data) => apiClient.put(`/inventario/conteos/items/${itemId}`, data),
+
+  /**
+   * Completar conteo (todos los items deben estar contados)
+   * Cambia estado: en_proceso → completado
+   * @param {number} id
+   * @returns {Promise<Object>} Conteo completado
+   */
+  completar: (id) => apiClient.post(`/inventario/conteos/${id}/completar`),
+
+  /**
+   * Aplicar ajustes de inventario basados en el conteo
+   * Cambia estado: completado → ajustado
+   * Crea movimientos de inventario para cada diferencia
+   * @param {number} id
+   * @returns {Promise<Object>} { conteo, ajustes_realizados }
+   */
+  aplicarAjustes: (id) => apiClient.post(`/inventario/conteos/${id}/aplicar-ajustes`),
+
+  /**
+   * Cancelar conteo
+   * Cambia estado: (cualquiera excepto ajustado) → cancelado
+   * @param {number} id
+   * @param {Object} data - { motivo? }
+   * @returns {Promise<Object>} Conteo cancelado
+   */
+  cancelar: (id, data) => apiClient.post(`/inventario/conteos/${id}/cancelar`, data),
+
+  /**
+   * Buscar item por código de barras o SKU
+   * @param {number} conteoId
+   * @param {string} codigo - Código de barras o SKU
+   * @returns {Promise<Object>} Item encontrado
+   */
+  buscarItem: (conteoId, codigo) => apiClient.get(`/inventario/conteos/${conteoId}/buscar-item`, { params: { codigo } }),
+
+  /**
+   * Obtener estadísticas de conteos por período
+   * @param {Object} params - { fecha_desde?, fecha_hasta? }
+   * @returns {Promise<Object>} Estadísticas
+   */
+  obtenerEstadisticas: (params) => apiClient.get('/inventario/conteos/estadisticas', { params }),
+};
+
+// ==================== AJUSTES MASIVOS DE INVENTARIO (Dic 2025) ====================
+export const ajustesMasivosApi = {
+  /**
+   * Listar ajustes masivos con filtros
+   * @param {Object} params - { estado?, fecha_desde?, fecha_hasta?, folio?, limit?, offset? }
+   * @returns {Promise<Object>} { ajustes, totales }
+   */
+  listar: (params) => apiClient.get('/inventario/ajustes-masivos', { params }),
+
+  /**
+   * Obtener ajuste masivo por ID con items
+   * @param {number} id
+   * @returns {Promise<Object>} Ajuste con items
+   */
+  obtenerPorId: (id) => apiClient.get(`/inventario/ajustes-masivos/${id}`),
+
+  /**
+   * Crear ajuste masivo desde items parseados del CSV
+   * @param {Object} data - { archivo_nombre, items: [{ fila_numero, sku?, codigo_barras?, cantidad_ajuste, motivo? }] }
+   * @returns {Promise<Object>} Ajuste creado (estado: pendiente)
+   */
+  crear: (data) => apiClient.post('/inventario/ajustes-masivos', data),
+
+  /**
+   * Validar items del ajuste masivo
+   * Resuelve SKU/código de barras a producto_id, verifica existencia
+   * Cambia estado: pendiente → validado
+   * @param {number} id
+   * @returns {Promise<Object>} Ajuste con items validados
+   */
+  validar: (id) => apiClient.post(`/inventario/ajustes-masivos/${id}/validar`),
+
+  /**
+   * Aplicar ajustes de inventario
+   * Crea movimientos de inventario para cada item válido
+   * Cambia estado: validado → aplicado | con_errores
+   * @param {number} id
+   * @returns {Promise<Object>} { aplicados: [], errores: [] }
+   */
+  aplicar: (id) => apiClient.post(`/inventario/ajustes-masivos/${id}/aplicar`),
+
+  /**
+   * Cancelar ajuste masivo
+   * Solo si estado = pendiente
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  cancelar: (id) => apiClient.delete(`/inventario/ajustes-masivos/${id}`),
+
+  /**
+   * Descargar plantilla CSV
+   * @returns {Promise<Blob>} Archivo CSV
+   */
+  descargarPlantilla: () => apiClient.get('/inventario/ajustes-masivos/plantilla', { responseType: 'blob' }),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -4603,4 +4780,6 @@ export default {
   workflows: workflowsApi,
   monedas: monedasApi,
   listasPrecios: listasPreciosApi,
+  conteos: conteosApi,
+  ajustesMasivos: ajustesMasivosApi,
 };

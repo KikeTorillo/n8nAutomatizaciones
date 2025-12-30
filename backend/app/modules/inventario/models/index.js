@@ -10,6 +10,9 @@ const AlertasInventarioModel = require('./alertas.model');
 const ReportesInventarioModel = require('./reportes.model');
 const OrdenesCompraModel = require('./ordenes-compra.model');
 const UbicacionesAlmacenModel = require('./ubicaciones.model');
+const SnapshotsModel = require('./snapshots.model');
+const ConteosModel = require('./conteos.model');
+const AjustesMasivosModel = require('./ajustes-masivos.model');
 
 module.exports = {
     CategoriasProductosModel,
@@ -19,5 +22,8 @@ module.exports = {
     AlertasInventarioModel,
     ReportesInventarioModel,
     OrdenesCompraModel,
-    UbicacionesAlmacenModel
+    UbicacionesAlmacenModel,
+    SnapshotsModel,
+    ConteosModel,
+    AjustesMasivosModel
 };

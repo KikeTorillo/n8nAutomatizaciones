@@ -195,27 +195,35 @@ await RLSContextManager.withBypass(async (db) => { ... });
 
 ## Capacidades Clave
 
-### Workflows de Aprobación
-Sistema para órdenes de compra basado en límites por rol.
-- Motor: `backend/app/modules/workflows/services/workflow.engine.js`
-- Tablas: `workflow_definiciones`, `workflow_instancias`, `workflow_historial`
-
 ### Inventario Completo
-- **Valoración**: FIFO, LIFO, Promedio Ponderado
-- **Números Serie/Lotes**: Tracking individual de productos
-- **WMS Básico**: Ubicaciones (Zona → Pasillo → Nivel)
-- **Órdenes Compra**: Flujo Borrador → Enviada → Recibida
-- **Particionamiento**: `movimientos_inventario` particionado por mes (pg_cron)
+| Feature | Descripción |
+|---------|-------------|
+| Valoración | FIFO, LIFO, Promedio Ponderado |
+| NS/Lotes | Tracking individual con fechas vencimiento |
+| Variantes | Atributos configurables (color, talla, etc.) |
+| Reservas | Atómicas con `FOR UPDATE SKIP LOCKED` |
+| Snapshots | Histórico diario (pg_cron 00:05 AM) |
+| WMS | Ubicaciones (Zona → Pasillo → Nivel) |
+| OC | Flujo Borrador → Enviada → Recibida |
+| GS1-128 | Parser + Generador + Scanner POS |
+
+### GS1-128
+```
+Parser:    parseGS1(code) → { gtin, lot, expirationDate, serial }
+Generator: generateGS1Code({ gtin, lot, ... }) → { code, humanReadable }
+Scanner:   BuscadorProductosPOS.jsx (botón "Escanear")
+Etiquetas: GenerarEtiquetaGS1Modal.jsx (5 plantillas industria)
+```
+
+### Workflows de Aprobación
+Motor para OC basado en límites por rol.
+- `backend/app/modules/workflows/services/workflow.engine.js`
 
 ### Multi-Moneda
-MXN, COP, USD con conversión en tiempo real.
-- Hook: `useCurrency.js`
-- Tablas: `monedas`, `tasas_cambio`, `precios_*_moneda`
+MXN, COP, USD con conversión tiempo real (`useCurrency.js`)
 
 ### Multi-Tenancy
-- RLS enforced a nivel PostgreSQL
-- 124+ políticas RLS activas
-- Context: `current_tenant_id`, `current_user_id`, `current_user_role`
+RLS enforced PostgreSQL (243+ políticas), context: `current_tenant_id`
 
 ---
 
@@ -252,6 +260,7 @@ sql/
 | "field not allowed to be empty" | Sanitizar `""` a `undefined` |
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | API inventario NS/Lotes | Usar `inventarioApi`, no `ordenesCompraApi` |
+| "Rendered fewer hooks than expected" | Mover returns condicionales DESPUÉS de todos los hooks |
 
 ---
 
@@ -259,10 +268,10 @@ sql/
 
 | Prioridad | Feature |
 |-----------|---------|
-| Alta | 2FA/MFA, Permisos CRUD granular |
-| Media | Auditoría cambios, Contratos laborales |
-| Baja | App móvil, API Keys por usuario |
+| Alta | 2FA/MFA, Integraciones Carriers |
+| Media | Auditoría cambios, Landed Costs, Reorden automático |
+| Baja | API Keys por usuario, Kitting/BOM |
 
 ---
 
-**Actualizado**: 26 Diciembre 2025
+**Actualizado**: 29 Diciembre 2025

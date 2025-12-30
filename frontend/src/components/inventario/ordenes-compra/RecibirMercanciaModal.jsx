@@ -134,12 +134,15 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
     setRecepciones(nuevasRecepciones);
   };
 
-  // Manejo de escaneo
-  const handleScan = (code) => {
+  // Manejo de escaneo - recibe (code, scanData) donde scanData incluye gs1 parseado
+  const handleScan = (code, scanData) => {
+    const { gs1 } = scanData || {};
+
     if (scanMode === 'producto') {
-      // Buscar producto por SKU escaneado
+      // Buscar producto por SKU o código de barras escaneado
       const itemIndex = recepciones.findIndex(
-        r => r.producto_sku?.toLowerCase() === code.toLowerCase()
+        r => r.producto_sku?.toLowerCase() === code.toLowerCase() ||
+             r.producto_codigo_barras === code
       );
 
       if (itemIndex >= 0) {
@@ -147,12 +150,53 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
         if (item.cantidad < item.cantidad_pendiente) {
           // Incrementar cantidad en 1
           handleCantidadChange(itemIndex, item.cantidad + 1);
-          showToast(`+1 ${item.producto_nombre}`, 'success');
+
+          // Si es GS1 y tiene datos extra, aplicarlos
+          if (gs1) {
+            // Aplicar lote si viene en el código
+            if (gs1.lot && !item.lote) {
+              handleLoteChange(itemIndex, gs1.lot);
+            }
+            // Aplicar fecha de vencimiento si viene en el código
+            if (gs1.expirationDateFormatted && !item.fecha_vencimiento) {
+              handleFechaVencimientoChange(itemIndex, gs1.expirationDateFormatted);
+            }
+
+            // Mostrar mensaje informativo con datos detectados
+            const extras = [];
+            if (gs1.lot) extras.push(`Lote: ${gs1.lot}`);
+            if (gs1.expirationDateFormatted) extras.push(`Venc: ${gs1.expirationDateFormatted}`);
+            if (gs1.serial) extras.push(`NS: ${gs1.serial}`);
+
+            if (extras.length > 0) {
+              showToast(`+1 ${item.producto_nombre} (${extras.join(', ')})`, 'success');
+            } else {
+              showToast(`+1 ${item.producto_nombre}`, 'success');
+            }
+
+            // Si producto requiere NS y el GS1 trae serial, auto-llenarlo
+            if (item.requiere_numero_serie && gs1.serial) {
+              const nuevasRecepciones = [...recepciones];
+              const nsArray = nuevasRecepciones[itemIndex].numeros_serie;
+              // Buscar el NS que se acaba de agregar (el último que esté vacío después del incremento)
+              const nsIndex = nsArray.findIndex(ns => !ns.numero_serie?.trim());
+              if (nsIndex >= 0) {
+                nsArray[nsIndex] = {
+                  numero_serie: gs1.serial,
+                  lote: gs1.lot || '',
+                  fecha_vencimiento: gs1.expirationDateFormatted || ''
+                };
+                setRecepciones(nuevasRecepciones);
+              }
+            }
+          } else {
+            showToast(`+1 ${item.producto_nombre}`, 'success');
+          }
         } else {
           showToast(`${item.producto_nombre} ya tiene la cantidad máxima`, 'warning');
         }
       } else {
-        showToast(`Producto con SKU "${code}" no está en esta orden`, 'error');
+        showToast(`Producto con código "${code}" no está en esta orden`, 'error');
       }
     } else if (scanMode === 'ns' && scanTargetItem !== null) {
       // Agregar número de serie escaneado
@@ -161,13 +205,30 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
         // Buscar primer NS vacío
         const nsIndex = item.numeros_serie.findIndex(ns => !ns.numero_serie?.trim());
         if (nsIndex >= 0) {
+          // Determinar número de serie a usar
+          const numeroSerie = gs1?.serial || code;
+
           // Verificar que no esté duplicado
-          const yaExiste = item.numeros_serie.some(ns => ns.numero_serie === code);
+          const yaExiste = item.numeros_serie.some(ns => ns.numero_serie === numeroSerie);
           if (yaExiste) {
-            showToast(`NS "${code}" ya fue escaneado`, 'warning');
+            showToast(`NS "${numeroSerie}" ya fue escaneado`, 'warning');
           } else {
-            handleNumeroSerieChange(scanTargetItem, nsIndex, 'numero_serie', code);
-            showToast(`NS ${nsIndex + 1}/${item.cantidad}: ${code}`, 'success');
+            // Actualizar con todos los datos disponibles del GS1
+            const nuevasRecepciones = [...recepciones];
+            nuevasRecepciones[scanTargetItem].numeros_serie[nsIndex] = {
+              numero_serie: numeroSerie,
+              lote: gs1?.lot || item.lote || '',
+              fecha_vencimiento: gs1?.expirationDateFormatted || item.fecha_vencimiento || ''
+            };
+            setRecepciones(nuevasRecepciones);
+
+            // Mensaje con datos detectados
+            const extras = [];
+            if (gs1?.lot) extras.push(`Lote: ${gs1.lot}`);
+            if (gs1?.expirationDateFormatted) extras.push(`Venc: ${gs1.expirationDateFormatted}`);
+            const extraMsg = extras.length > 0 ? ` (${extras.join(', ')})` : '';
+
+            showToast(`NS ${nsIndex + 1}/${item.cantidad}: ${numeroSerie}${extraMsg}`, 'success');
 
             // Si completó todos los NS, cerrar scanner
             const nsCompletos = item.numeros_serie.filter(ns => ns.numero_serie?.trim()).length + 1;

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageIcon, ScanLine } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageIcon, ScanLine, Tag } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
@@ -14,6 +14,7 @@ import { useProveedores } from '@/hooks/useProveedores';
 import ProductoFormModal from '@/components/inventario/ProductoFormModal';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';
+import GenerarEtiquetaModal from '@/components/inventario/GenerarEtiquetaModal';
 import BarcodeScanner from '@/components/common/BarcodeScanner';
 
 /**
@@ -36,6 +37,7 @@ function ProductosPage() {
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [isAjustarStockModalOpen, setIsAjustarStockModalOpen] = useState(false);
+  const [isEtiquetaModalOpen, setIsEtiquetaModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
   const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
@@ -96,6 +98,11 @@ function ProductosPage() {
   const handleAjustarStock = (producto) => {
     setProductoSeleccionado(producto);
     setIsAjustarStockModalOpen(true);
+  };
+
+  const handleGenerarEtiqueta = (producto) => {
+    setProductoSeleccionado(producto);
+    setIsEtiquetaModalOpen(true);
   };
 
   const handleAbrirModalEliminar = (producto) => {
@@ -454,6 +461,13 @@ function ProductosPage() {
                               <TrendingDown className="h-4 w-4" />
                             </button>
                             <button
+                              onClick={() => handleGenerarEtiqueta(producto)}
+                              className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+                              title="Generar Etiqueta"
+                            >
+                              <Tag className="h-4 w-4" />
+                            </button>
+                            <button
                               onClick={() => handleAbrirModalEliminar(producto)}
                               className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                               title="Eliminar"
@@ -498,6 +512,18 @@ function ProductosPage() {
             isOpen={isAjustarStockModalOpen}
             onClose={() => {
               setIsAjustarStockModalOpen(false);
+              setProductoSeleccionado(null);
+            }}
+            producto={productoSeleccionado}
+          />
+        )}
+
+        {/* Modal Generar Etiqueta */}
+        {isEtiquetaModalOpen && (
+          <GenerarEtiquetaModal
+            isOpen={isEtiquetaModalOpen}
+            onClose={() => {
+              setIsEtiquetaModalOpen(false);
               setProductoSeleccionado(null);
             }}
             producto={productoSeleccionado}
