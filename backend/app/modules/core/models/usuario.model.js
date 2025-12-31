@@ -5,6 +5,7 @@ const logger = require('../../../utils/logger');
 const RLSHelper = require('../../../utils/rlsHelper');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const emailService = require('../../../services/emailService');
+const RutasOperacionModel = require('../../inventario/models/rutas-operacion.model');
 
 const AUTH_CONFIG = {
     BCRYPT_SALT_ROUNDS: 12,
@@ -1666,6 +1667,21 @@ class UsuarioModel {
                         usuario.email,
                         userId
                     ]);
+                }
+
+                // ═══════════════════════════════════════════════════════════════════
+                // Crear rutas de operación default para inventario
+                // ═══════════════════════════════════════════════════════════════════
+                try {
+                    await RutasOperacionModel.crearRutasDefaultConDb(organizacion.id, userId, db);
+                    logger.info('[UsuarioModel.completarOnboarding] Rutas de operación creadas', {
+                        organizacion_id: organizacion.id
+                    });
+                } catch (rutasError) {
+                    // No bloquear onboarding si falla la creación de rutas
+                    logger.warn('[UsuarioModel.completarOnboarding] Error creando rutas default', {
+                        error: rutasError.message
+                    });
                 }
 
                 await db.query('COMMIT');

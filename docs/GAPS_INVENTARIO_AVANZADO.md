@@ -22,7 +22,7 @@
 | **Dropshipping** | ✅ | OC auto-generada al vender producto dropship |
 | **Venta NS en POS** | ✅ | Selección NS + trazabilidad automática |
 | **Venta Variantes en POS** | ✅ | Stock independiente por variante |
-| **Rutas de Operación** | ⚠️ | No se crean en onboarding, requiere setup manual |
+| **Rutas de Operación** | ✅ | Auto-creadas en onboarding (COMPRA, TRANSFERENCIA, DROPSHIP) |
 
 ---
 
@@ -32,7 +32,7 @@
 
 Se ejecutó validación completa creando datos **exclusivamente desde el frontend** sin intervención SQL manual.
 
-**Resultado**: **11/11 flujos funcionan correctamente**. 1 gap menor pendiente (Rutas onboarding).
+**Resultado**: **12/12 flujos funcionan correctamente**. Todos los gaps de inventario avanzado completados.
 
 ### Data Creada en Validación
 
@@ -110,15 +110,15 @@ Se ejecutó validación completa creando datos **exclusivamente desde el fronten
 
 ---
 
-### 3. Rutas de Operación no se crean en onboarding
+### 3. ~~Rutas de Operación no se crean en onboarding~~ ✅ CORREGIDO
 
-**Problema**: La tabla `rutas_operacion` está vacía después del onboarding. Las reglas de reorden requieren rutas para funcionar.
+**Problema original**: La tabla `rutas_operacion` estaba vacía después del onboarding. Las reglas de reorden requerían rutas para funcionar.
 
-**Workaround**: Existe botón "Crear Rutas Default" en `/inventario/rutas-operacion`
+**Solución aplicada** (31 Dic 2025):
+1. `rutas-operacion.model.js`: Agregada función `crearRutasDefaultConDb()` para uso en transacciones
+2. `usuario.model.js`: Modificado `completarOnboarding()` para crear rutas automáticamente
 
-**Impacto**: Medio - Bloquea configuración de reorden hasta crear rutas manualmente
-
-**Solución sugerida**: Crear rutas default automáticamente en onboarding
+**Resultado**: Nuevas organizaciones obtienen 3 rutas default (COMPRA, TRANSFERENCIA, DROPSHIP) automáticamente ✅
 
 ---
 
@@ -138,6 +138,8 @@ Se ejecutó validación completa creando datos **exclusivamente desde el fronten
 | `backend/.../landed-costs.model.js` | Funciones creaban nuevas transacciones | Agregadas `distribuirTodosConDb()` y `obtenerLandedCostsMapConDb()` |
 | `backend/.../ordenes-compra.model.js` | No incluía landed costs en costo unitario | Auto-distribución + cálculo `precioBase + landedCosts` |
 | `frontend/.../RecibirMercanciaModal.jsx` | Sin advertencia de costos pendientes | Agregado banner informativo con `useResumenCostos` |
+| `backend/.../rutas-operacion.model.js` | Sin función para transacciones externas | Agregada `crearRutasDefaultConDb()` |
+| `backend/.../usuario.model.js` | No creaba rutas en onboarding | Llamada a `crearRutasDefaultConDb()` en `completarOnboarding()` |
 
 ---
 
@@ -202,7 +204,7 @@ frontend/src/
 |------|---------|:------:|
 | 1 | Reorden, Landed Costs, Dropshipping | ✅ Completada |
 | 2 | Validación integral flujos | ✅ Completada 31 Dic - **10/10 flujos OK** |
-| 3 | Fix gaps críticos | ⚠️ Rutas onboarding (Landed Costs ✅) |
+| 3 | Fix gaps críticos | ✅ Completada (Landed Costs + Rutas) |
 | 4 | Conectores Carriers (DHL) | Pendiente |
 | 5 | Rutas multietapa, Batch transfers | Pendiente |
 
@@ -225,9 +227,7 @@ Todos los módulos de inventario tienen acceso desde tabs de navegación:
 
 2. ~~**Auto-distribuir Landed Costs** (Medio)~~ ✅ COMPLETADO 31 Dic 2025
 
-3. **Rutas en Onboarding** (Medio)
-   - Agregar llamada a crear rutas default en flujo de onboarding
-   - Archivo: `backend/app/modules/core/controllers/onboarding.controller.js`
+3. ~~**Rutas en Onboarding** (Medio)~~ ✅ COMPLETADO 31 Dic 2025
 
 ---
 

@@ -659,6 +659,68 @@ class RutasOperacionModel {
             return creadas;
         });
     }
+
+    /**
+     * Crear rutas default usando conexión existente (para transacciones externas)
+     * @param {number} organizacionId
+     * @param {number} usuarioId
+     * @param {Object} db - Conexión de base de datos existente
+     */
+    static async crearRutasDefaultConDb(organizacionId, usuarioId, db) {
+        const rutasDefault = [
+            {
+                codigo: 'COMPRA',
+                nombre: 'Compra a Proveedor',
+                descripcion: 'Generar orden de compra al proveedor del producto',
+                tipo: 'compra',
+                es_default: true,
+                prioridad: 1
+            },
+            {
+                codigo: 'TRANSFERENCIA',
+                nombre: 'Transferencia entre Sucursales',
+                descripcion: 'Solicitar transferencia desde otra sucursal con stock',
+                tipo: 'transferencia',
+                es_default: false,
+                prioridad: 2
+            },
+            {
+                codigo: 'DROPSHIP',
+                nombre: 'Dropship',
+                descripcion: 'El proveedor envía directamente al cliente',
+                tipo: 'dropship',
+                es_default: false,
+                prioridad: 3
+            }
+        ];
+
+        const creadas = [];
+        for (const ruta of rutasDefault) {
+            const result = await db.query(
+                `INSERT INTO rutas_operacion (
+                    organizacion_id, codigo, nombre, descripcion,
+                    tipo, es_default, prioridad, creado_por
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                ON CONFLICT (organizacion_id, codigo) DO NOTHING
+                RETURNING *`,
+                [
+                    organizacionId,
+                    ruta.codigo,
+                    ruta.nombre,
+                    ruta.descripcion,
+                    ruta.tipo,
+                    ruta.es_default,
+                    ruta.prioridad,
+                    usuarioId
+                ]
+            );
+            if (result.rows[0]) {
+                creadas.push(result.rows[0]);
+            }
+        }
+
+        return creadas;
+    }
 }
 
 module.exports = RutasOperacionModel;
