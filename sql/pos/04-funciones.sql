@@ -444,5 +444,32 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 COMMENT ON FUNCTION productos_mas_vendidos IS 'Top N productos más vendidos por ingresos en un período';
 
 -- ============================================================================
+-- FUNCIÓN: Marcar número de serie como vendido (trigger)
+-- Dic 2025 - INV-5: Trazabilidad NS en ventas POS
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION marcar_ns_vendido()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    -- Si el item tiene numero_serie_id, marcar como vendido
+    IF NEW.numero_serie_id IS NOT NULL THEN
+        UPDATE numeros_serie
+        SET estado = 'vendido',
+            venta_id = NEW.venta_pos_id,
+            fecha_salida = NOW(),
+            actualizado_en = NOW()
+        WHERE id = NEW.numero_serie_id;
+    END IF;
+
+    RETURN NEW;
+END;
+$$;
+
+COMMENT ON FUNCTION marcar_ns_vendido IS 'Marca número de serie como vendido al insertar item en venta POS';
+
+-- ============================================================================
 -- FIN: FUNCIONES DE PUNTO DE VENTA
 -- ============================================================================

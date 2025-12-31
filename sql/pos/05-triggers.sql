@@ -63,6 +63,20 @@ CREATE TRIGGER trigger_actualizar_timestamp_venta
 COMMENT ON TRIGGER trigger_actualizar_timestamp_venta ON ventas_pos IS 'Actualiza actualizado_en automáticamente en cada UPDATE';
 
 -- ============================================================================
+-- TRIGGER 5: Marcar número de serie como vendido
+-- Se ejecuta DESPUÉS de INSERT en items
+-- Función: marcar_ns_vendido() (definida en 04-funciones.sql)
+-- Dic 2025 - INV-5: Trazabilidad NS en ventas POS
+-- ============================================================================
+
+CREATE TRIGGER trg_marcar_ns_vendido
+    AFTER INSERT ON ventas_pos_items
+    FOR EACH ROW
+    EXECUTE FUNCTION marcar_ns_vendido();
+
+COMMENT ON TRIGGER trg_marcar_ns_vendido ON ventas_pos_items IS 'Marca NS como vendido automáticamente al agregar item con numero_serie_id';
+
+-- ============================================================================
 -- FIN: TRIGGERS DE PUNTO DE VENTA
 -- ============================================================================
 
