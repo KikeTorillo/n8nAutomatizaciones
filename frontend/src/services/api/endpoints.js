@@ -4974,6 +4974,269 @@ export const reordenApi = {
   obtenerLog: (id) => apiClient.get(`/inventario/reorden/logs/${id}`),
 };
 
+// ==================== OPERACIONES DE ALMACEN (Dic 2025) ====================
+export const operacionesAlmacenApi = {
+  /**
+   * Listar operaciones con filtros
+   * @param {Object} params - { sucursal_id?, tipo_operacion?, estado?, estados?, asignado_a?, origen_tipo?, limit? }
+   * @returns {Promise<Array>} Operaciones
+   */
+  listar: (params = {}) => apiClient.get('/inventario/operaciones', { params }),
+
+  /**
+   * Obtener operacion por ID con items
+   * @param {number} id
+   * @returns {Promise<Object>} Operacion con items
+   */
+  obtenerPorId: (id) => apiClient.get(`/inventario/operaciones/${id}`),
+
+  /**
+   * Crear operacion manual
+   * @param {Object} data - Datos de la operacion
+   * @returns {Promise<Object>} Operacion creada
+   */
+  crear: (data) => apiClient.post('/inventario/operaciones', data),
+
+  /**
+   * Actualizar operacion
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>} Operacion actualizada
+   */
+  actualizar: (id, data) => apiClient.put(`/inventario/operaciones/${id}`, data),
+
+  /**
+   * Asignar operacion a usuario
+   * @param {number} id
+   * @param {Object} data - { usuario_id? }
+   * @returns {Promise<Object>} Operacion asignada
+   */
+  asignar: (id, data = {}) => apiClient.post(`/inventario/operaciones/${id}/asignar`, data),
+
+  /**
+   * Iniciar procesamiento de operacion
+   * @param {number} id
+   * @returns {Promise<Object>} Operacion iniciada
+   */
+  iniciar: (id) => apiClient.post(`/inventario/operaciones/${id}/iniciar`),
+
+  /**
+   * Completar operacion procesando items
+   * @param {number} id
+   * @param {Object} data - { items: [{ id, cantidad_procesada, ubicacion_destino_id? }] }
+   * @returns {Promise<Object>} Resultado con operacion_siguiente si aplica
+   */
+  completar: (id, data) => apiClient.post(`/inventario/operaciones/${id}/completar`, data),
+
+  /**
+   * Cancelar operacion
+   * @param {number} id
+   * @param {Object} data - { motivo? }
+   * @returns {Promise<Object>} Operacion cancelada
+   */
+  cancelar: (id, data = {}) => apiClient.post(`/inventario/operaciones/${id}/cancelar`, data),
+
+  /**
+   * Procesar item individual
+   * @param {number} itemId
+   * @param {Object} data - { cantidad_procesada, ubicacion_destino_id? }
+   * @returns {Promise<Object>} Item procesado
+   */
+  procesarItem: (itemId, data) => apiClient.post(`/inventario/operaciones/items/${itemId}/procesar`, data),
+
+  /**
+   * Cancelar item
+   * @param {number} itemId
+   * @returns {Promise<Object>} Item cancelado
+   */
+  cancelarItem: (itemId) => apiClient.post(`/inventario/operaciones/items/${itemId}/cancelar`),
+
+  /**
+   * Obtener cadena completa de operaciones
+   * @param {number} id
+   * @returns {Promise<Array>} Cadena de operaciones
+   */
+  obtenerCadena: (id) => apiClient.get(`/inventario/operaciones/${id}/cadena`),
+
+  /**
+   * Obtener operaciones pendientes por sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Object>} { por_tipo, total }
+   */
+  obtenerPendientes: (sucursalId) => apiClient.get(`/inventario/operaciones/pendientes/${sucursalId}`),
+
+  /**
+   * Obtener estadisticas por tipo
+   * @param {number} sucursalId
+   * @returns {Promise<Object>} Estadisticas
+   */
+  obtenerEstadisticas: (sucursalId) => apiClient.get(`/inventario/operaciones/estadisticas/${sucursalId}`),
+
+  /**
+   * Obtener resumen para vista Kanban
+   * @param {number} sucursalId
+   * @returns {Promise<Object>} Resumen Kanban
+   */
+  obtenerResumenKanban: (sucursalId) => apiClient.get(`/inventario/operaciones/kanban/${sucursalId}`),
+};
+
+// ==================== BATCH PICKING (Dic 2025) ====================
+export const batchPickingApi = {
+  /**
+   * Listar batches con filtros
+   * @param {Object} params - { sucursal_id?, estado?, estados?, asignado_a?, limit? }
+   * @returns {Promise<Array>} Batches
+   */
+  listar: (params = {}) => apiClient.get('/inventario/batch-picking', { params }),
+
+  /**
+   * Obtener batch por ID con operaciones
+   * @param {number} id
+   * @returns {Promise<Object>} Batch con operaciones
+   */
+  obtenerPorId: (id) => apiClient.get(`/inventario/batch-picking/${id}`),
+
+  /**
+   * Crear batch de picking
+   * @param {Object} data - { sucursal_id?, operacion_ids, nombre? }
+   * @returns {Promise<Object>} Batch creado
+   */
+  crear: (data) => apiClient.post('/inventario/batch-picking', data),
+
+  /**
+   * Actualizar batch
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>} Batch actualizado
+   */
+  actualizar: (id, data) => apiClient.put(`/inventario/batch-picking/${id}`, data),
+
+  /**
+   * Eliminar batch (solo si esta en borrador)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/inventario/batch-picking/${id}`),
+
+  /**
+   * Agregar operacion al batch
+   * @param {number} batchId
+   * @param {Object} data - { operacion_id }
+   * @returns {Promise<Object>} Relacion creada
+   */
+  agregarOperacion: (batchId, data) => apiClient.post(`/inventario/batch-picking/${batchId}/operaciones`, data),
+
+  /**
+   * Quitar operacion del batch
+   * @param {number} batchId
+   * @param {number} operacionId
+   * @returns {Promise<Object>}
+   */
+  quitarOperacion: (batchId, operacionId) => apiClient.delete(`/inventario/batch-picking/${batchId}/operaciones/${operacionId}`),
+
+  /**
+   * Iniciar procesamiento del batch
+   * @param {number} id
+   * @returns {Promise<Object>} Resultado
+   */
+  iniciar: (id) => apiClient.post(`/inventario/batch-picking/${id}/iniciar`),
+
+  /**
+   * Procesar item del batch
+   * @param {number} id
+   * @param {Object} data - { producto_id, variante_id?, ubicacion_id?, cantidad }
+   * @returns {Promise<Object>} Resultado
+   */
+  procesarItem: (id, data) => apiClient.post(`/inventario/batch-picking/${id}/procesar-item`, data),
+
+  /**
+   * Completar batch
+   * @param {number} id
+   * @returns {Promise<Object>} Resultado
+   */
+  completar: (id) => apiClient.post(`/inventario/batch-picking/${id}/completar`),
+
+  /**
+   * Cancelar batch
+   * @param {number} id
+   * @returns {Promise<Object>} Batch cancelado
+   */
+  cancelar: (id) => apiClient.post(`/inventario/batch-picking/${id}/cancelar`),
+
+  /**
+   * Obtener lista consolidada de productos a recoger
+   * @param {number} id
+   * @returns {Promise<Array>} Lista consolidada
+   */
+  obtenerListaConsolidada: (id) => apiClient.get(`/inventario/batch-picking/${id}/lista-consolidada`),
+
+  /**
+   * Obtener estadisticas del batch
+   * @param {number} id
+   * @returns {Promise<Object>} Estadisticas
+   */
+  obtenerEstadisticas: (id) => apiClient.get(`/inventario/batch-picking/${id}/estadisticas`),
+
+  /**
+   * Obtener batches pendientes de una sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Array>} Batches pendientes
+   */
+  obtenerPendientes: (sucursalId) => apiClient.get(`/inventario/batch-picking/pendientes/${sucursalId}`),
+
+  /**
+   * Obtener operaciones de picking disponibles para batch
+   * @param {number} sucursalId
+   * @returns {Promise<Array>} Operaciones disponibles
+   */
+  obtenerOperacionesDisponibles: (sucursalId) => apiClient.get(`/inventario/batch-picking/operaciones-disponibles/${sucursalId}`),
+};
+
+// ==================== CONFIGURACION ALMACEN (Dic 2025) ====================
+export const configuracionAlmacenApi = {
+  /**
+   * Listar configuraciones de todas las sucursales
+   * @returns {Promise<Array>} Configuraciones
+   */
+  listar: () => apiClient.get('/inventario/configuracion-almacen'),
+
+  /**
+   * Obtener configuracion por sucursal
+   * @param {number} sucursalId
+   * @returns {Promise<Object>} Configuracion con ubicaciones
+   */
+  obtenerPorSucursal: (sucursalId) => apiClient.get(`/inventario/configuracion-almacen/${sucursalId}`),
+
+  /**
+   * Actualizar configuracion de sucursal
+   * @param {number} sucursalId
+   * @param {Object} data - { pasos_recepcion, pasos_envio, ubicacion_*_id, etc. }
+   * @returns {Promise<Object>} Configuracion actualizada
+   */
+  actualizar: (sucursalId, data) => apiClient.put(`/inventario/configuracion-almacen/${sucursalId}`, data),
+
+  /**
+   * Crear ubicaciones por defecto para rutas multietapa
+   * @param {number} sucursalId
+   * @returns {Promise<Object>} Resultado con ubicaciones creadas
+   */
+  crearUbicacionesDefault: (sucursalId) => apiClient.post(`/inventario/configuracion-almacen/${sucursalId}/crear-ubicaciones`),
+
+  /**
+   * Verificar si la sucursal usa rutas multietapa
+   * @param {number} sucursalId
+   * @param {Object} params - { tipo?: 'recepcion' | 'envio' }
+   * @returns {Promise<Object>} { usa_multietapa: boolean | { recepcion, envio } }
+   */
+  verificarMultietapa: (sucursalId, params = {}) => apiClient.get(`/inventario/configuracion-almacen/${sucursalId}/usa-multietapa`, { params }),
+
+  /**
+   * Obtener descripciones de todos los pasos disponibles
+   * @returns {Promise<Object>} { recepcion: {1, 2, 3}, envio: {1, 2, 3} }
+   */
+  obtenerDescripcionesPasos: () => apiClient.get('/inventario/configuracion-almacen/descripciones-pasos'),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -5015,4 +5278,7 @@ export default {
   reorden: reordenApi,
   landedCosts: landedCostsApi,
   dropship: dropshipApi,
+  operacionesAlmacen: operacionesAlmacenApi,
+  batchPicking: batchPickingApi,
+  configuracionAlmacen: configuracionAlmacenApi,
 };

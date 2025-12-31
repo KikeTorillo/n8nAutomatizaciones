@@ -57,6 +57,9 @@ const AjusteMasivoDetallePage = lazy(() => import('@/pages/inventario/AjusteMasi
 const ReordenPage = lazy(() => import('@/pages/inventario/ReordenPage'));
 const ReglasReordenPage = lazy(() => import('@/pages/inventario/ReglasReordenPage'));
 const DropshipPage = lazy(() => import('@/pages/inventario/DropshipPage'));
+const OperacionesAlmacenPage = lazy(() => import('@/pages/inventario/OperacionesAlmacenPage'));
+const BatchPickingPage = lazy(() => import('@/pages/inventario/BatchPickingPage'));
+const ConfiguracionAlmacenPage = lazy(() => import('@/pages/inventario/ConfiguracionAlmacenPage'));
 
 // Páginas de Precios (Fase 5)
 const ListasPreciosPage = lazy(() => import('@/pages/precios/ListasPreciosPage'));
@@ -531,6 +534,49 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(DropshipPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Operaciones de Almacén - Rutas Multietapa (Dic 2025)
+      {
+        path: 'inventario/operaciones',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(OperacionesAlmacenPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/operaciones/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(OperacionesAlmacenPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Batch Picking / Wave Picking (Dic 2025)
+      {
+        path: 'inventario/batch-picking',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(BatchPickingPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/batch-picking/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario', 'empleado']}>
+            {withSuspense(BatchPickingPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Configuración de Almacén (Dic 2025)
+      {
+        path: 'inventario/configuracion-almacen',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ConfiguracionAlmacenPage)}
           </ProtectedRoute>
         ),
       },

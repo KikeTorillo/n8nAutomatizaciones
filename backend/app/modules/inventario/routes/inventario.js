@@ -20,6 +20,9 @@ const SnapshotsController = require('../controllers/snapshots.controller');
 const ReordenController = require('../controllers/reorden.controller');
 const LandedCostsController = require('../controllers/landed-costs.controller');
 const DropshipController = require('../controllers/dropship.controller');
+const OperacionesAlmacenController = require('../controllers/operaciones-almacen.controller');
+const BatchPickingController = require('../controllers/batch-picking.controller');
+const ConfiguracionAlmacenController = require('../controllers/configuracion-almacen.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const { asyncHandler } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
@@ -2771,6 +2774,461 @@ router.patch('/dropship/ordenes/:id/cancelar',
     tenant.verifyTenantActive,
     rateLimiting.apiRateLimit,
     DropshipController.cancelar
+);
+
+// ===================================================================
+// OPERACIONES DE ALMACEN - Rutas Multietapa (Dic 2025)
+// Sistema multi-paso: Recepcion -> QC -> Almacenamiento | Picking -> Empaque -> Envio
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/operaciones
+ * Listar operaciones con filtros
+ */
+router.get('/operaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.listar
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/pendientes/:sucursalId
+ * Obtener operaciones pendientes de una sucursal
+ */
+router.get('/operaciones/pendientes/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.obtenerPendientes
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/estadisticas/:sucursalId
+ * Obtener estadisticas por tipo
+ */
+router.get('/operaciones/estadisticas/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.obtenerEstadisticas
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/kanban/:sucursalId
+ * Obtener resumen para vista Kanban
+ */
+router.get('/operaciones/kanban/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.obtenerResumenKanban
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/:id
+ * Obtener operacion con items
+ */
+router.get('/operaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.obtenerPorId
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/:id/cadena
+ * Obtener cadena completa de operaciones (multi-step)
+ */
+router.get('/operaciones/:id/cadena',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.obtenerCadena
+);
+
+/**
+ * POST /api/v1/inventario/operaciones
+ * Crear operacion manual
+ */
+router.post('/operaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.crear
+);
+
+/**
+ * PUT /api/v1/inventario/operaciones/:id
+ * Actualizar operacion
+ */
+router.put('/operaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.actualizar
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/:id/asignar
+ * Asignar operacion a usuario
+ */
+router.post('/operaciones/:id/asignar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.asignar
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/:id/iniciar
+ * Iniciar procesamiento de operacion
+ */
+router.post('/operaciones/:id/iniciar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.iniciar
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/:id/completar
+ * Completar operacion procesando items
+ */
+router.post('/operaciones/:id/completar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.completar
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/:id/cancelar
+ * Cancelar operacion
+ */
+router.post('/operaciones/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.cancelar
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/items/:itemId/procesar
+ * Procesar item individual
+ */
+router.post('/operaciones/items/:itemId/procesar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.procesarItem
+);
+
+/**
+ * POST /api/v1/inventario/operaciones/items/:itemId/cancelar
+ * Cancelar item
+ */
+router.post('/operaciones/items/:itemId/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    OperacionesAlmacenController.cancelarItem
+);
+
+// ===================================================================
+// BATCH PICKING - Wave Picking (Dic 2025)
+// Agrupacion de operaciones de picking para procesamiento consolidado
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/batch-picking
+ * Listar batches con filtros
+ */
+router.get('/batch-picking',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.listar
+);
+
+/**
+ * GET /api/v1/inventario/batch-picking/pendientes/:sucursalId
+ * Obtener batches pendientes de una sucursal
+ */
+router.get('/batch-picking/pendientes/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.obtenerPendientes
+);
+
+/**
+ * GET /api/v1/inventario/batch-picking/operaciones-disponibles/:sucursalId
+ * Obtener operaciones de picking disponibles para batch
+ */
+router.get('/batch-picking/operaciones-disponibles/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.obtenerOperacionesDisponibles
+);
+
+/**
+ * GET /api/v1/inventario/batch-picking/:id
+ * Obtener batch con operaciones
+ */
+router.get('/batch-picking/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.obtenerPorId
+);
+
+/**
+ * GET /api/v1/inventario/batch-picking/:id/lista-consolidada
+ * Obtener lista consolidada de productos a recoger
+ */
+router.get('/batch-picking/:id/lista-consolidada',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.obtenerListaConsolidada
+);
+
+/**
+ * GET /api/v1/inventario/batch-picking/:id/estadisticas
+ * Obtener estadisticas del batch
+ */
+router.get('/batch-picking/:id/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    BatchPickingController.obtenerEstadisticas
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking
+ * Crear batch de picking
+ */
+router.post('/batch-picking',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.crear
+);
+
+/**
+ * PUT /api/v1/inventario/batch-picking/:id
+ * Actualizar batch
+ */
+router.put('/batch-picking/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.actualizar
+);
+
+/**
+ * DELETE /api/v1/inventario/batch-picking/:id
+ * Eliminar batch (solo si esta en borrador)
+ */
+router.delete('/batch-picking/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.eliminar
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking/:id/operaciones
+ * Agregar operacion al batch
+ */
+router.post('/batch-picking/:id/operaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.agregarOperacion
+);
+
+/**
+ * DELETE /api/v1/inventario/batch-picking/:id/operaciones/:operacionId
+ * Quitar operacion del batch
+ */
+router.delete('/batch-picking/:id/operaciones/:operacionId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.quitarOperacion
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking/:id/iniciar
+ * Iniciar procesamiento del batch
+ */
+router.post('/batch-picking/:id/iniciar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.iniciar
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking/:id/procesar-item
+ * Procesar item del batch
+ */
+router.post('/batch-picking/:id/procesar-item',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.procesarItem
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking/:id/completar
+ * Completar batch
+ */
+router.post('/batch-picking/:id/completar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.completar
+);
+
+/**
+ * POST /api/v1/inventario/batch-picking/:id/cancelar
+ * Cancelar batch
+ */
+router.post('/batch-picking/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    BatchPickingController.cancelar
+);
+
+// ===================================================================
+// CONFIGURACION DE ALMACEN - Pasos de Recepcion/Envio (Dic 2025)
+// Configurar rutas multi-paso por sucursal
+// ===================================================================
+
+/**
+ * GET /api/v1/inventario/configuracion-almacen
+ * Listar configuraciones de todas las sucursales
+ */
+router.get('/configuracion-almacen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.listar
+);
+
+/**
+ * GET /api/v1/inventario/configuracion-almacen/descripciones-pasos
+ * Obtener descripciones de todos los pasos disponibles
+ */
+router.get('/configuracion-almacen/descripciones-pasos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.obtenerDescripcionesPasos
+);
+
+/**
+ * GET /api/v1/inventario/configuracion-almacen/:sucursalId
+ * Obtener configuracion por sucursal
+ */
+router.get('/configuracion-almacen/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.obtenerPorSucursal
+);
+
+/**
+ * GET /api/v1/inventario/configuracion-almacen/:sucursalId/usa-multietapa
+ * Verificar si la sucursal usa rutas multietapa
+ */
+router.get('/configuracion-almacen/:sucursalId/usa-multietapa',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.verificarMultietapa
+);
+
+/**
+ * PUT /api/v1/inventario/configuracion-almacen/:sucursalId
+ * Actualizar configuracion
+ */
+router.put('/configuracion-almacen/:sucursalId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.actualizar
+);
+
+/**
+ * POST /api/v1/inventario/configuracion-almacen/:sucursalId/crear-ubicaciones
+ * Crear ubicaciones por defecto para rutas multietapa
+ */
+router.post('/configuracion-almacen/:sucursalId/crear-ubicaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConfiguracionAlmacenController.crearUbicacionesDefault
 );
 
 module.exports = router;

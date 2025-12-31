@@ -23,6 +23,9 @@
 | **Venta NS en POS** | ✅ | Selección NS + trazabilidad automática |
 | **Venta Variantes en POS** | ✅ | Stock independiente por variante |
 | **Rutas de Operación** | ✅ | Auto-creadas en onboarding (COMPRA, TRANSFERENCIA, DROPSHIP) |
+| **Rutas Multietapa** | ✅ | Pick → Pack → Ship (1, 2 o 3 pasos configurable) |
+| **Batch/Wave Picking** | ✅ | Agrupar operaciones de picking para procesamiento eficiente |
+| **Configuración Almacén** | ✅ | Pasos recepción/envío configurables por sucursal |
 
 ---
 
@@ -30,15 +33,15 @@
 
 ### Resumen Ejecutivo
 
-Se ejecutó validación completa creando datos **exclusivamente desde el frontend** sin intervención SQL manual.
+Se ejecutaron **2 rondas de validación** creando datos **exclusivamente desde el frontend** sin intervención SQL manual.
 
-**Resultado**: **12/12 flujos funcionan correctamente**. Todos los gaps de inventario avanzado completados.
+**Resultado**: **14/14 flujos funcionan correctamente**. Todos los gaps de inventario avanzado completados.
 
 ### Data Creada en Validación
 
 | Entidad | Datos |
 |---------|-------|
-| Categorías | Electrónicos, Ropa |
+| Categorías | Electrónicos |
 | Proveedores | TechDistribuidor, DropshipGlobal |
 | Productos | Laptop Dell XPS 15 (NS), Monitor Dell 27" (dropship) |
 | Rutas Operación | Compra, Transferencia, Dropship (creadas con botón "Crear Rutas Default") |
@@ -48,38 +51,54 @@ Se ejecutó validación completa creando datos **exclusivamente desde el fronten
 
 | # | Escenario | Estado | Resultado |
 |---|-----------|:------:|-----------|
-| 1 | Crear categorías desde frontend | ✅ | 2 categorías creadas |
+| 1 | Crear categorías desde frontend | ✅ | Electrónicos creada |
 | 2 | Crear proveedores desde frontend | ✅ | 2 proveedores creados |
 | 3 | Crear productos (NS + Dropship) | ✅ | 2 productos con diferentes rutas |
 | 4 | Rutas de Operación | ✅ | Creadas con botón "Crear Rutas Default" |
-| 5 | OC → Enviar → Recibir con NS | ✅ | OC-2025-0001: 2 NS registrados (SN-DELL-001, SN-DELL-002) |
-| 6 | Venta POS con NS | ✅ | NS SN-DELL-001 seleccionado → estado "Vendido" |
-| 7 | Venta POS producto dropship | ✅ | OC-2025-0002 generada automáticamente para DropshipGlobal |
+| 5 | OC → Enviar → Recibir con NS | ✅ | OC-2025-0001: 2 NS (SN-DELL-001, SN-DELL-002) |
+| 6 | Venta POS con NS | ✅ | POS-2025-0001: NS SN-DELL-001 → "Vendido" |
+| 7 | Venta POS producto dropship | ✅ | POS-2025-0002 → OC-2025-0002 auto-generada |
 | 8 | Configurar regla reorden | ✅ | Regla "Reorden Laptops Dell" creada desde UI |
 | 9 | Ejecutar reorden manual | ✅ | OC-2025-0003 generada automáticamente ($120,000) |
 | 10 | pg_cron job configurado | ✅ | `0 6 * * *` - Ejecución diaria 6:00 AM |
+| 11 | **Enviar + Recibir OC con 10 NS** | ✅ | OC-2025-0003: SN-DELL-003 a SN-DELL-012 registrados |
+| 12 | **Venta POS seleccionando NS** | ✅ | POS-2025-0003: NS SN-DELL-003 → "Vendido" |
+| 13 | **Venta dropship genera OC auto** | ✅ | POS-2025-0004 → OC-2025-0004 auto-generada |
+| 14 | **Navegación solo con botones** | ✅ | Todos los tabs accesibles (17 tabs inventario) |
 
 ### OCs Generadas
 
 | Folio | Proveedor | Productos | Total | Estado | Origen |
 |-------|-----------|-----------|-------|--------|--------|
 | OC-2025-0001 | TechDistribuidor | 2× Laptop Dell @ $12,000 | $24,000 | Recibida | Manual |
-| OC-2025-0002 | DropshipGlobal | 1× Monitor Dell 27" | $4,500 | Borrador | **Dropship Automático** ✅ |
-| OC-2025-0003 | TechDistribuidor | 10× Laptop Dell @ $12,000 | $120,000 | Borrador | **Reorden Automático** ✅ |
+| OC-2025-0002 | DropshipGlobal | 1× Monitor Dell 27" | $4,500 | Borrador | **Dropship Auto** (POS-2025-0002) |
+| OC-2025-0003 | TechDistribuidor | 10× Laptop Dell @ $12,000 | $120,000 | **Recibida** | **Reorden Automático** |
+| OC-2025-0004 | DropshipGlobal | 1× Monitor Dell 27" | $4,500 | Borrador | **Dropship Auto** (POS-2025-0004) ✅ |
 
 ### Ventas POS
 
 | Folio | Producto | NS/Variante | Total | Resultado |
 |-------|----------|-------------|-------|-----------|
-| POS-2025-0001 | Laptop Dell XPS 15 | SN-DELL-001 | $15,000 | ✅ NS → Vendido, stock actualizado |
-| POS-2025-0002 | Monitor Dell 27" (dropship) | N/A | $5,999 | ✅ OC-2025-0002 auto-generada |
+| POS-2025-0001 | Laptop Dell XPS 15 | SN-DELL-001 | $15,000 | ✅ NS → Vendido |
+| POS-2025-0002 | Monitor Dell 27" (dropship) | N/A | $5,999 | ✅ OC-2025-0002 auto |
+| POS-2025-0003 | Laptop Dell XPS 15 | **SN-DELL-003** | $15,000 | ✅ NS → Vendido |
+| POS-2025-0004 | Monitor Dell 27" (dropship) | N/A | $5,999 | ✅ OC-2025-0004 auto |
 
-### Números de Serie Registrados
+### Números de Serie Registrados (12 total)
 
 | NS | Producto | Costo | Estado | Origen |
 |----|----------|-------|--------|--------|
-| SN-DELL-001 | Laptop Dell XPS 15 | $12,000 | Vendido | OC-2025-0001 |
+| SN-DELL-001 | Laptop Dell XPS 15 | $12,000 | **Vendido** | OC-2025-0001 |
 | SN-DELL-002 | Laptop Dell XPS 15 | $12,000 | Disponible | OC-2025-0001 |
+| SN-DELL-003 | Laptop Dell XPS 15 | $12,000 | **Vendido** | OC-2025-0003 |
+| SN-DELL-004 a SN-DELL-012 | Laptop Dell XPS 15 | $12,000 c/u | Disponible | OC-2025-0003 |
+
+### Navegación Validada (Sin Gaps)
+
+Todos los módulos accesibles desde navegación con botones (sin URLs directas):
+- **17 tabs en Inventario**: Productos, Categorías, Proveedores, Movimientos, Conteos, Ajustes CSV, Órdenes Compra, Reorden, Dropship, Alertas, Reportes, Listas Precios, Ubicaciones, NS/Lotes, Rutas, Histórico, Transferencias
+- **4 tabs en POS**: Nueva Venta, Historial, Corte de Caja, Reportes
+- **Home → Módulos**: Navegación por tarjetas funcionando correctamente
 
 ---
 
@@ -155,8 +174,8 @@ Se ejecutó validación completa creando datos **exclusivamente desde el fronten
 
 | Gap | Descripción | Complejidad |
 |-----|-------------|:-----------:|
-| Rutas Multietapa | Pick → Pack → Ship | Alta |
-| Traslados por Lote | Agrupar transfers para picking | Baja |
+| ~~Rutas Multietapa~~ | ~~Pick → Pack → Ship~~ | ✅ COMPLETADO 31 Dic 2025 |
+| ~~Traslados por Lote~~ | ~~Agrupar transfers para picking~~ | ✅ COMPLETADO 31 Dic 2025 |
 
 ### Prioridad Baja
 
@@ -174,25 +193,39 @@ Se ejecutó validación completa creando datos **exclusivamente desde el fronten
 sql/inventario/
 ├── 24-reorden-automatico.sql    # Reglas + job pg_cron
 ├── 25-landed-costs.sql          # Costos adicionales OC
-└── 26-dropshipping.sql          # Flujo dropship
+├── 26-dropshipping.sql          # Flujo dropship
+├── 27-rutas-multietapa.sql      # Operaciones almacén (Pick/Pack/Ship)
+└── 28-batch-picking.sql         # Wave picking
 
 backend/app/modules/inventario/
 ├── models/reorden.model.js
 ├── models/landed-costs.model.js
 ├── models/dropship.model.js
-└── controllers/*.controller.js
+├── models/operaciones-almacen.model.js    # NUEVO: Operaciones WMS
+├── models/batch-picking.model.js          # NUEVO: Wave picking
+├── models/configuracion-almacen.model.js  # NUEVO: Config pasos
+├── controllers/operaciones-almacen.controller.js
+├── controllers/batch-picking.controller.js
+├── controllers/configuracion-almacen.controller.js
+└── routes/*.routes.js
 
 backend/app/modules/pos/
 ├── schemas/pos.schemas.js       # Validación con NS/variantes
 └── models/ventas.model.js       # Lógica de venta POS
 
 frontend/src/
-├── pages/inventario/ReordenPage.jsx         # Dashboard reorden
-├── pages/inventario/ReglasReordenPage.jsx   # CRUD reglas
+├── pages/inventario/ReordenPage.jsx              # Dashboard reorden
+├── pages/inventario/ReglasReordenPage.jsx        # CRUD reglas
 ├── pages/inventario/DropshipPage.jsx
+├── pages/inventario/OperacionesAlmacenPage.jsx   # NUEVO: Kanban operaciones
+├── pages/inventario/BatchPickingPage.jsx         # NUEVO: Wave picking
+├── pages/inventario/ConfiguracionAlmacenPage.jsx # NUEVO: Config pasos
 ├── pages/pos/VentaPOSPage.jsx
 ├── components/pos/SeleccionarNSModal.jsx
 ├── components/inventario/ordenes-compra/LandedCostsSection.jsx
+├── hooks/useOperacionesAlmacen.js    # NUEVO
+├── hooks/useBatchPicking.js          # NUEVO
+├── hooks/useConfiguracionAlmacen.js  # NUEVO
 └── hooks/use{Reorden,LandedCosts,Dropship,NumerosSerie}.js
 ```
 
@@ -203,25 +236,71 @@ frontend/src/
 | Fase | Alcance | Estado |
 |------|---------|:------:|
 | 1 | Reorden, Landed Costs, Dropshipping | ✅ Completada |
-| 2 | Validación integral flujos | ✅ Completada 31 Dic - **10/10 flujos OK** |
+| 2 | Validación integral flujos | ✅ Completada 31 Dic - **14/14 flujos OK** |
 | 3 | Fix gaps críticos | ✅ Completada (Landed Costs + Rutas) |
-| 4 | Conectores Carriers (DHL) | Pendiente |
-| 5 | Rutas multietapa, Batch transfers | Pendiente |
+| 4 | **Rutas multietapa, Batch transfers** | ✅ **Completada 31 Dic 2025** |
+| 5 | Conectores Carriers (DHL, FedEx, Estafeta) | Pendiente |
 
 ---
 
-## Próxima Sesión
+## Implementación Rutas Multietapa (31 Dic 2025) ✅
 
-### Navegación Validada ✅
+### Funcionalidades Implementadas
 
-Todos los módulos de inventario tienen acceso desde tabs de navegación:
-- Reorden → Tab "Reorden" → Botón "Configurar Reglas" para reglas
-- Dropship → Tab "Dropship"
-- Rutas → Tab "Rutas"
+**Configuración por Sucursal:**
+- Pasos de recepción: 1 (directo), 2 (Recepción → Stock), 3 (Recepción → QC → Stock)
+- Pasos de envío: 1 (directo), 2 (Picking → Envío), 3 (Picking → Empaque → Envío)
+- Ubicaciones configurables para cada etapa
+
+**Operaciones de Almacén:**
+- Vista Kanban con 4 columnas: Borrador, Asignadas, En Proceso, Completadas
+- Tipos: recepcion, qc, almacenamiento, picking, empaque, envio
+- Encadenamiento automático (operacion_padre_id, operacion_siguiente_id)
+- Asignación a usuarios y priorización
+
+**Wave/Batch Picking:**
+- Agrupar múltiples operaciones de picking en un batch
+- Lista consolidada de items para picking eficiente
+- Estados: borrador, en_proceso, completado, cancelado
+
+### Nuevos Tabs en Inventario
+- **Operaciones** → Vista Kanban de operaciones de almacén
+- **Wave Pick** → Gestión de batches de picking
+
+### Archivos Creados
+
+**SQL (2 archivos):**
+- `sql/inventario/27-rutas-multietapa.sql` - Tablas y funciones operaciones
+- `sql/inventario/28-batch-picking.sql` - Tablas wave picking
+
+**Backend (9 archivos):**
+- `models/operaciones-almacen.model.js`
+- `models/batch-picking.model.js`
+- `models/configuracion-almacen.model.js`
+- Controllers, routes, schemas correspondientes
+
+**Frontend (9 archivos):**
+- `pages/inventario/OperacionesAlmacenPage.jsx`
+- `pages/inventario/BatchPickingPage.jsx`
+- `pages/inventario/ConfiguracionAlmacenPage.jsx`
+- `hooks/useOperacionesAlmacen.js`
+- `hooks/useBatchPicking.js`
+- `hooks/useConfiguracionAlmacen.js`
+- API endpoints en `endpoints.js`
 
 ---
 
-### Prioridad 1: Corregir Gaps Pendientes
+## Navegación Validada ✅
+
+Todos los módulos de inventario tienen acceso desde tabs de navegación (19 tabs):
+- Productos, Categorías, Proveedores, Movimientos, Conteos, Ajustes CSV
+- Órdenes Compra, Reorden, Dropship
+- **Operaciones** (NUEVO), **Wave Pick** (NUEVO)
+- Alertas, Reportes, Listas Precios, Ubicaciones, NS/Lotes, Rutas, Histórico, Transferencias
+
+---
+
+## Gaps Completados (Dic 2025)
 
 1. ~~**Fix Dropshipping** (Alto)~~ ✅ COMPLETADO 30 Dic 2025
 
@@ -229,9 +308,13 @@ Todos los módulos de inventario tienen acceso desde tabs de navegación:
 
 3. ~~**Rutas en Onboarding** (Medio)~~ ✅ COMPLETADO 31 Dic 2025
 
+4. ~~**Rutas Multietapa** (Alto)~~ ✅ COMPLETADO 31 Dic 2025
+
+5. ~~**Batch/Wave Picking** (Medio)~~ ✅ COMPLETADO 31 Dic 2025
+
 ---
 
-### Fase Siguiente: Conectores de Carriers
+## Fase Siguiente: Conectores de Carriers
 
 **Objetivo**: Integrar generación automática de etiquetas de envío
 
