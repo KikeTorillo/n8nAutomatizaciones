@@ -23,6 +23,8 @@ const DropshipController = require('../controllers/dropship.controller');
 const OperacionesAlmacenController = require('../controllers/operaciones-almacen.controller');
 const BatchPickingController = require('../controllers/batch-picking.controller');
 const ConfiguracionAlmacenController = require('../controllers/configuracion-almacen.controller');
+const PaquetesController = require('../controllers/paquetes.controller');
+const ConsignaController = require('../controllers/consigna.controller');
 const { auth, tenant, rateLimiting, validation, subscription, modules } = require('../../../middleware');
 const { asyncHandler } = require('../../../middleware');
 const inventarioSchemas = require('../schemas/inventario.schemas');
@@ -3229,6 +3231,506 @@ router.post('/configuracion-almacen/:sucursalId/crear-ubicaciones',
     tenant.verifyTenantActive,
     rateLimiting.apiRateLimit,
     ConfiguracionAlmacenController.crearUbicacionesDefault
+);
+
+// ===================================================================
+// PAQUETES DE ENVIO (Dic 2025)
+// ===================================================================
+
+/**
+ * POST /api/v1/inventario/operaciones/:operacionId/paquetes
+ * Crear paquete para operacion de empaque
+ */
+router.post('/operaciones/:operacionId/paquetes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearPaquete),
+    PaquetesController.crear
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/:operacionId/paquetes
+ * Listar paquetes de una operacion
+ */
+router.get('/operaciones/:operacionId/paquetes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    PaquetesController.listar
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/:operacionId/items-disponibles
+ * Items disponibles para empacar
+ */
+router.get('/operaciones/:operacionId/items-disponibles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    PaquetesController.itemsDisponibles
+);
+
+/**
+ * GET /api/v1/inventario/operaciones/:operacionId/resumen-empaque
+ * Resumen de empaque de la operacion
+ */
+router.get('/operaciones/:operacionId/resumen-empaque',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    PaquetesController.resumenEmpaque
+);
+
+/**
+ * GET /api/v1/inventario/paquetes/:id
+ * Obtener paquete por ID
+ */
+router.get('/paquetes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    PaquetesController.obtener
+);
+
+/**
+ * PUT /api/v1/inventario/paquetes/:id
+ * Actualizar dimensiones/peso del paquete
+ */
+router.put('/paquetes/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarPaquete),
+    PaquetesController.actualizar
+);
+
+/**
+ * POST /api/v1/inventario/paquetes/:id/items
+ * Agregar item al paquete
+ */
+router.post('/paquetes/:id/items',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.agregarItemPaquete),
+    PaquetesController.agregarItem
+);
+
+/**
+ * DELETE /api/v1/inventario/paquetes/:id/items/:itemId
+ * Remover item del paquete
+ */
+router.delete('/paquetes/:id/items/:itemId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    PaquetesController.removerItem
+);
+
+/**
+ * POST /api/v1/inventario/paquetes/:id/cerrar
+ * Cerrar paquete
+ */
+router.post('/paquetes/:id/cerrar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    PaquetesController.cerrar
+);
+
+/**
+ * POST /api/v1/inventario/paquetes/:id/cancelar
+ * Cancelar paquete
+ */
+router.post('/paquetes/:id/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.cancelarPaquete),
+    PaquetesController.cancelar
+);
+
+/**
+ * POST /api/v1/inventario/paquetes/:id/etiquetar
+ * Marcar paquete como etiquetado
+ */
+router.post('/paquetes/:id/etiquetar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.etiquetarPaquete),
+    PaquetesController.etiquetar
+);
+
+/**
+ * POST /api/v1/inventario/paquetes/:id/enviar
+ * Marcar paquete como enviado
+ */
+router.post('/paquetes/:id/enviar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    PaquetesController.enviar
+);
+
+/**
+ * GET /api/v1/inventario/paquetes/:id/etiqueta
+ * Generar datos de etiqueta del paquete
+ */
+router.get('/paquetes/:id/etiqueta',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    PaquetesController.generarEtiqueta
+);
+
+// ===================================================================
+// CONSIGNA - Inventario en Consignacion (Dic 2025)
+// ===================================================================
+
+// --- ACUERDOS DE CONSIGNA ---
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos
+ * Crear nuevo acuerdo de consignacion
+ */
+router.post('/consigna/acuerdos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.crearAcuerdoConsigna),
+    ConsignaController.crearAcuerdo
+);
+
+/**
+ * GET /api/v1/inventario/consigna/acuerdos
+ * Listar acuerdos de consignacion
+ */
+router.get('/consigna/acuerdos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.listarAcuerdos
+);
+
+/**
+ * GET /api/v1/inventario/consigna/acuerdos/:id
+ * Obtener acuerdo por ID
+ */
+router.get('/consigna/acuerdos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.obtenerAcuerdo
+);
+
+/**
+ * PUT /api/v1/inventario/consigna/acuerdos/:id
+ * Actualizar acuerdo
+ */
+router.put('/consigna/acuerdos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarAcuerdoConsigna),
+    ConsignaController.actualizarAcuerdo
+);
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/activar
+ * Activar acuerdo
+ */
+router.post('/consigna/acuerdos/:id/activar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.activarAcuerdo
+);
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/pausar
+ * Pausar acuerdo
+ */
+router.post('/consigna/acuerdos/:id/pausar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.pausarAcuerdo
+);
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/terminar
+ * Terminar acuerdo
+ */
+router.post('/consigna/acuerdos/:id/terminar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.terminarAcuerdo
+);
+
+// --- PRODUCTOS DEL ACUERDO ---
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/productos
+ * Agregar producto al acuerdo
+ */
+router.post('/consigna/acuerdos/:id/productos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.agregarProductoConsigna),
+    ConsignaController.agregarProducto
+);
+
+/**
+ * GET /api/v1/inventario/consigna/acuerdos/:id/productos
+ * Listar productos del acuerdo
+ */
+router.get('/consigna/acuerdos/:id/productos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.listarProductos
+);
+
+/**
+ * PUT /api/v1/inventario/consigna/acuerdos/:id/productos/:productoId
+ * Actualizar producto del acuerdo
+ */
+router.put('/consigna/acuerdos/:id/productos/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.actualizarProductoConsigna),
+    ConsignaController.actualizarProducto
+);
+
+/**
+ * DELETE /api/v1/inventario/consigna/acuerdos/:id/productos/:productoId
+ * Remover producto del acuerdo
+ */
+router.delete('/consigna/acuerdos/:id/productos/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.removerProducto
+);
+
+// --- STOCK CONSIGNA ---
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/recibir
+ * Recibir mercancia en consignacion
+ */
+router.post('/consigna/acuerdos/:id/recibir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.recibirMercanciaConsigna),
+    ConsignaController.recibirMercancia
+);
+
+/**
+ * GET /api/v1/inventario/consigna/stock
+ * Consultar stock en consignacion
+ */
+router.get('/consigna/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.consultarStock
+);
+
+/**
+ * POST /api/v1/inventario/consigna/stock/:id/ajuste
+ * Ajustar stock consigna
+ */
+router.post('/consigna/stock/:id/ajuste',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.ajustarStockConsigna),
+    ConsignaController.ajustarStock
+);
+
+/**
+ * POST /api/v1/inventario/consigna/acuerdos/:id/devolver
+ * Devolver mercancia al proveedor
+ */
+router.post('/consigna/acuerdos/:id/devolver',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.devolverMercanciaConsigna),
+    ConsignaController.devolverMercancia
+);
+
+// --- LIQUIDACIONES ---
+
+/**
+ * POST /api/v1/inventario/consigna/liquidaciones
+ * Generar liquidacion
+ */
+router.post('/consigna/liquidaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.generarLiquidacion),
+    ConsignaController.generarLiquidacion
+);
+
+/**
+ * GET /api/v1/inventario/consigna/liquidaciones
+ * Listar liquidaciones
+ */
+router.get('/consigna/liquidaciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.listarLiquidaciones
+);
+
+/**
+ * GET /api/v1/inventario/consigna/liquidaciones/:id
+ * Obtener liquidacion con detalle
+ */
+router.get('/consigna/liquidaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.obtenerLiquidacion
+);
+
+/**
+ * POST /api/v1/inventario/consigna/liquidaciones/:id/confirmar
+ * Confirmar liquidacion
+ */
+router.post('/consigna/liquidaciones/:id/confirmar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.confirmarLiquidacion
+);
+
+/**
+ * POST /api/v1/inventario/consigna/liquidaciones/:id/pagar
+ * Registrar pago de liquidacion
+ */
+router.post('/consigna/liquidaciones/:id/pagar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(inventarioSchemas.pagarLiquidacion),
+    ConsignaController.pagarLiquidacion
+);
+
+/**
+ * DELETE /api/v1/inventario/consigna/liquidaciones/:id
+ * Cancelar liquidacion
+ */
+router.delete('/consigna/liquidaciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    ConsignaController.cancelarLiquidacion
+);
+
+// --- REPORTES CONSIGNA ---
+
+/**
+ * GET /api/v1/inventario/consigna/reportes/stock
+ * Reporte de stock consigna
+ */
+router.get('/consigna/reportes/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.reporteStock
+);
+
+/**
+ * GET /api/v1/inventario/consigna/reportes/ventas
+ * Reporte de ventas consigna
+ */
+router.get('/consigna/reportes/ventas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.reporteVentas
+);
+
+/**
+ * GET /api/v1/inventario/consigna/reportes/pendiente
+ * Reporte pendiente de liquidar
+ */
+router.get('/consigna/reportes/pendiente',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('inventario'),
+    rateLimiting.apiRateLimit,
+    ConsignaController.reportePendiente
 );
 
 module.exports = router;

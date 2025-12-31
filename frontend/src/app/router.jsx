@@ -57,6 +57,7 @@ const AjusteMasivoDetallePage = lazy(() => import('@/pages/inventario/AjusteMasi
 const ReordenPage = lazy(() => import('@/pages/inventario/ReordenPage'));
 const ReglasReordenPage = lazy(() => import('@/pages/inventario/ReglasReordenPage'));
 const DropshipPage = lazy(() => import('@/pages/inventario/DropshipPage'));
+const ConsignaPage = lazy(() => import('@/pages/inventario/ConsignaPage'));
 const OperacionesAlmacenPage = lazy(() => import('@/pages/inventario/OperacionesAlmacenPage'));
 const BatchPickingPage = lazy(() => import('@/pages/inventario/BatchPickingPage'));
 const ConfiguracionAlmacenPage = lazy(() => import('@/pages/inventario/ConfiguracionAlmacenPage'));
@@ -534,6 +535,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(DropshipPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Consigna - Stock de terceros (Dic 2025)
+      {
+        path: 'inventario/consigna',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(ConsignaPage)}
           </ProtectedRoute>
         ),
       },

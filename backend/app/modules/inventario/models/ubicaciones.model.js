@@ -254,15 +254,16 @@ class UbicacionesAlmacenModel {
         const roots = [];
 
         // Crear mapa de todas las ubicaciones
+        // Nota: Usamos 'hijos' para compatibilidad con frontend
         ubicaciones.forEach(u => {
-            map.set(u.id, { ...u, children: [] });
+            map.set(u.id, { ...u, hijos: [] });
         });
 
         // Construir jerarquia
         ubicaciones.forEach(u => {
             const node = map.get(u.id);
             if (u.parent_id && map.has(u.parent_id)) {
-                map.get(u.parent_id).children.push(node);
+                map.get(u.parent_id).hijos.push(node);
             } else {
                 roots.push(node);
             }

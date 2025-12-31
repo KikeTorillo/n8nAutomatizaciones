@@ -3,6 +3,8 @@ const logger = require('../../../utils/logger');
 const workflowAdapter = require('../../../services/workflowAdapter');
 const RutasOperacionModel = require('./rutas-operacion.model');
 const LandedCostsModel = require('./landed-costs.model');
+const OperacionesAlmacenModel = require('./operaciones-almacen.model');
+const ConfiguracionAlmacenModel = require('./configuracion-almacen.model');
 
 /**
  * Model para gestión de Órdenes de Compra
@@ -1023,6 +1025,53 @@ class OrdenesCompraModel {
                     `UPDATE ordenes_compra SET fecha_recepcion = NOW() WHERE id = $1`,
                     [ordenId]
                 );
+
+                // ═══════════════════════════════════════════════════════════════════
+                // Generar operaciones multietapa si está configurado
+                // ═══════════════════════════════════════════════════════════════════
+                try {
+                    // Obtener sucursal principal de la organización
+                    const sucursalQuery = await db.query(
+                        `SELECT id FROM sucursales
+                         WHERE organizacion_id = $1 AND activo = true
+                         ORDER BY es_matriz DESC, id ASC LIMIT 1`,
+                        [organizacionId]
+                    );
+
+                    if (sucursalQuery.rows.length > 0) {
+                        const sucursalId = sucursalQuery.rows[0].id;
+
+                        // Verificar si usa rutas multietapa
+                        const configQuery = await db.query(
+                            `SELECT pasos_recepcion
+                             FROM configuracion_almacen_sucursal
+                             WHERE sucursal_id = $1 AND organizacion_id = $2`,
+                            [sucursalId, organizacionId]
+                        );
+
+                        const usaMultietapa = configQuery.rows[0]?.pasos_recepcion > 1;
+
+                        if (usaMultietapa) {
+                            // Generar operaciones de recepción
+                            const opResult = await db.query(
+                                'SELECT crear_operaciones_recepcion($1, $2, $3) as operacion_id',
+                                [ordenId, sucursalId, usuarioId]
+                            );
+
+                            logger.info('[OrdenesCompraModel.recibirMercancia] Operaciones multietapa generadas', {
+                                orden_id: ordenId,
+                                sucursal_id: sucursalId,
+                                operacion_id: opResult.rows[0]?.operacion_id
+                            });
+                        }
+                    }
+                } catch (opError) {
+                    // Log error pero no fallar la transacción principal
+                    logger.warn('[OrdenesCompraModel.recibirMercancia] Error generando operaciones multietapa', {
+                        orden_id: ordenId,
+                        error: opError.message
+                    });
+                }
             }
 
             // También actualizar estado de los items completados

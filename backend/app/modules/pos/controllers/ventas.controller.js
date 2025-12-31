@@ -6,6 +6,8 @@ const profesionalAdapter = require('../../../services/profesionalAdapter');
 const TicketPDFService = require('../../../services/ticketPDF.service');
 const RLSContextManager = require('../../../utils/rlsContextManager');
 const OrganizacionModel = require('../../core/models/organizacion.model');
+const DropshipModel = require('../../inventario/models/dropship.model');
+const logger = require('../../../utils/logger');
 
 /**
  * Controller para gestión de ventas POS
@@ -52,10 +54,48 @@ class VentasPOSController {
 
         const venta = await VentasPOSModel.crear(ventaData, organizacionId);
 
+        // Dic 2025: Auto-generar OC dropship si la venta contiene productos dropship
+        let dropshipResult = null;
+        if (venta?.venta?.es_dropship) {
+            try {
+                // Verificar configuración de auto-generación
+                const configDropship = await DropshipModel.obtenerConfiguracion(organizacionId);
+
+                if (configDropship.dropship_auto_generar_oc) {
+                    logger.info('[VentasPOSController.crear] Generando OC dropship automáticamente', {
+                        venta_id: venta.venta.id,
+                        folio: venta.venta.folio
+                    });
+
+                    dropshipResult = await DropshipModel.crearOCDesdeVenta(
+                        venta.venta.id,
+                        usuarioId,
+                        organizacionId
+                    );
+
+                    logger.info('[VentasPOSController.crear] OC dropship generada', {
+                        venta_id: venta.venta.id,
+                        ocs_creadas: dropshipResult.ocs_creadas
+                    });
+                }
+            } catch (dropshipError) {
+                // No fallar la venta si falla el dropship, solo loguear
+                logger.error('[VentasPOSController.crear] Error al generar OC dropship', {
+                    venta_id: venta.venta.id,
+                    error: dropshipError.message
+                });
+            }
+        }
+
         return ResponseHelper.success(
             res,
-            venta,
-            'Venta creada exitosamente',
+            {
+                ...venta,
+                dropship: dropshipResult
+            },
+            dropshipResult
+                ? `Venta creada exitosamente. ${dropshipResult.ocs_creadas} OC(s) dropship generada(s)`
+                : 'Venta creada exitosamente',
             201
         );
     });

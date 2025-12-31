@@ -326,18 +326,18 @@ CREATE OR REPLACE FUNCTION obtener_ventas_dropship_pendientes(
     direccion_envio TEXT,
     total DECIMAL(10,2),
     fecha_venta TIMESTAMPTZ,
-    items_dropship INTEGER
+    items_dropship BIGINT
 ) AS $$
 BEGIN
     RETURN QUERY
     SELECT
         v.id as venta_id,
         v.folio,
-        COALESCE(c.nombre, 'Sin cliente') as cliente_nombre,
-        COALESCE(v.direccion_envio, c.direccion, 'Sin direccion') as direccion_envio,
+        COALESCE(c.nombre, 'Sin cliente')::TEXT as cliente_nombre,
+        COALESCE(v.direccion_envio, c.direccion, 'Sin direccion')::TEXT as direccion_envio,
         v.total,
         v.fecha_venta,
-        (SELECT COUNT(*)::INTEGER
+        (SELECT COUNT(*)
          FROM ventas_pos_items vpi
          JOIN productos p ON p.id = vpi.producto_id
          WHERE vpi.venta_pos_id = v.id AND p.ruta_preferida = 'dropship') as items_dropship

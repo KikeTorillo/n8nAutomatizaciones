@@ -5237,6 +5237,337 @@ export const configuracionAlmacenApi = {
   obtenerDescripcionesPasos: () => apiClient.get('/inventario/configuracion-almacen/descripciones-pasos'),
 };
 
+// ========================================================================
+// PAQUETES DE ENVIO (Dic 2025)
+// ========================================================================
+
+/**
+ * Endpoints para Paquetes de Envio (empaque)
+ * @module paquetesApi
+ */
+export const paquetesApi = {
+  // ==================== PAQUETES POR OPERACION ====================
+
+  /**
+   * Crear paquete para operacion de empaque
+   * @param {number} operacionId
+   * @param {Object} data - { notas? }
+   * @returns {Promise<Object>} Paquete creado
+   */
+  crear: (operacionId, data = {}) => apiClient.post(`/inventario/operaciones/${operacionId}/paquetes`, data),
+
+  /**
+   * Listar paquetes de una operacion
+   * @param {number} operacionId
+   * @returns {Promise<Array>} Lista de paquetes
+   */
+  listarPorOperacion: (operacionId) => apiClient.get(`/inventario/operaciones/${operacionId}/paquetes`),
+
+  /**
+   * Obtener items disponibles para empacar
+   * @param {number} operacionId
+   * @returns {Promise<Array>} Items pendientes de empacar
+   */
+  obtenerItemsDisponibles: (operacionId) => apiClient.get(`/inventario/operaciones/${operacionId}/items-disponibles`),
+
+  /**
+   * Obtener resumen de empaque de la operacion
+   * @param {number} operacionId
+   * @returns {Promise<Object>} Resumen con totales y paquetes
+   */
+  obtenerResumen: (operacionId) => apiClient.get(`/inventario/operaciones/${operacionId}/resumen-empaque`),
+
+  // ==================== PAQUETE INDIVIDUAL ====================
+
+  /**
+   * Obtener paquete por ID con items
+   * @param {number} id
+   * @returns {Promise<Object>} Paquete con items
+   */
+  obtenerPorId: (id) => apiClient.get(`/inventario/paquetes/${id}`),
+
+  /**
+   * Actualizar dimensiones/peso del paquete
+   * @param {number} id
+   * @param {Object} data - { peso_kg?, largo_cm?, ancho_cm?, alto_cm?, notas?, carrier?, tracking_carrier? }
+   * @returns {Promise<Object>} Paquete actualizado
+   */
+  actualizar: (id, data) => apiClient.put(`/inventario/paquetes/${id}`, data),
+
+  // ==================== ITEMS DE PAQUETE ====================
+
+  /**
+   * Agregar item al paquete
+   * @param {number} paqueteId
+   * @param {Object} data - { operacion_item_id, cantidad, numero_serie_id? }
+   * @returns {Promise<Object>} Resultado
+   */
+  agregarItem: (paqueteId, data) => apiClient.post(`/inventario/paquetes/${paqueteId}/items`, data),
+
+  /**
+   * Remover item del paquete
+   * @param {number} paqueteId
+   * @param {number} itemId
+   * @returns {Promise<Object>} Resultado
+   */
+  removerItem: (paqueteId, itemId) => apiClient.delete(`/inventario/paquetes/${paqueteId}/items/${itemId}`),
+
+  // ==================== ACCIONES DE PAQUETE ====================
+
+  /**
+   * Cerrar paquete (no mas modificaciones)
+   * @param {number} id
+   * @returns {Promise<Object>} Resultado
+   */
+  cerrar: (id) => apiClient.post(`/inventario/paquetes/${id}/cerrar`),
+
+  /**
+   * Cancelar paquete
+   * @param {number} id
+   * @param {Object} data - { motivo? }
+   * @returns {Promise<Object>} Resultado
+   */
+  cancelar: (id, data = {}) => apiClient.post(`/inventario/paquetes/${id}/cancelar`, data),
+
+  /**
+   * Marcar paquete como etiquetado
+   * @param {number} id
+   * @param {Object} data - { tracking_carrier?, carrier? }
+   * @returns {Promise<Object>} Paquete actualizado
+   */
+  etiquetar: (id, data = {}) => apiClient.post(`/inventario/paquetes/${id}/etiquetar`, data),
+
+  /**
+   * Marcar paquete como enviado
+   * @param {number} id
+   * @returns {Promise<Object>} Paquete actualizado
+   */
+  enviar: (id) => apiClient.post(`/inventario/paquetes/${id}/enviar`),
+
+  /**
+   * Generar datos de etiqueta del paquete
+   * @param {number} id
+   * @returns {Promise<Object>} Datos para impresion de etiqueta
+   */
+  generarEtiqueta: (id) => apiClient.get(`/inventario/paquetes/${id}/etiqueta`),
+};
+
+// ================================================================================
+// CONSIGNA - Inventario en Consignacion (Dic 2025)
+// ================================================================================
+
+/**
+ * API para gestion de inventario en consignacion
+ * Stock de proveedores en tu almacen, pago solo al vender
+ */
+export const consignaApi = {
+  // --- ACUERDOS ---
+
+  /**
+   * Crear acuerdo de consignacion
+   * @param {Object} data - { proveedor_id, porcentaje_comision, dias_liquidacion, ... }
+   * @returns {Promise<Object>} Acuerdo creado
+   */
+  crearAcuerdo: (data) => apiClient.post('/inventario/consigna/acuerdos', data),
+
+  /**
+   * Listar acuerdos
+   * @param {Object} params - { proveedor_id?, estado?, busqueda?, limit?, offset? }
+   * @returns {Promise<Object>} { data, total, limit, offset }
+   */
+  listarAcuerdos: (params = {}) => apiClient.get('/inventario/consigna/acuerdos', { params }),
+
+  /**
+   * Obtener acuerdo por ID
+   * @param {number} id
+   * @returns {Promise<Object>} Acuerdo con detalles
+   */
+  obtenerAcuerdo: (id) => apiClient.get(`/inventario/consigna/acuerdos/${id}`),
+
+  /**
+   * Actualizar acuerdo
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>} Acuerdo actualizado
+   */
+  actualizarAcuerdo: (id, data) => apiClient.put(`/inventario/consigna/acuerdos/${id}`, data),
+
+  /**
+   * Activar acuerdo
+   * @param {number} id
+   * @returns {Promise<Object>} Acuerdo activado
+   */
+  activarAcuerdo: (id) => apiClient.post(`/inventario/consigna/acuerdos/${id}/activar`),
+
+  /**
+   * Pausar acuerdo
+   * @param {number} id
+   * @returns {Promise<Object>} Acuerdo pausado
+   */
+  pausarAcuerdo: (id) => apiClient.post(`/inventario/consigna/acuerdos/${id}/pausar`),
+
+  /**
+   * Terminar acuerdo
+   * @param {number} id
+   * @returns {Promise<Object>} Acuerdo terminado
+   */
+  terminarAcuerdo: (id) => apiClient.post(`/inventario/consigna/acuerdos/${id}/terminar`),
+
+  // --- PRODUCTOS DEL ACUERDO ---
+
+  /**
+   * Agregar producto al acuerdo
+   * @param {number} acuerdoId
+   * @param {Object} data - { producto_id, precio_consigna, ... }
+   * @returns {Promise<Object>} Producto agregado
+   */
+  agregarProducto: (acuerdoId, data) =>
+    apiClient.post(`/inventario/consigna/acuerdos/${acuerdoId}/productos`, data),
+
+  /**
+   * Listar productos del acuerdo
+   * @param {number} acuerdoId
+   * @returns {Promise<Array>} Productos del acuerdo
+   */
+  listarProductos: (acuerdoId) =>
+    apiClient.get(`/inventario/consigna/acuerdos/${acuerdoId}/productos`),
+
+  /**
+   * Actualizar producto del acuerdo
+   * @param {number} acuerdoId
+   * @param {number} productoId
+   * @param {Object} data
+   * @param {number} varianteId - Opcional
+   * @returns {Promise<Object>} Producto actualizado
+   */
+  actualizarProducto: (acuerdoId, productoId, data, varianteId = null) =>
+    apiClient.put(
+      `/inventario/consigna/acuerdos/${acuerdoId}/productos/${productoId}`,
+      data,
+      { params: varianteId ? { variante_id: varianteId } : {} }
+    ),
+
+  /**
+   * Remover producto del acuerdo
+   * @param {number} acuerdoId
+   * @param {number} productoId
+   * @param {number} varianteId - Opcional
+   * @returns {Promise<Object>} Resultado
+   */
+  removerProducto: (acuerdoId, productoId, varianteId = null) =>
+    apiClient.delete(
+      `/inventario/consigna/acuerdos/${acuerdoId}/productos/${productoId}`,
+      { params: varianteId ? { variante_id: varianteId } : {} }
+    ),
+
+  // --- STOCK CONSIGNA ---
+
+  /**
+   * Recibir mercancia en consignacion
+   * @param {number} acuerdoId
+   * @param {Object} data - { items: [{ producto_id, cantidad, ... }] }
+   * @returns {Promise<Object>} Movimientos creados
+   */
+  recibirMercancia: (acuerdoId, data) =>
+    apiClient.post(`/inventario/consigna/acuerdos/${acuerdoId}/recibir`, data),
+
+  /**
+   * Consultar stock en consignacion
+   * @param {Object} params - { acuerdo_id?, proveedor_id?, producto_id?, almacen_id?, solo_disponible? }
+   * @returns {Promise<Array>} Stock consigna
+   */
+  consultarStock: (params = {}) => apiClient.get('/inventario/consigna/stock', { params }),
+
+  /**
+   * Ajustar stock consigna
+   * @param {number} stockId
+   * @param {Object} data - { cantidad, motivo }
+   * @returns {Promise<Object>} Resultado del ajuste
+   */
+  ajustarStock: (stockId, data) =>
+    apiClient.post(`/inventario/consigna/stock/${stockId}/ajuste`, data),
+
+  /**
+   * Devolver mercancia al proveedor
+   * @param {number} acuerdoId
+   * @param {Object} data - { items: [{ producto_id, cantidad, ... }] }
+   * @returns {Promise<Object>} Movimientos de devolucion
+   */
+  devolverMercancia: (acuerdoId, data) =>
+    apiClient.post(`/inventario/consigna/acuerdos/${acuerdoId}/devolver`, data),
+
+  // --- LIQUIDACIONES ---
+
+  /**
+   * Generar liquidacion
+   * @param {Object} data - { acuerdo_id, fecha_desde, fecha_hasta }
+   * @returns {Promise<Object>} Liquidacion generada
+   */
+  generarLiquidacion: (data) => apiClient.post('/inventario/consigna/liquidaciones', data),
+
+  /**
+   * Listar liquidaciones
+   * @param {Object} params - { acuerdo_id?, proveedor_id?, estado?, limit?, offset? }
+   * @returns {Promise<Array>} Liquidaciones
+   */
+  listarLiquidaciones: (params = {}) =>
+    apiClient.get('/inventario/consigna/liquidaciones', { params }),
+
+  /**
+   * Obtener liquidacion con detalle
+   * @param {number} id
+   * @returns {Promise<Object>} Liquidacion con items
+   */
+  obtenerLiquidacion: (id) => apiClient.get(`/inventario/consigna/liquidaciones/${id}`),
+
+  /**
+   * Confirmar liquidacion
+   * @param {number} id
+   * @returns {Promise<Object>} Liquidacion confirmada
+   */
+  confirmarLiquidacion: (id) => apiClient.post(`/inventario/consigna/liquidaciones/${id}/confirmar`),
+
+  /**
+   * Pagar liquidacion
+   * @param {number} id
+   * @param {Object} data - { fecha_pago?, metodo_pago?, referencia_pago? }
+   * @returns {Promise<Object>} Liquidacion pagada
+   */
+  pagarLiquidacion: (id, data = {}) =>
+    apiClient.post(`/inventario/consigna/liquidaciones/${id}/pagar`, data),
+
+  /**
+   * Cancelar liquidacion
+   * @param {number} id
+   * @returns {Promise<Object>} Resultado
+   */
+  cancelarLiquidacion: (id) => apiClient.delete(`/inventario/consigna/liquidaciones/${id}`),
+
+  // --- REPORTES ---
+
+  /**
+   * Reporte de stock consigna
+   * @param {Object} params - { proveedor_id? }
+   * @returns {Promise<Array>} Resumen de stock
+   */
+  reporteStock: (params = {}) =>
+    apiClient.get('/inventario/consigna/reportes/stock', { params }),
+
+  /**
+   * Reporte de ventas consigna
+   * @param {Object} params - { fecha_desde, fecha_hasta }
+   * @returns {Promise<Array>} Ventas por producto
+   */
+  reporteVentas: (params) =>
+    apiClient.get('/inventario/consigna/reportes/ventas', { params }),
+
+  /**
+   * Reporte pendiente de liquidar
+   * @returns {Promise<Array>} Pendiente por acuerdo
+   */
+  reportePendiente: () => apiClient.get('/inventario/consigna/reportes/pendiente'),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -5281,4 +5612,6 @@ export default {
   operacionesAlmacen: operacionesAlmacenApi,
   batchPicking: batchPickingApi,
   configuracionAlmacen: configuracionAlmacenApi,
+  paquetes: paquetesApi,
+  consigna: consignaApi,
 };

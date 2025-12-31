@@ -15,7 +15,7 @@ class DropshipController {
      */
     static crearDesdeVenta = asyncHandler(async (req, res) => {
         const { ventaId } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
         const usuarioId = req.user.id;
 
         logger.info('[DropshipController.crearDesdeVenta] Request', {
@@ -41,7 +41,7 @@ class DropshipController {
      * Listar ventas pendientes de generar OC
      */
     static obtenerVentasPendientes = asyncHandler(async (req, res) => {
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const ventas = await DropshipModel.obtenerVentasPendientes(organizacionId);
 
@@ -56,7 +56,7 @@ class DropshipController {
      * Listar OC dropship
      */
     static listarOrdenes = asyncHandler(async (req, res) => {
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
         const { estado, proveedor_id, fecha_desde, fecha_hasta } = req.query;
 
         const ordenes = await DropshipModel.listarOCDropship(organizacionId, {
@@ -79,7 +79,7 @@ class DropshipController {
      */
     static obtenerOrden = asyncHandler(async (req, res) => {
         const { id } = req.params;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const orden = await DropshipModel.obtenerDetalle(
             parseInt(id),
@@ -106,7 +106,7 @@ class DropshipController {
     static confirmarEntrega = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { notas } = req.body;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const resultado = await DropshipModel.confirmarEntrega(
             parseInt(id),
@@ -128,7 +128,7 @@ class DropshipController {
     static cancelar = asyncHandler(async (req, res) => {
         const { id } = req.params;
         const { motivo } = req.body;
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const resultado = await DropshipModel.cancelar(
             parseInt(id),
@@ -148,7 +148,7 @@ class DropshipController {
      * Obtener configuracion dropship
      */
     static obtenerConfiguracion = asyncHandler(async (req, res) => {
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const config = await DropshipModel.obtenerConfiguracion(organizacionId);
 
@@ -163,7 +163,7 @@ class DropshipController {
      * Actualizar configuracion dropship
      */
     static actualizarConfiguracion = asyncHandler(async (req, res) => {
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
         const { dropship_auto_generar_oc } = req.body;
 
         const config = await DropshipModel.actualizarConfiguracion(
@@ -183,7 +183,7 @@ class DropshipController {
      * Obtener estadisticas de dropship
      */
     static obtenerEstadisticas = asyncHandler(async (req, res) => {
-        const organizacionId = req.user.organizacion_id;
+        const organizacionId = req.tenant.organizacionId;
 
         const stats = await DropshipModel.obtenerEstadisticas(organizacionId);
 
