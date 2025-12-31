@@ -365,8 +365,8 @@ BEGIN
                     mensaje,
                     nivel,
                     icono,
-                    url_accion,
-                    datos
+                    accion_url,
+                    accion_datos
                 )
                 SELECT
                     org.id,

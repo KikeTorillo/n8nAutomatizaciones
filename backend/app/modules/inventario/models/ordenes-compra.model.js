@@ -2,6 +2,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 const logger = require('../../../utils/logger');
 const workflowAdapter = require('../../../services/workflowAdapter');
 const RutasOperacionModel = require('./rutas-operacion.model');
+const LandedCostsModel = require('./landed-costs.model');
 
 /**
  * Model para gestión de Órdenes de Compra
@@ -769,6 +770,20 @@ class OrdenesCompraModel {
                 throw new Error('Solo se puede recibir mercancía de órdenes enviadas o con recepción parcial');
             }
 
+            // ═══════════════════════════════════════════════════════════════════
+            // Auto-distribuir landed costs pendientes antes de recibir
+            // ═══════════════════════════════════════════════════════════════════
+            const costosDistribuidos = await LandedCostsModel.distribuirTodosConDb(ordenId, db);
+            if (costosDistribuidos > 0) {
+                logger.info('[OrdenesCompraModel.recibirMercancia] Landed costs auto-distribuidos', {
+                    orden_id: ordenId,
+                    costos_distribuidos: costosDistribuidos
+                });
+            }
+
+            // Obtener mapa de landed costs por item
+            const landedCostsMap = await LandedCostsModel.obtenerLandedCostsMapConDb(ordenId, db);
+
             const itemsRecibidos = [];
 
             for (const recepcion of recepciones) {
@@ -827,8 +842,10 @@ class OrdenesCompraModel {
                 const stockAntes = parseInt(item.stock_actual);
                 const stockDespues = stockAntes + recepcion.cantidad;
 
-                // Calcular valores para el movimiento
-                const costoUnitario = recepcion.precio_unitario_real || item.precio_unitario || 0;
+                // Calcular valores para el movimiento (incluyendo landed costs)
+                const precioBase = recepcion.precio_unitario_real || item.precio_unitario || 0;
+                const landedCostsUnitario = landedCostsMap.get(recepcion.item_id) || 0;
+                const costoUnitario = precioBase + landedCostsUnitario;
                 const valorTotal = recepcion.cantidad * costoUnitario;
 
                 // Crear movimiento de inventario
@@ -920,7 +937,7 @@ class OrdenesCompraModel {
                                     ns.fecha_vencimiento || recepcion.fecha_vencimiento || null,
                                     null, // sucursal_id - puede ser null
                                     null, // ubicacion_id - puede ser null
-                                    recepcion.precio_unitario_real || item.precio_unitario,
+                                    costoUnitario, // Incluye precio base + landed costs
                                     null, // proveedor_id - se obtiene de la OC internamente
                                     ordenId, // orden_compra_id
                                     usuarioId,

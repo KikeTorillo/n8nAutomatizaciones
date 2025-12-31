@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS ventas_pos_items (
     -- 📦 PRODUCTO
     producto_id INTEGER NOT NULL REFERENCES productos(id),
     variante_id INTEGER, -- FK a variantes_producto (si aplica)
+    numero_serie_id INTEGER, -- FK a numeros_serie (si aplica) - Dic 2025
     nombre_producto VARCHAR(200) NOT NULL, -- Snapshot del nombre (no cambia si renombran producto)
     sku VARCHAR(50), -- Snapshot del SKU
 
@@ -161,5 +162,6 @@ COMMENT ON COLUMN ventas_pos_items.subtotal IS 'Total del item: cantidad × prec
 COMMENT ON COLUMN ventas_pos_items.aplica_comision IS 'Indica si este item genera comisión para el vendedor';
 
 -- ============================================================================
--- FIN: TABLAS DE PUNTO DE VENTA
+-- NOTA: FKs diferidos (numero_serie_id, variante_id)
+-- Se crean en sql/pos/06-foreign-keys.sql después de inventario avanzado
 -- ============================================================================

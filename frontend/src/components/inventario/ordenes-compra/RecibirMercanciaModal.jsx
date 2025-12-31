@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine } from 'lucide-react';
+import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine, Info } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
 import { useVerificarExistencia } from '@/hooks/useNumerosSerie';
+import { useResumenCostos } from '@/hooks/useLandedCosts';
 import BarcodeScanner from '@/components/common/BarcodeScanner';
 
 /**
@@ -22,6 +23,10 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
 
   // Mutation
   const recibirMutation = useRecibirMercancia();
+
+  // Obtener resumen de landed costs para advertencia
+  const { data: resumenCostos } = useResumenCostos(orden?.id);
+  const costosPendientes = resumenCostos?.totales?.total_pendiente || 0;
 
   // Estado para expandir sección de números de serie
   const [expandedNS, setExpandedNS] = useState({});
@@ -366,6 +371,23 @@ export default function RecibirMercanciaModal({ isOpen, onClose, orden }) {
               </div>
             </div>
           </div>
+
+          {/* Advertencia de landed costs pendientes */}
+          {costosPendientes > 0 && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+              <div className="flex items-start gap-2">
+                <Info className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-200">
+                    Costos adicionales pendientes: ${costosPendientes.toLocaleString('es-MX')}
+                  </p>
+                  <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">
+                    Se distribuirán automáticamente al confirmar la recepción.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Botones de acción rápida */}
           <div className="flex justify-between items-center">

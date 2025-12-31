@@ -292,6 +292,52 @@ class LandedCostsModel {
     }
 
     /**
+     * Distribuir todos los costos pendientes usando conexión existente (para transacciones)
+     * @param {number} ordenCompraId
+     * @param {Object} db - Conexión de base de datos existente
+     */
+    static async distribuirTodosConDb(ordenCompraId, db) {
+        const costosResult = await db.query(`
+            SELECT id FROM ordenes_compra_costos_adicionales
+            WHERE orden_compra_id = $1 AND NOT distribuido
+        `, [ordenCompraId]);
+
+        let distribuidos = 0;
+        for (const costo of costosResult.rows) {
+            const result = await db.query(
+                'SELECT distribuir_costo_adicional($1)',
+                [costo.id]
+            );
+            if (result.rows[0]?.distribuir_costo_adicional?.exito) {
+                distribuidos++;
+            }
+        }
+        return distribuidos;
+    }
+
+    /**
+     * Obtener mapa de landed costs por item usando conexión existente
+     * @param {number} ordenCompraId
+     * @param {Object} db - Conexión de base de datos existente
+     * @returns {Map<number, number>} Map de item_id -> landed_costs_unitario
+     */
+    static async obtenerLandedCostsMapConDb(ordenCompraId, db) {
+        const result = await db.query(`
+            SELECT
+                oci.id as item_id,
+                COALESCE(SUM(cd.costo_unitario_distribuido), 0) as landed_costs_unitario
+            FROM ordenes_compra_items oci
+            LEFT JOIN ordenes_compra_costos_distribuidos cd ON cd.orden_compra_item_id = oci.id
+            WHERE oci.orden_compra_id = $1
+            GROUP BY oci.id
+        `, [ordenCompraId]);
+
+        return new Map(
+            result.rows.map(r => [r.item_id, parseFloat(r.landed_costs_unitario) || 0])
+        );
+    }
+
+    /**
      * Obtener detalle de distribucion de un costo
      */
     static async obtenerDistribucion(costoId, organizacionId) {

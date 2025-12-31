@@ -29,11 +29,13 @@ import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import StockPronosticoChart from '@/components/inventario/reorden/StockPronosticoChart';
 
 export default function ReordenPage() {
   const [soloSinOC, setSoloSinOC] = useState(true);
   const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  const [showConfirmEjecutar, setShowConfirmEjecutar] = useState(false);
 
   const { data: dashboard, isLoading: loadingDashboard } = useDashboardReorden();
   const { data: productosBajoMinimo, isLoading: loadingProductos } = useProductosBajoMinimo({
@@ -44,9 +46,13 @@ export default function ReordenPage() {
   const ejecutarMutation = useEjecutarReordenManual();
 
   const handleEjecutar = () => {
-    if (confirm('¿Ejecutar evaluacion de reorden ahora? Esto generara OCs para productos con stock bajo.')) {
-      ejecutarMutation.mutate();
-    }
+    setShowConfirmEjecutar(true);
+  };
+
+  const confirmEjecutar = () => {
+    ejecutarMutation.mutate(undefined, {
+      onSettled: () => setShowConfirmEjecutar(false),
+    });
   };
 
   return (
@@ -339,6 +345,18 @@ export default function ReordenPage() {
           <StockPronosticoChart productoId={productoSeleccionado.producto_id} dias={30} />
         )}
       </Modal>
+
+      {/* Confirm Dialog para ejecutar reorden */}
+      <ConfirmDialog
+        isOpen={showConfirmEjecutar}
+        onClose={() => setShowConfirmEjecutar(false)}
+        onConfirm={confirmEjecutar}
+        title="Ejecutar Reorden"
+        message="¿Ejecutar evaluacion de reorden ahora? Esto generara OCs para productos con stock bajo segun las reglas configuradas."
+        confirmLabel="Ejecutar"
+        variant="primary"
+        isLoading={ejecutarMutation.isPending}
+      />
     </div>
   );
 }

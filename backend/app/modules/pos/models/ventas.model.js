@@ -84,7 +84,8 @@ class VentasPOSModel {
                     // Validar producto existe y está activo
                     const productoQuery = await db.query(
                         `SELECT id, nombre, sku, precio_venta,
-                                stock_actual, permite_venta, activo, tiene_variantes
+                                stock_actual, permite_venta, activo, tiene_variantes,
+                                ruta_preferida
                          FROM productos
                          WHERE id = $1 AND organizacion_id = $2
                          FOR UPDATE`,
@@ -107,6 +108,15 @@ class VentasPOSModel {
 
                     // Para cotizaciones no necesitamos reservar stock
                     if (data.tipo_venta === 'cotizacion') {
+                        continue;
+                    }
+
+                    // Productos dropship no necesitan reserva de stock - se genera OC al proveedor
+                    if (producto.ruta_preferida === 'dropship') {
+                        logger.info('[VentasPOSModel.crear] Producto dropship, omitiendo reserva', {
+                            producto_id: item.producto_id,
+                            nombre: producto.nombre
+                        });
                         continue;
                     }
 
@@ -532,6 +542,77 @@ class VentasPOSModel {
                 items: itemsInsertados.length,
                 reservas_confirmadas: reservasCreadas.length
             });
+
+            // ================================================================
+            // DROPSHIP: Generar OC automáticamente si hay productos dropship
+            // Dic 2025: Fix para auto-generación de OC dropship
+            // ================================================================
+            if (data.tipo_venta !== 'cotizacion') {
+                try {
+                    // Verificar si hay productos dropship en la venta
+                    const tieneDropship = await db.query(
+                        `SELECT tiene_productos_dropship($1) as tiene`,
+                        [venta.id]
+                    );
+
+                    if (tieneDropship.rows[0]?.tiene) {
+                        // Verificar configuración auto_generar
+                        const configQuery = await db.query(
+                            `SELECT COALESCE(dropship_auto_generar_oc, true) as auto_generar
+                             FROM configuracion_inventario
+                             WHERE organizacion_id = $1`,
+                            [organizacionId]
+                        );
+
+                        const autoGenerar = configQuery.rows[0]?.auto_generar ?? true;
+
+                        if (autoGenerar) {
+                            logger.info('[VentasPOSModel.crear] Generando OC dropship automáticamente', {
+                                venta_id: venta.id,
+                                folio: venta.folio
+                            });
+
+                            const dropshipResult = await db.query(
+                                `SELECT crear_oc_dropship_desde_venta($1, $2) as resultado`,
+                                [venta.id, data.usuario_id]
+                            );
+
+                            const resultado = dropshipResult.rows[0]?.resultado;
+
+                            if (resultado?.exito) {
+                                logger.info('[VentasPOSModel.crear] OC dropship creada', {
+                                    venta_id: venta.id,
+                                    ocs_creadas: resultado.ocs_creadas,
+                                    items_procesados: resultado.items_procesados
+                                });
+
+                                // Agregar info de dropship a la respuesta
+                                venta.dropship = resultado;
+                            } else {
+                                logger.warn('[VentasPOSModel.crear] Error generando OC dropship', {
+                                    venta_id: venta.id,
+                                    error: resultado?.mensaje
+                                });
+                            }
+                        } else {
+                            // Marcar venta para generar OC manualmente
+                            await db.query(
+                                `UPDATE ventas_pos SET requiere_oc_dropship = true WHERE id = $1`,
+                                [venta.id]
+                            );
+                            logger.info('[VentasPOSModel.crear] Venta marcada para OC dropship manual', {
+                                venta_id: venta.id
+                            });
+                        }
+                    }
+                } catch (dropshipError) {
+                    // No fallar la venta si hay error en dropship, solo loguear
+                    logger.error('[VentasPOSModel.crear] Error en proceso dropship', {
+                        venta_id: venta.id,
+                        error: dropshipError.message
+                    });
+                }
+            }
 
             return {
                 ...venta,

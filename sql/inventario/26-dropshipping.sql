@@ -138,7 +138,6 @@ CREATE OR REPLACE FUNCTION crear_oc_dropship_desde_venta(
 ) RETURNS JSONB AS $$
 DECLARE
     v_venta RECORD;
-    v_cliente RECORD;
     v_proveedor RECORD;
     v_item RECORD;
     v_oc_id INTEGER;
@@ -149,6 +148,10 @@ DECLARE
     v_items_procesados INTEGER := 0;
     v_resultado JSONB := '[]'::JSONB;
     v_organizacion_id INTEGER;
+    -- Variables escalares para cliente (evita error RECORD no asignado cuando cliente_id IS NULL)
+    v_cliente_nombre VARCHAR(150) := '';
+    v_cliente_telefono VARCHAR(20) := NULL;
+    v_cliente_direccion TEXT := NULL;
 BEGIN
     -- Obtener datos de la venta
     SELECT * INTO v_venta
@@ -161,9 +164,10 @@ BEGIN
 
     v_organizacion_id := v_venta.organizacion_id;
 
-    -- Obtener datos del cliente
+    -- Obtener datos del cliente (si existe)
     IF v_venta.cliente_id IS NOT NULL THEN
-        SELECT * INTO v_cliente
+        SELECT nombre, telefono, direccion
+        INTO v_cliente_nombre, v_cliente_telefono, v_cliente_direccion
         FROM clientes
         WHERE id = v_venta.cliente_id;
     END IF;
@@ -236,9 +240,9 @@ BEGIN
             true,
             p_venta_id,
             v_venta.cliente_id,
-            COALESCE(v_cliente.nombre, ''),
-            v_cliente.telefono,
-            COALESCE(v_venta.direccion_envio, v_cliente.direccion)
+            v_cliente_nombre,
+            v_cliente_telefono,
+            COALESCE(v_venta.direccion_envio, v_cliente_direccion)
         )
         RETURNING id INTO v_oc_id;
 
@@ -263,9 +267,8 @@ BEGIN
                 nombre_producto,
                 sku,
                 unidad_medida,
-                cantidad,
-                precio_unitario,
-                subtotal
+                cantidad_ordenada,
+                precio_unitario
             ) VALUES (
                 v_oc_id,
                 v_item.producto_id,
@@ -273,8 +276,7 @@ BEGIN
                 v_item.sku,
                 v_item.unidad_medida,
                 v_item.cantidad,
-                COALESCE(v_item.precio_unitario, 0),
-                v_item.cantidad * COALESCE(v_item.precio_unitario, 0)
+                COALESCE(v_item.precio_unitario, 0)
             );
 
             v_items_procesados := v_items_procesados + 1;

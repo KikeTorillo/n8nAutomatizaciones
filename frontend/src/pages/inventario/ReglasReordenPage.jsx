@@ -69,10 +69,11 @@ export default function ReglasReordenPage() {
     activo: filtroActivo === 'todas' ? undefined : filtroActivo === 'activas'
   });
   const { data: rutas } = useRutasOperacion({ activo: true });
-  const { data: proveedores } = useProveedores();
+  const { data: proveedoresData } = useProveedores();
+  const proveedores = proveedoresData?.proveedores || [];
   const { data: categorias } = useCategorias();
   const { data: productosData } = useProductos({ limit: 100, activo: true });
-  const productos = productosData?.data || [];
+  const productos = productosData?.productos || [];
 
   const crearMutation = useCrearReglaReorden();
   const actualizarMutation = useActualizarReglaReorden();
@@ -227,7 +228,7 @@ export default function ReglasReordenPage() {
 
       {/* Confirm delete */}
       <ConfirmDialog
-        open={!!deleteConfirm}
+        isOpen={!!deleteConfirm}
         onClose={() => setDeleteConfirm(null)}
         onConfirm={confirmDelete}
         title="Eliminar Regla"
@@ -376,17 +377,27 @@ function ReglaForm({ regla, rutas, proveedores, categorias, productos, onSubmit,
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    // Limpiar campos vacios
+    // Mapear campos del frontend a los nombres que espera el backend
     const data = {
-      ...formData,
-      producto_id: formData.producto_id || undefined,
-      categoria_id: formData.categoria_id || undefined,
-      proveedor_id: formData.proveedor_id || undefined,
-      ruta_operacion_id: formData.ruta_operacion_id || undefined,
-      stock_minimo_trigger: formData.stock_minimo_trigger ? Number(formData.stock_minimo_trigger) : undefined,
-      cantidad_a_ordenar: formData.cantidad_a_ordenar ? Number(formData.cantidad_a_ordenar) : undefined,
-      lead_time_dias: formData.lead_time_dias ? Number(formData.lead_time_dias) : undefined,
+      nombre: formData.nombre,
+      // Backend requiere ruta_id, no ruta_operacion_id
+      ruta_id: formData.ruta_operacion_id ? Number(formData.ruta_operacion_id) : undefined,
+      // Backend requiere stock_minimo_trigger (required)
+      stock_minimo_trigger: formData.stock_minimo_trigger ? Number(formData.stock_minimo_trigger) : 0,
+      // Backend espera cantidad_fija, no cantidad_a_ordenar
+      cantidad_fija: formData.cantidad_a_ordenar ? Number(formData.cantidad_a_ordenar) : undefined,
+      // Backend espera dias_semana, no dias_semana_aplicacion
+      dias_semana: formData.dias_semana_aplicacion?.length > 0 ? formData.dias_semana_aplicacion : undefined,
+      // Campos de alcance (solo uno puede estar definido)
+      producto_id: formData.tipo_alcance === 'producto' && formData.producto_id ? Number(formData.producto_id) : undefined,
+      categoria_id: formData.tipo_alcance === 'categoria' && formData.categoria_id ? Number(formData.categoria_id) : undefined,
+      // El backend no tiene proveedor_id, solo producto_id, categoria_id, sucursal_id
+      activo: formData.activo,
+      prioridad: formData.prioridad || 0,
     };
+
+    // Eliminar campos undefined
+    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
 
     onSubmit(data);
   };
@@ -502,22 +513,23 @@ function ReglaForm({ regla, rutas, proveedores, categorias, productos, onSubmit,
       {/* Ruta de operacion */}
       <div>
         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Ruta de Operacion (opcional)
+          Ruta de Operacion *
         </label>
         <select
           value={formData.ruta_operacion_id}
           onChange={(e) => handleChange('ruta_operacion_id', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+          required
         >
-          <option value="">Sin ruta especifica</option>
+          <option value="">Seleccionar ruta...</option>
           {rutas?.map((r) => (
             <option key={r.id} value={r.id}>
-              {r.nombre} ({r.tipo_reabastecimiento})
+              {r.nombre} ({r.tipo})
             </option>
           ))}
         </select>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Si no se selecciona, se usara la ruta predeterminada del producto
+          Define como se reabastece el producto (compra, produccion, etc.)
         </p>
       </div>
 
@@ -569,7 +581,7 @@ function ReglaForm({ regla, rutas, proveedores, categorias, productos, onSubmit,
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Stock trigger
+            Stock trigger *
           </label>
           <input
             type="number"
@@ -577,7 +589,8 @@ function ReglaForm({ regla, rutas, proveedores, categorias, productos, onSubmit,
             onChange={(e) => handleChange('stock_minimo_trigger', e.target.value)}
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
             min="0"
-            placeholder="Usar min. producto"
+            required
+            placeholder="Ej: 5"
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             Genera OC cuando stock &le; este valor

@@ -123,6 +123,11 @@ CREATE INDEX IF NOT EXISTS idx_ventas_pos_items_comision
 CREATE INDEX IF NOT EXISTS idx_ventas_pos_items_top_ventas
     ON ventas_pos_items(producto_id, cantidad, subtotal);
 
+-- Índice para trazabilidad de números de serie en ventas (Dic 2025)
+CREATE INDEX IF NOT EXISTS idx_ventas_pos_items_ns
+    ON ventas_pos_items(numero_serie_id)
+    WHERE numero_serie_id IS NOT NULL;
+
 -- ============================================================================
 -- ÍNDICES ESPECIALIZADOS PARA REPORTES
 -- ============================================================================
