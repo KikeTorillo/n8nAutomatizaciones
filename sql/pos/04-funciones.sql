@@ -206,6 +206,7 @@ RETURNS TRIGGER AS $$
 DECLARE
     item RECORD;
     v_stock_actual INTEGER;
+    v_ruta_preferida VARCHAR(20);
 BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
@@ -265,10 +266,10 @@ BEGIN
                         tipo_movimiento, cantidad, stock_antes, stock_despues,
                         costo_unitario, valor_total, venta_pos_id, usuario_id, creado_en
                     )
-                    SELECT v_organizacion_id, item.producto_id, item.variante_id,
+                    SELECT NEW.organizacion_id, item.producto_id, item.variante_id,
                         'salida_venta', -item.cantidad, v_stock_actual, v_stock_actual,
                         p.precio_compra, p.precio_compra * item.cantidad,
-                        NEW.id, v_usuario_id, NOW()
+                        NEW.id, NEW.usuario_id, NOW()
                     FROM productos p WHERE p.id = item.producto_id;
 
                     CONTINUE;
