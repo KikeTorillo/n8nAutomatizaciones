@@ -88,7 +88,23 @@ const posSchemas = {
 
                         aplica_comision: Joi.boolean().optional().default(true),
 
-                        notas: Joi.string().max(500).optional().allow(null, '')
+                        notas: Joi.string().max(500).optional().allow(null, ''),
+
+                        // Dic 2025: Reserva de stock (INV-5)
+                        reserva_id: Joi.number().integer().positive().optional().allow(null).messages({
+                            'number.base': 'reserva_id debe ser un número',
+                            'number.positive': 'reserva_id debe ser positivo'
+                        }),
+
+                        // Dic 2025: Número de serie para trazabilidad (INV-5)
+                        numero_serie_id: Joi.number().integer().positive().optional().allow(null).messages({
+                            'number.base': 'numero_serie_id debe ser un número',
+                            'number.positive': 'numero_serie_id debe ser positivo'
+                        }),
+
+                        numero_serie: Joi.string().max(100).optional().allow(null, '').messages({
+                            'string.max': 'numero_serie no puede exceder 100 caracteres'
+                        })
                     })
                 )
                 .required()

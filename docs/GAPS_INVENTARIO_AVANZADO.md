@@ -17,8 +17,37 @@
 | GS1-128 | ✅ | Parser + Generator + Scanner POS |
 | Conteos físicos | ✅ | Diferencias y ajustes |
 | **Reorden automático** | ✅ | Reglas + pg_cron 6AM + OC auto |
-| **Landed Costs** | ✅ | Prorrateo por valor/peso/cantidad |
+| **Landed Costs** | ✅ | Prorrateo por valor/peso/cantidad/volumen |
+| **Peso/Volumen productos** | ✅ | Columnas `peso`, `volumen` en tabla productos |
 | **Dropshipping** | ✅ | Venta sin stock → OC al proveedor |
+| **Venta NS en POS** | ✅ | Selección NS + trazabilidad automática |
+| **Venta Variantes en POS** | ✅ | Stock independiente por variante |
+
+---
+
+## Validación Integral Completada (30 Dic 2025)
+
+### Escenarios Validados
+
+| # | Escenario | Estado | Resultado |
+|---|-----------|:------:|-----------|
+| 1 | Compra → Stock → Venta con Landed Costs | ✅ | Prorrateo correcto por valor/peso/cantidad |
+| 2 | Dropshipping completo | ✅ | OC automática con datos de cliente |
+| 3 | Reorden automático | ✅ | Reglas + evaluación + OC generadas |
+| 4 | NS/Lotes en venta | ✅ | `numero_serie_id` guardado, NS → vendido |
+| 5 | Variantes en POS | ✅ | `variante_id` guardado, stock reducido |
+
+### Fixes Aplicados
+
+| Archivo | Problema | Solución |
+|---------|----------|----------|
+| `backend/app/modules/pos/schemas/pos.schemas.js` | Joi filtraba campos NS/reserva | Agregados `numero_serie_id`, `numero_serie`, `reserva_id` |
+| `backend/app/modules/pos/models/ventas.model.js` | Doble marcado NS causaba error | Removida llamada duplicada a `vender_numero_serie()` (trigger lo maneja) |
+
+### Ventas de Prueba
+
+- **POS-2025-0008**: Venta con NS HP-PB450-SN001 → NS marcado como 'vendido'
+- **POS-2025-0009**: Venta variante Negro/M → Stock reducido de 20 a 19
 
 ---
 
@@ -61,52 +90,18 @@ backend/app/modules/inventario/
 ├── models/dropship.model.js
 └── controllers/*.controller.js
 
+backend/app/modules/pos/
+├── schemas/pos.schemas.js       # Validación con NS/variantes
+└── models/ventas.model.js       # Lógica de venta POS
+
 frontend/src/
 ├── pages/inventario/ReordenPage.jsx
 ├── pages/inventario/DropshipPage.jsx
+├── pages/pos/VentaPOSPage.jsx
+├── components/pos/SeleccionarNSModal.jsx
 ├── components/inventario/ordenes-compra/LandedCostsSection.jsx
-└── hooks/use{Reorden,LandedCosts,Dropship}.js
+└── hooks/use{Reorden,LandedCosts,Dropship,NumerosSerie}.js
 ```
-
----
-
-## Próxima Sesión
-
-### Revisión Completa Flujos Inventario + POS
-
-**Objetivo**: Validar funcionamiento end-to-end de todos los módulos
-
-**Escenarios a probar**:
-
-1. **Compra → Stock → Venta**
-   - Crear OC con landed costs
-   - Recibir mercancía
-   - Verificar costo unitario distribuido
-   - Vender en POS
-   - Validar movimientos y valoración
-
-2. **Dropshipping**
-   - Producto con `ruta_preferida = 'dropship'`
-   - Vender en POS (stock = 0)
-   - Verificar OC automática con datos cliente
-   - Confirmar entrega sin afectar inventario
-
-3. **Reorden Automático**
-   - Crear regla por producto
-   - Reducir stock bajo mínimo
-   - Ejecutar evaluación
-   - Verificar OC generada
-
-4. **NS/Lotes en Venta**
-   - Producto con tracking
-   - Recibir con seriales
-   - Vender seleccionando NS
-   - Validar trazabilidad
-
-5. **Variantes en POS**
-   - Producto con variantes
-   - Stock por variante
-   - Vender variante específica
 
 ---
 
@@ -115,6 +110,25 @@ frontend/src/
 | Fase | Alcance | Estado |
 |------|---------|:------:|
 | 1 | Reorden, Landed Costs, Dropshipping | ✅ |
-| 2 | Validación integral flujos | **Próxima** |
-| 3 | Conectores Carriers (DHL) | Pendiente |
+| 2 | Validación integral flujos | ✅ |
+| 3 | Conectores Carriers (DHL) | **Próxima** |
 | 4 | Rutas multietapa, Batch transfers | Pendiente |
+
+---
+
+## Próxima Sesión
+
+### Conectores de Carriers
+
+**Objetivo**: Integrar generación automática de etiquetas de envío
+
+**Carriers prioritarios**:
+1. **Estafeta** - México
+2. **DHL Express** - Internacional
+3. **FedEx** - Internacional
+
+**Funcionalidades**:
+- Cotización de envío en tiempo real
+- Generación de guías/etiquetas
+- Tracking automático
+- Notificaciones al cliente

@@ -328,9 +328,11 @@ export default function VentaPOSPage() {
 
   // Handler para cuando se selecciona NS del modal
   const handleNSSeleccionado = async (numerosSeleccionados) => {
+    console.log('[DEBUG NS] numerosSeleccionados:', JSON.stringify(numerosSeleccionados, null, 2));
     if (productoParaNS && numerosSeleccionados.length > 0) {
       // Agregar cada NS como un item separado
       for (const ns of numerosSeleccionados) {
+        console.log('[DEBUG NS] Agregando NS al carrito:', ns);
         await agregarProductoAlCarrito(productoParaNS, ns);
       }
       setProductoParaNS(null);
@@ -467,7 +469,10 @@ export default function VentaPOSPage() {
       }
 
       // PASO 2: Preparar items para el backend (incluir reserva_id, variante_id y número de serie)
-      const itemsBackend = items.map(item => ({
+      console.log('[DEBUG NS] Items del carrito antes de mapear:', JSON.stringify(items.map(i => ({ id: i.id, numero_serie: i.numero_serie })), null, 2));
+      const itemsBackend = items.map(item => {
+        console.log('[DEBUG NS] Procesando item:', item.nombre, 'NS:', JSON.stringify(item.numero_serie));
+        return {
         producto_id: item.producto_id,
         variante_id: item.variante_id || undefined, // Dic 2025: variantes
         cantidad: item.cantidad,
@@ -479,7 +484,8 @@ export default function VentaPOSPage() {
         // Dic 2025: Número de serie (INV-5)
         numero_serie_id: item.numero_serie?.id || undefined,
         numero_serie: item.numero_serie?.numero_serie || undefined
-      }));
+      };
+      });
 
       // Calcular descuento global en monto
       const descuentoGlobalMonto = montoDescuentoGlobal;

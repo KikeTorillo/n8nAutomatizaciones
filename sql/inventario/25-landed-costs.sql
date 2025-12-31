@@ -183,18 +183,19 @@ BEGIN
 
     -- Calcular total de la base de distribucion
     -- Nota: Si cantidad_recibida = 0, usar cantidad_ordenada
-    -- TODO: Implementar peso/volumen en tabla productos cuando sea necesario
+    -- Peso/Volumen tomados de tabla productos (Dic 2025)
     SELECT COALESCE(SUM(
         CASE v_costo.metodo_distribucion
             WHEN 'valor' THEN oci.precio_unitario * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
             WHEN 'cantidad' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
-            WHEN 'peso' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
-            WHEN 'volumen' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
+            WHEN 'peso' THEN COALESCE(p.peso, 1) * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
+            WHEN 'volumen' THEN COALESCE(p.volumen, 1) * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
             ELSE oci.precio_unitario * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
         END
     ), 0)
     INTO v_total_base
     FROM ordenes_compra_items oci
+    JOIN productos p ON p.id = oci.producto_id
     WHERE oci.orden_compra_id = v_costo.orden_compra_id;
 
     IF v_total_base = 0 THEN
@@ -212,8 +213,8 @@ BEGIN
             CASE v_costo.metodo_distribucion
                 WHEN 'valor' THEN oci.precio_unitario * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
                 WHEN 'cantidad' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
-                WHEN 'peso' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
-                WHEN 'volumen' THEN CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
+                WHEN 'peso' THEN COALESCE(p.peso, 1) * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
+                WHEN 'volumen' THEN COALESCE(p.volumen, 1) * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
                 ELSE oci.precio_unitario * CASE WHEN oci.cantidad_recibida > 0 THEN oci.cantidad_recibida ELSE oci.cantidad_ordenada END
             END as base_calculo
         FROM ordenes_compra_items oci

@@ -398,6 +398,13 @@ class VentasPOSModel {
                     : precioUnitario * (1 - descuentoPorcentaje / 100);
                 const itemSubtotal = item.cantidad * precioFinal;
 
+                // DEBUG: Log del numero_serie_id recibido
+                logger.info('[VentasPOSModel.crear] DEBUG NS item:', {
+                    producto_id: item.producto_id,
+                    numero_serie_id: item.numero_serie_id,
+                    numero_serie: item.numero_serie
+                });
+
                 const itemQuery = `
                     INSERT INTO ventas_pos_items (
                         venta_pos_id,
@@ -412,8 +419,9 @@ class VentasPOSModel {
                         precio_final,
                         subtotal,
                         aplica_comision,
-                        notas
-                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+                        notas,
+                        numero_serie_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
                     RETURNING *
                 `;
 
@@ -430,7 +438,8 @@ class VentasPOSModel {
                     precioFinal,
                     itemSubtotal,
                     item.aplica_comision !== undefined ? item.aplica_comision : true,
-                    item.notas || null
+                    item.notas || null,
+                    item.numero_serie_id || null  // Dic 2025: NS para trazabilidad
                 ];
 
                 const resultItem = await db.query(itemQuery, itemValues);
@@ -440,14 +449,10 @@ class VentasPOSModel {
                 // automáticamente el stock de variantes y productos cuando la
                 // venta está 'completada'. No duplicar aquí.
 
-                // Dic 2025: Marcar número de serie como vendido (INV-5)
+                // Dic 2025: NS se marca como vendido via trigger trg_marcar_ns_vendido
+                // El trigger se ejecuta automáticamente después del INSERT
                 if (item.numero_serie_id) {
-                    await db.query(
-                        `SELECT vender_numero_serie($1, $2, $3)`,
-                        [item.numero_serie_id, venta.id, data.cliente_id || null]
-                    );
-
-                    logger.info('[VentasPOSModel.crear] NS marcado como vendido', {
+                    logger.info('[VentasPOSModel.crear] NS incluido en item (trigger lo marcará vendido)', {
                         numero_serie_id: item.numero_serie_id,
                         venta_id: venta.id
                     });

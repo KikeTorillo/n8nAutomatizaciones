@@ -814,7 +814,7 @@ class ProductosModel {
                             OR v.sku = $2
                             OR v.codigo_barras = $2
                         )
-                        ${solo_con_stock ? 'AND v.stock_actual > 0' : ''}
+                        ${solo_con_stock ? "AND (v.stock_actual > 0 OR p.ruta_preferida = 'dropship')" : ''}
                         ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
                         ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
 
@@ -859,7 +859,7 @@ class ProductosModel {
                             OR p.sku = $2
                             OR p.codigo_barras = $2
                         )
-                        ${solo_con_stock ? 'AND p.stock_actual > 0' : ''}
+                        ${solo_con_stock ? "AND (p.stock_actual > 0 OR p.ruta_preferida = 'dropship')" : ''}
                         ${categoria_id ? `AND p.categoria_id = ${parseInt(categoria_id)}` : ''}
                         ${proveedor_id ? `AND p.proveedor_id = ${parseInt(proveedor_id)}` : ''}
                 )

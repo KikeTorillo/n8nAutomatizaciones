@@ -132,6 +132,12 @@ CREATE TABLE IF NOT EXISTS productos (
     stock_maximo INTEGER DEFAULT 100, -- Stock objetivo máximo
     unidad_medida VARCHAR(20) DEFAULT 'unidad', -- unidad, kg, litro, caja, etc.
 
+    -- ⚖️ DIMENSIONES FÍSICAS (Dic 2025 - Landed Costs)
+    peso DECIMAL(10, 4), -- Peso en kg (para landed costs y envíos)
+    volumen DECIMAL(10, 4), -- Volumen en m³ (para landed costs y envíos)
+    peso_unidad VARCHAR(10) DEFAULT 'kg', -- Unidad de peso (kg, lb, g)
+    volumen_unidad VARCHAR(10) DEFAULT 'm3', -- Unidad de volumen (m3, cm3, l)
+
     -- 🔔 ALERTAS
     alerta_stock_minimo BOOLEAN DEFAULT true, -- Enviar alerta cuando stock <= stock_minimo
 

@@ -56,6 +56,7 @@ DECLARE
     v_usuario_id INTEGER;
     item RECORD;
     v_stock_actual INTEGER;
+    v_ruta_preferida VARCHAR(20);  -- Dic 2025: Soporte dropship
 BEGIN
     -- ⚠️ CRÍTICO: Bypass RLS para operaciones de sistema
     PERFORM set_config('app.bypass_rls', 'true', true);
@@ -120,12 +121,19 @@ BEGIN
                         WHERE id = item.variante_id;
                     ELSE
                         -- ✅ Lock optimista: Evitar race conditions (producto normal)
-                        SELECT stock_actual INTO v_stock_actual
+                        SELECT stock_actual, COALESCE(ruta_preferida, 'normal')
+                        INTO v_stock_actual, v_ruta_preferida
                         FROM productos
                         WHERE id = item.producto_id
                         FOR UPDATE;
 
-                        -- Validar stock suficiente
+                        -- Dic 2025: Dropship no requiere stock ni descuento
+                        -- El proveedor envía directo al cliente, no hay movimiento de inventario
+                        IF v_ruta_preferida = 'dropship' THEN
+                            CONTINUE; -- Skip: no descontar stock ni crear movimiento
+                        END IF;
+
+                        -- Validar stock suficiente (solo productos normales)
                         IF v_stock_actual < item.cantidad THEN
                             PERFORM set_config('app.bypass_rls', 'false', true);
                             RAISE EXCEPTION 'Stock insuficiente para producto ID %: disponible %, requerido %',
@@ -244,10 +252,27 @@ BEGIN
                 WHERE id = item.variante_id;
             ELSE
                 -- ✅ Lock optimista: Evitar race conditions (producto normal)
-                SELECT stock_actual INTO v_stock_actual
+                SELECT stock_actual, COALESCE(ruta_preferida, 'normal')
+                INTO v_stock_actual, v_ruta_preferida
                 FROM productos
                 WHERE id = item.producto_id
                 FOR UPDATE;
+
+                -- Dic 2025: Dropship no requiere stock ni descuento
+                IF v_ruta_preferida = 'dropship' THEN
+                    INSERT INTO movimientos_inventario (
+                        organizacion_id, producto_id, variante_id,
+                        tipo_movimiento, cantidad, stock_antes, stock_despues,
+                        costo_unitario, valor_total, venta_pos_id, usuario_id, creado_en
+                    )
+                    SELECT v_organizacion_id, item.producto_id, item.variante_id,
+                        'salida_venta', -item.cantidad, v_stock_actual, v_stock_actual,
+                        p.precio_compra, p.precio_compra * item.cantidad,
+                        NEW.id, v_usuario_id, NOW()
+                    FROM productos p WHERE p.id = item.producto_id;
+
+                    CONTINUE;
+                END IF;
 
                 -- Validar stock suficiente
                 IF v_stock_actual < item.cantidad THEN

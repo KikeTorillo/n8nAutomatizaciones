@@ -20,9 +20,11 @@ export default function SeleccionarNSModal({
   const [seleccionados, setSeleccionados] = useState([]);
 
   // Obtener números de serie disponibles del producto
+  // Fix: producto viene del buscador con producto_id, no id
+  const productoId = producto?.producto_id || producto?.id;
   const { data: numerosSerieData, isLoading } = useNumerosSerieDisponibles(
-    producto?.id,
-    { enabled: isOpen && !!producto?.id }
+    productoId,
+    { enabled: isOpen && !!productoId }
   );
 
   const numerosSerie = numerosSerieData || [];
