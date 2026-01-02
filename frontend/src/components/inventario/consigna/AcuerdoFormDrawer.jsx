@@ -18,7 +18,7 @@ const schema = z.object({
   porcentaje_comision: z.coerce.number().min(0).max(100, 'Maximo 100%'),
   dias_liquidacion: z.coerce.number().min(1, 'Minimo 1 dia').optional(),
   dias_devolucion: z.coerce.number().min(1).optional(),
-  sucursal_id: z.coerce.number().optional(),
+  sucursal_id: z.coerce.number().min(1, 'Selecciona una sucursal'),
   ubicacion_consigna_id: z.coerce.number().optional(),
   notas: z.string().max(500).optional(),
 });
@@ -130,7 +130,7 @@ export default function AcuerdoFormDrawer({ isOpen, onClose, acuerdo = null }) {
               <option value="">Seleccionar proveedor...</option>
               {proveedores?.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {p.razon_social}
+                  {p.nombre || p.razon_social}
                 </option>
               ))}
             </select>
@@ -192,19 +192,22 @@ export default function AcuerdoFormDrawer({ isOpen, onClose, acuerdo = null }) {
           {/* Sucursal */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Sucursal (opcional)
+              Sucursal <span className="text-red-500">*</span>
             </label>
             <select
               {...register('sucursal_id')}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
             >
-              <option value="">Todas las sucursales</option>
+              <option value="">Seleccionar sucursal...</option>
               {sucursales?.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.nombre}
                 </option>
               ))}
             </select>
+            {errors.sucursal_id && (
+              <p className="mt-1 text-sm text-red-500">{errors.sucursal_id.message}</p>
+            )}
           </div>
 
           {/* Ubicacion */}

@@ -192,11 +192,14 @@ CREATE OR REPLACE FUNCTION registrar_numero_serie(
     p_proveedor_id INTEGER DEFAULT NULL,
     p_orden_compra_id INTEGER DEFAULT NULL,
     p_usuario_id INTEGER DEFAULT NULL,
-    p_notas TEXT DEFAULT NULL
+    p_notas TEXT DEFAULT NULL,
+    p_acuerdo_consigna_id INTEGER DEFAULT NULL  -- Soporte para consigna
 )
 RETURNS INTEGER AS $$
 DECLARE
     v_ns_id INTEGER;
+    v_referencia_tipo VARCHAR(50);
+    v_referencia_id INTEGER;
 BEGIN
     -- Verificar que el producto requiere numero de serie
     IF NOT EXISTS (
@@ -218,16 +221,28 @@ BEGIN
         RAISE EXCEPTION 'El numero de serie % ya existe para este producto', p_numero_serie;
     END IF;
 
-    -- Insertar numero de serie
+    -- Insertar numero de serie (con soporte para consigna)
     INSERT INTO numeros_serie (
         organizacion_id, producto_id, numero_serie, lote, fecha_vencimiento,
         sucursal_id, ubicacion_id, costo_unitario, proveedor_id, orden_compra_id,
-        creado_por, notas
+        acuerdo_consigna_id, creado_por, notas
     ) VALUES (
         p_organizacion_id, p_producto_id, p_numero_serie, p_lote, p_fecha_vencimiento,
         p_sucursal_id, p_ubicacion_id, p_costo_unitario, p_proveedor_id, p_orden_compra_id,
-        p_usuario_id, p_notas
+        p_acuerdo_consigna_id, p_usuario_id, p_notas
     ) RETURNING id INTO v_ns_id;
+
+    -- Determinar tipo de referencia para historial
+    IF p_acuerdo_consigna_id IS NOT NULL THEN
+        v_referencia_tipo := 'consigna';
+        v_referencia_id := p_acuerdo_consigna_id;
+    ELSIF p_orden_compra_id IS NOT NULL THEN
+        v_referencia_tipo := 'orden_compra';
+        v_referencia_id := p_orden_compra_id;
+    ELSE
+        v_referencia_tipo := NULL;
+        v_referencia_id := NULL;
+    END IF;
 
     -- Registrar en historial
     INSERT INTO numeros_serie_historial (
@@ -237,8 +252,7 @@ BEGIN
     ) VALUES (
         v_ns_id, 'entrada', NULL, 'disponible',
         p_sucursal_id, p_ubicacion_id,
-        CASE WHEN p_orden_compra_id IS NOT NULL THEN 'orden_compra' ELSE NULL END,
-        p_orden_compra_id, p_usuario_id, 'Entrada inicial'
+        v_referencia_tipo, v_referencia_id, p_usuario_id, 'Entrada inicial'
     );
 
     RETURN v_ns_id;

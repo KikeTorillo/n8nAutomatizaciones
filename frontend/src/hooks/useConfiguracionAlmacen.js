@@ -126,6 +126,7 @@ export function useActualizarConfiguracion() {
 
 /**
  * Hook para crear ubicaciones por defecto
+ * Automáticamente actualiza el cache con los IDs de ubicaciones creadas
  */
 export function useCrearUbicacionesDefault() {
   const queryClient = useQueryClient();
@@ -135,9 +136,28 @@ export function useCrearUbicacionesDefault() {
       const response = await configuracionAlmacenApi.crearUbicacionesDefault(sucursalId);
       return response.data.data;
     },
-    onSuccess: (_, sucursalId) => {
-      queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(sucursalId));
+    onSuccess: (data, sucursalId) => {
+      // Invalidar lista de ubicaciones para que aparezcan en selectores
       queryClient.invalidateQueries(['ubicaciones-almacen']);
+
+      // Actualizar cache de configuración con los nuevos IDs de ubicaciones
+      if (data?.ubicaciones) {
+        queryClient.setQueryData(
+          CONFIGURACION_ALMACEN_KEYS.detail(sucursalId),
+          (old) => old ? {
+            ...old,
+            ubicacion_recepcion_id: data.ubicaciones.recepcion || old.ubicacion_recepcion_id,
+            ubicacion_qc_id: data.ubicaciones.qc || old.ubicacion_qc_id,
+            ubicacion_stock_id: data.ubicaciones.stock || old.ubicacion_stock_id,
+            ubicacion_picking_id: data.ubicaciones.picking || old.ubicacion_picking_id,
+            ubicacion_empaque_id: data.ubicaciones.empaque || old.ubicacion_empaque_id,
+            ubicacion_envio_id: data.ubicaciones.envio || old.ubicacion_envio_id,
+          } : old
+        );
+      }
+
+      // También invalidar para asegurar coherencia
+      queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(sucursalId));
     },
     onError: (error) => {
       const backendMessage = error.response?.data?.message;

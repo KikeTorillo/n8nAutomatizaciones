@@ -406,7 +406,7 @@ export default function ConsignaPage() {
                   <option value="">Todos los proveedores</option>
                   {proveedores?.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.razon_social}
+                      {p.nombre || p.razon_social}
                     </option>
                   ))}
                 </select>

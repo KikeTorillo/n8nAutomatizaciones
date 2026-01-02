@@ -188,7 +188,21 @@ function ConfiguracionSucursalCard({ sucursalId }) {
   const handleCrearUbicaciones = async () => {
     try {
       const resultado = await crearUbicacionesMutation.mutateAsync(sucursalId);
-      showSuccess(resultado.mensaje || 'Ubicaciones creadas correctamente');
+
+      // Actualizar formData con los IDs retornados para reflejarlos inmediatamente
+      if (resultado.ubicaciones) {
+        setFormData(prev => ({
+          ...prev,
+          ubicacion_recepcion_id: resultado.ubicaciones.recepcion || prev.ubicacion_recepcion_id,
+          ubicacion_qc_id: resultado.ubicaciones.qc || prev.ubicacion_qc_id,
+          ubicacion_stock_id: resultado.ubicaciones.stock || prev.ubicacion_stock_id,
+          ubicacion_picking_id: resultado.ubicaciones.picking || prev.ubicacion_picking_id,
+          ubicacion_empaque_id: resultado.ubicaciones.empaque || prev.ubicacion_empaque_id,
+          ubicacion_envio_id: resultado.ubicaciones.envio || prev.ubicacion_envio_id,
+        }));
+      }
+
+      showSuccess('Ubicaciones WMS creadas y asignadas correctamente');
       refetch();
     } catch (error) {
       showError(error.message || 'Error al crear ubicaciones');

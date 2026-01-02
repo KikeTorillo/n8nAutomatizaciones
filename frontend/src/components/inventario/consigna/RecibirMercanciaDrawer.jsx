@@ -1,9 +1,10 @@
 /**
  * Drawer para recibir mercancia en consignacion
+ * Soporta productos con y sin numeros de serie
  */
 
 import { useState, useEffect } from 'react';
-import { Plus, Minus, Package } from 'lucide-react';
+import { Plus, Minus, Package, Hash, AlertCircle } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { useProductosAcuerdo, useRecibirMercanciaConsigna } from '@/hooks/useConsigna';
@@ -22,9 +23,11 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
           producto_id: p.producto_id,
           variante_id: p.variante_id || null,
           nombre: p.producto_nombre,
-          sku: p.producto_sku,
+          sku: p.sku || p.producto_sku,
+          requiere_numero_serie: p.requiere_numero_serie || false,
           cantidad: 0,
           notas: '',
+          numeros_serie: [], // Array de { numero_serie, lote?, fecha_vencimiento? }
         }))
       );
     }
@@ -32,9 +35,57 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
 
   const handleCantidadChange = (index, delta) => {
     setItems((prev) =>
-      prev.map((item, i) =>
-        i === index ? { ...item, cantidad: Math.max(0, item.cantidad + delta) } : item
-      )
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        const newCantidad = Math.max(0, item.cantidad + delta);
+        // Ajustar array de NS si requiere
+        let newNs = [...item.numeros_serie];
+        if (item.requiere_numero_serie) {
+          if (newCantidad > newNs.length) {
+            // Agregar slots vacíos
+            for (let j = newNs.length; j < newCantidad; j++) {
+              newNs.push({ numero_serie: '', lote: '' });
+            }
+          } else if (newCantidad < newNs.length) {
+            // Recortar array
+            newNs = newNs.slice(0, newCantidad);
+          }
+        }
+        return { ...item, cantidad: newCantidad, numeros_serie: newNs };
+      })
+    );
+  };
+
+  // Manejar cambio directo de cantidad
+  const handleCantidadInput = (index, value) => {
+    const cantidad = parseInt(value) || 0;
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== index) return item;
+        let newNs = [...item.numeros_serie];
+        if (item.requiere_numero_serie) {
+          if (cantidad > newNs.length) {
+            for (let j = newNs.length; j < cantidad; j++) {
+              newNs.push({ numero_serie: '', lote: '' });
+            }
+          } else if (cantidad < newNs.length) {
+            newNs = newNs.slice(0, cantidad);
+          }
+        }
+        return { ...item, cantidad, numeros_serie: newNs };
+      })
+    );
+  };
+
+  // Manejar cambio de número de serie
+  const handleNsChange = (itemIndex, nsIndex, field, value) => {
+    setItems((prev) =>
+      prev.map((item, i) => {
+        if (i !== itemIndex) return item;
+        const newNs = [...item.numeros_serie];
+        newNs[nsIndex] = { ...newNs[nsIndex], [field]: value };
+        return { ...item, numeros_serie: newNs };
+      })
     );
   };
 
@@ -43,6 +94,24 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
 
     if (itemsConCantidad.length === 0) {
       return;
+    }
+
+    // Validar NS para productos que los requieren
+    for (const item of itemsConCantidad) {
+      if (item.requiere_numero_serie) {
+        const nsVacios = item.numeros_serie.filter(ns => !ns.numero_serie?.trim());
+        if (nsVacios.length > 0) {
+          alert(`Faltan números de serie para ${item.nombre}`);
+          return;
+        }
+        // Verificar duplicados
+        const nsValues = item.numeros_serie.map(ns => ns.numero_serie.trim().toLowerCase());
+        const duplicados = nsValues.filter((ns, idx) => nsValues.indexOf(ns) !== idx);
+        if (duplicados.length > 0) {
+          alert(`Números de serie duplicados en ${item.nombre}`);
+          return;
+        }
+      }
     }
 
     recibirMutation.mutate(
@@ -54,6 +123,13 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
             variante_id: item.variante_id,
             cantidad: item.cantidad,
             notas: item.notas?.trim() || undefined,
+            // Incluir NS solo si el producto los requiere
+            numeros_serie: item.requiere_numero_serie
+              ? item.numeros_serie.map(ns => ({
+                  numero_serie: ns.numero_serie.trim(),
+                  lote: ns.lote?.trim() || undefined,
+                }))
+              : undefined,
           })),
         },
       },
@@ -102,7 +178,14 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div>
-                      <p className="font-medium text-gray-900 dark:text-gray-100">{item.nombre}</p>
+                      <p className="font-medium text-gray-900 dark:text-gray-100">
+                        {item.nombre}
+                        {item.requiere_numero_serie && (
+                          <span className="ml-2 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+                            <Hash className="h-3 w-3 mr-0.5" />NS
+                          </span>
+                        )}
+                      </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400">SKU: {item.sku}</p>
                     </div>
                   </div>
@@ -121,12 +204,7 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
                         type="number"
                         min="0"
                         value={item.cantidad}
-                        onChange={(e) => {
-                          const value = parseInt(e.target.value) || 0;
-                          setItems((prev) =>
-                            prev.map((it, i) => (i === index ? { ...it, cantidad: value } : it))
-                          );
-                        }}
+                        onChange={(e) => handleCantidadInput(index, e.target.value)}
                         className="w-20 text-center px-2 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
                       />
                       <button
@@ -150,6 +228,48 @@ export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {
                       className="flex-1 px-3 py-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-gray-100"
                     />
                   </div>
+
+                  {/* Seccion de numeros de serie */}
+                  {item.requiere_numero_serie && item.cantidad > 0 && (
+                    <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Hash className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          Numeros de Serie ({item.numeros_serie.length}/{item.cantidad})
+                        </span>
+                      </div>
+                      {item.numeros_serie.filter(ns => !ns.numero_serie?.trim()).length > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-amber-600 dark:text-amber-400 mb-2">
+                          <AlertCircle className="h-3 w-3" />
+                          Completa todos los numeros de serie
+                        </div>
+                      )}
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {item.numeros_serie.map((ns, nsIdx) => (
+                          <div key={nsIdx} className="flex gap-2">
+                            <input
+                              type="text"
+                              placeholder={`NS ${nsIdx + 1}`}
+                              value={ns.numero_serie}
+                              onChange={(e) => handleNsChange(index, nsIdx, 'numero_serie', e.target.value)}
+                              className={`flex-1 px-2 py-1 text-sm border rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 ${
+                                !ns.numero_serie?.trim()
+                                  ? 'border-amber-400 dark:border-amber-600'
+                                  : 'border-gray-300 dark:border-gray-600'
+                              }`}
+                            />
+                            <input
+                              type="text"
+                              placeholder="Lote (opc.)"
+                              value={ns.lote || ''}
+                              onChange={(e) => handleNsChange(index, nsIdx, 'lote', e.target.value)}
+                              className="w-24 px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

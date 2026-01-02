@@ -393,6 +393,7 @@ class ConsignaModel {
                     p.nombre AS producto_nombre,
                     p.sku,
                     p.codigo_barras,
+                    p.requiere_numero_serie,
                     pv.nombre_variante AS variante_nombre,
                     COALESCE(
                         (SELECT SUM(cantidad_disponible)
@@ -490,12 +491,13 @@ class ConsignaModel {
 
     /**
      * Recibir mercancía en consignación
+     * Soporta productos con número de serie requerido
      */
     static async recibirMercancia(acuerdoId, items, organizacionId, usuarioId) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             // Verificar acuerdo activo
             const acuerdo = await db.query(`
-                SELECT id, sucursal_id, ubicacion_consigna_id
+                SELECT id, sucursal_id, ubicacion_consigna_id, proveedor_id
                 FROM acuerdos_consigna
                 WHERE id = $1 AND organizacion_id = $2 AND estado = 'activo'
             `, [acuerdoId, organizacionId]);
@@ -506,6 +508,7 @@ class ConsignaModel {
 
             const sucursalId = acuerdo.rows[0].sucursal_id;
             const ubicacionId = acuerdo.rows[0].ubicacion_consigna_id;
+            const proveedorId = acuerdo.rows[0].proveedor_id;
 
             if (!sucursalId) {
                 throw new Error('El acuerdo no tiene sucursal asignada');
@@ -514,14 +517,15 @@ class ConsignaModel {
             const movimientos = [];
 
             for (const item of items) {
-                // Verificar que producto está en el acuerdo
+                // Verificar que producto está en el acuerdo Y obtener info del producto
                 const prodAcuerdo = await db.query(`
-                    SELECT precio_consigna
-                    FROM acuerdos_consigna_productos
-                    WHERE acuerdo_id = $1
-                      AND producto_id = $2
-                      AND COALESCE(variante_id, 0) = COALESCE($3, 0)
-                      AND activo = true
+                    SELECT acp.precio_consigna, p.requiere_numero_serie
+                    FROM acuerdos_consigna_productos acp
+                    JOIN productos p ON p.id = acp.producto_id
+                    WHERE acp.acuerdo_id = $1
+                      AND acp.producto_id = $2
+                      AND COALESCE(acp.variante_id, 0) = COALESCE($3, 0)
+                      AND acp.activo = true
                 `, [acuerdoId, item.producto_id, item.variante_id]);
 
                 if (!prodAcuerdo.rows[0]) {
@@ -529,26 +533,97 @@ class ConsignaModel {
                 }
 
                 const precioConsigna = prodAcuerdo.rows[0].precio_consigna;
+                const requiereNs = prodAcuerdo.rows[0].requiere_numero_serie;
                 const ubicacionFinal = item.ubicacion_id || ubicacionId;
 
-                // Registrar movimiento usando función SQL
-                const movResult = await db.query(`
-                    SELECT registrar_movimiento_consigna(
-                        $1, $2, $3, $4, $5, $6, 'entrada', $7, $8,
-                        NULL, NULL, $9, $10, $11, $12
-                    ) as movimiento_id
-                `, [
-                    organizacionId, acuerdoId, item.producto_id, item.variante_id || null,
-                    sucursalId, ubicacionFinal, item.cantidad, precioConsigna,
-                    item.numero_serie_id || null, item.lote || null,
-                    item.notas || null, usuarioId
-                ]);
+                // Si producto requiere NS, generar números de serie
+                const numerosSerieIds = [];
+                if (requiereNs && item.numeros_serie && item.numeros_serie.length > 0) {
+                    // Validar que la cantidad de NS coincide con la cantidad
+                    if (item.numeros_serie.length !== item.cantidad) {
+                        throw new Error(`Producto ${item.producto_id} requiere ${item.cantidad} números de serie, pero se proporcionaron ${item.numeros_serie.length}`);
+                    }
 
-                movimientos.push({
-                    movimiento_id: movResult.rows[0].movimiento_id,
-                    producto_id: item.producto_id,
-                    cantidad: item.cantidad
-                });
+                    for (const ns of item.numeros_serie) {
+                        if (!ns.numero_serie?.trim()) {
+                            throw new Error('Número de serie vacío no permitido');
+                        }
+
+                        // Usar la nueva función con soporte para consigna (13 params)
+                        const nsResult = await db.query(`
+                            SELECT registrar_numero_serie(
+                                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+                            ) as ns_id
+                        `, [
+                            organizacionId,
+                            item.producto_id,
+                            ns.numero_serie.trim(),
+                            ns.lote || item.lote || null,
+                            ns.fecha_vencimiento || null,
+                            sucursalId,
+                            ubicacionFinal,
+                            precioConsigna, // costo unitario = precio consigna
+                            proveedorId, // proveedor del acuerdo
+                            null, // orden_compra_id (no aplica)
+                            usuarioId,
+                            ns.notas || null,
+                            acuerdoId // acuerdo_consigna_id (NUEVO)
+                        ]);
+
+                        numerosSerieIds.push(nsResult.rows[0].ns_id);
+                    }
+
+                    logger.info('[ConsignaModel.recibirMercancia] NS generados', {
+                        producto_id: item.producto_id,
+                        cantidad_ns: numerosSerieIds.length
+                    });
+                } else if (requiereNs && (!item.numeros_serie || item.numeros_serie.length === 0)) {
+                    throw new Error(`Producto ${item.producto_id} requiere números de serie pero no se proporcionaron`);
+                }
+
+                // Registrar movimiento usando función SQL
+                // Para productos con NS, registramos un movimiento por cada NS
+                if (numerosSerieIds.length > 0) {
+                    for (const nsId of numerosSerieIds) {
+                        const movResult = await db.query(`
+                            SELECT registrar_movimiento_consigna(
+                                $1, $2, $3, $4, $5, $6, 'entrada', $7, $8,
+                                NULL, NULL, $9, $10, $11, $12
+                            ) as movimiento_id
+                        `, [
+                            organizacionId, acuerdoId, item.producto_id, item.variante_id || null,
+                            sucursalId, ubicacionFinal, 1, precioConsigna, // cantidad 1 por NS
+                            nsId, item.lote || null,
+                            item.notas || null, usuarioId
+                        ]);
+
+                        movimientos.push({
+                            movimiento_id: movResult.rows[0].movimiento_id,
+                            producto_id: item.producto_id,
+                            cantidad: 1,
+                            numero_serie_id: nsId
+                        });
+                    }
+                } else {
+                    // Productos sin NS: un solo movimiento
+                    const movResult = await db.query(`
+                        SELECT registrar_movimiento_consigna(
+                            $1, $2, $3, $4, $5, $6, 'entrada', $7, $8,
+                            NULL, NULL, $9, $10, $11, $12
+                        ) as movimiento_id
+                    `, [
+                        organizacionId, acuerdoId, item.producto_id, item.variante_id || null,
+                        sucursalId, ubicacionFinal, item.cantidad, precioConsigna,
+                        null, item.lote || null,
+                        item.notas || null, usuarioId
+                    ]);
+
+                    movimientos.push({
+                        movimiento_id: movResult.rows[0].movimiento_id,
+                        producto_id: item.producto_id,
+                        cantidad: item.cantidad
+                    });
+                }
             }
 
             logger.info('[ConsignaModel.recibirMercancia] Mercancía recibida', {

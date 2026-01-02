@@ -2014,7 +2014,15 @@ const inventarioSchemas = {
                 numero_serie_id: Joi.number().integer().positive().optional().allow(null),
                 lote: Joi.string().max(50).optional().allow(null, ''),
                 ubicacion_id: Joi.number().integer().positive().optional().allow(null),
-                notas: Joi.string().max(500).optional().allow(null, '')
+                notas: Joi.string().max(500).optional().allow(null, ''),
+                // Numeros de serie para productos que lo requieren (31 Dic 2025)
+                numeros_serie: Joi.array().items(Joi.object({
+                    numero_serie: Joi.string().max(100).required().messages({
+                        'any.required': 'El numero de serie es requerido'
+                    }),
+                    lote: Joi.string().max(50).optional().allow(null, ''),
+                    fecha_vencimiento: Joi.string().isoDate().optional().allow(null)
+                })).optional()
             })).min(1).required().messages({
                 'any.required': 'Debe incluir al menos un item',
                 'array.min': 'Debe incluir al menos un item'
