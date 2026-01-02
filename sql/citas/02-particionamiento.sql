@@ -1,58 +1,64 @@
 -- ====================================================================
--- 📅 MÓDULO CITAS - PARTICIONAMIENTO
+-- 📅 MÓDULO CITAS - PARTICIONAMIENTO DINÁMICO
 -- ====================================================================
 --
--- Versión: 1.0.0
--- Fecha: 16 Noviembre 2025
+-- Versión: 2.0.0
+-- Fecha: Enero 2026
 -- Módulo: citas
 --
 -- DESCRIPCIÓN:
--- Define las particiones iniciales para la tabla citas.
--- Estrategia minimalista: solo 2 particiones iniciales.
--- pg_cron crea el resto automáticamente cada mes.
+-- Crea particiones dinámicamente basadas en la fecha actual.
+-- NO usa fechas hardcodeadas para evitar obsolescencia.
 --
 -- ESTRATEGIA:
--- • Mes actual + próximo mes (buffer mínimo)
--- • Automatización vía pg_cron (día 1 de cada mes a las 00:30)
--- • Función mantener_particiones(6, 24) crea particiones futuras
+-- • Crea particiones para mes actual + 6 meses adelante
+-- • pg_cron mantiene las particiones automáticamente (día 1 cada mes)
+-- • Función mantener_particiones() gestiona creación y limpieza
 --
 -- BENEFICIOS:
 -- • 10x+ más rápido en queries históricas
 -- • Facilita archivado de datos antiguos
 -- • Mantenimiento automático
---
--- DETECCIÓN DE FALLOS:
--- • Si pg_cron falla, INSERT a meses futuros generará error claro
--- • Solución manual: SELECT * FROM mantener_particiones(6, 24);
+-- • Sin fechas hardcodeadas = sin obsolescencia
 --
 -- ====================================================================
 
 -- ====================================================================
--- 📅 PARTICIONES INICIALES DE CITAS
+-- 📅 CREAR PARTICIONES DINÁMICAS DE CITAS
 -- ====================================================================
+-- Crea particiones para el mes actual y los próximos 6 meses
 
--- Mes actual (necesario AHORA)
-CREATE TABLE citas_2025_11 PARTITION OF citas
-    FOR VALUES FROM ('2025-11-01') TO ('2025-12-01');
+DO $$
+DECLARE
+    v_inicio DATE;
+    v_fin DATE;
+    v_nombre VARCHAR;
+    v_mes INTEGER;
+BEGIN
+    -- Crear particiones para los próximos 7 meses (actual + 6)
+    FOR v_mes IN 0..6 LOOP
+        v_inicio := DATE_TRUNC('month', CURRENT_DATE + (v_mes || ' months')::INTERVAL)::DATE;
+        v_fin := DATE_TRUNC('month', CURRENT_DATE + ((v_mes + 1) || ' months')::INTERVAL)::DATE;
+        v_nombre := 'citas_' || TO_CHAR(v_inicio, 'YYYY_MM');
 
--- Próximo mes (buffer mínimo de seguridad)
-CREATE TABLE citas_2025_12 PARTITION OF citas
-    FOR VALUES FROM ('2025-12-01') TO ('2026-01-01');
+        -- Solo crear si no existe
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = v_nombre AND n.nspname = 'public'
+        ) THEN
+            EXECUTE format(
+                'CREATE TABLE %I PARTITION OF citas FOR VALUES FROM (%L) TO (%L)',
+                v_nombre, v_inicio, v_fin
+            );
+            RAISE NOTICE '✅ Partición creada: % [% - %)', v_nombre, v_inicio, v_fin;
+        ELSE
+            RAISE NOTICE 'ℹ️  Partición ya existe: %', v_nombre;
+        END IF;
+    END LOOP;
 
--- ====================================================================
--- 📝 COMENTARIOS DE DOCUMENTACIÓN
--- ====================================================================
-
-COMMENT ON TABLE citas_2025_11 IS
-'Partición de citas para noviembre 2025. Las particiones futuras se crean automáticamente vía pg_cron.';
-
-COMMENT ON TABLE citas_2025_12 IS
-'Partición de citas para diciembre 2025. Buffer de seguridad antes de automatización completa.';
-
--- ====================================================================
--- ⚠️ NOTA IMPORTANTE
--- ====================================================================
--- ✅ TOTAL: 2 particiones (vs 18 originales)
--- ⏰ El cron job mantener_particiones() se encargará del resto
--- 🔧 Configurado en: sql/schema/18-pg-cron-setup.sql
--- ====================================================================
+    RAISE NOTICE '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+    RAISE NOTICE '📅 Particiones de citas configuradas dinámicamente';
+    RAISE NOTICE '⏰ pg_cron mantiene particiones futuras automáticamente';
+    RAISE NOTICE '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━';
+END $$;

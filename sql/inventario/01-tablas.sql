@@ -274,36 +274,40 @@ COMMENT ON COLUMN movimientos_inventario.tipo_movimiento IS 'Tipo de movimiento:
 COMMENT ON COLUMN movimientos_inventario.referencia IS 'Número de factura, orden de compra u otro documento de respaldo';
 
 -- ============================================================================
--- PARTICIONES INICIALES: movimientos_inventario (6 meses)
+-- PARTICIONES DINÁMICAS: movimientos_inventario
 -- ============================================================================
--- Crear particiones para los próximos 6 meses
--- pg_cron creará automáticamente las futuras (ver sql/mantenimiento/)
+-- Crea particiones dinámicamente basadas en la fecha actual.
+-- NO usa fechas hardcodeadas para evitar obsolescencia.
+-- pg_cron mantiene particiones futuras automáticamente.
 -- ============================================================================
 
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2025_11 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2025-11-01') TO ('2025-12-01');
+DO $$
+DECLARE
+    v_inicio TIMESTAMPTZ;
+    v_fin TIMESTAMPTZ;
+    v_nombre VARCHAR;
+    v_mes INTEGER;
+BEGIN
+    -- Crear particiones para los próximos 7 meses (actual + 6)
+    FOR v_mes IN 0..6 LOOP
+        v_inicio := DATE_TRUNC('month', NOW() + (v_mes || ' months')::INTERVAL);
+        v_fin := DATE_TRUNC('month', NOW() + ((v_mes + 1) || ' months')::INTERVAL);
+        v_nombre := 'movimientos_inventario_' || TO_CHAR(v_inicio, 'YYYY_MM');
 
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2025_12 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2025-12-01') TO ('2026-01-01');
-
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_01 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
-
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_02 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
-
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_03 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');
-
-CREATE TABLE IF NOT EXISTS movimientos_inventario_2026_04 PARTITION OF movimientos_inventario
-    FOR VALUES FROM ('2026-04-01') TO ('2026-05-01');
-
-COMMENT ON TABLE movimientos_inventario_2025_11 IS 'Partición Nov 2025';
-COMMENT ON TABLE movimientos_inventario_2025_12 IS 'Partición Dic 2025';
-COMMENT ON TABLE movimientos_inventario_2026_01 IS 'Partición Ene 2026';
-COMMENT ON TABLE movimientos_inventario_2026_02 IS 'Partición Feb 2026';
-COMMENT ON TABLE movimientos_inventario_2026_03 IS 'Partición Mar 2026';
-COMMENT ON TABLE movimientos_inventario_2026_04 IS 'Partición Abr 2026';
+        -- Solo crear si no existe
+        IF NOT EXISTS (
+            SELECT 1 FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = v_nombre AND n.nspname = 'public'
+        ) THEN
+            EXECUTE format(
+                'CREATE TABLE %I PARTITION OF movimientos_inventario FOR VALUES FROM (%L) TO (%L)',
+                v_nombre, v_inicio, v_fin
+            );
+            RAISE NOTICE '✅ Partición creada: % [% - %)', v_nombre, v_inicio, v_fin;
+        END IF;
+    END LOOP;
+END $$;
 
 -- ============================================================================
 -- TABLA: alertas_inventario

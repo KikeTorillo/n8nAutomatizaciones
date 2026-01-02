@@ -116,8 +116,23 @@ class CitaHelpersModel {
     }
 
 
+    /**
+     * Registrar evento de auditoría de forma segura usando SAVEPOINT
+     *
+     * IMPORTANTE: Usa SAVEPOINT para que un error (ej: partición faltante)
+     * NO aborte la transacción principal. Sin SAVEPOINT, PostgreSQL marca
+     * la transacción como "aborted" y el COMMIT se convierte en ROLLBACK.
+     *
+     * @param {Object} evento - Datos del evento
+     * @param {Object} db - Conexión de base de datos (dentro de transacción)
+     */
     static async registrarEventoAuditoria(evento, db) {
+        const savepointName = `auditoria_${Date.now()}`;
+
         try {
+            // Crear SAVEPOINT antes de la operación
+            await db.query(`SAVEPOINT ${savepointName}`);
+
             await db.query(`
                 INSERT INTO eventos_sistema (
                     organizacion_id, tipo_evento, descripcion,
@@ -131,8 +146,19 @@ class CitaHelpersModel {
                 evento.usuario_id || null,
                 JSON.stringify(evento.metadatos || {})
             ]);
+
+            // Liberar SAVEPOINT si todo OK
+            await db.query(`RELEASE SAVEPOINT ${savepointName}`);
+
         } catch (error) {
-            logger.warn('[CitaHelpersModel.registrarEventoAuditoria] Error registrando evento', {
+            // Rollback solo hasta el SAVEPOINT (no aborta la transacción principal)
+            try {
+                await db.query(`ROLLBACK TO SAVEPOINT ${savepointName}`);
+            } catch (rollbackError) {
+                // Ignorar error de rollback (el savepoint puede no existir)
+            }
+
+            logger.warn('[CitaHelpersModel.registrarEventoAuditoria] Error registrando evento (transacción NO afectada)', {
                 error: error.message,
                 evento
             });

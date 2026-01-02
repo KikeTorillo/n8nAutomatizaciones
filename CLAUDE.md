@@ -60,8 +60,6 @@ Usar **Cipher** via MCP:
 | Idioma | Español (América Latina) |
 | Módulos instalados | Ventas, CRM, Compras, Inventario, PdV, Facturación, Empleados, Calendario, Contactos, Conversaciones |
 
-> **Nota**: Si la BD se reinició, acceder a http://localhost:8069/web/database/manager para crear/restaurar.
-
 ---
 
 ## Comandos
@@ -196,16 +194,55 @@ await RLSContextManager.withBypass(async (db) => { ... });
 
 | Módulo | Controllers | Descripción |
 |--------|-------------|-------------|
-| **core** | 13 | Auth, usuarios, organizaciones, planes, webhooks, superadmin |
-| **inventario** | 12 | Productos, OC, movimientos, valoración FIFO/AVCO, números serie |
-| **eventos-digitales** | 9 | Eventos, invitados, galerías, plantillas |
-| **agendamiento** | 6 | Citas, horarios, disponibilidad |
-| **pos** | 3 | Punto de venta, carrito, métodos pago |
-| **workflows** | 2 | Motor de aprobaciones configurable |
+| **core** | 12 | Auth, usuarios, organizaciones, planes, webhooks, superadmin, monedas |
+| **inventario** | 24 | Productos, OC, movimientos, valoración, NS/Lotes, WMS, dropship, consigna, batch-picking |
+| **agendamiento** | 10 | Citas, horarios, disponibilidad, bloqueos, recordatorios |
+| **eventos-digitales** | 9 | Eventos, invitados, galerías, plantillas, mesas |
+| **pos** | 3 | Punto de venta, ventas, reportes |
+| **comisiones** | 4 | Configuración, cálculo, estadísticas |
+| **contabilidad** | 4 | Asientos, cuentas, reportes |
+| **clientes** | 1 | CRM clientes |
+| **profesionales** | 1 | Gestión profesionales |
+| **sucursales** | 1 | Multi-sucursal, transferencias |
 | **permisos** | 2 | Sistema normalizado 86 permisos |
-| *+13 más* | - | comisiones, contabilidad, marketplace, chatbots, etc. |
+| **marketplace** | 4 | Perfiles, reseñas, analytics |
+| **workflows** | 2 | Motor de aprobaciones |
+| **notificaciones** | 2 | Sistema de notificaciones |
+| **recordatorios** | 1 | Recordatorios Telegram/WhatsApp |
+| **storage** | 2 | Archivos MinIO |
+| **website** | 4 | Editor sitio web |
+| **custom-fields** | 2 | Campos personalizados |
+| **precios** | 1 | Listas de precios |
+| **organizacion** | 3 | Departamentos, puestos |
 
-**Totales**: 78 controllers, 69 models, 68 routes, 41 schemas Joi
+**Totales**: 78 controllers, 69 models, 68 routes, 45+ schemas Joi
+
+---
+
+## Módulo Inventario (20 submódulos)
+
+| Submódulo | Funcionalidad |
+|-----------|---------------|
+| Productos | CRUD con variantes, atributos, SKU, código barras |
+| Categorías | Jerárquicas con colores e iconos |
+| Proveedores | RFC, términos comerciales, ubicación |
+| Movimientos | Entradas, salidas, ajustes, kardex |
+| Conteos | Inventario físico con diferencias |
+| Ajustes CSV | Carga masiva de ajustes |
+| Órdenes Compra | Borrador → Enviada → Recibida con NS/Lotes |
+| Reorden | Reglas automáticas (pg_cron 6:00 AM) |
+| Dropship | Proveedor envía directo al cliente |
+| Consigna | Mercancía en consignación |
+| Operaciones | Picking, recepción, despacho |
+| Wave Pick | Batch/Wave picking |
+| Alertas | Stock bajo, vencimientos |
+| Reportes | Valoración, rotación, ABC |
+| Listas Precios | Multi-lista con rangos |
+| Ubicaciones | WMS (Zona → Pasillo → Nivel) |
+| NS/Lotes | Tracking individual con vencimiento |
+| Rutas | Rutas de operación multietapa |
+| Histórico | Snapshots diarios (pg_cron 00:05 AM) |
+| Transferencias | Entre sucursales |
 
 ---
 
@@ -222,6 +259,10 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | WMS | Ubicaciones (Zona → Pasillo → Nivel) |
 | OC | Flujo Borrador → Enviada → Recibida |
 | GS1-128 | Parser + Generador + Scanner POS |
+| Landed Costs | Distribución automática al recibir mercancía |
+| Dropship | Proveedor envía directo al cliente |
+| Consigna | Acuerdos con consignatarios |
+| Batch Picking | Wave picking para múltiples órdenes |
 
 ### GS1-128
 ```
@@ -231,6 +272,17 @@ Scanner:   BuscadorProductosPOS.jsx (botón "Escanear")
 Etiquetas: GenerarEtiquetaGS1Modal.jsx (5 plantillas industria)
 ```
 
+### POS (Punto de Venta)
+| Feature | Descripción |
+|---------|-------------|
+| Métodos Pago | Efectivo, Tarjeta, Transferencia, QR MercadoPago |
+| Buscador | Por nombre, SKU o código de barras |
+| Escaneo | Integración con scanner códigos |
+| Descuentos | Por producto y global (%) |
+| Devoluciones | Procesamiento desde historial |
+| Corte Caja | Cierre diario |
+| Reportes | Ventas diarias |
+
 ### Workflows de Aprobación
 Motor para OC basado en límites por rol.
 - `backend/app/modules/workflows/services/workflow.engine.js`
@@ -239,7 +291,7 @@ Motor para OC basado en límites por rol.
 MXN, COP, USD con conversión tiempo real (`useCurrency.js`)
 
 ### Multi-Tenancy
-RLS enforced PostgreSQL (243+ políticas), context: `current_tenant_id`
+RLS enforced PostgreSQL (430+ políticas), context: `current_tenant_id`
 
 ---
 
@@ -249,22 +301,72 @@ RLS enforced PostgreSQL (243+ políticas), context: `current_tenant_id`
 backend/app/
 ├── modules/        # 20 módulos (78 controllers)
 ├── middleware/     # 11 middlewares
-├── services/       # 15 servicios globales (email, n8n, storage, etc.)
+├── services/       # 27 archivos (email, n8n, storage, adapters)
 ├── utils/          # 9 utils (RLSContextManager, helpers, tokens)
 └── core/           # ModuleRegistry, RouteLoader (auto-discovery)
 
 frontend/src/
-├── components/     # 147 componentes (25 categorías)
-├── pages/          # 114 páginas (27 categorías)
-├── hooks/          # 45 hooks especializados
+├── components/     # 168 componentes (25+ categorías)
+├── pages/          # 127 páginas (27 categorías)
+├── hooks/          # 59 hooks especializados
 ├── store/          # 4 stores Zustand (auth, theme, sucursal, onboarding)
-└── services/api/   # 39 endpoints agrupados
+└── services/api/   # 39 endpoints agrupados (300+ métodos)
 
 sql/
-├── 32 directorios  # 173 archivos SQL
+├── 32 directorios  # 189 archivos SQL
 ├── Particionadas   # citas, movimientos_inventario, eventos_sistema, asientos_contables
-└── Tablas          # 125+ tablas con RLS
+└── Tablas          # 125+ tablas con RLS (430+ políticas)
 ```
+
+---
+
+## Frontend - Hooks Principales (59 total)
+
+### Inventario (14)
+`useInventario`, `useProductos`, `useNumerosSerie`, `useVariantes`, `useAtributos`, `useCategorias`, `useProveedores`, `useOrdenesCompra`, `useValoracion`, `useUbicacionesAlmacen`, `useConteos`, `useAjustesMasivos`, `useLandedCosts`, `useInventoryAtDate`
+
+### Operaciones Almacén (8)
+`useOperacionesAlmacen`, `useBatchPicking`, `usePaquetes`, `useConsigna`, `useDropship`, `useReorden`, `useConfiguracionAlmacen`, `useRutasOperacion`
+
+### POS & Ventas (3)
+`usePOS`, `useVentas`, `useBarcodeScanner`
+
+### Gestión Citas (5)
+`useCitas`, `useHorarios`, `useBloqueos`, `useTiposBloqueo`, `useRecordatorios`
+
+### Gestión Personas (6)
+`useClientes`, `useProfesionales`, `useUsuarios`, `useOrganigrama`, `usePuestos`, `useDepartamentos`
+
+### Sistema (7)
+`useModulos`, `useAccesoModulo`, `usePermisos`, `useNotificaciones`, `useCustomFields`, `useWorkflows`, `useSucursales`
+
+---
+
+## Stores Zustand (4)
+
+| Store | Estado Principal | Persistencia |
+|-------|-----------------|--------------|
+| **authStore** | user, accessToken, refreshToken, isAuthenticated | localStorage |
+| **sucursalStore** | sucursalActiva, sucursalesDisponibles | localStorage |
+| **themeStore** | theme (light/dark/system), resolvedTheme | localStorage |
+| **onboardingStore** | formData, registroEnviado, organizacion_id | localStorage |
+
+---
+
+## Tablas Particionadas (4)
+
+| Tabla | Partición | Descripción |
+|-------|-----------|-------------|
+| `movimientos_inventario` | Mensual (fecha) | Entradas, salidas, ajustes |
+| `citas` | Mensual (fecha_cita) | Citas agendadas |
+| `eventos_sistema` | Mensual (creado_en) | Auditoría (43 tipos) |
+| `asientos_contables` | Mensual (fecha_movimiento) | Contabilidad |
+
+**Creación dinámica**: Los scripts SQL crean particiones para el mes actual + 6 meses adelante automáticamente al inicializar la BD (sin fechas hardcodeadas).
+
+**pg_cron Jobs**:
+- `mantener_particiones()` - 1º de cada mes, crea particiones futuras para las 4 tablas
+- `snapshot_inventario_diario()` - 00:05 AM
 
 ---
 
@@ -277,6 +379,9 @@ sql/
 | Cambios no se reflejan | `docker restart <contenedor>` + Ctrl+Shift+R |
 | API inventario NS/Lotes | Usar `inventarioApi`, no `ordenesCompraApi` |
 | "Rendered fewer hooks than expected" | Mover returns condicionales DESPUÉS de todos los hooks |
+| Validación ruta_preferida | Seleccionar opción válida (normal/dropship/fabricar) |
+
+**Nota**: La auditoría (`registrarEventoAuditoria`) usa SAVEPOINT para que errores de logging no aborten transacciones principales.
 
 ---
 
@@ -284,13 +389,39 @@ sql/
 
 | Prioridad | Feature |
 |-----------|---------|
-| Alta | 2FA/MFA, Integraciones Carriers |
-| Media | Auditoría cambios, Landed Costs |
-| Baja | API Keys por usuario, Kitting/BOM |
+| Alta | 2FA/MFA, Integraciones Carriers (DHL, FedEx, Estafeta) |
+| Media | Auditoría cambios detallada, Kitting/BOM |
+| Baja | API Keys por usuario, Facturación electrónica CFDI |
 
-### Implementados Recientemente (Dic 2025)
-- ✅ **Reorden Automático**: Reglas configurables por producto/categoría/proveedor, evaluación pg_cron 6:00 AM, generación automática de OC
+### Implementados (Dic 2025 - Ene 2026)
+- ✅ **Reorden Automático**: Reglas configurables, pg_cron 6:00 AM, generación OC
+- ✅ **Landed Costs**: Distribución automática al recibir mercancía
+- ✅ **Dropship**: Proveedor envía directo al cliente
+- ✅ **Consigna**: Acuerdos con consignatarios, ventas POS integradas
+- ✅ **Batch/Wave Picking**: Picking optimizado para múltiples órdenes
+- ✅ **Rutas Operación**: Flujos multietapa configurables
+- ✅ **Paquetes**: Gestión de paquetería
+- ✅ **Particionamiento Dinámico**: SQL sin fechas hardcodeadas, SAVEPOINT en auditoría
 
 ---
 
-**Actualizado**: 30 Diciembre 2025
+## Flujos Validados (Testing)
+
+| Flujo | Estado | Notas |
+|-------|--------|-------|
+| Login/Auth | ✅ | JWT + refresh token |
+| Inventario - Categorías | ✅ | Jerárquicas con colores |
+| Inventario - Proveedores | ✅ | RFC, términos, ubicación México |
+| Inventario - Productos | ✅ | SKU, código barras, variantes, rutas |
+| Clientes | ✅ | CRM con foto, marketing opt-in |
+| POS - Venta | ✅ | Búsqueda, carrito, métodos pago |
+| Multi-moneda | ✅ | Conversión USD en tiempo real |
+| Agendamiento - Servicios | ✅ | Crear servicio, asignar profesional, plantillas duración |
+| Agendamiento - Horarios | ✅ | Plantillas (jornada completa, media jornada), días semana |
+| Agendamiento - Citas UI | ✅ | Formulario completo, validación días laborales |
+| Agendamiento - Calendario | ✅ | Vista mensual, navegación, estados visuales |
+| Agendamiento - Citas E2E | ✅ | Crear cita desde frontend, persistencia BD, auditoría |
+
+---
+
+**Actualizado**: 2 Enero 2026

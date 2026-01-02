@@ -577,7 +577,7 @@ BEGIN
     -- 1. Crear particiones futuras de citas
     RETURN QUERY
     SELECT
-        'CREAR_FUTURA'::VARCHAR,
+        'CREAR_CITAS'::VARCHAR,
         mensaje::TEXT
     FROM crear_particiones_futuras_citas(p_meses_adelante)
     WHERE creada = TRUE;
@@ -585,12 +585,28 @@ BEGIN
     -- 2. Crear particiones futuras de eventos
     RETURN QUERY
     SELECT
-        'CREAR_FUTURA'::VARCHAR,
+        'CREAR_EVENTOS'::VARCHAR,
         mensaje::TEXT
     FROM crear_particiones_futuras_eventos(p_meses_adelante)
     WHERE creada = TRUE;
 
-    -- 3. Eliminar particiones antiguas (>24 meses)
+    -- 3. Crear particiones futuras de movimientos_inventario
+    RETURN QUERY
+    SELECT
+        'CREAR_INVENTARIO'::VARCHAR,
+        mensaje::TEXT
+    FROM crear_particiones_futuras_inventario(p_meses_adelante)
+    WHERE creada = TRUE;
+
+    -- 4. Crear particiones futuras de asientos_contables
+    RETURN QUERY
+    SELECT
+        'CREAR_CONTABILIDAD'::VARCHAR,
+        mensaje::TEXT
+    FROM crear_particiones_futuras_contabilidad(p_meses_adelante)
+    WHERE creada = TRUE;
+
+    -- 5. Eliminar particiones antiguas (>24 meses)
     RETURN QUERY
     SELECT
         'ELIMINAR_ANTIGUA'::VARCHAR,
@@ -599,7 +615,7 @@ BEGIN
 
     RAISE NOTICE '✅ Mantenimiento de particiones completado';
 
-    -- 4. Retornar resumen
+    -- 6. Retornar resumen
     RETURN QUERY
     SELECT
         'RESUMEN'::VARCHAR,
@@ -616,9 +632,127 @@ Uso:
   SELECT * FROM mantener_particiones();                  -- Defaults: 6 meses adelante, 24 antiguos
   SELECT * FROM mantener_particiones(12, 36);            -- 12 meses adelante, 36 antiguos
 
+Tablas particionadas gestionadas:
+- citas (fecha_cita)
+- eventos_sistema (creado_en)
+- movimientos_inventario (creado_en)
+- asientos_contables (fecha)
+
 Acciones:
-1. Crea particiones para los próximos 6 meses (citas y eventos)
+1. Crea particiones para los próximos 6 meses (todas las tablas)
 2. Elimina particiones >24 meses (después de archivar)
 3. Muestra resumen de particiones
 
 Retorna: (accion, detalle)';
+
+-- ====================================================================
+-- FUNCIÓN 9: CREAR_PARTICIONES_FUTURAS_INVENTARIO
+-- ====================================================================
+-- Crea particiones mensuales de movimientos_inventario para los próximos N meses
+-- Columna de partición: creado_en (TIMESTAMPTZ)
+-- ────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION crear_particiones_futuras_inventario(
+    p_meses_adelante INTEGER DEFAULT 6
+)
+RETURNS TABLE(
+    particion_nombre VARCHAR,
+    fecha_inicio TIMESTAMPTZ,
+    fecha_fin TIMESTAMPTZ,
+    creada BOOLEAN,
+    mensaje TEXT
+) AS $$
+DECLARE
+    v_inicio TIMESTAMPTZ;
+    v_fin TIMESTAMPTZ;
+    v_nombre VARCHAR;
+    v_ya_existe BOOLEAN;
+    v_mes INTEGER;
+BEGIN
+    FOR v_mes IN 0..p_meses_adelante LOOP
+        v_inicio := DATE_TRUNC('month', NOW() + (v_mes || ' months')::INTERVAL);
+        v_fin := DATE_TRUNC('month', NOW() + ((v_mes + 1) || ' months')::INTERVAL);
+        v_nombre := 'movimientos_inventario_' || TO_CHAR(v_inicio, 'YYYY_MM');
+
+        SELECT EXISTS(
+            SELECT 1 FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = v_nombre AND n.nspname = 'public'
+        ) INTO v_ya_existe;
+
+        IF NOT v_ya_existe THEN
+            EXECUTE format(
+                'CREATE TABLE %I PARTITION OF movimientos_inventario FOR VALUES FROM (%L) TO (%L)',
+                v_nombre, v_inicio, v_fin
+            );
+
+            RETURN QUERY SELECT v_nombre, v_inicio, v_fin, TRUE,
+                ('Partición creada: ' || v_nombre)::TEXT;
+        ELSE
+            RETURN QUERY SELECT v_nombre, v_inicio, v_fin, FALSE,
+                ('Ya existe: ' || v_nombre)::TEXT;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION crear_particiones_futuras_inventario(INTEGER) IS
+'Crea particiones mensuales de movimientos_inventario para los próximos N meses.
+Columna de partición: creado_en (TIMESTAMPTZ).
+Ejecutar mensualmente via pg_cron.';
+
+-- ====================================================================
+-- FUNCIÓN 10: CREAR_PARTICIONES_FUTURAS_CONTABILIDAD
+-- ====================================================================
+-- Crea particiones mensuales de asientos_contables para los próximos N meses
+-- Columna de partición: fecha (DATE)
+-- ────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION crear_particiones_futuras_contabilidad(
+    p_meses_adelante INTEGER DEFAULT 6
+)
+RETURNS TABLE(
+    particion_nombre VARCHAR,
+    fecha_inicio DATE,
+    fecha_fin DATE,
+    creada BOOLEAN,
+    mensaje TEXT
+) AS $$
+DECLARE
+    v_inicio DATE;
+    v_fin DATE;
+    v_nombre VARCHAR;
+    v_ya_existe BOOLEAN;
+    v_mes INTEGER;
+BEGIN
+    FOR v_mes IN 0..p_meses_adelante LOOP
+        v_inicio := DATE_TRUNC('month', CURRENT_DATE + (v_mes || ' months')::INTERVAL)::DATE;
+        v_fin := DATE_TRUNC('month', CURRENT_DATE + ((v_mes + 1) || ' months')::INTERVAL)::DATE;
+        v_nombre := 'asientos_contables_' || TO_CHAR(v_inicio, 'YYYY_MM');
+
+        SELECT EXISTS(
+            SELECT 1 FROM pg_class c
+            JOIN pg_namespace n ON n.oid = c.relnamespace
+            WHERE c.relname = v_nombre AND n.nspname = 'public'
+        ) INTO v_ya_existe;
+
+        IF NOT v_ya_existe THEN
+            EXECUTE format(
+                'CREATE TABLE %I PARTITION OF asientos_contables FOR VALUES FROM (%L) TO (%L)',
+                v_nombre, v_inicio, v_fin
+            );
+
+            RETURN QUERY SELECT v_nombre, v_inicio, v_fin, TRUE,
+                ('Partición creada: ' || v_nombre)::TEXT;
+        ELSE
+            RETURN QUERY SELECT v_nombre, v_inicio, v_fin, FALSE,
+                ('Ya existe: ' || v_nombre)::TEXT;
+        END IF;
+    END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION crear_particiones_futuras_contabilidad(INTEGER) IS
+'Crea particiones mensuales de asientos_contables para los próximos N meses.
+Columna de partición: fecha (DATE).
+Ejecutar mensualmente via pg_cron.';
