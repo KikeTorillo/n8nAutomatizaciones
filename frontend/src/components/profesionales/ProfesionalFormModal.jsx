@@ -4,7 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   User, Palette, Mail, Settings, Send, Clock, CheckCircle, XCircle, RefreshCw,
-  Camera, X, Loader2, Building2, Briefcase, UserCheck, Tag, Calendar, MapPin, Phone, ChevronDown, Link2
+  Camera, X, Loader2, Building2, Briefcase, UserCheck, Tag, Calendar, MapPin, Phone, ChevronDown, Link2,
+  Wallet, Award, Globe
 } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
@@ -22,13 +23,24 @@ import {
   ESTADOS_LABORALES,
   TIPOS_CONTRATACION,
   GENEROS,
-  ESTADOS_CIVILES
+  ESTADOS_CIVILES,
+  FORMAS_PAGO,
+  IDIOMAS_DISPONIBLES
 } from '@/hooks/useProfesionales';
+import useAuthStore from '@/store/authStore';
+import { useCurrency } from '@/hooks/useCurrency';
+import MultiSelect from '@/components/ui/MultiSelect';
 import { useCambiarRolUsuario, useUsuariosSinProfesional, ROLES_USUARIO } from '@/hooks/useUsuarios';
 import { useToast } from '@/hooks/useToast';
 import { invitacionesApi } from '@/services/api/endpoints';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { DepartamentoSelect, PuestoSelect, SupervisorSelect, CategoriasSelect } from '@/components/organizacion';
+import DocumentosEmpleadoSection from './DocumentosEmpleadoSection';
+import CuentasBancariasSection from './CuentasBancariasSection';
+import ExperienciaLaboralSection from './ExperienciaLaboralSection';
+import EducacionFormalSection from './EducacionFormalSection';
+import HabilidadesSection from './HabilidadesSection';
+import OnboardingProgresoSection from './OnboardingProgresoSection';
 
 /**
  * Colores predefinidos para el calendario
@@ -65,9 +77,9 @@ const ROLES_INVITACION = [
  */
 const profesionalCreateSchema = z.object({
   // === Datos Básicos ===
-  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres'),
+  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(150, 'Máximo 150 caracteres'),
   // Email: opcional si se vincula a usuario existente (Dic 2025)
-  email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
+  email: z.string().email('Email inválido').max(150, 'Máximo 150 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').default('#753572'),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -77,9 +89,34 @@ const profesionalCreateSchema = z.object({
   codigo: z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
   genero: z.enum(['masculino', 'femenino', 'otro', 'no_especificado']).optional(),
   estado_civil: z.enum(['soltero', 'casado', 'divorciado', 'viudo', 'union_libre']).optional(),
-  direccion: z.string().max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
+  direccion: z.string().max(500, 'Máximo 500 caracteres').optional().or(z.literal('')),
   contacto_emergencia_nombre: z.string().max(100).optional().or(z.literal('')),
   contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+  // Nuevos campos Ene 2026
+  fecha_nacimiento: z.string().optional().or(z.literal('')),
+  documento_identidad: z.string().max(30, 'Máximo 30 caracteres').optional().or(z.literal('')),
+
+  // === Información Personal Adicional (Fase 1 - Enero 2026) ===
+  numero_pasaporte: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  numero_seguro_social: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  nacionalidad: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  lugar_nacimiento_ciudad: z.string().max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
+  lugar_nacimiento_pais: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  email_privado: z.string().email('Email inválido').max(150, 'Máximo 150 caracteres').optional().or(z.literal('')),
+  telefono_privado: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+  distancia_casa_trabajo_km: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().min(0).max(9999).optional()
+  ),
+  hijos_dependientes: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().int().min(0).max(50).optional()
+  ),
+
+  // === Configuración del Sistema (Fase 1 - Enero 2026) ===
+  zona_horaria: z.string().max(50).optional().default('America/Mexico_City'),
+  codigo_nip: z.string().max(10).regex(/^[0-9]*$/, 'Solo números').optional().or(z.literal('')),
+  id_credencial: z.string().max(50).optional().or(z.literal('')),
 
   // === Clasificación Laboral (Dic 2025) ===
   estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).default('activo'),
@@ -91,6 +128,23 @@ const profesionalCreateSchema = z.object({
   puesto_id: z.number().int().positive().optional().nullable(),
   supervisor_id: z.number().int().positive().optional().nullable(),
 
+  // === Información Profesional (Ene 2026) ===
+  años_experiencia: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().int().min(0).max(70).optional()
+  ),
+  idiomas: z.array(z.string()).optional().default([]),
+  disponible_online: z.boolean().optional().default(false),
+  licencias_profesionales: z.string().optional().or(z.literal('')),
+
+  // === Compensación (Ene 2026) - Solo admin/propietario ===
+  salario_base: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().min(0).optional()
+  ),
+  // comision_porcentaje eliminado - se configura en Módulo Comisiones por servicio/producto
+  forma_pago: z.enum(['comision', 'salario', 'mixto']).optional(),
+
   // === Acceso al Sistema (Dic 2025) ===
   rol_invitacion: z.enum(['empleado', 'propietario', 'admin']).default('empleado'),
 });
@@ -101,8 +155,8 @@ const profesionalCreateSchema = z.object({
  */
 const profesionalEditSchema = z.object({
   // === Datos Básicos ===
-  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(100, 'Máximo 100 caracteres').optional(),
-  email: z.string().email('Email inválido').max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
+  nombre_completo: z.string().min(3, 'Mínimo 3 caracteres').max(150, 'Máximo 150 caracteres').optional(),
+  email: z.string().email('Email inválido').max(150, 'Máximo 150 caracteres').optional().or(z.literal('')),
   telefono: z.string().regex(/^[1-9]\d{9}$/, 'El teléfono debe ser válido de 10 dígitos (ej: 5512345678)').optional().or(z.literal('')),
   color_calendario: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Color hexadecimal inválido').optional(),
   descripcion: z.string().max(500, 'Máximo 500 caracteres').optional(),
@@ -112,9 +166,34 @@ const profesionalEditSchema = z.object({
   codigo: z.string().max(20, 'Máximo 20 caracteres').optional().or(z.literal('')),
   genero: z.enum(['masculino', 'femenino', 'otro', 'no_especificado']).optional(),
   estado_civil: z.enum(['soltero', 'casado', 'divorciado', 'viudo', 'union_libre']).optional(),
-  direccion: z.string().max(255, 'Máximo 255 caracteres').optional().or(z.literal('')),
+  direccion: z.string().max(500, 'Máximo 500 caracteres').optional().or(z.literal('')),
   contacto_emergencia_nombre: z.string().max(100).optional().or(z.literal('')),
   contacto_emergencia_telefono: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+  // Nuevos campos Ene 2026
+  fecha_nacimiento: z.string().optional().or(z.literal('')),
+  documento_identidad: z.string().max(30, 'Máximo 30 caracteres').optional().or(z.literal('')),
+
+  // === Información Personal Adicional (Fase 1 - Enero 2026) ===
+  numero_pasaporte: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  numero_seguro_social: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  nacionalidad: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  lugar_nacimiento_ciudad: z.string().max(100, 'Máximo 100 caracteres').optional().or(z.literal('')),
+  lugar_nacimiento_pais: z.string().max(50, 'Máximo 50 caracteres').optional().or(z.literal('')),
+  email_privado: z.string().email('Email inválido').max(150, 'Máximo 150 caracteres').optional().or(z.literal('')),
+  telefono_privado: z.string().regex(/^[1-9]\d{9}$/, 'Teléfono inválido').optional().or(z.literal('')),
+  distancia_casa_trabajo_km: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().min(0).max(9999).optional()
+  ),
+  hijos_dependientes: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().int().min(0).max(50).optional()
+  ),
+
+  // === Configuración del Sistema (Fase 1 - Enero 2026) ===
+  zona_horaria: z.string().max(50).optional(),
+  codigo_nip: z.string().max(10).regex(/^[0-9]*$/, 'Solo números').optional().or(z.literal('')),
+  id_credencial: z.string().max(50).optional().or(z.literal('')),
 
   // === Clasificación Laboral (Dic 2025) ===
   estado: z.enum(['activo', 'vacaciones', 'incapacidad', 'suspendido', 'baja']).optional(),
@@ -125,6 +204,23 @@ const profesionalEditSchema = z.object({
   departamento_id: z.number().int().positive().optional().nullable(),
   puesto_id: z.number().int().positive().optional().nullable(),
   supervisor_id: z.number().int().positive().optional().nullable(),
+
+  // === Información Profesional (Ene 2026) ===
+  años_experiencia: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().int().min(0).max(70).optional()
+  ),
+  idiomas: z.array(z.string()).optional().default([]),
+  disponible_online: z.boolean().optional().default(false),
+  licencias_profesionales: z.string().optional().or(z.literal('')),
+
+  // === Compensación (Ene 2026) - Solo admin/propietario ===
+  salario_base: z.preprocess(
+    (val) => (val === '' || val === undefined || val === null) ? undefined : Number(val),
+    z.number().min(0).optional()
+  ),
+  // comision_porcentaje eliminado - se configura en Módulo Comisiones por servicio/producto
+  forma_pago: z.enum(['comision', 'salario', 'mixto']).optional(),
 });
 
 /**
@@ -154,12 +250,20 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const uploadMutation = useUploadArchivo();
 
   // Dic 2025: Secciones colapsables y categorías
+  // Ene 2026: Agregadas secciones infoProfesional y compensacion
   const [seccionesAbiertas, setSeccionesAbiertas] = useState({
     datosPersonales: false,
     clasificacion: true,
     organizacion: true,
+    infoProfesional: false,  // Nueva: Años experiencia, idiomas, disponible online
+    compensacion: false,     // Nueva: Salario, comisión, forma de pago (solo admin)
     acceso: true,
   });
+
+  // Ene 2026: Verificar rol para mostrar sección compensación
+  const { user } = useAuthStore();
+  const puedeVerCompensacion = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
+  const { symbol } = useCurrency();
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
   const sincronizarCategoriasMutation = useSincronizarCategorias();
 
@@ -220,6 +324,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           direccion: '',
           contacto_emergencia_nombre: '',
           contacto_emergencia_telefono: '',
+          // Nuevos campos Ene 2026
+          fecha_nacimiento: '',
+          documento_identidad: '',
           // Clasificación laboral (Dic 2025)
           estado: 'activo',
           tipo_contratacion: undefined,
@@ -228,6 +335,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           departamento_id: undefined,
           puesto_id: undefined,
           supervisor_id: undefined,
+          // Información Profesional (Ene 2026)
+          años_experiencia: undefined,
+          idiomas: [],
+          disponible_online: false,
+          licencias_profesionales: '',
+          // Compensación (Ene 2026)
+          salario_base: undefined,
+            forma_pago: undefined,
           // Acceso al sistema (Dic 2025)
           rol_invitacion: 'empleado',
         },
@@ -255,12 +370,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           direccion: '',
           contacto_emergencia_nombre: '',
           contacto_emergencia_telefono: '',
+          // Nuevos campos Ene 2026
+          fecha_nacimiento: '',
+          documento_identidad: '',
           estado: 'activo',
           tipo_contratacion: undefined,
           fecha_contratacion: '',
           departamento_id: undefined,
           puesto_id: undefined,
           supervisor_id: undefined,
+          // Información Profesional (Ene 2026)
+          años_experiencia: undefined,
+          idiomas: [],
+          disponible_online: false,
+          licencias_profesionales: '',
+          // Compensación (Ene 2026)
+          salario_base: undefined,
+            forma_pago: undefined,
           // Acceso al sistema (Dic 2025)
           rol_invitacion: 'empleado',
         });
@@ -288,6 +414,9 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         direccion: profesionalData.direccion || '',
         contacto_emergencia_nombre: profesionalData.contacto_emergencia_nombre || '',
         contacto_emergencia_telefono: profesionalData.contacto_emergencia_telefono || '',
+        // Nuevos campos Ene 2026
+        fecha_nacimiento: profesionalData.fecha_nacimiento?.split('T')[0] || '',
+        documento_identidad: profesionalData.documento_identidad || '',
         // Clasificación laboral (Dic 2025)
         estado: profesionalData.estado || 'activo',
         tipo_contratacion: profesionalData.tipo_contratacion || undefined,
@@ -296,6 +425,24 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         departamento_id: profesionalData.departamento_id || undefined,
         puesto_id: profesionalData.puesto_id || undefined,
         supervisor_id: profesionalData.supervisor_id || undefined,
+        // Información Profesional (Ene 2026)
+        años_experiencia: profesionalData.años_experiencia || undefined,
+        idiomas: profesionalData.idiomas || [],
+        disponible_online: profesionalData.disponible_online || false,
+        licencias_profesionales: (() => {
+          const val = profesionalData.licencias_profesionales;
+          if (!val) return '';
+          if (typeof val === 'string') return val;
+          // Si es objeto vacío, retornar string vacía
+          if (typeof val === 'object' && Object.keys(val).length === 0) return '';
+          // Si tiene campo "texto", retornar ese campo directamente
+          if (val.texto) return val.texto;
+          // Sino, formatear como JSON
+          return JSON.stringify(val, null, 2);
+        })(),
+        // Compensación (Ene 2026)
+        salario_base: profesionalData.salario_base || undefined,
+        forma_pago: profesionalData.forma_pago || undefined,
       });
       setSelectedColor(profesionalData.color_calendario || COLORES_CALENDARIO[0]);
 
@@ -480,7 +627,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         // Clasificación laboral (Dic 2025)
         estado: data.estado || 'activo',
         tipo_contratacion: data.tipo_contratacion || undefined,
-        fecha_contratacion: data.fecha_contratacion || undefined,
+        fecha_ingreso: data.fecha_contratacion || undefined,
         // Estructura organizacional (Dic 2025)
         departamento_id: data.departamento_id || null,
         puesto_id: data.puesto_id || null,
@@ -488,6 +635,43 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         // Dic 2025: Incluir foto
         foto_url: urlFotoFinal || undefined,
         // NOTA: modulos_acceso eliminado - permisos se gestionan via Configuración > Permisos
+        // Nuevos campos Ene 2026
+        fecha_nacimiento: data.fecha_nacimiento || undefined,
+        documento_identidad: data.documento_identidad?.trim() || undefined,
+        // Fase 1 Enero 2026 - Información Personal Adicional
+        numero_pasaporte: data.numero_pasaporte?.trim() || undefined,
+        numero_seguro_social: data.numero_seguro_social?.trim() || undefined,
+        nacionalidad: data.nacionalidad?.trim() || undefined,
+        lugar_nacimiento_ciudad: data.lugar_nacimiento_ciudad?.trim() || undefined,
+        lugar_nacimiento_pais: data.lugar_nacimiento_pais?.trim() || undefined,
+        email_privado: data.email_privado?.trim() || undefined,
+        telefono_privado: data.telefono_privado?.trim() || undefined,
+        distancia_casa_trabajo_km: data.distancia_casa_trabajo_km ?? undefined,
+        hijos_dependientes: data.hijos_dependientes ?? undefined,
+        // Fase 1 Enero 2026 - Configuración del Sistema
+        zona_horaria: data.zona_horaria || undefined,
+        codigo_nip: data.codigo_nip?.trim() || undefined,
+        id_credencial: data.id_credencial?.trim() || undefined,
+        // Información Profesional (Ene 2026)
+        años_experiencia: data.años_experiencia ?? undefined,
+        idiomas: data.idiomas?.length > 0 ? data.idiomas : undefined,
+        disponible_online: data.disponible_online ?? false,
+        licencias_profesionales: (() => {
+          const val = data.licencias_profesionales?.trim();
+          if (!val || val === '{}') return undefined;
+          try {
+            return JSON.parse(val);
+          } catch {
+            // Si no es JSON válido, guardarlo como objeto con campo "texto"
+            return { texto: val };
+          }
+        })(),
+        // Compensación (Ene 2026) - Solo si el usuario tiene permisos
+        // Nota: comision_porcentaje se configura en Módulo Comisiones por servicio/producto
+        ...(puedeVerCompensacion && {
+          salario_base: data.salario_base ?? undefined,
+          forma_pago: data.forma_pago || undefined,
+        }),
       };
 
       // Si se eliminó la foto existente
@@ -909,6 +1093,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
 
                 {seccionesAbiertas.datosPersonales && (
                   <div className="space-y-4 pl-7">
+                    {/* Fecha Nacimiento y Documento (Ene 2026) */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        name="fecha_nacimiento"
+                        control={control}
+                        type="date"
+                        label="Fecha de Nacimiento"
+                      />
+                      <FormField
+                        name="documento_identidad"
+                        control={control}
+                        label="Documento de Identidad"
+                        placeholder="INE, CURP, Pasaporte..."
+                        maxLength={30}
+                      />
+                    </div>
+
                     {/* Género y Estado Civil */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <Controller
@@ -982,6 +1183,204 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                   </div>
                 )}
               </div>
+
+              {/* ========== SECCIÓN: Información Profesional (Ene 2026) ========== */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeccion('infoProfesional')}
+                  className="w-full flex items-center justify-between gap-2 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <Award className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Información Profesional</h4>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">(Opcional)</span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.infoProfesional ? 'rotate-180' : ''}`} />
+                </button>
+
+                {seccionesAbiertas.infoProfesional && (
+                  <div className="space-y-4 pl-7">
+                    {/* Años de experiencia */}
+                    <FormField
+                      name="años_experiencia"
+                      control={control}
+                      type="number"
+                      label="Años de Experiencia"
+                      placeholder="0"
+                      min={0}
+                      max={70}
+                    />
+
+                    {/* Idiomas - MultiSelect */}
+                    <Controller
+                      name="idiomas"
+                      control={control}
+                      render={({ field: { value, onChange } }) => (
+                        <MultiSelect
+                          label="Idiomas"
+                          placeholder="Selecciona idiomas"
+                          value={value || []}
+                          onChange={onChange}
+                          options={IDIOMAS_DISPONIBLES}
+                          max={10}
+                          helper="Idiomas que domina el profesional"
+                        />
+                      )}
+                    />
+
+                    {/* Disponible Online */}
+                    <Controller
+                      name="disponible_online"
+                      control={control}
+                      render={({ field }) => (
+                        <div className="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                          <Checkbox
+                            checked={field.value}
+                            onChange={(e) => field.onChange(e.target.checked)}
+                          />
+                          <div>
+                            <span className="font-medium text-gray-900 dark:text-gray-100">
+                              Disponible para citas online
+                            </span>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              Aparecerá en el booking público del marketplace
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    />
+
+                    {/* Licencias Profesionales */}
+                    <Controller
+                      name="licencias_profesionales"
+                      control={control}
+                      render={({ field }) => (
+                        <Textarea
+                          {...field}
+                          label="Licencias y Certificaciones"
+                          placeholder="Ej: Cédula profesional, certificaciones..."
+                          rows={3}
+                          helper="Licencias, cédulas o certificaciones del profesional"
+                        />
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* ========== SECCIÓN: Compensación (Ene 2026) - Solo admin/propietario ========== */}
+              {puedeVerCompensacion && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => toggleSeccion('compensacion')}
+                    className="w-full flex items-center justify-between gap-2 mb-4"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">Compensación</h4>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">(Confidencial)</span>
+                    </div>
+                    <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.compensacion ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {seccionesAbiertas.compensacion && (
+                    <div className="space-y-4 pl-7">
+                      {/* Info privada */}
+                      <div className="p-3 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+                        <p className="text-sm text-amber-700 dark:text-amber-400">
+                          Esta información es confidencial y solo visible para administradores.
+                        </p>
+                      </div>
+
+                      {/* Forma de pago */}
+                      <Controller
+                        name="forma_pago"
+                        control={control}
+                        render={({ field: { value, onChange, ...field } }) => (
+                          <Select
+                            {...field}
+                            label="Forma de Pago"
+                            value={value || ''}
+                            onChange={(e) => onChange(e.target.value || undefined)}
+                            options={Object.entries(FORMAS_PAGO).map(([key, val]) => ({
+                              value: key,
+                              label: val.label,
+                            }))}
+                            placeholder="Selecciona forma de pago"
+                          />
+                        )}
+                      />
+
+                      {/* Salario base y Comisión */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField
+                          name="salario_base"
+                          control={control}
+                          type="number"
+                          label={`Salario Base (${symbol})`}
+                          placeholder="0.00"
+                          min={0}
+                          step={0.01}
+                        />
+{/* comision_porcentaje eliminado - se configura en Módulo Comisiones */}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ========== SECCIÓN: Documentos del Empleado (Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                  <DocumentosEmpleadoSection
+                    profesionalId={profesionalData.id}
+                    isEditing={isEditMode}
+                  />
+                </div>
+              )}
+
+              {/* ========== SECCIÓN: Cuentas Bancarias (Fase 1 - Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && puedeVerCompensacion && (
+                <CuentasBancariasSection
+                  profesionalId={profesionalData.id}
+                  isEditing={isEditMode}
+                />
+              )}
+
+              {/* ========== SECCIÓN: Experiencia Laboral (Fase 4 - Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && (
+                <ExperienciaLaboralSection
+                  profesionalId={profesionalData.id}
+                  isEditing={isEditMode}
+                />
+              )}
+
+              {/* ========== SECCIÓN: Educación Formal (Fase 4 - Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && (
+                <EducacionFormalSection
+                  profesionalId={profesionalData.id}
+                  isEditing={isEditMode}
+                />
+              )}
+
+              {/* ========== SECCIÓN: Habilidades (Fase 4 - Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && (
+                <HabilidadesSection
+                  profesionalId={profesionalData.id}
+                  isEditing={isEditMode}
+                  canVerify={puedeVerCompensacion}
+                />
+              )}
+
+              {/* ========== SECCIÓN: Plan de Integración (Fase 5 - Enero 2026) ========== */}
+              {isEditMode && profesionalData?.id && (
+                <OnboardingProgresoSection
+                  profesionalId={profesionalData.id}
+                  isEditing={isEditMode}
+                />
+              )}
 
               {/* Nov 2025: Sección Acceso al Sistema y Módulos */}
               <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">

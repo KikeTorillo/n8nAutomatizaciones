@@ -20,6 +20,20 @@ const minioClient = new Minio.Client({
   secretKey: process.env.MINIO_ROOT_PASSWORD || 'minioadmin123'
 });
 
+/**
+ * Cliente MinIO para generar URLs presigned accesibles desde el navegador
+ * Usa el endpoint público (localhost) en lugar del interno (minio)
+ * IMPORTANTE: region está configurado para evitar llamadas de red al generar URLs
+ */
+const minioPublicClient = new Minio.Client({
+  endPoint: process.env.MINIO_PUBLIC_ENDPOINT || 'localhost',
+  port: parseInt(process.env.MINIO_PORT) || 9000,
+  useSSL: process.env.MINIO_USE_SSL === 'true',
+  accessKey: process.env.MINIO_ROOT_USER || 'minioadmin',
+  secretKey: process.env.MINIO_ROOT_PASSWORD || 'minioadmin123',
+  region: 'us-east-1' // Evita llamada de red para obtener región
+});
+
 // ============================================
 // CONFIGURACIÓN DE BUCKETS
 // ============================================
@@ -150,6 +164,7 @@ async function getBucketStats(bucketName) {
 
 module.exports = {
   minioClient,
+  minioPublicClient,
   BUCKETS,
   initializeBuckets,
   checkConnection,

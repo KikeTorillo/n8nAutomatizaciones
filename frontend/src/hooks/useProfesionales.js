@@ -473,3 +473,33 @@ export const ESTADOS_CIVILES = {
   viudo: { label: 'Viudo/a' },
   union_libre: { label: 'Unión libre' },
 };
+
+// ====================================================================
+// CONSTANTES PARA COMPENSACIÓN (Ene 2026)
+// ====================================================================
+
+export const FORMAS_PAGO = {
+  comision: { label: 'Solo comisión', color: 'purple' },
+  salario: { label: 'Solo salario', color: 'blue' },
+  mixto: { label: 'Salario + Comisión', color: 'green' },
+};
+
+// ====================================================================
+// CONSTANTES PARA IDIOMAS (Ene 2026)
+// ====================================================================
+
+export const IDIOMAS_DISPONIBLES = [
+  { value: 'es', label: 'Español' },
+  { value: 'en', label: 'Inglés' },
+  { value: 'fr', label: 'Francés' },
+  { value: 'pt', label: 'Portugués' },
+  { value: 'de', label: 'Alemán' },
+  { value: 'it', label: 'Italiano' },
+  { value: 'zh', label: 'Chino Mandarín' },
+  { value: 'ja', label: 'Japonés' },
+  { value: 'ko', label: 'Coreano' },
+  { value: 'ar', label: 'Árabe' },
+  { value: 'ru', label: 'Ruso' },
+  { value: 'nah', label: 'Náhuatl' },
+  { value: 'maya', label: 'Maya' },
+];

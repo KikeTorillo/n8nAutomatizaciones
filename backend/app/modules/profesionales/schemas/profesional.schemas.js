@@ -7,6 +7,14 @@ const {
     TIPOS_CONTRATACION,
     GENEROS,
     ESTADOS_CIVILES,
+    TIPOS_DOCUMENTO_EMPLEADO,
+    TIPOS_CUENTA_BANCARIA,
+    USOS_CUENTA_BANCARIA,
+    MONEDAS_CUENTA,
+    // Fase 4: Currículum y Habilidades
+    NIVELES_EDUCACION,
+    CATEGORIAS_HABILIDAD,
+    NIVELES_HABILIDAD,
     LIMITES
 } = require('../constants/profesionales.constants');
 
@@ -69,6 +77,53 @@ const crear = {
         contacto_emergencia_telefono: commonSchemas.mexicanPhone
             .optional()
             .allow(null),
+
+        // === INFORMACIÓN PERSONAL ADICIONAL (Fase 1 - Enero 2026) ===
+        numero_pasaporte: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim(),
+        numero_seguro_social: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim(),
+        nacionalidad: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim(),
+        lugar_nacimiento_ciudad: Joi.string()
+            .max(100)
+            .optional()
+            .allow(null)
+            .trim(),
+        lugar_nacimiento_pais: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim(),
+        email_privado: Joi.string()
+            .email()
+            .max(150)
+            .optional()
+            .allow(null),
+        telefono_privado: commonSchemas.mexicanPhone
+            .optional()
+            .allow(null),
+        distancia_casa_trabajo_km: Joi.number()
+            .min(0)
+            .max(9999.99)
+            .precision(2)
+            .optional()
+            .allow(null),
+        hijos_dependientes: Joi.number()
+            .integer()
+            .min(0)
+            .max(50)
+            .optional()
+            .default(0),
 
         // === CLASIFICACIÓN LABORAL ===
         estado: Joi.string()
@@ -133,16 +188,13 @@ const crear = {
             .optional()
             .default({}),
 
-        // === COMPENSACIÓN ===
+        // === COMPENSACIÓN (Info contractual - HR/Nómina) ===
+        // NOTA: Las comisiones operativas se configuran en Módulo Comisiones
+        // (tabla configuracion_comisiones) por servicio/producto específico.
         salario_base: Joi.number()
             .min(0)
             .optional()
             .allow(null),
-        comision_porcentaje: Joi.number()
-            .min(LIMITES.COMISION_MIN)
-            .max(LIMITES.COMISION_MAX)
-            .optional()
-            .default(0),
         forma_pago: Joi.string()
             .valid(...FORMAS_PAGO)
             .optional()
@@ -151,6 +203,26 @@ const crear = {
         // === CONTROL DE ACCESO ===
         // NOTA: modulos_acceso eliminado (Dic 2025)
         // Los permisos se gestionan via permisos_catalogo, permisos_rol, permisos_usuario_sucursal
+
+        // === CONFIGURACIÓN DE SISTEMA (Fase 1 - Enero 2026) ===
+        zona_horaria: Joi.string()
+            .max(50)
+            .optional()
+            .default('America/Mexico_City'),
+        responsable_rrhh_id: commonSchemas.id
+            .optional()
+            .allow(null),
+        codigo_nip: Joi.string()
+            .max(10)
+            .pattern(/^[0-9]+$/)
+            .optional()
+            .allow(null)
+            .messages({ 'string.pattern.base': 'El código NIP debe contener solo números' }),
+        id_credencial: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null)
+            .trim(),
 
         // === LEGACY ===
         activo: Joi.boolean()
@@ -257,6 +329,17 @@ const actualizar = {
         contacto_emergencia_nombre: Joi.string().max(100).allow(null),
         contacto_emergencia_telefono: commonSchemas.mexicanPhone.allow(null),
 
+        // === INFORMACIÓN PERSONAL ADICIONAL (Fase 1 - Enero 2026) ===
+        numero_pasaporte: Joi.string().max(50).trim().allow(null),
+        numero_seguro_social: Joi.string().max(50).trim().allow(null),
+        nacionalidad: Joi.string().max(50).trim().allow(null),
+        lugar_nacimiento_ciudad: Joi.string().max(100).trim().allow(null),
+        lugar_nacimiento_pais: Joi.string().max(50).trim().allow(null),
+        email_privado: Joi.string().email().max(150).allow(null),
+        telefono_privado: commonSchemas.mexicanPhone.allow(null),
+        distancia_casa_trabajo_km: Joi.number().min(0).max(9999.99).precision(2).allow(null),
+        hijos_dependientes: Joi.number().integer().min(0).max(50),
+
         // === CLASIFICACIÓN LABORAL ===
         estado: Joi.string().valid(...ESTADOS_LABORALES),
         tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION),
@@ -283,14 +366,20 @@ const actualizar = {
         configuracion_horarios: Joi.object(),
         configuracion_servicios: Joi.object(),
 
-        // === COMPENSACIÓN ===
+        // === COMPENSACIÓN (Info contractual - HR/Nómina) ===
         salario_base: Joi.number().min(0).allow(null),
-        comision_porcentaje: Joi.number().min(LIMITES.COMISION_MIN).max(LIMITES.COMISION_MAX),
         forma_pago: Joi.string().valid(...FORMAS_PAGO),
 
         // === VINCULACIÓN CON USUARIO ===
         // NOTA: modulos_acceso eliminado (Dic 2025) - usar sistema de permisos normalizado
         usuario_id: Joi.number().integer().positive().optional().allow(null),
+
+        // === CONFIGURACIÓN DE SISTEMA (Fase 1 - Enero 2026) ===
+        zona_horaria: Joi.string().max(50),
+        responsable_rrhh_id: commonSchemas.id.allow(null),
+        codigo_nip: Joi.string().max(10).pattern(/^[0-9]+$/).allow(null)
+            .messages({ 'string.pattern.base': 'El código NIP debe contener solo números' }),
+        id_credencial: Joi.string().max(50).trim().allow(null),
 
         // === LEGACY ===
         activo: Joi.boolean(),
@@ -583,6 +672,852 @@ const sincronizarCategorias = {
     })
 };
 
+// ====================================================================
+// SCHEMAS PARA DOCUMENTOS DE EMPLEADO (Enero 2026)
+// ====================================================================
+
+// GET /profesionales/:id/documentos
+const listarDocumentos = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        tipo: Joi.string().valid(...TIPOS_DOCUMENTO_EMPLEADO).optional(),
+        verificado: Joi.string().valid('true', 'false').optional(),
+        estado_vencimiento: Joi.string().valid('vigente', 'por_vencer', 'vencido', 'sin_vencimiento').optional(),
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /profesionales/:id/documentos
+const crearDocumento = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        tipo_documento: Joi.string()
+            .valid(...TIPOS_DOCUMENTO_EMPLEADO)
+            .required()
+            .messages({
+                'any.required': 'El tipo de documento es requerido',
+                'any.only': 'Tipo de documento inválido'
+            }),
+        nombre: Joi.string()
+            .min(3)
+            .max(150)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre debe tener al menos 3 caracteres',
+                'any.required': 'El nombre del documento es requerido'
+            }),
+        descripcion: Joi.string()
+            .max(500)
+            .optional()
+            .allow(null, ''),
+        numero_documento: Joi.string()
+            .max(100)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        fecha_emision: Joi.date()
+            .iso()
+            .optional()
+            .allow(null),
+        fecha_vencimiento: Joi.date()
+            .iso()
+            .optional()
+            .allow(null)
+            .when('fecha_emision', {
+                is: Joi.exist(),
+                then: Joi.date().min(Joi.ref('fecha_emision')).messages({
+                    'date.min': 'La fecha de vencimiento debe ser posterior a la fecha de emisión'
+                })
+            })
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:profId/documentos/:docId
+const obtenerDocumento = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        docId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:profId/documentos/:docId
+const actualizarDocumento = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        docId: commonSchemas.id
+    }),
+    body: Joi.object({
+        tipo_documento: Joi.string().valid(...TIPOS_DOCUMENTO_EMPLEADO),
+        nombre: Joi.string().min(3).max(150).trim(),
+        descripcion: Joi.string().max(500).allow(null, ''),
+        numero_documento: Joi.string().max(100).allow(null, '').trim(),
+        fecha_emision: Joi.date().iso().allow(null),
+        fecha_vencimiento: Joi.date().iso().allow(null)
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:profId/documentos/:docId
+const eliminarDocumento = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        docId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:profId/documentos/:docId/verificar
+const verificarDocumento = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        docId: commonSchemas.id
+    }),
+    body: Joi.object({
+        verificado: Joi.boolean()
+            .required()
+            .messages({
+                'any.required': 'El estado de verificación es requerido'
+            }),
+        notas_verificacion: Joi.string()
+            .max(500)
+            .optional()
+            .allow(null, '')
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:profId/documentos/:docId/presigned
+const obtenerUrlPresigned = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        docId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        expiry: Joi.number().integer().min(60).max(86400).default(3600) // 1 min - 24 hrs, default 1 hr
+    })
+};
+
+// GET /documentos-empleado/proximos-vencer
+const listarProximosVencer = {
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        dias: Joi.number().integer().min(1).max(365).default(30),
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA CUENTAS BANCARIAS (Fase 1 - Enero 2026)
+// ====================================================================
+
+// GET /profesionales/:id/cuentas-bancarias
+const listarCuentasBancarias = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        uso: Joi.string().valid(...USOS_CUENTA_BANCARIA).optional(),
+        activo: Joi.string().valid('true', 'false').optional(),
+        limit: Joi.number().integer().min(1).max(50).default(20),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /profesionales/:id/cuentas-bancarias
+const crearCuentaBancaria = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        banco: Joi.string()
+            .min(2)
+            .max(100)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre del banco debe tener al menos 2 caracteres',
+                'any.required': 'El nombre del banco es requerido'
+            }),
+        numero_cuenta: Joi.string()
+            .min(4)
+            .max(50)
+            .required()
+            .trim()
+            .messages({
+                'any.required': 'El número de cuenta es requerido'
+            }),
+        clabe: Joi.string()
+            .length(18)
+            .pattern(/^[0-9]+$/)
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.length': 'La CLABE debe tener exactamente 18 dígitos',
+                'string.pattern.base': 'La CLABE debe contener solo números'
+            }),
+        tipo_cuenta: Joi.string()
+            .valid(...TIPOS_CUENTA_BANCARIA)
+            .optional()
+            .default('debito'),
+        moneda: Joi.string()
+            .valid(...MONEDAS_CUENTA)
+            .optional()
+            .default('MXN'),
+        titular_nombre: Joi.string()
+            .max(150)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        titular_documento: Joi.string()
+            .max(30)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        es_principal: Joi.boolean()
+            .optional()
+            .default(false),
+        uso: Joi.string()
+            .valid(...USOS_CUENTA_BANCARIA)
+            .optional()
+            .default('nomina')
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:id/cuentas-bancarias/:cuentaId
+const obtenerCuentaBancaria = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        cuentaId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:id/cuentas-bancarias/:cuentaId
+const actualizarCuentaBancaria = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        cuentaId: commonSchemas.id
+    }),
+    body: Joi.object({
+        banco: Joi.string().min(2).max(100).trim(),
+        numero_cuenta: Joi.string().min(4).max(50).trim(),
+        clabe: Joi.string().length(18).pattern(/^[0-9]+$/).allow(null, '')
+            .messages({
+                'string.length': 'La CLABE debe tener exactamente 18 dígitos',
+                'string.pattern.base': 'La CLABE debe contener solo números'
+            }),
+        tipo_cuenta: Joi.string().valid(...TIPOS_CUENTA_BANCARIA),
+        moneda: Joi.string().valid(...MONEDAS_CUENTA),
+        titular_nombre: Joi.string().max(150).allow(null, '').trim(),
+        titular_documento: Joi.string().max(30).allow(null, '').trim(),
+        es_principal: Joi.boolean(),
+        uso: Joi.string().valid(...USOS_CUENTA_BANCARIA)
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:id/cuentas-bancarias/:cuentaId
+const eliminarCuentaBancaria = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        cuentaId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/cuentas-bancarias/:cuentaId/principal
+const establecerCuentaPrincipal = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        cuentaId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /cuentas-bancarias/sin-principal
+const listarSinCuentaPrincipal = {
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA EXPERIENCIA LABORAL (Fase 4 - Enero 2026)
+// ====================================================================
+
+// GET /profesionales/:id/experiencia
+const listarExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        es_empleo_actual: Joi.string().valid('true', 'false').optional(),
+        limit: Joi.number().integer().min(1).max(50).default(20),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /profesionales/:id/experiencia
+const crearExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        empresa: Joi.string()
+            .min(2)
+            .max(200)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre de la empresa debe tener al menos 2 caracteres',
+                'any.required': 'El nombre de la empresa es requerido'
+            }),
+        puesto: Joi.string()
+            .min(2)
+            .max(150)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El puesto debe tener al menos 2 caracteres',
+                'any.required': 'El puesto es requerido'
+            }),
+        descripcion: Joi.string()
+            .max(2000)
+            .optional()
+            .allow(null, ''),
+        ubicacion: Joi.string()
+            .max(200)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        fecha_inicio: Joi.date()
+            .iso()
+            .required()
+            .messages({
+                'any.required': 'La fecha de inicio es requerida'
+            }),
+        fecha_fin: Joi.date()
+            .iso()
+            .optional()
+            .allow(null)
+            .when('es_empleo_actual', {
+                is: true,
+                then: Joi.forbidden().messages({
+                    'any.unknown': 'No se puede especificar fecha de fin si es el empleo actual'
+                })
+            }),
+        es_empleo_actual: Joi.boolean()
+            .optional()
+            .default(false),
+        sector_industria: Joi.string()
+            .max(100)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        tamanio_empresa: Joi.string()
+            .valid('startup', 'pequena', 'mediana', 'grande', 'corporativo')
+            .optional()
+            .allow(null),
+        motivo_salida: Joi.string()
+            .max(200)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        contacto_referencia: Joi.string()
+            .max(200)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        telefono_referencia: Joi.string()
+            .max(30)
+            .optional()
+            .allow(null, '')
+            .trim()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:id/experiencia/:expId
+const obtenerExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        expId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:id/experiencia/:expId
+const actualizarExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        expId: commonSchemas.id
+    }),
+    body: Joi.object({
+        empresa: Joi.string().min(2).max(200).trim(),
+        puesto: Joi.string().min(2).max(150).trim(),
+        descripcion: Joi.string().max(2000).allow(null, ''),
+        ubicacion: Joi.string().max(200).allow(null, '').trim(),
+        fecha_inicio: Joi.date().iso(),
+        fecha_fin: Joi.date().iso().allow(null),
+        es_empleo_actual: Joi.boolean(),
+        sector_industria: Joi.string().max(100).allow(null, '').trim(),
+        tamanio_empresa: Joi.string().valid('startup', 'pequena', 'mediana', 'grande', 'corporativo').allow(null),
+        motivo_salida: Joi.string().max(200).allow(null, '').trim(),
+        contacto_referencia: Joi.string().max(200).allow(null, '').trim(),
+        telefono_referencia: Joi.string().max(30).allow(null, '').trim()
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:id/experiencia/:expId
+const eliminarExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        expId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/experiencia/reordenar
+const reordenarExperiencia = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        orden: Joi.array()
+            .items(Joi.object({
+                id: commonSchemas.id,
+                orden: Joi.number().integer().min(0).required()
+            }))
+            .min(1)
+            .required()
+            .messages({
+                'array.min': 'Debe proporcionar al menos un elemento para reordenar',
+                'any.required': 'El orden es requerido'
+            })
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA EDUCACIÓN FORMAL (Fase 4 - Enero 2026)
+// ====================================================================
+
+// Valores válidos para el ENUM nivel_educacion
+const NIVELES_EDUCACION_VALORES = Object.keys(NIVELES_EDUCACION);
+
+// GET /profesionales/:id/educacion
+const listarEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        nivel: Joi.string().valid(...NIVELES_EDUCACION_VALORES).optional(),
+        en_curso: Joi.string().valid('true', 'false').optional(),
+        limit: Joi.number().integer().min(1).max(50).default(20),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /profesionales/:id/educacion
+const crearEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        institucion: Joi.string()
+            .min(2)
+            .max(200)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre de la institución debe tener al menos 2 caracteres',
+                'any.required': 'El nombre de la institución es requerido'
+            }),
+        titulo: Joi.string()
+            .min(2)
+            .max(200)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El título debe tener al menos 2 caracteres',
+                'any.required': 'El título es requerido'
+            }),
+        nivel: Joi.string()
+            .valid(...NIVELES_EDUCACION_VALORES)
+            .required()
+            .messages({
+                'any.required': 'El nivel de educación es requerido',
+                'any.only': 'Nivel de educación inválido'
+            }),
+        campo_estudio: Joi.string()
+            .max(150)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        fecha_inicio: Joi.date()
+            .iso()
+            .required()
+            .messages({
+                'any.required': 'La fecha de inicio es requerida'
+            }),
+        fecha_fin: Joi.date()
+            .iso()
+            .optional()
+            .allow(null)
+            .when('en_curso', {
+                is: true,
+                then: Joi.forbidden().messages({
+                    'any.unknown': 'No se puede especificar fecha de fin si está en curso'
+                })
+            }),
+        en_curso: Joi.boolean()
+            .optional()
+            .default(false),
+        descripcion: Joi.string()
+            .max(1000)
+            .optional()
+            .allow(null, ''),
+        promedio: Joi.string()
+            .max(10)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        numero_cedula: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        ubicacion: Joi.string()
+            .max(200)
+            .optional()
+            .allow(null, '')
+            .trim()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:id/educacion/:eduId
+const obtenerEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        eduId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:id/educacion/:eduId
+const actualizarEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        eduId: commonSchemas.id
+    }),
+    body: Joi.object({
+        institucion: Joi.string().min(2).max(200).trim(),
+        titulo: Joi.string().min(2).max(200).trim(),
+        nivel: Joi.string().valid(...NIVELES_EDUCACION_VALORES),
+        campo_estudio: Joi.string().max(150).allow(null, '').trim(),
+        fecha_inicio: Joi.date().iso(),
+        fecha_fin: Joi.date().iso().allow(null),
+        en_curso: Joi.boolean(),
+        descripcion: Joi.string().max(1000).allow(null, ''),
+        promedio: Joi.string().max(10).allow(null, '').trim(),
+        numero_cedula: Joi.string().max(50).allow(null, '').trim(),
+        ubicacion: Joi.string().max(200).allow(null, '').trim()
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:id/educacion/:eduId
+const eliminarEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        eduId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/educacion/reordenar
+const reordenarEducacion = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        orden: Joi.array()
+            .items(Joi.object({
+                id: commonSchemas.id,
+                orden: Joi.number().integer().min(0).required()
+            }))
+            .min(1)
+            .required()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA CATÁLOGO DE HABILIDADES (Fase 4 - Enero 2026)
+// ====================================================================
+
+// Valores válidos para ENUMs
+const CATEGORIAS_HABILIDAD_VALORES = Object.keys(CATEGORIAS_HABILIDAD);
+const NIVELES_HABILIDAD_VALORES = Object.keys(NIVELES_HABILIDAD);
+
+// GET /habilidades/catalogo
+const listarCatalogoHabilidades = {
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        categoria: Joi.string().valid(...CATEGORIAS_HABILIDAD_VALORES).optional(),
+        busqueda: Joi.string().min(2).max(100).trim().optional(),
+        activo: Joi.string().valid('true', 'false').optional(),
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /habilidades/catalogo
+const crearHabilidadCatalogo = {
+    body: Joi.object({
+        nombre: Joi.string()
+            .min(2)
+            .max(100)
+            .required()
+            .trim()
+            .messages({
+                'string.min': 'El nombre debe tener al menos 2 caracteres',
+                'any.required': 'El nombre de la habilidad es requerido'
+            }),
+        categoria: Joi.string()
+            .valid(...CATEGORIAS_HABILIDAD_VALORES)
+            .required()
+            .messages({
+                'any.required': 'La categoría es requerida',
+                'any.only': 'Categoría inválida'
+            }),
+        descripcion: Joi.string()
+            .max(500)
+            .optional()
+            .allow(null, ''),
+        icono: Joi.string()
+            .max(50)
+            .optional()
+            .allow(null, '')
+            .trim(),
+        color: Joi.string()
+            .max(20)
+            .optional()
+            .allow(null, '')
+            .trim()
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /habilidades/catalogo/:id
+const obtenerHabilidadCatalogo = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /habilidades/catalogo/:id
+const actualizarHabilidadCatalogo = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        nombre: Joi.string().min(2).max(100).trim(),
+        categoria: Joi.string().valid(...CATEGORIAS_HABILIDAD_VALORES),
+        descripcion: Joi.string().max(500).allow(null, ''),
+        icono: Joi.string().max(50).allow(null, '').trim(),
+        color: Joi.string().max(20).allow(null, '').trim()
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /habilidades/catalogo/:id
+const eliminarHabilidadCatalogo = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// ====================================================================
+// SCHEMAS PARA HABILIDADES DE EMPLEADO (Fase 4 - Enero 2026)
+// ====================================================================
+
+// GET /profesionales/:id/habilidades
+const listarHabilidadesEmpleado = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional(),
+        categoria: Joi.string().valid(...CATEGORIAS_HABILIDAD_VALORES).optional(),
+        nivel: Joi.string().valid(...NIVELES_HABILIDAD_VALORES).optional(),
+        verificado: Joi.string().valid('true', 'false').optional(),
+        limit: Joi.number().integer().min(1).max(100).default(50),
+        offset: Joi.number().integer().min(0).default(0)
+    })
+};
+
+// POST /profesionales/:id/habilidades
+const asignarHabilidad = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        habilidad_id: commonSchemas.id
+            .required()
+            .messages({
+                'any.required': 'El ID de la habilidad es requerido'
+            }),
+        nivel: Joi.string()
+            .valid(...NIVELES_HABILIDAD_VALORES)
+            .optional()
+            .default('basico'),
+        anios_experiencia: Joi.number()
+            .min(0)
+            .max(70)
+            .precision(1)
+            .optional()
+            .default(0),
+        notas: Joi.string()
+            .max(500)
+            .optional()
+            .allow(null, ''),
+        certificaciones: Joi.string()
+            .max(1000)
+            .optional()
+            .allow(null, '')
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// GET /profesionales/:id/habilidades/:habId
+const obtenerHabilidadEmpleado = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        habId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PUT /profesionales/:id/habilidades/:habId
+const actualizarHabilidadEmpleado = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        habId: commonSchemas.id
+    }),
+    body: Joi.object({
+        nivel: Joi.string().valid(...NIVELES_HABILIDAD_VALORES),
+        anios_experiencia: Joi.number().min(0).max(70).precision(1),
+        notas: Joi.string().max(500).allow(null, ''),
+        certificaciones: Joi.string().max(1000).allow(null, '')
+    }).min(1),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// PATCH /profesionales/:id/habilidades/:habId/verificar
+const verificarHabilidadEmpleado = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        habId: commonSchemas.id
+    }),
+    body: Joi.object({
+        verificado: Joi.boolean()
+            .required()
+            .messages({
+                'any.required': 'El estado de verificación es requerido'
+            })
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
+// DELETE /profesionales/:id/habilidades/:habId
+const eliminarHabilidadEmpleado = {
+    params: Joi.object({
+        id: commonSchemas.id,
+        habId: commonSchemas.id
+    }),
+    query: Joi.object({
+        organizacion_id: commonSchemas.id.optional()
+    })
+};
+
 module.exports = {
     crear,
     bulkCrear,
@@ -606,5 +1541,49 @@ module.exports = {
     obtenerCategoriasProfesional,
     asignarCategoria,
     eliminarCategoria,
-    sincronizarCategorias
+    sincronizarCategorias,
+    // Enero 2026 - Documentos de Empleado
+    listarDocumentos,
+    crearDocumento,
+    obtenerDocumento,
+    actualizarDocumento,
+    eliminarDocumento,
+    verificarDocumento,
+    obtenerUrlPresigned,
+    listarProximosVencer,
+    // Fase 1 Enero 2026 - Cuentas Bancarias
+    listarCuentasBancarias,
+    crearCuentaBancaria,
+    obtenerCuentaBancaria,
+    actualizarCuentaBancaria,
+    eliminarCuentaBancaria,
+    establecerCuentaPrincipal,
+    listarSinCuentaPrincipal,
+    // Fase 4 Enero 2026 - Experiencia Laboral
+    listarExperiencia,
+    crearExperiencia,
+    obtenerExperiencia,
+    actualizarExperiencia,
+    eliminarExperiencia,
+    reordenarExperiencia,
+    // Fase 4 Enero 2026 - Educación Formal
+    listarEducacion,
+    crearEducacion,
+    obtenerEducacion,
+    actualizarEducacion,
+    eliminarEducacion,
+    reordenarEducacion,
+    // Fase 4 Enero 2026 - Catálogo de Habilidades
+    listarCatalogoHabilidades,
+    crearHabilidadCatalogo,
+    obtenerHabilidadCatalogo,
+    actualizarHabilidadCatalogo,
+    eliminarHabilidadCatalogo,
+    // Fase 4 Enero 2026 - Habilidades de Empleado
+    listarHabilidadesEmpleado,
+    asignarHabilidad,
+    obtenerHabilidadEmpleado,
+    actualizarHabilidadEmpleado,
+    verificarHabilidadEmpleado,
+    eliminarHabilidadEmpleado
 };

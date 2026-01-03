@@ -21,6 +21,7 @@ import {
   Globe,
   Building2,
   ClipboardCheck,
+  Palmtree,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -150,6 +151,18 @@ function AppHomePage() {
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: true, // Siempre activo (módulo core compartido)
+      badge: 0,
+      adminOnly: false, // Visible para empleados también
+    },
+    {
+      id: 'vacaciones',
+      name: 'Vacaciones',
+      description: esEmpleado ? 'Mis vacaciones' : 'Gestiona vacaciones',
+      icon: Palmtree,
+      path: '/vacaciones',
+      color: 'text-primary-500 dark:text-primary-400',
+      bgColor: 'bg-primary-50 dark:bg-primary-900/30',
+      enabled: true, // Siempre activo (módulo core de empleados)
       badge: 0,
       adminOnly: false, // Visible para empleados también
     },

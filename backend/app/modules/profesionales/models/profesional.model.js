@@ -26,13 +26,20 @@ class ProfesionalModel {
                     fecha_ingreso, licencias_profesionales,
                     años_experiencia, idiomas, disponible_online, color_calendario,
                     biografia, configuracion_horarios, configuracion_servicios,
-                    salario_base, comision_porcentaje, forma_pago,
-                    usuario_id, activo
+                    salario_base, forma_pago,
+                    usuario_id, activo,
+                    -- Fase 1: Campos adicionales
+                    numero_pasaporte, numero_seguro_social, nacionalidad,
+                    lugar_nacimiento_ciudad, lugar_nacimiento_pais,
+                    email_privado, telefono_privado, distancia_casa_trabajo_km,
+                    hijos_dependientes, zona_horaria, responsable_rrhh_id,
+                    codigo_nip, id_credencial
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                     $11, $12, $13, $14, $15, $16, $17, $18, $19,
                     $20, $21, $22, $23, $24, $25, $26, $27, $28,
-                    $29, $30, $31, $32
+                    $29, $30, $31, $32, $33, $34, $35, $36, $37,
+                    $38, $39, $40, $41, $42, $43, $44
                 )
                 RETURNING *
             `;
@@ -66,10 +73,23 @@ class ProfesionalModel {
                 profesionalData.configuracion_horarios || {},
                 profesionalData.configuracion_servicios || {},
                 profesionalData.salario_base || null,
-                profesionalData.comision_porcentaje || 0,
                 profesionalData.forma_pago || 'comision',
                 profesionalData.usuario_id || null,
-                profesionalData.activo !== undefined ? profesionalData.activo : true
+                profesionalData.activo !== undefined ? profesionalData.activo : true,
+                // Fase 1: Campos adicionales
+                profesionalData.numero_pasaporte || null,
+                profesionalData.numero_seguro_social || null,
+                profesionalData.nacionalidad || null,
+                profesionalData.lugar_nacimiento_ciudad || null,
+                profesionalData.lugar_nacimiento_pais || null,
+                profesionalData.email_privado || null,
+                profesionalData.telefono_privado || null,
+                profesionalData.distancia_casa_trabajo_km || null,
+                profesionalData.hijos_dependientes || 0,
+                profesionalData.zona_horaria || 'America/Mexico_City',
+                profesionalData.responsable_rrhh_id || null,
+                profesionalData.codigo_nip || null,
+                profesionalData.id_credencial || null
             ];
 
             try {
@@ -94,9 +114,6 @@ class ProfesionalModel {
                     }
                     if (error.constraint && error.constraint.includes('calificacion_promedio')) {
                         throw new Error('La calificación debe estar entre 1.00 y 5.00');
-                    }
-                    if (error.constraint && error.constraint.includes('comision_porcentaje')) {
-                        throw new Error('La comisión debe estar entre 0% y 100%');
                     }
                     if (error.constraint && error.constraint.includes('color_calendario')) {
                         throw new Error('El color debe ser un código hexadecimal válido');
@@ -272,7 +289,7 @@ class ProfesionalModel {
                        p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
-                       p.comision_porcentaje, p.salario_base, p.forma_pago,
+                       p.salario_base, p.forma_pago,
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
@@ -283,12 +300,19 @@ class ProfesionalModel {
                        p.genero, p.estado_civil, p.direccion,
                        p.contacto_emergencia_nombre, p.contacto_emergencia_telefono,
                        p.creado_en, p.actualizado_en,
+                       -- Fase 1: Campos adicionales
+                       p.numero_pasaporte, p.numero_seguro_social, p.nacionalidad,
+                       p.lugar_nacimiento_ciudad, p.lugar_nacimiento_pais,
+                       p.email_privado, p.telefono_privado, p.distancia_casa_trabajo_km,
+                       p.hijos_dependientes, p.zona_horaria, p.responsable_rrhh_id,
+                       p.codigo_nip, p.id_credencial,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
                        u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
                        -- Dic 2025: JOINs para nombres de relaciones
                        sup.nombre_completo as supervisor_nombre,
                        d.nombre as departamento_nombre,
                        pu.nombre as puesto_nombre,
+                       rrhh.nombre as responsable_rrhh_nombre,
                        COUNT(sp.servicio_id) as total_servicios_asignados
                 FROM profesionales p
                 JOIN organizaciones o ON p.organizacion_id = o.id
@@ -296,9 +320,10 @@ class ProfesionalModel {
                 LEFT JOIN profesionales sup ON p.supervisor_id = sup.id
                 LEFT JOIN departamentos d ON p.departamento_id = d.id
                 LEFT JOIN puestos pu ON p.puesto_id = pu.id
+                LEFT JOIN usuarios rrhh ON p.responsable_rrhh_id = rrhh.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
                 WHERE p.id = $1 AND p.organizacion_id = $2
-                GROUP BY p.id, o.id, u.id, sup.id, d.id, pu.id
+                GROUP BY p.id, o.id, u.id, sup.id, d.id, pu.id, rrhh.id
             `;
 
             const result = await db.query(query, [id, organizacionId]);
@@ -339,7 +364,7 @@ class ProfesionalModel {
                        p.licencias_profesionales, p.años_experiencia,
                        p.idiomas, p.color_calendario, p.biografia, p.foto_url,
                        p.configuracion_horarios, p.configuracion_servicios,
-                       p.comision_porcentaje, p.salario_base, p.forma_pago,
+                       p.salario_base, p.forma_pago,
                        p.activo, p.disponible_online, p.fecha_ingreso, p.fecha_salida,
                        p.motivo_inactividad, p.calificacion_promedio,
                        p.total_citas_completadas, p.total_clientes_atendidos,
@@ -474,6 +499,11 @@ class ProfesionalModel {
                 // Información personal
                 'fecha_nacimiento', 'documento_identidad', 'genero', 'direccion',
                 'estado_civil', 'contacto_emergencia_nombre', 'contacto_emergencia_telefono',
+                // Fase 1: Campos personales adicionales
+                'numero_pasaporte', 'numero_seguro_social', 'nacionalidad',
+                'lugar_nacimiento_ciudad', 'lugar_nacimiento_pais',
+                'email_privado', 'telefono_privado', 'distancia_casa_trabajo_km',
+                'hijos_dependientes',
                 // Clasificación laboral
                 'estado', 'tipo_contratacion',
                 // Jerarquía
@@ -485,10 +515,12 @@ class ProfesionalModel {
                 // Configuración de agendamiento
                 'disponible_online', 'color_calendario', 'biografia',
                 'configuracion_horarios', 'configuracion_servicios',
-                // Compensación
-                'salario_base', 'comision_porcentaje', 'forma_pago',
+                // Compensación (Info contractual - HR/Nómina)
+                'salario_base', 'forma_pago',
                 // Vinculación con usuario
                 'usuario_id',
+                // Fase 1: Configuración de sistema
+                'zona_horaria', 'responsable_rrhh_id', 'codigo_nip', 'id_credencial',
                 // Legacy
                 'activo', 'fecha_salida', 'motivo_inactividad'
                 // NOTA: modulos_acceso eliminado - usar sistema de permisos normalizado
@@ -519,7 +551,7 @@ class ProfesionalModel {
                          licencias_profesionales, años_experiencia,
                          idiomas, color_calendario, biografia, foto_url,
                          configuracion_horarios, configuracion_servicios,
-                         comision_porcentaje, salario_base, forma_pago,
+                         salario_base, forma_pago,
                          activo, disponible_online, fecha_ingreso, fecha_salida,
                          motivo_inactividad, calificacion_promedio,
                          total_citas_completadas, total_clientes_atendidos,
@@ -527,6 +559,11 @@ class ProfesionalModel {
                          supervisor_id, departamento_id, puesto_id,
                          genero, estado_civil, direccion,
                          contacto_emergencia_nombre, contacto_emergencia_telefono,
+                         numero_pasaporte, numero_seguro_social, nacionalidad,
+                         lugar_nacimiento_ciudad, lugar_nacimiento_pais,
+                         email_privado, telefono_privado, distancia_casa_trabajo_km,
+                         hijos_dependientes, zona_horaria, responsable_rrhh_id,
+                         codigo_nip, id_credencial,
                          actualizado_en
             `;
 

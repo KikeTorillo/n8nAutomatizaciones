@@ -149,6 +149,12 @@ const NotificacionesPreferenciasPage = lazy(() => import('@/pages/notificaciones
 // Páginas de Aprobaciones (Dic 2025)
 const AprobacionesPage = lazy(() => import('@/pages/aprobaciones/AprobacionesPage'));
 
+// Páginas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
+const VacacionesPage = lazy(() => import('@/pages/vacaciones/VacacionesPage'));
+
+// Páginas de Onboarding Empleados (Ene 2026 - Fase 5 Plan Empleados)
+const OnboardingAdminPage = lazy(() => import('@/pages/onboarding-empleados/OnboardingAdminPage'));
+
 // Loading fallback
 const loadingFallback = (
   <div className="flex items-center justify-center min-h-screen bg-white dark:bg-gray-900">
@@ -859,6 +865,26 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(AprobacionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
+      {
+        path: 'vacaciones',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(VacacionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Rutas de Onboarding Empleados (Ene 2026 - Fase 5 Plan Empleados)
+      {
+        path: 'onboarding-empleados',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(OnboardingAdminPage)}
           </ProtectedRoute>
         ),
       },

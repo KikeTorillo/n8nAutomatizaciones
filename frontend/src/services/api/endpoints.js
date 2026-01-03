@@ -416,6 +416,485 @@ export const profesionalesApi = {
    */
   sincronizarCategorias: (profesionalId, categoriaIds) =>
     apiClient.put(`/profesionales/${profesionalId}/categorias`, { categoria_ids: categoriaIds }),
+
+  // ========== Documentos de Empleado - Enero 2026 ==========
+
+  /**
+   * Listar documentos de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { tipo, verificado, estado_vencimiento, limit, offset }
+   */
+  listarDocumentos: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/documentos`, { params }),
+
+  /**
+   * Subir documento de empleado
+   * @param {number} profesionalId
+   * @param {FormData} formData - Contiene: file, tipo_documento, nombre, descripcion, etc.
+   */
+  subirDocumento: (profesionalId, formData) =>
+    apiClient.post(`/profesionales/${profesionalId}/documentos`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+
+  /**
+   * Obtener documento por ID
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   */
+  obtenerDocumento: (profesionalId, documentoId) =>
+    apiClient.get(`/profesionales/${profesionalId}/documentos/${documentoId}`),
+
+  /**
+   * Actualizar metadata de documento
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   * @param {Object} data - { tipo_documento, nombre, descripcion, etc. }
+   */
+  actualizarDocumento: (profesionalId, documentoId, data) =>
+    apiClient.put(`/profesionales/${profesionalId}/documentos/${documentoId}`, data),
+
+  /**
+   * Eliminar documento (soft delete)
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   */
+  eliminarDocumento: (profesionalId, documentoId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/documentos/${documentoId}`),
+
+  /**
+   * Marcar documento como verificado/no verificado
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   * @param {Object} data - { verificado: boolean, notas_verificacion?: string }
+   */
+  verificarDocumento: (profesionalId, documentoId, data) =>
+    apiClient.patch(`/profesionales/${profesionalId}/documentos/${documentoId}/verificar`, data),
+
+  /**
+   * Obtener URL firmada temporal para descargar documento
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   * @param {Object} params - { expiry?: number } (segundos, default 3600)
+   */
+  obtenerUrlDocumento: (profesionalId, documentoId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/documentos/${documentoId}/presigned`, { params }),
+
+  /**
+   * Reemplazar archivo de documento existente
+   * @param {number} profesionalId
+   * @param {number} documentoId
+   * @param {FormData} formData - Contiene: file
+   */
+  reemplazarArchivoDocumento: (profesionalId, documentoId, formData) =>
+    apiClient.post(`/profesionales/${profesionalId}/documentos/${documentoId}/reemplazar-archivo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    }),
+
+  // ========== Cuentas Bancarias - Fase 1 Enero 2026 ==========
+
+  /**
+   * Listar cuentas bancarias de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { uso, activo, limit, offset }
+   */
+  listarCuentasBancarias: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/cuentas-bancarias`, { params }),
+
+  /**
+   * Crear cuenta bancaria
+   * @param {number} profesionalId
+   * @param {Object} data - { banco, numero_cuenta, clabe, tipo_cuenta, moneda, etc. }
+   */
+  crearCuentaBancaria: (profesionalId, data) =>
+    apiClient.post(`/profesionales/${profesionalId}/cuentas-bancarias`, data),
+
+  /**
+   * Obtener cuenta bancaria por ID
+   * @param {number} profesionalId
+   * @param {number} cuentaId
+   */
+  obtenerCuentaBancaria: (profesionalId, cuentaId) =>
+    apiClient.get(`/profesionales/${profesionalId}/cuentas-bancarias/${cuentaId}`),
+
+  /**
+   * Actualizar cuenta bancaria
+   * @param {number} profesionalId
+   * @param {number} cuentaId
+   * @param {Object} data
+   */
+  actualizarCuentaBancaria: (profesionalId, cuentaId, data) =>
+    apiClient.put(`/profesionales/${profesionalId}/cuentas-bancarias/${cuentaId}`, data),
+
+  /**
+   * Eliminar cuenta bancaria (soft delete)
+   * @param {number} profesionalId
+   * @param {number} cuentaId
+   */
+  eliminarCuentaBancaria: (profesionalId, cuentaId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/cuentas-bancarias/${cuentaId}`),
+
+  /**
+   * Establecer cuenta bancaria como principal
+   * @param {number} profesionalId
+   * @param {number} cuentaId
+   */
+  establecerCuentaPrincipal: (profesionalId, cuentaId) =>
+    apiClient.patch(`/profesionales/${profesionalId}/cuentas-bancarias/${cuentaId}/principal`),
+
+  // ========== Experiencia Laboral - Fase 4 Enero 2026 ==========
+
+  /**
+   * Listar experiencia laboral de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { limit, offset }
+   */
+  listarExperiencia: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/experiencia`, { params }),
+
+  /**
+   * Crear experiencia laboral
+   * @param {number} profesionalId
+   * @param {Object} data - { empresa, puesto, fecha_inicio, fecha_fin, descripcion, etc. }
+   */
+  crearExperiencia: (profesionalId, data) =>
+    apiClient.post(`/profesionales/${profesionalId}/experiencia`, data),
+
+  /**
+   * Obtener experiencia laboral por ID
+   * @param {number} profesionalId
+   * @param {number} experienciaId
+   */
+  obtenerExperiencia: (profesionalId, experienciaId) =>
+    apiClient.get(`/profesionales/${profesionalId}/experiencia/${experienciaId}`),
+
+  /**
+   * Actualizar experiencia laboral
+   * @param {number} profesionalId
+   * @param {number} experienciaId
+   * @param {Object} data
+   */
+  actualizarExperiencia: (profesionalId, experienciaId, data) =>
+    apiClient.put(`/profesionales/${profesionalId}/experiencia/${experienciaId}`, data),
+
+  /**
+   * Eliminar experiencia laboral (soft delete)
+   * @param {number} profesionalId
+   * @param {number} experienciaId
+   */
+  eliminarExperiencia: (profesionalId, experienciaId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/experiencia/${experienciaId}`),
+
+  /**
+   * Reordenar experiencia laboral
+   * @param {number} profesionalId
+   * @param {Object} data - { orden: [{ id, orden }] }
+   */
+  reordenarExperiencia: (profesionalId, data) =>
+    apiClient.patch(`/profesionales/${profesionalId}/experiencia/reordenar`, data),
+
+  /**
+   * Obtener empleo actual del profesional
+   * @param {number} profesionalId
+   */
+  obtenerEmpleoActual: (profesionalId) =>
+    apiClient.get(`/profesionales/${profesionalId}/experiencia/actual`),
+
+  // ========== Educación Formal - Fase 4 Enero 2026 ==========
+
+  /**
+   * Listar educación formal de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { nivel, limit, offset }
+   */
+  listarEducacion: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/educacion`, { params }),
+
+  /**
+   * Crear registro de educación formal
+   * @param {number} profesionalId
+   * @param {Object} data - { institucion, titulo, nivel, fecha_inicio, fecha_fin, etc. }
+   */
+  crearEducacion: (profesionalId, data) =>
+    apiClient.post(`/profesionales/${profesionalId}/educacion`, data),
+
+  /**
+   * Obtener educación por ID
+   * @param {number} profesionalId
+   * @param {number} educacionId
+   */
+  obtenerEducacion: (profesionalId, educacionId) =>
+    apiClient.get(`/profesionales/${profesionalId}/educacion/${educacionId}`),
+
+  /**
+   * Actualizar educación formal
+   * @param {number} profesionalId
+   * @param {number} educacionId
+   * @param {Object} data
+   */
+  actualizarEducacion: (profesionalId, educacionId, data) =>
+    apiClient.put(`/profesionales/${profesionalId}/educacion/${educacionId}`, data),
+
+  /**
+   * Eliminar educación formal (soft delete)
+   * @param {number} profesionalId
+   * @param {number} educacionId
+   */
+  eliminarEducacion: (profesionalId, educacionId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/educacion/${educacionId}`),
+
+  /**
+   * Reordenar educación formal
+   * @param {number} profesionalId
+   * @param {Object} data - { orden: [{ id, orden }] }
+   */
+  reordenarEducacion: (profesionalId, data) =>
+    apiClient.patch(`/profesionales/${profesionalId}/educacion/reordenar`, data),
+
+  /**
+   * Obtener estudios en curso del profesional
+   * @param {number} profesionalId
+   */
+  obtenerEducacionEnCurso: (profesionalId) =>
+    apiClient.get(`/profesionales/${profesionalId}/educacion/en-curso`),
+
+  // ========== Habilidades de Empleado - Fase 4 Enero 2026 ==========
+
+  /**
+   * Listar habilidades de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { categoria, nivel, verificado, limit, offset }
+   */
+  listarHabilidades: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/habilidades`, { params }),
+
+  /**
+   * Asignar habilidad a profesional
+   * @param {number} profesionalId
+   * @param {Object} data - { habilidad_id, nivel, anios_experiencia, notas, certificaciones }
+   */
+  asignarHabilidad: (profesionalId, data) =>
+    apiClient.post(`/profesionales/${profesionalId}/habilidades`, data),
+
+  /**
+   * Asignar múltiples habilidades en batch
+   * @param {number} profesionalId
+   * @param {Object} data - { habilidades: [{ habilidad_id, nivel, anios_experiencia }] }
+   */
+  asignarHabilidadesBatch: (profesionalId, data) =>
+    apiClient.post(`/profesionales/${profesionalId}/habilidades/batch`, data),
+
+  /**
+   * Obtener habilidad de empleado por ID
+   * @param {number} profesionalId
+   * @param {number} habilidadEmpleadoId
+   */
+  obtenerHabilidadEmpleado: (profesionalId, habilidadEmpleadoId) =>
+    apiClient.get(`/profesionales/${profesionalId}/habilidades/${habilidadEmpleadoId}`),
+
+  /**
+   * Actualizar habilidad de empleado
+   * @param {number} profesionalId
+   * @param {number} habilidadEmpleadoId
+   * @param {Object} data - { nivel, anios_experiencia, notas, certificaciones }
+   */
+  actualizarHabilidadEmpleado: (profesionalId, habilidadEmpleadoId, data) =>
+    apiClient.put(`/profesionales/${profesionalId}/habilidades/${habilidadEmpleadoId}`, data),
+
+  /**
+   * Eliminar habilidad de empleado (soft delete)
+   * @param {number} profesionalId
+   * @param {number} habilidadEmpleadoId
+   */
+  eliminarHabilidadEmpleado: (profesionalId, habilidadEmpleadoId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/habilidades/${habilidadEmpleadoId}`),
+
+  /**
+   * Verificar/desverificar habilidad de empleado
+   * @param {number} profesionalId
+   * @param {number} habilidadEmpleadoId
+   * @param {Object} data - { verificado: boolean }
+   */
+  verificarHabilidadEmpleado: (profesionalId, habilidadEmpleadoId, data) =>
+    apiClient.patch(`/profesionales/${profesionalId}/habilidades/${habilidadEmpleadoId}/verificar`, data),
+
+  // ========== Onboarding de Empleado - Fase 5 Enero 2026 ==========
+
+  /**
+   * Aplicar plantilla de onboarding a un profesional
+   * @param {number} profesionalId
+   * @param {number} plantillaId
+   */
+  aplicarOnboarding: (profesionalId, plantillaId) =>
+    apiClient.post(`/profesionales/${profesionalId}/onboarding/aplicar`, { plantilla_id: plantillaId }),
+
+  /**
+   * Obtener progreso de onboarding de un profesional
+   * @param {number} profesionalId
+   * @param {Object} params - { solo_pendientes }
+   */
+  obtenerProgresoOnboarding: (profesionalId, params = {}) =>
+    apiClient.get(`/profesionales/${profesionalId}/onboarding/progreso`, { params }),
+
+  /**
+   * Marcar tarea de onboarding como completada/pendiente
+   * @param {number} profesionalId
+   * @param {number} tareaId
+   * @param {Object} data - { completado, notas }
+   */
+  marcarTareaOnboarding: (profesionalId, tareaId, data) =>
+    apiClient.patch(`/profesionales/${profesionalId}/onboarding/progreso/${tareaId}`, data),
+
+  /**
+   * Eliminar todo el progreso de onboarding de un profesional
+   * @param {number} profesionalId
+   */
+  eliminarProgresoOnboarding: (profesionalId) =>
+    apiClient.delete(`/profesionales/${profesionalId}/onboarding`),
+};
+
+// ==================== ONBOARDING DE EMPLEADOS ====================
+export const onboardingEmpleadosApi = {
+  // ========== Plantillas ==========
+
+  /**
+   * Listar plantillas de onboarding
+   * @param {Object} params - { departamento_id, puesto_id, activo, limite, offset }
+   */
+  listarPlantillas: (params = {}) =>
+    apiClient.get('/onboarding-empleados/plantillas', { params }),
+
+  /**
+   * Crear plantilla de onboarding
+   * @param {Object} data - { nombre, descripcion, departamento_id, puesto_id, duracion_dias, activo }
+   */
+  crearPlantilla: (data) =>
+    apiClient.post('/onboarding-empleados/plantillas', data),
+
+  /**
+   * Obtener plantilla con tareas
+   * @param {number} plantillaId
+   */
+  obtenerPlantilla: (plantillaId) =>
+    apiClient.get(`/onboarding-empleados/plantillas/${plantillaId}`),
+
+  /**
+   * Actualizar plantilla
+   * @param {number} plantillaId
+   * @param {Object} data
+   */
+  actualizarPlantilla: (plantillaId, data) =>
+    apiClient.put(`/onboarding-empleados/plantillas/${plantillaId}`, data),
+
+  /**
+   * Eliminar plantilla (soft delete)
+   * @param {number} plantillaId
+   */
+  eliminarPlantilla: (plantillaId) =>
+    apiClient.delete(`/onboarding-empleados/plantillas/${plantillaId}`),
+
+  /**
+   * Obtener plantillas sugeridas para un profesional
+   * @param {number} profesionalId
+   */
+  obtenerPlantillasSugeridas: (profesionalId) =>
+    apiClient.get(`/onboarding-empleados/plantillas/sugeridas/${profesionalId}`),
+
+  // ========== Tareas ==========
+
+  /**
+   * Crear tarea en plantilla
+   * @param {number} plantillaId
+   * @param {Object} data - { titulo, descripcion, responsable_tipo, dias_limite, orden, es_obligatoria, url_recurso }
+   */
+  crearTarea: (plantillaId, data) =>
+    apiClient.post(`/onboarding-empleados/plantillas/${plantillaId}/tareas`, data),
+
+  /**
+   * Actualizar tarea
+   * @param {number} tareaId
+   * @param {Object} data
+   */
+  actualizarTarea: (tareaId, data) =>
+    apiClient.put(`/onboarding-empleados/tareas/${tareaId}`, data),
+
+  /**
+   * Eliminar tarea (soft delete)
+   * @param {number} tareaId
+   */
+  eliminarTarea: (tareaId) =>
+    apiClient.delete(`/onboarding-empleados/tareas/${tareaId}`),
+
+  /**
+   * Reordenar tareas de una plantilla
+   * @param {number} plantillaId
+   * @param {Array} items - [{ id, orden }]
+   */
+  reordenarTareas: (plantillaId, items) =>
+    apiClient.patch(`/onboarding-empleados/plantillas/${plantillaId}/tareas/reordenar`, { items }),
+
+  // ========== Dashboard RRHH ==========
+
+  /**
+   * Obtener dashboard de onboarding
+   * @param {Object} params - { departamento_id, estado_empleado, limite, offset }
+   */
+  obtenerDashboard: (params = {}) =>
+    apiClient.get('/onboarding-empleados/dashboard', { params }),
+
+  /**
+   * Obtener tareas vencidas de todos los empleados
+   * @param {Object} params - { solo_obligatorias, limite, offset }
+   */
+  obtenerTareasVencidas: (params = {}) =>
+    apiClient.get('/onboarding-empleados/vencidas', { params }),
+};
+
+// ==================== CATÁLOGO DE HABILIDADES ====================
+export const habilidadesApi = {
+  /**
+   * Listar catálogo de habilidades de la organización
+   * @param {Object} params - { categoria, q, limit, offset }
+   */
+  listar: (params = {}) =>
+    apiClient.get('/habilidades', { params }),
+
+  /**
+   * Crear habilidad en catálogo
+   * @param {Object} data - { nombre, categoria, descripcion, icono, color }
+   */
+  crear: (data) =>
+    apiClient.post('/habilidades', data),
+
+  /**
+   * Obtener habilidad del catálogo por ID
+   * @param {number} habilidadId
+   */
+  obtener: (habilidadId) =>
+    apiClient.get(`/habilidades/${habilidadId}`),
+
+  /**
+   * Actualizar habilidad del catálogo
+   * @param {number} habilidadId
+   * @param {Object} data - { nombre, categoria, descripcion, icono, color }
+   */
+  actualizar: (habilidadId, data) =>
+    apiClient.put(`/habilidades/${habilidadId}`, data),
+
+  /**
+   * Eliminar habilidad del catálogo (soft delete)
+   * @param {number} habilidadId
+   */
+  eliminar: (habilidadId) =>
+    apiClient.delete(`/habilidades/${habilidadId}`),
+
+  /**
+   * Listar profesionales con una habilidad específica
+   * @param {number} habilidadId
+   * @param {Object} params - { nivel_minimo, verificado, limit, offset }
+   */
+  listarProfesionales: (habilidadId, params = {}) =>
+    apiClient.get(`/habilidades/${habilidadId}/profesionales`, { params }),
 };
 
 // ==================== SERVICIOS ====================
@@ -5568,6 +6047,171 @@ export const consignaApi = {
   reportePendiente: () => apiClient.get('/inventario/consigna/reportes/pendiente'),
 };
 
+// ==================== VACACIONES (Fase 3 - Enero 2026) ====================
+
+export const vacacionesApi = {
+  // --- POLÍTICA ---
+
+  /**
+   * Obtener política de vacaciones de la organización
+   * @returns {Promise<Object>} Política
+   */
+  obtenerPolitica: () => apiClient.get('/vacaciones/politica'),
+
+  /**
+   * Actualizar política de vacaciones
+   * @param {Object} data - Datos de la política
+   * @returns {Promise<Object>} Política actualizada
+   */
+  actualizarPolitica: (data) => apiClient.put('/vacaciones/politica', data),
+
+  // --- NIVELES ---
+
+  /**
+   * Listar niveles de vacaciones por antigüedad
+   * @param {Object} params - { activo? }
+   * @returns {Promise<Array>} Niveles
+   */
+  listarNiveles: (params = {}) => apiClient.get('/vacaciones/niveles', { params }),
+
+  /**
+   * Crear nivel de vacaciones
+   * @param {Object} data - Datos del nivel
+   * @returns {Promise<Object>} Nivel creado
+   */
+  crearNivel: (data) => apiClient.post('/vacaciones/niveles', data),
+
+  /**
+   * Actualizar nivel
+   * @param {number} id - ID del nivel
+   * @param {Object} data - Datos a actualizar
+   * @returns {Promise<Object>} Nivel actualizado
+   */
+  actualizarNivel: (id, data) => apiClient.put(`/vacaciones/niveles/${id}`, data),
+
+  /**
+   * Eliminar nivel
+   * @param {number} id - ID del nivel
+   * @returns {Promise<Object>} Resultado
+   */
+  eliminarNivel: (id) => apiClient.delete(`/vacaciones/niveles/${id}`),
+
+  /**
+   * Crear niveles preset por país (México LFT o Colombia)
+   * @param {Object} data - { pais: 'mexico'|'colombia', sobrescribir? }
+   * @returns {Promise<Array>} Niveles creados
+   */
+  crearNivelesPreset: (data) => apiClient.post('/vacaciones/niveles/preset', data),
+
+  // --- SALDOS ---
+
+  /**
+   * Obtener mi saldo de vacaciones
+   * @param {Object} params - { anio? }
+   * @returns {Promise<Object>} { saldo, nivel }
+   */
+  obtenerMiSaldo: (params = {}) => apiClient.get('/vacaciones/mi-saldo', { params }),
+
+  /**
+   * Listar saldos de vacaciones (admin)
+   * @param {Object} params - { anio?, profesional_id?, con_pendientes?, page?, limit? }
+   * @returns {Promise<Object>} { data, total, page, limit }
+   */
+  listarSaldos: (params = {}) => apiClient.get('/vacaciones/saldos', { params }),
+
+  /**
+   * Ajustar saldo manualmente
+   * @param {number} id - ID del saldo
+   * @param {Object} data - { dias_ajuste, motivo }
+   * @returns {Promise<Object>} Saldo actualizado
+   */
+  ajustarSaldo: (id, data) => apiClient.put(`/vacaciones/saldos/${id}/ajustar`, data),
+
+  /**
+   * Generar saldos para un año
+   * @param {Object} data - { anio, profesional_id?, sobrescribir? }
+   * @returns {Promise<Object>} { creados, actualizados, errores }
+   */
+  generarSaldosAnio: (data) => apiClient.post('/vacaciones/saldos/generar-anio', data),
+
+  // --- SOLICITUDES ---
+
+  /**
+   * Crear solicitud de vacaciones
+   * @param {Object} data - { fecha_inicio, fecha_fin, es_medio_dia?, turno_medio_dia?, motivo_solicitud? }
+   * @returns {Promise<Object>} Solicitud creada
+   */
+  crearSolicitud: (data) => apiClient.post('/vacaciones/solicitudes', data),
+
+  /**
+   * Listar mis solicitudes
+   * @param {Object} params - { estado?, anio?, page?, limit? }
+   * @returns {Promise<Object>} { data, total }
+   */
+  listarMisSolicitudes: (params = {}) => apiClient.get('/vacaciones/mis-solicitudes', { params }),
+
+  /**
+   * Listar todas las solicitudes (admin)
+   * @param {Object} params - { estado?, profesional_id?, fecha_inicio?, fecha_fin?, anio?, page?, limit? }
+   * @returns {Promise<Object>} { data, total }
+   */
+  listarSolicitudes: (params = {}) => apiClient.get('/vacaciones/solicitudes', { params }),
+
+  /**
+   * Listar solicitudes pendientes de aprobación
+   * @param {Object} params - { page?, limit? }
+   * @returns {Promise<Object>} { data, total }
+   */
+  listarPendientes: (params = {}) => apiClient.get('/vacaciones/solicitudes/pendientes', { params }),
+
+  /**
+   * Obtener solicitud por ID
+   * @param {number} id - ID de la solicitud
+   * @returns {Promise<Object>} Solicitud
+   */
+  obtenerSolicitud: (id) => apiClient.get(`/vacaciones/solicitudes/${id}`),
+
+  /**
+   * Aprobar solicitud
+   * @param {number} id - ID de la solicitud
+   * @param {Object} data - { notas_internas? }
+   * @returns {Promise<Object>} Solicitud aprobada
+   */
+  aprobarSolicitud: (id, data = {}) => apiClient.post(`/vacaciones/solicitudes/${id}/aprobar`, data),
+
+  /**
+   * Rechazar solicitud
+   * @param {number} id - ID de la solicitud
+   * @param {Object} data - { motivo_rechazo, notas_internas? }
+   * @returns {Promise<Object>} Solicitud rechazada
+   */
+  rechazarSolicitud: (id, data) => apiClient.post(`/vacaciones/solicitudes/${id}/rechazar`, data),
+
+  /**
+   * Cancelar solicitud
+   * @param {number} id - ID de la solicitud
+   * @param {Object} data - { motivo? }
+   * @returns {Promise<Object>} Solicitud cancelada
+   */
+  cancelarSolicitud: (id, data = {}) => apiClient.delete(`/vacaciones/solicitudes/${id}`, { data }),
+
+  // --- DASHBOARD ---
+
+  /**
+   * Obtener dashboard de vacaciones del usuario
+   * @param {Object} params - { anio? }
+   * @returns {Promise<Object>} Dashboard con saldo, nivel, solicitudes recientes
+   */
+  obtenerDashboard: (params = {}) => apiClient.get('/vacaciones/dashboard', { params }),
+
+  /**
+   * Obtener estadísticas generales (admin)
+   * @param {Object} params - { anio?, departamento_id? }
+   * @returns {Promise<Object>} Estadísticas
+   */
+  obtenerEstadisticas: (params = {}) => apiClient.get('/vacaciones/estadisticas', { params }),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -5614,4 +6258,7 @@ export default {
   configuracionAlmacen: configuracionAlmacenApi,
   paquetes: paquetesApi,
   consigna: consignaApi,
+  vacaciones: vacacionesApi,
+  habilidades: habilidadesApi,
+  onboardingEmpleados: onboardingEmpleadosApi,
 };

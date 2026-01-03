@@ -14,7 +14,9 @@
     "notes": "Módulo base del sistema, incluido en todos los planes"
   },
   "routes": {
-    "profesionales": "/api/v1/profesionales"
+    "profesionales": "/api/v1/profesionales",
+    "habilidades": "/api/v1/habilidades",
+    "onboarding-empleados": "/api/v1/onboarding-empleados"
   },
   "resources": {
     "profesionales": {
@@ -25,7 +27,10 @@
   },
   "tables": [
     "profesionales",
-    "profesionales_categorias"
+    "profesionales_categorias",
+    "plantillas_onboarding",
+    "tareas_onboarding",
+    "progreso_onboarding"
   ],
   "features": [
     "CRUD completo de profesionales",

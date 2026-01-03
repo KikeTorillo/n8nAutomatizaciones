@@ -1,0 +1,49 @@
+{
+  "name": "vacaciones",
+  "display_name": "Sistema de Vacaciones",
+  "version": "1.0.0",
+  "description": "Módulo de gestión de vacaciones: políticas, niveles por antigüedad, saldos y solicitudes con integración a bloqueos",
+  "depends": ["core", "profesionales", "agendamiento"],
+  "dependencies_hard": {
+    "profesionales": "Requiere tabla profesionales para empleados",
+    "agendamiento": "Requiere bloqueos_horarios para integración calendario"
+  },
+  "dependencies_optional": {},
+  "used_by": [],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo de RRHH incluido en todos los planes"
+  },
+  "routes": {
+    "vacaciones": "/api/v1/vacaciones"
+  },
+  "resources": {
+    "solicitudes_vacaciones": {
+      "table": "solicitudes_vacaciones",
+      "limit_field": null,
+      "notes": "Sin límite por plan"
+    }
+  },
+  "tables": [
+    "politicas_vacaciones",
+    "niveles_vacaciones",
+    "saldos_vacaciones",
+    "solicitudes_vacaciones"
+  ],
+  "features": [
+    "Configuración de políticas por organización",
+    "Niveles de vacaciones por antigüedad (LFT México, Colombia)",
+    "Saldo de días por profesional y año",
+    "Solicitud con flujo de aprobación",
+    "Integración automática con bloqueos_horarios",
+    "Dashboard de vacaciones para empleado",
+    "Estadísticas para RRHH/Admin",
+    "Cálculo automático de días hábiles",
+    "Reserva de días en solicitudes pendientes"
+  ],
+  "priority": 5,
+  "required": false,
+  "can_disable": true
+}

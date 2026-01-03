@@ -41,9 +41,18 @@ CREATE TABLE profesionales (
     -- ====================================================================
     fecha_nacimiento DATE,                     -- Para validar mayoría de edad
     documento_identidad VARCHAR(30),           -- Cédula, DNI, Pasaporte, etc.
+    numero_pasaporte VARCHAR(50),              -- Número de pasaporte (Fase 1)
+    numero_seguro_social VARCHAR(50),          -- NSS, IMSS, ISSSTE (Fase 1)
+    nacionalidad VARCHAR(50),                  -- País de nacionalidad (Fase 1)
+    lugar_nacimiento_ciudad VARCHAR(100),      -- Ciudad de nacimiento (Fase 1)
+    lugar_nacimiento_pais VARCHAR(50),         -- País de nacimiento (Fase 1)
     genero genero DEFAULT 'no_especificado',   -- Género del empleado
     direccion TEXT,                            -- Dirección de domicilio
     estado_civil VARCHAR(20),                  -- soltero, casado, divorciado, viudo, union_libre
+    email_privado VARCHAR(150),                -- Email personal (Fase 1)
+    telefono_privado VARCHAR(20),              -- Teléfono personal (Fase 1)
+    distancia_casa_trabajo_km DECIMAL(6,2),    -- Km casa-trabajo para viáticos (Fase 1)
+    hijos_dependientes INTEGER DEFAULT 0,      -- Cantidad de hijos (Fase 1)
     contacto_emergencia_nombre VARCHAR(100),   -- Nombre del contacto de emergencia
     contacto_emergencia_telefono VARCHAR(20),  -- Teléfono del contacto de emergencia
 
@@ -92,10 +101,13 @@ CREATE TABLE profesionales (
     configuracion_servicios JSONB DEFAULT '{}', -- Config específica de servicios
 
     -- ====================================================================
-    -- 💰 SECCIÓN: COMPENSACIÓN
+    -- 💰 SECCIÓN: COMPENSACIÓN (Información contractual)
     -- ====================================================================
-    salario_base DECIMAL(10,2),                -- Salario base mensual
-    comision_porcentaje DECIMAL(5,2) DEFAULT 0, -- % de comisión por servicio
+    -- NOTA: Las comisiones operativas se configuran en módulo Comisiones
+    -- (tabla configuracion_comisiones) por servicio/producto específico.
+    -- Estos campos son para información contractual/HR/Nómina.
+    -- ────────────────────────────────────────────────────────────────────
+    salario_base DECIMAL(10,2),                -- Salario base mensual (contrato)
     forma_pago VARCHAR(20) DEFAULT 'comision', -- 'comision', 'salario', 'mixto'
 
     -- ====================================================================
@@ -113,6 +125,14 @@ CREATE TABLE profesionales (
     -- ====================================================================
     usuario_id INTEGER UNIQUE,                  -- Usuario del sistema vinculado
                                                -- FK se agrega después de CREATE TABLE usuarios
+
+    -- ====================================================================
+    -- 🎛️ SECCIÓN: CONFIGURACIÓN DE SISTEMA (Fase 1)
+    -- ====================================================================
+    zona_horaria VARCHAR(50) DEFAULT 'America/Mexico_City', -- Timezone del empleado
+    responsable_rrhh_id INTEGER,               -- Usuario de RRHH asignado (aprobador)
+    codigo_nip VARCHAR(10),                    -- PIN para control de asistencia
+    id_credencial VARCHAR(50),                 -- ID de tarjeta/credencial física
 
     -- ====================================================================
     -- 📊 SECCIÓN: MÉTRICAS (se actualizan automáticamente)
@@ -149,7 +169,6 @@ CREATE TABLE profesionales (
     -- Validaciones de datos
     CONSTRAINT chk_profesionales_nombre CHECK (char_length(nombre_completo) >= 3),
     CONSTRAINT chk_profesionales_experiencia CHECK (años_experiencia >= 0 AND años_experiencia <= 70),
-    CONSTRAINT chk_profesionales_comision CHECK (comision_porcentaje >= 0 AND comision_porcentaje <= 100),
     CONSTRAINT chk_profesionales_calificacion CHECK (calificacion_promedio >= 1.00 AND calificacion_promedio <= 5.00),
     CONSTRAINT chk_profesionales_color CHECK (color_calendario ~ '^#[0-9A-Fa-f]{6}$'),
 
@@ -199,3 +218,10 @@ ADD CONSTRAINT fk_profesionales_usuario
 FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
     ON DELETE SET NULL    -- Si se elimina usuario, SET NULL en profesional
     ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
+
+-- FK: profesionales.responsable_rrhh_id → usuarios.id (Fase 1)
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_responsable_rrhh
+FOREIGN KEY (responsable_rrhh_id) REFERENCES usuarios(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
