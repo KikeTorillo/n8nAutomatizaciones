@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import HabilidadModal from './HabilidadModal';
+import HabilidadDrawer from './drawers/HabilidadDrawer';
 import { useToast } from '@/hooks/useToast';
 import {
   useHabilidadesEmpleado,
@@ -257,8 +257,8 @@ function HabilidadesSection({ profesionalId, isEditing = false, canVerify = fals
         isLoading={eliminarMutation.isPending}
       />
 
-      {/* Modal de crear/editar habilidad */}
-      <HabilidadModal
+      {/* Drawer de crear/editar habilidad */}
+      <HabilidadDrawer
         isOpen={showModal}
         onClose={handleCloseModal}
         profesionalId={profesionalId}

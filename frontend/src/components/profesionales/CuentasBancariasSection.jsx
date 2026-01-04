@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import CuentaBancariaModal from './CuentaBancariaModal';
+import CuentaBancariaDrawer from './drawers/CuentaBancariaDrawer';
 import { useToast } from '@/hooks/useToast';
 import {
   useCuentasBancarias,
@@ -248,8 +248,8 @@ function CuentasBancariasSection({ profesionalId, isEditing = false }) {
         isLoading={eliminarMutation.isPending}
       />
 
-      {/* Modal de crear/editar cuenta bancaria */}
-      <CuentaBancariaModal
+      {/* Drawer de crear/editar cuenta bancaria */}
+      <CuentaBancariaDrawer
         isOpen={showModal}
         onClose={handleCloseModal}
         profesionalId={profesionalId}

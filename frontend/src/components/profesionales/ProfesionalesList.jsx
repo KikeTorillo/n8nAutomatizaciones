@@ -1,12 +1,12 @@
 import {
   Users,
-  User,
-  Edit,
+  Eye,
   Trash2,
   Clock,
   Mail,
   Phone,
   Calendar,
+  ChevronRight,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ProfesionalStatsCard from './ProfesionalStatsCard';
@@ -14,11 +14,12 @@ import ProfesionalStatsCard from './ProfesionalStatsCard';
 /**
  * Componente de lista de profesionales con cards responsivos
  * Muestra información detallada y acciones por profesional
+ * Ene 2026: Migración a página de detalle con navegación URL
  */
 function ProfesionalesList({
   profesionales,
   isLoading,
-  onEdit,
+  onVerDetalle,
   onDelete,
   onGestionarHorarios,
   onGestionarServicios,
@@ -74,8 +75,12 @@ function ProfesionalesList({
             id={`profesional-${profesional.id}`}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all duration-200"
           >
-            {/* Header del Card con Avatar */}
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            {/* Header del Card con Avatar - Clickeable */}
+            <button
+              type="button"
+              onClick={() => onVerDetalle(profesional)}
+              className="w-full p-6 border-b border-gray-100 dark:border-gray-700 text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors rounded-t-lg"
+            >
               <div className="flex items-start gap-4">
                 {/* Avatar con foto o iniciales */}
                 {profesional.foto_url ? (
@@ -99,9 +104,12 @@ function ProfesionalesList({
 
                 {/* Info principal */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-                    {profesional.nombre_completo || 'Sin nombre'}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {profesional.nombre_completo || 'Sin nombre'}
+                    </h3>
+                    <ChevronRight className="w-5 h-5 text-gray-400 flex-shrink-0" />
+                  </div>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
                     {profesional.puesto_nombre || profesional.departamento_nombre || 'Sin puesto asignado'}
                   </p>
@@ -120,7 +128,7 @@ function ProfesionalesList({
                   </div>
                 </div>
               </div>
-            </div>
+            </button>
 
             {/* Información de contacto */}
             <div className="p-6 space-y-3">
@@ -155,18 +163,18 @@ function ProfesionalesList({
             {/* Acciones */}
             <div className="p-4 bg-gray-50 dark:bg-gray-900/50 border-t border-gray-100 dark:border-gray-700">
               <div className="grid grid-cols-2 gap-2">
-                {/* Editar */}
+                {/* Ver Detalle */}
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => onEdit(profesional)}
+                  onClick={() => onVerDetalle(profesional)}
                   className="w-full"
                 >
-                  <Edit className="w-3 h-3 mr-1" />
-                  Editar
+                  <Eye className="w-3 h-3 mr-1" />
+                  Ver Detalle
                 </Button>
 
-                {/* Eliminar */}
+                {/* Desactivar */}
                 <Button
                   variant="outline"
                   size="sm"
@@ -174,7 +182,7 @@ function ProfesionalesList({
                   className="w-full text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                 >
                   <Trash2 className="w-3 h-3 mr-1" />
-                  Eliminar
+                  Desactivar
                 </Button>
 
                 {/* Horarios */}

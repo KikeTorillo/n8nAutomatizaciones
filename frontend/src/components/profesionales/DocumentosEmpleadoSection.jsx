@@ -15,7 +15,7 @@ import {
   getEstadoVencimiento,
   formatFileSize,
 } from '@/hooks/useDocumentosEmpleado';
-import DocumentoUploadModal from './DocumentoUploadModal';
+import DocumentoUploadDrawer from './drawers/DocumentoUploadDrawer';
 import {
   ChevronDown,
   ChevronUp,
@@ -312,8 +312,8 @@ export default function DocumentosEmpleadoSection({ profesionalId, isEditing = f
         )}
       </div>
 
-      {/* Modal de upload */}
-      <DocumentoUploadModal
+      {/* Drawer de upload */}
+      <DocumentoUploadDrawer
         isOpen={showUploadModal}
         onClose={() => setShowUploadModal(false)}
         profesionalId={profesionalId}

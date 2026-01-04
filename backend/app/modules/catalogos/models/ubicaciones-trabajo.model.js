@@ -21,28 +21,28 @@ class UbicacionTrabajoModel {
   static async listar(orgId, filtros = {}) {
     return await RLSContextManager.query(orgId, async (db) => {
       try {
-        let whereClause = 'WHERE organizacion_id = $1';
+        let whereClause = 'WHERE u.organizacion_id = $1';
         const params = [orgId];
         let paramIndex = 2;
 
         if (filtros.activas !== false) {
-          whereClause += ' AND activo = true';
+          whereClause += ' AND u.activo = true';
         }
 
         if (filtros.es_remoto !== undefined) {
-          whereClause += ` AND es_remoto = $${paramIndex}`;
+          whereClause += ` AND u.es_remoto = $${paramIndex}`;
           params.push(filtros.es_remoto);
           paramIndex++;
         }
 
         if (filtros.es_oficina_principal !== undefined) {
-          whereClause += ` AND es_oficina_principal = $${paramIndex}`;
+          whereClause += ` AND u.es_oficina_principal = $${paramIndex}`;
           params.push(filtros.es_oficina_principal);
           paramIndex++;
         }
 
         if (filtros.sucursal_id) {
-          whereClause += ` AND sucursal_id = $${paramIndex}`;
+          whereClause += ` AND u.sucursal_id = $${paramIndex}`;
           params.push(filtros.sucursal_id);
           paramIndex++;
         }

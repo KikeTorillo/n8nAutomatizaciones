@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import ExperienciaModal from './ExperienciaModal';
+import ExperienciaDrawer from './drawers/ExperienciaDrawer';
 import { useToast } from '@/hooks/useToast';
 import {
   useExperienciaLaboral,
@@ -218,8 +218,8 @@ function ExperienciaLaboralSection({ profesionalId, isEditing = false }) {
         isLoading={eliminarMutation.isPending}
       />
 
-      {/* Modal de crear/editar experiencia */}
-      <ExperienciaModal
+      {/* Drawer de crear/editar experiencia */}
+      <ExperienciaDrawer
         isOpen={showModal}
         onClose={handleCloseModal}
         profesionalId={profesionalId}

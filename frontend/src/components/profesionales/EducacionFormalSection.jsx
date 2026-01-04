@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import EducacionModal from './EducacionModal';
+import EducacionDrawer from './drawers/EducacionDrawer';
 import { useToast } from '@/hooks/useToast';
 import {
   useEducacionFormal,
@@ -34,7 +34,8 @@ function EducacionFormalSection({ profesionalId, isEditing = false }) {
   const { data: educacionData, isLoading, error } = useEducacionFormal(profesionalId);
   const eliminarMutation = useEliminarEducacion();
 
-  const educaciones = educacionData?.educaciones || [];
+  // FIX Bug #6: La API devuelve 'educacion' (singular), no 'educaciones'
+  const educaciones = educacionData?.educacion || [];
   // BUG-001 FIX: Usar conteo real del array, no el del backend (puede haber discrepancia)
   const conteo = { total: educaciones.length };
 
@@ -231,8 +232,8 @@ function EducacionFormalSection({ profesionalId, isEditing = false }) {
         isLoading={eliminarMutation.isPending}
       />
 
-      {/* Modal de crear/editar educación */}
-      <EducacionModal
+      {/* Drawer de crear/editar educación */}
+      <EducacionDrawer
         isOpen={showModal}
         onClose={handleCloseModal}
         profesionalId={profesionalId}

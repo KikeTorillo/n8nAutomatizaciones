@@ -154,7 +154,7 @@ function HorariosProfesionalModal({ isOpen, onClose, profesional }) {
       isOpen={isOpen}
       onClose={onClose}
       title="Gestión de Horarios"
-      subtitle={profesional ? `${profesional.nombre} ${profesional.apellidos || ''}` : 'Configura los horarios de disponibilidad'}
+      subtitle={profesional?.nombre_completo || 'Configura los horarios de disponibilidad'}
     >
       <div className="space-y-6">
 

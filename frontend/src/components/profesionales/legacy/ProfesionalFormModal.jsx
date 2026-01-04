@@ -1,3 +1,21 @@
+/**
+ * @deprecated Enero 2026 - Este componente ha sido reemplazado por:
+ * - ProfesionalDetailPage.jsx (edición con tabs)
+ * - NuevoProfesionalWizard.jsx (creación con wizard de 3 pasos)
+ *
+ * Mantener este archivo solo para referencia durante la transición.
+ * Será eliminado en futuras versiones.
+ *
+ * Nueva ubicación de funcionalidad:
+ * - Tab General: frontend/src/components/profesionales/tabs/GeneralTab.jsx
+ * - Tab Trabajo: frontend/src/components/profesionales/tabs/TrabajoTab.jsx
+ * - Tab Personal: frontend/src/components/profesionales/tabs/PersonalTab.jsx
+ * - Tab Currículum: frontend/src/components/profesionales/tabs/CurriculumTab.jsx
+ * - Tab Documentos: frontend/src/components/profesionales/tabs/DocumentosTab.jsx
+ * - Tab Compensación: frontend/src/components/profesionales/tabs/CompensacionTab.jsx
+ * - Tab Configuración: frontend/src/components/profesionales/tabs/ConfiguracionTab.jsx
+ */
+
 import { useState, useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -1495,15 +1513,23 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                     </p>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                      {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((dia) => (
+                      {[
+                        { key: 'lunes', label: 'Lunes' },
+                        { key: 'martes', label: 'Martes' },
+                        { key: 'miercoles', label: 'Miércoles' },
+                        { key: 'jueves', label: 'Jueves' },
+                        { key: 'viernes', label: 'Viernes' },
+                        { key: 'sabado', label: 'Sábado' },
+                        { key: 'domingo', label: 'Domingo' }
+                      ].map((dia) => (
                         <Controller
-                          key={dia}
-                          name={`ubicacion_${dia}_id`}
+                          key={dia.key}
+                          name={`ubicacion_${dia.key}_id`}
                           control={control}
                           render={({ field: { value, onChange, ...field } }) => (
                             <Select
                               {...field}
-                              label={dia.charAt(0).toUpperCase() + dia.slice(1)}
+                              label={dia.label}
                               value={value || ''}
                               onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
                               options={ubicacionesOptions.map(ub => ({

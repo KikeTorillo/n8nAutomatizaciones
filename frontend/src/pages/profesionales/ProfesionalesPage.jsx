@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, X, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Search, Filter, X, AlertTriangle, ClipboardList } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
-import ProfesionalFormModal from '@/components/profesionales/ProfesionalFormModal';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import {
@@ -22,6 +22,7 @@ import { useToast } from '@/hooks/useToast';
  * Implementa CRUD completo con búsqueda y filtros
  */
 function ProfesionalesPage() {
+  const navigate = useNavigate();
   const toast = useToast();
   const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
@@ -37,9 +38,6 @@ function ProfesionalesPage() {
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
 
   // Estados para modales
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
-  const [profesionalSeleccionado, setProfesionalSeleccionado] = useState(null);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [profesionalAEliminar, setProfesionalAEliminar] = useState(null);
   const [isHorariosModalOpen, setIsHorariosModalOpen] = useState(false);
@@ -70,15 +68,11 @@ function ProfesionalesPage() {
 
   // Handlers para acciones
   const handleNuevoProfesional = () => {
-    setModalMode('create');
-    setProfesionalSeleccionado(null);
-    setIsFormModalOpen(true);
+    navigate('/profesionales/nuevo');
   };
 
-  const handleEdit = (profesional) => {
-    setModalMode('edit');
-    setProfesionalSeleccionado(profesional);
-    setIsFormModalOpen(true);
+  const handleVerDetalle = (profesional) => {
+    navigate(`/profesionales/${profesional.id}`);
   };
 
   const handleDelete = (profesional) => {
@@ -139,10 +133,22 @@ function ProfesionalesPage() {
               </p>
             </div>
 
-            <Button onClick={handleNuevoProfesional} className="w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo Profesional
-            </Button>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/onboarding-empleados')}
+                className="flex-1 sm:flex-initial"
+              >
+                <ClipboardList className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Onboarding</span>
+                <span className="sm:hidden">Onboarding</span>
+              </Button>
+              <Button onClick={handleNuevoProfesional} className="flex-1 sm:flex-initial">
+                <Plus className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Nuevo Profesional</span>
+                <span className="sm:hidden">Nuevo</span>
+              </Button>
+            </div>
           </div>
 
           {/* Search Bar y Filtros */}
@@ -326,24 +332,12 @@ function ProfesionalesPage() {
         <ProfesionalesList
           profesionales={profesionales}
           isLoading={isLoading}
-          onEdit={handleEdit}
+          onVerDetalle={handleVerDetalle}
           onDelete={handleDelete}
           onGestionarHorarios={handleGestionarHorarios}
           onGestionarServicios={handleGestionarServicios}
         />
       </div>
-
-      {/* Modal de Crear/Editar Profesional */}
-      <ProfesionalFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setModalMode('create');
-          setProfesionalSeleccionado(null);
-        }}
-        mode={modalMode}
-        profesional={profesionalSeleccionado}
-      />
 
       {/* Modal de Gestión de Horarios */}
       <HorariosProfesionalModal

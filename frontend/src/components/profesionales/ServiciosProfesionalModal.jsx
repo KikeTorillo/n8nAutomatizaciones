@@ -152,7 +152,7 @@ function ServiciosProfesionalModal({ isOpen, onClose, profesional }) {
       isOpen={isOpen}
       onClose={onClose}
       title="Gestionar Servicios"
-      subtitle={profesional ? `${profesional.nombre} ${profesional.apellidos || ''}` : 'Selecciona los servicios del profesional'}
+      subtitle={profesional?.nombre_completo || 'Selecciona los servicios del profesional'}
     >
       <div className="space-y-6">
 

@@ -27,6 +27,8 @@ const ServiciosPage = lazy(() => import('@/pages/servicios/ServiciosPage'));
 
 // Páginas de Profesionales
 const ProfesionalesPage = lazy(() => import('@/pages/profesionales/ProfesionalesPage'));
+const ProfesionalDetailPage = lazy(() => import('@/pages/profesionales/ProfesionalDetailPage'));
+const NuevoProfesionalWizard = lazy(() => import('@/pages/profesionales/NuevoProfesionalWizard'));
 
 // Páginas de Citas
 const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
@@ -330,6 +332,31 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(ProfesionalesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Ruta específica 'nuevo' ANTES de rutas dinámicas :id
+      {
+        path: 'profesionales/nuevo',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(NuevoProfesionalWizard)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'profesionales/:id',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfesionalDetailPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'profesionales/:id/:tab',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(ProfesionalDetailPage)}
           </ProtectedRoute>
         ),
       },

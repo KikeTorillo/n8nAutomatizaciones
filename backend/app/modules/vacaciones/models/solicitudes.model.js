@@ -319,7 +319,7 @@ class SolicitudesVacacionesModel {
                     p.supervisor_id,
                     d.nombre as departamento_nombre,
                     ua.nombre || ' ' || COALESCE(ua.apellidos, '') as aprobador_nombre,
-                    uc.nombre || ' ' || COALESCE(uc.apellido, '') as creado_por_nombre
+                    uc.nombre || ' ' || COALESCE(uc.apellidos, '') as creado_por_nombre
                 FROM solicitudes_vacaciones sv
                 JOIN profesionales p ON p.id = sv.profesional_id
                 LEFT JOIN departamentos d ON d.id = p.departamento_id
@@ -375,15 +375,17 @@ class SolicitudesVacacionesModel {
             }
 
             // Crear bloqueo en bloqueos_horarios
+            // Si es todo el día, hora_inicio y hora_fin quedan null
             const tituloBloqueo = `Vacaciones - ${solicitud.profesional_nombre}`;
+            const esTodoElDia = !solicitud.es_medio_dia;
             const bloqueoQuery = await db.query(
                 `INSERT INTO bloqueos_horarios (
                     organizacion_id, profesional_id, tipo_bloqueo_id,
                     titulo, descripcion,
                     fecha_inicio, fecha_fin,
-                    todo_el_dia, auto_generado, origen_bloqueo,
-                    creado_por
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, 'vacaciones', $9)
+                    hora_inicio, hora_fin,
+                    auto_generado, origen_bloqueo
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, true, 'vacaciones')
                 RETURNING id`,
                 [
                     organizacionId,
@@ -393,8 +395,8 @@ class SolicitudesVacacionesModel {
                     `Solicitud ${solicitud.codigo}. ${solicitud.motivo_solicitud || ''}`,
                     solicitud.fecha_inicio,
                     solicitud.fecha_fin,
-                    !solicitud.es_medio_dia,
-                    aprobadorId,
+                    esTodoElDia ? null : '08:00:00',
+                    esTodoElDia ? null : '14:00:00',
                 ]
             );
 

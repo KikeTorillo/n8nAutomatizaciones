@@ -1,9 +1,15 @@
 /**
- * HabilidadModal - Modal para asignar/editar habilidad de empleado
- * Fase 4 del Plan de Empleados Competitivo - Enero 2026
+ * ====================================================================
+ * HabilidadDrawer - Drawer para asignar/editar habilidad de empleado
+ * ====================================================================
+ *
+ * Migrado a React Hook Form + Zod - Enero 2026
+ * Patron doble formulario: principal (asignar) + secundario (crear en catalogo)
  */
 import { useState, useEffect, useMemo } from 'react';
-import Modal from '@/components/ui/Modal';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -16,115 +22,132 @@ import {
   useCrearHabilidadCatalogo,
   NIVELES_HABILIDAD,
   CATEGORIAS_HABILIDAD,
-  getCategoriaConfig
+  getCategoriaConfig,
 } from '@/hooks/useHabilidades';
+import {
+  habilidadEmpleadoSchema,
+  nuevaHabilidadCatalogoSchema,
+} from '@/schemas/profesionales.schemas';
 
-const INITIAL_FORM_DATA = {
+// ====================================================================
+// CONSTANTES
+// ====================================================================
+
+const DEFAULT_VALUES_MAIN = {
   habilidad_id: null,
   nivel: 'basico',
   anios_experiencia: 0,
   notas: '',
-  certificaciones: ''
+  certificaciones: '',
 };
 
-const INITIAL_NEW_HABILIDAD = {
+const DEFAULT_VALUES_CATALOGO = {
   nombre: '',
   categoria: 'tecnica',
-  descripcion: ''
+  descripcion: '',
 };
 
-export default function HabilidadModal({
+// ====================================================================
+// COMPONENTE
+// ====================================================================
+
+export default function HabilidadDrawer({
   isOpen,
   onClose,
   profesionalId,
   habilidadEmpleado = null,
-  onSuccess
+  onSuccess,
 }) {
   const toast = useToast();
   const isEditing = !!habilidadEmpleado;
 
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-  const [errors, setErrors] = useState({});
+  // Estado UI
   const [busqueda, setBusqueda] = useState('');
   const [showNewForm, setShowNewForm] = useState(false);
-  const [newHabilidad, setNewHabilidad] = useState(INITIAL_NEW_HABILIDAD);
 
   // Queries y mutations
   const { data: catalogoData, isLoading: loadingCatalogo } = useCatalogoHabilidades({
-    enabled: isOpen && !isEditing
+    enabled: isOpen && !isEditing,
   });
   const asignarMutation = useAsignarHabilidad();
   const actualizarMutation = useActualizarHabilidadEmpleado();
   const crearCatalogoMutation = useCrearHabilidadCatalogo();
 
   const catalogo = catalogoData?.habilidades || [];
+  const isLoading =
+    asignarMutation.isPending ||
+    actualizarMutation.isPending ||
+    crearCatalogoMutation.isPending;
 
-  const isLoading = asignarMutation.isPending || actualizarMutation.isPending || crearCatalogoMutation.isPending;
+  // ============ FORMULARIO PRINCIPAL (asignar habilidad) ============
+  const mainForm = useForm({
+    resolver: zodResolver(habilidadEmpleadoSchema),
+    defaultValues: DEFAULT_VALUES_MAIN,
+  });
 
-  // Filtrar catálogo por búsqueda
+  // ============ FORMULARIO SECUNDARIO (crear en catalogo) ============
+  const catalogoForm = useForm({
+    resolver: zodResolver(nuevaHabilidadCatalogoSchema),
+    defaultValues: DEFAULT_VALUES_CATALOGO,
+  });
+
+  // Observar habilidad_id para mostrar seleccionada
+  const selectedHabilidadId = mainForm.watch('habilidad_id');
+  const selectedHabilidad = catalogo.find((h) => h.id === selectedHabilidadId);
+
+  // Filtrar catalogo por busqueda
   const catalogoFiltrado = useMemo(() => {
     if (!busqueda.trim()) return catalogo;
     const term = busqueda.toLowerCase();
-    return catalogo.filter(h =>
-      h.nombre.toLowerCase().includes(term) ||
-      h.categoria?.toLowerCase().includes(term)
+    return catalogo.filter(
+      (h) =>
+        h.nombre.toLowerCase().includes(term) ||
+        h.categoria?.toLowerCase().includes(term)
     );
   }, [catalogo, busqueda]);
 
-  // Cargar datos al editar
+  // Reset forms cuando cambia isOpen o habilidadEmpleado
   useEffect(() => {
-    if (isOpen && habilidadEmpleado) {
-      setFormData({
-        habilidad_id: habilidadEmpleado.habilidad_id,
-        nivel: habilidadEmpleado.nivel || 'basico',
-        anios_experiencia: habilidadEmpleado.anios_experiencia || 0,
-        notas: habilidadEmpleado.notas || '',
-        certificaciones: habilidadEmpleado.certificaciones || ''
-      });
-    } else if (isOpen && !habilidadEmpleado) {
-      setFormData(INITIAL_FORM_DATA);
-      setBusqueda('');
-      setShowNewForm(false);
-      setNewHabilidad(INITIAL_NEW_HABILIDAD);
+    if (isOpen) {
+      if (isEditing && habilidadEmpleado) {
+        mainForm.reset({
+          habilidad_id: habilidadEmpleado.habilidad_id,
+          nivel: habilidadEmpleado.nivel || 'basico',
+          anios_experiencia: habilidadEmpleado.anios_experiencia || 0,
+          notas: habilidadEmpleado.notas || '',
+          certificaciones: habilidadEmpleado.certificaciones || '',
+        });
+      } else {
+        mainForm.reset(DEFAULT_VALUES_MAIN);
+        catalogoForm.reset(DEFAULT_VALUES_CATALOGO);
+        setBusqueda('');
+        setShowNewForm(false);
+      }
     }
-  }, [isOpen, habilidadEmpleado]);
+  }, [isOpen, isEditing, habilidadEmpleado, mainForm, catalogoForm]);
 
-  const handleInputChange = (field, value) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: null }));
-    }
-  };
-
+  // Seleccionar habilidad del catalogo
   const handleSelectHabilidad = (hab) => {
-    setFormData(prev => ({ ...prev, habilidad_id: hab.id }));
-    setErrors(prev => ({ ...prev, habilidad_id: null }));
+    mainForm.setValue('habilidad_id', hab.id, { shouldValidate: true });
   };
 
-  const validateForm = () => {
-    const newErrors = {};
-
-    if (!isEditing && !formData.habilidad_id) {
-      newErrors.habilidad_id = 'Selecciona una habilidad del catálogo';
+  // Submit formulario principal
+  const onSubmitMain = async (data) => {
+    // Validar que haya habilidad seleccionada en create
+    if (!isEditing && !data.habilidad_id) {
+      mainForm.setError('habilidad_id', {
+        type: 'manual',
+        message: 'Selecciona una habilidad del catalogo',
+      });
+      return;
     }
-
-    if (!formData.nivel) {
-      newErrors.nivel = 'El nivel es requerido';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
 
     const dataToSend = {
-      habilidad_id: formData.habilidad_id,
-      nivel: formData.nivel,
-      anios_experiencia: parseInt(formData.anios_experiencia) || 0,
-      notas: formData.notas?.trim() || null,
-      certificaciones: formData.certificaciones?.trim() || null
+      habilidad_id: data.habilidad_id,
+      nivel: data.nivel,
+      anios_experiencia: parseInt(data.anios_experiencia) || 0,
+      notas: data.notas || null,
+      certificaciones: data.certificaciones || null,
     };
 
     try {
@@ -132,95 +155,59 @@ export default function HabilidadModal({
         await actualizarMutation.mutateAsync({
           profesionalId,
           habilidadEmpleadoId: habilidadEmpleado.id,
-          data: dataToSend
+          data: dataToSend,
         });
         toast.success('Habilidad actualizada');
       } else {
         await asignarMutation.mutateAsync({
           profesionalId,
-          data: dataToSend
+          data: dataToSend,
         });
         toast.success('Habilidad asignada');
       }
 
-      resetForm();
       onSuccess?.();
-      onClose();
+      handleClose();
     } catch (err) {
       toast.error(err.message || 'Error al guardar habilidad');
     }
   };
 
-  // Crear nueva habilidad en catálogo
-  const handleCrearNueva = async () => {
-    if (!newHabilidad.nombre?.trim()) {
-      toast.error('El nombre de la habilidad es requerido');
-      return;
-    }
-
+  // Crear nueva habilidad en catalogo
+  const handleCrearNueva = async (data) => {
     try {
       const nuevaHabilidad = await crearCatalogoMutation.mutateAsync({
-        nombre: newHabilidad.nombre.trim(),
-        categoria: newHabilidad.categoria,
-        descripcion: newHabilidad.descripcion?.trim() || null
+        nombre: data.nombre,
+        categoria: data.categoria,
+        descripcion: data.descripcion || null,
       });
 
       // Seleccionar la nueva habilidad
-      setFormData(prev => ({ ...prev, habilidad_id: nuevaHabilidad.id }));
+      mainForm.setValue('habilidad_id', nuevaHabilidad.id, { shouldValidate: true });
       setShowNewForm(false);
-      setNewHabilidad(INITIAL_NEW_HABILIDAD);
-      toast.success('Habilidad creada en catálogo');
+      catalogoForm.reset(DEFAULT_VALUES_CATALOGO);
+      toast.success('Habilidad creada en catalogo');
     } catch (err) {
       toast.error(err.message || 'Error al crear habilidad');
     }
   };
 
-  const resetForm = () => {
-    setFormData(INITIAL_FORM_DATA);
-    setErrors({});
+  const handleClose = () => {
+    mainForm.reset(DEFAULT_VALUES_MAIN);
+    catalogoForm.reset(DEFAULT_VALUES_CATALOGO);
     setBusqueda('');
     setShowNewForm(false);
-    setNewHabilidad(INITIAL_NEW_HABILIDAD);
-  };
-
-  const handleClose = () => {
-    resetForm();
     onClose();
   };
 
-  const selectedHabilidad = catalogo.find(h => h.id === formData.habilidad_id);
-
-  const footer = (
-    <div className="flex justify-end gap-3">
-      <Button variant="secondary" onClick={handleClose} disabled={isLoading}>
-        Cancelar
-      </Button>
-      <Button onClick={handleSubmit} disabled={isLoading || (!isEditing && !formData.habilidad_id)}>
-        {isLoading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Guardando...
-          </>
-        ) : (
-          <>
-            <Wrench className="mr-2 h-4 w-4" />
-            {isEditing ? 'Actualizar' : 'Asignar'}
-          </>
-        )}
-      </Button>
-    </div>
-  );
-
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={handleClose}
       title={isEditing ? 'Editar Habilidad' : 'Asignar Habilidad'}
-      size="md"
-      footer={footer}
-      disableClose={isLoading}
+      subtitle="Competencias y conocimientos del empleado"
     >
-      <div className="space-y-4">
+      <form onSubmit={mainForm.handleSubmit(onSubmitMain)} className="space-y-4">
         {/* Selector de habilidad (solo para crear) */}
         {!isEditing && (
           <div>
@@ -242,7 +229,7 @@ export default function HabilidadModal({
                   </div>
                   <button
                     type="button"
-                    onClick={() => setFormData(prev => ({ ...prev, habilidad_id: null }))}
+                    onClick={() => mainForm.setValue('habilidad_id', null)}
                     className="text-xs text-primary-600 hover:underline"
                   >
                     Cambiar
@@ -251,7 +238,7 @@ export default function HabilidadModal({
               </div>
             )}
 
-            {/* Búsqueda y lista */}
+            {/* Busqueda y lista */}
             {!selectedHabilidad && !showNewForm && (
               <>
                 <div className="relative mb-2">
@@ -277,7 +264,7 @@ export default function HabilidadModal({
                           No se encontraron habilidades
                         </div>
                       ) : (
-                        catalogoFiltrado.map(hab => {
+                        catalogoFiltrado.map((hab) => {
                           const cat = getCategoriaConfig(hab.categoria);
                           return (
                             <button
@@ -289,7 +276,7 @@ export default function HabilidadModal({
                               <span className="font-medium text-gray-900 dark:text-gray-100">
                                 {hab.nombre}
                               </span>
-                              <span className={`text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700`}>
+                              <span className="text-xs px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-700">
                                 {cat.label}
                               </span>
                             </button>
@@ -304,7 +291,7 @@ export default function HabilidadModal({
                       className="mt-2 w-full flex items-center justify-center gap-2 text-sm text-primary-600 hover:text-primary-700 py-2"
                     >
                       <Plus className="h-4 w-4" />
-                      Crear nueva habilidad en catálogo
+                      Crear nueva habilidad en catalogo
                     </button>
                   </>
                 )}
@@ -316,21 +303,22 @@ export default function HabilidadModal({
               <div className="p-3 border border-dashed border-gray-300 dark:border-gray-600 rounded-lg space-y-3">
                 <Input
                   label="Nombre de la habilidad"
-                  value={newHabilidad.nombre}
-                  onChange={(e) => setNewHabilidad(prev => ({ ...prev, nombre: e.target.value }))}
-                  placeholder="Ej: React, Liderazgo, Inglés..."
+                  placeholder="Ej: React, Liderazgo, Ingles..."
+                  error={catalogoForm.formState.errors.nombre?.message}
+                  {...catalogoForm.register('nombre')}
                 />
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Categoría
+                    Categoria
                   </label>
                   <select
-                    value={newHabilidad.categoria}
-                    onChange={(e) => setNewHabilidad(prev => ({ ...prev, categoria: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                    {...catalogoForm.register('categoria')}
                   >
-                    {CATEGORIAS_HABILIDAD.map(cat => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
+                    {CATEGORIAS_HABILIDAD.map((cat) => (
+                      <option key={cat.value} value={cat.value}>
+                        {cat.label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -339,14 +327,17 @@ export default function HabilidadModal({
                     type="button"
                     variant="secondary"
                     size="sm"
-                    onClick={() => setShowNewForm(false)}
+                    onClick={() => {
+                      setShowNewForm(false);
+                      catalogoForm.reset(DEFAULT_VALUES_CATALOGO);
+                    }}
                   >
                     Cancelar
                   </Button>
                   <Button
                     type="button"
                     size="sm"
-                    onClick={handleCrearNueva}
+                    onClick={catalogoForm.handleSubmit(handleCrearNueva)}
                     disabled={crearCatalogoMutation.isPending}
                   >
                     {crearCatalogoMutation.isPending ? (
@@ -359,8 +350,10 @@ export default function HabilidadModal({
               </div>
             )}
 
-            {errors.habilidad_id && (
-              <p className="mt-1 text-sm text-red-500">{errors.habilidad_id}</p>
+            {mainForm.formState.errors.habilidad_id && (
+              <p className="mt-1 text-sm text-red-500">
+                {mainForm.formState.errors.habilidad_id.message}
+              </p>
             )}
           </div>
         )}
@@ -385,13 +378,13 @@ export default function HabilidadModal({
             Nivel de Dominio *
           </label>
           <div className="grid grid-cols-4 gap-2">
-            {NIVELES_HABILIDAD.map(nivel => (
+            {NIVELES_HABILIDAD.map((nivel) => (
               <button
                 key={nivel.value}
                 type="button"
-                onClick={() => handleInputChange('nivel', nivel.value)}
+                onClick={() => mainForm.setValue('nivel', nivel.value)}
                 className={`p-2 text-center rounded-lg border transition-colors ${
-                  formData.nivel === nivel.value
+                  mainForm.watch('nivel') === nivel.value
                     ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-400'
                     : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 text-gray-700 dark:text-gray-300'
                 }`}
@@ -403,33 +396,61 @@ export default function HabilidadModal({
           </div>
         </div>
 
-        {/* Años de experiencia */}
+        {/* Anos de experiencia */}
         <Input
           type="number"
           min="0"
           max="50"
-          label="Años de Experiencia"
-          value={formData.anios_experiencia}
-          onChange={(e) => handleInputChange('anios_experiencia', e.target.value)}
+          label="Anos de Experiencia"
+          error={mainForm.formState.errors.anios_experiencia?.message}
+          {...mainForm.register('anios_experiencia')}
         />
 
         {/* Certificaciones */}
         <Input
           label="Certificaciones relacionadas"
-          value={formData.certificaciones}
-          onChange={(e) => handleInputChange('certificaciones', e.target.value)}
           placeholder="Ej: AWS Certified, SCRUM Master..."
+          error={mainForm.formState.errors.certificaciones?.message}
+          {...mainForm.register('certificaciones')}
         />
 
         {/* Notas */}
         <Textarea
           label="Notas adicionales"
-          value={formData.notas}
-          onChange={(e) => handleInputChange('notas', e.target.value)}
           placeholder="Observaciones o contexto adicional..."
           rows={2}
+          error={mainForm.formState.errors.notas?.message}
+          {...mainForm.register('notas')}
         />
-      </div>
-    </Modal>
+
+        {/* Footer con botones */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
+          <Button
+            type="button"
+            variant="secondary"
+            onClick={handleClose}
+            disabled={isLoading}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            disabled={isLoading || (!isEditing && !selectedHabilidadId)}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Guardando...
+              </>
+            ) : (
+              <>
+                <Wrench className="mr-2 h-4 w-4" />
+                {isEditing ? 'Actualizar' : 'Asignar'}
+              </>
+            )}
+          </Button>
+        </div>
+      </form>
+    </Drawer>
   );
 }

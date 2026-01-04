@@ -1,9 +1,9 @@
 /**
- * OnboardingAplicarModal - Modal para aplicar plantilla de onboarding
- * Fase 5 del Plan de Empleados Competitivo - Enero 2026
+ * OnboardingAplicarDrawer - Drawer para aplicar plantilla de onboarding
+ * Migrado de Modal a Drawer - Enero 2026
  */
 import { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
+import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import { Loader2, ClipboardList, CheckCircle2, Users, Building2, Calendar } from 'lucide-react';
 import {
@@ -12,7 +12,7 @@ import {
   usePlantillasOnboarding
 } from '@/hooks/useOnboardingEmpleados';
 
-export default function OnboardingAplicarModal({
+export default function OnboardingAplicarDrawer({
   isOpen,
   onClose,
   profesionalId
@@ -66,17 +66,16 @@ export default function OnboardingAplicarModal({
   };
 
   return (
-    <Modal
+    <Drawer
       isOpen={isOpen}
       onClose={onClose}
-      title="Aplicar Plan de Integracion"
-      size="lg"
+      title="Aplicar Plan de Integración"
+      subtitle="Selecciona una plantilla de onboarding para el empleado"
     >
       <div className="space-y-4">
         {/* Info */}
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Selecciona una plantilla de onboarding para aplicar al empleado.
-          Se generaran las tareas automaticamente basadas en la fecha de ingreso.
+          Se generarán las tareas automáticamente basadas en la fecha de ingreso.
         </p>
 
         {/* Loading */}
@@ -156,7 +155,7 @@ export default function OnboardingAplicarModal({
                         </span>
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3.5 w-3.5" />
-                          {plantilla.duracion_dias || 30} dias
+                          {plantilla.duracion_dias || 30} días
                         </span>
                         {plantilla.departamento_nombre && (
                           <span className="flex items-center gap-1">
@@ -204,8 +203,8 @@ export default function OnboardingAplicarModal({
           </div>
         )}
 
-        {/* Acciones */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+        {/* Footer con acciones */}
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700 mt-6">
           <Button
             type="button"
             variant="ghost"
@@ -231,6 +230,6 @@ export default function OnboardingAplicarModal({
           </Button>
         </div>
       </div>
-    </Modal>
+    </Drawer>
   );
 }

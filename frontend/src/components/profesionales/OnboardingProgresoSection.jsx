@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import OnboardingAplicarModal from './OnboardingAplicarModal';
+import OnboardingAplicarDrawer from './drawers/OnboardingAplicarDrawer';
 import {
   useProgresoOnboarding,
   useMarcarTareaOnboarding,
@@ -310,8 +310,8 @@ function OnboardingProgresoSection({ profesionalId, isEditing = false }) {
         </div>
       )}
 
-      {/* Modal aplicar plantilla */}
-      <OnboardingAplicarModal
+      {/* Drawer aplicar plantilla */}
+      <OnboardingAplicarDrawer
         isOpen={showAplicarModal}
         onClose={() => setShowAplicarModal(false)}
         profesionalId={profesionalId}
