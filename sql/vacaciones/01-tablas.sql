@@ -126,7 +126,8 @@ CREATE TABLE IF NOT EXISTS solicitudes_vacaciones (
 
 -- =====================================================
 -- TABLA: dias_festivos
--- Descripción: Días festivos por organización
+-- Descripción: Días festivos y días obligatorios por organización
+-- GAP-002 vs Odoo 19: Soporte para días de presencia obligatoria
 -- =====================================================
 CREATE TABLE IF NOT EXISTS dias_festivos (
     id SERIAL PRIMARY KEY,
@@ -135,8 +136,14 @@ CREATE TABLE IF NOT EXISTS dias_festivos (
     nombre VARCHAR(100) NOT NULL,
     descripcion TEXT,
     es_nacional BOOLEAN DEFAULT false,
+
+    -- GAP-002: Días obligatorios de presencia
+    es_obligatorio BOOLEAN DEFAULT false,       -- true = Día de presencia obligatoria (cierre contable, eventos)
+    permite_ausencia BOOLEAN DEFAULT false,     -- true = A pesar de ser obligatorio, se permite ausencia justificada
+
     activo BOOLEAN DEFAULT true,
     creado_en TIMESTAMPTZ DEFAULT NOW(),
+    actualizado_en TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT dias_festivos_unico UNIQUE(organizacion_id, fecha)
 );
 
@@ -146,6 +153,11 @@ CREATE TABLE IF NOT EXISTS dias_festivos (
 
 -- dias_festivos
 CREATE INDEX IF NOT EXISTS idx_dias_festivos_org_fecha ON dias_festivos(organizacion_id, fecha);
+
+-- GAP-002: Índice para días obligatorios de presencia
+CREATE INDEX IF NOT EXISTS idx_dias_obligatorios_org
+    ON dias_festivos(organizacion_id)
+    WHERE es_obligatorio = true AND activo = true;
 
 -- politicas_vacaciones
 CREATE INDEX IF NOT EXISTS idx_politicas_vac_org ON politicas_vacaciones(organizacion_id);
@@ -320,7 +332,9 @@ CREATE TRIGGER trg_actualizar_solicitudes_vac
 COMMENT ON TABLE politicas_vacaciones IS 'Configuración de vacaciones por organización';
 COMMENT ON TABLE saldos_vacaciones IS 'Saldo de días de vacaciones por profesional y año';
 COMMENT ON TABLE solicitudes_vacaciones IS 'Solicitudes de vacaciones con integración a bloqueos';
-COMMENT ON TABLE dias_festivos IS 'Días festivos por organización para cálculo de días hábiles';
+COMMENT ON TABLE dias_festivos IS 'Días festivos y obligatorios por organización para cálculo de días hábiles';
+COMMENT ON COLUMN dias_festivos.es_obligatorio IS 'GAP-002: true = Día de presencia obligatoria (cierre contable, inventario, eventos importantes)';
+COMMENT ON COLUMN dias_festivos.permite_ausencia IS 'GAP-002: true = A pesar de ser obligatorio, se permite ausencia con justificación válida';
 
 COMMENT ON COLUMN politicas_vacaciones.usar_niveles_antiguedad IS 'Si true, usa tabla niveles_vacaciones para calcular días';
 COMMENT ON COLUMN politicas_vacaciones.aprobador_tipo IS 'Quién aprueba: supervisor, rrhh, o rol_especifico';

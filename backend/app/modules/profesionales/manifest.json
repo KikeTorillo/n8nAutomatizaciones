@@ -16,7 +16,9 @@
   "routes": {
     "profesionales": "/api/v1/profesionales",
     "habilidades": "/api/v1/habilidades",
-    "onboarding-empleados": "/api/v1/onboarding-empleados"
+    "onboarding-empleados": "/api/v1/onboarding-empleados",
+    "motivos-salida": "/api/v1/motivos-salida",
+    "categorias-pago": "/api/v1/categorias-pago"
   },
   "resources": {
     "profesionales": {

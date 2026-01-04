@@ -79,7 +79,10 @@ CREATE TABLE profesionales (
     -- ====================================================================
     fecha_ingreso DATE DEFAULT CURRENT_DATE,   -- Fecha de contratación
     fecha_baja DATE,                           -- Fecha de baja (si estado='baja')
-    motivo_baja TEXT,                          -- Razón de baja
+    motivo_baja TEXT,                          -- Razón de baja (legacy, usar motivo_salida_id)
+
+    -- GAP-001: Motivo de salida estructurado (catálogo)
+    motivo_salida_id INTEGER,                  -- FK a motivos_salida (agregada después)
 
     -- ====================================================================
     -- 🎓 SECCIÓN: INFORMACIÓN PROFESIONAL
@@ -110,6 +113,9 @@ CREATE TABLE profesionales (
     salario_base DECIMAL(10,2),                -- Salario base mensual (contrato)
     forma_pago VARCHAR(20) DEFAULT 'comision', -- 'comision', 'salario', 'mixto'
 
+    -- GAP-004: Categoría de pago para nómina
+    categoria_pago_id INTEGER,                 -- FK a categorias_pago (agregada después)
+
     -- ====================================================================
     -- 🎛️ SECCIÓN: CONTROL DE ACCESO A MÓDULOS
     -- ====================================================================
@@ -133,6 +139,21 @@ CREATE TABLE profesionales (
     responsable_rrhh_id INTEGER,               -- Usuario de RRHH asignado (aprobador)
     codigo_nip VARCHAR(10),                    -- PIN para control de asistencia
     id_credencial VARCHAR(50),                 -- ID de tarjeta/credencial física
+
+    -- ====================================================================
+    -- 📍 SECCIÓN: UBICACIÓN POR DÍA (Trabajo Híbrido) - GAP-003
+    -- ====================================================================
+    -- Cada empleado puede tener una ubicación diferente por día de la semana
+    -- FK a ubicaciones_trabajo (agregadas después)
+    -- NULL = No trabaja ese día o usa ubicación por defecto
+    -- ────────────────────────────────────────────────────────────────────
+    ubicacion_lunes_id INTEGER,                -- Ubicación para lunes
+    ubicacion_martes_id INTEGER,               -- Ubicación para martes
+    ubicacion_miercoles_id INTEGER,            -- Ubicación para miércoles
+    ubicacion_jueves_id INTEGER,               -- Ubicación para jueves
+    ubicacion_viernes_id INTEGER,              -- Ubicación para viernes
+    ubicacion_sabado_id INTEGER,               -- Ubicación para sábado
+    ubicacion_domingo_id INTEGER,              -- Ubicación para domingo
 
     -- ====================================================================
     -- 📊 SECCIÓN: MÉTRICAS (se actualizan automáticamente)
@@ -225,3 +246,89 @@ ADD CONSTRAINT fk_profesionales_responsable_rrhh
 FOREIGN KEY (responsable_rrhh_id) REFERENCES usuarios(id)
     ON DELETE SET NULL
     ON UPDATE CASCADE;
+
+-- ====================================================================
+-- 🔗 FOREIGN KEYS DIFERIDAS - GAPS VS ODOO 19 (Enero 2026)
+-- ====================================================================
+-- Estas FKs se agregan después de crear las tablas relacionadas.
+-- Ejecutar después de: 09-motivos-salida.sql, 10-categorias-pago.sql
+-- y sql/catalogos/09-ubicaciones-trabajo.sql
+-- ====================================================================
+
+-- GAP-001: FK a motivos_salida
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_motivo_salida
+FOREIGN KEY (motivo_salida_id) REFERENCES motivos_salida(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
+
+-- GAP-004: FK a categorias_pago
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_categoria_pago
+FOREIGN KEY (categoria_pago_id) REFERENCES categorias_pago(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
+
+-- GAP-003: FKs a ubicaciones_trabajo (7 días)
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_lunes
+FOREIGN KEY (ubicacion_lunes_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_martes
+FOREIGN KEY (ubicacion_martes_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_miercoles
+FOREIGN KEY (ubicacion_miercoles_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_jueves
+FOREIGN KEY (ubicacion_jueves_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_viernes
+FOREIGN KEY (ubicacion_viernes_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_sabado
+FOREIGN KEY (ubicacion_sabado_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+ALTER TABLE profesionales
+ADD CONSTRAINT fk_profesionales_ubicacion_domingo
+FOREIGN KEY (ubicacion_domingo_id) REFERENCES ubicaciones_trabajo(id)
+    ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- Comentarios de documentación para nuevos campos
+COMMENT ON COLUMN profesionales.motivo_salida_id IS
+'GAP-001: FK a catálogo de motivos de salida. Reemplaza motivo_baja (texto libre).';
+
+COMMENT ON COLUMN profesionales.categoria_pago_id IS
+'GAP-004: Categoría de pago para nómina. Define permisos de comisiones, bonos, viáticos.';
+
+COMMENT ON COLUMN profesionales.ubicacion_lunes_id IS
+'GAP-003: Ubicación de trabajo para lunes (trabajo híbrido). NULL = no trabaja o usa default.';
+
+COMMENT ON COLUMN profesionales.ubicacion_martes_id IS
+'GAP-003: Ubicación de trabajo para martes.';
+
+COMMENT ON COLUMN profesionales.ubicacion_miercoles_id IS
+'GAP-003: Ubicación de trabajo para miércoles.';
+
+COMMENT ON COLUMN profesionales.ubicacion_jueves_id IS
+'GAP-003: Ubicación de trabajo para jueves.';
+
+COMMENT ON COLUMN profesionales.ubicacion_viernes_id IS
+'GAP-003: Ubicación de trabajo para viernes.';
+
+COMMENT ON COLUMN profesionales.ubicacion_sabado_id IS
+'GAP-003: Ubicación de trabajo para sábado.';
+
+COMMENT ON COLUMN profesionales.ubicacion_domingo_id IS
+'GAP-003: Ubicación de trabajo para domingo.';

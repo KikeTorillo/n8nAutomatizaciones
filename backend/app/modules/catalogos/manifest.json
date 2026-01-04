@@ -1,0 +1,31 @@
+{
+  "name": "catalogos",
+  "display_name": "Catálogos del Sistema",
+  "version": "1.0.0",
+  "description": "Módulo de catálogos compartidos: ubicaciones de trabajo, tipos, etc.",
+  "depends": ["core"],
+  "dependencies_hard": {},
+  "dependencies_optional": {},
+  "used_by": ["profesionales"],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo base del sistema, incluido en todos los planes"
+  },
+  "routes": {
+    "ubicaciones-trabajo": "/api/v1/ubicaciones-trabajo"
+  },
+  "resources": {},
+  "tables": [
+    "ubicaciones_trabajo"
+  ],
+  "features": [
+    "Catálogo de ubicaciones de trabajo (GAP-003 vs Odoo 19)",
+    "Soporte para trabajo híbrido",
+    "Ubicaciones remotas y físicas"
+  ],
+  "priority": 5,
+  "required": true,
+  "can_disable": false
+}

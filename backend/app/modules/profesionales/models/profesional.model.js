@@ -33,13 +33,19 @@ class ProfesionalModel {
                     lugar_nacimiento_ciudad, lugar_nacimiento_pais,
                     email_privado, telefono_privado, distancia_casa_trabajo_km,
                     hijos_dependientes, zona_horaria, responsable_rrhh_id,
-                    codigo_nip, id_credencial
+                    codigo_nip, id_credencial,
+                    -- GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                    categoria_pago_id, motivo_salida_id, fecha_baja,
+                    ubicacion_lunes_id, ubicacion_martes_id, ubicacion_miercoles_id,
+                    ubicacion_jueves_id, ubicacion_viernes_id, ubicacion_sabado_id,
+                    ubicacion_domingo_id
                 ) VALUES (
                     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
                     $11, $12, $13, $14, $15, $16, $17, $18, $19,
                     $20, $21, $22, $23, $24, $25, $26, $27, $28,
                     $29, $30, $31, $32, $33, $34, $35, $36, $37,
-                    $38, $39, $40, $41, $42, $43, $44
+                    $38, $39, $40, $41, $42, $43, $44, $45, $46,
+                    $47, $48, $49, $50, $51, $52, $53, $54
                 )
                 RETURNING *
             `;
@@ -89,7 +95,18 @@ class ProfesionalModel {
                 profesionalData.zona_horaria || 'America/Mexico_City',
                 profesionalData.responsable_rrhh_id || null,
                 profesionalData.codigo_nip || null,
-                profesionalData.id_credencial || null
+                profesionalData.id_credencial || null,
+                // GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                profesionalData.categoria_pago_id || null,
+                profesionalData.motivo_salida_id || null,
+                profesionalData.fecha_baja || null,
+                profesionalData.ubicacion_lunes_id || null,
+                profesionalData.ubicacion_martes_id || null,
+                profesionalData.ubicacion_miercoles_id || null,
+                profesionalData.ubicacion_jueves_id || null,
+                profesionalData.ubicacion_viernes_id || null,
+                profesionalData.ubicacion_sabado_id || null,
+                profesionalData.ubicacion_domingo_id || null
             ];
 
             try {
@@ -306,6 +323,11 @@ class ProfesionalModel {
                        p.email_privado, p.telefono_privado, p.distancia_casa_trabajo_km,
                        p.hijos_dependientes, p.zona_horaria, p.responsable_rrhh_id,
                        p.codigo_nip, p.id_credencial,
+                       -- GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                       p.categoria_pago_id, p.motivo_salida_id, p.fecha_baja,
+                       p.ubicacion_lunes_id, p.ubicacion_martes_id, p.ubicacion_miercoles_id,
+                       p.ubicacion_jueves_id, p.ubicacion_viernes_id, p.ubicacion_sabado_id,
+                       p.ubicacion_domingo_id,
                        o.nombre_comercial as organizacion_nombre, o.categoria_id,
                        u.nombre as usuario_nombre, u.email as usuario_email, u.rol as usuario_rol,
                        -- Dic 2025: JOINs para nombres de relaciones
@@ -522,7 +544,12 @@ class ProfesionalModel {
                 // Fase 1: Configuración de sistema
                 'zona_horaria', 'responsable_rrhh_id', 'codigo_nip', 'id_credencial',
                 // Legacy
-                'activo', 'fecha_salida', 'motivo_inactividad'
+                'activo', 'fecha_salida', 'motivo_inactividad',
+                // GAP vs Odoo 19: Nuevos campos (Ene 2026)
+                'categoria_pago_id', 'motivo_salida_id',
+                'ubicacion_lunes_id', 'ubicacion_martes_id', 'ubicacion_miercoles_id',
+                'ubicacion_jueves_id', 'ubicacion_viernes_id', 'ubicacion_sabado_id',
+                'ubicacion_domingo_id'
                 // NOTA: modulos_acceso eliminado - usar sistema de permisos normalizado
             ];
 
@@ -564,6 +591,10 @@ class ProfesionalModel {
                          email_privado, telefono_privado, distancia_casa_trabajo_km,
                          hijos_dependientes, zona_horaria, responsable_rrhh_id,
                          codigo_nip, id_credencial,
+                         categoria_pago_id, motivo_salida_id, fecha_baja,
+                         ubicacion_lunes_id, ubicacion_martes_id, ubicacion_miercoles_id,
+                         ubicacion_jueves_id, ubicacion_viernes_id, ubicacion_sabado_id,
+                         ubicacion_domingo_id,
                          actualizado_en
             `;
 

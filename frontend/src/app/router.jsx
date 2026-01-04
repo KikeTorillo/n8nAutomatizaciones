@@ -5,6 +5,10 @@ import ProtectedRoute from '@/components/auth/ProtectedRoute';
 // Lazy loading de páginas
 import { lazy, Suspense } from 'react';
 
+// BUG-003 FIX: Error Boundary para errores de chunks dinámicos
+import ChunkErrorBoundary from '@/components/common/ChunkErrorBoundary';
+import { lazyLoadWithRetry } from '@/utils/lazyLoadWithRetry';
+
 // Lazy load de páginas
 const LandingPage = lazy(() => import('@/pages/landing/LandingPage'));
 const LoginPage = lazy(() => import('@/pages/auth/Login'));
@@ -147,7 +151,11 @@ const NotificacionesPage = lazy(() => import('@/pages/notificaciones/Notificacio
 const NotificacionesPreferenciasPage = lazy(() => import('@/pages/notificaciones/NotificacionesPreferenciasPage'));
 
 // Páginas de Aprobaciones (Dic 2025)
-const AprobacionesPage = lazy(() => import('@/pages/aprobaciones/AprobacionesPage'));
+// BUG-003 FIX: Usar lazyLoadWithRetry para páginas problemáticas
+const AprobacionesPage = lazyLoadWithRetry(
+  () => import('@/pages/aprobaciones/AprobacionesPage'),
+  'AprobacionesPage'
+);
 
 // Páginas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
 const VacacionesPage = lazy(() => import('@/pages/vacaciones/VacacionesPage'));
@@ -162,12 +170,15 @@ const loadingFallback = (
   </div>
 );
 
-// Wrapper para lazy loading
-// eslint-disable-next-line no-unused-vars
+// BUG-003 FIX: Wrapper para lazy loading con Error Boundary
+// Envuelve componentes lazy con Suspense y ChunkErrorBoundary para manejar
+// errores de carga de chunks de forma graceful
 const withSuspense = (Component) => (
-  <Suspense fallback={loadingFallback}>
-    <Component />
-  </Suspense>
+  <ChunkErrorBoundary>
+    <Suspense fallback={loadingFallback}>
+      <Component />
+    </Suspense>
+  </ChunkErrorBoundary>
 );
 
 export const router = createBrowserRouter([

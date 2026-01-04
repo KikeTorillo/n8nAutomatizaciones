@@ -13,6 +13,28 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // BUG-003 FIX: Configuración de build para chunks estables
+  build: {
+    rollupOptions: {
+      output: {
+        // Agrupar dependencias en chunks con nombres estables
+        manualChunks: {
+          // Vendors de React
+          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+          // TanStack Query para data fetching
+          'query-vendor': ['@tanstack/react-query'],
+          // Iconos (lucide es pesado)
+          'icons-vendor': ['lucide-react'],
+        },
+        // Nombres de chunks estables para mejor caching
+        chunkFileNames: 'js/[name]-[hash].js',
+        entryFileNames: 'js/[name]-[hash].js',
+        assetFileNames: 'assets/[name]-[hash][extname]',
+      },
+    },
+    // Advertir si un chunk supera 1MB
+    chunkSizeWarningLimit: 1000,
+  },
   server: {
     port: 8080,
     host: '0.0.0.0', // Escuchar en todas las interfaces (necesario para Docker)

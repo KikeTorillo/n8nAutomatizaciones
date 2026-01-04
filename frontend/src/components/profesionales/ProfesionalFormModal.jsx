@@ -41,6 +41,10 @@ import ExperienciaLaboralSection from './ExperienciaLaboralSection';
 import EducacionFormalSection from './EducacionFormalSection';
 import HabilidadesSection from './HabilidadesSection';
 import OnboardingProgresoSection from './OnboardingProgresoSection';
+// GAP-001, GAP-003, GAP-004 vs Odoo 19 (Enero 2026)
+import { useMotivosSalida } from '@/hooks/useMotivosSalida';
+import { useCategoriasPagoOptions } from '@/hooks/useCategoriasPago';
+import { useUbicacionesTrabajoOptions } from '@/hooks/useUbicacionesTrabajo';
 
 /**
  * Colores predefinidos para el calendario
@@ -144,6 +148,21 @@ const profesionalCreateSchema = z.object({
   ),
   // comision_porcentaje eliminado - se configura en Módulo Comisiones por servicio/producto
   forma_pago: z.enum(['comision', 'salario', 'mixto']).optional(),
+  // GAP-004: Categoría de pago para nómina
+  categoria_pago_id: z.number().int().positive().optional().nullable(),
+
+  // === GAP-001: Motivo de Salida (solo si estado='baja') ===
+  motivo_salida_id: z.number().int().positive().optional().nullable(),
+  fecha_baja: z.string().optional().or(z.literal('')),
+
+  // === GAP-003: Ubicación por Día - Trabajo Híbrido ===
+  ubicacion_lunes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_martes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_miercoles_id: z.number().int().positive().optional().nullable(),
+  ubicacion_jueves_id: z.number().int().positive().optional().nullable(),
+  ubicacion_viernes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_sabado_id: z.number().int().positive().optional().nullable(),
+  ubicacion_domingo_id: z.number().int().positive().optional().nullable(),
 
   // === Acceso al Sistema (Dic 2025) ===
   rol_invitacion: z.enum(['empleado', 'propietario', 'admin']).default('empleado'),
@@ -221,6 +240,21 @@ const profesionalEditSchema = z.object({
   ),
   // comision_porcentaje eliminado - se configura en Módulo Comisiones por servicio/producto
   forma_pago: z.enum(['comision', 'salario', 'mixto']).optional(),
+  // GAP-004: Categoría de pago para nómina
+  categoria_pago_id: z.number().int().positive().optional().nullable(),
+
+  // === GAP-001: Motivo de Salida (solo si estado='baja') ===
+  motivo_salida_id: z.number().int().positive().optional().nullable(),
+  fecha_baja: z.string().optional().or(z.literal('')),
+
+  // === GAP-003: Ubicación por Día - Trabajo Híbrido ===
+  ubicacion_lunes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_martes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_miercoles_id: z.number().int().positive().optional().nullable(),
+  ubicacion_jueves_id: z.number().int().positive().optional().nullable(),
+  ubicacion_viernes_id: z.number().int().positive().optional().nullable(),
+  ubicacion_sabado_id: z.number().int().positive().optional().nullable(),
+  ubicacion_domingo_id: z.number().int().positive().optional().nullable(),
 });
 
 /**
@@ -250,13 +284,14 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const uploadMutation = useUploadArchivo();
 
   // Dic 2025: Secciones colapsables y categorías
-  // Ene 2026: Agregadas secciones infoProfesional y compensacion
+  // Ene 2026: Agregadas secciones infoProfesional, compensacion, ubicacionesPorDia
   const [seccionesAbiertas, setSeccionesAbiertas] = useState({
     datosPersonales: false,
     clasificacion: true,
     organizacion: true,
     infoProfesional: false,  // Nueva: Años experiencia, idiomas, disponible online
     compensacion: false,     // Nueva: Salario, comisión, forma de pago (solo admin)
+    ubicacionesPorDia: false, // GAP-003: Trabajo híbrido
     acceso: true,
   });
 
@@ -266,6 +301,11 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
   const { symbol } = useCurrency();
   const [categoriasSeleccionadas, setCategoriasSeleccionadas] = useState([]);
   const sincronizarCategoriasMutation = useSincronizarCategorias();
+
+  // GAP-001, GAP-003, GAP-004: Catálogos nuevos (Enero 2026)
+  const { data: motivosSalidaData } = useMotivosSalida();
+  const { options: categoriasPagoOptions } = useCategoriasPagoOptions();
+  const { options: ubicacionesOptions } = useUbicacionesTrabajoOptions();
 
   const isEditMode = mode === 'edit';
   const profesionalId = profesional?.id;
@@ -342,7 +382,19 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           licencias_profesionales: '',
           // Compensación (Ene 2026)
           salario_base: undefined,
-            forma_pago: undefined,
+          forma_pago: undefined,
+          categoria_pago_id: undefined,
+          // GAP-001: Motivo de salida
+          motivo_salida_id: undefined,
+          fecha_baja: '',
+          // GAP-003: Ubicaciones por día
+          ubicacion_lunes_id: undefined,
+          ubicacion_martes_id: undefined,
+          ubicacion_miercoles_id: undefined,
+          ubicacion_jueves_id: undefined,
+          ubicacion_viernes_id: undefined,
+          ubicacion_sabado_id: undefined,
+          ubicacion_domingo_id: undefined,
           // Acceso al sistema (Dic 2025)
           rol_invitacion: 'empleado',
         },
@@ -386,7 +438,19 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
           licencias_profesionales: '',
           // Compensación (Ene 2026)
           salario_base: undefined,
-            forma_pago: undefined,
+          forma_pago: undefined,
+          categoria_pago_id: undefined,
+          // GAP-001: Motivo de salida
+          motivo_salida_id: undefined,
+          fecha_baja: '',
+          // GAP-003: Ubicaciones por día
+          ubicacion_lunes_id: undefined,
+          ubicacion_martes_id: undefined,
+          ubicacion_miercoles_id: undefined,
+          ubicacion_jueves_id: undefined,
+          ubicacion_viernes_id: undefined,
+          ubicacion_sabado_id: undefined,
+          ubicacion_domingo_id: undefined,
           // Acceso al sistema (Dic 2025)
           rol_invitacion: 'empleado',
         });
@@ -443,6 +507,19 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         // Compensación (Ene 2026)
         salario_base: profesionalData.salario_base || undefined,
         forma_pago: profesionalData.forma_pago || undefined,
+        // GAP-004: Categoría de pago
+        categoria_pago_id: profesionalData.categoria_pago_id || undefined,
+        // GAP-001: Motivo de salida
+        motivo_salida_id: profesionalData.motivo_salida_id || undefined,
+        fecha_baja: profesionalData.fecha_baja?.split('T')[0] || '',
+        // GAP-003: Ubicación por día (trabajo híbrido)
+        ubicacion_lunes_id: profesionalData.ubicacion_lunes_id || undefined,
+        ubicacion_martes_id: profesionalData.ubicacion_martes_id || undefined,
+        ubicacion_miercoles_id: profesionalData.ubicacion_miercoles_id || undefined,
+        ubicacion_jueves_id: profesionalData.ubicacion_jueves_id || undefined,
+        ubicacion_viernes_id: profesionalData.ubicacion_viernes_id || undefined,
+        ubicacion_sabado_id: profesionalData.ubicacion_sabado_id || undefined,
+        ubicacion_domingo_id: profesionalData.ubicacion_domingo_id || undefined,
       });
       setSelectedColor(profesionalData.color_calendario || COLORES_CALENDARIO[0]);
 
@@ -671,7 +748,22 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
         ...(puedeVerCompensacion && {
           salario_base: data.salario_base ?? undefined,
           forma_pago: data.forma_pago || undefined,
+          // GAP-004: Categoría de pago
+          categoria_pago_id: data.categoria_pago_id || null,
         }),
+        // GAP-001: Motivo de salida (solo cuando estado = 'baja')
+        ...(data.estado === 'baja' && {
+          motivo_salida_id: data.motivo_salida_id || null,
+          fecha_baja: data.fecha_baja || undefined,
+        }),
+        // GAP-003: Ubicación por día (trabajo híbrido)
+        ubicacion_lunes_id: data.ubicacion_lunes_id || null,
+        ubicacion_martes_id: data.ubicacion_martes_id || null,
+        ubicacion_miercoles_id: data.ubicacion_miercoles_id || null,
+        ubicacion_jueves_id: data.ubicacion_jueves_id || null,
+        ubicacion_viernes_id: data.ubicacion_viernes_id || null,
+        ubicacion_sabado_id: data.ubicacion_sabado_id || null,
+        ubicacion_domingo_id: data.ubicacion_domingo_id || null,
       };
 
       // Si se eliminó la foto existente
@@ -963,6 +1055,37 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                         />
                       )}
                     />
+
+                    {/* GAP-001: Motivo de Salida (solo si estado='baja') */}
+                    {watch('estado') === 'baja' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <Controller
+                          name="motivo_salida_id"
+                          control={control}
+                          render={({ field: { value, onChange, ...field } }) => (
+                            <Select
+                              {...field}
+                              label="Motivo de Salida"
+                              value={value || ''}
+                              onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
+                              options={(motivosSalidaData?.motivos || []).map(m => ({
+                                value: m.id,
+                                label: m.nombre,
+                              }))}
+                              placeholder="Selecciona motivo"
+                              required
+                            />
+                          )}
+                        />
+                        <FormField
+                          name="fecha_baja"
+                          control={control}
+                          type="date"
+                          label="Fecha de Baja"
+                          required
+                        />
+                      </div>
+                    )}
 
                     {/* Tipo de contratación y Fecha */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1313,7 +1436,7 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                         )}
                       />
 
-                      {/* Salario base y Comisión */}
+                      {/* Salario base */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                           name="salario_base"
@@ -1324,12 +1447,78 @@ function ProfesionalFormModal({ isOpen, onClose, mode = 'create', profesional = 
                           min={0}
                           step={0.01}
                         />
-{/* comision_porcentaje eliminado - se configura en Módulo Comisiones */}
+
+                        {/* GAP-004: Categoría de Pago */}
+                        <Controller
+                          name="categoria_pago_id"
+                          control={control}
+                          render={({ field: { value, onChange, ...field } }) => (
+                            <Select
+                              {...field}
+                              label="Categoría de Pago"
+                              value={value || ''}
+                              onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
+                              options={categoriasPagoOptions.map(cat => ({
+                                value: cat.value,
+                                label: cat.label,
+                              }))}
+                              placeholder="Selecciona categoría"
+                              helperText="Define permisos de bonos, viáticos, etc."
+                            />
+                          )}
+                        />
                       </div>
                     </div>
                   )}
                 </div>
               )}
+
+              {/* ========== SECCIÓN: Ubicaciones por Día - Trabajo Híbrido (GAP-003) ========== */}
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                <button
+                  type="button"
+                  onClick={() => toggleSeccion('ubicacionesPorDia')}
+                  className="w-full flex items-center justify-between gap-2 mb-4"
+                >
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100">Ubicación por Día</h4>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">(Trabajo Híbrido)</span>
+                  </div>
+                  <ChevronDown className={`h-5 w-5 text-gray-500 transition-transform ${seccionesAbiertas.ubicacionesPorDia ? 'rotate-180' : ''}`} />
+                </button>
+
+                {seccionesAbiertas.ubicacionesPorDia && (
+                  <div className="space-y-4 pl-7">
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                      Configura la ubicación de trabajo para cada día de la semana. Deja vacío si no trabaja ese día o usa la ubicación por defecto.
+                    </p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+                      {['lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado', 'domingo'].map((dia) => (
+                        <Controller
+                          key={dia}
+                          name={`ubicacion_${dia}_id`}
+                          control={control}
+                          render={({ field: { value, onChange, ...field } }) => (
+                            <Select
+                              {...field}
+                              label={dia.charAt(0).toUpperCase() + dia.slice(1)}
+                              value={value || ''}
+                              onChange={(e) => onChange(e.target.value ? parseInt(e.target.value) : null)}
+                              options={ubicacionesOptions.map(ub => ({
+                                value: ub.value,
+                                label: ub.esRemoto ? `🏠 ${ub.label}` : `🏢 ${ub.label}`,
+                              }))}
+                              placeholder="Sin asignar"
+                            />
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* ========== SECCIÓN: Documentos del Empleado (Enero 2026) ========== */}
               {isEditMode && profesionalData?.id && (

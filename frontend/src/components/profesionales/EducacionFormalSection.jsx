@@ -35,7 +35,8 @@ function EducacionFormalSection({ profesionalId, isEditing = false }) {
   const eliminarMutation = useEliminarEducacion();
 
   const educaciones = educacionData?.educaciones || [];
-  const conteo = educacionData?.conteo || { total: 0 };
+  // BUG-001 FIX: Usar conteo real del array, no el del backend (puede haber discrepancia)
+  const conteo = { total: educaciones.length };
 
   // Editar educación
   const handleEdit = (edu) => {

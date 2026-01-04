@@ -6212,6 +6212,148 @@ export const vacacionesApi = {
   obtenerEstadisticas: (params = {}) => apiClient.get('/vacaciones/estadisticas', { params }),
 };
 
+// ==================== MOTIVOS DE SALIDA (GAP-001) ====================
+export const motivosSalidaApi = {
+  /**
+   * Listar motivos de salida disponibles (sistema + personalizados)
+   * @param {Object} params - { solo_sistema, solo_personalizados, activos }
+   * @returns {Promise<Object>}
+   */
+  listar: (params = {}) => apiClient.get('/motivos-salida', { params }),
+
+  /**
+   * Obtener estadísticas de uso de motivos
+   * @returns {Promise<Object>}
+   */
+  estadisticas: () => apiClient.get('/motivos-salida/estadisticas'),
+
+  /**
+   * Obtener motivo de salida por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/motivos-salida/${id}`),
+
+  /**
+   * Obtener motivo de salida por código
+   * @param {string} codigo
+   * @returns {Promise<Object>}
+   */
+  obtenerPorCodigo: (codigo) => apiClient.get(`/motivos-salida/codigo/${codigo}`),
+
+  /**
+   * Crear motivo de salida personalizado (solo admin/propietario)
+   * @param {Object} data - { codigo, nombre, descripcion, requiere_documentacion, afecta_finiquito, color, icono }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) => apiClient.post('/motivos-salida', data),
+
+  /**
+   * Actualizar motivo de salida
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (id, data) => apiClient.put(`/motivos-salida/${id}`, data),
+
+  /**
+   * Eliminar motivo de salida (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/motivos-salida/${id}`),
+};
+
+// ==================== UBICACIONES DE TRABAJO (GAP-003) ====================
+export const ubicacionesTrabajoApi = {
+  /**
+   * Listar ubicaciones de trabajo de la organización
+   * @param {Object} params - { activas, es_remoto, es_oficina_principal, sucursal_id }
+   * @returns {Promise<Object>}
+   */
+  listar: (params = {}) => apiClient.get('/ubicaciones-trabajo', { params }),
+
+  /**
+   * Obtener estadísticas de uso por día de la semana
+   * @returns {Promise<Object>}
+   */
+  estadisticas: () => apiClient.get('/ubicaciones-trabajo/estadisticas'),
+
+  /**
+   * Obtener ubicación de trabajo por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/ubicaciones-trabajo/${id}`),
+
+  /**
+   * Crear ubicación de trabajo (solo admin/propietario)
+   * @param {Object} data - { codigo, nombre, direccion, ciudad, es_remoto, es_oficina_principal, color, icono }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) => apiClient.post('/ubicaciones-trabajo', data),
+
+  /**
+   * Actualizar ubicación de trabajo
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (id, data) => apiClient.put(`/ubicaciones-trabajo/${id}`, data),
+
+  /**
+   * Eliminar ubicación de trabajo (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/ubicaciones-trabajo/${id}`),
+};
+
+// ==================== CATEGORÍAS DE PAGO (GAP-004) ====================
+export const categoriasPagoApi = {
+  /**
+   * Listar categorías de pago de la organización
+   * @param {Object} params - { activas, ordenar_por }
+   * @returns {Promise<Object>}
+   */
+  listar: (params = {}) => apiClient.get('/categorias-pago', { params }),
+
+  /**
+   * Obtener estadísticas de uso de categorías
+   * @returns {Promise<Object>}
+   */
+  estadisticas: () => apiClient.get('/categorias-pago/estadisticas'),
+
+  /**
+   * Obtener categoría de pago por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtener: (id) => apiClient.get(`/categorias-pago/${id}`),
+
+  /**
+   * Crear categoría de pago (solo admin/propietario)
+   * @param {Object} data - { codigo, nombre, nivel_salarial, permite_comisiones, permite_bonos, permite_viaticos, color, icono }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) => apiClient.post('/categorias-pago', data),
+
+  /**
+   * Actualizar categoría de pago
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (id, data) => apiClient.put(`/categorias-pago/${id}`, data),
+
+  /**
+   * Eliminar categoría de pago (soft delete)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminar: (id) => apiClient.delete(`/categorias-pago/${id}`),
+};
+
 export default {
   auth: authApi,
   organizaciones: organizacionesApi,
@@ -6261,4 +6403,7 @@ export default {
   vacaciones: vacacionesApi,
   habilidades: habilidadesApi,
   onboardingEmpleados: onboardingEmpleadosApi,
+  motivosSalida: motivosSalidaApi,
+  ubicacionesTrabajo: ubicacionesTrabajoApi,
+  categoriasPago: categoriasPagoApi,
 };
