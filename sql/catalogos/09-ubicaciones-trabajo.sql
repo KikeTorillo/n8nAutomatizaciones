@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS ubicaciones_trabajo (
     es_sucursal BOOLEAN DEFAULT false,        -- true = Sucursal de la organización
 
     -- 🔗 RELACIONES
-    sucursal_id INTEGER REFERENCES sucursales(id) ON DELETE SET NULL, -- Link a sucursal si aplica
+    sucursal_id INTEGER, -- Link a sucursal si aplica (FK diferida abajo)
 
     -- 📱 CONTACTO
     telefono VARCHAR(20),
@@ -173,3 +173,14 @@ COMMENT ON COLUMN ubicaciones_trabajo.sucursal_id IS
 
 COMMENT ON COLUMN ubicaciones_trabajo.dias_operacion IS
 'Días de la semana en que opera esta ubicación. Ej: {lunes, martes, miercoles}';
+
+-- ============================================================
+-- FK DIFERIDA: Link a sucursales
+-- ============================================================
+-- Se ejecuta después de crear tabla sucursales
+
+ALTER TABLE ubicaciones_trabajo
+ADD CONSTRAINT fk_ubicaciones_trabajo_sucursal
+FOREIGN KEY (sucursal_id) REFERENCES sucursales(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
