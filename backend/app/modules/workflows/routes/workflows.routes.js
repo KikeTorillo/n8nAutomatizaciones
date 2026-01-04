@@ -9,12 +9,14 @@
  * - Historial de aprobaciones
  * - Gestión de delegaciones
  * - Consulta de definiciones
+ * - Designer (CRUD de definiciones)
  */
 
 const express = require('express');
-const AprobacionesController = require('../controllers');
-const { auth, tenant, rateLimiting, validation, modules } = require('../../../middleware');
+const { AprobacionesController, DesignerController } = require('../controllers');
+const { auth, tenant, rateLimiting, validation, modules, permisos } = require('../../../middleware');
 const workflowsSchemas = require('../schemas/workflows.schemas');
+const designerSchemas = require('../schemas/designer.schemas');
 
 const router = express.Router();
 const validate = validation.validate;
@@ -202,6 +204,138 @@ router.get('/definiciones/:id',
     rateLimiting.apiRateLimit,
     validate(workflowsSchemas.obtenerDefinicion),
     AprobacionesController.obtenerDefinicion
+);
+
+// ===================================================================
+// DESIGNER - CRUD DE DEFINICIONES
+// ===================================================================
+// Requiere permiso 'workflows.gestionar'
+
+/**
+ * GET /api/v1/workflows/designer/entidades
+ * Listar tipos de entidad disponibles
+ */
+router.get('/designer/entidades',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    DesignerController.listarEntidades
+);
+
+/**
+ * GET /api/v1/workflows/designer/roles
+ * Listar roles disponibles para aprobadores
+ */
+router.get('/designer/roles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    DesignerController.listarRoles
+);
+
+/**
+ * GET /api/v1/workflows/designer/permisos
+ * Listar permisos disponibles para aprobadores
+ */
+router.get('/designer/permisos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    DesignerController.listarPermisos
+);
+
+/**
+ * POST /api/v1/workflows/designer/definiciones
+ * Crear nueva definición de workflow
+ */
+router.post('/designer/definiciones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    tenant.verifyTenantActive,
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    validate(designerSchemas.crearDefinicion),
+    DesignerController.crear
+);
+
+/**
+ * PUT /api/v1/workflows/designer/definiciones/:id
+ * Actualizar definición de workflow
+ */
+router.put('/designer/definiciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    tenant.verifyTenantActive,
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    validate(designerSchemas.actualizarDefinicion),
+    DesignerController.actualizar
+);
+
+/**
+ * DELETE /api/v1/workflows/designer/definiciones/:id
+ * Eliminar definición de workflow
+ */
+router.delete('/designer/definiciones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    tenant.verifyTenantActive,
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    validate(designerSchemas.eliminarDefinicion),
+    DesignerController.eliminar
+);
+
+/**
+ * POST /api/v1/workflows/designer/definiciones/:id/duplicar
+ * Duplicar un workflow existente
+ */
+router.post('/designer/definiciones/:id/duplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    tenant.verifyTenantActive,
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    validate(designerSchemas.duplicarDefinicion),
+    DesignerController.duplicar
+);
+
+/**
+ * PATCH /api/v1/workflows/designer/definiciones/:id/publicar
+ * Publicar o despublicar workflow
+ */
+router.patch('/designer/definiciones/:id/publicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    tenant.verifyTenantActive,
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    validate(designerSchemas.cambiarEstadoPublicacion),
+    DesignerController.cambiarEstadoPublicacion
+);
+
+/**
+ * GET /api/v1/workflows/designer/definiciones/:id/validar
+ * Validar estructura de un workflow
+ */
+router.get('/designer/definiciones/:id/validar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('workflows'),
+    permisos.verificarPermiso('workflows.gestionar'),
+    rateLimiting.apiRateLimit,
+    DesignerController.validarWorkflow
 );
 
 module.exports = router;

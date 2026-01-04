@@ -12,6 +12,7 @@ import {
   Shield,
   Coins,
   Users,
+  GitBranch,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 import useAuthStore from '@/store/authStore';
@@ -113,6 +114,16 @@ function ConfiguracionPage() {
       description: 'Tasas de cambio y monedas disponibles',
       icon: Coins,
       path: '/configuracion/monedas',
+      color: 'text-primary-600 dark:text-primary-400',
+      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: esAdmin,
+    },
+    {
+      id: 'workflows',
+      name: 'Workflows',
+      description: 'Configura flujos de aprobacion',
+      icon: GitBranch,
+      path: '/configuracion/workflows',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
       enabled: esAdmin,

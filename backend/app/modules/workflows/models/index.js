@@ -3,7 +3,9 @@
  */
 
 const WorkflowInstanciasModel = require('./instancias.model');
+const WorkflowDefinicionesModel = require('./definiciones.model');
 
 module.exports = {
-    WorkflowInstanciasModel
+    WorkflowInstanciasModel,
+    WorkflowDefinicionesModel
 };

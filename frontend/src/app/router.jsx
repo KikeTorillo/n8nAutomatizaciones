@@ -110,6 +110,8 @@ const OrganigramaPage = lazy(() => import('@/pages/organizacion/OrganigramaPage'
 const PermisosPage = lazy(() => import('@/pages/configuracion/PermisosPage'));
 const MonedasPage = lazy(() => import('@/pages/configuracion/MonedasPage'));
 const UsuariosPage = lazy(() => import('@/pages/configuracion/UsuariosPage'));
+const WorkflowsListPage = lazy(() => import('@/pages/configuracion/workflows/WorkflowsListPage'));
+const WorkflowDesignerPage = lazy(() => import('@/pages/configuracion/workflows/WorkflowDesignerPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -782,6 +784,31 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(MonedasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Workflows Designer (Ene 2026)
+      {
+        path: 'configuracion/workflows',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(WorkflowsListPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/workflows/nuevo',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(WorkflowDesignerPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'configuracion/workflows/:id',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(WorkflowDesignerPage)}
           </ProtectedRoute>
         ),
       },

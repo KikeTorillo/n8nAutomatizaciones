@@ -322,186 +322,129 @@ INSERT INTO workflow_definiciones (codigo, entidad_tipo, condicion_activacion) V
 
 ---
 
-## GAP: Disenador Visual de Workflows
+## Editor Visual de Workflows - IMPLEMENTADO
 
-### Estado Actual
+**Estado**: Completado y probado (4 Enero 2026)
+**Tecnologia**: React Flow
 
-| Componente | Estado | Descripcion |
-|------------|--------|-------------|
-| AprobacionesPage | Existe | Bandeja para aprobar/rechazar solicitudes |
-| WorkflowEngine | Existe | Motor backend que ejecuta workflows |
-| Tablas workflow_* | Existe | 6 tablas para definiciones y ejecuciones |
-| **UI de Diseno** | **NO EXISTE** | No hay forma visual de crear workflows |
-| **Configurador** | **NO EXISTE** | Solo via SQL directo |
-
-### Comparacion con Competencia
-
-| Funcionalidad | Odoo Studio | NetSuite SuiteFlow | Nexo (Actual) |
-|---------------|-------------|-------------------|---------------|
-| Diseno visual drag & drop | Si | Si | No |
-| Configurar condiciones | Si | Si | No (SQL) |
-| Asignar aprobadores | Si | Si | No (SQL) |
-| Crear pasos personalizados | Si | Si | No |
-| Preview del flujo | Si | Si | No |
-
-### Solucion Propuesta: Disenador Visual de Workflows
-
-**Objetivo**: Permitir a usuarios no tecnicos crear y modificar workflows de aprobacion sin escribir codigo.
-
-#### Componentes a Desarrollar
+### Estructura de Archivos
 
 ```
-frontend/src/pages/configuracion/workflows/
-├── WorkflowsListPage.jsx       # Lista de workflows existentes
-├── WorkflowDesignerPage.jsx    # Editor visual principal
-└── components/
-    ├── WorkflowCanvas.jsx      # Canvas drag & drop
-    ├── StepNode.jsx            # Nodo de paso (inicio, aprobacion, fin)
-    ├── ConditionEditor.jsx     # Editor de condiciones
-    ├── ApproverSelector.jsx    # Selector de aprobadores
-    ├── TransitionLine.jsx      # Lineas de conexion
-    └── WorkflowToolbar.jsx     # Barra de herramientas
+frontend/src/
+├── pages/configuracion/workflows/
+│   ├── WorkflowsListPage.jsx        # Lista CRUD de workflows
+│   └── WorkflowDesignerPage.jsx     # Editor visual principal
+│
+├── components/workflows/
+│   ├── canvas/WorkflowCanvas.jsx    # Canvas React Flow
+│   ├── nodes/
+│   │   ├── BaseNode.jsx             # Estilos base
+│   │   ├── StartNode.jsx            # Inicio (verde)
+│   │   ├── ApprovalNode.jsx         # Aprobacion (morado)
+│   │   ├── ConditionNode.jsx        # Condicion (ambar)
+│   │   ├── ActionNode.jsx           # Accion (azul)
+│   │   └── EndNode.jsx              # Fin (rojo)
+│   ├── edges/WorkflowEdge.jsx       # Conexiones con etiquetas
+│   ├── drawers/
+│   │   ├── ApprovalNodeDrawer.jsx   # Config aprobadores + timeout
+│   │   ├── NodeConfigDrawer.jsx     # Router por tipo de nodo
+│   │   └── WorkflowSettingsDrawer.jsx
+│   ├── editors/
+│   │   ├── ApproverSelector.jsx     # Selector rol/usuario/permiso
+│   │   └── ConditionEditor.jsx      # Editor condiciones
+│   ├── toolbar/
+│   │   ├── WorkflowToolbar.jsx      # Guardar/Validar/Publicar
+│   │   └── NodePalette.jsx          # Paleta drag & drop
+│   └── modals/PublishWorkflowModal.jsx
+│
+└── hooks/
+    ├── useWorkflowDesigner.js       # CRUD + serializacion
+    └── useWorkflowValidation.js     # Validacion del flujo
+
+backend/app/modules/workflows/
+├── controllers/designer.controller.js
+├── models/definiciones.model.js
+└── schemas/designer.schemas.js
 ```
 
-#### Arquitectura del Disenador
+### API Endpoints
 
-```
-+------------------------------------------------------------------+
-|                    WORKFLOW DESIGNER                              |
-+------------------------------------------------------------------+
-|  [Toolbar: Guardar | Probar | Publicar | Historial]              |
-+------------------------------------------------------------------+
-|                           |                                       |
-|   PANEL IZQUIERDO         |         CANVAS CENTRAL                |
-|   +-----------------+     |     +-------------------------+       |
-|   | Componentes     |     |     |                         |       |
-|   | +-------------+ |     |     |    [INICIO]             |       |
-|   | | Inicio      | |     |     |        |                |       |
-|   | +-------------+ |     |     |        v                |       |
-|   | | Aprobacion  | |     |     |  +-----------+          |       |
-|   | +-------------+ |     |     |  | Condicion |          |       |
-|   | | Condicion   | |     |     |  | monto>10k |          |       |
-|   | +-------------+ |     |     |  +-----------+          |       |
-|   | | Notificar   | |     |     |    /       \            |       |
-|   | +-------------+ |     |     |   Si        No          |       |
-|   | | Fin         | |     |     |   |          |          |       |
-|   | +-------------+ |     |     |   v          v          |       |
-|   +-----------------+     |     | [Aprobar] [Auto-OK]     |       |
-|                           |     |     |          |        |       |
-|   PROPIEDADES             |     |     v          v        |       |
-|   +-----------------+     |     |      [FIN]              |       |
-|   | Paso: Aprobar   |     |     |                         |       |
-|   | Timeout: 48h    |     |     +-------------------------+       |
-|   | Aprobadores:    |     |                                       |
-|   | [x] Gerente     |     |   PANEL DERECHO                       |
-|   | [ ] Director    |     |   +---------------------------+       |
-|   | Escalar a: ...  |     |   | Vista Previa JSON         |       |
-|   +-----------------+     |   | Validacion en tiempo real |       |
-|                           |   +---------------------------+       |
-+------------------------------------------------------------------+
-```
+| Metodo | Ruta | Descripcion |
+|--------|------|-------------|
+| GET | `/api/v1/workflows/definiciones` | Listar |
+| GET | `/api/v1/workflows/definiciones/:id` | Detalle con pasos |
+| POST | `/api/v1/workflows/designer/definiciones` | Crear |
+| PUT | `/api/v1/workflows/designer/definiciones/:id` | Actualizar |
+| DELETE | `/api/v1/workflows/designer/definiciones/:id` | Eliminar |
+| PATCH | `/api/v1/workflows/designer/definiciones/:id/publicar` | Publicar |
 
-#### Funcionalidades Clave
+### Tipos de Nodos
 
-| Funcionalidad | Descripcion | Prioridad |
-|---------------|-------------|-----------|
-| Drag & Drop | Arrastrar nodos al canvas | Alta |
-| Conexiones visuales | Lineas entre nodos | Alta |
-| Editor de condiciones | UI para campo/operador/valor | Alta |
-| Selector de aprobadores | Por rol, usuario, jerarquia | Alta |
-| Validacion en tiempo real | Verificar flujo valido | Media |
-| Preview/Simulacion | Probar con datos de ejemplo | Media |
-| Versionamiento | Historial de cambios | Media |
-| Importar/Exportar | JSON para backup | Baja |
-| Templates | Plantillas predefinidas | Baja |
+| Tipo | Color | Handles | Config |
+|------|-------|---------|--------|
+| `inicio` | Verde | Solo salida | - |
+| `aprobacion` | Morado | Entrada + 3 salidas | aprobadores, timeout |
+| `condicion` | Ambar | Entrada + 2 salidas | campo, operador, valor |
+| `accion` | Azul | Entrada + salida | tipo_accion, config |
+| `fin` | Rojo | Solo entrada | - |
 
-#### Tecnologias Sugeridas
+### Config JSONB para Aprobacion
 
-| Opcion | Libreria | Pros | Contras |
-|--------|----------|------|---------|
-| **A** | React Flow | Popular, bien documentado, MIT | Curva de aprendizaje |
-| B | Xyflow | Fork de React Flow, activo | Menos ejemplos |
-| C | Custom Canvas | Control total | Mucho desarrollo |
-| D | Blockly (Google) | Muy visual, probado | Estilo "bloques" |
-
-**Recomendacion**: React Flow (opcion A) - es el estandar de la industria para editores de flujos.
-
-#### Ejemplo de Integracion con React Flow
-
-```jsx
-// WorkflowCanvas.jsx (concepto)
-import ReactFlow, {
-  Background,
-  Controls,
-  MiniMap
-} from 'reactflow';
-
-const nodeTypes = {
-  inicio: StartNode,
-  aprobacion: ApprovalNode,
-  condicion: ConditionNode,
-  notificacion: NotifyNode,
-  fin: EndNode,
-};
-
-function WorkflowCanvas({ workflow, onChange }) {
-  return (
-    <ReactFlow
-      nodes={workflow.nodes}
-      edges={workflow.edges}
-      nodeTypes={nodeTypes}
-      onNodesChange={onChange}
-      fitView
-    >
-      <Background />
-      <Controls />
-      <MiniMap />
-    </ReactFlow>
-  );
+```json
+{
+  "aprobadores_tipo": "rol",
+  "aprobadores": ["admin"],
+  "timeout_horas": 24,
+  "accion_timeout": "escalar",
+  "notificar": true
 }
 ```
 
-#### API Backend Requerida
+### Serializacion Frontend → Backend
 
-| Endpoint | Metodo | Descripcion |
-|----------|--------|-------------|
-| `/api/v1/workflows` | GET | Listar workflows |
-| `/api/v1/workflows` | POST | Crear workflow |
-| `/api/v1/workflows/:id` | GET | Obtener detalle |
-| `/api/v1/workflows/:id` | PUT | Actualizar workflow |
-| `/api/v1/workflows/:id` | DELETE | Eliminar (soft) |
-| `/api/v1/workflows/:id/validate` | POST | Validar flujo |
-| `/api/v1/workflows/:id/simulate` | POST | Simular con datos |
-| `/api/v1/workflows/:id/publish` | POST | Publicar version |
-| `/api/v1/workflows/:id/versions` | GET | Historial versiones |
-
-#### Plan de Implementacion
-
-| Fase | Duracion | Entregables |
-|------|----------|-------------|
-| **Fase 1** | 2 semanas | Lista de workflows + CRUD basico |
-| **Fase 2** | 3 semanas | Canvas con React Flow + nodos basicos |
-| **Fase 3** | 2 semanas | Editor de condiciones + aprobadores |
-| **Fase 4** | 2 semanas | Validacion + simulacion |
-| **Fase 5** | 1 semana | Templates + pulido UX |
-
-**Total estimado**: 10 semanas de desarrollo
-
-#### Mockup de Lista de Workflows
-
+```javascript
+// useWorkflowDesigner.js
+function transformApprovalConfig(config) {
+  const { aprobador, ...rest } = config;
+  return {
+    ...rest,
+    aprobadores_tipo: aprobador.tipo,
+    aprobadores: [aprobador.valor],
+  };
+}
 ```
-+------------------------------------------------------------------+
-| Configuracion > Workflows de Aprobacion                          |
-+------------------------------------------------------------------+
-| [+ Nuevo Workflow]                           [Buscar...]         |
-+------------------------------------------------------------------+
-| Nombre                  | Tipo          | Estado    | Acciones   |
-+------------------------------------------------------------------+
-| Aprobacion OC por monto | orden_compra  | Activo    | [Editar]   |
-| Aprobacion Gastos       | gastos        | Borrador  | [Editar]   |
-| Aprobacion Facturas     | factura       | Inactivo  | [Editar]   |
-+------------------------------------------------------------------+
+
+### Prueba Validada (4 Ene 2026)
+
+**Flujo probado**: `Inicio → siguiente → Aprobacion (admin, 24h) → aprobar → Fin`
+
+**Verificacion en BD**:
+```sql
+-- workflow_definiciones: id=2, codigo='nuevo_workflow'
+-- workflow_pasos: 3 (inicio, aprobacion, fin)
+-- workflow_transiciones: 2 (siguiente, aprobar)
 ```
+
+### Funcionalidades Implementadas
+
+- [x] Canvas React Flow con dark mode
+- [x] Paleta de 5 tipos de nodos
+- [x] Drag & drop de nodos
+- [x] Conexiones con etiquetas
+- [x] Drawer config aprobacion (rol, timeout, accion)
+- [x] Drawer config workflow (codigo, nombre, entidad)
+- [x] Validacion en tiempo real
+- [x] Indicador de errores/warnings
+- [x] Minimapa de navegacion
+- [x] Atajos teclado (Delete, Ctrl+S)
+- [x] Guardado en PostgreSQL
+
+### Pendiente
+
+- [ ] Drawer para nodo condicion
+- [ ] Drawer para nodo accion
+- [ ] Duplicar workflow
+- [ ] Integracion con motor de ejecucion
 
 ---
 
