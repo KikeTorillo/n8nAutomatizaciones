@@ -600,7 +600,9 @@ class WorkflowInstanciasModel {
             const transicionesQuery = `
                 SELECT
                     wt.*,
+                    wp_origen.codigo AS paso_origen_codigo,
                     wp_origen.nombre AS paso_origen_nombre,
+                    wp_destino.codigo AS paso_destino_codigo,
                     wp_destino.nombre AS paso_destino_nombre
                 FROM workflow_transiciones wt
                 JOIN workflow_pasos wp_origen ON wp_origen.id = wt.paso_origen_id

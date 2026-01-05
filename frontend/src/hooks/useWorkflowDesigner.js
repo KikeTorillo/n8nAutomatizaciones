@@ -256,6 +256,24 @@ export function edgesToTransiciones(edges) {
 }
 
 /**
+ * Transforma config de aprobación del formato backend al formato frontend
+ * Backend: { aprobadores_tipo: "rol", aprobadores: ["admin"] }
+ * Frontend: { aprobador: { tipo: "rol", valor: "admin" } }
+ */
+function transformBackendApprovalConfig(config) {
+  if (!config?.aprobadores_tipo) return config;
+
+  const { aprobadores_tipo, aprobadores, ...rest } = config;
+  return {
+    ...rest,
+    aprobador: {
+      tipo: aprobadores_tipo,
+      valor: aprobadores?.[0] || null,
+    },
+  };
+}
+
+/**
  * Convierte los pasos del backend a nodos de React Flow
  * @param {Array} pasos - Pasos del backend
  * @returns {Array} Nodos de React Flow
@@ -265,6 +283,11 @@ export function pasosToNodes(pasos) {
     // Extraer posiciones del config._visual
     const visual = paso.config?._visual || {};
     const { _visual, ...configSinVisual } = paso.config || {};
+
+    // Transformar config de aprobación si aplica
+    const configFinal = paso.tipo === 'aprobacion'
+      ? transformBackendApprovalConfig(configSinVisual)
+      : configSinVisual;
 
     return {
       id: paso.codigo,
@@ -276,11 +299,28 @@ export function pasosToNodes(pasos) {
       data: {
         label: paso.nombre,
         descripcion: paso.descripcion,
-        config: configSinVisual,
+        config: configFinal,
         pasoId: paso.id,
       },
     };
   });
+}
+
+/**
+ * Mapea la etiqueta de transición al sourceHandle correspondiente
+ * @param {string} etiqueta - Etiqueta de la transición
+ * @returns {string} ID del sourceHandle
+ */
+function getSourceHandle(etiqueta) {
+  const handleMap = {
+    aprobar: 'aprobar',
+    rechazar: 'rechazar',
+    si: 'si',
+    no: 'no',
+    siguiente: 'out',
+    timeout: 'timeout',
+  };
+  return handleMap[etiqueta] || 'out';
 }
 
 /**
@@ -290,9 +330,11 @@ export function pasosToNodes(pasos) {
  */
 export function transicionesToEdges(transiciones) {
   return (transiciones || []).map((trans) => ({
-    id: `${trans.paso_origen_codigo}-${trans.paso_destino_codigo}`,
+    id: `${trans.paso_origen_codigo}-${trans.paso_destino_codigo}-${trans.etiqueta}`,
     source: trans.paso_origen_codigo,
     target: trans.paso_destino_codigo,
+    sourceHandle: getSourceHandle(trans.etiqueta),
+    targetHandle: 'in',
     label: trans.etiqueta,
     type: 'workflowEdge',
     animated: trans.etiqueta === 'aprobar',

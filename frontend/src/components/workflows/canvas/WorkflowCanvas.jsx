@@ -122,7 +122,7 @@ function WorkflowCanvas({
         fitView
         fitViewOptions={{ padding: 0.2 }}
         snapToGrid
-        snapGrid={[15, 15]}
+        snapGrid={[5, 5]}
         nodesDraggable={!readOnly}
         nodesConnectable={!readOnly}
         elementsSelectable={!readOnly}

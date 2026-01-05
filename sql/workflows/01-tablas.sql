@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS workflow_definiciones (
     activo BOOLEAN DEFAULT true,
     version INTEGER DEFAULT 1,
 
+    -- Prioridad para orden de evaluación
+    prioridad INTEGER DEFAULT 0,
+    -- 0 = normal, 1 = alta, 2 = urgente
+
     -- Auditoría
     creado_por INTEGER REFERENCES usuarios(id),
     creado_en TIMESTAMPTZ DEFAULT NOW(),
@@ -105,6 +109,10 @@ CREATE TABLE IF NOT EXISTS workflow_pasos (
 
     -- Orden para visualización
     orden INTEGER DEFAULT 0,
+
+    -- Posición en el canvas del editor visual
+    posicion_x INTEGER DEFAULT 0,
+    posicion_y INTEGER DEFAULT 0,
 
     -- Restricciones
     CONSTRAINT uk_workflow_pasos_codigo UNIQUE(workflow_id, codigo),

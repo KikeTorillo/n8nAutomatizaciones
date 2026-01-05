@@ -25,10 +25,10 @@ function ApprovalNode({ data, selected }) {
       hasError={data?.hasError}
       hasWarning={data?.hasWarning}
     >
-      {/* Handle de entrada */}
+      {/* Handle de entrada (izquierda para flujo horizontal) */}
       <NodeHandle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         id="in"
       />
 
@@ -54,18 +54,18 @@ function ApprovalNode({ data, selected }) {
         </div>
       </div>
 
-      {/* Handles de salida: aprobar y rechazar */}
+      {/* Handles de salida: aprobar (arriba-derecha) y rechazar (abajo-derecha) */}
       <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         id="aprobar"
-        style={{ left: '30%' }}
+        style={{ top: '30%' }}
       />
       <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         id="rechazar"
-        style={{ left: '70%' }}
+        style={{ top: '70%' }}
       />
     </BaseNode>
   );

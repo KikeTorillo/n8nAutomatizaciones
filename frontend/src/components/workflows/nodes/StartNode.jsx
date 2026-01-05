@@ -23,10 +23,10 @@ function StartNode({ data, selected }) {
         <Play className="w-6 h-6" />
       </div>
 
-      {/* Solo handle de salida */}
+      {/* Solo handle de salida (derecha para flujo horizontal) */}
       <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         id="out"
       />
     </BaseNode>

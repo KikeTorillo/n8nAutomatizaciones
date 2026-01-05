@@ -77,6 +77,7 @@ function WorkflowDesignerPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [isNodeConfigOpen, setIsNodeConfigOpen] = useState(false);
   const [showPublishModal, setShowPublishModal] = useState(false);
+  const initialLoadDone = useRef(false);
 
   // Hook de validación
   const validation = useWorkflowValidation(nodes, edges, workflowData);
@@ -109,15 +110,14 @@ function WorkflowDesignerPage() {
       setNodes(loadedNodes);
       setEdges(loadedEdges);
       setIsDirty(false);
+
+      // Marcar carga inicial como completada (después de un tick para que los states se actualicen)
+      setTimeout(() => {
+        initialLoadDone.current = true;
+      }, 0);
     }
   }, [existingWorkflow, isNew, setNodes, setEdges]);
 
-  // Marcar como dirty cuando cambian nodos/edges
-  useEffect(() => {
-    if (!isLoading && !isNew && existingWorkflow) {
-      setIsDirty(true);
-    }
-  }, [nodes, edges]);
 
   // Handler para conectar nodos
   const onConnect = useCallback(
@@ -411,11 +411,24 @@ function WorkflowDesignerPage() {
             edges={edges}
             onNodesChange={(changes) => {
               onNodesChange(changes);
-              setIsDirty(true);
+              // Solo marcar dirty para cambios significativos (posición, eliminación)
+              // No para dimensiones o selección que ocurren al cargar
+              const significantChange = changes.some(
+                (c) => c.type === 'position' || c.type === 'remove'
+              );
+              if (significantChange && initialLoadDone.current) {
+                setIsDirty(true);
+              }
             }}
             onEdgesChange={(changes) => {
               onEdgesChange(changes);
-              setIsDirty(true);
+              // Solo marcar dirty para cambios significativos
+              const significantChange = changes.some(
+                (c) => c.type === 'remove' || c.type === 'add'
+              );
+              if (significantChange && initialLoadDone.current) {
+                setIsDirty(true);
+              }
             }}
             onConnect={onConnect}
             onNodeClick={onNodeClick}

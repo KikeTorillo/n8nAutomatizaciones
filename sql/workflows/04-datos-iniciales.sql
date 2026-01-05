@@ -61,7 +61,8 @@ DECLARE
     v_workflow_id INTEGER;
     v_paso_inicio_id INTEGER;
     v_paso_aprobacion_id INTEGER;
-    v_paso_fin_id INTEGER;
+    v_paso_fin_aprobado_id INTEGER;
+    v_paso_fin_rechazado_id INTEGER;
 BEGIN
     -- Verificar si ya existe
     SELECT id INTO v_workflow_id
@@ -94,8 +95,10 @@ BEGIN
     RETURNING id INTO v_workflow_id;
 
     -- Crear paso: INICIO
+    -- StartNode: 64px alto, handle al centro (32px)
+    -- Para alinear con ApprovalNode (80px, handle a 40px): y = 208
     INSERT INTO workflow_pasos (
-        workflow_id, codigo, nombre, descripcion, tipo, config, orden
+        workflow_id, codigo, nombre, descripcion, tipo, config, orden, posicion_x, posicion_y
     ) VALUES (
         v_workflow_id,
         'inicio',
@@ -103,13 +106,17 @@ BEGIN
         'Punto de entrada del workflow',
         'inicio',
         '{}'::JSONB,
-        0
+        0,
+        100,  -- posicion_x
+        211   -- posicion_y (ajustado para alinear handle con aprobacion - StartNode 66px, ApprovalNode 89px)
     )
     RETURNING id INTO v_paso_inicio_id;
 
     -- Crear paso: APROBACIÓN por admin/propietario
+    -- ApprovalNode: ~80px alto, handle entrada al 50% (40px)
+    -- Handles salida: aprobar al 30% (24px), rechazar al 70% (56px)
     INSERT INTO workflow_pasos (
-        workflow_id, codigo, nombre, descripcion, tipo, config, orden
+        workflow_id, codigo, nombre, descripcion, tipo, config, orden, posicion_x, posicion_y
     ) VALUES (
         v_workflow_id,
         'aprobacion_admin',
@@ -122,13 +129,18 @@ BEGIN
             "timeout_horas": 72,
             "accion_timeout": null
         }'::JSONB,
-        1
+        1,
+        350,  -- posicion_x
+        200   -- posicion_y
     )
     RETURNING id INTO v_paso_aprobacion_id;
 
     -- Crear paso: FIN (aprobado)
+    -- EndNode: 64px alto, handle al centro (32px)
+    -- Debe alinear con handle "aprobar" del ApprovalNode (y=200+24=224)
+    -- Posicion: 224 - 32 = 192
     INSERT INTO workflow_pasos (
-        workflow_id, codigo, nombre, descripcion, tipo, config, orden
+        workflow_id, codigo, nombre, descripcion, tipo, config, orden, posicion_x, posicion_y
     ) VALUES (
         v_workflow_id,
         'fin_aprobado',
@@ -139,9 +151,32 @@ BEGIN
             "accion": "cambiar_estado",
             "estado_nuevo": "enviada"
         }'::JSONB,
-        2
+        2,
+        600,  -- posicion_x
+        192   -- posicion_y (alineado con handle "aprobar")
     )
-    RETURNING id INTO v_paso_fin_id;
+    RETURNING id INTO v_paso_fin_aprobado_id;
+
+    -- Crear paso: FIN (rechazado)
+    -- Debe alinear con handle "rechazar" del ApprovalNode (y=200+56=256)
+    -- Posicion: 256 - 32 = 224
+    INSERT INTO workflow_pasos (
+        workflow_id, codigo, nombre, descripcion, tipo, config, orden, posicion_x, posicion_y
+    ) VALUES (
+        v_workflow_id,
+        'fin_rechazado',
+        'Orden Rechazada',
+        'La orden de compra fue rechazada',
+        'fin',
+        '{
+            "accion": "cambiar_estado",
+            "estado_nuevo": "rechazada"
+        }'::JSONB,
+        3,
+        600,  -- posicion_x
+        224   -- posicion_y (alineado con handle "rechazar")
+    )
+    RETURNING id INTO v_paso_fin_rechazado_id;
 
     -- Crear transición: inicio -> aprobacion
     INSERT INTO workflow_transiciones (
@@ -154,16 +189,28 @@ BEGIN
         0
     );
 
-    -- Crear transición: aprobacion -> fin (cuando se aprueba)
+    -- Crear transición: aprobacion -> fin_aprobado (cuando se aprueba)
     INSERT INTO workflow_transiciones (
         workflow_id, paso_origen_id, paso_destino_id, etiqueta, condicion, orden
     ) VALUES (
         v_workflow_id,
         v_paso_aprobacion_id,
-        v_paso_fin_id,
+        v_paso_fin_aprobado_id,
         'aprobar',
         '{"decision": "aprobar"}'::JSONB,
         0
+    );
+
+    -- Crear transición: aprobacion -> fin_rechazado (cuando se rechaza)
+    INSERT INTO workflow_transiciones (
+        workflow_id, paso_origen_id, paso_destino_id, etiqueta, condicion, orden
+    ) VALUES (
+        v_workflow_id,
+        v_paso_aprobacion_id,
+        v_paso_fin_rechazado_id,
+        'rechazar',
+        '{"decision": "rechazar"}'::JSONB,
+        1
     );
 
     RETURN v_workflow_id;

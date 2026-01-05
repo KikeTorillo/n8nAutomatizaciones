@@ -30,35 +30,35 @@ function ConditionNode({ data, selected }) {
         <GitBranch className="w-5 h-5" />
       </BaseNode>
 
-      {/* Handle de entrada (arriba) */}
+      {/* Handle de entrada (izquierda para flujo horizontal) */}
       <NodeHandle
         type="target"
-        position={Position.Top}
-        id="in"
-        style={{ top: -6 }}
-      />
-
-      {/* Handle Si (izquierda) */}
-      <NodeHandle
-        type="source"
         position={Position.Left}
-        id="si"
+        id="in"
         style={{ left: -6 }}
       />
 
-      {/* Handle No (derecha) */}
+      {/* Handle Si (derecha arriba) */}
+      <NodeHandle
+        type="source"
+        position={Position.Right}
+        id="si"
+        style={{ right: -6, top: '30%' }}
+      />
+
+      {/* Handle No (derecha abajo) */}
       <NodeHandle
         type="source"
         position={Position.Right}
         id="no"
-        style={{ right: -6 }}
+        style={{ right: -6, top: '70%' }}
       />
 
       {/* Etiquetas */}
-      <span className="absolute -left-6 top-1/2 -translate-y-1/2 text-[10px] font-medium text-green-600 dark:text-green-400">
-        Si
+      <span className="absolute -right-7 top-[20%] text-[10px] font-medium text-green-600 dark:text-green-400">
+        Sí
       </span>
-      <span className="absolute -right-7 top-1/2 -translate-y-1/2 text-[10px] font-medium text-red-600 dark:text-red-400">
+      <span className="absolute -right-8 top-[60%] text-[10px] font-medium text-red-600 dark:text-red-400">
         No
       </span>
 

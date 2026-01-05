@@ -29,10 +29,10 @@ function ActionNode({ data, selected }) {
       hasError={data?.hasError}
       hasWarning={data?.hasWarning}
     >
-      {/* Handle de entrada */}
+      {/* Handle de entrada (izquierda para flujo horizontal) */}
       <NodeHandle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         id="in"
       />
 
@@ -52,10 +52,10 @@ function ActionNode({ data, selected }) {
         </div>
       </div>
 
-      {/* Handle de salida */}
+      {/* Handle de salida (derecha para flujo horizontal) */}
       <NodeHandle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
         id="out"
       />
     </BaseNode>

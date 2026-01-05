@@ -26,10 +26,10 @@ function EndNode({ data, selected }) {
       hasError={data?.hasError}
       hasWarning={data?.hasWarning}
     >
-      {/* Solo handle de entrada */}
+      {/* Solo handle de entrada (izquierda para flujo horizontal) */}
       <NodeHandle
         type="target"
-        position={Position.Top}
+        position={Position.Left}
         id="in"
       />
 

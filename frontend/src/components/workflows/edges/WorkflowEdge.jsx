@@ -10,6 +10,7 @@ import {
   EdgeLabelRenderer,
   getBezierPath,
   getSmoothStepPath,
+  getStraightPath,
 } from 'reactflow';
 
 // Colores y estilos por tipo de etiqueta
