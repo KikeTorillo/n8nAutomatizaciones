@@ -151,7 +151,7 @@ class SaldosVacacionesModel {
                 FROM saldos_vacaciones sv
                 JOIN profesionales p ON p.id = sv.profesional_id
                 WHERE ${whereClause}
-                  AND p.activo = true
+                  AND p.estado = 'activo'
                   AND p.eliminado_en IS NULL
             `;
             const countResult = await db.query(countQuery, values);
@@ -164,16 +164,16 @@ class SaldosVacacionesModel {
                     sv.*,
                     p.nombre_completo as profesional_nombre,
                     p.email as profesional_email,
-                    p.codigo_empleado,
+                    p.codigo as codigo_empleado,
                     p.fecha_ingreso,
                     d.nombre as departamento_nombre
                 FROM saldos_vacaciones sv
                 JOIN profesionales p ON p.id = sv.profesional_id
                 LEFT JOIN departamentos d ON d.id = p.departamento_id
                 WHERE ${whereClause}
-                  AND p.activo = true
+                  AND p.estado = 'activo'
                   AND p.eliminado_en IS NULL
-                ORDER BY p.nombre ASC
+                ORDER BY p.nombre_completo ASC
                 LIMIT $${contador} OFFSET $${contador + 1}
             `;
             values.push(limit, offset);

@@ -344,8 +344,30 @@ Etiquetas: GenerarEtiquetaGS1Modal.jsx (5 plantillas industria)
 | Reportes | Ventas diarias |
 
 ### Workflows de Aprobación
-Motor para OC basado en límites por rol.
-- `backend/app/modules/workflows/services/workflow.engine.js`
+
+| Enfoque | Módulos |
+|---------|---------|
+| **WorkflowEngine** | OC, Requisiciones, Facturas, Pagos, Gastos (condiciones por monto/rol) |
+| **Sistema Propio** | Vacaciones, Nómina, Contratos (lógica de dominio específica) |
+
+**Flujo de ejecución**:
+```
+OC.enviar() → workflowAdapter.evaluarRequiereAprobacion()
+           → si total > limite_aprobacion: iniciarWorkflow() → notificar aprobadores
+           → Aprobador.aprobar() → si hay otro nivel: notificar siguiente
+           → Último nivel aprueba → ejecutar acción final (OC.estado='enviada')
+```
+
+**Multi-nivel**: Manager → Director → CFO (notificación automática entre niveles)
+
+**Editor Visual**: React Flow + Tailwind, snap grid 5x5, flujo horizontal
+- Nodos: inicio, aprobación, condición, acción, fin
+- Ruta: `/configuracion/workflows`
+
+**Archivos clave**:
+- `workflow.engine.js` - Motor: evaluar, iniciar, aprobar, rechazar
+- `workflowAdapter.js` - Interfaz desacoplada para otros módulos
+- `WorkflowDesignerPage.jsx` - Editor visual
 
 ### Multi-Moneda
 MXN, COP, USD con conversión tiempo real (`useCurrency.js`)
@@ -469,6 +491,8 @@ sql/
 - **Módulo Vacaciones**: Solicitudes, políticas, saldos, niveles antigüedad
 - **Profesionales con Tabs**: Arquitectura modular RHF + Zod (General, Trabajo, Personal, Currículum, Documentos, Compensación, Configuración)
 - **Catálogos Sistema**: Categorías de pago, motivos de salida, ubicaciones de trabajo
+- **Editor Visual Workflows**: React Flow, 5 tipos de nodos, flujo horizontal, validación en tiempo real
+- **Multi-nivel Aprobación**: Cadenas Manager → Director → CFO con notificación automática
 
 ---
 
@@ -492,6 +516,8 @@ sql/
 | Profesionales - Detalle | ✅ | Vista con tabs, edición inline, indicador completitud |
 | Vacaciones - Dashboard | ✅ | Días disponibles, usados, en trámite |
 | Home - Dashboard | ✅ | 17 módulos, accesos rápidos, trial info |
+| Workflows - Editor Visual | ✅ | Crear, editar, duplicar, publicar workflows |
+| Workflows - Ejecución | ✅ | OC con aprobación, multi-nivel, notificaciones |
 
 ---
 

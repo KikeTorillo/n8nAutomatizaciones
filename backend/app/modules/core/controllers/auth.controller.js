@@ -118,6 +118,7 @@ class AuthController {
                 telefono: usuario.telefono,
                 rol: usuario.rol,
                 organizacion_id: usuario.organizacion_id,
+                profesional_id: usuario.profesional_id || null,
                 email_verificado: usuario.email_verificado,
                 onboarding_completado: usuario.onboarding_completado,  // Dic 2025 - Flujo unificado
                 // Datos de la organización (para filtros de tipos profesionales, etc.)

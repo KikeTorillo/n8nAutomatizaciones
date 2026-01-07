@@ -116,6 +116,94 @@ export const LABELS_TIPO_BLOQUEO = {
 };
 
 /**
+ * Orígenes de bloqueo (cómo fue creado)
+ */
+export const ORIGENES_BLOQUEO = {
+  manual: {
+    label: 'Manual',
+    descripcion: 'Creado manualmente por un usuario',
+    color: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+    editable: true,
+  },
+  vacaciones: {
+    label: 'Vacaciones',
+    descripcion: 'Generado por solicitud de vacaciones aprobada',
+    color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
+    editable: false,
+    moduloRelacionado: 'Vacaciones',
+  },
+  feriados: {
+    label: 'Feriados',
+    descripcion: 'Generado por el catálogo de días festivos',
+    color: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300',
+    editable: false,
+    moduloRelacionado: 'Días Festivos',
+  },
+  importado: {
+    label: 'Importado',
+    descripcion: 'Importado desde sistema externo',
+    color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
+    editable: false,
+  },
+};
+
+/**
+ * Opciones de origen para filtros/selects
+ */
+export const OPCIONES_ORIGEN_BLOQUEO = [
+  { value: '', label: 'Todos los orígenes' },
+  { value: 'manual', label: 'Manual' },
+  { value: 'vacaciones', label: 'Vacaciones' },
+  { value: 'feriados', label: 'Feriados' },
+  { value: 'importado', label: 'Importado' },
+];
+
+/**
+ * Obtener label del origen de un bloqueo
+ * @param {string} origen - Código del origen (manual, vacaciones, feriados, importado)
+ * @returns {string} Label traducido
+ */
+export const obtenerLabelOrigenBloqueo = (origen) => {
+  return ORIGENES_BLOQUEO[origen]?.label || origen || 'Manual';
+};
+
+/**
+ * Obtener clases de color para el badge de origen
+ * @param {string} origen - Código del origen
+ * @returns {string} Clases Tailwind para el badge
+ */
+export const obtenerColorOrigenBloqueo = (origen) => {
+  return ORIGENES_BLOQUEO[origen]?.color || ORIGENES_BLOQUEO.manual.color;
+};
+
+/**
+ * Verificar si un bloqueo es auto-generado (no editable manualmente)
+ * @param {Object} bloqueo - { auto_generado, origen_bloqueo }
+ * @returns {boolean}
+ */
+export const esBloqueoAutoGenerado = (bloqueo) => {
+  return bloqueo.auto_generado === true;
+};
+
+/**
+ * Obtener mensaje de por qué un bloqueo no es editable
+ * @param {Object} bloqueo - { origen_bloqueo }
+ * @returns {string} Mensaje explicativo
+ */
+export const obtenerMensajeBloqueoProtegido = (bloqueo) => {
+  const origen = ORIGENES_BLOQUEO[bloqueo.origen_bloqueo];
+  if (!origen || origen.editable) return '';
+
+  if (bloqueo.origen_bloqueo === 'vacaciones') {
+    return 'Este bloqueo fue generado por una solicitud de vacaciones. Para modificarlo, cancela la solicitud desde el módulo de Vacaciones.';
+  }
+  if (bloqueo.origen_bloqueo === 'feriados') {
+    return 'Este bloqueo corresponde a un día festivo. Para modificarlo, ve a Configuración → Días Festivos.';
+  }
+  return 'Este bloqueo fue generado automáticamente y no puede ser modificado directamente.';
+};
+
+/**
  * Obtener configuración de color para un tipo de bloqueo
  * @param {string} tipo - Tipo de bloqueo
  * @returns {Object} Objeto con clases Tailwind y color hex
@@ -398,9 +486,15 @@ export default {
   COLORES_TIPO_BLOQUEO,
   ICONOS_TIPO_BLOQUEO,
   LABELS_TIPO_BLOQUEO,
+  ORIGENES_BLOQUEO,
+  OPCIONES_ORIGEN_BLOQUEO,
   obtenerColorTipoBloqueo,
   obtenerIconoTipoBloqueo,
   obtenerLabelTipoBloqueo,
+  obtenerLabelOrigenBloqueo,
+  obtenerColorOrigenBloqueo,
+  esBloqueoAutoGenerado,
+  obtenerMensajeBloqueoProtegido,
   calcularDiasBloqueo,
   validarSolapamientoBloqueos,
   formatearRangoBloqueo,

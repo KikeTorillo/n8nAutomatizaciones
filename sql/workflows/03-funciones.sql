@@ -19,6 +19,66 @@
 -- ====================================================================
 
 -- ====================================================================
+-- FUNCIÓN: resolver_supervisor_aprobador
+-- Resuelve el(los) supervisor(es) que pueden aprobar según configuración
+-- ====================================================================
+-- Obtiene los supervisores de un usuario que pueden actuar como aprobadores
+-- basándose en la jerarquía de profesionales.
+--
+-- PARÁMETROS:
+-- - p_usuario_id: ID del usuario que inició el workflow
+-- - p_nivel: Nivel de supervisor (1=directo, 2=segundo nivel, etc.)
+-- - p_cualquier_nivel: Si true, cualquier supervisor en la cadena puede aprobar
+--
+-- RETORNA: TABLE(supervisor_usuario_id, supervisor_profesional_id, nivel_jerarquico)
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION resolver_supervisor_aprobador(
+    p_usuario_id INTEGER,
+    p_nivel INTEGER DEFAULT 1,
+    p_cualquier_nivel BOOLEAN DEFAULT FALSE
+)
+RETURNS TABLE (
+    supervisor_usuario_id INTEGER,
+    supervisor_profesional_id INTEGER,
+    nivel_jerarquico INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    WITH usuario_profesional AS (
+        -- Obtener el profesional_id del usuario que inicia
+        SELECT u.profesional_id
+        FROM usuarios u
+        WHERE u.id = p_usuario_id
+          AND u.profesional_id IS NOT NULL
+    ),
+    cadena AS (
+        -- Obtener la cadena de supervisores usando función existente
+        SELECT
+            cs.profesional_id as supervisor_id,
+            cs.nivel
+        FROM usuario_profesional up
+        CROSS JOIN LATERAL get_cadena_supervisores(up.profesional_id) cs
+    )
+    SELECT
+        u.id AS supervisor_usuario_id,
+        c.supervisor_id AS supervisor_profesional_id,
+        c.nivel AS nivel_jerarquico
+    FROM cadena c
+    JOIN usuarios u ON u.profesional_id = c.supervisor_id AND u.activo = true
+    WHERE
+        CASE
+            WHEN p_cualquier_nivel THEN TRUE
+            ELSE c.nivel = p_nivel
+        END
+    ORDER BY c.nivel;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+COMMENT ON FUNCTION resolver_supervisor_aprobador IS 'Resuelve los supervisores que pueden aprobar un workflow basado en la jerarquía de profesionales';
+
+
+-- ====================================================================
 -- FUNCIÓN: obtener_delegado_activo
 -- Obtiene el usuario delegado activo si existe
 -- ====================================================================
@@ -157,6 +217,30 @@ BEGIN
             -- Usar función existente del sistema de permisos
             RETURN tiene_permiso(p_usuario_id, COALESCE(v_sucursal_id, 1), v_permiso_requerido);
 
+        WHEN 'supervisor' THEN
+            -- El usuario debe ser supervisor del iniciador del workflow
+            DECLARE
+                v_iniciado_por INTEGER;
+                v_nivel INTEGER;
+                v_cualquier_nivel BOOLEAN;
+            BEGIN
+                -- Obtener quién inició el workflow
+                SELECT wi.iniciado_por INTO v_iniciado_por
+                FROM workflow_instancias wi
+                WHERE wi.id = p_instancia_id;
+
+                -- Obtener configuración de nivel
+                v_nivel := COALESCE((v_paso_config->'supervisor_config'->>'nivel')::INTEGER, 1);
+                v_cualquier_nivel := COALESCE((v_paso_config->'supervisor_config'->>'cualquier_nivel')::BOOLEAN, FALSE);
+
+                -- Verificar si el usuario es supervisor del iniciador
+                RETURN EXISTS (
+                    SELECT 1
+                    FROM resolver_supervisor_aprobador(v_iniciado_por, v_nivel, v_cualquier_nivel) rsa
+                    WHERE rsa.supervisor_usuario_id = p_usuario_id
+                );
+            END;
+
         ELSE
             -- Tipo no reconocido, denegar
             RETURN FALSE;
@@ -178,7 +262,8 @@ COMMENT ON FUNCTION puede_aprobar_workflow IS 'Verifica si un usuario puede apro
 
 CREATE OR REPLACE FUNCTION obtener_aprobadores_paso(
     p_paso_id INTEGER,
-    p_organizacion_id INTEGER
+    p_organizacion_id INTEGER,
+    p_iniciado_por INTEGER DEFAULT NULL  -- Requerido para tipo 'supervisor'
 )
 RETURNS TABLE(usuario_id INTEGER, nombre TEXT, email TEXT, es_delegado BOOLEAN) AS $$
 DECLARE
@@ -186,6 +271,8 @@ DECLARE
     v_aprobadores_tipo TEXT;
     v_aprobadores JSONB;
     v_permiso_requerido TEXT;
+    v_nivel INTEGER;
+    v_cualquier_nivel BOOLEAN;
 BEGIN
     -- Obtener configuración del paso
     SELECT config INTO v_paso_config
@@ -238,6 +325,28 @@ BEGIN
             WHERE u.organizacion_id = p_organizacion_id
               AND u.activo = true
               AND tiene_permiso(u.id, us.sucursal_id, v_permiso_requerido);
+
+        WHEN 'supervisor' THEN
+            -- Supervisores del usuario que inició el workflow
+            IF p_iniciado_por IS NULL THEN
+                -- Si no se proporciona, no podemos resolver supervisores
+                RETURN;
+            END IF;
+
+            -- Obtener configuración de nivel
+            v_nivel := COALESCE((v_paso_config->'supervisor_config'->>'nivel')::INTEGER, 1);
+            v_cualquier_nivel := COALESCE((v_paso_config->'supervisor_config'->>'cualquier_nivel')::BOOLEAN, FALSE);
+
+            RETURN QUERY
+            SELECT
+                rsa.supervisor_usuario_id AS id,
+                COALESCE(u.nombre, u.email)::TEXT AS nombre,
+                u.email::TEXT,
+                FALSE AS es_delegado
+            FROM resolver_supervisor_aprobador(p_iniciado_por, v_nivel, v_cualquier_nivel) rsa
+            JOIN usuarios u ON u.id = rsa.supervisor_usuario_id
+            WHERE u.organizacion_id = p_organizacion_id;
+
     END CASE;
 
     RETURN;

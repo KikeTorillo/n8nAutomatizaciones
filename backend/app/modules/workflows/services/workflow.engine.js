@@ -349,6 +349,17 @@ class WorkflowEngine {
                 await this._ejecutarAccionFinal(instancia, pasoFinalConfig, db);
             }
 
+            // Si sigue en progreso y hay siguiente paso, notificar a nuevos aprobadores (multi-nivel)
+            if (nuevoEstado === 'en_progreso' && siguientePasoId) {
+                const instanciaActualizada = resultado.rows[0];
+                logger.info('[WorkflowEngine.aprobar] Avanzando a siguiente nivel de aprobación', {
+                    instancia_id: instanciaId,
+                    paso_anterior: instancia.paso_actual_id,
+                    paso_nuevo: siguientePasoId
+                });
+                await this._notificarAprobadores(instanciaActualizada, organizacionId, db);
+            }
+
             // Notificar al solicitante
             await this._notificarSolicitante(instancia, 'aprobado', usuarioId, comentario, organizacionId);
 
@@ -442,13 +453,51 @@ class WorkflowEngine {
      */
     static async _notificarAprobadores(instancia, organizacionId, db) {
         try {
-            // Obtener aprobadores del paso actual
-            const aprobadoresQuery = await db.query(
-                `SELECT * FROM obtener_aprobadores_paso($1, $2)`,
-                [instancia.paso_actual_id, organizacionId]
+            // Obtener configuración del paso para verificar si es tipo supervisor
+            const pasoConfigQuery = await db.query(
+                `SELECT config FROM workflow_pasos WHERE id = $1`,
+                [instancia.paso_actual_id]
             );
 
-            const aprobadores = aprobadoresQuery.rows;
+            const pasoConfig = pasoConfigQuery.rows[0]?.config || {};
+            const esTipoSupervisor = pasoConfig.aprobadores_tipo === 'supervisor';
+
+            // Obtener aprobadores del paso actual
+            // Para tipo supervisor, pasamos iniciado_por como tercer parámetro
+            const aprobadoresQuery = await db.query(
+                `SELECT * FROM obtener_aprobadores_paso($1, $2, $3)`,
+                [instancia.paso_actual_id, organizacionId, esTipoSupervisor ? instancia.iniciado_por : null]
+            );
+
+            let aprobadores = aprobadoresQuery.rows;
+
+            // Si es tipo supervisor y no hay aprobadores, usar fallback_rol
+            if (aprobadores.length === 0 && esTipoSupervisor) {
+                const fallbackRol = pasoConfig.supervisor_config?.fallback_rol;
+
+                if (fallbackRol) {
+                    logger.info('[WorkflowEngine._notificarAprobadores] Usando fallback_rol', {
+                        instancia_id: instancia.id,
+                        fallback_rol: fallbackRol
+                    });
+
+                    // Obtener usuarios con el rol de fallback
+                    const fallbackQuery = await db.query(
+                        `SELECT id as usuario_id, COALESCE(nombre, email) as nombre, email, FALSE as es_delegado
+                         FROM usuarios
+                         WHERE organizacion_id = $1
+                           AND activo = true
+                           AND rol = $2`,
+                        [organizacionId, fallbackRol]
+                    );
+                    aprobadores = fallbackQuery.rows;
+                } else {
+                    logger.error('[WorkflowEngine._notificarAprobadores] El usuario no tiene supervisor y no hay fallback_rol configurado', {
+                        instancia_id: instancia.id,
+                        iniciado_por: instancia.iniciado_por
+                    });
+                }
+            }
 
             if (aprobadores.length === 0) {
                 logger.warn('[WorkflowEngine._notificarAprobadores] Sin aprobadores configurados', {

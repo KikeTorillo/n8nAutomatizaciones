@@ -8,11 +8,11 @@ import {
   Building,
   Briefcase,
   Tags,
-  Network,
   Shield,
   Coins,
   Users,
   GitBranch,
+  CalendarDays,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 import useAuthStore from '@/store/authStore';
@@ -99,16 +99,6 @@ function ConfiguracionPage() {
       enabled: esAdmin,
     },
     {
-      id: 'organigrama',
-      name: 'Organigrama',
-      description: 'Visualiza la estructura jerárquica del equipo',
-      icon: Network,
-      path: '/configuracion/organigrama',
-      color: 'text-primary-600 dark:text-primary-400',
-      bgColor: 'bg-primary-100 dark:bg-primary-900/40',
-      enabled: esAdmin,
-    },
-    {
       id: 'monedas',
       name: 'Monedas',
       description: 'Tasas de cambio y monedas disponibles',
@@ -126,6 +116,16 @@ function ConfiguracionPage() {
       path: '/configuracion/workflows',
       color: 'text-primary-600 dark:text-primary-400',
       bgColor: 'bg-primary-100 dark:bg-primary-900/40',
+      enabled: esAdmin,
+    },
+    {
+      id: 'dias-festivos',
+      name: 'Días Festivos',
+      description: 'Feriados nacionales y días no laborables',
+      icon: CalendarDays,
+      path: '/configuracion/dias-festivos',
+      color: 'text-red-600 dark:text-red-400',
+      bgColor: 'bg-red-100 dark:bg-red-900/40',
       enabled: esAdmin,
     },
     {

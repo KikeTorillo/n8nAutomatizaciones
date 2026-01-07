@@ -345,9 +345,9 @@ const actualizar = {
         tipo_contratacion: Joi.string().valid(...TIPOS_CONTRATACION),
 
         // === JERARQUÍA ===
-        supervisor_id: commonSchemas.id.allow(null),
-        departamento_id: commonSchemas.id.allow(null),
-        puesto_id: commonSchemas.id.allow(null),
+        supervisor_id: commonSchemas.id.optional().allow(null),
+        departamento_id: commonSchemas.id.optional().allow(null),
+        puesto_id: commonSchemas.id.optional().allow(null),
 
         // === FECHAS LABORALES ===
         fecha_ingreso: Joi.date().iso().allow(null),
@@ -376,7 +376,7 @@ const actualizar = {
 
         // === CONFIGURACIÓN DE SISTEMA (Fase 1 - Enero 2026) ===
         zona_horaria: Joi.string().max(50),
-        responsable_rrhh_id: commonSchemas.id.allow(null),
+        responsable_rrhh_id: commonSchemas.id.optional().allow(null),
         codigo_nip: Joi.string().max(10).pattern(/^[0-9]+$/).allow(null)
             .messages({ 'string.pattern.base': 'El código NIP debe contener solo números' }),
         id_credencial: Joi.string().max(50).trim().allow(null),

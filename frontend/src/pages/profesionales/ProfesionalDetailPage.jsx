@@ -14,6 +14,7 @@ import PersonalTab from '@/components/profesionales/tabs/PersonalTab';
 import CurriculumTab from '@/components/profesionales/tabs/CurriculumTab';
 import DocumentosTab from '@/components/profesionales/tabs/DocumentosTab';
 import CompensacionTab from '@/components/profesionales/tabs/CompensacionTab';
+import AusenciasTab from '@/components/profesionales/tabs/AusenciasTab';
 import ConfiguracionTab from '@/components/profesionales/tabs/ConfiguracionTab';
 
 // Definición de tabs disponibles
@@ -24,6 +25,7 @@ const TABS = [
   { id: 'curriculum', label: 'Currículum' },
   { id: 'documentos', label: 'Documentos' },
   { id: 'compensacion', label: 'Compensación' },
+  { id: 'ausencias', label: 'Ausencias' },
   { id: 'configuracion', label: 'Configuración' },
 ];
 
@@ -90,6 +92,8 @@ function ProfesionalDetailPage() {
         return <DocumentosTab profesional={profesional} />;
       case 'compensacion':
         return <CompensacionTab profesional={profesional} />;
+      case 'ausencias':
+        return <AusenciasTab profesional={profesional} />;
       case 'configuracion':
         return <ConfiguracionTab profesional={profesional} />;
       default:

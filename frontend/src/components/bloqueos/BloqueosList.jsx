@@ -12,6 +12,8 @@ import {
   Wrench,
   Star,
   AlertTriangle,
+  Lock,
+  Info,
 } from 'lucide-react';
 import {
   obtenerColorTipoBloqueo,
@@ -20,6 +22,10 @@ import {
   calcularDiasBloqueo,
   esBloqueoDiaCompleto,
   esBloqueoOrganizacional,
+  esBloqueoAutoGenerado,
+  obtenerLabelOrigenBloqueo,
+  obtenerColorOrigenBloqueo,
+  obtenerMensajeBloqueoProtegido,
 } from '@/utils/bloqueoHelpers';
 import { formatCurrency } from '@/lib/utils';
 import { useState } from 'react';
@@ -57,27 +63,39 @@ function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
   );
   const esOrganizacional = esBloqueoOrganizacional(bloqueo);
   const esDiaCompleto = esBloqueoDiaCompleto(bloqueo);
+  const esAutoGenerado = esBloqueoAutoGenerado(bloqueo);
+  const mensajeProtegido = obtenerMensajeBloqueoProtegido(bloqueo);
 
   return (
     <div
-      className={`bg-white dark:bg-gray-800 rounded-lg border-l-4 ${colores.border} shadow-sm hover:shadow-md transition-shadow duration-200`}
+      className={`bg-white dark:bg-gray-800 rounded-lg border-l-4 ${colores.border} shadow-sm hover:shadow-md transition-shadow duration-200 ${esAutoGenerado ? 'ring-1 ring-amber-200 dark:ring-amber-800' : ''}`}
     >
       {/* Header */}
       <div className="p-4 border-b border-gray-100 dark:border-gray-700">
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3 flex-1">
             {/* Ícono */}
-            <div className={`w-12 h-12 ${colores.badge} rounded-lg flex items-center justify-center flex-shrink-0`}>
+            <div className={`relative w-12 h-12 ${colores.badge} rounded-lg flex items-center justify-center flex-shrink-0`}>
               <IconoComponente className="h-6 w-6 text-white" />
+              {esAutoGenerado && (
+                <div className="absolute -top-1 -right-1 bg-amber-500 rounded-full p-0.5">
+                  <Lock className="h-3 w-3 text-white" />
+                </div>
+              )}
             </div>
 
             {/* Info principal */}
             <div className="flex-1 min-w-0">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">{bloqueo.titulo}</h3>
-              <div className="flex items-center gap-2 mt-1">
+              <div className="flex flex-wrap items-center gap-2 mt-1">
                 <span className={`px-2 py-1 text-xs font-medium rounded ${colores.bg} ${colores.text}`}>
                   {obtenerLabelTipoBloqueo(bloqueo.tipo_bloqueo_codigo)}
                 </span>
+                {esAutoGenerado && (
+                  <span className={`px-2 py-1 text-xs font-medium rounded ${obtenerColorOrigenBloqueo(bloqueo.origen_bloqueo)}`}>
+                    {obtenerLabelOrigenBloqueo(bloqueo.origen_bloqueo)}
+                  </span>
+                )}
                 {!bloqueo.activo && (
                   <span className="px-2 py-1 text-xs font-medium rounded bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300">
                     Inactivo
@@ -114,26 +132,47 @@ function BloqueoCard({ bloqueo, onVer, onEditar, onEliminar }) {
                     <Eye className="h-4 w-4" />
                     Ver detalles
                   </button>
-                  <button
-                    onClick={() => {
-                      onEditar(bloqueo);
-                      setMenuAbierto(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
-                  >
-                    <Edit className="h-4 w-4" />
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => {
-                      onEliminar(bloqueo);
-                      setMenuAbierto(false);
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Eliminar
-                  </button>
+                  {esAutoGenerado ? (
+                    <>
+                      <div className="w-full px-4 py-2 text-left text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Editar (protegido)
+                      </div>
+                      <div className="w-full px-4 py-2 text-left text-sm text-gray-400 dark:text-gray-500 cursor-not-allowed flex items-center gap-2">
+                        <Lock className="h-4 w-4" />
+                        Eliminar (protegido)
+                      </div>
+                      <div className="px-4 py-2 border-t border-gray-100 dark:border-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 flex items-start gap-1">
+                          <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
+                          <span>{mensajeProtegido}</span>
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          onEditar(bloqueo);
+                          setMenuAbierto(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Editar
+                      </button>
+                      <button
+                        onClick={() => {
+                          onEliminar(bloqueo);
+                          setMenuAbierto(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Eliminar
+                      </button>
+                    </>
+                  )}
                 </div>
               </>
             )}

@@ -10,7 +10,7 @@ import {
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
-import { ESTADOS_LABORALES, TIPOS_CONTRATACION, FORMAS_PAGO } from '@/hooks/useProfesionales';
+import { ESTADOS_LABORALES, TIPOS_CONTRATACION, FORMAS_PAGO, useProfesionales } from '@/hooks/useProfesionales';
 import { useMotivosSalida } from '@/hooks/useMotivosSalida';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { usePuestos } from '@/hooks/usePuestos';
@@ -37,6 +37,10 @@ function TrabajoTab({ profesional }) {
   const { data: motivosSalida = [] } = useMotivosSalida();
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
   const { data: puestos = [] } = usePuestos({ activo: true });
+  const { data: todosLosProfesionales = [] } = useProfesionales();
+
+  // Filtrar profesionales para supervisor (excluir al profesional actual)
+  const supervisoresDisponibles = todosLosProfesionales.filter(p => p.id !== profesional.id);
 
   // Formatear fecha
   const formatDate = (date) => {
@@ -288,10 +292,24 @@ function TrabajoTab({ profesional }) {
             type: 'select',
             options: puestos.map((p) => ({ value: p.id, label: p.nombre })),
           },
+          {
+            name: 'supervisor_id',
+            label: 'Supervisor',
+            type: 'select',
+            options: supervisoresDisponibles.map((p) => ({ value: p.id, label: p.nombre_completo })),
+          },
+          {
+            name: 'responsable_rrhh_id',
+            label: 'Responsable RRHH',
+            type: 'select',
+            options: supervisoresDisponibles.map((p) => ({ value: p.id, label: p.nombre_completo })),
+          },
         ]}
         initialValues={{
           departamento_id: profesional.departamento_id || '',
           puesto_id: profesional.puesto_id || '',
+          supervisor_id: profesional.supervisor_id || '',
+          responsable_rrhh_id: profesional.responsable_rrhh_id || '',
         }}
       />
     </div>

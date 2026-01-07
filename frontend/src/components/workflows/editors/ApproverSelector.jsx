@@ -17,6 +17,7 @@ import {
   Users,
   User,
   Shield,
+  UserCheck,
   Search,
   Check,
   X,
@@ -29,6 +30,7 @@ const TIPO_APROBADOR = {
   rol: { label: 'Por Rol', icon: Users, description: 'Cualquier usuario con el rol' },
   usuario: { label: 'Por Usuario', icon: User, description: 'Usuario específico' },
   permiso: { label: 'Por Permiso', icon: Shield, description: 'Usuarios con el permiso' },
+  supervisor: { label: 'Por Superior', icon: UserCheck, description: 'Supervisor jerárquico del solicitante' },
 };
 
 // Roles disponibles
@@ -358,9 +360,96 @@ function PermisoSelector({ value, onChange }) {
 }
 
 /**
+ * Selector de configuración de supervisor
+ */
+function SupervisorSelector({ value = {}, onChange }) {
+  const handleChange = (field, val) => {
+    onChange({ ...value, [field]: val });
+  };
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+        El supervisor del usuario que inicie el workflow será asignado como aprobador automáticamente
+      </p>
+
+      {/* Selector de nivel */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Nivel de supervisor
+        </label>
+        <select
+          value={value.nivel || 1}
+          onChange={(e) => handleChange('nivel', parseInt(e.target.value))}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+            focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        >
+          <option value={1}>Supervisor directo (1er nivel)</option>
+          <option value={2}>Segundo nivel (jefe del jefe)</option>
+          <option value={3}>Tercer nivel</option>
+          <option value={4}>Cuarto nivel</option>
+          <option value={5}>Quinto nivel</option>
+        </select>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Nivel 1 = jefe inmediato, Nivel 2 = jefe del jefe, etc.
+        </p>
+      </div>
+
+      {/* Toggle cualquier nivel */}
+      <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+        <input
+          type="checkbox"
+          checked={value.cualquier_nivel || false}
+          onChange={(e) => handleChange('cualquier_nivel', e.target.checked)}
+          className="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+        />
+        <div>
+          <p className="font-medium text-gray-900 dark:text-gray-100">
+            Cualquier supervisor puede aprobar
+          </p>
+          <p className="text-xs text-gray-500 dark:text-gray-400">
+            Permite que cualquier supervisor en la cadena jerárquica apruebe, no solo el del nivel seleccionado
+          </p>
+        </div>
+      </label>
+
+      {/* Fallback */}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          Si no tiene supervisor asignado:
+        </label>
+        <select
+          value={value.fallback_rol || ''}
+          onChange={(e) => handleChange('fallback_rol', e.target.value || null)}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+            bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100
+            focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+        >
+          <option value="">Bloquear solicitud (requiere supervisor)</option>
+          <option value="admin">Escalar a Administrador</option>
+          <option value="propietario">Escalar a Propietario</option>
+        </select>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          Define qué sucede si el usuario no tiene un supervisor configurado en su perfil
+        </p>
+      </div>
+
+      {/* Info box */}
+      <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+        <p className="text-sm text-blue-700 dark:text-blue-300">
+          <strong>Nota:</strong> Para que esta opción funcione, los empleados deben tener un supervisor
+          asignado en su perfil de profesional (Profesionales → Editar → Trabajo → Supervisor).
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/**
  * Componente principal ApproverSelector
- * @param {Object} value - { tipo: 'rol'|'usuario'|'permiso', valor: string|number }
- * @param {function} onChange - Callback con { tipo, valor }
+ * @param {Object} value - { tipo: 'rol'|'usuario'|'permiso'|'supervisor', valor: string|number, supervisor_config: object }
+ * @param {function} onChange - Callback con { tipo, valor, supervisor_config }
  */
 function ApproverSelector({ value = {}, onChange }) {
   const [tipoActivo, setTipoActivo] = useState(value.tipo || 'rol');
@@ -416,20 +505,37 @@ function ApproverSelector({ value = {}, onChange }) {
             onChange={handleValorChange}
           />
         )}
+        {tipoActivo === 'supervisor' && (
+          <SupervisorSelector
+            value={value.tipo === 'supervisor' ? (value.supervisor_config || {}) : {}}
+            onChange={(config) => onChange({
+              tipo: 'supervisor',
+              valor: 'supervisor',
+              supervisor_config: config
+            })}
+          />
+        )}
       </div>
 
       {/* Resumen de selección */}
-      {value.valor && (
+      {(value.valor || value.tipo === 'supervisor') && (
         <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
           <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
           <span className="text-sm text-green-700 dark:text-green-300">
             {tipoActivo === 'rol' && `Aprobador: Rol ${ROLES_DISPONIBLES.find(r => r.value === value.valor)?.label}`}
             {tipoActivo === 'usuario' && `Aprobador: Usuario ID ${value.valor}`}
             {tipoActivo === 'permiso' && `Aprobador: Permiso ${value.valor}`}
+            {tipoActivo === 'supervisor' && `Aprobador: Supervisor ${value.supervisor_config?.cualquier_nivel ? '(cualquier nivel)' : `nivel ${value.supervisor_config?.nivel || 1}`}`}
           </span>
           <button
             type="button"
-            onClick={() => handleValorChange(null)}
+            onClick={() => {
+              if (tipoActivo === 'supervisor') {
+                onChange({ tipo: 'supervisor', valor: null, supervisor_config: null });
+              } else {
+                handleValorChange(null);
+              }
+            }}
             className="ml-auto p-1 hover:bg-green-100 dark:hover:bg-green-800 rounded"
           >
             <X className="w-4 h-4 text-green-600 dark:text-green-400" />

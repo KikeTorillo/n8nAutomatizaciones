@@ -26,19 +26,51 @@ const ENTIDADES_VALIDAS = [
 // ===================================================================
 
 /**
+ * Schema para configuración de supervisor
+ */
+const supervisorConfigSchema = Joi.object({
+    nivel: Joi.number()
+        .integer()
+        .min(1)
+        .max(5)
+        .default(1)
+        .messages({
+            'number.min': 'El nivel mínimo es 1 (supervisor directo)',
+            'number.max': 'El nivel máximo es 5'
+        }),
+    cualquier_nivel: Joi.boolean()
+        .default(false),
+    permitir_auto_aprobacion: Joi.boolean()
+        .default(false),
+    fallback_rol: Joi.string()
+        .valid('admin', 'propietario')
+        .allow(null)
+        .optional()
+});
+
+/**
  * Schema para configuración de nodo de aprobación
  */
 const configAprobacionSchema = Joi.object({
     aprobadores_tipo: Joi.string()
-        .valid('rol', 'usuario', 'permiso')
+        .valid('rol', 'usuario', 'permiso', 'supervisor')
         .required(),
     aprobadores: Joi.array()
         .items(Joi.alternatives().try(
             Joi.string(),  // rol o permiso
             Joi.number().integer().positive()  // usuario_id
         ))
-        .min(1)
-        .required(),
+        .when('aprobadores_tipo', {
+            is: 'supervisor',
+            then: Joi.optional(),  // No requerido para supervisor
+            otherwise: Joi.array().min(1).required()
+        }),
+    supervisor_config: supervisorConfigSchema
+        .when('aprobadores_tipo', {
+            is: 'supervisor',
+            then: Joi.required(),
+            otherwise: Joi.forbidden()
+        }),
     timeout_horas: Joi.number()
         .integer()
         .min(1)

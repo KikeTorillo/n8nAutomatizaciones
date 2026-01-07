@@ -371,6 +371,18 @@ function AppHomePage() {
               {/* Centro de notificaciones */}
               <NotificacionesBell />
 
+              {/* Mi Perfil - Solo si tiene profesional vinculado */}
+              {user?.profesional_id && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate('/mi-perfil')}
+                >
+                  <UserCircle className="w-4 h-4 mr-2" />
+                  Mi Perfil
+                </Button>
+              )}
+
               <Button
                 variant="outline"
                 size="sm"

@@ -4,6 +4,7 @@ import { useState, useMemo } from 'react';
 import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { OPCIONES_ORIGEN_BLOQUEO, obtenerLabelOrigenBloqueo } from '@/utils/bloqueoHelpers';
 
 /**
  * BloqueoFilters - Componente de filtros para bloqueos
@@ -49,6 +50,7 @@ function BloqueoFilters({
     if (filtros.busqueda) count++;
     if (filtros.tipo_bloqueo_id) count++;
     if (filtros.profesional_id) count++;
+    if (filtros.origen_bloqueo) count++;
     if (filtros.fecha_desde) count++;
     if (filtros.fecha_hasta) count++;
     if (filtros.solo_activos !== undefined) count++;
@@ -138,7 +140,7 @@ function BloqueoFilters({
       {/* Filtros avanzados expandibles */}
       {mostrarAvanzados && (
         <div className="pt-4 border-t border-gray-200 dark:border-gray-700 space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Profesional */}
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -154,6 +156,23 @@ function BloqueoFilters({
                 }
                 options={opcionesProfesionales}
                 disabled={isLoadingProfesionales}
+              />
+            </div>
+
+            {/* Origen del bloqueo */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Origen
+              </label>
+              <Select
+                value={filtros.origen_bloqueo || ''}
+                onChange={(e) =>
+                  onFiltrosChange({
+                    ...filtros,
+                    origen_bloqueo: e.target.value,
+                  })
+                }
+                options={OPCIONES_ORIGEN_BLOQUEO}
               />
             </div>
 
@@ -245,6 +264,18 @@ function BloqueoFilters({
               Profesional seleccionado
               <button
                 onClick={() => onFiltrosChange({ ...filtros, profesional_id: '' })}
+                className="hover:text-gray-900 dark:hover:text-gray-100"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {filtros.origen_bloqueo && (
+            <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full">
+              Origen: {obtenerLabelOrigenBloqueo(filtros.origen_bloqueo)}
+              <button
+                onClick={() => onFiltrosChange({ ...filtros, origen_bloqueo: '' })}
                 className="hover:text-gray-900 dark:hover:text-gray-100"
               >
                 <X className="h-3 w-3" />

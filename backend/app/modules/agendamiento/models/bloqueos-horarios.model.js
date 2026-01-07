@@ -259,6 +259,20 @@ class BloqueosHorariosModel {
                     whereClause += ` AND bh.profesional_id IS NULL`;
                 }
 
+                // Filtro por origen del bloqueo (manual, vacaciones, feriados, importado)
+                if (filtros.origen_bloqueo) {
+                    whereClause += ` AND bh.origen_bloqueo = $${paramCounter}`;
+                    queryParams.push(filtros.origen_bloqueo);
+                    paramCounter++;
+                }
+
+                // Filtro por auto_generado
+                if (filtros.auto_generado !== undefined) {
+                    whereClause += ` AND bh.auto_generado = $${paramCounter}`;
+                    queryParams.push(filtros.auto_generado);
+                    paramCounter++;
+                }
+
                 const query = `
                     SELECT
                         bh.id, bh.organizacion_id, bh.profesional_id, bh.servicio_id,
@@ -342,7 +356,8 @@ class BloqueosHorariosModel {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             try {
                 const bloqueoExistente = await db.query(`
-                    SELECT id, profesional_id, fecha_inicio, fecha_fin, hora_inicio, hora_fin
+                    SELECT id, profesional_id, fecha_inicio, fecha_fin, hora_inicio, hora_fin,
+                           auto_generado, origen_bloqueo
                     FROM bloqueos_horarios
                     WHERE id = $1 AND organizacion_id = $2 AND activo = true
                     FOR UPDATE
@@ -353,6 +368,33 @@ class BloqueosHorariosModel {
                 }
 
                 const bloqueoActual = bloqueoExistente.rows[0];
+
+                // ====================================================================
+                // PROTECCIÓN: Bloqueos auto-generados no pueden ser editados
+                // ====================================================================
+                if (bloqueoActual.auto_generado) {
+                    const origenTexto = {
+                        vacaciones: 'el módulo de Vacaciones',
+                        feriados: 'el catálogo de Días Festivos',
+                        importado: 'una importación externa'
+                    };
+                    const origen = origenTexto[bloqueoActual.origen_bloqueo] || 'el sistema';
+
+                    const error = new Error(
+                        `Este bloqueo fue generado automáticamente por ${origen} y no puede ser modificado directamente. ` +
+                        `Para cambiarlo, utiliza ${bloqueoActual.origen_bloqueo === 'vacaciones' ? 'el módulo de Vacaciones' : 'la configuración correspondiente'}.`
+                    );
+                    error.statusCode = 403; // Forbidden
+                    error.codigo = 'BLOQUEO_AUTO_GENERADO';
+
+                    logger.warn('[BloqueosHorariosModel.actualizar] Intento de editar bloqueo auto-generado', {
+                        bloqueo_id: bloqueoId,
+                        origen_bloqueo: bloqueoActual.origen_bloqueo,
+                        usuario_id: auditoria.usuario_id
+                    });
+
+                    throw error;
+                }
 
                 // ====================================================================
                 // VALIDACIÓN: Si se actualizan fechas u horas, verificar conflictos
@@ -545,6 +587,47 @@ class BloqueosHorariosModel {
     static async eliminar(bloqueoId, organizacionId, auditoria = {}) {
         return await RLSContextManager.transaction(organizacionId, async (db) => {
             try {
+                // ====================================================================
+                // PROTECCIÓN: Verificar si el bloqueo es auto-generado antes de eliminar
+                // ====================================================================
+                const bloqueoExistente = await db.query(`
+                    SELECT id, titulo, fecha_inicio, fecha_fin, auto_generado, origen_bloqueo
+                    FROM bloqueos_horarios
+                    WHERE id = $1 AND organizacion_id = $2 AND activo = true
+                    FOR UPDATE
+                `, [bloqueoId, organizacionId]);
+
+                if (bloqueoExistente.rows.length === 0) {
+                    throw new Error('Bloqueo no encontrado o sin permisos para eliminar');
+                }
+
+                const bloqueo = bloqueoExistente.rows[0];
+
+                // Rechazar eliminación de bloqueos auto-generados
+                if (bloqueo.auto_generado) {
+                    const origenTexto = {
+                        vacaciones: 'el módulo de Vacaciones',
+                        feriados: 'el catálogo de Días Festivos',
+                        importado: 'una importación externa'
+                    };
+                    const origen = origenTexto[bloqueo.origen_bloqueo] || 'el sistema';
+
+                    const error = new Error(
+                        `Este bloqueo fue generado automáticamente por ${origen} y no puede ser eliminado directamente. ` +
+                        `Para eliminarlo, ${bloqueo.origen_bloqueo === 'vacaciones' ? 'cancela la solicitud de vacaciones correspondiente' : 'utiliza la configuración correspondiente'}.`
+                    );
+                    error.statusCode = 403; // Forbidden
+                    error.codigo = 'BLOQUEO_AUTO_GENERADO';
+
+                    logger.warn('[BloqueosHorariosModel.eliminar] Intento de eliminar bloqueo auto-generado', {
+                        bloqueo_id: bloqueoId,
+                        origen_bloqueo: bloqueo.origen_bloqueo,
+                        usuario_id: auditoria.usuario_id
+                    });
+
+                    throw error;
+                }
+
                 const result = await db.query(`
                     UPDATE bloqueos_horarios
                     SET activo = false,
@@ -553,10 +636,6 @@ class BloqueosHorariosModel {
                     WHERE id = $1 AND organizacion_id = $2 AND activo = true
                     RETURNING id, titulo, fecha_inicio, fecha_fin
                 `, [bloqueoId, organizacionId, auditoria.usuario_id || null]);
-
-                if (result.rows.length === 0) {
-                    throw new Error('Bloqueo no encontrado o sin permisos para eliminar');
-                }
 
                 return {
                     eliminado: true,

@@ -1,14 +1,10 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Users,
   User,
-  ChevronRight,
-  ChevronDown,
-  Building,
-  Briefcase,
   Search,
   Loader2,
-  UserCircle,
   Network,
   BarChart3,
   Filter,
@@ -18,8 +14,10 @@ import {
 import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import { useOrganigrama } from '@/hooks/useOrganigrama';
+import useThemeStore from '@/store/themeStore';
+import D3OrgChart from '@/components/profesionales/D3OrgChart';
 
-// Colores por tipo de empleado
+// Colores por tipo de empleado (para leyenda)
 const TIPO_COLORS = {
   gerencial: 'bg-purple-100 dark:bg-purple-900/40 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700',
   administrativo: 'bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700',
@@ -43,61 +41,18 @@ const ESTADO_COLORS = {
 };
 
 /**
- * Página de Organigrama - Visualización jerárquica de profesionales
+ * Página de Organigrama - Visualización jerárquica de profesionales con D3.js
+ * Ene 2026: Migración a d3-org-chart para visualización interactiva
  */
 function OrganigramaPage() {
+  const navigate = useNavigate();
+  const { resolvedTheme } = useThemeStore();
+  const isDarkMode = resolvedTheme === 'dark';
+
   const { arbol, stats, isLoading, departamentos } = useOrganigrama();
-  const [expandedNodes, setExpandedNodes] = useState(new Set());
-  const [expandAll, setExpandAll] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroDepartamento, setFiltroDepartamento] = useState('');
-
-  // Inicialmente expandir todo
-  useEffect(() => {
-    if (arbol.length > 0 && expandedNodes.size === 0) {
-      const allIds = new Set();
-      const collectIds = (nodes) => {
-        nodes.forEach(n => {
-          allIds.add(n.id);
-          if (n.children.length > 0) collectIds(n.children);
-        });
-      };
-      collectIds(arbol);
-      setExpandedNodes(allIds);
-    }
-  }, [arbol]);
-
-  // Toggle expandir nodo
-  const toggleNode = (id) => {
-    setExpandedNodes(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  };
-
-  // Expandir/Colapsar todo
-  const toggleExpandAll = () => {
-    if (expandAll) {
-      setExpandedNodes(new Set());
-    } else {
-      const allIds = new Set();
-      const collectIds = (nodes) => {
-        nodes.forEach(n => {
-          allIds.add(n.id);
-          if (n.children.length > 0) collectIds(n.children);
-        });
-      };
-      collectIds(arbol);
-      setExpandedNodes(allIds);
-    }
-    setExpandAll(!expandAll);
-  };
 
   // Filtrar árbol
   const arbolFiltrado = useMemo(() => {
@@ -137,127 +92,21 @@ function OrganigramaPage() {
 
   const hayFiltrosActivos = searchTerm || filtroTipo || filtroDepartamento;
 
-  // Componente de nodo del organigrama
-  const OrgNode = ({ node, level = 0, isLast = false }) => {
-    const hasChildren = node.children && node.children.length > 0;
-    const isExpanded = expandedNodes.has(node.id);
-    const tipoColor = TIPO_COLORS[node.tipo] || 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
-    const estadoColor = ESTADO_COLORS[node.estado] || ESTADO_COLORS.activo;
-
-    return (
-      <div className={level > 0 ? 'ml-6 md:ml-10' : ''}>
-        {/* Línea de conexión */}
-        {level > 0 && (
-          <div className="absolute left-0 top-0 h-full border-l-2 border-gray-200 dark:border-gray-700"
-               style={{ marginLeft: `${(level - 1) * 40 + 20}px` }} />
-        )}
-
-        {/* Card del profesional */}
-        <div
-          className={`
-            relative flex items-start gap-3 p-3 md:p-4 mb-2
-            bg-white dark:bg-gray-800 rounded-xl
-            border border-gray-200 dark:border-gray-700
-            hover:shadow-md transition-shadow
-            ${node.estado !== 'activo' ? 'opacity-60' : ''}
-          `}
-        >
-          {/* Botón expandir/colapsar */}
-          {hasChildren && (
-            <button
-              onClick={() => toggleNode(node.id)}
-              className="absolute -left-3 top-1/2 -translate-y-1/2 p-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 z-10"
-            >
-              {isExpanded ? (
-                <ChevronDown className="w-4 h-4 text-gray-500" />
-              ) : (
-                <ChevronRight className="w-4 h-4 text-gray-500" />
-              )}
-            </button>
-          )}
-
-          {/* Avatar */}
-          <div className="relative flex-shrink-0">
-            {node.foto_url ? (
-              <img
-                src={node.foto_url}
-                alt={node.nombre_completo}
-                className="w-12 h-12 md:w-14 md:h-14 rounded-full object-cover border-2 border-primary-200 dark:border-primary-800"
-              />
-            ) : (
-              <div className="w-12 h-12 md:w-14 md:h-14 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center border-2 border-primary-200 dark:border-primary-800">
-                <UserCircle className="w-8 h-8 text-primary-600 dark:text-primary-400" />
-              </div>
-            )}
-            {/* Indicador de estado */}
-            <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full border-2 border-white dark:border-gray-800 ${estadoColor}`}
-                 title={node.estado} />
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-semibold text-gray-900 dark:text-gray-100 truncate">
-                {node.nombre_completo}
-              </h3>
-              {node.tipo && (
-                <span className={`text-xs px-2 py-0.5 rounded-full border ${tipoColor}`}>
-                  {TIPO_LABELS[node.tipo] || node.tipo}
-                </span>
-              )}
-            </div>
-
-            {/* Puesto */}
-            {node.puesto?.nombre && (
-              <div className="flex items-center gap-1 mt-1 text-sm text-gray-600 dark:text-gray-400">
-                <Briefcase className="w-3.5 h-3.5" />
-                <span className="truncate">{node.puesto.nombre}</span>
-              </div>
-            )}
-
-            {/* Departamento */}
-            {node.departamento?.nombre && (
-              <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-500">
-                <Building className="w-3.5 h-3.5" />
-                <span className="truncate">{node.departamento.nombre}</span>
-              </div>
-            )}
-
-            {/* Badge subordinados */}
-            {hasChildren && (
-              <div className="flex items-center gap-1 mt-2 text-xs text-gray-500 dark:text-gray-400">
-                <Users className="w-3.5 h-3.5" />
-                <span>{node.children.length} subordinado{node.children.length !== 1 ? 's' : ''}</span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Hijos */}
-        {hasChildren && isExpanded && (
-          <div className="relative pl-4 border-l-2 border-gray-200 dark:border-gray-700 ml-4 md:ml-6">
-            {node.children.map((child, idx) => (
-              <OrgNode
-                key={child.id}
-                node={child}
-                level={level + 1}
-                isLast={idx === node.children.length - 1}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    );
+  // Handler para click en nodo
+  const handleNodeClick = (node) => {
+    if (node?.id) {
+      navigate(`/profesionales/${node.id}`);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
-              <BackButton to="/configuracion" label="Configuración" />
+              <BackButton to="/profesionales" label="Profesionales" />
               <div>
                 <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                   <Network className="w-5 h-5 text-primary-600" />
@@ -268,21 +117,12 @@ function OrganigramaPage() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggleExpandAll}
-              >
-                {expandAll ? 'Colapsar' : 'Expandir'}
-              </Button>
-            </div>
           </div>
         </div>
       </div>
 
       {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-gray-700">
@@ -400,13 +240,15 @@ function OrganigramaPage() {
           </div>
         </div>
 
-        {/* Organigrama */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
-          {isLoading ? (
+        {/* Organigrama D3 */}
+        {isLoading ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
             </div>
-          ) : arbolFiltrado.length === 0 ? (
+          </div>
+        ) : arbolFiltrado.length === 0 ? (
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6">
             <div className="text-center py-20">
               <Network className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
@@ -423,19 +265,15 @@ function OrganigramaPage() {
                 </Button>
               )}
             </div>
-          ) : (
-            <div className="space-y-2">
-              {arbolFiltrado.map((node, idx) => (
-                <OrgNode
-                  key={node.id}
-                  node={node}
-                  level={0}
-                  isLast={idx === arbolFiltrado.length - 1}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        ) : (
+          <D3OrgChart
+            data={arbolFiltrado}
+            onNodeClick={handleNodeClick}
+            isDarkMode={isDarkMode}
+            organizacionNombre="Mi Organización"
+          />
+        )}
 
         {/* Leyenda */}
         {!isLoading && arbolFiltrado.length > 0 && (

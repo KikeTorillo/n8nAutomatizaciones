@@ -81,7 +81,18 @@ class DisponibilidadModel {
         throw new Error('Servicio no encontrado o inactivo');
       }
 
-      const duracionFinal = duracion || servicio.duracion_minutos || DEFAULTS.INTERVALO_MINUTOS;
+      // Calcular duración total incluyendo buffer time (preparación + servicio + limpieza)
+      const duracionServicio = duracion || servicio.duracion_minutos || DEFAULTS.INTERVALO_MINUTOS;
+      const tiempoPreparacion = servicio.requiere_preparacion_minutos || 0;
+      const tiempoLimpieza = servicio.tiempo_limpieza_minutos || 0;
+      const duracionFinal = tiempoPreparacion + duracionServicio + tiempoLimpieza;
+
+      logger.debug('[DisponibilidadModel] Duración total calculada con buffer', {
+        duracion_servicio: duracionServicio,
+        tiempo_preparacion: tiempoPreparacion,
+        tiempo_limpieza: tiempoLimpieza,
+        duracion_total: duracionFinal,
+      });
 
       // ========== 3. Obtener profesionales que ofrecen el servicio ==========
       const profesionales = await this._obtenerProfesionales(
@@ -101,6 +112,9 @@ class DisponibilidadModel {
             id: servicio.id,
             nombre: servicio.nombre,
             duracion_minutos: servicio.duracion_minutos,
+            requiere_preparacion_minutos: tiempoPreparacion,
+            tiempo_limpieza_minutos: tiempoLimpieza,
+            duracion_total: duracionFinal,
             precio: servicio.precio,
           },
           disponibilidad_por_fecha: [],
@@ -247,6 +261,9 @@ class DisponibilidadModel {
           id: servicio.id,
           nombre: servicio.nombre,
           duracion_minutos: servicio.duracion_minutos,
+          requiere_preparacion_minutos: tiempoPreparacion,
+          tiempo_limpieza_minutos: tiempoLimpieza,
+          duracion_total: duracionFinal,
           precio: servicio.precio,
         },
         disponibilidad_por_fecha: disponibilidadPorFecha,
@@ -493,7 +510,8 @@ class DisponibilidadModel {
   static async _obtenerServicio(servicioId, organizacionId, db) {
     const resultado = await db.query(
       `
-      SELECT id, nombre, duracion_minutos, precio, activo
+      SELECT id, nombre, duracion_minutos, precio, activo,
+             requiere_preparacion_minutos, tiempo_limpieza_minutos
       FROM servicios
       WHERE id = $1 AND organizacion_id = $2 AND activo = true
     `,

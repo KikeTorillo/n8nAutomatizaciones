@@ -43,11 +43,15 @@ function QuickEditDrawer({
   // Submit
   const onSubmit = async (data) => {
     try {
-      // Sanitizar valores vacíos
+      // Sanitizar valores vacíos y convertir IDs a números
       const sanitized = {};
       Object.entries(data).forEach(([key, value]) => {
-        if (value === '' || value === null) {
+        if (value === '' || value === null || value === undefined) {
           sanitized[key] = undefined;
+        } else if (key.endsWith('_id') && typeof value === 'string') {
+          // Convertir IDs de string a número
+          const numValue = parseInt(value, 10);
+          sanitized[key] = isNaN(numValue) ? undefined : numValue;
         } else if (typeof value === 'string') {
           sanitized[key] = value.trim() || undefined;
         } else {

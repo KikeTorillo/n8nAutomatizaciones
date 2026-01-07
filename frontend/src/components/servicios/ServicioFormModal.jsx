@@ -26,6 +26,9 @@ const servicioCreateSchema = z.object({
   descripcion: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
   categoria: z.string().min(1, 'Categoría requerida').max(50, 'Máximo 50 caracteres'),
   duracion_minutos: z.number().int('Debe ser un número entero').min(1, 'Mínimo 1 minuto').max(480, 'Máximo 8 horas'),
+  // Buffer Time - Tiempo de preparación y limpieza
+  requiere_preparacion_minutos: z.number().int('Debe ser un número entero').min(0, 'Mínimo 0 minutos').max(120, 'Máximo 120 minutos').optional().default(0),
+  tiempo_limpieza_minutos: z.number().int('Debe ser un número entero').min(0, 'Mínimo 0 minutos').max(60, 'Máximo 60 minutos').optional().default(5),
   precio: z
     .union([z.number(), z.string()])
     .transform((val) => {
@@ -53,6 +56,9 @@ const servicioEditSchema = z.object({
   descripcion: z.string().max(1000, 'Máximo 1000 caracteres').optional(),
   categoria: z.string().min(1, 'Categoría requerida').max(50, 'Máximo 50 caracteres').optional(),
   duracion_minutos: z.number().int('Debe ser un número entero').min(1, 'Mínimo 1 minuto').max(480, 'Máximo 8 horas').optional(),
+  // Buffer Time - Tiempo de preparación y limpieza
+  requiere_preparacion_minutos: z.number().int('Debe ser un número entero').min(0, 'Mínimo 0 minutos').max(120, 'Máximo 120 minutos').optional(),
+  tiempo_limpieza_minutos: z.number().int('Debe ser un número entero').min(0, 'Mínimo 0 minutos').max(60, 'Máximo 60 minutos').optional(),
   precio: z
     .union([z.number(), z.string()])
     .transform((val) => {
@@ -142,6 +148,8 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
           descripcion: '',
           categoria: '',
           duracion_minutos: 30,
+          requiere_preparacion_minutos: 0,
+          tiempo_limpieza_minutos: 5,
           precio: '',
           profesionales_ids: [],
           activo: true,
@@ -156,6 +164,8 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
         descripcion: servicioData.descripcion || '',
         categoria: servicioData.categoria || '',
         duracion_minutos: servicioData.duracion_minutos || 30,
+        requiere_preparacion_minutos: servicioData.requiere_preparacion_minutos || 0,
+        tiempo_limpieza_minutos: servicioData.tiempo_limpieza_minutos ?? 5,
         precio: parseFloat(servicioData.precio) || 0,
         activo: servicioData.activo !== undefined ? servicioData.activo : true,
       });
@@ -544,6 +554,109 @@ function ServicioFormModal({ isOpen, onClose, mode = 'create', servicio = null }
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       Total: <span className="font-semibold text-gray-900 dark:text-gray-100">{field.value} minutos</span>
                     </p>
+                  )}
+                />
+              </div>
+
+              {/* Buffer Time - Tiempo de preparación y limpieza */}
+              <div className="space-y-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Tiempo Buffer
+                  <span className="text-xs font-normal text-gray-500 dark:text-gray-400 ml-2">
+                    (preparación y limpieza)
+                  </span>
+                </label>
+                <p className="text-xs text-gray-500 dark:text-gray-400 -mt-1">
+                  Tiempo adicional antes y después del servicio para preparación del espacio
+                </p>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Tiempo de preparación */}
+                  <Controller
+                    name="requiere_preparacion_minutos"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        label="Preparación (min)"
+                        placeholder="0"
+                        min="0"
+                        max="120"
+                        value={field.value === 0 ? '' : field.value}
+                        onKeyDown={(e) => {
+                          if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 120);
+                          field.onChange(newValue);
+                        }}
+                        error={errors.requiere_preparacion_minutos?.message}
+                      />
+                    )}
+                  />
+
+                  {/* Tiempo de limpieza */}
+                  <Controller
+                    name="tiempo_limpieza_minutos"
+                    control={control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        label="Limpieza (min)"
+                        placeholder="5"
+                        min="0"
+                        max="60"
+                        value={field.value === 0 ? '' : field.value}
+                        onKeyDown={(e) => {
+                          if (['-', '+', 'e', 'E', '.'].includes(e.key)) {
+                            e.preventDefault();
+                          }
+                        }}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          const newValue = value === '' ? 0 : Math.min(Math.max(parseInt(value) || 0, 0), 60);
+                          field.onChange(newValue);
+                        }}
+                        error={errors.tiempo_limpieza_minutos?.message}
+                      />
+                    )}
+                  />
+                </div>
+
+                {/* Mostrar tiempo total con buffers */}
+                <Controller
+                  name="duracion_minutos"
+                  control={control}
+                  render={({ field: duracionField }) => (
+                    <Controller
+                      name="requiere_preparacion_minutos"
+                      control={control}
+                      render={({ field: prepField }) => (
+                        <Controller
+                          name="tiempo_limpieza_minutos"
+                          control={control}
+                          render={({ field: limpiezaField }) => {
+                            const tiempoTotal = (prepField.value || 0) + duracionField.value + (limpiezaField.value || 0);
+                            return (
+                              <div className="p-3 bg-primary-50 dark:bg-primary-900/20 rounded-lg">
+                                <p className="text-sm text-primary-700 dark:text-primary-300">
+                                  <span className="font-medium">Tiempo total por cita:</span>{' '}
+                                  <span className="font-bold">{tiempoTotal} minutos</span>
+                                  {(prepField.value > 0 || limpiezaField.value > 0) && (
+                                    <span className="text-xs text-primary-600 dark:text-primary-400 ml-2">
+                                      ({prepField.value || 0} prep + {duracionField.value} servicio + {limpiezaField.value || 0} limpieza)
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            );
+                          }}
+                        />
+                      )}
+                    />
                   )}
                 />
               </div>

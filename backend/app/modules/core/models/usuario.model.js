@@ -234,7 +234,7 @@ class UsuarioModel {
             const query = `
                 SELECT
                     u.id, u.email, u.nombre, u.apellidos, u.telefono,
-                    u.rol, u.organizacion_id, u.activo, u.email_verificado,
+                    u.rol, u.organizacion_id, u.profesional_id, u.activo, u.email_verificado,
                     u.onboarding_completado,
                     o.categoria_id,
                     ci.codigo as categoria_codigo,

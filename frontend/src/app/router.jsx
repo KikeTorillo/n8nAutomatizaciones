@@ -112,6 +112,7 @@ const MonedasPage = lazy(() => import('@/pages/configuracion/MonedasPage'));
 const UsuariosPage = lazy(() => import('@/pages/configuracion/UsuariosPage'));
 const WorkflowsListPage = lazy(() => import('@/pages/configuracion/workflows/WorkflowsListPage'));
 const WorkflowDesignerPage = lazy(() => import('@/pages/configuracion/workflows/WorkflowDesignerPage'));
+const DiasFestivosPage = lazy(() => import('@/pages/configuracion/DiasFestivosPage'));
 
 // Página de App Home / Launcher (Nov 2025)
 const AppHomePage = lazy(() => import('@/pages/home/AppHomePage'));
@@ -163,6 +164,9 @@ const AprobacionesPage = lazyLoadWithRetry(
 
 // Páginas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
 const VacacionesPage = lazy(() => import('@/pages/vacaciones/VacacionesPage'));
+
+// Página Mi Perfil - Portal Autoservicio Empleados (Ene 2026)
+const MiPerfilPage = lazy(() => import('@/pages/mi-perfil/MiPerfilPage'));
 
 // Páginas de Onboarding Empleados (Ene 2026 - Fase 5 Plan Empleados)
 const OnboardingAdminPage = lazy(() => import('@/pages/onboarding-empleados/OnboardingAdminPage'));
@@ -343,6 +347,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(NuevoProfesionalWizard)}
+          </ProtectedRoute>
+        ),
+      },
+      // Organigrama de profesionales (movido desde configuración - Ene 2026)
+      {
+        path: 'profesionales/organigrama',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(OrganigramaPage)}
           </ProtectedRoute>
         ),
       },
@@ -751,15 +764,6 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      // Organigrama (Dic 2025)
-      {
-        path: 'configuracion/organigrama',
-        element: (
-          <ProtectedRoute requiredRole={['admin', 'propietario']}>
-            {withSuspense(OrganigramaPage)}
-          </ProtectedRoute>
-        ),
-      },
       // Permisos (Dic 2025 - Sistema Normalizado)
       {
         path: 'configuracion/permisos',
@@ -809,6 +813,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(WorkflowDesignerPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Días Festivos (Ene 2026)
+      {
+        path: 'configuracion/dias-festivos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(DiasFestivosPage)}
           </ProtectedRoute>
         ),
       },
@@ -940,6 +953,16 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(VacacionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+
+      // Mi Perfil - Portal Autoservicio Empleados (Ene 2026)
+      {
+        path: 'mi-perfil',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(MiPerfilPage)}
           </ProtectedRoute>
         ),
       },

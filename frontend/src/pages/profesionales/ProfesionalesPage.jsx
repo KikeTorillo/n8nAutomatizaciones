@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, X, AlertTriangle, ClipboardList } from 'lucide-react';
+import { Plus, Search, Filter, X, AlertTriangle, ClipboardList, Network } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
@@ -134,6 +134,15 @@ function ProfesionalesPage() {
             </div>
 
             <div className="flex gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/profesionales/organigrama')}
+                className="flex-1 sm:flex-initial"
+              >
+                <Network className="w-4 h-4 mr-2" />
+                <span className="hidden sm:inline">Organigrama</span>
+                <span className="sm:hidden">Org</span>
+              </Button>
               <Button
                 variant="outline"
                 onClick={() => navigate('/onboarding-empleados')}
