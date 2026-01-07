@@ -736,6 +736,107 @@ class ServicioModel {
         });
     }
 
+    // =====================================================================
+    // ROUND-ROBIN: ORDEN DE PROFESIONALES (Ene 2026)
+    // =====================================================================
+
+    /**
+     * Obtiene profesionales de un servicio con orden de rotación
+     * Incluye el campo orden_rotacion para UI de drag & drop
+     *
+     * @param {number} servicioId - ID del servicio
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} - Profesionales con orden
+     */
+    static async obtenerProfesionalesConOrden(servicioId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    p.id,
+                    p.nombre_completo,
+                    p.email,
+                    p.foto_url,
+                    p.calificacion_promedio,
+                    sp.precio_personalizado,
+                    sp.duracion_personalizada,
+                    sp.orden_rotacion,
+                    sp.activo as asignacion_activa
+                FROM profesionales p
+                JOIN servicios_profesionales sp ON p.id = sp.profesional_id
+                WHERE sp.servicio_id = $1
+                  AND sp.activo = true
+                  AND p.activo = true
+                ORDER BY sp.orden_rotacion ASC, p.id ASC
+            `;
+
+            const result = await db.query(query, [servicioId]);
+            return result.rows;
+        });
+    }
+
+    /**
+     * Actualiza el orden de rotación de profesionales para un servicio
+     * Usado por UI drag & drop para definir prioridad de asignación
+     *
+     * @param {number} servicioId - ID del servicio
+     * @param {Array<{profesional_id: number, orden: number}>} ordenArray - Array con nuevo orden
+     * @param {number} organizacionId - ID de la organización
+     * @returns {Promise<Array>} - Profesionales actualizados con nuevo orden
+     */
+    static async actualizarOrdenProfesionales(servicioId, ordenArray, organizacionId) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Validar que el servicio existe
+            const servicioCheck = await db.query(
+                'SELECT id FROM servicios WHERE id = $1 AND organizacion_id = $2',
+                [servicioId, organizacionId]
+            );
+
+            if (servicioCheck.rows.length === 0) {
+                throw new Error('Servicio no encontrado');
+            }
+
+            // Validar que todos los profesionales están asignados al servicio
+            const profesionalesIds = ordenArray.map(item => item.profesional_id);
+            const profesionalesValidos = await db.query(
+                `SELECT profesional_id FROM servicios_profesionales
+                 WHERE servicio_id = $1 AND profesional_id = ANY($2) AND activo = true`,
+                [servicioId, profesionalesIds]
+            );
+
+            if (profesionalesValidos.rows.length !== profesionalesIds.length) {
+                const idsValidos = profesionalesValidos.rows.map(r => r.profesional_id);
+                const idsInvalidos = profesionalesIds.filter(id => !idsValidos.includes(id));
+                throw new Error(`Profesionales no asignados al servicio: ${idsInvalidos.join(', ')}`);
+            }
+
+            // Actualizar orden para cada profesional
+            for (const item of ordenArray) {
+                await db.query(
+                    `UPDATE servicios_profesionales
+                     SET orden_rotacion = $1, actualizado_en = NOW()
+                     WHERE servicio_id = $2 AND profesional_id = $3`,
+                    [item.orden, servicioId, item.profesional_id]
+                );
+            }
+
+            // Retornar lista actualizada
+            const query = `
+                SELECT
+                    p.id,
+                    p.nombre_completo,
+                    p.email,
+                    sp.orden_rotacion
+                FROM profesionales p
+                JOIN servicios_profesionales sp ON p.id = sp.profesional_id
+                WHERE sp.servicio_id = $1 AND sp.activo = true
+                ORDER BY sp.orden_rotacion ASC, p.id ASC
+            `;
+
+            const result = await db.query(query, [servicioId]);
+            return result.rows;
+        });
+    }
+
     /**
      * Obtiene estadísticas de asignaciones servicio-profesional
      * Calcula métricas de servicios sin profesionales y viceversa

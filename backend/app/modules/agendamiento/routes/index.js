@@ -12,6 +12,7 @@ const tiposBloqueoRouter = require('./tipos-bloqueo');
 const horariosProfesionalesRouter = require('./horarios-profesionales');
 const chatbotsRouter = require('./chatbots');
 const disponibilidadRouter = require('./disponibilidad');
+const configuracionRouter = require('./configuracion');
 
 module.exports = {
   servicios: serviciosRouter,
@@ -20,5 +21,6 @@ module.exports = {
   'tipos-bloqueo': tiposBloqueoRouter,
   'horarios-profesionales': horariosProfesionalesRouter,
   chatbots: chatbotsRouter,
-  disponibilidad: disponibilidadRouter
+  disponibilidad: disponibilidadRouter,
+  configuracion: configuracionRouter
 };

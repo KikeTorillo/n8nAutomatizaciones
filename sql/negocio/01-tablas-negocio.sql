@@ -138,6 +138,12 @@ CREATE TABLE servicios_profesionales (
     notas_especiales TEXT,                     -- Notas específicas para este profesional
 
     -- ====================================================================
+    -- 🔄 SECCIÓN: ROUND-ROBIN (Ene 2026)
+    -- ====================================================================
+    orden_rotacion INTEGER DEFAULT 0,          -- Orden para auto-asignación round-robin (menor = mayor prioridad)
+                                               -- Si todos tienen 0, se ordena por profesional_id
+
+    -- ====================================================================
     -- ⚙️ SECCIÓN: CONTROL
     -- ====================================================================
     activo BOOLEAN DEFAULT TRUE,               -- El profesional puede brindar este servicio

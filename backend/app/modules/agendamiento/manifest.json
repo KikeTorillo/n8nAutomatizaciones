@@ -20,7 +20,8 @@
     "disponibilidad": "/api/v1/disponibilidad",
     "bloqueos-horarios": "/api/v1/bloqueos-horarios",
     "tipos-bloqueo": "/api/v1/tipos-bloqueo",
-    "chatbots": "/api/v1/chatbots"
+    "chatbots": "/api/v1/chatbots",
+    "configuracion": "/api/v1/agendamiento/configuracion"
   },
   "resources": {
     "servicios": {

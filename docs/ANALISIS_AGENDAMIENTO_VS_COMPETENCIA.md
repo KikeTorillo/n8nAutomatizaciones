@@ -1,20 +1,20 @@
 # Análisis Comparativo: Módulo Agendamiento Nexo vs Competencia
 
 **Fecha**: 7 de Enero 2026
-**Versión**: 2.3
-**Última actualización**: Citas Recurrentes - Testing E2E completado
+**Versión**: 2.4
+**Última actualización**: Round-Robin completado
 
 ---
 
 ## Resumen Ejecutivo
 
-Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Calendly**, **Acuity Scheduling**, **Cal.com** y otros líderes.
+Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Calendly**, **Acuity Scheduling**, **Cal.com**.
 
-**Estado actual**: 8.5/10 (subió de 8 tras implementar Citas Recurrentes)
+**Estado actual**: 9/10 (subió de 8.5 tras implementar Round-Robin)
 
 ---
 
-## 1. Matriz Comparativa de Funcionalidades
+## 1. Matriz Comparativa
 
 ### Leyenda
 - ✅ Implementado | ⚠️ Parcial | ❌ No disponible
@@ -27,10 +27,8 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 | Multi-servicio por cita | ✅ | ❌ | ❌ | ✅ | ❌ |
 | Walk-in (sin cita previa) | ✅ | ❌ | ❌ | ❌ | ❌ |
 | Horarios por profesional | ✅ | ✅ | ✅ | ✅ | ✅ |
-| **Buffer time (prep/limpieza)** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Buffer time (prep/limpieza) | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Bloqueos (vacaciones, etc.) | ✅ | ✅ | ⚠️ | ✅ | ✅ |
-| **Filtros por origen bloqueo** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Protección bloqueos auto-generados** | ✅ | ✅ | N/A | N/A | N/A |
 | Citas recurrentes | ✅ | ❌ | ⚠️ | ✅ | ✅ |
 | Reservas grupales | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Lista de espera (waitlist) | ❌ | ❌ | ❌ | ✅ | ❌ |
@@ -40,8 +38,8 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 | Funcionalidad | Nexo | Odoo 19 | Calendly | Acuity | Cal.com |
 |--------------|:----:|:-------:|:--------:|:------:|:-------:|
 | Selección manual | ✅ | ✅ | ✅ | ✅ | ✅ |
-| Auto-asignación básica | ⚠️ | ✅ | ❌ | ❌ | ✅ |
-| Round-robin | ❌ | ✅ | ✅ | ❌ | ✅ |
+| Auto-asignación básica | ✅ | ✅ | ❌ | ❌ | ✅ |
+| **Round-Robin** | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Por habilidades/servicios | ✅ | ✅ | ❌ | ✅ | ⚠️ |
 
 ### 1.3 Notificaciones
@@ -57,22 +55,17 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 
 | Funcionalidad | Nexo | Odoo 19 | Calendly | Acuity | Cal.com |
 |--------------|:----:|:-------:|:--------:|:------:|:-------:|
-| Sync Google Calendar | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Sync Outlook | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Videoconferencia | ❌ | ✅ | ✅ | ✅ | ✅ |
+| Sync Google/Outlook | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Widget embebible | ❌ | ✅ | ✅ | ✅ | ✅ |
-| Webhooks | ✅ | ✅ | ✅ | ✅ | ✅ |
 | Pago anticipado | ❌ | ✅ | ✅ | ✅ | ✅ |
 
-### 1.5 Gestión HR/Empleados
+### 1.5 Gestión HR
 
 | Funcionalidad | Nexo | Odoo 19 | Calendly | Acuity | Cal.com |
 |--------------|:----:|:-------:|:--------:|:------:|:-------:|
-| **Días festivos configurables** | ✅ | ✅ | ❌ | ❌ | ❌ |
-| **Catálogo feriados LATAM** | ✅ | ⚠️ | ❌ | ❌ | ❌ |
-| **Tab Ausencias en profesional** | ✅ | ✅ | N/A | N/A | N/A |
-| **Portal Mi Perfil (autoservicio)** | ✅ | ✅ | N/A | N/A | N/A |
-| Módulo Vacaciones integrado | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Días festivos LATAM | ✅ | ⚠️ | ❌ | ❌ | ❌ |
+| Módulo Vacaciones | ✅ | ✅ | ❌ | ❌ | ❌ |
+| Portal Mi Perfil | ✅ | ✅ | N/A | N/A | N/A |
 
 ---
 
@@ -80,17 +73,16 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 
 | Feature | Ventaja Competitiva |
 |---------|---------------------|
-| **Multi-servicio por cita** | Salones/spas (corte + tintura + peinado) |
-| **Walk-in nativo** | Cola de espera para negocios con alto tráfico |
-| **Chatbots IA** | Agendamiento por Telegram/WhatsApp con LLM |
-| **Calificaciones bidireccionales** | Profesional califica cliente post-servicio |
-| **Catálogo feriados LATAM** | MX, CO, AR, CL, PE pre-configurados |
-| **RLS + Particionamiento** | Multi-tenancy y performance enterprise |
-| **Citas Recurrentes con Preview** | Visualización de disponibilidad antes de crear serie |
+| Multi-servicio por cita | Salones/spas (corte + tintura + peinado) |
+| Walk-in nativo | Cola de espera para negocios con alto tráfico |
+| Chatbots IA | Agendamiento por Telegram/WhatsApp con LLM |
+| Catálogo feriados LATAM | MX, CO, AR, CL, PE pre-configurados |
+| Round-Robin con orden personalizable | Drag & drop por servicio |
+| Citas Recurrentes con Preview | Visualización de disponibilidad antes de crear serie |
 
 ---
 
-## 3. Gaps Pendientes (Priorizado)
+## 3. Gaps Pendientes
 
 ### Alta Prioridad
 | Gap | Impacto | Esfuerzo |
@@ -103,152 +95,149 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 |-----|---------|----------|
 | Lista de Espera | Optimización agenda | 4-6 días |
 | Reservas Grupales | Clases/talleres | 6-8 días |
-| Round-Robin | Equipos grandes | 3-4 días |
 | Widget Embebible | Captación clientes | 4-5 días |
 
-### Baja Prioridad
-| Gap | Notas |
-|-----|-------|
-| Videoconferencia | Zoom/Meet integration |
-| Depósitos parciales | Solo Acuity lo tiene |
-| HIPAA compliance | Sector salud específico |
+---
+
+## 4. Implementaciones Completadas (Fase 0 - Enero 2026)
+
+| Feature | Estado | Componentes Clave |
+|---------|:------:|-------------------|
+| Buffer Time | ✅ | Query + Command sincronizados |
+| Días Festivos LATAM | ✅ | Catálogo MX, CO, AR, CL, PE |
+| Tab Ausencias | ✅ | Integrado en Profesionales |
+| Mi Perfil (Autoservicio) | ✅ | Portal empleados |
+| Citas Recurrentes | ✅ | Preview + Series + Validación inteligente |
+| **Round-Robin** | ✅ | Auto-asignación con orden personalizable |
+
+### Round-Robin (7 Ene 2026)
+
+| Componente | Descripción |
+|------------|-------------|
+| **SQL** | `orden_rotacion` en `servicios_profesionales` + índice |
+| **Backend Service** | `RoundRobinService` - algoritmo con verificación disponibilidad |
+| **Backend Config** | `ConfiguracionAgendamientoController` - toggle + API orden |
+| **Frontend Toggle** | Configuración > Módulos > Agendamiento > Configuración avanzada |
+| **Frontend Orden** | Servicios > Gestionar profesionales > Drag & drop |
+
+**Flujo:**
+1. Si `profesional_id` no proporcionado → usar RoundRobinService
+2. Obtener profesionales ordenados por `orden_rotacion`
+3. Obtener último asignado de tabla `citas`
+4. Iterar verificando disponibilidad hasta encontrar uno libre
+
+**Archivos:**
+- `sql/agendamiento/06-round-robin.sql`
+- `backend/app/modules/agendamiento/services/round-robin.service.js`
+- `backend/app/modules/agendamiento/controllers/configuracion.controller.js`
+- `frontend/src/pages/servicios/components/ProfesionalesServicioModal.jsx`
 
 ---
 
-## 4. Implementaciones Completadas (Fase 0)
+## 5. Roadmap Q1 2026
 
-### Enero 2026
-
-| Feature | Estado | Archivos Clave |
-|---------|--------|----------------|
-| **Buffer Time (Query + Command)** | ✅ | `disponibilidad.model.js`, `cita.helpers.model.js` |
-| **UI Bloqueos mejorada** | ✅ | `BloqueosPage.jsx`, `BloqueosList.jsx` |
-| **Días Festivos + LATAM** | ✅ | `DiasFestivosPage.jsx`, `feriados-latam.js` |
-| **Tab Ausencias** | ✅ | `AusenciasTab.jsx` |
-| **Mi Perfil (Autoservicio)** | ✅ | `MiPerfilPage.jsx` |
-| **Citas Recurrentes** | ✅ | Ver detalle abajo |
-
-### Detalle Buffer Time (7 Ene 2026)
-Validación consistente en patrón CQS:
-- **Query**: `DisponibilidadModel` calcula slots disponibles con buffer
-- **Command**: `CitaHelpersModel.validarConflictoHorario()` bloquea citas que invaden buffer
-- Mensaje de error incluye detalle: "(incluye X min prep. + Y min limpieza)"
-
-### Detalle Mi Perfil
-Portal autoservicio para empleados:
-- Acceso condicional: solo usuarios con `profesional_id`
-- Widgets: vacaciones, ausencias, acciones rápidas
-
-### Detalle Citas Recurrentes (7 Ene 2026) - COMPLETO
-
-#### Arquitectura
-Sistema completo de series de citas con patrón CQS:
-
-| Capa | Archivos | Descripción |
-|------|----------|-------------|
-| **SQL** | `sql/citas/01-tablas-citas.sql` | Campos: `cita_serie_id`, `es_cita_recurrente`, `numero_en_serie`, `total_en_serie`, `patron_recurrencia` |
-| **Schemas** | `cita.schemas.js` | Validación Joi: `crearCitaRecurrenteSchema`, `previewRecurrenciaSchema` |
-| **Utils** | `recurrencia.util.js` (NUEVO) | Funciones: `generarFechasRecurrentes()`, `calcularSiguienteFecha()` |
-| **Model** | `cita.base.model.js` | Métodos: `crearRecurrente()`, `obtenerSerie()`, `cancelarSerie()`, `previewRecurrencia()` |
-| **Model Index** | `models/citas/index.js` | Proxy de los 4 métodos |
-| **Controller** | `cita.base.controller.js` | Endpoints: `crearRecurrente`, `obtenerSerie`, `cancelarSerie`, `previewRecurrencia` |
-| **Controller Index** | `controllers/citas/index.js` | Proxy de los 4 endpoints |
-| **Routes** | `routes/citas.js` | Rutas: `POST /recurrente`, `GET /serie/:serieId`, `DELETE /serie/:serieId`, `POST /preview-recurrencia` |
-| **API Frontend** | `endpoints.js` | Métodos: `crearCitaRecurrente()`, `obtenerSerie()`, `cancelarSerie()`, `previewRecurrencia()` |
-| **Hooks** | `useCitas.js` | Hooks: `useCrearCitaRecurrente()`, `useObtenerSerie()`, `useCancelarSerie()`, `usePreviewRecurrencia()` |
-| **UI** | `CitaFormModal.jsx` | Toggle recurrencia, configuración patrón, preview disponibilidad |
-
-#### Funcionalidades
-- **Patrones soportados**: Semanal, Quincenal, Mensual
-- **Días específicos**: Selección de días de la semana (ej: solo Lunes y Miércoles)
-- **Terminación**: Por cantidad (2-52 citas) o por fecha específica
-- **Preview**: Consulta de disponibilidad antes de crear la serie
-- **Validación inteligente**: Omite automáticamente fechas con conflictos (bloqueos, citas existentes, fuera de horario)
-- **Auditoría**: Registro de creación/cancelación de series
-
-#### Prueba E2E Exitosa (7 Ene 2026)
-```
-POST /api/v1/citas/preview-recurrencia
-→ 4 fechas disponibles: 2026-01-13, 01-20, 01-27, 02-03 (100% disponibilidad)
-
-POST /api/v1/citas/recurrente
-→ 4 citas creadas:
-   - ORG001-20260113-001 (serie #1)
-   - ORG001-20260120-001 (serie #2)
-   - ORG001-20260127-001 (serie #3)
-   - ORG001-20260203-001 (serie #4)
-
-UI: "Pendientes: 4" visible en dashboard de citas
-```
-
-#### Estadísticas de Implementación
-| Métrica | Valor |
-|---------|-------|
-| Archivos modificados | 14 |
-| Líneas agregadas | ~1,760 |
-| Archivos nuevos | 1 (`recurrencia.util.js`) |
-| Endpoints nuevos | 4 |
-| Hooks nuevos | 4 |
-
----
-
-## 5. Roadmap Actualizado
-
-### Q1 2026 (Siguiente)
 | Semana | Feature | Prioridad | Estado |
 |--------|---------|-----------|--------|
-| 1 | Citas Recurrentes | Alta | ✅ Completado |
-| 2-3 | Pagos Anticipados (Stripe) | Alta | Pendiente |
-| 4-5 | Lista de Espera | Alta | Pendiente |
-| 6-7 | Widget Embebible | Media | Pendiente |
-| 8-9 | Sync Google/Outlook | Alta | Pendiente |
-
-### Q2 2026
-| Feature | Prioridad |
-|---------|-----------|
-| Round-Robin mejorado | Media |
-| Reservas Grupales | Media |
-| Videoconferencia | Baja |
+| 1 | Citas Recurrentes | Alta | ✅ |
+| 1 | Round-Robin | Media | ✅ |
+| **2** | **Testing E2E Integral** | **Alta** | **Siguiente** |
+| 3-4 | Pagos Anticipados (Stripe) | Alta | Pendiente |
+| 5-6 | Lista de Espera | Alta | Pendiente |
+| 7-8 | Sync Google/Outlook | Alta | Pendiente |
 
 ---
 
-## 6. Métricas de Código
+## 6. Siguiente Paso: Testing E2E Integral
 
-### Módulo Agendamiento - Backend
-| Componente | Cantidad |
-|------------|----------|
-| Controllers | 10 |
-| Models | 8 |
-| Routes | 5 |
-| Schemas | 4 |
-| Utils | 2 |
+### Objetivo
+Validar el flujo completo de Profesionales + Agendamiento desde el frontend, empezando desde cero (BD limpia).
 
-### Módulo Agendamiento - Frontend
-| Componente | Cantidad |
-|------------|----------|
-| Páginas | 8 |
-| Componentes | 15+ |
-| Hooks | 6 |
+### Plan de Testing
+
+#### Fase 1: Setup Inicial (desde Frontend)
+| Paso | Acción | Validación |
+|------|--------|------------|
+| 1 | Crear organización via registro | Organización creada |
+| 2 | Login como admin | Acceso al dashboard |
+| 3 | Crear 3 profesionales | Lista muestra 3 profesionales |
+| 4 | Crear 2 servicios | Lista muestra 2 servicios |
+| 5 | Asignar profesionales a servicios | "2 profesionales" visible |
+
+#### Fase 2: Configuración Agendamiento
+| Paso | Acción | Validación |
+|------|--------|------------|
+| 6 | Crear horarios para cada profesional | Horarios visibles en calendario |
+| 7 | Activar Round-Robin | Toggle en "activado" |
+| 8 | Configurar orden profesionales (drag & drop) | Orden guardado en BD |
+
+#### Fase 3: Flujo de Citas
+| Paso | Acción | Validación |
+|------|--------|------------|
+| 9 | Crear cliente | Cliente en lista |
+| 10 | Crear cita SIN seleccionar profesional | Round-Robin asigna automáticamente |
+| 11 | Verificar asignación correcta | Profesional #1 del orden asignado |
+| 12 | Crear segunda cita | Profesional #2 asignado (rotación) |
+| 13 | Crear cita recurrente (4 semanas) | 4 citas creadas en serie |
+| 14 | Verificar preview recurrencia | Muestra fechas disponibles |
+
+#### Fase 4: Bloqueos y Disponibilidad
+| Paso | Acción | Validación |
+|------|--------|------------|
+| 15 | Crear bloqueo para profesional | Bloqueo visible en calendario |
+| 16 | Intentar crear cita en horario bloqueado | Error: "No disponible" |
+| 17 | Crear cita cuando solo 1 profesional disponible | Asigna al disponible |
+
+### Comando para Ejecutar
+```bash
+# 1. Limpiar BD y levantar stack desde cero
+npm run clean:data
+
+# 2. Abrir navegador en http://localhost:8080/registro
+
+# 3. Seguir flujo de testing manual desde frontend
+```
+
+### Criterios de Éxito
+- [ ] Todos los pasos completados sin errores 500
+- [ ] Round-Robin asigna correctamente en rotación
+- [ ] Citas recurrentes crean serie completa
+- [ ] Bloqueos respetados en disponibilidad
+- [ ] UI muestra feedback correcto en cada acción
 
 ---
 
-## 7. Conclusiones
+## 7. Métricas de Código
 
-**Mejoras desde v1.0:**
-- Buffer time completo: Query (disponibilidad) + Command (creación) sincronizados
-- Arquitectura modular de ausencias (patrón Odoo)
-- Portal Mi Perfil para empleados
-- Catálogo feriados LATAM único en el mercado
-- **Citas Recurrentes: series semanales, quincenales, mensuales con preview de disponibilidad**
+### Backend Agendamiento
+| Componente | Cantidad |
+|------------|----------|
+| Controllers | 11 |
+| Models | 9 |
+| Services | 2 |
+| Routes | 6 |
 
-**Ventajas vs Competencia:**
-- Único con preview de disponibilidad antes de crear serie recurrente
-- Omite automáticamente fechas no disponibles (Calendly/Cal.com fallan silenciosamente)
-- UI integrada en el mismo modal de creación de cita (no requiere navegación adicional)
+### Frontend Agendamiento
+| Componente | Cantidad |
+|------------|----------|
+| Páginas | 9 |
+| Componentes | 18+ |
+| Hooks | 7 |
 
-**Próximo foco:** Pagos anticipados y lista de espera para cerrar gaps vs Acuity/Cal.com
+---
+
+## 8. Conclusiones
+
+**Score: 9/10** - Nexo ahora compite directamente con Calendly/Cal.com en features core.
+
+**Ventajas únicas:**
+- Round-Robin con orden personalizable por servicio (drag & drop)
+- Preview de disponibilidad en citas recurrentes
+- Multi-servicio + Walk-in (único en el mercado)
+- Chatbots IA para agendamiento
+
+**Próximo foco:** Testing E2E integral para validar flujo completo antes de continuar con pagos anticipados.
 
 ---
 
 **Documento actualizado**: 7 de Enero 2026
-**Próxima revisión**: Fin Q1 2026
+**Próxima revisión**: Post Testing E2E

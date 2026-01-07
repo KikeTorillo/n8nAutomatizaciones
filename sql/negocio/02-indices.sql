@@ -106,6 +106,18 @@ CREATE INDEX idx_servicios_profesionales_profesional
 CREATE INDEX idx_servicios_profesionales_org
     ON servicios_profesionales (organizacion_id);
 
+-- 🔄 ÍNDICE 4: ROUND-ROBIN PARA AUTO-ASIGNACIÓN (Ene 2026)
+-- Propósito: Ordenamiento eficiente para rotación de profesionales
+-- Uso: WHERE servicio_id = ? AND activo = TRUE ORDER BY orden_rotacion ASC, profesional_id ASC
+CREATE INDEX idx_servicios_profesionales_round_robin
+    ON servicios_profesionales (servicio_id, orden_rotacion ASC, profesional_id ASC)
+    WHERE activo = TRUE;
+
+COMMENT ON INDEX idx_servicios_profesionales_round_robin IS
+'Índice para auto-asignación round-robin de profesionales.
+Ordena por: orden_rotacion (menor = mayor prioridad), luego por profesional_id.
+Si todos tienen orden_rotacion = 0, el orden es por ID de profesional.';
+
 -- ====================================================================
 -- 🔗 ÍNDICES PARA FOREIGN KEYS DE AUDITORÍA
 -- ====================================================================

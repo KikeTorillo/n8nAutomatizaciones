@@ -296,6 +296,73 @@ class ServicioController {
             'Estadísticas de asignaciones obtenidas exitosamente'
         );
     });
+
+    // =====================================================================
+    // ROUND-ROBIN: ORDEN DE PROFESIONALES (Ene 2026)
+    // =====================================================================
+
+    /**
+     * Obtiene profesionales de un servicio con orden de rotación
+     * @route GET /api/v1/servicios/:id/profesionales/orden
+     */
+    static obtenerProfesionalesConOrden = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+
+        const profesionales = await ServicioModel.obtenerProfesionalesConOrden(
+            parseInt(id),
+            req.tenant.organizacionId
+        );
+
+        return ResponseHelper.success(
+            res,
+            profesionales,
+            'Profesionales con orden de rotación obtenidos exitosamente'
+        );
+    });
+
+    /**
+     * Actualiza el orden de rotación de profesionales para un servicio
+     * @route PUT /api/v1/servicios/:id/profesionales/orden
+     * @body { orden: [{profesional_id: number, orden: number}] }
+     */
+    static actualizarOrdenProfesionales = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { orden } = req.body;
+
+        if (!Array.isArray(orden) || orden.length === 0) {
+            return ResponseHelper.error(res, 'Se requiere un array de orden', 400);
+        }
+
+        // Validar estructura del array
+        for (const item of orden) {
+            if (!item.profesional_id || item.orden === undefined) {
+                return ResponseHelper.error(
+                    res,
+                    'Cada elemento debe tener profesional_id y orden',
+                    400
+                );
+            }
+        }
+
+        try {
+            const profesionalesActualizados = await ServicioModel.actualizarOrdenProfesionales(
+                parseInt(id),
+                orden,
+                req.tenant.organizacionId
+            );
+
+            return ResponseHelper.success(
+                res,
+                profesionalesActualizados,
+                'Orden de profesionales actualizado exitosamente'
+            );
+        } catch (error) {
+            if (error.message.includes('no encontrado') || error.message.includes('no asignados')) {
+                return ResponseHelper.error(res, error.message, 400);
+            }
+            throw error;
+        }
+    });
 }
 
 module.exports = ServicioController;

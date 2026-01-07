@@ -989,6 +989,27 @@ export const serviciosApi = {
    */
   obtenerEstadisticasAsignaciones: () =>
     apiClient.get('/servicios/estadisticas/asignaciones'),
+
+  // =====================================================================
+  // ROUND-ROBIN: Orden de profesionales (Ene 2026)
+  // =====================================================================
+
+  /**
+   * Obtener profesionales con orden de rotación
+   * @param {number} id - ID del servicio
+   * @returns {Promise<Array>} - Profesionales con orden_rotacion
+   */
+  obtenerProfesionalesConOrden: (id) =>
+    apiClient.get(`/servicios/${id}/profesionales/orden`),
+
+  /**
+   * Actualizar orden de rotación de profesionales
+   * @param {number} id - ID del servicio
+   * @param {Array} orden - Array de { profesional_id, orden }
+   * @returns {Promise<Array>} - Profesionales actualizados
+   */
+  actualizarOrdenProfesionales: (id, orden) =>
+    apiClient.put(`/servicios/${id}/profesionales/orden`, { orden }),
 };
 
 // ==================== HORARIOS PROFESIONALES ====================
@@ -1248,6 +1269,28 @@ export const citasApi = {
    * @returns {Promise<Object>} { fechas_disponibles, fechas_no_disponibles, porcentaje_disponibilidad }
    */
   previewRecurrencia: (data) => apiClient.post('/citas/recurrente/preview', data),
+};
+
+// ==================== CONFIGURACIÓN AGENDAMIENTO (Ene 2026) ====================
+export const configuracionAgendamientoApi = {
+  /**
+   * Obtener configuración de agendamiento de la organización
+   * @returns {Promise<Object>} { round_robin_habilitado, verificar_disponibilidad }
+   */
+  obtener: () => apiClient.get('/agendamiento/configuracion'),
+
+  /**
+   * Actualizar configuración de agendamiento
+   * @param {Object} data - { round_robin_habilitado?, verificar_disponibilidad? }
+   * @returns {Promise<Object>} Configuración actualizada
+   */
+  actualizar: (data) => apiClient.put('/agendamiento/configuracion', data),
+
+  /**
+   * Toggle rápido para round-robin
+   * @returns {Promise<Object>} { round_robin_habilitado, estado_anterior }
+   */
+  toggleRoundRobin: () => apiClient.post('/agendamiento/configuracion/round-robin/toggle'),
 };
 
 // ==================== PLANES ====================
@@ -6510,4 +6553,5 @@ export default {
   motivosSalida: motivosSalidaApi,
   ubicacionesTrabajo: ubicacionesTrabajoApi,
   categoriasPago: categoriasPagoApi,
+  configuracionAgendamiento: configuracionAgendamientoApi,
 };

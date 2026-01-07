@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   useModulosDisponibles,
   useModulosActivos,
@@ -20,8 +21,13 @@ import {
   Zap,
   PartyPopper,
   ClipboardCheck,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  Info,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
+import { configuracionAgendamientoApi } from '@/services/api/endpoints';
 
 /**
  * Mapeo de iconos por módulo
@@ -60,14 +66,51 @@ const COLORES = {
  */
 function ModulosPage() {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const { isAdmin } = useAuthStore();
 
   // Estado local
   const [confirmDialog, setConfirmDialog] = useState({ open: false, modulo: null, accion: null });
+  const [expandedModules, setExpandedModules] = useState({});
 
   // Queries
   const { data: disponiblesData, isLoading: loadingDisponibles } = useModulosDisponibles();
   const { data: activosData, isLoading: loadingActivos, refetch } = useModulosActivos();
+
+  // Query para configuración de agendamiento
+  const { data: configAgendamiento, isLoading: loadingConfigAgendamiento } = useQuery({
+    queryKey: ['configuracion-agendamiento'],
+    queryFn: async () => {
+      const response = await configuracionAgendamientoApi.obtener();
+      return response.data?.data || response.data || {};
+    },
+    staleTime: 30000,
+  });
+
+  // Mutation para toggle round-robin
+  const toggleRoundRobinMutation = useMutation({
+    mutationFn: configuracionAgendamientoApi.toggleRoundRobin,
+    onSuccess: (response) => {
+      const data = response.data?.data || response.data;
+      queryClient.invalidateQueries({ queryKey: ['configuracion-agendamiento'] });
+      toast.success(
+        data?.round_robin_habilitado
+          ? 'Round-Robin activado'
+          : 'Round-Robin desactivado'
+      );
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || 'Error al cambiar configuración');
+    },
+  });
+
+  // Toggle expanded state for module configuration
+  const toggleExpanded = (moduleName) => {
+    setExpandedModules(prev => ({
+      ...prev,
+      [moduleName]: !prev[moduleName]
+    }));
+  };
 
   // Mutations
   const activarMutation = useActivarModulo();
@@ -296,7 +339,22 @@ function ModulosPage() {
                     </div>
 
                     {/* Toggle Button */}
-                    <div className="ml-4">
+                    <div className="ml-4 flex items-center gap-2">
+                      {/* Botón configuración para Agendamiento activo */}
+                      {modulo.nombre === 'agendamiento' && activo && isAdmin() && (
+                        <button
+                          onClick={() => toggleExpanded(modulo.nombre)}
+                          className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400"
+                          title="Configuración avanzada"
+                        >
+                          {expandedModules[modulo.nombre] ? (
+                            <ChevronUp className="w-4 h-4" />
+                          ) : (
+                            <ChevronDown className="w-4 h-4" />
+                          )}
+                        </button>
+                      )}
+
                       {isAdmin() ? (
                         <button
                           onClick={() => handleToggleModulo(modulo.nombre, activo)}
@@ -333,6 +391,58 @@ function ModulosPage() {
                       )}
                     </div>
                   </div>
+
+                  {/* Configuración expandida para Agendamiento */}
+                  {modulo.nombre === 'agendamiento' && activo && expandedModules[modulo.nombre] && (
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      <h4 className="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                        Configuración Avanzada
+                      </h4>
+
+                      {/* Round-Robin Toggle */}
+                      <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                        <div className="flex items-start gap-3">
+                          <RefreshCw className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                              Round-Robin
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                              Distribuye citas equitativamente entre profesionales cuando el cliente no elige uno específico.
+                            </p>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => toggleRoundRobinMutation.mutate()}
+                          disabled={toggleRoundRobinMutation.isPending || loadingConfigAgendamiento}
+                          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 ${
+                            configAgendamiento?.round_robin_habilitado
+                              ? 'bg-primary-600 focus:ring-primary-500'
+                              : 'bg-gray-300 dark:bg-gray-600 focus:ring-gray-500'
+                          } ${
+                            toggleRoundRobinMutation.isPending || loadingConfigAgendamiento
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'cursor-pointer'
+                          }`}
+                        >
+                          <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                              configAgendamiento?.round_robin_habilitado ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                          />
+                        </button>
+                      </div>
+
+                      {/* Nota informativa */}
+                      <div className="mt-3 flex items-start gap-2 text-xs text-primary-700 dark:text-primary-300 bg-primary-50 dark:bg-primary-900/30 p-2.5 rounded-lg">
+                        <Info className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                        <span>
+                          El orden de profesionales se configura en cada servicio desde Servicios &gt; Editar &gt; Profesionales.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

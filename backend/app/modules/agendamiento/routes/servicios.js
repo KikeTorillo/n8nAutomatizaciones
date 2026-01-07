@@ -73,6 +73,25 @@ router.delete('/:id/profesionales/:profesional_id',
     ServicioController.desasignarProfesional
 );
 
+// ========== Rutas Round-Robin (Ene 2026) ==========
+// GET /api/v1/servicios/:id/profesionales/orden - Obtener profesionales con orden de rotación
+router.get('/:id/profesionales/orden',
+    rateLimiting.apiRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    ServicioController.obtenerProfesionalesConOrden
+);
+
+// PUT /api/v1/servicios/:id/profesionales/orden - Actualizar orden de rotación
+router.put('/:id/profesionales/orden',
+    rateLimiting.apiRateLimit,
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    auth.requireAdminRole,
+    ServicioController.actualizarOrdenProfesionales
+);
+
 // ========== Rutas Bulk ==========
 
 router.post('/bulk-create',
