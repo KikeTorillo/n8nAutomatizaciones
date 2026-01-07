@@ -215,7 +215,9 @@ class DisponibilidadModel {
             slots,
             prof.id,
             fechaStr,
-            duracionFinal,
+            duracionServicio,
+            tiempoPreparacion,
+            tiempoLimpieza,
             citasRangoFiltradas,
             bloqueosRango,
             nivelDetalle
@@ -286,26 +288,66 @@ class DisponibilidadModel {
   /**
    * ✅ BATCH QUERY: Obtener todas las citas del rango de UNA VEZ
    * Evita N+1 queries (1 query vs miles)
+   *
+   * IMPORTANTE: Incluye buffer time (preparación y limpieza) del servicio
+   * para calcular el rango efectivo que bloquea al profesional.
+   *
+   * - hora_inicio_efectiva: hora_inicio - preparación del primer servicio
+   * - hora_fin_efectiva: hora_fin + limpieza del último servicio
    */
   static async _obtenerCitasRango(profesionalIds, fechaInicio, fechaFin, organizacionId, db) {
     const resultado = await db.query(
       `
+      WITH citas_buffer AS (
+        SELECT
+          c.id,
+          c.profesional_id,
+          c.fecha_cita,
+          c.hora_inicio,
+          c.hora_fin,
+          c.estado,
+          c.codigo_cita,
+          -- Buffer de preparación: del primer servicio (orden_ejecucion = 1)
+          COALESCE(
+            (SELECT s.requiere_preparacion_minutos
+             FROM citas_servicios cs
+             JOIN servicios s ON cs.servicio_id = s.id
+             WHERE cs.cita_id = c.id AND cs.fecha_cita = c.fecha_cita
+             ORDER BY cs.orden_ejecucion ASC
+             LIMIT 1), 0
+          ) as buffer_preparacion,
+          -- Buffer de limpieza: del último servicio (MAX orden_ejecucion)
+          COALESCE(
+            (SELECT s.tiempo_limpieza_minutos
+             FROM citas_servicios cs
+             JOIN servicios s ON cs.servicio_id = s.id
+             WHERE cs.cita_id = c.id AND cs.fecha_cita = c.fecha_cita
+             ORDER BY cs.orden_ejecucion DESC
+             LIMIT 1), 0
+          ) as buffer_limpieza
+        FROM citas c
+        WHERE c.profesional_id = ANY($1::int[])
+          AND c.fecha_cita BETWEEN $2 AND $3
+          AND c.estado NOT IN ('cancelada', 'no_asistio')
+          AND c.organizacion_id = $4
+      )
       SELECT
-        c.id,
-        c.profesional_id,
-        c.fecha_cita,
-        c.hora_inicio,
-        c.hora_fin,
-        c.estado,
-        c.codigo_cita,
-        cl.nombre as cliente_nombre
-      FROM citas c
+        cb.id,
+        cb.profesional_id,
+        cb.fecha_cita,
+        -- Hora efectiva de inicio (considerando preparación antes)
+        (cb.hora_inicio - (cb.buffer_preparacion || ' minutes')::interval)::time as hora_inicio,
+        -- Hora efectiva de fin (considerando limpieza después)
+        (cb.hora_fin + (cb.buffer_limpieza || ' minutes')::interval)::time as hora_fin,
+        cb.estado,
+        cb.codigo_cita,
+        cl.nombre as cliente_nombre,
+        cb.buffer_preparacion,
+        cb.buffer_limpieza
+      FROM citas_buffer cb
+      LEFT JOIN citas c ON cb.id = c.id AND cb.fecha_cita = c.fecha_cita
       LEFT JOIN clientes cl ON c.cliente_id = cl.id
-      WHERE c.profesional_id = ANY($1::int[])
-        AND c.fecha_cita BETWEEN $2 AND $3
-        AND c.estado NOT IN ('cancelada', 'no_asistio')
-        AND c.organizacion_id = $4
-      ORDER BY c.fecha_cita, c.hora_inicio
+      ORDER BY cb.fecha_cita, cb.hora_inicio
     `,
       [profesionalIds, fechaInicio, fechaFin, organizacionId]
     );
@@ -366,6 +408,12 @@ class DisponibilidadModel {
    * - CitaValidacionUtil.formatearMensajeCita() - Formato de mensajes de citas
    * - CitaValidacionUtil.formatearMensajeBloqueo() - Formato de mensajes de bloqueos
    *
+   * BUFFER TIME:
+   * - tiempoPreparacion: minutos ANTES del slot.hora que el profesional necesita
+   * - tiempoLimpieza: minutos DESPUÉS del servicio que el profesional necesita
+   * - horaInicioEfectiva = slot.hora - tiempoPreparacion
+   * - horaFinEfectiva = slot.hora + duracionServicio + tiempoLimpieza
+   *
    * Si se modifica la lógica de validación, actualizar también en:
    * - CitaValidacionUtil (funciones compartidas)
    * - CitaHelpersModel.validarHorarioPermitido() (operaciones de escritura)
@@ -377,20 +425,27 @@ class DisponibilidadModel {
     slots,
     profesionalId,
     fecha,
-    duracion,
+    duracionServicio,
+    tiempoPreparacion,
+    tiempoLimpieza,
     citasRango,
     bloqueosRango,
     nivelDetalle
   ) {
     const slotsConDisponibilidad = [];
+    const duracionTotal = tiempoPreparacion + duracionServicio + tiempoLimpieza;
 
     for (const slot of slots) {
-      const horaFin = this._calcularHoraFin(slot.hora, duracion);
+      // Calcular rango efectivo del slot considerando buffer time
+      // - horaInicioEfectiva: el profesional necesita prepararse ANTES del slot.hora
+      // - horaFinEfectiva: el profesional necesita limpiar DESPUÉS del servicio
+      const horaInicioEfectiva = this._calcularHoraInicio(slot.hora, tiempoPreparacion);
+      const horaFinEfectiva = this._calcularHoraFin(slot.hora, duracionServicio + tiempoLimpieza);
 
       const slotInfo = {
         hora: slot.hora,
         disponible: true,
-        duracion_disponible: duracion,
+        duracion_disponible: duracionTotal,
         razon_no_disponible: null,
       };
 
@@ -398,8 +453,9 @@ class DisponibilidadModel {
       // Verificación 1: Conflicto con citas existentes
       // ====================================================================
       // ✅ Usar CitaValidacionUtil.citaSolapaConSlot() para lógica compartida
+      // NOTA: Las citas ya vienen con hora_inicio/hora_fin ajustadas por buffer
       const citaConflicto = citasRango.find((cita) =>
-        CitaValidacionUtil.citaSolapaConSlot(cita, profesionalId, fecha, slot.hora, horaFin)
+        CitaValidacionUtil.citaSolapaConSlot(cita, profesionalId, fecha, horaInicioEfectiva, horaFinEfectiva)
       );
 
       if (citaConflicto) {
@@ -420,10 +476,13 @@ class DisponibilidadModel {
 
         logger.debug('[_verificarDisponibilidadSlotsEnMemoria] Slot bloqueado por cita', {
           slot_hora: slot.hora,
-          slot_fin: horaFin,
+          slot_inicio_efectivo: horaInicioEfectiva,
+          slot_fin_efectivo: horaFinEfectiva,
           cita_hora_inicio: citaConflicto.hora_inicio,
           cita_hora_fin: citaConflicto.hora_fin,
-          cita_codigo: citaConflicto.codigo_cita
+          cita_codigo: citaConflicto.codigo_cita,
+          buffer_prep: tiempoPreparacion,
+          buffer_limpieza: tiempoLimpieza,
         });
 
         slotsConDisponibilidad.push(slotInfo);
@@ -435,7 +494,7 @@ class DisponibilidadModel {
       // ====================================================================
       // ✅ Usar CitaValidacionUtil.bloqueoAfectaSlot() para lógica compartida
       const bloqueoConflicto = bloqueosRango.find((bloqueo) =>
-        CitaValidacionUtil.bloqueoAfectaSlot(bloqueo, profesionalId, fecha, slot.hora, horaFin)
+        CitaValidacionUtil.bloqueoAfectaSlot(bloqueo, profesionalId, fecha, horaInicioEfectiva, horaFinEfectiva)
       );
 
       if (bloqueoConflicto) {
@@ -450,7 +509,8 @@ class DisponibilidadModel {
 
         logger.debug('[_verificarDisponibilidadSlotsEnMemoria] Slot bloqueado por bloqueo', {
           slot_hora: slot.hora,
-          slot_fin: horaFin,
+          slot_inicio_efectivo: horaInicioEfectiva,
+          slot_fin_efectivo: horaFinEfectiva,
           bloqueo_hora_inicio: bloqueoConflicto.hora_inicio,
           bloqueo_hora_fin: bloqueoConflicto.hora_fin,
           bloqueo_titulo: bloqueoConflicto.titulo
@@ -614,6 +674,18 @@ class DisponibilidadModel {
     }
 
     return slots;
+  }
+
+  /**
+   * Calcular hora de inicio restando tiempo de preparación
+   * @param {string} horaSlot - Hora del slot (HH:mm:ss)
+   * @param {number} minutosPreparacion - Minutos de preparación antes del slot
+   * @returns {string} Hora de inicio efectiva (HH:mm:ss)
+   */
+  static _calcularHoraInicio(horaSlot, minutosPreparacion) {
+    const hora = DateTime.fromFormat(horaSlot, 'HH:mm:ss');
+    const inicioEfectivo = hora.minus({ minutes: minutosPreparacion });
+    return inicioEfectivo.toFormat('HH:mm:ss');
   }
 
   /**

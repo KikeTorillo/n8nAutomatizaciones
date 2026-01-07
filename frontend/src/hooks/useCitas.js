@@ -498,6 +498,143 @@ export function useRecordatorios(citaId) {
   });
 }
 
+// ==================== CITAS RECURRENTES ====================
+
+/**
+ * Hook para crear una serie de citas recurrentes
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ *
+ * @example
+ * const crearRecurrenteMutation = useCrearCitaRecurrente();
+ *
+ * crearRecurrenteMutation.mutate({
+ *   cliente_id: 1,
+ *   profesional_id: 2,
+ *   servicios_ids: [3],
+ *   fecha_cita: '2026-01-15',
+ *   hora_inicio: '10:00:00',
+ *   hora_fin: '10:30:00',
+ *   es_recurrente: true,
+ *   patron_recurrencia: {
+ *     frecuencia: 'semanal',
+ *     dias_semana: [3],
+ *     intervalo: 1,
+ *     termina_en: 'cantidad',
+ *     cantidad_citas: 12
+ *   }
+ * });
+ */
+export function useCrearCitaRecurrente() {
+  const queryClient = useQueryClient();
+  const { success, error: showError } = useToast();
+  const { getSucursalId } = useSucursalStore();
+
+  return useMutation({
+    mutationFn: async (citaData) => {
+      const sanitizedData = {
+        ...citaData,
+        notas_cliente: citaData.notas_cliente?.trim() || undefined,
+        notas_internas: citaData.notas_internas?.trim() || undefined,
+        sucursal_id: citaData.sucursal_id || getSucursalId() || undefined,
+      };
+
+      const response = await citasApi.crearRecurrente(sanitizedData);
+      return response.data?.data || response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      success(`Serie creada: ${data.citas_creadas?.length || 0} citas`);
+    },
+    onError: (error) => {
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al crear serie recurrente';
+      showError(mensaje);
+    },
+  });
+}
+
+/**
+ * Hook para obtener todas las citas de una serie recurrente
+ * @param {string} serieId - UUID de la serie
+ * @param {Object} options - { incluir_canceladas: boolean }
+ * @returns {Object} { data, isLoading, error }
+ *
+ * @example
+ * const { data: serie } = useSerieCitas('uuid-serie-id', { incluir_canceladas: false });
+ */
+export function useSerieCitas(serieId, options = {}) {
+  return useQuery({
+    queryKey: ['citas', 'serie', serieId, options],
+    queryFn: async () => {
+      const response = await citasApi.obtenerSerie(serieId, options);
+      return response.data?.data || response.data;
+    },
+    enabled: !!serieId,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+/**
+ * Hook para cancelar todas las citas pendientes de una serie
+ * @returns {Object} { mutate, mutateAsync, isLoading, error }
+ *
+ * @example
+ * const cancelarSerieMutation = useCancelarSerie();
+ *
+ * cancelarSerieMutation.mutate({
+ *   serieId: 'uuid-serie-id',
+ *   motivo_cancelacion: 'Cliente solicitó cancelar tratamiento',
+ *   cancelar_solo_pendientes: true
+ * });
+ */
+export function useCancelarSerie() {
+  const queryClient = useQueryClient();
+  const { success, error: showError } = useToast();
+
+  return useMutation({
+    mutationFn: async ({ serieId, ...opciones }) => {
+      const response = await citasApi.cancelarSerie(serieId, opciones);
+      return response.data?.data || response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['citas'] });
+      success(`${data.citas_canceladas || 0} citas canceladas`);
+    },
+    onError: (error) => {
+      const mensaje = error.response?.data?.message || error.response?.data?.error || 'Error al cancelar serie';
+      showError(mensaje);
+    },
+  });
+}
+
+/**
+ * Hook para obtener preview de fechas disponibles para serie recurrente
+ * @returns {Object} { mutate, mutateAsync, isLoading, error, data }
+ *
+ * @example
+ * const previewMutation = usePreviewRecurrencia();
+ *
+ * previewMutation.mutate({
+ *   fecha_inicio: '2026-01-15',
+ *   hora_inicio: '10:00:00',
+ *   duracion_minutos: 30,
+ *   profesional_id: 2,
+ *   patron_recurrencia: {
+ *     frecuencia: 'semanal',
+ *     intervalo: 1,
+ *     termina_en: 'cantidad',
+ *     cantidad_citas: 12
+ *   }
+ * });
+ */
+export function usePreviewRecurrencia() {
+  return useMutation({
+    mutationFn: async (datos) => {
+      const response = await citasApi.previewRecurrencia(datos);
+      return response.data?.data || response.data;
+    },
+  });
+}
+
 // ==================== HOOKS DE BÚSQUEDA Y FILTRADO ====================
 
 /**
@@ -595,4 +732,10 @@ export default {
   useBuscarCitas,
   useCitasPorProfesional,
   useCitasPorCliente,
+
+  // Citas Recurrentes
+  useCrearCitaRecurrente,
+  useSerieCitas,
+  useCancelarSerie,
+  usePreviewRecurrencia,
 };

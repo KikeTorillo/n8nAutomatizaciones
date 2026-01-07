@@ -132,6 +132,7 @@ class RouteLoader {
       return require(routesIndexPath);
     } catch (error) {
       logger.debug(`[RouteLoader] Módulo ${moduleInfo.name} sin routes/index.js`);
+      logger.error(`[RouteLoader] Error cargando ${moduleInfo.name}: ${error.message}`);
       return null;
     }
   }

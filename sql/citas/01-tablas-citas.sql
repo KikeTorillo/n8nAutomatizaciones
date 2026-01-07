@@ -65,6 +65,13 @@ CREATE TABLE citas (
     notas_internas TEXT,
     origen_cita VARCHAR(50) DEFAULT 'manual',
 
+    -- 🔄 CITAS RECURRENTES
+    cita_serie_id UUID,                    -- Agrupa citas de la misma serie recurrente
+    es_cita_recurrente BOOLEAN DEFAULT false,
+    numero_en_serie INTEGER,               -- Posición en la serie (1, 2, 3...)
+    total_en_serie INTEGER,                -- Total de citas en la serie
+    patron_recurrencia JSONB,              -- Solo en cita #1: {frecuencia, dias_semana, intervalo, termina_en, fecha_fin, cantidad_citas}
+
     -- ⭐ CALIFICACIÓN Y FEEDBACK
     calificacion_cliente INTEGER CHECK (calificacion_cliente >= 1 AND calificacion_cliente <= 5),
     comentario_cliente TEXT,
@@ -157,6 +164,36 @@ COMMENT ON COLUMN citas.estado IS
 
 COMMENT ON COLUMN citas.origen_cita IS
 'Origen de creación: manual, whatsapp, telegram, web, telefono, api';
+
+COMMENT ON COLUMN citas.cita_serie_id IS
+'UUID que agrupa todas las citas de una serie recurrente. NULL si es cita única.';
+
+COMMENT ON COLUMN citas.es_cita_recurrente IS
+'Indica si la cita forma parte de una serie recurrente.';
+
+COMMENT ON COLUMN citas.numero_en_serie IS
+'Posición de la cita dentro de la serie (1, 2, 3...). NULL si no es recurrente.';
+
+COMMENT ON COLUMN citas.total_en_serie IS
+'Número total de citas en la serie recurrente. NULL si no es recurrente.';
+
+COMMENT ON COLUMN citas.patron_recurrencia IS
+'Patrón de recurrencia en formato JSON. Solo se almacena en la primera cita de la serie.
+Formato: {
+  "frecuencia": "semanal|quincenal|mensual",
+  "dias_semana": [0-6],
+  "intervalo": 1-4,
+  "termina_en": "fecha|cantidad",
+  "fecha_fin": "YYYY-MM-DD",
+  "cantidad_citas": 2-52
+}';
+
+-- ====================================================================
+-- 📇 ÍNDICES PARA CITAS RECURRENTES
+-- ====================================================================
+
+CREATE INDEX idx_citas_serie ON citas(cita_serie_id) WHERE cita_serie_id IS NOT NULL;
+CREATE INDEX idx_citas_recurrentes ON citas(organizacion_id, es_cita_recurrente) WHERE es_cita_recurrente = true;
 
 -- ====================================================================
 -- 🔗 TABLA CITAS_SERVICIOS - RELACIÓN M:N CON SERVICIOS

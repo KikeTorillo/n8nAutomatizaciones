@@ -71,7 +71,51 @@ const crear = {
             .optional()
             .allow(null),
         notas_cliente: Joi.string().max(1000).optional(),
-        notas: Joi.string().max(1000).optional() // Alias para compatibilidad
+        notas: Joi.string().max(1000).optional(), // Alias para compatibilidad
+
+        // ✅ FEATURE: Citas Recurrentes
+        es_recurrente: Joi.boolean().default(false),
+        patron_recurrencia: Joi.object({
+            frecuencia: Joi.string().valid('semanal', 'quincenal', 'mensual').required()
+                .messages({ 'any.only': 'Frecuencia debe ser: semanal, quincenal o mensual' }),
+            dias_semana: Joi.array()
+                .items(Joi.number().integer().min(0).max(6))
+                .min(1)
+                .max(7)
+                .optional()
+                .messages({
+                    'number.min': 'Día de semana debe ser 0-6 (Domingo=0)',
+                    'number.max': 'Día de semana debe ser 0-6 (Sábado=6)'
+                }),
+            intervalo: Joi.number().integer().min(1).max(4).default(1)
+                .messages({ 'number.max': 'Intervalo máximo es 4' }),
+            termina_en: Joi.string().valid('fecha', 'cantidad').required()
+                .messages({ 'any.only': 'termina_en debe ser: fecha o cantidad' }),
+            fecha_fin: Joi.date().iso()
+                .when('termina_en', {
+                    is: 'fecha',
+                    then: Joi.required(),
+                    otherwise: Joi.optional()
+                })
+                .messages({ 'any.required': 'fecha_fin es requerida cuando termina_en=fecha' }),
+            cantidad_citas: Joi.number().integer().min(2).max(52)
+                .when('termina_en', {
+                    is: 'cantidad',
+                    then: Joi.required(),
+                    otherwise: Joi.optional()
+                })
+                .messages({
+                    'any.required': 'cantidad_citas es requerida cuando termina_en=cantidad',
+                    'number.min': 'Mínimo 2 citas por serie',
+                    'number.max': 'Máximo 52 citas por serie (1 año semanal)'
+                })
+        }).when('es_recurrente', {
+            is: true,
+            then: Joi.required(),
+            otherwise: Joi.optional()
+        }).messages({
+            'any.required': 'patron_recurrencia es requerido cuando es_recurrente=true'
+        })
     })
     .custom((value, helpers) => {
         // Validar que proporcione servicios_ids O servicio_id (no ambos)
@@ -215,6 +259,9 @@ const listar = {
         busqueda: Joi.string().max(100).optional(),
         // ✅ FEATURE: Multi-sucursal - Filtrar por sucursal
         sucursal_id: commonSchemas.id.optional(),
+        // ✅ FEATURE: Citas Recurrentes - Filtros
+        cita_serie_id: Joi.string().uuid().optional(),
+        es_cita_recurrente: Joi.boolean().optional(),
         page: Joi.number().integer().min(1).default(1),
         limit: Joi.number().integer().min(1).max(100).default(20),
         orden: Joi.string().default('fecha_cita'),
@@ -466,6 +513,84 @@ const calificarCliente = {
     })
 };
 
+// ===================================================================
+// CITAS RECURRENTES
+// ===================================================================
+
+const obtenerSerie = {
+    params: Joi.object({
+        serieId: Joi.string().uuid().required()
+            .messages({ 'string.guid': 'serieId debe ser un UUID válido' })
+    }),
+    query: Joi.object({
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        }),
+        incluir_canceladas: Joi.boolean().default(false)
+    })
+};
+
+const cancelarSerie = {
+    params: Joi.object({
+        serieId: Joi.string().uuid().required()
+            .messages({ 'string.guid': 'serieId debe ser un UUID válido' })
+    }),
+    body: Joi.object({
+        motivo_cancelacion: Joi.string().min(5).max(500).required()
+            .messages({
+                'any.required': 'Debe proporcionar un motivo de cancelación',
+                'string.min': 'Motivo debe tener al menos 5 caracteres'
+            }),
+        cancelar_desde_fecha: Joi.date().iso().optional(),
+        cancelar_solo_pendientes: Joi.boolean().default(true)
+    }),
+    query: Joi.object({
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
+    })
+};
+
+const previewRecurrencia = {
+    body: Joi.object({
+        fecha_inicio: Joi.date().iso().required(),
+        hora_inicio: commonSchemas.time.required(),
+        duracion_minutos: Joi.number().integer().min(5).max(480).required(),
+        profesional_id: commonSchemas.id.required(),
+        patron_recurrencia: Joi.object({
+            frecuencia: Joi.string().valid('semanal', 'quincenal', 'mensual').required(),
+            dias_semana: Joi.array()
+                .items(Joi.number().integer().min(0).max(6))
+                .min(1)
+                .max(7)
+                .optional(),
+            intervalo: Joi.number().integer().min(1).max(4).default(1),
+            termina_en: Joi.string().valid('fecha', 'cantidad').required(),
+            fecha_fin: Joi.date().iso().when('termina_en', {
+                is: 'fecha',
+                then: Joi.required(),
+                otherwise: Joi.optional()
+            }),
+            cantidad_citas: Joi.number().integer().min(2).max(52).when('termina_en', {
+                is: 'cantidad',
+                then: Joi.required(),
+                otherwise: Joi.optional()
+            })
+        }).required()
+    }),
+    query: Joi.object({
+        organizacion_id: Joi.when('$userRole', {
+            is: 'super_admin',
+            then: commonSchemas.id.optional(),
+            otherwise: Joi.forbidden()
+        })
+    })
+};
+
 module.exports = {
     // CRUD
     crear,
@@ -493,5 +618,10 @@ module.exports = {
     // Recordatorios
     obtenerRecordatorios,
     marcarRecordatorioEnviado,
-    calificarCliente
+    calificarCliente,
+
+    // Citas Recurrentes
+    obtenerSerie,
+    cancelarSerie,
+    previewRecurrencia
 };

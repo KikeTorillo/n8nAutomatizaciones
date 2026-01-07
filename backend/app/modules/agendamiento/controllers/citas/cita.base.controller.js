@@ -182,6 +182,10 @@ class CitaBaseController {
             cliente_id: req.query.cliente_id ? parseInt(req.query.cliente_id) : null,
             profesional_id: req.query.profesional_id ? parseInt(req.query.profesional_id) : null,
             servicio_id: req.query.servicio_id ? parseInt(req.query.servicio_id) : null,
+            // ✅ FEATURE: Citas Recurrentes - filtros
+            cita_serie_id: req.query.cita_serie_id,
+            es_cita_recurrente: req.query.es_cita_recurrente === 'true' ? true :
+                               req.query.es_cita_recurrente === 'false' ? false : undefined,
             busqueda: req.query.busqueda,
             limite: limit,
             offset,
@@ -202,6 +206,179 @@ class CitaBaseController {
                 has_prev: page > 1
             }
         }, 'Citas obtenidas exitosamente');
+    });
+
+    // =====================================================================
+    // CITAS RECURRENTES
+    // =====================================================================
+
+    /**
+     * Crea una serie de citas recurrentes
+     * POST /api/v1/citas/recurrente
+     */
+    static crearRecurrente = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+        let citaData = {
+            ...req.body,
+            organizacion_id: organizacionId
+        };
+
+        // ✅ FEATURE: Agendamiento público - crear cliente automáticamente si se proporciona objeto
+        if (citaData.cliente && !citaData.cliente_id) {
+            const clienteInfo = citaData.cliente;
+
+            // Buscar cliente existente por email (prioritario) o teléfono
+            let clienteId = null;
+
+            if (clienteInfo.email) {
+                const resultadoBusqueda = await RLSContextManager.query(organizacionId, async (db) => {
+                    const query = 'SELECT id FROM clientes WHERE organizacion_id = $1 AND LOWER(email) = LOWER($2) LIMIT 1';
+                    const result = await db.query(query, [organizacionId, clienteInfo.email]);
+                    return result.rows[0];
+                });
+
+                if (resultadoBusqueda) {
+                    clienteId = resultadoBusqueda.id;
+                }
+            }
+
+            // Si no se encontró por email, buscar por teléfono (via adapter)
+            if (!clienteId && clienteInfo.telefono) {
+                const resultadoBusqueda = await clienteAdapter.buscarPorTelefono(
+                    clienteInfo.telefono,
+                    organizacionId,
+                    { exacto: true }
+                );
+
+                if (resultadoBusqueda.encontrado) {
+                    clienteId = resultadoBusqueda.cliente.id;
+                }
+            }
+
+            // Si no existe, crear nuevo cliente (via adapter)
+            if (!clienteId) {
+                const nuevoCliente = await clienteAdapter.crear({
+                    organizacion_id: organizacionId,
+                    nombre: clienteInfo.nombre,
+                    apellidos: clienteInfo.apellidos || null,
+                    email: clienteInfo.email || null,
+                    telefono: clienteInfo.telefono,
+                    como_conocio: 'marketplace',
+                    notas_especiales: 'Cliente creado desde agendamiento público (serie recurrente)',
+                    activo: true,
+                    marketing_permitido: true
+                });
+
+                clienteId = nuevoCliente.id;
+            }
+
+            // Reemplazar objeto cliente con cliente_id
+            citaData.cliente_id = clienteId;
+            delete citaData.cliente;
+        }
+
+        // ✅ FEATURE: Asignar profesional automáticamente si no se especificó
+        if (!citaData.profesional_id) {
+            const profesionalAsignado = await RLSContextManager.query(organizacionId, async (db) => {
+                const query = 'SELECT id FROM profesionales WHERE organizacion_id = $1 AND activo = true ORDER BY id ASC LIMIT 1';
+                const result = await db.query(query, [organizacionId]);
+                return result.rows[0];
+            });
+
+            if (!profesionalAsignado) {
+                return ResponseHelper.error(res, 'No hay profesionales activos disponibles', 400);
+            }
+
+            citaData.profesional_id = profesionalAsignado.id;
+        }
+
+        // ✅ FEATURE: Calcular hora_fin automáticamente si no se proporciona
+        if (!citaData.hora_fin && citaData.hora_inicio) {
+            const serviciosIds = citaData.servicios_ids || (citaData.servicio_id ? [citaData.servicio_id] : []);
+
+            if (serviciosIds.length > 0) {
+                // Obtener duración total de los servicios
+                const duracionTotal = await RLSContextManager.query(organizacionId, async (db) => {
+                    const query = 'SELECT SUM(duracion_minutos) as duracion_total FROM servicios WHERE organizacion_id = $1 AND id = ANY($2)';
+                    const result = await db.query(query, [organizacionId, serviciosIds]);
+                    return result.rows[0]?.duracion_total || 60;
+                });
+
+                // Calcular hora_fin sumando la duración a hora_inicio
+                const [horas, minutos] = citaData.hora_inicio.split(':').map(Number);
+                const horaInicioDate = new Date(2000, 0, 1, horas, minutos);
+                horaInicioDate.setMinutes(horaInicioDate.getMinutes() + parseInt(duracionTotal));
+
+                const horaFin = `${String(horaInicioDate.getHours()).padStart(2, '0')}:${String(horaInicioDate.getMinutes()).padStart(2, '0')}`;
+                citaData.hora_fin = horaFin;
+            }
+        }
+
+        const usuarioId = req.user?.id || null;
+        const resultado = await CitaModel.crearRecurrente(citaData, usuarioId);
+
+        return ResponseHelper.success(res, resultado, 'Serie de citas creada exitosamente', 201);
+    });
+
+    /**
+     * Obtiene todas las citas de una serie recurrente
+     * GET /api/v1/citas/serie/:serieId
+     */
+    static obtenerSerie = asyncHandler(async (req, res) => {
+        const { serieId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+        const incluirCanceladas = req.query.incluir_canceladas === 'true';
+
+        const serie = await CitaModel.obtenerSerie(serieId, organizacionId, {
+            incluir_canceladas: incluirCanceladas
+        });
+
+        if (!serie) {
+            return ResponseHelper.error(res, 'Serie de citas no encontrada', 404);
+        }
+
+        return ResponseHelper.success(res, serie, 'Serie obtenida exitosamente');
+    });
+
+    /**
+     * Cancela todas las citas pendientes de una serie
+     * POST /api/v1/citas/serie/:serieId/cancelar
+     */
+    static cancelarSerie = asyncHandler(async (req, res) => {
+        const { serieId } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user.id;
+
+        const opciones = {
+            motivo_cancelacion: req.body.motivo_cancelacion,
+            cancelar_desde_fecha: req.body.cancelar_desde_fecha,
+            cancelar_solo_pendientes: req.body.cancelar_solo_pendientes !== false
+        };
+
+        const resultado = await CitaModel.cancelarSerie(serieId, organizacionId, opciones, usuarioId);
+
+        return ResponseHelper.success(res, resultado, 'Serie cancelada exitosamente');
+    });
+
+    /**
+     * Preview de fechas para una serie recurrente (sin crear)
+     * POST /api/v1/citas/recurrente/preview
+     */
+    static previewRecurrencia = asyncHandler(async (req, res) => {
+        const organizacionId = req.tenant.organizacionId;
+
+        const datos = {
+            fecha_inicio: req.body.fecha_inicio,
+            hora_inicio: req.body.hora_inicio,
+            hora_fin: req.body.hora_fin,
+            duracion_minutos: req.body.duracion_minutos,
+            profesional_id: req.body.profesional_id,
+            patron_recurrencia: req.body.patron_recurrencia
+        };
+
+        const preview = await CitaModel.previewRecurrencia(datos, organizacionId);
+
+        return ResponseHelper.success(res, preview, 'Preview de recurrencia generado');
     });
 }
 

@@ -2,20 +2,42 @@ import { useState, useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Calendar, User, Briefcase, Package, Clock, DollarSign } from 'lucide-react';
+import { Calendar, User, Briefcase, Package, Clock, DollarSign, Repeat, ChevronDown, ChevronUp, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import MultiSelect from '@/components/ui/MultiSelect';
 import Textarea from '@/components/ui/Textarea';
 import FormField from '@/components/forms/FormField';
-import { useCrearCita, useActualizarCita } from '@/hooks/useCitas';
+import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecurrencia } from '@/hooks/useCitas';
 import { useClientes } from '@/hooks/useClientes';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import { aFormatoISO } from '@/utils/dateHelpers';
+
+// Constantes para recurrencia
+const FRECUENCIAS = [
+  { value: 'semanal', label: 'Semanal' },
+  { value: 'quincenal', label: 'Quincenal (cada 2 semanas)' },
+  { value: 'mensual', label: 'Mensual' },
+];
+
+const DIAS_SEMANA = [
+  { value: '0', label: 'Dom' },
+  { value: '1', label: 'Lun' },
+  { value: '2', label: 'Mar' },
+  { value: '3', label: 'Mié' },
+  { value: '4', label: 'Jue' },
+  { value: '5', label: 'Vie' },
+  { value: '6', label: 'Sáb' },
+];
+
+const TERMINA_EN = [
+  { value: 'cantidad', label: 'Después de N citas' },
+  { value: 'fecha', label: 'En una fecha específica' },
+];
 
 /**
  * Schema de validación Zod para CREAR cita
@@ -110,6 +132,17 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   const [cargandoServicios, setCargandoServicios] = useState(false);
   const [precioCalculado, setPrecioCalculado] = useState(0);
 
+  // Estados para citas recurrentes
+  const [esRecurrente, setEsRecurrente] = useState(false);
+  const [frecuencia, setFrecuencia] = useState('semanal');
+  const [diasSemana, setDiasSemana] = useState([]);
+  const [intervalo, setIntervalo] = useState(1);
+  const [terminaEn, setTerminaEn] = useState('cantidad');
+  const [cantidadCitas, setCantidadCitas] = useState(12);
+  const [fechaFinRecurrencia, setFechaFinRecurrencia] = useState('');
+  const [previewData, setPreviewData] = useState(null);
+  const [mostrarPreview, setMostrarPreview] = useState(false);
+
   // Fetch data
   const { data: clientesData } = useClientes({ activo: true });
   const { data: profesionales } = useProfesionales({ activo: true });
@@ -118,6 +151,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   // Hooks de mutación
   const crearMutation = useCrearCita();
   const actualizarMutation = useActualizarCita();
+  const crearRecurrenteMutation = useCrearCitaRecurrente();
+  const previewMutation = usePreviewRecurrencia();
 
   // React Hook Form con validación Zod
   const {
@@ -321,6 +356,37 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, isEditMode]);
 
+  // Función para obtener preview de recurrencia
+  const handlePreviewRecurrencia = async () => {
+    const formData = watch();
+    if (!formData.profesional_id || !formData.fecha_cita || !formData.hora_inicio || !formData.duracion_minutos) {
+      toast.error('Completa profesional, fecha, hora y duración para ver el preview');
+      return;
+    }
+
+    const patronRecurrencia = {
+      frecuencia,
+      dias_semana: frecuencia !== 'mensual' && diasSemana.length > 0 ? diasSemana.map(Number) : undefined,
+      intervalo,
+      termina_en: terminaEn,
+      ...(terminaEn === 'cantidad' ? { cantidad_citas: cantidadCitas } : { fecha_fin: fechaFinRecurrencia }),
+    };
+
+    try {
+      const result = await previewMutation.mutateAsync({
+        fecha_inicio: formData.fecha_cita,
+        hora_inicio: `${formData.hora_inicio}:00`,
+        duracion_minutos: formData.duracion_minutos,
+        profesional_id: parseInt(formData.profesional_id),
+        patron_recurrencia: patronRecurrencia,
+      });
+      setPreviewData(result);
+      setMostrarPreview(true);
+    } catch (error) {
+      toast.error('Error al generar preview: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   // Handler de submit
   const onSubmit = async (data) => {
     try {
@@ -352,18 +418,45 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
         // Modo edición
         await actualizarMutation.mutateAsync({ id: cita.id, ...sanitized });
         toast.success('Cita actualizada exitosamente');
+      } else if (esRecurrente) {
+        // Modo creación recurrente
+        const patronRecurrencia = {
+          frecuencia,
+          dias_semana: frecuencia !== 'mensual' && diasSemana.length > 0 ? diasSemana.map(Number) : undefined,
+          intervalo,
+          termina_en: terminaEn,
+          ...(terminaEn === 'cantidad' ? { cantidad_citas: cantidadCitas } : { fecha_fin: fechaFinRecurrencia }),
+        };
+
+        const result = await crearRecurrenteMutation.mutateAsync({
+          ...sanitized,
+          es_recurrente: true,
+          patron_recurrencia: patronRecurrencia,
+        });
+
+        // Mostrar resumen de citas creadas
+        if (result.citas_omitidas?.length > 0) {
+          toast.warning(`Serie creada: ${result.citas_creadas?.length} citas. ${result.citas_omitidas?.length} fechas omitidas por conflictos.`);
+        } else {
+          toast.success(`Serie creada: ${result.citas_creadas?.length} citas`);
+        }
       } else {
-        // Modo creación
+        // Modo creación simple
         await crearMutation.mutateAsync(sanitized);
         toast.success('Cita creada exitosamente');
       }
+
+      // Resetear estados de recurrencia
+      setEsRecurrente(false);
+      setPreviewData(null);
+      setMostrarPreview(false);
 
       onClose();
       reset();
     } catch (error) {
       // Extraer el mensaje de error del response del backend
       let mensajeError = '';
-      const accion = isEditMode ? 'actualizar' : 'crear';
+      const accion = isEditMode ? 'actualizar' : esRecurrente ? 'crear serie de citas' : 'crear';
 
       if (error.response?.data?.message) {
         // El backend envía el error en response.data.message
@@ -375,7 +468,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
         // Fallback a error.message si no hay response
         mensajeError = error.message;
       } else {
-        mensajeError = `Error al ${accion} la cita`;
+        mensajeError = `Error al ${accion}`;
       }
 
       // Agregar prefijo descriptivo solo si el mensaje no lo tiene ya
@@ -383,7 +476,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                            mensajeError.startsWith('Error') ||
                            mensajeError.startsWith('Conflicto')
         ? mensajeError
-        : `No se puede ${accion} la cita: ${mensajeError}`;
+        : `No se puede ${accion}: ${mensajeError}`;
 
       // Mostrar el error con un toast
       toast.error(mensajeFinal);
@@ -637,6 +730,243 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                   />
                 )}
               />
+
+              {/* Sección de Recurrencia (solo en modo creación) */}
+              {!isEditMode && (
+                <div className="border-t border-gray-200 dark:border-gray-700 pt-4 mt-4">
+                  {/* Toggle de recurrencia */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Repeat className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Cita Recurrente
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={esRecurrente}
+                        onChange={(e) => {
+                          setEsRecurrente(e.target.checked);
+                          if (!e.target.checked) {
+                            setPreviewData(null);
+                            setMostrarPreview(false);
+                          }
+                        }}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600"></div>
+                    </label>
+                  </div>
+
+                  {/* Panel de configuración de recurrencia */}
+                  {esRecurrente && (
+                    <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 space-y-4">
+                      {/* Frecuencia */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                          Frecuencia
+                        </label>
+                        <select
+                          value={frecuencia}
+                          onChange={(e) => setFrecuencia(e.target.value)}
+                          className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                        >
+                          {FRECUENCIAS.map((f) => (
+                            <option key={f.value} value={f.value}>{f.label}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Días de la semana (solo para semanal/quincenal) */}
+                      {(frecuencia === 'semanal' || frecuencia === 'quincenal') && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                            Días de la semana (opcional)
+                          </label>
+                          <div className="flex flex-wrap gap-2">
+                            {DIAS_SEMANA.map((dia) => (
+                              <button
+                                key={dia.value}
+                                type="button"
+                                onClick={() => {
+                                  setDiasSemana((prev) =>
+                                    prev.includes(dia.value)
+                                      ? prev.filter((d) => d !== dia.value)
+                                      : [...prev, dia.value]
+                                  );
+                                }}
+                                className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${
+                                  diasSemana.includes(dia.value)
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                }`}
+                              >
+                                {dia.label}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                            Si no seleccionas días, se usará el mismo día de la semana que la fecha inicial
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Intervalo (solo para semanal) */}
+                      {frecuencia === 'semanal' && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Cada cuántas semanas
+                          </label>
+                          <select
+                            value={intervalo}
+                            onChange={(e) => setIntervalo(parseInt(e.target.value))}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          >
+                            <option value={1}>Cada semana</option>
+                            <option value={2}>Cada 2 semanas</option>
+                            <option value={3}>Cada 3 semanas</option>
+                            <option value={4}>Cada 4 semanas</option>
+                          </select>
+                        </div>
+                      )}
+
+                      {/* Terminación */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Termina
+                          </label>
+                          <select
+                            value={terminaEn}
+                            onChange={(e) => setTerminaEn(e.target.value)}
+                            className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                          >
+                            {TERMINA_EN.map((t) => (
+                              <option key={t.value} value={t.value}>{t.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {terminaEn === 'cantidad' ? (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Número de citas
+                            </label>
+                            <input
+                              type="number"
+                              min={2}
+                              max={52}
+                              value={cantidadCitas}
+                              onChange={(e) => setCantidadCitas(parseInt(e.target.value) || 12)}
+                              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                          </div>
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Fecha de fin
+                            </label>
+                            <input
+                              type="date"
+                              value={fechaFinRecurrencia}
+                              onChange={(e) => setFechaFinRecurrencia(e.target.value)}
+                              className="block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botón de Preview */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handlePreviewRecurrencia}
+                        isLoading={previewMutation.isPending}
+                        className="w-full"
+                      >
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Ver fechas disponibles
+                      </Button>
+
+                      {/* Preview de fechas */}
+                      {mostrarPreview && previewData && (
+                        <div className="mt-4 space-y-3">
+                          {/* Resumen */}
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-600 dark:text-gray-400">
+                              {previewData.descripcion_patron}
+                            </span>
+                            <span className={`font-medium ${
+                              previewData.porcentaje_disponibilidad >= 80 ? 'text-green-600' :
+                              previewData.porcentaje_disponibilidad >= 50 ? 'text-yellow-600' : 'text-red-600'
+                            }`}>
+                              {previewData.porcentaje_disponibilidad}% disponible
+                            </span>
+                          </div>
+
+                          {/* Estadísticas */}
+                          <div className="grid grid-cols-3 gap-2 text-center text-sm">
+                            <div className="bg-green-50 dark:bg-green-900/30 rounded-lg p-2">
+                              <div className="flex items-center justify-center gap-1 text-green-600 dark:text-green-400">
+                                <CheckCircle className="w-4 h-4" />
+                                <span className="font-bold">{previewData.total_disponibles}</span>
+                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Disponibles</span>
+                            </div>
+                            <div className="bg-red-50 dark:bg-red-900/30 rounded-lg p-2">
+                              <div className="flex items-center justify-center gap-1 text-red-600 dark:text-red-400">
+                                <XCircle className="w-4 h-4" />
+                                <span className="font-bold">{previewData.total_no_disponibles}</span>
+                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Conflictos</span>
+                            </div>
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                              <div className="flex items-center justify-center gap-1 text-gray-600 dark:text-gray-400">
+                                <Calendar className="w-4 h-4" />
+                                <span className="font-bold">{previewData.total_solicitadas}</span>
+                              </div>
+                              <span className="text-xs text-gray-500 dark:text-gray-400">Total</span>
+                            </div>
+                          </div>
+
+                          {/* Lista expandible de fechas */}
+                          <details className="text-sm">
+                            <summary className="cursor-pointer text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300">
+                              Ver detalle de fechas
+                            </summary>
+                            <div className="mt-2 max-h-40 overflow-y-auto space-y-1">
+                              {previewData.fechas_disponibles?.map((f, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs text-green-600 dark:text-green-400">
+                                  <CheckCircle className="w-3 h-3" />
+                                  <span>{new Date(f.fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })}</span>
+                                </div>
+                              ))}
+                              {previewData.fechas_no_disponibles?.map((f, i) => (
+                                <div key={i} className="flex items-center gap-2 text-xs text-red-600 dark:text-red-400">
+                                  <XCircle className="w-3 h-3" />
+                                  <span>{new Date(f.fecha + 'T12:00:00').toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' })} - {f.motivo}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+
+                          {/* Advertencia si hay muchos conflictos */}
+                          {previewData.porcentaje_disponibilidad < 50 && (
+                            <div className="flex items-start gap-2 p-2 bg-yellow-50 dark:bg-yellow-900/30 rounded-lg text-sm">
+                              <AlertCircle className="w-4 h-4 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
+                              <span className="text-yellow-700 dark:text-yellow-300">
+                                Muchas fechas no están disponibles. Considera ajustar el horario o el profesional.
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Botones de acción */}
@@ -645,22 +975,26 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 type="button"
                 variant="outline"
                 onClick={onClose}
-                disabled={crearMutation.isPending || actualizarMutation.isPending}
+                disabled={crearMutation.isPending || actualizarMutation.isPending || crearRecurrenteMutation.isPending}
               >
                 Cancelar
               </Button>
               <Button
                 type="submit"
-                isLoading={crearMutation.isPending || actualizarMutation.isPending}
-                disabled={crearMutation.isPending || actualizarMutation.isPending}
+                isLoading={crearMutation.isPending || actualizarMutation.isPending || crearRecurrenteMutation.isPending}
+                disabled={crearMutation.isPending || actualizarMutation.isPending || crearRecurrenteMutation.isPending}
               >
                 {isEditMode
                   ? actualizarMutation.isPending
                     ? 'Actualizando...'
                     : 'Actualizar Cita'
-                  : crearMutation.isPending
-                    ? 'Creando...'
-                    : 'Crear Cita'}
+                  : esRecurrente
+                    ? crearRecurrenteMutation.isPending
+                      ? 'Creando serie...'
+                      : `Crear ${previewData?.total_disponibles || cantidadCitas} Citas`
+                    : crearMutation.isPending
+                      ? 'Creando...'
+                      : 'Crear Cita'}
               </Button>
             </div>
           </>

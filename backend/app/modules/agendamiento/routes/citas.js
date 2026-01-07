@@ -70,6 +70,62 @@ router.get('/recordatorios',
 );
 
 // ===================================================================
+// CITAS RECURRENTES
+// ===================================================================
+
+/**
+ * POST /api/v1/citas/recurrente/preview
+ * Preview de fechas disponibles para una serie recurrente (sin crear)
+ */
+router.post('/recurrente/preview',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.previewRecurrencia),
+    CitaController.previewRecurrencia
+);
+
+/**
+ * POST /api/v1/citas/recurrente
+ * Crear una serie de citas recurrentes
+ */
+router.post('/recurrente',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    subscription.checkResourceLimit('citas_mes'),
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.crear),  // Usa el schema crear que incluye patron_recurrencia
+    CitaController.crearRecurrente
+);
+
+/**
+ * GET /api/v1/citas/serie/:serieId
+ * Obtener todas las citas de una serie recurrente
+ */
+router.get('/serie/:serieId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.obtenerSerie),
+    CitaController.obtenerSerie
+);
+
+/**
+ * POST /api/v1/citas/serie/:serieId/cancelar
+ * Cancelar todas las citas pendientes de una serie
+ */
+router.post('/serie/:serieId/cancelar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    tenant.verifyTenantActive,
+    rateLimiting.apiRateLimit,
+    validate(citaSchemas.cancelarSerie),
+    CitaController.cancelarSerie
+);
+
+// ===================================================================
 // CRUD
 // ===================================================================
 

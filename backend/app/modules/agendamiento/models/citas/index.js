@@ -191,6 +191,49 @@ class CitaModel {
         const CitaServicioModel = require('./cita-servicio.model');
         return CitaServicioModel.calcularTotales(serviciosData);
     }
+
+    // ===================================================================
+    // 🔄 MÉTODOS CITAS RECURRENTES
+    // ===================================================================
+
+    /**
+     * Crear una serie de citas recurrentes
+     * @param {Object} citaData - Datos de la cita base con patrón de recurrencia
+     * @param {number} usuarioId - ID del usuario que crea la serie
+     */
+    static async crearRecurrente(citaData, usuarioId) {
+        return CitaBaseModel.crearRecurrente(citaData, usuarioId);
+    }
+
+    /**
+     * Obtener todas las citas de una serie recurrente
+     * @param {string} serieId - UUID de la serie
+     * @param {number} organizacionId - ID de organización
+     * @param {Object} opciones - Opciones de filtro
+     */
+    static async obtenerSerie(serieId, organizacionId, opciones = {}) {
+        return CitaBaseModel.obtenerSerie(serieId, organizacionId, opciones);
+    }
+
+    /**
+     * Cancelar todas las citas pendientes de una serie
+     * @param {string} serieId - UUID de la serie
+     * @param {number} organizacionId - ID de organización
+     * @param {Object} opciones - Opciones (motivo_cancelacion, etc.)
+     * @param {number} usuarioId - ID del usuario que cancela
+     */
+    static async cancelarSerie(serieId, organizacionId, opciones, usuarioId) {
+        return CitaBaseModel.cancelarSerie(serieId, organizacionId, opciones, usuarioId);
+    }
+
+    /**
+     * Preview de fechas disponibles para una serie recurrente (sin crear)
+     * @param {Object} datos - Datos del preview (profesional, fecha, hora, patrón)
+     * @param {number} organizacionId - ID de organización
+     */
+    static async previewRecurrencia(datos, organizacionId) {
+        return CitaBaseModel.previewRecurrencia(datos, organizacionId);
+    }
 }
 
 module.exports = CitaModel;

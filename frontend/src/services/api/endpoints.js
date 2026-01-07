@@ -1216,6 +1216,38 @@ export const citasApi = {
    * @returns {Promise<Object>}
    */
   disponibilidadInmediata: (params) => apiClient.get('/citas/disponibilidad-inmediata', { params }),
+
+  // ==================== CITAS RECURRENTES ====================
+
+  /**
+   * Crear serie de citas recurrentes
+   * @param {Object} data - Datos de la cita + patron_recurrencia
+   * @returns {Promise<Object>} { cita_serie_id, citas_creadas, citas_omitidas, estadisticas }
+   */
+  crearRecurrente: (data) => apiClient.post('/citas/recurrente', data),
+
+  /**
+   * Obtener todas las citas de una serie recurrente
+   * @param {string} serieId - UUID de la serie
+   * @param {Object} params - { incluir_canceladas: boolean }
+   * @returns {Promise<Object>} Serie completa con citas y estadísticas
+   */
+  obtenerSerie: (serieId, params = {}) => apiClient.get(`/citas/serie/${serieId}`, { params }),
+
+  /**
+   * Cancelar todas las citas pendientes de una serie
+   * @param {string} serieId - UUID de la serie
+   * @param {Object} data - { motivo_cancelacion, cancelar_desde_fecha, cancelar_solo_pendientes }
+   * @returns {Promise<Object>} Resumen de cancelación
+   */
+  cancelarSerie: (serieId, data) => apiClient.post(`/citas/serie/${serieId}/cancelar`, data),
+
+  /**
+   * Preview de fechas para serie recurrente (sin crear)
+   * @param {Object} data - { fecha_inicio, hora_inicio, duracion_minutos, profesional_id, patron_recurrencia }
+   * @returns {Promise<Object>} { fechas_disponibles, fechas_no_disponibles, porcentaje_disponibilidad }
+   */
+  previewRecurrencia: (data) => apiClient.post('/citas/recurrente/preview', data),
 };
 
 // ==================== PLANES ====================

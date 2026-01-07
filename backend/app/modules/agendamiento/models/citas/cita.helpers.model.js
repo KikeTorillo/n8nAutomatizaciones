@@ -274,28 +274,71 @@ class CitaHelpersModel {
         const fechaNormalizada = CitaValidacionUtil.normalizarFecha(fecha);
 
         // Consultar todas las citas del profesional en la fecha
-        // ✅ IMPORTANTE: Incluir profesional_id y estado para citaSolapaConSlot()
+        // ✅ IMPORTANTE: Incluir buffer_preparacion y buffer_limpieza del servicio
+        // Buffer de preparación: del primer servicio (orden_ejecucion ASC)
+        // Buffer de limpieza: del último servicio (orden_ejecucion DESC)
         let query = `
-            SELECT id, profesional_id, fecha_cita, hora_inicio, hora_fin, estado, codigo_cita
-            FROM citas
-            WHERE profesional_id = $1
-                AND fecha_cita = $2
-                AND estado NOT IN ('cancelada', 'no_asistio')
+            WITH citas_con_buffer AS (
+                SELECT
+                    c.id,
+                    c.profesional_id,
+                    c.fecha_cita,
+                    c.hora_inicio as hora_inicio_original,
+                    c.hora_fin as hora_fin_original,
+                    c.estado,
+                    c.codigo_cita,
+                    -- Buffer de preparación: del primer servicio
+                    COALESCE(
+                        (SELECT s.requiere_preparacion_minutos
+                         FROM citas_servicios cs
+                         JOIN servicios s ON cs.servicio_id = s.id
+                         WHERE cs.cita_id = c.id AND cs.fecha_cita = c.fecha_cita
+                         ORDER BY cs.orden_ejecucion ASC LIMIT 1), 0
+                    ) as buffer_preparacion,
+                    -- Buffer de limpieza: del último servicio
+                    COALESCE(
+                        (SELECT s.tiempo_limpieza_minutos
+                         FROM citas_servicios cs
+                         JOIN servicios s ON cs.servicio_id = s.id
+                         WHERE cs.cita_id = c.id AND cs.fecha_cita = c.fecha_cita
+                         ORDER BY cs.orden_ejecucion DESC LIMIT 1), 0
+                    ) as buffer_limpieza
+                FROM citas c
+                WHERE c.profesional_id = $1
+                    AND c.fecha_cita = $2
+                    AND c.estado NOT IN ('cancelada', 'no_asistio')
+                    ${citaIdExcluir ? 'AND c.id != $3' : ''}
+            )
+            SELECT
+                id,
+                profesional_id,
+                fecha_cita,
+                -- Horas efectivas con buffer aplicado
+                (hora_inicio_original - (buffer_preparacion || ' minutes')::interval)::time as hora_inicio,
+                (hora_fin_original + (buffer_limpieza || ' minutes')::interval)::time as hora_fin,
+                -- Horas originales para logging
+                hora_inicio_original,
+                hora_fin_original,
+                estado,
+                codigo_cita,
+                buffer_preparacion,
+                buffer_limpieza
+            FROM citas_con_buffer
         `;
 
-        const params = [profesionalId, fechaNormalizada];
-
-        if (citaIdExcluir) {
-            query += ' AND id != $3';
-            params.push(citaIdExcluir);
-        }
+        const params = citaIdExcluir
+            ? [profesionalId, fechaNormalizada, citaIdExcluir]
+            : [profesionalId, fechaNormalizada];
 
         const citasResult = await db.query(query, params);
 
         // ✅ Usar CitaValidacionUtil.citaSolapaConSlot() para validar cada cita
+        // Las horas ya vienen ajustadas con buffer desde SQL
         for (const cita of citasResult.rows) {
             if (CitaValidacionUtil.citaSolapaConSlot(cita, profesionalId, fecha, horaInicio, horaFin)) {
-                const horaConflicto = `${cita.hora_inicio.substring(0, 5)} - ${cita.hora_fin.substring(0, 5)}`;
+                // Mostrar hora original + buffer en mensaje de error
+                const horaOriginal = `${cita.hora_inicio_original.substring(0, 5)} - ${cita.hora_fin_original.substring(0, 5)}`;
+                const horaEfectiva = `${cita.hora_inicio.substring(0, 5)} - ${cita.hora_fin.substring(0, 5)}`;
 
                 // Formatear fecha correctamente
                 const fechaStr = cita.fecha_cita instanceof Date
@@ -304,8 +347,17 @@ class CitaHelpersModel {
                 const [year, month, day] = fechaStr.split('-');
                 const fechaFormateada = `${day}/${month}/${year}`;
 
+                // Construir mensaje con info de buffer si aplica
+                let bufferInfo = '';
+                if (cita.buffer_preparacion > 0 || cita.buffer_limpieza > 0) {
+                    const buffers = [];
+                    if (cita.buffer_preparacion > 0) buffers.push(`${cita.buffer_preparacion} min prep.`);
+                    if (cita.buffer_limpieza > 0) buffers.push(`${cita.buffer_limpieza} min limpieza`);
+                    bufferInfo = ` (incluye ${buffers.join(' + ')}, bloquea ${horaEfectiva})`;
+                }
+
                 throw new Error(
-                    `Conflicto de horario: El profesional ya tiene la cita ${cita.codigo_cita} programada el ${fechaFormateada} de ${horaConflicto}. ` +
+                    `Conflicto de horario: El profesional ya tiene la cita ${cita.codigo_cita} programada el ${fechaFormateada} de ${horaOriginal}${bufferInfo}. ` +
                     `Por favor, selecciona otro horario disponible.`
                 );
             }

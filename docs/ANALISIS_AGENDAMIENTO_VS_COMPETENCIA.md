@@ -1,8 +1,8 @@
 # Análisis Comparativo: Módulo Agendamiento Nexo vs Competencia
 
-**Fecha**: 6 de Enero 2026
-**Versión**: 2.0
-**Última actualización**: Fase 0 completada + Mi Perfil implementado
+**Fecha**: 7 de Enero 2026
+**Versión**: 2.3
+**Última actualización**: Citas Recurrentes - Testing E2E completado
 
 ---
 
@@ -10,7 +10,7 @@
 
 Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Calendly**, **Acuity Scheduling**, **Cal.com** y otros líderes.
 
-**Estado actual**: 8/10 (subió de 7.5 tras Fase 0)
+**Estado actual**: 8.5/10 (subió de 8 tras implementar Citas Recurrentes)
 
 ---
 
@@ -31,7 +31,7 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 | Bloqueos (vacaciones, etc.) | ✅ | ✅ | ⚠️ | ✅ | ✅ |
 | **Filtros por origen bloqueo** | ✅ | ✅ | ❌ | ❌ | ❌ |
 | **Protección bloqueos auto-generados** | ✅ | ✅ | N/A | N/A | N/A |
-| Citas recurrentes | ❌ | ❌ | ⚠️ | ✅ | ✅ |
+| Citas recurrentes | ✅ | ❌ | ⚠️ | ✅ | ✅ |
 | Reservas grupales | ❌ | ✅ | ✅ | ✅ | ✅ |
 | Lista de espera (waitlist) | ❌ | ❌ | ❌ | ✅ | ❌ |
 
@@ -86,6 +86,7 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 | **Calificaciones bidireccionales** | Profesional califica cliente post-servicio |
 | **Catálogo feriados LATAM** | MX, CO, AR, CL, PE pre-configurados |
 | **RLS + Particionamiento** | Multi-tenancy y performance enterprise |
+| **Citas Recurrentes con Preview** | Visualización de disponibilidad antes de crear serie |
 
 ---
 
@@ -94,7 +95,6 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 ### Alta Prioridad
 | Gap | Impacto | Esfuerzo |
 |-----|---------|----------|
-| Citas Recurrentes | Retención clientes | 5-8 días |
 | Sync Google/Outlook | Evita doble-reserva | 8-12 días |
 | Pagos Anticipados (Stripe) | Reduce no-shows | 5-7 días |
 
@@ -121,50 +121,134 @@ Análisis del módulo de agendamiento de Nexo vs **Odoo 19 Appointments**, **Cal
 
 | Feature | Estado | Archivos Clave |
 |---------|--------|----------------|
-| **Buffer Time** | ✅ | `ServicioFormModal.jsx`, `disponibilidad.model.js` |
+| **Buffer Time (Query + Command)** | ✅ | `disponibilidad.model.js`, `cita.helpers.model.js` |
 | **UI Bloqueos mejorada** | ✅ | `BloqueosPage.jsx`, `BloqueosList.jsx` |
 | **Días Festivos + LATAM** | ✅ | `DiasFestivosPage.jsx`, `feriados-latam.js` |
 | **Tab Ausencias** | ✅ | `AusenciasTab.jsx` |
 | **Mi Perfil (Autoservicio)** | ✅ | `MiPerfilPage.jsx` |
+| **Citas Recurrentes** | ✅ | Ver detalle abajo |
+
+### Detalle Buffer Time (7 Ene 2026)
+Validación consistente en patrón CQS:
+- **Query**: `DisponibilidadModel` calcula slots disponibles con buffer
+- **Command**: `CitaHelpersModel.validarConflictoHorario()` bloquea citas que invaden buffer
+- Mensaje de error incluye detalle: "(incluye X min prep. + Y min limpieza)"
 
 ### Detalle Mi Perfil
-Portal autoservicio para empleados (similar a Odoo Employee Self Service):
+Portal autoservicio para empleados:
 - Acceso condicional: solo usuarios con `profesional_id`
 - Widgets: vacaciones, ausencias, acciones rápidas
-- Links a: Vacaciones, Mi Calendario, Mis Citas
+
+### Detalle Citas Recurrentes (7 Ene 2026) - COMPLETO
+
+#### Arquitectura
+Sistema completo de series de citas con patrón CQS:
+
+| Capa | Archivos | Descripción |
+|------|----------|-------------|
+| **SQL** | `sql/citas/01-tablas-citas.sql` | Campos: `cita_serie_id`, `es_cita_recurrente`, `numero_en_serie`, `total_en_serie`, `patron_recurrencia` |
+| **Schemas** | `cita.schemas.js` | Validación Joi: `crearCitaRecurrenteSchema`, `previewRecurrenciaSchema` |
+| **Utils** | `recurrencia.util.js` (NUEVO) | Funciones: `generarFechasRecurrentes()`, `calcularSiguienteFecha()` |
+| **Model** | `cita.base.model.js` | Métodos: `crearRecurrente()`, `obtenerSerie()`, `cancelarSerie()`, `previewRecurrencia()` |
+| **Model Index** | `models/citas/index.js` | Proxy de los 4 métodos |
+| **Controller** | `cita.base.controller.js` | Endpoints: `crearRecurrente`, `obtenerSerie`, `cancelarSerie`, `previewRecurrencia` |
+| **Controller Index** | `controllers/citas/index.js` | Proxy de los 4 endpoints |
+| **Routes** | `routes/citas.js` | Rutas: `POST /recurrente`, `GET /serie/:serieId`, `DELETE /serie/:serieId`, `POST /preview-recurrencia` |
+| **API Frontend** | `endpoints.js` | Métodos: `crearCitaRecurrente()`, `obtenerSerie()`, `cancelarSerie()`, `previewRecurrencia()` |
+| **Hooks** | `useCitas.js` | Hooks: `useCrearCitaRecurrente()`, `useObtenerSerie()`, `useCancelarSerie()`, `usePreviewRecurrencia()` |
+| **UI** | `CitaFormModal.jsx` | Toggle recurrencia, configuración patrón, preview disponibilidad |
+
+#### Funcionalidades
+- **Patrones soportados**: Semanal, Quincenal, Mensual
+- **Días específicos**: Selección de días de la semana (ej: solo Lunes y Miércoles)
+- **Terminación**: Por cantidad (2-52 citas) o por fecha específica
+- **Preview**: Consulta de disponibilidad antes de crear la serie
+- **Validación inteligente**: Omite automáticamente fechas con conflictos (bloqueos, citas existentes, fuera de horario)
+- **Auditoría**: Registro de creación/cancelación de series
+
+#### Prueba E2E Exitosa (7 Ene 2026)
+```
+POST /api/v1/citas/preview-recurrencia
+→ 4 fechas disponibles: 2026-01-13, 01-20, 01-27, 02-03 (100% disponibilidad)
+
+POST /api/v1/citas/recurrente
+→ 4 citas creadas:
+   - ORG001-20260113-001 (serie #1)
+   - ORG001-20260120-001 (serie #2)
+   - ORG001-20260127-001 (serie #3)
+   - ORG001-20260203-001 (serie #4)
+
+UI: "Pendientes: 4" visible en dashboard de citas
+```
+
+#### Estadísticas de Implementación
+| Métrica | Valor |
+|---------|-------|
+| Archivos modificados | 14 |
+| Líneas agregadas | ~1,760 |
+| Archivos nuevos | 1 (`recurrencia.util.js`) |
+| Endpoints nuevos | 4 |
+| Hooks nuevos | 4 |
 
 ---
 
 ## 5. Roadmap Actualizado
 
 ### Q1 2026 (Siguiente)
-| Semana | Feature | Prioridad |
-|--------|---------|-----------|
-| 1-2 | Pagos Anticipados (Stripe) | Alta |
-| 3-4 | Citas Recurrentes | Alta |
-| 5-6 | Lista de Espera | Alta |
-| 7-8 | Widget Embebible | Media |
+| Semana | Feature | Prioridad | Estado |
+|--------|---------|-----------|--------|
+| 1 | Citas Recurrentes | Alta | ✅ Completado |
+| 2-3 | Pagos Anticipados (Stripe) | Alta | Pendiente |
+| 4-5 | Lista de Espera | Alta | Pendiente |
+| 6-7 | Widget Embebible | Media | Pendiente |
+| 8-9 | Sync Google/Outlook | Alta | Pendiente |
 
 ### Q2 2026
 | Feature | Prioridad |
 |---------|-----------|
-| Google/Outlook Sync | Alta |
 | Round-Robin mejorado | Media |
 | Reservas Grupales | Media |
+| Videoconferencia | Baja |
 
 ---
 
-## 6. Conclusiones
+## 6. Métricas de Código
+
+### Módulo Agendamiento - Backend
+| Componente | Cantidad |
+|------------|----------|
+| Controllers | 10 |
+| Models | 8 |
+| Routes | 5 |
+| Schemas | 4 |
+| Utils | 2 |
+
+### Módulo Agendamiento - Frontend
+| Componente | Cantidad |
+|------------|----------|
+| Páginas | 8 |
+| Componentes | 15+ |
+| Hooks | 6 |
+
+---
+
+## 7. Conclusiones
 
 **Mejoras desde v1.0:**
-- Buffer time ahora funcional en cálculo de disponibilidad
+- Buffer time completo: Query (disponibilidad) + Command (creación) sincronizados
 - Arquitectura modular de ausencias (patrón Odoo)
 - Portal Mi Perfil para empleados
 - Catálogo feriados LATAM único en el mercado
+- **Citas Recurrentes: series semanales, quincenales, mensuales con preview de disponibilidad**
 
-**Próximo foco:** Pagos anticipados y citas recurrentes para cerrar gaps vs Acuity/Cal.com
+**Ventajas vs Competencia:**
+- Único con preview de disponibilidad antes de crear serie recurrente
+- Omite automáticamente fechas no disponibles (Calendly/Cal.com fallan silenciosamente)
+- UI integrada en el mismo modal de creación de cita (no requiere navegación adicional)
+
+**Próximo foco:** Pagos anticipados y lista de espera para cerrar gaps vs Acuity/Cal.com
 
 ---
 
-**Documento actualizado**: 6 de Enero 2026
+**Documento actualizado**: 7 de Enero 2026
 **Próxima revisión**: Fin Q1 2026

@@ -104,6 +104,26 @@ class CitaController {
     static async calificarCliente(req, res) {
         return CitaRecordatoriosController.calificarCliente(req, res);
     }
+
+    // ===================================================================
+    // 🔄 ENDPOINTS CITAS RECURRENTES
+    // ===================================================================
+
+    static async crearRecurrente(req, res) {
+        return CitaBaseController.crearRecurrente(req, res);
+    }
+
+    static async obtenerSerie(req, res) {
+        return CitaBaseController.obtenerSerie(req, res);
+    }
+
+    static async cancelarSerie(req, res) {
+        return CitaBaseController.cancelarSerie(req, res);
+    }
+
+    static async previewRecurrencia(req, res) {
+        return CitaBaseController.previewRecurrencia(req, res);
+    }
 }
 
 module.exports = CitaController;

@@ -4,6 +4,9 @@ const { DEFAULTS, CitaHelpersModel } = require('./cita.helpers.model');
 const RLSContextManager = require('../../../../utils/rlsContextManager');
 // ✅ FIX GAP #5: Importar CitaServicioQueries para evitar N+1 en listarConFiltros
 const CitaServicioQueries = require('./cita-servicio.queries');
+// ✅ FEATURE: Citas Recurrentes
+const { v4: uuidv4 } = require('uuid');
+const { RecurrenciaUtil, FRECUENCIAS } = require('../../utils/recurrencia.util');
 
 class CitaBaseModel {
 
@@ -930,6 +933,585 @@ class CitaBaseModel {
                 citas: dataResult.rows,
                 total: total
             };
+        });
+    }
+
+    // =====================================================================
+    // CITAS RECURRENTES
+    // =====================================================================
+
+    /**
+     * Crea una serie de citas recurrentes
+     *
+     * @param {Object} citaData - Datos base de la cita + patron_recurrencia
+     * @param {number} usuarioId - ID del usuario que crea
+     * @returns {Object} Resumen: { citas_creadas, citas_omitidas, detalles }
+     */
+    static async crearRecurrente(citaData, usuarioId) {
+        logger.info('[CitaBaseModel.crearRecurrente] Iniciando creación de serie recurrente', {
+            organizacion_id: citaData.organizacion_id,
+            profesional_id: citaData.profesional_id,
+            patron: citaData.patron_recurrencia
+        });
+
+        // Validar patrón de recurrencia
+        const validacionPatron = RecurrenciaUtil.validarPatronRecurrencia(citaData.patron_recurrencia);
+        if (!validacionPatron.valido) {
+            throw new Error(`Patrón de recurrencia inválido: ${validacionPatron.errores.join(', ')}`);
+        }
+
+        // Normalizar fecha de inicio
+        let fechaInicio;
+        if (citaData.fecha_cita instanceof Date) {
+            fechaInicio = citaData.fecha_cita.toISOString().split('T')[0];
+        } else if (typeof citaData.fecha_cita === 'string' && citaData.fecha_cita.includes('T')) {
+            fechaInicio = citaData.fecha_cita.split('T')[0];
+        } else {
+            fechaInicio = citaData.fecha_cita;
+        }
+
+        // Generar todas las fechas de la serie
+        const fechasSerie = RecurrenciaUtil.generarFechasRecurrentes(
+            citaData.patron_recurrencia,
+            fechaInicio
+        );
+
+        logger.info('[CitaBaseModel.crearRecurrente] Fechas generadas', {
+            total: fechasSerie.length,
+            primera: fechasSerie[0],
+            ultima: fechasSerie[fechasSerie.length - 1]
+        });
+
+        // Generar UUID para la serie
+        const citaSerieId = uuidv4();
+
+        // Resultado
+        const resultado = {
+            cita_serie_id: citaSerieId,
+            total_solicitadas: fechasSerie.length,
+            citas_creadas: [],
+            citas_omitidas: [],
+            patron: citaData.patron_recurrencia,
+            descripcion_patron: RecurrenciaUtil.describirPatron(citaData.patron_recurrencia)
+        };
+
+        return await RLSContextManager.transaction(citaData.organizacion_id, async (db) => {
+            // Validar entidades relacionadas una sola vez
+            const serviciosIds = citaData.servicios_ids || [citaData.servicio_id];
+
+            await CitaHelpersModel.validarEntidadesRelacionadas(
+                citaData.cliente_id,
+                citaData.profesional_id,
+                serviciosIds[0],
+                citaData.organizacion_id,
+                db
+            );
+
+            // Obtener información de servicios una sola vez
+            const CitaServicioModel = require('./cita-servicio.model');
+            await CitaServicioModel.validarServiciosOrganizacion(serviciosIds, citaData.organizacion_id);
+
+            const serviciosData = await Promise.all(
+                serviciosIds.map(async (servicioId, index) => {
+                    const servicio = await CitaHelpersModel.obtenerServicioCompleto(
+                        servicioId,
+                        citaData.organizacion_id,
+                        db
+                    );
+
+                    if (!servicio) {
+                        throw new Error(`Servicio con ID ${servicioId} no encontrado`);
+                    }
+
+                    const servicioData = citaData.servicios_data?.[index] || {};
+
+                    return {
+                        servicio_id: servicioId,
+                        orden_ejecucion: index + 1,
+                        precio_aplicado: servicioData.precio_aplicado || servicio.precio || 0.00,
+                        duracion_minutos: servicioData.duracion_minutos || servicio.duracion_minutos || 0,
+                        descuento: servicioData.descuento || 0.00,
+                        notas: servicioData.notas || null
+                    };
+                })
+            );
+
+            const { precio_total, duracion_total_minutos } = CitaServicioModel.calcularTotales(serviciosData);
+
+            // Crear cada cita de la serie
+            for (let i = 0; i < fechasSerie.length; i++) {
+                const fechaCita = fechasSerie[i];
+                const numeroEnSerie = i + 1;
+
+                try {
+                    // Validar horario para esta fecha específica
+                    const validacion = await CitaHelpersModel.validarHorarioPermitido(
+                        citaData.profesional_id,
+                        fechaCita,
+                        citaData.hora_inicio,
+                        citaData.hora_fin,
+                        citaData.organizacion_id,
+                        db,
+                        null,
+                        { esWalkIn: false, permitirFueraHorario: false }
+                    );
+
+                    if (!validacion.valido) {
+                        // Esta fecha no está disponible, omitirla
+                        resultado.citas_omitidas.push({
+                            fecha: fechaCita,
+                            numero_en_serie: numeroEnSerie,
+                            motivo: validacion.errores.map(e => e.mensaje).join('; ')
+                        });
+
+                        logger.warn('[CitaBaseModel.crearRecurrente] Fecha omitida por conflicto', {
+                            fecha: fechaCita,
+                            numero_en_serie: numeroEnSerie,
+                            errores: validacion.errores
+                        });
+
+                        continue;
+                    }
+
+                    // Preparar datos para esta cita
+                    const datosCita = {
+                        organizacion_id: citaData.organizacion_id,
+                        cliente_id: citaData.cliente_id,
+                        profesional_id: citaData.profesional_id,
+                        sucursal_id: citaData.sucursal_id || null,
+                        fecha_cita: fechaCita,
+                        hora_inicio: citaData.hora_inicio,
+                        hora_fin: citaData.hora_fin,
+                        zona_horaria: citaData.zona_horaria || DEFAULTS.ZONA_HORARIA,
+                        precio_total: precio_total,
+                        duracion_total_minutos: duracion_total_minutos,
+                        estado: 'pendiente',
+                        metodo_pago: citaData.metodo_pago || null,
+                        pagado: false,
+                        notas_cliente: citaData.notas_cliente || null,
+                        notas_profesional: citaData.notas_profesional || null,
+                        notas_internas: citaData.notas_internas || null,
+                        confirmacion_requerida: citaData.confirmacion_requerida !== false,
+                        confirmada_por_cliente: null,
+                        recordatorio_enviado: false,
+                        creado_por: usuarioId,
+                        ip_origen: citaData.ip_origen || null,
+                        user_agent: citaData.user_agent || null,
+                        origen_aplicacion: citaData.origen_aplicacion || DEFAULTS.ORIGEN_APLICACION,
+                        // Campos de recurrencia
+                        cita_serie_id: citaSerieId,
+                        es_cita_recurrente: true,
+                        numero_en_serie: numeroEnSerie,
+                        total_en_serie: fechasSerie.length,
+                        // Solo guardar patrón en la primera cita
+                        patron_recurrencia: numeroEnSerie === 1 ? citaData.patron_recurrencia : null
+                    };
+
+                    // Validar que no cruce medianoche
+                    CitaHelpersModel.validarNoMidnightCrossing(citaData.hora_inicio, citaData.hora_fin);
+
+                    // Insertar cita
+                    const nuevaCita = await CitaHelpersModel.insertarCitaCompleta(datosCita, db);
+
+                    // Insertar servicios
+                    const values = [];
+                    const placeholders = [];
+                    let paramCount = 1;
+
+                    serviciosData.forEach((servicio) => {
+                        placeholders.push(
+                            `($${paramCount}, $${paramCount + 1}, $${paramCount + 2}, $${paramCount + 3}, $${paramCount + 4}, $${paramCount + 5}, $${paramCount + 6}, $${paramCount + 7})`
+                        );
+
+                        values.push(
+                            nuevaCita.id,
+                            fechaCita,
+                            servicio.servicio_id,
+                            servicio.orden_ejecucion,
+                            servicio.precio_aplicado,
+                            servicio.duracion_minutos,
+                            servicio.descuento,
+                            servicio.notas
+                        );
+
+                        paramCount += 8;
+                    });
+
+                    await db.query(`
+                        INSERT INTO citas_servicios (
+                            cita_id, fecha_cita, servicio_id, orden_ejecucion,
+                            precio_aplicado, duracion_minutos, descuento, notas
+                        ) VALUES ${placeholders.join(', ')}
+                    `, values);
+
+                    resultado.citas_creadas.push({
+                        id: nuevaCita.id,
+                        fecha: fechaCita,
+                        codigo_cita: nuevaCita.codigo_cita,
+                        numero_en_serie: numeroEnSerie
+                    });
+
+                    logger.info('[CitaBaseModel.crearRecurrente] Cita creada', {
+                        cita_id: nuevaCita.id,
+                        fecha: fechaCita,
+                        numero_en_serie: numeroEnSerie
+                    });
+
+                } catch (error) {
+                    // Error inesperado, registrar y continuar
+                    resultado.citas_omitidas.push({
+                        fecha: fechaCita,
+                        numero_en_serie: numeroEnSerie,
+                        motivo: error.message
+                    });
+
+                    logger.error('[CitaBaseModel.crearRecurrente] Error al crear cita', {
+                        fecha: fechaCita,
+                        numero_en_serie: numeroEnSerie,
+                        error: error.message
+                    });
+                }
+            }
+
+            // Verificar que se creó al menos una cita
+            if (resultado.citas_creadas.length === 0) {
+                throw new Error('No se pudo crear ninguna cita de la serie. Todas las fechas tienen conflictos.');
+            }
+
+            // Actualizar total_en_serie en todas las citas creadas (por si algunas fueron omitidas)
+            if (resultado.citas_creadas.length !== fechasSerie.length) {
+                await db.query(`
+                    UPDATE citas
+                    SET total_en_serie = $1
+                    WHERE cita_serie_id = $2
+                `, [resultado.citas_creadas.length, citaSerieId]);
+            }
+
+            // Registrar evento de auditoría
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: citaData.organizacion_id,
+                tipo_evento: 'serie_citas_creada',
+                descripcion: `Serie recurrente creada: ${resultado.citas_creadas.length} citas`,
+                cita_id: resultado.citas_creadas[0]?.id,
+                usuario_id: usuarioId,
+                metadatos: {
+                    cita_serie_id: citaSerieId,
+                    citas_creadas: resultado.citas_creadas.length,
+                    citas_omitidas: resultado.citas_omitidas.length,
+                    patron: citaData.patron_recurrencia,
+                    descripcion_patron: resultado.descripcion_patron
+                }
+            }, db);
+
+            // Calcular estadísticas de la serie
+            const fechasCreadas = resultado.citas_creadas.map(c => c.fecha);
+            resultado.estadisticas = RecurrenciaUtil.calcularEstadisticasSerie(
+                fechasCreadas,
+                precio_total,
+                duracion_total_minutos
+            );
+
+            logger.info('[CitaBaseModel.crearRecurrente] Serie creada exitosamente', {
+                cita_serie_id: citaSerieId,
+                creadas: resultado.citas_creadas.length,
+                omitidas: resultado.citas_omitidas.length
+            });
+
+            return resultado;
+        });
+    }
+
+    /**
+     * Obtiene todas las citas de una serie recurrente
+     *
+     * @param {string} serieId - UUID de la serie
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} opciones - { incluir_canceladas: boolean }
+     * @returns {Object} Serie completa con citas y estadísticas
+     */
+    static async obtenerSerie(serieId, organizacionId, opciones = {}) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            let whereConditions = [
+                'c.organizacion_id = $1',
+                'c.cita_serie_id = $2'
+            ];
+
+            if (!opciones.incluir_canceladas) {
+                whereConditions.push("c.estado != 'cancelada'");
+            }
+
+            const query = `
+                SELECT
+                    c.*,
+                    cl.nombre as cliente_nombre,
+                    cl.telefono as cliente_telefono,
+                    cl.email as cliente_email,
+                    p.nombre_completo as profesional_nombre,
+                    COALESCE(
+                        json_agg(
+                            json_build_object(
+                                'id', cs.id,
+                                'servicio_id', cs.servicio_id,
+                                'servicio_nombre', s.nombre,
+                                'orden_ejecucion', cs.orden_ejecucion,
+                                'precio_aplicado', cs.precio_aplicado,
+                                'duracion_minutos', cs.duracion_minutos
+                            ) ORDER BY cs.orden_ejecucion
+                        ) FILTER (WHERE cs.id IS NOT NULL),
+                        '[]'::json
+                    ) as servicios
+                FROM citas c
+                JOIN clientes cl ON c.cliente_id = cl.id
+                JOIN profesionales p ON c.profesional_id = p.id
+                LEFT JOIN citas_servicios cs ON c.id = cs.cita_id AND cs.fecha_cita = c.fecha_cita
+                LEFT JOIN servicios s ON cs.servicio_id = s.id
+                WHERE ${whereConditions.join(' AND ')}
+                GROUP BY c.id, c.fecha_cita, cl.id, p.id
+                ORDER BY c.fecha_cita ASC, c.hora_inicio ASC
+            `;
+
+            const resultado = await db.query(query, [organizacionId, serieId]);
+
+            if (resultado.rows.length === 0) {
+                return null;
+            }
+
+            // Obtener patrón de la primera cita
+            const primeraCita = resultado.rows.find(c => c.numero_en_serie === 1);
+            const patron = primeraCita?.patron_recurrencia;
+
+            // Calcular estadísticas
+            const citasActivas = resultado.rows.filter(c => c.estado !== 'cancelada');
+            const citasCompletadas = resultado.rows.filter(c => c.estado === 'completada');
+            const citasPendientes = resultado.rows.filter(c =>
+                ['pendiente', 'confirmada'].includes(c.estado)
+            );
+
+            return {
+                cita_serie_id: serieId,
+                patron_recurrencia: patron,
+                descripcion_patron: patron ? RecurrenciaUtil.describirPatron(patron) : null,
+                total_citas: resultado.rows.length,
+                citas_activas: citasActivas.length,
+                citas_completadas: citasCompletadas.length,
+                citas_pendientes: citasPendientes.length,
+                citas_canceladas: resultado.rows.length - citasActivas.length,
+                fecha_inicio: resultado.rows[0]?.fecha_cita,
+                fecha_fin: resultado.rows[resultado.rows.length - 1]?.fecha_cita,
+                cliente: {
+                    id: resultado.rows[0]?.cliente_id,
+                    nombre: resultado.rows[0]?.cliente_nombre,
+                    telefono: resultado.rows[0]?.cliente_telefono,
+                    email: resultado.rows[0]?.cliente_email
+                },
+                profesional: {
+                    id: resultado.rows[0]?.profesional_id,
+                    nombre: resultado.rows[0]?.profesional_nombre
+                },
+                citas: resultado.rows
+            };
+        });
+    }
+
+    /**
+     * Cancela todas las citas pendientes de una serie
+     *
+     * @param {string} serieId - UUID de la serie
+     * @param {number} organizacionId - ID de la organización
+     * @param {Object} opciones - { motivo_cancelacion, cancelar_desde_fecha, cancelar_solo_pendientes }
+     * @param {number} usuarioId - ID del usuario que cancela
+     * @returns {Object} Resumen de cancelación
+     */
+    static async cancelarSerie(serieId, organizacionId, opciones, usuarioId) {
+        const {
+            motivo_cancelacion,
+            cancelar_desde_fecha,
+            cancelar_solo_pendientes = true
+        } = opciones;
+
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            // Verificar que la serie existe
+            const verificacion = await db.query(`
+                SELECT COUNT(*) as total,
+                       COUNT(*) FILTER (WHERE estado IN ('pendiente', 'confirmada')) as pendientes
+                FROM citas
+                WHERE organizacion_id = $1 AND cita_serie_id = $2
+            `, [organizacionId, serieId]);
+
+            if (parseInt(verificacion.rows[0].total) === 0) {
+                throw new Error('Serie de citas no encontrada');
+            }
+
+            // Construir condiciones de cancelación
+            let whereConditions = [
+                'organizacion_id = $1',
+                'cita_serie_id = $2'
+            ];
+            let params = [organizacionId, serieId];
+            let paramCount = 2;
+
+            // Solo cancelar pendientes/confirmadas
+            if (cancelar_solo_pendientes) {
+                whereConditions.push("estado IN ('pendiente', 'confirmada')");
+            } else {
+                whereConditions.push("estado NOT IN ('completada', 'cancelada')");
+            }
+
+            // Cancelar desde fecha específica
+            if (cancelar_desde_fecha) {
+                paramCount++;
+                whereConditions.push(`fecha_cita >= $${paramCount}`);
+                params.push(cancelar_desde_fecha);
+            }
+
+            // Ejecutar cancelación
+            paramCount++;
+            params.push(motivo_cancelacion);
+            paramCount++;
+            params.push(usuarioId);
+
+            const resultado = await db.query(`
+                UPDATE citas
+                SET estado = 'cancelada',
+                    estado_anterior = estado,
+                    motivo_cancelacion = $${paramCount - 1},
+                    actualizado_por = $${paramCount},
+                    actualizado_en = NOW()
+                WHERE ${whereConditions.join(' AND ')}
+                RETURNING id, fecha_cita, codigo_cita, estado_anterior
+            `, params);
+
+            const citasCanceladas = resultado.rows;
+
+            // Registrar evento de auditoría
+            await CitaHelpersModel.registrarEventoAuditoria({
+                organizacion_id: organizacionId,
+                tipo_evento: 'serie_citas_cancelada',
+                descripcion: `Serie cancelada: ${citasCanceladas.length} citas`,
+                cita_id: citasCanceladas[0]?.id,
+                usuario_id: usuarioId,
+                metadatos: {
+                    cita_serie_id: serieId,
+                    citas_canceladas: citasCanceladas.length,
+                    motivo: motivo_cancelacion,
+                    desde_fecha: cancelar_desde_fecha
+                }
+            }, db);
+
+            logger.info('[CitaBaseModel.cancelarSerie] Serie cancelada', {
+                cita_serie_id: serieId,
+                canceladas: citasCanceladas.length
+            });
+
+            return {
+                cita_serie_id: serieId,
+                citas_canceladas: citasCanceladas.length,
+                detalle: citasCanceladas.map(c => ({
+                    id: c.id,
+                    fecha: c.fecha_cita,
+                    codigo_cita: c.codigo_cita,
+                    estado_anterior: c.estado_anterior
+                }))
+            };
+        });
+    }
+
+    /**
+     * Preview de fechas para una serie recurrente (sin crear)
+     * Útil para mostrar al usuario antes de confirmar
+     *
+     * @param {Object} datos - Datos del preview
+     * @returns {Object} Preview con fechas disponibles y no disponibles
+     */
+    static async previewRecurrencia(datos, organizacionId) {
+        // Validar patrón
+        const validacionPatron = RecurrenciaUtil.validarPatronRecurrencia(datos.patron_recurrencia);
+        if (!validacionPatron.valido) {
+            throw new Error(`Patrón inválido: ${validacionPatron.errores.join(', ')}`);
+        }
+
+        // Normalizar fecha
+        let fechaInicio;
+        if (datos.fecha_inicio instanceof Date) {
+            fechaInicio = datos.fecha_inicio.toISOString().split('T')[0];
+        } else if (typeof datos.fecha_inicio === 'string' && datos.fecha_inicio.includes('T')) {
+            fechaInicio = datos.fecha_inicio.split('T')[0];
+        } else {
+            fechaInicio = datos.fecha_inicio;
+        }
+
+        // Generar fechas
+        const fechasSerie = RecurrenciaUtil.generarFechasRecurrentes(
+            datos.patron_recurrencia,
+            fechaInicio
+        );
+
+        // Calcular hora_fin si no se proporciona
+        let horaFin = datos.hora_fin;
+        if (!horaFin && datos.duracion_minutos) {
+            const [horas, minutos] = datos.hora_inicio.split(':').map(Number);
+            const minutosFinales = (horas * 60 + minutos) + datos.duracion_minutos;
+            const horasFin = Math.floor(minutosFinales / 60);
+            const minutosFin = minutosFinales % 60;
+            horaFin = `${String(horasFin).padStart(2, '0')}:${String(minutosFin).padStart(2, '0')}:00`;
+        }
+
+        const resultado = {
+            fechas_disponibles: [],
+            fechas_no_disponibles: [],
+            patron: datos.patron_recurrencia,
+            descripcion_patron: RecurrenciaUtil.describirPatron(datos.patron_recurrencia)
+        };
+
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            for (let i = 0; i < fechasSerie.length; i++) {
+                const fecha = fechasSerie[i];
+
+                try {
+                    const validacion = await CitaHelpersModel.validarHorarioPermitido(
+                        datos.profesional_id,
+                        fecha,
+                        datos.hora_inicio,
+                        horaFin,
+                        organizacionId,
+                        db,
+                        null,
+                        { esWalkIn: false, permitirFueraHorario: false }
+                    );
+
+                    if (validacion.valido) {
+                        resultado.fechas_disponibles.push({
+                            fecha,
+                            numero_en_serie: i + 1,
+                            hora_inicio: datos.hora_inicio,
+                            hora_fin: horaFin,
+                            advertencias: validacion.advertencias.map(a => a.mensaje)
+                        });
+                    } else {
+                        resultado.fechas_no_disponibles.push({
+                            fecha,
+                            numero_en_serie: i + 1,
+                            motivo: validacion.errores.map(e => e.mensaje).join('; ')
+                        });
+                    }
+                } catch (error) {
+                    resultado.fechas_no_disponibles.push({
+                        fecha,
+                        numero_en_serie: i + 1,
+                        motivo: error.message
+                    });
+                }
+            }
+
+            // Calcular estadísticas
+            resultado.total_solicitadas = fechasSerie.length;
+            resultado.total_disponibles = resultado.fechas_disponibles.length;
+            resultado.total_no_disponibles = resultado.fechas_no_disponibles.length;
+            resultado.porcentaje_disponibilidad = Math.round(
+                (resultado.total_disponibles / resultado.total_solicitadas) * 100
+            );
+
+            return resultado;
         });
     }
 }
