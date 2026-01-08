@@ -1,6 +1,7 @@
 const { PerfilesMarketplaceModel } = require('../models');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
+const RLSContextManager = require('../../../utils/rlsContextManager');
 
 /**
  * ====================================================================
@@ -9,7 +10,8 @@ const { asyncHandler } = require('../../../middleware');
  *
  * Gestiona perfiles públicos de negocios en el directorio marketplace.
  *
- * ENDPOINTS (7):
+ * ENDPOINTS (8):
+ * • GET    /categorias         - Listar categorías/industrias (público)
  * • POST   /perfiles           - Crear perfil (requiere auth)
  * • PUT    /perfiles/:id       - Actualizar perfil (requiere auth)
  * • PATCH  /perfiles/:id/activar - Activar/desactivar (solo super_admin)
@@ -19,8 +21,43 @@ const { asyncHandler } = require('../../../middleware');
  * • GET    /perfiles/:id/estadisticas - Stats del perfil (requiere auth)
  *
  * Fecha creación: 17 Noviembre 2025
+ * Actualizado: Enero 2026 - Endpoint de categorías
  */
 class PerfilesMarketplaceController {
+
+    /**
+     * Listar categorías/industrias disponibles
+     * GET /api/v1/marketplace/categorias
+     *
+     * @public Sin autenticación requerida
+     * @returns {Array} Lista de categorías activas ordenadas
+     */
+    static listarCategorias = asyncHandler(async (req, res) => {
+        const categorias = await RLSContextManager.withBypass(async (db) => {
+            const query = `
+                SELECT
+                    id,
+                    codigo,
+                    nombre,
+                    sector,
+                    descripcion,
+                    icono,
+                    color,
+                    orden
+                FROM categorias
+                WHERE activo = true
+                ORDER BY orden ASC, nombre ASC
+            `;
+            const result = await db.query(query);
+            return result.rows;
+        });
+
+        return ResponseHelper.success(
+            res,
+            categorias,
+            'Categorías obtenidas exitosamente'
+        );
+    });
 
     /**
      * Crear perfil de marketplace para una organización
@@ -145,8 +182,12 @@ class PerfilesMarketplaceController {
         const filtros = {
             q: req.query.q || undefined,              // Búsqueda full-text
             ciudad: req.query.ciudad || undefined,
+            ciudad_id: req.query.ciudad_id ? parseInt(req.query.ciudad_id) : undefined,
             estado: req.query.estado || undefined,
+            estado_id: req.query.estado_id ? parseInt(req.query.estado_id) : undefined,
             pais: req.query.pais || undefined,
+            pais_id: req.query.pais_id ? parseInt(req.query.pais_id) : undefined,
+            categoria_id: req.query.categoria_id ? parseInt(req.query.categoria_id) : undefined, // Filtro por industria (Ene 2026)
             rating_minimo: req.query.rating_minimo ? parseFloat(req.query.rating_minimo) : undefined,
             orden: req.query.orden || 'rating',       // rating, reseñas, reciente, alfabetico
             pagina: req.query.pagina ? parseInt(req.query.pagina) : 1,

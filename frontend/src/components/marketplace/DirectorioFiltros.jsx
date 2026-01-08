@@ -1,7 +1,8 @@
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
 import EstrellaRating from './EstrellaRating';
+import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
 
 /**
  * Componente de filtros para el directorio de marketplace
@@ -9,7 +10,7 @@ import EstrellaRating from './EstrellaRating';
  *
  * @param {Object} filtros - Valores actuales de filtros
  * @param {string} filtros.ciudad - Ciudad seleccionada
- * @param {string} filtros.categoria - Categoría seleccionada
+ * @param {number} filtros.categoria_id - ID de categoría seleccionada
  * @param {number} filtros.rating_min - Rating mínimo (1-5)
  * @param {function} onChange - Callback cuando cambia un filtro: (key, value) => void
  * @param {function} onLimpiar - Callback para limpiar todos los filtros
@@ -19,10 +20,13 @@ import EstrellaRating from './EstrellaRating';
  * <DirectorioFiltros
  *   filtros={filtros}
  *   onChange={(key, value) => setFiltros(prev => ({ ...prev, [key]: value }))}
- *   onLimpiar={() => setFiltros({ ciudad: '', categoria: '', rating_min: '' })}
+ *   onLimpiar={() => setFiltros({ ciudad: '', categoria_id: '', rating_min: '' })}
  * />
  */
 function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
+  // Cargar categorías dinámicamente desde el backend
+  const { data: categorias, isLoading: isLoadingCategorias } = useCategoriasMarketplace();
+
   // Opciones de ciudades (TODO: Obtener dinámicamente del backend)
   const ciudadesOpciones = [
     { value: '', label: 'Todas las ciudades' },
@@ -36,19 +40,13 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
     { value: 'Tijuana', label: 'Tijuana' },
   ];
 
-  // Opciones de categorías (basadas en marketplace_categorias del backend)
+  // Opciones de categorías (cargadas dinámicamente desde tabla categorias)
   const categoriasOpciones = [
     { value: '', label: 'Todas las categorías' },
-    { value: 'belleza', label: 'Belleza y Estética' },
-    { value: 'salud', label: 'Salud y Bienestar' },
-    { value: 'fitness', label: 'Fitness y Deporte' },
-    { value: 'educacion', label: 'Educación y Capacitación' },
-    { value: 'legal', label: 'Legal y Consultoría' },
-    { value: 'tecnologia', label: 'Tecnología e IT' },
-    { value: 'hogar', label: 'Hogar y Mantenimiento' },
-    { value: 'eventos', label: 'Eventos y Celebraciones' },
-    { value: 'profesional', label: 'Servicios Profesionales' },
-    { value: 'otro', label: 'Otros' },
+    ...(categorias?.map((cat) => ({
+      value: cat.id.toString(),
+      label: cat.nombre,
+    })) || []),
   ];
 
   // Opciones de rating mínimo
@@ -94,11 +92,15 @@ function DirectorioFiltros({ filtros, onChange, onLimpiar, className }) {
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Categoría
+              {isLoadingCategorias && (
+                <Loader2 className="inline-block w-3 h-3 ml-2 animate-spin text-gray-400" />
+              )}
             </label>
             <Select
-              value={filtros.categoria || ''}
-              onChange={(e) => onChange('categoria', e.target.value)}
+              value={filtros.categoria_id || ''}
+              onChange={(e) => onChange('categoria_id', e.target.value)}
               options={categoriasOpciones}
+              disabled={isLoadingCategorias}
             />
           </div>
 

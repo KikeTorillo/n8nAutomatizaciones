@@ -29,6 +29,21 @@ const router = express.Router();
 const validate = validation.validate;
 
 // ===================================================================
+// CATEGORÍAS (INDUSTRIAS) - PÚBLICO
+// ===================================================================
+
+/**
+ * GET /api/v1/marketplace/categorias
+ * Listar todas las categorías/industrias disponibles
+ * @public Sin autenticación
+ * @returns {Array} Lista de categorías activas
+ */
+router.get('/categorias',
+    rateLimiting.apiRateLimit,
+    PerfilesMarketplaceController.listarCategorias
+);
+
+// ===================================================================
 // PERFILES PÚBLICOS
 // ===================================================================
 

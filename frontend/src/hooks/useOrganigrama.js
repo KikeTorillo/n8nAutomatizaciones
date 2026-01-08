@@ -7,7 +7,8 @@ import { useDepartamentos } from './useDepartamentos';
  * Construye un árbol basado en supervisor_id
  */
 export function useOrganigrama() {
-  const { data: profesionales = [], isLoading: loadingProfesionales } = useProfesionales();
+  const { data: profesionalesData, isLoading: loadingProfesionales } = useProfesionales();
+  const profesionales = profesionalesData?.profesionales || [];
   const { data: departamentos = [], isLoading: loadingDepartamentos } = useDepartamentos();
 
   // Construir árbol jerárquico

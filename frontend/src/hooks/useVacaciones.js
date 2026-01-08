@@ -305,6 +305,31 @@ export function useSolicitudesVacaciones(filtros = {}) {
 }
 
 /**
+ * Hook para obtener solicitudes para el calendario de equipo
+ * Ene 2026: Soporta filtros de fecha_inicio, fecha_fin, estado, departamento_id
+ * @param {Object} filtros - { fecha_inicio, fecha_fin, estado, departamento_id }
+ */
+export function useSolicitudesCalendario(filtros = {}) {
+  return useQuery({
+    queryKey: QUERY_KEYS.solicitudes({ ...filtros, tipo: 'calendario' }),
+    queryFn: async () => {
+      const params = {
+        fecha_inicio: filtros.fecha_inicio,
+        fecha_fin: filtros.fecha_fin,
+        estado: filtros.estado || undefined,
+        departamento_id: filtros.departamento_id || undefined,
+        limit: 500, // Máximo para calendario mensual
+      };
+      const response = await vacacionesApi.listarSolicitudes(params);
+      return response.data.data || [];
+    },
+    enabled: !!filtros.fecha_inicio && !!filtros.fecha_fin,
+    staleTime: 30 * 1000,
+    keepPreviousData: true, // Suaviza transiciones al cambiar mes
+  });
+}
+
+/**
  * Listar solicitudes pendientes
  */
 export function useSolicitudesPendientes(filtros = {}) {
@@ -484,6 +509,7 @@ export default {
   useCrearSolicitudVacaciones,
   useMisSolicitudesVacaciones,
   useSolicitudesVacaciones,
+  useSolicitudesCalendario,
   useSolicitudesPendientes,
   useSolicitudVacaciones,
   useAprobarSolicitud,

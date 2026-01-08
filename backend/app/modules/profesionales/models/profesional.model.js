@@ -376,11 +376,106 @@ class ProfesionalModel {
                 supervisor_id = null,
                 // Filtro para supervisores (Dic 2025): usar rol_usuario
                 rol_usuario = null, // Filtrar por rol del usuario vinculado (admin, propietario, empleado)
-                limite = 50,
-                offset = 0
+                // Ene 2026: Paginación
+                page = 1,
+                limite = 20,
+                offset = null // Si se pasa offset directo, usarlo; si no, calcular desde page
             } = filtros;
 
-            let query = `
+            // Calcular offset desde page si no se pasa directamente
+            const calculatedOffset = offset !== null ? offset : (parseInt(page) - 1) * parseInt(limite);
+            const limitNum = parseInt(limite);
+
+            // Construir WHERE clause (reutilizable para COUNT y SELECT)
+            let whereClause = ` WHERE p.organizacion_id = $1`;
+            const values = [organizacionId];
+            let contador = 2;
+
+            if (activo !== null) {
+                whereClause += ` AND p.activo = $${contador}`;
+                values.push(activo);
+                contador++;
+            }
+
+            if (disponible_online !== null) {
+                whereClause += ` AND p.disponible_online = $${contador}`;
+                values.push(disponible_online);
+                contador++;
+            }
+
+            if (busqueda) {
+                whereClause += ` AND (p.nombre_completo ILIKE $${contador} OR p.email ILIKE $${contador})`;
+                values.push(`%${busqueda}%`);
+                contador++;
+            }
+
+            // Filtrar por módulo habilitado - DEPRECADO
+            if (modulo) {
+                console.warn('DEPRECADO: Filtro por modulo ya no usa modulos_acceso. Usar sistema de permisos normalizado.');
+            }
+
+            // Filtrar por usuario vinculado (Nov 2025)
+            if (con_usuario === true) {
+                whereClause += ` AND p.usuario_id IS NOT NULL`;
+            } else if (con_usuario === false) {
+                whereClause += ` AND p.usuario_id IS NULL`;
+            }
+
+            // Dic 2025: Filtro por rol del usuario vinculado (para supervisores)
+            if (rol_usuario) {
+                if (Array.isArray(rol_usuario)) {
+                    whereClause += ` AND u.rol::text = ANY($${contador}::text[])`;
+                    values.push(rol_usuario);
+                } else {
+                    whereClause += ` AND u.rol = $${contador}`;
+                    values.push(rol_usuario);
+                }
+                contador++;
+            }
+
+            if (estado) {
+                whereClause += ` AND p.estado = $${contador}`;
+                values.push(estado);
+                contador++;
+            }
+
+            if (tipo_contratacion) {
+                whereClause += ` AND p.tipo_contratacion = $${contador}`;
+                values.push(tipo_contratacion);
+                contador++;
+            }
+
+            // Dic 2025: Filtros de jerarquía
+            if (departamento_id) {
+                whereClause += ` AND p.departamento_id = $${contador}`;
+                values.push(departamento_id);
+                contador++;
+            }
+
+            if (puesto_id) {
+                whereClause += ` AND p.puesto_id = $${contador}`;
+                values.push(puesto_id);
+                contador++;
+            }
+
+            if (supervisor_id) {
+                whereClause += ` AND p.supervisor_id = $${contador}`;
+                values.push(supervisor_id);
+                contador++;
+            }
+
+            // Query de conteo total (Ene 2026: para paginación)
+            const countQuery = `
+                SELECT COUNT(DISTINCT p.id) as total
+                FROM profesionales p
+                LEFT JOIN usuarios u ON p.usuario_id = u.id
+                ${whereClause}
+            `;
+            const countResult = await db.query(countQuery, values);
+            const total = parseInt(countResult.rows[0].total) || 0;
+
+            // Query principal con datos
+            const dataQuery = `
                 SELECT p.id, p.organizacion_id, p.nombre_completo, p.email, p.telefono,
                        p.fecha_nacimiento, p.documento_identidad,
                        p.licencias_profesionales, p.años_experiencia,
@@ -405,99 +500,36 @@ class ProfesionalModel {
                 LEFT JOIN departamentos d ON p.departamento_id = d.id
                 LEFT JOIN puestos pu ON p.puesto_id = pu.id
                 LEFT JOIN servicios_profesionales sp ON p.id = sp.profesional_id AND sp.activo = true
-                WHERE p.organizacion_id = $1
+                ${whereClause}
+                GROUP BY p.id, u.id, d.id, pu.id
+                ORDER BY p.nombre_completo ASC
+                LIMIT $${contador} OFFSET $${contador + 1}
             `;
 
-            const values = [organizacionId];
-            let contador = 2;
-
-            if (activo !== null) {
-                query += ` AND p.activo = $${contador}`;
-                values.push(activo);
-                contador++;
-            }
-
-            if (disponible_online !== null) {
-                query += ` AND p.disponible_online = $${contador}`;
-                values.push(disponible_online);
-                contador++;
-            }
-
-            if (busqueda) {
-                query += ` AND (p.nombre_completo ILIKE $${contador} OR p.email ILIKE $${contador})`;
-                values.push(`%${busqueda}%`);
-                contador++;
-            }
-
-            // Filtrar por módulo habilitado - DEPRECADO
-            // Los permisos ahora se gestionan via sistema normalizado (permisos_catalogo, permisos_rol)
-            // TODO: Implementar filtro usando obtener_permiso() cuando sea necesario
-            if (modulo) {
-                console.warn('DEPRECADO: Filtro por modulo ya no usa modulos_acceso. Usar sistema de permisos normalizado.');
-            }
-
-            // Filtrar por usuario vinculado (Nov 2025)
-            if (con_usuario === true) {
-                query += ` AND p.usuario_id IS NOT NULL`;
-            } else if (con_usuario === false) {
-                query += ` AND p.usuario_id IS NULL`;
-            }
-
-            // Dic 2025: Filtro por rol del usuario vinculado (para supervisores)
-            if (rol_usuario) {
-                // rol_usuario puede ser string o array
-                // Filtra profesionales cuyo usuario vinculado tenga el rol especificado
-                if (Array.isArray(rol_usuario)) {
-                    query += ` AND u.rol::text = ANY($${contador}::text[])`;
-                    values.push(rol_usuario);
-                } else {
-                    query += ` AND u.rol = $${contador}`;
-                    values.push(rol_usuario);
-                }
-                contador++;
-            }
-
-            if (estado) {
-                query += ` AND p.estado = $${contador}`;
-                values.push(estado);
-                contador++;
-            }
-
-            if (tipo_contratacion) {
-                query += ` AND p.tipo_contratacion = $${contador}`;
-                values.push(tipo_contratacion);
-                contador++;
-            }
-
-            // Dic 2025: Filtros de jerarquía
-            if (departamento_id) {
-                query += ` AND p.departamento_id = $${contador}`;
-                values.push(departamento_id);
-                contador++;
-            }
-
-            if (puesto_id) {
-                query += ` AND p.puesto_id = $${contador}`;
-                values.push(puesto_id);
-                contador++;
-            }
-
-            if (supervisor_id) {
-                query += ` AND p.supervisor_id = $${contador}`;
-                values.push(supervisor_id);
-                contador++;
-            }
-
-            query += ` GROUP BY p.id, u.id, d.id, pu.id ORDER BY p.nombre_completo ASC LIMIT $${contador} OFFSET $${contador + 1}`;
-            values.push(limite, offset);
-
-            const result = await db.query(query, values);
+            const dataValues = [...values, limitNum, calculatedOffset];
+            const result = await db.query(dataQuery, dataValues);
 
             // Convertir total_servicios_asignados de string a number
-            return result.rows.map(row => ({
+            const profesionales = result.rows.map(row => ({
                 ...row,
                 total_servicios_asignados: parseInt(row.total_servicios_asignados, 10) || 0
             }));
+
+            // Calcular información de paginación
+            const currentPage = Math.floor(calculatedOffset / limitNum) + 1;
+            const totalPages = Math.ceil(total / limitNum);
+
+            return {
+                profesionales,
+                paginacion: {
+                    page: currentPage,
+                    limit: limitNum,
+                    total,
+                    totalPages,
+                    hasNext: calculatedOffset + limitNum < total,
+                    hasPrev: calculatedOffset > 0
+                }
+            };
         });
     }
 

@@ -28,8 +28,9 @@ CREATE TABLE organizaciones (
     rfc_nif VARCHAR(20),
 
     -- Categoría de la organización (tabla dinámica - Nov 2025)
-    categoria_id INTEGER NOT NULL REFERENCES categorias(id)
-        ON DELETE RESTRICT
+    -- Nullable: se configura después del onboarding en Configuración > Mi Negocio
+    categoria_id INTEGER REFERENCES categorias(id)
+        ON DELETE SET NULL
         ON UPDATE CASCADE,
     configuracion_categoria JSONB DEFAULT '{}',
 

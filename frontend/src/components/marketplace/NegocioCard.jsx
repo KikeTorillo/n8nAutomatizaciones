@@ -11,7 +11,9 @@ import EstrellaRating from './EstrellaRating';
  * @param {string} perfil.slug - Slug único del perfil
  * @param {string} perfil.nombre_comercial - Nombre del negocio
  * @param {string} perfil.ciudad - Ciudad
- * @param {string} perfil.categoria - Categoría del negocio
+ * @param {number} perfil.categoria_id - ID de categoría/industria
+ * @param {string} perfil.categoria_codigo - Código de categoría (barberia, spa, etc.)
+ * @param {string} perfil.categoria_nombre - Nombre de categoría para mostrar
  * @param {string} perfil.descripcion_corta - Descripción breve
  * @param {string} perfil.logo_url - URL del logo
  * @param {string} perfil.foto_portada - URL de foto de portada
@@ -57,11 +59,11 @@ function NegocioCard({ perfil, className }) {
           </div>
         )}
 
-        {/* Badge de categoría */}
-        {perfil.categoria && (
+        {/* Badge de categoría/industria */}
+        {perfil.categoria_nombre && (
           <div className="absolute top-3 right-3">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm text-gray-700 dark:text-gray-300 shadow-sm">
-              {perfil.categoria}
+              {perfil.categoria_nombre}
             </span>
           </div>
         )}

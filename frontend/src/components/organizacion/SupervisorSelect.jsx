@@ -44,7 +44,8 @@ const SupervisorSelect = forwardRef(
     }, [soloActivos, departamentoId]);
 
     // Fetch profesionales
-    const { data: profesionales = [], isLoading } = useProfesionales(params);
+    const { data: profesionalesData, isLoading } = useProfesionales(params);
+    const profesionales = profesionalesData?.profesionales || [];
 
     // Construir opciones (excluyendo el profesional actual si aplica)
     const options = useMemo(() => {

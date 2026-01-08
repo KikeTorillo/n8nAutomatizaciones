@@ -17,15 +17,23 @@ export const ESTADOS_CITA = {
   NO_ASISTIO: 'no_asistio',
 };
 
-// Industrias
-export const INDUSTRIAS = [
-  { value: 'barberia', label: 'Barbería' },
-  { value: 'salon_belleza', label: 'Salón de Belleza' },
-  { value: 'spa', label: 'Spa' },
-  { value: 'consultorio_medico', label: 'Consultorio Médico' },
-  { value: 'clinica_dental', label: 'Clínica Dental' },
-  { value: 'otro', label: 'Otro' },
-];
+// ✅ Industrias - MIGRADO A SISTEMA DINÁMICO (Ene 2026)
+// ================================================================
+// Las industrias/categorías ahora son dinámicas y se gestionan desde la base de datos.
+//
+// ✅ USO CORRECTO:
+//   import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
+//   const { data: categorias } = useCategoriasMarketplace();
+//
+// CARACTERÍSTICAS:
+// - 11 categorías del sistema
+// - Se configuran en Configuración > Mi Negocio
+// - Ya NO se piden en el onboarding
+// - Usadas para filtrar en marketplace
+//
+// 📦 Backend API: GET /api/v1/marketplace/categorias
+// 📖 Hook: @/hooks/useMarketplace (useCategoriasMarketplace)
+// ================================================================
 
 // ✅ Tipos de Profesionales - MIGRADO A SISTEMA DINÁMICO
 // ================================================================

@@ -2,15 +2,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
 
 /**
- * Hook para listar profesionales con filtros
- * @param {Object} params - { activo, busqueda, estado, departamento_id, rol_usuario, etc. }
+ * Hook para listar profesionales con filtros y paginación
+ * @param {Object} params - { page, limit, activo, busqueda, estado, departamento_id, rol_usuario, etc. }
+ * Ene 2026: Añadido soporte de paginación server-side
  */
 export function useProfesionales(params = {}) {
+  // Extraer page y limit con defaults
+  const { page = 1, limit = 20, ...filtros } = params;
+
   return useQuery({
-    queryKey: ['profesionales', params],
+    queryKey: ['profesionales', { page, limit, ...filtros }],
     queryFn: async () => {
       // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
+      const sanitizedParams = Object.entries({ page, limit, ...filtros }).reduce((acc, [key, value]) => {
         // Excluir: "", null, undefined
         if (value !== '' && value !== null && value !== undefined) {
           acc[key] = value;
@@ -20,10 +24,11 @@ export function useProfesionales(params = {}) {
 
       const response = await profesionalesApi.listar(sanitizedParams);
 
-      // Backend retorna: { success, data: { profesionales: [...], total, filtros_aplicados } }
-      return response.data.data.profesionales || [];
+      // Backend retorna: { success, data: { profesionales: [...], pagination: {...} } }
+      return response.data.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
+    keepPreviousData: true, // Ene 2026: Transiciones suaves entre páginas
   });
 }
 
@@ -183,10 +188,12 @@ export function useBuscarProfesionales(termino, options = {}) {
     queryFn: async () => {
       const params = {
         busqueda: termino,
+        limit: 50, // Búsqueda rápida sin paginación
         ...options,
       };
       const response = await profesionalesApi.listar(params);
-      return response.data.data.profesionales || [];
+      // Ene 2026: Adaptado a nueva estructura de respuesta
+      return response.data.data?.profesionales || [];
     },
     enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
     staleTime: 1000 * 30, // 30 segundos

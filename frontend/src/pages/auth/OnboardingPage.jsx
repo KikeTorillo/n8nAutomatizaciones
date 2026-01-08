@@ -19,16 +19,15 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import Button from '@/components/ui/Button';
-import { INDUSTRIAS } from '@/lib/constants';
 import { Building2, UserCheck, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import ModuloSelector from '@/components/onboarding/ModuloSelector';
 
 // Schema de validación
+// Industria removida del onboarding - se configura en Configuración > Mi Negocio (Ene 2026)
 const onboardingSchema = z.object({
   nombre_negocio: z.string()
     .min(2, 'El nombre debe tener al menos 2 caracteres')
     .max(150, 'El nombre es muy largo'),
-  industria: z.string().min(1, 'Selecciona una industria'),
   estado_id: z.string()
     .min(1, 'Selecciona un estado')
     .transform((val) => parseInt(val, 10))
@@ -71,7 +70,6 @@ function OnboardingPage() {
     resolver: zodResolver(onboardingSchema),
     defaultValues: {
       nombre_negocio: '',
-      industria: '',
       estado_id: '',
       ciudad_id: '',
       soy_profesional: true,
@@ -119,12 +117,6 @@ function OnboardingPage() {
     console.error('[Onboarding] Errores de validación:', errors);
   };
 
-  // Convertir INDUSTRIAS a formato de options
-  const industriasOptions = INDUSTRIAS.map(ind => ({
-    value: ind.value,
-    label: ind.label
-  }));
-
   return (
     <AuthLayout
       title="Configura tu negocio"
@@ -151,16 +143,6 @@ function OnboardingPage() {
             />
             <Building2 className="absolute right-3 top-[38px] w-5 h-5 text-gray-400" />
           </div>
-
-          {/* Industria */}
-          <FormField
-            name="industria"
-            control={control}
-            label="Industria"
-            placeholder="Selecciona tu industria"
-            options={industriasOptions}
-            required
-          />
 
           {/* Ubicación */}
           <div>

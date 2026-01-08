@@ -13,8 +13,9 @@ import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecu
 import { useClientes } from '@/hooks/useClientes';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
-import { serviciosApi } from '@/services/api/endpoints';
+import { serviciosApi, configuracionAgendamientoApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
+import { useQuery } from '@tanstack/react-query';
 import { aFormatoISO } from '@/utils/dateHelpers';
 
 // Constantes para recurrencia
@@ -41,11 +42,12 @@ const TERMINA_EN = [
 
 /**
  * Schema de validación Zod para CREAR cita
+ * NOTA: profesional_id es opcional cuando Round-Robin está habilitado
  */
 const citaCreateSchema = z
   .object({
     cliente_id: z.string().min(1, 'Debes seleccionar un cliente'),
-    profesional_id: z.string().min(1, 'Debes seleccionar un profesional'),
+    profesional_id: z.string().optional(), // Opcional: si vacío, usa Round-Robin
     servicios_ids: z.array(z.string()).min(1, 'Debes seleccionar al menos un servicio').max(10, 'Máximo 10 servicios por cita'),
     fecha_cita: z.string().min(1, 'La fecha es requerida'),
     hora_inicio: z
@@ -145,8 +147,21 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
   // Fetch data
   const { data: clientesData } = useClientes({ activo: true });
-  const { data: profesionales } = useProfesionales({ activo: true });
-  const { data: servicios } = useServicios({ activo: true });
+  const { data: profesionalesData } = useProfesionales({ activo: true });
+  const profesionales = profesionalesData?.profesionales || [];
+  const { data: serviciosData } = useServicios({ activo: true });
+  const servicios = serviciosData?.servicios || [];
+
+  // Fetch configuración Round-Robin
+  const { data: configAgendamiento } = useQuery({
+    queryKey: ['configuracion-agendamiento'],
+    queryFn: async () => {
+      const response = await configuracionAgendamientoApi.obtener();
+      return response.data.data;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
+  });
+  const roundRobinHabilitado = configAgendamiento?.round_robin_habilitado || false;
 
   // Hooks de mutación
   const crearMutation = useCrearCita();
@@ -200,7 +215,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   // Cargar servicios del profesional seleccionado
   useEffect(() => {
     const cargarServiciosProfesional = async () => {
-      if (!watchProfesional || watchProfesional === '') {
+      // Si es 'auto' (Round-Robin) o vacío, no cargar servicios de un profesional específico
+      if (!watchProfesional || watchProfesional === '' || watchProfesional === 'auto') {
         setServiciosDisponibles([]);
         return;
       }
@@ -227,8 +243,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
   // Servicios con estado de disponibilidad (filtrado dual)
   const serviciosDisponiblesConEstado = useMemo(() => {
-    // Si NO hay profesional seleccionado: mostrar TODOS los servicios con estado
-    if (!watchProfesional || watchProfesional === '') {
+    // Si NO hay profesional seleccionado o es 'auto' (Round-Robin): mostrar TODOS los servicios con estado
+    if (!watchProfesional || watchProfesional === '' || watchProfesional === 'auto') {
       return servicios?.servicios?.map(s => ({
         ...s,
         disponible: s.total_profesionales_asignados > 0,
@@ -252,8 +268,14 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       let duracionTotal = 0;
       let precioTotal = 0;
 
+      // Usar serviciosDisponiblesConEstado que funciona tanto con profesional específico como con Round-Robin
+      // Si está vacío, usar el catálogo general de servicios
+      const listaServicios = serviciosDisponiblesConEstado.length > 0
+        ? serviciosDisponiblesConEstado
+        : (servicios?.servicios || []);
+
       watchServicios.forEach((servicioId) => {
-        const servicio = serviciosDisponibles.find(
+        const servicio = listaServicios.find(
           (s) => s.id === parseInt(servicioId)
         );
         if (servicio) {
@@ -269,7 +291,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       setValue('duracion_minutos', 0);
       setValue('precio_servicio', 0);
     }
-  }, [watchServicios, serviciosDisponibles, setValue]);
+  }, [watchServicios, serviciosDisponiblesConEstado, servicios, setValue]);
 
   // Calcular precio total
   useEffect(() => {
@@ -400,9 +422,12 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
       const horaFin = `${String(horasFin).padStart(2, '0')}:${String(minutosFin).padStart(2, '0')}:00`;
 
       // Sanitizar datos
+      // NOTA: profesional_id puede ser 'auto' o vacío para Round-Robin (auto-asignación)
+      // Cuando es Round-Robin, NO enviamos profesional_id (undefined) para que el backend lo asigne
       const sanitized = {
         cliente_id: parseInt(data.cliente_id),
-        profesional_id: parseInt(data.profesional_id),
+        // Solo incluir profesional_id si hay uno seleccionado (no es 'auto' ni vacío)
+        ...(data.profesional_id && data.profesional_id !== 'auto' ? { profesional_id: parseInt(data.profesional_id) } : {}),
         servicios_ids: data.servicios_ids.map(id => parseInt(id)),
         fecha_cita: data.fecha_cita,
         hora_inicio: `${data.hora_inicio}:00`, // Agregar segundos
@@ -494,10 +519,18 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     label: `${c.nombre} ${c.apellidos || ''} - ${c.telefono || 'Sin teléfono'}`,
   }));
 
-  const profesionalesOpciones = (profesionales || []).map((p) => ({
-    value: p.id.toString(),
-    label: `${p.nombre_completo} - ${p.tipo_nombre || 'Profesional'}`,
-  }));
+  const profesionalesOpciones = [
+    // Agregar opción de auto-asignar si Round-Robin está habilitado
+    ...(roundRobinHabilitado ? [{
+      value: 'auto',
+      label: '🔄 Auto-asignar (Round-Robin)',
+    }] : []),
+    // Profesionales disponibles
+    ...(profesionales || []).map((p) => ({
+      value: p.id.toString(),
+      label: `${p.nombre_completo} - ${p.tipo_nombre || 'Profesional'}`,
+    })),
+  ];
 
   const serviciosOpciones = serviciosDisponiblesConEstado.map((s) => ({
     value: s.id.toString(),
@@ -579,7 +612,9 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 )}
                 {!errors.profesional_id && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    💡 Selecciona un profesional para ver solo sus servicios, o deja vacío para ver todos los servicios disponibles
+                    {roundRobinHabilitado
+                      ? '🔄 Round-Robin activo: selecciona "Auto-asignar" para asignación automática rotativa'
+                      : '💡 Selecciona un profesional para ver solo sus servicios'}
                   </p>
                 )}
               </div>
@@ -600,18 +635,23 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                         options={serviciosOpciones}
                         placeholder={cargandoServicios ? 'Cargando servicios...' : 'Selecciona uno o más servicios'}
                         className="flex-1"
-                        disabled={!watchProfesional || cargandoServicios}
+                        disabled={((!watchProfesional || watchProfesional === '') && !roundRobinHabilitado) || cargandoServicios}
                         max={10}
                         helper={!errors.servicios_ids && watchServicios?.length > 0 && `${watchServicios.length} servicio(s) seleccionado(s)`}
                       />
                     )}
                   />
                 </div>
-                {!watchProfesional && (
+                {(!watchProfesional || watchProfesional === '') && !roundRobinHabilitado && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Primero selecciona un profesional
                   </p>
                 )}
+                {((!watchProfesional || watchProfesional === '') && roundRobinHabilitado) || watchProfesional === 'auto' ? (
+                  <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                    🔄 Round-Robin: el sistema asignará automáticamente al profesional disponible
+                  </p>
+                ) : null}
                 {errors.servicios_ids && (
                   <p className="mt-1 text-sm text-red-600">{errors.servicios_ids.message}</p>
                 )}
@@ -655,25 +695,61 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
               {/* Duración, Precio y Descuento */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                {/* Duración */}
-                <FormField
-                  name="duracion_minutos"
-                  control={control}
-                  label="Duración (minutos)"
-                  type="number"
-                  placeholder="30"
-                  required={!isEditMode}
-                />
+                {/* Duración - Mostrar como texto si hay servicios, input si no */}
+                <div>
+                  {!isEditMode && watchServicios?.length > 0 ? (
+                    <>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Duración
+                      </label>
+                      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {watch('duracion_minutos') || 0} min
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                        Calculado de servicios
+                      </p>
+                    </>
+                  ) : (
+                    <FormField
+                      name="duracion_minutos"
+                      control={control}
+                      label="Duración (minutos)"
+                      type="number"
+                      placeholder="30"
+                      required={!isEditMode}
+                    />
+                  )}
+                </div>
 
-                {/* Precio */}
-                <FormField
-                  name="precio_servicio"
-                  control={control}
-                  label="Precio del Servicio"
-                  type="number"
-                  placeholder="25000"
-                  required={!isEditMode}
-                />
+                {/* Precio - Mostrar como texto si hay servicios, input si no */}
+                <div>
+                  {!isEditMode && watchServicios?.length > 0 ? (
+                    <>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Precio
+                      </label>
+                      <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg px-3 py-2">
+                        <span className="text-lg font-semibold text-gray-900 dark:text-white">
+                          ${(watch('precio_servicio') || 0).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-xs text-green-600 dark:text-green-400">
+                        Calculado de servicios
+                      </p>
+                    </>
+                  ) : (
+                    <FormField
+                      name="precio_servicio"
+                      control={control}
+                      label="Precio del Servicio"
+                      type="number"
+                      placeholder="25000"
+                      required={!isEditMode}
+                    />
+                  )}
+                </div>
 
                 {/* Descuento */}
                 <FormField

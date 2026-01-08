@@ -31,9 +31,10 @@ import { format } from 'date-fns';
 function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInicial = null }) {
 
   // Queries
-  const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
+  const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales({
     activo: true,
   });
+  const profesionales = profesionalesData?.profesionales || [];
 
   const { data: tiposData, isLoading: isLoadingTipos } = useTiposBloqueo();
 
@@ -72,6 +73,12 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
     if (!tipoSeleccionado) return false;
     const codigosOrganizacionales = ['organizacional', 'feriado', 'mantenimiento'];
     return codigosOrganizacionales.includes(tipoSeleccionado.codigo);
+  }, [tipoSeleccionado]);
+
+  // Detectar si es tipo vacaciones (requiere usar módulo Vacaciones)
+  const esTipoVacaciones = useMemo(() => {
+    if (!tipoSeleccionado) return false;
+    return tipoSeleccionado.codigo === 'vacaciones';
   }, [tipoSeleccionado]);
 
   // Auto-limpiar profesional_id si es organizacional
@@ -167,8 +174,8 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Información del bloqueo */}
         <div className="space-y-4">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <Info className="h-4 w-4 text-primary-600" />
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Info className="h-4 w-4 text-primary-600 dark:text-primary-400" />
             Información del Bloqueo
           </h3>
 
@@ -187,7 +194,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
             control={control}
             render={({ field: { value, onChange, ...field }, fieldState: { error } }) => (
               <div>
-                <label htmlFor="tipo_bloqueo_id" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="tipo_bloqueo_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Tipo de bloqueo <span className="text-red-500">*</span>
                 </label>
                 <Select
@@ -213,20 +220,48 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
             )}
           />
 
+          {/* Advertencia: tipo vacaciones debe usar módulo Vacaciones */}
+          {esTipoVacaciones && (
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-medium text-amber-800 dark:text-amber-200 mb-1">
+                    Para registrar vacaciones usa el módulo de Vacaciones
+                  </p>
+                  <p className="text-amber-700 dark:text-amber-300 mb-3">
+                    El módulo de Vacaciones gestiona saldos, aprobaciones y genera el bloqueo automáticamente.
+                  </p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      handleClose();
+                      window.location.href = '/vacaciones';
+                    }}
+                  >
+                    Ir a Vacaciones
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Descripción */}
           <Controller
             name="descripcion"
             control={control}
             render={({ field }) => (
               <div>
-                <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="descripcion" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Descripción
                 </label>
                 <textarea
                   {...field}
                   id="descripcion"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                   placeholder="Descripción detallada del bloqueo (opcional)"
                 />
                 {errors.descripcion && (
@@ -238,19 +273,19 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
         </div>
 
         {/* Alcance del bloqueo */}
-        <div className="space-y-4 pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
             {esOrganizacional ? (
-              <Building className="h-4 w-4 text-gray-600" />
+              <Building className="h-4 w-4 text-gray-600 dark:text-gray-400" />
             ) : (
-              <User className="h-4 w-4 text-primary-600" />
+              <User className="h-4 w-4 text-primary-600 dark:text-primary-400" />
             )}
             {esOrganizacional ? 'Bloqueo Organizacional' : 'Profesional'}
           </h3>
 
           {esOrganizacional ? (
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-3">
-              <p className="text-sm text-primary-800">
+            <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+              <p className="text-sm text-primary-800 dark:text-primary-200">
                 Este tipo de bloqueo se aplicará a <strong>toda la organización</strong> y afectará a
                 todos los profesionales.
               </p>
@@ -261,7 +296,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
               control={control}
               render={({ field: { value, onChange, ...field } }) => (
                 <div>
-                  <label htmlFor="profesional_id" className="block text-sm font-medium text-gray-700 mb-1">
+                  <label htmlFor="profesional_id" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Profesional <span className="text-red-500">*</span>
                   </label>
                   <Select
@@ -277,7 +312,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
                     disabled={isLoadingProfesionales}
                     error={!!errors.profesional_id}
                   />
-                  <p className="mt-1 text-xs text-gray-500">
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Selecciona el profesional al que se aplicará este bloqueo
                   </p>
                   {errors.profesional_id && (
@@ -290,9 +325,9 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
         </div>
 
         {/* Fechas y horarios */}
-        <div className="space-y-4 pt-4 border-t border-gray-200">
-          <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-            <Calendar className="h-4 w-4 text-primary-600" />
+        <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-primary-600 dark:text-primary-400" />
             Fechas y Horarios
           </h3>
 
@@ -319,8 +354,8 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
 
           {/* Preview de días */}
           {diasBloqueo > 0 && (
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
-              <p className="text-sm text-gray-700">
+            <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
                 <strong>Duración:</strong> {diasBloqueo} {diasBloqueo === 1 ? 'día' : 'días'}
               </p>
             </div>
@@ -328,11 +363,11 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
 
           {/* Horarios (opcional) */}
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-sm text-gray-700">
+            <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
               <Clock className="h-4 w-4" />
               <span className="font-medium">Horario específico (opcional)</span>
             </div>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Deja estos campos vacíos para bloquear días completos. Especifica horas solo si deseas
               bloquear un horario parcial.
             </p>
@@ -357,10 +392,10 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
 
         {/* Advertencias de impacto */}
         {bloqueo?.citas_afectadas > 0 && modo === 'editar' && (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-amber-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-amber-800">
+              <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-800 dark:text-amber-200">
                 <p className="font-medium mb-1">⚠️ Atención: Citas afectadas</p>
                 <p>
                   Este bloqueo actualmente afecta <strong>{bloqueo.citas_afectadas} citas</strong>.
@@ -373,7 +408,7 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
 
         {/* Estado activo */}
         {modo === 'editar' && (
-          <div className="pt-4 border-t border-gray-200">
+          <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
             <Controller
               name="activo"
               control={control}
@@ -384,11 +419,11 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
                     type="checkbox"
                     checked={value}
                     onChange={(e) => onChange(e.target.checked)}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                    className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 dark:border-gray-600 rounded"
                   />
-                  <label className="text-sm text-gray-700">
+                  <label className="text-sm text-gray-700 dark:text-gray-300">
                     <span className="font-medium">Bloqueo activo</span>
-                    <span className="text-gray-500 ml-1">
+                    <span className="text-gray-500 dark:text-gray-400 ml-1">
                       (Desactívalo si ya no aplica pero deseas mantener el registro)
                     </span>
                   </label>
@@ -399,13 +434,13 @@ function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInici
         )}
 
         {/* Acciones */}
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
           <Button type="button" variant="secondary" onClick={handleClose} disabled={isSubmitting}>
             Cancelar
           </Button>
           <Button
             type="submit"
-            disabled={isSubmitting || crearMutation.isPending || actualizarMutation.isPending}
+            disabled={isSubmitting || crearMutation.isPending || actualizarMutation.isPending || esTipoVacaciones}
           >
             {isSubmitting
               ? 'Guardando...'

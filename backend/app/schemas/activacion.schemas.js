@@ -196,13 +196,10 @@ const activacionSchemas = {
                     'any.required': 'El nombre del negocio es requerido'
                 }),
 
+            // Industria ahora es opcional - se configura en Configuración > Mi Negocio (Ene 2026)
             industria: Joi.string()
-                .valid('barberia', 'salon_belleza', 'spa', 'consultorio_medico', 'clinica_dental', 'otro')
-                .required()
-                .messages({
-                    'any.only': 'Debe seleccionar una industria válida',
-                    'any.required': 'La industria es requerida'
-                }),
+                .optional()
+                .allow(null, ''),
 
             estado_id: Joi.number()
                 .integer()

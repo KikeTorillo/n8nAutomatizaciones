@@ -250,9 +250,18 @@ class SolicitudesVacacionesModel {
                 contador++;
             }
 
-            // Contar total
+            // Ene 2026: Filtro por departamento para calendario de equipo
+            if (filtros.departamento_id) {
+                whereClause += ` AND p.departamento_id = $${contador}`;
+                values.push(filtros.departamento_id);
+                contador++;
+            }
+
+            // Contar total (incluir JOIN con profesionales para filtro departamento)
             const countResult = await db.query(
-                `SELECT COUNT(*) as total FROM solicitudes_vacaciones sv WHERE ${whereClause}`,
+                `SELECT COUNT(*) as total FROM solicitudes_vacaciones sv
+                 JOIN profesionales p ON p.id = sv.profesional_id
+                 WHERE ${whereClause}`,
                 values
             );
             const total = parseInt(countResult.rows[0].total);

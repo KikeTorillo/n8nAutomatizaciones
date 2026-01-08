@@ -4,9 +4,13 @@
  * FEATURE: Tabs "Mis Vacaciones" y "Mi Equipo" para supervisores
  */
 import { useState } from 'react';
-import { Calendar, Users } from 'lucide-react';
+import { Calendar, Users, CalendarDays } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
-import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
+import {
+  VacacionesDashboard,
+  SolicitudesEquipoSection,
+  CalendarioEquipoVacaciones,
+} from '@/components/vacaciones';
 import { useSolicitudesPendientes } from '@/hooks/useVacaciones';
 
 /**
@@ -83,6 +87,12 @@ function VacacionesPage() {
                 onClick={() => setActiveTab('mi-equipo')}
                 count={cantidadPendientes}
               />
+              <TabItem
+                icon={CalendarDays}
+                label="Calendario"
+                isActive={activeTab === 'calendario'}
+                onClick={() => setActiveTab('calendario')}
+              />
             </div>
           )}
         </div>
@@ -92,6 +102,7 @@ function VacacionesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === 'mis-vacaciones' && <VacacionesDashboard />}
         {activeTab === 'mi-equipo' && esSupervisor && <SolicitudesEquipoSection />}
+        {activeTab === 'calendario' && esSupervisor && <CalendarioEquipoVacaciones soloEquipo={true} />}
       </div>
     </div>
   );

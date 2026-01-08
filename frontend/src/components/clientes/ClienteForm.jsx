@@ -41,8 +41,10 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   const [fotoFile, setFotoFile] = useState(null);
 
   // Cargar datos de profesionales y servicios para preferencias
-  const { data: profesionales = [] } = useProfesionales();
-  const { data: servicios = [] } = useServiciosDashboard();
+  const { data: profesionalesData } = useProfesionales();
+  const profesionales = profesionalesData?.profesionales || [];
+  const { data: serviciosData } = useServiciosDashboard();
+  const servicios = serviciosData?.servicios || [];
 
   // Cargar listas de precios disponibles
   const { data: listasPreciosData } = useQuery({

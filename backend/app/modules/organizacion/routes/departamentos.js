@@ -34,6 +34,15 @@ router.get(
     asyncHandler(DepartamentoController.obtenerArbol)
 );
 
+// POST /departamentos/seed-catalogos
+router.post(
+    '/seed-catalogos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    auth.requireAdminRole,
+    asyncHandler(DepartamentoController.seedCatalogos)
+);
+
 // GET /departamentos/:id
 router.get(
     '/:id',

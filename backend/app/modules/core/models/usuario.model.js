@@ -1583,16 +1583,18 @@ class UsuarioModel {
                     throw new Error('El onboarding ya fue completado');
                 }
 
-                // 2. Resolver categoria_id desde código de industria
-                const categoriaResult = await db.query(
-                    'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
-                    [industria]
-                );
-
-                if (!categoriaResult.rows[0]) {
-                    throw new Error('Industria no válida');
+                // 2. Resolver categoria_id desde código de industria (opcional - Ene 2026)
+                let categoria_id = null;
+                if (industria) {
+                    const categoriaResult = await db.query(
+                        'SELECT id FROM categorias WHERE codigo = $1 AND activo = TRUE LIMIT 1',
+                        [industria]
+                    );
+                    if (categoriaResult.rows[0]) {
+                        categoria_id = categoriaResult.rows[0].id;
+                    }
                 }
-                const categoria_id = categoriaResult.rows[0].id;
+                // Nota: categoria_id puede ser null, se configura después en Configuración > Mi Negocio
 
                 // 3. Generar código de tenant único
                 const codigoTenant = `org-${Date.now().toString(36)}`;

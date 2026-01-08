@@ -29,7 +29,8 @@ function SucursalProfesionalesModal({
   const [seleccionados, setSeleccionados] = useState({});
 
   // Fetch todos los profesionales de la organización
-  const { data: profesionales = [], isLoading } = useProfesionales({ activo: true });
+  const { data: profesionalesData, isLoading } = useProfesionales({ activo: true });
+  const profesionales = profesionalesData?.profesionales || [];
 
   // Hook de asignación
   const asignarMutation = useAsignarProfesionalSucursal();
@@ -37,8 +38,8 @@ function SucursalProfesionalesModal({
   // IDs de profesionales ya asignados
   const idsAsignados = (profesionalesAsignados || []).map((p) => p.profesional_id || p.id);
 
-  // Asegurar que profesionales es un array
-  const profesionalesArray = Array.isArray(profesionales) ? profesionales : [];
+  // profesionales ya es array
+  const profesionalesArray = profesionales;
 
   // Filtrar profesionales por búsqueda y excluir ya asignados
   const profesionalesFiltrados = profesionalesArray.filter((profesional) => {

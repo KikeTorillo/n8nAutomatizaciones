@@ -159,8 +159,16 @@ const marketplaceSchemas = {
 
             // Filtros geográficos
             ciudad: Joi.string().max(100).optional(),
+            ciudad_id: Joi.number().integer().positive().optional(),
             estado: Joi.string().max(100).optional(),
+            estado_id: Joi.number().integer().positive().optional(),
             pais: Joi.string().max(50).optional(),
+            pais_id: Joi.number().integer().positive().optional(),
+
+            // Filtro por categoría/industria (Ene 2026)
+            categoria_id: Joi.number().integer().positive().optional().messages({
+                'number.positive': 'categoria_id debe ser un número positivo'
+            }),
 
             // Filtros de calidad
             rating_minimo: Joi.number().min(0).max(5).optional().messages({

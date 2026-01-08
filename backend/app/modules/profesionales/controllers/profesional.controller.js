@@ -87,6 +87,10 @@ class ProfesionalController {
     });
 
     static listar = asyncHandler(async (req, res) => {
+        // Ene 2026: Soporte de paginación con page/limit
+        const page = Math.max(parseInt(req.query.page) || 1, 1);
+        const limit = Math.min(Math.max(parseInt(req.query.limit) || 20, 1), 100);
+
         const filtros = {
             activo: req.query.activo !== undefined ? req.query.activo === 'true' : null,
             disponible_online: req.query.disponible_online !== undefined ? req.query.disponible_online === 'true' : null,
@@ -100,16 +104,16 @@ class ProfesionalController {
             departamento_id: req.query.departamento_id ? parseInt(req.query.departamento_id) : null,
             puesto_id: req.query.puesto_id ? parseInt(req.query.puesto_id) : null,
             supervisor_id: req.query.supervisor_id ? parseInt(req.query.supervisor_id) : null,
-            limite: Math.min(parseInt(req.query.limit) || 20, 50),
-            offset: Math.max(parseInt(req.query.offset) || 0, 0)
+            // Ene 2026: Usar page en lugar de offset directo
+            page,
+            limite: limit
         };
 
-        const profesionales = await ProfesionalModel.listarPorOrganizacion(req.tenant.organizacionId, filtros);
+        const resultado = await ProfesionalModel.listarPorOrganizacion(req.tenant.organizacionId, filtros);
 
         return ResponseHelper.success(res, {
-            profesionales,
-            filtros_aplicados: filtros,
-            total: profesionales.length
+            profesionales: resultado.profesionales,
+            pagination: resultado.paginacion
         }, 'Profesionales obtenidos exitosamente');
     });
 

@@ -226,7 +226,7 @@ class PerfilesMarketplaceModel {
 
     /**
      * Búsqueda pública de perfiles
-     * Usa full-text search en español + filtros geográficos
+     * Usa full-text search en español + filtros geográficos + categoría
      *
      * @param {Object} filtros - Filtros de búsqueda
      * @returns {Object} {perfiles, paginacion}
@@ -278,6 +278,13 @@ class PerfilesMarketplaceModel {
                 paramIndex++;
             }
 
+            // Filtro por categoría/industria (Ene 2026)
+            if (filtros.categoria_id) {
+                whereConditions.push(`o.categoria_id = $${paramIndex}`);
+                queryParams.push(filtros.categoria_id);
+                paramIndex++;
+            }
+
             // Filtro de rating
             if (filtros.rating_minimo) {
                 whereConditions.push(`mp.rating_promedio >= $${paramIndex}`);
@@ -287,10 +294,11 @@ class PerfilesMarketplaceModel {
 
             const whereClause = whereConditions.join(' AND ');
 
-            // Contar total
+            // Contar total (con JOIN a organizaciones para filtro de categoría)
             const countQuery = `
                 SELECT COUNT(*) as total
                 FROM marketplace_perfiles mp
+                INNER JOIN organizaciones o ON mp.organizacion_id = o.id
                 LEFT JOIN ciudades c ON mp.ciudad_id = c.id
                 LEFT JOIN estados e ON mp.estado_id = e.id
                 LEFT JOIN paises p ON mp.pais_id = p.id
@@ -310,7 +318,7 @@ class PerfilesMarketplaceModel {
                     orderBy = 'mp.publicado_en DESC NULLS LAST, mp.creado_en DESC';
                     break;
                 case 'alfabetico':
-                    orderBy = 'c.nombre ASC';
+                    orderBy = 'o.nombre_comercial ASC';
                     break;
             }
 
@@ -320,15 +328,21 @@ class PerfilesMarketplaceModel {
                 filtros.limite || 12
             );
 
-            // Query principal con JOINs a tablas de ubicación
+            // Query principal con JOINs a tablas de ubicación y organización
             const query = `
                 SELECT
                     mp.*,
                     c.nombre as ciudad,
                     e.nombre as estado,
                     e.nombre_corto as estado_codigo,
-                    p.nombre as pais
+                    p.nombre as pais,
+                    o.nombre_comercial,
+                    o.categoria_id,
+                    cat.codigo as categoria_codigo,
+                    cat.nombre as categoria_nombre
                 FROM marketplace_perfiles mp
+                INNER JOIN organizaciones o ON mp.organizacion_id = o.id
+                LEFT JOIN categorias cat ON o.categoria_id = cat.id
                 LEFT JOIN ciudades c ON mp.ciudad_id = c.id
                 LEFT JOIN estados e ON mp.estado_id = e.id
                 LEFT JOIN paises p ON mp.pais_id = p.id

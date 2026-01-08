@@ -18,12 +18,14 @@ import {
   Coins,
   Clock,
   ShoppingCart,
+  Briefcase,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
 import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
+import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
@@ -56,6 +58,7 @@ function NegocioPage() {
       nombre_comercial: '',
       razon_social: '',
       rfc_nif: '',
+      categoria_id: '',
       email_admin: '',
       telefono: '',
       sitio_web: '',
@@ -77,6 +80,9 @@ function NegocioPage() {
 
   const monedas = monedasData?.data?.data || [];
 
+  // Query para obtener categorías/industrias (Ene 2026)
+  const { data: categorias = [], isLoading: isLoadingCategorias } = useCategoriasMarketplace();
+
   // Query para obtener datos de la organización
   const { data, isLoading, error } = useQuery({
     queryKey: ['organizacion', organizacionId],
@@ -92,6 +98,7 @@ function NegocioPage() {
         nombre_comercial: org.nombre_comercial || '',
         razon_social: org.razon_social || '',
         rfc_nif: org.rfc_nif || '',
+        categoria_id: org.categoria_id?.toString() || '',
         email_admin: org.email_admin || '',
         telefono: org.telefono || '',
         sitio_web: org.sitio_web || '',
@@ -176,6 +183,11 @@ function NegocioPage() {
 
       // Actualizar logo_url con la URL subida
       cleanData.logo_url = logoUrlFinal || null;
+
+      // Convertir categoria_id a número (viene como string del select)
+      if (cleanData.categoria_id) {
+        cleanData.categoria_id = parseInt(cleanData.categoria_id, 10);
+      }
 
       // nombre_comercial es requerido
       if (!cleanData.nombre_comercial) {
@@ -356,6 +368,41 @@ function NegocioPage() {
                   maxLength={13}
                 />
               </div>
+            </div>
+          </div>
+
+          {/* Tipo de Negocio - Ene 2026 */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+              <Briefcase className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+              Tipo de Negocio
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Selecciona la industria de tu negocio. Esto ayuda a los clientes a encontrarte en el marketplace.
+            </p>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Industria
+                {isLoadingCategorias && (
+                  <Loader2 className="inline-block w-3 h-3 ml-2 animate-spin text-gray-400" />
+                )}
+              </label>
+              <select
+                {...register('categoria_id')}
+                disabled={isLoadingCategorias}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Sin especificar</option>
+                {categorias.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.nombre}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Esta información se muestra en tu perfil público del marketplace.
+              </p>
             </div>
           </div>
 

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Search, Filter, X, AlertTriangle, ClipboardList, Network } from 'lucide-react';
+import { Plus, Search, Filter, X, AlertTriangle, ClipboardList, Network, LayoutGrid, LayoutList } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
@@ -27,6 +27,11 @@ function ProfesionalesPage() {
   const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
+  // Ene 2026: Vista y paginación
+  const [viewMode, setViewMode] = useState('cards'); // 'cards' | 'table'
+  const [page, setPage] = useState(1);
+  const limit = 20;
+
   // Filtros (Dic 2025: ampliados con nuevos campos)
   const [filtros, setFiltros] = useState({
     activo: '',
@@ -45,13 +50,19 @@ function ProfesionalesPage() {
   const [isServiciosModalOpen, setIsServiciosModalOpen] = useState(false);
   const [profesionalParaServicios, setProfesionalParaServicios] = useState(null);
 
-  // Fetch profesionales con filtros (Dic 2025: nuevos filtros)
-  const { data: profesionales, isLoading } = useProfesionales({
+  // Fetch profesionales con filtros y paginación (Ene 2026)
+  const { data, isLoading } = useProfesionales({
+    page,
+    limit,
     busqueda,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
     estado: filtros.estado || undefined,
     departamento_id: filtros.departamento_id ? parseInt(filtros.departamento_id, 10) : undefined,
   });
+
+  // Extraer profesionales y paginación de la respuesta
+  const profesionales = data?.profesionales || [];
+  const pagination = data?.pagination || { page: 1, limit: 20, total: 0, totalPages: 1, hasNext: false, hasPrev: false };
 
   // Hook de eliminación
   const eliminarMutation = useEliminarProfesional();
@@ -64,6 +75,25 @@ function ProfesionalesPage() {
       departamento_id: '',
     });
     setBusqueda('');
+    setPage(1); // Reset a página 1
+  };
+
+  // Ene 2026: Handler para cambio de página
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Ene 2026: Handler para cambio de búsqueda (reset página)
+  const handleBusquedaChange = (e) => {
+    setBusqueda(e.target.value);
+    setPage(1);
+  };
+
+  // Ene 2026: Handler para cambio de filtros (reset página)
+  const handleFiltroChange = (campo, valor) => {
+    setFiltros(prev => ({ ...prev, [campo]: valor }));
+    setPage(1);
   };
 
   // Handlers para acciones
@@ -169,7 +199,7 @@ function ProfesionalesPage() {
                   type="text"
                   placeholder="Buscar por nombre o email..."
                   value={busqueda}
-                  onChange={(e) => setBusqueda(e.target.value)}
+                  onChange={handleBusquedaChange}
                   className="pl-10"
                 />
               </div>
@@ -187,6 +217,28 @@ function ProfesionalesPage() {
                   </span>
                 )}
               </Button>
+
+              {/* Ene 2026: Toggle de vista cards/tabla */}
+              <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`p-2 transition-colors ${viewMode === 'cards'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  title="Vista tarjetas"
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setViewMode('table')}
+                  className={`p-2 transition-colors ${viewMode === 'table'
+                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
+                  title="Vista tabla"
+                >
+                  <LayoutList className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             {/* Panel de Filtros (Dic 2025: ampliado con nuevos filtros) */}
@@ -200,9 +252,7 @@ function ProfesionalesPage() {
                     </label>
                     <Select
                       value={filtros.activo}
-                      onChange={(e) =>
-                        setFiltros({ ...filtros, activo: e.target.value })
-                      }
+                      onChange={(e) => handleFiltroChange('activo', e.target.value)}
                     >
                       <option value="">Todos</option>
                       <option value="true">Activos</option>
@@ -217,9 +267,7 @@ function ProfesionalesPage() {
                     </label>
                     <Select
                       value={filtros.estado}
-                      onChange={(e) =>
-                        setFiltros({ ...filtros, estado: e.target.value })
-                      }
+                      onChange={(e) => handleFiltroChange('estado', e.target.value)}
                     >
                       <option value="">Todos los estados</option>
                       {Object.entries(ESTADOS_LABORALES).map(([key, val]) => (
@@ -237,9 +285,7 @@ function ProfesionalesPage() {
                     </label>
                     <Select
                       value={filtros.departamento_id}
-                      onChange={(e) =>
-                        setFiltros({ ...filtros, departamento_id: e.target.value })
-                      }
+                      onChange={(e) => handleFiltroChange('departamento_id', e.target.value)}
                     >
                       <option value="">Todos los departamentos</option>
                       {departamentos.map((depto) => (
@@ -340,11 +386,14 @@ function ProfesionalesPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <ProfesionalesList
           profesionales={profesionales}
+          pagination={pagination}
+          viewMode={viewMode}
           isLoading={isLoading}
           onVerDetalle={handleVerDetalle}
           onDelete={handleDelete}
           onGestionarHorarios={handleGestionarHorarios}
           onGestionarServicios={handleGestionarServicios}
+          onPageChange={handlePageChange}
         />
       </div>
 

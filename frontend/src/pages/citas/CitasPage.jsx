@@ -78,7 +78,8 @@ function CitasPage() {
   // ✅ FIX: Query para todas las citas pendientes (sin filtro de fecha)
   const { data: todasCitasPendientes = [] } = useCitas({ estado: 'pendiente' });
 
-  const { data: profesionales = [] } = useProfesionales({ activo: true });
+  const { data: profesionalesData } = useProfesionales({ activo: true });
+  const profesionales = profesionalesData?.profesionales || [];
   const { data: serviciosData } = useServicios({ activo: true });
   const servicios = serviciosData?.servicios || [];
 

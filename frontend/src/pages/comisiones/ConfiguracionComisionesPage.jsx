@@ -38,7 +38,8 @@ function ConfiguracionComisionesPage() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Fetch data - filtra por aplica_a según el tab activo
-  const { data: profesionales } = useProfesionales();
+  const { data: profesionalesData } = useProfesionales();
+  const profesionales = profesionalesData?.profesionales || [];
   const { data: configuraciones, isLoading } = useConfiguracionesComision({
     profesional_id: filtros.profesional_id || undefined,
     activo: filtros.activo === '' ? undefined : filtros.activo === 'true',

@@ -41,9 +41,10 @@ function BloqueosPage() {
   const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
 
   // Queries
-  const { data: profesionales = [], isLoading: isLoadingProfesionales } = useProfesionales({
+  const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales({
     activo: true,
   });
+  const profesionales = profesionalesData?.profesionales || [];
 
   // Mutations
   const eliminarMutation = useEliminarBloqueo();

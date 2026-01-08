@@ -1,68 +1,10 @@
 /**
  * Constantes de Profesionales
- * Definiciones compartidas para tipos de profesional y configuraciones
+ * Definiciones compartidas para configuraciones del módulo
  */
 
-/**
- * Tipos de profesional válidos por industria
- * Estos valores deben coincidir con el ENUM tipo_profesional en PostgreSQL
- */
-const TIPOS_PROFESIONAL = [
-    // Barbería
-    'barbero',
-    'estilista_masculino',
-
-    // Salón de belleza
-    'estilista',
-    'colorista',
-    'manicurista',
-    'peinados_eventos',
-
-    // Estética y cosmetología
-    'esteticista',
-    'cosmetologo',
-    'depilacion_laser',
-
-    // Spa y terapias
-    'masajista',
-    'terapeuta_spa',
-    'aromaterapeuta',
-    'reflexologo',
-
-    // Podología
-    'podologo',
-    'asistente_podologia',
-
-    // Consultorio médico
-    'doctor_general',
-    'enfermero',
-    'recepcionista_medica',
-
-    // Academia
-    'instructor',
-    'profesor',
-    'tutor',
-
-    // Taller técnico
-    'tecnico_auto',
-    'tecnico_electronico',
-    'mecanico',
-    'soldador',
-
-    // Centro fitness
-    'entrenador_personal',
-    'instructor_yoga',
-    'instructor_pilates',
-    'nutricionista',
-
-    // Veterinaria
-    'veterinario',
-    'asistente_veterinario',
-    'groomer',
-
-    // Genérico
-    'otro'
-];
+// NOTA: tipo_profesional fue removido en favor de categorias_profesional (tabla dinámica)
+// que permite categorías flexibles por organización. Ver: profesionales_categorias, categorias_profesional
 
 /**
  * Formas de pago válidas
@@ -219,7 +161,6 @@ const LIMITES = {
 };
 
 module.exports = {
-    TIPOS_PROFESIONAL,
     FORMAS_PAGO,
     ROLES_SUPERVISORES,
     ESTADOS_LABORALES,

@@ -119,7 +119,8 @@ const actualizar = {
             .trim(),
         categoria_id: Joi.number()
             .integer()
-            .positive(),
+            .positive()
+            .allow(null),
         configuracion_categoria: Joi.object(),
         email_admin: commonSchemas.email,
         telefono: commonSchemas.mexicanPhone

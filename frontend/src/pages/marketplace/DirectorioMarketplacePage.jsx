@@ -15,7 +15,7 @@ function DirectorioMarketplacePage() {
   const [filtros, setFiltros] = useState({
     busqueda: '',
     ciudad: '',
-    categoria: '',
+    categoria_id: '', // ID de categoría (industria)
     rating_min: '',
     pagina: 1,
     limite: 12,
@@ -38,7 +38,7 @@ function DirectorioMarketplacePage() {
     setFiltros({
       busqueda: '',
       ciudad: '',
-      categoria: '',
+      categoria_id: '',
       rating_min: '',
       pagina: 1,
       limite: 12,

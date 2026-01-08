@@ -51,7 +51,8 @@ function ComisionesDashboard() {
   const [origenSeleccionado, setOrigenSeleccionado] = useState('');
 
   // Fetch profesionales
-  const { data: profesionales } = useProfesionales();
+  const { data: profesionalesData } = useProfesionales();
+  const profesionales = profesionalesData?.profesionales || [];
 
   // Calcular fechas según periodo
   const getFechas = () => {

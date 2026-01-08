@@ -6,17 +6,36 @@ import { marketplaceApi } from '@/services/api/endpoints';
  * Sigue el patrón establecido en useServicios.js y useComisiones.js
  */
 
-// ==================== QUERIES (7) ====================
+// ==================== QUERIES (8) ====================
+
+/**
+ * Hook para listar categorías/industrias disponibles (público)
+ * @returns {Object} { data: categorias[], isLoading, error }
+ *
+ * @example
+ * const { data: categorias, isLoading } = useCategoriasMarketplace();
+ * // categorias = [{ id: 1, codigo: 'barberia', nombre: 'Barbería', ... }, ...]
+ */
+export function useCategoriasMarketplace() {
+  return useQuery({
+    queryKey: ['categorias-marketplace'],
+    queryFn: async () => {
+      const response = await marketplaceApi.getCategorias();
+      return response.data.data || [];
+    },
+    staleTime: 1000 * 60 * 30, // 30 minutos (categorías cambian poco)
+  });
+}
 
 /**
  * Hook para listar perfiles del marketplace (público)
- * @param {Object} params - { ciudad, categoria, rating_min, busqueda, pagina, limite }
+ * @param {Object} params - { ciudad, ciudad_id, categoria_id, rating_min, q, pagina, limite }
  * @returns {Object} { data: { perfiles, paginacion }, isLoading, error, refetch }
  *
  * @example
  * const { data, isLoading } = usePerfilesMarketplace({
  *   ciudad: 'CDMX',
- *   categoria: 'belleza',
+ *   categoria_id: 1, // Filtro por industria
  *   rating_min: 4,
  *   pagina: 1,
  *   limite: 12
@@ -596,6 +615,7 @@ export function useCrearCitaPublica() {
 
 export default {
   // Queries
+  useCategoriasMarketplace,
   usePerfilesMarketplace,
   usePerfilPublico,
   useMiPerfilMarketplace,

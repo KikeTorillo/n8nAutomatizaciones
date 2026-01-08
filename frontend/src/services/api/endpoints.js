@@ -1640,8 +1640,14 @@ export const marketplaceApi = {
   // ========== Públicas (sin auth) ==========
 
   /**
+   * Listar categorías/industrias disponibles
+   * @returns {Promise<Array>} Lista de categorías activas
+   */
+  getCategorias: () => apiClient.get('/marketplace/categorias'),
+
+  /**
    * Buscar perfiles en directorio
-   * @param {Object} params - { ciudad, categoria, rating_min, busqueda, pagina, limite }
+   * @param {Object} params - { ciudad, ciudad_id, categoria_id, rating_minimo, q, pagina, limite }
    * @returns {Promise<Object>} { perfiles, paginacion }
    */
   getPerfiles: (params = {}) => apiClient.get('/marketplace/perfiles/buscar', { params }),
