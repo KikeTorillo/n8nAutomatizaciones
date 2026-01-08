@@ -37,9 +37,11 @@ function TrabajoTab({ profesional }) {
   const { data: motivosSalida = [] } = useMotivosSalida();
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
   const { data: puestos = [] } = usePuestos({ activo: true });
-  const { data: todosLosProfesionales = [] } = useProfesionales();
+  const { data: profesionalesData } = useProfesionales();
 
   // Filtrar profesionales para supervisor (excluir al profesional actual)
+  // useProfesionales retorna { profesionales: [...], pagination: {...} }
+  const todosLosProfesionales = profesionalesData?.profesionales || [];
   const supervisoresDisponibles = todosLosProfesionales.filter(p => p.id !== profesional.id);
 
   // Formatear fecha

@@ -16,6 +16,7 @@ import {
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
+import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -374,14 +375,12 @@ function AlertasPage() {
               <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando alertas...</span>
             </div>
           ) : alertas.length === 0 ? (
-            <div className="text-center py-12">
-              <AlertCircle className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                No hay alertas
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                No se encontraron alertas con los filtros aplicados
-              </p>
+            <div className="py-8">
+              <EmptyState
+                icon={AlertCircle}
+                title="No hay alertas"
+                description="No se encontraron alertas con los filtros aplicados"
+              />
             </div>
           ) : (
             <div className="p-4">

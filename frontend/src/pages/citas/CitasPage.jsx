@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Calendar, Plus, TrendingUp, Clock, CheckCircle, AlertCircle, List, CalendarDays } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
 import CitaDetailModal from '@/components/citas/CitaDetailModal';
@@ -13,6 +15,7 @@ import NoShowModal from '@/components/citas/NoShowModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
 import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useCitas,
   useCitasDelDia,
@@ -45,31 +48,35 @@ function CitasPage() {
     fecha_hasta: '',
   });
 
-  // Estado de modales
-  const [citaSeleccionada, setCitaSeleccionada] = useState(null);
-  const [modalDetallesAbierto, setModalDetallesAbierto] = useState(false);
-  const [modalCancelarAbierto, setModalCancelarAbierto] = useState(false);
-  const [motivoCancelacion, setMotivoCancelacion] = useState('');
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
-  const [citaParaEditar, setCitaParaEditar] = useState(null);
-  const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
-  const [modalCompletarAbierto, setModalCompletarAbierto] = useState(false);
-  const [modalNoShowAbierto, setModalNoShowAbierto] = useState(false);
-  const [clientePreseleccionado, setClientePreseleccionado] = useState(null);
+  // Estado de modales centralizado con useModalManager
+  const {
+    openModal,
+    closeModal,
+    transitionModal,
+    isOpen,
+    getModalData,
+    getModalProps,
+    updateModal,
+  } = useModalManager({
+    detalles: { isOpen: false, data: null },
+    formulario: { isOpen: false, data: null, mode: 'create', fechaPreseleccionada: null, clientePreseleccionado: null },
+    cancelar: { isOpen: false, data: null, motivoCancelacion: '' },
+    completar: { isOpen: false, data: null },
+    noShow: { isOpen: false, data: null },
+  });
 
   // Efecto para abrir modal desde navegación (ej: desde ClienteDetailPage)
   useEffect(() => {
     if (location.state?.abrirModal) {
-      setModalMode('create');
-      if (location.state?.clienteId) {
-        setClientePreseleccionado(location.state.clienteId);
-      }
-      setIsFormModalOpen(true);
+      openModal('formulario', null, {
+        mode: 'create',
+        clientePreseleccionado: location.state?.clienteId || null,
+      });
       // Limpiar el state para evitar que se abra de nuevo al navegar
       navigate(location.pathname, { replace: true, state: {} });
     }
-  }, [location.state, navigate, location.pathname]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state?.abrirModal]); // Solo depender de abrirModal, no del objeto completo
 
   // Queries
   const { data: citas = [], isLoading: cargandoCitas } = useCitas(filtros);
@@ -107,13 +114,10 @@ function CitasPage() {
 
   // Handlers de acciones
   const handleVerDetalles = (cita) => {
-    setCitaSeleccionada(cita);
-    setModalDetallesAbierto(true);
+    openModal('detalles', cita);
   };
 
   const handleCambiarEstado = (cita, accion) => {
-    setCitaSeleccionada(cita);
-
     switch (accion) {
       case 'confirmar':
         confirmarMutation.mutate({ id: cita.id });
@@ -122,18 +126,12 @@ function CitasPage() {
         iniciarMutation.mutate({ id: cita.id });
         break;
       case 'completar':
-        // Transición suave: cerrar modal de detalles y después de la animación abrir modal de completar
-        setModalDetallesAbierto(false);
-        setTimeout(() => {
-          setModalCompletarAbierto(true);
-        }, 300); // Espera a que termine la animación de cierre del modal
+        // Transición suave: cerrar modal de detalles y abrir modal de completar
+        transitionModal('detalles', 'completar', cita);
         break;
       case 'no_show':
-        // Transición suave: cerrar modal de detalles y después de la animación abrir modal de no_show
-        setModalDetallesAbierto(false);
-        setTimeout(() => {
-          setModalNoShowAbierto(true);
-        }, 300); // Espera a que termine la animación de cierre del modal
+        // Transición suave: cerrar modal de detalles y abrir modal de no_show
+        transitionModal('detalles', 'noShow', cita);
         break;
       default:
         break;
@@ -141,19 +139,18 @@ function CitasPage() {
   };
 
   const handleEditar = (cita) => {
-    setCitaParaEditar(cita);
-    setModalMode('edit');
-    setIsFormModalOpen(true);
+    openModal('formulario', cita, { mode: 'edit' });
   };
 
   const handleAbrirModalCancelar = (cita) => {
-    setCitaSeleccionada(cita);
-    setMotivoCancelacion('');
-    setModalCancelarAbierto(true);
+    openModal('cancelar', cita, { motivoCancelacion: '' });
   };
 
   const handleCancelar = () => {
-    if (!motivoCancelacion.trim()) {
+    const { motivoCancelacion } = getModalProps('cancelar');
+    const citaSeleccionada = getModalData('cancelar');
+
+    if (!motivoCancelacion?.trim()) {
       showToast('Debes indicar un motivo de cancelación', 'error');
       return;
     }
@@ -165,26 +162,17 @@ function CitasPage() {
       },
       {
         onSuccess: () => {
-          setModalCancelarAbierto(false);
-          setMotivoCancelacion('');
-          setCitaSeleccionada(null);
+          closeModal('cancelar');
         },
       }
     );
   };
 
   const handleNuevaCita = (fechaDesdeCalendario) => {
-    setModalMode('create');
-    setCitaParaEditar(null);
-
-    // Si se proporciona una fecha desde el calendario, guardarla para pre-llenar el formulario
-    if (fechaDesdeCalendario) {
-      setFechaPreseleccionada(fechaDesdeCalendario);
-    } else {
-      setFechaPreseleccionada(null);
-    }
-
-    setIsFormModalOpen(true);
+    openModal('formulario', null, {
+      mode: 'create',
+      fechaPreseleccionada: fechaDesdeCalendario || null,
+    });
   };
 
   // Calcular estadísticas
@@ -193,6 +181,20 @@ function CitasPage() {
   // En Curso y Completadas solo cuentan las de HOY
   const citasEnCurso = citasDelDia.filter((c) => c.estado === 'en_curso').length;
   const citasCompletadas = citasDelDia.filter((c) => c.estado === 'completada').length;
+
+  // Configuración de StatCards
+  const statsConfig = useMemo(() => [
+    { key: 'hoy', icon: Calendar, label: 'Citas Hoy', value: citasDelDia.length, color: 'primary' },
+    { key: 'pendientes', icon: Clock, label: 'Pendientes', value: citasPendientes, color: 'yellow' },
+    { key: 'enCurso', icon: TrendingUp, label: 'En Curso', value: citasEnCurso, color: 'primary' },
+    { key: 'completadas', icon: CheckCircle, label: 'Completadas', value: citasCompletadas, color: 'green' },
+  ], [citasDelDia.length, citasPendientes, citasEnCurso, citasCompletadas]);
+
+  // Configuración de ViewTabs
+  const viewTabsConfig = useMemo(() => [
+    { id: 'lista', label: 'Vista Lista', icon: List },
+    { id: 'calendario', label: 'Vista Calendario', icon: CalendarDays },
+  ], []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -229,97 +231,16 @@ function CitasPage() {
             </Button>
           </div>
         </div>
-        {/* Estadísticas Rápidas - 2 cols mobile, 4 cols desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6">
-          {/* Total Citas del Día */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Citas Hoy</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">{citasDelDia.length}</p>
-              </div>
-              <div className="bg-primary-100 dark:bg-primary-900/40 p-2 sm:p-3 rounded-lg">
-                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Pendientes */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Pendientes</p>
-                <p className="text-xl sm:text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{citasPendientes}</p>
-              </div>
-              <div className="bg-yellow-100 dark:bg-yellow-900/40 p-2 sm:p-3 rounded-lg">
-                <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* En Curso */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">En Curso</p>
-                <p className="text-xl sm:text-2xl font-bold text-primary-600 dark:text-primary-400 mt-1">{citasEnCurso}</p>
-              </div>
-              <div className="bg-primary-100 dark:bg-primary-900/40 p-2 sm:p-3 rounded-lg">
-                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-primary-600 dark:text-primary-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Completadas */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Completadas</p>
-                <p className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{citasCompletadas}</p>
-              </div>
-              <div className="bg-green-100 dark:bg-green-900/40 p-2 sm:p-3 rounded-lg">
-                <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Estadísticas Rápidas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
 
         {/* Sistema de Tabs - Vista Lista / Calendario */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-t-lg">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
-              <button
-                onClick={() => setVistaActiva('lista')}
-                className={`
-                  py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  flex items-center gap-2
-                  ${
-                    vistaActiva === 'lista'
-                      ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                  }
-                `}
-              >
-                <List className="w-5 h-5" />
-                Vista Lista
-              </button>
-              <button
-                onClick={() => setVistaActiva('calendario')}
-                className={`
-                  py-4 px-1 border-b-2 font-medium text-sm transition-colors
-                  flex items-center gap-2
-                  ${
-                    vistaActiva === 'calendario'
-                      ? 'border-primary-600 dark:border-primary-400 text-primary-600 dark:text-primary-400'
-                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                  }
-                `}
-              >
-                <CalendarDays className="w-5 h-5" />
-                Vista Calendario
-              </button>
-            </nav>
-          </div>
+        <div className="bg-white dark:bg-gray-800 rounded-t-lg px-6">
+          <ViewTabs
+            tabs={viewTabsConfig}
+            activeTab={vistaActiva}
+            onChange={setVistaActiva}
+          />
         </div>
 
         {/* Contenido según vista activa */}
@@ -358,12 +279,9 @@ function CitasPage() {
 
       {/* Modal de Detalles */}
       <CitaDetailModal
-        isOpen={modalDetallesAbierto}
-        onClose={() => {
-          setModalDetallesAbierto(false);
-          setCitaSeleccionada(null);
-        }}
-        cita={citaSeleccionada}
+        isOpen={isOpen('detalles')}
+        onClose={() => closeModal('detalles')}
+        cita={getModalData('detalles')}
         onCambiarEstado={handleCambiarEstado}
         onEditar={handleEditar}
         onCancelar={handleAbrirModalCancelar}
@@ -371,61 +289,45 @@ function CitasPage() {
 
       {/* Modal de Formulario Crear/Editar */}
       <CitaFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setModalMode('create');
-          setCitaParaEditar(null);
-          setFechaPreseleccionada(null);
-          setClientePreseleccionado(null);
-        }}
-        mode={modalMode}
-        cita={citaParaEditar}
-        fechaPreseleccionada={fechaPreseleccionada}
-        clientePreseleccionado={clientePreseleccionado}
+        isOpen={isOpen('formulario')}
+        onClose={() => closeModal('formulario')}
+        mode={getModalProps('formulario').mode || 'create'}
+        cita={getModalData('formulario')}
+        fechaPreseleccionada={getModalProps('formulario').fechaPreseleccionada}
+        clientePreseleccionado={getModalProps('formulario').clientePreseleccionado}
       />
 
       {/* Modal de Completar Cita */}
       <CompletarCitaModal
-        isOpen={modalCompletarAbierto}
-        onClose={() => {
-          setModalCompletarAbierto(false);
-          setCitaSeleccionada(null);
-        }}
-        cita={citaSeleccionada}
+        isOpen={isOpen('completar')}
+        onClose={() => closeModal('completar')}
+        cita={getModalData('completar')}
       />
 
       {/* Modal de No Show */}
       <NoShowModal
-        isOpen={modalNoShowAbierto}
-        onClose={() => {
-          setModalNoShowAbierto(false);
-          setCitaSeleccionada(null);
-        }}
-        cita={citaSeleccionada}
+        isOpen={isOpen('noShow')}
+        onClose={() => closeModal('noShow')}
+        cita={getModalData('noShow')}
       />
 
       {/* Modal de Cancelar */}
       <Modal
-        isOpen={modalCancelarAbierto}
-        onClose={() => {
-          setModalCancelarAbierto(false);
-          setCitaSeleccionada(null);
-          setMotivoCancelacion('');
-        }}
+        isOpen={isOpen('cancelar')}
+        onClose={() => closeModal('cancelar')}
         title="Cancelar Cita"
       >
         <div className="space-y-4">
           {/* Información de la cita */}
-          {citaSeleccionada && (
+          {getModalData('cancelar') && (
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <div className="flex items-center gap-2 mb-2">
                 <AlertCircle className="w-5 h-5 text-orange-500 dark:text-orange-400" />
                 <h4 className="font-semibold text-gray-900 dark:text-gray-100">¿Estás seguro?</h4>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Vas a cancelar la cita <strong className="text-gray-900 dark:text-gray-100">{citaSeleccionada.codigo_cita}</strong> del
-                cliente <strong className="text-gray-900 dark:text-gray-100">{citaSeleccionada.cliente_nombre}</strong>
+                Vas a cancelar la cita <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar').codigo_cita}</strong> del
+                cliente <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar').cliente_nombre}</strong>
               </p>
             </div>
           )}
@@ -436,8 +338,8 @@ function CitasPage() {
               Motivo de cancelación <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <textarea
-              value={motivoCancelacion}
-              onChange={(e) => setMotivoCancelacion(e.target.value)}
+              value={getModalProps('cancelar').motivoCancelacion || ''}
+              onChange={(e) => updateModal('cancelar', { motivoCancelacion: e.target.value })}
               placeholder="Indica el motivo de la cancelación..."
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
@@ -448,17 +350,14 @@ function CitasPage() {
           <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => {
-                setModalCancelarAbierto(false);
-                setMotivoCancelacion('');
-              }}
+              onClick={() => closeModal('cancelar')}
             >
               Volver
             </Button>
             <Button
               variant="danger"
               onClick={handleCancelar}
-              disabled={cancelarMutation.isLoading || !motivoCancelacion.trim()}
+              disabled={cancelarMutation.isLoading || !(getModalProps('cancelar').motivoCancelacion || '').trim()}
             >
               {cancelarMutation.isLoading ? 'Cancelando...' : 'Confirmar Cancelación'}
             </Button>

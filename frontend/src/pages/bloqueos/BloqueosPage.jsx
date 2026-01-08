@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays } from 'lucide-react';
+import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, Users, Building2 } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/useBloqueos';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
@@ -11,6 +11,8 @@ import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import {
   calcularEstadisticasBloqueos,
   filtrarBloqueos,
@@ -84,6 +86,33 @@ function BloqueosPage() {
   const estadisticas = useMemo(() => {
     return calcularEstadisticasBloqueos(bloqueosFiltrados);
   }, [bloqueosFiltrados]);
+
+  // Calcular próximos bloqueos (próximos 30 días)
+  const proximosBloqueos = useMemo(() => {
+    const hoy = new Date();
+    const treintaDias = new Date();
+    treintaDias.setDate(hoy.getDate() + 30);
+    return bloqueosFiltrados.filter((b) => {
+      const fecha = new Date(b.fecha_inicio);
+      return fecha >= hoy && fecha <= treintaDias;
+    }).length;
+  }, [bloqueosFiltrados]);
+
+  // Configuración de StatCards
+  const statsConfig = useMemo(() => [
+    { key: 'total', icon: Lock, label: 'Total Bloqueos', value: estadisticas.totalBloqueos, color: 'primary' },
+    { key: 'dias', icon: Calendar, label: 'Total Días', value: estadisticas.totalDias, color: 'primary' },
+    { key: 'perdidos', icon: TrendingDown, label: 'Ingresos Perdidos', value: formatCurrency(estadisticas.ingresosPerdidos), color: 'red' },
+    { key: 'proximos', icon: Clock, label: 'Próximos 30 días', value: proximosBloqueos, color: 'yellow' },
+  ], [estadisticas, proximosBloqueos]);
+
+  // Configuración de ViewTabs
+  const viewTabsConfig = useMemo(() => [
+    { id: 'todos', label: 'Todos', icon: Lock },
+    { id: 'profesionales', label: 'Por Profesional', icon: Users },
+    { id: 'organizacionales', label: 'Organizacionales', icon: Building2 },
+    { id: 'calendario', label: 'Calendario', icon: CalendarDays },
+  ], []);
 
   // Handlers
   const handleLimpiarFiltros = () => {
@@ -179,119 +208,16 @@ function BloqueosPage() {
           </div>
         </div>
 
-        {/* Estadísticas - 2 cols mobile, 4 cols desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          {/* Total bloqueos */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Lock className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Bloqueos</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalBloqueos}</p>
-              </div>
-            </div>
-          </div>
+        {/* Estadísticas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
 
-          {/* Total días */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Total Días</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{estadisticas.totalDias}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Ingresos perdidos */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <TrendingDown className="h-5 w-5 sm:h-6 sm:w-6 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Ingresos Perdidos</p>
-                <p className="text-base sm:text-lg font-bold text-gray-900 dark:text-gray-100">
-                  {formatCurrency(estadisticas.ingresosPerdidos)}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Próximos bloqueos */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-amber-100 dark:bg-amber-900/40 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Clock className="h-5 w-5 sm:h-6 sm:w-6 text-amber-600 dark:text-amber-400" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Próximos 30 días</p>
-                <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                  {bloqueosFiltrados.filter((b) => {
-                    const hoy = new Date();
-                    const fecha = new Date(b.fecha_inicio);
-                    const treintaDias = new Date();
-                    treintaDias.setDate(hoy.getDate() + 30);
-                    return fecha >= hoy && fecha <= treintaDias;
-                  }).length}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs de vistas - Mobile First */}
-        <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm border border-gray-200 dark:border-gray-700 border-b-0">
-          <div className="flex border-b border-gray-200 dark:border-gray-700">
-            <button
-              onClick={() => setVistaActiva('todos')}
-              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
-                vistaActiva === 'todos'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              }`}
-            >
-              Todos
-            </button>
-            <button
-              onClick={() => setVistaActiva('profesionales')}
-              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
-                vistaActiva === 'profesionales'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              }`}
-            >
-              <span className="sm:hidden">Profes.</span>
-              <span className="hidden sm:inline">Por Profesional</span>
-            </button>
-            <button
-              onClick={() => setVistaActiva('organizacionales')}
-              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors ${
-                vistaActiva === 'organizacionales'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              }`}
-            >
-              <span className="sm:hidden">Org.</span>
-              <span className="hidden sm:inline">Organizacionales</span>
-            </button>
-            <button
-              onClick={() => setVistaActiva('calendario')}
-              className={`flex-1 px-2 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors flex items-center justify-center gap-1 sm:gap-2 ${
-                vistaActiva === 'calendario'
-                  ? 'text-primary-600 dark:text-primary-400 border-b-2 border-primary-600 dark:border-primary-400'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100'
-              }`}
-            >
-              <CalendarDays className="h-4 w-4" />
-              <span className="sm:hidden">Cal.</span>
-              <span className="hidden sm:inline">Calendario</span>
-            </button>
-          </div>
+        {/* Tabs de vistas */}
+        <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm border border-gray-200 dark:border-gray-700 border-b-0 px-4">
+          <ViewTabs
+            tabs={viewTabsConfig}
+            activeTab={vistaActiva}
+            onChange={setVistaActiva}
+          />
         </div>
 
         {/* Vista condicional: Lista o Calendario */}

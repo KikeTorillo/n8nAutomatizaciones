@@ -3,6 +3,7 @@ import { FolderTree, Plus, Edit, Trash2, ChevronRight, ChevronDown } from 'lucid
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -298,24 +299,16 @@ function CategoriasPage() {
               <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando categorías...</span>
             </div>
           ) : arbolFiltrado.length === 0 ? (
-            <div className="text-center py-12">
-              <FolderTree className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                No hay categorías
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Comienza creando tu primera categoría
-              </p>
-              <div className="mt-6">
-                <Button
-                  variant="primary"
-                  onClick={handleNuevaCategoria}
-                  icon={Plus}
-                >
+            <EmptyState
+              icon={FolderTree}
+              title="No hay categorías"
+              description="Comienza creando tu primera categoría"
+              action={
+                <Button variant="primary" onClick={handleNuevaCategoria} icon={Plus}>
                   Nueva Categoría
                 </Button>
-              </div>
-            </div>
+              }
+            />
           ) : (
             <div className="space-y-2">
               {arbolFiltrado.map((categoria) => (

@@ -27,6 +27,7 @@ import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import StatCardGrid from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -403,38 +404,41 @@ export default function OperacionesAlmacenPage() {
 
       {/* Estadísticas */}
       <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {operacionesPorEstado.borrador.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Borradores</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-blue-600">
-              {operacionesPorEstado.asignada.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Asignadas</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-yellow-600">
-              {operacionesPorEstado.en_proceso.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">En Proceso</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-green-600">
-              {operacionesPorEstado.completada.length}+
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Completadas</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm col-span-2">
-            <div className="text-2xl font-bold text-primary-600">
-              {operaciones.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Total Operaciones</div>
-          </div>
-        </div>
+        <StatCardGrid
+          columns={4}
+          className="lg:grid-cols-5"
+          stats={[
+            {
+              icon: Package,
+              label: 'Borradores',
+              value: operacionesPorEstado.borrador.length,
+            },
+            {
+              icon: User,
+              label: 'Asignadas',
+              value: operacionesPorEstado.asignada.length,
+              color: 'blue',
+            },
+            {
+              icon: Play,
+              label: 'En Proceso',
+              value: operacionesPorEstado.en_proceso.length,
+              color: 'yellow',
+            },
+            {
+              icon: CheckCircle,
+              label: 'Completadas',
+              value: `${operacionesPorEstado.completada.length}+`,
+              color: 'green',
+            },
+            {
+              icon: Boxes,
+              label: 'Total Operaciones',
+              value: operaciones.length,
+              color: 'primary',
+            },
+          ]}
+        />
       </div>
 
       {/* Filtros */}

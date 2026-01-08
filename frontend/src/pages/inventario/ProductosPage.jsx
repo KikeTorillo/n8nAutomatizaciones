@@ -3,7 +3,9 @@ import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageI
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useProductos,
@@ -33,14 +35,8 @@ function ProductosPage() {
     stock_agotado: false,
   });
 
-  // Estado de modales
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
-  const [isAjustarStockModalOpen, setIsAjustarStockModalOpen] = useState(false);
-  const [isEtiquetaModalOpen, setIsEtiquetaModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  // Estado de modales con useModalManager
+  const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
   // Estado del scanner
   const [showScanner, setShowScanner] = useState(false);
@@ -84,38 +80,31 @@ function ProductosPage() {
 
   // Handlers de acciones
   const handleNuevoProducto = () => {
-    setProductoSeleccionado(null);
-    setModalMode('create');
-    setIsFormModalOpen(true);
+    openModal('form', { producto: null, mode: 'create' });
   };
 
   const handleEditarProducto = (producto) => {
-    setProductoSeleccionado(producto);
-    setModalMode('edit');
-    setIsFormModalOpen(true);
+    openModal('form', { producto, mode: 'edit' });
   };
 
   const handleAjustarStock = (producto) => {
-    setProductoSeleccionado(producto);
-    setIsAjustarStockModalOpen(true);
+    openModal('ajustarStock', { producto });
   };
 
   const handleGenerarEtiqueta = (producto) => {
-    setProductoSeleccionado(producto);
-    setIsEtiquetaModalOpen(true);
+    openModal('etiqueta', { producto });
   };
 
   const handleAbrirModalEliminar = (producto) => {
-    setProductoSeleccionado(producto);
-    setModalEliminarAbierto(true);
+    openModal('eliminar', { producto });
   };
 
   const handleEliminar = () => {
-    eliminarMutation.mutate(productoSeleccionado.id, {
+    const { producto } = getModalData('eliminar');
+    eliminarMutation.mutate(producto.id, {
       onSuccess: () => {
         showSuccess('Producto eliminado correctamente');
-        setModalEliminarAbierto(false);
-        setProductoSeleccionado(null);
+        closeModal('eliminar');
       },
       onError: (error) => {
         showError(
@@ -181,7 +170,7 @@ function ProductosPage() {
             <div className="flex gap-2 sm:gap-3">
               <Button
                 variant="secondary"
-                onClick={() => setIsBulkModalOpen(true)}
+                onClick={() => openModal('bulk')}
                 icon={Upload}
                 className="flex-1 sm:flex-none text-sm"
               >
@@ -362,19 +351,17 @@ function ProductosPage() {
                   </tr>
                 ) : productos.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center">
-                      <Package className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500 mb-4" />
-                      <p className="text-gray-500 dark:text-gray-400">
-                        No se encontraron productos.
-                      </p>
-                      <Button
-                        variant="primary"
-                        onClick={handleNuevoProducto}
-                        icon={Plus}
-                        className="mt-4"
-                      >
-                        Crear Primer Producto
-                      </Button>
+                    <td colSpan="8" className="px-6 py-8">
+                      <EmptyState
+                        icon={Package}
+                        title="No se encontraron productos"
+                        description="Crea tu primer producto para comenzar a gestionar el inventario"
+                        action={
+                          <Button variant="primary" onClick={handleNuevoProducto} icon={Plus}>
+                            Crear Primer Producto
+                          </Button>
+                        }
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -486,60 +473,51 @@ function ProductosPage() {
         </div>
 
         {/* Modal Formulario Producto */}
-        {isFormModalOpen && (
+        {isOpen('form') && (
           <ProductoFormModal
-            isOpen={isFormModalOpen}
-            onClose={() => {
-              setIsFormModalOpen(false);
-              setProductoSeleccionado(null);
-            }}
-            mode={modalMode}
-            producto={productoSeleccionado}
+            isOpen={isOpen('form')}
+            onClose={() => closeModal('form')}
+            mode={getModalData('form')?.mode || 'create'}
+            producto={getModalData('form')?.producto}
           />
         )}
 
         {/* Modal Carga Masiva */}
-        {isBulkModalOpen && (
+        {isOpen('bulk') && (
           <BulkProductosModal
-            isOpen={isBulkModalOpen}
-            onClose={() => setIsBulkModalOpen(false)}
+            isOpen={isOpen('bulk')}
+            onClose={() => closeModal('bulk')}
           />
         )}
 
         {/* Modal Ajustar Stock */}
-        {isAjustarStockModalOpen && (
+        {isOpen('ajustarStock') && (
           <AjustarStockModal
-            isOpen={isAjustarStockModalOpen}
-            onClose={() => {
-              setIsAjustarStockModalOpen(false);
-              setProductoSeleccionado(null);
-            }}
-            producto={productoSeleccionado}
+            isOpen={isOpen('ajustarStock')}
+            onClose={() => closeModal('ajustarStock')}
+            producto={getModalData('ajustarStock')?.producto}
           />
         )}
 
         {/* Modal Generar Etiqueta */}
-        {isEtiquetaModalOpen && (
+        {isOpen('etiqueta') && (
           <GenerarEtiquetaModal
-            isOpen={isEtiquetaModalOpen}
-            onClose={() => {
-              setIsEtiquetaModalOpen(false);
-              setProductoSeleccionado(null);
-            }}
-            producto={productoSeleccionado}
+            isOpen={isOpen('etiqueta')}
+            onClose={() => closeModal('etiqueta')}
+            producto={getModalData('etiqueta')?.producto}
           />
         )}
 
         {/* Modal Confirmar Eliminación */}
         <Modal
-          isOpen={modalEliminarAbierto}
-          onClose={() => setModalEliminarAbierto(false)}
+          isOpen={isOpen('eliminar')}
+          onClose={() => closeModal('eliminar')}
           title="Confirmar Eliminación"
         >
           <div className="space-y-4">
             <p className="text-gray-700 dark:text-gray-300">
               ¿Estás seguro de que deseas eliminar el producto{' '}
-              <span className="font-semibold">{productoSeleccionado?.nombre}</span>?
+              <span className="font-semibold">{getModalData('eliminar')?.producto?.nombre}</span>?
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Esta acción marcará el producto como inactivo. Podrás reactivarlo después si lo necesitas.
@@ -547,7 +525,7 @@ function ProductosPage() {
             <div className="flex justify-end space-x-3">
               <Button
                 variant="secondary"
-                onClick={() => setModalEliminarAbierto(false)}
+                onClick={() => closeModal('eliminar')}
               >
                 Cancelar
               </Button>

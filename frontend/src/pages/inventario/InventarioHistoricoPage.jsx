@@ -3,6 +3,7 @@ import { Calendar, RefreshCw, Clock, Package, TrendingUp, TrendingDown, Minus, A
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import { useInventoryAtDate, useFechasDisponibles, useGenerarSnapshot, useCompararInventario } from '@/hooks/useInventoryAtDate';
@@ -275,30 +276,26 @@ function InventarioHistoricoPage() {
         {/* Tabla de Productos */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {!fechaSeleccionada ? (
-            <div className="text-center py-12">
-              <Calendar className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                Selecciona una fecha
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Elige una fecha para ver el estado del inventario en ese momento
-              </p>
-            </div>
+            <EmptyState
+              icon={Calendar}
+              title="Selecciona una fecha"
+              description="Elige una fecha para ver el estado del inventario en ese momento"
+              size="sm"
+              className="border-0 shadow-none"
+            />
           ) : cargandoInventario ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
               <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando inventario...</span>
             </div>
           ) : productos.length === 0 ? (
-            <div className="text-center py-12">
-              <Package className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                Sin productos
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                No hay productos registrados en el snapshot de esta fecha
-              </p>
-            </div>
+            <EmptyState
+              icon={Package}
+              title="Sin productos"
+              description="No hay productos registrados en el snapshot de esta fecha"
+              size="sm"
+              className="border-0 shadow-none"
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

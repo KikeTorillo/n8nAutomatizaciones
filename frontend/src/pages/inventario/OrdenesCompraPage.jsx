@@ -11,7 +11,6 @@ import {
   DollarSign,
   Filter,
   Search,
-  Calendar,
   Building2,
   Zap,
   AlertTriangle,
@@ -23,7 +22,10 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
+import StatCardGrid from '@/components/ui/StatCardGrid';
+import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useOrdenesCompra,
@@ -58,18 +60,11 @@ export default function OrdenesCompraPage() {
   });
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-
-  // Estado de modales
-  const [modalForm, setModalForm] = useState({ isOpen: false, orden: null, mode: 'create' });
-  const [modalDetalle, setModalDetalle] = useState({ isOpen: false, ordenId: null });
-  const [modalRecibir, setModalRecibir] = useState({ isOpen: false, orden: null });
-  const [modalPago, setModalPago] = useState({ isOpen: false, orden: null });
-  const [modalEliminar, setModalEliminar] = useState({ isOpen: false, orden: null });
-  const [modalCancelar, setModalCancelar] = useState({ isOpen: false, orden: null });
-  const [modalEnviar, setModalEnviar] = useState({ isOpen: false, orden: null });
-  const [motivoCancelacion, setMotivoCancelacion] = useState('');
-  const [modalAutoGenerar, setModalAutoGenerar] = useState(false);
   const [mostrarSugerencias, setMostrarSugerencias] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('');
+
+  // Estado de modales unificado
+  const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
   // Queries
   const { data: ordenesData, isLoading } = useOrdenesCompra(filtros);
@@ -109,7 +104,7 @@ export default function OrdenesCompraPage() {
 
   // Handlers de acciones
   const handleNuevaOrden = () => {
-    setModalForm({ isOpen: true, orden: null, mode: 'create' });
+    openModal('form', { orden: null, mode: 'create' });
   };
 
   const handleEditar = (orden) => {
@@ -117,11 +112,11 @@ export default function OrdenesCompraPage() {
       showWarning('Solo se pueden editar órdenes en estado borrador');
       return;
     }
-    setModalForm({ isOpen: true, orden, mode: 'edit' });
+    openModal('form', { orden, mode: 'edit' });
   };
 
   const handleVerDetalle = (ordenId) => {
-    setModalDetalle({ isOpen: true, ordenId });
+    openModal('detalle', { ordenId });
   };
 
   const handleAbrirModalEliminar = (orden) => {
@@ -129,14 +124,15 @@ export default function OrdenesCompraPage() {
       showWarning('Solo se pueden eliminar órdenes en estado borrador');
       return;
     }
-    setModalEliminar({ isOpen: true, orden });
+    openModal('eliminar', { orden });
   };
 
   const handleEliminar = () => {
-    eliminarMutation.mutate(modalEliminar.orden.id, {
+    const { orden } = getModalData('eliminar');
+    eliminarMutation.mutate(orden.id, {
       onSuccess: () => {
         showSuccess('Orden de compra eliminada correctamente');
-        setModalEliminar({ isOpen: false, orden: null });
+        closeModal('eliminar');
       },
       onError: (error) => {
         showError(error.response?.data?.mensaje || 'Error al eliminar la orden');
@@ -155,14 +151,15 @@ export default function OrdenesCompraPage() {
       showWarning('La orden debe tener al menos un item para enviar');
       return;
     }
-    setModalEnviar({ isOpen: true, orden });
+    openModal('enviar', { orden });
   };
 
   const handleEnviar = () => {
-    enviarMutation.mutate(modalEnviar.orden.id, {
+    const { orden } = getModalData('enviar');
+    enviarMutation.mutate(orden.id, {
       onSuccess: () => {
         showSuccess('Orden enviada al proveedor correctamente');
-        setModalEnviar({ isOpen: false, orden: null });
+        closeModal('enviar');
       },
       onError: (error) => {
         showError(error.response?.data?.mensaje || 'Error al enviar la orden');
@@ -176,16 +173,17 @@ export default function OrdenesCompraPage() {
       return;
     }
     setMotivoCancelacion('');
-    setModalCancelar({ isOpen: true, orden });
+    openModal('cancelar', { orden });
   };
 
   const handleCancelar = () => {
+    const { orden } = getModalData('cancelar');
     cancelarMutation.mutate(
-      { id: modalCancelar.orden.id, motivo: motivoCancelacion || undefined },
+      { id: orden.id, motivo: motivoCancelacion || undefined },
       {
         onSuccess: () => {
           showSuccess('Orden cancelada correctamente');
-          setModalCancelar({ isOpen: false, orden: null });
+          closeModal('cancelar');
           setMotivoCancelacion('');
         },
         onError: (error) => {
@@ -200,7 +198,7 @@ export default function OrdenesCompraPage() {
       showWarning('Solo se puede recibir mercancía de órdenes enviadas o parciales');
       return;
     }
-    setModalRecibir({ isOpen: true, orden });
+    openModal('recibir', { orden });
   };
 
   const handleRegistrarPago = (orden) => {
@@ -212,7 +210,7 @@ export default function OrdenesCompraPage() {
       showWarning('No se pueden registrar pagos en órdenes canceladas o en borrador');
       return;
     }
-    setModalPago({ isOpen: true, orden });
+    openModal('pago', { orden });
   };
 
   // Handler para auto-generar OCs
@@ -221,14 +219,14 @@ export default function OrdenesCompraPage() {
       showInfo('No hay productos con stock bajo que requieran reabastecimiento');
       return;
     }
-    setModalAutoGenerar(true);
+    openModal('autoGenerar');
   };
 
   const confirmarAutoGenerar = () => {
     autoGenerarMutation.mutate(undefined, {
       onSuccess: (data) => {
         showSuccess(`Se crearon ${data.ordenes_creadas || 0} orden(es) de compra automáticamente`);
-        setModalAutoGenerar(false);
+        closeModal('autoGenerar');
         setMostrarSugerencias(false);
       },
       onError: (error) => {
@@ -413,30 +411,33 @@ export default function OrdenesCompraPage() {
 
       {/* Resumen de totales */}
       {totales && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Órdenes</div>
-            <div className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{totales.cantidad || 0}</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Valor Total</div>
-            <div className="text-lg sm:text-2xl font-bold text-primary-600 dark:text-primary-400">
-              ${parseFloat(totales.valor_total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">Total Pagado</div>
-            <div className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
-              ${parseFloat(totales.total_pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-3 sm:p-4">
-            <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">Pendiente de Pago</div>
-            <div className="text-lg sm:text-2xl font-bold text-orange-600 dark:text-orange-400">
-              ${parseFloat(totales.pendiente_pago || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-            </div>
-          </div>
-        </div>
+        <StatCardGrid
+          stats={[
+            {
+              icon: ShoppingCart,
+              label: 'Total Órdenes',
+              value: totales.cantidad || 0,
+            },
+            {
+              icon: DollarSign,
+              label: 'Valor Total',
+              value: `$${parseFloat(totales.valor_total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+              color: 'primary',
+            },
+            {
+              icon: Package,
+              label: 'Total Pagado',
+              value: `$${parseFloat(totales.total_pagado || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+              color: 'green',
+            },
+            {
+              icon: AlertTriangle,
+              label: 'Pendiente de Pago',
+              value: `$${parseFloat(totales.pendiente_pago || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+              color: 'orange',
+            },
+          ]}
+        />
       )}
 
       {/* Panel de filtros */}
@@ -559,16 +560,16 @@ export default function OrdenesCompraPage() {
             Cargando órdenes de compra...
           </div>
         ) : ordenes.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-            <p className="text-lg font-medium text-gray-900 dark:text-gray-100">No se encontraron órdenes de compra</p>
-            <p className="text-sm mt-1">Crea una nueva orden para comenzar</p>
-            <div className="mt-4">
+          <EmptyState
+            icon={ShoppingCart}
+            title="No se encontraron órdenes de compra"
+            description="Crea una nueva orden para comenzar"
+            action={
               <Button variant="primary" onClick={handleNuevaOrden} icon={Plus}>
                 Nueva Orden
               </Button>
-            </div>
-          </div>
+            }
+          />
         ) : (
           <>
             <div className="overflow-x-auto">
@@ -763,64 +764,64 @@ export default function OrdenesCompraPage() {
 
       {/* Modales */}
       <OrdenCompraFormModal
-        isOpen={modalForm.isOpen}
-        onClose={() => setModalForm({ isOpen: false, orden: null, mode: 'create' })}
-        orden={modalForm.orden}
-        mode={modalForm.mode}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        orden={getModalData('form')?.orden}
+        mode={getModalData('form')?.mode || 'create'}
       />
 
       <OrdenCompraDetalleModal
-        isOpen={modalDetalle.isOpen}
-        onClose={() => setModalDetalle({ isOpen: false, ordenId: null })}
-        ordenId={modalDetalle.ordenId}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
+        ordenId={getModalData('detalle')?.ordenId}
         onEditar={(orden) => {
-          setModalDetalle({ isOpen: false, ordenId: null });
+          closeModal('detalle');
           handleEditar(orden);
         }}
         onEnviar={(orden) => {
-          setModalDetalle({ isOpen: false, ordenId: null });
+          closeModal('detalle');
           handleAbrirModalEnviar(orden);
         }}
         onRecibir={(orden) => {
-          setModalDetalle({ isOpen: false, ordenId: null });
+          closeModal('detalle');
           handleRecibirMercancia(orden);
         }}
         onPago={(orden) => {
-          setModalDetalle({ isOpen: false, ordenId: null });
+          closeModal('detalle');
           handleRegistrarPago(orden);
         }}
       />
 
       <RecibirMercanciaModal
-        isOpen={modalRecibir.isOpen}
-        onClose={() => setModalRecibir({ isOpen: false, orden: null })}
-        orden={modalRecibir.orden}
+        isOpen={isOpen('recibir')}
+        onClose={() => closeModal('recibir')}
+        orden={getModalData('recibir')?.orden}
       />
 
       <RegistrarPagoModal
-        isOpen={modalPago.isOpen}
-        onClose={() => setModalPago({ isOpen: false, orden: null })}
-        orden={modalPago.orden}
+        isOpen={isOpen('pago')}
+        onClose={() => closeModal('pago')}
+        orden={getModalData('pago')?.orden}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={modalEliminar.isOpen}
-        onClose={() => setModalEliminar({ isOpen: false, orden: null })}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Eliminar Orden de Compra"
         size="md"
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas eliminar la orden{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{modalEliminar.orden?.folio}</strong>?
+            <strong className="text-gray-900 dark:text-gray-100">{getModalData('eliminar')?.orden?.folio}</strong>?
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer.</p>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setModalEliminar({ isOpen: false, orden: null })}
+              onClick={() => closeModal('eliminar')}
             >
               Cancelar
             </Button>
@@ -837,16 +838,16 @@ export default function OrdenesCompraPage() {
 
       {/* Modal de Confirmación de Envío */}
       <Modal
-        isOpen={modalEnviar.isOpen}
-        onClose={() => setModalEnviar({ isOpen: false, orden: null })}
+        isOpen={isOpen('enviar')}
+        onClose={() => closeModal('enviar')}
         title="Enviar Orden al Proveedor"
         size="md"
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Confirmas que deseas enviar la orden{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{modalEnviar.orden?.folio}</strong> al proveedor{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{modalEnviar.orden?.proveedor_nombre}</strong>?
+            <strong className="text-gray-900 dark:text-gray-100">{getModalData('enviar')?.orden?.folio}</strong> al proveedor{' '}
+            <strong className="text-gray-900 dark:text-gray-100">{getModalData('enviar')?.orden?.proveedor_nombre}</strong>?
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             Una vez enviada, no podrás modificar los items de la orden.
@@ -855,7 +856,7 @@ export default function OrdenesCompraPage() {
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setModalEnviar({ isOpen: false, orden: null })}
+              onClick={() => closeModal('enviar')}
             >
               Cancelar
             </Button>
@@ -873,15 +874,15 @@ export default function OrdenesCompraPage() {
 
       {/* Modal de Cancelación */}
       <Modal
-        isOpen={modalCancelar.isOpen}
-        onClose={() => setModalCancelar({ isOpen: false, orden: null })}
+        isOpen={isOpen('cancelar')}
+        onClose={() => closeModal('cancelar')}
         title="Cancelar Orden de Compra"
         size="md"
       >
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas cancelar la orden{' '}
-            <strong className="text-gray-900">{modalCancelar.orden?.folio}</strong>?
+            <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar')?.orden?.folio}</strong>?
           </p>
 
           <Textarea
@@ -892,10 +893,10 @@ export default function OrdenesCompraPage() {
             placeholder="Indica el motivo de la cancelación..."
           />
 
-          <div className="flex justify-end space-x-3 pt-4 border-t">
+          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setModalCancelar({ isOpen: false, orden: null })}
+              onClick={() => closeModal('cancelar')}
             >
               Volver
             </Button>
@@ -913,8 +914,8 @@ export default function OrdenesCompraPage() {
 
       {/* Modal de Auto-generar OCs */}
       <Modal
-        isOpen={modalAutoGenerar}
-        onClose={() => setModalAutoGenerar(false)}
+        isOpen={isOpen('autoGenerar')}
+        onClose={() => closeModal('autoGenerar')}
         title="Generar Órdenes de Compra Automáticamente"
         size="md"
       >
@@ -946,7 +947,7 @@ export default function OrdenesCompraPage() {
           </div>
 
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" onClick={() => setModalAutoGenerar(false)}>
+            <Button variant="secondary" onClick={() => closeModal('autoGenerar')}>
               Cancelar
             </Button>
             <Button

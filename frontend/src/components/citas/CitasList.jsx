@@ -2,6 +2,7 @@ import { Calendar, Clock, User, Package } from 'lucide-react';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { obtenerColorEstado, obtenerLabelEstado } from '@/utils/citaValidators';
 import Button from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 /**
  * Componente para listar citas en formato de tabla responsiva
@@ -84,16 +85,13 @@ function CitasList({
   // Empty state
   if (!citas || citas.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-        <Calendar className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No hay citas</h3>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          No se encontraron citas con los filtros seleccionados.
-        </p>
-        <Button variant="primary" onClick={() => window.location.reload()}>
-          Limpiar filtros
-        </Button>
-      </div>
+      <EmptyState
+        icon={Calendar}
+        title="No hay citas"
+        description="No se encontraron citas con los filtros seleccionados."
+        actionLabel="Limpiar filtros"
+        onAction={() => window.location.reload()}
+      />
     );
   }
 

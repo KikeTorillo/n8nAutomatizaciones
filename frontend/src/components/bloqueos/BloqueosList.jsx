@@ -15,6 +15,7 @@ import {
   Lock,
   Info,
 } from 'lucide-react';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   obtenerColorTipoBloqueo,
   obtenerLabelTipoBloqueo,
@@ -278,13 +279,11 @@ function BloqueosList({ bloqueos, isLoading, onVer, onEditar, onEliminar }) {
   // Empty state
   if (!bloqueos || bloqueos.length === 0) {
     return (
-      <div className="text-center py-12">
-        <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full mb-4">
-          <Clock className="h-8 w-8 text-gray-400 dark:text-gray-500" />
-        </div>
-        <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No hay bloqueos registrados</h3>
-        <p className="text-gray-500 dark:text-gray-400 mb-6">Comienza creando un bloqueo de horario</p>
-      </div>
+      <EmptyState
+        icon={Clock}
+        title="No hay bloqueos registrados"
+        description="Comienza creando un bloqueo de horario"
+      />
     );
   }
 

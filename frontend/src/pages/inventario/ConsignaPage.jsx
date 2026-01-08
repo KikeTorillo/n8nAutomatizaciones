@@ -44,6 +44,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { formatCurrency } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/EmptyState';
 import AcuerdoFormDrawer from '@/components/inventario/consigna/AcuerdoFormDrawer';
 import AcuerdoDetalleModal from '@/components/inventario/consigna/AcuerdoDetalleModal';
 import RecibirMercanciaDrawer from '@/components/inventario/consigna/RecibirMercanciaDrawer';
@@ -285,7 +286,11 @@ export default function ConsignaPage() {
                 {loadingAcuerdos ? (
                   <LoadingSpinner />
                 ) : acuerdos?.length === 0 ? (
-                  <EmptyState message="No hay acuerdos de consignacion" />
+                  <EmptyState
+                    icon={Handshake}
+                    title="No hay acuerdos de consignación"
+                    description="Crea un acuerdo para recibir productos en consignación"
+                  />
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
@@ -417,7 +422,11 @@ export default function ConsignaPage() {
                 {loadingStock ? (
                   <LoadingSpinner />
                 ) : stockConsigna?.length === 0 ? (
-                  <EmptyState message="No hay stock en consignacion" />
+                  <EmptyState
+                    icon={Warehouse}
+                    title="No hay stock en consignación"
+                    description="El stock aparecerá cuando recibas mercancía de un acuerdo activo"
+                  />
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
@@ -522,7 +531,11 @@ export default function ConsignaPage() {
                 {loadingLiq ? (
                   <LoadingSpinner />
                 ) : liquidaciones?.length === 0 ? (
-                  <EmptyState message="No hay liquidaciones" />
+                  <EmptyState
+                    icon={FileText}
+                    title="No hay liquidaciones"
+                    description="Las liquidaciones se generan para pagar al proveedor las ventas realizadas"
+                  />
                 ) : (
                   <table className="w-full">
                     <thead className="bg-gray-50 dark:bg-gray-700">
@@ -800,14 +813,6 @@ function LoadingSpinner() {
   return (
     <div className="flex justify-center py-8">
       <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-    </div>
-  );
-}
-
-function EmptyState({ message }) {
-  return (
-    <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-      {message}
     </div>
   );
 }

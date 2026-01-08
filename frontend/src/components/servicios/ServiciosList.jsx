@@ -1,5 +1,7 @@
 import { Briefcase, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { formatCurrency } from '@/lib/utils';
 import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
 
@@ -19,31 +21,22 @@ function ServiciosList({
   // Loading state
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 dark:border-primary-400"></div>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Cargando servicios...</p>
-        </div>
-      </div>
+      <SkeletonTable
+        rows={5}
+        columns={7}
+        columnWidths={['lg', 'md', 'sm', 'md', 'lg', 'sm', 'md']}
+      />
     );
   }
 
   // Empty state
   if (!servicios || servicios.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-        <div className="max-w-sm mx-auto">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Briefcase className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            No se encontraron servicios
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400">
-            Intenta ajustar los filtros o la búsqueda
-          </p>
-        </div>
-      </div>
+      <EmptyState
+        icon={Briefcase}
+        title="No se encontraron servicios"
+        description="Intenta ajustar los filtros o la búsqueda"
+      />
     );
   }
 

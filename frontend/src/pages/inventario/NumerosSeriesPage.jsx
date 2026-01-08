@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import {
-  Search, Filter, X, RefreshCw, Package, AlertTriangle, Clock,
-  CheckCircle, XCircle, Eye, History, ArrowLeftRight, Trash2,
-  Plus, BarChart3
+  Search, X, RefreshCw, Package, AlertTriangle, Clock,
+  CheckCircle, XCircle, Eye, History,
+  BarChart3
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import StatCardGrid from '@/components/ui/StatCardGrid';
+import EmptyState from '@/components/ui/EmptyState';
+import Pagination from '@/components/ui/Pagination';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useNumerosSerie,
@@ -43,11 +47,8 @@ function NumerosSeriesPage() {
     limit: 20,
   });
 
-  // Estados de modales
-  const [detalleOpen, setDetalleOpen] = useState(false);
-  const [historialOpen, setHistorialOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState(null);
-  const [defectuosoOpen, setDefectuosoOpen] = useState(false);
+  // Estado de modales unificado
+  const { isOpen, getModalData, openModal, closeModal } = useModalManager();
   const [motivoDefectuoso, setMotivoDefectuoso] = useState('');
 
   // Queries
@@ -60,6 +61,8 @@ function NumerosSeriesPage() {
   const { data: sucursalesData } = useSucursales();
   const sucursales = sucursalesData?.sucursales || [];
 
+  // Obtener ID seleccionado de cualquier modal
+  const selectedId = getModalData('detalle')?.id || getModalData('historial')?.id || getModalData('defectuoso')?.id;
   const { data: detalleNumeroSerie } = useNumeroSerie(selectedId);
   const { data: historial } = useHistorialNumeroSerie(selectedId);
 
@@ -82,13 +85,15 @@ function NumerosSeriesPage() {
   };
 
   const handleVerDetalle = (id) => {
-    setSelectedId(id);
-    setDetalleOpen(true);
+    openModal('detalle', { id });
   };
 
   const handleVerHistorial = (id) => {
-    setSelectedId(id);
-    setHistorialOpen(true);
+    openModal('historial', { id });
+  };
+
+  const handleAbrirDefectuoso = (id) => {
+    openModal('defectuoso', { id });
   };
 
   const handleMarcarDefectuoso = async () => {
@@ -97,13 +102,14 @@ function NumerosSeriesPage() {
       return;
     }
 
+    const { id } = getModalData('defectuoso');
     try {
       await marcarDefectuosoMutation.mutateAsync({
-        id: selectedId,
+        id,
         motivo: motivoDefectuoso,
       });
       showToast('Marcado como defectuoso', 'success');
-      setDefectuosoOpen(false);
+      closeModal('defectuoso');
       setMotivoDefectuoso('');
       refetch();
     } catch (error) {
@@ -150,56 +156,20 @@ function NumerosSeriesPage() {
       <div className="p-6">
         {/* Estadisticas */}
         {estadisticas && (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-6">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Total</div>
-              <div className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {estadisticas.total_registrados || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Disponibles</div>
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {estadisticas.disponibles || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Reservados</div>
-              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {estadisticas.reservados || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Vendidos</div>
-              <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {estadisticas.vendidos || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Defectuosos</div>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {estadisticas.defectuosos || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Devueltos</div>
-              <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                {estadisticas.devueltos || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Por Vencer</div>
-              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                {estadisticas.proximos_vencer_30d || 0}
-              </div>
-            </div>
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-              <div className="text-sm text-gray-500 dark:text-gray-400">Vencidos</div>
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">
-                {estadisticas.vencidos || 0}
-              </div>
-            </div>
-          </div>
+          <StatCardGrid
+            columns={4}
+            className="lg:grid-cols-8"
+            stats={[
+              { icon: BarChart3, label: 'Total', value: estadisticas.total_registrados || 0 },
+              { icon: CheckCircle, label: 'Disponibles', value: estadisticas.disponibles || 0, color: 'green' },
+              { icon: Clock, label: 'Reservados', value: estadisticas.reservados || 0, color: 'yellow' },
+              { icon: Package, label: 'Vendidos', value: estadisticas.vendidos || 0, color: 'blue' },
+              { icon: XCircle, label: 'Defectuosos', value: estadisticas.defectuosos || 0, color: 'red' },
+              { icon: History, label: 'Devueltos', value: estadisticas.devueltos || 0, color: 'purple' },
+              { icon: AlertTriangle, label: 'Por Vencer', value: estadisticas.proximos_vencer_30d || 0, color: 'yellow' },
+              { icon: XCircle, label: 'Vencidos', value: estadisticas.vencidos || 0, color: 'red' },
+            ]}
+          />
         )}
 
         {/* Alerta de proximos a vencer */}
@@ -310,8 +280,12 @@ function NumerosSeriesPage() {
                   </tr>
                 ) : numerosSerie.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      No se encontraron numeros de serie
+                    <td colSpan={8} className="px-4 py-8">
+                      <EmptyState
+                        icon={Package}
+                        title="No se encontraron números de serie"
+                        description="No hay números de serie que coincidan con los filtros aplicados"
+                      />
                     </td>
                   </tr>
                 ) : (
@@ -369,10 +343,7 @@ function NumerosSeriesPage() {
                             </button>
                             {ns.estado === 'disponible' && (
                               <button
-                                onClick={() => {
-                                  setSelectedId(ns.id);
-                                  setDefectuosoOpen(true);
-                                }}
+                                onClick={() => handleAbrirDefectuoso(ns.id)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                 title="Marcar defectuoso"
                               >
@@ -391,28 +362,19 @@ function NumerosSeriesPage() {
 
           {/* Paginacion */}
           {pagination.totalPages > 1 && (
-            <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                Mostrando {((filtros.page - 1) * filtros.limit) + 1} - {Math.min(filtros.page * filtros.limit, pagination.total)} de {pagination.total}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={filtros.page === 1}
-                  onClick={() => handlePageChange(filtros.page - 1)}
-                >
-                  Anterior
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={filtros.page >= pagination.totalPages}
-                  onClick={() => handlePageChange(filtros.page + 1)}
-                >
-                  Siguiente
-                </Button>
-              </div>
+            <div className="px-4 border-t border-gray-200 dark:border-gray-700">
+              <Pagination
+                pagination={{
+                  page: filtros.page,
+                  limit: filtros.limit,
+                  total: pagination.total,
+                  totalPages: pagination.totalPages,
+                  hasNext: filtros.page < pagination.totalPages,
+                  hasPrev: filtros.page > 1,
+                }}
+                onPageChange={handlePageChange}
+                size="sm"
+              />
             </div>
           )}
         </div>
@@ -420,8 +382,8 @@ function NumerosSeriesPage() {
 
       {/* Modal Detalle */}
       <Modal
-        isOpen={detalleOpen}
-        onClose={() => setDetalleOpen(false)}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
         title="Detalle del Numero de Serie"
         size="lg"
       >
@@ -513,8 +475,8 @@ function NumerosSeriesPage() {
 
       {/* Modal Historial */}
       <Modal
-        isOpen={historialOpen}
-        onClose={() => setHistorialOpen(false)}
+        isOpen={isOpen('historial')}
+        onClose={() => closeModal('historial')}
         title="Historial de Movimientos"
         size="lg"
       >
@@ -548,9 +510,9 @@ function NumerosSeriesPage() {
 
       {/* Modal Marcar Defectuoso */}
       <Modal
-        isOpen={defectuosoOpen}
+        isOpen={isOpen('defectuoso')}
         onClose={() => {
-          setDefectuosoOpen(false);
+          closeModal('defectuoso');
           setMotivoDefectuoso('');
         }}
         title="Marcar como Defectuoso"
@@ -577,7 +539,7 @@ function NumerosSeriesPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                setDefectuosoOpen(false);
+                closeModal('defectuoso');
                 setMotivoDefectuoso('');
               }}
             >

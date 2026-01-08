@@ -3,6 +3,7 @@ import { Building2, Plus, Edit, Trash2, Phone, Mail, Globe, MapPin, Search, X } 
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -191,24 +192,16 @@ function ProveedoresPage() {
               <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando proveedores...</span>
             </div>
           ) : proveedores.length === 0 ? (
-            <div className="text-center py-12">
-              <Building2 className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                No hay proveedores
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Comienza agregando tu primer proveedor
-              </p>
-              <div className="mt-6">
-                <Button
-                  variant="primary"
-                  onClick={handleNuevoProveedor}
-                  icon={Plus}
-                >
+            <EmptyState
+              icon={Building2}
+              title="No hay proveedores"
+              description="Comienza agregando tu primer proveedor"
+              action={
+                <Button variant="primary" onClick={handleNuevoProveedor} icon={Plus}>
                   Nuevo Proveedor
                 </Button>
-              </div>
-            </div>
+              }
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">

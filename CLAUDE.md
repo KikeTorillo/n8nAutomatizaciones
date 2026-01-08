@@ -189,6 +189,20 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | `Modal` | Confirmaciones y visualización |
 | `ConfirmDialog` | Acciones destructivas |
 | `Tabs` | Navegación en vistas de detalle (ver Profesionales) |
+| `StatCard` | Card de métrica con icono, label, valor, color |
+| `StatCardGrid` | Grid responsivo de StatCards (2 cols mobile, 4 desktop) |
+| `ViewTabs` | Tabs para cambiar vistas (Lista/Calendario/etc.) |
+| `EmptyState` | Estado vacío genérico con icono, título, descripción, acción |
+| `SkeletonTable` | Skeleton loading para tablas |
+| `SkeletonCard` | Skeleton loading para cards |
+| `Pagination` | Paginación server-side con números de página |
+| `ExpandableSection` | Sección expandible con soporte CRUD (para listas anidadas) |
+
+### Hooks Reutilizables (Nuevos Ene 2026)
+| Hook | Uso |
+|------|-----|
+| `useModalManager` | Gestionar múltiples modales: `openModal()`, `closeModal()`, `transitionModal()` |
+| `useSimpleModal` | Hook simplificado para un solo modal: `{ isOpen, data, open, close }` |
 
 ---
 
@@ -473,26 +487,25 @@ sql/
 
 ## Gaps Pendientes
 
-| Prioridad | Feature |
-|-----------|---------|
-| Alta | 2FA/MFA, Integraciones Carriers (DHL, FedEx, Estafeta) |
-| Media | Auditoría cambios detallada, Kitting/BOM |
-| Baja | API Keys por usuario, Facturación electrónica CFDI |
+| Prioridad | Feature | Notas |
+|-----------|---------|-------|
+| **Alta** | 2FA/MFA | Seguridad crítica para producción |
+| **Alta** | Integraciones Carriers | DHL, FedEx, Estafeta - tracking automático |
+| **Media** | Kitting/BOM | Lista de materiales para productos compuestos |
+| **Media** | Facturación CFDI | Timbrado fiscal México |
+| **Baja** | API Keys por usuario | Acceso programático externo |
 
-### Implementados (Dic 2025 - Ene 2026)
-- **Reorden Automático**: Reglas configurables, pg_cron 6:00 AM, generación OC
-- **Landed Costs**: Distribución automática al recibir mercancía
-- **Dropship**: Proveedor envía directo al cliente
-- **Consigna**: Acuerdos con consignatarios, ventas POS integradas
-- **Batch/Wave Picking**: Picking optimizado para múltiples órdenes
-- **Rutas Operación**: Flujos multietapa configurables
-- **Paquetes**: Gestión de paquetería
-- **Particionamiento Dinámico**: SQL sin fechas hardcodeadas, SAVEPOINT en auditoría
-- **Módulo Vacaciones**: Solicitudes, políticas, saldos, niveles antigüedad
-- **Profesionales con Tabs**: Arquitectura modular RHF + Zod (General, Trabajo, Personal, Currículum, Documentos, Compensación, Configuración)
-- **Catálogos Sistema**: Categorías de pago, motivos de salida, ubicaciones de trabajo
-- **Editor Visual Workflows**: React Flow, 5 tipos de nodos, flujo horizontal, validación en tiempo real
-- **Multi-nivel Aprobación**: Cadenas Manager → Director → CFO con notificación automática
+### Auditoría Frontend (Ene 2026)
+
+**Completado:**
+| Módulo | Páginas | Componentes Aplicados |
+|--------|---------|----------------------|
+| Inventario | 20 | StatCardGrid, EmptyState, ViewTabs, Pagination, ExpandableSection |
+| Agendamiento | 4 | useModalManager, StatCardGrid, ViewTabs, EmptyState, SkeletonTable |
+
+**Pendiente (2da pasada):**
+- Agendamiento: revisar CalendarioMensual, CitaFormModal, validaciones
+- Profesionales: tabs de detalle, formularios, gestión de documentos
 
 ---
 
@@ -521,4 +534,4 @@ sql/
 
 ---
 
-**Actualizado**: 4 Enero 2026
+**Actualizado**: 8 Enero 2026

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,6 +11,7 @@ import {
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import {
   Bell,
   Save,
@@ -41,34 +42,6 @@ const configSchema = z.object({
   hora_fin: z.string().regex(/^\d{2}:\d{2}$/),
   max_reintentos: z.number().min(1).max(5),
 });
-
-/**
- * Componente de tarjeta de estadística
- */
-function StatCard({ title, value, icon: Icon, color = 'blue', subtitle }) {
-  const colors = {
-    blue: 'bg-primary-100 dark:bg-primary-900/40 text-primary-600 dark:text-primary-400',
-    green: 'bg-green-100 dark:bg-green-900/40 text-green-600 dark:text-green-400',
-    red: 'bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400',
-    yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400',
-    purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-3 sm:p-4">
-      <div className="flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{title}</p>
-          <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
-          {subtitle && <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">{subtitle}</p>}
-        </div>
-        <div className={`p-2 sm:p-3 rounded-full flex-shrink-0 ${colors[color]}`}>
-          <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
-        </div>
-      </div>
-    </div>
-  );
-}
 
 /**
  * Componente de variables disponibles
@@ -146,6 +119,14 @@ function RecordatoriosPage() {
   // Mutations
   const actualizarMutation = useActualizarConfiguracion();
   const enviarPruebaMutation = useEnviarPrueba();
+
+  // Configuración de estadísticas
+  const statsConfig = useMemo(() => [
+    { key: 'enviados', icon: Send, label: 'Total enviados', value: stats?.total || 0, color: 'primary' },
+    { key: 'confirmados', icon: CheckCircle, label: 'Confirmados', value: stats?.confirmados || 0, color: 'green' },
+    { key: 'fallidos', icon: XCircle, label: 'Fallidos', value: stats?.fallidos || 0, color: 'red' },
+    { key: 'tasa', icon: BarChart3, label: 'Tasa de confirmación', value: `${stats?.tasa_confirmacion || 0}%`, color: 'purple' },
+  ], [stats]);
 
   // Form
   const {
@@ -245,33 +226,8 @@ function RecordatoriosPage() {
 
         <div className="space-y-6">
 
-      {/* Estadísticas - 2 cols mobile, 4 cols desktop */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-        <StatCard
-          title="Total enviados"
-          value={stats?.total || 0}
-          icon={Send}
-          color="blue"
-        />
-        <StatCard
-          title="Confirmados"
-          value={stats?.confirmados || 0}
-          icon={CheckCircle}
-          color="green"
-        />
-        <StatCard
-          title="Fallidos"
-          value={stats?.fallidos || 0}
-          icon={XCircle}
-          color="red"
-        />
-        <StatCard
-          title="Tasa de confirmación"
-          value={`${stats?.tasa_confirmacion || 0}%`}
-          icon={BarChart3}
-          color="purple"
-        />
-      </div>
+      {/* Estadísticas */}
+      <StatCardGrid stats={statsConfig} columns={4} />
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Activación global */}

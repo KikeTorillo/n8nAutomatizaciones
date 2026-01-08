@@ -22,6 +22,9 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -57,12 +60,10 @@ export default function ConteosPage() {
     });
 
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
-
-    // Estado de modales
-    const [modalForm, setModalForm] = useState({ isOpen: false });
-    const [modalIniciar, setModalIniciar] = useState({ isOpen: false, conteo: null });
-    const [modalCancelar, setModalCancelar] = useState({ isOpen: false, conteo: null });
     const [motivoCancelacion, setMotivoCancelacion] = useState('');
+
+    // Modal manager
+    const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
     // Queries
     const { data: conteosData, isLoading } = useConteos(filtros);
@@ -100,14 +101,14 @@ export default function ConteosPage() {
 
     // Handlers de acciones
     const handleNuevoConteo = () => {
-        setModalForm({ isOpen: true });
+        openModal('form');
     };
 
     const handleCrearConteo = (data) => {
         crearMutation.mutate(data, {
             onSuccess: (conteo) => {
                 showSuccess(`Conteo ${conteo.folio} creado correctamente`);
-                setModalForm({ isOpen: false });
+                closeModal('form');
             },
             onError: (error) => {
                 showError(error.message || 'Error al crear el conteo');
@@ -124,16 +125,16 @@ export default function ConteosPage() {
             showWarning('Solo se pueden iniciar conteos en estado borrador');
             return;
         }
-        setModalIniciar({ isOpen: true, conteo });
+        openModal('iniciar', { conteo });
     };
 
     const handleIniciar = () => {
-        iniciarMutation.mutate(modalIniciar.conteo.id, {
+        const conteo = getModalData('iniciar')?.conteo;
+        iniciarMutation.mutate(conteo.id, {
             onSuccess: (result) => {
                 showSuccess(`Conteo iniciado. ${result.resumen?.total || 0} productos para contar.`);
-                setModalIniciar({ isOpen: false, conteo: null });
-                // Redirigir a la página de detalle para iniciar el conteo
-                navigate(`/inventario/conteos/${modalIniciar.conteo.id}`);
+                closeModal('iniciar');
+                navigate(`/inventario/conteos/${conteo.id}`);
             },
             onError: (error) => {
                 showError(error.message || 'Error al iniciar el conteo');
@@ -147,16 +148,17 @@ export default function ConteosPage() {
             return;
         }
         setMotivoCancelacion('');
-        setModalCancelar({ isOpen: true, conteo });
+        openModal('cancelar', { conteo });
     };
 
     const handleCancelar = () => {
+        const conteo = getModalData('cancelar')?.conteo;
         cancelarMutation.mutate(
-            { id: modalCancelar.conteo.id, motivo: motivoCancelacion || undefined },
+            { id: conteo.id, motivo: motivoCancelacion || undefined },
             {
                 onSuccess: () => {
                     showSuccess('Conteo cancelado correctamente');
-                    setModalCancelar({ isOpen: false, conteo: null });
+                    closeModal('cancelar');
                     setMotivoCancelacion('');
                 },
                 onError: (error) => {
@@ -375,61 +377,15 @@ export default function ConteosPage() {
 
             {/* Estadísticas rápidas */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                                <ClipboardList className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">{total}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-                                <Play className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">En Proceso</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(totales.en_proceso) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Ajustados</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(totales.ajustados) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                                <Diff className="h-5 w-5 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Con Diferencias</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(estadisticas.conteos_con_diferencias) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <StatCardGrid
+                    className="mb-6"
+                    stats={[
+                        { icon: ClipboardList, label: 'Total', value: total, color: 'blue' },
+                        { icon: Play, label: 'En Proceso', value: parseInt(totales.en_proceso) || 0, color: 'yellow' },
+                        { icon: CheckCircle, label: 'Ajustados', value: parseInt(totales.ajustados) || 0, color: 'green' },
+                        { icon: Diff, label: 'Con Diferencias', value: parseInt(estadisticas.conteos_con_diferencias) || 0, color: 'red' },
+                    ]}
+                />
 
                 {/* Tabla de conteos */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -438,16 +394,17 @@ export default function ConteosPage() {
                             Cargando conteos...
                         </div>
                     ) : conteos.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <ClipboardList className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500 dark:text-gray-400">
-                                No hay conteos de inventario
-                            </p>
-                            <Button onClick={handleNuevoConteo} className="mt-4">
-                                <Plus className="h-4 w-4 mr-1" />
-                                Crear primer conteo
-                            </Button>
-                        </div>
+                        <EmptyState
+                            icon={ClipboardList}
+                            title="No hay conteos de inventario"
+                            description="Crea tu primer conteo para comenzar a gestionar el inventario físico"
+                            action={
+                                <Button onClick={handleNuevoConteo}>
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Crear primer conteo
+                                </Button>
+                            }
+                        />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -592,77 +549,77 @@ export default function ConteosPage() {
             </div>
 
             {/* Modal crear conteo */}
-            <ConteoFormModal
-                isOpen={modalForm.isOpen}
-                onClose={() => setModalForm({ isOpen: false })}
-                onSubmit={handleCrearConteo}
-                isLoading={crearMutation.isPending}
-            />
+            {isOpen('form') && (
+                <ConteoFormModal
+                    isOpen={isOpen('form')}
+                    onClose={() => closeModal('form')}
+                    onSubmit={handleCrearConteo}
+                    isLoading={crearMutation.isPending}
+                />
+            )}
 
             {/* Modal confirmar iniciar */}
-            <Modal
-                isOpen={modalIniciar.isOpen}
-                onClose={() => setModalIniciar({ isOpen: false, conteo: null })}
-                title="Iniciar Conteo"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas iniciar el conteo <strong>{modalIniciar.conteo?.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Se generarán los productos a contar según los filtros configurados. Una vez iniciado,
-                        podrás registrar las cantidades contadas.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalIniciar({ isOpen: false, conteo: null })}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleIniciar} isLoading={iniciarMutation.isPending}>
-                            <Play className="h-4 w-4 mr-1" />
-                            Iniciar Conteo
-                        </Button>
+            {isOpen('iniciar') && (
+                <Modal
+                    isOpen={isOpen('iniciar')}
+                    onClose={() => closeModal('iniciar')}
+                    title="Iniciar Conteo"
+                >
+                    <div className="p-4">
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            ¿Deseas iniciar el conteo <strong>{getModalData('iniciar')?.conteo?.folio}</strong>?
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Se generarán los productos a contar según los filtros configurados. Una vez iniciado,
+                            podrás registrar las cantidades contadas.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => closeModal('iniciar')}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={handleIniciar} isLoading={iniciarMutation.isPending}>
+                                <Play className="h-4 w-4 mr-1" />
+                                Iniciar Conteo
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
 
             {/* Modal confirmar cancelar */}
-            <Modal
-                isOpen={modalCancelar.isOpen}
-                onClose={() => setModalCancelar({ isOpen: false, conteo: null })}
-                title="Cancelar Conteo"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas cancelar el conteo <strong>{modalCancelar.conteo?.folio}</strong>?
-                    </p>
-                    <Textarea
-                        label="Motivo de cancelación (opcional)"
-                        value={motivoCancelacion}
-                        onChange={(e) => setMotivoCancelacion(e.target.value)}
-                        placeholder="Ingresa el motivo de la cancelación..."
-                        rows={3}
-                    />
-                    <div className="flex justify-end gap-2 mt-4">
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalCancelar({ isOpen: false, conteo: null })}
-                        >
-                            Volver
-                        </Button>
-                        <Button
-                            variant="danger"
-                            onClick={handleCancelar}
-                            isLoading={cancelarMutation.isPending}
-                        >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Cancelar Conteo
-                        </Button>
+            {isOpen('cancelar') && (
+                <Modal
+                    isOpen={isOpen('cancelar')}
+                    onClose={() => closeModal('cancelar')}
+                    title="Cancelar Conteo"
+                >
+                    <div className="p-4">
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            ¿Deseas cancelar el conteo <strong>{getModalData('cancelar')?.conteo?.folio}</strong>?
+                        </p>
+                        <Textarea
+                            label="Motivo de cancelación (opcional)"
+                            value={motivoCancelacion}
+                            onChange={(e) => setMotivoCancelacion(e.target.value)}
+                            placeholder="Ingresa el motivo de la cancelación..."
+                            rows={3}
+                        />
+                        <div className="flex justify-end gap-2 mt-4">
+                            <Button variant="outline" onClick={() => closeModal('cancelar')}>
+                                Volver
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={handleCancelar}
+                                isLoading={cancelarMutation.isPending}
+                            >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Cancelar Conteo
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
         </div>
     );
 }

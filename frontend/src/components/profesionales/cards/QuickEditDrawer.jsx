@@ -1,5 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -9,8 +11,99 @@ import { useActualizarProfesional } from '@/hooks/useProfesionales';
 import { useToast } from '@/hooks/useToast';
 
 /**
+ * Schemas de validación Zod por tipo de campo
+ */
+const fieldSchemas = {
+  text: (field) => {
+    let schema = z.string();
+    if (field.required) {
+      schema = schema.min(1, `${field.label} es requerido`);
+    }
+    if (field.maxLength) {
+      schema = schema.max(field.maxLength, `Máximo ${field.maxLength} caracteres`);
+    }
+    if (field.minLength) {
+      schema = schema.min(field.minLength, `Mínimo ${field.minLength} caracteres`);
+    }
+    return field.required ? schema : schema.optional();
+  },
+  email: (field) => {
+    let schema = z.string().email('Email inválido');
+    return field.required ? schema : schema.optional().or(z.literal(''));
+  },
+  tel: (field) => {
+    let schema = z.string().regex(/^[\d\s\-+()]{7,20}$/, 'Teléfono inválido');
+    return field.required ? schema : schema.optional().or(z.literal(''));
+  },
+  number: (field) => {
+    let schema = z.coerce.number();
+    if (field.min !== undefined) {
+      schema = schema.min(field.min, `Mínimo ${field.min}`);
+    }
+    if (field.max !== undefined) {
+      schema = schema.max(field.max, `Máximo ${field.max}`);
+    }
+    return field.required ? schema : schema.optional();
+  },
+  date: (field) => {
+    let schema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Fecha inválida');
+    return field.required ? schema : schema.optional().or(z.literal(''));
+  },
+  select: (field) => {
+    let schema = z.string();
+    if (field.required) {
+      schema = schema.min(1, `${field.label} es requerido`);
+    }
+    return field.required ? schema : schema.optional();
+  },
+  textarea: (field) => {
+    let schema = z.string();
+    if (field.maxLength) {
+      schema = schema.max(field.maxLength, `Máximo ${field.maxLength} caracteres`);
+    }
+    return field.required ? schema.min(1, `${field.label} es requerido`) : schema.optional();
+  },
+};
+
+/**
+ * Construye un schema Zod dinámico basado en la configuración de fields
+ */
+function buildDynamicSchema(fields) {
+  const schemaShape = {};
+
+  fields.forEach((field) => {
+    const type = field.type || 'text';
+    const schemaBuilder = fieldSchemas[type] || fieldSchemas.text;
+    schemaShape[field.name] = schemaBuilder(field);
+  });
+
+  return z.object(schemaShape);
+}
+
+/**
  * Drawer para edición rápida de campos del profesional
  * Soporta diferentes tipos de campos: text, email, tel, select, textarea, date, number
+ *
+ * Ahora con validación Zod integrada automáticamente basada en la configuración de fields
+ *
+ * @param {Object} props
+ * @param {boolean} props.isOpen - Si el drawer está abierto
+ * @param {Function} props.onClose - Callback al cerrar
+ * @param {number} props.profesionalId - ID del profesional a editar
+ * @param {string} props.title - Título del drawer
+ * @param {string} [props.subtitle] - Subtítulo opcional
+ * @param {Array} props.fields - Configuración de campos
+ * @param {string} props.fields[].name - Nombre del campo
+ * @param {string} props.fields[].label - Label del campo
+ * @param {string} [props.fields[].type] - Tipo: text, email, tel, select, textarea, date, number
+ * @param {boolean} [props.fields[].required] - Si es requerido
+ * @param {number} [props.fields[].maxLength] - Longitud máxima (text, textarea)
+ * @param {number} [props.fields[].minLength] - Longitud mínima (text)
+ * @param {number} [props.fields[].min] - Valor mínimo (number)
+ * @param {number} [props.fields[].max] - Valor máximo (number)
+ * @param {Array} [props.fields[].options] - Opciones para select [{value, label}]
+ * @param {Object} props.initialValues - Valores iniciales
+ * @param {Object} [props.schema] - Schema Zod personalizado (opcional, se genera automáticamente)
  */
 function QuickEditDrawer({
   isOpen,
@@ -20,9 +113,15 @@ function QuickEditDrawer({
   subtitle,
   fields = [],
   initialValues = {},
+  schema: customSchema,
 }) {
   const toast = useToast();
   const actualizarMutation = useActualizarProfesional();
+
+  // Construir schema Zod dinámicamente basado en fields
+  const dynamicSchema = useMemo(() => {
+    return customSchema || buildDynamicSchema(fields);
+  }, [customSchema, fields]);
 
   const {
     control,
@@ -30,7 +129,9 @@ function QuickEditDrawer({
     reset,
     formState: { errors },
   } = useForm({
+    resolver: zodResolver(dynamicSchema),
     defaultValues: initialValues,
+    mode: 'onSubmit',
   });
 
   // Reset form cuando cambian los valores iniciales

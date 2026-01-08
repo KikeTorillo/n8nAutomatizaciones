@@ -19,6 +19,9 @@ import {
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -52,11 +55,8 @@ export default function AjustesMasivosPage() {
 
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
-    // Estado de modales
-    const [modalNuevo, setModalNuevo] = useState(false);
-    const [modalValidar, setModalValidar] = useState({ isOpen: false, ajuste: null });
-    const [modalAplicar, setModalAplicar] = useState({ isOpen: false, ajuste: null });
-    const [modalCancelar, setModalCancelar] = useState({ isOpen: false, ajuste: null });
+    // Modal manager
+    const { isOpen, getModalData, openModal, closeModal } = useModalManager();
 
     // Queries
     const { data: ajustesData, isLoading } = useAjustesMasivos(filtros);
@@ -88,12 +88,12 @@ export default function AjustesMasivosPage() {
 
     // Handlers de acciones
     const handleNuevoAjuste = () => {
-        setModalNuevo(true);
+        openModal('nuevo');
     };
 
     const handleAjusteCreado = (ajuste) => {
         showSuccess(`Ajuste ${ajuste.folio} creado correctamente`);
-        setModalNuevo(false);
+        closeModal('nuevo');
     };
 
     const handleDescargarPlantilla = () => {
@@ -116,17 +116,18 @@ export default function AjustesMasivosPage() {
             showWarning('Solo se pueden validar ajustes en estado pendiente');
             return;
         }
-        setModalValidar({ isOpen: true, ajuste });
+        openModal('validar', { ajuste });
     };
 
     const handleValidar = () => {
-        validarMutation.mutate(modalValidar.ajuste.id, {
+        const ajuste = getModalData('validar')?.ajuste;
+        validarMutation.mutate(ajuste.id, {
             onSuccess: (result) => {
                 const msg = result.filas_validas > 0
                     ? `Validado: ${result.filas_validas} items validos, ${result.filas_error} con errores`
                     : 'Todos los items tienen errores';
                 showSuccess(msg);
-                setModalValidar({ isOpen: false, ajuste: null });
+                closeModal('validar');
             },
             onError: (error) => {
                 showError(error.message || 'Error al validar ajuste');
@@ -139,17 +140,18 @@ export default function AjustesMasivosPage() {
             showWarning('Solo se pueden aplicar ajustes validados');
             return;
         }
-        setModalAplicar({ isOpen: true, ajuste });
+        openModal('aplicar', { ajuste });
     };
 
     const handleAplicar = () => {
-        aplicarMutation.mutate(modalAplicar.ajuste.id, {
+        const ajuste = getModalData('aplicar')?.ajuste;
+        aplicarMutation.mutate(ajuste.id, {
             onSuccess: (result) => {
                 const msg = result.errores?.length > 0
                     ? `Aplicados ${result.aplicados?.length || 0} items, ${result.errores.length} con errores`
                     : `${result.aplicados?.length || 0} ajustes aplicados correctamente`;
                 showSuccess(msg);
-                setModalAplicar({ isOpen: false, ajuste: null });
+                closeModal('aplicar');
             },
             onError: (error) => {
                 showError(error.message || 'Error al aplicar ajustes');
@@ -162,14 +164,15 @@ export default function AjustesMasivosPage() {
             showWarning('Este ajuste no puede ser cancelado');
             return;
         }
-        setModalCancelar({ isOpen: true, ajuste });
+        openModal('cancelar', { ajuste });
     };
 
     const handleCancelar = () => {
-        cancelarMutation.mutate(modalCancelar.ajuste.id, {
+        const ajuste = getModalData('cancelar')?.ajuste;
+        cancelarMutation.mutate(ajuste.id, {
             onSuccess: () => {
                 showSuccess('Ajuste cancelado correctamente');
-                setModalCancelar({ isOpen: false, ajuste: null });
+                closeModal('cancelar');
             },
             onError: (error) => {
                 showError(error.message || 'Error al cancelar ajuste');
@@ -372,61 +375,15 @@ export default function AjustesMasivosPage() {
 
             {/* Estadisticas rapidas */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                                <FileSpreadsheet className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Total</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">{total}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
-                                <FileCheck className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Pendientes</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(totales.pendientes) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Aplicados</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(totales.aplicados) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-yellow-100 dark:bg-yellow-900 rounded-lg">
-                                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Con Errores</p>
-                                <p className="text-xl font-bold text-gray-900 dark:text-white">
-                                    {parseInt(totales.con_errores) || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <StatCardGrid
+                    className="mb-6"
+                    stats={[
+                        { icon: FileSpreadsheet, label: 'Total', value: total, color: 'blue' },
+                        { icon: FileCheck, label: 'Pendientes', value: parseInt(totales.pendientes) || 0 },
+                        { icon: CheckCircle, label: 'Aplicados', value: parseInt(totales.aplicados) || 0, color: 'green' },
+                        { icon: AlertTriangle, label: 'Con Errores', value: parseInt(totales.con_errores) || 0, color: 'yellow' },
+                    ]}
+                />
 
                 {/* Tabla de ajustes */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -435,16 +392,17 @@ export default function AjustesMasivosPage() {
                             Cargando ajustes...
                         </div>
                     ) : ajustes.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <FileSpreadsheet className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500 dark:text-gray-400">
-                                No hay ajustes masivos
-                            </p>
-                            <Button onClick={handleNuevoAjuste} className="mt-4">
-                                <Plus className="h-4 w-4 mr-1" />
-                                Crear primer ajuste
-                            </Button>
-                        </div>
+                        <EmptyState
+                            icon={FileSpreadsheet}
+                            title="No hay ajustes masivos"
+                            description="Importa tu primer archivo CSV para ajustar inventario"
+                            action={
+                                <Button onClick={handleNuevoAjuste}>
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Crear primer ajuste
+                                </Button>
+                            }
+                        />
                     ) : (
                         <div className="overflow-x-auto">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -576,105 +534,104 @@ export default function AjustesMasivosPage() {
             </div>
 
             {/* Modal nuevo ajuste */}
-            <AjusteMasivoModal
-                isOpen={modalNuevo}
-                onClose={() => setModalNuevo(false)}
-                onSuccess={handleAjusteCreado}
-            />
+            {isOpen('nuevo') && (
+                <AjusteMasivoModal
+                    isOpen={isOpen('nuevo')}
+                    onClose={() => closeModal('nuevo')}
+                    onSuccess={handleAjusteCreado}
+                />
+            )}
 
             {/* Modal confirmar validar */}
-            <Modal
-                isOpen={modalValidar.isOpen}
-                onClose={() => setModalValidar({ isOpen: false, ajuste: null })}
-                title="Validar Ajuste Masivo"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas validar el ajuste <strong>{modalValidar.ajuste?.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Se verificara que los SKUs/codigos de barras existan y se calculara el stock resultante.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalValidar({ isOpen: false, ajuste: null })}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleValidar} isLoading={validarMutation.isPending}>
-                            <FileCheck className="h-4 w-4 mr-1" />
-                            Validar
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-
-            {/* Modal confirmar aplicar */}
-            <Modal
-                isOpen={modalAplicar.isOpen}
-                onClose={() => setModalAplicar({ isOpen: false, ajuste: null })}
-                title="Aplicar Ajustes de Inventario"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas aplicar los ajustes del folio <strong>{modalAplicar.ajuste?.folio}</strong>?
-                    </p>
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                        <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                            <div className="text-sm text-yellow-700 dark:text-yellow-300">
-                                <p className="font-medium">Esta accion no se puede deshacer</p>
-                                <p>Se crearan movimientos de inventario para cada item valido.</p>
-                            </div>
+            {isOpen('validar') && (
+                <Modal
+                    isOpen={isOpen('validar')}
+                    onClose={() => closeModal('validar')}
+                    title="Validar Ajuste Masivo"
+                >
+                    <div className="p-4">
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            ¿Deseas validar el ajuste <strong>{getModalData('validar')?.ajuste?.folio}</strong>?
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Se verificara que los SKUs/codigos de barras existan y se calculara el stock resultante.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => closeModal('validar')}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={handleValidar} isLoading={validarMutation.isPending}>
+                                <FileCheck className="h-4 w-4 mr-1" />
+                                Validar
+                            </Button>
                         </div>
                     </div>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalAplicar({ isOpen: false, ajuste: null })}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleAplicar} isLoading={aplicarMutation.isPending}>
-                            <Play className="h-4 w-4 mr-1" />
-                            Aplicar Ajustes
-                        </Button>
+                </Modal>
+            )}
+
+            {/* Modal confirmar aplicar */}
+            {isOpen('aplicar') && (
+                <Modal
+                    isOpen={isOpen('aplicar')}
+                    onClose={() => closeModal('aplicar')}
+                    title="Aplicar Ajustes de Inventario"
+                >
+                    <div className="p-4">
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            ¿Deseas aplicar los ajustes del folio <strong>{getModalData('aplicar')?.ajuste?.folio}</strong>?
+                        </p>
+                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
+                            <div className="flex items-start gap-2">
+                                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                                <div className="text-sm text-yellow-700 dark:text-yellow-300">
+                                    <p className="font-medium">Esta accion no se puede deshacer</p>
+                                    <p>Se crearan movimientos de inventario para cada item valido.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => closeModal('aplicar')}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={handleAplicar} isLoading={aplicarMutation.isPending}>
+                                <Play className="h-4 w-4 mr-1" />
+                                Aplicar Ajustes
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
 
             {/* Modal confirmar cancelar */}
-            <Modal
-                isOpen={modalCancelar.isOpen}
-                onClose={() => setModalCancelar({ isOpen: false, ajuste: null })}
-                title="Cancelar Ajuste Masivo"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas cancelar el ajuste <strong>{modalCancelar.ajuste?.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Esta accion eliminara el ajuste y todos sus items.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button
-                            variant="outline"
-                            onClick={() => setModalCancelar({ isOpen: false, ajuste: null })}
-                        >
-                            Volver
-                        </Button>
-                        <Button
-                            variant="danger"
-                            onClick={handleCancelar}
-                            isLoading={cancelarMutation.isPending}
-                        >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Cancelar Ajuste
-                        </Button>
+            {isOpen('cancelar') && (
+                <Modal
+                    isOpen={isOpen('cancelar')}
+                    onClose={() => closeModal('cancelar')}
+                    title="Cancelar Ajuste Masivo"
+                >
+                    <div className="p-4">
+                        <p className="text-gray-600 dark:text-gray-300 mb-4">
+                            ¿Deseas cancelar el ajuste <strong>{getModalData('cancelar')?.ajuste?.folio}</strong>?
+                        </p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Esta accion eliminara el ajuste y todos sus items.
+                        </p>
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => closeModal('cancelar')}>
+                                Volver
+                            </Button>
+                            <Button
+                                variant="danger"
+                                onClick={handleCancelar}
+                                isLoading={cancelarMutation.isPending}
+                            >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Cancelar Ajuste
+                            </Button>
+                        </div>
                     </div>
-                </div>
-            </Modal>
+                </Modal>
+            )}
         </div>
     );
 }

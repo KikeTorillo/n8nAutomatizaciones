@@ -19,6 +19,7 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Drawer from '@/components/ui/Drawer';
+import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import useSucursalStore from '@/store/sucursalStore';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -261,12 +262,11 @@ function StockUbicacionModal({ ubicacion, isOpen, onClose }) {
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
           </div>
         ) : stock.length === 0 ? (
-          <div className="text-center py-8">
-            <Package className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              No hay productos en esta ubicación
-            </p>
-          </div>
+          <EmptyState
+            icon={Package}
+            title="Sin productos"
+            description="No hay productos en esta ubicación"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -619,24 +619,22 @@ function UbicacionesAlmacenPage() {
               <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando ubicaciones...</span>
             </div>
           ) : arbolFiltrado.length === 0 ? (
-            <div className="text-center py-12">
-              <MapPin className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">
-                {busqueda ? 'Sin resultados' : 'No hay ubicaciones'}
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {busqueda
+            <EmptyState
+              icon={MapPin}
+              title={busqueda ? 'Sin resultados' : 'No hay ubicaciones'}
+              description={
+                busqueda
                   ? 'No se encontraron ubicaciones con ese criterio'
-                  : 'Comienza creando tu primera zona de almacén'}
-              </p>
-              {!busqueda && (
-                <div className="mt-6">
+                  : 'Comienza creando tu primera zona de almacén'
+              }
+              action={
+                !busqueda && (
                   <Button variant="primary" onClick={handleNuevaUbicacion} icon={Plus}>
                     Nueva Ubicación
                   </Button>
-                </div>
-              )}
-            </div>
+                )
+              }
+            />
           ) : (
             <div className="space-y-1">
               {arbolFiltrado.map((ubicacion) => (

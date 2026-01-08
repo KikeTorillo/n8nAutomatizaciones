@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   MoreVertical,
-  MessageSquare,
   Calendar,
   Clock,
   Settings,
@@ -12,6 +10,7 @@ import {
   Phone,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import BackButton from '@/components/ui/BackButton';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import { ESTADOS_LABORALES, TIPOS_CONTRATACION } from '@/hooks/useProfesionales';
@@ -56,14 +55,7 @@ function ProfesionalHeader({ profesional }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {/* Breadcrumb */}
           <div className="mb-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate('/profesionales')}
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Volver a Profesionales
-            </Button>
+            <BackButton to="/profesionales" label="Volver a Profesionales" />
           </div>
 
           {/* Header Content */}

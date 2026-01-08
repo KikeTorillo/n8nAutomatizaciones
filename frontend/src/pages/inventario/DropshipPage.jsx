@@ -36,6 +36,7 @@ import { formatDistanceToNow, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { formatCurrency } from '@/lib/utils';
 
 // Estados con colores
@@ -237,9 +238,11 @@ export default function DropshipPage() {
               <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
             </div>
           ) : ordenes?.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              No hay ordenes dropship
-            </div>
+            <EmptyState
+              icon={Truck}
+              title="No hay órdenes dropship"
+              description="Las órdenes dropship aparecerán cuando haya ventas con productos de envío directo"
+            />
           ) : (
             <table className="w-full">
               <thead className="bg-gray-50 dark:bg-gray-700">

@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers } from 'lucide-react';
+import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers, Package, Info } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
+import StatCardGrid from '@/components/ui/StatCardGrid';
+import EmptyState from '@/components/ui/EmptyState';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useValorInventario,
@@ -64,38 +66,34 @@ function ReporteValorInventario() {
   return (
     <div className="space-y-6">
       {/* Resumen */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Valor Venta</p>
-          <p className="text-lg sm:text-2xl font-bold text-primary-600 dark:text-primary-400">
-            ${valorVenta.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Costo: ${valorCompra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Total Productos</p>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {totalProductos.toLocaleString('es-MX')}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Unidades Totales</p>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-            {totalUnidades.toLocaleString('es-MX')}
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mb-1">Margen Potencial</p>
-          <p className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400">
-            ${margenPotencial.toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            {porcentajeMargen.toFixed(1)}% de margen
-          </p>
-        </div>
-      </div>
+      <StatCardGrid
+        stats={[
+          {
+            icon: DollarSign,
+            label: 'Valor Venta',
+            value: `$${valorVenta.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+            color: 'primary',
+            subtext: `Costo: $${valorCompra.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+          },
+          {
+            icon: Package,
+            label: 'Total Productos',
+            value: totalProductos.toLocaleString('es-MX'),
+          },
+          {
+            icon: Layers,
+            label: 'Unidades Totales',
+            value: totalUnidades.toLocaleString('es-MX'),
+          },
+          {
+            icon: TrendingUp,
+            label: 'Margen Potencial',
+            value: `$${margenPotencial.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`,
+            color: 'green',
+            subtext: `${porcentajeMargen.toFixed(1)}% de margen`,
+          },
+        ]}
+      />
 
       {/* Botón Exportar */}
       <div className="flex justify-end">
@@ -332,11 +330,12 @@ function ReporteValoracionFIFOAVCO() {
             <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
           </div>
         ) : !comparativa || comparativa.length === 0 ? (
-          <div className="text-center py-12">
-            <Calculator className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-            <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-              No hay productos con stock para valorar
-            </p>
+          <div className="py-8">
+            <EmptyState
+              icon={Calculator}
+              title="Sin datos de valoración"
+              description="No hay productos con stock para valorar"
+            />
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -487,9 +486,12 @@ function ReporteAnalisisABC() {
           <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando análisis...</span>
         </div>
       ) : productos.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <BarChart3 className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">No hay datos para el período seleccionado</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 py-8">
+          <EmptyState
+            icon={BarChart3}
+            title="Sin datos de análisis"
+            description="No hay datos para el período seleccionado"
+          />
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -608,9 +610,12 @@ function ReporteRotacion() {
           <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando rotación...</span>
         </div>
       ) : productos.length === 0 ? (
-        <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <TrendingUp className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">No hay datos para el período seleccionado</p>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 py-8">
+          <EmptyState
+            icon={TrendingUp}
+            title="Sin datos de rotación"
+            description="No hay datos para el período seleccionado"
+          />
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">

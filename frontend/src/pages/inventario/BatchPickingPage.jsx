@@ -25,6 +25,8 @@ import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Checkbox from '@/components/ui/Checkbox';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -482,32 +484,14 @@ export default function BatchPickingPage() {
 
       {/* Estadísticas */}
       <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-gray-900 dark:text-white">
-              {batchesPorEstado.borrador.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Borradores</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-yellow-600">
-              {batchesPorEstado.en_proceso.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">En Proceso</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-green-600">
-              {batchesPorEstado.completado.length}+
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Completados</div>
-          </div>
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="text-2xl font-bold text-primary-600">
-              {operacionesDisponibles.length}
-            </div>
-            <div className="text-sm text-gray-500 dark:text-gray-400">Ops. Disponibles</div>
-          </div>
-        </div>
+        <StatCardGrid
+          stats={[
+            { icon: Layers, label: 'Borradores', value: batchesPorEstado.borrador.length },
+            { icon: Play, label: 'En Proceso', value: batchesPorEstado.en_proceso.length, color: 'yellow' },
+            { icon: CheckCircle, label: 'Completados', value: `${batchesPorEstado.completado.length}+`, color: 'green' },
+            { icon: Package, label: 'Ops. Disponibles', value: operacionesDisponibles.length, color: 'primary' },
+          ]}
+        />
       </div>
 
       {/* Filtros */}
@@ -545,22 +529,17 @@ export default function BatchPickingPage() {
             <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
           </div>
         ) : batches.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-            <Layers className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No hay batches de picking
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Crea un nuevo batch para agrupar operaciones de picking
-            </p>
-            <Button
-              variant="primary"
-              onClick={() => setModalCrear(true)}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Crear Primer Batch
-            </Button>
-          </div>
+          <EmptyState
+            icon={Layers}
+            title="No hay batches de picking"
+            description="Crea un nuevo batch para agrupar operaciones de picking"
+            action={
+              <Button variant="primary" onClick={() => setModalCrear(true)}>
+                <Plus className="h-4 w-4 mr-1" />
+                Crear Primer Batch
+              </Button>
+            }
+          />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {batches.map((batch) => (

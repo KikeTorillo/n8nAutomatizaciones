@@ -1,15 +1,18 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, X, AlertTriangle } from 'lucide-react';
+import { Plus, Search, Filter, X, AlertTriangle, Briefcase, CheckCircle, DollarSign, List, XCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import ServiciosList from '@/components/servicios/ServiciosList';
 import ServicioFormModal from '@/components/servicios/ServicioFormModal';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
 import { useServicios, useEliminarServicio } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';
+import { formatCurrency } from '@/lib/utils';
 
 /**
  * Página principal de gestión de servicios
@@ -42,14 +45,28 @@ function ServiciosPage() {
     precio_max: '',
   });
 
+  // Estado de vista activa (tabs)
+  const [vistaActiva, setVistaActiva] = useState('todos'); // 'todos', 'activos', 'inactivos'
+
+  // Determinar filtro de activo basado en vista y filtros
+  const getActivoFilter = () => {
+    // Si hay un filtro específico en el panel, usarlo
+    if (filtros.activo !== '') {
+      return filtros.activo === 'true';
+    }
+    // Si no, usar el tab activo
+    if (vistaActiva === 'activos') return true;
+    if (vistaActiva === 'inactivos') return false;
+    return undefined; // 'todos' - sin filtro
+  };
+
   // Fetch servicios con filtros
   // React Query maneja el debouncing automáticamente con keepPreviousData
   const { data, isLoading } = useServicios({
     pagina: page,
     limite: 20,
     busqueda,
-    // Solo enviar filtros si tienen valor
-    activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
+    activo: getActivoFilter(),
     categoria: filtros.categoria || undefined,
     precio_min: filtros.precio_min || undefined,
     precio_max: filtros.precio_max || undefined,
@@ -57,6 +74,31 @@ function ServiciosPage() {
 
   // Hook de eliminación
   const eliminarMutation = useEliminarServicio();
+
+  // Configuración de estadísticas
+  const statsConfig = useMemo(() => {
+    const servicios = data?.servicios || [];
+    const total = data?.paginacion?.total || servicios.length;
+    const activos = servicios.filter(s => s.activo).length;
+    const sinProfesionales = servicios.filter(s => s.total_profesionales_asignados === 0 && s.activo).length;
+    const precioPromedio = servicios.length > 0
+      ? servicios.reduce((sum, s) => sum + parseFloat(s.precio || 0), 0) / servicios.length
+      : 0;
+
+    return [
+      { key: 'total', icon: Briefcase, label: 'Total Servicios', value: total, color: 'primary' },
+      { key: 'activos', icon: CheckCircle, label: 'Activos', value: activos, color: 'green' },
+      { key: 'sinProf', icon: AlertTriangle, label: 'Sin Profesionales', value: sinProfesionales, color: 'yellow' },
+      { key: 'precio', icon: DollarSign, label: 'Precio Promedio', value: formatCurrency(precioPromedio), color: 'primary' },
+    ];
+  }, [data?.servicios, data?.paginacion?.total]);
+
+  // Configuración de ViewTabs
+  const viewTabsConfig = useMemo(() => [
+    { id: 'todos', label: 'Todos', icon: List },
+    { id: 'activos', label: 'Activos', icon: CheckCircle },
+    { id: 'inactivos', label: 'Inactivos', icon: XCircle },
+  ], []);
 
   // Handlers para paginación
   const handlePageChange = (newPage) => {
@@ -273,6 +315,28 @@ function ServiciosPage() {
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Estadísticas y Tabs */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Estadísticas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
+
+        {/* Tabs de Vista */}
+        <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <ViewTabs
+            tabs={viewTabsConfig}
+            activeTab={vistaActiva}
+            onChange={(tab) => {
+              setVistaActiva(tab);
+              setPage(1); // Resetear a página 1 al cambiar vista
+              // Limpiar filtro de estado cuando se usa tab
+              if (filtros.activo !== '') {
+                setFiltros({ ...filtros, activo: '' });
+              }
+            }}
+          />
         </div>
       </div>
 
