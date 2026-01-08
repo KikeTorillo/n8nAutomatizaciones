@@ -1,0 +1,46 @@
+{
+  "name": "incapacidades",
+  "display_name": "Sistema de Incapacidades",
+  "version": "1.0.0",
+  "description": "Módulo de gestión de incapacidades médicas IMSS: enfermedad general, maternidad y riesgo de trabajo con integración a bloqueos",
+  "depends": ["core", "profesionales", "agendamiento"],
+  "dependencies_hard": {
+    "profesionales": "Requiere tabla profesionales para empleados",
+    "agendamiento": "Requiere bloqueos_horarios para integración calendario"
+  },
+  "dependencies_optional": {},
+  "used_by": [],
+  "pricing": {
+    "base_mensual": 0,
+    "currency": "MXN",
+    "incluido_en_todos_planes": true,
+    "notes": "Módulo de RRHH incluido en todos los planes"
+  },
+  "routes": {
+    "incapacidades": "/api/v1/incapacidades"
+  },
+  "resources": {
+    "incapacidades": {
+      "table": "incapacidades",
+      "limit_field": null,
+      "notes": "Sin límite por plan"
+    }
+  },
+  "tables": [
+    "incapacidades"
+  ],
+  "features": [
+    "Registro de incapacidades médicas IMSS",
+    "Tipos: Enfermedad General, Maternidad, Riesgo de Trabajo",
+    "Integración automática con bloqueos_horarios",
+    "Actualización automática de estado_laboral del profesional",
+    "Gestión de prórrogas (incapacidades consecutivas)",
+    "Upload de documentos (folio IMSS)",
+    "Historial de incapacidades por empleado",
+    "Estadísticas y reportes para RRHH/Admin",
+    "Cálculo informativo de pago IMSS"
+  ],
+  "priority": 6,
+  "required": false,
+  "can_disable": true
+}

@@ -81,6 +81,14 @@ export const COLORES_TIPO_BLOQUEO = {
     badge: 'bg-cyan-500',
     hex: '#06B6D4',
   },
+  // 🏥 INCAPACIDAD (Enero 2026)
+  incapacidad: {
+    bg: 'bg-rose-100',
+    text: 'text-rose-800',
+    border: 'border-rose-600',
+    badge: 'bg-rose-600',
+    hex: '#DC2626',
+  },
 };
 
 /**
@@ -97,6 +105,8 @@ export const ICONOS_TIPO_BLOQUEO = {
   // 🆕 NUEVOS TIPOS
   hora_comida: 'Utensils',
   descanso: 'Coffee',
+  // 🏥 INCAPACIDAD (Enero 2026)
+  incapacidad: 'HeartPulse',
 };
 
 /**
@@ -113,6 +123,8 @@ export const LABELS_TIPO_BLOQUEO = {
   // 🆕 NUEVOS TIPOS
   hora_comida: 'Hora de Comida',
   descanso: 'Descanso',
+  // 🏥 INCAPACIDAD (Enero 2026)
+  incapacidad: 'Incapacidad Médica',
 };
 
 /**
@@ -145,6 +157,14 @@ export const ORIGENES_BLOQUEO = {
     color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300',
     editable: false,
   },
+  // 🏥 INCAPACIDAD (Enero 2026)
+  incapacidad: {
+    label: 'Incapacidad',
+    descripcion: 'Generado por registro de incapacidad médica',
+    color: 'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+    editable: false,
+    moduloRelacionado: 'Incapacidades',
+  },
 };
 
 /**
@@ -155,6 +175,7 @@ export const OPCIONES_ORIGEN_BLOQUEO = [
   { value: 'manual', label: 'Manual' },
   { value: 'vacaciones', label: 'Vacaciones' },
   { value: 'feriados', label: 'Feriados' },
+  { value: 'incapacidad', label: 'Incapacidad' },
   { value: 'importado', label: 'Importado' },
 ];
 

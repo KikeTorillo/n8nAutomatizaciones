@@ -58,7 +58,7 @@ function BloqueosPage() {
     if (filtros.fecha_hasta) params.fecha_fin = filtros.fecha_hasta;
 
     // Aplicar filtro de tipo
-    if (filtros.tipo_bloqueo) params.tipo_bloqueo = filtros.tipo_bloqueo;
+    if (filtros.tipo_bloqueo_id) params.tipo_bloqueo_id = filtros.tipo_bloqueo_id;
 
     // Según la vista activa
     if (vistaActiva === 'organizacionales') {

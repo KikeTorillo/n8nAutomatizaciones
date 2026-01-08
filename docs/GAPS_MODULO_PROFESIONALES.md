@@ -1,6 +1,6 @@
 # Gaps Módulo Profesionales
 
-**Actualizado**: 7 Enero 2026
+**Actualizado**: 8 Enero 2026
 
 ---
 
@@ -11,7 +11,6 @@
 | Gap | Descripción |
 |-----|-------------|
 | Contratos múltiples | Historial de contratos por empleado |
-| Incapacidades | Permisos médicos y tipos de ausencia |
 | Nómina México | IMSS, ISR, CFDI |
 
 ### Futuro
@@ -23,6 +22,6 @@
 
 ---
 
-## Diferenciador Nexo
+## Completados (Ene 2026)
 
-Odoo no tiene nativo: **Comisiones automáticas + Round-Robin + Chatbots IA + KPIs tiempo real**
+- **Incapacidades IMSS**: Registro, prórrogas, integración con bloqueos, estadísticas

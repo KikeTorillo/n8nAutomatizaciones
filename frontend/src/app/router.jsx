@@ -165,6 +165,9 @@ const AprobacionesPage = lazyLoadWithRetry(
 // Páginas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
 const VacacionesPage = lazy(() => import('@/pages/vacaciones/VacacionesPage'));
 
+// Páginas de Incapacidades (Ene 2026 - Módulo Profesionales)
+const IncapacidadesPage = lazy(() => import('@/pages/incapacidades/IncapacidadesPage'));
+
 // Página Mi Perfil - Portal Autoservicio Empleados (Ene 2026)
 const MiPerfilPage = lazy(() => import('@/pages/mi-perfil/MiPerfilPage'));
 
@@ -356,6 +359,15 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(OrganigramaPage)}
+          </ProtectedRoute>
+        ),
+      },
+      // Incapacidades de profesionales (Ene 2026)
+      {
+        path: 'profesionales/incapacidades',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(IncapacidadesPage)}
           </ProtectedRoute>
         ),
       },

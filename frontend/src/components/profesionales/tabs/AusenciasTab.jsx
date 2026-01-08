@@ -8,6 +8,8 @@ import {
   ExternalLink,
   CheckCircle,
   Info,
+  HeartPulse,
+  AlertTriangle,
 } from 'lucide-react';
 import PropTypes from 'prop-types';
 import Button from '@/components/ui/Button';
@@ -15,6 +17,11 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import useAuthStore from '@/store/authStore';
 import { useBloqueos } from '@/hooks/useBloqueos';
 import { useSaldosVacaciones } from '@/hooks/useVacaciones';
+import {
+  useIncapacidadesActivasProfesional,
+  getTipoIncapacidadConfig,
+  formatDiasIncapacidad,
+} from '@/hooks/useIncapacidades';
 import {
   obtenerColorTipoBloqueo,
   obtenerLabelTipoBloqueo,
@@ -55,9 +62,17 @@ function AusenciasTab({ profesional }) {
     enabled: !!profesionalId,
   });
 
+  // Fetch incapacidades activas del profesional
+  const { data: incapacidadesData, isLoading: isLoadingIncapacidades } = useIncapacidadesActivasProfesional(
+    profesionalId,
+    { enabled: !!profesionalId }
+  );
+
   const bloqueos = bloqueosData?.bloqueos || [];
   // Obtener el saldo del profesional (primer resultado)
   const saldo = saldosData?.saldos?.[0] || null;
+  // Incapacidades activas
+  const incapacidadesActivas = incapacidadesData || [];
 
   // Separar bloqueos próximos vs pasados
   const { proximos, pasados } = useMemo(() => {
@@ -87,7 +102,7 @@ function AusenciasTab({ profesional }) {
     return { proximos: prox, pasados: past.slice(0, 10) };
   }, [bloqueos]);
 
-  const isLoading = isLoadingBloqueos || isLoadingSaldo;
+  const isLoading = isLoadingBloqueos || isLoadingSaldo || isLoadingIncapacidades;
 
   if (isLoading) {
     return (
@@ -99,6 +114,56 @@ function AusenciasTab({ profesional }) {
 
   return (
     <div className="space-y-6">
+      {/* Alerta de Incapacidad Activa */}
+      {incapacidadesActivas.length > 0 && (
+        <div className="bg-rose-50 dark:bg-rose-900/20 border border-rose-200 dark:border-rose-800 rounded-lg p-4">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-rose-100 dark:bg-rose-900/40 rounded-lg">
+              <HeartPulse className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-1">
+                <AlertTriangle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                <h3 className="font-semibold text-rose-800 dark:text-rose-200">
+                  Incapacidad Activa
+                </h3>
+              </div>
+              {incapacidadesActivas.map((incapacidad) => {
+                const tipoConfig = getTipoIncapacidadConfig(incapacidad.tipo_incapacidad);
+                const fechaFin = parseISO(incapacidad.fecha_fin.split('T')[0]);
+                const diasRestantes = Math.max(0, Math.ceil((fechaFin - new Date()) / (1000 * 60 * 60 * 24)));
+
+                return (
+                  <div key={incapacidad.id} className="mb-2 last:mb-0">
+                    <p className="text-rose-700 dark:text-rose-300">
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mr-2 ${tipoConfig.bgColor} ${tipoConfig.textColor}`}>
+                        {tipoConfig.label}
+                      </span>
+                      <span className="font-medium">{incapacidad.codigo}</span>
+                      {' - '}
+                      Folio IMSS: {incapacidad.folio_imss}
+                    </p>
+                    <p className="text-sm text-rose-600 dark:text-rose-400 mt-1">
+                      {formatDiasIncapacidad(incapacidad.dias_autorizados)} autorizados
+                      {' • '}
+                      {diasRestantes > 0
+                        ? `${diasRestantes} días restantes`
+                        : 'Vencida - pendiente de cierre'}
+                    </p>
+                  </div>
+                );
+              })}
+              <Link to="/profesionales/incapacidades" className="inline-block mt-3">
+                <Button variant="outline" size="sm" className="border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40">
+                  <ExternalLink className="h-4 w-4 mr-2" />
+                  Ver Incapacidades
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Row 1: Widgets principales */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Widget Saldo de Vacaciones */}
@@ -291,6 +356,8 @@ function AusenciasTab({ profesional }) {
                     <div className={`w-12 h-12 ${colores.badge} rounded-lg flex items-center justify-center`}>
                       {bloqueo.tipo_bloqueo_codigo === 'vacaciones' ? (
                         <Palmtree className="h-6 w-6 text-white" />
+                      ) : bloqueo.tipo_bloqueo_codigo === 'incapacidad' ? (
+                        <HeartPulse className="h-6 w-6 text-white" />
                       ) : (
                         <Calendar className="h-6 w-6 text-white" />
                       )}
