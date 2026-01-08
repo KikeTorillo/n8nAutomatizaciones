@@ -21,7 +21,7 @@ import {
   Globe,
   Building2,
   ClipboardCheck,
-  Palmtree,
+  CalendarOff,
 } from 'lucide-react';
 
 import useAuthStore from '@/store/authStore';
@@ -155,11 +155,11 @@ function AppHomePage() {
       adminOnly: false, // Visible para empleados también
     },
     {
-      id: 'vacaciones',
-      name: 'Vacaciones',
-      description: esEmpleado ? 'Mis vacaciones' : 'Gestiona vacaciones',
-      icon: Palmtree,
-      path: '/vacaciones',
+      id: 'ausencias',
+      name: 'Ausencias',
+      description: esEmpleado ? 'Mis ausencias' : 'Vacaciones e incapacidades',
+      icon: CalendarOff,
+      path: '/ausencias',
       color: 'text-primary-500 dark:text-primary-400',
       bgColor: 'bg-primary-50 dark:bg-primary-900/30',
       enabled: true, // Siempre activo (módulo core de empleados)

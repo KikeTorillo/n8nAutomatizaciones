@@ -318,7 +318,7 @@ export function useSolicitudesCalendario(filtros = {}) {
         fecha_fin: filtros.fecha_fin,
         estado: filtros.estado || undefined,
         departamento_id: filtros.departamento_id || undefined,
-        limit: 500, // Máximo para calendario mensual
+        limit: 100, // Máximo permitido por el backend
       };
       const response = await vacacionesApi.listarSolicitudes(params);
       return response.data.data || [];

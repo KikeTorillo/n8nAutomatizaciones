@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router-dom';
+import { createBrowserRouter, Navigate } from 'react-router-dom';
 import App from './App';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 
@@ -162,10 +162,10 @@ const AprobacionesPage = lazyLoadWithRetry(
   'AprobacionesPage'
 );
 
-// Páginas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
-const VacacionesPage = lazy(() => import('@/pages/vacaciones/VacacionesPage'));
+// Páginas de Ausencias (Ene 2026 - Módulo Unificado Vacaciones + Incapacidades)
+const AusenciasPage = lazy(() => import('@/pages/ausencias/AusenciasPage'));
 
-// Páginas de Incapacidades (Ene 2026 - Módulo Profesionales)
+// LEGACY: Páginas de Incapacidades (redirige a /ausencias?tab=incapacidades)
 const IncapacidadesPage = lazy(() => import('@/pages/incapacidades/IncapacidadesPage'));
 
 // Página Mi Perfil - Portal Autoservicio Empleados (Ene 2026)
@@ -362,14 +362,10 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      // Incapacidades de profesionales (Ene 2026)
+      // REDIRECT: Incapacidades ahora está en /ausencias (Ene 2026)
       {
         path: 'profesionales/incapacidades',
-        element: (
-          <ProtectedRoute requiredRole={['admin', 'propietario']}>
-            {withSuspense(IncapacidadesPage)}
-          </ProtectedRoute>
-        ),
+        element: <Navigate to="/ausencias?tab=incapacidades" replace />,
       },
       {
         path: 'profesionales/:id',
@@ -396,14 +392,10 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
-      // Rutas de Bloqueos
+      // REDIRECT: Bloqueos ahora está en /ausencias (Ene 2026)
       {
         path: 'bloqueos',
-        element: (
-          <ProtectedRoute>
-            {withSuspense(BloqueosPage)}
-          </ProtectedRoute>
-        ),
+        element: <Navigate to="/ausencias?tab=otros-bloqueos" replace />,
       },
       // Rutas de Chatbots
       {
@@ -959,12 +951,12 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Rutas de Vacaciones (Ene 2026 - Fase 3 Plan Empleados)
+      // Módulo Ausencias Unificado (Ene 2026)
       {
-        path: 'vacaciones',
+        path: 'ausencias',
         element: (
           <ProtectedRoute>
-            {withSuspense(VacacionesPage)}
+            {withSuspense(AusenciasPage)}
           </ProtectedRoute>
         ),
       },

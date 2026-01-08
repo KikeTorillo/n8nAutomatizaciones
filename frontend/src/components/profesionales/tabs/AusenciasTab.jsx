@@ -153,7 +153,7 @@ function AusenciasTab({ profesional }) {
                   </div>
                 );
               })}
-              <Link to="/profesionales/incapacidades" className="inline-block mt-3">
+              <Link to="/ausencias?tab=incapacidades" className="inline-block mt-3">
                 <Button variant="outline" size="sm" className="border-rose-300 dark:border-rose-700 text-rose-700 dark:text-rose-300 hover:bg-rose-100 dark:hover:bg-rose-900/40">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ver Incapacidades
@@ -208,7 +208,7 @@ function AusenciasTab({ profesional }) {
                 </div>
               </div>
 
-              <Link to="/vacaciones">
+              <Link to="/ausencias">
                 <Button variant="outline" size="sm" className="w-full mt-2">
                   <ExternalLink className="h-4 w-4 mr-2" />
                   Ver vacaciones
@@ -295,7 +295,7 @@ function AusenciasTab({ profesional }) {
 
           <div className="space-y-3">
             {esPropioPerfil && (
-              <Link to="/vacaciones" className="block">
+              <Link to="/ausencias" className="block">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Palmtree className="h-4 w-4 mr-2" />
                   Solicitar Vacaciones

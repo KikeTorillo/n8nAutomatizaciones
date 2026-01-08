@@ -1,9 +1,10 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Calendar, Lock, Bell } from 'lucide-react';
+import { Calendar, Bell } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo de Agendamiento
- * Permite navegar entre Citas, Bloqueos y Recordatorios
+ * Permite navegar entre Citas y Recordatorios
+ * Nota: Bloqueos se movió a /ausencias?tab=otros-bloqueos (Ene 2026)
  */
 const tabs = [
   {
@@ -11,12 +12,6 @@ const tabs = [
     label: 'Citas',
     path: '/citas',
     icon: Calendar,
-  },
-  {
-    id: 'bloqueos',
-    label: 'Bloqueos',
-    path: '/bloqueos',
-    icon: Lock,
   },
   {
     id: 'recordatorios',
