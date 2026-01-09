@@ -4,7 +4,6 @@ import {
   Plus,
   Search,
   Filter,
-  X,
   ArrowRightLeft,
   Building2,
   Package,
@@ -14,14 +13,17 @@ import {
   Send,
   Eye,
   Trash2,
+  ChevronDown,
+  ChevronUp,
+  RotateCcw,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import TransferenciaFormModal from '@/components/sucursales/TransferenciaFormModal';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useTransferencias,
   useSucursales,
@@ -176,125 +178,133 @@ function TransferenciasPage() {
     });
   };
 
+  // Calcular filtros activos
+  const filtrosActivos = [filtros.estado, filtros.sucursal_origen_id, filtros.sucursal_destino_id, busqueda].filter(Boolean).length;
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <BackButton to="/sucursales" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <ArrowRightLeft className="w-7 h-7 text-primary-600" />
-                  Transferencias de Stock
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  Gestiona el movimiento de productos entre sucursales
-                </p>
-              </div>
+    <InventarioPageLayout
+      icon={ArrowRightLeft}
+      title="Transferencias"
+      subtitle={`${transferenciasFiltradas?.length || 0} transferencia${(transferenciasFiltradas?.length || 0) !== 1 ? 's' : ''}`}
+      actions={
+        <Button
+          variant="primary"
+          onClick={handleNuevaTransferencia}
+          icon={Plus}
+          className="flex-1 sm:flex-none text-sm"
+        >
+          <span className="hidden sm:inline">Nueva Transferencia</span>
+          <span className="sm:hidden">Nueva</span>
+        </Button>
+      }
+    >
+
+        {/* Panel de Filtros */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+          <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            {/* Barra de búsqueda */}
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Buscar por código o sucursal..."
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+              />
             </div>
 
-            <Button onClick={handleNuevaTransferencia} variant="primary">
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva Transferencia
-            </Button>
+            {/* Botones de acción */}
+            <div className="flex items-center gap-2">
+              {/* Botón Filtros */}
+              <button
+                type="button"
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors min-h-[40px] ${
+                  showFilters
+                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400'
+                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                } hover:bg-gray-200 dark:hover:bg-gray-600`}
+                aria-expanded={showFilters}
+              >
+                <Filter className="h-4 w-4" />
+                <span>Filtros</span>
+                {filtrosActivos > 0 && (
+                  <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold rounded-full bg-primary-600 text-white">
+                    {filtrosActivos}
+                  </span>
+                )}
+                {showFilters ? (
+                  <ChevronUp className="h-4 w-4" />
+                ) : (
+                  <ChevronDown className="h-4 w-4" />
+                )}
+              </button>
+
+              {/* Botón Limpiar */}
+              {filtrosActivos > 0 && (
+                <button
+                  type="button"
+                  onClick={handleLimpiarFiltros}
+                  className="flex items-center gap-1.5 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors min-h-[40px] text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  aria-label="Limpiar todos los filtros"
+                >
+                  <RotateCcw className="h-4 w-4" />
+                  <span className="hidden sm:inline">Limpiar</span>
+                </button>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Filtros */}
-      <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-          {/* Búsqueda */}
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            <Input
-              type="text"
-              placeholder="Buscar por código o sucursal..."
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-
-          {/* Toggle filtros */}
-          <Button
-            variant="secondary"
-            onClick={() => setShowFilters(!showFilters)}
-            className={showFilters ? 'bg-primary-50 dark:bg-primary-900/30' : ''}
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            Filtros
-            {(filtros.estado || filtros.sucursal_origen_id || filtros.sucursal_destino_id) && (
-              <span className="ml-2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
-                {[filtros.estado, filtros.sucursal_origen_id, filtros.sucursal_destino_id].filter(Boolean).length}
-              </span>
-            )}
-          </Button>
-
-          {/* Limpiar filtros */}
-          {(busqueda || filtros.estado || filtros.sucursal_origen_id || filtros.sucursal_destino_id) && (
-            <Button variant="ghost" onClick={handleLimpiarFiltros} size="sm">
-              <X className="w-4 h-4 mr-1" />
-              Limpiar
-            </Button>
+          {/* Filtros expandidos */}
+          {showFilters && (
+            <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <Select
+                  label="Estado"
+                  value={filtros.estado}
+                  onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
+                  options={estadosOptions}
+                />
+                <Select
+                  label="Sucursal Origen"
+                  value={filtros.sucursal_origen_id}
+                  onChange={(e) => setFiltros({ ...filtros, sucursal_origen_id: e.target.value })}
+                  options={sucursalesOptions}
+                />
+                <Select
+                  label="Sucursal Destino"
+                  value={filtros.sucursal_destino_id}
+                  onChange={(e) => setFiltros({ ...filtros, sucursal_destino_id: e.target.value })}
+                  options={sucursalesOptions}
+                />
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Panel de filtros expandible */}
-        {showFilters && (
-          <div className="mt-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Select
-                label="Estado"
-                value={filtros.estado}
-                onChange={(e) => setFiltros({ ...filtros, estado: e.target.value })}
-                options={estadosOptions}
-              />
-              <Select
-                label="Sucursal Origen"
-                value={filtros.sucursal_origen_id}
-                onChange={(e) => setFiltros({ ...filtros, sucursal_origen_id: e.target.value })}
-                options={sucursalesOptions}
-              />
-              <Select
-                label="Sucursal Destino"
-                value={filtros.sucursal_destino_id}
-                onChange={(e) => setFiltros({ ...filtros, sucursal_destino_id: e.target.value })}
-                options={sucursalesOptions}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Lista de transferencias */}
-      <div className="max-w-7xl mx-auto px-4 pb-8 sm:px-6 lg:px-8">
-        {isLoading ? (
-          <div className="flex justify-center py-12">
-            <LoadingSpinner size="lg" />
-          </div>
-        ) : transferenciasFiltradas?.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-            <ArrowRightLeft className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No hay transferencias
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {busqueda || filtros.estado
-                ? 'No se encontraron transferencias con los filtros aplicados'
-                : 'Crea tu primera transferencia para mover stock entre sucursales'}
-            </p>
-            {!busqueda && !filtros.estado && (
-              <Button onClick={handleNuevaTransferencia} variant="primary">
-                <Plus className="w-4 h-4 mr-2" />
-                Nueva Transferencia
-              </Button>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Lista de transferencias */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {isLoading ? (
+            <SkeletonTable rows={5} columns={7} />
+          ) : transferenciasFiltradas?.length === 0 ? (
+            <EmptyState
+              icon={ArrowRightLeft}
+              title="No hay transferencias"
+              description={
+                busqueda || filtros.estado
+                  ? 'No se encontraron transferencias con los filtros aplicados'
+                  : 'Crea tu primera transferencia para mover stock entre sucursales'
+              }
+              action={
+                !busqueda && !filtros.estado && (
+                  <Button onClick={handleNuevaTransferencia} variant="primary" icon={Plus}>
+                    Nueva Transferencia
+                  </Button>
+                )
+              }
+            />
+          ) : (
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead className="bg-gray-50 dark:bg-gray-900">
@@ -429,9 +439,8 @@ function TransferenciasPage() {
                 </tbody>
               </table>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
       {/* Modal crear transferencia */}
       <TransferenciaFormModal
@@ -478,7 +487,7 @@ function TransferenciasPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

@@ -2,12 +2,11 @@ import { useState } from 'react';
 import { FolderTree, Plus, Edit, Trash2, ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Alert from '@/components/ui/Alert';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useCategorias,
   useArbolCategorias,
@@ -217,44 +216,21 @@ function CategoriasPage() {
       }));
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección - Mobile First */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <FolderTree className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Categorías</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {total} categoría{total !== 1 ? 's' : ''} en total
-                </p>
-              </div>
-            </div>
-            <Button
-              variant="primary"
-              onClick={handleNuevaCategoria}
-              icon={Plus}
-              className="w-full sm:w-auto"
-            >
-              Nueva Categoría
-            </Button>
-          </div>
-        </div>
+    <InventarioPageLayout
+      icon={FolderTree}
+      title="Categorías"
+      subtitle={`${total} categoría${total !== 1 ? 's' : ''} en total`}
+      actions={
+        <Button
+          variant="primary"
+          onClick={handleNuevaCategoria}
+          icon={Plus}
+          className="w-full sm:w-auto"
+        >
+          Nueva Categoría
+        </Button>
+      }
+    >
 
         {/* Controles - Mobile First */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
@@ -324,7 +300,6 @@ function CategoriasPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal de Formulario */}
       <CategoriaFormModal
@@ -387,7 +362,7 @@ function CategoriasPage() {
           );
         })()}
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

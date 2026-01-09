@@ -1,11 +1,10 @@
 import { useState, useMemo } from 'react';
 import { Calendar, RefreshCw, Clock, Package, TrendingUp, TrendingDown, Minus, AlertCircle, Download, Filter, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import { useInventoryAtDate, useFechasDisponibles, useGenerarSnapshot, useCompararInventario } from '@/hooks/useInventoryAtDate';
 import { useCategorias } from '@/hooks/useCategorias';
 import { format, parseISO } from 'date-fns';
@@ -120,42 +119,21 @@ function InventarioHistoricoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Clock className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Inventario Histórico</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Consulta el estado del inventario en fechas pasadas
-                </p>
-              </div>
-            </div>
-            <Button
-              onClick={handleGenerarSnapshot}
-              loading={generandoSnapshot}
-              icon={RefreshCw}
-            >
-              Generar Snapshot
-            </Button>
-          </div>
-        </div>
+    <InventarioPageLayout
+      icon={Clock}
+      title="Inventario Histórico"
+      subtitle="Consulta el estado del inventario en fechas pasadas"
+      actions={
+        <Button
+          onClick={handleGenerarSnapshot}
+          loading={generandoSnapshot}
+          icon={RefreshCw}
+        >
+          Generar Snapshot
+        </Button>
+      }
+    >
+      <div className="space-y-6">
 
         {/* Selector de Fecha y Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
@@ -408,7 +386,7 @@ function InventarioHistoricoPage() {
           )}
         </div>
       </div>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

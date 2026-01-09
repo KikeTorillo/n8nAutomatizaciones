@@ -5,7 +5,6 @@ import {
 } from 'lucide-react';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
@@ -16,7 +15,7 @@ import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useNumerosSerie,
   useBuscarNumeroSerie,
@@ -138,20 +137,11 @@ function NumerosSeriesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-
-        <InventarioNavTabs activeTab="numeros-serie" />
-      </div>
-
-      {/* Contenido */}
-      <div className="p-6">
+    <InventarioPageLayout
+      icon={Package}
+      title="Números de Serie / Lotes"
+      subtitle={`${pagination.total} registros en total`}
+    >
         {/* Estadisticas */}
         {estadisticas && (
           <StatCardGrid
@@ -380,7 +370,6 @@ function NumerosSeriesPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal Detalle */}
       <Modal
@@ -561,7 +550,7 @@ function NumerosSeriesPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

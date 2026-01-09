@@ -38,8 +38,7 @@ import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatCurrency } from '@/lib/utils';
-import BackButton from '@/components/ui/BackButton';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 
 // Estados con colores
 const ESTADOS = {
@@ -94,43 +93,21 @@ export default function DropshipPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Header de sección */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <Truck className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-                Dropshipping
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Gestión de envíos directos del proveedor al cliente
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => setShowConfigurar(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-          >
-            <Settings className="h-4 w-4" />
-            Configuración
-          </button>
-        </div>
+    <InventarioPageLayout
+      icon={Truck}
+      title="Dropshipping"
+      subtitle="Gestión de envíos directos del proveedor al cliente"
+      actions={
+        <button
+          onClick={() => setShowConfigurar(true)}
+          className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <Settings className="h-4 w-4" />
+          Configuración
+        </button>
+      }
+    >
+      <div className="space-y-6">
 
       {/* Metricas */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -496,7 +473,7 @@ export default function DropshipPage() {
           </p>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

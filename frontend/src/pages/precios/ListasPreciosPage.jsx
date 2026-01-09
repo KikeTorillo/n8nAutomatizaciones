@@ -18,7 +18,6 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
@@ -28,6 +27,7 @@ import { useToast } from '@/hooks/useToast';
 import { listasPreciosApi, monedasApi, clientesApi, inventarioApi } from '@/services/api/endpoints';
 import Select from '@/components/ui/Select';
 import { useCurrency } from '@/hooks/useCurrency';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 
 /**
  * Página de Gestión de Listas de Precios
@@ -141,49 +141,28 @@ function ListasPreciosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/inventario/productos" label="Inventario" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Listas de Precios
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gestiona precios diferenciados por cliente
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="p-3 bg-primary-100 dark:bg-primary-900/40 rounded-lg">
-                <Tag className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Toolbar */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <Input
-              type="text"
-              placeholder="Buscar lista..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Button onClick={handleNueva}>
-            <Plus className="w-4 h-4" />
-            Nueva Lista
-          </Button>
+    <InventarioPageLayout
+      icon={Tag}
+      title="Listas de Precios"
+      subtitle={`${listasFiltradas.length} lista${listasFiltradas.length !== 1 ? 's' : ''} de precios`}
+      actions={
+        <Button onClick={handleNueva}>
+          <Plus className="w-4 h-4 mr-1" />
+          Nueva Lista
+        </Button>
+      }
+    >
+      <div className="space-y-6">
+        {/* Búsqueda */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Buscar lista..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
         </div>
 
         {/* Lista de listas de precios */}
@@ -221,7 +200,7 @@ function ListasPreciosPage() {
             ))}
           </div>
         )}
-      </main>
+      </div>
 
       {/* Drawer: Formulario de Lista */}
       <Drawer
@@ -285,7 +264,7 @@ function ListasPreciosPage() {
         variant="danger"
         isLoading={eliminarMutation.isPending}
       />
-    </div>
+    </InventarioPageLayout>
   );
 }
 

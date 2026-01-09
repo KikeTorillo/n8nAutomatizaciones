@@ -14,13 +14,12 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useAlertas,
   useMarcarAlertaLeida,
@@ -222,53 +221,29 @@ function AlertasPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <AlertTriangle className="h-8 w-8 text-orange-600 dark:text-orange-400" />
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Alertas de Inventario</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {total} alerta{total !== 1 ? 's' : ''} registrada{total !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-
-            {/* Acciones Masivas */}
-            {alertasSeleccionadas.length > 0 && (
-              <div className="flex items-center space-x-3">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {alertasSeleccionadas.length} seleccionada{alertasSeleccionadas.length !== 1 ? 's' : ''}
-                </span>
-                <Button
-                  variant="primary"
-                  onClick={handleMarcarVariasLeidas}
-                  icon={CheckCheck}
-                  isLoading={marcarVariasMutation.isPending}
-                >
-                  Marcar como Leídas
-                </Button>
-              </div>
-            )}
+    <InventarioPageLayout
+      icon={AlertTriangle}
+      title="Alertas de Inventario"
+      subtitle={`${total} alerta${total !== 1 ? 's' : ''} registrada${total !== 1 ? 's' : ''}`}
+      actions={
+        alertasSeleccionadas.length > 0 && (
+          <div className="flex items-center space-x-3">
+            <span className="text-sm text-gray-600 dark:text-gray-400">
+              {alertasSeleccionadas.length} seleccionada{alertasSeleccionadas.length !== 1 ? 's' : ''}
+            </span>
+            <Button
+              variant="primary"
+              onClick={handleMarcarVariasLeidas}
+              icon={CheckCheck}
+              isLoading={marcarVariasMutation.isPending}
+            >
+              Marcar como Leídas
+            </Button>
           </div>
-        </div>
+        )
+      }
+    >
+      <div className="space-y-6">
 
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
@@ -539,7 +514,7 @@ function AlertasPage() {
           )}
         </div>
       </div>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

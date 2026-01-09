@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useDebounce } from '@/hooks/useDebounce';
 import {
     ClipboardList,
     Plus,
@@ -10,16 +11,12 @@ import {
     Filter,
     Search,
     Calendar,
-    Building2,
     ChevronDown,
     ChevronUp,
-    BarChart3,
     AlertTriangle,
-    Package,
     Diff,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -28,7 +25,7 @@ import Pagination from '@/components/ui/Pagination';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useConteos,
     useCrearConteo,
@@ -63,6 +60,13 @@ export default function ConteosPage() {
 
     const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [motivoCancelacion, setMotivoCancelacion] = useState('');
+    const [busquedaInput, setBusquedaInput] = useState('');
+    const busquedaDebounced = useDebounce(busquedaInput, 300);
+
+    // Actualizar filtros cuando cambia la búsqueda debounced
+    useEffect(() => {
+        setFiltros((prev) => ({ ...prev, folio: busquedaDebounced, offset: 0 }));
+    }, [busquedaDebounced]);
 
     // Modal manager
     const { isOpen, getModalData, openModal, closeModal } = useModalManager();
@@ -90,6 +94,7 @@ export default function ConteosPage() {
     };
 
     const handleLimpiarFiltros = () => {
+        setBusquedaInput('');
         setFiltros({
             estado: '',
             tipo_conteo: '',
@@ -180,15 +185,6 @@ export default function ConteosPage() {
         });
     };
 
-    // Formatear moneda
-    const formatMoneda = (valor) => {
-        if (valor === null || valor === undefined) return '$0.00';
-        return new Intl.NumberFormat('es-MX', {
-            style: 'currency',
-            currency: 'MXN',
-        }).format(valor);
-    };
-
     // Renderizar estado
     const renderEstado = (estado) => {
         const config = ESTADOS_CONTEO_CONFIG[estado] || ESTADOS_CONTEO_CONFIG.borrador;
@@ -256,63 +252,46 @@ export default function ConteosPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <BackButton to="/home" label="Volver al Inicio" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <ClipboardList className="h-7 w-7 text-primary-600" />
-                                    Conteos de Inventario
-                                </h1>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Gestión de conteos físicos y ajustes de inventario
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                            >
-                                <Filter className="h-4 w-4 mr-1" />
-                                Filtros
-                                {mostrarFiltros ? (
-                                    <ChevronUp className="h-4 w-4 ml-1" />
-                                ) : (
-                                    <ChevronDown className="h-4 w-4 ml-1" />
-                                )}
-                            </Button>
-
-                            <Button onClick={handleNuevoConteo}>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Nuevo Conteo
-                            </Button>
-                        </div>
-                    </div>
-
-                    <InventarioNavTabs activeTab="conteos" className="mt-4" />
-                </div>
-            </div>
-
+        <InventarioPageLayout
+            icon={ClipboardList}
+            title="Conteos"
+            subtitle={`${total} conteo${total !== 1 ? 's' : ''} en total`}
+            actions={
+                <>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                        className="flex-1 sm:flex-none"
+                    >
+                        <Filter className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Filtros</span>
+                        {mostrarFiltros ? (
+                            <ChevronUp className="h-4 w-4 ml-1" />
+                        ) : (
+                            <ChevronDown className="h-4 w-4 ml-1" />
+                        )}
+                    </Button>
+                    <Button onClick={handleNuevoConteo} className="flex-1 sm:flex-none">
+                        <Plus className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Nuevo Conteo</span>
+                        <span className="sm:hidden">Nuevo</span>
+                    </Button>
+                </>
+            }
+        >
             {/* Filtros */}
             {mostrarFiltros && (
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
                             {/* Búsqueda por folio */}
                             <div className="relative">
                                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                                 <input
                                     type="text"
                                     placeholder="Buscar por folio..."
-                                    value={filtros.folio}
-                                    onChange={(e) => handleFiltroChange('folio', e.target.value)}
+                                    value={busquedaInput}
+                                    onChange={(e) => setBusquedaInput(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                                 />
                             </div>
@@ -368,29 +347,27 @@ export default function ConteosPage() {
                             </div>
                         </div>
 
-                        <div className="flex justify-end mt-4">
-                            <Button variant="ghost" size="sm" onClick={handleLimpiarFiltros}>
-                                Limpiar filtros
-                            </Button>
-                        </div>
+                    <div className="flex justify-end mt-4 col-span-full">
+                        <Button variant="ghost" size="sm" onClick={handleLimpiarFiltros}>
+                            Limpiar filtros
+                        </Button>
                     </div>
                 </div>
             )}
 
             {/* Estadísticas rápidas */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                <StatCardGrid
-                    className="mb-6"
-                    stats={[
-                        { icon: ClipboardList, label: 'Total', value: total, color: 'blue' },
-                        { icon: Play, label: 'En Proceso', value: parseInt(totales.en_proceso) || 0, color: 'yellow' },
-                        { icon: CheckCircle, label: 'Ajustados', value: parseInt(totales.ajustados) || 0, color: 'green' },
-                        { icon: Diff, label: 'Con Diferencias', value: parseInt(estadisticas.conteos_con_diferencias) || 0, color: 'red' },
-                    ]}
-                />
+            <StatCardGrid
+                className="mb-6"
+                stats={[
+                    { icon: ClipboardList, label: 'Total', value: total, color: 'blue' },
+                    { icon: Play, label: 'En Proceso', value: parseInt(totales.en_proceso) || 0, color: 'yellow' },
+                    { icon: CheckCircle, label: 'Ajustados', value: parseInt(totales.ajustados) || 0, color: 'green' },
+                    { icon: Diff, label: 'Con Diferencias', value: parseInt(estadisticas.conteos_con_diferencias) || 0, color: 'red' },
+                ]}
+            />
 
-                {/* Tabla de conteos */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+            {/* Tabla de conteos */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                     {isLoading ? (
                         <SkeletonTable rows={5} columns={7} />
                     ) : conteos.length === 0 ? (
@@ -493,10 +470,11 @@ export default function ConteosPage() {
                                                         <button
                                                             key={idx}
                                                             onClick={accion.onClick}
-                                                            className={`p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${accion.className}`}
+                                                            className={`p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center ${accion.className}`}
                                                             title={accion.label}
+                                                            aria-label={accion.label}
                                                         >
-                                                            <accion.icon className="h-4 w-4" />
+                                                            <accion.icon className="h-5 w-5" />
                                                         </button>
                                                     ))}
                                                 </div>
@@ -530,7 +508,6 @@ export default function ConteosPage() {
                         />
                     </div>
                 )}
-            </div>
 
             {/* Modal crear conteo */}
             {isOpen('form') && (
@@ -604,6 +581,6 @@ export default function ConteosPage() {
                     </div>
                 </Modal>
             )}
-        </div>
+        </InventarioPageLayout>
     );
 }

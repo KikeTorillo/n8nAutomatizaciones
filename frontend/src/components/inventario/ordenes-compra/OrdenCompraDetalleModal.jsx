@@ -15,6 +15,7 @@ import {
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import RecordNavigation from '@/components/ui/RecordNavigation';
 import { useToast } from '@/hooks/useToast';
 import {
   useOrdenCompra,
@@ -37,11 +38,28 @@ export default function OrdenCompraDetalleModal({
   onEnviar,
   onRecibir,
   onPago,
+  // Props para navegación entre registros
+  allOrdenIds = [],
+  currentIndex = 0,
+  onNavigate,
 }) {
   const { showToast } = useToast();
 
   // Query de la orden
   const { data: orden, isLoading } = useOrdenCompra(ordenId);
+
+  // Handlers de navegación
+  const handlePrevious = () => {
+    if (currentIndex > 0 && onNavigate) {
+      onNavigate(allOrdenIds[currentIndex - 1]);
+    }
+  };
+
+  const handleNext = () => {
+    if (currentIndex < allOrdenIds.length - 1 && onNavigate) {
+      onNavigate(allOrdenIds[currentIndex + 1]);
+    }
+  };
 
   // Estado para agregar items
   const [mostrarAgregarItem, setMostrarAgregarItem] = useState(false);
@@ -207,11 +225,29 @@ export default function OrdenCompraDetalleModal({
   const esBorrador = orden?.estado === 'borrador';
   const items = orden?.items || [];
 
+  // Custom header con RecordNavigation
+  const modalHeader = (
+    <div className="flex items-center justify-between w-full">
+      <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+        Orden de Compra {orden?.folio || ''}
+      </h2>
+      {allOrdenIds.length > 1 && (
+        <RecordNavigation
+          currentIndex={currentIndex}
+          totalRecords={allOrdenIds.length}
+          onPrevious={handlePrevious}
+          onNext={handleNext}
+          size="sm"
+        />
+      )}
+    </div>
+  );
+
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Orden de Compra ${orden?.folio || ''}`}
+      title={modalHeader}
       size="4xl"
     >
       {isLoading ? (

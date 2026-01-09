@@ -2,13 +2,12 @@ import { useState } from 'react';
 import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search, ArrowLeftRight } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import { useMovimientos } from '@/hooks/useInventario';
 import { useProductos } from '@/hooks/useProductos';
 import { useProveedores } from '@/hooks/useProveedores';
@@ -90,34 +89,11 @@ function MovimientosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-3">
-            <ArrowLeftRight className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Movimientos de Inventario</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                {total} movimiento{total !== 1 ? 's' : ''} registrado{total !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-        </div>
+    <InventarioPageLayout
+      icon={ArrowLeftRight}
+      title="Kardex"
+      subtitle={`${total} movimiento${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`}
+    >
 
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
@@ -392,7 +368,6 @@ function MovimientosPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Modal de Kardex */}
       <KardexModal
@@ -400,7 +375,7 @@ function MovimientosPage() {
         onClose={() => closeModal('kardex')}
         producto={getModalData('kardex')}
       />
-    </div>
+    </InventarioPageLayout>
   );
 }
 

@@ -23,13 +23,12 @@ import {
   Send,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useOperacionesAlmacen,
   useOperacionesKanban,
@@ -353,57 +352,39 @@ export default function OperacionesAlmacenPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <BackButton fallbackPath="/inventario" />
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                  <Boxes className="h-6 w-6 text-primary-600" />
-                  Operaciones de Almacén
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Gestión de operaciones multi-paso: Recepción, QC, Picking, Empaque, Envío
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => navigate('/inventario/configuracion-almacen')}
-              >
-                <Settings className="h-4 w-4 mr-1" />
-                Configurar
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetch()}
-                disabled={isLoading}
-              >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-              </Button>
-              <Button
-                variant={mostrarFiltros ? 'primary' : 'outline'}
-                size="sm"
-                onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              >
-                <Filter className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+    <InventarioPageLayout
+      icon={Boxes}
+      title="Operaciones de Almacén"
+      subtitle="Gestión de operaciones: Recepción, QC, Picking, Empaque, Envío"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => navigate('/inventario/configuracion-almacen')}
+            icon={Settings}
+          >
+            <span className="hidden sm:inline">Configurar</span>
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isLoading}
+            icon={RefreshCw}
+            className={isLoading ? '[&_svg]:animate-spin' : ''}
+          />
+          <Button
+            variant={mostrarFiltros ? 'primary' : 'secondary'}
+            size="sm"
+            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+            icon={Filter}
+          />
         </div>
-      </div>
-
-      {/* Nav tabs */}
-      <InventarioNavTabs />
-
+      }
+    >
       {/* Estadísticas */}
-      <div className="max-w-full px-4 sm:px-6 lg:px-8 py-4">
+      <div className="mb-4">
         <StatCardGrid
           columns={4}
           className="lg:grid-cols-5"
@@ -443,7 +424,7 @@ export default function OperacionesAlmacenPage() {
 
       {/* Filtros */}
       {mostrarFiltros && (
-        <div className="max-w-full px-4 sm:px-6 lg:px-8 pb-4">
+        <div className="mb-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <Select
@@ -481,7 +462,7 @@ export default function OperacionesAlmacenPage() {
       )}
 
       {/* Kanban Board */}
-      <div className="max-w-full px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
             <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
@@ -559,6 +540,6 @@ export default function OperacionesAlmacenPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }

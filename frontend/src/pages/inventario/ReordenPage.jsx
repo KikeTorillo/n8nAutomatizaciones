@@ -30,8 +30,8 @@ import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import BackButton from '@/components/ui/BackButton';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import Button from '@/components/ui/Button';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import StockPronosticoChart from '@/components/inventario/reorden/StockPronosticoChart';
 
 export default function ReordenPage() {
@@ -58,55 +58,34 @@ export default function ReordenPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      <InventarioNavTabs />
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Header de sección */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center space-x-3">
-            <RefreshCw className="h-7 w-7 text-primary-600 dark:text-primary-400" />
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-                Reorden Automático
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Sistema de reabastecimiento automático basado en reglas
-              </p>
-            </div>
-          </div>
-
+    <InventarioPageLayout
+      icon={RefreshCw}
+      title="Reorden Automático"
+      subtitle="Sistema de reabastecimiento automático basado en reglas"
+      actions={
         <div className="flex gap-2">
           <Link
             to="/inventario/reorden/reglas"
             className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <Settings className="h-4 w-4" />
-            Configurar Reglas
+            <span className="hidden sm:inline">Configurar Reglas</span>
+            <span className="sm:hidden">Reglas</span>
           </Link>
-          <button
+          <Button
+            variant="primary"
             onClick={handleEjecutar}
             disabled={ejecutarMutation.isPending}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            icon={ejecutarMutation.isPending ? RefreshCw : Play}
+            className={ejecutarMutation.isPending ? '[&_svg]:animate-spin' : ''}
           >
-            {ejecutarMutation.isPending ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Play className="h-4 w-4" />
-            )}
-            Ejecutar Ahora
-          </button>
+            <span className="hidden sm:inline">Ejecutar Ahora</span>
+            <span className="sm:hidden">Ejecutar</span>
+          </Button>
         </div>
-      </div>
+      }
+    >
+      <div className="space-y-6">
 
       {/* Metricas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -349,7 +328,7 @@ export default function ReordenPage() {
           </div>
         </div>
       )}
-      </div>
+    </div>
 
       {/* Modal de Pronostico de Stock */}
       <Modal
@@ -375,7 +354,7 @@ export default function ReordenPage() {
         variant="primary"
         isLoading={ejecutarMutation.isPending}
       />
-    </div>
+    </InventarioPageLayout>
   );
 }
 

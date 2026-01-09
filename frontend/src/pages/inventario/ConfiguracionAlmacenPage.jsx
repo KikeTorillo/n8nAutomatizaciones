@@ -18,11 +18,10 @@ import {
   Send,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useConfiguracionAlmacen,
   useActualizarConfiguracion,
@@ -484,30 +483,12 @@ export default function ConfiguracionAlmacenPage() {
   const sucursalId = getSucursalId();
 
   return (
-    <div className="min-h-screen bg-gray-100 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center gap-4">
-            <BackButton fallbackPath="/inventario/operaciones" />
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Settings className="h-6 w-6 text-primary-600" />
-                Configuración de Almacén
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Configura rutas de recepción y envío multi-paso por sucursal
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Nav tabs */}
-      <InventarioNavTabs />
-
-      {/* Info Card */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+    <InventarioPageLayout
+      icon={Settings}
+      title="Configuración de Almacén"
+      subtitle="Configura rutas de recepción y envío multi-paso por sucursal"
+    >
+      <div className="space-y-6">
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
           <div className="flex gap-3">
             <Info className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
@@ -524,6 +505,6 @@ export default function ConfiguracionAlmacenPage() {
         {/* Configuración de la sucursal actual */}
         <ConfiguracionSucursalCard sucursalId={sucursalId} />
       </div>
-    </div>
+    </InventarioPageLayout>
   );
 }

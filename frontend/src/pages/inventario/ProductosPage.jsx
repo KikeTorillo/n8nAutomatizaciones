@@ -1,13 +1,15 @@
-import { useState } from 'react';
-import { Package, Plus, Edit, Trash2, TrendingDown, Upload, FileBarChart, ImageIcon, ScanLine, Tag } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Package, Plus, Edit, Trash2, TrendingDown, Upload, ImageIcon, ScanLine, Tag, Search, AlertTriangle } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
+import { AdvancedFilterPanel, FilterChip, SavedSearchModal } from '@/components/ui/filters';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import { useFilters } from '@/hooks/useFilters';
+import { useSavedFilters } from '@/hooks/useSavedFilters';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useProductos,
   useEliminarProducto,
@@ -26,15 +28,35 @@ import BarcodeScanner from '@/components/common/BarcodeScanner';
 function ProductosPage() {
   const { success: showSuccess, error: showError } = useToast();
 
-  // Estado de filtros
-  const [filtros, setFiltros] = useState({
+  // Estado de filtros con hook reutilizable
+  const INITIAL_FILTERS = {
     busqueda: '',
     categoria_id: '',
     proveedor_id: '',
     activo: true,
     stock_bajo: false,
     stock_agotado: false,
-  });
+  };
+
+  const {
+    filtros,
+    filtrosQuery,
+    filtrosActivos,
+    filtrosActivosArray,
+    setFiltro,
+    setFiltros,
+    limpiarFiltros,
+    aplicarBusqueda,
+  } = useFilters(INITIAL_FILTERS, { moduloId: 'inventario.productos' });
+
+  // Búsquedas guardadas
+  const {
+    busquedas,
+    guardarBusqueda,
+    eliminarBusqueda,
+    toggleDefault,
+    existeNombre,
+  } = useSavedFilters('inventario.productos');
 
   // Estado de modales con useModalManager
   const { isOpen, getModalData, openModal, closeModal } = useModalManager();
@@ -42,8 +64,11 @@ function ProductosPage() {
   // Estado del scanner
   const [showScanner, setShowScanner] = useState(false);
 
-  // Queries
-  const { data: productosData, isLoading: cargandoProductos } = useProductos(filtros);
+  // Modal para guardar búsqueda
+  const [showSaveSearchModal, setShowSaveSearchModal] = useState(false);
+
+  // Queries - usar filtrosQuery (debounced)
+  const { data: productosData, isLoading: cargandoProductos } = useProductos(filtrosQuery);
   const productos = productosData?.productos || [];
   const total = productosData?.total || 0;
 
@@ -56,27 +81,44 @@ function ProductosPage() {
   // Mutations
   const eliminarMutation = useEliminarProducto();
 
-  // Handlers de filtros
-  const handleFiltroChange = (campo, valor) => {
-    setFiltros((prev) => ({ ...prev, [campo]: valor }));
-  };
-
-  const handleLimpiarFiltros = () => {
-    setFiltros({
-      busqueda: '',
-      categoria_id: '',
-      proveedor_id: '',
-      activo: true,
-      stock_bajo: false,
-      stock_agotado: false,
-    });
-  };
+  // Configuración de filtros para AdvancedFilterPanel
+  const filterConfig = useMemo(() => [
+    {
+      id: 'stock',
+      label: 'Estado de Stock',
+      type: 'checkbox-group',
+      options: [
+        { field: 'stock_bajo', label: 'Stock bajo', icon: TrendingDown },
+        { field: 'stock_agotado', label: 'Agotados', icon: AlertTriangle },
+      ],
+    },
+    {
+      id: 'categoria_id',
+      label: 'Categoría',
+      type: 'select',
+      placeholder: 'Todas las categorías',
+      options: categorias.map((c) => ({ value: c.id, label: c.nombre })),
+    },
+    {
+      id: 'proveedor_id',
+      label: 'Proveedor',
+      type: 'select',
+      placeholder: 'Todos los proveedores',
+      options: proveedores.map((p) => ({ value: p.id, label: p.nombre })),
+    },
+  ], [categorias, proveedores]);
 
   // Handler de escaneo
   const handleScan = (code) => {
     setShowScanner(false);
-    handleFiltroChange('busqueda', code);
+    setFiltro('busqueda', code);
     showSuccess(`Buscando: ${code}`);
+  };
+
+  // Handler para guardar búsqueda
+  const handleGuardarBusqueda = (nombre, esDefault) => {
+    guardarBusqueda(nombre, filtros, esDefault);
+    showSuccess('Búsqueda guardada correctamente');
   };
 
   // Handlers de acciones
@@ -141,161 +183,109 @@ function ProductosPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+    <InventarioPageLayout
+      icon={Package}
+      title="Productos"
+      subtitle={`${total} producto${total !== 1 ? 's' : ''} en total`}
+      actions={
+        <>
+          <Button
+            variant="secondary"
+            onClick={() => openModal('bulk')}
+            icon={Upload}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Carga Masiva</span>
+            <span className="sm:hidden">Carga</span>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleNuevoProducto}
+            icon={Plus}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Nuevo Producto</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </>
+      }
+    >
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección - Mobile First */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Package className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Productos</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {total} producto{total !== 1 ? 's' : ''} en total
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 sm:gap-3">
-              <Button
-                variant="secondary"
-                onClick={() => openModal('bulk')}
-                icon={Upload}
-                className="flex-1 sm:flex-none text-sm"
-              >
-                <span className="hidden sm:inline">Carga Masiva</span>
-                <span className="sm:hidden">Carga</span>
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleNuevoProducto}
-                icon={Plus}
-                className="flex-1 sm:flex-none text-sm"
-              >
-                <span className="hidden sm:inline">Nuevo Producto</span>
-                <span className="sm:hidden">Nuevo</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            {/* Búsqueda con Scanner */}
-            <div className="relative z-10">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Buscar
-              </label>
-              <div className="flex gap-2">
+        {/* Panel de Filtros Avanzados */}
+        <AdvancedFilterPanel
+          filtros={filtros}
+          onFiltrosChange={setFiltros}
+          onLimpiarFiltros={limpiarFiltros}
+          filterConfig={filterConfig}
+          moduloId="inventario.productos"
+          busquedasGuardadas={busquedas}
+          onAplicarBusqueda={aplicarBusqueda}
+          onEliminarBusqueda={eliminarBusqueda}
+          onToggleDefault={toggleDefault}
+          onGuardarBusqueda={() => setShowSaveSearchModal(true)}
+          filtrosActivos={filtrosActivos}
+          className="mb-6"
+          searchBar={
+            <div className="flex gap-2 flex-1">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Nombre, SKU o código..."
                   value={filtros.busqueda}
-                  onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                  className="flex-1 min-w-0 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                  onChange={(e) => setFiltro('busqueda', e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowScanner(true)}
-                  className="relative z-20 flex-shrink-0 p-2.5 border-2 border-primary-500 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors bg-white dark:bg-gray-700"
-                  title="Escanear código de barras"
-                >
-                  <ScanLine className="w-5 h-5 text-primary-600 dark:text-primary-400" />
-                </button>
               </div>
-            </div>
-
-            {/* Categoría */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Categoría
-              </label>
-              <select
-                value={filtros.categoria_id}
-                onChange={(e) => handleFiltroChange('categoria_id', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="flex-shrink-0 p-2.5 border-2 border-primary-500 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors bg-white dark:bg-gray-700"
+                title="Escanear código de barras"
+                aria-label="Escanear código de barras"
               >
-                <option value="">Todas las categorías</option>
-                {categorias.map((categoria) => (
-                  <option key={categoria.id} value={categoria.id}>
-                    {categoria.nombre}
-                  </option>
-                ))}
-              </select>
+                <ScanLine className="w-5 h-5 text-primary-600 dark:text-primary-400" />
+              </button>
             </div>
+          }
+        />
 
-            {/* Proveedor */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Proveedor
-              </label>
-              <select
-                value={filtros.proveedor_id}
-                onChange={(e) => handleFiltroChange('proveedor_id', e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              >
-                <option value="">Todos los proveedores</option>
-                {proveedores.map((proveedor) => (
-                  <option key={proveedor.id} value={proveedor.id}>
-                    {proveedor.nombre}
-                  </option>
-                ))}
-              </select>
-            </div>
+        {/* Chips de filtros activos */}
+        {filtrosActivosArray.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-4">
+            {filtrosActivosArray.map(({ key, value }) => {
+              // Obtener label legible
+              let label = key;
+              let displayValue = String(value);
 
-            {/* Filtros adicionales */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Estado
-              </label>
-              <div className="space-y-2">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filtros.stock_bajo}
-                    onChange={(e) => handleFiltroChange('stock_bajo', e.target.checked)}
-                    className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-white dark:bg-gray-700"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Stock bajo</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={filtros.stock_agotado}
-                    onChange={(e) => handleFiltroChange('stock_agotado', e.target.checked)}
-                    className="rounded border-gray-300 dark:border-gray-600 text-primary-600 focus:ring-primary-500 bg-white dark:bg-gray-700"
-                  />
-                  <span className="ml-2 text-sm text-gray-700 dark:text-gray-300">Agotados</span>
-                </label>
-              </div>
-            </div>
+              if (key === 'categoria_id') {
+                label = 'Categoría';
+                displayValue = categorias.find(c => c.id === value)?.nombre || value;
+              } else if (key === 'proveedor_id') {
+                label = 'Proveedor';
+                displayValue = proveedores.find(p => p.id === value)?.nombre || value;
+              } else if (key === 'stock_bajo') {
+                label = 'Stock bajo';
+                displayValue = '';
+              } else if (key === 'stock_agotado') {
+                label = 'Agotados';
+                displayValue = '';
+              } else if (key === 'busqueda') {
+                label = 'Búsqueda';
+                displayValue = value;
+              }
+
+              return (
+                <FilterChip
+                  key={key}
+                  label={label}
+                  value={displayValue || undefined}
+                  onRemove={() => setFiltro(key, key.includes('stock') ? false : '')}
+                />
+              );
+            })}
           </div>
-
-          {/* Botón limpiar filtros */}
-          <div className="mt-4 flex justify-end">
-            <Button
-              variant="secondary"
-              onClick={handleLimpiarFiltros}
-              size="sm"
-            >
-              Limpiar Filtros
-            </Button>
-          </div>
-        </div>
+        )}
 
         {/* Scanner Modal */}
         {showScanner && (
@@ -536,8 +526,16 @@ function ProductosPage() {
             </div>
           </div>
         </Modal>
-      </div>
-    </div>
+
+        {/* Modal Guardar Búsqueda */}
+        <SavedSearchModal
+          isOpen={showSaveSearchModal}
+          onClose={() => setShowSaveSearchModal(false)}
+          filtrosActuales={filtros}
+          onSave={handleGuardarBusqueda}
+          existeNombre={existeNombre}
+        />
+    </InventarioPageLayout>
   );
 }
 

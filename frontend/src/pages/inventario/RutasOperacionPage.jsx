@@ -1,11 +1,10 @@
 import { useState } from 'react';
 import { Route, Plus, Edit, Trash2, Search, X, Zap, Truck, ShoppingCart, Factory, ToggleLeft, ToggleRight } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Drawer from '@/components/ui/Drawer';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useRutasOperacion,
   useInicializarRutas,
@@ -161,57 +160,35 @@ function RutasOperacionPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Route className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Rutas de Operación</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {rutasFiltradas.length} ruta{rutasFiltradas.length !== 1 ? 's' : ''} configurada{rutasFiltradas.length !== 1 ? 's' : ''}
-                </p>
-              </div>
-            </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              {rutas.length === 0 && (
-                <Button
-                  variant="secondary"
-                  onClick={handleInicializarRutas}
-                  icon={Zap}
-                  isLoading={inicializarMutation.isPending}
-                  className="w-full sm:w-auto"
-                >
-                  Crear Rutas Default
-                </Button>
-              )}
-              <Button
-                variant="primary"
-                onClick={handleNuevaRuta}
-                icon={Plus}
-                className="w-full sm:w-auto"
-              >
-                Nueva Ruta
-              </Button>
-            </div>
-          </div>
+    <InventarioPageLayout
+      icon={Route}
+      title="Rutas de Operación"
+      subtitle={`${rutasFiltradas.length} ruta${rutasFiltradas.length !== 1 ? 's' : ''} configurada${rutasFiltradas.length !== 1 ? 's' : ''}`}
+      actions={
+        <div className="flex flex-col sm:flex-row gap-2">
+          {rutas.length === 0 && (
+            <Button
+              variant="secondary"
+              onClick={handleInicializarRutas}
+              icon={Zap}
+              isLoading={inicializarMutation.isPending}
+              className="w-full sm:w-auto"
+            >
+              Crear Rutas Default
+            </Button>
+          )}
+          <Button
+            variant="primary"
+            onClick={handleNuevaRuta}
+            icon={Plus}
+            className="w-full sm:w-auto"
+          >
+            Nueva Ruta
+          </Button>
         </div>
+      }
+    >
+      <div className="space-y-6">
 
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
@@ -631,7 +608,7 @@ function RutasOperacionPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

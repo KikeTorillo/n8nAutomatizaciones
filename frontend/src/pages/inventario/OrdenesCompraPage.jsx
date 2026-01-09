@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   ShoppingCart,
   Plus,
@@ -17,20 +17,22 @@ import {
   ChevronDown,
   ChevronUp,
   TrendingDown,
+  FileText,
+  Clock,
+  CheckCircle,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
-import Alert from '@/components/ui/Alert';
 import Pagination from '@/components/ui/Pagination';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import SmartButtons from '@/components/ui/SmartButtons';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useOrdenesCompra,
   useEliminarOrdenCompra,
@@ -87,6 +89,59 @@ export default function OrdenesCompraPage() {
   const autoGenerarMutation = useAutoGenerarOCs();
   const enviarMutation = useEnviarOrdenCompra();
   const cancelarMutation = useCancelarOrdenCompra();
+
+  // Configuración de SmartButtons para filtros rápidos
+  const smartButtonsConfig = useMemo(() => {
+    // Contar órdenes por estado
+    const conteoEstados = ordenes.reduce((acc, o) => {
+      acc[o.estado] = (acc[o.estado] || 0) + 1;
+      return acc;
+    }, {});
+
+    return [
+      {
+        id: 'todas',
+        icon: FileText,
+        value: totales.cantidad || 0,
+        label: 'Total',
+        color: filtros.estado === '' ? 'primary' : 'gray',
+        onClick: () => setFiltros(prev => ({ ...prev, estado: '', offset: 0 })),
+      },
+      {
+        id: 'borradores',
+        icon: Edit,
+        value: conteoEstados.borrador || 0,
+        label: 'Borradores',
+        color: filtros.estado === 'borrador' ? 'yellow' : 'gray',
+        onClick: () => setFiltros(prev => ({ ...prev, estado: 'borrador', offset: 0 })),
+      },
+      {
+        id: 'enviadas',
+        icon: Clock,
+        value: conteoEstados.enviada || 0,
+        label: 'Enviadas',
+        color: filtros.estado === 'enviada' ? 'blue' : 'gray',
+        onClick: () => setFiltros(prev => ({ ...prev, estado: 'enviada', offset: 0 })),
+      },
+      {
+        id: 'recibidas',
+        icon: CheckCircle,
+        value: conteoEstados.recibida || 0,
+        label: 'Recibidas',
+        color: filtros.estado === 'recibida' ? 'green' : 'gray',
+        onClick: () => setFiltros(prev => ({ ...prev, estado: 'recibida', offset: 0 })),
+      },
+      {
+        id: 'alertas',
+        icon: AlertTriangle,
+        value: sugerencias.length,
+        label: 'Stock bajo',
+        color: sugerencias.length > 0 ? 'red' : 'gray',
+        onClick: () => setMostrarSugerencias(true),
+        disabled: sugerencias.length === 0,
+      },
+    ];
+  }, [totales.cantidad, ordenes, filtros.estado, sugerencias.length]);
 
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
@@ -275,67 +330,49 @@ export default function OrdenesCompraPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+    <InventarioPageLayout
+      icon={ShoppingCart}
+      title="Órdenes de Compra"
+      subtitle={`${total} orden${total !== 1 ? 'es' : ''} en total`}
+      actions={
+        <>
+          <Button
+            variant={mostrarFiltros ? 'secondary' : 'outline'}
+            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+            icon={Filter}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">{mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros</span>
+            <span className="sm:hidden">Filtros</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleAutoGenerar}
+            icon={Zap}
+            className="flex-1 sm:flex-none text-sm relative"
+            title="Generar OCs automáticamente para productos con stock bajo"
+          >
+            <span className="hidden sm:inline">Auto-generar</span>
+            <span className="sm:hidden">Auto</span>
+            {sugerencias.length > 0 && (
+              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                {sugerencias.length}
+              </span>
+            )}
+          </Button>
+          <Button variant="primary" onClick={handleNuevaOrden} icon={Plus} className="flex-1 sm:flex-none text-sm">
+            <span className="hidden sm:inline">Nueva Orden</span>
+            <span className="sm:hidden">Nueva</span>
+          </Button>
+        </>
+      }
+    >
+      <div className="space-y-6">
 
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
+        {/* SmartButtons - Filtros rápidos por estado */}
+        <SmartButtons buttons={smartButtonsConfig} className="mb-2" />
 
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
-        {/* Header de sección */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <ShoppingCart className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-            <div>
-              <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Órdenes de Compra</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                Gestiona las órdenes de compra a proveedores
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button
-              variant={mostrarFiltros ? 'secondary' : 'outline'}
-              onClick={() => setMostrarFiltros(!mostrarFiltros)}
-              icon={Filter}
-              className="flex-1 sm:flex-none text-sm"
-            >
-              <span className="hidden sm:inline">{mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros</span>
-              <span className="sm:hidden">Filtros</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleAutoGenerar}
-              icon={Zap}
-              className="flex-1 sm:flex-none text-sm relative"
-              title="Generar OCs automáticamente para productos con stock bajo"
-            >
-              <span className="hidden sm:inline">Auto-generar</span>
-              <span className="sm:hidden">Auto</span>
-              {sugerencias.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {sugerencias.length}
-                </span>
-              )}
-            </Button>
-            <Button variant="primary" onClick={handleNuevaOrden} icon={Plus} className="flex-1 sm:flex-none text-sm">
-              <span className="hidden sm:inline">Nueva Orden</span>
-              <span className="sm:hidden">Nueva</span>
-            </Button>
-          </div>
-      </div>
-
-      {/* Alerta de productos con stock bajo */}
+        {/* Alerta de productos con stock bajo */}
       {sugerencias.length > 0 && (
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <div
@@ -759,7 +796,7 @@ export default function OrdenesCompraPage() {
           </>
         )}
       </div>
-      </div>
+    </div>
 
       {/* Modales */}
       <OrdenCompraFormModal
@@ -789,6 +826,10 @@ export default function OrdenesCompraPage() {
           closeModal('detalle');
           handleRegistrarPago(orden);
         }}
+        // Props para navegación entre registros
+        allOrdenIds={ordenes.map(o => o.id)}
+        currentIndex={ordenes.findIndex(o => o.id === getModalData('detalle')?.ordenId)}
+        onNavigate={(ordenId) => openModal('detalle', { ordenId })}
       />
 
       <RecibirMercanciaModal
@@ -960,6 +1001,6 @@ export default function OrdenesCompraPage() {
           </div>
         </div>
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }

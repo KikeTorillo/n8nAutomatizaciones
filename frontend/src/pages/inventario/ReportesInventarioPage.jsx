@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers, Package, Info } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Badge from '@/components/ui/Badge';
 import Alert from '@/components/ui/Alert';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
 import { SkeletonTable, SkeletonCard } from '@/components/ui/SkeletonTable';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useValorInventario,
   useAnalisisABC,
@@ -134,8 +133,8 @@ function ReporteValorInventario() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {reporte.productos.map((producto, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {reporte.productos.map((producto) => (
+                  <tr key={producto.id || producto.sku || producto.nombre} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {producto.nombre}
@@ -190,9 +189,11 @@ function ReporteValoracionFIFOAVCO() {
   const [metodoSeleccionado, setMetodoSeleccionado] = useState(null);
 
   // Cuando carga la config, establecer el metodo actual
-  if (config?.metodo_valoracion && metodoSeleccionado === null) {
-    setMetodoSeleccionado(config.metodo_valoracion);
-  }
+  useEffect(() => {
+    if (config?.metodo_valoracion && metodoSeleccionado === null) {
+      setMetodoSeleccionado(config.metodo_valoracion);
+    }
+  }, [config?.metodo_valoracion, metodoSeleccionado]);
 
   const handleCambiarMetodo = async (nuevoMetodo) => {
     setMetodoSeleccionado(nuevoMetodo);
@@ -375,8 +376,8 @@ function ReporteValoracionFIFOAVCO() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {comparativa.slice(0, 15).map((prod, idx) => (
-                  <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {comparativa.slice(0, 15).map((prod) => (
+                  <tr key={prod.producto_id || prod.nombre_producto} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-4 py-3">
                       <p className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
                         {prod.nombre_producto}
@@ -527,8 +528,8 @@ function ReporteAnalisisABC() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {productos.map((producto, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {productos.map((producto) => (
+                  <tr key={producto.id || producto.nombre} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4">
                       <Badge variant={getCategoriaVariant(producto.categoria_abc)} size="sm">
                         {producto.categoria_abc}
@@ -646,8 +647,8 @@ function ReporteRotacion() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {productos.map((producto, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {productos.map((producto) => (
+                  <tr key={producto.id || producto.nombre} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {producto.nombre}
@@ -738,8 +739,8 @@ function ReporteAlertas() {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {resumen.por_tipo && resumen.por_tipo.map((tipo, index) => (
-                  <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                {resumen.por_tipo && resumen.por_tipo.map((tipo) => (
+                  <tr key={tipo.tipo_alerta} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4">
                       <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                         {tipo.tipo_alerta}
@@ -771,35 +772,11 @@ function ReportesInventarioPage() {
   const [tabActivo, setTabActivo] = useState('valor');
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-3">
-            <BarChart3 className="h-8 w-8 text-primary-600 dark:text-primary-400" />
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Reportes de Inventario</h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Analíticas y reportes de tu inventario
-              </p>
-            </div>
-          </div>
-        </div>
-
+    <InventarioPageLayout
+      icon={BarChart3}
+      title="Reportes"
+      subtitle="Analíticas y reportes de tu inventario"
+    >
         {/* Tabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm mb-6">
           <div className="border-b border-gray-200 dark:border-gray-700">
@@ -837,8 +814,7 @@ function ReportesInventarioPage() {
             {tabActivo === 'alertas' && <ReporteAlertas />}
           </div>
         </div>
-      </div>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

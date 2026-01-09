@@ -17,13 +17,12 @@ import {
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import Drawer from '@/components/ui/Drawer';
 import EmptyState from '@/components/ui/EmptyState';
 import { useToast } from '@/hooks/useToast';
 import useSucursalStore from '@/store/sucursalStore';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useArbolUbicaciones,
   useEstadisticasUbicaciones,
@@ -483,55 +482,33 @@ function UbicacionesAlmacenPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Inventario</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona productos, proveedores y stock
-        </p>
-      </div>
-
-      {/* Tabs */}
-      <InventarioNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de Sección */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <MapPin className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">
-                  Ubicaciones de Almacén
-                </h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  {totalUbicaciones} ubicacion{totalUbicaciones !== 1 ? 'es' : ''} en total
-                </p>
-              </div>
-            </div>
-            <div className="flex gap-2 flex-wrap">
-              <Button
-                variant="secondary"
-                onClick={handleMoverStock}
-                icon={ArrowRightLeft}
-                className="flex-1 sm:flex-none"
-              >
-                Mover Stock
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleNuevaUbicacion}
-                icon={Plus}
-                className="flex-1 sm:flex-none"
-              >
-                Nueva Ubicación
-              </Button>
-            </div>
-          </div>
+    <InventarioPageLayout
+      icon={MapPin}
+      title="Ubicaciones de Almacén"
+      subtitle={`${totalUbicaciones} ubicacion${totalUbicaciones !== 1 ? 'es' : ''} en total`}
+      actions={
+        <div className="flex gap-2 flex-wrap">
+          <Button
+            variant="secondary"
+            onClick={handleMoverStock}
+            icon={ArrowRightLeft}
+            className="flex-1 sm:flex-none"
+          >
+            <span className="hidden sm:inline">Mover Stock</span>
+            <span className="sm:hidden">Mover</span>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={handleNuevaUbicacion}
+            icon={Plus}
+            className="flex-1 sm:flex-none"
+          >
+            <span className="hidden sm:inline">Nueva Ubicación</span>
+            <span className="sm:hidden">Nueva</span>
+          </Button>
         </div>
+      }
+    >
 
         {/* Estadísticas */}
         {!cargandoStats && estadisticas && (
@@ -650,7 +627,6 @@ function UbicacionesAlmacenPage() {
             </div>
           )}
         </div>
-      </div>
 
       {/* Drawer de Formulario */}
       <UbicacionFormDrawer
@@ -727,7 +703,7 @@ function UbicacionesAlmacenPage() {
           );
         })()}
       </Modal>
-    </div>
+    </InventarioPageLayout>
   );
 }
 

@@ -17,13 +17,14 @@ import {
     FileCheck,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import Pagination from '@/components/ui/Pagination';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
-import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useAjustesMasivos,
     useValidarAjusteMasivo,
@@ -257,124 +258,140 @@ export default function AjustesMasivosPage() {
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <BackButton to="/home" label="Volver al Inicio" />
-                            <div>
-                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                    <FileSpreadsheet className="h-7 w-7 text-primary-600" />
-                                    Ajustes Masivos
-                                </h1>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                    Importacion masiva de ajustes via CSV
-                                </p>
-                            </div>
+        <InventarioPageLayout
+            icon={FileSpreadsheet}
+            title="Ajustes Masivos"
+            subtitle={`${total} ajuste${total !== 1 ? 's' : ''} en total`}
+            actions={
+                <>
+                    <Button
+                        variant="secondary"
+                        onClick={handleDescargarPlantilla}
+                        icon={Download}
+                        loading={descargarPlantillaMutation.isPending}
+                        className="flex-1 sm:flex-none text-sm"
+                    >
+                        <span className="hidden sm:inline">Plantilla</span>
+                        <span className="sm:hidden">CSV</span>
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={handleNuevoAjuste}
+                        icon={Plus}
+                        className="flex-1 sm:flex-none text-sm"
+                    >
+                        <span className="hidden sm:inline">Nuevo Ajuste</span>
+                        <span className="sm:hidden">Nuevo</span>
+                    </Button>
+                </>
+            }
+        >
+
+                {/* Panel de Filtros */}
+                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm mb-6">
+                    <div className="p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+                        {/* Barra de búsqueda */}
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <input
+                                type="text"
+                                placeholder="Buscar por folio..."
+                                value={filtros.folio}
+                                onChange={(e) => handleFiltroChange('folio', e.target.value)}
+                                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                            />
                         </div>
 
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleDescargarPlantilla}
-                                isLoading={descargarPlantillaMutation.isPending}
-                            >
-                                <Download className="h-4 w-4 mr-1" />
-                                Plantilla
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                            >
-                                <Filter className="h-4 w-4 mr-1" />
-                                Filtros
-                                {mostrarFiltros ? (
-                                    <ChevronUp className="h-4 w-4 ml-1" />
-                                ) : (
-                                    <ChevronDown className="h-4 w-4 ml-1" />
-                                )}
-                            </Button>
-
-                            <Button onClick={handleNuevoAjuste}>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Nuevo Ajuste
-                            </Button>
-                        </div>
+                        {/* Botón Filtros */}
+                        <button
+                            type="button"
+                            onClick={() => setMostrarFiltros(!mostrarFiltros)}
+                            className={`flex items-center gap-2 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors min-h-[40px] ${
+                                mostrarFiltros
+                                    ? 'bg-primary-100 text-primary-700 dark:bg-primary-900/40 dark:text-primary-400'
+                                    : 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
+                            } hover:bg-gray-200 dark:hover:bg-gray-600`}
+                            aria-expanded={mostrarFiltros}
+                        >
+                            <Filter className="h-4 w-4" />
+                            <span>Filtros</span>
+                            {mostrarFiltros ? (
+                                <ChevronUp className="h-4 w-4" />
+                            ) : (
+                                <ChevronDown className="h-4 w-4" />
+                            )}
+                        </button>
                     </div>
 
-                    <InventarioNavTabs activeTab="ajustes-masivos" className="mt-4" />
-                </div>
-            </div>
+                    {/* Filtros expandidos */}
+                    {mostrarFiltros && (
+                        <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                {/* Estado */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Estado
+                                    </label>
+                                    <select
+                                        value={filtros.estado}
+                                        onChange={(e) => handleFiltroChange('estado', e.target.value)}
+                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                    >
+                                        <option value="">Todos los estados</option>
+                                        <option value="pendiente">Pendiente</option>
+                                        <option value="validado">Validado</option>
+                                        <option value="aplicado">Aplicado</option>
+                                        <option value="con_errores">Con Errores</option>
+                                    </select>
+                                </div>
 
-            {/* Filtros */}
-            {mostrarFiltros && (
-                <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4">
-                    <div className="max-w-7xl mx-auto">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                            {/* Busqueda por folio */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por folio..."
-                                    value={filtros.folio}
-                                    onChange={(e) => handleFiltroChange('folio', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
+                                {/* Fecha desde */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Fecha desde
+                                    </label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="date"
+                                            value={filtros.fecha_desde}
+                                            onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Fecha hasta */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Fecha hasta
+                                    </label>
+                                    <div className="relative">
+                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <input
+                                            type="date"
+                                            value={filtros.fecha_hasta}
+                                            onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
+                                            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
                             </div>
 
-                            {/* Estado */}
-                            <select
-                                value={filtros.estado}
-                                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            >
-                                <option value="">Todos los estados</option>
-                                <option value="pendiente">Pendiente</option>
-                                <option value="validado">Validado</option>
-                                <option value="aplicado">Aplicado</option>
-                                <option value="con_errores">Con Errores</option>
-                            </select>
-
-                            {/* Fecha desde */}
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={filtros.fecha_desde}
-                                    onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Fecha hasta */}
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={filtros.fecha_hasta}
-                                    onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
+                            <div className="flex justify-end mt-4">
+                                <button
+                                    type="button"
+                                    onClick={handleLimpiarFiltros}
+                                    className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                >
+                                    Limpiar filtros
+                                </button>
                             </div>
                         </div>
-
-                        <div className="flex justify-end mt-4">
-                            <Button variant="ghost" size="sm" onClick={handleLimpiarFiltros}>
-                                Limpiar filtros
-                            </Button>
-                        </div>
-                    </div>
+                    )}
                 </div>
-            )}
 
-            {/* Estadisticas rapidas */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                {/* Estadísticas rápidas */}
                 <StatCardGrid
                     className="mb-6"
                     stats={[
@@ -388,9 +405,7 @@ export default function AjustesMasivosPage() {
                 {/* Tabla de ajustes */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                     {isLoading ? (
-                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            Cargando ajustes...
-                        </div>
+                        <SkeletonTable rows={5} columns={7} />
                     ) : ajustes.length === 0 ? (
                         <EmptyState
                             icon={FileSpreadsheet}
@@ -478,10 +493,11 @@ export default function AjustesMasivosPage() {
                                                         <button
                                                             key={idx}
                                                             onClick={accion.onClick}
-                                                            className={`p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 ${accion.className}`}
+                                                            className={`p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center ${accion.className}`}
                                                             title={accion.label}
+                                                            aria-label={accion.label}
                                                         >
-                                                            <accion.icon className="h-4 w-4" />
+                                                            <accion.icon className="h-5 w-5" />
                                                         </button>
                                                     ))}
                                                 </div>
@@ -496,42 +512,25 @@ export default function AjustesMasivosPage() {
 
                 {/* Paginacion */}
                 {ajustes.length > 0 && total > filtros.limit && (
-                    <div className="flex items-center justify-between mt-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Mostrando {filtros.offset + 1} - {Math.min(filtros.offset + filtros.limit, total)} de{' '}
-                            {total}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={filtros.offset === 0}
-                                onClick={() =>
-                                    setFiltros((prev) => ({
-                                        ...prev,
-                                        offset: Math.max(0, prev.offset - prev.limit),
-                                    }))
-                                }
-                            >
-                                Anterior
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={filtros.offset + filtros.limit >= total}
-                                onClick={() =>
-                                    setFiltros((prev) => ({
-                                        ...prev,
-                                        offset: prev.offset + prev.limit,
-                                    }))
-                                }
-                            >
-                                Siguiente
-                            </Button>
-                        </div>
+                    <div className="mt-4">
+                        <Pagination
+                            pagination={{
+                                page: Math.floor(filtros.offset / filtros.limit) + 1,
+                                limit: filtros.limit,
+                                total,
+                                totalPages: Math.ceil(total / filtros.limit),
+                                hasNext: filtros.offset + filtros.limit < total,
+                                hasPrev: filtros.offset > 0,
+                            }}
+                            onPageChange={(page) =>
+                                setFiltros((prev) => ({
+                                    ...prev,
+                                    offset: (page - 1) * prev.limit,
+                                }))
+                            }
+                        />
                     </div>
                 )}
-            </div>
 
             {/* Modal nuevo ajuste */}
             {isOpen('nuevo') && (
@@ -632,6 +631,6 @@ export default function AjustesMasivosPage() {
                     </div>
                 </Modal>
             )}
-        </div>
+        </InventarioPageLayout>
     );
 }
