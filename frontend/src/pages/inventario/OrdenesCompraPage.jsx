@@ -24,6 +24,10 @@ import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/Badge';
+import Alert from '@/components/ui/Alert';
+import Pagination from '@/components/ui/Pagination';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -236,24 +240,18 @@ export default function OrdenesCompraPage() {
   };
 
   // Helpers de visualización
-  const getBadgeEstado = (estado) => {
-    const badges = {
-      borrador: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
-      enviada: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300',
-      parcial: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
-      recibida: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
-      cancelada: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
-    };
-    return badges[estado] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+  const ESTADO_OC_VARIANT = {
+    borrador: 'default',
+    enviada: 'primary',
+    parcial: 'warning',
+    recibida: 'success',
+    cancelada: 'error',
   };
 
-  const getBadgeEstadoPago = (estadoPago) => {
-    const badges = {
-      pendiente: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
-      parcial: 'bg-orange-100 dark:bg-orange-900/40 text-orange-800 dark:text-orange-300',
-      pagado: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
-    };
-    return badges[estadoPago] || 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+  const ESTADO_PAGO_VARIANT = {
+    pendiente: 'warning',
+    parcial: 'warning',
+    pagado: 'success',
   };
 
   const formatearEstado = (estado) => {
@@ -555,10 +553,7 @@ export default function OrdenesCompraPage() {
       {/* Tabla de órdenes */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
         {isLoading ? (
-          <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            Cargando órdenes de compra...
-          </div>
+          <SkeletonTable rows={5} columns={8} />
         ) : ordenes.length === 0 ? (
           <EmptyState
             icon={ShoppingCart}
@@ -645,22 +640,14 @@ export default function OrdenesCompraPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstado(
-                            orden.estado
-                          )}`}
-                        >
+                        <Badge variant={ESTADO_OC_VARIANT[orden.estado] || 'default'} size="sm">
                           {formatearEstado(orden.estado)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getBadgeEstadoPago(
-                            orden.estado_pago
-                          )}`}
-                        >
+                        <Badge variant={ESTADO_PAGO_VARIANT[orden.estado_pago] || 'default'} size="sm">
                           {formatearEstadoPago(orden.estado_pago)}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-1">
@@ -749,14 +736,26 @@ export default function OrdenesCompraPage() {
             </div>
 
             {/* Paginación */}
-            <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
-              <div className="flex items-center justify-between">
-                <div className="text-sm text-gray-700 dark:text-gray-300">
-                  Mostrando <span className="font-medium">{ordenes.length}</span> de{' '}
-                  <span className="font-medium">{total}</span> órdenes
-                </div>
+            {total > filtros.limit && (
+              <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
+                <Pagination
+                  pagination={{
+                    page: Math.floor(filtros.offset / filtros.limit) + 1,
+                    limit: filtros.limit,
+                    total,
+                    totalPages: Math.ceil(total / filtros.limit),
+                    hasNext: filtros.offset + filtros.limit < total,
+                    hasPrev: filtros.offset > 0,
+                  }}
+                  onPageChange={(page) =>
+                    setFiltros((prev) => ({
+                      ...prev,
+                      offset: (page - 1) * prev.limit,
+                    }))
+                  }
+                />
               </div>
-            </div>
+            )}
           </>
         )}
       </div>

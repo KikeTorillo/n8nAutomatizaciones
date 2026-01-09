@@ -4,9 +4,10 @@
  * Enero 2026
  */
 import { useState } from 'react';
-import { Palmtree, Users, BarChart3, RefreshCw } from 'lucide-react';
+import { Palmtree, Users, BarChart3, RefreshCw, Clock, CheckCircle, Calendar } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
+import StatCardGrid from '@/components/ui/StatCardGrid';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
 import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/useVacaciones';
 
@@ -37,40 +38,39 @@ function EstadisticasVacaciones() {
   const diasTotales = stats?.dias_aprobados || 0;
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-          {totalProfesionales}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Profesionales con saldo
-        </p>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-          {pendientes}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Solicitudes pendientes
-        </p>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-          {aprobadas}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Solicitudes aprobadas
-        </p>
-      </div>
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-        <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-          {diasTotales}
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Días otorgados
-        </p>
-      </div>
-    </div>
+    <StatCardGrid
+      stats={[
+        {
+          key: 'profesionales',
+          icon: Users,
+          label: 'Profesionales con saldo',
+          value: totalProfesionales,
+          color: 'primary',
+        },
+        {
+          key: 'pendientes',
+          icon: Clock,
+          label: 'Solicitudes pendientes',
+          value: pendientes,
+          color: 'yellow',
+        },
+        {
+          key: 'aprobadas',
+          icon: CheckCircle,
+          label: 'Solicitudes aprobadas',
+          value: aprobadas,
+          color: 'green',
+        },
+        {
+          key: 'dias',
+          icon: Calendar,
+          label: 'Días otorgados',
+          value: diasTotales,
+          color: 'blue',
+        },
+      ]}
+      columns={4}
+    />
   );
 }
 

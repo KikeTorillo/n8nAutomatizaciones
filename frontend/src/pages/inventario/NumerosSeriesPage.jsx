@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import {
   Search, X, RefreshCw, Package, AlertTriangle, Clock,
-  CheckCircle, XCircle, Eye, History,
-  BarChart3
+  CheckCircle, XCircle, Eye, History, BarChart3
 } from 'lucide-react';
+import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
@@ -12,6 +12,8 @@ import Modal from '@/components/ui/Modal';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
+import Badge from '@/components/ui/Badge';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -122,21 +124,17 @@ function NumerosSeriesPage() {
   };
 
   // Helpers
-  const getEstadoBadge = (estado) => {
-    const config = ESTADOS_NUMERO_SERIE[estado] || { label: estado, color: 'gray' };
-    const colorClasses = {
-      green: 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-400',
-      yellow: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-400',
-      blue: 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-400',
-      red: 'bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-400',
-      purple: 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-400',
-      gray: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
-    };
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses[config.color]}`}>
-        {config.label}
-      </span>
-    );
+  const ESTADO_NS_VARIANT = {
+    disponible: 'success',
+    reservado: 'warning',
+    vendido: 'info',
+    devuelto: 'default',
+    dañado: 'error',
+    defectuoso: 'error',
+  };
+
+  const getEstadoLabel = (estado) => {
+    return ESTADOS_NUMERO_SERIE[estado]?.label || estado;
   };
 
   return (
@@ -174,20 +172,22 @@ function NumerosSeriesPage() {
 
         {/* Alerta de proximos a vencer */}
         {proximosVencer && proximosVencer.length > 0 && (
-          <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4 mb-6">
-            <div className="flex items-center gap-2 text-orange-800 dark:text-orange-200 font-medium mb-2">
-              <AlertTriangle size={20} />
-              {proximosVencer.length} productos por vencer en los proximos 30 dias
-            </div>
-            <div className="text-sm text-orange-700 dark:text-orange-300">
-              {proximosVencer.slice(0, 3).map((item, idx) => (
-                <span key={item.id}>
-                  {item.producto_nombre} ({item.numero_serie})
-                  {idx < Math.min(2, proximosVencer.length - 1) ? ', ' : ''}
-                </span>
-              ))}
-              {proximosVencer.length > 3 && ` y ${proximosVencer.length - 3} mas...`}
-            </div>
+          <div className="mb-6">
+            <Alert
+              variant="warning"
+              icon={AlertTriangle}
+              title={`${proximosVencer.length} productos por vencer en los próximos 30 días`}
+            >
+              <p className="text-sm">
+                {proximosVencer.slice(0, 3).map((item, idx) => (
+                  <span key={item.id}>
+                    {item.producto_nombre} ({item.numero_serie})
+                    {idx < Math.min(2, proximosVencer.length - 1) ? ', ' : ''}
+                  </span>
+                ))}
+                {proximosVencer.length > 3 && ` y ${proximosVencer.length - 3} más...`}
+              </p>
+            </Alert>
           </div>
         )}
 
@@ -274,8 +274,8 @@ function NumerosSeriesPage() {
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
-                      Cargando...
+                    <td colSpan={8} className="p-0">
+                      <SkeletonTable rows={5} columns={8} />
                     </td>
                   </tr>
                 ) : numerosSerie.length === 0 ? (
@@ -306,7 +306,9 @@ function NumerosSeriesPage() {
                           {ns.lote || '-'}
                         </td>
                         <td className="px-4 py-3">
-                          {getEstadoBadge(ns.estado)}
+                          <Badge variant={ESTADO_NS_VARIANT[ns.estado] || 'default'} size="sm">
+                            {getEstadoLabel(ns.estado)}
+                          </Badge>
                         </td>
                         <td className="px-4 py-3 text-sm">
                           {ns.fecha_vencimiento ? (
@@ -396,7 +398,11 @@ function NumerosSeriesPage() {
               </div>
               <div>
                 <label className="text-sm text-gray-500 dark:text-gray-400">Estado</label>
-                <p>{getEstadoBadge(detalleNumeroSerie.estado)}</p>
+                <p>
+                  <Badge variant={ESTADO_NS_VARIANT[detalleNumeroSerie.estado] || 'default'} size="sm">
+                    {getEstadoLabel(detalleNumeroSerie.estado)}
+                  </Badge>
+                </p>
               </div>
               <div>
                 <label className="text-sm text-gray-500 dark:text-gray-400">Producto</label>

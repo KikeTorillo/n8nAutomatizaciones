@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { Building2, Plus, Edit, Trash2, Phone, Mail, Globe, MapPin, Search, X } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
+import Badge from '@/components/ui/Badge';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -25,11 +28,11 @@ function ProveedoresPage() {
     ciudad: '',
   });
 
-  // Estado de modales
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
-  const [proveedorSeleccionado, setProveedorSeleccionado] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  // Estado de modales unificado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: proveedoresData, isLoading: cargandoProveedores } = useProveedores(filtros);
@@ -54,28 +57,23 @@ function ProveedoresPage() {
 
   // Handlers de acciones
   const handleNuevoProveedor = () => {
-    setProveedorSeleccionado(null);
-    setModalMode('create');
-    setIsFormModalOpen(true);
+    openModal('form', { mode: 'create', proveedor: null });
   };
 
   const handleEditarProveedor = (proveedor) => {
-    setProveedorSeleccionado(proveedor);
-    setModalMode('edit');
-    setIsFormModalOpen(true);
+    openModal('form', { mode: 'edit', proveedor });
   };
 
   const handleAbrirModalEliminar = (proveedor) => {
-    setProveedorSeleccionado(proveedor);
-    setModalEliminarAbierto(true);
+    openModal('eliminar', proveedor);
   };
 
   const handleEliminar = () => {
+    const proveedorSeleccionado = getModalData('eliminar');
     eliminarMutation.mutate(proveedorSeleccionado.id, {
       onSuccess: () => {
         showSuccess('Proveedor eliminado correctamente');
-        setModalEliminarAbierto(false);
-        setProveedorSeleccionado(null);
+        closeModal('eliminar');
       },
       onError: (err) => {
         showError(err.response?.data?.mensaje || 'Error al eliminar proveedor');
@@ -187,10 +185,7 @@ function ProveedoresPage() {
         {/* Tabla de Proveedores */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoProveedores ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando proveedores...</span>
-            </div>
+            <SkeletonTable rows={5} columns={6} />
           ) : proveedores.length === 0 ? (
             <EmptyState
               icon={Building2}
@@ -324,15 +319,9 @@ function ProveedoresPage() {
 
                       {/* Estado */}
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            proveedor.activo
-                              ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                              : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                          }`}
-                        >
+                        <Badge variant={proveedor.activo ? 'success' : 'default'} size="sm">
                           {proveedor.activo ? 'Activo' : 'Inactivo'}
-                        </span>
+                        </Badge>
                       </td>
 
                       {/* Acciones */}
@@ -367,48 +356,53 @@ function ProveedoresPage() {
 
       {/* Modal de Formulario */}
       <ProveedorFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        proveedor={proveedorSeleccionado}
-        mode={modalMode}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        proveedor={getModalData('form')?.proveedor}
+        mode={getModalData('form')?.mode || 'create'}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={modalEliminarAbierto}
-        onClose={() => setModalEliminarAbierto(false)}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Eliminar Proveedor"
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de que deseas eliminar el proveedor{' '}
-            <strong className="text-gray-900 dark:text-gray-100">
-              {proveedorSeleccionado?.nombre}
-            </strong>
-            ?
-          </p>
+        {(() => {
+          const proveedorEliminar = getModalData('eliminar');
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                ¿Estás seguro de que deseas eliminar el proveedor{' '}
+                <strong className="text-gray-900 dark:text-gray-100">
+                  {proveedorEliminar?.nombre}
+                </strong>
+                ?
+              </p>
 
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Esta acción no se puede deshacer.
-          </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Esta acción no se puede deshacer.
+              </p>
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => setModalEliminarAbierto(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleEliminar}
-              isLoading={eliminarMutation.isPending}
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  variant="secondary"
+                  onClick={() => closeModal('eliminar')}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleEliminar}
+                  isLoading={eliminarMutation.isPending}
+                >
+                  Eliminar
+                </Button>
+              </div>
+            </div>
+          );
+        })()}
       </Modal>
     </div>
   );

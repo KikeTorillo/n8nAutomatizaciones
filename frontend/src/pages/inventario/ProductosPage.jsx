@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/Badge';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -125,17 +126,18 @@ function ProductosPage() {
     return proveedor?.nombre || 'Sin proveedor';
   };
 
-  const obtenerEstadoStock = (producto) => {
-    if (producto.stock_actual === 0) {
-      return { texto: 'Agotado', color: 'text-red-600 bg-red-100 dark:text-red-400 dark:bg-red-900/30' };
-    }
-    if (producto.stock_actual <= producto.stock_minimo) {
-      return { texto: 'Stock bajo', color: 'text-yellow-600 bg-yellow-100 dark:text-yellow-400 dark:bg-yellow-900/30' };
-    }
-    if (producto.stock_actual >= producto.stock_maximo) {
-      return { texto: 'Stock alto', color: 'text-primary-600 bg-primary-100 dark:text-primary-400 dark:bg-primary-900/30' };
-    }
-    return { texto: 'Normal', color: 'text-green-600 bg-green-100 dark:text-green-400 dark:bg-green-900/30' };
+  const getStockVariant = (producto) => {
+    if (producto.stock_actual === 0) return 'error';
+    if (producto.stock_actual <= producto.stock_minimo) return 'warning';
+    if (producto.stock_actual >= producto.stock_maximo) return 'primary';
+    return 'success';
+  };
+
+  const getStockLabel = (producto) => {
+    if (producto.stock_actual === 0) return 'Agotado';
+    if (producto.stock_actual <= producto.stock_minimo) return 'Stock bajo';
+    if (producto.stock_actual >= producto.stock_maximo) return 'Stock alto';
+    return 'Normal';
   };
 
   return (
@@ -365,9 +367,7 @@ function ProductosPage() {
                     </td>
                   </tr>
                 ) : (
-                  productos.map((producto) => {
-                    const estadoStock = obtenerEstadoStock(producto);
-                    return (
+                  productos.map((producto) => (
                       <tr key={producto.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center space-x-3">
@@ -425,11 +425,9 @@ function ProductosPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <span
-                            className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoStock.color}`}
-                          >
-                            {estadoStock.texto}
-                          </span>
+                          <Badge variant={getStockVariant(producto)} size="sm">
+                            {getStockLabel(producto)}
+                          </Badge>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
                           <div className="flex items-center justify-center space-x-2">
@@ -464,8 +462,7 @@ function ProductosPage() {
                           </div>
                         </td>
                       </tr>
-                    );
-                  })
+                  ))
                 )}
               </tbody>
             </table>

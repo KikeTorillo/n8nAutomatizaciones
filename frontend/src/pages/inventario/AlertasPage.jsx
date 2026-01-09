@@ -17,6 +17,8 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/Badge';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -195,11 +197,17 @@ function AlertasPage() {
     return labels[tipo] || tipo;
   };
 
-  const getNivelColor = (nivel) => {
+  const NIVEL_ALERTA_VARIANT = {
+    info: 'info',
+    warning: 'warning',
+    critical: 'error',
+  };
+
+  const getNivelBorderColor = (nivel) => {
     const colors = {
-      info: 'bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-300 border-primary-200 dark:border-primary-800',
-      warning: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300 border-yellow-200 dark:border-yellow-800',
-      critical: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800',
+      info: 'border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20',
+      warning: 'border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20',
+      critical: 'border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20',
     };
     return colors[nivel] || colors.info;
   };
@@ -370,10 +378,7 @@ function AlertasPage() {
         {/* Lista de Alertas */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoAlertas ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando alertas...</span>
-            </div>
+            <SkeletonTable rows={5} columns={5} />
           ) : alertas.length === 0 ? (
             <div className="py-8">
               <EmptyState
@@ -404,7 +409,7 @@ function AlertasPage() {
                   return (
                     <div
                       key={alerta.id}
-                      className={`flex items-start p-4 rounded-lg border-2 ${getNivelColor(
+                      className={`flex items-start p-4 rounded-lg border-2 ${getNivelBorderColor(
                         alerta.nivel
                       )} ${
                         alerta.leida ? 'opacity-60' : ''
@@ -431,13 +436,9 @@ function AlertasPage() {
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
-                              <span
-                                className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full ${getNivelColor(
-                                  alerta.nivel
-                                )}`}
-                              >
+                              <Badge variant={NIVEL_ALERTA_VARIANT[alerta.nivel] || 'info'} size="sm">
                                 {getTipoAlertaLabel(alerta.tipo_alerta)}
-                              </span>
+                              </Badge>
                               <span className="text-xs text-gray-500 dark:text-gray-400">
                                 {format(
                                   new Date(alerta.creado_en),

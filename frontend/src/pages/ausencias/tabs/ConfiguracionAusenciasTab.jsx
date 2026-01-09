@@ -3,9 +3,11 @@
  * Enero 2026
  */
 import { useState } from 'react';
-import { Settings, Layers, Sliders, RefreshCw } from 'lucide-react';
+import { Settings, Layers, Sliders, RefreshCw, Info } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   usePoliticaVacaciones,
   useActualizarPoliticaVacaciones,
@@ -223,13 +225,12 @@ function NivelesVacacionesSection() {
       </div>
 
       {nivelesArray.length === 0 ? (
-        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-          <Layers className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>No hay niveles configurados</p>
-          <p className="text-sm mt-1">
-            Usa los presets para crear niveles según la ley de tu país
-          </p>
-        </div>
+        <EmptyState
+          icon={Layers}
+          title="Sin niveles configurados"
+          description="Usa los presets para crear niveles según la ley de tu país"
+          size="sm"
+        />
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -304,12 +305,10 @@ function ConfiguracionAusenciasTab() {
       </div>
 
       {/* Info */}
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-        <p className="text-sm text-blue-700 dark:text-blue-300">
-          <strong>Nota:</strong> Las incapacidades se rigen por las reglas del IMSS y no requieren
-          configuración adicional. Los días de incapacidad no afectan el saldo de vacaciones.
-        </p>
-      </div>
+      <Alert variant="info" icon={Info} title="Nota">
+        Las incapacidades se rigen por las reglas del IMSS y no requieren
+        configuración adicional. Los días de incapacidad no afectan el saldo de vacaciones.
+      </Alert>
     </div>
   );
 }

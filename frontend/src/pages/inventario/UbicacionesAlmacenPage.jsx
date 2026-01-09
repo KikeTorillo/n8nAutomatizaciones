@@ -15,6 +15,7 @@ import {
   Filter,
   RefreshCw,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
@@ -326,14 +327,16 @@ function UbicacionesAlmacenPage() {
   const { getSucursalId } = useSucursalStore();
   const sucursalId = getSucursalId();
 
-  // Estado
-  const [isFormDrawerOpen, setIsFormDrawerOpen] = useState(false);
+  // Estado de modales unificado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },      // data: { ubicacion, parent }
+    eliminar: { isOpen: false, data: null },
+    stock: { isOpen: false, data: null },
+    moverStock: { isOpen: false, data: null },
+  });
   const [drawerKey, setDrawerKey] = useState(0); // Key para forzar remount de Vaul
-  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState(null);
-  const [parentSeleccionado, setParentSeleccionado] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
-  const [modalStockAbierto, setModalStockAbierto] = useState(false);
-  const [moverStockDrawerOpen, setMoverStockDrawerOpen] = useState(false);
+
+  // Estado UI
   const [expandido, setExpandido] = useState({});
   const [busqueda, setBusqueda] = useState('');
 
@@ -348,34 +351,27 @@ function UbicacionesAlmacenPage() {
 
   // Handlers
   const handleNuevaUbicacion = () => {
-    setUbicacionSeleccionada(null);
-    setParentSeleccionado(null);
-    setIsFormDrawerOpen(true);
+    openModal('form', { ubicacion: null, parent: null });
   };
 
   const handleCrearHijo = (parent) => {
-    setUbicacionSeleccionada(null);
-    setParentSeleccionado(parent);
-    setIsFormDrawerOpen(true);
+    openModal('form', { ubicacion: null, parent });
   };
 
   const handleEditarUbicacion = (ubicacion) => {
-    setUbicacionSeleccionada(ubicacion);
-    setParentSeleccionado(null);
-    setIsFormDrawerOpen(true);
+    openModal('form', { ubicacion, parent: null });
   };
 
   const handleAbrirModalEliminar = (ubicacion) => {
-    setUbicacionSeleccionada(ubicacion);
-    setModalEliminarAbierto(true);
+    openModal('eliminar', ubicacion);
   };
 
   const handleEliminar = () => {
-    eliminarMutation.mutate(ubicacionSeleccionada.id, {
+    const ubicacionEliminar = getModalData('eliminar');
+    eliminarMutation.mutate(ubicacionEliminar.id, {
       onSuccess: () => {
         showSuccess('Ubicación eliminada correctamente');
-        setModalEliminarAbierto(false);
-        setUbicacionSeleccionada(null);
+        closeModal('eliminar');
       },
       onError: (err) => {
         showError(err.response?.data?.message || 'Error al eliminar ubicación');
@@ -402,12 +398,11 @@ function UbicacionesAlmacenPage() {
   };
 
   const handleVerStock = (ubicacion) => {
-    setUbicacionSeleccionada(ubicacion);
-    setModalStockAbierto(true);
+    openModal('stock', ubicacion);
   };
 
   const handleMoverStock = () => {
-    setMoverStockDrawerOpen(true);
+    openModal('moverStock', null);
   };
 
   const handleToggleExpansion = (ubicacionId) => {
@@ -660,77 +655,77 @@ function UbicacionesAlmacenPage() {
       {/* Drawer de Formulario */}
       <UbicacionFormDrawer
         key={drawerKey}
-        isOpen={isFormDrawerOpen}
+        isOpen={isOpen('form')}
         onClose={() => {
-          setIsFormDrawerOpen(false);
-          setUbicacionSeleccionada(null);
-          setParentSeleccionado(null);
+          closeModal('form');
           setDrawerKey(k => k + 1); // Forzar remount para evitar bug de Vaul
         }}
-        ubicacion={ubicacionSeleccionada}
-        parent={parentSeleccionado}
+        ubicacion={getModalData('form')?.ubicacion}
+        parent={getModalData('form')?.parent}
         sucursalId={sucursalId}
       />
 
       {/* Drawer de Mover Stock */}
       <MoverStockDrawer
-        isOpen={moverStockDrawerOpen}
-        onClose={() => setMoverStockDrawerOpen(false)}
+        isOpen={isOpen('moverStock')}
+        onClose={() => closeModal('moverStock')}
         sucursalId={sucursalId}
       />
 
       {/* Modal de Stock */}
       <StockUbicacionModal
-        ubicacion={ubicacionSeleccionada}
-        isOpen={modalStockAbierto}
-        onClose={() => {
-          setModalStockAbierto(false);
-          setUbicacionSeleccionada(null);
-        }}
+        ubicacion={getModalData('stock')}
+        isOpen={isOpen('stock')}
+        onClose={() => closeModal('stock')}
       />
 
       {/* Modal de Eliminación */}
       <Modal
-        isOpen={modalEliminarAbierto}
-        onClose={() => setModalEliminarAbierto(false)}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Eliminar Ubicación"
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de que deseas eliminar la ubicación{' '}
-            <strong className="text-gray-900 dark:text-gray-100">
-              {ubicacionSeleccionada?.codigo}
-            </strong>
-            ?
-          </p>
-
-          {ubicacionSeleccionada?.children?.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                Esta ubicación tiene sub-ubicaciones. Debes eliminarlas primero.
+        {(() => {
+          const ubicacionEliminar = getModalData('eliminar');
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                ¿Estás seguro de que deseas eliminar la ubicación{' '}
+                <strong className="text-gray-900 dark:text-gray-100">
+                  {ubicacionEliminar?.codigo}
+                </strong>
+                ?
               </p>
+
+              {ubicacionEliminar?.children?.length > 0 && (
+                <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
+                    Esta ubicación tiene sub-ubicaciones. Debes eliminarlas primero.
+                  </p>
+                </div>
+              )}
+
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Solo se puede eliminar si no tiene stock ni sub-ubicaciones.
+              </p>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button variant="secondary" onClick={() => closeModal('eliminar')}>
+                  Cancelar
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleEliminar}
+                  isLoading={eliminarMutation.isPending}
+                  disabled={ubicacionEliminar?.children?.length > 0}
+                >
+                  Eliminar
+                </Button>
+              </div>
             </div>
-          )}
-
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Solo se puede eliminar si no tiene stock ni sub-ubicaciones.
-          </p>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" onClick={() => setModalEliminarAbierto(false)}>
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleEliminar}
-              isLoading={eliminarMutation.isPending}
-              disabled={ubicacionSeleccionada?.children?.length > 0}
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
+          );
+        })()}
       </Modal>
     </div>
   );

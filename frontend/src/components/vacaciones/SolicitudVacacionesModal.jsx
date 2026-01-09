@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { X, Calendar, Clock, Send, AlertCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import Alert from '@/components/ui/Alert';
 import { useCrearSolicitudVacaciones, TURNOS_MEDIO_DIA } from '@/hooks/useVacaciones';
 
 // Schema de validación
@@ -134,13 +135,9 @@ function SolicitudVacacionesModal({
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* Alerta de saldo */}
         {saldoInsuficiente && diasCalculados > 0 && (
-          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-red-500 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-red-700 dark:text-red-300">
-              <p className="font-medium">Saldo insuficiente</p>
-              <p>Estás solicitando {diasCalculados} días pero solo tienes {diasDisponibles} disponibles.</p>
-            </div>
-          </div>
+          <Alert variant="error" icon={AlertCircle} title="Saldo insuficiente">
+            Estás solicitando {diasCalculados} días pero solo tienes {diasDisponibles} disponibles.
+          </Alert>
         )}
 
         {/* Fechas */}

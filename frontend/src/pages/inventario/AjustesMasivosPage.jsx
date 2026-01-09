@@ -263,7 +263,7 @@ export default function AjustesMasivosPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <BackButton to="/inventario" />
+                            <BackButton to="/home" label="Volver al Inicio" />
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     <FileSpreadsheet className="h-7 w-7 text-primary-600" />

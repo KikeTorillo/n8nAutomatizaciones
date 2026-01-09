@@ -2,8 +2,11 @@ import { useState } from 'react';
 import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers, Package, Info } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
+import Badge from '@/components/ui/Badge';
+import Alert from '@/components/ui/Alert';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
+import { SkeletonTable, SkeletonCard } from '@/components/ui/SkeletonTable';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
   useValorInventario,
@@ -48,9 +51,13 @@ function ReporteValorInventario() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando reporte...</span>
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <SkeletonTable rows={5} columns={5} />
       </div>
     );
   }
@@ -194,9 +201,14 @@ function ReporteValoracionFIFOAVCO() {
 
   if (loadingResumen || loadingConfig) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-        <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando valoracion...</span>
+      <div className="space-y-6">
+        <SkeletonCard />
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[...Array(3)].map((_, i) => (
+            <SkeletonCard key={i} />
+          ))}
+        </div>
+        <SkeletonTable rows={5} columns={6} />
       </div>
     );
   }
@@ -217,9 +229,9 @@ function ReporteValoracionFIFOAVCO() {
               Metodo de Valoracion Preferido
             </h3>
           </div>
-          <span className="text-xs px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-800 dark:text-primary-300 rounded">
+          <Badge variant="primary" size="sm">
             Actual: {METODOS_VALORACION[config?.metodo_valoracion] || 'Promedio'}
-          </span>
+          </Badge>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -254,7 +266,7 @@ function ReporteValoracionFIFOAVCO() {
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">FIFO</p>
             {metodoSeleccionado === 'fifo' && (
-              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+              <Badge variant="primary" size="sm">Activo</Badge>
             )}
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -279,7 +291,7 @@ function ReporteValoracionFIFOAVCO() {
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">AVCO</p>
             {metodoSeleccionado === 'avco' && (
-              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+              <Badge variant="primary" size="sm">Activo</Badge>
             )}
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -304,7 +316,7 @@ function ReporteValoracionFIFOAVCO() {
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Promedio Simple</p>
             {metodoSeleccionado === 'promedio' && (
-              <span className="text-xs px-1.5 py-0.5 bg-primary-500 text-white rounded">Activo</span>
+              <Badge variant="primary" size="sm">Activo</Badge>
             )}
           </div>
           <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -326,8 +338,8 @@ function ReporteValoracionFIFOAVCO() {
         </div>
 
         {loadingComparativa ? (
-          <div className="flex items-center justify-center py-12">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600"></div>
+          <div className="p-4">
+            <SkeletonTable rows={5} columns={6} />
           </div>
         ) : !comparativa || comparativa.length === 0 ? (
           <div className="py-8">
@@ -424,13 +436,13 @@ function ReporteAnalisisABC() {
   const { data, isLoading } = useAnalisisABC(fechas);
   const productos = data?.productos || [];
 
-  const getCategoriaColor = (categoria) => {
-    const colors = {
-      A: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
-      B: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
-      C: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+  const getCategoriaVariant = (categoria) => {
+    const variants = {
+      A: 'success',
+      B: 'warning',
+      C: 'default',
     };
-    return colors[categoria] || colors.C;
+    return variants[categoria] || 'default';
   };
 
   return (
@@ -464,9 +476,8 @@ function ReporteAnalisisABC() {
       </div>
 
       {/* Explicación ABC */}
-      <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4">
-        <h4 className="text-sm font-medium text-primary-900 dark:text-primary-300 mb-2">Análisis ABC</h4>
-        <ul className="text-sm text-primary-800 dark:text-primary-300 space-y-1">
+      <Alert variant="info" icon={Info} title="Análisis ABC">
+        <ul className="text-sm space-y-1">
           <li>
             <strong>Categoría A (80%):</strong> Productos más importantes por ventas
           </li>
@@ -477,13 +488,12 @@ function ReporteAnalisisABC() {
             <strong>Categoría C (5%):</strong> Productos de menor importancia
           </li>
         </ul>
-      </div>
+      </Alert>
 
       {/* Tabla */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando análisis...</span>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <SkeletonTable rows={5} columns={5} />
         </div>
       ) : productos.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 py-8">
@@ -520,13 +530,9 @@ function ReporteAnalisisABC() {
                 {productos.map((producto, index) => (
                   <tr key={index} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4">
-                      <span
-                        className={`inline-flex px-3 py-1 text-sm font-semibold rounded-full ${getCategoriaColor(
-                          producto.categoria_abc
-                        )}`}
-                      >
+                      <Badge variant={getCategoriaVariant(producto.categoria_abc)} size="sm">
                         {producto.categoria_abc}
-                      </span>
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -605,9 +611,8 @@ function ReporteRotacion() {
 
       {/* Tabla */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando rotación...</span>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <SkeletonTable rows={5} columns={5} />
         </div>
       ) : productos.length === 0 ? (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 py-8">
@@ -712,9 +717,8 @@ function ReporteAlertas() {
 
       {/* Resumen por Tipo */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-          <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando resumen...</span>
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <SkeletonTable rows={5} columns={3} />
         </div>
       ) : (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">

@@ -1,17 +1,19 @@
 import { useState, useMemo } from 'react';
-import { Plus, Search, Filter, X, AlertTriangle, Briefcase, CheckCircle, DollarSign, List, XCircle } from 'lucide-react';
+import { Plus, Search, Filter, AlertTriangle, Briefcase, CheckCircle, DollarSign, List, XCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { ViewTabs } from '@/components/ui/ViewTabs';
 import ServiciosList from '@/components/servicios/ServiciosList';
 import ServicioFormModal from '@/components/servicios/ServicioFormModal';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
+import ServiciosFilters from '@/components/servicios/ServiciosFilters';
+import ServiciosSinProfesionalesAlert from '@/components/servicios/ServiciosSinProfesionalesAlert';
 import { useServicios, useEliminarServicio } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import { formatCurrency } from '@/lib/utils';
 
 /**
@@ -24,18 +26,12 @@ function ServiciosPage() {
   const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Estados para modal de crear/editar
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create'); // 'create' o 'edit'
-  const [servicioSeleccionado, setServicioSeleccionado] = useState(null);
-
-  // Estados para modal de profesionales
-  const [isProfesionalesModalOpen, setIsProfesionalesModalOpen] = useState(false);
-  const [servicioParaProfesionales, setServicioParaProfesionales] = useState(null);
-
-  // Estados para modal de confirmación de eliminación
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [servicioAEliminar, setServicioAEliminar] = useState(null);
+  // Gestión centralizada de modales
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    formulario: { isOpen: false, data: null, mode: 'create' },
+    profesionales: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+  });
 
   // Filtros
   const [filtros, setFiltros] = useState({
@@ -108,32 +104,27 @@ function ServiciosPage() {
 
   // Handler para crear nuevo servicio
   const handleNuevoServicio = () => {
-    setModalMode('create');
-    setServicioSeleccionado(null);
-    setIsModalOpen(true);
+    openModal('formulario', null, { mode: 'create' });
   };
 
   // Handler para editar servicio
   const handleEdit = (servicio) => {
-    setModalMode('edit');
-    setServicioSeleccionado(servicio);
-    setIsModalOpen(true);
+    openModal('formulario', servicio, { mode: 'edit' });
   };
 
   // Handler para gestionar profesionales
   const handleGestionarProfesionales = (servicio) => {
-    setServicioParaProfesionales(servicio);
-    setIsProfesionalesModalOpen(true);
+    openModal('profesionales', servicio);
   };
 
   // Handler para abrir modal de confirmación de eliminación
   const handleDelete = (servicio) => {
-    setServicioAEliminar(servicio);
-    setIsDeleteModalOpen(true);
+    openModal('eliminar', servicio);
   };
 
   // Handler para confirmar eliminación
   const handleConfirmDelete = async () => {
+    const servicioAEliminar = getModalData('eliminar');
     if (!servicioAEliminar) return;
 
     try {
@@ -141,8 +132,7 @@ function ServiciosPage() {
       toast.success(
         `Servicio "${servicioAEliminar.nombre}" desactivado correctamente`
       );
-      setIsDeleteModalOpen(false);
-      setServicioAEliminar(null);
+      closeModal('eliminar');
     } catch (error) {
       toast.error(
         error.message || 'Error al desactivar el servicio. Intenta nuevamente.'
@@ -228,91 +218,15 @@ function ServiciosPage() {
 
             {/* Panel de Filtros */}
             {showFilters && (
-              <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Filtro: Estado */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Estado
-                    </label>
-                    <Select
-                      value={filtros.activo}
-                      onChange={(e) => {
-                        setFiltros({ ...filtros, activo: e.target.value });
-                        setPage(1);
-                      }}
-                    >
-                      <option value="">Todos</option>
-                      <option value="true">Activos</option>
-                      <option value="false">Inactivos</option>
-                    </Select>
-                  </div>
-
-                  {/* Filtro: Categoría */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Categoría
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="Ej: Cortes, Barba..."
-                      value={filtros.categoria}
-                      onChange={(e) => {
-                        setFiltros({ ...filtros, categoria: e.target.value });
-                        setPage(1);
-                      }}
-                    />
-                  </div>
-
-                  {/* Filtro: Precio Mínimo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Precio Mínimo
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="10000"
-                      min="0"
-                      value={filtros.precio_min}
-                      onChange={(e) => {
-                        setFiltros({ ...filtros, precio_min: e.target.value });
-                        setPage(1);
-                      }}
-                    />
-                  </div>
-
-                  {/* Filtro: Precio Máximo */}
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Precio Máximo
-                    </label>
-                    <Input
-                      type="number"
-                      placeholder="100000"
-                      min="0"
-                      value={filtros.precio_max}
-                      onChange={(e) => {
-                        setFiltros({ ...filtros, precio_max: e.target.value });
-                        setPage(1);
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Botón para limpiar filtros */}
-                {hasFiltrosActivos && (
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleLimpiarFiltros}
-                    >
-                      <X className="w-4 h-4 mr-1" />
-                      Limpiar Filtros
-                    </Button>
-                  </div>
-                )}
-              </div>
+              <ServiciosFilters
+                filtros={filtros}
+                onFiltrosChange={(nuevosFiltros) => {
+                  setFiltros(nuevosFiltros);
+                  setPage(1);
+                }}
+                onLimpiarFiltros={handleLimpiarFiltros}
+                hasFiltrosActivos={hasFiltrosActivos}
+              />
             )}
           </div>
         </div>
@@ -341,70 +255,10 @@ function ServiciosPage() {
       </div>
 
       {/* Alerta Global: Servicios sin Profesionales */}
-      {useMemo(() => {
-        const serviciosSinProfesional = data?.servicios?.filter(
-          s => s.total_profesionales_asignados === 0 && s.activo
-        ) || [];
-
-        if (serviciosSinProfesional.length === 0) return null;
-
-        return (
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6 mt-6">
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 border-l-4 border-yellow-400 dark:border-yellow-600 p-4 rounded-r-lg">
-              <div className="flex items-start">
-                <div className="flex-shrink-0">
-                  <AlertTriangle className="h-5 w-5 text-yellow-400 dark:text-yellow-500" />
-                </div>
-                <div className="ml-3 flex-1">
-                  <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-300">
-                    Atención: {serviciosSinProfesional.length} servicio{serviciosSinProfesional.length !== 1 ? 's' : ''} sin profesionales asignados
-                  </h3>
-                  <div className="mt-2 text-sm text-yellow-700 dark:text-yellow-400">
-                    <p>
-                      Los siguientes servicios activos no tienen profesionales asignados.
-                      Asigna al menos un profesional a cada servicio para poder crear citas:
-                    </p>
-                    <ul className="list-disc list-inside mt-2 space-y-1">
-                      {serviciosSinProfesional.map(servicio => (
-                        <li key={servicio.id}>
-                          <a
-                            href={`#servicio-${servicio.id}`}
-                            className="font-medium underline hover:text-yellow-900 dark:hover:text-yellow-200"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              document.getElementById(`servicio-${servicio.id}`)?.scrollIntoView({
-                                behavior: 'smooth',
-                                block: 'center'
-                              });
-                            }}
-                          >
-                            {servicio.nombre}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="mt-3">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        const primerServicio = serviciosSinProfesional[0];
-                        if (primerServicio) {
-                          handleGestionarProfesionales(primerServicio);
-                        }
-                      }}
-                      className="bg-white dark:bg-gray-800 hover:bg-yellow-50 dark:hover:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300 border-yellow-300 dark:border-yellow-700"
-                    >
-                      Asignar profesionales al primer servicio
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }, [data?.servicios])}
+      <ServiciosSinProfesionalesAlert
+        servicios={data?.servicios}
+        onAsignarProfesionales={handleGestionarProfesionales}
+      />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -421,33 +275,24 @@ function ServiciosPage() {
 
       {/* Modal de Crear/Editar Servicio */}
       <ServicioFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setModalMode('create');
-          setServicioSeleccionado(null);
-        }}
-        mode={modalMode}
-        servicio={servicioSeleccionado}
+        key={`${getModalProps('formulario').mode}-${getModalData('formulario')?.id || 'new'}`}
+        isOpen={isOpen('formulario')}
+        onClose={() => closeModal('formulario')}
+        mode={getModalProps('formulario').mode || 'create'}
+        servicio={getModalData('formulario')}
       />
 
       {/* Modal de Gestión de Profesionales */}
       <ProfesionalesServicioModal
-        isOpen={isProfesionalesModalOpen}
-        onClose={() => {
-          setIsProfesionalesModalOpen(false);
-          setServicioParaProfesionales(null);
-        }}
-        servicio={servicioParaProfesionales}
+        isOpen={isOpen('profesionales')}
+        onClose={() => closeModal('profesionales')}
+        servicio={getModalData('profesionales')}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setServicioAEliminar(null);
-        }}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Confirmar Desactivación"
         maxWidth="md"
       >
@@ -468,7 +313,7 @@ function ServiciosPage() {
           </div>
 
           {/* Información del servicio */}
-          {servicioAEliminar && (
+          {getModalData('eliminar') && (
             <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
               <div className="space-y-2">
                 <div>
@@ -476,16 +321,16 @@ function ServiciosPage() {
                     Servicio:{' '}
                   </span>
                   <span className="text-sm text-gray-900 dark:text-gray-100">
-                    {servicioAEliminar.nombre}
+                    {getModalData('eliminar').nombre}
                   </span>
                 </div>
-                {servicioAEliminar.categoria && (
+                {getModalData('eliminar').categoria && (
                   <div>
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       Categoría:{' '}
                     </span>
                     <span className="text-sm text-gray-900 dark:text-gray-100">
-                      {servicioAEliminar.categoria}
+                      {getModalData('eliminar').categoria}
                     </span>
                   </div>
                 )}
@@ -515,10 +360,7 @@ function ServiciosPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setServicioAEliminar(null);
-              }}
+              onClick={() => closeModal('eliminar')}
               disabled={eliminarMutation.isPending}
             >
               Cancelar

@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search, ArrowLeftRight } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
 import EmptyState from '@/components/ui/EmptyState';
+import Badge from '@/components/ui/Badge';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import { useMovimientos } from '@/hooks/useInventario';
@@ -29,9 +32,10 @@ function MovimientosPage() {
     fecha_hasta: '',
   });
 
-  // Estado de modales
-  const [isKardexModalOpen, setIsKardexModalOpen] = useState(false);
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
+  // Estado de modales unificado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    kardex: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: movimientosData, isLoading: cargandoMovimientos } = useMovimientos(filtros);
@@ -62,16 +66,12 @@ function MovimientosPage() {
 
   // Handlers de acciones
   const handleVerKardex = (producto) => {
-    setProductoSeleccionado(producto);
-    setIsKardexModalOpen(true);
+    openModal('kardex', producto);
   };
 
   // Helpers
-  const getTipoMovimientoColor = (tipo) => {
-    if (tipo.startsWith('entrada')) {
-      return 'text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/40';
-    }
-    return 'text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-900/40';
+  const getTipoMovimientoVariant = (tipo) => {
+    return tipo.startsWith('entrada') ? 'success' : 'error';
   };
 
   const getTipoMovimientoLabel = (tipo) => {
@@ -247,10 +247,7 @@ function MovimientosPage() {
         {/* Tabla de Movimientos */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
           {cargandoMovimientos ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando movimientos...</span>
-            </div>
+            <SkeletonTable rows={5} columns={8} />
           ) : movimientos.length === 0 ? (
             <div className="py-8">
               <EmptyState
@@ -305,13 +302,9 @@ function MovimientosPage() {
 
                       {/* Tipo */}
                       <td className="px-6 py-4">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTipoMovimientoColor(
-                            movimiento.tipo_movimiento
-                          )}`}
-                        >
+                        <Badge variant={getTipoMovimientoVariant(movimiento.tipo_movimiento)} size="sm">
                           {getTipoMovimientoLabel(movimiento.tipo_movimiento)}
-                        </span>
+                        </Badge>
                       </td>
 
                       {/* Producto */}
@@ -403,9 +396,9 @@ function MovimientosPage() {
 
       {/* Modal de Kardex */}
       <KardexModal
-        isOpen={isKardexModalOpen}
-        onClose={() => setIsKardexModalOpen(false)}
-        producto={productoSeleccionado}
+        isOpen={isOpen('kardex')}
+        onClose={() => closeModal('kardex')}
+        producto={getModalData('kardex')}
       />
     </div>
   );

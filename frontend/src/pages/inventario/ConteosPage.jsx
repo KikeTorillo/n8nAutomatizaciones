@@ -24,6 +24,8 @@ import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import Pagination from '@/components/ui/Pagination';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
@@ -260,7 +262,7 @@ export default function ConteosPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div className="flex items-center gap-4">
-                            <BackButton to="/inventario" />
+                            <BackButton to="/home" label="Volver al Inicio" />
                             <div>
                                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
                                     <ClipboardList className="h-7 w-7 text-primary-600" />
@@ -390,9 +392,7 @@ export default function ConteosPage() {
                 {/* Tabla de conteos */}
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                     {isLoading ? (
-                        <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                            Cargando conteos...
-                        </div>
+                        <SkeletonTable rows={5} columns={7} />
                     ) : conteos.length === 0 ? (
                         <EmptyState
                             icon={ClipboardList}
@@ -511,39 +511,23 @@ export default function ConteosPage() {
 
                 {/* Paginación */}
                 {conteos.length > 0 && total > filtros.limit && (
-                    <div className="flex items-center justify-between mt-4">
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                            Mostrando {filtros.offset + 1} - {Math.min(filtros.offset + filtros.limit, total)} de{' '}
-                            {total}
-                        </p>
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={filtros.offset === 0}
-                                onClick={() =>
-                                    setFiltros((prev) => ({
-                                        ...prev,
-                                        offset: Math.max(0, prev.offset - prev.limit),
-                                    }))
-                                }
-                            >
-                                Anterior
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                disabled={filtros.offset + filtros.limit >= total}
-                                onClick={() =>
-                                    setFiltros((prev) => ({
-                                        ...prev,
-                                        offset: prev.offset + prev.limit,
-                                    }))
-                                }
-                            >
-                                Siguiente
-                            </Button>
-                        </div>
+                    <div className="mt-4">
+                        <Pagination
+                            pagination={{
+                                page: Math.floor(filtros.offset / filtros.limit) + 1,
+                                limit: filtros.limit,
+                                total,
+                                totalPages: Math.ceil(total / filtros.limit),
+                                hasNext: filtros.offset + filtros.limit < total,
+                                hasPrev: filtros.offset > 0,
+                            }}
+                            onPageChange={(page) =>
+                                setFiltros((prev) => ({
+                                    ...prev,
+                                    offset: (page - 1) * prev.limit,
+                                }))
+                            }
+                        />
                     </div>
                 )}
             </div>

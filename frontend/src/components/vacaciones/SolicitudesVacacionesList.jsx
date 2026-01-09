@@ -11,12 +11,11 @@ import {
   AlertCircle,
   MoreVertical,
   Eye,
-  X as XIcon,
-  ChevronLeft,
-  ChevronRight
+  X as XIcon
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import Pagination from '@/components/ui/Pagination';
 import {
   useMisSolicitudesVacaciones,
   useCancelarSolicitud,
@@ -263,35 +262,17 @@ function SolicitudesVacacionesList({
 
       {/* Paginación */}
       {pagination.pages > 1 && (
-        <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
-            Mostrando {solicitudes.length} de {pagination.total} solicitudes
-          </span>
-
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPage(p => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {page} / {pagination.pages}
-            </span>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
-              disabled={page === pagination.pages}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          pagination={{
+            page,
+            limit,
+            total: pagination.total,
+            totalPages: pagination.pages,
+            hasNext: page < pagination.pages,
+            hasPrev: page > 1,
+          }}
+          onPageChange={setPage}
+        />
       )}
     </div>
   );

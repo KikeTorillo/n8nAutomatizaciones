@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { FolderTree, Plus, Edit, Trash2, ChevronRight, ChevronDown } from 'lucide-react';
+import { FolderTree, Plus, Edit, Trash2, ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
+import Alert from '@/components/ui/Alert';
 import { useToast } from '@/hooks/useToast';
 import InventarioNavTabs from '@/components/inventario/InventarioNavTabs';
 import {
@@ -135,11 +137,13 @@ function NodoCategoria({
 function CategoriasPage() {
   const { success: showSuccess, error: showError } = useToast();
 
-  // Estado
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  // Estado de modales unificado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+  });
+
+  // Estado UI
   const [expandido, setExpandido] = useState({});
   const [mostrarInactivas, setMostrarInactivas] = useState(false);
 
@@ -155,28 +159,23 @@ function CategoriasPage() {
 
   // Handlers
   const handleNuevaCategoria = () => {
-    setCategoriaSeleccionada(null);
-    setModalMode('create');
-    setIsFormModalOpen(true);
+    openModal('form', { mode: 'create', categoria: null });
   };
 
   const handleEditarCategoria = (categoria) => {
-    setCategoriaSeleccionada(categoria);
-    setModalMode('edit');
-    setIsFormModalOpen(true);
+    openModal('form', { mode: 'edit', categoria });
   };
 
   const handleAbrirModalEliminar = (categoria) => {
-    setCategoriaSeleccionada(categoria);
-    setModalEliminarAbierto(true);
+    openModal('eliminar', categoria);
   };
 
   const handleEliminar = () => {
+    const categoriaSeleccionada = getModalData('eliminar');
     eliminarMutation.mutate(categoriaSeleccionada.id, {
       onSuccess: () => {
         showSuccess('Categoría eliminada correctamente');
-        setModalEliminarAbierto(false);
-        setCategoriaSeleccionada(null);
+        closeModal('eliminar');
       },
       onError: (err) => {
         showError(err.message || 'Error al eliminar categoría');
@@ -329,59 +328,64 @@ function CategoriasPage() {
 
       {/* Modal de Formulario */}
       <CategoriaFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
-        categoria={categoriaSeleccionada}
-        mode={modalMode}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        categoria={getModalData('form')?.categoria}
+        mode={getModalData('form')?.mode || 'create'}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={modalEliminarAbierto}
-        onClose={() => setModalEliminarAbierto(false)}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Eliminar Categoría"
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de que deseas eliminar la categoría{' '}
-            <strong className="text-gray-900 dark:text-gray-100">
-              {categoriaSeleccionada?.nombre}
-            </strong>
-            ?
-          </p>
-
-          {categoriaSeleccionada?.hijos?.length > 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-              <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                ⚠️ Esta categoría tiene{' '}
-                <strong>{categoriaSeleccionada.hijos.length}</strong>{' '}
-                subcategoría{categoriaSeleccionada.hijos.length !== 1 ? 's' : ''}. Las
-                subcategorías quedarán sin padre.
+        {(() => {
+          const categoriaEliminar = getModalData('eliminar');
+          return (
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                ¿Estás seguro de que deseas eliminar la categoría{' '}
+                <strong className="text-gray-900 dark:text-gray-100">
+                  {categoriaEliminar?.nombre}
+                </strong>
+                ?
               </p>
+
+              {categoriaEliminar?.hijos?.length > 0 && (
+                <Alert variant="warning" icon={AlertTriangle} title="Atención">
+                  <p className="text-sm">
+                    Esta categoría tiene{' '}
+                    <strong>{categoriaEliminar.hijos.length}</strong>{' '}
+                    subcategoría{categoriaEliminar.hijos.length !== 1 ? 's' : ''}. Las
+                    subcategorías quedarán sin padre.
+                  </p>
+                </Alert>
+              )}
+
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Esta acción no se puede deshacer.
+              </p>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <Button
+                  variant="secondary"
+                  onClick={() => closeModal('eliminar')}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  variant="danger"
+                  onClick={handleEliminar}
+                  isLoading={eliminarMutation.isPending}
+                >
+                  Eliminar
+                </Button>
+              </div>
             </div>
-          )}
-
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Esta acción no se puede deshacer.
-          </p>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => setModalEliminarAbierto(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleEliminar}
-              isLoading={eliminarMutation.isPending}
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
+          );
+        })()}
       </Modal>
     </div>
   );

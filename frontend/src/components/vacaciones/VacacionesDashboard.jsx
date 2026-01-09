@@ -8,6 +8,7 @@ import { Plus, Calendar, Filter, RefreshCw, Clock, User, FileText, X } from 'luc
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useDashboardVacaciones,
   usePoliticaVacaciones,
@@ -86,22 +87,17 @@ function FiltroEstadoTab({ label, value, count, isActive, onClick }) {
  * Muestra saldo, solicitudes y permite crear nuevas
  */
 function VacacionesDashboard() {
-  const [modalAbierto, setModalAbierto] = useState(false);
+  // Gestión de modales con hook centralizado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    solicitud: { isOpen: false, data: null },
+    detalle: { isOpen: false, data: null },
+  });
   const [filtroEstado, setFiltroEstado] = useState(null);
-  // BUG-002 FIX: Estados para modal de detalle
-  const [solicitudSeleccionada, setSolicitudSeleccionada] = useState(null);
-  const [modalDetalle, setModalDetalle] = useState(false);
   const anioActual = new Date().getFullYear();
 
-  // BUG-002 FIX: Handler para ver detalle de solicitud
+  // Handler para ver detalle de solicitud
   const handleVerDetalle = (solicitud) => {
-    setSolicitudSeleccionada(solicitud);
-    setModalDetalle(true);
-  };
-
-  const handleCerrarDetalle = () => {
-    setModalDetalle(false);
-    setSolicitudSeleccionada(null);
+    openModal('detalle', solicitud);
   };
 
   // Queries
@@ -142,7 +138,7 @@ function VacacionesDashboard() {
           </Button>
 
           <Button
-            onClick={() => setModalAbierto(true)}
+            onClick={() => openModal('solicitud')}
             disabled={diasDisponibles <= 0}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -214,31 +210,31 @@ function VacacionesDashboard() {
 
       {/* Modal de nueva solicitud */}
       <SolicitudVacacionesModal
-        isOpen={modalAbierto}
-        onClose={() => setModalAbierto(false)}
+        isOpen={isOpen('solicitud')}
+        onClose={() => closeModal('solicitud')}
         diasDisponibles={diasDisponibles}
         diasAnticipacionMinimos={diasAnticipacion}
       />
 
-      {/* BUG-002 FIX: Modal de detalle de solicitud */}
+      {/* Modal de detalle de solicitud */}
       <Modal
-        isOpen={modalDetalle}
-        onClose={handleCerrarDetalle}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
         title="Detalle de Solicitud"
         size="md"
       >
-        {solicitudSeleccionada && (
+        {getModalData('detalle') && (
           <div className="space-y-6">
             {/* Estado */}
             <div className="flex justify-center">
-              <EstadoBadge estado={solicitudSeleccionada.estado} />
+              <EstadoBadge estado={getModalData('detalle').estado} />
             </div>
 
             {/* Código de solicitud */}
-            {solicitudSeleccionada.codigo && (
+            {getModalData('detalle').codigo && (
               <div className="text-center">
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  Código: <span className="font-mono font-medium">{solicitudSeleccionada.codigo}</span>
+                  Código: <span className="font-mono font-medium">{getModalData('detalle').codigo}</span>
                 </span>
               </div>
             )}
@@ -253,13 +249,13 @@ function VacacionesDashboard() {
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fecha Inicio</p>
                   <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {formatFecha(solicitudSeleccionada.fecha_inicio)}
+                    {formatFecha(getModalData('detalle').fecha_inicio)}
                   </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Fecha Fin</p>
                   <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {formatFecha(solicitudSeleccionada.fecha_fin)}
+                    {formatFecha(getModalData('detalle').fecha_fin)}
                   </p>
                 </div>
               </div>
@@ -267,58 +263,58 @@ function VacacionesDashboard() {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-gray-500 dark:text-gray-400">Días hábiles</span>
                   <span className="font-bold text-lg text-primary-600 dark:text-primary-400">
-                    {formatDias(solicitudSeleccionada.dias_habiles)}
+                    {formatDias(getModalData('detalle').dias_habiles)}
                   </span>
                 </div>
-                {solicitudSeleccionada.es_medio_dia && (
+                {getModalData('detalle').es_medio_dia && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Turno: {solicitudSeleccionada.turno_medio_dia === 'manana' ? 'Mañana' : 'Tarde'}
+                    Turno: {getModalData('detalle').turno_medio_dia === 'manana' ? 'Mañana' : 'Tarde'}
                   </p>
                 )}
               </div>
             </div>
 
             {/* Motivo de solicitud */}
-            {solicitudSeleccionada.motivo_solicitud && (
+            {getModalData('detalle').motivo_solicitud && (
               <div>
                 <div className="flex items-center gap-2 mb-2">
                   <FileText className="h-4 w-4 text-gray-400" />
                   <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">Motivo de la solicitud</h4>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-900/50 rounded-lg p-3">
-                  {solicitudSeleccionada.motivo_solicitud}
+                  {getModalData('detalle').motivo_solicitud}
                 </p>
               </div>
             )}
 
             {/* Info de aprobación/rechazo */}
-            {(solicitudSeleccionada.estado === 'aprobada' || solicitudSeleccionada.estado === 'rechazada') && (
+            {(getModalData('detalle').estado === 'aprobada' || getModalData('detalle').estado === 'rechazada') && (
               <div className={`rounded-lg p-4 ${
-                solicitudSeleccionada.estado === 'aprobada'
+                getModalData('detalle').estado === 'aprobada'
                   ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
                   : 'bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800'
               }`}>
                 <div className="flex items-center gap-2 mb-2">
                   <User className="h-4 w-4" />
                   <h4 className="text-sm font-medium">
-                    {solicitudSeleccionada.estado === 'aprobada' ? 'Aprobado por' : 'Rechazado por'}
+                    {getModalData('detalle').estado === 'aprobada' ? 'Aprobado por' : 'Rechazado por'}
                   </h4>
                 </div>
-                {solicitudSeleccionada.aprobador_nombre && (
-                  <p className="text-sm font-medium">{solicitudSeleccionada.aprobador_nombre}</p>
+                {getModalData('detalle').aprobador_nombre && (
+                  <p className="text-sm font-medium">{getModalData('detalle').aprobador_nombre}</p>
                 )}
-                {solicitudSeleccionada.fecha_decision && (
+                {getModalData('detalle').fecha_decision && (
                   <p className="text-xs text-gray-500 mt-1">
-                    {formatFecha(solicitudSeleccionada.fecha_decision)}
+                    {formatFecha(getModalData('detalle').fecha_decision)}
                   </p>
                 )}
-                {solicitudSeleccionada.motivo_rechazo && (
+                {getModalData('detalle').motivo_rechazo && (
                   <div className="mt-3 pt-3 border-t border-red-200 dark:border-red-700">
                     <p className="text-sm font-medium text-red-700 dark:text-red-300">
                       Motivo del rechazo:
                     </p>
                     <p className="text-sm text-red-600 dark:text-red-400 mt-1">
-                      {solicitudSeleccionada.motivo_rechazo}
+                      {getModalData('detalle').motivo_rechazo}
                     </p>
                   </div>
                 )}
@@ -327,15 +323,15 @@ function VacacionesDashboard() {
 
             {/* Fechas de auditoría */}
             <div className="flex items-center justify-between text-xs text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <span>Creado: {formatFecha(solicitudSeleccionada.creado_en)}</span>
-              {solicitudSeleccionada.actualizado_en !== solicitudSeleccionada.creado_en && (
-                <span>Actualizado: {formatFecha(solicitudSeleccionada.actualizado_en)}</span>
+              <span>Creado: {formatFecha(getModalData('detalle').creado_en)}</span>
+              {getModalData('detalle').actualizado_en !== getModalData('detalle').creado_en && (
+                <span>Actualizado: {formatFecha(getModalData('detalle').actualizado_en)}</span>
               )}
             </div>
 
             {/* Botón cerrar */}
             <div className="flex justify-end">
-              <Button variant="outline" onClick={handleCerrarDetalle}>
+              <Button variant="outline" onClick={() => closeModal('detalle')}>
                 Cerrar
               </Button>
             </div>

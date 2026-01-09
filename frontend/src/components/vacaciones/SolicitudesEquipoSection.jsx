@@ -12,6 +12,8 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Badge from '@/components/ui/Badge';
 import Textarea from '@/components/ui/Textarea';
+import EmptyState from '@/components/ui/EmptyState';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useSolicitudesPendientes,
   useAprobarSolicitud,
@@ -389,10 +391,12 @@ function RechazarModal({ isOpen, onClose, solicitud, onConfirm, isLoading }) {
  * Sección principal de solicitudes del equipo
  */
 function SolicitudesEquipoSection() {
-  // Estado para modales
-  const [solicitudDetalle, setSolicitudDetalle] = useState(null);
-  const [solicitudAprobar, setSolicitudAprobar] = useState(null);
-  const [solicitudRechazar, setSolicitudRechazar] = useState(null);
+  // Gestión de modales con hook centralizado
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    detalle: { isOpen: false, data: null },
+    aprobar: { isOpen: false, data: null },
+    rechazar: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data, isLoading, error, refetch } = useSolicitudesPendientes();
@@ -403,23 +407,23 @@ function SolicitudesEquipoSection() {
 
   // Handlers
   const handleVerDetalle = (sol) => {
-    setSolicitudDetalle(sol);
+    openModal('detalle', sol);
   };
 
   const handleIniciarAprobar = (sol) => {
-    setSolicitudDetalle(null);
-    setSolicitudAprobar(sol);
+    closeModal('detalle');
+    openModal('aprobar', sol);
   };
 
   const handleIniciarRechazar = (sol) => {
-    setSolicitudDetalle(null);
-    setSolicitudRechazar(sol);
+    closeModal('detalle');
+    openModal('rechazar', sol);
   };
 
   const handleConfirmarAprobar = async (id, notas) => {
     try {
       await aprobarMutation.mutateAsync({ id, notas_internas: notas || undefined });
-      setSolicitudAprobar(null);
+      closeModal('aprobar');
     } catch (err) {
       // El toast de error ya se muestra en el hook
     }
@@ -432,7 +436,7 @@ function SolicitudesEquipoSection() {
         motivo_rechazo: motivo,
         notas_internas: notas || undefined
       });
-      setSolicitudRechazar(null);
+      closeModal('rechazar');
     } catch (err) {
       // El toast de error ya se muestra en el hook
     }
@@ -475,15 +479,11 @@ function SolicitudesEquipoSection() {
 
       {/* Lista vacía */}
       {!isLoading && !error && solicitudes.length === 0 && (
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-8 text-center">
-          <Users className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Sin solicitudes pendientes
-          </h3>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            No hay solicitudes de vacaciones de tu equipo esperando aprobación
-          </p>
-        </div>
+        <EmptyState
+          icon={Users}
+          title="Sin solicitudes pendientes"
+          description="No hay solicitudes de vacaciones de tu equipo esperando aprobación"
+        />
       )}
 
       {/* Lista de solicitudes */}
@@ -503,25 +503,25 @@ function SolicitudesEquipoSection() {
 
       {/* Modales */}
       <DetalleModal
-        isOpen={!!solicitudDetalle}
-        onClose={() => setSolicitudDetalle(null)}
-        solicitud={solicitudDetalle}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
+        solicitud={getModalData('detalle')}
         onAprobar={handleIniciarAprobar}
         onRechazar={handleIniciarRechazar}
       />
 
       <AprobarModal
-        isOpen={!!solicitudAprobar}
-        onClose={() => setSolicitudAprobar(null)}
-        solicitud={solicitudAprobar}
+        isOpen={isOpen('aprobar')}
+        onClose={() => closeModal('aprobar')}
+        solicitud={getModalData('aprobar')}
         onConfirm={handleConfirmarAprobar}
         isLoading={aprobarMutation.isPending}
       />
 
       <RechazarModal
-        isOpen={!!solicitudRechazar}
-        onClose={() => setSolicitudRechazar(null)}
-        solicitud={solicitudRechazar}
+        isOpen={isOpen('rechazar')}
+        onClose={() => closeModal('rechazar')}
+        solicitud={getModalData('rechazar')}
         onConfirm={handleConfirmarRechazar}
         isLoading={rechazarMutation.isPending}
       />

@@ -13,8 +13,6 @@ import {
   Eye,
   XCircle,
   AlertCircle,
-  ChevronLeft,
-  ChevronRight,
   Search,
   Filter,
   Plus,
@@ -24,6 +22,8 @@ import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Select from '@/components/ui/Select';
 import Input from '@/components/ui/Input';
+import Pagination from '@/components/ui/Pagination';
+import EmptyState from '@/components/ui/EmptyState';
 import {
   useIncapacidades,
   useCancelarIncapacidad,
@@ -320,17 +320,21 @@ function IncapacidadesList({ onRegistrar }) {
 
       {/* Lista */}
       {incapacidades.length === 0 ? (
-        <div className="bg-gray-50 dark:bg-gray-900/50 rounded-lg p-8 text-center">
-          <HeartPulse className="h-12 w-12 text-gray-400 mx-auto mb-3" />
-          <p className="text-gray-500 dark:text-gray-400 mb-4">
-            No hay incapacidades registradas
-            {(filtros.estado || filtros.tipo || filtros.busqueda) && ' con los filtros seleccionados'}
-          </p>
-          <Button onClick={onRegistrar}>
-            <Plus className="h-4 w-4 mr-2" />
-            Registrar Incapacidad
-          </Button>
-        </div>
+        <EmptyState
+          icon={HeartPulse}
+          title="Sin incapacidades"
+          description={
+            filtros.estado || filtros.tipo || filtros.busqueda
+              ? 'No hay incapacidades con los filtros seleccionados'
+              : 'No hay incapacidades registradas'
+          }
+          action={
+            <Button onClick={onRegistrar}>
+              <Plus className="h-4 w-4 mr-2" />
+              Registrar Incapacidad
+            </Button>
+          }
+        />
       ) : (
         <>
           <div className="space-y-3">
@@ -346,35 +350,17 @@ function IncapacidadesList({ onRegistrar }) {
 
           {/* Paginación */}
           {pagination.pages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
-                Mostrando {incapacidades.length} de {pagination.total} incapacidades
-              </span>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPage(p => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  {page} / {pagination.pages}
-                </span>
-
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setPage(p => Math.min(pagination.pages, p + 1))}
-                  disabled={page === pagination.pages}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
+            <Pagination
+              pagination={{
+                page,
+                limit,
+                total: pagination.total,
+                totalPages: pagination.pages,
+                hasNext: page < pagination.pages,
+                hasPrev: page > 1,
+              }}
+              onPageChange={setPage}
+            />
           )}
         </>
       )}

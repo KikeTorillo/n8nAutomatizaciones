@@ -1,5 +1,7 @@
-import { Briefcase, Edit, Trash2, ChevronLeft, ChevronRight, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Briefcase, Edit, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { formatCurrency } from '@/lib/utils';
@@ -112,16 +114,12 @@ function ServiciosList({
 
                     {/* Categoría */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-800 dark:text-primary-400">
-                        {servicio.categoria}
-                      </span>
+                      <Badge variant="primary" size="sm">{servicio.categoria}</Badge>
                     </td>
 
                     {/* Duración */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-400">
-                        {formatDuration(servicio.duracion_minutos)}
-                      </span>
+                      <Badge variant="info" size="sm">{formatDuration(servicio.duracion_minutos)}</Badge>
                     </td>
 
                     {/* Precio */}
@@ -154,17 +152,9 @@ function ServiciosList({
 
                     {/* Estado */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`
-                          px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                          ${servicio.activo
-                            ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
-                          }
-                        `}
-                      >
+                      <Badge variant={servicio.activo ? 'success' : 'default'} size="sm">
                         {servicio.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Acciones */}
@@ -230,82 +220,18 @@ function ServiciosList({
 
       {/* Pagination */}
       {paginacion && paginacion.totalPages > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Mostrando{' '}
-              <span className="font-medium">
-                {(paginacion.page - 1) * paginacion.limit + 1}
-              </span>
-              {' - '}
-              <span className="font-medium">
-                {Math.min(paginacion.page * paginacion.limit, paginacion.total)}
-              </span>
-              {' de '}
-              <span className="font-medium">{paginacion.total}</span>
-              {' servicios'}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(paginacion.page - 1)}
-                disabled={!paginacion.hasPrev}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Anterior
-              </Button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: paginacion.totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    // Mostrar solo páginas cercanas a la actual
-                    return (
-                      page === 1 ||
-                      page === paginacion.totalPages ||
-                      Math.abs(page - paginacion.page) <= 1
-                    );
-                  })
-                  .map((page, index, array) => {
-                    // Agregar "..." si hay un salto
-                    const showEllipsis =
-                      index > 0 && array[index - 1] !== page - 1;
-
-                    return (
-                      <div key={page} className="flex items-center">
-                        {showEllipsis && (
-                          <span className="px-2 text-gray-400 dark:text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => onPageChange(page)}
-                          className={`
-                            min-w-[2.5rem] h-10 px-3 rounded-md text-sm font-medium
-                            transition-colors
-                            ${page === paginacion.page
-                              ? 'bg-primary-600 text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }
-                          `}
-                        >
-                          {page}
-                        </button>
-                      </div>
-                    );
-                  })}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(paginacion.page + 1)}
-                disabled={!paginacion.hasNext}
-              >
-                Siguiente
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
+        <div className="mt-4">
+          <Pagination
+            pagination={{
+              page: paginacion.page,
+              limit: paginacion.limit,
+              total: paginacion.total,
+              totalPages: paginacion.totalPages,
+              hasNext: paginacion.hasNext,
+              hasPrev: paginacion.hasPrev,
+            }}
+            onPageChange={onPageChange}
+          />
         </div>
       )}
     </div>

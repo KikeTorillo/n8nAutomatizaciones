@@ -4,9 +4,12 @@
  * Enero 2026
  */
 import { useState } from 'react';
-import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle } from 'lucide-react';
+import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
+import Alert from '@/components/ui/Alert';
+import EmptyState from '@/components/ui/EmptyState';
+import StatCardGrid from '@/components/ui/StatCardGrid';
 import {
   useDashboardAusencias,
   useMisAusencias,
@@ -99,15 +102,9 @@ function AusenciaCard({ ausencia, onVerDetalle }) {
         <div className="flex-1 min-w-0">
           {/* Tipo y código */}
           <div className="flex items-center gap-2 mb-2">
-            <span
-              className={`
-                px-2 py-0.5 text-xs font-medium rounded-full
-                ${tipoConfig?.bgColor || 'bg-gray-100'}
-                ${tipoConfig?.textColor || 'text-gray-700'}
-              `}
-            >
+            <Badge variant={colorMap[tipoConfig?.color] || 'default'} size="sm">
               {esVacaciones ? 'Vacaciones' : ausencia.subTipoConfig?.label || 'Incapacidad'}
-            </span>
+            </Badge>
             <span className="text-xs text-gray-400">{ausencia.codigo}</span>
           </div>
 
@@ -165,12 +162,9 @@ function MisAusenciasTab() {
 
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-        <div className="flex items-center gap-2 text-red-700 dark:text-red-300">
-          <AlertCircle className="w-5 h-5" />
-          <span>Error al cargar datos: {error.message}</span>
-        </div>
-      </div>
+      <Alert variant="error" icon={AlertCircle} title="Error">
+        Error al cargar datos: {error.message}
+      </Alert>
     );
   }
 
@@ -230,38 +224,39 @@ function MisAusenciasTab() {
       )}
 
       {/* Resumen del año */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-            {dashboard?.diasVacacionesDisponibles || 0}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Días disponibles
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-            {dashboard?.diasVacacionesUsados || 0}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Días usados
-          </p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-            {dashboard?.diasVacacionesEnTramite || 0}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">En trámite</p>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-          <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-            {dashboard?.diasIncapacidadAnio || 0}
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Días incapacidad
-          </p>
-        </div>
-      </div>
+      <StatCardGrid
+        stats={[
+          {
+            key: 'disponibles',
+            icon: Calendar,
+            label: 'Días disponibles',
+            value: dashboard?.diasVacacionesDisponibles || 0,
+            color: 'green',
+          },
+          {
+            key: 'usados',
+            icon: CheckCircle,
+            label: 'Días usados',
+            value: dashboard?.diasVacacionesUsados || 0,
+            color: 'blue',
+          },
+          {
+            key: 'tramite',
+            icon: Clock,
+            label: 'En trámite',
+            value: dashboard?.diasVacacionesEnTramite || 0,
+            color: 'yellow',
+          },
+          {
+            key: 'incapacidad',
+            icon: HeartPulse,
+            label: 'Días incapacidad',
+            value: dashboard?.diasIncapacidadAnio || 0,
+            color: 'red',
+          },
+        ]}
+        columns={4}
+      />
 
       {/* Filtros para historial */}
       <div className="flex items-center gap-2 border-b border-gray-200 dark:border-gray-700 pb-2">
@@ -321,10 +316,12 @@ function MisAusenciasTab() {
             ))}
           </div>
         ) : ausencias?.length === 0 ? (
-          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-            <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>No hay ausencias registradas este año</p>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            title="Sin ausencias"
+            description="No hay ausencias registradas este año"
+            size="sm"
+          />
         ) : (
           <div className="space-y-3">
             {ausencias?.map((ausencia) => (

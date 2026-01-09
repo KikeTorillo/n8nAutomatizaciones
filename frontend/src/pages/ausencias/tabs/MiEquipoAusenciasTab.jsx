@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { RefreshCw, HeartPulse, Calendar, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import { SolicitudesEquipoSection } from '@/components/vacaciones';
 import { useIncapacidades } from '@/hooks/useIncapacidades';
 import Badge from '@/components/ui/Badge';
@@ -19,26 +20,10 @@ function IncapacidadEquipoCard({ incapacidad }) {
   const diasRestantes = calcularDiasRestantes(incapacidad.fecha_fin);
 
   const tipoConfig = {
-    enfermedad_general: {
-      label: 'Enfermedad General',
-      bgColor: 'bg-red-100 dark:bg-red-900/30',
-      textColor: 'text-red-700 dark:text-red-300',
-    },
-    maternidad: {
-      label: 'Maternidad',
-      bgColor: 'bg-pink-100 dark:bg-pink-900/30',
-      textColor: 'text-pink-700 dark:text-pink-300',
-    },
-    riesgo_trabajo: {
-      label: 'Riesgo de Trabajo',
-      bgColor: 'bg-orange-100 dark:bg-orange-900/30',
-      textColor: 'text-orange-700 dark:text-orange-300',
-    },
-  }[incapacidad.tipo_incapacidad] || {
-    label: 'Incapacidad',
-    bgColor: 'bg-gray-100 dark:bg-gray-800',
-    textColor: 'text-gray-700 dark:text-gray-300',
-  };
+    enfermedad_general: { label: 'Enfermedad General', variant: 'error' },
+    maternidad: { label: 'Maternidad', variant: 'info' },
+    riesgo_trabajo: { label: 'Riesgo de Trabajo', variant: 'warning' },
+  }[incapacidad.tipo_incapacidad] || { label: 'Incapacidad', variant: 'default' };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
@@ -48,14 +33,9 @@ function IncapacidadEquipoCard({ incapacidad }) {
             <span className="font-medium text-gray-900 dark:text-white">
               {incapacidad.profesional_nombre}
             </span>
-            <span
-              className={`
-                px-2 py-0.5 text-xs font-medium rounded-full
-                ${tipoConfig.bgColor} ${tipoConfig.textColor}
-              `}
-            >
+            <Badge variant={tipoConfig.variant} size="sm">
               {tipoConfig.label}
-            </span>
+            </Badge>
           </div>
 
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -168,10 +148,12 @@ function MiEquipoAusenciasTab() {
               ))}
             </div>
           ) : incapacidadesActivas.length === 0 ? (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <HeartPulse className="w-12 h-12 mx-auto mb-2 opacity-50" />
-              <p>No hay incapacidades activas</p>
-            </div>
+            <EmptyState
+              icon={HeartPulse}
+              title="Sin incapacidades activas"
+              description="No hay profesionales con incapacidad activa en este momento"
+              size="sm"
+            />
           ) : (
             <div className="space-y-3">
               {incapacidadesActivas.map((inc) => (
