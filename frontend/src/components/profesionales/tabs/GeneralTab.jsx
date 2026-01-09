@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Mail,
@@ -30,6 +30,13 @@ function GeneralTab({ profesional }) {
   // Estado para foto de perfil
   const [fotoPreview, setFotoPreview] = useState(profesional?.foto_url || null);
   const [isUploadingFoto, setIsUploadingFoto] = useState(false);
+
+  // Sincronizar foto cuando cambia el profesional (navegación directa o actualización externa)
+  useEffect(() => {
+    if (!isUploadingFoto) {
+      setFotoPreview(profesional?.foto_url || null);
+    }
+  }, [profesional?.foto_url, isUploadingFoto]);
 
   // Hooks para upload y actualización
   const uploadMutation = useUploadArchivo();
@@ -369,7 +376,7 @@ function GeneralTab({ profesional }) {
         ]}
         initialValues={{
           anos_experiencia: profesional.anos_experiencia || '',
-          disponible_online: profesional.disponible_online ? 'true' : 'false',
+          disponible_online: String(profesional.disponible_online === true || profesional.disponible_online === 'true'),
           licencias_profesionales: typeof profesional.licencias_profesionales === 'object'
             ? JSON.stringify(profesional.licencias_profesionales)
             : profesional.licencias_profesionales || '',

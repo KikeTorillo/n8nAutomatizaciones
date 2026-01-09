@@ -196,7 +196,7 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | `SkeletonTable` | Skeleton loading para tablas |
 | `SkeletonCard` | Skeleton loading para cards |
 | `Pagination` | Paginación server-side con números de página |
-| `ExpandableSection` | Sección expandible con soporte CRUD (para listas anidadas) |
+| `ExpandableCrudSection` | Sección expandible CRUD reutilizable (Educación, Experiencia, Habilidades, Cuentas) |
 
 ### Hooks Reutilizables (Nuevos Ene 2026)
 | Hook | Uso |
@@ -500,12 +500,13 @@ sql/
 **Completado:**
 | Módulo | Páginas | Componentes Aplicados |
 |--------|---------|----------------------|
-| Inventario | 20 | StatCardGrid, EmptyState, ViewTabs, Pagination, ExpandableSection |
+| Inventario | 20 | StatCardGrid, EmptyState, ViewTabs, Pagination |
 | Agendamiento | 4 | useModalManager, StatCardGrid, ViewTabs, EmptyState, SkeletonTable |
+| Profesionales | 7 tabs | ExpandableCrudSection, useModalManager, validaciones Zod |
 
-**Pendiente (2da pasada):**
-- Agendamiento: revisar CalendarioMensual, CitaFormModal, validaciones
-- Profesionales: tabs de detalle, formularios, gestión de documentos
+**Revisión completada (8 Ene 2026):**
+- Agendamiento: validación medianoche, key prop para remontaje, fix EmptyState
+- Profesionales: fix isEditing, type coercion, botones móvil, fallback API
 
 ---
 

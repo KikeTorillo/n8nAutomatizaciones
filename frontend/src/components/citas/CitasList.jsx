@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import { Calendar, Clock, User, Package } from 'lucide-react';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { obtenerColorEstado, obtenerLabelEstado } from '@/utils/citaValidators';
@@ -11,6 +12,7 @@ function CitasList({
   citas = [],
   isLoading = false,
   onVerDetalles,
+  onLimpiarFiltros,
 }) {
   // Estados de carga (skeleton)
   if (isLoading) {
@@ -89,8 +91,8 @@ function CitasList({
         icon={Calendar}
         title="No hay citas"
         description="No se encontraron citas con los filtros seleccionados."
-        actionLabel="Limpiar filtros"
-        onAction={() => window.location.reload()}
+        actionLabel={onLimpiarFiltros ? 'Limpiar filtros' : undefined}
+        onAction={onLimpiarFiltros}
       />
     );
   }
@@ -277,5 +279,38 @@ function CitasList({
     </div>
   );
 }
+
+CitasList.propTypes = {
+  citas: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      codigo_cita: PropTypes.string,
+      fecha_cita: PropTypes.string,
+      hora_inicio: PropTypes.string,
+      hora_fin: PropTypes.string,
+      cliente_nombre: PropTypes.string,
+      cliente_telefono: PropTypes.string,
+      profesional_nombre: PropTypes.string,
+      profesional_color: PropTypes.string,
+      profesional_especialidad: PropTypes.string,
+      servicio_nombre: PropTypes.string,
+      servicios: PropTypes.arrayOf(
+        PropTypes.shape({
+          servicio_nombre: PropTypes.string,
+          precio_aplicado: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        })
+      ),
+      precio_total: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      precio_servicio: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      descuento: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      duracion_total_minutos: PropTypes.number,
+      duracion_minutos: PropTypes.number,
+      estado: PropTypes.string,
+    })
+  ),
+  isLoading: PropTypes.bool,
+  onVerDetalles: PropTypes.func.isRequired,
+  onLimpiarFiltros: PropTypes.func,
+};
 
 export default CitasList;

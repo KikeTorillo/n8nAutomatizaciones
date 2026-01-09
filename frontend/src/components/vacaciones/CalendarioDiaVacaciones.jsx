@@ -41,10 +41,10 @@ const obtenerColorEstado = (estado) => {
 function CalendarioDiaVacaciones({
   dia,
   solicitudes = [],
-  esDelMesActual,
-  esHoy,
-  onVerSolicitud,
-  isLoading,
+  esDelMesActual = true,
+  esHoy = false,
+  onVerSolicitud = () => {},
+  isLoading = false,
 }) {
   const numeroDia = format(dia, 'd');
   const maxVisibles = 3;
@@ -151,14 +151,6 @@ CalendarioDiaVacaciones.propTypes = {
   esHoy: PropTypes.bool,
   onVerSolicitud: PropTypes.func,
   isLoading: PropTypes.bool,
-};
-
-CalendarioDiaVacaciones.defaultProps = {
-  solicitudes: [],
-  esDelMesActual: true,
-  esHoy: false,
-  onVerSolicitud: () => {},
-  isLoading: false,
 };
 
 export default CalendarioDiaVacaciones;

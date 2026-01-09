@@ -6,6 +6,7 @@ import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
+import { ViewTabs } from '@/components/ui/ViewTabs';
 import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
@@ -16,6 +17,7 @@ import {
 } from '@/hooks/useProfesionales';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 
 /**
  * Página principal de gestión de profesionales
@@ -42,13 +44,17 @@ function ProfesionalesPage() {
   // Fetch departamentos para filtros (Dic 2025)
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
 
-  // Estados para modales
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [profesionalAEliminar, setProfesionalAEliminar] = useState(null);
-  const [isHorariosModalOpen, setIsHorariosModalOpen] = useState(false);
-  const [profesionalParaHorarios, setProfesionalParaHorarios] = useState(null);
-  const [isServiciosModalOpen, setIsServiciosModalOpen] = useState(false);
-  const [profesionalParaServicios, setProfesionalParaServicios] = useState(null);
+  // Ene 2026: Estado de modales centralizado con useModalManager
+  const {
+    openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+  } = useModalManager({
+    eliminar: { isOpen: false, data: null },
+    horarios: { isOpen: false, data: null },
+    servicios: { isOpen: false, data: null },
+  });
 
   // Fetch profesionales con filtros y paginación (Ene 2026)
   const { data, isLoading } = useProfesionales({
@@ -106,11 +112,11 @@ function ProfesionalesPage() {
   };
 
   const handleDelete = (profesional) => {
-    setProfesionalAEliminar(profesional);
-    setIsDeleteModalOpen(true);
+    openModal('eliminar', profesional);
   };
 
   const handleConfirmDelete = async () => {
+    const profesionalAEliminar = getModalData('eliminar');
     if (!profesionalAEliminar) return;
 
     try {
@@ -118,8 +124,7 @@ function ProfesionalesPage() {
       toast.success(
         `Profesional "${profesionalAEliminar.nombre_completo}" desactivado correctamente`
       );
-      setIsDeleteModalOpen(false);
-      setProfesionalAEliminar(null);
+      closeModal('eliminar');
     } catch (error) {
       toast.error(
         error.message || 'Error al desactivar el profesional. Intenta nuevamente.'
@@ -128,13 +133,11 @@ function ProfesionalesPage() {
   };
 
   const handleGestionarHorarios = (profesional) => {
-    setProfesionalParaHorarios(profesional);
-    setIsHorariosModalOpen(true);
+    openModal('horarios', profesional);
   };
 
   const handleGestionarServicios = (profesional) => {
-    setProfesionalParaServicios(profesional);
-    setIsServiciosModalOpen(true);
+    openModal('servicios', profesional);
   };
 
   // Verificar si hay filtros activos (Dic 2025: nuevos filtros)
@@ -143,6 +146,12 @@ function ProfesionalesPage() {
     filtros.estado !== '' ||
     filtros.departamento_id !== '' ||
     busqueda !== '';
+
+  // Ene 2026: Configuración de ViewTabs para toggle cards/tabla
+  const viewTabsConfig = useMemo(() => [
+    { id: 'cards', label: 'Tarjetas', icon: LayoutGrid },
+    { id: 'table', label: 'Tabla', icon: LayoutList },
+  ], []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -218,27 +227,13 @@ function ProfesionalesPage() {
                 )}
               </Button>
 
-              {/* Ene 2026: Toggle de vista cards/tabla */}
-              <div className="flex items-center border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`p-2 transition-colors ${viewMode === 'cards'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                  title="Vista tarjetas"
-                >
-                  <LayoutGrid className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`p-2 transition-colors ${viewMode === 'table'
-                    ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700'}`}
-                  title="Vista tabla"
-                >
-                  <LayoutList className="w-5 h-5" />
-                </button>
-              </div>
+              {/* Ene 2026: Toggle de vista cards/tabla con ViewTabs */}
+              <ViewTabs
+                tabs={viewTabsConfig}
+                activeTab={viewMode}
+                onChange={setViewMode}
+                className="border-b-0 mb-0"
+              />
             </div>
 
             {/* Panel de Filtros (Dic 2025: ampliado con nuevos filtros) */}
@@ -399,31 +394,22 @@ function ProfesionalesPage() {
 
       {/* Modal de Gestión de Horarios */}
       <HorariosProfesionalModal
-        isOpen={isHorariosModalOpen}
-        onClose={() => {
-          setIsHorariosModalOpen(false);
-          setProfesionalParaHorarios(null);
-        }}
-        profesional={profesionalParaHorarios}
+        isOpen={isOpen('horarios')}
+        onClose={() => closeModal('horarios')}
+        profesional={getModalData('horarios')}
       />
 
       {/* Modal de Gestión de Servicios */}
       <ServiciosProfesionalModal
-        isOpen={isServiciosModalOpen}
-        onClose={() => {
-          setIsServiciosModalOpen(false);
-          setProfesionalParaServicios(null);
-        }}
-        profesional={profesionalParaServicios}
+        isOpen={isOpen('servicios')}
+        onClose={() => closeModal('servicios')}
+        profesional={getModalData('servicios')}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setProfesionalAEliminar(null);
-        }}
+        isOpen={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         title="Confirmar Desactivación"
         maxWidth="md"
       >
@@ -444,25 +430,25 @@ function ProfesionalesPage() {
           </div>
 
           {/* Información del profesional */}
-          {profesionalAEliminar && (
+          {getModalData('eliminar') && (
             <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
               <div className="flex items-center gap-3 mb-3">
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold"
                   style={{
                     backgroundColor:
-                      profesionalAEliminar.color_calendario || '#3b82f6',
+                      getModalData('eliminar').color_calendario || '#3b82f6',
                   }}
                 >
-                  {profesionalAEliminar.nombre_completo?.split(' ')[0]?.charAt(0)}
-                  {profesionalAEliminar.nombre_completo?.split(' ')[1]?.charAt(0)}
+                  {getModalData('eliminar').nombre_completo?.split(' ')[0]?.charAt(0)}
+                  {getModalData('eliminar').nombre_completo?.split(' ')[1]?.charAt(0)}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {profesionalAEliminar.nombre_completo}
+                    {getModalData('eliminar').nombre_completo}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {profesionalAEliminar.tipo_nombre || 'Tipo no especificado'}
+                    {getModalData('eliminar').tipo_nombre || 'Tipo no especificado'}
                   </p>
                 </div>
               </div>
@@ -492,10 +478,7 @@ function ProfesionalesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setProfesionalAEliminar(null);
-              }}
+              onClick={() => closeModal('eliminar')}
               disabled={eliminarMutation.isPending}
             >
               Cancelar

@@ -189,8 +189,4 @@ CalendarioEquipoVacaciones.propTypes = {
   soloEquipo: PropTypes.bool,
 };
 
-CalendarioEquipoVacaciones.defaultProps = {
-  soloEquipo: false,
-};
-
 export default CalendarioEquipoVacaciones;

@@ -27,7 +27,7 @@ function EditableField({
     <div className={`flex justify-between items-start group ${className}`}>
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-0.5">{label}</p>
-        <p className="text-gray-900 dark:text-gray-100 break-words">{displayValue}</p>
+        <div className="text-gray-900 dark:text-gray-100 break-words">{displayValue}</div>
       </div>
       {onEdit && (
         <button

@@ -7,10 +7,11 @@ import {
   Phone,
   Calendar,
   ChevronRight,
-  ChevronLeft,
   Star,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import { Pagination } from '@/components/ui/Pagination';
 import ProfesionalStatsCard from './ProfesionalStatsCard';
 import { ESTADOS_LABORALES } from '@/hooks/useProfesionales';
 
@@ -88,20 +89,20 @@ function ProfesionalesList({
     );
   };
 
-  // Obtener color del estado laboral
-  const getEstadoColor = (estado) => {
+  // Mapear color de estado laboral a variante de Badge
+  const getEstadoBadgeVariant = (estado) => {
     const config = ESTADOS_LABORALES[estado];
-    if (!config) return 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300';
+    if (!config) return 'default';
 
-    const colors = {
-      green: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400',
-      blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-400',
-      yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-400',
-      red: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-400',
-      gray: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
+    const variantMap = {
+      green: 'success',
+      blue: 'info',
+      yellow: 'warning',
+      red: 'error',
+      gray: 'default',
     };
 
-    return colors[config.color] || colors.gray;
+    return variantMap[config.color] || 'default';
   };
 
   return (
@@ -166,15 +167,12 @@ function ProfesionalesList({
 
                     {/* Badge de estado */}
                     <div className="mt-2">
-                      <span
-                        className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          profesional.activo
-                            ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-400'
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-400'
-                        }`}
+                      <Badge
+                        variant={profesional.activo ? 'success' : 'default'}
+                        size="sm"
                       >
                         {profesional.activo ? 'Activo' : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </div>
                   </div>
                 </div>
@@ -356,17 +354,14 @@ function ProfesionalesList({
 
                     {/* Estado */}
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          profesional.activo
-                            ? getEstadoColor(profesional.estado || 'activo')
-                            : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                        }`}
+                      <Badge
+                        variant={profesional.activo ? getEstadoBadgeVariant(profesional.estado || 'activo') : 'default'}
+                        size="sm"
                       >
                         {profesional.activo
                           ? ESTADOS_LABORALES[profesional.estado]?.label || 'Activo'
                           : 'Inactivo'}
-                      </span>
+                      </Badge>
                     </td>
 
                     {/* Citas */}
@@ -431,84 +426,13 @@ function ProfesionalesList({
         </div>
       )}
 
-      {/* Paginacion */}
+      {/* Paginación */}
       {pagination && pagination.totalPages > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Mostrando{' '}
-              <span className="font-medium">
-                {(pagination.page - 1) * pagination.limit + 1}
-              </span>
-              {' - '}
-              <span className="font-medium">
-                {Math.min(pagination.page * pagination.limit, pagination.total)}
-              </span>
-              {' de '}
-              <span className="font-medium">{pagination.total}</span>
-              {' profesionales'}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page - 1)}
-                disabled={!pagination.hasPrev}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Anterior
-              </Button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    // Mostrar solo paginas cercanas a la actual
-                    return (
-                      page === 1 ||
-                      page === pagination.totalPages ||
-                      Math.abs(page - pagination.page) <= 1
-                    );
-                  })
-                  .map((page, index, array) => {
-                    // Agregar "..." si hay un salto
-                    const showEllipsis =
-                      index > 0 && array[index - 1] !== page - 1;
-
-                    return (
-                      <div key={page} className="flex items-center">
-                        {showEllipsis && (
-                          <span className="px-2 text-gray-400 dark:text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => onPageChange(page)}
-                          className={`
-                            min-w-[2.5rem] h-10 px-3 rounded-md text-sm font-medium
-                            transition-colors
-                            ${page === pagination.page
-                              ? 'bg-primary-600 dark:bg-primary-500 text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }
-                          `}
-                        >
-                          {page}
-                        </button>
-                      </div>
-                    );
-                  })}
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page + 1)}
-                disabled={!pagination.hasNext}
-              >
-                Siguiente
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
-            </div>
-          </div>
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6">
+          <Pagination
+            pagination={pagination}
+            onPageChange={onPageChange}
+          />
         </div>
       )}
     </div>

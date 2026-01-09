@@ -28,7 +28,7 @@ import { format } from 'date-fns';
 /**
  * BloqueoFormModal - Modal con formulario para crear/editar bloqueos
  */
-function BloqueoFormModal({ isOpen, onClose, bloqueo, modo = 'crear', fechaInicial = null }) {
+function BloqueoFormModal({ isOpen, onClose, bloqueo = null, modo = 'crear', fechaInicial = null }) {
 
   // Queries
   const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales({
@@ -460,12 +460,6 @@ BloqueoFormModal.propTypes = {
   bloqueo: PropTypes.object,
   modo: PropTypes.oneOf(['crear', 'editar']),
   fechaInicial: PropTypes.string, // Formato YYYY-MM-DD
-};
-
-BloqueoFormModal.defaultProps = {
-  bloqueo: null,
-  modo: 'crear',
-  fechaInicial: null,
 };
 
 export default BloqueoFormModal;

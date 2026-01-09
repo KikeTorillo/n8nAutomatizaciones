@@ -98,7 +98,7 @@ function TestForm({ onEnviar, isLoading }) {
         type="submit"
         variant="secondary"
         disabled={!telefono.trim() || isLoading}
-        loading={isLoading}
+        isLoading={isLoading}
         className="w-full sm:w-auto"
       >
         <TestTube className="w-4 h-4 mr-2" />
@@ -216,7 +216,7 @@ function RecordatoriosPage() {
           <Button
             onClick={handleSubmit(onSubmit)}
             disabled={!isDirty || actualizarMutation.isPending}
-            loading={actualizarMutation.isPending}
+            isLoading={actualizarMutation.isPending}
             className="w-full sm:w-auto"
           >
             <Save className="w-4 h-4 mr-2" />
@@ -292,7 +292,7 @@ function RecordatoriosPage() {
                 <input
                   type="number"
                   {...register('recordatorio_1_horas', { valueAsNumber: true })}
-                  disabled={!recordatorio1Activo}
+                  disabled={recordatorio1Activo !== true}
                   className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   min="1"
                   max="168"
@@ -326,7 +326,7 @@ function RecordatoriosPage() {
                 <input
                   type="number"
                   {...register('recordatorio_2_horas', { valueAsNumber: true })}
-                  disabled={!recordatorio2Activo}
+                  disabled={recordatorio2Activo !== true}
                   className="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 disabled:bg-gray-100 dark:disabled:bg-gray-800"
                   min="1"
                   max="24"

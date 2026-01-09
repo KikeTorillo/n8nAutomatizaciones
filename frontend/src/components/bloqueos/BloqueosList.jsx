@@ -252,7 +252,7 @@ BloqueoCard.propTypes = {
 /**
  * BloqueosList - Lista de bloqueos con cards
  */
-function BloqueosList({ bloqueos, isLoading, onVer, onEditar, onEliminar }) {
+function BloqueosList({ bloqueos = [], isLoading = false, onVer, onEditar, onEliminar }) {
   // Loading skeleton
   if (isLoading) {
     return (
@@ -314,11 +314,6 @@ BloqueosList.propTypes = {
   onVer: PropTypes.func.isRequired,
   onEditar: PropTypes.func.isRequired,
   onEliminar: PropTypes.func.isRequired,
-};
-
-BloqueosList.defaultProps = {
-  bloqueos: [],
-  isLoading: false,
 };
 
 export default BloqueosList;

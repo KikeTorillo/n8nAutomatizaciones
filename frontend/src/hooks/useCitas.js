@@ -13,16 +13,20 @@ import useSucursalStore from '@/store/sucursalStore';
 // ==================== QUERY HOOKS ====================
 
 /**
- * Hook para listar citas con filtros
- * @param {Object} params - Filtros: { fecha_desde, fecha_hasta, profesional_id, estado, cliente_id, servicio_id }
- * @returns {Object} { data, isLoading, error, refetch }
+ * Hook para listar citas con filtros y paginación
+ * @param {Object} params - Filtros: { fecha_desde, fecha_hasta, profesional_id, estado, cliente_id, servicio_id, page, limit }
+ * @returns {Object} { data: { citas, meta }, isLoading, error, refetch }
  *
  * @example
- * const { data: citas, isLoading } = useCitas({
+ * const { data, isLoading } = useCitas({
  *   fecha_desde: '2025-10-01',
  *   fecha_hasta: '2025-10-31',
- *   estado: 'pendiente'
+ *   estado: 'pendiente',
+ *   page: 1,
+ *   limit: 20
  * });
+ * // data.citas = [...]
+ * // data.meta = { total, page, limit, total_pages, has_next, has_prev }
  */
 export function useCitas(params = {}) {
   return useQuery({
@@ -39,7 +43,18 @@ export function useCitas(params = {}) {
 
       const response = await citasApi.listar(sanitizedParams);
       // Backend usa ResponseHelper: { success, data: { citas: [...], meta: {...} } }
-      return response.data?.data?.citas || [];
+      const data = response.data?.data || {};
+      return {
+        citas: data.citas || [],
+        meta: data.meta || {
+          total: 0,
+          page: 1,
+          limit: 20,
+          total_pages: 1,
+          has_next: false,
+          has_prev: false,
+        },
+      };
     },
     staleTime: 2 * 60 * 1000, // 2 minutos (las citas cambian frecuentemente)
     enabled: true,

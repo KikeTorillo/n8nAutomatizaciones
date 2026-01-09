@@ -39,7 +39,7 @@ class EducacionController {
         );
 
         return ResponseHelper.success(res, {
-            educacion,
+            educaciones: educacion, // FIX BUG-001: usar plural para consistencia
             conteo,
             filtros_aplicados: filtros
         }, 'Educación obtenida exitosamente');

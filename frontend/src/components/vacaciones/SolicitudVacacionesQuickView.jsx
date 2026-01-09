@@ -33,7 +33,7 @@ const badgeColors = {
   cancelada: 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300',
 };
 
-function SolicitudVacacionesQuickView({ isOpen, onClose, solicitud }) {
+function SolicitudVacacionesQuickView({ isOpen, onClose, solicitud = null }) {
   const [modoRechazo, setModoRechazo] = useState(false);
   const [motivoRechazo, setMotivoRechazo] = useState('');
 
@@ -241,10 +241,6 @@ SolicitudVacacionesQuickView.propTypes = {
     motivo_solicitud: PropTypes.string,
     motivo_rechazo: PropTypes.string,
   }),
-};
-
-SolicitudVacacionesQuickView.defaultProps = {
-  solicitud: null,
 };
 
 export default SolicitudVacacionesQuickView;

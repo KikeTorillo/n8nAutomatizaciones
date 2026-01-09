@@ -10,6 +10,7 @@ import {
   Phone,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
 import BackButton from '@/components/ui/BackButton';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
@@ -36,17 +37,17 @@ function ProfesionalHeader({ profesional }) {
     return (parts[0]?.[0] || '') + (parts[1]?.[0] || '');
   };
 
-  // Mapeo de colores para badges de estado
-  const getEstadoClasses = () => {
-    const colorMap = {
-      green: 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300',
-      blue: 'bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300',
-      yellow: 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-300',
-      red: 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300',
-      gray: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300',
-      purple: 'bg-purple-100 dark:bg-purple-900/40 text-purple-800 dark:text-purple-300',
+  // Mapear color de estado laboral a variante de Badge
+  const getEstadoBadgeVariant = () => {
+    const variantMap = {
+      green: 'success',
+      blue: 'info',
+      yellow: 'warning',
+      red: 'error',
+      gray: 'default',
+      purple: 'primary',
     };
-    return colorMap[estadoInfo.color] || colorMap.gray;
+    return variantMap[estadoInfo.color] || 'default';
   };
 
   return (
@@ -92,18 +93,18 @@ function ProfesionalHeader({ profesional }) {
                 </p>
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2 mt-2">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getEstadoClasses()}`}>
+                  <Badge variant={getEstadoBadgeVariant()} size="sm">
                     {estadoInfo.label}
-                  </span>
+                  </Badge>
                   {tipoInfo.label && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300">
+                    <Badge variant="default" size="sm">
                       {tipoInfo.label}
-                    </span>
+                    </Badge>
                   )}
                   {profesional.fecha_ingreso && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300">
+                    <Badge variant="primary" size="sm">
                       Desde {new Date(profesional.fecha_ingreso).toLocaleDateString('es-MX', { month: 'short', year: 'numeric' })}
-                    </span>
+                    </Badge>
                   )}
                 </div>
               </div>

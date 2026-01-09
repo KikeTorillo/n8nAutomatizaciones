@@ -13,8 +13,8 @@ function BloqueoFilters({
   filtros,
   onFiltrosChange,
   onLimpiar,
-  profesionales,
-  isLoadingProfesionales,
+  profesionales = [],
+  isLoadingProfesionales = false,
 }) {
   const [mostrarAvanzados, setMostrarAvanzados] = useState(false);
 
@@ -318,11 +318,6 @@ BloqueoFilters.propTypes = {
   onLimpiar: PropTypes.func.isRequired,
   profesionales: PropTypes.array,
   isLoadingProfesionales: PropTypes.bool,
-};
-
-BloqueoFilters.defaultProps = {
-  profesionales: [],
-  isLoadingProfesionales: false,
 };
 
 export default BloqueoFilters;

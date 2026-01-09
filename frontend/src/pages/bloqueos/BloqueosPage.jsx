@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, Users, Building2 } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/useBloqueos';
 import { useProfesionales } from '@/hooks/useProfesionales';
+import { useModalManager } from '@/hooks/useModalManager';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
 import BloqueosCalendar from '@/components/bloqueos/BloqueosCalendar';
 import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';
@@ -23,24 +24,23 @@ import { formatCurrency } from '@/lib/utils';
  * BloqueosPage - Página principal de gestión de bloqueos de horarios
  */
 function BloqueosPage() {
-  // Estados
+  // Estados de vista y filtros
   const [vistaActiva, setVistaActiva] = useState('todos'); // 'todos' | 'profesionales' | 'organizacionales'
   const [filtros, setFiltros] = useState({
     busqueda: '',
-    tipo_bloqueo: '',
+    tipo_bloqueo_id: '', // Corregido: usar tipo_bloqueo_id consistentemente
     profesional_id: '',
     fecha_desde: '',
     fecha_hasta: '',
     solo_activos: true,
   });
-  const [modalFormularioAbierto, setModalFormularioAbierto] = useState(false);
-  const [modoFormulario, setModoFormulario] = useState('crear'); // 'crear' | 'editar'
-  const [bloqueoSeleccionado, setBloqueoSeleccionado] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
-  const [bloqueoParaEliminar, setBloqueoParaEliminar] = useState(null);
-  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
-  const [bloqueoParaVer, setBloqueoParaVer] = useState(null);
-  const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
+
+  // Gestión centralizada de modales
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    formulario: { isOpen: false, data: null, modo: 'crear', fechaInicial: null },
+    detalle: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales({
@@ -118,7 +118,7 @@ function BloqueosPage() {
   const handleLimpiarFiltros = () => {
     setFiltros({
       busqueda: '',
-      tipo_bloqueo: '',
+      tipo_bloqueo_id: '',
       profesional_id: '',
       fecha_desde: '',
       fecha_hasta: '',
@@ -127,49 +127,37 @@ function BloqueosPage() {
   };
 
   const handleNuevoBloqueo = () => {
-    setModoFormulario('crear');
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(null);
-    setModalFormularioAbierto(true);
+    openModal('formulario', null, { modo: 'crear', fechaInicial: null });
   };
 
   const handleCrearBloqueoDesdeCalendario = (fechaISO) => {
-    setModoFormulario('crear');
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(fechaISO);
-    setModalFormularioAbierto(true);
+    openModal('formulario', null, { modo: 'crear', fechaInicial: fechaISO });
   };
 
   const handleVerBloqueo = (bloqueo) => {
-    setBloqueoParaVer(bloqueo);
-    setModalDetalleAbierto(true);
+    openModal('detalle', bloqueo);
   };
 
   const handleEditarBloqueo = (bloqueo) => {
-    setModoFormulario('editar');
-    setBloqueoSeleccionado(bloqueo);
-    setModalFormularioAbierto(true);
+    openModal('formulario', bloqueo, { modo: 'editar', fechaInicial: null });
   };
 
   const handleEliminarBloqueo = (bloqueo) => {
-    setBloqueoParaEliminar(bloqueo);
-    setModalEliminarAbierto(true);
+    openModal('eliminar', bloqueo);
   };
 
   const handleConfirmarEliminar = async () => {
+    const bloqueoParaEliminar = getModalData('eliminar');
     try {
       await eliminarMutation.mutateAsync(bloqueoParaEliminar.id);
-      setModalEliminarAbierto(false);
-      setBloqueoParaEliminar(null);
+      closeModal('eliminar');
     } catch (error) {
       console.error('Error al eliminar bloqueo:', error);
     }
   };
 
   const handleCerrarFormulario = () => {
-    setModalFormularioAbierto(false);
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(null);
+    closeModal('formulario');
   };
 
   return (
@@ -261,76 +249,71 @@ function BloqueosPage() {
 
         {/* Modal de formulario (crear/editar) */}
         <BloqueoFormModal
-          isOpen={modalFormularioAbierto}
+          isOpen={isOpen('formulario')}
           onClose={handleCerrarFormulario}
-          bloqueo={bloqueoSeleccionado}
-          modo={modoFormulario}
-          fechaInicial={fechaPreseleccionada}
+          bloqueo={getModalData('formulario')}
+          modo={getModalProps('formulario').modo}
+          fechaInicial={getModalProps('formulario').fechaInicial}
         />
 
         {/* Modal de detalle (ver información completa) */}
         <BloqueoDetailModal
-          isOpen={modalDetalleAbierto}
-          onClose={() => {
-            setModalDetalleAbierto(false);
-            setBloqueoParaVer(null);
-          }}
-          bloqueo={bloqueoParaVer}
+          isOpen={isOpen('detalle')}
+          onClose={() => closeModal('detalle')}
+          bloqueo={getModalData('detalle')}
           onEditar={handleEditarBloqueo}
           onEliminar={handleEliminarBloqueo}
         />
 
         {/* Modal de confirmación de eliminación */}
         <Modal
-          isOpen={modalEliminarAbierto}
-          onClose={() => {
-            setModalEliminarAbierto(false);
-            setBloqueoParaEliminar(null);
-          }}
+          isOpen={isOpen('eliminar')}
+          onClose={() => closeModal('eliminar')}
           title="Eliminar Bloqueo"
           size="md"
         >
-          {bloqueoParaEliminar && (
-            <div className="space-y-4">
-              <p className="text-gray-700 dark:text-gray-300">
-                ¿Estás seguro de que deseas eliminar el siguiente bloqueo?
-              </p>
+          {(() => {
+            const bloqueoAEliminar = getModalData('eliminar');
+            if (!bloqueoAEliminar) return null;
+            return (
+              <div className="space-y-4">
+                <p className="text-gray-700 dark:text-gray-300">
+                  ¿Estás seguro de que deseas eliminar el siguiente bloqueo?
+                </p>
 
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-                <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{bloqueoParaEliminar.titulo}</h4>
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <p>Tipo: {bloqueoParaEliminar.tipo_bloqueo}</p>
-                  <p>
-                    Fecha: {bloqueoParaEliminar.fecha_inicio} - {bloqueoParaEliminar.fecha_fin}
-                  </p>
-                  {bloqueoParaEliminar.citas_afectadas > 0 && (
-                    <p className="text-red-600 dark:text-red-400 font-medium mt-2">
-                      ⚠️ Este bloqueo afecta {bloqueoParaEliminar.citas_afectadas} citas
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                  <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">{bloqueoAEliminar.titulo}</h4>
+                  <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                    <p>Tipo: {bloqueoAEliminar.tipo_bloqueo}</p>
+                    <p>
+                      Fecha: {bloqueoAEliminar.fecha_inicio} - {bloqueoAEliminar.fecha_fin}
                     </p>
-                  )}
+                    {bloqueoAEliminar.citas_afectadas > 0 && (
+                      <p className="text-red-600 dark:text-red-400 font-medium mt-2">
+                        ⚠️ Este bloqueo afecta {bloqueoAEliminar.citas_afectadas} citas
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-3">
+                  <Button
+                    variant="secondary"
+                    onClick={() => closeModal('eliminar')}
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    variant="danger"
+                    onClick={handleConfirmarEliminar}
+                    disabled={eliminarMutation.isPending}
+                  >
+                    {eliminarMutation.isPending ? 'Eliminando...' : 'Eliminar Bloqueo'}
+                  </Button>
                 </div>
               </div>
-
-              <div className="flex justify-end gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={() => {
-                    setModalEliminarAbierto(false);
-                    setBloqueoParaEliminar(null);
-                  }}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={handleConfirmarEliminar}
-                  disabled={eliminarMutation.isPending}
-                >
-                  {eliminarMutation.isPending ? 'Eliminando...' : 'Eliminar Bloqueo'}
-                </Button>
-              </div>
-            </div>
-          )}
+            );
+          })()}
         </Modal>
       </div>
     </div>

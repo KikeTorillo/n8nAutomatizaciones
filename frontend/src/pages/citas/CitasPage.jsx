@@ -1,25 +1,24 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Plus, TrendingUp, Clock, CheckCircle, AlertCircle, List, CalendarDays } from 'lucide-react';
+import { Calendar, Plus, TrendingUp, Clock, CheckCircle, List, CalendarDays } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
-import Modal from '@/components/ui/Modal';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { ViewTabs } from '@/components/ui/ViewTabs';
+import { Pagination } from '@/components/ui/Pagination';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
 import CitaDetailModal from '@/components/citas/CitaDetailModal';
 import CitaFormModal from '@/components/citas/CitaFormModal';
 import CompletarCitaModal from '@/components/citas/CompletarCitaModal';
 import NoShowModal from '@/components/citas/NoShowModal';
+import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
 import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
-import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useCitas,
   useCitasDelDia,
-  useCancelarCita,
   useConfirmarCita,
   useIniciarCita,
 } from '@/hooks/useCitas';
@@ -32,10 +31,13 @@ import { useServicios } from '@/hooks/useServicios';
 function CitasPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { showToast } = useToast();
 
   // Estado de vista activa (lista o calendario)
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' o 'calendario'
+
+  // Estado de paginación
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 20;
 
   // Estado de filtros (incluye sucursal_id para multi-sucursal)
   const [filtros, setFiltros] = useState({
@@ -56,11 +58,10 @@ function CitasPage() {
     isOpen,
     getModalData,
     getModalProps,
-    updateModal,
   } = useModalManager({
     detalles: { isOpen: false, data: null },
     formulario: { isOpen: false, data: null, mode: 'create', fechaPreseleccionada: null, clientePreseleccionado: null },
-    cancelar: { isOpen: false, data: null, motivoCancelacion: '' },
+    cancelar: { isOpen: false, data: null },
     completar: { isOpen: false, data: null },
     noShow: { isOpen: false, data: null },
   });
@@ -78,12 +79,21 @@ function CitasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.abrirModal]); // Solo depender de abrirModal, no del objeto completo
 
-  // Queries
-  const { data: citas = [], isLoading: cargandoCitas } = useCitas(filtros);
-  const { data: citasDelDia = [] } = useCitasDelDia();
+  // Queries con paginación
+  const { data: citasData, isLoading: cargandoCitas } = useCitas({
+    ...filtros,
+    page,
+    limit: ITEMS_PER_PAGE,
+  });
+  const citas = citasData?.citas || [];
+  const citasMeta = citasData?.meta || { total: 0, page: 1, limit: ITEMS_PER_PAGE, total_pages: 1 };
 
-  // ✅ FIX: Query para todas las citas pendientes (sin filtro de fecha)
-  const { data: todasCitasPendientes = [] } = useCitas({ estado: 'pendiente' });
+  const { data: citasDelDiaData } = useCitasDelDia();
+  const citasDelDia = citasDelDiaData || [];
+
+  // ✅ FIX: Query para citas pendientes (backend limita a max 100)
+  const { data: todasCitasPendientesData } = useCitas({ estado: 'pendiente', limit: 100 });
+  const todasCitasPendientes = todasCitasPendientesData?.citas || [];
 
   const { data: profesionalesData } = useProfesionales({ activo: true });
   const profesionales = profesionalesData?.profesionales || [];
@@ -91,13 +101,13 @@ function CitasPage() {
   const servicios = serviciosData?.servicios || [];
 
   // Mutations
-  const cancelarMutation = useCancelarCita();
   const confirmarMutation = useConfirmarCita();
   const iniciarMutation = useIniciarCita();
 
   // Handlers de filtros
   const handleFiltrosChange = (nuevosFiltros) => {
     setFiltros(nuevosFiltros);
+    setPage(1); // Resetear a página 1 al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
@@ -110,6 +120,12 @@ function CitasPage() {
       fecha_desde: '',
       fecha_hasta: '',
     });
+    setPage(1); // Resetear a página 1 al limpiar filtros
+  };
+
+  // Handler de paginación
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
   // Handlers de acciones
@@ -143,29 +159,7 @@ function CitasPage() {
   };
 
   const handleAbrirModalCancelar = (cita) => {
-    openModal('cancelar', cita, { motivoCancelacion: '' });
-  };
-
-  const handleCancelar = () => {
-    const { motivoCancelacion } = getModalProps('cancelar');
-    const citaSeleccionada = getModalData('cancelar');
-
-    if (!motivoCancelacion?.trim()) {
-      showToast('Debes indicar un motivo de cancelación', 'error');
-      return;
-    }
-
-    cancelarMutation.mutate(
-      {
-        id: citaSeleccionada.id,
-        motivo_cancelacion: motivoCancelacion,
-      },
-      {
-        onSuccess: () => {
-          closeModal('cancelar');
-        },
-      }
-    );
+    openModal('cancelar', cita);
   };
 
   const handleNuevaCita = (fechaDesdeCalendario) => {
@@ -175,20 +169,21 @@ function CitasPage() {
     });
   };
 
-  // Calcular estadísticas
-  // ✅ FIX: Pendientes muestra TODAS las citas pendientes (no solo las de hoy)
-  const citasPendientes = todasCitasPendientes.length;
-  // En Curso y Completadas solo cuentan las de HOY
-  const citasEnCurso = citasDelDia.filter((c) => c.estado === 'en_curso').length;
-  const citasCompletadas = citasDelDia.filter((c) => c.estado === 'completada').length;
+  // Calcular estadísticas memoizadas para evitar recálculos innecesarios
+  const estadisticas = useMemo(() => ({
+    hoy: citasDelDia.length,
+    pendientes: todasCitasPendientes.length,
+    enCurso: citasDelDia.filter((c) => c.estado === 'en_curso').length,
+    completadas: citasDelDia.filter((c) => c.estado === 'completada').length,
+  }), [citasDelDia, todasCitasPendientes]);
 
   // Configuración de StatCards
   const statsConfig = useMemo(() => [
-    { key: 'hoy', icon: Calendar, label: 'Citas Hoy', value: citasDelDia.length, color: 'primary' },
-    { key: 'pendientes', icon: Clock, label: 'Pendientes', value: citasPendientes, color: 'yellow' },
-    { key: 'enCurso', icon: TrendingUp, label: 'En Curso', value: citasEnCurso, color: 'primary' },
-    { key: 'completadas', icon: CheckCircle, label: 'Completadas', value: citasCompletadas, color: 'green' },
-  ], [citasDelDia.length, citasPendientes, citasEnCurso, citasCompletadas]);
+    { key: 'hoy', icon: Calendar, label: 'Citas Hoy', value: estadisticas.hoy, color: 'primary' },
+    { key: 'pendientes', icon: Clock, label: 'Pendientes', value: estadisticas.pendientes, color: 'yellow' },
+    { key: 'enCurso', icon: TrendingUp, label: 'En Curso', value: estadisticas.enCurso, color: 'primary' },
+    { key: 'completadas', icon: CheckCircle, label: 'Completadas', value: estadisticas.completadas, color: 'green' },
+  ], [estadisticas]);
 
   // Configuración de ViewTabs
   const viewTabsConfig = useMemo(() => [
@@ -263,7 +258,25 @@ function CitasPage() {
               onCambiarEstado={handleCambiarEstado}
               onEditar={handleEditar}
               onCancelar={handleAbrirModalCancelar}
+              onLimpiarFiltros={handleLimpiarFiltros}
             />
+
+            {/* Paginación */}
+            {citasMeta.total_pages > 1 && (
+              <div className="mt-4">
+                <Pagination
+                  pagination={{
+                    page: citasMeta.page,
+                    limit: citasMeta.limit,
+                    total: citasMeta.total,
+                    totalPages: citasMeta.total_pages,
+                    hasNext: citasMeta.has_next,
+                    hasPrev: citasMeta.has_prev,
+                  }}
+                  onPageChange={handlePageChange}
+                />
+              </div>
+            )}
           </>
         ) : (
           <>
@@ -289,6 +302,7 @@ function CitasPage() {
 
       {/* Modal de Formulario Crear/Editar */}
       <CitaFormModal
+        key={`${getModalProps('formulario').mode}-${getModalData('formulario')?.id || 'new'}`}
         isOpen={isOpen('formulario')}
         onClose={() => closeModal('formulario')}
         mode={getModalProps('formulario').mode || 'create'}
@@ -312,58 +326,11 @@ function CitasPage() {
       />
 
       {/* Modal de Cancelar */}
-      <Modal
+      <CancelarCitaModal
         isOpen={isOpen('cancelar')}
         onClose={() => closeModal('cancelar')}
-        title="Cancelar Cita"
-      >
-        <div className="space-y-4">
-          {/* Información de la cita */}
-          {getModalData('cancelar') && (
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center gap-2 mb-2">
-                <AlertCircle className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-                <h4 className="font-semibold text-gray-900 dark:text-gray-100">¿Estás seguro?</h4>
-              </div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Vas a cancelar la cita <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar').codigo_cita}</strong> del
-                cliente <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar').cliente_nombre}</strong>
-              </p>
-            </div>
-          )}
-
-          {/* Motivo de cancelación */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Motivo de cancelación <span className="text-red-500 dark:text-red-400">*</span>
-            </label>
-            <textarea
-              value={getModalProps('cancelar').motivoCancelacion || ''}
-              onChange={(e) => updateModal('cancelar', { motivoCancelacion: e.target.value })}
-              placeholder="Indica el motivo de la cancelación..."
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-sm resize-none bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
-            />
-          </div>
-
-          {/* Botones */}
-          <div className="flex gap-3 justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('cancelar')}
-            >
-              Volver
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleCancelar}
-              disabled={cancelarMutation.isLoading || !(getModalProps('cancelar').motivoCancelacion || '').trim()}
-            >
-              {cancelarMutation.isLoading ? 'Cancelando...' : 'Confirmar Cancelación'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        cita={getModalData('cancelar')}
+      />
     </div>
   );
 }

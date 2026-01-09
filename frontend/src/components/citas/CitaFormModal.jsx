@@ -85,6 +85,19 @@ const citaCreateSchema = z
       message: 'La fecha no puede ser en el pasado',
       path: ['fecha_cita'],
     }
+  )
+  .refine(
+    (data) => {
+      // Validar que la cita no cruce medianoche
+      if (!data.hora_inicio || !data.duracion_minutos) return true;
+      const [horas, minutos] = data.hora_inicio.split(':').map(Number);
+      const minutosTotal = horas * 60 + minutos + data.duracion_minutos;
+      return minutosTotal <= 24 * 60; // No debe exceder las 24:00
+    },
+    {
+      message: 'La cita no puede terminar después de las 23:59',
+      path: ['duracion_minutos'],
+    }
   );
 
 /**
@@ -116,6 +129,19 @@ const citaEditSchema = z
     },
     {
       message: 'Debes modificar al menos un campo',
+    }
+  )
+  .refine(
+    (data) => {
+      // Validar que la cita no cruce medianoche (si se modifican hora o duración)
+      if (!data.hora_inicio || !data.duracion_minutos) return true;
+      const [horas, minutos] = data.hora_inicio.split(':').map(Number);
+      const minutosTotal = horas * 60 + minutos + data.duracion_minutos;
+      return minutosTotal <= 24 * 60;
+    },
+    {
+      message: 'La cita no puede terminar después de las 23:59',
+      path: ['duracion_minutos'],
     }
   );
 
@@ -210,7 +236,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     if (isOpen && clientePreseleccionado && !isEditMode) {
       setValue('cliente_id', String(clientePreseleccionado));
     }
-  }, [isOpen, clientePreseleccionado, isEditMode, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, clientePreseleccionado, isEditMode]); // setValue es estable
 
   // Cargar servicios del profesional seleccionado
   useEffect(() => {
@@ -262,7 +289,11 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
   }, [servicios, serviciosDisponibles, watchProfesional]);
 
   // Auto-calcular totales de servicios seleccionados
+  // Nota: Solo calcular cuando el modal está abierto para evitar loops innecesarios
   useEffect(() => {
+    // Guard: No ejecutar si el modal está cerrado
+    if (!isOpen) return;
+
     if (watchServicios && watchServicios.length > 0) {
       // Calcular totales sumando TODOS los servicios seleccionados
       let duracionTotal = 0;
@@ -286,12 +317,14 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
 
       setValue('duracion_minutos', duracionTotal);
       setValue('precio_servicio', precioTotal);
-    } else {
-      // Si no hay servicios seleccionados, resetear a 0
+    } else if (isOpen && !isEditMode) {
+      // Si no hay servicios seleccionados y es modo crear, resetear a 0
+      // No resetear en modo edición para preservar valores cargados
       setValue('duracion_minutos', 0);
       setValue('precio_servicio', 0);
     }
-  }, [watchServicios, serviciosDisponiblesConEstado, servicios, setValue]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, watchServicios, serviciosDisponiblesConEstado, servicios, isEditMode]); // setValue es estable
 
   // Calcular precio total
   useEffect(() => {
@@ -300,32 +333,8 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
     setPrecioCalculado(precio - descuento);
   }, [watchPrecio, watchDescuento]);
 
-  // Reset formulario cuando cambia el modo (create/edit)
-  // TEMPORALMENTE COMENTADO PARA DEBUGGING Bug #7
-  /*
-  useEffect(() => {
-    if (isOpen && !isEditMode) {
-      // Modo creación: resetear a valores vacíos
-      reset({
-        cliente_id: '',
-        profesional_id: '',
-        servicio_id: '',
-        fecha_cita: '',
-        hora_inicio: '',
-        duracion_minutos: 30,
-        precio_servicio: 0,
-        descuento: 0,
-        notas_cliente: '',
-        notas_internas: '',
-      });
-      setProfesionalSeleccionado('');
-      setServiciosDisponibles([]);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, isEditMode]);
-  */
-
   // Pre-cargar datos de la cita en modo edición
+  // Nota: El reset en modo creación se maneja con key prop en CitasPage
   useEffect(() => {
     if (isEditMode && cita && isOpen) {
       // Convertir servicios a array de IDs si existe el campo servicios
@@ -590,7 +599,9 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
               {/* Profesional */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Profesional {!isEditMode && <span className="text-red-500">*</span>}
+                  Profesional{' '}
+                  {!isEditMode && !roundRobinHabilitado && <span className="text-red-500">*</span>}
+                  {roundRobinHabilitado && <span className="text-gray-400 text-xs font-normal">(opcional)</span>}
                 </label>
                 <div className="flex items-center gap-2">
                   <Briefcase className="w-5 h-5 text-gray-400 dark:text-gray-500" />
@@ -601,7 +612,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                       <Select
                         {...field}
                         options={profesionalesOpciones}
-                        placeholder="Selecciona un profesional"
+                        placeholder={roundRobinHabilitado ? 'Auto-asignar (Round-Robin)' : 'Selecciona un profesional'}
                         className="flex-1"
                       />
                     )}
@@ -613,7 +624,7 @@ function CitaFormModal({ isOpen, onClose, mode = 'create', cita = null, fechaPre
                 {!errors.profesional_id && (
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     {roundRobinHabilitado
-                      ? '🔄 Round-Robin activo: selecciona "Auto-asignar" para asignación automática rotativa'
+                      ? '🔄 Si no seleccionas, el sistema asignará automáticamente al profesional disponible'
                       : '💡 Selecciona un profesional para ver solo sus servicios'}
                   </p>
                 )}

@@ -6,7 +6,7 @@ import PropTypes from 'prop-types';
 import { Filter, Users, Building } from 'lucide-react';
 import { useDepartamentosActivos } from '@/hooks/useDepartamentos';
 
-function FiltrosCalendarioVacaciones({ filtros, onFiltrosChange, soloEquipo }) {
+function FiltrosCalendarioVacaciones({ filtros = {}, onFiltrosChange, soloEquipo = false }) {
   const { data: departamentos = [] } = useDepartamentosActivos();
 
   const handleEstadoChange = (e) => {
@@ -83,11 +83,6 @@ FiltrosCalendarioVacaciones.propTypes = {
   }),
   onFiltrosChange: PropTypes.func.isRequired,
   soloEquipo: PropTypes.bool,
-};
-
-FiltrosCalendarioVacaciones.defaultProps = {
-  filtros: {},
-  soloEquipo: false,
 };
 
 export default FiltrosCalendarioVacaciones;
