@@ -172,13 +172,24 @@ Contenido (max-w-7xl)
 
 ## Pendientes Opcionales (Baja Prioridad)
 
-| Tarea | Módulo |
-|-------|--------|
-| Vista Pipeline Kanban con drag & drop | Oportunidades |
-| Página `/oportunidades` independiente | Oportunidades |
-| Contactos relacionados (empresa → personas) | Clientes |
-| Checkbox selección múltiple (batch actions) | Inventario |
-| Timeline visual en Kardex | Inventario |
+### Clientes
+
+| Tarea | Descripción | Complejidad |
+|-------|-------------|-------------|
+| Pipeline Kanban | Vista drag & drop para oportunidades (estilo Trello) | Media |
+| Página `/oportunidades` | Dashboard global de oportunidades de todos clientes | Baja |
+| Contactos relacionados | Empresa → Personas (relación muchos a muchos) | Media |
+| Importación CSV | Carga masiva de clientes desde archivo | Baja |
+| Merge duplicados | Fusionar clientes duplicados manualmente | Media |
+| Segmentos guardados | Filtros guardados: "VIP", "Sin visitas 30 días" | Media |
+| ClientesPageLayout | Layout consistente (otros módulos lo tienen) | Baja |
+
+### Inventario
+
+| Tarea | Descripción | Complejidad |
+|-------|-------------|-------------|
+| Checkbox selección múltiple | Batch actions (eliminar, mover, etc.) | Media |
+| Timeline visual en Kardex | Historial de movimientos con gráfica | Baja |
 
 ---
 
