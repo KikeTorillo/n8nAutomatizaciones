@@ -161,14 +161,14 @@ function verificarPermiso(codigoPermiso, options = {}) {
                 return ResponseHelper.error(res, 'Usuario no autenticado', 401);
             }
 
-            // Determinar sucursal
+            // Determinar sucursal (acepta camelCase y snake_case)
             let sucursalId;
             if (options.usarSucursalDeParams && req.params.sucursalId) {
                 sucursalId = parseInt(req.params.sucursalId);
             } else if (options.usarSucursalDeQuery && req.query.sucursalId) {
                 sucursalId = parseInt(req.query.sucursalId);
-            } else if (req.body?.sucursalId) {
-                sucursalId = parseInt(req.body.sucursalId);
+            } else if (req.body?.sucursalId || req.body?.sucursal_id) {
+                sucursalId = parseInt(req.body.sucursalId || req.body.sucursal_id);
             } else {
                 sucursalId = req.user.sucursal_id;
             }

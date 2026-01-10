@@ -17,7 +17,8 @@ import EtiquetaFormModal from '@/components/clientes/EtiquetaFormModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import SkeletonTable from '@/components/ui/SkeletonTable';
-import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
+import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 
 export default function EtiquetasPage() {
   const { toast } = useToast();
@@ -66,40 +67,31 @@ export default function EtiquetasPage() {
 
   if (error) {
     return (
-      <div className="p-6">
-        <div className="text-center text-red-500">
+      <ClientesPageLayout
+        icon={Tag}
+        title="Etiquetas"
+        subtitle="Error al cargar"
+      >
+        <div className="text-center text-red-500 py-8">
           Error al cargar etiquetas: {error.message}
         </div>
-      </div>
+      </ClientesPageLayout>
     );
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Back Button */}
-      <BackButton to="/clientes" label="Volver a Clientes" />
-
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-            <Tag className="h-7 w-7 text-primary-500" />
-            Etiquetas de Clientes
-          </h1>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-            Gestiona las etiquetas para segmentar y organizar tus clientes
-          </p>
-        </div>
-        <button
-          onClick={handleCrear}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
-        >
-          <Plus className="h-5 w-5" />
-          Nueva Etiqueta
-        </button>
-      </div>
-
-      {/* Contenido */}
+    <ClientesPageLayout
+      icon={Tag}
+      title="Etiquetas"
+      subtitle={`${etiquetas.length} etiquetas configuradas`}
+      actions={
+        <Button onClick={handleCrear} aria-label="Crear nueva etiqueta">
+          <Plus className="h-4 w-4 sm:mr-2" />
+          <span className="hidden sm:inline">Nueva Etiqueta</span>
+          <span className="sm:hidden">Nueva</span>
+        </Button>
+      }
+    >
       {isLoading ? (
         <SkeletonTable rows={5} cols={4} />
       ) : etiquetas.length === 0 ? (
@@ -203,7 +195,7 @@ export default function EtiquetasPage() {
         etiqueta={etiquetaEditar}
       />
 
-      {/* Modal de confirmación de eliminación */}
+      {/* Modal de confirmacion de eliminacion */}
       <ConfirmDialog
         isOpen={isDeleteOpen}
         onClose={() => {
@@ -212,12 +204,12 @@ export default function EtiquetasPage() {
         }}
         onConfirm={handleEliminar}
         title="Eliminar etiqueta"
-        message={`¿Estás seguro de que deseas eliminar la etiqueta "${etiquetaEliminar?.nombre}"?`}
+        message={`¿Estas seguro de que deseas eliminar la etiqueta "${etiquetaEliminar?.nombre}"?`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarEtiqueta.isLoading}
       />
-    </div>
+    </ClientesPageLayout>
   );
 }
 

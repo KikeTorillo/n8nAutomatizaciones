@@ -670,6 +670,119 @@ class ClienteModel {
             }));
         });
     }
+
+    /**
+     * Buscar cliente por email exacto (para validacion de duplicados)
+     */
+    static async buscarPorEmail(email, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT id, nombre, email, telefono, activo
+                FROM clientes
+                WHERE organizacion_id = $1
+                  AND LOWER(email) = LOWER($2)
+                LIMIT 1
+            `;
+
+            const result = await db.query(query, [organizacionId, email]);
+            return result.rows[0] || null;
+        });
+    }
+
+    // =========================================================================
+    // CRÉDITO / FIADO (Ene 2026)
+    // =========================================================================
+
+    /**
+     * Obtener estado de crédito de un cliente
+     * Usa la función SQL obtener_estado_credito_cliente()
+     */
+    static async obtenerEstadoCredito(clienteId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT * FROM obtener_estado_credito_cliente($1, $2)
+            `;
+
+            const result = await db.query(query, [organizacionId, clienteId]);
+            return result.rows[0] || null;
+        });
+    }
+
+    /**
+     * Registrar abono a la cuenta del cliente
+     * Usa la función SQL registrar_abono_credito()
+     */
+    static async registrarAbonoCredito(clienteId, monto, descripcion, usuarioId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT registrar_abono_credito($1, $2, $3, $4, $5) AS movimiento
+            `;
+
+            const result = await db.query(query, [
+                organizacionId,
+                clienteId,
+                monto,
+                descripcion || 'Abono a cuenta',
+                usuarioId
+            ]);
+
+            return result.rows[0]?.movimiento || null;
+        });
+    }
+
+    /**
+     * Listar movimientos de crédito de un cliente
+     */
+    static async listarMovimientosCredito(clienteId, organizacionId, options = {}) {
+        const { limit = 50, offset = 0 } = options;
+
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT
+                    m.*,
+                    u.nombre AS usuario_nombre,
+                    v.folio AS venta_folio
+                FROM movimientos_credito_cliente m
+                LEFT JOIN usuarios u ON u.id = m.usuario_id
+                LEFT JOIN ventas_pos v ON v.id = m.venta_pos_id
+                WHERE m.cliente_id = $1
+                  AND m.organizacion_id = $2
+                ORDER BY m.creado_en DESC
+                LIMIT $3 OFFSET $4
+            `;
+
+            const countQuery = `
+                SELECT COUNT(*) AS total
+                FROM movimientos_credito_cliente
+                WHERE cliente_id = $1 AND organizacion_id = $2
+            `;
+
+            const [movimientos, countResult] = await Promise.all([
+                db.query(query, [clienteId, organizacionId, limit, offset]),
+                db.query(countQuery, [clienteId, organizacionId])
+            ]);
+
+            return {
+                movimientos: movimientos.rows,
+                total: parseInt(countResult.rows[0]?.total || 0)
+            };
+        });
+    }
+
+    /**
+     * Listar clientes con saldo pendiente
+     * Usa la función SQL listar_clientes_con_saldo()
+     */
+    static async listarClientesConSaldo(organizacionId, soloVencidos = false) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const query = `
+                SELECT * FROM listar_clientes_con_saldo($1, $2)
+            `;
+
+            const result = await db.query(query, [organizacionId, soloVencidos]);
+            return result.rows;
+        });
+    }
 }
 
 module.exports = ClienteModel;

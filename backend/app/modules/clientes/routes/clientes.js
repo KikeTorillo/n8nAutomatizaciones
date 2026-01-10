@@ -108,6 +108,20 @@ router.get('/buscar',
     ClienteController.buscar
 );
 
+/**
+ * POST /api/v1/clientes/importar-csv
+ * Importar clientes desde CSV (masivo)
+ */
+router.post('/importar-csv',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin']),
+    validation.validate(clienteSchemas.importarCSV),
+    ClienteController.importarCSV
+);
+
 // ===================================================================
 // GESTIÓN DE ETIQUETAS (Fase 2 - Ene 2026)
 // IMPORTANTE: Estas rutas DEBEN ir ANTES de /:id para evitar conflictos
@@ -531,6 +545,99 @@ router.post('/:clienteId/documentos/:documentoId/archivo',
     storage.createUploadSingle('archivo'),
     validation.validate(documentoSchemas.subirArchivo),
     DocumentoClienteController.subirArchivo
+);
+
+// ===================================================================
+// CRÉDITO / FIADO (Ene 2026)
+// ===================================================================
+
+/**
+ * GET /api/v1/clientes/credito/con-saldo
+ * Listar clientes con saldo pendiente (cobranza)
+ * NOTA: Esta ruta debe ir ANTES de /:id
+ */
+router.get('/credito/con-saldo',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
+    ClienteController.listarClientesConSaldo
+);
+
+/**
+ * GET /api/v1/clientes/:id/credito
+ * Obtener estado de crédito de un cliente
+ */
+router.get('/:id/credito',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(clienteSchemas.obtenerPorId),
+    ClienteController.obtenerEstadoCredito
+);
+
+/**
+ * PATCH /api/v1/clientes/:id/credito
+ * Habilitar/deshabilitar crédito
+ */
+router.patch('/:id/credito',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
+    validation.validate(clienteSchemas.actualizarCredito),
+    ClienteController.actualizarConfigCredito
+);
+
+/**
+ * POST /api/v1/clientes/:id/credito/suspender
+ * Suspender crédito
+ */
+router.post('/:id/credito/suspender',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
+    validation.validate(clienteSchemas.suspenderCredito),
+    ClienteController.suspenderCredito
+);
+
+/**
+ * POST /api/v1/clientes/:id/credito/reactivar
+ * Reactivar crédito suspendido
+ */
+router.post('/:id/credito/reactivar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager']),
+    validation.validate(clienteSchemas.obtenerPorId),
+    ClienteController.reactivarCredito
+);
+
+/**
+ * POST /api/v1/clientes/:id/credito/abono
+ * Registrar abono a la cuenta del cliente
+ */
+router.post('/:id/credito/abono',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    auth.requireRole(['super_admin', 'admin', 'organizacion_admin', 'manager', 'empleado']),
+    validation.validate(clienteSchemas.registrarAbono),
+    ClienteController.registrarAbono
+);
+
+/**
+ * GET /api/v1/clientes/:id/credito/movimientos
+ * Listar movimientos de crédito
+ */
+router.get('/:id/credito/movimientos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validation.validate(clienteSchemas.listarMovimientosCredito),
+    ClienteController.listarMovimientosCredito
 );
 
 // ===================================================================

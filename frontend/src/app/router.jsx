@@ -22,6 +22,7 @@ const ClientesPage = lazy(() => import('@/pages/clientes/ClientesPage'));
 const ClienteFormPage = lazy(() => import('@/pages/clientes/ClienteFormPage'));
 const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'));
 const EtiquetasPage = lazy(() => import('@/pages/clientes/EtiquetasPage'));
+const OportunidadesPage = lazy(() => import('@/pages/clientes/OportunidadesPage'));
 
 // Páginas de Servicios
 const ServiciosPage = lazy(() => import('@/pages/servicios/ServiciosPage'));
@@ -329,6 +330,14 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute>
             {withSuspense(EtiquetasPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'clientes/oportunidades',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(OportunidadesPage)}
           </ProtectedRoute>
         ),
       },

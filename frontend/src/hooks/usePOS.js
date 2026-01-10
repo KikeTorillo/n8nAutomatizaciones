@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { posApi } from '@/services/api/endpoints';
+import { posApi, inventarioApi } from '@/services/api/endpoints';
 import useSucursalStore from '@/store/sucursalStore';
 
 // ==================== VENTAS POS ====================
@@ -52,12 +52,14 @@ export function useCrearVenta() {
 
   return useMutation({
     mutationFn: async (data) => {
+      // DEBUG: Ver valor de monto_pagado antes de sanitizar
+      console.log('[DEBUG usePOS.crearVenta] data.monto_pagado:', data.monto_pagado, 'tipo:', typeof data.monto_pagado);
       const sanitized = {
         ...data,
         cliente_id: data.cliente_id || undefined,
         cita_id: data.cita_id || undefined,
         profesional_id: data.profesional_id || undefined,
-        monto_pagado: data.monto_pagado || undefined,
+        monto_pagado: data.monto_pagado ?? undefined,
         fecha_apartado: data.fecha_apartado || undefined,
         fecha_vencimiento_apartado: data.fecha_vencimiento_apartado || undefined,
         notas: data.notas?.trim() || undefined,
@@ -415,6 +417,325 @@ export function useVentasDiarias(params) {
       };
     },
     enabled: !!params.fecha,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+}
+
+// ==================== PAGO SPLIT (Ene 2026) ====================
+
+/**
+ * Hook para registrar pagos split (múltiples métodos de pago)
+ */
+export function useRegistrarPagosSplit() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ ventaId, pagos, clienteId }) => {
+      const data = {
+        pagos,
+        cliente_id: clienteId || undefined,
+      };
+
+      const response = await posApi.registrarPagosSplit(ventaId, data);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['ventas-pos']);
+      queryClient.invalidateQueries(['venta-pos', variables.ventaId]);
+      queryClient.invalidateQueries(['pagos-venta', variables.ventaId]);
+      queryClient.invalidateQueries(['corte-caja']);
+      queryClient.invalidateQueries(['ventas-diarias']);
+      queryClient.invalidateQueries(['sesion-caja-activa']);
+      // Si es pago a cuenta, invalidar crédito del cliente
+      if (variables.clienteId) {
+        queryClient.invalidateQueries(['cliente-credito', variables.clienteId]);
+      }
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        400: 'Datos de pago inválidos',
+        404: 'Venta no encontrada',
+        403: 'No tienes permisos para registrar pagos',
+        409: 'El monto de pagos excede el total de la venta',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || 'Error al registrar pagos';
+      throw new Error(message);
+    },
+  });
+}
+
+/**
+ * Hook para obtener desglose de pagos de una venta
+ */
+export function usePagosVenta(ventaId) {
+  return useQuery({
+    queryKey: ['pagos-venta', ventaId],
+    queryFn: async () => {
+      const response = await posApi.obtenerPagosVenta(ventaId);
+      return response.data.data || { venta: null, pagos: [], resumen: {} };
+    },
+    enabled: !!ventaId,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+// ==================== SESIONES DE CAJA ====================
+
+/**
+ * Hook para obtener sesión de caja activa del usuario
+ * @param {Object} params - { sucursal_id? }
+ */
+export function useSesionCajaActiva(params = {}) {
+  const { getSucursalId } = useSucursalStore();
+
+  return useQuery({
+    queryKey: ['sesion-caja-activa', params],
+    queryFn: async () => {
+      const sucursalId = params.sucursal_id || getSucursalId();
+      const response = await posApi.obtenerSesionActiva({ sucursal_id: sucursalId });
+      return response.data.data || { activa: false, sesion: null, totales: null };
+    },
+    staleTime: 1000 * 30, // 30 segundos - datos frescos para sesión activa
+    refetchOnWindowFocus: true,
+  });
+}
+
+/**
+ * Hook para obtener sesión de caja por ID
+ */
+export function useSesionCaja(id) {
+  return useQuery({
+    queryKey: ['sesion-caja', id],
+    queryFn: async () => {
+      const response = await posApi.obtenerSesionCaja(id);
+      return response.data.data || null;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+/**
+ * Hook para obtener resumen de sesión para cierre
+ */
+export function useResumenSesionCaja(id) {
+  return useQuery({
+    queryKey: ['resumen-sesion-caja', id],
+    queryFn: async () => {
+      const response = await posApi.obtenerResumenSesion(id);
+      return response.data.data || null;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 30, // 30 segundos - datos frescos para cierre
+  });
+}
+
+/**
+ * Hook para listar sesiones de caja con filtros
+ * @param {Object} params - { sucursal_id?, usuario_id?, estado?, fecha_desde?, fecha_hasta?, limit?, offset? }
+ */
+export function useSesionesCaja(params = {}) {
+  return useQuery({
+    queryKey: ['sesiones-caja', params],
+    queryFn: async () => {
+      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
+        if (value !== '' && value !== null && value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
+
+      const response = await posApi.listarSesionesCaja(sanitizedParams);
+      return response.data.data || { sesiones: [], total: 0 };
+    },
+    staleTime: 1000 * 60 * 2,
+  });
+}
+
+/**
+ * Hook para listar movimientos de una sesión
+ */
+export function useMovimientosCaja(sesionId) {
+  return useQuery({
+    queryKey: ['movimientos-caja', sesionId],
+    queryFn: async () => {
+      const response = await posApi.listarMovimientosCaja(sesionId);
+      return response.data.data || [];
+    },
+    enabled: !!sesionId,
+    staleTime: 1000 * 60,
+  });
+}
+
+/**
+ * Hook para abrir sesión de caja
+ */
+export function useAbrirSesionCaja() {
+  const queryClient = useQueryClient();
+  const { getSucursalId } = useSucursalStore();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const sanitized = {
+        sucursal_id: data.sucursal_id || getSucursalId(),
+        monto_inicial: data.monto_inicial || 0,
+        nota_apertura: data.nota_apertura?.trim() || undefined,
+      };
+
+      const response = await posApi.abrirSesionCaja(sanitized);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sesion-caja-activa']);
+      queryClient.invalidateQueries(['sesiones-caja']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        400: 'Datos inválidos para abrir caja',
+        403: 'No tienes permisos para abrir caja',
+        409: 'Ya existe una sesión de caja abierta',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || 'Error al abrir sesión de caja';
+      throw new Error(message);
+    },
+  });
+}
+
+/**
+ * Hook para cerrar sesión de caja
+ */
+export function useCerrarSesionCaja() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const sanitized = {
+        sesion_id: data.sesion_id,
+        monto_contado: data.monto_contado,
+        nota_cierre: data.nota_cierre?.trim() || undefined,
+        desglose: data.desglose || undefined,
+      };
+
+      const response = await posApi.cerrarSesionCaja(sanitized);
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['sesion-caja-activa']);
+      queryClient.invalidateQueries(['sesiones-caja']);
+      queryClient.invalidateQueries(['resumen-sesion-caja']);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        400: 'Datos inválidos para cerrar caja',
+        403: 'No tienes permisos para cerrar caja',
+        404: 'Sesión de caja no encontrada',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || 'Error al cerrar sesión de caja';
+      throw new Error(message);
+    },
+  });
+}
+
+/**
+ * Hook para registrar movimiento de efectivo (entrada/salida)
+ */
+export function useRegistrarMovimientoCaja() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ sesionId, data }) => {
+      const sanitized = {
+        tipo: data.tipo,
+        monto: data.monto,
+        motivo: data.motivo?.trim(),
+      };
+
+      const response = await posApi.registrarMovimientoCaja(sesionId, sanitized);
+      return response.data.data;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries(['sesion-caja-activa']);
+      queryClient.invalidateQueries(['movimientos-caja', variables.sesionId]);
+      queryClient.invalidateQueries(['resumen-sesion-caja', variables.sesionId]);
+    },
+    onError: (error) => {
+      const backendMessage = error.response?.data?.message;
+      if (backendMessage) {
+        throw new Error(backendMessage);
+      }
+
+      const errorMessages = {
+        400: 'Datos inválidos para el movimiento',
+        403: 'No tienes permisos para registrar movimientos de caja',
+        404: 'Sesión de caja no encontrada o ya está cerrada',
+      };
+
+      const statusCode = error.response?.status;
+      const message = errorMessages[statusCode] || 'Error al registrar movimiento de caja';
+      throw new Error(message);
+    },
+  });
+}
+
+// ==================== GRID VISUAL PRODUCTOS ====================
+
+/**
+ * Hook para obtener categorías de productos para POS
+ * Solo categorías activas con conteo de productos
+ */
+export function useCategoriasPOS() {
+  return useQuery({
+    queryKey: ['categorias-pos'],
+    queryFn: async () => {
+      const response = await inventarioApi.listarCategorias({
+        solo_activas: true,
+        incluir_conteo: true
+      });
+      return response.data.data?.categorias || [];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos - categorías cambian poco
+  });
+}
+
+/**
+ * Hook para obtener productos para el grid visual del POS
+ * @param {Object} params - { categoria_id?, limit? }
+ */
+export function useProductosPOS(params = {}) {
+  return useQuery({
+    queryKey: ['productos-pos', params],
+    queryFn: async () => {
+      const response = await inventarioApi.listarProductos({
+        solo_activos: true,
+        solo_con_stock: false, // Mostrar todos, pero indicar agotados
+        categoria_id: params.categoria_id || undefined,
+        limit: params.limit || 50,
+        orden: 'nombre',
+        direccion: 'asc'
+      });
+      return response.data.data?.productos || [];
+    },
     staleTime: 1000 * 60 * 2, // 2 minutos
   });
 }

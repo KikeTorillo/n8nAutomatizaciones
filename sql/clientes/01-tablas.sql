@@ -80,6 +80,15 @@ CREATE TABLE clientes (
     activo BOOLEAN DEFAULT TRUE,
     marketing_permitido BOOLEAN DEFAULT TRUE,
 
+    -- 💳 CRÉDITO (FIADO) - Ene 2026
+    permite_credito BOOLEAN DEFAULT FALSE,         -- Si el cliente puede comprar a crédito
+    limite_credito DECIMAL(12, 2) DEFAULT 0,       -- Límite máximo de crédito
+    saldo_credito DECIMAL(12, 2) DEFAULT 0,        -- Saldo actual pendiente (calculado por triggers)
+    dias_credito INTEGER DEFAULT 30,               -- Días de plazo para pagar
+    credito_suspendido BOOLEAN DEFAULT FALSE,      -- Crédito suspendido manualmente
+    credito_suspendido_en TIMESTAMPTZ,             -- Fecha de suspensión
+    credito_suspendido_motivo TEXT,                -- Motivo de suspensión
+
     -- 🗑️ Soft Delete (Dic 2025)
     eliminado_en TIMESTAMPTZ DEFAULT NULL,     -- NULL = activo, con valor = eliminado
     eliminado_por INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
@@ -205,3 +214,38 @@ COMMENT ON COLUMN clientes.whatsapp_phone IS
 
 COMMENT ON COLUMN clientes.profesional_preferido_id IS
 'Profesional preferido del cliente para asignación automática en citas.';
+
+-- ====================================================================
+-- 💳 CAMPOS DE CRÉDITO (Ene 2026)
+-- ====================================================================
+
+COMMENT ON COLUMN clientes.permite_credito IS
+'Si el cliente puede comprar a crédito (fiado). Default: false.';
+
+COMMENT ON COLUMN clientes.limite_credito IS
+'Límite máximo de crédito permitido. Default: 0 (sin crédito).';
+
+COMMENT ON COLUMN clientes.saldo_credito IS
+'Saldo actual pendiente de pago. Calculado automáticamente por triggers.';
+
+COMMENT ON COLUMN clientes.dias_credito IS
+'Días de plazo para pagar el crédito. Default: 30 días.';
+
+COMMENT ON COLUMN clientes.credito_suspendido IS
+'Si el crédito está suspendido manualmente (independiente del límite).';
+
+COMMENT ON COLUMN clientes.credito_suspendido_en IS
+'Fecha de suspensión del crédito.';
+
+COMMENT ON COLUMN clientes.credito_suspendido_motivo IS
+'Motivo de suspensión del crédito (ej: morosidad, verificación).';
+
+-- Índice para clientes con saldo pendiente (para cobranza)
+CREATE INDEX idx_clientes_saldo_credito
+    ON clientes(saldo_credito)
+    WHERE saldo_credito > 0 AND eliminado_en IS NULL;
+
+-- Índice para clientes con crédito habilitado
+CREATE INDEX idx_clientes_permite_credito
+    ON clientes(permite_credito)
+    WHERE permite_credito = TRUE AND eliminado_en IS NULL;

@@ -11,18 +11,18 @@ import {
   UserX,
   Mail,
   FileSpreadsheet,
+  Upload,
   List,
   LayoutGrid,
   Filter,
   X,
   Tag,
   Building2,
-  ChevronDown,
   Layers,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
+import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 import MultiSelect from '@/components/ui/MultiSelect';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { ViewTabs } from '@/components/ui/ViewTabs';
@@ -30,6 +30,7 @@ import { useClientes, useEstadisticasClientes } from '@/hooks/useClientes';
 import { useEtiquetas } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
 import WalkInModal from '@/components/clientes/WalkInModal';
+import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import ClientesList from '@/components/clientes/ClientesList';
 import ClientesCardsGrid from '@/components/clientes/ClientesCardsGrid';
 import EtiquetasBadges from '@/components/clientes/EtiquetasBadges';
@@ -44,6 +45,7 @@ function ClientesPage() {
   const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
   const [walkInOpen, setWalkInOpen] = useState(false);
+  const [importarOpen, setImportarOpen] = useState(false);
   const [vistaActiva, setVistaActiva] = useState('tabla');
 
   // Estados para filtros (Fase 2 - Ene 2026)
@@ -224,87 +226,71 @@ function ClientesPage() {
     navigate('/clientes/nuevo');
   };
 
+  // Botones de accion para el header
+  const actionButtons = (
+    <>
+      <Button
+        variant="secondary"
+        onClick={() => setImportarOpen(true)}
+        aria-label="Importar clientes desde CSV"
+        className="flex-1 sm:flex-none"
+      >
+        <Upload className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Importar CSV</span>
+      </Button>
+
+      <Button
+        variant="secondary"
+        onClick={handleExportarCSV}
+        disabled={!data?.clientes?.length}
+        aria-label="Exportar clientes a CSV"
+        className="flex-1 sm:flex-none"
+      >
+        <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Exportar CSV</span>
+      </Button>
+
+      <Button
+        variant="outline"
+        onClick={() => setWalkInOpen(true)}
+        aria-label="Registrar cliente walk-in"
+        className="flex-1 sm:flex-none"
+      >
+        <UserPlus className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Walk-in</span>
+      </Button>
+
+      <Button
+        onClick={handleNuevoCliente}
+        aria-label="Crear nuevo cliente"
+        className="flex-1 sm:flex-none"
+      >
+        <Plus className="w-4 h-4 sm:mr-2" />
+        <span className="hidden sm:inline">Nuevo Cliente</span>
+        <span className="sm:hidden">Nuevo</span>
+      </Button>
+    </>
+  );
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        {/* Header - Mobile First */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary-100 dark:bg-primary-900/40 rounded-xl flex items-center justify-center flex-shrink-0">
-              <UserCircle className="h-6 w-6 sm:h-7 sm:w-7 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">
-                Clientes
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
-                Gestiona tu base de clientes y atención walk-in
-              </p>
-            </div>
-          </div>
-
-          <div className="flex gap-2 sm:gap-3">
-            <Button
-              variant="secondary"
-              onClick={() => navigate('/clientes/etiquetas')}
-              aria-label="Gestionar etiquetas"
-              className="flex-1 sm:flex-none"
-            >
-              <Tag className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Etiquetas</span>
-            </Button>
-
-            <Button
-              variant="secondary"
-              onClick={handleExportarCSV}
-              disabled={!data?.clientes?.length}
-              aria-label="Exportar clientes a CSV"
-              className="flex-1 sm:flex-none"
-            >
-              <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Exportar CSV</span>
-            </Button>
-
-            <Button
-              variant="outline"
-              onClick={() => setWalkInOpen(true)}
-              aria-label="Registrar cliente walk-in"
-              className="flex-1 sm:flex-none"
-            >
-              <UserPlus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Walk-in</span>
-            </Button>
-
-            <Button
-              onClick={handleNuevoCliente}
-              aria-label="Crear nuevo cliente"
-              className="flex-1 sm:flex-none"
-            >
-              <Plus className="w-4 h-4 sm:mr-2" />
-              <span className="hidden sm:inline">Nuevo Cliente</span>
-              <span className="sm:hidden">Nuevo</span>
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Estadísticas */}
-        <StatCardGrid stats={statsConfig} columns={4} className="mb-6" />
+    <ClientesPageLayout
+      icon={UserCircle}
+      title="Lista de Clientes"
+      subtitle={`${data?.pagination?.total || 0} clientes en total`}
+      actions={actionButtons}
+    >
+      {/* Estadisticas */}
+      <StatCardGrid stats={statsConfig} columns={4} className="mb-6" />
 
         {/* Barra de búsqueda + Filtros + ViewTabs */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex flex-col gap-4">
               {/* Primera fila: Search + Botones */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Search */}
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 dark:text-gray-500 z-10" />
                   <Input
                     type="text"
                     placeholder="Buscar por nombre, teléfono o email..."
@@ -313,34 +299,37 @@ function ClientesPage() {
                       setBusqueda(e.target.value);
                       setPage(1);
                     }}
-                    className="pl-10"
+                    className="pl-10 h-10 w-full"
                     aria-label="Buscar clientes"
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-2 sm:gap-3">
                   {/* Botón Filtros */}
                   <Button
-                    variant={mostrarFiltros ? 'primary' : 'outline'}
+                    variant="secondary"
                     onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                    className="relative"
+                    className={`relative ${mostrarFiltros ? 'ring-2 ring-primary-500' : ''}`}
                     aria-label="Mostrar filtros"
                   >
-                    <Filter className="w-4 h-4 sm:mr-2" />
+                    <Filter className={`w-4 h-4 sm:mr-2 ${filtrosActivos > 0 ? 'text-primary-600 dark:text-primary-400' : ''}`} />
                     <span className="hidden sm:inline">Filtros</span>
                     {filtrosActivos > 0 && (
-                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center">
+                      <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-primary-600 text-white text-xs rounded-full flex items-center justify-center font-medium">
                         {filtrosActivos}
                       </span>
                     )}
                   </Button>
+
+                  {/* Separador visual */}
+                  <div className="hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600" />
 
                   {/* Selector Agrupar Por */}
                   <div className="relative">
                     <select
                       value={agruparPor}
                       onChange={(e) => setAgruparPor(e.target.value)}
-                      className="appearance-none pl-3 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="appearance-none h-10 pl-3 pr-8 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-sm text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                       aria-label="Agrupar por"
                     >
                       <option value="">Sin agrupar</option>
@@ -350,6 +339,9 @@ function ClientesPage() {
                     </select>
                     <Layers className="absolute right-2.5 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+
+                  {/* Separador visual */}
+                  <div className="hidden sm:block w-px h-6 bg-gray-300 dark:bg-gray-600" />
 
                   {/* ViewTabs */}
                   <ViewTabs
@@ -609,7 +601,6 @@ function ClientesPage() {
             )}
           </div>
         </div>
-      </div>
 
       {/* Walk-in Modal */}
       <WalkInModal
@@ -617,7 +608,13 @@ function ClientesPage() {
         onClose={() => setWalkInOpen(false)}
         onSuccess={handleWalkInSuccess}
       />
-    </div>
+
+      {/* Importar CSV Modal */}
+      <ImportarClientesModal
+        isOpen={importarOpen}
+        onClose={() => setImportarOpen(false)}
+      />
+    </ClientesPageLayout>
   );
 }
 

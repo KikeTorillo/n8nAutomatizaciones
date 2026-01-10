@@ -2,6 +2,7 @@ import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe, Tag, RefreshCw, User
 import { useQuery } from '@tanstack/react-query';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/useCurrency';
+import InputCupon from './InputCupon';
 
 /**
  * Componente de carrito de venta para POS
@@ -17,7 +18,11 @@ export default function CarritoVenta({
   onActualizarDescuentoGlobal,
   monedaSecundaria = 'USD', // Moneda para mostrar equivalente
   recalculandoPrecios = false, // Dic 2025: Estado de recálculo
-  clienteSeleccionado = null  // Dic 2025: Cliente para mostrar en header
+  clienteSeleccionado = null,  // Dic 2025: Cliente para mostrar en header
+  // Ene 2026: Props para cupones de descuento
+  cuponActivo = null,
+  onCuponAplicado,
+  onCuponRemovido
 }) {
   const { code: monedaOrg } = useCurrency();
 
@@ -42,8 +47,11 @@ export default function CarritoVenta({
   // Calcular descuento global
   const montoDescuentoGlobal = (subtotal * (parseFloat(descuentoGlobal) / 100));
 
-  // Calcular total
-  const total = subtotal - montoDescuentoGlobal;
+  // Ene 2026: Descuento por cupón
+  const descuentoCupon = cuponActivo?.descuento_calculado || 0;
+
+  // Calcular total (incluye descuento global + cupón)
+  const total = subtotal - montoDescuentoGlobal - descuentoCupon;
 
   const formatearPrecio = (precio) => {
     return `$${parseFloat(precio || 0).toFixed(2)}`;
@@ -73,7 +81,7 @@ export default function CarritoVenta({
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-0">
       {/* Header */}
       <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
@@ -251,6 +259,19 @@ export default function CarritoVenta({
             </span>
           </div>
 
+          {/* Ene 2026: Cupón de descuento */}
+          <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
+            <InputCupon
+              subtotal={subtotal - montoDescuentoGlobal}
+              clienteId={clienteSeleccionado?.id}
+              productosIds={items.map(item => item.producto_id || item.id)}
+              onCuponAplicado={onCuponAplicado}
+              onCuponRemovido={onCuponRemovido}
+              cuponActivo={cuponActivo}
+              disabled={items.length === 0}
+            />
+          </div>
+
           {/* Subtotal */}
           <div className="flex justify-between text-base">
             <span className="text-gray-600 dark:text-gray-400">Subtotal:</span>
@@ -262,6 +283,14 @@ export default function CarritoVenta({
             <div className="flex justify-between text-sm text-red-600 dark:text-red-400">
               <span>Descuento ({descuentoGlobal}%):</span>
               <span>-{formatearPrecio(montoDescuentoGlobal)}</span>
+            </div>
+          )}
+
+          {/* Ene 2026: Descuento por cupón */}
+          {descuentoCupon > 0 && cuponActivo && (
+            <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+              <span>Cupón ({cuponActivo.codigo}):</span>
+              <span>-{formatearPrecio(descuentoCupon)}</span>
             </div>
           )}
 

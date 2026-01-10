@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw } from 'lucide-react';
+import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw, DollarSign, Lock, ArrowUpDown, MoreVertical, Grid3X3, Search } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import BackButton from '@/components/ui/BackButton';
@@ -13,12 +13,19 @@ import {
   useCancelarReserva,
   useConfirmarReservasMultiple
 } from '@/hooks/useInventario';
+import { useSesionCajaActiva, useCategoriasPOS, useProductosPOS, useRegistrarPagosSplit } from '@/hooks/usePOS';
+import { useEstadoCredito } from '@/hooks/useClienteCredito';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
+import CategoriasPOS from '@/components/pos/CategoriasPOS';
+import ProductosGridPOS from '@/components/pos/ProductosGridPOS';
 import CarritoVenta from '@/components/pos/CarritoVenta';
 import MetodoPagoModal from '@/components/pos/MetodoPagoModal';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 import ClienteSelector from '@/components/pos/ClienteSelector';
 import SeleccionarNSModal from '@/components/pos/SeleccionarNSModal';
+import AperturaCajaModal from '@/components/pos/AperturaCajaModal';
+import CierreCajaModal from '@/components/pos/CierreCajaModal';
+import MovimientosCajaDrawer from '@/components/pos/MovimientosCajaDrawer';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { listasPreciosApi } from '@/services/api/endpoints';
@@ -37,6 +44,7 @@ export default function VentaPOSPage() {
   const { getSucursalId } = useSucursalStore();
   const toast = useToast();
   const crearVenta = useCrearVenta();
+  const registrarPagosSplit = useRegistrarPagosSplit();
 
   // Dic 2025: Hooks para reservas de stock (evitar sobreventa)
   const crearReserva = useCrearReserva();
@@ -50,6 +58,11 @@ export default function VentaPOSPage() {
     profesionalNombre,
     isLoading: isLoadingAcceso
   } = useAccesoModulo('pos');
+
+  // Ene 2026: Sesión de caja activa
+  const { data: sesionData, isLoading: isLoadingSesion } = useSesionCajaActiva();
+  const sesionActiva = sesionData?.activa ? sesionData.sesion : null;
+  const totalesSesion = sesionData?.totales || null;
 
   // Redirigir si no tiene acceso a POS (después de cargar)
   useEffect(() => {
@@ -71,6 +84,45 @@ export default function VentaPOSPage() {
   const [mostrarModalNS, setMostrarModalNS] = useState(false);
   const [productoParaNS, setProductoParaNS] = useState(null);
   const pendingNSCallback = useRef(null);
+
+  // Ene 2026: Estados para sesiones de caja
+  const [mostrarAperturaCaja, setMostrarAperturaCaja] = useState(false);
+  const [mostrarCierreCaja, setMostrarCierreCaja] = useState(false);
+  const [mostrarMovimientosCaja, setMostrarMovimientosCaja] = useState(false);
+  const [mostrarMenuCaja, setMostrarMenuCaja] = useState(false);
+
+  // Ene 2026: Estados para vista Grid de productos
+  const [vistaProductos, setVistaProductos] = useState('grid'); // 'grid' | 'search'
+  const [categoriaActiva, setCategoriaActiva] = useState(null);
+
+  // Ene 2026: Estado para cupón de descuento
+  const [cuponActivo, setCuponActivo] = useState(null);
+
+  // Ene 2026: Hooks para Grid Visual de Productos
+  const { data: categorias = [], isLoading: isLoadingCategorias } = useCategoriasPOS();
+  const { data: productosGrid = [], isLoading: isLoadingProductos } = useProductosPOS({
+    categoria_id: categoriaActiva
+  });
+
+  // Ene 2026: Estado de crédito del cliente seleccionado (para Fiado)
+  const { data: estadoCredito } = useEstadoCredito(clienteSeleccionado?.id);
+  const clienteCredito = useMemo(() => {
+    if (!estadoCredito) return null;
+    return {
+      permite_credito: estadoCredito.permite_credito,
+      limite_credito: estadoCredito.limite_credito || 0,
+      saldo_credito: estadoCredito.saldo_credito || 0,
+      disponible: (estadoCredito.limite_credito || 0) - (estadoCredito.saldo_credito || 0),
+      credito_suspendido: estadoCredito.credito_suspendido
+    };
+  }, [estadoCredito]);
+
+  // Ene 2026: Mostrar modal de apertura si no hay sesión activa
+  useEffect(() => {
+    if (!isLoadingSesion && !sesionActiva) {
+      setMostrarAperturaCaja(true);
+    }
+  }, [isLoadingSesion, sesionActiva]);
 
   // Fix Dic 2025: Cleanup de reservas huérfanas al desmontar el componente
   useEffect(() => {
@@ -168,7 +220,9 @@ export default function VentaPOSPage() {
   }, 0);
 
   const montoDescuentoGlobal = (subtotal * (parseFloat(descuentoGlobal) / 100));
-  const total = subtotal - montoDescuentoGlobal;
+  // Ene 2026: Incluir descuento de cupón en el total
+  const descuentoCupon = cuponActivo?.descuento_calculado || 0;
+  const total = subtotal - montoDescuentoGlobal - descuentoCupon;
 
   // Handler: Agregar producto al carrito
   // Dic 2025: Integración con listas de precios inteligentes + reservas de stock + números de serie
@@ -432,9 +486,22 @@ export default function VentaPOSPage() {
 
     setItems([]);
     setDescuentoGlobal(0);
+    setCuponActivo(null); // Ene 2026: Limpiar cupón
     setMostrarConfirmVaciar(false);
     toast.success('Carrito vaciado');
   };
+
+  // Ene 2026: Handler para cuando se aplica un cupón válido
+  const handleCuponAplicado = useCallback((cuponData) => {
+    setCuponActivo(cuponData);
+    toast.success(`Cupón "${cuponData.codigo}" aplicado: -$${cuponData.descuento_calculado?.toFixed(2) || '0.00'}`);
+  }, [toast]);
+
+  // Ene 2026: Handler para cuando se quita un cupón
+  const handleCuponRemovido = useCallback(() => {
+    setCuponActivo(null);
+    toast.info('Cupón removido');
+  }, [toast]);
 
   // Handler: Proceder al pago
   const handleProcederPago = () => {
@@ -449,11 +516,24 @@ export default function VentaPOSPage() {
   // Handler: Confirmar venta
   // Dic 2025: Confirma las reservas de stock al completar la venta + marca NS como vendidos
   // Fix Dic 2025: Confirmar reservas ANTES de crear venta para garantizar atomicidad
+  // Ene 2026: Soporte para pago split (múltiples métodos de pago)
   const handleConfirmarVenta = async (datosPago) => {
     // Obtener IDs de reservas a confirmar
     const reservaIds = items
       .filter(item => item.reserva_id)
       .map(item => item.reserva_id);
+
+    // Ene 2026: Detectar si es pago split (múltiples métodos de pago)
+    // El modal siempre envía array de pagos, pero solo es "split" si hay más de 1
+    const esPagoSplit = Array.isArray(datosPago.pagos) && datosPago.pagos.length > 1;
+
+    // DEBUG: Verificar datos de pago
+    console.log('[DEBUG PAGO SPLIT]', {
+      esPagoSplit,
+      pagosLength: datosPago.pagos?.length,
+      pagos: datosPago.pagos,
+      datosPago
+    });
 
     try {
       // PASO 1: Confirmar reservas PRIMERO (descuenta stock)
@@ -494,40 +574,65 @@ export default function VentaPOSPage() {
       const datosVenta = {
         tipo_venta: 'directa',
         usuario_id: user.id,
-        // Dic 2025: Incluir sucursal para permisos
-        sucursalId: getSucursalId() || 1,
+        // Dic 2025: Incluir sucursal para permisos (snake_case para Joi)
+        sucursal_id: getSucursalId() || 1,
         // Nov 2025: Incluir cliente si está seleccionado
         cliente_id: clienteSeleccionado?.id || undefined,
         items: itemsBackend,
         descuento_porcentaje: parseFloat(descuentoGlobal) || 0,
         descuento_monto: descuentoGlobalMonto,
-        metodo_pago: datosPago.metodo_pago,
-        monto_pagado: datosPago.monto_pagado,
+        // Ene 2026: Para pago split no enviar metodo_pago ni monto_pagado aquí
+        // Fix: El modal siempre envía pagos[] array, extraer del primer pago para venta simple
+        metodo_pago: esPagoSplit ? undefined : (datosPago.pagos?.[0]?.metodo_pago || datosPago.metodo_pago),
+        monto_pagado: esPagoSplit ? 0 : (datosPago.pagos?.[0]?.monto || datosPago.monto_pagado),
         impuestos: 0,
         notas: '',
         // Indicar que las reservas ya fueron confirmadas
-        reservas_confirmadas: true
+        reservas_confirmadas: true,
+        // Ene 2026: Datos del cupón aplicado
+        cupon_id: cuponActivo?.id || undefined,
+        descuento_cupon: cuponActivo?.descuento_calculado || 0
       };
 
       // PASO 3: Crear venta (reservas ya confirmadas, stock ya descontado)
+      console.log('[DEBUG DATOS VENTA]', {
+        esPagoSplit,
+        monto_pagado: datosVenta.monto_pagado,
+        tipo: typeof datosVenta.monto_pagado,
+        datosVenta
+      });
       const resultado = await crearVenta.mutateAsync(datosVenta);
+
+      // Ene 2026: PASO 4: Si es pago split, registrar los pagos
+      if (esPagoSplit) {
+        await registrarPagosSplit.mutateAsync({
+          ventaId: resultado.id,
+          pagos: datosPago.pagos,
+          clienteId: clienteSeleccionado?.id || undefined
+        });
+      }
 
       // Mostrar éxito
       toast.success(`¡Venta ${resultado.folio} creada exitosamente!`, {
         duration: 4000
       });
 
-      // Mostrar cambio si es efectivo
-      if (datosPago.metodo_pago === 'efectivo' && datosPago.cambio > 0) {
+      // Mostrar cambio si aplica
+      if (esPagoSplit && datosPago.cambio_total > 0) {
+        toast.success(`💵 Cambio a entregar: $${datosPago.cambio_total.toFixed(2)}`, {
+          duration: 6000
+        });
+      } else if (!esPagoSplit && datosPago.metodo_pago === 'efectivo' && datosPago.cambio > 0) {
         toast.success(`💵 Cambio a entregar: $${datosPago.cambio.toFixed(2)}`, {
           duration: 6000
         });
       }
 
-      // Limpiar carrito y cliente
+      // Limpiar carrito, cliente y cupón
       setItems([]);
       setDescuentoGlobal(0);
       setClienteSeleccionado(null);
+      setCuponActivo(null); // Ene 2026: Limpiar cupón
       setMostrarModalPago(false);
 
     } catch (error) {
@@ -549,14 +654,57 @@ export default function VentaPOSPage() {
         <div className="flex items-center justify-between mb-2">
           <BackButton to="/home" label="Volver al Inicio" />
 
-          {/* Vendedor - siempre visible pero compacto en móvil */}
-          {profesionalNombre && (
-            <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-xs sm:text-sm">
-              <User className="h-4 w-4" />
-              <span className="font-medium hidden sm:inline">Vendedor:</span>
-              <span className="font-medium">{profesionalNombre}</span>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {/* Vendedor - siempre visible pero compacto en móvil */}
+            {profesionalNombre && (
+              <div className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg text-xs sm:text-sm">
+                <User className="h-4 w-4" />
+                <span className="font-medium hidden sm:inline">Vendedor:</span>
+                <span className="font-medium">{profesionalNombre}</span>
+              </div>
+            )}
+
+            {/* Ene 2026: Indicador de sesión de caja */}
+            {sesionActiva && (
+              <div className="relative">
+                <button
+                  onClick={() => setMostrarMenuCaja(!mostrarMenuCaja)}
+                  className="flex items-center gap-1 sm:gap-2 px-2 py-1 sm:px-3 sm:py-2 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 rounded-lg text-xs sm:text-sm hover:bg-green-100 dark:hover:bg-green-900/50 transition-colors"
+                >
+                  <DollarSign className="h-4 w-4" />
+                  <span className="font-medium hidden sm:inline">Caja:</span>
+                  <span className="font-bold">${(totalesSesion?.monto_esperado || sesionActiva.monto_inicial || 0).toFixed(2)}</span>
+                  <MoreVertical className="h-4 w-4" />
+                </button>
+
+                {/* Menú dropdown de caja */}
+                {mostrarMenuCaja && (
+                  <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+                    <button
+                      onClick={() => {
+                        setMostrarMovimientosCaja(true);
+                        setMostrarMenuCaja(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                    >
+                      <ArrowUpDown className="h-4 w-4" />
+                      Entrada/Salida efectivo
+                    </button>
+                    <button
+                      onClick={() => {
+                        setMostrarCierreCaja(true);
+                        setMostrarMenuCaja(false);
+                      }}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
+                    >
+                      <Lock className="h-4 w-4" />
+                      Cerrar caja
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Row 2: Título */}
@@ -595,30 +743,101 @@ export default function VentaPOSPage() {
       {/* Main Content - Mobile First */}
       <div className="flex-1 overflow-auto">
         <div className="p-3 sm:p-6 space-y-4 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-          {/* Columna izquierda: Buscador */}
+          {/* Columna izquierda: Productos */}
           <div className="lg:col-span-2 space-y-3 sm:space-y-4">
-            <BuscadorProductosPOS onProductoSeleccionado={handleProductoSeleccionado} />
-
-            {/* Info de ayuda - simplificada en móvil */}
-            {items.length === 0 && (
-              <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4 sm:p-6 text-center">
-                <ShoppingCart className="h-10 w-10 sm:h-16 sm:w-16 text-primary-400 dark:text-primary-500 mx-auto mb-2 sm:mb-4" />
-                <h3 className="text-base sm:text-lg font-semibold text-primary-900 dark:text-primary-300 mb-1 sm:mb-2">
-                  Comienza a agregar productos
-                </h3>
-                <p className="text-sm text-primary-700 dark:text-primary-400 mb-3 sm:mb-4">
-                  Busca productos por nombre, SKU o escanea el código de barras
-                </p>
-                {/* Atajos de teclado - ocultos en móvil */}
-                <div className="hidden sm:block bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">Atajos de teclado:</p>
-                  <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> - Seleccionar producto</li>
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> - Cerrar resultados</li>
-                    <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">F2</kbd> - Proceder al pago</li>
-                  </ul>
-                </div>
+            {/* Toggle Grid / Búsqueda */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+                <button
+                  onClick={() => setVistaProductos('grid')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    vistaProductos === 'grid'
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Grid</span>
+                </button>
+                <button
+                  onClick={() => setVistaProductos('search')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                    vistaProductos === 'search'
+                      ? 'bg-white dark:bg-gray-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                      : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
+                  }`}
+                >
+                  <Search className="h-4 w-4" />
+                  <span className="hidden sm:inline">Búsqueda</span>
+                </button>
               </div>
+
+              {/* Contador de productos en grid */}
+              {vistaProductos === 'grid' && (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {productosGrid.length} productos
+                </span>
+              )}
+            </div>
+
+            {/* Vista Grid de productos */}
+            {vistaProductos === 'grid' && (
+              <>
+                {/* Categorías */}
+                <CategoriasPOS
+                  categorias={categorias}
+                  categoriaActiva={categoriaActiva}
+                  onCategoriaChange={setCategoriaActiva}
+                  isLoading={isLoadingCategorias}
+                />
+
+                {/* Grid de productos */}
+                <div className="max-h-[calc(100vh-24rem)] overflow-y-auto">
+                  <ProductosGridPOS
+                    productos={productosGrid}
+                    onAddToCart={(producto) => {
+                      // Ene 2026: Adaptar formato del grid (id) al formato esperado (producto_id)
+                      handleProductoSeleccionado({
+                        ...producto,
+                        producto_id: producto.id,
+                        es_variante: false,
+                        requiere_numero_serie: producto.requiere_numero_serie || false
+                      });
+                    }}
+                    cartItems={items}
+                    isLoading={isLoadingProductos}
+                  />
+                </div>
+              </>
+            )}
+
+            {/* Vista Búsqueda tradicional */}
+            {vistaProductos === 'search' && (
+              <>
+                <BuscadorProductosPOS onProductoSeleccionado={handleProductoSeleccionado} />
+
+                {/* Info de ayuda - simplificada en móvil */}
+                {items.length === 0 && (
+                  <div className="bg-primary-50 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-lg p-4 sm:p-6 text-center">
+                    <ShoppingCart className="h-10 w-10 sm:h-16 sm:w-16 text-primary-400 dark:text-primary-500 mx-auto mb-2 sm:mb-4" />
+                    <h3 className="text-base sm:text-lg font-semibold text-primary-900 dark:text-primary-300 mb-1 sm:mb-2">
+                      Comienza a agregar productos
+                    </h3>
+                    <p className="text-sm text-primary-700 dark:text-primary-400 mb-3 sm:mb-4">
+                      Busca productos por nombre, SKU o escanea el código de barras
+                    </p>
+                    {/* Atajos de teclado - ocultos en móvil */}
+                    <div className="hidden sm:block bg-white dark:bg-gray-800 rounded-lg p-4 text-left max-w-md mx-auto">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 font-medium mb-2">Atajos de teclado:</p>
+                      <ul className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                        <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Enter</kbd> - Seleccionar producto</li>
+                        <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">Esc</kbd> - Cerrar resultados</li>
+                        <li>• <kbd className="px-2 py-0.5 bg-gray-100 dark:bg-gray-700 rounded">F2</kbd> - Proceder al pago</li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Resumen rápido - responsive */}
@@ -643,7 +862,8 @@ export default function VentaPOSPage() {
           </div>
 
           {/* Columna derecha: Carrito */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col lg:h-[calc(100vh-16rem)]">
+          {/* Ene 2026: min-h-0 permite que flex children se contraigan; overflow-hidden evita scroll externo */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden flex flex-col lg:h-[calc(100vh-16rem)] min-h-0">
             <CarritoVenta
               items={items}
               onActualizarCantidad={handleActualizarCantidad}
@@ -653,6 +873,9 @@ export default function VentaPOSPage() {
               onActualizarDescuentoGlobal={setDescuentoGlobal}
               recalculandoPrecios={recalculandoPrecios}
               clienteSeleccionado={clienteSeleccionado}
+              cuponActivo={cuponActivo}
+              onCuponAplicado={handleCuponAplicado}
+              onCuponRemovido={handleCuponRemovido}
             />
 
             {/* Botón de pago */}
@@ -678,6 +901,8 @@ export default function VentaPOSPage() {
         total={total}
         onConfirmar={handleConfirmarVenta}
         isLoading={crearVenta.isPending}
+        clienteId={clienteSeleccionado?.id}
+        clienteCredito={clienteCredito}
       />
 
       {/* Modal de confirmación para vaciar carrito */}
@@ -703,6 +928,47 @@ export default function VentaPOSPage() {
         cantidad={1}
         onSeleccionar={handleNSSeleccionado}
       />
+
+      {/* Ene 2026: Modal de apertura de caja */}
+      <AperturaCajaModal
+        isOpen={mostrarAperturaCaja}
+        onClose={() => {
+          // Solo permitir cerrar si hay sesión activa
+          if (sesionActiva) {
+            setMostrarAperturaCaja(false);
+          }
+        }}
+        onSuccess={() => {
+          setMostrarAperturaCaja(false);
+        }}
+      />
+
+      {/* Ene 2026: Modal de cierre de caja */}
+      <CierreCajaModal
+        isOpen={mostrarCierreCaja}
+        onClose={() => setMostrarCierreCaja(false)}
+        sesionId={sesionActiva?.id}
+        onSuccess={() => {
+          setMostrarCierreCaja(false);
+          // Mostrar modal de apertura para nueva sesión
+          setMostrarAperturaCaja(true);
+        }}
+      />
+
+      {/* Ene 2026: Drawer de movimientos de caja */}
+      <MovimientosCajaDrawer
+        isOpen={mostrarMovimientosCaja}
+        onClose={() => setMostrarMovimientosCaja(false)}
+        sesionId={sesionActiva?.id}
+      />
+
+      {/* Ene 2026: Click fuera para cerrar menú de caja */}
+      {mostrarMenuCaja && (
+        <div
+          className="fixed inset-0 z-40"
+          onClick={() => setMostrarMenuCaja(false)}
+        />
+      )}
     </div>
   );
 }

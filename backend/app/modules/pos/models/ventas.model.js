@@ -266,7 +266,10 @@ class VentasPOSModel {
                 };
             });
 
-            const descuentoVenta = data.descuento_monto || 0;
+            // Ene 2026: Incluir descuento de cupón en el total
+            const descuentoMonto = data.descuento_monto || 0;
+            const descuentoCupon = data.descuento_cupon || 0;
+            const descuentoVenta = descuentoMonto + descuentoCupon;
             const impuestos = data.impuestos || 0;
             const total = subtotal - descuentoVenta + impuestos;
 
@@ -321,7 +324,10 @@ class VentasPOSModel {
 
             // El monto_pagado en BD es lo efectivamente cobrado (máximo = total)
             // El "cambio" para el cliente se calcula en frontend como: monto_recibido - total
-            const montoRecibido = data.monto_pagado !== undefined ? data.monto_pagado : total;
+            // Ene 2026: Si no hay metodo_pago, es pago split y monto_pagado debe ser 0
+            // (los pagos se registran después en venta_pagos)
+            const esPagoSplit = !data.metodo_pago;
+            const montoRecibido = esPagoSplit ? 0 : (data.monto_pagado !== undefined ? data.monto_pagado : total);
             const montoPagado = Math.min(montoRecibido, total); // No guardar más del total
             const montoPendiente = Math.max(0, total - montoPagado);
             let estadoPago = 'pendiente';
@@ -330,6 +336,17 @@ class VentasPOSModel {
             } else if (montoRecibido > 0) {
                 estadoPago = 'parcial';
             }
+
+            // DEBUG: Verificar valores de pago
+            logger.info('[VentasPOSModel.crear] DEBUG PAGO', {
+                data_monto_pagado: data.monto_pagado,
+                data_monto_pagado_type: typeof data.monto_pagado,
+                montoRecibido,
+                montoPagado,
+                montoPendiente,
+                estadoPago,
+                total
+            });
 
             // FIX Dic 2025: Insertar inicialmente con monto_pagado = 0
             // El trigger calcular_totales_venta_pos() recalcula el total después de cada item
@@ -610,6 +627,39 @@ class VentasPOSModel {
                     logger.error('[VentasPOSModel.crear] Error en proceso dropship', {
                         venta_id: venta.id,
                         error: dropshipError.message
+                    });
+                }
+            }
+
+            // ================================================================
+            // ENE 2026: REGISTRAR USO DE CUPÓN
+            // Si la venta tiene cupon_id, registrar en uso_cupones
+            // ================================================================
+            if (data.cupon_id && data.tipo_venta !== 'cotizacion') {
+                try {
+                    await db.query(
+                        `INSERT INTO uso_cupones (cupon_id, venta_pos_id, cliente_id, descuento_aplicado, subtotal_antes)
+                         VALUES ($1, $2, $3, $4, $5)`,
+                        [data.cupon_id, venta.id, data.cliente_id || null, descuentoCupon, subtotal]
+                    );
+
+                    // Incrementar contador de usos del cupón
+                    await db.query(
+                        `UPDATE cupones SET usos_actuales = usos_actuales + 1 WHERE id = $1`,
+                        [data.cupon_id]
+                    );
+
+                    logger.info('[VentasPOSModel.crear] Cupón registrado', {
+                        venta_id: venta.id,
+                        cupon_id: data.cupon_id,
+                        descuento: descuentoCupon
+                    });
+                } catch (cuponError) {
+                    // No fallar la venta si hay error en cupón, solo loguear
+                    logger.error('[VentasPOSModel.crear] Error registrando cupón', {
+                        venta_id: venta.id,
+                        cupon_id: data.cupon_id,
+                        error: cuponError.message
                     });
                 }
             }
@@ -1961,6 +2011,197 @@ class VentasPOSModel {
             ...venta,
             items: itemsInsertados
         };
+    }
+
+    // =========================================================================
+    // PAGO SPLIT - Múltiples métodos de pago (Ene 2026)
+    // =========================================================================
+
+    /**
+     * Registrar pagos split para una venta
+     * Soporta múltiples métodos de pago en una sola venta
+     * @param {number} ventaId - ID de la venta
+     * @param {Array} pagos - Array de { metodo_pago, monto, monto_recibido?, referencia? }
+     * @param {number} usuarioId - ID del usuario que registra el pago
+     * @param {number} organizacionId - ID de la organización
+     * @param {number|null} clienteId - ID del cliente (opcional, para crédito)
+     */
+    static async registrarPagosSplit(ventaId, pagos, usuarioId, organizacionId, clienteId = null) {
+        return await RLSContextManager.transaction(organizacionId, async (db) => {
+            logger.info('[VentasPOSModel.registrarPagosSplit] Iniciando', {
+                venta_id: ventaId,
+                total_pagos: pagos.length,
+                usuario_id: usuarioId
+            });
+
+            // Obtener venta
+            const ventaQuery = await db.query(
+                `SELECT id, total, monto_pagado, estado, estado_pago
+                 FROM ventas_pos WHERE id = $1 AND organizacion_id = $2
+                 FOR UPDATE`,
+                [ventaId, organizacionId]
+            );
+
+            if (ventaQuery.rows.length === 0) {
+                throw new Error('Venta no encontrada');
+            }
+
+            const venta = ventaQuery.rows[0];
+
+            if (venta.estado === 'cancelada') {
+                throw new Error('No se pueden registrar pagos en una venta cancelada');
+            }
+
+            // Calcular total de pagos a registrar
+            const totalPagos = pagos.reduce((sum, p) => sum + parseFloat(p.monto), 0);
+            const totalEsperado = parseFloat(venta.total) - parseFloat(venta.monto_pagado);
+
+            // Validar que no se pague de más (excepto efectivo que genera cambio)
+            const pagoEfectivo = pagos.find(p => p.metodo_pago === 'efectivo');
+            const pagosNoEfectivo = pagos.filter(p => p.metodo_pago !== 'efectivo');
+            const totalNoEfectivo = pagosNoEfectivo.reduce((sum, p) => sum + parseFloat(p.monto), 0);
+
+            if (totalNoEfectivo > totalEsperado) {
+                throw new Error(`Los pagos no pueden exceder el monto pendiente ($${totalEsperado.toFixed(2)})`);
+            }
+
+            const pagosRegistrados = [];
+
+            // Registrar cada pago
+            for (const pago of pagos) {
+                // Validar método cuenta_cliente
+                if (pago.metodo_pago === 'cuenta_cliente') {
+                    if (!clienteId) {
+                        throw new Error('Se requiere cliente_id para pagos a cuenta');
+                    }
+
+                    // Registrar cargo de crédito
+                    await db.query(
+                        `SELECT registrar_cargo_credito($1, $2, $3, $4, NULL, $5, $6)`,
+                        [
+                            organizacionId,
+                            clienteId,
+                            pago.monto,
+                            ventaId,
+                            `Venta a crédito - ${venta.id}`,
+                            usuarioId
+                        ]
+                    );
+
+                    logger.info('[VentasPOSModel.registrarPagosSplit] Cargo de crédito registrado', {
+                        cliente_id: clienteId,
+                        monto: pago.monto
+                    });
+                }
+
+                // Calcular cambio para efectivo
+                let cambio = 0;
+                if (pago.metodo_pago === 'efectivo' && pago.monto_recibido) {
+                    cambio = parseFloat(pago.monto_recibido) - parseFloat(pago.monto);
+                }
+
+                // Insertar pago
+                const insertQuery = `
+                    INSERT INTO venta_pagos (
+                        venta_pos_id,
+                        metodo_pago,
+                        monto,
+                        monto_recibido,
+                        cambio,
+                        referencia,
+                        usuario_id
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+                    RETURNING *
+                `;
+
+                const result = await db.query(insertQuery, [
+                    ventaId,
+                    pago.metodo_pago,
+                    pago.monto,
+                    pago.metodo_pago === 'efectivo' ? (pago.monto_recibido || pago.monto) : null,
+                    pago.metodo_pago === 'efectivo' ? cambio : 0,
+                    pago.referencia || null,
+                    usuarioId
+                ]);
+
+                pagosRegistrados.push(result.rows[0]);
+            }
+
+            // El trigger sincronizar_pagos_venta() actualiza automáticamente:
+            // - monto_pagado
+            // - monto_pendiente
+            // - estado_pago
+            // - metodo_pago
+
+            // Obtener venta actualizada
+            const ventaActualizada = await db.query(
+                `SELECT * FROM ventas_pos WHERE id = $1`,
+                [ventaId]
+            );
+
+            logger.info('[VentasPOSModel.registrarPagosSplit] Pagos registrados', {
+                venta_id: ventaId,
+                total_pagos: pagosRegistrados.length,
+                estado_pago: ventaActualizada.rows[0].estado_pago,
+                monto_pagado: ventaActualizada.rows[0].monto_pagado
+            });
+
+            return {
+                venta: ventaActualizada.rows[0],
+                pagos: pagosRegistrados
+            };
+        });
+    }
+
+    /**
+     * Obtener desglose de pagos de una venta
+     * @param {number} ventaId - ID de la venta
+     * @param {number} organizacionId - ID de la organización
+     */
+    static async obtenerPagosVenta(ventaId, organizacionId) {
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            // Verificar que la venta existe
+            const ventaQuery = await db.query(
+                `SELECT id, total, monto_pagado, monto_pendiente, estado_pago, metodo_pago
+                 FROM ventas_pos WHERE id = $1`,
+                [ventaId]
+            );
+
+            if (ventaQuery.rows.length === 0) {
+                throw new Error('Venta no encontrada');
+            }
+
+            // Obtener pagos
+            const pagosQuery = await db.query(
+                `SELECT
+                    vp.*,
+                    u.nombre AS usuario_nombre
+                 FROM venta_pagos vp
+                 LEFT JOIN usuarios u ON u.id = vp.usuario_id
+                 WHERE vp.venta_pos_id = $1
+                 ORDER BY vp.creado_en ASC`,
+                [ventaId]
+            );
+
+            return {
+                venta: ventaQuery.rows[0],
+                pagos: pagosQuery.rows,
+                resumen: {
+                    total_pagos: pagosQuery.rows.length,
+                    total_efectivo: pagosQuery.rows
+                        .filter(p => p.metodo_pago === 'efectivo')
+                        .reduce((sum, p) => sum + parseFloat(p.monto), 0),
+                    total_tarjeta: pagosQuery.rows
+                        .filter(p => ['tarjeta_debito', 'tarjeta_credito'].includes(p.metodo_pago))
+                        .reduce((sum, p) => sum + parseFloat(p.monto), 0),
+                    total_otros: pagosQuery.rows
+                        .filter(p => !['efectivo', 'tarjeta_debito', 'tarjeta_credito'].includes(p.metodo_pago))
+                        .reduce((sum, p) => sum + parseFloat(p.monto), 0),
+                    cambio_total: pagosQuery.rows
+                        .reduce((sum, p) => sum + parseFloat(p.cambio || 0), 0)
+                }
+            };
+        });
     }
 }
 

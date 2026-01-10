@@ -1146,6 +1146,14 @@ export const clientesApi = {
    */
   obtenerEstadisticasCliente: (id) => apiClient.get(`/clientes/${id}/estadisticas`),
 
+  /**
+   * Importar clientes desde CSV
+   * Ene 2026: Importacion masiva de clientes
+   * @param {Object} data - { clientes: Array<{ nombre, email?, telefono?, direccion?, notas? }> }
+   * @returns {Promise<Object>} { creados, errores, duplicados }
+   */
+  importarCSV: (data) => apiClient.post('/clientes/importar-csv', data),
+
   // ==================== ETIQUETAS (Ene 2026 - Fase 2) ====================
 
   /**
@@ -1424,6 +1432,68 @@ export const clientesApi = {
    */
   obtenerEstadisticasOportunidadesCliente: (clienteId) =>
     apiClient.get(`/clientes/${clienteId}/oportunidades/estadisticas`),
+
+  // ==================== CRÉDITO / FIADO (Ene 2026) ====================
+
+  /**
+   * Obtener estado de crédito de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>} { cliente, permite_credito, limite_credito, saldo_credito, disponible, dias_credito, credito_suspendido }
+   */
+  obtenerEstadoCredito: (clienteId) =>
+    apiClient.get(`/clientes/${clienteId}/credito`),
+
+  /**
+   * Actualizar configuración de crédito de un cliente
+   * @param {number} clienteId
+   * @param {Object} data - { permite_credito, limite_credito, dias_credito }
+   * @returns {Promise<Object>}
+   */
+  actualizarCredito: (clienteId, data) =>
+    apiClient.patch(`/clientes/${clienteId}/credito`, data),
+
+  /**
+   * Suspender crédito de un cliente
+   * @param {number} clienteId
+   * @param {Object} data - { motivo }
+   * @returns {Promise<Object>}
+   */
+  suspenderCredito: (clienteId, data = {}) =>
+    apiClient.post(`/clientes/${clienteId}/credito/suspender`, data),
+
+  /**
+   * Reactivar crédito de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  reactivarCredito: (clienteId) =>
+    apiClient.post(`/clientes/${clienteId}/credito/reactivar`),
+
+  /**
+   * Registrar abono a cuenta de cliente
+   * @param {number} clienteId
+   * @param {Object} data - { monto, descripcion }
+   * @returns {Promise<Object>}
+   */
+  registrarAbono: (clienteId, data) =>
+    apiClient.post(`/clientes/${clienteId}/credito/abono`, data),
+
+  /**
+   * Listar movimientos de crédito de un cliente
+   * @param {number} clienteId
+   * @param {Object} params - { limit, offset }
+   * @returns {Promise<Object>}
+   */
+  listarMovimientosCredito: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/credito/movimientos`, { params }),
+
+  /**
+   * Listar clientes con saldo pendiente (cobranza)
+   * @param {Object} params - { solo_vencidos }
+   * @returns {Promise<Object>}
+   */
+  listarClientesConSaldo: (params = {}) =>
+    apiClient.get('/clientes/credito/con-saldo', { params }),
 };
 
 // ==================== OPORTUNIDADES B2B (Ene 2026 - Fase 5) ====================
@@ -3603,6 +3673,163 @@ export const posApi = {
    * @returns {Promise<Object>} { resumen, ventas_por_hora, top_productos, detalle }
    */
   obtenerVentasDiarias: (params) => apiClient.get('/pos/reportes/ventas-diarias', { params }),
+
+  // ========== Pago Split (Ene 2026) ==========
+
+  /**
+   * Registrar pagos split (múltiples métodos de pago)
+   * @param {number} ventaId - ID de la venta
+   * @param {Object} data - { pagos: [{ metodo_pago, monto, monto_recibido?, referencia? }], cliente_id? }
+   * @returns {Promise<Object>} { venta, pagos }
+   */
+  registrarPagosSplit: (ventaId, data) => apiClient.post(`/pos/ventas/${ventaId}/pagos-split`, data),
+
+  /**
+   * Obtener desglose de pagos de una venta
+   * @param {number} ventaId - ID de la venta
+   * @returns {Promise<Object>} { venta, pagos, resumen }
+   */
+  obtenerPagosVenta: (ventaId) => apiClient.get(`/pos/ventas/${ventaId}/pagos`),
+
+  // ========== Sesiones de Caja ==========
+
+  /**
+   * Abrir nueva sesión de caja
+   * @param {Object} data - { sucursal_id?, monto_inicial?, nota_apertura? }
+   * @returns {Promise<Object>} { sesion }
+   */
+  abrirSesionCaja: (data) => apiClient.post('/pos/sesiones-caja/abrir', data),
+
+  /**
+   * Obtener sesión de caja activa del usuario
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Object>} { activa, sesion?, totales? }
+   */
+  obtenerSesionActiva: (params = {}) => apiClient.get('/pos/sesiones-caja/activa', { params }),
+
+  /**
+   * Cerrar sesión de caja
+   * @param {Object} data - { sesion_id, monto_contado, nota_cierre?, desglose? }
+   * @returns {Promise<Object>} { sesion, diferencia }
+   */
+  cerrarSesionCaja: (data) => apiClient.post('/pos/sesiones-caja/cerrar', data),
+
+  /**
+   * Listar sesiones de caja con filtros
+   * @param {Object} params - { sucursal_id?, usuario_id?, estado?, fecha_desde?, fecha_hasta?, limit?, offset? }
+   * @returns {Promise<Object>} { sesiones, total }
+   */
+  listarSesionesCaja: (params = {}) => apiClient.get('/pos/sesiones-caja', { params }),
+
+  /**
+   * Obtener sesión de caja por ID
+   * @param {number} id
+   * @returns {Promise<Object>} { sesion }
+   */
+  obtenerSesionCaja: (id) => apiClient.get(`/pos/sesiones-caja/${id}`),
+
+  /**
+   * Obtener resumen de sesión para cierre
+   * @param {number} id
+   * @returns {Promise<Object>} { sesion, totales, movimientos }
+   */
+  obtenerResumenSesion: (id) => apiClient.get(`/pos/sesiones-caja/${id}/resumen`),
+
+  /**
+   * Registrar movimiento de efectivo (entrada/salida)
+   * @param {number} id - ID de la sesión
+   * @param {Object} data - { tipo: 'entrada' | 'salida', monto, motivo }
+   * @returns {Promise<Object>} { movimiento }
+   */
+  registrarMovimientoCaja: (id, data) => apiClient.post(`/pos/sesiones-caja/${id}/movimiento`, data),
+
+  /**
+   * Listar movimientos de una sesión
+   * @param {number} id - ID de la sesión
+   * @returns {Promise<Object>} { movimientos }
+   */
+  listarMovimientosCaja: (id) => apiClient.get(`/pos/sesiones-caja/${id}/movimientos`),
+
+  // ========== Cupones de Descuento (Ene 2026) ==========
+
+  /**
+   * Listar cupones vigentes (para selector en POS)
+   * @returns {Promise<Object>} Array de cupones activos
+   */
+  listarCuponesVigentes: () => apiClient.get('/pos/cupones/vigentes'),
+
+  /**
+   * Validar cupón sin aplicar (preview)
+   * @param {Object} data - { codigo, subtotal, cliente_id?, productos_ids? }
+   * @returns {Promise<Object>} { valido, cupon?, descuento_calculado?, error?, mensaje? }
+   */
+  validarCupon: (data) => apiClient.post('/pos/cupones/validar', data),
+
+  /**
+   * Aplicar cupón a una venta
+   * @param {Object} data - { cupon_id, venta_pos_id, cliente_id?, subtotal_antes? }
+   * @returns {Promise<Object>} uso_cupones row
+   */
+  aplicarCupon: (data) => apiClient.post('/pos/cupones/aplicar', data),
+
+  /**
+   * Listar cupones con paginación (administración)
+   * @param {Object} params - { page?, limit?, busqueda?, activo?, vigente?, ordenPor?, orden? }
+   * @returns {Promise<Object>} { cupones, paginacion }
+   */
+  listarCupones: (params = {}) => apiClient.get('/pos/cupones', { params }),
+
+  /**
+   * Crear nuevo cupón
+   * @param {Object} data - { codigo, nombre, tipo_descuento, valor, ... }
+   * @returns {Promise<Object>}
+   */
+  crearCupon: (data) => apiClient.post('/pos/cupones', data),
+
+  /**
+   * Obtener cupón por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerCupon: (id) => apiClient.get(`/pos/cupones/${id}`),
+
+  /**
+   * Actualizar cupón
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarCupon: (id, data) => apiClient.put(`/pos/cupones/${id}`, data),
+
+  /**
+   * Eliminar cupón (solo si no tiene usos)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarCupon: (id) => apiClient.delete(`/pos/cupones/${id}`),
+
+  /**
+   * Obtener historial de uso de un cupón
+   * @param {number} id
+   * @param {Object} params - { limit?, offset? }
+   * @returns {Promise<Object>}
+   */
+  obtenerHistorialCupon: (id, params = {}) => apiClient.get(`/pos/cupones/${id}/historial`, { params }),
+
+  /**
+   * Obtener estadísticas de un cupón
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasCupon: (id) => apiClient.get(`/pos/cupones/${id}/estadisticas`),
+
+  /**
+   * Activar/desactivar cupón
+   * @param {number} id
+   * @param {boolean} activo
+   * @returns {Promise<Object>}
+   */
+  cambiarEstadoCupon: (id, activo) => apiClient.patch(`/pos/cupones/${id}/estado`, { activo }),
 };
 
 // ==================== MÓDULOS ====================

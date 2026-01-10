@@ -202,6 +202,248 @@ class ClienteController {
 
         return ResponseHelper.success(res, clientes, 'Búsqueda por nombre completada');
     });
+
+    /**
+     * Importar clientes desde CSV
+     * POST /api/v1/clientes/importar-csv
+     *
+     * Body: { clientes: Array<{ nombre, email?, telefono?, direccion?, notas? }> }
+     */
+    static importarCSV = asyncHandler(async (req, res) => {
+        const { clientes = [] } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        if (!Array.isArray(clientes) || clientes.length === 0) {
+            return ResponseHelper.badRequest(res, 'Se requiere un array de clientes para importar');
+        }
+
+        // Limite de 500 registros por importacion
+        if (clientes.length > 500) {
+            return ResponseHelper.badRequest(res, 'Maximo 500 clientes por importacion');
+        }
+
+        const resultados = {
+            creados: 0,
+            errores: [],
+            duplicados: 0
+        };
+
+        for (let i = 0; i < clientes.length; i++) {
+            const clienteData = clientes[i];
+            const fila = i + 1;
+
+            try {
+                // Validar campo requerido
+                if (!clienteData.nombre || clienteData.nombre.trim() === '') {
+                    resultados.errores.push({
+                        fila,
+                        error: 'El nombre es requerido'
+                    });
+                    continue;
+                }
+
+                // Verificar duplicado por email si existe
+                if (clienteData.email) {
+                    const existente = await ClienteModel.buscarPorEmail(
+                        clienteData.email,
+                        organizacionId
+                    );
+                    if (existente) {
+                        resultados.duplicados++;
+                        resultados.errores.push({
+                            fila,
+                            error: `Email ${clienteData.email} ya existe`
+                        });
+                        continue;
+                    }
+                }
+
+                // Crear cliente
+                await ClienteModel.crear({
+                    organizacion_id: organizacionId,
+                    nombre: clienteData.nombre.trim(),
+                    email: clienteData.email?.trim() || null,
+                    telefono: clienteData.telefono?.trim() || null,
+                    direccion: clienteData.direccion?.trim() || null,
+                    notas: clienteData.notas?.trim() || null,
+                    activo: true,
+                    marketing_permitido: clienteData.marketing_permitido ?? true
+                });
+
+                resultados.creados++;
+
+            } catch (error) {
+                resultados.errores.push({
+                    fila,
+                    error: error.message || 'Error desconocido'
+                });
+            }
+        }
+
+        const mensaje = `Importacion completada: ${resultados.creados} creados, ${resultados.duplicados} duplicados, ${resultados.errores.length} errores`;
+
+        return ResponseHelper.success(res, resultados, mensaje);
+    });
+
+    // =========================================================================
+    // CRÉDITO / FIADO (Ene 2026)
+    // =========================================================================
+
+    /**
+     * Obtener estado de crédito de un cliente
+     * GET /api/v1/clientes/:id/credito
+     */
+    static obtenerEstadoCredito = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const estadoCredito = await ClienteModel.obtenerEstadoCredito(
+            parseInt(id),
+            organizacionId
+        );
+
+        if (!estadoCredito) {
+            return ResponseHelper.notFound(res, 'Cliente no encontrado');
+        }
+
+        return ResponseHelper.success(res, estadoCredito, 'Estado de crédito obtenido');
+    });
+
+    /**
+     * Habilitar/deshabilitar crédito de un cliente
+     * PATCH /api/v1/clientes/:id/credito
+     */
+    static actualizarConfigCredito = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { permite_credito, limite_credito, dias_credito } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        const clienteActualizado = await ClienteModel.actualizar(
+            parseInt(id),
+            {
+                permite_credito,
+                limite_credito: limite_credito || 0,
+                dias_credito: dias_credito || 30
+            },
+            organizacionId
+        );
+
+        if (!clienteActualizado) {
+            return ResponseHelper.notFound(res, 'Cliente no encontrado');
+        }
+
+        return ResponseHelper.success(
+            res,
+            clienteActualizado,
+            permite_credito ? 'Crédito habilitado' : 'Crédito deshabilitado'
+        );
+    });
+
+    /**
+     * Suspender crédito de un cliente
+     * POST /api/v1/clientes/:id/credito/suspender
+     */
+    static suspenderCredito = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { motivo } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+
+        const clienteActualizado = await ClienteModel.actualizar(
+            parseInt(id),
+            {
+                credito_suspendido: true,
+                credito_suspendido_en: new Date().toISOString(),
+                credito_suspendido_motivo: motivo || 'Suspendido manualmente'
+            },
+            organizacionId
+        );
+
+        if (!clienteActualizado) {
+            return ResponseHelper.notFound(res, 'Cliente no encontrado');
+        }
+
+        return ResponseHelper.success(res, clienteActualizado, 'Crédito suspendido');
+    });
+
+    /**
+     * Reactivar crédito de un cliente
+     * POST /api/v1/clientes/:id/credito/reactivar
+     */
+    static reactivarCredito = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const clienteActualizado = await ClienteModel.actualizar(
+            parseInt(id),
+            {
+                credito_suspendido: false,
+                credito_suspendido_en: null,
+                credito_suspendido_motivo: null
+            },
+            organizacionId
+        );
+
+        if (!clienteActualizado) {
+            return ResponseHelper.notFound(res, 'Cliente no encontrado');
+        }
+
+        return ResponseHelper.success(res, clienteActualizado, 'Crédito reactivado');
+    });
+
+    /**
+     * Registrar abono a la cuenta del cliente
+     * POST /api/v1/clientes/:id/credito/abono
+     */
+    static registrarAbono = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { monto, descripcion } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user?.id;
+
+        const resultado = await ClienteModel.registrarAbonoCredito(
+            parseInt(id),
+            monto,
+            descripcion,
+            usuarioId,
+            organizacionId
+        );
+
+        return ResponseHelper.success(res, resultado, 'Abono registrado exitosamente');
+    });
+
+    /**
+     * Listar movimientos de crédito del cliente
+     * GET /api/v1/clientes/:id/credito/movimientos
+     */
+    static listarMovimientosCredito = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { limit = 50, offset = 0 } = req.query;
+        const organizacionId = req.tenant.organizacionId;
+
+        const movimientos = await ClienteModel.listarMovimientosCredito(
+            parseInt(id),
+            organizacionId,
+            { limit: parseInt(limit), offset: parseInt(offset) }
+        );
+
+        return ResponseHelper.success(res, movimientos, 'Movimientos obtenidos');
+    });
+
+    /**
+     * Listar clientes con saldo pendiente (cobranza)
+     * GET /api/v1/clientes/credito/con-saldo
+     */
+    static listarClientesConSaldo = asyncHandler(async (req, res) => {
+        const { solo_vencidos = false } = req.query;
+        const organizacionId = req.tenant.organizacionId;
+
+        const clientes = await ClienteModel.listarClientesConSaldo(
+            organizacionId,
+            solo_vencidos === 'true'
+        );
+
+        return ResponseHelper.success(res, clientes, 'Clientes con saldo obtenidos');
+    });
 }
 
 module.exports = ClienteController;

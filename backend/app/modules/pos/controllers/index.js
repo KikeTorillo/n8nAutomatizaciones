@@ -5,6 +5,7 @@
 
 const VentasPOSController = require('./ventas.controller');
 const ReportesPOSController = require('./reportes.controller');
+const SesionesCajaController = require('./sesiones-caja.controller');
 
 /**
  * Controller principal que combina todos los módulos especializados
@@ -74,6 +75,54 @@ class POSMainController {
 
     static obtenerVentasDiarias(req, res) {
         return ReportesPOSController.obtenerVentasDiarias(req, res);
+    }
+
+    // ===================================================================
+    // 💵 ENDPOINTS SESIONES DE CAJA
+    // ===================================================================
+
+    static abrirSesionCaja(req, res) {
+        return SesionesCajaController.abrir(req, res);
+    }
+
+    static obtenerSesionActiva(req, res) {
+        return SesionesCajaController.obtenerActiva(req, res);
+    }
+
+    static obtenerResumenSesion(req, res) {
+        return SesionesCajaController.obtenerResumen(req, res);
+    }
+
+    static cerrarSesionCaja(req, res) {
+        return SesionesCajaController.cerrar(req, res);
+    }
+
+    static registrarMovimientoCaja(req, res) {
+        return SesionesCajaController.registrarMovimiento(req, res);
+    }
+
+    static listarMovimientosCaja(req, res) {
+        return SesionesCajaController.listarMovimientos(req, res);
+    }
+
+    static listarSesionesCaja(req, res) {
+        return SesionesCajaController.listar(req, res);
+    }
+
+    static obtenerSesionPorId(req, res) {
+        return SesionesCajaController.obtenerPorId(req, res);
+    }
+
+    // ===================================================================
+    // 💳 PAGO SPLIT (Ene 2026)
+    // ===================================================================
+
+    static registrarPagosSplit(req, res) {
+        return VentasPOSController.registrarPagosSplit(req, res);
+    }
+
+    static obtenerPagosVenta(req, res) {
+        return VentasPOSController.obtenerPagosVenta(req, res);
     }
 }
 

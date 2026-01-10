@@ -68,6 +68,139 @@ router.get('/corte-caja',
     POSController.generarCorteCaja
 );
 
+// ===================================================================
+// SESIONES DE CAJA
+// ===================================================================
+
+/**
+ * POST /api/v1/pos/sesiones-caja/abrir
+ * Abrir nueva sesión de caja
+ * Body:
+ * - sucursal_id (opcional si se obtiene del contexto)
+ * - monto_inicial: número >= 0
+ * - nota_apertura (opcional)
+ */
+router.post('/sesiones-caja/abrir',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    verificarPermiso('pos.gestionar_caja'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.abrirSesionCaja),
+    POSController.abrirSesionCaja
+);
+
+/**
+ * GET /api/v1/pos/sesiones-caja/activa
+ * Obtener sesión de caja activa del usuario actual
+ * Query params:
+ * - sucursal_id (opcional si se obtiene del contexto)
+ */
+router.get('/sesiones-caja/activa',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerSesionActiva),
+    POSController.obtenerSesionActiva
+);
+
+/**
+ * POST /api/v1/pos/sesiones-caja/cerrar
+ * Cerrar sesión de caja
+ * Body:
+ * - sesion_id (requerido)
+ * - monto_contado (requerido)
+ * - nota_cierre (opcional)
+ * - desglose (opcional): desglose de billetes/monedas
+ */
+router.post('/sesiones-caja/cerrar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_caja'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.cerrarSesionCaja),
+    POSController.cerrarSesionCaja
+);
+
+/**
+ * GET /api/v1/pos/sesiones-caja
+ * Listar sesiones de caja con filtros
+ * Query params:
+ * - sucursal_id (opcional)
+ * - usuario_id (opcional)
+ * - estado: abierta | cerrada
+ * - fecha_desde, fecha_hasta
+ * - limit, offset
+ */
+router.get('/sesiones-caja',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.ver_historial', { usarSucursalDeQuery: true }),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.listarSesionesCaja),
+    POSController.listarSesionesCaja
+);
+
+/**
+ * GET /api/v1/pos/sesiones-caja/:id
+ * Obtener sesión de caja por ID
+ */
+router.get('/sesiones-caja/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerSesionPorId),
+    POSController.obtenerSesionPorId
+);
+
+/**
+ * GET /api/v1/pos/sesiones-caja/:id/resumen
+ * Obtener resumen de sesión para cierre
+ * Incluye totales, movimientos, ventas en efectivo
+ */
+router.get('/sesiones-caja/:id/resumen',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerSesionPorId),
+    POSController.obtenerResumenSesion
+);
+
+/**
+ * POST /api/v1/pos/sesiones-caja/:id/movimiento
+ * Registrar entrada/salida de efectivo
+ * Body:
+ * - tipo: entrada | salida
+ * - monto: número > 0
+ * - motivo (requerido)
+ */
+router.post('/sesiones-caja/:id/movimiento',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_caja'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.registrarMovimientoCaja),
+    POSController.registrarMovimientoCaja
+);
+
+/**
+ * GET /api/v1/pos/sesiones-caja/:id/movimientos
+ * Listar movimientos de una sesión
+ */
+router.get('/sesiones-caja/:id/movimientos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerSesionPorId),
+    POSController.listarMovimientosCaja
+);
+
 /**
  * GET /api/v1/pos/ventas/:id
  * Obtener venta por ID con sus items
@@ -269,6 +402,217 @@ router.get('/ventas/:id/ticket',
     rateLimiting.apiRateLimit,
     validate(posSchemas.obtenerPorId),
     POSController.generarTicket
+);
+
+// ===================================================================
+// PAGO SPLIT (Ene 2026)
+// ===================================================================
+
+/**
+ * POST /api/v1/pos/ventas/:id/pagos-split
+ * Registrar pagos split (múltiples métodos de pago)
+ * Body:
+ * - pagos: Array de { metodo_pago, monto, monto_recibido?, referencia? }
+ * - cliente_id (opcional): Para pagos a cuenta/crédito
+ */
+router.post('/ventas/:id/pagos-split',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.registrarPagosSplit),
+    POSController.registrarPagosSplit
+);
+
+/**
+ * GET /api/v1/pos/ventas/:id/pagos
+ * Obtener desglose de pagos de una venta
+ * Returns: { venta, pagos, resumen }
+ */
+router.get('/ventas/:id/pagos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerPagosVenta),
+    POSController.obtenerPagosVenta
+);
+
+// ===================================================================
+// CUPONES DE DESCUENTO (Ene 2026)
+// ===================================================================
+
+const CuponesController = require('../controllers/cupones.controller');
+
+/**
+ * GET /api/v1/pos/cupones/vigentes
+ * Listar cupones vigentes (para selector en POS)
+ * Returns: Array de cupones activos y dentro de fechas válidas
+ */
+router.get('/cupones/vigentes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    CuponesController.listarVigentes
+);
+
+/**
+ * POST /api/v1/pos/cupones/validar
+ * Validar cupón sin aplicar (preview)
+ * Body:
+ * - codigo: string
+ * - subtotal: number
+ * - cliente_id (opcional)
+ * - productos_ids (opcional)
+ * Returns: { valido, cupon, descuento_calculado } o { valido: false, error, mensaje }
+ */
+router.post('/cupones/validar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.validarCupon),
+    CuponesController.validar
+);
+
+/**
+ * POST /api/v1/pos/cupones/aplicar
+ * Aplicar cupón a una venta
+ * Body:
+ * - cupon_id: number
+ * - venta_pos_id: number
+ * - cliente_id (opcional)
+ * - subtotal_antes (opcional)
+ * Returns: uso_cupones row
+ */
+router.post('/cupones/aplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.aplicarCupon),
+    CuponesController.aplicar
+);
+
+/**
+ * GET /api/v1/pos/cupones
+ * Listar cupones con filtros y paginación
+ * Query params:
+ * - page, limit
+ * - busqueda
+ * - activo: true | false
+ * - vigente: true | false
+ * - ordenPor, orden
+ */
+router.get('/cupones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.listarCupones),
+    CuponesController.listar
+);
+
+/**
+ * POST /api/v1/pos/cupones
+ * Crear nuevo cupón
+ * Body: { codigo, nombre, tipo_descuento, valor, ... }
+ */
+router.post('/cupones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    subscription.checkActiveSubscription,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.crearCupon),
+    CuponesController.crear
+);
+
+/**
+ * GET /api/v1/pos/cupones/:id
+ * Obtener cupón por ID
+ */
+router.get('/cupones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerCupon),
+    CuponesController.obtenerPorId
+);
+
+/**
+ * PUT /api/v1/pos/cupones/:id
+ * Actualizar cupón
+ */
+router.put('/cupones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.actualizarCupon),
+    CuponesController.actualizar
+);
+
+/**
+ * DELETE /api/v1/pos/cupones/:id
+ * Eliminar cupón (solo si no tiene usos)
+ */
+router.delete('/cupones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.eliminarCupon),
+    CuponesController.eliminar
+);
+
+/**
+ * GET /api/v1/pos/cupones/:id/historial
+ * Obtener historial de uso de un cupón
+ */
+router.get('/cupones/:id/historial',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.historialCupon),
+    CuponesController.obtenerHistorial
+);
+
+/**
+ * GET /api/v1/pos/cupones/:id/estadisticas
+ * Obtener estadísticas de un cupón
+ */
+router.get('/cupones/:id/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.obtenerCupon),
+    CuponesController.obtenerEstadisticas
+);
+
+/**
+ * PATCH /api/v1/pos/cupones/:id/estado
+ * Activar/desactivar cupón
+ */
+router.patch('/cupones/:id/estado',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_cupones'),
+    rateLimiting.apiRateLimit,
+    validate(posSchemas.cambiarEstadoCupon),
+    CuponesController.cambiarEstado
 );
 
 module.exports = router;

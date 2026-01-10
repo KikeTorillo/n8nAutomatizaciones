@@ -255,3 +255,26 @@ export function useEstadisticasCliente(clienteId) {
     staleTime: 1000 * 60 * 2, // 2 minutos
   });
 }
+
+/**
+ * Hook para importar clientes desde CSV
+ * Ene 2026: Importacion masiva de clientes
+ */
+export function useImportarClientesCSV() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data) => {
+      const response = await clientesApi.importarCSV(data);
+      return response.data.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries(['clientes']);
+      queryClient.invalidateQueries(['clientes-estadisticas']);
+    },
+    onError: (error) => {
+      const message = error.response?.data?.message || 'Error al importar clientes';
+      throw new Error(message);
+    },
+  });
+}

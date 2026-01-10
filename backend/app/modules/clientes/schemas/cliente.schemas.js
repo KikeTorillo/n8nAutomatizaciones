@@ -529,6 +529,185 @@ const buscarPorNombre = {
     })
 };
 
+/**
+ * Schema para importacion masiva de clientes desde CSV
+ */
+const importarCSV = {
+    body: Joi.object({
+        clientes: Joi.array()
+            .items(
+                Joi.object({
+                    nombre: Joi.string()
+                        .min(LIMITES.NOMBRE_MIN)
+                        .max(LIMITES.NOMBRE_MAX)
+                        .required()
+                        .trim(),
+                    email: Joi.string()
+                        .email()
+                        .max(LIMITES.NOMBRE_MAX)
+                        .optional()
+                        .allow(null, '')
+                        .lowercase(),
+                    telefono: Joi.string()
+                        .min(LIMITES.TELEFONO_MIN)
+                        .max(LIMITES.TELEFONO_MAX)
+                        .optional()
+                        .allow(null, ''),
+                    direccion: Joi.string()
+                        .max(500)
+                        .optional()
+                        .allow(null, ''),
+                    notas: Joi.string()
+                        .max(LIMITES.NOTAS_MAX)
+                        .optional()
+                        .allow(null, ''),
+                    marketing_permitido: Joi.boolean()
+                        .optional()
+                        .default(true)
+                })
+            )
+            .min(1)
+            .max(500)
+            .required()
+            .messages({
+                'array.min': 'Se requiere al menos un cliente para importar',
+                'array.max': 'Maximo 500 clientes por importacion',
+                'any.required': 'El campo clientes es requerido'
+            })
+    })
+};
+
+// =========================================================================
+// CRÉDITO / FIADO (Ene 2026)
+// =========================================================================
+
+/**
+ * Obtener estado de crédito de un cliente
+ * GET /api/v1/clientes/:id/credito
+ */
+const obtenerEstadoCredito = {
+    params: Joi.object({
+        id: commonSchemas.id
+    })
+};
+
+/**
+ * Actualizar configuración de crédito de un cliente
+ * PATCH /api/v1/clientes/:id/credito
+ */
+const actualizarCredito = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        permite_credito: Joi.boolean()
+            .required()
+            .messages({
+                'any.required': 'Debe indicar si permite crédito'
+            }),
+        limite_credito: Joi.number()
+            .min(0)
+            .max(9999999999.99)
+            .optional()
+            .default(0)
+            .messages({
+                'number.min': 'Límite de crédito no puede ser negativo',
+                'number.max': 'Límite de crédito excede el máximo permitido'
+            }),
+        dias_credito: Joi.number()
+            .integer()
+            .min(1)
+            .max(365)
+            .optional()
+            .default(30)
+            .messages({
+                'number.min': 'Días de crédito debe ser al menos 1',
+                'number.max': 'Días de crédito no puede exceder 365'
+            })
+    })
+};
+
+/**
+ * Suspender crédito de un cliente
+ * POST /api/v1/clientes/:id/credito/suspender
+ */
+const suspenderCredito = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        motivo: Joi.string()
+            .max(500)
+            .optional()
+            .trim()
+            .messages({
+                'string.max': 'Motivo no puede exceder 500 caracteres'
+            })
+    })
+};
+
+/**
+ * Registrar abono a cuenta de cliente
+ * POST /api/v1/clientes/:id/credito/abono
+ */
+const registrarAbono = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    body: Joi.object({
+        monto: Joi.number()
+            .positive()
+            .max(9999999999.99)
+            .required()
+            .messages({
+                'number.positive': 'Monto debe ser positivo',
+                'number.max': 'Monto excede el máximo permitido',
+                'any.required': 'Monto es requerido'
+            }),
+        descripcion: Joi.string()
+            .max(500)
+            .optional()
+            .trim()
+            .messages({
+                'string.max': 'Descripción no puede exceder 500 caracteres'
+            })
+    })
+};
+
+/**
+ * Listar movimientos de crédito de un cliente
+ * GET /api/v1/clientes/:id/credito/movimientos
+ */
+const listarMovimientosCredito = {
+    params: Joi.object({
+        id: commonSchemas.id
+    }),
+    query: Joi.object({
+        limit: Joi.number()
+            .integer()
+            .min(1)
+            .max(100)
+            .default(50),
+        offset: Joi.number()
+            .integer()
+            .min(0)
+            .default(0)
+    })
+};
+
+/**
+ * Listar clientes con saldo pendiente
+ * GET /api/v1/clientes/credito/con-saldo
+ */
+const listarClientesConSaldo = {
+    query: Joi.object({
+        solo_vencidos: Joi.string()
+            .valid('true', 'false')
+            .optional()
+            .default('false')
+    })
+};
+
 module.exports = {
     crear,
     actualizar,
@@ -541,5 +720,13 @@ module.exports = {
     obtenerEstadisticasCliente,
     buscarPorTelefono,
     buscarPorNombre,
+    importarCSV,
+    // Crédito / Fiado (Ene 2026)
+    obtenerEstadoCredito,
+    actualizarCredito,
+    suspenderCredito,
+    registrarAbono,
+    listarMovimientosCredito,
+    listarClientesConSaldo,
     LIMITES
 };

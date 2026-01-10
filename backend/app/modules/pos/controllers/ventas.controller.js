@@ -368,6 +368,55 @@ class VentasPOSController {
 
         return res.send(pdfBuffer);
     });
+
+    // =========================================================================
+    // PAGO SPLIT - Múltiples métodos de pago (Ene 2026)
+    // =========================================================================
+
+    /**
+     * Registrar pagos split (múltiples métodos de pago)
+     * POST /api/v1/pos/ventas/:id/pagos-split
+     */
+    static registrarPagosSplit = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const { pagos, cliente_id } = req.body;
+        const organizacionId = req.tenant.organizacionId;
+        const usuarioId = req.user?.id;
+
+        const resultado = await VentasPOSModel.registrarPagosSplit(
+            parseInt(id),
+            pagos,
+            usuarioId,
+            organizacionId,
+            cliente_id || null
+        );
+
+        return ResponseHelper.success(
+            res,
+            resultado,
+            `${resultado.pagos.length} pago(s) registrado(s) exitosamente`
+        );
+    });
+
+    /**
+     * Obtener desglose de pagos de una venta
+     * GET /api/v1/pos/ventas/:id/pagos
+     */
+    static obtenerPagosVenta = asyncHandler(async (req, res) => {
+        const { id } = req.params;
+        const organizacionId = req.tenant.organizacionId;
+
+        const resultado = await VentasPOSModel.obtenerPagosVenta(
+            parseInt(id),
+            organizacionId
+        );
+
+        return ResponseHelper.success(
+            res,
+            resultado,
+            'Pagos de venta obtenidos exitosamente'
+        );
+    });
 }
 
 module.exports = VentasPOSController;
