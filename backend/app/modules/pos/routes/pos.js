@@ -45,7 +45,7 @@ router.post('/ventas',
     subscription.checkActiveSubscription,
     subscription.checkResourceLimit('ventas_pos_mes'),
     verificarPermiso('pos.crear_ventas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.crearVenta),
     POSController.crearVenta
 );
@@ -63,7 +63,7 @@ router.get('/corte-caja',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.corte_caja', { usarSucursalDeQuery: true }),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.corteCaja),
     POSController.generarCorteCaja
 );
@@ -87,7 +87,7 @@ router.post('/sesiones-caja/abrir',
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
     verificarPermiso('pos.gestionar_caja'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.abrirSesionCaja),
     POSController.abrirSesionCaja
 );
@@ -101,7 +101,7 @@ router.post('/sesiones-caja/abrir',
 router.get('/sesiones-caja/activa',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerSesionActiva),
     POSController.obtenerSesionActiva
 );
@@ -121,7 +121,7 @@ router.post('/sesiones-caja/cerrar',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.gestionar_caja'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.cerrarSesionCaja),
     POSController.cerrarSesionCaja
 );
@@ -140,7 +140,7 @@ router.get('/sesiones-caja',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.ver_historial', { usarSucursalDeQuery: true }),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.listarSesionesCaja),
     POSController.listarSesionesCaja
 );
@@ -152,7 +152,7 @@ router.get('/sesiones-caja',
 router.get('/sesiones-caja/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerSesionPorId),
     POSController.obtenerSesionPorId
 );
@@ -165,7 +165,7 @@ router.get('/sesiones-caja/:id',
 router.get('/sesiones-caja/:id/resumen',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerSesionPorId),
     POSController.obtenerResumenSesion
 );
@@ -184,7 +184,7 @@ router.post('/sesiones-caja/:id/movimiento',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.gestionar_caja'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.registrarMovimientoCaja),
     POSController.registrarMovimientoCaja
 );
@@ -196,7 +196,7 @@ router.post('/sesiones-caja/:id/movimiento',
 router.get('/sesiones-caja/:id/movimientos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerSesionPorId),
     POSController.listarMovimientosCaja
 );
@@ -208,7 +208,7 @@ router.get('/sesiones-caja/:id/movimientos',
 router.get('/ventas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerPorId),
     POSController.obtenerVentaPorId
 );
@@ -231,7 +231,7 @@ router.get('/ventas',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.ver_historial', { usarSucursalDeQuery: true }),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.listarVentas),
     POSController.listarVentas
 );
@@ -247,7 +247,7 @@ router.patch('/ventas/:id/estado',
     tenant.setTenantContext,
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.actualizarEstado),
     POSController.actualizarEstadoVenta
 );
@@ -266,7 +266,7 @@ router.post('/ventas/:id/pago',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.registrarPago),
     POSController.registrarPago
 );
@@ -285,7 +285,7 @@ router.post('/ventas/:id/cancelar',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.anular_ventas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.cancelarVenta),
     POSController.cancelarVenta
 );
@@ -306,7 +306,7 @@ router.post('/ventas/:id/devolver',
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
     verificarPermiso('pos.devolver_productos'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.devolverItems),
     POSController.devolverItems
 );
@@ -324,7 +324,7 @@ router.post('/ventas/:id/items',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.agregarItems),
     POSController.agregarItems
 );
@@ -339,7 +339,7 @@ router.put('/ventas/:id',
     tenant.setTenantContext,
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.actualizarVenta),
     POSController.actualizarVenta
 );
@@ -358,7 +358,7 @@ router.delete('/ventas/:id',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.anular_ventas'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.eliminarVenta),
     POSController.eliminarVenta
 );
@@ -379,7 +379,7 @@ router.delete('/ventas/:id',
 router.get('/reportes/ventas-diarias',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.reporteVentasDiarias),
     POSController.obtenerVentasDiarias
 );
@@ -399,7 +399,7 @@ router.get('/reportes/ventas-diarias',
 router.get('/ventas/:id/ticket',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerPorId),
     POSController.generarTicket
 );
@@ -421,7 +421,7 @@ router.post('/ventas/:id/pagos-split',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.registrarPagosSplit),
     POSController.registrarPagosSplit
 );
@@ -434,7 +434,7 @@ router.post('/ventas/:id/pagos-split',
 router.get('/ventas/:id/pagos',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerPagosVenta),
     POSController.obtenerPagosVenta
 );
@@ -453,7 +453,7 @@ const CuponesController = require('../controllers/cupones.controller');
 router.get('/cupones/vigentes',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     CuponesController.listarVigentes
 );
 
@@ -470,7 +470,7 @@ router.get('/cupones/vigentes',
 router.post('/cupones/validar',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.validarCupon),
     CuponesController.validar
 );
@@ -491,7 +491,7 @@ router.post('/cupones/aplicar',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.aplicarCupon),
     CuponesController.aplicar
 );
@@ -510,7 +510,7 @@ router.get('/cupones',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.listarCupones),
     CuponesController.listar
 );
@@ -527,7 +527,7 @@ router.post('/cupones',
     tenant.verifyTenantActive,
     subscription.checkActiveSubscription,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.crearCupon),
     CuponesController.crear
 );
@@ -539,7 +539,7 @@ router.post('/cupones',
 router.get('/cupones/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerCupon),
     CuponesController.obtenerPorId
 );
@@ -554,7 +554,7 @@ router.put('/cupones/:id',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.actualizarCupon),
     CuponesController.actualizar
 );
@@ -569,7 +569,7 @@ router.delete('/cupones/:id',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.eliminarCupon),
     CuponesController.eliminar
 );
@@ -582,7 +582,7 @@ router.get('/cupones/:id/historial',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.historialCupon),
     CuponesController.obtenerHistorial
 );
@@ -595,7 +595,7 @@ router.get('/cupones/:id/estadisticas',
     auth.authenticateToken,
     tenant.setTenantContext,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.obtenerCupon),
     CuponesController.obtenerEstadisticas
 );
@@ -610,7 +610,7 @@ router.patch('/cupones/:id/estado',
     modules.requireModule('pos'),
     tenant.verifyTenantActive,
     verificarPermiso('pos.gestionar_cupones'),
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(posSchemas.cambiarEstadoCupon),
     CuponesController.cambiarEstado
 );
