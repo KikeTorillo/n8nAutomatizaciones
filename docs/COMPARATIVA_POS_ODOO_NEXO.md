@@ -124,12 +124,22 @@ sql/pos/
 
 ## Próximos Pasos
 
-1. **Cuenta de cliente (fiado)** - Completar integración
+1. **Rate Limiting POS** - URGENTE
+   - Problema: Al agregar productos rápido se alcanza el límite 429
+   - El POS genera muchas requests por operación (precios, tasas, stock)
+   - Revisar: `backend/app/middleware/rateLimiting.js`
+   - Opciones a evaluar:
+     - Aumentar límites para usuarios autenticados
+     - Crear `posRateLimit` específico con límites altos
+     - Optimizar frontend para reducir requests (debouncing, batching)
+     - Cache más agresivo en queries frecuentes (tasas, precios)
+
+2. **Cuenta de cliente (fiado)** - Completar integración
    - SQL `08-credito-cliente.sql` ya existe
    - Falta: UI en MetodoPagoModal para método "A cuenta"
    - Falta: Vista de saldos pendientes por cliente
 
-2. **Fase 3** - Evaluar prioridad según feedback usuarios
+3. **Fase 3** - Evaluar prioridad según feedback usuarios
 
 ---
 

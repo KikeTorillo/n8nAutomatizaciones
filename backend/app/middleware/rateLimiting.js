@@ -352,7 +352,7 @@ const ipRateLimit = createRateLimit({
  */
 const userRateLimit = createRateLimit({
   windowMs: 15 * 60 * 1000,                                      // 15 minutos
-  max: 200,                                                    // 200 requests (más generoso)
+  max: 1000,                                                   // 1000 requests (POS necesita muchas)
   message: 'Demasiadas solicitudes, intenta en 15 minutos',
   keyGenerator: (req) => req.user ? `user:${req.user.id}` : `ip:${req.ip}`, // Usuario o IP
   skip: (req) => process.env.NODE_ENV === 'test' || !req.user  // Saltar en test o sin usuario
