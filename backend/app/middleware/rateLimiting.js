@@ -439,10 +439,15 @@ const apiRateLimit = createRateLimit({
     return apiKey ? `api:${apiKey}` : `ip:${req.ip}`;
   },
   skip: (req) => {
-    // Saltar en ambiente de test o si viene de localhost en desarrollo
-    return process.env.NODE_ENV === 'test' ||
-           (process.env.NODE_ENV === 'development' &&
-            (req.ip === '127.0.0.1' || req.ip === '::1' || req.ip === '::ffff:127.0.0.1'));
+    // Saltar en ambiente de test o desarrollo (Docker usa IPs 172.x.x.x)
+    if (process.env.NODE_ENV === 'test') return true;
+    if (process.env.NODE_ENV === 'development') {
+      const ip = req.ip || '';
+      return ip === '127.0.0.1' || ip === '::1' ||
+             ip.startsWith('::ffff:127.') || ip.startsWith('::ffff:172.') ||
+             ip.startsWith('172.') || ip.startsWith('192.168.');
+    }
+    return false;
   }
 });
 
