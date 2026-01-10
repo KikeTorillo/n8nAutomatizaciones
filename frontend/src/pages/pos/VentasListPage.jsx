@@ -1,9 +1,11 @@
-import { useState } from 'react';
-import { Receipt, Eye, XCircle, RefreshCw, Filter, Search, Calendar, DollarSign } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { format } from 'date-fns';
+import { Receipt, Eye, XCircle, RefreshCw, Filter, Search, Calendar, DollarSign, FileSpreadsheet, TrendingUp, Package } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
 import { useVentas } from '@/hooks/useVentas';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
@@ -42,6 +44,78 @@ export default function VentasListPage() {
   const { data: ventasData, isLoading } = useVentas(filtros);
   const ventas = ventasData?.ventas || [];
   const total = ventasData?.total || 0;
+
+  // Calcular métricas desde los datos
+  const metricas = useMemo(() => {
+    const ventasCompletadas = ventas.filter((v) => v.estado === 'completada');
+    const totalIngresos = ventasCompletadas.reduce((sum, v) => sum + parseFloat(v.total || 0), 0);
+    const ticketPromedio = ventasCompletadas.length > 0 ? totalIngresos / ventasCompletadas.length : 0;
+    const ventasCanceladas = ventas.filter((v) => v.estado === 'cancelada').length;
+
+    return {
+      totalVentas: ventas.length,
+      totalIngresos,
+      ticketPromedio,
+      ventasCanceladas,
+    };
+  }, [ventas]);
+
+  // Configuración de StatCards
+  const statsConfig = useMemo(() => [
+    { key: 'total', icon: Receipt, label: 'Total Ventas', value: metricas.totalVentas, color: 'primary' },
+    { key: 'ingresos', icon: DollarSign, label: 'Ingresos', value: `$${metricas.totalIngresos.toFixed(2)}`, color: 'green' },
+    { key: 'ticket', icon: TrendingUp, label: 'Ticket Promedio', value: `$${metricas.ticketPromedio.toFixed(2)}`, color: 'blue' },
+    { key: 'canceladas', icon: XCircle, label: 'Canceladas', value: metricas.ventasCanceladas, color: 'red' },
+  ], [metricas]);
+
+  // Handler para exportar CSV
+  const handleExportarCSV = () => {
+    if (!ventas || ventas.length === 0) {
+      toast.error('No hay ventas para exportar');
+      return;
+    }
+
+    try {
+      const headers = [
+        'Folio',
+        'Fecha',
+        'Cliente',
+        'Total',
+        'Método Pago',
+        'Estado',
+        'Estado Pago',
+      ];
+
+      const rows = ventas.map((v) => [
+        v.folio || '',
+        v.fecha_venta ? format(new Date(v.fecha_venta), 'dd/MM/yyyy HH:mm') : '',
+        v.cliente_nombre || 'Venta directa',
+        `$${parseFloat(v.total || 0).toFixed(2)}`,
+        formatearMetodoPago(v.metodo_pago),
+        v.estado || '',
+        v.estado_pago || '',
+      ]);
+
+      // BOM para UTF-8 (Excel)
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ventas_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      toast.success('Ventas exportadas exitosamente');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      toast.error('Error al exportar CSV');
+    }
+  };
 
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
@@ -139,7 +213,7 @@ export default function VentasListPage() {
       {/* Contenido */}
       <div className="p-6 space-y-6">
         {/* Header de sección */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
               <Receipt className="h-6 w-6 text-primary-600 dark:text-primary-400" />
@@ -150,14 +224,29 @@ export default function VentasListPage() {
             </p>
           </div>
 
-          <Button
-            variant={mostrarFiltros ? 'secondary' : 'outline'}
-            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            icon={Filter}
-        >
-          {mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros
-        </Button>
-      </div>
+          <div className="flex gap-2">
+            <Button
+              variant="secondary"
+              onClick={handleExportarCSV}
+              disabled={!ventas?.length}
+              aria-label="Exportar ventas a CSV"
+            >
+              <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Exportar CSV</span>
+            </Button>
+            <Button
+              variant={mostrarFiltros ? 'primary' : 'outline'}
+              onClick={() => setMostrarFiltros(!mostrarFiltros)}
+            >
+              <Filter className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">{mostrarFiltros ? 'Ocultar' : 'Mostrar'} Filtros</span>
+              <span className="sm:hidden">Filtros</span>
+            </Button>
+          </div>
+        </div>
+
+        {/* Métricas rápidas */}
+        <StatCardGrid stats={statsConfig} columns={4} />
 
       {/* Panel de filtros */}
       {mostrarFiltros && (
@@ -358,6 +447,7 @@ export default function VentasListPage() {
                             onClick={() => handleVerDetalle(venta.id)}
                             className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                             title="Ver detalle"
+                            aria-label={`Ver detalle de venta ${venta.folio}`}
                           >
                             <Eye className="h-5 w-5" />
                           </button>
@@ -367,6 +457,7 @@ export default function VentasListPage() {
                                 onClick={() => handleDevolver(venta)}
                                 className="text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300"
                                 title="Procesar devolución"
+                                aria-label={`Procesar devolución de venta ${venta.folio}`}
                               >
                                 <RefreshCw className="h-5 w-5" />
                               </button>
@@ -374,6 +465,7 @@ export default function VentasListPage() {
                                 onClick={() => handleCancelar(venta)}
                                 className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                                 title="Cancelar venta"
+                                aria-label={`Cancelar venta ${venta.folio}`}
                               >
                                 <XCircle className="h-5 w-5" />
                               </button>

@@ -1,12 +1,15 @@
 import { useNavigate } from 'react-router-dom';
-import { Phone, Mail, Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserCircle } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import EmptyState from '@/components/ui/EmptyState';
+import EtiquetasBadges from './EtiquetasBadges';
 
 /**
  * Componente de lista de clientes con tabla y paginación
+ * @param {boolean} showPagination - Mostrar paginación (default: true)
  */
-function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
+function ClientesList({ clientes, pagination, isLoading, onPageChange, showPagination = true }) {
   const navigate = useNavigate();
 
   if (isLoading) {
@@ -19,22 +22,13 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
 
   if (!clientes || clientes.length === 0) {
     return (
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-12 text-center">
-        <div className="max-w-sm mx-auto">
-          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Phone className="w-8 h-8 text-gray-400 dark:text-gray-500" />
-          </div>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-            No hay clientes registrados
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            Comienza agregando tu primer cliente o atiende un cliente walk-in
-          </p>
-          <Button onClick={() => navigate('/clientes/nuevo')}>
-            Agregar Cliente
-          </Button>
-        </div>
-      </div>
+      <EmptyState
+        icon={UserCircle}
+        title="No hay clientes registrados"
+        description="Comienza agregando tu primer cliente o atiende un cliente walk-in"
+        actionLabel="Agregar Cliente"
+        onAction={() => navigate('/clientes/nuevo')}
+      />
     );
   }
 
@@ -95,6 +89,12 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                         {cliente.email && (
                           <div className="text-sm text-gray-500 dark:text-gray-400">
                             {cliente.email}
+                          </div>
+                        )}
+                        {/* Etiquetas (Fase 2 - Ene 2026) */}
+                        {cliente.etiquetas && cliente.etiquetas.length > 0 && (
+                          <div className="mt-1">
+                            <EtiquetasBadges etiquetas={cliente.etiquetas} size="xs" maxVisible={2} />
                           </div>
                         )}
                       </div>
@@ -164,6 +164,7 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
                         e.stopPropagation();
                         navigate(`/clientes/${cliente.id}/editar`);
                       }}
+                      aria-label={`Editar cliente ${cliente.nombre}`}
                     >
                       Editar
                     </Button>
@@ -176,7 +177,7 @@ function ClientesList({ clientes, pagination, isLoading, onPageChange }) {
       </div>
 
       {/* Pagination */}
-      {pagination && pagination.totalPages > 1 && (
+      {showPagination && pagination && pagination.totalPages > 1 && (
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="text-sm text-gray-700 dark:text-gray-300">

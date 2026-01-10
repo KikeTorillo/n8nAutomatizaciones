@@ -167,11 +167,8 @@ function ProveedoresPage() {
               icon={Building2}
               title="No hay proveedores"
               description="Comienza agregando tu primer proveedor"
-              action={
-                <Button variant="primary" onClick={handleNuevoProveedor} icon={Plus}>
-                  Nuevo Proveedor
-                </Button>
-              }
+              actionLabel="Nuevo Proveedor"
+              onAction={handleNuevoProveedor}
             />
           ) : (
             <div className="overflow-x-auto">

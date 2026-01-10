@@ -18,13 +18,22 @@ const LIMITES = {
     NOMBRE_MAX: 150,
     TELEFONO_MIN: 7,
     TELEFONO_MAX: 20,
-    DIRECCION_MAX: 500,
     NOTAS_MAX: 1000,
     ALERGIAS_MAX: 1000,
     COMO_CONOCIO_MAX: 100,
     EDAD_MIN: 5,
-    EDAD_MAX: 120
+    EDAD_MAX: 120,
+    // Nuevos límites - Dirección estructurada (Ene 2026)
+    CALLE_MAX: 200,
+    COLONIA_MAX: 100,
+    CIUDAD_MAX: 100,
+    CP_MAX: 10,
+    RFC_MAX: 13,
+    RAZON_SOCIAL_MAX: 200
 };
+
+// Patrón RFC mexicano: 3-4 letras + 6 números + 3 caracteres alfanuméricos
+const RFC_PATTERN = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/i;
 
 const crear = {
     body: Joi.object({
@@ -94,14 +103,101 @@ const crear = {
                 'date.max': 'Fecha de nacimiento no puede ser en el futuro',
                 'any.invalid': `Edad debe estar entre ${LIMITES.EDAD_MIN} y ${LIMITES.EDAD_MAX} años`
             }),
-        direccion: Joi.string()
-            .max(LIMITES.DIRECCION_MAX)
+
+        // ====================================================================
+        // Tipo de cliente y datos fiscales (Ene 2026)
+        // ====================================================================
+        tipo: Joi.string()
+            .valid('persona', 'empresa')
             .optional()
-            .allow(null)
+            .default('persona')
+            .messages({
+                'any.only': 'Tipo debe ser "persona" o "empresa"'
+            }),
+        rfc: Joi.string()
+            .max(LIMITES.RFC_MAX)
+            .pattern(RFC_PATTERN)
+            .uppercase()
+            .optional()
+            .allow(null, '')
+            .when('tipo', {
+                is: 'persona',
+                then: Joi.forbidden().messages({
+                    'any.unknown': 'RFC solo aplica para clientes tipo empresa'
+                })
+            })
+            .messages({
+                'string.pattern.base': 'RFC no válido (formato: XXXX000000XXX)',
+                'string.max': `RFC no puede exceder ${LIMITES.RFC_MAX} caracteres`
+            }),
+        razon_social: Joi.string()
+            .max(LIMITES.RAZON_SOCIAL_MAX)
+            .trim()
+            .optional()
+            .allow(null, '')
+            .when('tipo', {
+                is: 'persona',
+                then: Joi.forbidden().messages({
+                    'any.unknown': 'Razón social solo aplica para clientes tipo empresa'
+                })
+            })
+            .messages({
+                'string.max': `Razón social no puede exceder ${LIMITES.RAZON_SOCIAL_MAX} caracteres`
+            }),
+
+        // ====================================================================
+        // Dirección estructurada (Ene 2026)
+        // ====================================================================
+        calle: Joi.string()
+            .max(LIMITES.CALLE_MAX)
+            .optional()
+            .allow(null, '')
             .trim()
             .messages({
-                'string.max': `Dirección no puede exceder ${LIMITES.DIRECCION_MAX} caracteres`
+                'string.max': `Calle no puede exceder ${LIMITES.CALLE_MAX} caracteres`
             }),
+        colonia: Joi.string()
+            .max(LIMITES.COLONIA_MAX)
+            .optional()
+            .allow(null, '')
+            .trim()
+            .messages({
+                'string.max': `Colonia no puede exceder ${LIMITES.COLONIA_MAX} caracteres`
+            }),
+        ciudad: Joi.string()
+            .max(LIMITES.CIUDAD_MAX)
+            .optional()
+            .allow(null, '')
+            .trim()
+            .messages({
+                'string.max': `Ciudad no puede exceder ${LIMITES.CIUDAD_MAX} caracteres`
+            }),
+        estado_id: commonSchemas.id
+            .optional()
+            .allow(null)
+            .messages({
+                'number.base': 'ID de estado debe ser un número'
+            }),
+        codigo_postal: Joi.string()
+            .max(LIMITES.CP_MAX)
+            .pattern(/^[0-9]{5}$/)
+            .optional()
+            .allow(null, '')
+            .messages({
+                'string.pattern.base': 'Código postal debe ser de 5 dígitos',
+                'string.max': `Código postal no puede exceder ${LIMITES.CP_MAX} caracteres`
+            }),
+        pais_id: commonSchemas.id
+            .optional()
+            .allow(null)
+            .default(1) // México
+            .messages({
+                'number.base': 'ID de país debe ser un número'
+            }),
+
+        // ====================================================================
+        // Campos existentes
+        // ====================================================================
         notas_especiales: Joi.string()
             .max(LIMITES.NOTAS_MAX)
             .optional()
@@ -188,10 +284,62 @@ const actualizar = {
                 }
                 return value;
             }),
-        direccion: Joi.string()
-            .max(LIMITES.DIRECCION_MAX)
+
+        // ====================================================================
+        // Tipo de cliente y datos fiscales (Ene 2026)
+        // ====================================================================
+        tipo: Joi.string()
+            .valid('persona', 'empresa')
+            .messages({
+                'any.only': 'Tipo debe ser "persona" o "empresa"'
+            }),
+        rfc: Joi.string()
+            .max(LIMITES.RFC_MAX)
+            .pattern(RFC_PATTERN)
+            .uppercase()
+            .allow(null, '')
+            .messages({
+                'string.pattern.base': 'RFC no válido (formato: XXXX000000XXX)',
+                'string.max': `RFC no puede exceder ${LIMITES.RFC_MAX} caracteres`
+            }),
+        razon_social: Joi.string()
+            .max(LIMITES.RAZON_SOCIAL_MAX)
             .trim()
+            .allow(null, '')
+            .messages({
+                'string.max': `Razón social no puede exceder ${LIMITES.RAZON_SOCIAL_MAX} caracteres`
+            }),
+
+        // ====================================================================
+        // Dirección estructurada (Ene 2026)
+        // ====================================================================
+        calle: Joi.string()
+            .max(LIMITES.CALLE_MAX)
+            .trim()
+            .allow(null, ''),
+        colonia: Joi.string()
+            .max(LIMITES.COLONIA_MAX)
+            .trim()
+            .allow(null, ''),
+        ciudad: Joi.string()
+            .max(LIMITES.CIUDAD_MAX)
+            .trim()
+            .allow(null, ''),
+        estado_id: commonSchemas.id
             .allow(null),
+        codigo_postal: Joi.string()
+            .max(LIMITES.CP_MAX)
+            .pattern(/^[0-9]{5}$/)
+            .allow(null, '')
+            .messages({
+                'string.pattern.base': 'Código postal debe ser de 5 dígitos'
+            }),
+        pais_id: commonSchemas.id
+            .allow(null),
+
+        // ====================================================================
+        // Campos existentes
+        // ====================================================================
         notas_especiales: Joi.string()
             .max(LIMITES.NOTAS_MAX)
             .trim()
@@ -229,6 +377,23 @@ const listar = {
         marketing_permitido: Joi.string()
             .valid('true', 'false')
             .optional(),
+        // Filtro por tipo (Ene 2026)
+        tipo: Joi.string()
+            .valid('persona', 'empresa')
+            .optional()
+            .messages({
+                'any.only': 'Tipo debe ser "persona" o "empresa"'
+            }),
+        // Filtro por etiquetas (Ene 2026 - Fase 2)
+        etiqueta_ids: Joi.alternatives()
+            .try(
+                Joi.string().pattern(/^[\d,\s]+$/),  // String con IDs separados por coma
+                Joi.array().items(Joi.number().integer().positive())  // Array de números
+            )
+            .optional()
+            .messages({
+                'alternatives.match': 'etiqueta_ids debe ser una lista de IDs separados por coma o un array de números'
+            }),
         busqueda: Joi.string()
             .min(2)
             .max(100)
@@ -244,7 +409,7 @@ const listar = {
             .max(100)
             .default(20),
         ordenPor: Joi.string()
-            .valid('nombre', 'email', 'telefono', 'creado_en', 'actualizado_en')
+            .valid('nombre', 'email', 'telefono', 'tipo', 'creado_en', 'actualizado_en')
             .default('nombre'),
         orden: Joi.string()
             .valid('ASC', 'DESC', 'asc', 'desc')

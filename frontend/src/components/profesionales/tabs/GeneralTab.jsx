@@ -303,7 +303,13 @@ function GeneralTab({ profesional }) {
           <EditableField
             label="Licencias profesionales"
             value={profesional.licencias_profesionales}
-            renderValue={(val) => typeof val === 'object' ? JSON.stringify(val) : val}
+            renderValue={(val) => {
+              // Fix: Si es objeto vacío o null, retornar null para mostrar emptyText
+              if (!val || (typeof val === 'object' && Object.keys(val).length === 0)) {
+                return null;
+              }
+              return typeof val === 'object' ? JSON.stringify(val) : val;
+            }}
             emptyText="Sin licencias"
             onEdit={() => setEditModal('profesional')}
           />

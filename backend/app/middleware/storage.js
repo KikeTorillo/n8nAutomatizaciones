@@ -265,6 +265,30 @@ function handleMulterUpload(uploadFn) {
 }
 
 // ============================================
+// FACTORY PARA CAMPOS PERSONALIZADOS
+// ============================================
+
+/**
+ * Crea un middleware de upload para un campo específico
+ * Útil cuando el nombre del campo no es 'file'
+ *
+ * @param {string} fieldName - Nombre del campo del archivo
+ * @returns {Function} Middleware de Express
+ */
+function createUploadSingle(fieldName) {
+  const uploadFn = multer({
+    storage,
+    fileFilter,
+    limits: {
+      fileSize: SIZE_LIMITS.pdf, // 25MB para documentos
+      files: 1
+    }
+  }).single(fieldName);
+
+  return handleMulterUpload(uploadFn);
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
@@ -272,6 +296,9 @@ module.exports = {
   // Funciones de upload con manejo de errores
   uploadSingle: handleMulterUpload(uploadSingle),
   uploadMultiple: handleMulterUpload(uploadMultiple),
+
+  // Factory para campos personalizados
+  createUploadSingle,
 
   // Validación de límites
   checkStorageLimit,

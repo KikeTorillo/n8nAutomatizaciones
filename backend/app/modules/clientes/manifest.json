@@ -1,8 +1,8 @@
 {
   "name": "clientes",
   "display_name": "Gestión de Clientes",
-  "version": "1.0.0",
-  "description": "Módulo central de clientes: CRUD, búsqueda fuzzy, vista 360°",
+  "version": "1.2.0",
+  "description": "Módulo central de clientes: CRUD, búsqueda fuzzy, vista 360°, etiquetas, oportunidades B2B",
   "depends": ["core"],
   "dependencies_hard": {},
   "dependencies_optional": {},
@@ -14,7 +14,8 @@
     "notes": "Módulo base del sistema, incluido en todos los planes"
   },
   "routes": {
-    "clientes": "/api/v1/clientes"
+    "clientes": "/api/v1/clientes",
+    "oportunidades": "/api/v1/oportunidades"
   },
   "resources": {
     "clientes": {
@@ -24,14 +25,24 @@
     }
   },
   "tables": [
-    "clientes"
+    "clientes",
+    "etiquetas_clientes",
+    "cliente_etiquetas",
+    "cliente_actividades",
+    "cliente_documentos",
+    "etapas_oportunidad",
+    "oportunidades"
   ],
   "features": [
     "CRUD completo de clientes",
     "Búsqueda fuzzy por teléfono y nombre (IA)",
     "Vista 360° con estadísticas",
     "Integración Telegram/WhatsApp",
-    "Marketing permitido configurable"
+    "Marketing permitido configurable",
+    "Sistema de etiquetas con colores (Ene 2026)",
+    "Timeline de actividad (Ene 2026)",
+    "Documentos con upload MinIO (Ene 2026)",
+    "Pipeline de oportunidades B2B (Ene 2026)"
   ],
   "priority": 0,
   "required": true,

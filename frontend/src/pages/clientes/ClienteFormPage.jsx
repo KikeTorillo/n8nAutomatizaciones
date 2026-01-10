@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ClienteForm from '@/components/clientes/ClienteForm';
 import { useCliente, useCrearCliente, useActualizarCliente } from '@/hooks/useClientes';
+import { useAsignarEtiquetasCliente } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
 
 /**
@@ -21,16 +21,29 @@ function ClienteFormPage() {
   // Mutations
   const crearMutation = useCrearCliente();
   const actualizarMutation = useActualizarCliente();
+  const asignarEtiquetas = useAsignarEtiquetasCliente();
 
-  const isLoading = crearMutation.isPending || actualizarMutation.isPending;
+  const isLoading = crearMutation.isPending || actualizarMutation.isPending || asignarEtiquetas.isPending;
 
-  const handleSubmit = (data) => {
+  const handleSubmit = async (data, etiquetaIds = []) => {
     if (isEditing) {
       // Actualizar cliente existente
       actualizarMutation.mutate(
         { id, data },
         {
-          onSuccess: () => {
+          onSuccess: async () => {
+            // Asignar etiquetas después de actualizar
+            if (etiquetaIds.length >= 0) {
+              try {
+                await asignarEtiquetas.mutateAsync({
+                  clienteId: parseInt(id),
+                  etiquetaIds,
+                });
+              } catch (error) {
+                console.error('Error al asignar etiquetas:', error);
+                // No bloquear la actualización por error de etiquetas
+              }
+            }
             toast.success('Cliente actualizado exitosamente');
             navigate(`/clientes/${id}`);
           },
@@ -46,7 +59,19 @@ function ClienteFormPage() {
     } else {
       // Crear nuevo cliente
       crearMutation.mutate(data, {
-        onSuccess: (nuevoCliente) => {
+        onSuccess: async (nuevoCliente) => {
+          // Asignar etiquetas después de crear
+          if (etiquetaIds.length > 0) {
+            try {
+              await asignarEtiquetas.mutateAsync({
+                clienteId: nuevoCliente.id,
+                etiquetaIds,
+              });
+            } catch (error) {
+              console.error('Error al asignar etiquetas:', error);
+              // No bloquear la creación por error de etiquetas
+            }
+          }
           toast.success('Cliente creado exitosamente');
           navigate(`/clientes/${nuevoCliente.id}`);
         },

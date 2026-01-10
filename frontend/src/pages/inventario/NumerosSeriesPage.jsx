@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Search, X, RefreshCw, Package, AlertTriangle, Clock,
-  CheckCircle, XCircle, Eye, History, BarChart3
+  CheckCircle, XCircle, Eye, History, BarChart3, FileSpreadsheet
 } from 'lucide-react';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
@@ -136,11 +136,62 @@ function NumerosSeriesPage() {
     return ESTADOS_NUMERO_SERIE[estado]?.label || estado;
   };
 
+  // Exportar CSV
+  const handleExportarCSV = () => {
+    if (!numerosSerie || numerosSerie.length === 0) {
+      showToast('No hay datos para exportar', 'warning');
+      return;
+    }
+
+    try {
+      const headers = ['Número Serie', 'Producto', 'SKU', 'Lote', 'Estado', 'Vencimiento', 'Sucursal', 'Costo'];
+
+      const rows = numerosSerie.map(ns => [
+        ns.numero_serie || '',
+        ns.producto_nombre || '',
+        ns.producto_sku || '',
+        ns.lote || '',
+        getEstadoLabel(ns.estado),
+        ns.fecha_vencimiento ? format(new Date(ns.fecha_vencimiento), 'dd/MM/yyyy') : '',
+        ns.sucursal_nombre || '',
+        parseFloat(ns.costo || 0).toFixed(2)
+      ]);
+
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `numeros_serie_${format(new Date(), 'yyyyMMdd')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      showToast('Números de serie exportados exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      showToast('Error al exportar CSV', 'error');
+    }
+  };
+
   return (
     <InventarioPageLayout
       icon={Package}
       title="Números de Serie / Lotes"
       subtitle={`${pagination.total} registros en total`}
+      actions={
+        <Button
+          variant="secondary"
+          onClick={handleExportarCSV}
+          disabled={numerosSerie.length === 0}
+          icon={FileSpreadsheet}
+        >
+          Exportar CSV
+        </Button>
+      }
     >
         {/* Estadisticas */}
         {estadisticas && (
@@ -323,6 +374,7 @@ function NumerosSeriesPage() {
                               onClick={() => handleVerDetalle(ns.id)}
                               className="p-1.5 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
                               title="Ver detalle"
+                              aria-label="Ver detalle del número de serie"
                             >
                               <Eye size={16} />
                             </button>
@@ -330,6 +382,7 @@ function NumerosSeriesPage() {
                               onClick={() => handleVerHistorial(ns.id)}
                               className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
                               title="Ver historial"
+                              aria-label="Ver historial de movimientos"
                             >
                               <History size={16} />
                             </button>
@@ -338,6 +391,7 @@ function NumerosSeriesPage() {
                                 onClick={() => handleAbrirDefectuoso(ns.id)}
                                 className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
                                 title="Marcar defectuoso"
+                                aria-label="Marcar como defectuoso"
                               >
                                 <XCircle size={16} />
                               </button>

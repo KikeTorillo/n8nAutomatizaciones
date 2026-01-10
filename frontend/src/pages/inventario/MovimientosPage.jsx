@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search, ArrowLeftRight } from 'lucide-react';
+import { RefreshCw, Filter, X, FileBarChart, TrendingUp, TrendingDown, Search, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
@@ -88,11 +88,64 @@ function MovimientosPage() {
     return labels[tipo] || tipo;
   };
 
+  // Exportar CSV
+  const handleExportarCSV = () => {
+    if (!movimientos || movimientos.length === 0) {
+      showToast('No hay datos para exportar', 'warning');
+      return;
+    }
+
+    try {
+      const headers = ['Fecha', 'Hora', 'Tipo', 'Producto', 'SKU', 'Cantidad', 'Stock Después', 'Costo Unit.', 'Referencia', 'Motivo'];
+
+      const rows = movimientos.map(m => [
+        format(new Date(m.creado_en), 'dd/MM/yyyy'),
+        format(new Date(m.creado_en), 'HH:mm'),
+        getTipoMovimientoLabel(m.tipo_movimiento),
+        m.producto_nombre || '',
+        m.producto_sku || '',
+        m.cantidad || 0,
+        m.stock_despues || 0,
+        parseFloat(m.costo_unitario || 0).toFixed(2),
+        m.referencia || '',
+        m.motivo || ''
+      ]);
+
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `kardex_${format(new Date(), 'yyyyMMdd')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      showToast('Kardex exportado exitosamente', 'success');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      showToast('Error al exportar CSV', 'error');
+    }
+  };
+
   return (
     <InventarioPageLayout
       icon={ArrowLeftRight}
       title="Kardex"
       subtitle={`${total} movimiento${total !== 1 ? 's' : ''} registrado${total !== 1 ? 's' : ''}`}
+      actions={
+        <Button
+          variant="secondary"
+          onClick={handleExportarCSV}
+          disabled={movimientos.length === 0}
+          icon={FileSpreadsheet}
+        >
+          Exportar CSV
+        </Button>
+      }
     >
 
         {/* Filtros */}

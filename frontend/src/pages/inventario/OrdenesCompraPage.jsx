@@ -20,7 +20,9 @@ import {
   FileText,
   Clock,
   CheckCircle,
+  FileSpreadsheet,
 } from 'lucide-react';
+import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
@@ -329,6 +331,47 @@ export default function OrdenesCompraPage() {
     return estados[estado] || estado;
   };
 
+  // Exportar CSV
+  const handleExportarCSV = () => {
+    if (!ordenes || ordenes.length === 0) {
+      showError('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const headers = ['Folio', 'Fecha', 'Proveedor', 'Items', 'Total', 'Estado', 'Estado Pago', 'Notas'];
+
+      const rows = ordenes.map(oc => [
+        oc.folio || '',
+        oc.fecha ? format(new Date(oc.fecha), 'dd/MM/yyyy') : '',
+        oc.proveedor_nombre || '',
+        oc.total_items || 0,
+        parseFloat(oc.total || 0).toFixed(2),
+        formatearEstado(oc.estado),
+        formatearEstadoPago(oc.estado_pago),
+        oc.notas || ''
+      ]);
+
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `ordenes_compra_${format(new Date(), 'yyyyMMdd')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      showSuccess('Órdenes de compra exportadas exitosamente');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      showError('Error al exportar CSV');
+    }
+  };
+
   return (
     <InventarioPageLayout
       icon={ShoppingCart}
@@ -336,6 +379,16 @@ export default function OrdenesCompraPage() {
       subtitle={`${total} orden${total !== 1 ? 'es' : ''} en total`}
       actions={
         <>
+          <Button
+            variant="secondary"
+            onClick={handleExportarCSV}
+            disabled={ordenes.length === 0}
+            icon={FileSpreadsheet}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Exportar CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </Button>
           <Button
             variant={mostrarFiltros ? 'secondary' : 'outline'}
             onClick={() => setMostrarFiltros(!mostrarFiltros)}
@@ -596,11 +649,8 @@ export default function OrdenesCompraPage() {
             icon={ShoppingCart}
             title="No se encontraron órdenes de compra"
             description="Crea una nueva orden para comenzar"
-            action={
-              <Button variant="primary" onClick={handleNuevaOrden} icon={Plus}>
-                Nueva Orden
-              </Button>
-            }
+            actionLabel="Nueva Orden"
+            onAction={handleNuevaOrden}
           />
         ) : (
           <>
@@ -693,6 +743,7 @@ export default function OrdenesCompraPage() {
                             onClick={() => handleVerDetalle(orden.id)}
                             className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
                             title="Ver detalle"
+                            aria-label="Ver detalle de la orden"
                           >
                             <Eye className="h-4 w-4" />
                           </button>
@@ -703,6 +754,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleEditar(orden)}
                               className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                               title="Editar"
+                              aria-label="Editar orden"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
@@ -714,6 +766,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleAbrirModalEnviar(orden)}
                               className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
                               title="Enviar al proveedor"
+                              aria-label="Enviar orden al proveedor"
                             >
                               <Send className="h-4 w-4" />
                             </button>
@@ -725,6 +778,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleRecibirMercancia(orden)}
                               className="p-1.5 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
                               title="Recibir mercancía"
+                              aria-label="Recibir mercancía"
                             >
                               <Package className="h-4 w-4" />
                             </button>
@@ -738,6 +792,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleRegistrarPago(orden)}
                               className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded"
                               title="Registrar pago"
+                              aria-label="Registrar pago"
                             >
                               <DollarSign className="h-4 w-4" />
                             </button>
@@ -749,6 +804,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleAbrirModalCancelar(orden)}
                               className="p-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
                               title="Cancelar orden"
+                              aria-label="Cancelar orden"
                             >
                               <XCircle className="h-4 w-4" />
                             </button>
@@ -760,6 +816,7 @@ export default function OrdenesCompraPage() {
                               onClick={() => handleAbrirModalEliminar(orden)}
                               className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
                               title="Eliminar"
+                              aria-label="Eliminar orden"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

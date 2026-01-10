@@ -344,7 +344,7 @@ function AusenciasTab({ profesional }) {
                 </Button>
               </Link>
             )}
-            <Link to={`/bloqueos?profesional_id=${profesionalId}`} className="block">
+            <Link to={`/ausencias?tab=otros-bloqueos&profesional_id=${profesionalId}`} className="block">
               <Button variant="outline" size="sm" className="w-full justify-start">
                 <Calendar className="h-4 w-4 mr-2" />
                 Ver Bloqueos
@@ -384,7 +384,7 @@ function AusenciasTab({ profesional }) {
 
         {bloqueos.length > 15 && (
           <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 text-center">
-            <Link to="/bloqueos" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <Link to="/ausencias?tab=otros-bloqueos" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
               Ver todos los bloqueos
             </Link>
           </div>

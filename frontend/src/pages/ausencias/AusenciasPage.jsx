@@ -3,8 +3,9 @@
  * Unifica Vacaciones + Incapacidades en una sola experiencia
  * Enero 2026
  */
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { format } from 'date-fns';
 import {
   User,
   Users,
@@ -14,10 +15,20 @@ import {
   Settings,
   CalendarOff,
   Ban,
+  ChevronDown,
+  Check,
+  ClipboardList,
+  FileSpreadsheet,
 } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
+import Button from '@/components/ui/Button';
 import useAuthStore from '@/store/authStore';
-import { useSolicitudesPendientesAusencias } from '@/hooks/useAusencias';
+import { useToast } from '@/hooks/useToast';
+import {
+  useSolicitudesPendientesAusencias,
+  useMisAusencias,
+} from '@/hooks/useAusencias';
+import { useIncapacidades } from '@/hooks/useIncapacidades';
 
 // Tabs - Lazy loading para mejor performance
 import MisAusenciasTab from './tabs/MisAusenciasTab';
@@ -29,7 +40,7 @@ import CalendarioAusenciasTab from './tabs/CalendarioAusenciasTab';
 import ConfiguracionAusenciasTab from './tabs/ConfiguracionAusenciasTab';
 
 /**
- * Tab item component
+ * Tab item component - Solo visible en desktop (md+)
  */
 function TabItem({ icon: Icon, label, isActive, onClick, count, disabled }) {
   if (disabled) return null;
@@ -46,7 +57,7 @@ function TabItem({ icon: Icon, label, isActive, onClick, count, disabled }) {
       `}
     >
       <Icon className="w-4 h-4" />
-      <span className="hidden sm:inline">{label}</span>
+      <span>{label}</span>
       {count !== undefined && count > 0 && (
         <span
           className={`
@@ -65,6 +76,201 @@ function TabItem({ icon: Icon, label, isActive, onClick, count, disabled }) {
 }
 
 /**
+ * TabDropdown - Dropdown para agrupar tabs en desktop
+ */
+function TabDropdown({ icon: Icon, label, items, activeTab, onTabChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Verificar si algún item del grupo está activo
+  const hasActiveItem = items.some((item) => item.id === activeTab);
+  const activeItem = items.find((item) => item.id === activeTab);
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setIsOpen(false);
+    }
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
+  const handleItemClick = (tabId) => {
+    onTabChange(tabId);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={`
+          flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors
+          ${hasActiveItem
+            ? 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+            : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800'
+          }
+        `}
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
+        {activeItem ? (
+          <>
+            {(() => {
+              const ActiveIcon = activeItem.icon;
+              return <ActiveIcon className="w-4 h-4" />;
+            })()}
+            <span>{activeItem.label}</span>
+          </>
+        ) : (
+          <>
+            <Icon className="w-4 h-4" />
+            <span>{label}</span>
+          </>
+        )}
+        <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 mt-1 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+          role="menu"
+        >
+          {items.map((item) => {
+            const ItemIcon = item.icon;
+            const isItemActive = activeTab === item.id;
+            return (
+              <button
+                key={item.id}
+                onClick={() => handleItemClick(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-2 text-sm text-left transition-colors ${
+                  isItemActive
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                role="menuitem"
+              >
+                <ItemIcon className={`h-4 w-4 ${isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                <span className="flex-1">{item.label}</span>
+                {isItemActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Mobile selector - Dropdown para navegación en móvil
+ */
+function MobileAusenciasSelector({ tabs, activeTab, onTabChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  const activeTabData = tabs.find((t) => t.id === activeTab) || tabs[0];
+  const ActiveIcon = activeTabData?.icon || User;
+
+  // Cerrar al hacer click fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Cerrar con Escape
+  useEffect(() => {
+    function handleKeyDown(event) {
+      if (event.key === 'Escape') setIsOpen(false);
+    }
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [isOpen]);
+
+  const handleItemClick = (tabId) => {
+    onTabChange(tabId);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100"
+        aria-expanded={isOpen}
+        aria-haspopup="true"
+      >
+        <div className="flex items-center gap-2">
+          <ActiveIcon className="h-4 w-4 text-primary-600 dark:text-primary-400" />
+          <span>{activeTabData?.label}</span>
+          {activeTabData?.count > 0 && (
+            <span className="px-2 py-0.5 text-xs rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+              {activeTabData.count}
+            </span>
+          )}
+        </div>
+        <ChevronDown className={`h-5 w-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
+
+      {isOpen && (
+        <div
+          className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50"
+          role="menu"
+        >
+          {tabs.map((tab) => {
+            const ItemIcon = tab.icon;
+            const isItemActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleItemClick(tab.id)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left transition-colors ${
+                  isItemActive
+                    ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
+                }`}
+                role="menuitem"
+              >
+                <ItemIcon className={`h-4 w-4 ${isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400'}`} />
+                <span className="flex-1">{tab.label}</span>
+                {tab.count > 0 && (
+                  <span className="px-2 py-0.5 text-xs rounded-full font-semibold bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400">
+                    {tab.count}
+                  </span>
+                )}
+                {isItemActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Página de Ausencias unificada
  * Tabs dinámicos según el rol del usuario:
  * - Empleado: Mis Ausencias, Calendario
@@ -74,6 +280,7 @@ function TabItem({ icon: Icon, label, isActive, onClick, count, disabled }) {
 function AusenciasPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
+  const toast = useToast();
 
   const { user } = useAuthStore();
   const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
@@ -82,6 +289,10 @@ function AusenciasPage() {
   const { data: pendientes, esSupervisor, isLoading: isLoadingSupervisor } =
     useSolicitudesPendientesAusencias();
   const cantidadPendientes = pendientes?.length || 0;
+
+  // Hooks para datos exportables (cargan solo cuando se necesitan para exportar)
+  const { data: misAusencias } = useMisAusencias();
+  const { data: incapacidadesData } = useIncapacidades({ limite: 100 });
 
   // Definir tabs disponibles según rol
   const tabs = useMemo(() => {
@@ -201,49 +412,209 @@ function AusenciasPage() {
     }
   };
 
+  // Verificar si el tab actual es exportable
+  const tabsExportables = ['mis-ausencias', 'mi-equipo', 'incapacidades'];
+  const puedeExportar = tabsExportables.includes(activeTab);
+
+  // Handler para exportar CSV según tab activo
+  const handleExportarAusencias = () => {
+    try {
+      let headers = [];
+      let rows = [];
+      let filename = '';
+
+      switch (activeTab) {
+        case 'mis-ausencias': {
+          if (!misAusencias || misAusencias.length === 0) {
+            toast.error('No hay ausencias para exportar');
+            return;
+          }
+          headers = ['Código', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Estado', 'Motivo'];
+          rows = misAusencias.map((a) => [
+            a.codigo || '',
+            a.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
+            a.fechaInicio ? format(new Date(a.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            a.fechaFin ? format(new Date(a.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            a.dias || 0,
+            a.estadoConfig?.label || a.estado || '',
+            a.motivo || '',
+          ]);
+          filename = `mis_ausencias_${format(new Date(), 'yyyyMMdd')}.csv`;
+          break;
+        }
+
+        case 'mi-equipo': {
+          if (!pendientes || pendientes.length === 0) {
+            toast.error('No hay solicitudes del equipo para exportar');
+            return;
+          }
+          headers = ['Profesional', 'Puesto', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Estado', 'Motivo'];
+          rows = pendientes.map((s) => [
+            s.profesionalNombre || '',
+            s.puestoNombre || '',
+            s.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
+            s.fechaInicio ? format(new Date(s.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            s.fechaFin ? format(new Date(s.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            s.dias || 0,
+            s.estado || '',
+            s.motivo || '',
+          ]);
+          filename = `equipo_ausencias_${format(new Date(), 'yyyyMMdd')}.csv`;
+          break;
+        }
+
+        case 'incapacidades': {
+          const incapacidades = incapacidadesData?.data || [];
+          if (incapacidades.length === 0) {
+            toast.error('No hay incapacidades para exportar');
+            return;
+          }
+          const tiposLabel = {
+            enfermedad_general: 'Enfermedad General',
+            maternidad: 'Maternidad',
+            riesgo_trabajo: 'Riesgo de Trabajo',
+          };
+          const estadosLabel = {
+            activa: 'Activa',
+            finalizada: 'Finalizada',
+            cancelada: 'Cancelada',
+          };
+          headers = ['Código', 'Profesional', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Folio IMSS', 'Estado'];
+          rows = incapacidades.map((i) => [
+            i.codigo || '',
+            i.profesional_nombre || '',
+            tiposLabel[i.tipo_incapacidad] || i.tipo_incapacidad || '',
+            i.fecha_inicio ? format(new Date(i.fecha_inicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            i.fecha_fin ? format(new Date(i.fecha_fin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+            i.dias_autorizados || 0,
+            i.folio_imss || '',
+            estadosLabel[i.estado] || i.estado || '',
+          ]);
+          filename = `incapacidades_${format(new Date(), 'yyyyMMdd')}.csv`;
+          break;
+        }
+
+        default:
+          toast.error('Este tab no soporta exportación');
+          return;
+      }
+
+      // BOM para UTF-8 (Excel)
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      toast.success('Exportación completada exitosamente');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      toast.error('Error al exportar CSV');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          {/* Breadcrumb */}
-          <div className="mb-4">
-            <BackButton to="/home" label="Volver al Inicio" />
+      {/* Header fijo del módulo */}
+      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Ausencias</h1>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              Gestión de vacaciones e incapacidades
+            </p>
           </div>
-
-          {/* Título */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="p-2 bg-primary-100 dark:bg-primary-900/30 rounded-lg">
-              <CalendarOff className="w-6 h-6 text-primary-600 dark:text-primary-400" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                Ausencias
-              </h1>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Gestión de vacaciones e incapacidades
-              </p>
-            </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex items-center gap-1 sm:gap-2 overflow-x-auto pb-2 -mb-2">
-            {tabs.map((tab) => (
-              <TabItem
-                key={tab.id}
-                icon={tab.icon}
-                label={tab.label}
-                isActive={activeTab === tab.id}
-                onClick={() => handleTabChange(tab.id)}
-                count={tab.count}
-              />
-            ))}
-          </div>
+          {puedeExportar && (
+            <Button
+              variant="secondary"
+              onClick={handleExportarAusencias}
+              aria-label="Exportar datos a CSV"
+              className="w-full sm:w-auto"
+            >
+              <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+              <span className="hidden sm:inline">Exportar CSV</span>
+              <span className="sm:hidden">Exportar</span>
+            </Button>
+          )}
         </div>
       </div>
 
+      {/* NavTabs - Barra separada como en otros módulos */}
+      <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        {/* Desktop: Tabs agrupados */}
+        <div className="hidden md:flex items-center gap-1 px-4 py-2">
+          {/* Mis Ausencias - siempre visible */}
+          <TabItem
+            icon={User}
+            label="Mis Ausencias"
+            isActive={activeTab === 'mis-ausencias'}
+            onClick={() => handleTabChange('mis-ausencias')}
+          />
+
+          {/* Mi Equipo - supervisor/admin */}
+          {(esSupervisor || esAdmin) && (
+            <TabItem
+              icon={Users}
+              label="Mi Equipo"
+              isActive={activeTab === 'mi-equipo'}
+              onClick={() => handleTabChange('mi-equipo')}
+              count={cantidadPendientes}
+            />
+          )}
+
+          {/* Tipos - dropdown para admin (Vacaciones, Incapacidades, Otros Bloqueos) */}
+          {esAdmin && (
+            <TabDropdown
+              icon={ClipboardList}
+              label="Tipos"
+              items={[
+                { id: 'vacaciones', label: 'Vacaciones', icon: Palmtree },
+                { id: 'incapacidades', label: 'Incapacidades', icon: HeartPulse },
+                { id: 'otros-bloqueos', label: 'Otros Bloqueos', icon: Ban },
+              ]}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+            />
+          )}
+
+          {/* Calendario - siempre visible */}
+          <TabItem
+            icon={CalendarDays}
+            label="Calendario"
+            isActive={activeTab === 'calendario'}
+            onClick={() => handleTabChange('calendario')}
+          />
+
+          {/* Configuración - solo admin */}
+          {esAdmin && (
+            <TabItem
+              icon={Settings}
+              label="Configuración"
+              isActive={activeTab === 'configuracion'}
+              onClick={() => handleTabChange('configuracion')}
+            />
+          )}
+        </div>
+        {/* Mobile: Dropdown con todos los tabs */}
+        <div className="md:hidden px-4 py-2">
+          <MobileAusenciasSelector
+            tabs={tabs}
+            activeTab={activeTab}
+            onTabChange={handleTabChange}
+          />
+        </div>
+      </nav>
+
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {renderTabContent()}
       </div>
     </div>

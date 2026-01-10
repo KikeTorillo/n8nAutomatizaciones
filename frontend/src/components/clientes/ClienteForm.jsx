@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Save, Camera, X, Loader2, User, Tag } from 'lucide-react';
+import { Save, Camera, X, Loader2, User, Tag, Building2, UserCircle, MapPin, Tags, MessageCircle, Send } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -10,7 +10,10 @@ import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { useToast } from '@/hooks/useToast';
+import { useEstadosMexico, usePaises } from '@/hooks/useUbicaciones';
 import { listasPreciosApi } from '@/services/api/endpoints';
+import EtiquetasSelector from './EtiquetasSelector';
+import { useAsignarEtiquetasCliente } from '@/hooks/useEtiquetasClientes';
 
 /**
  * Formulario reutilizable para crear/editar clientes
@@ -18,13 +21,16 @@ import { listasPreciosApi } from '@/services/api/endpoints';
 function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   const toast = useToast();
   const uploadMutation = useUploadArchivo();
+  const asignarEtiquetas = useAsignarEtiquetasCliente();
+
+  // Estado para etiquetas (separado del formData porque se guarda aparte)
+  const [etiquetaIds, setEtiquetaIds] = useState([]);
 
   const [formData, setFormData] = useState({
     nombre_completo: '',
     telefono: '',
     email: '',
     fecha_nacimiento: '',
-    direccion: '',
     notas_medicas: '',
     marketing_permitido: true,
     activo: true,
@@ -34,6 +40,20 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       servicios_favoritos: [],
     },
     foto_url: '',
+    // Nuevos campos (Ene 2026)
+    tipo: 'persona',  // 'persona' o 'empresa'
+    rfc: '',
+    razon_social: '',
+    // Dirección estructurada
+    calle: '',
+    colonia: '',
+    ciudad: '',
+    estado_id: '',
+    codigo_postal: '',
+    pais_id: '1',  // México por defecto
+    // Canales digitales (Ene 2026 - Fase 3)
+    telegram_chat_id: '',
+    whatsapp_phone: '',
   });
 
   const [errors, setErrors] = useState({});
@@ -54,6 +74,10 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   });
   const listasPrecios = listasPreciosData?.data?.data || [];
 
+  // Cargar estados de México y países (Ene 2026)
+  const { data: estados = [] } = useEstadosMexico();
+  const { data: paises = [] } = usePaises();
+
   // Si hay un cliente, cargar sus datos
   // ⚠️ IMPORTANTE: Mapear campos del backend a frontend
   // Backend devuelve: nombre, alergias, profesional_preferido_id
@@ -67,7 +91,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         fecha_nacimiento: cliente.fecha_nacimiento
           ? cliente.fecha_nacimiento.split('T')[0]
           : '',
-        direccion: cliente.direccion || '',
         notas_medicas: cliente.alergias || '', // Backend devuelve "alergias"
         marketing_permitido: cliente.marketing_permitido ?? true,
         activo: cliente.activo ?? true,
@@ -77,8 +100,27 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           servicios_favoritos: [], // Este campo NO existe en backend
         },
         foto_url: cliente.foto_url || '',
+        // Nuevos campos (Ene 2026)
+        tipo: cliente.tipo || 'persona',
+        rfc: cliente.rfc || '',
+        razon_social: cliente.razon_social || '',
+        // Dirección estructurada
+        calle: cliente.calle || '',
+        colonia: cliente.colonia || '',
+        ciudad: cliente.ciudad || '',
+        estado_id: cliente.estado_id?.toString() || '',
+        codigo_postal: cliente.codigo_postal || '',
+        pais_id: cliente.pais_id?.toString() || '1',
+        // Canales digitales (Ene 2026 - Fase 3)
+        telegram_chat_id: cliente.telegram_chat_id || '',
+        whatsapp_phone: cliente.whatsapp_phone || '',
       });
       setFotoPreview(cliente.foto_url || null);
+
+      // Cargar etiquetas del cliente
+      if (cliente.etiquetas && Array.isArray(cliente.etiquetas)) {
+        setEtiquetaIds(cliente.etiquetas.map((e) => e.id));
+      }
     }
   }, [cliente]);
 
@@ -159,6 +201,24 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
       newErrors.email = 'El email no es válido';
     }
 
+    // RFC (solo para empresas, opcional pero si se proporciona debe ser válido)
+    if (formData.tipo === 'empresa' && formData.rfc) {
+      const rfcPattern = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/i;
+      if (!rfcPattern.test(formData.rfc)) {
+        newErrors.rfc = 'El RFC no es válido (formato: XXXX000000XXX)';
+      }
+    }
+
+    // Código postal (opcional, pero si se proporciona debe ser de 5 dígitos)
+    if (formData.codigo_postal && !/^[0-9]{5}$/.test(formData.codigo_postal)) {
+      newErrors.codigo_postal = 'El código postal debe ser de 5 dígitos';
+    }
+
+    // WhatsApp (opcional, pero si se proporciona debe tener formato internacional)
+    if (formData.whatsapp_phone && !/^\+\d{10,15}$/.test(formData.whatsapp_phone)) {
+      newErrors.whatsapp_phone = 'Formato internacional: +521XXXXXXXXXX';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -190,7 +250,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         nombre: formData.nombre_completo, // Backend espera "nombre" no "nombre_completo"
         telefono: formData.telefono,
         email: formData.email?.trim() || undefined,
-        direccion: formData.direccion?.trim() || undefined,
         fecha_nacimiento: formData.fecha_nacimiento?.trim() || undefined,
         alergias: formData.notas_medicas?.trim() || undefined, // Backend espera "alergias"
         marketing_permitido: formData.marketing_permitido,
@@ -203,10 +262,29 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           : undefined,
         foto_url: fotoUrlFinal || undefined,
         // Nota: servicios_favoritos NO existe en backend, se omite
+
+        // Nuevos campos (Ene 2026)
+        tipo: formData.tipo,
+        // RFC y razón social solo para empresas
+        rfc: formData.tipo === 'empresa' ? (formData.rfc?.trim().toUpperCase() || undefined) : undefined,
+        razon_social: formData.tipo === 'empresa' ? (formData.razon_social?.trim() || undefined) : undefined,
+        // Dirección estructurada
+        calle: formData.calle?.trim() || undefined,
+        colonia: formData.colonia?.trim() || undefined,
+        ciudad: formData.ciudad?.trim() || undefined,
+        estado_id: formData.estado_id ? parseInt(formData.estado_id) : undefined,
+        codigo_postal: formData.codigo_postal?.trim() || undefined,
+        pais_id: formData.pais_id ? parseInt(formData.pais_id) : 1,
+        // Canales digitales (Ene 2026 - Fase 3)
+        telegram_chat_id: formData.telegram_chat_id?.trim() || undefined,
+        whatsapp_phone: formData.whatsapp_phone?.trim() || undefined,
       };
 
       setFotoFile(null); // Limpiar archivo después de subir
-      onSubmit(dataToSubmit);
+
+      // Pasar etiquetaIds junto con los datos del cliente
+      // El componente padre manejará la asignación de etiquetas después de crear/actualizar
+      onSubmit(dataToSubmit, etiquetaIds);
     } catch (error) {
       toast.error('No se pudo subir la foto');
     }
@@ -276,6 +354,135 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         </div>
       </div>
 
+      {/* Tipo de Cliente (Ene 2026) */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+          Tipo de Cliente
+        </h3>
+
+        <div className="flex flex-col sm:flex-row gap-4">
+          {/* Persona */}
+          <label
+            className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+              formData.tipo === 'persona'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+            }`}
+          >
+            <input
+              type="radio"
+              name="tipo"
+              value="persona"
+              checked={formData.tipo === 'persona'}
+              onChange={handleChange}
+              className="sr-only"
+            />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              formData.tipo === 'persona'
+                ? 'bg-primary-100 dark:bg-primary-800'
+                : 'bg-gray-100 dark:bg-gray-700'
+            }`}>
+              <UserCircle className={`w-5 h-5 ${
+                formData.tipo === 'persona'
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`} />
+            </div>
+            <div>
+              <p className={`font-medium ${
+                formData.tipo === 'persona'
+                  ? 'text-primary-700 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}>
+                Persona Física
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Cliente individual
+              </p>
+            </div>
+          </label>
+
+          {/* Empresa */}
+          <label
+            className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+              formData.tipo === 'empresa'
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+            }`}
+          >
+            <input
+              type="radio"
+              name="tipo"
+              value="empresa"
+              checked={formData.tipo === 'empresa'}
+              onChange={handleChange}
+              className="sr-only"
+            />
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+              formData.tipo === 'empresa'
+                ? 'bg-primary-100 dark:bg-primary-800'
+                : 'bg-gray-100 dark:bg-gray-700'
+            }`}>
+              <Building2 className={`w-5 h-5 ${
+                formData.tipo === 'empresa'
+                  ? 'text-primary-600 dark:text-primary-400'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`} />
+            </div>
+            <div>
+              <p className={`font-medium ${
+                formData.tipo === 'empresa'
+                  ? 'text-primary-700 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}>
+                Empresa
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Cliente B2B con facturación
+              </p>
+            </div>
+          </label>
+        </div>
+
+        {/* Campos condicionales para empresa */}
+        {formData.tipo === 'empresa' && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                RFC
+              </label>
+              <Input
+                name="rfc"
+                value={formData.rfc}
+                onChange={handleChange}
+                placeholder="XAXX010101000"
+                maxLength={13}
+                error={errors.rfc}
+                className="uppercase"
+              />
+              {errors.rfc && (
+                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.rfc}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                RFC mexicano para facturación
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Razón Social
+              </label>
+              <Input
+                name="razon_social"
+                value={formData.razon_social}
+                onChange={handleChange}
+                placeholder="Empresa S.A. de C.V."
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
       {/* Información Básica */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -285,13 +492,13 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Nombre Completo *
+              {formData.tipo === 'empresa' ? 'Nombre Comercial *' : 'Nombre Completo *'}
             </label>
             <Input
               name="nombre_completo"
               value={formData.nombre_completo}
               onChange={handleChange}
-              placeholder="Juan Pérez García"
+              placeholder={formData.tipo === 'empresa' ? 'Mi Empresa' : 'Juan Pérez García'}
               error={errors.nombre_completo}
             />
             {errors.nombre_completo && (
@@ -334,27 +541,112 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             )}
           </div>
 
-          <div>
+          {/* Fecha de nacimiento solo para personas físicas */}
+          {formData.tipo === 'persona' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Fecha de Nacimiento
+              </label>
+              <Input
+                type="date"
+                name="fecha_nacimiento"
+                value={formData.fecha_nacimiento}
+                onChange={handleChange}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Dirección Estructurada (Ene 2026) */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          Dirección
+        </h3>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Fecha de Nacimiento
+              Calle y Número
             </label>
             <Input
-              type="date"
-              name="fecha_nacimiento"
-              value={formData.fecha_nacimiento}
+              name="calle"
+              value={formData.calle}
               onChange={handleChange}
+              placeholder="Av. Insurgentes Sur 1234, Int. 5"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Dirección
+              Colonia
             </label>
             <Input
-              name="direccion"
-              value={formData.direccion}
+              name="colonia"
+              value={formData.colonia}
               onChange={handleChange}
-              placeholder="Calle 123 #45-67"
+              placeholder="Del Valle"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Ciudad
+            </label>
+            <Input
+              name="ciudad"
+              value={formData.ciudad}
+              onChange={handleChange}
+              placeholder="Ciudad de México"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Estado
+            </label>
+            <Select
+              name="estado_id"
+              value={formData.estado_id}
+              onChange={handleChange}
+              placeholder="Selecciona un estado"
+              options={estados.map((estado) => ({
+                value: estado.id.toString(),
+                label: estado.nombre || estado.nombre_corto,
+              }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Código Postal
+            </label>
+            <Input
+              name="codigo_postal"
+              value={formData.codigo_postal}
+              onChange={handleChange}
+              placeholder="03100"
+              maxLength={5}
+              error={errors.codigo_postal}
+            />
+            {errors.codigo_postal && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.codigo_postal}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              País
+            </label>
+            <Select
+              name="pais_id"
+              value={formData.pais_id}
+              onChange={handleChange}
+              options={paises.map((pais) => ({
+                value: pais.id.toString(),
+                label: pais.nombre,
+              }))}
             />
           </div>
         </div>
@@ -374,6 +666,56 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
           rows={3}
           placeholder="Alergias, condiciones médicas relevantes, etc."
         />
+      </div>
+
+      {/* Canales de Contacto Digital (Ene 2026 - Fase 3) */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <MessageCircle className="w-5 h-5 text-primary-500" />
+          Canales de Contacto Digital
+        </h3>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+          Configura canales adicionales para comunicación automática con el cliente
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+              <Send className="w-4 h-4 text-blue-500" />
+              Telegram Chat ID
+            </label>
+            <Input
+              name="telegram_chat_id"
+              value={formData.telegram_chat_id}
+              onChange={handleChange}
+              placeholder="123456789"
+            />
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              ID numérico del chat de Telegram para notificaciones
+            </p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+              <MessageCircle className="w-4 h-4 text-green-500" />
+              WhatsApp
+            </label>
+            <Input
+              name="whatsapp_phone"
+              value={formData.whatsapp_phone}
+              onChange={handleChange}
+              placeholder="+521XXXXXXXXXX"
+              error={errors.whatsapp_phone}
+            />
+            {errors.whatsapp_phone && (
+              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.whatsapp_phone}</p>
+            )}
+            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              Número con código de país para mensajes de WhatsApp
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Preferencias y Precios */}
@@ -444,6 +786,25 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Etiquetas (Ene 2026 - Fase 2) */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+          <Tags className="w-5 h-5 text-primary-500" />
+          Etiquetas
+        </h3>
+
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+          Asigna etiquetas para segmentar y organizar este cliente
+        </p>
+
+        <EtiquetasSelector
+          value={etiquetaIds}
+          onChange={setEtiquetaIds}
+          placeholder="Buscar o seleccionar etiquetas..."
+          maxTags={10}
+        />
       </div>
 
       {/* Configuración */}

@@ -4,6 +4,7 @@ import InfoCard from '@/components/profesionales/cards/InfoCard';
 import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
 import CuentasBancariasSection from '@/components/profesionales/CuentasBancariasSection';
+import MisComisionesSection from '@/components/profesionales/MisComisionesSection';
 import { FORMAS_PAGO } from '@/hooks/useProfesionales';
 import { useCategoriasPagoOptions } from '@/hooks/useCategoriasPago';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -86,6 +87,11 @@ function CompensacionTab({ profesional }) {
       {/* Cuentas Bancarias */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
         <CuentasBancariasSection profesionalId={profesional.id} />
+      </div>
+
+      {/* Mis Comisiones */}
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+        <MisComisionesSection profesionalId={profesional.id} />
       </div>
 
       {/* Modal de edición */}

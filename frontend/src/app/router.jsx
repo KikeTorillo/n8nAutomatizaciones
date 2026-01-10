@@ -21,6 +21,7 @@ const Dashboard = lazy(() => import('@/pages/dashboard/Dashboard'));
 const ClientesPage = lazy(() => import('@/pages/clientes/ClientesPage'));
 const ClienteFormPage = lazy(() => import('@/pages/clientes/ClienteFormPage'));
 const ClienteDetailPage = lazy(() => import('@/pages/clientes/ClienteDetailPage'));
+const EtiquetasPage = lazy(() => import('@/pages/clientes/EtiquetasPage'));
 
 // Páginas de Servicios
 const ServiciosPage = lazy(() => import('@/pages/servicios/ServiciosPage'));
@@ -32,9 +33,6 @@ const NuevoProfesionalWizard = lazy(() => import('@/pages/profesionales/NuevoPro
 
 // Páginas de Citas
 const CitasPage = lazy(() => import('@/pages/citas/CitasPage'));
-
-// Páginas de Bloqueos
-const BloqueosPage = lazy(() => import('@/pages/bloqueos/BloqueosPage'));
 
 // Páginas de Chatbots
 const ChatbotsPage = lazy(() => import('@/pages/chatbots/ChatbotsPage'));
@@ -326,6 +324,14 @@ export const router = createBrowserRouter([
           </ProtectedRoute>
         ),
       },
+      {
+        path: 'clientes/etiquetas',
+        element: (
+          <ProtectedRoute>
+            {withSuspense(EtiquetasPage)}
+          </ProtectedRoute>
+        ),
+      },
       // Rutas de Servicios
       {
         path: 'servicios',
@@ -391,11 +397,6 @@ export const router = createBrowserRouter([
             {withSuspense(CitasPage)}
           </ProtectedRoute>
         ),
-      },
-      // REDIRECT: Bloqueos ahora está en /ausencias (Ene 2026)
-      {
-        path: 'bloqueos',
-        element: <Navigate to="/ausencias?tab=otros-bloqueos" replace />,
       },
       // Rutas de Chatbots
       {

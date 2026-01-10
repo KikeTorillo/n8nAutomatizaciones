@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
-import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp, Layers, Truck } from 'lucide-react';
+import { Package, DollarSign, TrendingUp, Tag, Barcode, ImageIcon, X, Upload, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp, Layers, Truck, Settings } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
@@ -157,6 +157,9 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
 
   // Estado para modal de variantes
   const [mostrarModalVariantes, setMostrarModalVariantes] = useState(false);
+
+  // Estado para tabs del formulario
+  const [activeTab, setActiveTab] = useState('general');
 
   // Query para obtener monedas disponibles
   const { data: monedasResponse } = useQuery({
@@ -511,6 +514,35 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
       subtitle={mode === 'create' ? 'Completa la información del producto' : 'Modifica los datos del producto'}
     >
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        {/* Tabs de navegación */}
+        <div className="border-b border-gray-200 dark:border-gray-700 -mx-4 px-4 sticky top-0 bg-white dark:bg-gray-800 z-10">
+          <nav className="flex space-x-1 overflow-x-auto scrollbar-hide" aria-label="Tabs">
+            {[
+              { id: 'general', label: 'General', icon: Package },
+              { id: 'precios', label: 'Precios', icon: DollarSign },
+              ...(mode === 'create' ? [{ id: 'inventario', label: 'Inventario', icon: TrendingUp }] : []),
+              { id: 'config', label: 'Configuración', icon: Settings },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTab(tab.id)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 whitespace-nowrap transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-primary-500 text-primary-600 dark:text-primary-400'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 dark:text-gray-400 dark:hover:text-gray-300'
+                }`}
+              >
+                <tab.icon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Tab: General - Información Básica + Imagen */}
+        {activeTab === 'general' && (
+          <>
         {/* Información Básica */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
@@ -639,7 +671,12 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             </div>
           </div>
         </div>
+          </>
+        )}
 
+        {/* Tab: Precios */}
+        {activeTab === 'precios' && (
+          <>
         {/* Precios */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
@@ -770,9 +807,11 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             </div>
           )}
         </div>
+          </>
+        )}
 
-        {/* Inventario (Solo en crear) */}
-        {mode === 'create' && (
+        {/* Tab: Inventario (Solo en crear) */}
+        {activeTab === 'inventario' && mode === 'create' && (
           <div className="space-y-4">
             <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
               <TrendingUp className="h-5 w-5 mr-2 text-primary-600 dark:text-primary-400" />
@@ -822,6 +861,9 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
           </div>
         )}
 
+        {/* Tab: Configuración */}
+        {activeTab === 'config' && (
+          <>
         {/* Configuración */}
         <div className="space-y-4">
           <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 flex items-center">
@@ -965,6 +1007,8 @@ function ProductoFormModal({ isOpen, onClose, mode = 'create', producto = null }
             error={errors.notas?.message}
           />
         </div>
+          </>
+        )}
 
         {/* Botones */}
         <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">

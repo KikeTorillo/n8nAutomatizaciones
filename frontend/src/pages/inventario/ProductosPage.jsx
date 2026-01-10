@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { Package, Plus, Edit, Trash2, TrendingDown, Upload, ImageIcon, ScanLine, Tag, Search, AlertTriangle } from 'lucide-react';
+import { Package, Plus, Edit, Trash2, TrendingDown, Upload, ImageIcon, ScanLine, Tag, Search, AlertTriangle, FileSpreadsheet } from 'lucide-react';
+import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import EmptyState from '@/components/ui/EmptyState';
@@ -182,6 +183,50 @@ function ProductosPage() {
     return 'Normal';
   };
 
+  // Exportar CSV
+  const handleExportarCSV = () => {
+    if (!productos || productos.length === 0) {
+      showError('No hay datos para exportar');
+      return;
+    }
+
+    try {
+      const headers = ['Nombre', 'SKU', 'Código Barras', 'Categoría', 'Proveedor', 'Stock', 'Mínimo', 'Máximo', 'Precio Compra', 'Precio Venta', 'Estado'];
+
+      const rows = productos.map(p => [
+        p.nombre || '',
+        p.sku || '',
+        p.codigo_barras || '',
+        p.categoria_nombre || 'Sin categoría',
+        p.proveedor_nombre || 'Sin proveedor',
+        p.stock_actual || 0,
+        p.stock_minimo || 0,
+        p.stock_maximo || 0,
+        parseFloat(p.precio_compra || 0).toFixed(2),
+        parseFloat(p.precio_venta || 0).toFixed(2),
+        getStockLabel(p)
+      ]);
+
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `productos_${format(new Date(), 'yyyyMMdd')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      showSuccess('Productos exportados exitosamente');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      showError('Error al exportar CSV');
+    }
+  };
+
   return (
     <InventarioPageLayout
       icon={Package}
@@ -189,6 +234,16 @@ function ProductosPage() {
       subtitle={`${total} producto${total !== 1 ? 's' : ''} en total`}
       actions={
         <>
+          <Button
+            variant="secondary"
+            onClick={handleExportarCSV}
+            disabled={productos.length === 0}
+            icon={FileSpreadsheet}
+            className="flex-1 sm:flex-none text-sm"
+          >
+            <span className="hidden sm:inline">Exportar CSV</span>
+            <span className="sm:hidden">CSV</span>
+          </Button>
           <Button
             variant="secondary"
             onClick={() => openModal('bulk')}
@@ -348,11 +403,8 @@ function ProductosPage() {
                         icon={Package}
                         title="No se encontraron productos"
                         description="Crea tu primer producto para comenzar a gestionar el inventario"
-                        action={
-                          <Button variant="primary" onClick={handleNuevoProducto} icon={Plus}>
-                            Crear Primer Producto
-                          </Button>
-                        }
+                        actionLabel="Crear Primer Producto"
+                        onAction={handleNuevoProducto}
                       />
                     </td>
                   </tr>
@@ -425,6 +477,7 @@ function ProductosPage() {
                               onClick={() => handleEditarProducto(producto)}
                               className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                               title="Editar"
+                              aria-label="Editar producto"
                             >
                               <Edit className="h-4 w-4" />
                             </button>
@@ -432,6 +485,7 @@ function ProductosPage() {
                               onClick={() => handleAjustarStock(producto)}
                               className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                               title="Ajustar Stock"
+                              aria-label="Ajustar stock"
                             >
                               <TrendingDown className="h-4 w-4" />
                             </button>
@@ -439,6 +493,7 @@ function ProductosPage() {
                               onClick={() => handleGenerarEtiqueta(producto)}
                               className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
                               title="Generar Etiqueta"
+                              aria-label="Generar etiqueta"
                             >
                               <Tag className="h-4 w-4" />
                             </button>
@@ -446,6 +501,7 @@ function ProductosPage() {
                               onClick={() => handleAbrirModalEliminar(producto)}
                               className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
                               title="Eliminar"
+                              aria-label="Eliminar producto"
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>

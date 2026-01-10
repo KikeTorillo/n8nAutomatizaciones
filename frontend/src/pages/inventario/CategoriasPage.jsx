@@ -278,11 +278,8 @@ function CategoriasPage() {
               icon={FolderTree}
               title="No hay categorías"
               description="Comienza creando tu primera categoría"
-              action={
-                <Button variant="primary" onClick={handleNuevaCategoria} icon={Plus}>
-                  Nueva Categoría
-                </Button>
-              }
+              actionLabel="Nueva Categoría"
+              onAction={handleNuevaCategoria}
             />
           ) : (
             <div className="space-y-2">

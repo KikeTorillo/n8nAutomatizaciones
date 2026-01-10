@@ -2,12 +2,13 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { FolderTree, Tag, Palette } from 'lucide-react';
+import { FolderTree, Palette } from 'lucide-react';
 import Drawer from '@/components/ui/Drawer';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Textarea from '@/components/ui/Textarea';
 import Checkbox from '@/components/ui/Checkbox';
+import IconPicker from '@/components/ui/IconPicker';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/useCategorias';
 import { useToast } from '@/hooks/useToast';
@@ -81,6 +82,7 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
   });
 
   const colorSeleccionado = watch('color');
+  const iconoSeleccionado = watch('icono');
 
   // Cargar datos al editar
   useEffect(() => {
@@ -194,38 +196,31 @@ function CategoriaFormModal({ isOpen, onClose, categoria = null, mode = 'create'
           error={errors.categoria_padre_id?.message}
         />
 
-        <div className="grid grid-cols-2 gap-4">
-          {/* Icono */}
-          <FieldWrapper
-            label="Icono"
+        {/* Icono */}
+        <FieldWrapper
+          label="Icono"
+          error={errors.icono?.message}
+        >
+          <IconPicker
+            value={iconoSeleccionado}
+            onChange={(icono) => setValue('icono', icono)}
             error={errors.icono?.message}
-            helperText="Nombre del icono Lucide"
-          >
-            <div className="relative">
-              <Tag className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 dark:text-gray-500" />
-              <input
-                type="text"
-                {...register('icono')}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-                placeholder="Ej: Scissors, Bottle"
-              />
-            </div>
-          </FieldWrapper>
+          />
+        </FieldWrapper>
 
-          {/* Orden */}
-          <FieldWrapper
-            label="Orden"
-            error={errors.orden?.message}
-            helperText="Orden de visualización"
-          >
-            <input
-              type="number"
-              min="0"
-              {...register('orden')}
-              className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-            />
-          </FieldWrapper>
-        </div>
+        {/* Orden */}
+        <FieldWrapper
+          label="Orden de visualización"
+          error={errors.orden?.message}
+        >
+          <input
+            type="number"
+            min="0"
+            {...register('orden')}
+            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            placeholder="0"
+          />
+        </FieldWrapper>
 
         {/* Color */}
         <FieldWrapper label="Color" error={errors.color?.message}>

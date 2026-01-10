@@ -45,9 +45,21 @@ class ClienteController {
             busqueda,
             activo,
             marketing_permitido,
+            tipo,  // Filtro: 'persona' o 'empresa'
+            etiqueta_ids,  // Filtro por etiquetas (comma-separated o array)
             ordenPor,
             orden
         } = req.query;
+
+        // Parsear etiqueta_ids si viene como string separado por comas
+        let etiquetaIdsArray = null;
+        if (etiqueta_ids) {
+            if (Array.isArray(etiqueta_ids)) {
+                etiquetaIdsArray = etiqueta_ids.map(id => parseInt(id));
+            } else if (typeof etiqueta_ids === 'string') {
+                etiquetaIdsArray = etiqueta_ids.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+            }
+        }
 
         const options = {
             organizacionId: req.tenant.organizacionId,
@@ -56,6 +68,8 @@ class ClienteController {
             busqueda,
             activos: activo !== undefined ? activo === 'true' : undefined,
             marketing: marketing_permitido !== undefined ? marketing_permitido === 'true' : undefined,
+            tipo,
+            etiqueta_ids: etiquetaIdsArray,
             ordenPor,
             orden
         };

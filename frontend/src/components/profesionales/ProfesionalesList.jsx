@@ -390,6 +390,7 @@ function ProfesionalesList({
                             onGestionarHorarios(profesional);
                           }}
                           title="Horarios"
+                          aria-label="Gestionar horarios de trabajo"
                         >
                           <Clock className="w-4 h-4" />
                         </Button>
@@ -401,6 +402,7 @@ function ProfesionalesList({
                             onGestionarServicios(profesional);
                           }}
                           title="Servicios"
+                          aria-label="Gestionar servicios asignados"
                         >
                           <Calendar className="w-4 h-4" />
                         </Button>
@@ -413,6 +415,7 @@ function ProfesionalesList({
                           }}
                           className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
                           title="Desactivar"
+                          aria-label="Desactivar profesional"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>

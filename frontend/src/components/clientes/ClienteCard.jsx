@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, Calendar, Edit } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import EtiquetasBadges from './EtiquetasBadges';
 
 /**
  * Componente Card individual de cliente
@@ -45,6 +46,13 @@ function ClienteCard({ cliente }) {
           </div>
         </div>
       </div>
+
+      {/* Etiquetas (Fase 2 - Ene 2026) */}
+      {cliente.etiquetas && cliente.etiquetas.length > 0 && (
+        <div className="mb-4">
+          <EtiquetasBadges etiquetas={cliente.etiquetas} size="sm" maxVisible={3} />
+        </div>
+      )}
 
       {/* Contact Info */}
       <div className="space-y-2 mb-4">
@@ -91,6 +99,7 @@ function ClienteCard({ cliente }) {
           size="sm"
           className="flex-1"
           onClick={() => navigate(`/clientes/${cliente.id}`)}
+          aria-label={`Ver detalle de ${cliente.nombre}`}
         >
           Ver Detalle
         </Button>
@@ -98,6 +107,7 @@ function ClienteCard({ cliente }) {
           variant="outline"
           size="sm"
           onClick={() => navigate(`/clientes/${cliente.id}/editar`)}
+          aria-label={`Editar cliente ${cliente.nombre}`}
         >
           <Edit className="w-4 h-4" />
         </Button>

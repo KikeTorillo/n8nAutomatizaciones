@@ -224,3 +224,34 @@ export function useDisponibilidadInmediata(servicioId, profesionalId = null) {
     refetchInterval: 1000 * 60, // Refetch cada minuto
   });
 }
+
+/**
+ * Hook para obtener estadísticas generales de clientes
+ */
+export function useEstadisticasClientes() {
+  return useQuery({
+    queryKey: ['clientes-estadisticas'],
+    queryFn: async () => {
+      const response = await clientesApi.obtenerEstadisticas();
+      return response.data.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos
+  });
+}
+
+/**
+ * Hook para obtener estadísticas de un cliente específico (Vista 360°)
+ * Ene 2026: Usado por ClienteDetailPage para Smart Buttons
+ * @param {number|string} clienteId - ID del cliente
+ */
+export function useEstadisticasCliente(clienteId) {
+  return useQuery({
+    queryKey: ['cliente-estadisticas', clienteId],
+    queryFn: async () => {
+      const response = await clientesApi.obtenerEstadisticasCliente(clienteId);
+      return response.data.data;
+    },
+    enabled: !!clienteId,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+}

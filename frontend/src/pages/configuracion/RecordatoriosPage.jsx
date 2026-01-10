@@ -9,7 +9,6 @@ import {
   useEnviarPrueba,
 } from '@/hooks/useRecordatorios';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import {
@@ -26,7 +25,7 @@ import {
   Settings,
   TestTube,
 } from 'lucide-react';
-import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
+import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
 
 /**
  * Schema de validación para configuración
@@ -189,42 +188,23 @@ function RecordatoriosPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-2" />
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
-      </div>
-
-      {/* Tabs de navegación */}
-      <AgendamientoNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección - Mobile First */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div>
-            <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-              <Bell className="w-5 h-5 text-amber-600 dark:text-amber-500 flex-shrink-0" />
-              Recordatorios Automáticos
-            </h2>
-            <p className="text-gray-500 dark:text-gray-400 text-sm hidden sm:block">
-              Configura los recordatorios de citas para tus clientes
-            </p>
-          </div>
-
-          <Button
-            onClick={handleSubmit(onSubmit)}
-            disabled={!isDirty || actualizarMutation.isPending}
-            isLoading={actualizarMutation.isPending}
-            className="w-full sm:w-auto"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Guardar cambios
-          </Button>
-        </div>
-
-        <div className="space-y-6">
+    <AgendamientoPageLayout
+      icon={Bell}
+      title="Recordatorios Automáticos"
+      subtitle="Configura los recordatorios de citas para tus clientes"
+      actions={
+        <Button
+          onClick={handleSubmit(onSubmit)}
+          disabled={!isDirty || actualizarMutation.isPending}
+          isLoading={actualizarMutation.isPending}
+          className="w-full sm:w-auto"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          Guardar cambios
+        </Button>
+      }
+    >
+      <div className="space-y-6">
 
       {/* Estadísticas */}
       <StatCardGrid stats={statsConfig} columns={4} />
@@ -421,9 +401,8 @@ function RecordatoriosPage() {
         />
       </div>
 
-        </div>{/* Cierre space-y-6 */}
-      </div>{/* Cierre max-w-7xl */}
-    </div>
+      </div>{/* Cierre space-y-6 */}
+    </AgendamientoPageLayout>
   );
 }
 

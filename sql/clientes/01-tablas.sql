@@ -17,6 +17,9 @@
 -- y soporte para métricas calculadas dinámicamente.
 --
 -- 🔧 CARACTERÍSTICAS DESTACADAS:
+-- • Tipo persona/empresa para distinguir B2B vs B2C
+-- • RFC y razón social para empresas (facturación)
+-- • Dirección estructurada (calle, colonia, ciudad, estado, CP)
 -- • Validación de email y teléfono con regex
 -- • Profesional preferido para personalización
 -- • Control granular de marketing
@@ -24,6 +27,8 @@
 -- • RLS habilitado para aislamiento por organización
 -- • Validaciones CHECK para integridad de datos
 -- • Constraints únicos por organización (no globales)
+--
+-- Actualizado: Ene 2026 - Campos tipo, RFC, dirección estructurada
 -- ====================================================================
 
 CREATE TABLE clientes (
@@ -32,10 +37,17 @@ CREATE TABLE clientes (
     organizacion_id INTEGER NOT NULL REFERENCES organizaciones(id) ON DELETE CASCADE,
     sucursal_id INTEGER,  -- NULL = cliente compartido, con valor = cliente exclusivo de sucursal
 
+    -- 🏢 Tipo de cliente (Ene 2026)
+    tipo VARCHAR(10) DEFAULT 'persona',        -- 'persona' = persona física, 'empresa' = B2B
+
     -- 👤 Información personal básica
-    nombre VARCHAR(150) NOT NULL,
+    nombre VARCHAR(150) NOT NULL,              -- Nombre completo (persona) o nombre comercial (empresa)
     email VARCHAR(150),
     telefono VARCHAR(20),                      -- OPCIONAL: Teléfono tradicional (solo si el negocio necesita llamar)
+
+    -- 📄 Datos fiscales - Solo empresas B2B (Ene 2026)
+    rfc VARCHAR(13),                           -- RFC mexicano (12-13 caracteres)
+    razon_social VARCHAR(200),                 -- Razón social para facturación
 
     -- 📱 Identificadores de plataformas de mensajería
     telegram_chat_id VARCHAR(50),              -- ID de Telegram (ej: "1700200086")
@@ -50,8 +62,15 @@ CREATE TABLE clientes (
     notas_especiales TEXT,
     alergias TEXT,
 
-    -- 📍 Información adicional
-    direccion TEXT,
+    -- 📍 Dirección estructurada (Ene 2026 - antes era campo TEXT único)
+    calle VARCHAR(200),                        -- Calle y número exterior/interior
+    colonia VARCHAR(100),                      -- Colonia o fraccionamiento
+    ciudad VARCHAR(100),                       -- Ciudad o municipio (texto libre)
+    estado_id INTEGER,                         -- FK a catálogo de estados (INEGI)
+    codigo_postal VARCHAR(10),                 -- Código postal (5 dígitos México)
+    pais_id INTEGER DEFAULT 1,                 -- FK a catálogo de países (default: México=1)
+
+    -- 📋 Información adicional
     como_conocio VARCHAR(100),                 -- 'referido', 'redes_sociales', 'google', 'caminando', etc.
 
     -- 🖼️ FOTO (Dic 2025 - Storage MinIO)
@@ -70,14 +89,20 @@ CREATE TABLE clientes (
     actualizado_en TIMESTAMPTZ DEFAULT NOW(),
 
     -- ✅ Validaciones de integridad
+    CONSTRAINT valid_tipo
+        CHECK (tipo IN ('persona', 'empresa')),
     CONSTRAINT valid_email
         CHECK (email IS NULL OR email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     CONSTRAINT valid_fecha_nacimiento
         CHECK (fecha_nacimiento IS NULL OR fecha_nacimiento <= CURRENT_DATE - INTERVAL '5 years'),
+    CONSTRAINT valid_rfc
+        CHECK (rfc IS NULL OR rfc ~* '^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$'),
 
     -- 🔒 Constraints de unicidad por organización
     CONSTRAINT unique_email_por_org
-        UNIQUE(organizacion_id, email) DEFERRABLE
+        UNIQUE(organizacion_id, email) DEFERRABLE,
+    CONSTRAINT unique_rfc_por_org
+        UNIQUE(organizacion_id, rfc)
     -- NOTA: unique_telefono_por_org se implementa como índice único parcial
     -- para permitir múltiples clientes con telefono=NULL en la misma organización
 );
@@ -92,6 +117,20 @@ ADD CONSTRAINT fk_clientes_profesional_preferido
 FOREIGN KEY (profesional_preferido_id) REFERENCES profesionales(id)
     ON DELETE SET NULL    -- Si se elimina profesional, SET NULL en cliente
     ON UPDATE CASCADE;    -- Si se actualiza ID, actualizar cascada
+
+-- FK: clientes.estado_id → estados.id (Ene 2026)
+ALTER TABLE clientes
+ADD CONSTRAINT fk_clientes_estado
+FOREIGN KEY (estado_id) REFERENCES estados(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
+
+-- FK: clientes.pais_id → paises.id (Ene 2026)
+ALTER TABLE clientes
+ADD CONSTRAINT fk_clientes_pais
+FOREIGN KEY (pais_id) REFERENCES paises(id)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE;
 
 -- ====================================================================
 -- 📱 CONSTRAINTS ÚNICOS PARA IDENTIFICADORES DE PLATAFORMAS
@@ -111,10 +150,52 @@ ALTER TABLE clientes
 ADD CONSTRAINT unique_whatsapp_por_org
     UNIQUE (organizacion_id, whatsapp_phone);
 
--- Comentarios de documentación
+-- ====================================================================
+-- 📊 ÍNDICES PARA BÚSQUEDAS EFICIENTES (Ene 2026)
+-- ====================================================================
+
+CREATE INDEX idx_clientes_tipo ON clientes(tipo);
+CREATE INDEX idx_clientes_rfc ON clientes(rfc) WHERE rfc IS NOT NULL;
+CREATE INDEX idx_clientes_estado ON clientes(estado_id) WHERE estado_id IS NOT NULL;
+CREATE INDEX idx_clientes_ciudad ON clientes(ciudad) WHERE ciudad IS NOT NULL;
+
+-- ====================================================================
+-- 📝 COMENTARIOS DE DOCUMENTACIÓN
+-- ====================================================================
+
 COMMENT ON TABLE clientes IS
 'Base de datos de clientes con soporte multi-canal (Telegram, WhatsApp, teléfono).
-Métricas como total_citas y ultima_visita se calculan dinámicamente via JOINs.';
+Soporta tipo persona/empresa para distinguir B2B vs B2C.
+Dirección estructurada con FK a catálogos de estados/países.
+Métricas como total_citas y ultima_visita se calculan dinámicamente via JOINs.
+Actualizado: Ene 2026 - Campos tipo, RFC, dirección estructurada.';
+
+COMMENT ON COLUMN clientes.tipo IS
+'Tipo de cliente: persona (física) o empresa (B2B). Default: persona.';
+
+COMMENT ON COLUMN clientes.rfc IS
+'RFC mexicano para facturación. Solo para clientes tipo empresa. 12-13 caracteres.';
+
+COMMENT ON COLUMN clientes.razon_social IS
+'Razón social para facturación. Solo para clientes tipo empresa.';
+
+COMMENT ON COLUMN clientes.calle IS
+'Calle y número exterior/interior de la dirección.';
+
+COMMENT ON COLUMN clientes.colonia IS
+'Colonia o fraccionamiento de la dirección.';
+
+COMMENT ON COLUMN clientes.ciudad IS
+'Ciudad o municipio de la dirección (texto libre para flexibilidad).';
+
+COMMENT ON COLUMN clientes.estado_id IS
+'FK a catálogo de estados de México (INEGI). Dropdown normalizado.';
+
+COMMENT ON COLUMN clientes.codigo_postal IS
+'Código postal mexicano (5 dígitos).';
+
+COMMENT ON COLUMN clientes.pais_id IS
+'FK a catálogo de países. Default: 1 (México).';
 
 COMMENT ON COLUMN clientes.telegram_chat_id IS
 'ID de Telegram del cliente. Obtenido automáticamente del webhook de Telegram.';

@@ -88,6 +88,7 @@ module.exports = {
   storage: {
     uploadSingle: storage.uploadSingle,
     uploadMultiple: storage.uploadMultiple,
+    createUploadSingle: storage.createUploadSingle,
     checkStorageLimit: storage.checkStorageLimit,
     validateFileSize: storage.validateFileSize,
     ALLOWED_TYPES: storage.ALLOWED_TYPES,

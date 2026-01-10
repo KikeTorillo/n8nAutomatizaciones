@@ -77,8 +77,25 @@ class ComisionesModel {
             const countResult = await db.query(countQuery, queryParams);
             const total = parseInt(countResult.rows[0].total);
 
+            // Query para resumen por estado de pago
+            const resumenQuery = `
+                SELECT
+                    COALESCE(SUM(cp.monto_comision), 0) as total,
+                    COALESCE(SUM(CASE WHEN cp.estado_pago = 'pendiente' THEN cp.monto_comision ELSE 0 END), 0) as total_pendientes,
+                    COALESCE(SUM(CASE WHEN cp.estado_pago = 'pagada' THEN cp.monto_comision ELSE 0 END), 0) as total_pagadas
+                FROM comisiones_profesionales cp
+                WHERE ${whereClause}
+            `;
+
+            const resumenResult = await db.query(resumenQuery, queryParams);
+            const resumen = {
+                total: parseFloat(resumenResult.rows[0].total || 0),
+                total_pendientes: parseFloat(resumenResult.rows[0].total_pendientes || 0),
+                total_pagadas: parseFloat(resumenResult.rows[0].total_pagadas || 0)
+            };
+
             // Paginación
-            const { limit, offset } = PaginationHelper.calcularLimitOffset(
+            const { limit, offset } = PaginationHelper.calculatePagination(
                 filtros.pagina || 1,
                 filtros.limite || 20
             );
@@ -94,7 +111,7 @@ class ComisionesModel {
                     cl.nombre as cliente_nombre,
                     cl.telefono as cliente_telefono,
                     -- Datos de venta (origen = 'venta')
-                    vp.codigo_venta,
+                    vp.folio as codigo_venta,
                     vp.total as venta_total,
                     cl_venta.nombre as cliente_venta_nombre
                 FROM comisiones_profesionales cp
@@ -123,10 +140,12 @@ class ComisionesModel {
 
             return {
                 comisiones: result.rows,
-                paginacion: PaginationHelper.generarMetadata(
-                    total,
+                total,
+                resumen,
+                paginacion: PaginationHelper.getPaginationInfo(
                     filtros.pagina || 1,
-                    filtros.limite || 20
+                    filtros.limite || 20,
+                    total
                 )
             };
         });
@@ -199,7 +218,7 @@ class ComisionesModel {
                     c.hora_fin,
                     cl.nombre as cliente_nombre,
                     -- Datos de venta (origen = 'venta')
-                    vp.codigo_venta,
+                    vp.folio as codigo_venta,
                     vp.total as venta_total,
                     cl_venta.nombre as cliente_venta_nombre,
                     -- Usuario que pagó
@@ -409,7 +428,7 @@ class ComisionesModel {
                     cl.telefono as cliente_telefono,
                     cl.email as cliente_email,
                     -- Datos de venta (origen = 'venta')
-                    vp.codigo_venta,
+                    vp.folio as codigo_venta,
                     vp.total as venta_total,
                     vp.estado as venta_estado,
                     vp.metodo_pago as venta_metodo_pago,

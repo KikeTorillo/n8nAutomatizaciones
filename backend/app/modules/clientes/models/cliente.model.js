@@ -24,12 +24,14 @@ class ClienteModel {
                 INSERT INTO clientes (
                     organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url, lista_precios_id
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+                    como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
+                    tipo, rfc, razon_social, calle, colonia, ciudad, estado_id, codigo_postal, pais_id
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, telegram_chat_id, whatsapp_phone,
                     fecha_nacimiento, profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
+                    como_conocio, activo, marketing_permitido, foto_url, lista_precios_id,
+                    tipo, rfc, razon_social, calle, colonia, ciudad, estado_id, codigo_postal, pais_id,
                     creado_en, actualizado_en
             `;
 
@@ -44,12 +46,21 @@ class ClienteModel {
                 clienteData.profesional_preferido_id || null,
                 clienteData.notas_especiales || null,
                 clienteData.alergias || null,
-                clienteData.direccion || null,
                 clienteData.como_conocio || null,
                 clienteData.activo !== undefined ? clienteData.activo : true,
                 clienteData.marketing_permitido !== undefined ? clienteData.marketing_permitido : true,
                 clienteData.foto_url || null,
-                clienteData.lista_precios_id || null
+                clienteData.lista_precios_id || null,
+                // Nuevos campos Ene 2026
+                clienteData.tipo || 'persona',
+                clienteData.rfc || null,
+                clienteData.razon_social || null,
+                clienteData.calle || null,
+                clienteData.colonia || null,
+                clienteData.ciudad || null,
+                clienteData.estado_id || null,
+                clienteData.codigo_postal || null,
+                clienteData.pais_id || 1  // Default: México
             ];
 
             try {
@@ -69,6 +80,9 @@ class ClienteModel {
                     if (error.constraint === 'unique_whatsapp_por_org') {
                         throw new Error(`El número de WhatsApp ${clienteData.whatsapp_phone} ya está registrado en esta organización`);
                     }
+                    if (error.constraint === 'unique_rfc_por_org') {
+                        throw new Error(`El RFC ${clienteData.rfc} ya está registrado en esta organización`);
+                    }
                 }
 
                 if (error.code === '23514') {
@@ -80,6 +94,12 @@ class ClienteModel {
                     }
                     if (error.constraint === 'valid_fecha_nacimiento') {
                         throw new Error('La fecha de nacimiento no es válida (debe ser mayor a 5 años)');
+                    }
+                    if (error.constraint === 'valid_tipo') {
+                        throw new Error('El tipo de cliente debe ser "persona" o "empresa"');
+                    }
+                    if (error.constraint === 'valid_rfc') {
+                        throw new Error('El formato del RFC no es válido (debe ser RFC mexicano válido)');
                     }
                 }
 
@@ -94,12 +114,21 @@ class ClienteModel {
                 SELECT
                     c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.telegram_chat_id, c.whatsapp_phone,
                     c.fecha_nacimiento, c.profesional_preferido_id, c.notas_especiales, c.alergias,
-                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url, c.lista_precios_id,
+                    c.como_conocio, c.activo, c.marketing_permitido, c.foto_url, c.lista_precios_id,
+                    c.tipo, c.rfc, c.razon_social,
+                    c.calle, c.colonia, c.ciudad, c.estado_id, c.codigo_postal, c.pais_id,
                     c.creado_en, c.actualizado_en,
                     lp.codigo as lista_precios_codigo,
-                    lp.nombre as lista_precios_nombre
+                    lp.nombre as lista_precios_nombre,
+                    e.nombre as estado_nombre,
+                    e.codigo as estado_codigo,
+                    p.nombre as pais_nombre,
+                    p.codigo_alfa2 as pais_codigo,
+                    get_cliente_etiquetas(c.id) as etiquetas
                 FROM clientes c
                 LEFT JOIN listas_precios lp ON lp.id = c.lista_precios_id
+                LEFT JOIN estados e ON e.id = c.estado_id
+                LEFT JOIN paises p ON p.id = c.pais_id
                 WHERE c.id = $1
             `;
 
@@ -116,12 +145,14 @@ class ClienteModel {
             busqueda,
             activos = true,
             marketing,
+            tipo,  // Filtro: 'persona' o 'empresa'
+            etiqueta_ids,  // Filtro por etiquetas (Ene 2026)
             ordenPor = 'nombre',
             orden = 'ASC'
         } = options;
 
         return await RLSContextManager.query(organizacionId, async (db) => {
-            const camposValidos = ['nombre', 'email', 'telefono', 'creado_en', 'actualizado_en'];
+            const camposValidos = ['nombre', 'email', 'telefono', 'tipo', 'creado_en', 'actualizado_en'];
             const ordenValido = ['ASC', 'DESC'].includes(orden.toUpperCase()) ? orden.toUpperCase() : 'ASC';
             const campoOrden = camposValidos.includes(ordenPor) ? ordenPor : 'nombre';
 
@@ -130,22 +161,40 @@ class ClienteModel {
             let paramIndex = 1;
 
             if (activos !== undefined) {
-                whereConditions.push(`activo = $${paramIndex}`);
+                whereConditions.push(`c.activo = $${paramIndex}`);
                 queryParams.push(activos);
                 paramIndex++;
             }
 
             if (marketing !== undefined) {
-                whereConditions.push(`marketing_permitido = $${paramIndex}`);
+                whereConditions.push(`c.marketing_permitido = $${paramIndex}`);
                 queryParams.push(marketing);
+                paramIndex++;
+            }
+
+            // Filtro por tipo de cliente (Ene 2026)
+            if (tipo && ['persona', 'empresa'].includes(tipo)) {
+                whereConditions.push(`c.tipo = $${paramIndex}`);
+                queryParams.push(tipo);
+                paramIndex++;
+            }
+
+            // Filtro por etiquetas (Ene 2026 - Fase 2)
+            if (etiqueta_ids && etiqueta_ids.length > 0) {
+                whereConditions.push(`c.id IN (
+                    SELECT ce.cliente_id FROM cliente_etiquetas ce
+                    WHERE ce.etiqueta_id = ANY($${paramIndex})
+                )`);
+                queryParams.push(etiqueta_ids);
                 paramIndex++;
             }
 
             if (busqueda) {
                 whereConditions.push(`(
-                    nombre ILIKE $${paramIndex} OR
-                    email ILIKE $${paramIndex} OR
-                    telefono ILIKE $${paramIndex}
+                    c.nombre ILIKE $${paramIndex} OR
+                    c.email ILIKE $${paramIndex} OR
+                    c.telefono ILIKE $${paramIndex} OR
+                    c.rfc ILIKE $${paramIndex}
                 )`);
                 queryParams.push(`%${busqueda}%`);
                 paramIndex++;
@@ -158,26 +207,33 @@ class ClienteModel {
                 SELECT
                     c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
                     c.profesional_preferido_id, c.notas_especiales, c.alergias,
-                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
+                    c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
+                    c.tipo, c.rfc, c.razon_social,
+                    c.calle, c.colonia, c.ciudad, c.estado_id, c.codigo_postal, c.pais_id,
                     c.creado_en, c.actualizado_en,
+                    e.nombre as estado_nombre,
+                    get_cliente_etiquetas(c.id) as etiquetas,
                     COUNT(citas.id) as total_citas,
                     MAX(citas.fecha_cita) as ultima_cita
                 FROM clientes c
                 LEFT JOIN citas ON c.id = citas.cliente_id
+                LEFT JOIN estados e ON e.id = c.estado_id
                 ${whereClause}
                 GROUP BY c.id, c.organizacion_id, c.nombre, c.email, c.telefono, c.fecha_nacimiento,
                     c.profesional_preferido_id, c.notas_especiales, c.alergias,
-                    c.direccion, c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
-                    c.creado_en, c.actualizado_en
-                ORDER BY ${campoOrden} ${ordenValido}
+                    c.como_conocio, c.activo, c.marketing_permitido, c.foto_url,
+                    c.tipo, c.rfc, c.razon_social,
+                    c.calle, c.colonia, c.ciudad, c.estado_id, c.codigo_postal, c.pais_id,
+                    c.creado_en, c.actualizado_en, e.nombre
+                ORDER BY c.${campoOrden} ${ordenValido}
                 LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
             `;
 
             queryParams.push(limit, offset);
 
             const countQuery = `
-                SELECT COUNT(*) as total
-                FROM clientes
+                SELECT COUNT(DISTINCT c.id) as total
+                FROM clientes c
                 ${whereClause}
             `;
 
@@ -208,8 +264,11 @@ class ClienteModel {
             const camposActualizables = [
                 'nombre', 'email', 'telefono', 'fecha_nacimiento',
                 'profesional_preferido_id', 'notas_especiales', 'alergias',
-                'direccion', 'como_conocio', 'activo', 'marketing_permitido', 'foto_url',
-                'lista_precios_id'
+                'como_conocio', 'activo', 'marketing_permitido', 'foto_url',
+                'lista_precios_id',
+                // Nuevos campos Ene 2026
+                'tipo', 'rfc', 'razon_social',
+                'calle', 'colonia', 'ciudad', 'estado_id', 'codigo_postal', 'pais_id'
             ];
 
             const setClauses = [];
@@ -237,8 +296,10 @@ class ClienteModel {
                 RETURNING
                     id, organizacion_id, nombre, email, telefono, fecha_nacimiento,
                     profesional_preferido_id, notas_especiales, alergias,
-                    direccion, como_conocio, activo, marketing_permitido, foto_url,
-                    lista_precios_id, creado_en, actualizado_en
+                    como_conocio, activo, marketing_permitido, foto_url,
+                    lista_precios_id, tipo, rfc, razon_social,
+                    calle, colonia, ciudad, estado_id, codigo_postal, pais_id,
+                    creado_en, actualizado_en
             `;
 
             try {
@@ -251,6 +312,18 @@ class ClienteModel {
                     }
                     if (error.constraint === 'unique_telefono_por_org') {
                         throw new Error(`El teléfono ${clienteData.telefono} ya está registrado en esta organización`);
+                    }
+                    if (error.constraint === 'unique_rfc_por_org') {
+                        throw new Error(`El RFC ${clienteData.rfc} ya está registrado en esta organización`);
+                    }
+                }
+
+                if (error.code === '23514') {
+                    if (error.constraint === 'valid_tipo') {
+                        throw new Error('El tipo de cliente debe ser "persona" o "empresa"');
+                    }
+                    if (error.constraint === 'valid_rfc') {
+                        throw new Error('El formato del RFC no es válido (debe ser RFC mexicano válido)');
                     }
                 }
 
@@ -369,10 +442,10 @@ class ClienteModel {
                         COUNT(*) as total_citas,
                         COUNT(*) FILTER (WHERE estado = 'completada') as citas_completadas,
                         COUNT(*) FILTER (WHERE estado = 'cancelada') as citas_canceladas,
-                        COUNT(*) FILTER (WHERE estado = 'no_show') as citas_no_show,
+                        COUNT(*) FILTER (WHERE estado = 'no_asistio') as citas_no_asistio,
                         MIN(fecha_cita) as primera_cita,
                         MAX(fecha_cita) as ultima_cita,
-                        COALESCE(SUM(total), 0) as total_gastado_citas
+                        COALESCE(SUM(precio_total), 0) as total_gastado_citas
                     FROM citas
                     WHERE cliente_id = $1
                 ),
@@ -434,7 +507,9 @@ class ClienteModel {
                 SELECT
                     id, organizacion_id, nombre, email, telefono,
                     fecha_nacimiento, profesional_preferido_id,
-                    notas_especiales, alergias, direccion, como_conocio,
+                    notas_especiales, alergias, como_conocio,
+                    tipo, rfc, razon_social,
+                    calle, colonia, ciudad, estado_id, codigo_postal, pais_id,
                     activo, marketing_permitido, creado_en, actualizado_en,
                     CASE
                         WHEN REPLACE(REPLACE(REPLACE(telefono, ' ', ''), '-', ''), '(', '') = $1 THEN 1.0

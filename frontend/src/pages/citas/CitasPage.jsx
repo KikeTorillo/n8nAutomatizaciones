@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Calendar, Plus, TrendingUp, Clock, CheckCircle, List, CalendarDays } from 'lucide-react';
+import { format } from 'date-fns';
+import { Calendar, Plus, TrendingUp, Clock, CheckCircle, List, CalendarDays, FileSpreadsheet } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { ViewTabs } from '@/components/ui/ViewTabs';
 import { Pagination } from '@/components/ui/Pagination';
@@ -14,7 +14,7 @@ import CompletarCitaModal from '@/components/citas/CompletarCitaModal';
 import NoShowModal from '@/components/citas/NoShowModal';
 import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
-import AgendamientoNavTabs from '@/components/agendamiento/AgendamientoNavTabs';
+import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useCitas,
@@ -24,6 +24,7 @@ import {
 } from '@/hooks/useCitas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * Página principal de Gestión de Citas - FASE 1-4
@@ -31,6 +32,7 @@ import { useServicios } from '@/hooks/useServicios';
 function CitasPage() {
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
 
   // Estado de vista activa (lista o calendario)
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' o 'calendario'
@@ -169,6 +171,84 @@ function CitasPage() {
     });
   };
 
+  // Handler para exportar CSV
+  const handleExportarCSV = () => {
+    if (!citas || citas.length === 0) {
+      toast.error('No hay citas para exportar');
+      return;
+    }
+
+    try {
+      const headers = [
+        'Código',
+        'Fecha',
+        'Hora',
+        'Cliente',
+        'Teléfono',
+        'Profesional',
+        'Servicios',
+        'Total',
+        'Estado',
+      ];
+
+      const estadoLabels = {
+        pendiente: 'Pendiente',
+        confirmada: 'Confirmada',
+        en_curso: 'En Curso',
+        completada: 'Completada',
+        cancelada: 'Cancelada',
+        no_show: 'No Asistió',
+      };
+
+      const rows = citas.map((c) => {
+        // Formatear fecha
+        const fechaFormateada = c.fecha_cita
+          ? format(new Date(c.fecha_cita.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy')
+          : '';
+
+        // Formatear hora
+        const horaFormateada = c.hora_inicio || '';
+
+        // Concatenar servicios
+        const serviciosTexto = c.servicios?.map((s) => s.nombre).join(', ') || c.servicio_nombre || '';
+
+        // Formatear total
+        const totalFormateado = c.precio_total ? `$${Number(c.precio_total).toFixed(2)}` : '';
+
+        return [
+          c.codigo_cita || '',
+          fechaFormateada,
+          horaFormateada,
+          c.cliente_nombre || '',
+          c.cliente_telefono || '',
+          c.profesional_nombre || '',
+          serviciosTexto,
+          totalFormateado,
+          estadoLabels[c.estado] || c.estado || '',
+        ];
+      });
+
+      // BOM para UTF-8 (Excel)
+      const BOM = '\uFEFF';
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
+      ].join('\n');
+
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `citas_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
+      link.click();
+      URL.revokeObjectURL(link.href);
+
+      toast.success('Citas exportadas exitosamente');
+    } catch (error) {
+      console.error('Error al exportar CSV:', error);
+      toast.error('Error al exportar CSV');
+    }
+  };
+
   // Calcular estadísticas memoizadas para evitar recálculos innecesarios
   const estadisticas = useMemo(() => ({
     hoy: citasDelDia.length,
@@ -192,41 +272,36 @@ function CitasPage() {
   ], []);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con navegación */}
-      <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
-        <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
-
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Agendamiento</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Gestiona citas y recordatorios
-        </p>
-      </div>
-
-      {/* Tabs de navegación */}
-      <AgendamientoNavTabs />
-
-      {/* Contenido */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        {/* Header de sección - Mobile First */}
-        <div className="mb-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-3">
-              <Calendar className="h-7 w-7 sm:h-8 sm:w-8 text-primary-600 dark:text-primary-400 flex-shrink-0" />
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">Gestión de Citas</h2>
-                <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
-                  Administra y monitorea todas las citas de tu negocio
-                </p>
-              </div>
-            </div>
-            <Button variant="primary" onClick={handleNuevaCita} className="w-full sm:w-auto">
-              <Plus className="w-5 h-5 mr-2" />
-              Nueva Cita
-            </Button>
-          </div>
+    <AgendamientoPageLayout
+      icon={Calendar}
+      title="Gestión de Citas"
+      subtitle="Administra y monitorea todas las citas de tu negocio"
+      actions={
+        <div className="flex gap-2 sm:gap-3">
+          <Button
+            variant="secondary"
+            onClick={handleExportarCSV}
+            disabled={!citas?.length}
+            aria-label="Exportar citas a CSV"
+            className="flex-1 sm:flex-none"
+          >
+            <FileSpreadsheet className="w-4 h-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportar CSV</span>
+          </Button>
+          <Button
+            variant="primary"
+            onClick={() => handleNuevaCita()}
+            aria-label="Crear nueva cita"
+            className="flex-1 sm:flex-none"
+          >
+            <Plus className="w-5 h-5 sm:mr-2" />
+            <span className="hidden sm:inline">Nueva Cita</span>
+            <span className="sm:hidden">Nueva</span>
+          </Button>
         </div>
-        {/* Estadísticas Rápidas */}
+      }
+    >
+      {/* Estadísticas Rápidas */}
         <StatCardGrid stats={statsConfig} columns={4} />
 
         {/* Sistema de Tabs - Vista Lista / Calendario */}
@@ -288,7 +363,6 @@ function CitasPage() {
             />
           </>
         )}
-      </div>
 
       {/* Modal de Detalles */}
       <CitaDetailModal
@@ -331,7 +405,7 @@ function CitasPage() {
         onClose={() => closeModal('cancelar')}
         cita={getModalData('cancelar')}
       />
-    </div>
+    </AgendamientoPageLayout>
   );
 }
 

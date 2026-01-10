@@ -1137,6 +1137,453 @@ export const clientesApi = {
    * @returns {Promise<Object>}
    */
   cambiarEstado: (id, activo) => apiClient.patch(`/clientes/${id}/estado`, { activo }),
+
+  /**
+   * Obtener estadísticas de un cliente específico (Vista 360°)
+   * Ene 2026: Total citas, ventas POS, lifetime value, servicios frecuentes
+   * @param {number} id - ID del cliente
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasCliente: (id) => apiClient.get(`/clientes/${id}/estadisticas`),
+
+  // ==================== ETIQUETAS (Ene 2026 - Fase 2) ====================
+
+  /**
+   * Listar etiquetas de la organización
+   * @param {Object} params - { soloActivas }
+   * @returns {Promise<Object>}
+   */
+  listarEtiquetas: (params = {}) => apiClient.get('/clientes/etiquetas', { params }),
+
+  /**
+   * Crear etiqueta
+   * @param {Object} data - { nombre, color, descripcion, orden }
+   * @returns {Promise<Object>}
+   */
+  crearEtiqueta: (data) => apiClient.post('/clientes/etiquetas', data),
+
+  /**
+   * Obtener etiqueta por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerEtiqueta: (id) => apiClient.get(`/clientes/etiquetas/${id}`),
+
+  /**
+   * Actualizar etiqueta
+   * @param {number} id
+   * @param {Object} data - { nombre, color, descripcion, orden, activo }
+   * @returns {Promise<Object>}
+   */
+  actualizarEtiqueta: (id, data) => apiClient.put(`/clientes/etiquetas/${id}`, data),
+
+  /**
+   * Eliminar etiqueta
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarEtiqueta: (id) => apiClient.delete(`/clientes/etiquetas/${id}`),
+
+  /**
+   * Obtener etiquetas de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  obtenerEtiquetasCliente: (clienteId) => apiClient.get(`/clientes/${clienteId}/etiquetas`),
+
+  /**
+   * Asignar etiquetas a un cliente (reemplaza las existentes)
+   * @param {number} clienteId
+   * @param {Array<number>} etiquetaIds
+   * @returns {Promise<Object>}
+   */
+  asignarEtiquetasCliente: (clienteId, etiquetaIds) =>
+    apiClient.post(`/clientes/${clienteId}/etiquetas`, { etiqueta_ids: etiquetaIds }),
+
+  /**
+   * Agregar una etiqueta a un cliente
+   * @param {number} clienteId
+   * @param {number} etiquetaId
+   * @returns {Promise<Object>}
+   */
+  agregarEtiquetaCliente: (clienteId, etiquetaId) =>
+    apiClient.post(`/clientes/${clienteId}/etiquetas/${etiquetaId}`),
+
+  /**
+   * Quitar una etiqueta de un cliente
+   * @param {number} clienteId
+   * @param {number} etiquetaId
+   * @returns {Promise<Object>}
+   */
+  quitarEtiquetaCliente: (clienteId, etiquetaId) =>
+    apiClient.delete(`/clientes/${clienteId}/etiquetas/${etiquetaId}`),
+
+  // ==================== ACTIVIDADES Y TIMELINE (Ene 2026 - Fase 4A) ====================
+
+  /**
+   * Listar actividades de un cliente
+   * @param {number} clienteId
+   * @param {Object} params - { page, limit, tipo, estado, soloTareas }
+   * @returns {Promise<Object>}
+   */
+  listarActividades: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/actividades`, { params }),
+
+  /**
+   * Obtener timeline unificado (actividades + citas + ventas)
+   * @param {number} clienteId
+   * @param {Object} params - { limit, offset }
+   * @returns {Promise<Object>}
+   */
+  obtenerTimeline: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/timeline`, { params }),
+
+  /**
+   * Crear actividad (nota, llamada, tarea, email)
+   * @param {number} clienteId
+   * @param {Object} data - { tipo, titulo, descripcion, fecha_vencimiento, prioridad, asignado_a }
+   * @returns {Promise<Object>}
+   */
+  crearActividad: (clienteId, data) =>
+    apiClient.post(`/clientes/${clienteId}/actividades`, data),
+
+  /**
+   * Obtener actividad por ID
+   * @param {number} clienteId
+   * @param {number} actividadId
+   * @returns {Promise<Object>}
+   */
+  obtenerActividad: (clienteId, actividadId) =>
+    apiClient.get(`/clientes/${clienteId}/actividades/${actividadId}`),
+
+  /**
+   * Actualizar actividad
+   * @param {number} clienteId
+   * @param {number} actividadId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarActividad: (clienteId, actividadId, data) =>
+    apiClient.put(`/clientes/${clienteId}/actividades/${actividadId}`, data),
+
+  /**
+   * Eliminar actividad
+   * @param {number} clienteId
+   * @param {number} actividadId
+   * @returns {Promise<Object>}
+   */
+  eliminarActividad: (clienteId, actividadId) =>
+    apiClient.delete(`/clientes/${clienteId}/actividades/${actividadId}`),
+
+  /**
+   * Marcar tarea como completada
+   * @param {number} clienteId
+   * @param {number} actividadId
+   * @returns {Promise<Object>}
+   */
+  completarTarea: (clienteId, actividadId) =>
+    apiClient.patch(`/clientes/${clienteId}/actividades/${actividadId}/completar`),
+
+  /**
+   * Contar actividades de un cliente por tipo
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  contarActividades: (clienteId) =>
+    apiClient.get(`/clientes/${clienteId}/actividades/conteo`),
+
+  // ==================== DOCUMENTOS (Ene 2026 - Fase 4B) ====================
+
+  /**
+   * Obtener tipos de documento disponibles
+   * @returns {Promise<Object>}
+   */
+  obtenerTiposDocumento: () =>
+    apiClient.get('/clientes/documentos/tipos'),
+
+  /**
+   * Listar documentos por vencer de la organización
+   * @param {Object} params - { dias }
+   * @returns {Promise<Object>}
+   */
+  listarDocumentosPorVencer: (params = {}) =>
+    apiClient.get('/clientes/documentos/por-vencer', { params }),
+
+  /**
+   * Listar documentos de un cliente
+   * @param {number} clienteId
+   * @param {Object} params - { tipo, verificado, estado_vencimiento, limite, offset }
+   * @returns {Promise<Object>}
+   */
+  listarDocumentos: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/documentos`, { params }),
+
+  /**
+   * Obtener documento por ID
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @returns {Promise<Object>}
+   */
+  obtenerDocumento: (clienteId, documentoId) =>
+    apiClient.get(`/clientes/${clienteId}/documentos/${documentoId}`),
+
+  /**
+   * Crear documento (con o sin archivo)
+   * @param {number} clienteId
+   * @param {FormData} formData - Datos del documento + archivo opcional
+   * @returns {Promise<Object>}
+   */
+  crearDocumento: (clienteId, formData) =>
+    apiClient.post(`/clientes/${clienteId}/documentos`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  /**
+   * Actualizar documento
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarDocumento: (clienteId, documentoId, data) =>
+    apiClient.put(`/clientes/${clienteId}/documentos/${documentoId}`, data),
+
+  /**
+   * Eliminar documento
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @returns {Promise<Object>}
+   */
+  eliminarDocumento: (clienteId, documentoId) =>
+    apiClient.delete(`/clientes/${clienteId}/documentos/${documentoId}`),
+
+  /**
+   * Verificar/desverificar documento
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @param {boolean} verificado
+   * @returns {Promise<Object>}
+   */
+  verificarDocumento: (clienteId, documentoId, verificado) =>
+    apiClient.patch(`/clientes/${clienteId}/documentos/${documentoId}/verificar`, { verificado }),
+
+  /**
+   * Obtener URL presigned para descargar documento
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @param {Object} params - { expiry }
+   * @returns {Promise<Object>}
+   */
+  obtenerDocumentoPresigned: (clienteId, documentoId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/documentos/${documentoId}/presigned`, { params }),
+
+  /**
+   * Contar documentos de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  contarDocumentos: (clienteId) =>
+    apiClient.get(`/clientes/${clienteId}/documentos/conteo`),
+
+  /**
+   * Subir/reemplazar archivo de un documento existente
+   * @param {number} clienteId
+   * @param {number} documentoId
+   * @param {FormData} formData - Archivo
+   * @returns {Promise<Object>}
+   */
+  subirArchivoDocumento: (clienteId, documentoId, formData) =>
+    apiClient.post(`/clientes/${clienteId}/documentos/${documentoId}/archivo`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+
+  // ==================== OPORTUNIDADES POR CLIENTE (Ene 2026 - Fase 5) ====================
+
+  /**
+   * Listar oportunidades de un cliente
+   * @param {number} clienteId
+   * @param {Object} params - { page, limit, estado }
+   * @returns {Promise<Object>}
+   */
+  listarOportunidadesCliente: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/oportunidades`, { params }),
+
+  /**
+   * Crear oportunidad para un cliente
+   * @param {number} clienteId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  crearOportunidadCliente: (clienteId, data) =>
+    apiClient.post(`/clientes/${clienteId}/oportunidades`, data),
+
+  /**
+   * Obtener estadísticas de oportunidades de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasOportunidadesCliente: (clienteId) =>
+    apiClient.get(`/clientes/${clienteId}/oportunidades/estadisticas`),
+};
+
+// ==================== OPORTUNIDADES B2B (Ene 2026 - Fase 5) ====================
+export const oportunidadesApi = {
+  // ========== ETAPAS DEL PIPELINE ==========
+
+  /**
+   * Listar etapas del pipeline
+   * @param {Object} params - { incluirInactivas }
+   * @returns {Promise<Object>}
+   */
+  listarEtapas: (params = {}) =>
+    apiClient.get('/oportunidades/etapas', { params }),
+
+  /**
+   * Crear etapa
+   * @param {Object} data - { nombre, descripcion, probabilidad_default, color, orden, es_ganada, es_perdida }
+   * @returns {Promise<Object>}
+   */
+  crearEtapa: (data) =>
+    apiClient.post('/oportunidades/etapas', data),
+
+  /**
+   * Actualizar etapa
+   * @param {number} etapaId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarEtapa: (etapaId, data) =>
+    apiClient.put(`/oportunidades/etapas/${etapaId}`, data),
+
+  /**
+   * Eliminar etapa
+   * @param {number} etapaId
+   * @returns {Promise<Object>}
+   */
+  eliminarEtapa: (etapaId) =>
+    apiClient.delete(`/oportunidades/etapas/${etapaId}`),
+
+  /**
+   * Reordenar etapas
+   * @param {Object} data - { orden: [id1, id2, ...] }
+   * @returns {Promise<Object>}
+   */
+  reordenarEtapas: (data) =>
+    apiClient.put('/oportunidades/etapas/reordenar', data),
+
+  // ========== PIPELINE ==========
+
+  /**
+   * Obtener pipeline completo para Kanban
+   * @param {Object} params - { vendedor_id }
+   * @returns {Promise<Object>}
+   */
+  obtenerPipeline: (params = {}) =>
+    apiClient.get('/oportunidades/pipeline', { params }),
+
+  /**
+   * Obtener estadísticas del pipeline
+   * @param {Object} params - { vendedor_id }
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticas: (params = {}) =>
+    apiClient.get('/oportunidades/estadisticas', { params }),
+
+  /**
+   * Obtener pronóstico de ventas
+   * @param {Object} params - { fecha_inicio, fecha_fin }
+   * @returns {Promise<Object>}
+   */
+  obtenerPronostico: (params = {}) =>
+    apiClient.get('/oportunidades/pronostico', { params }),
+
+  // ========== CRUD OPORTUNIDADES ==========
+
+  /**
+   * Listar oportunidades
+   * @param {Object} params - { page, limit, cliente_id, etapa_id, vendedor_id, estado, prioridad, fecha_desde, fecha_hasta, busqueda }
+   * @returns {Promise<Object>}
+   */
+  listar: (params = {}) =>
+    apiClient.get('/oportunidades', { params }),
+
+  /**
+   * Listar oportunidades por cliente
+   * @param {number} clienteId
+   * @param {Object} params
+   * @returns {Promise<Object>}
+   */
+  listarPorCliente: (clienteId, params = {}) =>
+    apiClient.get(`/clientes/${clienteId}/oportunidades`, { params }),
+
+  /**
+   * Crear oportunidad
+   * @param {Object} data - { cliente_id, etapa_id, nombre, descripcion, probabilidad, fecha_cierre_esperada, ingreso_esperado, vendedor_id, prioridad, fuente }
+   * @returns {Promise<Object>}
+   */
+  crear: (data) =>
+    apiClient.post('/oportunidades', data),
+
+  /**
+   * Obtener oportunidad por ID
+   * @param {number} oportunidadId
+   * @returns {Promise<Object>}
+   */
+  obtenerPorId: (oportunidadId) =>
+    apiClient.get(`/oportunidades/${oportunidadId}`),
+
+  /**
+   * Actualizar oportunidad
+   * @param {number} oportunidadId
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizar: (oportunidadId, data) =>
+    apiClient.put(`/oportunidades/${oportunidadId}`, data),
+
+  /**
+   * Eliminar oportunidad
+   * @param {number} oportunidadId
+   * @returns {Promise<Object>}
+   */
+  eliminar: (oportunidadId) =>
+    apiClient.delete(`/oportunidades/${oportunidadId}`),
+
+  // ========== OPERACIONES PIPELINE ==========
+
+  /**
+   * Mover oportunidad a otra etapa (drag & drop)
+   * @param {number} oportunidadId
+   * @param {Object} data - { etapa_id }
+   * @returns {Promise<Object>}
+   */
+  mover: (oportunidadId, data) =>
+    apiClient.patch(`/oportunidades/${oportunidadId}/mover`, data),
+
+  /**
+   * Marcar oportunidad como ganada
+   * @param {number} oportunidadId
+   * @returns {Promise<Object>}
+   */
+  marcarGanada: (oportunidadId) =>
+    apiClient.patch(`/oportunidades/${oportunidadId}/ganar`),
+
+  /**
+   * Marcar oportunidad como perdida
+   * @param {number} oportunidadId
+   * @param {Object} data - { motivo_perdida }
+   * @returns {Promise<Object>}
+   */
+  marcarPerdida: (oportunidadId, data) =>
+    apiClient.patch(`/oportunidades/${oportunidadId}/perder`, data),
+
+  /**
+   * Obtener estadísticas de oportunidades de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasCliente: (clienteId) =>
+    apiClient.get(`/clientes/${clienteId}/oportunidades/estadisticas`),
 };
 
 // ==================== CITAS ====================

@@ -424,7 +424,7 @@ function MiPerfilPage() {
 
           {bloqueos.length > 10 && (
             <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 text-center">
-              <Link to="/bloqueos" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+              <Link to="/ausencias?tab=otros-bloqueos" className="text-sm text-primary-600 dark:text-primary-400 hover:underline">
                 Ver todas las ausencias
               </Link>
             </div>
