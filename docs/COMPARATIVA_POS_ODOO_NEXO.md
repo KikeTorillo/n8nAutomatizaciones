@@ -1,146 +1,124 @@
 # Comparativa POS: Odoo 19 vs Nexo
 
-**Última actualización:** 10 Enero 2026
+**Última actualización:** 11 Enero 2026
 
 ---
 
 ## Estado de Implementación
 
-### Fase 1: Quick Wins - COMPLETADA ✅
-
-| Funcionalidad | Estado | Archivos |
-|---------------|--------|----------|
-| Grid visual de productos | ✅ | `ProductosGridPOS.jsx`, `CategoriasPOS.jsx` |
-| Categorías visuales con tabs | ✅ | `CategoriasPOS.jsx` |
-| Apertura/cierre de caja formal | ✅ | `AperturaCajaModal.jsx`, `CierreCajaModal.jsx` |
-| Entrada/salida efectivo mid-session | ✅ | `MovimientosCajaDrawer.jsx` |
-| Teclado de billetes (efectivo) | ✅ | `TecladoBilletes.jsx` |
-| Badge cantidad en productos | ✅ | `ProductosGridPOS.jsx` |
+| Fase | Estado | Funcionalidades |
+|------|--------|-----------------|
+| **Fase 1: Quick Wins** | ✅ | Grid visual, categorías, sesiones caja, teclado billetes |
+| **Fase 2: Core Features** | ✅ | Pago split, cupones, crédito cliente (fiado) |
+| **Fase 3: Diferenciadores** | ✅ | Promociones, lealtad, pantalla cliente, combos/modificadores |
 
 ---
 
-### Fase 2: Core Features - EN PROGRESO
+## Funcionalidades Implementadas
 
-| Funcionalidad | Estado | Archivos |
-|---------------|--------|----------|
-| **Pago split (múltiples métodos)** | ✅ | `venta_pagos` tabla, `MetodoPagoModal.jsx` |
-| **Cupones de descuento** | ✅ | `cupones.model.js`, `InputCupon.jsx` |
-| **Cuenta de cliente (fiado)** | 🔄 | SQL listo, falta integración UI |
+### Promociones Automáticas
 
-#### Pago Split - Implementado
-- Tabla `venta_pagos` para múltiples métodos por venta
-- Trigger `sincronizar_pagos_venta` actualiza automáticamente `monto_pagado` y `estado_pago`
-- UI permite agregar efectivo + tarjeta + transferencia en una sola venta
-- Campo `metodo_pago = 'mixto'` cuando hay más de un método
+**Tipos:** `cantidad` (2x1), `porcentaje`, `monto_fijo`, `precio_especial`, `regalo`
 
-#### Cupones de Descuento - Implementado
-- Tablas: `cupones`, `uso_cupones`
-- Tipos: porcentaje o monto fijo
-- Validaciones: monto mínimo, fecha vigencia, usos máximos, usos por cliente
-- Input en carrito con validación en tiempo real
-- Registro automático de uso al crear venta
+**Condiciones:** Monto mín/máx, productos/categorías, horario, límite de usos, sucursales, solo primera compra, exclusiva/acumulable.
+
+**Motor:** Función SQL `evaluar_promociones_carrito()` evalúa automáticamente al cambiar el carrito.
 
 ---
 
-### Fase 3: Diferenciadores - PENDIENTE
+### Programa de Lealtad
 
-| Funcionalidad | Esfuerzo | Descripción |
-|--------------|----------|-------------|
-| Programa de lealtad/puntos | Alta | Acumular puntos por compra, canjear por descuentos |
-| PWA modo offline | Alta | Funcionar sin conexión, sincronizar al reconectar |
-| Pantalla del cliente | Media | Segunda pantalla mostrando productos y total |
-| Promociones automáticas | Alta | 2x1, 3x2, descuento por monto mínimo |
+- Acumulación de puntos por compra (configurable $/punto)
+- 4 niveles: Bronze, Silver, Gold, Platinum con multiplicadores
+- Canje de puntos por descuento en POS
+- Expiración configurable (default 12 meses)
 
 ---
 
-### Otros Gaps (Baja Prioridad)
+### Pantalla del Cliente
 
-| Funcionalidad | Esfuerzo | Notas |
-|--------------|----------|-------|
-| Combos/Paquetes | Alta | Producto compuesto de varios items |
-| Modificadores de producto | Alta | Extras, sin cebolla, etc. (restaurantes) |
-| Tarjetas de regalo | Media | Vender y canjear gift cards |
-| Crear producto desde POS | Media | Modal rápido sin ir a Inventario |
-| Modo restaurante (mesas) | Alta | Solo si se enfoca en ese vertical |
+**Arquitectura:** BroadcastChannel API (mismo origen, sin servidor)
+
+```
+VentaPOSPage ──► BroadcastChannel 'nexo-pos-display' ──► CustomerDisplayPage
+```
+
+**Estados:** Idle → Cart (tiempo real) → Payment → Complete
+
+**Indicador:** Icono en header del POS muestra si display está conectado.
 
 ---
 
-## Fortalezas de Nexo vs Odoo
+### Combos y Modificadores
+
+**Combos:** Producto compuesto, 3 tipos de precio (fijo, suma, descuento %), descuento automático de stock de componentes.
+
+**Modificadores:** Grupos (Tamaño, Extras), selección única/múltiple, precio adicional, obligatorios/opcionales, prefijos (Add, No, Extra).
+
+---
+
+## Fortalezas Nexo vs Odoo
 
 | Fortaleza | Nexo | Odoo |
-|-----------|------|------|
+|-----------|:----:|:----:|
 | IA Conversacional (WhatsApp/Telegram) | ✅ | ❌ |
 | Walk-in Flow | ✅ | ❌ |
 | Vista 360° Cliente | ✅ | Parcial |
 | Escaneo GS1-128 con lotes/NS | ✅ | Parcial |
 | Reservas de stock atómicas | ✅ | ❌ |
 | Dark Mode nativo | ✅ | ❌ |
-| Integración Comisiones | ✅ | Módulo separado |
-| **Pago Split nativo** | ✅ | ✅ |
-| **Cupones integrados** | ✅ | ✅ |
+| Pantalla cliente (sin IoT) | ✅ | ❌ |
+| Pago Split, Cupones, Promociones | ✅ | ✅ |
+| Lealtad, Combos, Modificadores | ✅ | ✅ |
 
 ---
 
-## Archivos del Módulo POS
+## Arquitectura Técnica
+
+### Rate Limiting - RESUELTO
+POS físico no necesita reservas durante el carrito. Backend valida stock y reserva atómicamente al confirmar venta (`FOR UPDATE SKIP LOCKED`). Cache local de precios 5min.
+
+### Estructura de Archivos
 
 ```
 frontend/src/
 ├── pages/pos/
-│   └── VentaPOSPage.jsx        # Página principal (toggle Grid/Búsqueda)
-├── components/pos/
-│   ├── ProductosGridPOS.jsx    # Grid visual de productos
-│   ├── CategoriasPOS.jsx       # Tabs horizontales categorías
-│   ├── BuscadorProductosPOS.jsx
-│   ├── CarritoVenta.jsx        # Incluye InputCupon
-│   ├── InputCupon.jsx          # Validación cupones en tiempo real
-│   ├── MetodoPagoModal.jsx     # Pago split + TecladoBilletes
-│   ├── TecladoBilletes.jsx     # Botones $1000, $500, etc.
-│   ├── AperturaCajaModal.jsx   # Abrir sesión de caja
-│   ├── CierreCajaModal.jsx     # Cerrar con validación diferencia
-│   └── MovimientosCajaDrawer.jsx
+│   ├── VentaPOSPage.jsx        # Principal + broadcast
+│   ├── PromocionesPage.jsx     # CRUD promociones
+│   └── CustomerDisplayPage.jsx # Display cliente
+├── components/pos/             # 12 componentes
 └── hooks/
-    ├── usePOS.js               # useSesionCajaActiva, useCategoriasPOS
-    └── useCupones.js           # useValidarCupon, useCupones
+    ├── usePOS.js, useCupones.js, usePromociones.js
+    ├── useLealtad.js, useCombosModificadores.js
+    └── usePOSBroadcast.js      # BroadcastChannel
 
 backend/app/modules/pos/
-├── controllers/
-│   ├── ventas.controller.js
-│   ├── cupones.controller.js
-│   └── sesiones-caja.controller.js
-├── models/
-│   ├── ventas.model.js         # Incluye registro uso_cupones
-│   ├── cupones.model.js
-│   └── sesiones-caja.model.js
+├── controllers/                # 6 controllers
+├── models/                     # 6 models
 ├── routes/pos.js
-└── schemas/pos.schemas.js      # Incluye cupon_id, descuento_cupon
+└── schemas/pos.schemas.js
 
 sql/pos/
-├── 07-sesiones-caja.sql        # sesiones_caja, movimientos_caja
-├── 08-venta-pagos.sql          # venta_pagos + trigger sincronización
-└── 09-cupones.sql              # cupones, uso_cupones
+├── 07-sesiones-caja.sql
+├── 08-venta-pagos.sql, 08-credito-cliente.sql
+├── 09-cupones.sql, 10-promociones.sql
+├── 11-programa-lealtad.sql
+└── 12-combos-modificadores.sql
 ```
 
 ---
 
 ## Próximos Pasos
 
-1. **Rate Limiting POS** - URGENTE
-   - Problema: Al agregar productos rápido se alcanza el límite 429
-   - El POS genera muchas requests por operación (precios, tasas, stock)
-   - Revisar: `backend/app/middleware/rateLimiting.js`
-   - Opciones a evaluar:
-     - Aumentar límites para usuarios autenticados
-     - Crear `posRateLimit` específico con límites altos
-     - Optimizar frontend para reducir requests (debouncing, batching)
-     - Cache más agresivo en queries frecuentes (tasas, precios)
-
-2. **Cuenta de cliente (fiado)** - Completar integración
-   - SQL `08-credito-cliente.sql` ya existe
-   - Falta: UI en MetodoPagoModal para método "A cuenta"
-   - Falta: Vista de saldos pendientes por cliente
-
-3. **Fase 3** - Evaluar prioridad según feedback usuarios
+| Prioridad | Funcionalidad | Notas |
+|-----------|---------------|-------|
+| **Alta** | Revisión detallada POS | Probar todos los tipos de promociones, validar puntos de lealtad, flujo completo de venta |
+| Media | Tarjetas de regalo | Gift cards |
+| Media | Impresoras térmicas | ESC/POS nativo |
+| Media | Crear producto desde POS | Modal rápido |
+| Baja | Modo restaurante | Gestión de mesas |
+| Baja | PWA Offline | Sincronizar al reconectar |
 
 ---
 
-*Documento actualizado: 10 Enero 2026*
+*Documento actualizado: 11 Enero 2026*

@@ -75,6 +75,8 @@ const VentaPOSPage = lazy(() => import('@/pages/pos/VentaPOSPage'));
 const VentasListPage = lazy(() => import('@/pages/pos/VentasListPage'));
 const CorteCajaPage = lazy(() => import('@/pages/pos/CorteCajaPage'));
 const ReporteVentasDiariasPage = lazy(() => import('@/pages/pos/ReporteVentasDiariasPage'));
+const PromocionesPage = lazy(() => import('@/pages/pos/PromocionesPage'));
+const CustomerDisplayPage = lazy(() => import('@/pages/pos/CustomerDisplayPage'));
 
 // Páginas de Marketplace
 const DirectorioMarketplacePage = lazy(() => import('@/pages/marketplace/DirectorioMarketplacePage'));
@@ -695,6 +697,19 @@ export const router = createBrowserRouter([
             {withSuspense(ReporteVentasDiariasPage)}
           </ProtectedRoute>
         ),
+      },
+      {
+        path: 'pos/promociones',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(PromocionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        // Pantalla del cliente - sin autenticación (abierta en segunda pantalla)
+        path: 'pos/display',
+        element: withSuspense(CustomerDisplayPage),
       },
       // Rutas de Super Admin (requiere rol super_admin)
       {

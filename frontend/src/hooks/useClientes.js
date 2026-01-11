@@ -54,7 +54,7 @@ export function useBuscarClientes(termino, options = {}) {
       return response.data.data;
     },
     enabled: termino.length >= 2, // Solo buscar si hay al menos 2 caracteres
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests
   });
 }
 
@@ -69,7 +69,7 @@ export function useBuscarPorTelefono(telefono, enabled = false) {
       return response.data.data;
     },
     enabled: enabled && telefono.length >= 10,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests
   });
 }
 

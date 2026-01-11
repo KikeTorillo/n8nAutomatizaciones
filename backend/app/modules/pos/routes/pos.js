@@ -615,4 +615,667 @@ router.patch('/cupones/:id/estado',
     CuponesController.cambiarEstado
 );
 
+// ===================================================================
+// PROMOCIONES AUTOMATICAS (Ene 2026 - Fase 3)
+// ===================================================================
+
+const PromocionesController = require('../controllers/promociones.controller');
+
+/**
+ * GET /api/v1/pos/promociones/vigentes
+ * Listar promociones vigentes para uso en POS
+ * Query params:
+ * - sucursal_id (opcional)
+ */
+router.get('/promociones/vigentes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.listarPromocionesVigentes),
+    PromocionesController.listarVigentes
+);
+
+/**
+ * POST /api/v1/pos/promociones/evaluar
+ * Evaluar promociones aplicables a un carrito
+ * Body:
+ * - items: Array de { producto_id, categoria_id, cantidad, precio_unitario }
+ * - subtotal (requerido)
+ * - cliente_id (opcional)
+ * - sucursal_id (opcional)
+ */
+router.post('/promociones/evaluar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.evaluarPromociones),
+    PromocionesController.evaluar
+);
+
+/**
+ * POST /api/v1/pos/promociones/aplicar
+ * Aplicar promocion a una venta
+ * Body:
+ * - promocion_id (requerido)
+ * - venta_pos_id (requerido)
+ * - cliente_id (opcional)
+ * - descuento_total (requerido)
+ * - productos_aplicados (opcional)
+ */
+router.post('/promociones/aplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.aplicarPromocion),
+    PromocionesController.aplicar
+);
+
+/**
+ * GET /api/v1/pos/promociones
+ * Listar promociones con paginacion (admin)
+ * Query params:
+ * - page, limit, busqueda, activo, vigente, tipo, ordenPor, orden
+ */
+router.get('/promociones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.listarPromociones),
+    PromocionesController.listar
+);
+
+/**
+ * POST /api/v1/pos/promociones
+ * Crear nueva promocion
+ */
+router.post('/promociones',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearPromocion),
+    PromocionesController.crear
+);
+
+/**
+ * GET /api/v1/pos/promociones/:id
+ * Obtener promocion por ID
+ */
+router.get('/promociones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.obtenerPromocion),
+    PromocionesController.obtenerPorId
+);
+
+/**
+ * PUT /api/v1/pos/promociones/:id
+ * Actualizar promocion
+ */
+router.put('/promociones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.actualizarPromocion),
+    PromocionesController.actualizar
+);
+
+/**
+ * DELETE /api/v1/pos/promociones/:id
+ * Eliminar promocion (solo si no tiene usos)
+ */
+router.delete('/promociones/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.eliminarPromocion),
+    PromocionesController.eliminar
+);
+
+/**
+ * GET /api/v1/pos/promociones/:id/historial
+ * Obtener historial de uso de una promocion
+ */
+router.get('/promociones/:id/historial',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.historialPromocion),
+    PromocionesController.obtenerHistorial
+);
+
+/**
+ * GET /api/v1/pos/promociones/:id/estadisticas
+ * Obtener estadisticas de una promocion
+ */
+router.get('/promociones/:id/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.obtenerPromocion),
+    PromocionesController.obtenerEstadisticas
+);
+
+/**
+ * PATCH /api/v1/pos/promociones/:id/estado
+ * Activar/desactivar promocion
+ */
+router.patch('/promociones/:id/estado',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.cambiarEstadoPromocion),
+    PromocionesController.cambiarEstado
+);
+
+/**
+ * POST /api/v1/pos/promociones/:id/duplicar
+ * Duplicar promocion
+ */
+router.post('/promociones/:id/duplicar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.gestionar_promociones', { usarSucursalDeQuery: true }),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.duplicarPromocion),
+    PromocionesController.duplicar
+);
+
+// ===================================================================
+// PROGRAMA DE LEALTAD (Ene 2026 - Fase 3)
+// ===================================================================
+
+const LealtadController = require('../controllers/lealtad.controller');
+
+/**
+ * GET /api/v1/pos/lealtad/configuracion
+ * Obtener configuración del programa de lealtad
+ */
+router.get('/lealtad/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    LealtadController.obtenerConfiguracion
+);
+
+/**
+ * PUT /api/v1/pos/lealtad/configuracion
+ * Guardar configuración del programa de lealtad
+ */
+router.put('/lealtad/configuracion',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.configuracionLealtad),
+    LealtadController.guardarConfiguracion
+);
+
+/**
+ * GET /api/v1/pos/lealtad/niveles
+ * Listar niveles de lealtad
+ */
+router.get('/lealtad/niveles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    LealtadController.listarNiveles
+);
+
+/**
+ * POST /api/v1/pos/lealtad/niveles
+ * Crear nivel de lealtad
+ */
+router.post('/lealtad/niveles',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearNivelLealtad),
+    LealtadController.crearNivel
+);
+
+/**
+ * PUT /api/v1/pos/lealtad/niveles/:id
+ * Actualizar nivel de lealtad
+ */
+router.put('/lealtad/niveles/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.actualizarNivelLealtad),
+    LealtadController.actualizarNivel
+);
+
+/**
+ * DELETE /api/v1/pos/lealtad/niveles/:id
+ * Eliminar nivel de lealtad
+ */
+router.delete('/lealtad/niveles/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    LealtadController.eliminarNivel
+);
+
+/**
+ * POST /api/v1/pos/lealtad/niveles/default
+ * Crear niveles por defecto
+ */
+router.post('/lealtad/niveles/default',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    LealtadController.crearNivelesDefault
+);
+
+/**
+ * GET /api/v1/pos/lealtad/clientes/:clienteId/puntos
+ * Obtener puntos de un cliente
+ */
+router.get('/lealtad/clientes/:clienteId/puntos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    LealtadController.obtenerPuntosCliente
+);
+
+/**
+ * GET /api/v1/pos/lealtad/clientes/:clienteId/historial
+ * Obtener historial de transacciones de puntos
+ */
+router.get('/lealtad/clientes/:clienteId/historial',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.historialPuntos),
+    LealtadController.obtenerHistorial
+);
+
+/**
+ * GET /api/v1/pos/lealtad/clientes
+ * Listar clientes con puntos
+ */
+router.get('/lealtad/clientes',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.listarClientesPuntos),
+    LealtadController.listarClientesConPuntos
+);
+
+/**
+ * POST /api/v1/pos/lealtad/calcular
+ * Calcular puntos que ganaría una venta (preview)
+ */
+router.post('/lealtad/calcular',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.calcularPuntosVenta),
+    LealtadController.calcularPuntosVenta
+);
+
+/**
+ * POST /api/v1/pos/lealtad/validar-canje
+ * Validar canje de puntos (preview)
+ */
+router.post('/lealtad/validar-canje',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.validarCanjePuntos),
+    LealtadController.validarCanje
+);
+
+/**
+ * POST /api/v1/pos/lealtad/canjear
+ * Canjear puntos por descuento
+ */
+router.post('/lealtad/canjear',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.canjear_puntos'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.canjearPuntos),
+    LealtadController.canjearPuntos
+);
+
+/**
+ * POST /api/v1/pos/lealtad/acumular
+ * Acumular puntos por una venta
+ */
+router.post('/lealtad/acumular',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    rateLimiting.userRateLimit,
+    validate(posSchemas.acumularPuntos),
+    LealtadController.acumularPuntos
+);
+
+/**
+ * POST /api/v1/pos/lealtad/ajustar
+ * Ajuste manual de puntos (admin)
+ */
+router.post('/lealtad/ajustar',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    modules.requireModule('pos'),
+    tenant.verifyTenantActive,
+    verificarPermiso('pos.ajustar_puntos'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.ajustarPuntos),
+    LealtadController.ajustarPuntos
+);
+
+/**
+ * GET /api/v1/pos/lealtad/estadisticas
+ * Obtener estadísticas del programa de lealtad
+ */
+router.get('/lealtad/estadisticas',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.configurar_lealtad'),
+    rateLimiting.userRateLimit,
+    LealtadController.obtenerEstadisticas
+);
+
+// ===================================================================
+// 🎁 COMBOS / PAQUETES (Ene 2026)
+// ===================================================================
+
+const CombosController = require('../controllers/combos.controller');
+
+/**
+ * GET /api/v1/pos/combos
+ * Listar combos
+ */
+router.get('/combos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.listarCombos
+);
+
+/**
+ * GET /api/v1/pos/combos/verificar/:productoId
+ * Verificar si un producto es combo
+ */
+router.get('/combos/verificar/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.verificarCombo
+);
+
+/**
+ * GET /api/v1/pos/combos/:productoId
+ * Obtener combo por producto ID
+ */
+router.get('/combos/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.obtenerCombo
+);
+
+/**
+ * POST /api/v1/pos/combos
+ * Crear combo
+ */
+router.post('/combos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.crear_combos'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearCombo),
+    CombosController.crearCombo
+);
+
+/**
+ * PUT /api/v1/pos/combos/:productoId
+ * Actualizar combo
+ */
+router.put('/combos/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.crear_combos'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.actualizarCombo),
+    CombosController.actualizarCombo
+);
+
+/**
+ * DELETE /api/v1/pos/combos/:productoId
+ * Eliminar combo
+ */
+router.delete('/combos/:productoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.crear_combos'),
+    rateLimiting.userRateLimit,
+    CombosController.eliminarCombo
+);
+
+/**
+ * GET /api/v1/pos/combos/:productoId/precio
+ * Calcular precio de combo
+ */
+router.get('/combos/:productoId/precio',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.calcularPrecio
+);
+
+/**
+ * GET /api/v1/pos/combos/:productoId/stock
+ * Verificar stock de componentes
+ */
+router.get('/combos/:productoId/stock',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.verificarStock
+);
+
+// ===================================================================
+// 🔧 MODIFICADORES (Ene 2026)
+// ===================================================================
+
+/**
+ * GET /api/v1/pos/modificadores/grupos
+ * Listar grupos de modificadores
+ */
+router.get('/modificadores/grupos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.listarGrupos
+);
+
+/**
+ * POST /api/v1/pos/modificadores/grupos
+ * Crear grupo de modificadores
+ */
+router.post('/modificadores/grupos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearGrupoModificadores),
+    CombosController.crearGrupo
+);
+
+/**
+ * PUT /api/v1/pos/modificadores/grupos/:id
+ * Actualizar grupo de modificadores
+ */
+router.put('/modificadores/grupos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.actualizarGrupoModificadores),
+    CombosController.actualizarGrupo
+);
+
+/**
+ * DELETE /api/v1/pos/modificadores/grupos/:id
+ * Eliminar grupo de modificadores
+ */
+router.delete('/modificadores/grupos/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    CombosController.eliminarGrupo
+);
+
+/**
+ * POST /api/v1/pos/modificadores
+ * Crear modificador
+ */
+router.post('/modificadores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.crearModificador),
+    CombosController.crearModificador
+);
+
+/**
+ * PUT /api/v1/pos/modificadores/:id
+ * Actualizar modificador
+ */
+router.put('/modificadores/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.actualizarModificador),
+    CombosController.actualizarModificador
+);
+
+/**
+ * DELETE /api/v1/pos/modificadores/:id
+ * Eliminar modificador
+ */
+router.delete('/modificadores/:id',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    CombosController.eliminarModificador
+);
+
+/**
+ * GET /api/v1/pos/productos/:productoId/modificadores
+ * Obtener modificadores de un producto
+ */
+router.get('/productos/:productoId/modificadores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.obtenerModificadoresProducto
+);
+
+/**
+ * GET /api/v1/pos/productos/:productoId/tiene-modificadores
+ * Verificar si un producto tiene modificadores
+ */
+router.get('/productos/:productoId/tiene-modificadores',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.tieneModificadores
+);
+
+/**
+ * GET /api/v1/pos/productos/:productoId/grupos
+ * Listar asignaciones de grupos a producto
+ */
+router.get('/productos/:productoId/grupos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    rateLimiting.userRateLimit,
+    CombosController.listarAsignacionesProducto
+);
+
+/**
+ * POST /api/v1/pos/productos/:productoId/grupos
+ * Asignar grupo a producto
+ */
+router.post('/productos/:productoId/grupos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.asignarGrupo),
+    CombosController.asignarGrupoAProducto
+);
+
+/**
+ * DELETE /api/v1/pos/productos/:productoId/grupos/:grupoId
+ * Eliminar asignación de grupo a producto
+ */
+router.delete('/productos/:productoId/grupos/:grupoId',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    CombosController.eliminarAsignacionProducto
+);
+
+/**
+ * POST /api/v1/pos/categorias/:categoriaId/grupos
+ * Asignar grupo a categoría
+ */
+router.post('/categorias/:categoriaId/grupos',
+    auth.authenticateToken,
+    tenant.setTenantContext,
+    verificarPermiso('pos.gestionar_modificadores'),
+    rateLimiting.userRateLimit,
+    validate(posSchemas.asignarGrupo),
+    CombosController.asignarGrupoACategoria
+);
+
 module.exports = router;

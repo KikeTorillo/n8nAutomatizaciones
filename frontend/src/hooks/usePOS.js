@@ -72,9 +72,9 @@ export function useCrearVenta() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(['ventas-pos']);
-      queryClient.invalidateQueries(['productos']); // Stock cambió
-      queryClient.invalidateQueries(['stock-critico']);
-      queryClient.invalidateQueries(['movimientos']); // Se registró movimiento automático
+      // Ene 2026: Removidas invalidaciones agresivas para reducir requests
+      // ['productos'] y ['movimientos'] se refrescan con staleTime (5 min)
+      queryClient.invalidateQueries(['stock-critico']); // Solo alertas de stock bajo
       queryClient.invalidateQueries(['corte-caja']);
       queryClient.invalidateQueries(['ventas-diarias']);
     },
@@ -502,8 +502,8 @@ export function useSesionCajaActiva(params = {}) {
       const response = await posApi.obtenerSesionActiva({ sucursal_id: sucursalId });
       return response.data.data || { activa: false, sesion: null, totales: null };
     },
-    staleTime: 1000 * 30, // 30 segundos - datos frescos para sesión activa
-    refetchOnWindowFocus: true,
+    staleTime: 1000 * 60 * 3, // 3 minutos - Ene 2026: aumentado para reducir requests
+    refetchOnWindowFocus: false, // Ene 2026: desactivado para evitar refetch innecesario
   });
 }
 
@@ -524,6 +524,7 @@ export function useSesionCaja(id) {
 
 /**
  * Hook para obtener resumen de sesión para cierre
+ * Ene 2026: Aumentado staleTime para reducir requests en POS
  */
 export function useResumenSesionCaja(id) {
   return useQuery({
@@ -533,7 +534,8 @@ export function useResumenSesionCaja(id) {
       return response.data.data || null;
     },
     enabled: !!id,
-    staleTime: 1000 * 30, // 30 segundos - datos frescos para cierre
+    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado para reducir requests
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -555,12 +557,14 @@ export function useSesionesCaja(params = {}) {
       const response = await posApi.listarSesionesCaja(sanitizedParams);
       return response.data.data || { sesiones: [], total: 0 };
     },
-    staleTime: 1000 * 60 * 2,
+    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado
+    refetchOnWindowFocus: false,
   });
 }
 
 /**
  * Hook para listar movimientos de una sesión
+ * Ene 2026: Aumentado staleTime para reducir requests en POS
  */
 export function useMovimientosCaja(sesionId) {
   return useQuery({
@@ -570,7 +574,8 @@ export function useMovimientosCaja(sesionId) {
       return response.data.data || [];
     },
     enabled: !!sesionId,
-    staleTime: 1000 * 60,
+    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado para reducir requests
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -715,6 +720,7 @@ export function useCategoriasPOS() {
       return response.data.data?.categorias || [];
     },
     staleTime: 1000 * 60 * 5, // 5 minutos - categorías cambian poco
+    refetchOnWindowFocus: false, // Ene 2026: evitar refetch innecesario
   });
 }
 
@@ -736,6 +742,7 @@ export function useProductosPOS(params = {}) {
       });
       return response.data.data?.productos || [];
     },
-    staleTime: 1000 * 60 * 2, // 2 minutos
+    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado para reducir requests
+    refetchOnWindowFocus: false, // Ene 2026: evitar refetch innecesario
   });
 }

@@ -67,6 +67,9 @@ INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, t
 ('pos.cerrar_caja', 'pos', 'operacion', 'Cerrar caja', 'Permite cerrar turno de caja', 'booleano', 'true', 270),
 ('pos.corte_caja', 'pos', 'operacion', 'Realizar corte de caja', 'Permite realizar corte/arqueo de caja', 'booleano', 'false', 280),
 ('pos.reimprimir_tickets', 'pos', 'operacion', 'Reimprimir tickets', 'Permite reimprimir tickets de venta', 'booleano', 'true', 290),
+('pos.gestionar_caja', 'pos', 'operacion', 'Gestionar caja', 'Permite abrir, cerrar y gestionar sesiones de caja', 'booleano', 'true', 295),
+('pos.gestionar_cupones', 'pos', 'operacion', 'Gestionar cupones', 'Permite crear y administrar cupones de descuento', 'booleano', 'false', 296),
+('pos.gestionar_promociones', 'pos', 'operacion', 'Gestionar promociones', 'Permite crear y administrar promociones automaticas', 'booleano', 'false', 297),
 
 -- ========================================
 -- MÓDULO: INVENTARIO
@@ -285,6 +288,83 @@ INSERT INTO permisos_rol (rol, permiso_id, valor)
 SELECT 'propietario', id, 'true'::JSONB
 FROM permisos_catalogo
 WHERE codigo IN ('workflows.aprobar', 'workflows.ver_todas', 'workflows.gestionar')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+
+-- ====================================================================
+-- PERMISOS DE PROGRAMA DE LEALTAD (Ene 2026)
+-- ====================================================================
+
+INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
+VALUES
+    ('pos.configurar_lealtad', 'pos', 'configuracion', 'Configurar programa de lealtad',
+     'Permite configurar programa de lealtad, niveles y reglas',
+     'booleano', 'false', 298),
+
+    ('pos.ver_puntos_cliente', 'pos', 'operacion', 'Ver puntos de cliente',
+     'Permite ver saldo de puntos de clientes',
+     'booleano', 'true', 299),
+
+    ('pos.canjear_puntos', 'pos', 'operacion', 'Canjear puntos',
+     'Permite canjear puntos por descuento en ventas',
+     'booleano', 'true', 300),
+
+    ('pos.ajustar_puntos', 'pos', 'operacion', 'Ajustar puntos manualmente',
+     'Permite hacer ajustes manuales de puntos a clientes',
+     'booleano', 'false', 301)
+
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Asignar permisos de lealtad a admin
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'admin', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('pos.configurar_lealtad', 'pos.ver_puntos_cliente', 'pos.canjear_puntos', 'pos.ajustar_puntos')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+-- Asignar permisos de lealtad a propietario
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'propietario', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('pos.configurar_lealtad', 'pos.ver_puntos_cliente', 'pos.canjear_puntos', 'pos.ajustar_puntos')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+-- Empleado puede ver y canjear puntos (no ajustar ni configurar)
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'empleado', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('pos.ver_puntos_cliente', 'pos.canjear_puntos')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+
+-- ====================================================================
+-- PERMISOS DE COMBOS Y MODIFICADORES (Ene 2026)
+-- ====================================================================
+
+INSERT INTO permisos_catalogo (codigo, modulo, categoria, nombre, descripcion, tipo_valor, valor_default, orden_display)
+VALUES
+    ('pos.gestionar_combos', 'pos', 'operacion', 'Gestionar combos',
+     'Permite crear, editar y eliminar combos/paquetes de productos',
+     'booleano', 'false', 302),
+
+    ('pos.gestionar_modificadores', 'pos', 'operacion', 'Gestionar modificadores',
+     'Permite crear, editar grupos de modificadores y asignarlos a productos',
+     'booleano', 'false', 303)
+
+ON CONFLICT (codigo) DO NOTHING;
+
+-- Asignar permisos de combos/modificadores a admin
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'admin', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('pos.gestionar_combos', 'pos.gestionar_modificadores')
+ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
+
+-- Asignar permisos de combos/modificadores a propietario
+INSERT INTO permisos_rol (rol, permiso_id, valor)
+SELECT 'propietario', id, 'true'::JSONB
+FROM permisos_catalogo
+WHERE codigo IN ('pos.gestionar_combos', 'pos.gestionar_modificadores')
 ON CONFLICT (rol, permiso_id) DO UPDATE SET valor = EXCLUDED.valor;
 
 

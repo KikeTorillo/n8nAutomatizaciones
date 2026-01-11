@@ -876,6 +876,772 @@ const posSchemas = {
                 'any.required': 'activo es requerido'
             })
         })
+    },
+
+    // ========================================================================
+    // PROMOCIONES AUTOMATICAS (Ene 2026 - Fase 3)
+    // ========================================================================
+
+    /**
+     * Schema para crear promocion
+     * POST /api/v1/pos/promociones
+     */
+    crearPromocion: {
+        body: Joi.object({
+            codigo: Joi.string()
+                .min(3)
+                .max(50)
+                .pattern(/^[A-Z0-9_-]+$/i)
+                .required()
+                .messages({
+                    'any.required': 'codigo es requerido',
+                    'string.min': 'codigo debe tener al menos 3 caracteres',
+                    'string.max': 'codigo no puede exceder 50 caracteres',
+                    'string.pattern.base': 'codigo solo puede contener letras, numeros, guiones y guiones bajos'
+                }),
+
+            nombre: Joi.string()
+                .min(3)
+                .max(200)
+                .required()
+                .messages({
+                    'any.required': 'nombre es requerido',
+                    'string.min': 'nombre debe tener al menos 3 caracteres',
+                    'string.max': 'nombre no puede exceder 200 caracteres'
+                }),
+
+            descripcion: Joi.string().max(1000).optional().allow(null, ''),
+
+            tipo: Joi.string()
+                .valid('cantidad', 'porcentaje', 'monto_fijo', 'precio_especial', 'regalo')
+                .required()
+                .messages({
+                    'any.required': 'tipo es requerido',
+                    'any.only': 'tipo debe ser: cantidad, porcentaje, monto_fijo, precio_especial o regalo'
+                }),
+
+            reglas: Joi.object().optional().default({}),
+
+            valor_descuento: Joi.number().min(0).optional().allow(null),
+
+            fecha_inicio: Joi.date().iso().optional(),
+            fecha_fin: Joi.date().iso().optional().allow(null),
+            hora_inicio: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional().allow(null),
+            hora_fin: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional().allow(null),
+            dias_semana: Joi.array().items(Joi.number().integer().min(0).max(6)).optional().allow(null),
+
+            prioridad: Joi.number().integer().min(0).optional().default(0),
+            exclusiva: Joi.boolean().optional().default(false),
+            acumulable_cupones: Joi.boolean().optional().default(true),
+
+            usos_maximos: Joi.number().integer().positive().optional().allow(null),
+            usos_por_cliente: Joi.number().integer().positive().optional().allow(null),
+
+            monto_minimo: Joi.number().min(0).optional().default(0),
+            monto_maximo_descuento: Joi.number().min(0).optional().allow(null),
+            solo_primera_compra: Joi.boolean().optional().default(false),
+            sucursales_ids: Joi.array().items(Joi.number().integer().positive()).optional().allow(null),
+
+            activo: Joi.boolean().optional().default(true)
+        }).custom((value, helpers) => {
+            // Validar que porcentaje no exceda 100
+            if (value.tipo === 'porcentaje' && value.valor_descuento > 100) {
+                return helpers.error('any.custom', {
+                    message: 'Para descuento en porcentaje, el valor no puede exceder 100'
+                });
+            }
+            // Validar fechas
+            if (value.fecha_fin && value.fecha_inicio && value.fecha_fin < value.fecha_inicio) {
+                return helpers.error('any.custom', {
+                    message: 'fecha_fin debe ser posterior a fecha_inicio'
+                });
+            }
+            return value;
+        })
+    },
+
+    /**
+     * Schema para actualizar promocion
+     * PUT /api/v1/pos/promociones/:id
+     */
+    actualizarPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            codigo: Joi.string().min(3).max(50).pattern(/^[A-Z0-9_-]+$/i).optional(),
+            nombre: Joi.string().min(3).max(200).optional(),
+            descripcion: Joi.string().max(1000).optional().allow(null, ''),
+            tipo: Joi.string().valid('cantidad', 'porcentaje', 'monto_fijo', 'precio_especial', 'regalo').optional(),
+            reglas: Joi.object().optional(),
+            valor_descuento: Joi.number().min(0).optional().allow(null),
+            fecha_inicio: Joi.date().iso().optional(),
+            fecha_fin: Joi.date().iso().optional().allow(null),
+            hora_inicio: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional().allow(null),
+            hora_fin: Joi.string().pattern(/^([01]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/).optional().allow(null),
+            dias_semana: Joi.array().items(Joi.number().integer().min(0).max(6)).optional().allow(null),
+            prioridad: Joi.number().integer().min(0).optional(),
+            exclusiva: Joi.boolean().optional(),
+            acumulable_cupones: Joi.boolean().optional(),
+            usos_maximos: Joi.number().integer().positive().optional().allow(null),
+            usos_por_cliente: Joi.number().integer().positive().optional().allow(null),
+            monto_minimo: Joi.number().min(0).optional(),
+            monto_maximo_descuento: Joi.number().min(0).optional().allow(null),
+            solo_primera_compra: Joi.boolean().optional(),
+            sucursales_ids: Joi.array().items(Joi.number().integer().positive()).optional().allow(null),
+            activo: Joi.boolean().optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para listar promociones
+     * GET /api/v1/pos/promociones
+     */
+    listarPromociones: {
+        query: Joi.object({
+            page: Joi.number().integer().min(1).optional().default(1),
+            limit: Joi.number().integer().min(1).max(100).optional().default(20),
+            busqueda: Joi.string().min(2).max(100).optional(),
+            activo: Joi.string().valid('true', 'false').optional(),
+            vigente: Joi.string().valid('true', 'false').optional(),
+            tipo: Joi.string().valid('cantidad', 'porcentaje', 'monto_fijo', 'precio_especial', 'regalo').optional(),
+            ordenPor: Joi.string().valid('prioridad', 'creado_en', 'codigo', 'nombre', 'fecha_inicio', 'fecha_fin', 'usos_actuales', 'tipo').optional(),
+            orden: Joi.string().valid('ASC', 'DESC', 'asc', 'desc').optional()
+        })
+    },
+
+    /**
+     * Schema para obtener promocion por ID
+     * GET /api/v1/pos/promociones/:id
+     */
+    obtenerPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para eliminar promocion
+     * DELETE /api/v1/pos/promociones/:id
+     */
+    eliminarPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para evaluar promociones del carrito
+     * POST /api/v1/pos/promociones/evaluar
+     */
+    evaluarPromociones: {
+        body: Joi.object({
+            items: Joi.array()
+                .min(1)
+                .items(
+                    Joi.object({
+                        producto_id: Joi.number().integer().positive().required(),
+                        categoria_id: Joi.number().integer().positive().optional().allow(null),
+                        cantidad: Joi.number().integer().min(1).required(),
+                        precio_unitario: Joi.number().min(0).required()
+                    })
+                )
+                .required()
+                .messages({
+                    'any.required': 'items es requerido',
+                    'array.min': 'Debe incluir al menos 1 item'
+                }),
+
+            subtotal: Joi.number().min(0).required().messages({
+                'any.required': 'subtotal es requerido'
+            }),
+
+            cliente_id: Joi.number().integer().positive().optional().allow(null),
+            sucursal_id: Joi.number().integer().positive().optional().allow(null)
+        })
+    },
+
+    /**
+     * Schema para aplicar promocion a una venta
+     * POST /api/v1/pos/promociones/aplicar
+     */
+    aplicarPromocion: {
+        body: Joi.object({
+            promocion_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'promocion_id es requerido'
+            }),
+
+            venta_pos_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'venta_pos_id es requerido'
+            }),
+
+            cliente_id: Joi.number().integer().positive().optional().allow(null),
+            descuento_total: Joi.number().min(0).required().messages({
+                'any.required': 'descuento_total es requerido'
+            }),
+            productos_aplicados: Joi.array().items(Joi.object()).optional().allow(null)
+        })
+    },
+
+    /**
+     * Schema para obtener historial de uso de promocion
+     * GET /api/v1/pos/promociones/:id/historial
+     */
+    historialPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para cambiar estado de promocion
+     * PATCH /api/v1/pos/promociones/:id/estado
+     */
+    cambiarEstadoPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+        body: Joi.object({
+            activo: Joi.boolean().required().messages({
+                'any.required': 'activo es requerido'
+            })
+        })
+    },
+
+    /**
+     * Schema para duplicar promocion
+     * POST /api/v1/pos/promociones/:id/duplicar
+     */
+    duplicarPromocion: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para listar promociones vigentes
+     * GET /api/v1/pos/promociones/vigentes
+     */
+    listarPromocionesVigentes: {
+        query: Joi.object({
+            sucursal_id: Joi.number().integer().positive().optional()
+        })
+    },
+
+    // ========================================================================
+    // PROGRAMA DE LEALTAD (Ene 2026 - Fase 3)
+    // ========================================================================
+
+    /**
+     * Schema para guardar configuración de lealtad
+     * PUT /api/v1/pos/lealtad/configuracion
+     */
+    configuracionLealtad: {
+        body: Joi.object({
+            activo: Joi.boolean().optional().default(true),
+
+            puntos_por_peso: Joi.number().min(0).optional().default(1).messages({
+                'number.min': 'puntos_por_peso no puede ser negativo'
+            }),
+
+            pesos_por_punto_descuento: Joi.number().min(0.01).optional().default(100).messages({
+                'number.min': 'pesos_por_punto_descuento debe ser mayor a 0'
+            }),
+
+            meses_expiracion: Joi.number().integer().min(1).max(60).optional().default(12).messages({
+                'number.min': 'meses_expiracion debe ser al menos 1',
+                'number.max': 'meses_expiracion no puede exceder 60'
+            }),
+
+            minimo_puntos_canje: Joi.number().integer().min(0).optional().default(100).messages({
+                'number.min': 'minimo_puntos_canje no puede ser negativo'
+            }),
+
+            maximo_porcentaje_descuento: Joi.number().min(1).max(100).optional().default(50).messages({
+                'number.min': 'maximo_porcentaje_descuento debe ser al menos 1',
+                'number.max': 'maximo_porcentaje_descuento no puede exceder 100'
+            }),
+
+            puntos_por_registro: Joi.number().integer().min(0).optional().default(0).messages({
+                'number.min': 'puntos_por_registro no puede ser negativo'
+            }),
+
+            puntos_cumpleanos: Joi.number().integer().min(0).optional().default(0).messages({
+                'number.min': 'puntos_cumpleanos no puede ser negativo'
+            }),
+
+            acumular_con_cupon: Joi.boolean().optional().default(false),
+            redondeo: Joi.string().valid('floor', 'ceil', 'round').optional().default('floor')
+        })
+    },
+
+    /**
+     * Schema para crear nivel de lealtad
+     * POST /api/v1/pos/lealtad/niveles
+     */
+    crearNivelLealtad: {
+        body: Joi.object({
+            nombre: Joi.string()
+                .min(2)
+                .max(50)
+                .required()
+                .messages({
+                    'any.required': 'nombre es requerido',
+                    'string.min': 'nombre debe tener al menos 2 caracteres',
+                    'string.max': 'nombre no puede exceder 50 caracteres'
+                }),
+
+            codigo: Joi.string()
+                .min(2)
+                .max(20)
+                .pattern(/^[A-Z0-9_]+$/i)
+                .required()
+                .messages({
+                    'any.required': 'codigo es requerido',
+                    'string.pattern.base': 'codigo solo puede contener letras, numeros y guion bajo'
+                }),
+
+            color: Joi.string()
+                .pattern(/^#[0-9A-Fa-f]{6}$/)
+                .optional()
+                .default('#6B7280')
+                .messages({
+                    'string.pattern.base': 'color debe ser un color hexadecimal válido (#RRGGBB)'
+                }),
+
+            icono: Joi.string().max(50).optional().allow(null, ''),
+
+            puntos_minimos: Joi.number().integer().min(0).required().messages({
+                'any.required': 'puntos_minimos es requerido',
+                'number.min': 'puntos_minimos no puede ser negativo'
+            }),
+
+            puntos_maximos: Joi.number().integer().min(0).optional().allow(null).messages({
+                'number.min': 'puntos_maximos no puede ser negativo'
+            }),
+
+            multiplicador_puntos: Joi.number().min(1).max(10).optional().default(1).messages({
+                'number.min': 'multiplicador_puntos debe ser al menos 1',
+                'number.max': 'multiplicador_puntos no puede exceder 10'
+            }),
+
+            beneficios: Joi.object().optional().default({}),
+            orden: Joi.number().integer().min(0).optional().default(0),
+            activo: Joi.boolean().optional().default(true)
+        }).custom((value, helpers) => {
+            // Validar que puntos_maximos >= puntos_minimos si está definido
+            if (value.puntos_maximos !== null && value.puntos_maximos !== undefined) {
+                if (value.puntos_maximos < value.puntos_minimos) {
+                    return helpers.error('any.custom', {
+                        message: 'puntos_maximos debe ser mayor o igual a puntos_minimos'
+                    });
+                }
+            }
+            return value;
+        })
+    },
+
+    /**
+     * Schema para actualizar nivel de lealtad
+     * PUT /api/v1/pos/lealtad/niveles/:id
+     */
+    actualizarNivelLealtad: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            nombre: Joi.string().min(2).max(50).optional(),
+            codigo: Joi.string().min(2).max(20).pattern(/^[A-Z0-9_]+$/i).optional(),
+            color: Joi.string().pattern(/^#[0-9A-Fa-f]{6}$/).optional(),
+            icono: Joi.string().max(50).optional().allow(null, ''),
+            puntos_minimos: Joi.number().integer().min(0).optional(),
+            puntos_maximos: Joi.number().integer().min(0).optional().allow(null),
+            multiplicador_puntos: Joi.number().min(1).max(10).optional(),
+            beneficios: Joi.object().optional(),
+            orden: Joi.number().integer().min(0).optional(),
+            activo: Joi.boolean().optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para eliminar nivel de lealtad
+     * DELETE /api/v1/pos/lealtad/niveles/:id
+     */
+    eliminarNivelLealtad: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para obtener puntos de un cliente
+     * GET /api/v1/pos/lealtad/clientes/:clienteId/puntos
+     */
+    obtenerPuntosCliente: {
+        params: Joi.object({
+            clienteId: Joi.number().integer().positive().required()
+        })
+    },
+
+    /**
+     * Schema para historial de puntos
+     * GET /api/v1/pos/lealtad/clientes/:clienteId/historial
+     */
+    historialPuntos: {
+        params: Joi.object({
+            clienteId: Joi.number().integer().positive().required()
+        }),
+        query: Joi.object({
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0),
+            tipo: Joi.string().valid('acumulacion', 'canje', 'ajuste', 'expiracion', 'registro', 'cumpleanos').optional(),
+            fecha_desde: Joi.string().isoDate().optional(),
+            fecha_hasta: Joi.string().isoDate().optional()
+        })
+    },
+
+    /**
+     * Schema para listar clientes con puntos
+     * GET /api/v1/pos/lealtad/clientes
+     */
+    listarClientesPuntos: {
+        query: Joi.object({
+            limit: Joi.number().integer().min(1).max(100).optional().default(50),
+            offset: Joi.number().integer().min(0).optional().default(0),
+            busqueda: Joi.string().min(2).max(100).optional(),
+            nivel_id: Joi.number().integer().positive().optional(),
+            orden: Joi.string().valid('puntos_asc', 'puntos_desc', 'nombre_asc', 'nombre_desc').optional().default('puntos_desc')
+        })
+    },
+
+    /**
+     * Schema para calcular puntos que ganaría una venta (preview)
+     * POST /api/v1/pos/lealtad/calcular
+     */
+    calcularPuntosVenta: {
+        body: Joi.object({
+            cliente_id: Joi.number().integer().positive().optional().allow(null),
+            monto: Joi.number().min(0).required().messages({
+                'any.required': 'monto es requerido',
+                'number.min': 'monto no puede ser negativo'
+            }),
+            tiene_cupon: Joi.boolean().optional().default(false)
+        })
+    },
+
+    /**
+     * Schema para validar canje de puntos (preview)
+     * POST /api/v1/pos/lealtad/validar-canje
+     */
+    validarCanjePuntos: {
+        body: Joi.object({
+            cliente_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'cliente_id es requerido'
+            }),
+            puntos: Joi.number().integer().positive().required().messages({
+                'any.required': 'puntos es requerido',
+                'number.positive': 'puntos debe ser mayor a 0'
+            }),
+            total_venta: Joi.number().min(0).required().messages({
+                'any.required': 'total_venta es requerido'
+            })
+        })
+    },
+
+    /**
+     * Schema para canjear puntos por descuento
+     * POST /api/v1/pos/lealtad/canjear
+     */
+    canjearPuntos: {
+        body: Joi.object({
+            cliente_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'cliente_id es requerido'
+            }),
+            venta_id: Joi.number().integer().positive().optional().allow(null),
+            puntos: Joi.number().integer().positive().required().messages({
+                'any.required': 'puntos es requerido',
+                'number.positive': 'puntos debe ser mayor a 0'
+            }),
+            descuento: Joi.number().min(0.01).required().messages({
+                'any.required': 'descuento es requerido',
+                'number.min': 'descuento debe ser mayor a 0'
+            }),
+            descripcion: Joi.string().max(500).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para acumular puntos por una venta
+     * POST /api/v1/pos/lealtad/acumular
+     */
+    acumularPuntos: {
+        body: Joi.object({
+            cliente_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'cliente_id es requerido'
+            }),
+            venta_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'venta_id es requerido'
+            }),
+            monto: Joi.number().min(0).required().messages({
+                'any.required': 'monto es requerido'
+            }),
+            descripcion: Joi.string().max(500).optional().allow(null, '')
+        })
+    },
+
+    /**
+     * Schema para ajuste manual de puntos (admin)
+     * POST /api/v1/pos/lealtad/ajustar
+     */
+    ajustarPuntos: {
+        body: Joi.object({
+            cliente_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'cliente_id es requerido'
+            }),
+            puntos: Joi.number().integer().required().messages({
+                'any.required': 'puntos es requerido'
+            }),
+            motivo: Joi.string().min(3).max(500).required().messages({
+                'any.required': 'motivo es requerido',
+                'string.min': 'motivo debe tener al menos 3 caracteres'
+            })
+        })
+    },
+
+    /**
+     * Schema para obtener estadísticas del programa
+     * GET /api/v1/pos/lealtad/estadisticas
+     */
+    estadisticasLealtad: {
+        query: Joi.object({
+            fecha_desde: Joi.string().isoDate().optional(),
+            fecha_hasta: Joi.string().isoDate().optional()
+        })
+    },
+
+    // ========================================================================
+    // COMBOS / PAQUETES (Ene 2026 - Fase 3)
+    // ========================================================================
+
+    /**
+     * Schema para crear combo
+     * POST /api/v1/pos/combos
+     */
+    crearCombo: {
+        body: Joi.object({
+            producto_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'producto_id es requerido'
+            }),
+
+            tipo_precio: Joi.string()
+                .valid('fijo', 'suma_componentes', 'descuento_porcentaje')
+                .optional()
+                .default('fijo'),
+
+            descuento_porcentaje: Joi.number()
+                .min(0)
+                .max(100)
+                .optional()
+                .default(0),
+
+            manejo_stock: Joi.string()
+                .valid('descontar_componentes', 'descontar_combo')
+                .optional()
+                .default('descontar_componentes'),
+
+            componentes: Joi.array()
+                .min(1)
+                .items(
+                    Joi.object({
+                        producto_id: Joi.number().integer().positive().required(),
+                        cantidad: Joi.number().integer().min(1).optional().default(1),
+                        precio_unitario: Joi.number().min(0).optional().allow(null)
+                    })
+                )
+                .required()
+                .messages({
+                    'any.required': 'componentes es requerido',
+                    'array.min': 'Debe incluir al menos 1 componente'
+                })
+        })
+    },
+
+    /**
+     * Schema para actualizar combo
+     * PUT /api/v1/pos/combos/:productoId
+     */
+    actualizarCombo: {
+        params: Joi.object({
+            productoId: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            tipo_precio: Joi.string()
+                .valid('fijo', 'suma_componentes', 'descuento_porcentaje')
+                .optional(),
+
+            descuento_porcentaje: Joi.number().min(0).max(100).optional(),
+
+            manejo_stock: Joi.string()
+                .valid('descontar_componentes', 'descontar_combo')
+                .optional(),
+
+            activo: Joi.boolean().optional(),
+
+            componentes: Joi.array()
+                .min(1)
+                .items(
+                    Joi.object({
+                        producto_id: Joi.number().integer().positive().required(),
+                        cantidad: Joi.number().integer().min(1).optional().default(1),
+                        precio_unitario: Joi.number().min(0).optional().allow(null)
+                    })
+                )
+                .optional()
+        }).min(1)
+    },
+
+    // ========================================================================
+    // MODIFICADORES (Ene 2026 - Fase 3)
+    // ========================================================================
+
+    /**
+     * Schema para crear grupo de modificadores
+     * POST /api/v1/pos/modificadores/grupos
+     */
+    crearGrupoModificadores: {
+        body: Joi.object({
+            nombre: Joi.string()
+                .min(2)
+                .max(100)
+                .required()
+                .messages({
+                    'any.required': 'nombre es requerido',
+                    'string.min': 'nombre debe tener al menos 2 caracteres'
+                }),
+
+            codigo: Joi.string()
+                .max(50)
+                .pattern(/^[A-Z0-9_-]+$/i)
+                .optional(),
+
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+
+            tipo_seleccion: Joi.string()
+                .valid('unico', 'multiple')
+                .optional()
+                .default('unico'),
+
+            requerido: Joi.boolean().optional().default(false),
+            minimo_seleccion: Joi.number().integer().min(0).optional().default(0),
+            maximo_seleccion: Joi.number().integer().min(1).optional().allow(null),
+            orden: Joi.number().integer().min(0).optional().default(0),
+
+            modificadores: Joi.array()
+                .items(
+                    Joi.object({
+                        nombre: Joi.string().min(1).max(100).required(),
+                        codigo: Joi.string().max(50).optional(),
+                        prefijo: Joi.string().max(20).optional().allow(null),
+                        precio_adicional: Joi.number().optional().default(0),
+                        es_default: Joi.boolean().optional().default(false)
+                    })
+                )
+                .optional()
+        })
+    },
+
+    /**
+     * Schema para actualizar grupo de modificadores
+     * PUT /api/v1/pos/modificadores/grupos/:id
+     */
+    actualizarGrupoModificadores: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            nombre: Joi.string().min(2).max(100).optional(),
+            codigo: Joi.string().max(50).pattern(/^[A-Z0-9_-]+$/i).optional(),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+            tipo_seleccion: Joi.string().valid('unico', 'multiple').optional(),
+            requerido: Joi.boolean().optional(),
+            minimo_seleccion: Joi.number().integer().min(0).optional(),
+            maximo_seleccion: Joi.number().integer().min(1).optional().allow(null),
+            orden: Joi.number().integer().min(0).optional(),
+            activo: Joi.boolean().optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para crear modificador
+     * POST /api/v1/pos/modificadores
+     */
+    crearModificador: {
+        body: Joi.object({
+            grupo_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'grupo_id es requerido'
+            }),
+
+            nombre: Joi.string()
+                .min(1)
+                .max(100)
+                .required()
+                .messages({
+                    'any.required': 'nombre es requerido'
+                }),
+
+            codigo: Joi.string().max(50).optional(),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+            prefijo: Joi.string().max(20).optional().allow(null),
+            precio_adicional: Joi.number().optional().default(0),
+            producto_id: Joi.number().integer().positive().optional().allow(null),
+            es_default: Joi.boolean().optional().default(false),
+            orden: Joi.number().integer().min(0).optional().default(0)
+        })
+    },
+
+    /**
+     * Schema para actualizar modificador
+     * PUT /api/v1/pos/modificadores/:id
+     */
+    actualizarModificador: {
+        params: Joi.object({
+            id: Joi.number().integer().positive().required()
+        }),
+
+        body: Joi.object({
+            nombre: Joi.string().min(1).max(100).optional(),
+            codigo: Joi.string().max(50).optional(),
+            descripcion: Joi.string().max(500).optional().allow(null, ''),
+            prefijo: Joi.string().max(20).optional().allow(null),
+            precio_adicional: Joi.number().optional(),
+            producto_id: Joi.number().integer().positive().optional().allow(null),
+            es_default: Joi.boolean().optional(),
+            orden: Joi.number().integer().min(0).optional(),
+            activo: Joi.boolean().optional()
+        }).min(1)
+    },
+
+    /**
+     * Schema para asignar grupo a producto/categoría
+     * POST /api/v1/pos/productos/:productoId/grupos
+     * POST /api/v1/pos/categorias/:categoriaId/grupos
+     */
+    asignarGrupo: {
+        body: Joi.object({
+            grupo_id: Joi.number().integer().positive().required().messages({
+                'any.required': 'grupo_id es requerido'
+            }),
+            requerido: Joi.boolean().optional().allow(null),
+            orden: Joi.number().integer().min(0).optional().default(0)
+        })
     }
 };
 

@@ -21,6 +21,7 @@ export function useProductos(params = {}) {
       return response.data.data || { productos: [], total: 0 };
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
+    refetchOnWindowFocus: false, // Ene 2026: evitar refetch innecesario en POS
   });
 }
 
@@ -58,7 +59,7 @@ export function useBuscarProductos(params) {
       return response.data.data || [];
     },
     enabled: !!params.q && params.q.length >= 2,
-    staleTime: 1000 * 30, // 30 segundos (búsqueda debe ser más fresca)
+    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests POS
   });
 }
 

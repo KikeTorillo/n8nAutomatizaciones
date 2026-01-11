@@ -3830,6 +3830,372 @@ export const posApi = {
    * @returns {Promise<Object>}
    */
   cambiarEstadoCupon: (id, activo) => apiClient.patch(`/pos/cupones/${id}/estado`, { activo }),
+
+  // ========== Promociones Automáticas (Ene 2026) ==========
+
+  /**
+   * Listar promociones vigentes (para aplicar en POS)
+   * @param {Object} params - { sucursal_id? }
+   * @returns {Promise<Object>} Array de promociones activas y vigentes
+   */
+  listarPromocionesVigentes: (params = {}) => apiClient.get('/pos/promociones/vigentes', { params }),
+
+  /**
+   * Evaluar promociones aplicables a un carrito
+   * @param {Object} data - { items: [{ producto_id, cantidad, precio_unitario, categoria_id? }], subtotal, cliente_id?, sucursal_id? }
+   * @returns {Promise<Object>} { promociones: [...], descuento_total, hay_exclusiva, cantidad_aplicables }
+   */
+  evaluarPromociones: (data) => apiClient.post('/pos/promociones/evaluar', data),
+
+  /**
+   * Aplicar promoción a una venta (registrar uso)
+   * @param {Object} data - { promocion_id, venta_pos_id, cliente_id?, descuento_total, productos_aplicados? }
+   * @returns {Promise<Object>} uso_promociones row
+   */
+  aplicarPromocion: (data) => apiClient.post('/pos/promociones/aplicar', data),
+
+  /**
+   * Listar promociones con paginación (administración)
+   * @param {Object} params - { page?, limit?, busqueda?, activo?, vigente?, tipo?, ordenPor?, orden? }
+   * @returns {Promise<Object>} { promociones, paginacion }
+   */
+  listarPromociones: (params = {}) => apiClient.get('/pos/promociones', { params }),
+
+  /**
+   * Crear nueva promoción
+   * @param {Object} data - { codigo, nombre, tipo, reglas, valor_descuento?, fecha_inicio, fecha_fin?, ... }
+   * @returns {Promise<Object>}
+   */
+  crearPromocion: (data) => apiClient.post('/pos/promociones', data),
+
+  /**
+   * Obtener promoción por ID
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerPromocion: (id) => apiClient.get(`/pos/promociones/${id}`),
+
+  /**
+   * Actualizar promoción
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarPromocion: (id, data) => apiClient.put(`/pos/promociones/${id}`, data),
+
+  /**
+   * Eliminar promoción (solo si no tiene usos)
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarPromocion: (id) => apiClient.delete(`/pos/promociones/${id}`),
+
+  /**
+   * Obtener historial de uso de una promoción
+   * @param {number} id
+   * @param {Object} params - { limit?, offset? }
+   * @returns {Promise<Object>}
+   */
+  obtenerHistorialPromocion: (id, params = {}) => apiClient.get(`/pos/promociones/${id}/historial`, { params }),
+
+  /**
+   * Obtener estadísticas de una promoción
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  obtenerEstadisticasPromocion: (id) => apiClient.get(`/pos/promociones/${id}/estadisticas`),
+
+  /**
+   * Activar/desactivar promoción
+   * @param {number} id
+   * @param {boolean} activo
+   * @returns {Promise<Object>}
+   */
+  cambiarEstadoPromocion: (id, activo) => apiClient.patch(`/pos/promociones/${id}/estado`, { activo }),
+
+  /**
+   * Duplicar promoción
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  duplicarPromocion: (id) => apiClient.post(`/pos/promociones/${id}/duplicar`),
+
+  // ========== Programa de Lealtad (Ene 2026) ==========
+
+  /**
+   * Obtener configuración del programa de lealtad
+   * @returns {Promise<Object>} { configuracion }
+   */
+  obtenerConfiguracionLealtad: () => apiClient.get('/pos/lealtad/configuracion'),
+
+  /**
+   * Guardar configuración del programa de lealtad
+   * @param {Object} data - { activo, puntos_por_peso, pesos_por_punto_descuento, meses_expiracion, ... }
+   * @returns {Promise<Object>}
+   */
+  guardarConfiguracionLealtad: (data) => apiClient.put('/pos/lealtad/configuracion', data),
+
+  /**
+   * Listar niveles de lealtad
+   * @param {Object} params - { incluir_inactivos? }
+   * @returns {Promise<Object>} Array de niveles
+   */
+  listarNivelesLealtad: (params = {}) => apiClient.get('/pos/lealtad/niveles', { params }),
+
+  /**
+   * Crear nivel de lealtad
+   * @param {Object} data - { nombre, codigo, color?, puntos_minimos, puntos_maximos?, multiplicador_puntos?, ... }
+   * @returns {Promise<Object>}
+   */
+  crearNivelLealtad: (data) => apiClient.post('/pos/lealtad/niveles', data),
+
+  /**
+   * Actualizar nivel de lealtad
+   * @param {number} id
+   * @param {Object} data
+   * @returns {Promise<Object>}
+   */
+  actualizarNivelLealtad: (id, data) => apiClient.put(`/pos/lealtad/niveles/${id}`, data),
+
+  /**
+   * Eliminar nivel de lealtad
+   * @param {number} id
+   * @returns {Promise<Object>}
+   */
+  eliminarNivelLealtad: (id) => apiClient.delete(`/pos/lealtad/niveles/${id}`),
+
+  /**
+   * Crear niveles por defecto (Bronze, Silver, Gold, Platinum)
+   * @returns {Promise<Object>} Array de niveles creados
+   */
+  crearNivelesLealtadDefault: () => apiClient.post('/pos/lealtad/niveles/default'),
+
+  /**
+   * Obtener puntos de un cliente
+   * @param {number} clienteId
+   * @returns {Promise<Object>} { puntos_disponibles, puntos_totales, nivel, proximo_nivel, ... }
+   */
+  obtenerPuntosCliente: (clienteId) => apiClient.get(`/pos/lealtad/clientes/${clienteId}/puntos`),
+
+  /**
+   * Obtener historial de transacciones de puntos de un cliente
+   * @param {number} clienteId
+   * @param {Object} params - { limit?, offset?, tipo?, fecha_desde?, fecha_hasta? }
+   * @returns {Promise<Object>} { transacciones, paginacion }
+   */
+  obtenerHistorialPuntos: (clienteId, params = {}) => apiClient.get(`/pos/lealtad/clientes/${clienteId}/historial`, { params }),
+
+  /**
+   * Listar clientes con puntos (administración)
+   * @param {Object} params - { limit?, offset?, busqueda?, nivel_id?, orden? }
+   * @returns {Promise<Object>} { clientes, paginacion }
+   */
+  listarClientesConPuntos: (params = {}) => apiClient.get('/pos/lealtad/clientes', { params }),
+
+  /**
+   * Calcular puntos que ganaría una venta (preview)
+   * @param {Object} data - { cliente_id?, monto, tiene_cupon? }
+   * @returns {Promise<Object>} { puntos, multiplicador, detalle }
+   */
+  calcularPuntosVenta: (data) => apiClient.post('/pos/lealtad/calcular', data),
+
+  /**
+   * Validar canje de puntos (preview sin aplicar)
+   * @param {Object} data - { cliente_id, puntos, total_venta }
+   * @returns {Promise<Object>} { valido, descuento, mensaje }
+   */
+  validarCanjePuntos: (data) => apiClient.post('/pos/lealtad/validar-canje', data),
+
+  /**
+   * Canjear puntos por descuento
+   * @param {Object} data - { cliente_id, venta_id?, puntos, descuento, descripcion? }
+   * @returns {Promise<Object>} Transacción de canje
+   */
+  canjearPuntos: (data) => apiClient.post('/pos/lealtad/canjear', data),
+
+  /**
+   * Acumular puntos por una venta
+   * @param {Object} data - { cliente_id, venta_id, monto, descripcion? }
+   * @returns {Promise<Object>} Transacción de acumulación
+   */
+  acumularPuntos: (data) => apiClient.post('/pos/lealtad/acumular', data),
+
+  /**
+   * Ajuste manual de puntos (administración)
+   * @param {Object} data - { cliente_id, puntos, motivo }
+   * @returns {Promise<Object>} Transacción de ajuste
+   */
+  ajustarPuntos: (data) => apiClient.post('/pos/lealtad/ajustar', data),
+
+  /**
+   * Obtener estadísticas del programa de lealtad
+   * @returns {Promise<Object>} { clientes_activos, puntos_circulantes, canjes_mes, ... }
+   */
+  obtenerEstadisticasLealtad: () => apiClient.get('/pos/lealtad/estadisticas'),
+
+  // ========== Combos y Modificadores (Ene 2026) ==========
+
+  // --- Combos ---
+
+  /**
+   * Verificar si un producto es combo
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} { es_combo: boolean }
+   */
+  verificarCombo: (productoId) => apiClient.get(`/pos/combos/verificar/${productoId}`),
+
+  /**
+   * Obtener combo por producto ID
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} Combo con componentes
+   */
+  obtenerCombo: (productoId) => apiClient.get(`/pos/combos/${productoId}`),
+
+  /**
+   * Listar combos
+   * @param {Object} params - { limit?, offset?, busqueda?, activo? }
+   * @returns {Promise<Object>} { data, total, paginacion }
+   */
+  listarCombos: (params = {}) => apiClient.get('/pos/combos', { params }),
+
+  /**
+   * Crear combo
+   * @param {Object} data - { producto_id, tipo_precio, descuento_porcentaje?, componentes[] }
+   * @returns {Promise<Object>} Combo creado
+   */
+  crearCombo: (data) => apiClient.post('/pos/combos', data),
+
+  /**
+   * Actualizar combo
+   * @param {number} productoId - ID del producto
+   * @param {Object} data - Datos a actualizar
+   * @returns {Promise<Object>} Combo actualizado
+   */
+  actualizarCombo: (productoId, data) => apiClient.put(`/pos/combos/${productoId}`, data),
+
+  /**
+   * Eliminar combo
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>}
+   */
+  eliminarCombo: (productoId) => apiClient.delete(`/pos/combos/${productoId}`),
+
+  /**
+   * Calcular precio de combo
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} { precio }
+   */
+  calcularPrecioCombo: (productoId) => apiClient.get(`/pos/combos/${productoId}/precio`),
+
+  /**
+   * Verificar stock de combo
+   * @param {number} productoId - ID del producto
+   * @param {number} cantidad - Cantidad a verificar (default 1)
+   * @returns {Promise<Object>} { disponible, componentes }
+   */
+  verificarStockCombo: (productoId, cantidad = 1) => apiClient.get(`/pos/combos/${productoId}/stock`, { params: { cantidad } }),
+
+  // --- Grupos de Modificadores ---
+
+  /**
+   * Listar grupos de modificadores
+   * @param {Object} params - { activo?, incluir_modificadores? }
+   * @returns {Promise<Object>} Lista de grupos
+   */
+  listarGruposModificadores: (params = {}) => apiClient.get('/pos/modificadores/grupos', { params }),
+
+  /**
+   * Crear grupo de modificadores
+   * @param {Object} data - { nombre, descripcion?, tipo_seleccion, es_obligatorio?, minimo_seleccion?, maximo_seleccion?, modificadores[]? }
+   * @returns {Promise<Object>} Grupo creado
+   */
+  crearGrupoModificadores: (data) => apiClient.post('/pos/modificadores/grupos', data),
+
+  /**
+   * Actualizar grupo de modificadores
+   * @param {number} id - ID del grupo
+   * @param {Object} data - Datos a actualizar
+   * @returns {Promise<Object>} Grupo actualizado
+   */
+  actualizarGrupoModificadores: (id, data) => apiClient.put(`/pos/modificadores/grupos/${id}`, data),
+
+  /**
+   * Eliminar grupo de modificadores
+   * @param {number} id - ID del grupo
+   * @returns {Promise<Object>}
+   */
+  eliminarGrupoModificadores: (id) => apiClient.delete(`/pos/modificadores/grupos/${id}`),
+
+  // --- Modificadores ---
+
+  /**
+   * Crear modificador
+   * @param {Object} data - { grupo_id, nombre, descripcion?, precio_adicional?, prefijo?, orden?, activo? }
+   * @returns {Promise<Object>} Modificador creado
+   */
+  crearModificador: (data) => apiClient.post('/pos/modificadores', data),
+
+  /**
+   * Actualizar modificador
+   * @param {number} id - ID del modificador
+   * @param {Object} data - Datos a actualizar
+   * @returns {Promise<Object>} Modificador actualizado
+   */
+  actualizarModificador: (id, data) => apiClient.put(`/pos/modificadores/${id}`, data),
+
+  /**
+   * Eliminar modificador
+   * @param {number} id - ID del modificador
+   * @returns {Promise<Object>}
+   */
+  eliminarModificador: (id) => apiClient.delete(`/pos/modificadores/${id}`),
+
+  // --- Modificadores de Producto ---
+
+  /**
+   * Obtener modificadores de un producto
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} Grupos y modificadores del producto
+   */
+  obtenerModificadoresProducto: (productoId) => apiClient.get(`/pos/productos/${productoId}/modificadores`),
+
+  /**
+   * Verificar si un producto tiene modificadores
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} { tiene_modificadores: boolean }
+   */
+  tieneModificadores: (productoId) => apiClient.get(`/pos/productos/${productoId}/tiene-modificadores`),
+
+  /**
+   * Listar asignaciones de grupos a un producto
+   * @param {number} productoId - ID del producto
+   * @returns {Promise<Object>} Lista de asignaciones
+   */
+  listarAsignacionesProducto: (productoId) => apiClient.get(`/pos/productos/${productoId}/grupos`),
+
+  /**
+   * Asignar grupo a producto
+   * @param {number} productoId - ID del producto
+   * @param {Object} data - { grupo_id, orden? }
+   * @returns {Promise<Object>} Asignación creada
+   */
+  asignarGrupoAProducto: (productoId, data) => apiClient.post(`/pos/productos/${productoId}/grupos`, data),
+
+  /**
+   * Eliminar asignación de grupo a producto
+   * @param {number} productoId - ID del producto
+   * @param {number} grupoId - ID del grupo
+   * @returns {Promise<Object>}
+   */
+  eliminarAsignacionProducto: (productoId, grupoId) => apiClient.delete(`/pos/productos/${productoId}/grupos/${grupoId}`),
+
+  /**
+   * Asignar grupo a categoría
+   * @param {number} categoriaId - ID de la categoría
+   * @param {Object} data - { grupo_id, orden? }
+   * @returns {Promise<Object>} Asignación creada
+   */
+  asignarGrupoACategoria: (categoriaId, data) => apiClient.post(`/pos/categorias/${categoriaId}/grupos`, data),
 };
 
 // ==================== MÓDULOS ====================

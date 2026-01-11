@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw, DollarSign, Lock, ArrowUpDown, MoreVertical, Grid3X3, Search } from 'lucide-react';
+import { ShoppingCart, Trash2, Check, AlertCircle, User, RefreshCw, DollarSign, Lock, ArrowUpDown, MoreVertical, Grid3X3, Search, Monitor } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import BackButton from '@/components/ui/BackButton';
@@ -8,13 +8,13 @@ import useAuthStore from '@/store/authStore';
 import useSucursalStore from '@/store/sucursalStore';
 import { useCrearVenta } from '@/hooks/useVentas';
 import { useAccesoModulo } from '@/hooks/useAccesoModulo';
-import {
-  useCrearReserva,
-  useCancelarReserva,
-  useConfirmarReservasMultiple
-} from '@/hooks/useInventario';
+// Ene 2026: Reservas de stock se manejan atómicamente en el backend
+// El frontend ya NO crea/cancela reservas durante el carrito
+// import { useCrearReserva, useCancelarReserva, useConfirmarReservasMultiple } from '@/hooks/useInventario';
 import { useSesionCajaActiva, useCategoriasPOS, useProductosPOS, useRegistrarPagosSplit } from '@/hooks/usePOS';
 import { useEstadoCredito } from '@/hooks/useClienteCredito';
+import { useEvaluarPromociones, useAplicarPromocion } from '@/hooks/usePromociones';
+import { usePOSDisplaySync } from '@/hooks/usePOSBroadcast';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CategoriasPOS from '@/components/pos/CategoriasPOS';
 import ProductosGridPOS from '@/components/pos/ProductosGridPOS';
@@ -46,10 +46,9 @@ export default function VentaPOSPage() {
   const crearVenta = useCrearVenta();
   const registrarPagosSplit = useRegistrarPagosSplit();
 
-  // Dic 2025: Hooks para reservas de stock (evitar sobreventa)
-  const crearReserva = useCrearReserva();
-  const cancelarReserva = useCancelarReserva();
-  const confirmarReservas = useConfirmarReservasMultiple();
+  // Ene 2026: Las reservas de stock se manejan atómicamente en el backend
+  // El frontend ya NO necesita crear/cancelar reservas durante el carrito
+  // Esto elimina ~3 API calls por cada click en producto (problema de rate limiting)
 
   // Nov 2025: Obtener profesional vinculado y validar acceso a POS
   const {
@@ -85,6 +84,14 @@ export default function VentaPOSPage() {
   const [productoParaNS, setProductoParaNS] = useState(null);
   const pendingNSCallback = useRef(null);
 
+  // Ene 2026: Cache local de precios para reducir requests al API
+  // Key: `${productoId}-${cantidad}-${clienteId}`, Value: { precio, timestamp }
+  const preciosCache = useRef(new Map());
+  const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+  // Ene 2026: itemsRef ya no es necesario (las reservas se manejan en backend)
+  // const itemsRef = useRef(items);
+
   // Ene 2026: Estados para sesiones de caja
   const [mostrarAperturaCaja, setMostrarAperturaCaja] = useState(false);
   const [mostrarCierreCaja, setMostrarCierreCaja] = useState(false);
@@ -97,6 +104,39 @@ export default function VentaPOSPage() {
 
   // Ene 2026: Estado para cupón de descuento
   const [cuponActivo, setCuponActivo] = useState(null);
+
+  // Ene 2026: Hook para evaluar promociones automáticas
+  const sucursalId = getSucursalId() || user?.sucursal_id;
+  const {
+    data: promocionesData,
+    isLoading: evaluandoPromociones
+  } = useEvaluarPromociones(
+    {
+      items: items.map(item => ({
+        producto_id: item.producto_id,
+        cantidad: item.cantidad,
+        precio_unitario: item.precio_unitario || item.precio_venta,
+        categoria_id: item.categoria_id
+      })),
+      subtotal: items.reduce((sum, item) => {
+        const precio = parseFloat(item.precio_unitario || item.precio_venta || 0);
+        const cantidad = parseInt(item.cantidad || 1);
+        const descuento = parseFloat(item.descuento_monto || 0);
+        return sum + (precio * cantidad - descuento);
+      }, 0),
+      clienteId: clienteSeleccionado?.id,
+      sucursalId
+    },
+    { enabled: items.length > 0 }
+  );
+
+  // Extraer datos de promociones
+  const promocionesAplicadas = promocionesData?.promociones || [];
+  const descuentoPromociones = promocionesData?.descuento_total || 0;
+  const hayPromocionExclusiva = promocionesData?.hay_exclusiva || false;
+
+  // Hook para aplicar promociones al confirmar venta
+  const aplicarPromocion = useAplicarPromocion();
 
   // Ene 2026: Hooks para Grid Visual de Productos
   const { data: categorias = [], isLoading: isLoadingCategorias } = useCategoriasPOS();
@@ -124,22 +164,23 @@ export default function VentaPOSPage() {
     }
   }, [isLoadingSesion, sesionActiva]);
 
-  // Fix Dic 2025: Cleanup de reservas huérfanas al desmontar el componente
-  useEffect(() => {
-    return () => {
-      const reservasActivas = items.filter(item => item.reserva_id);
-      if (reservasActivas.length > 0) {
-        reservasActivas.forEach(item => {
-          cancelarReserva.mutateAsync(item.reserva_id).catch(() => {});
-        });
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Ene 2026: Ya no necesitamos cleanup de reservas
+  // Las reservas se crean atómicamente en el backend al confirmar la venta
+  // Esto elimina el problema de reservas huérfanas y reduce API calls
 
   // Dic 2025: Función para obtener precio inteligente de un producto
+  // Ene 2026: Con cache local para reducir requests
   const obtenerPrecioInteligente = useCallback(async (productoId, cantidad = 1) => {
     try {
+      const clienteId = clienteSeleccionado?.id || 'none';
+      const cacheKey = `${productoId}-${cantidad}-${clienteId}`;
+
+      // Verificar cache
+      const cached = preciosCache.current.get(cacheKey);
+      if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+        return cached.precio;
+      }
+
       const params = {
         cantidad,
         ...(clienteSeleccionado?.id && { clienteId: clienteSeleccionado.id }),
@@ -147,7 +188,14 @@ export default function VentaPOSPage() {
       };
 
       const response = await listasPreciosApi.obtenerPrecio(productoId, params);
-      return response?.data?.data || null;
+      const precio = response?.data?.data || null;
+
+      // Guardar en cache
+      if (precio) {
+        preciosCache.current.set(cacheKey, { precio, timestamp: Date.now() });
+      }
+
+      return precio;
     } catch (error) {
       console.warn('[POS] Error obteniendo precio inteligente:', error);
       return null;
@@ -204,7 +252,9 @@ export default function VentaPOSPage() {
   }, [items, clienteSeleccionado, user?.sucursal_id, toast]);
 
   // Recalcular precios cuando cambia el cliente
+  // Ene 2026: También limpiar cache de precios
   useEffect(() => {
+    preciosCache.current.clear(); // Limpiar cache al cambiar cliente
     if (items.length > 0) {
       recalcularPreciosCarrito();
     }
@@ -220,9 +270,39 @@ export default function VentaPOSPage() {
   }, 0);
 
   const montoDescuentoGlobal = (subtotal * (parseFloat(descuentoGlobal) / 100));
-  // Ene 2026: Incluir descuento de cupón en el total
+  // Ene 2026: Incluir descuento de cupón y promociones en el total
   const descuentoCupon = cuponActivo?.descuento_calculado || 0;
-  const total = subtotal - montoDescuentoGlobal - descuentoCupon;
+  // Si hay promoción exclusiva, no aplicar cupones
+  const descuentoCuponFinal = hayPromocionExclusiva ? 0 : descuentoCupon;
+  const total = subtotal - montoDescuentoGlobal - descuentoCuponFinal - descuentoPromociones;
+
+  // Ene 2026: Sincronización con pantalla del cliente
+  const cartDataForDisplay = useMemo(() => {
+    if (items.length === 0) return null;
+    return {
+      items: items.map(item => ({
+        nombre: item.nombre,
+        cantidad: item.cantidad,
+        precioUnitario: parseFloat(item.precio_unitario || item.precio_venta || 0),
+        subtotal: parseFloat(item.precio_unitario || item.precio_venta || 0) * item.cantidad,
+      })),
+      subtotal,
+      descuentos: {
+        global: montoDescuentoGlobal,
+        cupon: descuentoCuponFinal,
+        promociones: descuentoPromociones,
+      },
+      total,
+      cliente: clienteSeleccionado ? {
+        nombre: clienteSeleccionado.nombre_completo || clienteSeleccionado.nombre,
+      } : null,
+    };
+  }, [items, subtotal, montoDescuentoGlobal, descuentoCuponFinal, descuentoPromociones, total, clienteSeleccionado]);
+
+  const { isDisplayConnected, broadcastPaymentStart, broadcastPaymentComplete, broadcastClear } = usePOSDisplaySync(
+    cartDataForDisplay,
+    { organizacion: user?.organizacion }
+  );
 
   // Handler: Agregar producto al carrito
   // Dic 2025: Integración con listas de precios inteligentes + reservas de stock + números de serie
@@ -249,120 +329,79 @@ export default function VentaPOSPage() {
     }
 
     if (itemExistente) {
-      // Incrementar cantidad y recalcular precio por qty breaks
+      // Ene 2026: Incrementar cantidad sin crear reservas (se valida en backend al confirmar)
       const nuevaCantidad = itemExistente.cantidad + 1;
-      const reservaAnteriorId = itemExistente.reserva_id;
 
-      try {
-        let nuevaReservaId = null;
-
-        // Dic 2025: Las variantes NO usan reservas (stock en tabla separada)
-        if (producto.es_variante) {
-          // Validación simple de stock para variantes
-          if (nuevaCantidad > producto.stock_actual) {
-            toast.error(`Stock insuficiente. Disponible: ${producto.stock_actual}`);
-            return;
-          }
-          nuevaReservaId = null; // Sin reserva para variantes
-        } else {
-          // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior
-          const nuevaReserva = await crearReserva.mutateAsync({
-            producto_id: producto.producto_id,
-            cantidad: nuevaCantidad,
-            tipo_origen: 'venta_pos'
-          });
-          nuevaReservaId = nuevaReserva.id;
-
-          // Solo si la nueva reserva fue exitosa, cancelar la anterior
-          if (reservaAnteriorId) {
-            try {
-              await cancelarReserva.mutateAsync(reservaAnteriorId);
-            } catch (cancelError) {
-              console.warn('[POS] Error cancelando reserva anterior:', cancelError);
-            }
-          }
-        }
-
-        // Obtener precio actualizado por cantidad
-        const precioResuelto = await obtenerPrecioInteligente(producto.producto_id, nuevaCantidad);
-
-        // Actualizar item (buscar por variante_id si es variante)
-        setItems(items.map(item => {
-          const esElMismo = producto.es_variante
-            ? item.variante_id === producto.variante_id
-            : item.producto_id === producto.producto_id && !item.variante_id;
-
-          return esElMismo
-            ? {
-                ...item,
-                cantidad: nuevaCantidad,
-                reserva_id: nuevaReservaId,
-                // Actualizar precio si hay qty break
-                ...(precioResuelto && {
-                  precio_unitario: parseFloat(precioResuelto.precio),
-                  fuente_precio: precioResuelto.fuente,
-                  fuente_detalle: precioResuelto.fuente_detalle,
-                  descuento_lista: parseFloat(precioResuelto.descuento_aplicado || 0),
-                  lista_codigo: precioResuelto.lista_codigo
-                })
-              }
-            : item;
-        }));
-        toast.success(`Cantidad de "${producto.nombre}" aumentada`);
-      } catch (error) {
-        // Si falla la nueva reserva, el item mantiene su reserva anterior intacta
-        toast.error(error.message || 'Stock insuficiente');
+      // Validación optimista de stock (solo UI, el backend valida atómicamente)
+      if (nuevaCantidad > (producto.stock_actual || 999)) {
+        toast.error(`Stock insuficiente. Disponible: ${producto.stock_actual}`);
         return;
       }
+
+      // Obtener precio actualizado por cantidad (qty breaks)
+      const precioResuelto = await obtenerPrecioInteligente(producto.producto_id, nuevaCantidad);
+
+      // Actualizar item (buscar por variante_id si es variante)
+      setItems(items.map(item => {
+        const esElMismo = producto.es_variante
+          ? item.variante_id === producto.variante_id
+          : item.producto_id === producto.producto_id && !item.variante_id;
+
+        return esElMismo
+          ? {
+              ...item,
+              cantidad: nuevaCantidad,
+              // Actualizar precio si hay qty break
+              ...(precioResuelto && {
+                precio_unitario: parseFloat(precioResuelto.precio),
+                fuente_precio: precioResuelto.fuente,
+                fuente_detalle: precioResuelto.fuente_detalle,
+                descuento_lista: parseFloat(precioResuelto.descuento_aplicado || 0),
+                lista_codigo: precioResuelto.lista_codigo
+              })
+            }
+          : item;
+      }));
+      toast.success(`Cantidad de "${producto.nombre}" aumentada`);
     } else {
       await agregarProductoAlCarrito(producto, null);
     }
   };
 
   // Handler interno para agregar producto al carrito (con o sin NS)
-  // Dic 2025: Soporte para variantes de producto
+  // Ene 2026: Ya NO crea reservas - el backend las maneja atómicamente al confirmar
   const agregarProductoAlCarrito = async (producto, numeroSerie = null) => {
     try {
-      let reservaId = null;
-
-      // Dic 2025: Las variantes no usan sistema de reservas (stock en tabla separada)
-      // Solo crear reserva para productos normales (sin variantes)
-      if (!producto.es_variante) {
-        const reserva = await crearReserva.mutateAsync({
-          producto_id: producto.producto_id,
-          cantidad: 1,
-          tipo_origen: 'venta_pos'
-        });
-        reservaId = reserva.id;
+      // Validación optimista de stock (el backend valida atómicamente al confirmar)
+      if ((producto.stock_actual || 0) < 1 && !producto.es_variante) {
+        toast.error(`"${producto.nombre}" sin stock disponible`);
+        return;
       }
 
       // Obtener precio inteligente para el producto
       const precioResuelto = await obtenerPrecioInteligente(producto.producto_id, 1);
 
-      // Agregar nuevo item con precio resuelto y reserva_id
-      // Dic 2025: Incluir variante_id si es variante
+      // Agregar nuevo item con precio resuelto (sin reserva_id)
       const nuevoItem = {
         id: Date.now(), // ID temporal para el carrito
         producto_id: producto.producto_id,
-        variante_id: producto.es_variante ? producto.variante_id : null, // Dic 2025
-        es_variante: producto.es_variante || false, // Dic 2025
-        reserva_id: reservaId, // null para variantes
+        variante_id: producto.es_variante ? producto.variante_id : null,
+        es_variante: producto.es_variante || false,
+        // Ene 2026: Ya no hay reserva_id - el backend maneja las reservas
         nombre: producto.nombre,
         sku: producto.sku,
-        precio_venta: producto.precio_venta, // Precio base
+        precio_venta: producto.precio_venta,
         precio_original: producto.precio_venta,
         precio_unitario: precioResuelto?.precio ? parseFloat(precioResuelto.precio) : producto.precio_venta,
         cantidad: 1,
         descuento_monto: 0,
         stock_actual: producto.stock_actual,
-        // Dic 2025: Info de lista de precios
         fuente_precio: precioResuelto?.fuente || 'precio_producto',
         fuente_detalle: precioResuelto?.fuente_detalle || 'Precio base del producto',
         descuento_lista: parseFloat(precioResuelto?.descuento_aplicado || 0),
         lista_codigo: precioResuelto?.lista_codigo || null,
-        // Dic 2025: Número de serie (INV-5)
         requiere_numero_serie: producto.requiere_numero_serie || false,
-        numero_serie: numeroSerie // { id, numero_serie, lote, fecha_vencimiento } o null
+        numero_serie: numeroSerie
       };
 
       setItems(prev => [...prev, nuevoItem]);
@@ -376,7 +415,7 @@ export default function VentaPOSPage() {
         toast.success(`"${producto.nombre}" agregado al carrito`);
       }
     } catch (error) {
-      toast.error(error.message || 'Stock insuficiente para este producto');
+      toast.error(error.message || 'Error al agregar producto');
     }
   };
 
@@ -394,56 +433,35 @@ export default function VentaPOSPage() {
   };
 
   // Handler: Actualizar cantidad de item
-  // Dic 2025: Recalcula precio cuando cambia cantidad (qty breaks) + actualiza reserva
-  // Fix Dic 2025: Crear nueva reserva ANTES de cancelar la anterior para evitar race condition
+  // Ene 2026: Ya NO crea reservas - solo actualiza estado local y recalcula precios
   const handleActualizarCantidad = async (itemId, nuevaCantidad) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
 
-    const reservaAnteriorId = item.reserva_id;
-
-    try {
-      // PRIMERO: Crear nueva reserva con cantidad actualizada
-      // Esto valida que hay stock suficiente ANTES de cancelar la anterior
-      const nuevaReserva = await crearReserva.mutateAsync({
-        producto_id: item.producto_id,
-        cantidad: nuevaCantidad,
-        tipo_origen: 'venta_pos'
-      });
-
-      // SEGUNDO: Solo si la nueva reserva fue exitosa, cancelar la anterior
-      if (reservaAnteriorId) {
-        try {
-          await cancelarReserva.mutateAsync(reservaAnteriorId);
-        } catch (cancelError) {
-          // Si falla la cancelación, loguear pero continuar (la reserva anterior expirará)
-          console.warn('[POS] Error cancelando reserva anterior:', cancelError);
-        }
-      }
-
-      // Obtener el precio actualizado por cantidad
-      const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
-
-      setItems(prevItems => prevItems.map(i =>
-        i.id === itemId
-          ? {
-              ...i,
-              cantidad: nuevaCantidad,
-              reserva_id: nuevaReserva.id,
-              ...(precioResuelto && {
-                precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
-                fuente_precio: precioResuelto.fuente,
-                fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
-                descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
-                lista_codigo: precioResuelto.lista_codigo
-              })
-            }
-          : i
-      ));
-    } catch (error) {
-      // Si la nueva reserva falla, el item mantiene su reserva anterior intacta
-      toast.error(error.message || 'Stock insuficiente para esta cantidad');
+    // Validación optimista de stock (el backend valida atómicamente al confirmar)
+    if (nuevaCantidad > (item.stock_actual || 999)) {
+      toast.error(`Stock insuficiente. Disponible: ${item.stock_actual}`);
+      return;
     }
+
+    // Obtener el precio actualizado por cantidad (qty breaks)
+    const precioResuelto = await obtenerPrecioInteligente(item.producto_id, nuevaCantidad);
+
+    setItems(prevItems => prevItems.map(i =>
+      i.id === itemId
+        ? {
+            ...i,
+            cantidad: nuevaCantidad,
+            ...(precioResuelto && {
+              precio_unitario: parseFloat(precioResuelto.precio_unitario || precioResuelto.precio),
+              fuente_precio: precioResuelto.fuente,
+              fuente_detalle: precioResuelto.fuente_detalle || `Lista: ${precioResuelto.lista_codigo || 'Precio base'}`,
+              descuento_lista: parseFloat(precioResuelto.descuento_pct || precioResuelto.descuento_aplicado || 0),
+              lista_codigo: precioResuelto.lista_codigo
+            })
+          }
+        : i
+    ));
   };
 
   // Handler: Actualizar descuento de item
@@ -456,37 +474,21 @@ export default function VentaPOSPage() {
   };
 
   // Handler: Eliminar item del carrito
-  // Dic 2025: Cancela la reserva de stock
-  const handleEliminarItem = async (itemId) => {
+  // Ene 2026: Ya no hay reservas que cancelar - solo actualiza estado local
+  const handleEliminarItem = (itemId) => {
     const item = items.find(i => i.id === itemId);
     if (!item) return;
-
-    // Cancelar reserva si existe
-    if (item.reserva_id) {
-      try {
-        await cancelarReserva.mutateAsync(item.reserva_id);
-      } catch (error) {
-        console.warn('Error al cancelar reserva:', error);
-      }
-    }
 
     setItems(items.filter(i => i.id !== itemId));
     toast.success(`"${item.nombre}" eliminado del carrito`);
   };
 
   // Handler: Vaciar carrito
-  // Dic 2025: Cancela todas las reservas de stock
-  const handleVaciarCarrito = async () => {
-    // Cancelar todas las reservas activas
-    const cancelaciones = items
-      .filter(item => item.reserva_id)
-      .map(item => cancelarReserva.mutateAsync(item.reserva_id).catch(() => {}));
-
-    await Promise.all(cancelaciones);
-
+  // Ene 2026: Ya no hay reservas que cancelar - solo actualiza estado local
+  const handleVaciarCarrito = () => {
     setItems([]);
     setDescuentoGlobal(0);
-    setCuponActivo(null); // Ene 2026: Limpiar cupón
+    setCuponActivo(null);
     setMostrarConfirmVaciar(false);
     toast.success('Carrito vaciado');
   };
@@ -511,99 +513,61 @@ export default function VentaPOSPage() {
     }
 
     setMostrarModalPago(true);
+
+    // Ene 2026: Notificar a pantalla del cliente
+    broadcastPaymentStart({ total, items: items.length });
   };
 
   // Handler: Confirmar venta
-  // Dic 2025: Confirma las reservas de stock al completar la venta + marca NS como vendidos
-  // Fix Dic 2025: Confirmar reservas ANTES de crear venta para garantizar atomicidad
-  // Ene 2026: Soporte para pago split (múltiples métodos de pago)
+  // Ene 2026: Simplificado - el backend maneja reservas atómicamente
+  // Ya NO se crean/confirman reservas desde el frontend
   const handleConfirmarVenta = async (datosPago) => {
-    // Obtener IDs de reservas a confirmar
-    const reservaIds = items
-      .filter(item => item.reserva_id)
-      .map(item => item.reserva_id);
-
-    // Ene 2026: Detectar si es pago split (múltiples métodos de pago)
-    // El modal siempre envía array de pagos, pero solo es "split" si hay más de 1
+    // Detectar si es pago split (múltiples métodos de pago)
     const esPagoSplit = Array.isArray(datosPago.pagos) && datosPago.pagos.length > 1;
 
-    // DEBUG: Verificar datos de pago
-    console.log('[DEBUG PAGO SPLIT]', {
-      esPagoSplit,
-      pagosLength: datosPago.pagos?.length,
-      pagos: datosPago.pagos,
-      datosPago
-    });
-
     try {
-      // PASO 1: Confirmar reservas PRIMERO (descuenta stock)
-      // Esto garantiza que el stock está disponible antes de crear la venta
-      if (reservaIds.length > 0) {
-        const resultadoReservas = await confirmarReservas.mutateAsync(reservaIds);
-
-        // Validar que todas las reservas se confirmaron
-        if (resultadoReservas.confirmadas?.length !== reservaIds.length) {
-          const noConfirmadas = reservaIds.length - (resultadoReservas.confirmadas?.length || 0);
-          throw new Error(`No se pudieron confirmar ${noConfirmadas} reserva(s). Stock insuficiente.`);
-        }
-      }
-
-      // PASO 2: Preparar items para el backend (incluir reserva_id, variante_id y número de serie)
-      console.log('[DEBUG NS] Items del carrito antes de mapear:', JSON.stringify(items.map(i => ({ id: i.id, numero_serie: i.numero_serie })), null, 2));
-      const itemsBackend = items.map(item => {
-        console.log('[DEBUG NS] Procesando item:', item.nombre, 'NS:', JSON.stringify(item.numero_serie));
-        return {
+      // Preparar items para el backend
+      const itemsBackend = items.map(item => ({
         producto_id: item.producto_id,
-        variante_id: item.variante_id || undefined, // Dic 2025: variantes
+        variante_id: item.variante_id || undefined,
         cantidad: item.cantidad,
         precio_unitario: parseFloat(item.precio_unitario),
         descuento_monto: parseFloat(item.descuento_monto || 0),
         aplica_comision: true,
         notas: '',
-        reserva_id: item.reserva_id || undefined,
-        // Dic 2025: Número de serie (INV-5)
+        // Número de serie (si aplica)
         numero_serie_id: item.numero_serie?.id || undefined,
         numero_serie: item.numero_serie?.numero_serie || undefined
-      };
-      });
-
-      // Calcular descuento global en monto
-      const descuentoGlobalMonto = montoDescuentoGlobal;
+      }));
 
       // Preparar datos de la venta
+      // Ene 2026: El backend crea y confirma reservas atómicamente en la transacción
       const datosVenta = {
         tipo_venta: 'directa',
         usuario_id: user.id,
-        // Dic 2025: Incluir sucursal para permisos (snake_case para Joi)
         sucursal_id: getSucursalId() || 1,
-        // Nov 2025: Incluir cliente si está seleccionado
         cliente_id: clienteSeleccionado?.id || undefined,
         items: itemsBackend,
         descuento_porcentaje: parseFloat(descuentoGlobal) || 0,
-        descuento_monto: descuentoGlobalMonto,
-        // Ene 2026: Para pago split no enviar metodo_pago ni monto_pagado aquí
-        // Fix: El modal siempre envía pagos[] array, extraer del primer pago para venta simple
+        descuento_monto: montoDescuentoGlobal,
         metodo_pago: esPagoSplit ? undefined : (datosPago.pagos?.[0]?.metodo_pago || datosPago.metodo_pago),
         monto_pagado: esPagoSplit ? 0 : (datosPago.pagos?.[0]?.monto || datosPago.monto_pagado),
         impuestos: 0,
         notas: '',
-        // Indicar que las reservas ya fueron confirmadas
-        reservas_confirmadas: true,
-        // Ene 2026: Datos del cupón aplicado
         cupon_id: cuponActivo?.id || undefined,
-        descuento_cupon: cuponActivo?.descuento_calculado || 0
+        descuento_cupon: hayPromocionExclusiva ? 0 : (cuponActivo?.descuento_calculado || 0),
+        // Ene 2026: Promociones automáticas
+        promociones_aplicadas: promocionesAplicadas.map(p => ({
+          promocion_id: p.id,
+          descuento: p.descuento
+        })),
+        descuento_promociones: descuentoPromociones
       };
 
-      // PASO 3: Crear venta (reservas ya confirmadas, stock ya descontado)
-      console.log('[DEBUG DATOS VENTA]', {
-        esPagoSplit,
-        monto_pagado: datosVenta.monto_pagado,
-        tipo: typeof datosVenta.monto_pagado,
-        datosVenta
-      });
+      // Crear venta (el backend valida stock y crea reservas atómicamente)
       const resultado = await crearVenta.mutateAsync(datosVenta);
 
-      // Ene 2026: PASO 4: Si es pago split, registrar los pagos
+      // Si es pago split, registrar los pagos adicionales
       if (esPagoSplit) {
         await registrarPagosSplit.mutateAsync({
           ventaId: resultado.id,
@@ -628,20 +592,22 @@ export default function VentaPOSPage() {
         });
       }
 
-      // Limpiar carrito, cliente y cupón
+      // Ene 2026: Notificar a pantalla del cliente
+      broadcastPaymentComplete({
+        folio: resultado.folio,
+        total: total,
+        puntosGanados: resultado.puntos_ganados || 0,
+      });
+
+      // Limpiar carrito y estado
       setItems([]);
       setDescuentoGlobal(0);
       setClienteSeleccionado(null);
-      setCuponActivo(null); // Ene 2026: Limpiar cupón
+      setCuponActivo(null);
       setMostrarModalPago(false);
 
     } catch (error) {
       console.error('Error al procesar venta:', error);
-
-      // Si el error fue en la confirmación de reservas, las reservas siguen activas
-      // Si el error fue en la creación de venta, las reservas ya se confirmaron (stock descontado)
-      // TODO: En producción, considerar crear movimiento de ajuste si venta falla post-confirmación
-
       toast.error(error.response?.data?.message || error.message || 'Error al procesar la venta');
     }
   };
@@ -663,6 +629,19 @@ export default function VentaPOSPage() {
                 <span className="font-medium">{profesionalNombre}</span>
               </div>
             )}
+
+            {/* Ene 2026: Indicador de pantalla del cliente */}
+            <div
+              className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${
+                isDisplayConnected
+                  ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500'
+              }`}
+              title={isDisplayConnected ? 'Pantalla del cliente conectada' : 'Pantalla del cliente desconectada'}
+            >
+              <Monitor className="h-4 w-4" />
+              <span className="hidden sm:inline">{isDisplayConnected ? 'Display' : 'Sin display'}</span>
+            </div>
 
             {/* Ene 2026: Indicador de sesión de caja */}
             {sesionActiva && (
@@ -876,6 +855,10 @@ export default function VentaPOSPage() {
               cuponActivo={cuponActivo}
               onCuponAplicado={handleCuponAplicado}
               onCuponRemovido={handleCuponRemovido}
+              promocionesAplicadas={promocionesAplicadas}
+              descuentoPromociones={descuentoPromociones}
+              hayPromocionExclusiva={hayPromocionExclusiva}
+              evaluandoPromociones={evaluandoPromociones}
             />
 
             {/* Botón de pago */}

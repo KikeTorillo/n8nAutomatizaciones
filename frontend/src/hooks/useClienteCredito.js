@@ -32,7 +32,7 @@ export function useEstadoCredito(clienteId, options = {}) {
       return response.data.data;
     },
     enabled: !!clienteId && (options.enabled !== false),
-    staleTime: 1000 * 60, // 1 minuto
+    staleTime: 1000 * 60 * 5, // 5 minutos - Ene 2026: aumentado para reducir requests POS
   });
 }
 
@@ -129,7 +129,7 @@ export function useMovimientosCredito(clienteId, params = {}) {
       return response.data.data;
     },
     enabled: !!clienteId,
-    staleTime: 1000 * 30, // 30 segundos
+    staleTime: 1000 * 60 * 2, // 2 minutos - Ene 2026: aumentado para reducir requests POS
     keepPreviousData: true,
   });
 }

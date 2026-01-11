@@ -4,8 +4,10 @@
 
 const VentasPOSModel = require('./ventas.model');
 const ReportesPOSModel = require('./reportes.model');
+const PromocionesModel = require('./promociones.model');
 
 module.exports = {
     VentasPOSModel,
-    ReportesPOSModel
+    ReportesPOSModel,
+    PromocionesModel
 };

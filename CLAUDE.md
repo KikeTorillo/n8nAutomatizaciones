@@ -214,7 +214,7 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | **inventario** | 24 | Productos, OC, movimientos, valoración, NS/Lotes, WMS, dropship, consigna, batch-picking |
 | **agendamiento** | 10 | Citas, horarios, disponibilidad, bloqueos, recordatorios |
 | **eventos-digitales** | 9 | Eventos, invitados, galerías, plantillas, mesas |
-| **pos** | 3 | Punto de venta, ventas, reportes |
+| **pos** | 4 | Ventas, cupones, promociones, sesiones-caja |
 | **comisiones** | 4 | Configuración, cálculo, estadísticas |
 | **contabilidad** | 4 | Asientos, cuentas, reportes |
 | **clientes** | 1 | CRM clientes |
@@ -233,7 +233,7 @@ await RLSContextManager.withBypass(async (db) => { ... });
 | **vacaciones** | 4 | Solicitudes, políticas, saldos, niveles antigüedad |
 | **catalogos** | 2 | Catálogos del sistema (categorías de pago, motivos salida) |
 
-**Totales**: 93 controllers, 90 models, 78 routes, 72 schemas Joi
+**Totales**: 94 controllers, 91 models, 78 routes, 73 schemas Joi
 
 ---
 
@@ -277,19 +277,6 @@ Vista de detalle con 7 tabs:
 - Indicador de completitud de perfil (%)
 - Edición inline por campo
 - Migración a React Hook Form + Zod
-
----
-
-## Módulo Vacaciones (Nuevo Ene 2026)
-
-| Feature | Descripción |
-|---------|-------------|
-| **Mis Vacaciones** | Dashboard con días disponibles, usados, en trámite |
-| **Mi Equipo** | Vista de solicitudes del equipo (para managers) |
-| **Solicitudes** | Filtros por estado (Todas, Pendientes, Aprobadas, Rechazadas, Canceladas) |
-| **Políticas** | Configuración de días por año, antigüedad |
-| **Niveles** | Días adicionales por antigüedad |
-| **Saldos** | Cálculo automático por empleado |
 
 ---
 
@@ -349,13 +336,14 @@ Etiquetas: GenerarEtiquetaGS1Modal.jsx (5 plantillas industria)
 ### POS (Punto de Venta)
 | Feature | Descripción |
 |---------|-------------|
-| Métodos Pago | Efectivo, Tarjeta, Transferencia, QR MercadoPago |
-| Buscador | Por nombre, SKU o código de barras |
-| Escaneo | Integración con scanner códigos |
-| Descuentos | Por producto y global (%) |
-| Devoluciones | Procesamiento desde historial |
-| Corte Caja | Cierre diario |
-| Reportes | Ventas diarias |
+| Métodos Pago | Efectivo, Tarjeta, Transferencia, QR, Split (múltiples métodos) |
+| Cupones | Porcentaje o monto fijo con validación tiempo real |
+| Promociones | Motor reglas JSON: 2x1, %, monto fijo, regalo, por horario/categoría |
+| Sesiones Caja | Apertura/cierre formal, movimientos mid-session |
+| Grid Visual | Productos por categoría con badges de cantidad |
+| Buscador | Por nombre, SKU o código de barras + scanner |
+
+**Arquitectura**: Frontend usa validación optimista; backend crea reservas atómicas al confirmar venta. Ver `docs/COMPARATIVA_POS_ODOO_NEXO.md`.
 
 ### Workflows de Aprobación
 
@@ -416,7 +404,7 @@ sql/
 
 ---
 
-## Frontend - Hooks Principales (69 total)
+## Frontend - Hooks Principales (71 total)
 
 ### Inventario (14)
 `useInventario`, `useProductos`, `useNumerosSerie`, `useVariantes`, `useAtributos`, `useCategorias`, `useProveedores`, `useOrdenesCompra`, `useValoracion`, `useUbicacionesAlmacen`, `useConteos`, `useAjustesMasivos`, `useLandedCosts`, `useInventoryAtDate`
@@ -424,8 +412,8 @@ sql/
 ### Operaciones Almacén (8)
 `useOperacionesAlmacen`, `useBatchPicking`, `usePaquetes`, `useConsigna`, `useDropship`, `useReorden`, `useConfiguracionAlmacen`, `useRutasOperacion`
 
-### POS & Ventas (3)
-`usePOS`, `useVentas`, `useBarcodeScanner`
+### POS & Ventas (5)
+`usePOS`, `useVentas`, `useCupones`, `usePromociones`, `useBarcodeScanner`
 
 ### Gestión Citas (5)
 `useCitas`, `useHorarios`, `useBloqueos`, `useTiposBloqueo`, `useRecordatorios`
@@ -495,44 +483,21 @@ sql/
 | **Media** | Facturación CFDI | Timbrado fiscal México |
 | **Baja** | API Keys por usuario | Acceso programático externo |
 
-### Auditoría Frontend (Ene 2026)
+---
 
-**Completado:**
-| Módulo | Páginas | Componentes Aplicados |
-|--------|---------|----------------------|
-| Inventario | 20 | StatCardGrid, EmptyState, ViewTabs, Pagination |
-| Agendamiento | 4 | useModalManager, StatCardGrid, ViewTabs, EmptyState, SkeletonTable |
-| Profesionales | 7 tabs | ExpandableCrudSection, useModalManager, validaciones Zod |
+## Flujos Validados
 
-**Revisión completada (8 Ene 2026):**
-- Agendamiento: validación medianoche, key prop para remontaje, fix EmptyState
-- Profesionales: fix isEditing, type coercion, botones móvil, fallback API
+| Módulo | Features Testeadas |
+|--------|-------------------|
+| Auth | JWT + refresh token |
+| Inventario | Categorías, proveedores, productos, variantes, NS/Lotes |
+| Clientes | CRM, fotos, marketing opt-in |
+| POS | Grid visual, carrito, pago split, cupones, promociones automáticas |
+| Agendamiento | Servicios, horarios, citas, calendario |
+| Profesionales | Lista, detalle con tabs, edición inline |
+| Vacaciones | Dashboard, solicitudes, saldos |
+| Workflows | Editor visual, ejecución multi-nivel |
 
 ---
 
-## Flujos Validados (Testing)
-
-| Flujo | Estado | Notas |
-|-------|--------|-------|
-| Login/Auth | ✅ | JWT + refresh token |
-| Inventario - Categorías | ✅ | Jerárquicas con colores |
-| Inventario - Proveedores | ✅ | RFC, términos, ubicación México |
-| Inventario - Productos | ✅ | SKU, código barras, variantes, rutas |
-| Clientes | ✅ | CRM con foto, marketing opt-in |
-| POS - Venta | ✅ | Búsqueda, carrito, métodos pago |
-| Multi-moneda | ✅ | Conversión USD en tiempo real |
-| Agendamiento - Servicios | ✅ | Crear servicio, asignar profesional, plantillas duración |
-| Agendamiento - Horarios | ✅ | Plantillas (jornada completa, media jornada), días semana |
-| Agendamiento - Citas UI | ✅ | Formulario completo, validación días laborales |
-| Agendamiento - Calendario | ✅ | Vista mensual, navegación, estados visuales |
-| Agendamiento - Citas E2E | ✅ | Crear cita desde frontend, persistencia BD, auditoría |
-| Profesionales - Lista | ✅ | Cards con estadísticas, búsqueda, filtros |
-| Profesionales - Detalle | ✅ | Vista con tabs, edición inline, indicador completitud |
-| Vacaciones - Dashboard | ✅ | Días disponibles, usados, en trámite |
-| Home - Dashboard | ✅ | 17 módulos, accesos rápidos, trial info |
-| Workflows - Editor Visual | ✅ | Crear, editar, duplicar, publicar workflows |
-| Workflows - Ejecución | ✅ | OC con aprobación, multi-nivel, notificaciones |
-
----
-
-**Actualizado**: 8 Enero 2026
+**Actualizado**: 10 Enero 2026

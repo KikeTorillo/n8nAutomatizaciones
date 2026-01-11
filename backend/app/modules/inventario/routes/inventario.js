@@ -899,7 +899,7 @@ router.post('/reservas',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearReserva),
     InventarioController.crearReserva
 );
@@ -913,7 +913,7 @@ router.post('/reservas/multiple',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.crearReservaMultiple),
     InventarioController.crearReservaMultiple
 );
@@ -927,7 +927,7 @@ router.post('/reservas/confirmar-multiple',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.confirmarReservaMultiple),
     InventarioController.confirmarReservaMultiple
 );
@@ -939,7 +939,7 @@ router.post('/reservas/confirmar-multiple',
 router.get('/reservas/:id',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.obtenerPorId),
     InventarioController.obtenerReservaPorId
 );
@@ -951,7 +951,7 @@ router.get('/reservas/:id',
 router.get('/reservas',
     auth.authenticateToken,
     tenant.setTenantContext,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.listarReservas),
     InventarioController.listarReservas
 );
@@ -965,7 +965,7 @@ router.patch('/reservas/:id/confirmar',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.confirmarReserva),
     InventarioController.confirmarReserva
 );
@@ -979,7 +979,7 @@ router.patch('/reservas/:id/extender',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.extenderReserva),
     InventarioController.extenderReserva
 );
@@ -993,7 +993,7 @@ router.delete('/reservas/origen/:tipoOrigen/:origenId',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarReservaPorOrigen),
     InventarioController.cancelarReservaPorOrigen
 );
@@ -1007,7 +1007,7 @@ router.delete('/reservas/:id',
     tenant.setTenantContext,
     modules.requireModule('inventario'),
     tenant.verifyTenantActive,
-    rateLimiting.apiRateLimit,
+    rateLimiting.userRateLimit,
     validate(inventarioSchemas.cancelarReserva),
     InventarioController.cancelarReserva
 );

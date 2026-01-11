@@ -3,11 +3,13 @@ import { useQuery } from '@tanstack/react-query';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/useCurrency';
 import InputCupon from './InputCupon';
+import PromocionesAplicadas from './PromocionesAplicadas';
 
 /**
  * Componente de carrito de venta para POS
  * Muestra items, cantidades, descuentos y totales
  * Dic 2025: Conversión multi-moneda + Listas de precios inteligentes
+ * Ene 2026: Cupones + Promociones automáticas
  */
 export default function CarritoVenta({
   items,
@@ -22,15 +24,22 @@ export default function CarritoVenta({
   // Ene 2026: Props para cupones de descuento
   cuponActivo = null,
   onCuponAplicado,
-  onCuponRemovido
+  onCuponRemovido,
+  // Ene 2026: Props para promociones automáticas
+  promocionesAplicadas = [],
+  descuentoPromociones = 0,
+  hayPromocionExclusiva = false,
+  evaluandoPromociones = false
 }) {
   const { code: monedaOrg } = useCurrency();
 
   // Obtener tasa de cambio para moneda secundaria
+  // Ene 2026: Aumentado staleTime y deshabilitado refetch para reducir requests
   const { data: tasaResponse } = useQuery({
     queryKey: ['tasa-cambio', monedaOrg, monedaSecundaria],
     queryFn: () => monedasApi.obtenerTasa(monedaOrg, monedaSecundaria),
-    staleTime: 1000 * 60 * 5, // 5 minutos
+    staleTime: 1000 * 60 * 30, // 30 minutos - tasas no cambian frecuentemente
+    refetchOnWindowFocus: false,
     enabled: monedaOrg !== monedaSecundaria,
   });
 
@@ -50,8 +59,12 @@ export default function CarritoVenta({
   // Ene 2026: Descuento por cupón
   const descuentoCupon = cuponActivo?.descuento_calculado || 0;
 
-  // Calcular total (incluye descuento global + cupón)
-  const total = subtotal - montoDescuentoGlobal - descuentoCupon;
+  // Ene 2026: Verificar si cupón y promociones son acumulables
+  // Si hay promocion exclusiva, no aplicar cupones
+  const descuentoCuponFinal = hayPromocionExclusiva ? 0 : descuentoCupon;
+
+  // Calcular total (incluye descuento global + cupón + promociones)
+  const total = subtotal - montoDescuentoGlobal - descuentoCuponFinal - descuentoPromociones;
 
   const formatearPrecio = (precio) => {
     return `$${parseFloat(precio || 0).toFixed(2)}`;
@@ -262,15 +275,39 @@ export default function CarritoVenta({
           {/* Ene 2026: Cupón de descuento */}
           <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
             <InputCupon
-              subtotal={subtotal - montoDescuentoGlobal}
+              subtotal={subtotal - montoDescuentoGlobal - descuentoPromociones}
               clienteId={clienteSeleccionado?.id}
               productosIds={items.map(item => item.producto_id || item.id)}
               onCuponAplicado={onCuponAplicado}
               onCuponRemovido={onCuponRemovido}
               cuponActivo={cuponActivo}
-              disabled={items.length === 0}
+              disabled={items.length === 0 || hayPromocionExclusiva}
             />
+            {hayPromocionExclusiva && cuponActivo && (
+              <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                La promocion exclusiva no permite cupones adicionales
+              </p>
+            )}
           </div>
+
+          {/* Ene 2026: Promociones automáticas */}
+          {(promocionesAplicadas.length > 0 || evaluandoPromociones) && (
+            <div className="pb-3 border-b border-gray-200 dark:border-gray-700">
+              {evaluandoPromociones ? (
+                <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                  <RefreshCw className="h-4 w-4 animate-spin" />
+                  <span>Evaluando promociones...</span>
+                </div>
+              ) : (
+                <PromocionesAplicadas
+                  promociones={promocionesAplicadas}
+                  descuentoTotal={descuentoPromociones}
+                  hayExclusiva={hayPromocionExclusiva}
+                  compact={true}
+                />
+              )}
+            </div>
+          )}
 
           {/* Subtotal */}
           <div className="flex justify-between text-base">
@@ -287,10 +324,18 @@ export default function CarritoVenta({
           )}
 
           {/* Ene 2026: Descuento por cupón */}
-          {descuentoCupon > 0 && cuponActivo && (
+          {descuentoCuponFinal > 0 && cuponActivo && (
             <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
               <span>Cupón ({cuponActivo.codigo}):</span>
-              <span>-{formatearPrecio(descuentoCupon)}</span>
+              <span>-{formatearPrecio(descuentoCuponFinal)}</span>
+            </div>
+          )}
+
+          {/* Ene 2026: Descuento por promociones */}
+          {descuentoPromociones > 0 && (
+            <div className="flex justify-between text-sm text-amber-600 dark:text-amber-400">
+              <span>Promociones ({promocionesAplicadas.length}):</span>
+              <span>-{formatearPrecio(descuentoPromociones)}</span>
             </div>
           )}
 
