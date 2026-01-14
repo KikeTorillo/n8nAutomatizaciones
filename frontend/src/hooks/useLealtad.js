@@ -486,6 +486,6 @@ export function useLealtadPOS(clienteId, totalCarrito = 0, tieneCupon = false) {
     // Helpers
     puedeAcumular: programaActivo && !tieneCupon || (config?.acumular_con_cupon ?? false),
     minimoPuntosCanje: config?.minimo_puntos_canje ?? 100,
-    valorPunto: config?.pesos_por_punto_descuento ? 1 / config.pesos_por_punto_descuento : 0.01,
+    valorPunto: config?.puntos_por_peso_descuento ? 1 / config.puntos_por_peso_descuento : 0.01,
   };
 }

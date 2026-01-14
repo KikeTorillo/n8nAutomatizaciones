@@ -142,6 +142,26 @@ const posSchemas = {
             }),
             descuento_cupon: Joi.number().min(0).optional().default(0).messages({
                 'number.min': 'descuento_cupon no puede ser negativo'
+            }),
+
+            // Ene 2026: Promociones automáticas
+            promociones_aplicadas: Joi.array().items(
+                Joi.object({
+                    promocion_id: Joi.number().integer().positive().required(),
+                    descuento: Joi.number().min(0).required()
+                })
+            ).optional().default([]),
+            descuento_promociones: Joi.number().min(0).optional().default(0).messages({
+                'number.min': 'descuento_promociones no puede ser negativo'
+            }),
+
+            // Ene 2026: Canje de puntos de lealtad
+            puntos_canjeados: Joi.number().integer().min(0).optional().default(0).messages({
+                'number.base': 'puntos_canjeados debe ser un número',
+                'number.min': 'puntos_canjeados no puede ser negativo'
+            }),
+            descuento_puntos: Joi.number().min(0).optional().default(0).messages({
+                'number.min': 'descuento_puntos no puede ser negativo'
             })
         }).custom((value, helpers) => {
             // Validación: Si es apartado, debe tener fechas
@@ -1149,8 +1169,8 @@ const posSchemas = {
                 'number.min': 'puntos_por_peso no puede ser negativo'
             }),
 
-            pesos_por_punto_descuento: Joi.number().min(0.01).optional().default(100).messages({
-                'number.min': 'pesos_por_punto_descuento debe ser mayor a 0'
+            puntos_por_peso_descuento: Joi.number().min(0.01).optional().default(100).messages({
+                'number.min': 'puntos_por_peso_descuento debe ser mayor a 0'
             }),
 
             meses_expiracion: Joi.number().integer().min(1).max(60).optional().default(12).messages({
@@ -1468,7 +1488,10 @@ const posSchemas = {
                 .messages({
                     'any.required': 'componentes es requerido',
                     'array.min': 'Debe incluir al menos 1 componente'
-                })
+                }),
+
+            // Para verificación de permisos
+            sucursal_id: Joi.number().integer().positive().optional()
         })
     },
 
@@ -1503,7 +1526,10 @@ const posSchemas = {
                         precio_unitario: Joi.number().min(0).optional().allow(null)
                     })
                 )
-                .optional()
+                .optional(),
+
+            // Para verificación de permisos
+            sucursal_id: Joi.number().integer().positive().optional()
         }).min(1)
     },
 

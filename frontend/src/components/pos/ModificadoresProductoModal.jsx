@@ -71,10 +71,11 @@ export default function ModificadoresProductoModal({
     // Sumar precios de modificadores seleccionados
     let precioModificadores = 0;
     Object.entries(selecciones).forEach(([grupoId, modIds]) => {
-      const grupo = grupos.find(g => g.id === parseInt(grupoId));
-      if (grupo?.modificadores) {
+      const grupo = grupos.find(g => (g.grupo_id || g.id) === parseInt(grupoId));
+      const mods = grupo?.modificadores || [];
+      if (mods.length > 0) {
         modIds.forEach(modId => {
-          const mod = grupo.modificadores.find(m => m.id === modId);
+          const mod = mods.find(m => m.id === modId);
           if (mod?.precio_adicional) {
             precioModificadores += parseFloat(mod.precio_adicional);
           }
@@ -87,16 +88,17 @@ export default function ModificadoresProductoModal({
 
   // Validar selecciones obligatorias
   const validacion = useMemo(() => {
-    const gruposObligatorios = grupos.filter(g => g.es_obligatorio);
+    const gruposObligatorios = grupos.filter(g => g.requerido || g.es_obligatorio);
     const faltantes = [];
 
     gruposObligatorios.forEach(grupo => {
-      const seleccionGrupo = selecciones[grupo.id] || [];
+      const grupoIdKey = grupo.grupo_id || grupo.id;
+      const seleccionGrupo = selecciones[grupoIdKey] || [];
       const minimo = grupo.minimo_seleccion || 1;
 
       if (seleccionGrupo.length < minimo) {
         faltantes.push({
-          grupo: grupo.nombre,
+          grupo: grupo.grupo_nombre || grupo.nombre,
           minimo,
           actual: seleccionGrupo.length,
         });
@@ -114,15 +116,16 @@ export default function ModificadoresProductoModal({
     const resultado = [];
 
     Object.entries(selecciones).forEach(([grupoId, modIds]) => {
-      const grupo = grupos.find(g => g.id === parseInt(grupoId));
-      if (grupo?.modificadores) {
+      const grupo = grupos.find(g => (g.grupo_id || g.id) === parseInt(grupoId));
+      const mods = grupo?.modificadores || [];
+      if (mods.length > 0) {
         modIds.forEach(modId => {
-          const mod = grupo.modificadores.find(m => m.id === modId);
+          const mod = mods.find(m => m.id === modId);
           if (mod) {
             resultado.push({
               ...mod,
-              grupo_id: grupo.id,
-              grupo_nombre: grupo.nombre,
+              grupo_id: grupo.grupo_id || grupo.id,
+              grupo_nombre: grupo.grupo_nombre || grupo.nombre,
             });
           }
         });
@@ -254,12 +257,17 @@ export default function ModificadoresProductoModal({
               {/* Grupos de modificadores */}
               {grupos.length > 0 ? (
                 <div className="space-y-6">
-                  {grupos.map((grupo) => (
-                    <div key={grupo.id}>
+                  {grupos.map((grupo) => {
+                    const grupoId = grupo.grupo_id || grupo.id;
+                    const grupoNombre = grupo.grupo_nombre || grupo.nombre;
+                    const esObligatorio = grupo.requerido || grupo.es_obligatorio;
+
+                    return (
+                    <div key={grupoId}>
                       <div className="flex items-center justify-between mb-3">
                         <h3 className="text-sm font-medium text-gray-900 dark:text-white">
-                          {grupo.nombre}
-                          {grupo.es_obligatorio && (
+                          {grupoNombre}
+                          {esObligatorio && (
                             <span className="ml-2 text-xs text-red-500">*Obligatorio</span>
                           )}
                         </h3>
@@ -278,7 +286,7 @@ export default function ModificadoresProductoModal({
 
                       <div className="space-y-2">
                         {grupo.modificadores?.map((mod) => {
-                          const seleccionGrupo = selecciones[grupo.id] || [];
+                          const seleccionGrupo = selecciones[grupoId] || [];
                           const isSelected = seleccionGrupo.includes(mod.id);
                           const esUnico = grupo.tipo_seleccion === 'unico';
 
@@ -287,8 +295,8 @@ export default function ModificadoresProductoModal({
                               key={mod.id}
                               onClick={() =>
                                 esUnico
-                                  ? handleSeleccionUnica(grupo.id, mod.id)
-                                  : handleSeleccionMultiple(grupo.id, mod.id, grupo)
+                                  ? handleSeleccionUnica(grupoId, mod.id)
+                                  : handleSeleccionMultiple(grupoId, mod.id, grupo)
                               }
                               className={`w-full flex items-center justify-between p-3 rounded-lg border transition-all ${
                                 isSelected
@@ -340,7 +348,8 @@ export default function ModificadoresProductoModal({
                         })}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : !esCombo ? (
                 <div className="text-center py-8 text-gray-500 dark:text-gray-400">

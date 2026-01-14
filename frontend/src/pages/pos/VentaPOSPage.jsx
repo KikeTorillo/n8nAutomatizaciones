@@ -15,6 +15,7 @@ import { useSesionCajaActiva, useCategoriasPOS, useProductosPOS, useRegistrarPag
 import { useEstadoCredito } from '@/hooks/useClienteCredito';
 import { useEvaluarPromociones, useAplicarPromocion } from '@/hooks/usePromociones';
 import { usePOSDisplaySync } from '@/hooks/usePOSBroadcast';
+import { useVerificarCombo, useTieneModificadores } from '@/hooks/useCombosModificadores';
 import BuscadorProductosPOS from '@/components/pos/BuscadorProductosPOS';
 import CategoriasPOS from '@/components/pos/CategoriasPOS';
 import ProductosGridPOS from '@/components/pos/ProductosGridPOS';
@@ -26,6 +27,8 @@ import SeleccionarNSModal from '@/components/pos/SeleccionarNSModal';
 import AperturaCajaModal from '@/components/pos/AperturaCajaModal';
 import CierreCajaModal from '@/components/pos/CierreCajaModal';
 import MovimientosCajaDrawer from '@/components/pos/MovimientosCajaDrawer';
+import ModificadoresProductoModal from '@/components/pos/ModificadoresProductoModal';
+import PuntosCliente from '@/components/pos/PuntosCliente';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { listasPreciosApi } from '@/services/api/endpoints';
@@ -104,6 +107,14 @@ export default function VentaPOSPage() {
 
   // Ene 2026: Estado para cupón de descuento
   const [cuponActivo, setCuponActivo] = useState(null);
+
+  // Ene 2026: Estado para canje de puntos de lealtad
+  const [descuentoPuntos, setDescuentoPuntos] = useState(0);
+  const [puntosCanjeados, setPuntosCanjeados] = useState(0);
+
+  // Ene 2026: Estado para modal de modificadores/combos
+  const [mostrarModalModificadores, setMostrarModalModificadores] = useState(false);
+  const [productoParaModificadores, setProductoParaModificadores] = useState(null);
 
   // Ene 2026: Hook para evaluar promociones automáticas
   const sucursalId = getSucursalId() || user?.sucursal_id;
@@ -274,7 +285,8 @@ export default function VentaPOSPage() {
   const descuentoCupon = cuponActivo?.descuento_calculado || 0;
   // Si hay promoción exclusiva, no aplicar cupones
   const descuentoCuponFinal = hayPromocionExclusiva ? 0 : descuentoCupon;
-  const total = subtotal - montoDescuentoGlobal - descuentoCuponFinal - descuentoPromociones;
+  // Ene 2026: Total incluye descuento de puntos de lealtad
+  const total = subtotal - montoDescuentoGlobal - descuentoCuponFinal - descuentoPromociones - descuentoPuntos;
 
   // Ene 2026: Sincronización con pantalla del cliente
   const cartDataForDisplay = useMemo(() => {
@@ -291,13 +303,14 @@ export default function VentaPOSPage() {
         global: montoDescuentoGlobal,
         cupon: descuentoCuponFinal,
         promociones: descuentoPromociones,
+        puntos: descuentoPuntos,
       },
       total,
       cliente: clienteSeleccionado ? {
         nombre: clienteSeleccionado.nombre_completo || clienteSeleccionado.nombre,
       } : null,
     };
-  }, [items, subtotal, montoDescuentoGlobal, descuentoCuponFinal, descuentoPromociones, total, clienteSeleccionado]);
+  }, [items, subtotal, montoDescuentoGlobal, descuentoCuponFinal, descuentoPromociones, descuentoPuntos, total, clienteSeleccionado]);
 
   const { isDisplayConnected, broadcastPaymentStart, broadcastPaymentComplete, broadcastClear } = usePOSDisplaySync(
     cartDataForDisplay,
@@ -307,6 +320,7 @@ export default function VentaPOSPage() {
   // Handler: Agregar producto al carrito
   // Dic 2025: Integración con listas de precios inteligentes + reservas de stock + números de serie
   // Dic 2025: Soporte para variantes de producto
+  // Ene 2026: Soporte para combos y modificadores
   const handleProductoSeleccionado = async (producto) => {
     // Dic 2025: Buscar item existente por variante_id o producto_id
     const itemExistente = producto.es_variante
@@ -318,6 +332,32 @@ export default function VentaPOSPage() {
       setProductoParaNS(producto);
       setMostrarModalNS(true);
       return;
+    }
+
+    // Ene 2026: Si es producto nuevo (no en carrito), verificar si es combo o tiene modificadores
+    if (!itemExistente) {
+      try {
+        const { posApi } = await import('@/services/api/endpoints');
+        const [esComboRes, tieneModRes] = await Promise.all([
+          posApi.verificarCombo(producto.producto_id),
+          posApi.tieneModificadores(producto.producto_id)
+        ]);
+
+        const esCombo = esComboRes?.data?.data?.es_combo || esComboRes?.data?.es_combo;
+        const tieneModificadores = tieneModRes?.data?.data?.tiene_modificadores || tieneModRes?.data?.tiene_modificadores;
+
+        if (esCombo || tieneModificadores) {
+          setProductoParaModificadores({
+            ...producto,
+            id: producto.producto_id,
+            precio: producto.precio_venta
+          });
+          setMostrarModalModificadores(true);
+          return;
+        }
+      } catch (error) {
+        console.log('[POS] Error verificando combo/modificadores, agregando producto normalmente');
+      }
     }
 
     // Si ya está en el carrito y requiere NS, no permitir incrementar (cada NS es único)
@@ -432,6 +472,39 @@ export default function VentaPOSPage() {
     }
   };
 
+  // Ene 2026: Handler para cuando se confirman modificadores/combo
+  const handleModificadoresConfirmados = async ({ cantidad, modificadoresSeleccionados, precioUnitario, descripcionModificadores }) => {
+    if (!productoParaModificadores) return;
+
+    try {
+      // Crear item con modificadores
+      const nuevoItem = {
+        id: Date.now(),
+        producto_id: productoParaModificadores.producto_id || productoParaModificadores.id,
+        nombre: productoParaModificadores.nombre,
+        sku: productoParaModificadores.sku,
+        precio_venta: productoParaModificadores.precio_venta || productoParaModificadores.precio,
+        precio_original: productoParaModificadores.precio_venta || productoParaModificadores.precio,
+        precio_unitario: precioUnitario,
+        cantidad,
+        descuento_monto: 0,
+        stock_actual: productoParaModificadores.stock_actual,
+        fuente_precio: 'precio_producto',
+        fuente_detalle: descripcionModificadores ? `Con: ${descripcionModificadores}` : 'Precio base',
+        modificadores: modificadoresSeleccionados,
+        descripcion_modificadores: descripcionModificadores
+      };
+
+      setItems(prev => [...prev, nuevoItem]);
+      toast.success(`"${productoParaModificadores.nombre}" agregado al carrito`);
+    } catch (error) {
+      toast.error('Error al agregar producto con modificadores');
+    } finally {
+      setMostrarModalModificadores(false);
+      setProductoParaModificadores(null);
+    }
+  };
+
   // Handler: Actualizar cantidad de item
   // Ene 2026: Ya NO crea reservas - solo actualiza estado local y recalcula precios
   const handleActualizarCantidad = async (itemId, nuevaCantidad) => {
@@ -489,6 +562,8 @@ export default function VentaPOSPage() {
     setItems([]);
     setDescuentoGlobal(0);
     setCuponActivo(null);
+    setDescuentoPuntos(0);
+    setPuntosCanjeados(0);
     setMostrarConfirmVaciar(false);
     toast.success('Carrito vaciado');
   };
@@ -503,6 +578,13 @@ export default function VentaPOSPage() {
   const handleCuponRemovido = useCallback(() => {
     setCuponActivo(null);
     toast.info('Cupón removido');
+  }, [toast]);
+
+  // Ene 2026: Handler para cuando se canjean puntos de lealtad
+  const handleCanjeAplicado = useCallback((descuento, puntos) => {
+    setDescuentoPuntos(descuento);
+    setPuntosCanjeados(puntos);
+    toast.success(`${puntos.toLocaleString()} puntos canjeados: -$${descuento.toFixed(2)}`);
   }, [toast]);
 
   // Handler: Proceder al pago
@@ -557,11 +639,16 @@ export default function VentaPOSPage() {
         cupon_id: cuponActivo?.id || undefined,
         descuento_cupon: hayPromocionExclusiva ? 0 : (cuponActivo?.descuento_calculado || 0),
         // Ene 2026: Promociones automáticas
-        promociones_aplicadas: promocionesAplicadas.map(p => ({
-          promocion_id: p.id,
-          descuento: p.descuento
-        })),
-        descuento_promociones: descuentoPromociones
+        promociones_aplicadas: promocionesAplicadas
+          .filter(p => p.id || p.promocion_id) // Filtrar promociones sin ID
+          .map(p => ({
+            promocion_id: p.promocion_id || p.id,
+            descuento: p.descuento || 0
+          })),
+        descuento_promociones: descuentoPromociones,
+        // Ene 2026: Canje de puntos de lealtad
+        descuento_puntos: descuentoPuntos || 0,
+        puntos_canjeados: puntosCanjeados || 0
       };
 
       // Crear venta (el backend valida stock y crea reservas atómicamente)
@@ -861,6 +948,30 @@ export default function VentaPOSPage() {
               evaluandoPromociones={evaluandoPromociones}
             />
 
+            {/* Ene 2026: Sección de puntos de lealtad */}
+            {clienteSeleccionado && items.length > 0 && (
+              <div className="p-3 border-t border-gray-200 dark:border-gray-700">
+                <PuntosCliente
+                  clienteId={clienteSeleccionado.id}
+                  clienteNombre={clienteSeleccionado.nombre_completo || clienteSeleccionado.nombre}
+                  totalCarrito={subtotal - montoDescuentoGlobal - descuentoCuponFinal - descuentoPromociones}
+                  tieneCupon={!!cuponActivo}
+                  onCanjeAplicado={handleCanjeAplicado}
+                />
+                {/* Mostrar descuento de puntos aplicado */}
+                {descuentoPuntos > 0 && (
+                  <div className="mt-2 flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="text-sm text-green-700 dark:text-green-300">
+                      Descuento por {puntosCanjeados.toLocaleString()} puntos
+                    </span>
+                    <span className="text-sm font-semibold text-green-700 dark:text-green-300">
+                      -${descuentoPuntos.toFixed(2)}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Botón de pago */}
             {items.length > 0 && (
               <div className="p-3 sm:p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700">
@@ -910,6 +1021,17 @@ export default function VentaPOSPage() {
         producto={productoParaNS}
         cantidad={1}
         onSeleccionar={handleNSSeleccionado}
+      />
+
+      {/* Ene 2026: Modal de modificadores/combos */}
+      <ModificadoresProductoModal
+        isOpen={mostrarModalModificadores}
+        onClose={() => {
+          setMostrarModalModificadores(false);
+          setProductoParaModificadores(null);
+        }}
+        producto={productoParaModificadores}
+        onConfirmar={handleModificadoresConfirmados}
       />
 
       {/* Ene 2026: Modal de apertura de caja */}

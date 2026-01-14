@@ -1,4 +1,5 @@
 const { VentasPOSModel } = require('../models');
+const LealtadModel = require('../models/lealtad.model');
 const { ResponseHelper } = require('../../../utils/helpers');
 const { asyncHandler } = require('../../../middleware');
 const ModulesCache = require('../../../core/ModulesCache');
@@ -63,39 +64,135 @@ class VentasPOSController {
 
                 if (configDropship.dropship_auto_generar_oc) {
                     logger.info('[VentasPOSController.crear] Generando OC dropship automáticamente', {
-                        venta_id: venta.venta.id,
-                        folio: venta.venta.folio
+                        venta_id: venta.id,
+                        folio: venta.folio
                     });
 
                     dropshipResult = await DropshipModel.crearOCDesdeVenta(
-                        venta.venta.id,
+                        venta.id,
                         usuarioId,
                         organizacionId
                     );
 
                     logger.info('[VentasPOSController.crear] OC dropship generada', {
-                        venta_id: venta.venta.id,
+                        venta_id: venta.id,
                         ocs_creadas: dropshipResult.ocs_creadas
                     });
                 }
             } catch (dropshipError) {
                 // No fallar la venta si falla el dropship, solo loguear
                 logger.error('[VentasPOSController.crear] Error al generar OC dropship', {
-                    venta_id: venta.venta.id,
+                    venta_id: venta.id,
                     error: dropshipError.message
                 });
             }
+        }
+
+        // Ene 2026: Canjear puntos de lealtad si se especificaron
+        // NOTA: VentasPOSModel.crear() retorna {...venta, items, reservas} (spread)
+        let canjeResult = null;
+        const clienteIdVenta = venta?.cliente_id;
+        logger.info('[VentasPOSController.crear] DEBUG CANJE - Verificando condiciones', {
+            cliente_id_venta: clienteIdVenta,
+            cliente_id_ventaData: ventaData.cliente_id,
+            puntos_canjeados: ventaData.puntos_canjeados,
+            descuento_puntos: ventaData.descuento_puntos,
+            condicion1: !!clienteIdVenta,
+            condicion2: ventaData.puntos_canjeados > 0,
+            condicion3: ventaData.descuento_puntos > 0
+        });
+        if (clienteIdVenta && ventaData.puntos_canjeados > 0 && ventaData.descuento_puntos > 0) {
+            try {
+                canjeResult = await LealtadModel.canjearPuntos({
+                    cliente_id: venta.cliente_id,
+                    venta_pos_id: venta.id,
+                    puntos: ventaData.puntos_canjeados,
+                    descuento: ventaData.descuento_puntos
+                }, organizacionId, usuarioId);
+
+                logger.info('[VentasPOSController.crear] Puntos de lealtad canjeados', {
+                    venta_id: venta.id,
+                    cliente_id: venta.cliente_id,
+                    puntos: ventaData.puntos_canjeados,
+                    descuento: ventaData.descuento_puntos
+                });
+            } catch (canjeError) {
+                // No fallar la venta si falla el canje, solo loguear
+                logger.error('[VentasPOSController.crear] Error al canjear puntos de lealtad', {
+                    venta_id: venta.id,
+                    cliente_id: venta.cliente_id,
+                    error: canjeError.message
+                });
+            }
+        }
+
+        // Ene 2026: Auto-acumular puntos de lealtad si hay cliente asociado
+        let lealtadResult = null;
+        if (venta?.cliente_id) {
+            try {
+                // Verificar si el programa de lealtad está activo
+                const configLealtad = await LealtadModel.obtenerConfiguracion(organizacionId);
+
+                if (configLealtad?.activo) {
+                    // Verificar si aplica con cupones (si la venta tiene cupón)
+                    const tieneCupon = venta.cupon_id || ventaData.cupon_codigo;
+
+                    if (!tieneCupon || configLealtad.aplica_con_cupones) {
+                        // Calcular puntos basados en el total de la venta
+                        const puntosCalculo = await LealtadModel.calcularPuntosVenta({
+                            cliente_id: venta.cliente_id,
+                            monto: venta.total,
+                            tiene_cupon: !!tieneCupon
+                        }, organizacionId);
+
+                        if (puntosCalculo?.puntos > 0) {
+                            // Acumular puntos
+                            lealtadResult = await LealtadModel.acumularPuntos({
+                                cliente_id: venta.cliente_id,
+                                venta_pos_id: venta.id,
+                                monto_venta: venta.total,
+                                puntos: puntosCalculo.puntos
+                            }, organizacionId, usuarioId);
+
+                            logger.info('[VentasPOSController.crear] Puntos de lealtad acumulados', {
+                                venta_id: venta.id,
+                                cliente_id: venta.cliente_id,
+                                puntos: puntosCalculo.puntos
+                            });
+                        }
+                    }
+                }
+            } catch (lealtadError) {
+                // No fallar la venta si falla la lealtad, solo loguear
+                logger.error('[VentasPOSController.crear] Error al acumular puntos de lealtad', {
+                    venta_id: venta.id,
+                    cliente_id: venta.cliente_id,
+                    error: lealtadError.message
+                });
+            }
+        }
+
+        // Construir mensaje de éxito
+        let mensaje = 'Venta creada exitosamente';
+        if (dropshipResult) {
+            mensaje += `. ${dropshipResult.ocs_creadas} OC(s) dropship generada(s)`;
+        }
+        if (canjeResult?.puntos) {
+            mensaje += `. Cliente canjeó ${canjeResult.puntos} puntos`;
+        }
+        if (lealtadResult?.puntos) {
+            mensaje += `. Cliente ganó ${lealtadResult.puntos} puntos de lealtad`;
         }
 
         return ResponseHelper.success(
             res,
             {
                 ...venta,
-                dropship: dropshipResult
+                dropship: dropshipResult,
+                canje: canjeResult,
+                lealtad: lealtadResult
             },
-            dropshipResult
-                ? `Venta creada exitosamente. ${dropshipResult.ocs_creadas} OC(s) dropship generada(s)`
-                : 'Venta creada exitosamente',
+            mensaje,
             201
         );
     });

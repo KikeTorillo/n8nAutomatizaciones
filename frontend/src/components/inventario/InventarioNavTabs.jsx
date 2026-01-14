@@ -4,7 +4,7 @@ import {
   Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3,
   ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft, Clock,
   ClipboardList, FileSpreadsheet, RefreshCw, Send, Handshake, Boxes, Layers,
-  ChevronDown, Check
+  ChevronDown, Check, PackagePlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import NavDropdown from '@/components/ui/NavDropdown';
@@ -21,6 +21,7 @@ const NAV_GROUPS = [
     items: [
       { id: 'productos', label: 'Productos', icon: Package, path: '/inventario/productos' },
       { id: 'categorias', label: 'Categorías', icon: FolderTree, path: '/inventario/categorias' },
+      { id: 'combos', label: 'Combos/Kits', icon: Layers, path: '/inventario/combos' },
       { id: 'proveedores', label: 'Proveedores', icon: Truck, path: '/inventario/proveedores' },
     ],
   },

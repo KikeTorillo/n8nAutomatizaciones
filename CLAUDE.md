@@ -82,6 +82,35 @@ npm run clean:data       # Reset completo (DESTRUCTIVO)
 
 ---
 
+## Qwen Code (CLI alternativa)
+
+CLI similar a Claude Code pero usando modelos Qwen de Alibaba. Instalado vía npm.
+
+```bash
+# Ruta completa (usar si no está en PATH)
+/home/kike/.nvm/versions/node/v20.19.2/bin/qwen
+
+# Ejecutar con prompt (modo no interactivo)
+qwen -p "Tu prompt aquí"
+
+# Ejemplo
+qwen -p "Explica brevemente qué es Docker"
+
+# Ver ayuda completa
+qwen --help
+```
+
+**Opciones útiles**:
+| Flag | Descripción |
+|------|-------------|
+| `-p "prompt"` | Ejecutar prompt en modo no interactivo |
+| `-i "prompt"` | Ejecutar prompt y continuar en modo interactivo |
+| `-m modelo` | Especificar modelo |
+| `-y` / `--yolo` | Auto-aceptar todas las acciones |
+| `-c` / `--continue` | Continuar sesión más reciente |
+
+---
+
 ## Conexión a Base de Datos
 
 **SIEMPRE usar estos comandos exactos** (no adivinar credenciales):
@@ -468,6 +497,7 @@ sql/
 | "Rendered fewer hooks than expected" | Mover returns condicionales DESPUÉS de todos los hooks |
 | Validación ruta_preferida | Seleccionar opción válida (normal/dropship/fabricar) |
 | "Perfil no encontrado" en navegación directa | Usar navegación desde Home, no URLs directas |
+| Error 400 en endpoints con `verificarPermiso` | **Enviar `sucursal_id` en el body**. El middleware requiere `sucursal_id` o `sucursalId` para verificar permisos. Usar `useSucursalStore` y agregar `sucursal_id: sucursalActiva?.id` |
 
 **Nota**: La auditoría (`registrarEventoAuditoria`) usa SAVEPOINT para que errores de logging no aborten transacciones principales.
 

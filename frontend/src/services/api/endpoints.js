@@ -3930,7 +3930,7 @@ export const posApi = {
 
   /**
    * Guardar configuración del programa de lealtad
-   * @param {Object} data - { activo, puntos_por_peso, pesos_por_punto_descuento, meses_expiracion, ... }
+   * @param {Object} data - { activo, puntos_por_peso, puntos_por_peso_descuento, meses_expiracion, ... }
    * @returns {Promise<Object>}
    */
   guardarConfiguracionLealtad: (data) => apiClient.put('/pos/lealtad/configuracion', data),
@@ -4033,37 +4033,37 @@ export const posApi = {
    */
   obtenerEstadisticasLealtad: () => apiClient.get('/pos/lealtad/estadisticas'),
 
-  // ========== Combos y Modificadores (Ene 2026) ==========
+  // ========== Combos y Modificadores (Migrado a Inventario - Ene 2026) ==========
 
-  // --- Combos ---
+  // --- Combos / Kits ---
 
   /**
    * Verificar si un producto es combo
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} { es_combo: boolean }
    */
-  verificarCombo: (productoId) => apiClient.get(`/pos/combos/verificar/${productoId}`),
+  verificarCombo: (productoId) => apiClient.get(`/inventario/combos/verificar/${productoId}`),
 
   /**
    * Obtener combo por producto ID
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} Combo con componentes
    */
-  obtenerCombo: (productoId) => apiClient.get(`/pos/combos/${productoId}`),
+  obtenerCombo: (productoId) => apiClient.get(`/inventario/combos/${productoId}`),
 
   /**
    * Listar combos
    * @param {Object} params - { limit?, offset?, busqueda?, activo? }
    * @returns {Promise<Object>} { data, total, paginacion }
    */
-  listarCombos: (params = {}) => apiClient.get('/pos/combos', { params }),
+  listarCombos: (params = {}) => apiClient.get('/inventario/combos', { params }),
 
   /**
    * Crear combo
    * @param {Object} data - { producto_id, tipo_precio, descuento_porcentaje?, componentes[] }
    * @returns {Promise<Object>} Combo creado
    */
-  crearCombo: (data) => apiClient.post('/pos/combos', data),
+  crearCombo: (data) => apiClient.post('/inventario/combos', data),
 
   /**
    * Actualizar combo
@@ -4071,21 +4071,22 @@ export const posApi = {
    * @param {Object} data - Datos a actualizar
    * @returns {Promise<Object>} Combo actualizado
    */
-  actualizarCombo: (productoId, data) => apiClient.put(`/pos/combos/${productoId}`, data),
+  actualizarCombo: (productoId, data) => apiClient.put(`/inventario/combos/${productoId}`, data),
 
   /**
    * Eliminar combo
    * @param {number} productoId - ID del producto
+   * @param {number} sucursalId - ID de la sucursal (para permisos)
    * @returns {Promise<Object>}
    */
-  eliminarCombo: (productoId) => apiClient.delete(`/pos/combos/${productoId}`),
+  eliminarCombo: (productoId, sucursalId) => apiClient.delete(`/inventario/combos/${productoId}`, { params: { sucursalId } }),
 
   /**
    * Calcular precio de combo
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} { precio }
    */
-  calcularPrecioCombo: (productoId) => apiClient.get(`/pos/combos/${productoId}/precio`),
+  calcularPrecioCombo: (productoId) => apiClient.get(`/inventario/combos/${productoId}/precio`),
 
   /**
    * Verificar stock de combo
@@ -4093,7 +4094,7 @@ export const posApi = {
    * @param {number} cantidad - Cantidad a verificar (default 1)
    * @returns {Promise<Object>} { disponible, componentes }
    */
-  verificarStockCombo: (productoId, cantidad = 1) => apiClient.get(`/pos/combos/${productoId}/stock`, { params: { cantidad } }),
+  verificarStockCombo: (productoId, cantidad = 1) => apiClient.get(`/inventario/combos/${productoId}/stock`, { params: { cantidad } }),
 
   // --- Grupos de Modificadores ---
 
@@ -4102,14 +4103,14 @@ export const posApi = {
    * @param {Object} params - { activo?, incluir_modificadores? }
    * @returns {Promise<Object>} Lista de grupos
    */
-  listarGruposModificadores: (params = {}) => apiClient.get('/pos/modificadores/grupos', { params }),
+  listarGruposModificadores: (params = {}) => apiClient.get('/inventario/modificadores/grupos', { params }),
 
   /**
    * Crear grupo de modificadores
    * @param {Object} data - { nombre, descripcion?, tipo_seleccion, es_obligatorio?, minimo_seleccion?, maximo_seleccion?, modificadores[]? }
    * @returns {Promise<Object>} Grupo creado
    */
-  crearGrupoModificadores: (data) => apiClient.post('/pos/modificadores/grupos', data),
+  crearGrupoModificadores: (data) => apiClient.post('/inventario/modificadores/grupos', data),
 
   /**
    * Actualizar grupo de modificadores
@@ -4117,14 +4118,14 @@ export const posApi = {
    * @param {Object} data - Datos a actualizar
    * @returns {Promise<Object>} Grupo actualizado
    */
-  actualizarGrupoModificadores: (id, data) => apiClient.put(`/pos/modificadores/grupos/${id}`, data),
+  actualizarGrupoModificadores: (id, data) => apiClient.put(`/inventario/modificadores/grupos/${id}`, data),
 
   /**
    * Eliminar grupo de modificadores
    * @param {number} id - ID del grupo
    * @returns {Promise<Object>}
    */
-  eliminarGrupoModificadores: (id) => apiClient.delete(`/pos/modificadores/grupos/${id}`),
+  eliminarGrupoModificadores: (id) => apiClient.delete(`/inventario/modificadores/grupos/${id}`),
 
   // --- Modificadores ---
 
@@ -4133,7 +4134,7 @@ export const posApi = {
    * @param {Object} data - { grupo_id, nombre, descripcion?, precio_adicional?, prefijo?, orden?, activo? }
    * @returns {Promise<Object>} Modificador creado
    */
-  crearModificador: (data) => apiClient.post('/pos/modificadores', data),
+  crearModificador: (data) => apiClient.post('/inventario/modificadores', data),
 
   /**
    * Actualizar modificador
@@ -4141,14 +4142,14 @@ export const posApi = {
    * @param {Object} data - Datos a actualizar
    * @returns {Promise<Object>} Modificador actualizado
    */
-  actualizarModificador: (id, data) => apiClient.put(`/pos/modificadores/${id}`, data),
+  actualizarModificador: (id, data) => apiClient.put(`/inventario/modificadores/${id}`, data),
 
   /**
    * Eliminar modificador
    * @param {number} id - ID del modificador
    * @returns {Promise<Object>}
    */
-  eliminarModificador: (id) => apiClient.delete(`/pos/modificadores/${id}`),
+  eliminarModificador: (id) => apiClient.delete(`/inventario/modificadores/${id}`),
 
   // --- Modificadores de Producto ---
 
@@ -4157,21 +4158,21 @@ export const posApi = {
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} Grupos y modificadores del producto
    */
-  obtenerModificadoresProducto: (productoId) => apiClient.get(`/pos/productos/${productoId}/modificadores`),
+  obtenerModificadoresProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/modificadores`),
 
   /**
    * Verificar si un producto tiene modificadores
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} { tiene_modificadores: boolean }
    */
-  tieneModificadores: (productoId) => apiClient.get(`/pos/productos/${productoId}/tiene-modificadores`),
+  tieneModificadores: (productoId) => apiClient.get(`/inventario/productos/${productoId}/tiene-modificadores`),
 
   /**
    * Listar asignaciones de grupos a un producto
    * @param {number} productoId - ID del producto
    * @returns {Promise<Object>} Lista de asignaciones
    */
-  listarAsignacionesProducto: (productoId) => apiClient.get(`/pos/productos/${productoId}/grupos`),
+  listarAsignacionesProducto: (productoId) => apiClient.get(`/inventario/productos/${productoId}/grupos`),
 
   /**
    * Asignar grupo a producto
@@ -4179,7 +4180,7 @@ export const posApi = {
    * @param {Object} data - { grupo_id, orden? }
    * @returns {Promise<Object>} Asignación creada
    */
-  asignarGrupoAProducto: (productoId, data) => apiClient.post(`/pos/productos/${productoId}/grupos`, data),
+  asignarGrupoAProducto: (productoId, data) => apiClient.post(`/inventario/productos/${productoId}/grupos`, data),
 
   /**
    * Eliminar asignación de grupo a producto
@@ -4187,7 +4188,7 @@ export const posApi = {
    * @param {number} grupoId - ID del grupo
    * @returns {Promise<Object>}
    */
-  eliminarAsignacionProducto: (productoId, grupoId) => apiClient.delete(`/pos/productos/${productoId}/grupos/${grupoId}`),
+  eliminarAsignacionProducto: (productoId, grupoId) => apiClient.delete(`/inventario/productos/${productoId}/grupos/${grupoId}`),
 
   /**
    * Asignar grupo a categoría
@@ -4195,7 +4196,7 @@ export const posApi = {
    * @param {Object} data - { grupo_id, orden? }
    * @returns {Promise<Object>} Asignación creada
    */
-  asignarGrupoACategoria: (categoriaId, data) => apiClient.post(`/pos/categorias/${categoriaId}/grupos`, data),
+  asignarGrupoACategoria: (categoriaId, data) => apiClient.post(`/inventario/categorias/${categoriaId}/grupos`, data),
 };
 
 // ==================== MÓDULOS ====================

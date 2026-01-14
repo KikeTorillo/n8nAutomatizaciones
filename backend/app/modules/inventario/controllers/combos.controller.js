@@ -3,9 +3,9 @@
  * CONTROLLER - COMBOS Y MODIFICADORES
  * ====================================================================
  *
- * Controller para gestión de combos/paquetes y modificadores de productos
+ * Controller para gestión de combos/kits y modificadores de productos
  *
- * Ene 2026 - Fase 3 POS
+ * Migrado desde POS a Inventario - Ene 2026
  * ====================================================================
  */
 
@@ -16,12 +16,12 @@ const asyncHandler = require('../../../middleware/asyncHandler');
 class CombosController {
 
     // ========================================================================
-    // COMBOS / PAQUETES
+    // COMBOS / KITS
     // ========================================================================
 
     /**
      * Verificar si un producto es combo
-     * GET /api/v1/pos/combos/verificar/:productoId
+     * GET /api/v1/inventario/combos/verificar/:productoId
      */
     static verificarCombo = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -34,7 +34,7 @@ class CombosController {
 
     /**
      * Obtener combo por producto ID
-     * GET /api/v1/pos/combos/:productoId
+     * GET /api/v1/inventario/combos/:productoId
      */
     static obtenerCombo = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -51,7 +51,7 @@ class CombosController {
 
     /**
      * Listar combos
-     * GET /api/v1/pos/combos
+     * GET /api/v1/inventario/combos
      */
     static listarCombos = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -76,7 +76,7 @@ class CombosController {
 
     /**
      * Crear combo
-     * POST /api/v1/pos/combos
+     * POST /api/v1/inventario/combos
      */
     static crearCombo = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -88,7 +88,7 @@ class CombosController {
 
     /**
      * Actualizar combo
-     * PUT /api/v1/pos/combos/:productoId
+     * PUT /api/v1/inventario/combos/:productoId
      */
     static actualizarCombo = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -109,7 +109,7 @@ class CombosController {
 
     /**
      * Eliminar combo
-     * DELETE /api/v1/pos/combos/:productoId
+     * DELETE /api/v1/inventario/combos/:productoId
      */
     static eliminarCombo = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -126,7 +126,7 @@ class CombosController {
 
     /**
      * Calcular precio de combo
-     * GET /api/v1/pos/combos/:productoId/precio
+     * GET /api/v1/inventario/combos/:productoId/precio
      */
     static calcularPrecio = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -139,7 +139,7 @@ class CombosController {
 
     /**
      * Verificar stock de componentes
-     * GET /api/v1/pos/combos/:productoId/stock
+     * GET /api/v1/inventario/combos/:productoId/stock
      */
     static verificarStock = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -161,7 +161,7 @@ class CombosController {
 
     /**
      * Listar grupos de modificadores
-     * GET /api/v1/pos/modificadores/grupos
+     * GET /api/v1/inventario/modificadores/grupos
      */
     static listarGrupos = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -177,7 +177,7 @@ class CombosController {
 
     /**
      * Crear grupo de modificadores
-     * POST /api/v1/pos/modificadores/grupos
+     * POST /api/v1/inventario/modificadores/grupos
      */
     static crearGrupo = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -189,7 +189,7 @@ class CombosController {
 
     /**
      * Actualizar grupo de modificadores
-     * PUT /api/v1/pos/modificadores/grupos/:id
+     * PUT /api/v1/inventario/modificadores/grupos/:id
      */
     static actualizarGrupo = asyncHandler(async (req, res) => {
         const { id } = req.params;
@@ -210,7 +210,7 @@ class CombosController {
 
     /**
      * Eliminar grupo de modificadores
-     * DELETE /api/v1/pos/modificadores/grupos/:id
+     * DELETE /api/v1/inventario/modificadores/grupos/:id
      */
     static eliminarGrupo = asyncHandler(async (req, res) => {
         const { id } = req.params;
@@ -238,7 +238,7 @@ class CombosController {
 
     /**
      * Crear modificador
-     * POST /api/v1/pos/modificadores
+     * POST /api/v1/inventario/modificadores
      */
     static crearModificador = asyncHandler(async (req, res) => {
         const organizacionId = req.tenant.organizacionId;
@@ -250,7 +250,7 @@ class CombosController {
 
     /**
      * Actualizar modificador
-     * PUT /api/v1/pos/modificadores/:id
+     * PUT /api/v1/inventario/modificadores/:id
      */
     static actualizarModificador = asyncHandler(async (req, res) => {
         const { id } = req.params;
@@ -271,7 +271,7 @@ class CombosController {
 
     /**
      * Eliminar modificador
-     * DELETE /api/v1/pos/modificadores/:id
+     * DELETE /api/v1/inventario/modificadores/:id
      */
     static eliminarModificador = asyncHandler(async (req, res) => {
         const { id } = req.params;
@@ -292,7 +292,7 @@ class CombosController {
 
     /**
      * Obtener modificadores de un producto
-     * GET /api/v1/pos/productos/:productoId/modificadores
+     * GET /api/v1/inventario/productos/:productoId/modificadores
      */
     static obtenerModificadoresProducto = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -308,7 +308,7 @@ class CombosController {
 
     /**
      * Verificar si un producto tiene modificadores
-     * GET /api/v1/pos/productos/:productoId/tiene-modificadores
+     * GET /api/v1/inventario/productos/:productoId/tiene-modificadores
      */
     static tieneModificadores = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -324,7 +324,7 @@ class CombosController {
 
     /**
      * Asignar grupo a producto
-     * POST /api/v1/pos/productos/:productoId/grupos
+     * POST /api/v1/inventario/productos/:productoId/grupos
      */
     static asignarGrupoAProducto = asyncHandler(async (req, res) => {
         const { productoId } = req.params;
@@ -340,7 +340,7 @@ class CombosController {
 
     /**
      * Asignar grupo a categoría
-     * POST /api/v1/pos/categorias/:categoriaId/grupos
+     * POST /api/v1/inventario/categorias/:categoriaId/grupos
      */
     static asignarGrupoACategoria = asyncHandler(async (req, res) => {
         const { categoriaId } = req.params;
@@ -356,7 +356,7 @@ class CombosController {
 
     /**
      * Eliminar asignación de grupo a producto
-     * DELETE /api/v1/pos/productos/:productoId/grupos/:grupoId
+     * DELETE /api/v1/inventario/productos/:productoId/grupos/:grupoId
      */
     static eliminarAsignacionProducto = asyncHandler(async (req, res) => {
         const { productoId, grupoId } = req.params;
@@ -377,7 +377,7 @@ class CombosController {
 
     /**
      * Listar asignaciones de un producto
-     * GET /api/v1/pos/productos/:productoId/grupos
+     * GET /api/v1/inventario/productos/:productoId/grupos
      */
     static listarAsignacionesProducto = asyncHandler(async (req, res) => {
         const { productoId } = req.params;

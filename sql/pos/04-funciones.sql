@@ -71,10 +71,11 @@ BEGIN
     WHERE venta_pos_id = v_venta_pos_id;
 
     -- Actualizar totales de la venta
+    -- Ene 2026: Incluir descuento_puntos en el cálculo del total
     UPDATE ventas_pos
     SET subtotal = suma_subtotales,
-        total = suma_subtotales - COALESCE(descuento_monto, 0) + COALESCE(impuestos, 0),
-        monto_pendiente = (suma_subtotales - COALESCE(descuento_monto, 0) + COALESCE(impuestos, 0)) - COALESCE(monto_pagado, 0),
+        total = suma_subtotales - COALESCE(descuento_monto, 0) - COALESCE(descuento_puntos, 0) + COALESCE(impuestos, 0),
+        monto_pendiente = (suma_subtotales - COALESCE(descuento_monto, 0) - COALESCE(descuento_puntos, 0) + COALESCE(impuestos, 0)) - COALESCE(monto_pagado, 0),
         actualizado_en = NOW()
     WHERE id = v_venta_pos_id;
 
@@ -177,6 +178,22 @@ BEGIN
                         NOW()
                     FROM productos p
                     WHERE p.id = item.producto_id;
+
+                    -- Ene 2026: Si el producto es combo, descontar stock de componentes
+                    IF EXISTS (
+                        SELECT 1 FROM productos_combo
+                        WHERE producto_id = item.producto_id
+                        AND activo = true
+                        AND manejo_stock = 'descontar_componentes'
+                    ) THEN
+                        -- Obtener sucursal_id de la venta
+                        PERFORM descontar_stock_combo(
+                            item.producto_id,
+                            item.cantidad,
+                            (SELECT sucursal_id FROM ventas_pos WHERE id = v_venta_pos_id),
+                            v_venta_pos_id
+                        );
+                    END IF;
 
                 END LOOP;
             END IF;
@@ -319,6 +336,21 @@ BEGIN
                 NOW()
             FROM productos p
             WHERE p.id = item.producto_id;
+
+            -- Ene 2026: Si el producto es combo, descontar stock de componentes
+            IF EXISTS (
+                SELECT 1 FROM productos_combo
+                WHERE producto_id = item.producto_id
+                AND activo = true
+                AND manejo_stock = 'descontar_componentes'
+            ) THEN
+                PERFORM descontar_stock_combo(
+                    item.producto_id,
+                    item.cantidad,
+                    NEW.sucursal_id,
+                    NEW.id
+                );
+            END IF;
 
         END LOOP;
 

@@ -473,6 +473,30 @@ class LealtadModel {
         });
     }
 
+    /**
+     * Revertir puntos por devolución de venta
+     * Ene 2026 - Fix: Las devoluciones deben restar puntos proporcionales
+     * @param {Object} params - Parámetros de la reversión
+     * @param {number} params.cliente_id - ID del cliente
+     * @param {number} params.venta_pos_id - ID de la venta
+     * @param {number} params.monto_devuelto - Monto total devuelto
+     * @param {number} params.monto_original - Monto original de la venta
+     * @param {number} organizacionId - ID de la organización
+     * @param {number} usuarioId - ID del usuario que procesa
+     */
+    static async revertirPuntosDevolucion(params, organizacionId, usuarioId = null) {
+        const { cliente_id, venta_pos_id, monto_devuelto, monto_original } = params;
+
+        return await RLSContextManager.query(organizacionId, async (db) => {
+            const result = await db.query(
+                `SELECT * FROM revertir_puntos_devolucion($1, $2, $3, $4, $5, $6)`,
+                [organizacionId, cliente_id, venta_pos_id, monto_devuelto, monto_original, usuarioId]
+            );
+
+            return result.rows[0] || null;
+        });
+    }
+
     // ========================================================================
     // HISTORIAL Y REPORTES
     // ========================================================================

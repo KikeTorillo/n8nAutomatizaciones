@@ -6,6 +6,7 @@ import Textarea from '@/components/ui/Textarea';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
+import useSucursalStore from '@/store/sucursalStore';
 import { useVenta, useDevolverItems } from '@/hooks/useVentas';
 
 /**
@@ -15,6 +16,7 @@ import { useVenta, useDevolverItems } from '@/hooks/useVentas';
 export default function DevolverItemsModal({ isOpen, onClose, venta }) {
   const toast = useToast();
   const { user } = useAuthStore();
+  const { sucursalActiva } = useSucursalStore();
   const devolverMutation = useDevolverItems();
 
   // Obtener detalle de la venta con items
@@ -97,7 +99,7 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
 
     // Preparar datos para el backend
     const itemsFormateados = itemsParaDevolver.map((item) => ({
-      venta_pos_item_id: item.venta_pos_item_id,
+      item_id: item.venta_pos_item_id,
       cantidad_devolver: item.cantidad_devolver,
     }));
 
@@ -117,6 +119,7 @@ export default function DevolverItemsModal({ isOpen, onClose, venta }) {
         items_devueltos: datosDevolucion.itemsFormateados,
         motivo: motivo.trim(),
         usuario_id: user.id,
+        sucursal_id: sucursalActiva?.id || 1, // Requerido para middleware de permisos
       });
 
       toast.success('Devolución procesada exitosamente. Stock ajustado.');

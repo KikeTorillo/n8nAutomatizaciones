@@ -76,7 +76,10 @@ const VentasListPage = lazy(() => import('@/pages/pos/VentasListPage'));
 const CorteCajaPage = lazy(() => import('@/pages/pos/CorteCajaPage'));
 const ReporteVentasDiariasPage = lazy(() => import('@/pages/pos/ReporteVentasDiariasPage'));
 const PromocionesPage = lazy(() => import('@/pages/pos/PromocionesPage'));
+const CuponesPage = lazy(() => import('@/pages/pos/CuponesPage'));
 const CustomerDisplayPage = lazy(() => import('@/pages/pos/CustomerDisplayPage'));
+const LealtadPage = lazy(() => import('@/pages/pos/LealtadPage'));
+const CombosPage = lazy(() => import('@/pages/inventario/CombosPage'));
 
 // Páginas de Marketplace
 const DirectorioMarketplacePage = lazy(() => import('@/pages/marketplace/DirectorioMarketplacePage'));
@@ -703,6 +706,30 @@ export const router = createBrowserRouter([
         element: (
           <ProtectedRoute requiredRole={['admin', 'propietario']}>
             {withSuspense(PromocionesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pos/cupones',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(CuponesPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'pos/lealtad',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(LealtadPage)}
+          </ProtectedRoute>
+        ),
+      },
+      {
+        path: 'inventario/combos',
+        element: (
+          <ProtectedRoute requiredRole={['admin', 'propietario']}>
+            {withSuspense(CombosPage)}
           </ProtectedRoute>
         ),
       },

@@ -1,14 +1,48 @@
-import { useState, useEffect } from 'react';
-import { DollarSign, Lock, FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { DollarSign, Lock, FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import { useResumenSesionCaja, useCerrarSesionCaja } from '@/hooks/usePOS';
 import { useToast } from '@/hooks/useToast';
 
+// Denominaciones del peso mexicano
+const DENOMINACIONES = {
+  billetes: [
+    { key: 'billetes_1000', valor: 1000, label: '$1,000' },
+    { key: 'billetes_500', valor: 500, label: '$500' },
+    { key: 'billetes_200', valor: 200, label: '$200' },
+    { key: 'billetes_100', valor: 100, label: '$100' },
+    { key: 'billetes_50', valor: 50, label: '$50' },
+    { key: 'billetes_20', valor: 20, label: '$20' },
+  ],
+  monedas: [
+    { key: 'monedas_10', valor: 10, label: '$10' },
+    { key: 'monedas_5', valor: 5, label: '$5' },
+    { key: 'monedas_2', valor: 2, label: '$2' },
+    { key: 'monedas_1', valor: 1, label: '$1' },
+    { key: 'monedas_050', valor: 0.5, label: '$0.50' },
+  ],
+};
+
+// Estado inicial del desglose
+const DESGLOSE_INICIAL = {
+  billetes_1000: 0,
+  billetes_500: 0,
+  billetes_200: 0,
+  billetes_100: 0,
+  billetes_50: 0,
+  billetes_20: 0,
+  monedas_10: 0,
+  monedas_5: 0,
+  monedas_2: 0,
+  monedas_1: 0,
+  monedas_050: 0,
+};
+
 /**
  * Modal para cerrar sesión de caja
- * Muestra resumen y permite ingresar monto contado
+ * Muestra resumen, permite ingresar monto contado y desglose de billetes
  */
 export default function CierreCajaModal({
   isOpen,
@@ -18,6 +52,8 @@ export default function CierreCajaModal({
 }) {
   const [montoContado, setMontoContado] = useState('');
   const [notaCierre, setNotaCierre] = useState('');
+  const [mostrarDesglose, setMostrarDesglose] = useState(false);
+  const [desglose, setDesglose] = useState(DESGLOSE_INICIAL);
 
   const { success: toastSuccess, warning: toastWarning, error: toastError } = useToast();
   const { data: resumen, isLoading: isLoadingResumen } = useResumenSesionCaja(sesionId);
@@ -28,13 +64,34 @@ export default function CierreCajaModal({
   const montoContadoNum = parseFloat(montoContado) || 0;
   const diferencia = montoContadoNum - montoEsperado;
 
+  // Calcular total del desglose de billetes/monedas
+  const totalDesglose = useMemo(() => {
+    return Object.entries(desglose).reduce((total, [key, cantidad]) => {
+      const denominacion = [...DENOMINACIONES.billetes, ...DENOMINACIONES.monedas].find(d => d.key === key);
+      return total + (denominacion ? denominacion.valor * cantidad : 0);
+    }, 0);
+  }, [desglose]);
+
   // Resetear cuando se abre el modal
   useEffect(() => {
     if (isOpen) {
       setMontoContado('');
       setNotaCierre('');
+      setMostrarDesglose(false);
+      setDesglose(DESGLOSE_INICIAL);
     }
   }, [isOpen]);
+
+  // Handler para actualizar cantidad de una denominación
+  const handleDenominacionChange = (key, value) => {
+    const cantidad = Math.max(0, parseInt(value) || 0);
+    setDesglose(prev => ({ ...prev, [key]: cantidad }));
+  };
+
+  // Aplicar total del desglose como monto contado
+  const handleAplicarDesglose = () => {
+    setMontoContado(totalDesglose.toFixed(2));
+  };
 
   const handleCerrar = async () => {
     if (!montoContado) {
@@ -43,11 +100,19 @@ export default function CierreCajaModal({
     }
 
     try {
-      const resultado = await cerrarSesionMutation.mutateAsync({
+      // Preparar datos de cierre
+      const datosClerre = {
         sesion_id: sesionId,
         monto_contado: montoContadoNum,
-        nota_cierre: notaCierre.trim() || undefined
-      });
+        nota_cierre: notaCierre.trim() || undefined,
+      };
+
+      // Incluir desglose solo si se usó
+      if (mostrarDesglose && totalDesglose > 0) {
+        datosClerre.desglose = desglose;
+      }
+
+      const resultado = await cerrarSesionMutation.mutateAsync(datosClerre);
 
       const mensaje = diferencia === 0
         ? 'Caja cerrada correctamente sin diferencias'
@@ -96,7 +161,7 @@ export default function CierreCajaModal({
       onClose={onClose}
       title="Cerrar Caja"
       subtitle="Revisa el resumen y cuenta el efectivo"
-      size="md"
+      size="lg"
       footer={footerContent}
       disableClose={cerrarSesionMutation.isPending}
     >
@@ -177,8 +242,98 @@ export default function CierreCajaModal({
                 >
                   Monto exacto
                 </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMostrarDesglose(!mostrarDesglose)}
+                >
+                  <Calculator className="h-4 w-4 mr-1" />
+                  Desglose de billetes
+                  {mostrarDesglose ? (
+                    <ChevronUp className="h-4 w-4 ml-1" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 ml-1" />
+                  )}
+                </Button>
               </div>
             </div>
+
+            {/* Desglose de billetes y monedas */}
+            {mostrarDesglose && (
+              <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 space-y-4 border border-gray-200 dark:border-gray-700">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                    <Calculator className="h-5 w-5 text-gray-500" />
+                    Desglose de efectivo
+                  </h3>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">Total contado</p>
+                    <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
+                      ${totalDesglose.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Billetes */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Billetes</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {DENOMINACIONES.billetes.map((den) => (
+                      <div key={den.key} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400 w-12">{den.label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={desglose[den.key] || ''}
+                          onChange={(e) => handleDenominacionChange(den.key, e.target.value)}
+                          placeholder="0"
+                          className="w-16 px-2 py-1 text-center text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          = ${(desglose[den.key] * den.valor).toFixed(0)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Monedas */}
+                <div>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Monedas</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {DENOMINACIONES.monedas.map((den) => (
+                      <div key={den.key} className="flex items-center gap-2">
+                        <span className="text-xs text-gray-600 dark:text-gray-400 w-12">{den.label}</span>
+                        <input
+                          type="number"
+                          min="0"
+                          value={desglose[den.key] || ''}
+                          onChange={(e) => handleDenominacionChange(den.key, e.target.value)}
+                          placeholder="0"
+                          className="w-16 px-2 py-1 text-center text-sm rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
+                        />
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          = ${(desglose[den.key] * den.valor).toFixed(2)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Botón aplicar desglose */}
+                <div className="pt-2 border-t border-gray-200 dark:border-gray-600">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={handleAplicarDesglose}
+                    disabled={totalDesglose === 0}
+                    className="w-full"
+                  >
+                    Aplicar ${totalDesglose.toFixed(2)} como monto contado
+                  </Button>
+                </div>
+              </div>
+            )}
 
             {/* Diferencia */}
             {montoContado && (

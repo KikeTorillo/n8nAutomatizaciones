@@ -46,8 +46,8 @@ export default function CanjePuntosModal({
 
   // Configuración del programa
   const minimoPuntos = config?.minimo_puntos_canje || 100;
-  const valorPunto = config?.pesos_por_punto_descuento
-    ? 1 / config.pesos_por_punto_descuento
+  const valorPunto = config?.puntos_por_peso_descuento
+    ? 1 / config.puntos_por_peso_descuento
     : 0.01;
   const maxPorcentaje = config?.maximo_porcentaje_descuento || 50;
 

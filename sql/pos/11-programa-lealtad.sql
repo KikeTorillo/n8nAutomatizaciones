@@ -788,5 +788,88 @@ END $$;
 -- SELECT cron.schedule('expirar-puntos-lealtad', '30 0 * * *', 'SELECT expirar_puntos_vencidos()');
 
 -- ============================================================================
+-- FUNCIÓN: revertir_puntos_devolucion
+-- Descripción: Revierte puntos proporcionales al monto devuelto
+-- Ene 2026 - Fix: Devoluciones deben revertir puntos ganados
+-- ============================================================================
+CREATE OR REPLACE FUNCTION revertir_puntos_devolucion(
+    p_organizacion_id INTEGER,
+    p_cliente_id INTEGER,
+    p_venta_pos_id INTEGER,
+    p_monto_devuelto DECIMAL(10, 2),
+    p_monto_original DECIMAL(10, 2),
+    p_usuario_id INTEGER DEFAULT NULL
+)
+RETURNS transacciones_puntos AS $$
+DECLARE
+    v_puntos_actual INTEGER;
+    v_puntos_ganados INTEGER;
+    v_puntos_revertir INTEGER;
+    v_transaccion transacciones_puntos;
+BEGIN
+    -- 1. Obtener puntos ganados en la venta original
+    SELECT COALESCE(SUM(puntos), 0) INTO v_puntos_ganados
+    FROM transacciones_puntos
+    WHERE venta_pos_id = p_venta_pos_id
+    AND tipo = 'acumulacion'
+    AND organizacion_id = p_organizacion_id;
+
+    -- Si no hubo acumulación de puntos, no hay nada que revertir
+    IF v_puntos_ganados <= 0 THEN
+        RETURN NULL;
+    END IF;
+
+    -- 2. Calcular puntos a revertir (proporción del monto devuelto)
+    v_puntos_revertir := FLOOR(
+        (p_monto_devuelto / NULLIF(p_monto_original, 0)) * v_puntos_ganados
+    );
+
+    IF v_puntos_revertir <= 0 THEN
+        RETURN NULL;
+    END IF;
+
+    -- 3. Obtener saldo actual con lock
+    SELECT puntos_disponibles INTO v_puntos_actual
+    FROM puntos_cliente
+    WHERE organizacion_id = p_organizacion_id AND cliente_id = p_cliente_id
+    FOR UPDATE;
+
+    -- Si no tiene registro de puntos, no hay nada que revertir
+    IF v_puntos_actual IS NULL THEN
+        RETURN NULL;
+    END IF;
+
+    -- 4. Registrar transacción de reversión (tipo 'cancelacion' ya existe en la tabla)
+    INSERT INTO transacciones_puntos (
+        organizacion_id, cliente_id, tipo, puntos,
+        puntos_antes, puntos_despues,
+        venta_pos_id, monto_descuento, descripcion, creado_por
+    ) VALUES (
+        p_organizacion_id, p_cliente_id, 'cancelacion', -v_puntos_revertir,
+        v_puntos_actual, GREATEST(v_puntos_actual - v_puntos_revertir, 0),
+        p_venta_pos_id, p_monto_devuelto,
+        FORMAT('Reversión por devolución: %s puntos (%s%% del total)',
+               v_puntos_revertir,
+               ROUND((p_monto_devuelto / NULLIF(p_monto_original, 0)) * 100, 1)),
+        p_usuario_id
+    )
+    RETURNING * INTO v_transaccion;
+
+    -- 5. Actualizar saldo (no puede quedar negativo)
+    UPDATE puntos_cliente
+    SET puntos_disponibles = GREATEST(puntos_disponibles - v_puntos_revertir, 0),
+        actualizado_en = NOW()
+    WHERE organizacion_id = p_organizacion_id AND cliente_id = p_cliente_id;
+
+    RETURN v_transaccion;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+COMMENT ON FUNCTION revertir_puntos_devolucion IS 'Revierte puntos proporcionales al monto devuelto de una venta';
+
+-- Permisos para la función
+GRANT EXECUTE ON FUNCTION revertir_puntos_devolucion(INTEGER, INTEGER, INTEGER, DECIMAL, DECIMAL, INTEGER) TO saas_app;
+
+-- ============================================================================
 -- FIN DEL ARCHIVO
 -- ============================================================================

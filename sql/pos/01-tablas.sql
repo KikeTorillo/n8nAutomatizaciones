@@ -74,6 +74,10 @@ CREATE TABLE IF NOT EXISTS ventas_pos (
     direccion_envio TEXT,                    -- Direccion de envio del cliente
     requiere_oc_dropship BOOLEAN DEFAULT false, -- Indica si requiere generar OC dropship
 
+    -- 🎯 LEALTAD (Ene 2026)
+    puntos_canjeados INTEGER DEFAULT 0,      -- Puntos canjeados por descuento
+    descuento_puntos DECIMAL(10, 2) DEFAULT 0, -- Descuento en $ por puntos canjeados
+
     -- 📅 TIMESTAMPS
     fecha_venta TIMESTAMPTZ DEFAULT NOW(),
     fecha_apartado DATE, -- Si tipo_venta = apartado

@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingCart, History, Calculator, BarChart3, Sparkles } from 'lucide-react';
+import { ShoppingCart, History, Calculator, BarChart3, Sparkles, Ticket, Gift } from 'lucide-react';
 
 /**
  * Tabs de navegación para el módulo POS
@@ -23,6 +23,18 @@ const tabs = [
     label: 'Promociones',
     path: '/pos/promociones',
     icon: Sparkles,
+  },
+  {
+    id: 'cupones',
+    label: 'Cupones',
+    path: '/pos/cupones',
+    icon: Ticket,
+  },
+  {
+    id: 'lealtad',
+    label: 'Lealtad',
+    path: '/pos/lealtad',
+    icon: Gift,
   },
   {
     id: 'corte-caja',

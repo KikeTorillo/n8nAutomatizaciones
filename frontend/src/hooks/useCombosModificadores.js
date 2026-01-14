@@ -96,24 +96,16 @@ export function useCombos(params = {}, options = {}) {
  */
 export function useCrearCombo() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: (data) => posApi.crearCombo(data),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
-            toast({
-                title: 'Combo creado',
-                description: 'El combo se ha creado exitosamente',
-                variant: 'success',
-            });
+            toast.success('Combo creado exitosamente');
         },
         onError: (error) => {
-            toast({
-                title: 'Error al crear combo',
-                description: error.response?.data?.message || error.message,
-                variant: 'error',
-            });
+            toast.error(error.response?.data?.message || 'Error al crear combo');
         },
     });
 }
@@ -124,25 +116,17 @@ export function useCrearCombo() {
  */
 export function useActualizarCombo() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ productoId, data }) => posApi.actualizarCombo(productoId, data),
         onSuccess: (_, { productoId }) => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combo, productoId] });
-            toast({
-                title: 'Combo actualizado',
-                description: 'El combo se ha actualizado exitosamente',
-                variant: 'success',
-            });
+            toast.success('Combo actualizado exitosamente');
         },
         onError: (error) => {
-            toast({
-                title: 'Error al actualizar combo',
-                description: error.response?.data?.message || error.message,
-                variant: 'error',
-            });
+            toast.error(error.response?.data?.message || 'Error al actualizar combo');
         },
     });
 }
@@ -153,24 +137,16 @@ export function useActualizarCombo() {
  */
 export function useEliminarCombo() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
-        mutationFn: (productoId) => posApi.eliminarCombo(productoId),
+        mutationFn: ({ productoId, sucursalId }) => posApi.eliminarCombo(productoId, sucursalId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.combos] });
-            toast({
-                title: 'Combo eliminado',
-                description: 'El combo se ha eliminado exitosamente',
-                variant: 'success',
-            });
+            toast.success('Combo eliminado exitosamente');
         },
         onError: (error) => {
-            toast({
-                title: 'Error al eliminar combo',
-                description: error.response?.data?.message || error.message,
-                variant: 'error',
-            });
+            toast.error(error.response?.data?.message || 'Error al eliminar combo');
         },
     });
 }
@@ -239,7 +215,7 @@ export function useGruposModificadores(params = {}, options = {}) {
  */
 export function useCrearGrupoModificadores() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: (data) => posApi.crearGrupoModificadores(data),
@@ -267,7 +243,7 @@ export function useCrearGrupoModificadores() {
  */
 export function useActualizarGrupoModificadores() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ id, data }) => posApi.actualizarGrupoModificadores(id, data),
@@ -295,7 +271,7 @@ export function useActualizarGrupoModificadores() {
  */
 export function useEliminarGrupoModificadores() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: (id) => posApi.eliminarGrupoModificadores(id),
@@ -327,7 +303,7 @@ export function useEliminarGrupoModificadores() {
  */
 export function useCrearModificador() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: (data) => posApi.crearModificador(data),
@@ -355,7 +331,7 @@ export function useCrearModificador() {
  */
 export function useActualizarModificador() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ id, data }) => posApi.actualizarModificador(id, data),
@@ -383,7 +359,7 @@ export function useActualizarModificador() {
  */
 export function useEliminarModificador() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: (id) => posApi.eliminarModificador(id),
@@ -473,7 +449,7 @@ export function useAsignacionesProducto(productoId, options = {}) {
  */
 export function useAsignarGrupoAProducto() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ productoId, data }) => posApi.asignarGrupoAProducto(productoId, data),
@@ -503,7 +479,7 @@ export function useAsignarGrupoAProducto() {
  */
 export function useAsignarGrupoACategoria() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ categoriaId, data }) => posApi.asignarGrupoACategoria(categoriaId, data),
@@ -533,7 +509,7 @@ export function useAsignarGrupoACategoria() {
  */
 export function useEliminarAsignacionProducto() {
     const queryClient = useQueryClient();
-    const { toast } = useToast();
+    const toast = useToast();
 
     return useMutation({
         mutationFn: ({ productoId, grupoId }) => posApi.eliminarAsignacionProducto(productoId, grupoId),

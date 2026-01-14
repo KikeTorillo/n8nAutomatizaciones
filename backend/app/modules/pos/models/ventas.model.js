@@ -266,16 +266,20 @@ class VentasPOSModel {
                 };
             });
 
-            // Ene 2026: Incluir descuento de cupón en el total
+            // Ene 2026: Incluir descuento de cupón y puntos en el total
             const descuentoMonto = data.descuento_monto || 0;
             const descuentoCupon = data.descuento_cupon || 0;
+            const descuentoPuntos = data.descuento_puntos || 0;
+            const puntosCanjeados = data.puntos_canjeados || 0;
             const descuentoVenta = descuentoMonto + descuentoCupon;
             const impuestos = data.impuestos || 0;
-            const total = subtotal - descuentoVenta + impuestos;
+            const total = subtotal - descuentoVenta - descuentoPuntos + impuestos;
 
             logger.info('[VentasPOSModel.crear] DEBUG - Totales calculados:', {
                 subtotal,
                 descuentoVenta,
+                descuentoPuntos,
+                puntosCanjeados,
                 impuestos,
                 total,
                 monto_pagado: data.monto_pagado
@@ -294,6 +298,7 @@ class VentasPOSModel {
 
             // Insertar venta con folio generado manualmente
             // ✅ FEATURE: Multi-sucursal - sucursal_id agregado
+            // ✅ Ene 2026: puntos_canjeados y descuento_puntos para lealtad
             const ventaQuery = `
                 INSERT INTO ventas_pos (
                     organizacion_id,
@@ -317,8 +322,10 @@ class VentasPOSModel {
                     estado,
                     fecha_venta,
                     fecha_apartado,
-                    fecha_vencimiento_apartado
-                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22)
+                    fecha_vencimiento_apartado,
+                    puntos_canjeados,
+                    descuento_puntos
+                ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
                 RETURNING *
             `;
 
@@ -374,7 +381,9 @@ class VentasPOSModel {
                 data.tipo_venta === 'cotizacion' ? 'cotizacion' : 'completada',
                 new Date(),
                 data.fecha_apartado || null,
-                data.fecha_vencimiento_apartado || null
+                data.fecha_vencimiento_apartado || null,
+                puntosCanjeados,      // Ene 2026: puntos de lealtad canjeados
+                descuentoPuntos       // Ene 2026: descuento en $ por puntos
             ];
 
             const resultVenta = await db.query(ventaQuery, ventaValues);
@@ -1105,9 +1114,9 @@ class VentasPOSModel {
                 throw new Error('Debe especificar al menos un item para devolver');
             }
 
-            // Obtener venta
+            // Obtener venta (incluir cliente_id para reversión de puntos)
             const ventaQuery = await db.query(
-                `SELECT id, folio, total, estado FROM ventas_pos WHERE id = $1`,
+                `SELECT id, folio, total, estado, cliente_id FROM ventas_pos WHERE id = $1`,
                 [id]
             );
 
@@ -1117,9 +1126,11 @@ class VentasPOSModel {
 
             const venta = ventaQuery.rows[0];
 
-            // Validar que la venta esté completada
-            if (venta.estado !== 'completada') {
-                throw new Error('Solo se pueden hacer devoluciones de ventas completadas');
+            // Validar que la venta permita devoluciones (completada o con devolución parcial)
+            // Ene 2026: Permitir devoluciones adicionales en ventas con devolucion_parcial
+            const estadosPermitidos = ['completada', 'devolucion_parcial'];
+            if (!estadosPermitidos.includes(venta.estado)) {
+                throw new Error('Solo se pueden hacer devoluciones de ventas completadas o con devolución parcial');
             }
 
             let totalDevuelto = 0;
@@ -1219,6 +1230,49 @@ class VentasPOSModel {
                  WHERE id = $2`,
                 [notasDevolucion, id]
             );
+
+            // Determinar si es devolución parcial o total
+            // Obtener todos los items de la venta para comparar
+            const todosItemsQuery = await db.query(
+                `SELECT SUM(cantidad) as total_items FROM ventas_pos_items WHERE venta_pos_id = $1`,
+                [id]
+            );
+            const totalItemsVenta = parseInt(todosItemsQuery.rows[0]?.total_items || 0);
+            const totalItemsDevueltos = itemsDevueltos.reduce((sum, item) => sum + item.cantidad_devolver, 0);
+
+            const nuevoEstado = totalItemsDevueltos >= totalItemsVenta
+                ? 'devolucion_total'
+                : 'devolucion_parcial';
+
+            await db.query(
+                `UPDATE ventas_pos SET estado = $1, actualizado_en = NOW() WHERE id = $2`,
+                [nuevoEstado, id]
+            );
+
+            // Ene 2026: Revertir puntos de lealtad si la venta tuvo cliente
+            if (venta.cliente_id) {
+                try {
+                    const LealtadModel = require('./lealtad.model');
+                    await LealtadModel.revertirPuntosDevolucion({
+                        cliente_id: venta.cliente_id,
+                        venta_pos_id: id,
+                        monto_devuelto: totalDevuelto,
+                        monto_original: parseFloat(venta.total)
+                    }, organizacionId, usuarioId);
+
+                    logger.info('[VentasPOSModel.devolver] Puntos revertidos por devolución', {
+                        venta_id: id,
+                        cliente_id: venta.cliente_id,
+                        monto_devuelto: totalDevuelto
+                    });
+                } catch (errorLealtad) {
+                    // No fallar la devolución si hay error en lealtad
+                    logger.warn('[VentasPOSModel.devolver] Error al revertir puntos (no crítico)', {
+                        error: errorLealtad.message,
+                        venta_id: id
+                    });
+                }
+            }
 
             logger.info('[VentasPOSModel.devolver] Devolución procesada exitosamente', {
                 venta_id: id,

@@ -4,11 +4,11 @@
  * ====================================================================
  *
  * Modelo para gestión de:
- * - Combos/Paquetes de productos
+ * - Combos/Kits de productos
  * - Grupos de modificadores
  * - Opciones de modificadores
  *
- * Ene 2026 - Fase 3 POS
+ * Migrado desde POS a Inventario - Ene 2026
  * ====================================================================
  */
 
@@ -17,7 +17,7 @@ const RLSContextManager = require('../../../utils/rlsContextManager');
 class CombosModel {
 
     // ========================================================================
-    // COMBOS / PAQUETES
+    // COMBOS / KITS
     // ========================================================================
 
     /**
