@@ -22,6 +22,7 @@ import Modal from '@/components/ui/Modal';
 import { useToast } from '@/hooks/useToast';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/useCurrency';
+import { useModalManager } from '@/hooks/useModalManager';
 
 /**
  * Pares de tasas de cambio predefinidos
@@ -43,11 +44,14 @@ function MonedasPage() {
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
 
-  const [showModal, setShowModal] = useState(false);
-  const [showHistorialModal, setShowHistorialModal] = useState(false);
-  const [parSeleccionado, setParSeleccionado] = useState(null);
+  // Estado de formulario
   const [nuevaTasa, setNuevaTasa] = useState('');
-  const [tasaEditing, setTasaEditing] = useState(null);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    editarTasa: { isOpen: false, data: null },
+    historial: { isOpen: false, data: null },
+  });
 
   // Query: Listar monedas
   const { data: monedas = [], isLoading: loadingMonedas } = useQuery({
@@ -79,6 +83,7 @@ function MonedasPage() {
   });
 
   // Query: Historial de tasas para el par seleccionado
+  const parSeleccionado = getModalData('historial');
   const { data: historial = [], isLoading: loadingHistorial } = useQuery({
     queryKey: ['historial-tasas', parSeleccionado?.origen, parSeleccionado?.destino],
     queryFn: async () => {
@@ -90,7 +95,7 @@ function MonedasPage() {
       );
       return response.data.data || [];
     },
-    enabled: !!parSeleccionado && showHistorialModal,
+    enabled: !!parSeleccionado && isOpen('historial'),
   });
 
   // Mutation: Guardar tasa
@@ -106,12 +111,11 @@ function MonedasPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['tasas-cambio-actuales'] });
       toast.success('Tasa de cambio actualizada');
-      setShowModal(false);
+      closeModal('editarTasa');
       setNuevaTasa('');
-      setTasaEditing(null);
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al guardar la tasa');
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Error al guardar la tasa');
     },
   });
 
@@ -120,13 +124,13 @@ function MonedasPage() {
 
   // Manejar click en editar tasa
   const handleEditarTasa = (par, tasaActual) => {
-    setTasaEditing(par);
     setNuevaTasa(tasaActual?.tasa?.toString() || '');
-    setShowModal(true);
+    openModal('editarTasa', par);
   };
 
   // Manejar guardar tasa
   const handleGuardarTasa = () => {
+    const tasaEditing = getModalData('editarTasa');
     if (!tasaEditing || !nuevaTasa || parseFloat(nuevaTasa) <= 0) {
       toast.error('Ingresa una tasa válida mayor a 0');
       return;
@@ -140,8 +144,7 @@ function MonedasPage() {
 
   // Manejar ver historial
   const handleVerHistorial = (par) => {
-    setParSeleccionado(par);
-    setShowHistorialModal(true);
+    openModal('historial', par);
   };
 
   // Formatear fecha
@@ -343,13 +346,12 @@ function MonedasPage() {
 
       {/* Modal: Editar Tasa */}
       <Modal
-        isOpen={showModal}
+        isOpen={isOpen('editarTasa')}
         onClose={() => {
-          setShowModal(false);
+          closeModal('editarTasa');
           setNuevaTasa('');
-          setTasaEditing(null);
         }}
-        title={`Actualizar Tasa: ${tasaEditing?.origen} → ${tasaEditing?.destino}`}
+        title={`Actualizar Tasa: ${getModalData('editarTasa')?.origen} → ${getModalData('editarTasa')?.destino}`}
       >
         <div className="space-y-4">
           <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -358,7 +360,7 @@ function MonedasPage() {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              1 {tasaEditing?.origen} =
+              1 {getModalData('editarTasa')?.origen} =
             </label>
             <div className="flex items-center gap-2">
               <Input
@@ -372,7 +374,7 @@ function MonedasPage() {
                 autoFocus
               />
               <span className="text-lg font-medium text-gray-700 dark:text-gray-300">
-                {tasaEditing?.destino}
+                {getModalData('editarTasa')?.destino}
               </span>
             </div>
           </div>
@@ -381,9 +383,8 @@ function MonedasPage() {
             <Button
               variant="ghost"
               onClick={() => {
-                setShowModal(false);
+                closeModal('editarTasa');
                 setNuevaTasa('');
-                setTasaEditing(null);
               }}
             >
               Cancelar
@@ -405,12 +406,9 @@ function MonedasPage() {
 
       {/* Modal: Historial de Tasas */}
       <Modal
-        isOpen={showHistorialModal}
-        onClose={() => {
-          setShowHistorialModal(false);
-          setParSeleccionado(null);
-        }}
-        title={`Historial: ${parSeleccionado?.origen} → ${parSeleccionado?.destino}`}
+        isOpen={isOpen('historial')}
+        onClose={() => closeModal('historial')}
+        title={`Historial: ${getModalData('historial')?.origen} → ${getModalData('historial')?.destino}`}
         size="md"
       >
         <div className="space-y-4">

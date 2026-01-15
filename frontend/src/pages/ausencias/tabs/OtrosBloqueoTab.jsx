@@ -5,6 +5,7 @@
  * Enero 2026
  */
 import { useState, useMemo } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, List } from 'lucide-react';
 import { useBloqueos, useEliminarBloqueo } from '@/hooks/useBloqueos';
 import { useProfesionales } from '@/hooks/useProfesionales';
@@ -37,14 +38,12 @@ function OtrosBloqueoTab() {
     fecha_hasta: '',
     solo_activos: true,
   });
-  const [modalFormularioAbierto, setModalFormularioAbierto] = useState(false);
-  const [modoFormulario, setModoFormulario] = useState('crear');
-  const [bloqueoSeleccionado, setBloqueoSeleccionado] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
-  const [bloqueoParaEliminar, setBloqueoParaEliminar] = useState(null);
-  const [modalDetalleAbierto, setModalDetalleAbierto] = useState(false);
-  const [bloqueoParaVer, setBloqueoParaVer] = useState(null);
-  const [fechaPreseleccionada, setFechaPreseleccionada] = useState(null);
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null }, // { bloqueo, mode, fechaPreseleccionada }
+    delete: { isOpen: false, data: null }, // bloqueo
+    detalle: { isOpen: false, data: null }, // bloqueo
+  });
 
   // Queries
   const { data: profesionalesData, isLoading: isLoadingProfesionales } = useProfesionales({
@@ -100,52 +99,41 @@ function OtrosBloqueoTab() {
   };
 
   const handleNuevoBloqueo = () => {
-    setModoFormulario('crear');
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(null);
-    setModalFormularioAbierto(true);
+    openModal('form', { bloqueo: null, mode: 'crear', fechaPreseleccionada: null });
   };
 
   const handleCrearBloqueoDesdeCalendario = (fechaISO) => {
-    setModoFormulario('crear');
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(fechaISO);
-    setModalFormularioAbierto(true);
+    openModal('form', { bloqueo: null, mode: 'crear', fechaPreseleccionada: fechaISO });
   };
 
   const handleVerBloqueo = (bloqueo) => {
     // Solo mostrar detalles si es bloqueo manual
     if (!esBloqueoAutoGenerado(bloqueo)) {
-      setBloqueoParaVer(bloqueo);
-      setModalDetalleAbierto(true);
+      openModal('detalle', bloqueo);
     }
   };
 
   const handleEditarBloqueo = (bloqueo) => {
-    setModoFormulario('editar');
-    setBloqueoSeleccionado(bloqueo);
-    setModalFormularioAbierto(true);
+    openModal('form', { bloqueo, mode: 'editar', fechaPreseleccionada: null });
   };
 
   const handleEliminarBloqueo = (bloqueo) => {
-    setBloqueoParaEliminar(bloqueo);
-    setModalEliminarAbierto(true);
+    openModal('delete', bloqueo);
   };
 
   const handleConfirmarEliminar = async () => {
+    const bloqueoParaEliminar = getModalData('delete');
+    if (!bloqueoParaEliminar) return;
     try {
       await eliminarMutation.mutateAsync(bloqueoParaEliminar.id);
-      setModalEliminarAbierto(false);
-      setBloqueoParaEliminar(null);
-    } catch (error) {
-      console.error('Error al eliminar bloqueo:', error);
+      closeModal('delete');
+    } catch (err) {
+      console.error('Error al eliminar bloqueo:', err);
     }
   };
 
   const handleCerrarFormulario = () => {
-    setModalFormularioAbierto(false);
-    setBloqueoSeleccionado(null);
-    setFechaPreseleccionada(null);
+    closeModal('form');
   };
 
   return (
@@ -302,36 +290,30 @@ function OtrosBloqueoTab() {
 
       {/* Modal de formulario */}
       <BloqueoFormModal
-        isOpen={modalFormularioAbierto}
+        isOpen={isOpen('form')}
         onClose={handleCerrarFormulario}
-        bloqueo={bloqueoSeleccionado}
-        modo={modoFormulario}
-        fechaInicial={fechaPreseleccionada}
+        bloqueo={getModalData('form')?.bloqueo}
+        modo={getModalData('form')?.mode || 'crear'}
+        fechaInicial={getModalData('form')?.fechaPreseleccionada}
       />
 
       {/* Modal de detalle */}
       <BloqueoDetailModal
-        isOpen={modalDetalleAbierto}
-        onClose={() => {
-          setModalDetalleAbierto(false);
-          setBloqueoParaVer(null);
-        }}
-        bloqueo={bloqueoParaVer}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
+        bloqueo={getModalData('detalle')}
         onEditar={handleEditarBloqueo}
         onEliminar={handleEliminarBloqueo}
       />
 
       {/* Modal de confirmación de eliminación */}
       <Modal
-        isOpen={modalEliminarAbierto}
-        onClose={() => {
-          setModalEliminarAbierto(false);
-          setBloqueoParaEliminar(null);
-        }}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Eliminar Bloqueo"
         size="md"
       >
-        {bloqueoParaEliminar && (
+        {getModalData('delete') && (
           <div className="space-y-4">
             <p className="text-gray-700 dark:text-gray-300">
               ¿Estás seguro de que deseas eliminar el siguiente bloqueo?
@@ -339,16 +321,16 @@ function OtrosBloqueoTab() {
 
             <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
               <h4 className="font-medium text-gray-900 dark:text-gray-100 mb-2">
-                {bloqueoParaEliminar.titulo}
+                {getModalData('delete')?.titulo}
               </h4>
               <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <p>Tipo: {bloqueoParaEliminar.tipo_bloqueo}</p>
+                <p>Tipo: {getModalData('delete')?.tipo_bloqueo}</p>
                 <p>
-                  Fecha: {bloqueoParaEliminar.fecha_inicio} - {bloqueoParaEliminar.fecha_fin}
+                  Fecha: {getModalData('delete')?.fecha_inicio} - {getModalData('delete')?.fecha_fin}
                 </p>
-                {bloqueoParaEliminar.citas_afectadas > 0 && (
+                {getModalData('delete')?.citas_afectadas > 0 && (
                   <p className="text-red-600 dark:text-red-400 font-medium mt-2">
-                    Este bloqueo afecta {bloqueoParaEliminar.citas_afectadas} citas
+                    Este bloqueo afecta {getModalData('delete')?.citas_afectadas} citas
                   </p>
                 )}
               </div>
@@ -357,10 +339,7 @@ function OtrosBloqueoTab() {
             <div className="flex justify-end gap-3">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setModalEliminarAbierto(false);
-                  setBloqueoParaEliminar(null);
-                }}
+                onClick={() => closeModal('delete')}
               >
                 Cancelar
               </Button>

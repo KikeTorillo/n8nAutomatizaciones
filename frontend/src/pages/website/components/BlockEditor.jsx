@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   GripVertical,
   Trash2,
@@ -227,7 +228,11 @@ function BloqueItem({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [confirmarEliminar, setConfirmarEliminar] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    delete: { isOpen: false },
+  });
 
   const config = BLOQUES_CONFIG[bloque.tipo] || {
     icon: Layout,
@@ -264,7 +269,7 @@ function BloqueItem({
 
   const handleEliminar = () => {
     onEliminar();
-    setConfirmarEliminar(false);
+    closeModal('delete');
   };
 
   return (
@@ -328,7 +333,7 @@ function BloqueItem({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              setConfirmarEliminar(true);
+              openModal('delete');
             }}
             className="p-1.5 hover:bg-red-50 dark:hover:bg-red-900/30 rounded text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
             title="Eliminar"
@@ -366,8 +371,8 @@ function BloqueItem({
 
       {/* Modal confirmar eliminar bloque */}
       <ConfirmDialog
-        isOpen={confirmarEliminar}
-        onClose={() => setConfirmarEliminar(false)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar Bloque"
         message={`¿Estás seguro de eliminar el bloque "${config.label}"?`}

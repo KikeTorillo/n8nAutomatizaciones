@@ -33,6 +33,7 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Pagination from '@/components/ui/Pagination';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import useSucursalStore from '@/store/sucursalStore';
 import {
   usePromociones,
@@ -56,12 +57,17 @@ export default function PromocionesPage() {
   const toast = useToast();
   const { sucursalActiva } = useSucursalStore();
 
-  // Estados de UI
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingPromocion, setEditingPromocion] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [statsModalOpen, setStatsModalOpen] = useState(false);
-  const [selectedPromocionId, setSelectedPromocionId] = useState(null);
+  // Estados de modales centralizados con useModalManager
+  const {
+    openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+  } = useModalManager({
+    form: { isOpen: false, data: null, mode: 'create' },
+    delete: { isOpen: false, data: null },
+    stats: { isOpen: false, data: null },
+  });
 
   // Filtros y paginacion
   const [searchTerm, setSearchTerm] = useState('');
@@ -91,7 +97,8 @@ export default function PromocionesPage() {
   const cambiarEstadoMutation = useCambiarEstadoPromocion();
   const duplicarMutation = useDuplicarPromocion();
 
-  // Estadisticas
+  // Estadisticas (usando datos del modal)
+  const selectedPromocionId = getModalData('stats')?.id;
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticasPromocion(selectedPromocionId);
 
   // Form
@@ -135,9 +142,8 @@ export default function PromocionesPage() {
 
   const tipoSeleccionado = watch('tipo');
 
-  // Handlers
+  // Handlers usando useModalManager
   const handleNuevo = () => {
-    setEditingPromocion(null);
     reset({
       codigo: '',
       nombre: '',
@@ -164,11 +170,10 @@ export default function PromocionesPage() {
         clientes_ids: []
       }
     });
-    setDrawerOpen(true);
+    openModal('form', null, { mode: 'create' });
   };
 
   const handleEditar = (promocion) => {
-    setEditingPromocion(promocion);
     const reglas = promocion.reglas || {};
     reset({
       codigo: promocion.codigo || '',
@@ -196,16 +201,15 @@ export default function PromocionesPage() {
         clientes_ids: reglas.clientes_ids || []
       }
     });
-    setDrawerOpen(true);
+    openModal('form', promocion, { mode: 'edit' });
   };
 
   const handleEliminar = (promocion) => {
-    setDeleteConfirm(promocion);
+    openModal('delete', promocion);
   };
 
-  const handleVerEstadisticas = (promocionId) => {
-    setSelectedPromocionId(promocionId);
-    setStatsModalOpen(true);
+  const handleVerEstadisticas = (promocion) => {
+    openModal('stats', promocion);
   };
 
   const handleDuplicar = async (promocionId) => {
@@ -230,6 +234,7 @@ export default function PromocionesPage() {
   };
 
   const onSubmit = async (data) => {
+    const editingPromocion = getModalData('form');
     try {
       // Construir reglas segun tipo
       const reglas = {};
@@ -264,7 +269,8 @@ export default function PromocionesPage() {
         acumulable_cupones: data.acumulable_cupones,
         limite_uso_total: data.limite_uso_total ? parseInt(data.limite_uso_total) : undefined,
         limite_uso_cliente: data.limite_uso_cliente ? parseInt(data.limite_uso_cliente) : undefined,
-        activo: data.activo
+        activo: data.activo,
+        sucursal_id: sucursalActiva?.id
       };
 
       if (editingPromocion) {
@@ -278,7 +284,7 @@ export default function PromocionesPage() {
         toast.success('Promocion creada');
       }
 
-      setDrawerOpen(false);
+      closeModal('form');
       reset();
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || 'Error al guardar');
@@ -286,10 +292,11 @@ export default function PromocionesPage() {
   };
 
   const confirmarEliminar = async () => {
+    const promocionToDelete = getModalData('delete');
     try {
-      await eliminarMutation.mutateAsync(deleteConfirm.id);
+      await eliminarMutation.mutateAsync(promocionToDelete.id);
       toast.success('Promocion eliminada');
-      setDeleteConfirm(null);
+      closeModal('delete');
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || 'Error al eliminar');
     }
@@ -577,7 +584,7 @@ export default function PromocionesPage() {
                       </button>
 
                       <button
-                        onClick={() => handleVerEstadisticas(promocion.id)}
+                        onClick={() => handleVerEstadisticas(promocion)}
                         className="p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Ver estadisticas"
                       >
@@ -627,11 +634,11 @@ export default function PromocionesPage() {
         )}
       </div>
 
-      {/* Drawer de crear/editar */}
+      {/* Drawer de crear/editar usando useModalManager */}
       <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingPromocion ? 'Editar Promocion' : 'Nueva Promocion'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Promocion' : 'Nueva Promocion'}
         size="lg"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-4">
@@ -863,7 +870,7 @@ export default function PromocionesPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => closeModal('form')}
               className="flex-1"
             >
               Cancelar
@@ -876,19 +883,16 @@ export default function PromocionesPage() {
               {(crearMutation.isPending || actualizarMutation.isPending) && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              {editingPromocion ? 'Guardar cambios' : 'Crear promocion'}
+              {getModalData('form') ? 'Guardar cambios' : 'Crear promocion'}
             </Button>
           </div>
         </form>
       </Drawer>
 
-      {/* Modal de estadisticas */}
+      {/* Modal de estadisticas usando useModalManager */}
       <Modal
-        isOpen={statsModalOpen}
-        onClose={() => {
-          setStatsModalOpen(false);
-          setSelectedPromocionId(null);
-        }}
+        isOpen={isOpen('stats')}
+        onClose={() => closeModal('stats')}
         title="Estadisticas de Promocion"
       >
         {loadingStats ? (
@@ -937,13 +941,13 @@ export default function PromocionesPage() {
         )}
       </Modal>
 
-      {/* Confirmacion de eliminar */}
+      {/* Confirmacion de eliminar usando useModalManager */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmarEliminar}
         title="Eliminar promocion"
-        message={`¿Estas seguro de eliminar la promocion "${deleteConfirm?.nombre}"? Esta accion no se puede deshacer.`}
+        message={`¿Estas seguro de eliminar la promocion "${getModalData('delete')?.nombre}"? Esta accion no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

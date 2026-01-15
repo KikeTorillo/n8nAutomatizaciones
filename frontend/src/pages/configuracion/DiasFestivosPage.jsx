@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Calendar,
-  Plus,
   Download,
   Search,
   Trash2,
   ChevronLeft,
   ChevronRight,
   Globe,
-  AlertTriangle,
   CheckCircle,
   Loader2,
 } from 'lucide-react';
@@ -20,6 +18,7 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/useBloqueos';
 import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
 import {
@@ -43,11 +42,13 @@ function DiasFestivosPage() {
   // Estado para filtros
   const [anioSeleccionado, setAnioSeleccionado] = useState(new Date().getFullYear());
   const [busqueda, setBusqueda] = useState('');
-
-  // Estado para modales
-  const [modalImportarOpen, setModalImportarOpen] = useState(false);
   const [paisSeleccionado, setPaisSeleccionado] = useState('');
-  const [feriadoAEliminar, setFeriadoAEliminar] = useState(null);
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    importar: { isOpen: false },
+    delete: { isOpen: false, data: null },
+  });
 
   // Obtener tipo de bloqueo 'feriado'
   const { data: tiposData } = useTiposBloqueo();
@@ -129,20 +130,21 @@ function DiasFestivosPage() {
       toast.warning(`${errores} feriados ya existían o no pudieron importarse`);
     }
 
-    setModalImportarOpen(false);
+    closeModal('importar');
     setPaisSeleccionado('');
   };
 
   // Eliminar feriado
   const handleEliminarFeriado = async () => {
+    const feriadoAEliminar = getModalData('delete');
     if (!feriadoAEliminar) return;
 
     try {
       await eliminarMutation.mutateAsync(feriadoAEliminar.id);
       toast.success('Feriado eliminado');
-      setFeriadoAEliminar(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar feriado');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar feriado');
     }
   };
 
@@ -175,7 +177,7 @@ function DiasFestivosPage() {
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
-                onClick={() => setModalImportarOpen(true)}
+                onClick={() => openModal('importar')}
                 icon={<Download className="h-4 w-4" />}
               >
                 Importar
@@ -264,7 +266,7 @@ function DiasFestivosPage() {
             <p className="text-gray-500 dark:text-gray-400 mb-4">
               Importa feriados de tu país para comenzar
             </p>
-            <Button onClick={() => setModalImportarOpen(true)} icon={<Download className="h-4 w-4" />}>
+            <Button onClick={() => openModal('importar')} icon={<Download className="h-4 w-4" />}>
               Importar Feriados
             </Button>
           </div>
@@ -325,7 +327,7 @@ function DiasFestivosPage() {
                             </span>
                           ) : (
                             <button
-                              onClick={() => setFeriadoAEliminar(feriado)}
+                              onClick={() => openModal('delete', feriado)}
                               className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                               title="Eliminar"
                             >
@@ -345,9 +347,9 @@ function DiasFestivosPage() {
 
       {/* Modal Importar */}
       <Modal
-        isOpen={modalImportarOpen}
+        isOpen={isOpen('importar')}
         onClose={() => {
-          setModalImportarOpen(false);
+          closeModal('importar');
           setPaisSeleccionado('');
         }}
         title="Importar Feriados"
@@ -402,7 +404,7 @@ function DiasFestivosPage() {
             <Button
               variant="outline"
               onClick={() => {
-                setModalImportarOpen(false);
+                closeModal('importar');
                 setPaisSeleccionado('');
               }}
             >
@@ -421,11 +423,11 @@ function DiasFestivosPage() {
 
       {/* Confirm Delete */}
       <ConfirmDialog
-        isOpen={!!feriadoAEliminar}
-        onClose={() => setFeriadoAEliminar(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminarFeriado}
         title="Eliminar Feriado"
-        message={`¿Estás seguro de eliminar "${feriadoAEliminar?.titulo}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${getModalData('delete')?.titulo}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         isLoading={eliminarMutation.isPending}
         variant="danger"

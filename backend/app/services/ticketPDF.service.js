@@ -6,6 +6,8 @@
  */
 
 const PDFDocument = require('pdfkit');
+const https = require('https');
+const http = require('http');
 
 /**
  * Configuraciones de tamaño de papel térmico
@@ -37,6 +39,46 @@ const PAPER_SIZES = {
 class TicketPDFService {
 
     /**
+     * Descarga una imagen desde URL y retorna el buffer
+     * @private
+     * @param {string} url - URL de la imagen
+     * @param {number} timeout - Timeout en ms (default: 3000)
+     * @returns {Promise<Buffer|null>} Buffer de la imagen o null si falla
+     */
+    static async _fetchImage(url, timeout = 3000) {
+        if (!url) return null;
+
+        return new Promise((resolve) => {
+            try {
+                const client = url.startsWith('https') ? https : http;
+                const req = client.get(url, { timeout }, (res) => {
+                    // Seguir redirects
+                    if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+                        return this._fetchImage(res.headers.location, timeout).then(resolve);
+                    }
+
+                    if (res.statusCode !== 200) {
+                        return resolve(null);
+                    }
+
+                    const chunks = [];
+                    res.on('data', chunk => chunks.push(chunk));
+                    res.on('end', () => resolve(Buffer.concat(chunks)));
+                    res.on('error', () => resolve(null));
+                });
+
+                req.on('error', () => resolve(null));
+                req.on('timeout', () => {
+                    req.destroy();
+                    resolve(null);
+                });
+            } catch {
+                resolve(null);
+            }
+        });
+    }
+
+    /**
      * Genera un ticket PDF para una venta
      * @param {Object} data - Datos de la venta
      * @param {Object} data.venta - Información de la venta
@@ -50,6 +92,9 @@ class TicketPDFService {
         const { venta, items, organizacion } = data;
         const paperSize = options.paperSize || '80mm';
         const config = PAPER_SIZES[paperSize];
+
+        // Fetch logo antes de crear el PDF (fuera del Promise callback)
+        const logoBuffer = await this._fetchImage(organizacion.logo_url || organizacion.logo);
 
         return new Promise((resolve, reject) => {
             try {
@@ -73,6 +118,26 @@ class TicketPDFService {
 
                 const contentWidth = config.width - (config.margin * 2);
                 let y = config.margin;
+
+                // ========================================
+                // LOGO (si existe)
+                // ========================================
+                if (logoBuffer) {
+                    try {
+                        // Calcular tamaño del logo (máximo 40x40 puntos para 80mm, 30x30 para 58mm)
+                        const maxLogoSize = paperSize === '80mm' ? 40 : 30;
+                        const logoX = (config.width - maxLogoSize) / 2;
+
+                        doc.image(logoBuffer, logoX, y, {
+                            fit: [maxLogoSize, maxLogoSize],
+                            align: 'center'
+                        });
+                        y += maxLogoSize + 6;
+                    } catch (logoErr) {
+                        // Si falla el logo, continuar sin él
+                        console.warn('Error al agregar logo al ticket:', logoErr.message);
+                    }
+                }
 
                 // ========================================
                 // ENCABEZADO - Datos del negocio

@@ -25,6 +25,7 @@ import {
 import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Textarea from '@/components/ui/Textarea';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import EmptyState from '@/components/ui/EmptyState';
@@ -33,6 +34,7 @@ import Pagination from '@/components/ui/Pagination';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import SmartButtons from '@/components/ui/SmartButtons';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
@@ -54,6 +56,7 @@ import RegistrarPagoModal from '@/components/inventario/ordenes-compra/Registrar
  */
 export default function OrdenesCompraPage() {
   const { success: showSuccess, error: showError, warning: showWarning, info: showInfo } = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -84,7 +87,7 @@ export default function OrdenesCompraPage() {
   const proveedores = proveedoresData?.proveedores || [];
 
   // Sugerencias de reabastecimiento
-  const { data: sugerencias = [], isLoading: loadingSugerencias } = useSugerenciasOC();
+  const { data: sugerencias = [] } = useSugerenciasOC();
 
   // Mutations
   const eliminarMutation = useEliminarOrdenCompra();
@@ -331,45 +334,34 @@ export default function OrdenesCompraPage() {
     return estados[estado] || estado;
   };
 
-  // Exportar CSV
+  // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!ordenes || ordenes.length === 0) {
       showError('No hay datos para exportar');
       return;
     }
 
-    try {
-      const headers = ['Folio', 'Fecha', 'Proveedor', 'Items', 'Total', 'Estado', 'Estado Pago', 'Notas'];
+    const datosExportar = ordenes.map((oc) => ({
+      folio: oc.folio || '',
+      fecha: oc.fecha ? format(new Date(oc.fecha), 'dd/MM/yyyy') : '',
+      proveedor: oc.proveedor_nombre || '',
+      items: oc.total_items || 0,
+      total: parseFloat(oc.total || 0).toFixed(2),
+      estado: formatearEstado(oc.estado),
+      estado_pago: formatearEstadoPago(oc.estado_pago),
+      notas: oc.notas || '',
+    }));
 
-      const rows = ordenes.map(oc => [
-        oc.folio || '',
-        oc.fecha ? format(new Date(oc.fecha), 'dd/MM/yyyy') : '',
-        oc.proveedor_nombre || '',
-        oc.total_items || 0,
-        parseFloat(oc.total || 0).toFixed(2),
-        formatearEstado(oc.estado),
-        formatearEstadoPago(oc.estado_pago),
-        oc.notas || ''
-      ]);
-
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `ordenes_compra_${format(new Date(), 'yyyyMMdd')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      showSuccess('Órdenes de compra exportadas exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      showError('Error al exportar CSV');
-    }
+    exportCSV(datosExportar, [
+      { key: 'folio', header: 'Folio' },
+      { key: 'fecha', header: 'Fecha' },
+      { key: 'proveedor', header: 'Proveedor' },
+      { key: 'items', header: 'Items' },
+      { key: 'total', header: 'Total' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'estado_pago', header: 'Estado Pago' },
+      { key: 'notas', header: 'Notas' },
+    ], `ordenes_compra_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   return (
@@ -901,73 +893,29 @@ export default function OrdenesCompraPage() {
         orden={getModalData('pago')?.orden}
       />
 
-      {/* Modal de Confirmación de Eliminación */}
-      <Modal
+      {/* Confirmación de Eliminación */}
+      <ConfirmDialog
         isOpen={isOpen('eliminar')}
         onClose={() => closeModal('eliminar')}
+        onConfirm={handleEliminar}
         title="Eliminar Orden de Compra"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de que deseas eliminar la orden{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{getModalData('eliminar')?.orden?.folio}</strong>?
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Esta acción no se puede deshacer.</p>
+        message={`¿Estás seguro de que deseas eliminar la orden ${getModalData('eliminar')?.orden?.folio}? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={eliminarMutation.isPending}
+      />
 
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('eliminar')}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleEliminar}
-              isLoading={eliminarMutation.isPending}
-            >
-              Eliminar
-            </Button>
-          </div>
-        </div>
-      </Modal>
-
-      {/* Modal de Confirmación de Envío */}
-      <Modal
+      {/* Confirmación de Envío */}
+      <ConfirmDialog
         isOpen={isOpen('enviar')}
         onClose={() => closeModal('enviar')}
+        onConfirm={handleEnviar}
         title="Enviar Orden al Proveedor"
-        size="md"
-      >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Confirmas que deseas enviar la orden{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{getModalData('enviar')?.orden?.folio}</strong> al proveedor{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{getModalData('enviar')?.orden?.proveedor_nombre}</strong>?
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            Una vez enviada, no podrás modificar los items de la orden.
-          </p>
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('enviar')}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleEnviar}
-              isLoading={enviarMutation.isPending}
-              icon={Send}
-            >
-              Confirmar Envío
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={`¿Confirmas que deseas enviar la orden ${getModalData('enviar')?.orden?.folio} al proveedor ${getModalData('enviar')?.orden?.proveedor_nombre}? Una vez enviada, no podrás modificar los items.`}
+        confirmText="Confirmar Envío"
+        variant="primary"
+        isLoading={enviarMutation.isPending}
+      />
 
       {/* Modal de Cancelación */}
       <Modal

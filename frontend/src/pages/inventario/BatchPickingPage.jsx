@@ -13,9 +13,6 @@ import {
   Package,
   User,
   Clock,
-  ChevronDown,
-  ChevronUp,
-  Search,
   PackageCheck,
   ListChecks,
 } from 'lucide-react';
@@ -23,10 +20,10 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useBatchPickings,
@@ -328,13 +325,17 @@ export default function BatchPickingPage() {
   const { success: showSuccess, error: showError, warning: showWarning } = useToast();
   const { getSucursalId } = useSucursalStore();
 
-  // Estado
+  // Estado de filtros
   const [filtros, setFiltros] = useState({
     estado: '',
   });
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
-  const [modalCrear, setModalCrear] = useState(false);
-  const [modalConfirmar, setModalConfirmar] = useState({ isOpen: false, batch: null, accion: '' });
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    crear: { isOpen: false },
+    confirmar: { isOpen: false, data: null, accion: '' },
+  });
 
   // Queries
   const sucursalId = getSucursalId();
@@ -374,31 +375,33 @@ export default function BatchPickingPage() {
         nombre: nombre || undefined,
       });
       showSuccess(`Batch ${batch.folio} creado correctamente`);
-      setModalCrear(false);
+      closeModal('crear');
       refetchOperaciones();
-    } catch (error) {
-      showError(error.message || 'Error al crear batch');
+    } catch (err) {
+      showError(err.message || 'Error al crear batch');
     }
   };
 
   const handleIniciar = (batch) => {
-    setModalConfirmar({ isOpen: true, batch, accion: 'iniciar' });
+    openModal('confirmar', batch, { accion: 'iniciar' });
   };
 
   const handleCompletar = (batch) => {
-    setModalConfirmar({ isOpen: true, batch, accion: 'completar' });
+    openModal('confirmar', batch, { accion: 'completar' });
   };
 
   const handleCancelar = (batch) => {
-    setModalConfirmar({ isOpen: true, batch, accion: 'cancelar' });
+    openModal('confirmar', batch, { accion: 'cancelar' });
   };
 
   const handleEliminar = (batch) => {
-    setModalConfirmar({ isOpen: true, batch, accion: 'eliminar' });
+    openModal('confirmar', batch, { accion: 'eliminar' });
   };
 
   const handleConfirmarAccion = async () => {
-    const { batch, accion } = modalConfirmar;
+    const confirmProps = getModalProps('confirmar');
+    const batch = confirmProps.data;
+    const accion = confirmProps.accion;
     if (!batch) return;
 
     try {
@@ -421,9 +424,9 @@ export default function BatchPickingPage() {
           showSuccess(`Batch ${batch.folio} eliminado`);
           break;
       }
-      setModalConfirmar({ isOpen: false, batch: null, accion: '' });
-    } catch (error) {
-      showError(error.message || `Error al ${accion} batch`);
+      closeModal('confirmar');
+    } catch (err) {
+      showError(err.message || `Error al ${accion} batch`);
     }
   };
 
@@ -441,7 +444,7 @@ export default function BatchPickingPage() {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setModalCrear(true)}
+            onClick={() => openModal('crear')}
             icon={Plus}
           >
             <span className="hidden sm:inline">Nuevo Batch</span>
@@ -516,7 +519,7 @@ export default function BatchPickingPage() {
             title="No hay batches de picking"
             description="Crea un nuevo batch para agrupar operaciones de picking"
             action={
-              <Button variant="primary" onClick={() => setModalCrear(true)}>
+              <Button variant="primary" onClick={() => openModal('crear')}>
                 <Plus className="h-4 w-4 mr-1" />
                 Crear Primer Batch
               </Button>
@@ -541,8 +544,8 @@ export default function BatchPickingPage() {
 
       {/* Modal Crear */}
       <CrearBatchModal
-        isOpen={modalCrear}
-        onClose={() => setModalCrear(false)}
+        isOpen={isOpen('crear')}
+        onClose={() => closeModal('crear')}
         operacionesDisponibles={operacionesDisponibles}
         onCrear={handleCrear}
         isCreating={crearMutation.isPending}
@@ -550,24 +553,24 @@ export default function BatchPickingPage() {
 
       {/* Modal Confirmar Acción */}
       <Modal
-        isOpen={modalConfirmar.isOpen}
-        onClose={() => setModalConfirmar({ isOpen: false, batch: null, accion: '' })}
-        title={`Confirmar ${modalConfirmar.accion}`}
+        isOpen={isOpen('confirmar')}
+        onClose={() => closeModal('confirmar')}
+        title={`Confirmar ${getModalProps('confirmar').accion || ''}`}
       >
         <div className="p-4">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Estás seguro de que deseas <strong>{modalConfirmar.accion}</strong> el batch{' '}
-            <strong>{modalConfirmar.batch?.folio}</strong>?
+            ¿Estás seguro de que deseas <strong>{getModalProps('confirmar').accion}</strong> el batch{' '}
+            <strong>{getModalData('confirmar')?.folio}</strong>?
           </p>
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              onClick={() => setModalConfirmar({ isOpen: false, batch: null, accion: '' })}
+              onClick={() => closeModal('confirmar')}
             >
               Cancelar
             </Button>
             <Button
-              variant={modalConfirmar.accion === 'eliminar' || modalConfirmar.accion === 'cancelar' ? 'danger' : 'primary'}
+              variant={getModalProps('confirmar').accion === 'eliminar' || getModalProps('confirmar').accion === 'cancelar' ? 'danger' : 'primary'}
               onClick={handleConfirmarAccion}
               disabled={
                 iniciarMutation.isPending ||

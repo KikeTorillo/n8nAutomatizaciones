@@ -26,6 +26,7 @@ import {
   useCancelarTransferencia,
 } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 
 // Configuración de estados
 const estadoConfig = {
@@ -68,9 +69,13 @@ function TransferenciaDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Estado para modales
-  const [isRecibirModalOpen, setIsRecibirModalOpen] = useState(false);
-  const [isCancelarModalOpen, setIsCancelarModalOpen] = useState(false);
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    recibir: { isOpen: false },
+    cancelar: { isOpen: false },
+  });
+
+  // Estado para items de recepción (datos del formulario)
   const [itemsRecepcion, setItemsRecepcion] = useState([]);
 
   // Fetch data
@@ -147,7 +152,7 @@ function TransferenciaDetailPage() {
         cantidad_recibida: item.cantidad_recibida || item.cantidad_enviada,
       })) || []
     );
-    setIsRecibirModalOpen(true);
+    openModal('recibir');
   };
 
   // Handler: Actualizar cantidad recibida
@@ -170,9 +175,9 @@ function TransferenciaDetailPage() {
         },
       });
       toast.success('Transferencia recibida correctamente');
-      setIsRecibirModalOpen(false);
-    } catch (error) {
-      toast.error(error.message || 'Error al recibir transferencia');
+      closeModal('recibir');
+    } catch (err) {
+      toast.error(err.message || 'Error al recibir transferencia');
     }
   };
 
@@ -181,9 +186,9 @@ function TransferenciaDetailPage() {
     try {
       await cancelarMutation.mutateAsync(transferencia.id);
       toast.success('Transferencia cancelada');
-      setIsCancelarModalOpen(false);
-    } catch (error) {
-      toast.error(error.message || 'Error al cancelar transferencia');
+      closeModal('cancelar');
+    } catch (err) {
+      toast.error(err.message || 'Error al cancelar transferencia');
     }
   };
 
@@ -230,7 +235,7 @@ function TransferenciaDetailPage() {
                   </Button>
                   <Button
                     variant="danger"
-                    onClick={() => setIsCancelarModalOpen(true)}
+                    onClick={() => openModal('cancelar')}
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Cancelar
@@ -250,7 +255,7 @@ function TransferenciaDetailPage() {
                   </Button>
                   <Button
                     variant="danger"
-                    onClick={() => setIsCancelarModalOpen(true)}
+                    onClick={() => openModal('cancelar')}
                   >
                     <XCircle className="w-4 h-4 mr-2" />
                     Cancelar
@@ -489,8 +494,8 @@ function TransferenciaDetailPage() {
 
       {/* Modal Recibir Transferencia */}
       <Modal
-        isOpen={isRecibirModalOpen}
-        onClose={() => setIsRecibirModalOpen(false)}
+        isOpen={isOpen('recibir')}
+        onClose={() => closeModal('recibir')}
         title="Recibir Transferencia"
         size="lg"
       >
@@ -545,7 +550,7 @@ function TransferenciaDetailPage() {
           <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setIsRecibirModalOpen(false)}
+              onClick={() => closeModal('recibir')}
             >
               Cancelar
             </Button>
@@ -562,8 +567,8 @@ function TransferenciaDetailPage() {
 
       {/* Modal Cancelar Transferencia */}
       <Modal
-        isOpen={isCancelarModalOpen}
-        onClose={() => setIsCancelarModalOpen(false)}
+        isOpen={isOpen('cancelar')}
+        onClose={() => closeModal('cancelar')}
         title="Cancelar Transferencia"
       >
         <div className="p-4">
@@ -584,7 +589,7 @@ function TransferenciaDetailPage() {
           <div className="flex justify-end gap-3">
             <Button
               variant="secondary"
-              onClick={() => setIsCancelarModalOpen(false)}
+              onClick={() => closeModal('cancelar')}
             >
               No, mantener
             </Button>

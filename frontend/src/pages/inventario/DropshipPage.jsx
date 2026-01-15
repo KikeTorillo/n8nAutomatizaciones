@@ -22,6 +22,7 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useDropshipEstadisticas,
   useDropshipConfiguracion,
@@ -32,10 +33,11 @@ import {
   useConfirmarEntregaDropship,
   useCancelarDropship,
 } from '@/hooks/useDropship';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { formatCurrency } from '@/lib/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -50,8 +52,16 @@ const ESTADOS = {
 
 export default function DropshipPage() {
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [ordenSeleccionada, setOrdenSeleccionada] = useState(null);
-  const [showConfigurar, setShowConfigurar] = useState(false);
+  const [motivoCancelacion, setMotivoCancelacion] = useState('');
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    detalle: { isOpen: false, data: null },
+    config: { isOpen: false },
+    crearOC: { isOpen: false, data: null },
+    confirmarEntrega: { isOpen: false, data: null },
+    cancelar: { isOpen: false, data: null },
+  });
 
   const { data: stats, isLoading: loadingStats } = useDropshipEstadisticas();
   const { data: config } = useDropshipConfiguracion();
@@ -65,24 +75,44 @@ export default function DropshipPage() {
   const cancelarMutation = useCancelarDropship();
   const actualizarConfigMutation = useActualizarConfigDropship();
 
+  // Handlers que abren modales de confirmación
   const handleCrearOC = (ventaId) => {
-    if (confirm('Generar OC dropship para esta venta?')) {
-      crearOCMutation.mutate(ventaId);
-    }
+    openModal('crearOC', ventaId);
   };
 
   const handleConfirmarEntrega = (id) => {
-    if (confirm('Confirmar que el cliente recibio el producto?')) {
-      confirmarMutation.mutate({ id });
-      setOrdenSeleccionada(null);
-    }
+    openModal('confirmarEntrega', id);
   };
 
   const handleCancelar = (id) => {
-    const motivo = prompt('Motivo de cancelacion:');
-    if (motivo) {
-      cancelarMutation.mutate({ id, motivo });
-      setOrdenSeleccionada(null);
+    setMotivoCancelacion('');
+    openModal('cancelar', id);
+  };
+
+  // Ejecutar acciones tras confirmación
+  const ejecutarCrearOC = () => {
+    const ventaId = getModalData('crearOC');
+    if (ventaId) {
+      crearOCMutation.mutate(ventaId);
+      closeModal('crearOC');
+    }
+  };
+
+  const ejecutarConfirmarEntrega = () => {
+    const id = getModalData('confirmarEntrega');
+    if (id) {
+      confirmarMutation.mutate({ id });
+      closeModal('confirmarEntrega');
+      closeModal('detalle');
+    }
+  };
+
+  const ejecutarCancelar = () => {
+    const id = getModalData('cancelar');
+    if (id && motivoCancelacion.trim()) {
+      cancelarMutation.mutate({ id, motivo: motivoCancelacion });
+      closeModal('cancelar');
+      closeModal('detalle');
     }
   };
 
@@ -99,7 +129,7 @@ export default function DropshipPage() {
       subtitle="Gestión de envíos directos del proveedor al cliente"
       actions={
         <button
-          onClick={() => setShowConfigurar(true)}
+          onClick={() => openModal('config')}
           className="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
           <Settings className="h-4 w-4" />
@@ -326,7 +356,7 @@ export default function DropshipPage() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-right">
                         <button
-                          onClick={() => setOrdenSeleccionada(orden)}
+                          onClick={() => openModal('detalle', orden)}
                           className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
                         >
                           <Eye className="h-5 w-5" />
@@ -344,12 +374,12 @@ export default function DropshipPage() {
 
       {/* Modal Detalle de Orden */}
       <Modal
-        isOpen={!!ordenSeleccionada}
-        onClose={() => setOrdenSeleccionada(null)}
-        title={`Orden ${ordenSeleccionada?.folio}`}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
+        title={`Orden ${getModalData('detalle')?.folio}`}
         size="lg"
       >
-        {ordenSeleccionada && (
+        {getModalData('detalle') && (
           <div className="space-y-4">
             {/* Info Cliente */}
             <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -360,19 +390,19 @@ export default function DropshipPage() {
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-900 dark:text-gray-100">
-                    {ordenSeleccionada.cliente_nombre || 'Sin nombre'}
+                    {getModalData('detalle').cliente_nombre || 'Sin nombre'}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-gray-400" />
                   <span className="text-gray-900 dark:text-gray-100">
-                    {ordenSeleccionada.cliente_telefono || 'Sin telefono'}
+                    {getModalData('detalle').cliente_telefono || 'Sin telefono'}
                   </span>
                 </div>
                 <div className="flex items-start gap-2 col-span-2">
                   <MapPin className="h-4 w-4 text-gray-400 mt-0.5" />
                   <span className="text-gray-900 dark:text-gray-100">
-                    {ordenSeleccionada.direccion_envio_cliente || 'Sin direccion'}
+                    {getModalData('detalle').direccion_envio_cliente || 'Sin direccion'}
                   </span>
                 </div>
               </div>
@@ -383,36 +413,36 @@ export default function DropshipPage() {
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Proveedor:</span>
                 <span className="ml-2 text-gray-900 dark:text-gray-100">
-                  {ordenSeleccionada.proveedor_nombre}
+                  {getModalData('detalle').proveedor_nombre}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Venta:</span>
                 <span className="ml-2 text-gray-900 dark:text-gray-100">
-                  {ordenSeleccionada.venta_folio || '-'}
+                  {getModalData('detalle').venta_folio || '-'}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Total:</span>
                 <span className="ml-2 font-medium text-gray-900 dark:text-gray-100">
-                  {formatCurrency(parseFloat(ordenSeleccionada.total))}
+                  {formatCurrency(parseFloat(getModalData('detalle').total))}
                 </span>
               </div>
               <div>
                 <span className="text-gray-500 dark:text-gray-400">Items:</span>
                 <span className="ml-2 text-gray-900 dark:text-gray-100">
-                  {ordenSeleccionada.total_items || '-'}
+                  {getModalData('detalle').total_items || '-'}
                 </span>
               </div>
             </div>
 
             {/* Acciones */}
-            {ordenSeleccionada.estado !== 'recibida' &&
-              ordenSeleccionada.estado !== 'cancelada' && (
+            {getModalData('detalle').estado !== 'recibida' &&
+              getModalData('detalle').estado !== 'cancelada' && (
                 <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <Button
                     variant="ghost"
-                    onClick={() => handleCancelar(ordenSeleccionada.id)}
+                    onClick={() => handleCancelar(getModalData('detalle').id)}
                     disabled={cancelarMutation.isPending}
                   >
                     <XCircle className="h-4 w-4 mr-1" />
@@ -420,7 +450,7 @@ export default function DropshipPage() {
                   </Button>
                   <Button
                     variant="primary"
-                    onClick={() => handleConfirmarEntrega(ordenSeleccionada.id)}
+                    onClick={() => handleConfirmarEntrega(getModalData('detalle').id)}
                     disabled={confirmarMutation.isPending}
                   >
                     {confirmarMutation.isPending ? (
@@ -438,8 +468,8 @@ export default function DropshipPage() {
 
       {/* Modal Configuracion */}
       <Modal
-        isOpen={showConfigurar}
-        onClose={() => setShowConfigurar(false)}
+        isOpen={isOpen('config')}
+        onClose={() => closeModal('config')}
         title="Configuracion de Dropshipping"
       >
         <div className="space-y-4">
@@ -473,12 +503,73 @@ export default function DropshipPage() {
           </p>
         </div>
       </Modal>
+
+      {/* Confirmación crear OC */}
+      <ConfirmDialog
+        isOpen={isOpen('crearOC')}
+        onClose={() => closeModal('crearOC')}
+        onConfirm={ejecutarCrearOC}
+        title="Generar orden de compra"
+        message="¿Generar OC dropship para esta venta? El proveedor enviará directamente al cliente."
+        confirmText="Generar OC"
+        variant="primary"
+        isLoading={crearOCMutation.isPending}
+      />
+
+      {/* Confirmación entrega */}
+      <ConfirmDialog
+        isOpen={isOpen('confirmarEntrega')}
+        onClose={() => closeModal('confirmarEntrega')}
+        onConfirm={ejecutarConfirmarEntrega}
+        title="Confirmar entrega"
+        message="¿Confirmar que el cliente recibió el producto? Esta acción marcará la orden como completada."
+        confirmText="Confirmar"
+        variant="primary"
+        isLoading={confirmarMutation.isPending}
+      />
+
+      {/* Modal cancelación con motivo */}
+      <Modal
+        isOpen={isOpen('cancelar')}
+        onClose={() => closeModal('cancelar')}
+        title="Cancelar orden dropship"
+      >
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            ¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer.
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Motivo de cancelación *
+            </label>
+            <textarea
+              value={motivoCancelacion}
+              onChange={(e) => setMotivoCancelacion(e.target.value)}
+              placeholder="Ingresa el motivo..."
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="ghost" onClick={() => closeModal('cancelar')}>
+              Cancelar
+            </Button>
+            <Button
+              variant="danger"
+              onClick={ejecutarCancelar}
+              disabled={!motivoCancelacion.trim() || cancelarMutation.isPending}
+            >
+              {cancelarMutation.isPending ? 'Cancelando...' : 'Confirmar cancelación'}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </InventarioPageLayout>
   );
 }
 
 // Componente de Metrica
-function MetricCard({ title, value, icon: Icon, color, loading, isMonetary }) {
+function MetricCard({ title, value, icon, color, loading, isMonetary }) {
   const colorClasses = {
     primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
     gray: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
@@ -487,11 +578,13 @@ function MetricCard({ title, value, icon: Icon, color, loading, isMonetary }) {
     amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
   };
 
+  const IconComp = icon;
+
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
       <div className="flex items-center justify-between">
         <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="h-5 w-5" />
+          <IconComp className="h-5 w-5" />
         </div>
       </div>
       <div className="mt-3">

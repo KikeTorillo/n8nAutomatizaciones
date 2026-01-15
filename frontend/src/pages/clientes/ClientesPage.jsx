@@ -29,6 +29,8 @@ import { ViewTabs } from '@/components/ui/ViewTabs';
 import { useClientes, useEstadisticasClientes } from '@/hooks/useClientes';
 import { useEtiquetas } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
+import { useModalManager } from '@/hooks/useModalManager';
 import WalkInModal from '@/components/clientes/WalkInModal';
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import ClientesList from '@/components/clientes/ClientesList';
@@ -42,11 +44,20 @@ import EtiquetasBadges from '@/components/clientes/EtiquetasBadges';
 function ClientesPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { exportCSV } = useExportCSV();
   const [page, setPage] = useState(1);
   const [busqueda, setBusqueda] = useState('');
-  const [walkInOpen, setWalkInOpen] = useState(false);
-  const [importarOpen, setImportarOpen] = useState(false);
   const [vistaActiva, setVistaActiva] = useState('tabla');
+
+  // Estados de modales centralizados con useModalManager
+  const {
+    openModal,
+    closeModal,
+    isOpen,
+  } = useModalManager({
+    walkIn: { isOpen: false },
+    importar: { isOpen: false },
+  });
 
   // Estados para filtros (Fase 2 - Ene 2026)
   const [filtroActivo, setFiltroActivo] = useState(''); // '', 'true', 'false'
@@ -168,70 +179,49 @@ function ClientesPage() {
     []
   );
 
-  // Handler para exportar CSV
+  // Handler para exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!data?.clientes || data.clientes.length === 0) {
       toast.error('No hay clientes para exportar');
       return;
     }
 
-    try {
-      const headers = [
-        'Nombre',
-        'Email',
-        'Teléfono',
-        'Total Citas',
-        'Última Cita',
-        'Estado',
-        'Marketing',
-      ];
+    const datosExportar = data.clientes.map((c) => ({
+      nombre: c.nombre || '',
+      email: c.email || '',
+      telefono: c.telefono || '',
+      total_citas: c.total_citas || 0,
+      ultima_cita: c.ultima_cita ? format(new Date(c.ultima_cita), 'dd/MM/yyyy') : 'Sin citas',
+      estado: c.activo ? 'Activo' : 'Inactivo',
+      marketing: c.marketing_permitido ? 'Sí' : 'No',
+    }));
 
-      const rows = data.clientes.map((c) => [
-        c.nombre || '',
-        c.email || '',
-        c.telefono || '',
-        c.total_citas || 0,
-        c.ultima_cita ? format(new Date(c.ultima_cita), 'dd/MM/yyyy') : 'Sin citas',
-        c.activo ? 'Activo' : 'Inactivo',
-        c.marketing_permitido ? 'Sí' : 'No',
-      ]);
-
-      // BOM para UTF-8 (Excel)
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${cell}"`).join(',')),
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `clientes_${format(new Date(), 'yyyyMMdd')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      toast.success('Clientes exportados exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      toast.error('Error al exportar CSV');
-    }
+    exportCSV(datosExportar, [
+      { key: 'nombre', header: 'Nombre' },
+      { key: 'email', header: 'Email' },
+      { key: 'telefono', header: 'Teléfono' },
+      { key: 'total_citas', header: 'Total Citas' },
+      { key: 'ultima_cita', header: 'Última Cita' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'marketing', header: 'Marketing' },
+    ], `clientes_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   const handleWalkInSuccess = (cita) => {
     toast.success(`Cita walk-in creada exitosamente: ${cita.codigo_cita || 'sin código'}`);
-    setWalkInOpen(false);
+    closeModal('walkIn');
   };
 
   const handleNuevoCliente = () => {
     navigate('/clientes/nuevo');
   };
 
-  // Botones de accion para el header
+  // Botones de accion para el header usando useModalManager
   const actionButtons = (
     <>
       <Button
         variant="secondary"
-        onClick={() => setImportarOpen(true)}
+        onClick={() => openModal('importar')}
         aria-label="Importar clientes desde CSV"
         className="flex-1 sm:flex-none"
       >
@@ -252,7 +242,7 @@ function ClientesPage() {
 
       <Button
         variant="outline"
-        onClick={() => setWalkInOpen(true)}
+        onClick={() => openModal('walkIn')}
         aria-label="Registrar cliente walk-in"
         className="flex-1 sm:flex-none"
       >
@@ -602,17 +592,17 @@ function ClientesPage() {
           </div>
         </div>
 
-      {/* Walk-in Modal */}
+      {/* Walk-in Modal usando useModalManager */}
       <WalkInModal
-        isOpen={walkInOpen}
-        onClose={() => setWalkInOpen(false)}
+        isOpen={isOpen('walkIn')}
+        onClose={() => closeModal('walkIn')}
         onSuccess={handleWalkInSuccess}
       />
 
-      {/* Importar CSV Modal */}
+      {/* Importar CSV Modal usando useModalManager */}
       <ImportarClientesModal
-        isOpen={importarOpen}
-        onClose={() => setImportarOpen(false)}
+        isOpen={isOpen('importar')}
+        onClose={() => closeModal('importar')}
       />
     </ClientesPageLayout>
   );

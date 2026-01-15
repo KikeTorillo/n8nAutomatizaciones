@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   DndContext,
   DragOverlay,
@@ -37,10 +38,14 @@ function SeatingChartEditor({ eventoId }) {
   const toast = useToast();
   const [activeId, setActiveId] = useState(null);
   const [dragType, setDragType] = useState(null); // 'mesa' | 'invitado'
-  const [showCreateMesa, setShowCreateMesa] = useState(false);
-  const [editingMesa, setEditingMesa] = useState(null);
-  const [mesaAEliminar, setMesaAEliminar] = useState(null);
+  const [editingMesa, setEditingMesa] = useState(null); // Se mantiene como useState porque edita sus datos
   const [isEditMode, setIsEditMode] = useState(false); // Modo edición para mover mesas
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    create: { isOpen: false },
+    delete: { isOpen: false, data: null },
+  });
   const [newMesaData, setNewMesaData] = useState({
     nombre: '',
     numero: '',
@@ -207,7 +212,7 @@ function SeatingChartEditor({ eventoId }) {
         },
       });
       toast.success('Mesa creada');
-      setShowCreateMesa(false);
+      closeModal('create');
       setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
     } catch (error) {
       toast.error(error.message);
@@ -215,13 +220,15 @@ function SeatingChartEditor({ eventoId }) {
   };
 
   // Eliminar mesa
-  const handleDeleteMesa = async (mesaId) => {
+  const handleDeleteMesa = async () => {
+    const mesaAEliminar = getModalData('delete');
+    if (!mesaAEliminar) return;
     try {
-      await eliminarMesa.mutateAsync({ mesaId, eventoId });
+      await eliminarMesa.mutateAsync({ mesaId: mesaAEliminar.id, eventoId });
       toast.success('Mesa eliminada');
-      setMesaAEliminar(null);
-    } catch (error) {
-      toast.error(error.message);
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message);
     }
   };
 
@@ -352,7 +359,7 @@ function SeatingChartEditor({ eventoId }) {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setShowCreateMesa(true)}
+                  onClick={() => openModal('create')}
                   className="flex items-center gap-1 text-xs sm:text-sm"
                 >
                   <Plus className="w-4 h-4" />
@@ -393,7 +400,7 @@ function SeatingChartEditor({ eventoId }) {
                   isEditing={editingMesa?.id === mesa.id}
                   isEditMode={isEditMode}
                   onEdit={() => setEditingMesa(mesa)}
-                  onDelete={() => setMesaAEliminar(mesa)}
+                  onDelete={() => openModal('delete', mesa)}
                   onDesasignarInvitado={handleDesasignarInvitado}
                   onSave={(data) => handleUpdateMesa(mesa.id, data)}
                   onCancelEdit={() => setEditingMesa(null)}
@@ -425,9 +432,9 @@ function SeatingChartEditor({ eventoId }) {
 
       {/* Drawer crear mesa */}
       <Drawer
-        isOpen={showCreateMesa}
+        isOpen={isOpen('create')}
         onClose={() => {
-          setShowCreateMesa(false);
+          closeModal('create');
           setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
         }}
         title="Nueva Mesa"
@@ -475,7 +482,7 @@ function SeatingChartEditor({ eventoId }) {
             type="button"
             variant="outline"
             onClick={() => {
-              setShowCreateMesa(false);
+              closeModal('create');
               setNewMesaData({ nombre: '', numero: '', tipo: 'redonda', capacidad: 8 });
             }}
           >
@@ -566,11 +573,11 @@ function SeatingChartEditor({ eventoId }) {
 
       {/* Modal confirmar eliminar mesa */}
       <ConfirmDialog
-        isOpen={!!mesaAEliminar}
-        onClose={() => setMesaAEliminar(null)}
-        onConfirm={() => handleDeleteMesa(mesaAEliminar.id)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
+        onConfirm={handleDeleteMesa}
         title="Eliminar Mesa"
-        message={`¿Estás seguro de eliminar la mesa "${mesaAEliminar?.nombre}"? Los invitados asignados serán desasignados.`}
+        message={`¿Estás seguro de eliminar la mesa "${getModalData('delete')?.nombre}"? Los invitados asignados serán desasignados.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

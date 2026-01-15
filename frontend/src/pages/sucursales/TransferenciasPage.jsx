@@ -17,6 +17,7 @@ import {
   ChevronUp,
   RotateCcw,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
@@ -72,10 +73,11 @@ function TransferenciasPage() {
     sucursal_destino_id: '',
   });
 
-  // Estados para modales
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
-  const [transferenciaSeleccionada, setTransferenciaSeleccionada] = useState(null);
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false },
+    cancel: { isOpen: false, data: null },
+  });
 
   // Fetch transferencias y sucursales
   const { data: transferencias, isLoading } = useTransferencias({
@@ -109,7 +111,7 @@ function TransferenciasPage() {
 
   // Handlers para acciones
   const handleNuevaTransferencia = () => {
-    setIsFormModalOpen(true);
+    openModal('form');
   };
 
   const handleVerDetalle = (transferencia) => {
@@ -125,8 +127,8 @@ function TransferenciasPage() {
     try {
       await enviarMutation.mutateAsync(transferencia.id);
       toast.success('Transferencia enviada correctamente');
-    } catch (error) {
-      toast.error(error.message || 'Error al enviar transferencia');
+    } catch (err) {
+      toast.error(err.message || 'Error al enviar transferencia');
     }
   };
 
@@ -135,20 +137,19 @@ function TransferenciasPage() {
       toast.error('No se puede cancelar esta transferencia');
       return;
     }
-    setTransferenciaSeleccionada(transferencia);
-    setIsCancelModalOpen(true);
+    openModal('cancel', transferencia);
   };
 
   const confirmarCancelacion = async () => {
-    if (!transferenciaSeleccionada) return;
+    const transferencia = getModalData('cancel');
+    if (!transferencia) return;
 
     try {
-      await cancelarMutation.mutateAsync(transferenciaSeleccionada.id);
+      await cancelarMutation.mutateAsync(transferencia.id);
       toast.success('Transferencia cancelada');
-      setIsCancelModalOpen(false);
-      setTransferenciaSeleccionada(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al cancelar');
+      closeModal('cancel');
+    } catch (err) {
+      toast.error(err.message || 'Error al cancelar');
     }
   };
 
@@ -444,25 +445,22 @@ function TransferenciasPage() {
 
       {/* Modal crear transferencia */}
       <TransferenciaFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => setIsFormModalOpen(false)}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
       />
 
       {/* Modal confirmar cancelación */}
       <Modal
-        isOpen={isCancelModalOpen}
-        onClose={() => {
-          setIsCancelModalOpen(false);
-          setTransferenciaSeleccionada(null);
-        }}
+        isOpen={isOpen('cancel')}
+        onClose={() => closeModal('cancel')}
         title="Cancelar Transferencia"
       >
         <div className="p-4">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
             ¿Estás seguro de cancelar la transferencia{' '}
-            <strong>{transferenciaSeleccionada?.codigo}</strong>?
+            <strong>{getModalData('cancel')?.codigo}</strong>?
           </p>
-          {transferenciaSeleccionada?.estado === 'enviado' && (
+          {getModalData('cancel')?.estado === 'enviado' && (
             <p className="text-yellow-600 dark:text-yellow-400 text-sm mb-4">
               El stock será devuelto a la sucursal de origen.
             </p>
@@ -470,10 +468,7 @@ function TransferenciasPage() {
           <div className="flex justify-end gap-3">
             <Button
               variant="secondary"
-              onClick={() => {
-                setIsCancelModalOpen(false);
-                setTransferenciaSeleccionada(null);
-              }}
+              onClick={() => closeModal('cancel')}
             >
               No, mantener
             </Button>

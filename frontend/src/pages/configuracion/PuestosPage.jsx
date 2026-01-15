@@ -18,6 +18,7 @@ import Input from '@/components/ui/Input';
 import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   usePuestos,
   useCrearPuesto,
@@ -32,11 +33,16 @@ import { useDepartamentos } from '@/hooks/useDepartamentos';
  */
 function PuestosPage() {
   const toast = useToast();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingPuesto, setEditingPuesto] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Estado de filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [filterDepartamento, setFilterDepartamento] = useState('');
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: puestos = [], isLoading } = usePuestos();
@@ -91,7 +97,6 @@ function PuestosPage() {
 
   // Abrir drawer para crear
   const handleNuevo = () => {
-    setEditingPuesto(null);
     reset({
       nombre: '',
       codigo: '',
@@ -101,12 +106,11 @@ function PuestosPage() {
       salario_maximo: '',
       activo: true,
     });
-    setDrawerOpen(true);
+    openModal('form', null);
   };
 
   // Abrir drawer para editar
   const handleEditar = (puesto) => {
-    setEditingPuesto(puesto);
     reset({
       nombre: puesto.nombre || '',
       codigo: puesto.codigo || '',
@@ -116,16 +120,17 @@ function PuestosPage() {
       salario_maximo: puesto.salario_maximo?.toString() || '',
       activo: puesto.activo ?? true,
     });
-    setDrawerOpen(true);
+    openModal('form', puesto);
   };
 
   // Confirmar eliminación
   const handleEliminar = (puesto) => {
-    setDeleteConfirm(puesto);
+    openModal('delete', puesto);
   };
 
   // Submit form
   const onSubmit = async (data) => {
+    const editingPuesto = getModalData('form');
     try {
       const payload = {
         nombre: data.nombre.trim(),
@@ -148,21 +153,23 @@ function PuestosPage() {
         toast.success('Puesto creado');
       }
 
-      setDrawerOpen(false);
+      closeModal('form');
       reset();
-    } catch (error) {
-      toast.error(error.message || 'Error al guardar');
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar');
     }
   };
 
   // Confirmar delete
   const confirmarEliminar = async () => {
+    const deleteConfirm = getModalData('delete');
+    if (!deleteConfirm) return;
     try {
       await eliminarMutation.mutateAsync(deleteConfirm.id);
       toast.success('Puesto eliminado');
-      setDeleteConfirm(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar');
     }
   };
 
@@ -347,10 +354,10 @@ function PuestosPage() {
 
       {/* Drawer Form */}
       <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingPuesto ? 'Editar Puesto' : 'Nuevo Puesto'}
-        subtitle={editingPuesto ? 'Modifica los datos del puesto' : 'Crea un nuevo puesto de trabajo'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Puesto' : 'Nuevo Puesto'}
+        subtitle={getModalData('form') ? 'Modifica los datos del puesto' : 'Crea un nuevo puesto de trabajo'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -425,7 +432,7 @@ function PuestosPage() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => closeModal('form')}
             >
               Cancelar
             </Button>
@@ -434,7 +441,7 @@ function PuestosPage() {
               className="flex-1"
               loading={crearMutation.isPending || actualizarMutation.isPending}
             >
-              {editingPuesto ? 'Actualizar' : 'Crear'}
+              {getModalData('form') ? 'Actualizar' : 'Crear'}
             </Button>
           </div>
         </form>
@@ -442,10 +449,10 @@ function PuestosPage() {
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Eliminar puesto"
-        message={`¿Estás seguro de eliminar "${deleteConfirm?.nombre}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         variant="danger"
         onConfirm={confirmarEliminar}

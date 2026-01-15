@@ -7,6 +7,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import { useMovimientos } from '@/hooks/useInventario';
 import { useProductos } from '@/hooks/useProductos';
@@ -20,6 +21,7 @@ import { es } from 'date-fns/locale';
  */
 function MovimientosPage() {
   const { showToast } = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -88,47 +90,38 @@ function MovimientosPage() {
     return labels[tipo] || tipo;
   };
 
-  // Exportar CSV
+  // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!movimientos || movimientos.length === 0) {
       showToast('No hay datos para exportar', 'warning');
       return;
     }
 
-    try {
-      const headers = ['Fecha', 'Hora', 'Tipo', 'Producto', 'SKU', 'Cantidad', 'Stock Después', 'Costo Unit.', 'Referencia', 'Motivo'];
+    const datosExportar = movimientos.map((m) => ({
+      fecha: format(new Date(m.creado_en), 'dd/MM/yyyy'),
+      hora: format(new Date(m.creado_en), 'HH:mm'),
+      tipo: getTipoMovimientoLabel(m.tipo_movimiento),
+      producto: m.producto_nombre || '',
+      sku: m.producto_sku || '',
+      cantidad: m.cantidad || 0,
+      stock_despues: m.stock_despues || 0,
+      costo_unitario: parseFloat(m.costo_unitario || 0).toFixed(2),
+      referencia: m.referencia || '',
+      motivo: m.motivo || '',
+    }));
 
-      const rows = movimientos.map(m => [
-        format(new Date(m.creado_en), 'dd/MM/yyyy'),
-        format(new Date(m.creado_en), 'HH:mm'),
-        getTipoMovimientoLabel(m.tipo_movimiento),
-        m.producto_nombre || '',
-        m.producto_sku || '',
-        m.cantidad || 0,
-        m.stock_despues || 0,
-        parseFloat(m.costo_unitario || 0).toFixed(2),
-        m.referencia || '',
-        m.motivo || ''
-      ]);
-
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `kardex_${format(new Date(), 'yyyyMMdd')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      showToast('Kardex exportado exitosamente', 'success');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      showToast('Error al exportar CSV', 'error');
-    }
+    exportCSV(datosExportar, [
+      { key: 'fecha', header: 'Fecha' },
+      { key: 'hora', header: 'Hora' },
+      { key: 'tipo', header: 'Tipo' },
+      { key: 'producto', header: 'Producto' },
+      { key: 'sku', header: 'SKU' },
+      { key: 'cantidad', header: 'Cantidad' },
+      { key: 'stock_despues', header: 'Stock Después' },
+      { key: 'costo_unitario', header: 'Costo Unit.' },
+      { key: 'referencia', header: 'Referencia' },
+      { key: 'motivo', header: 'Motivo' },
+    ], `kardex_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   return (

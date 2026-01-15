@@ -27,6 +27,7 @@ import LoadingSpinner from '@/components/common/LoadingSpinner';
 import SucursalFormModal from '@/components/sucursales/SucursalFormModal';
 import { useSucursales, useEliminarSucursal } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 
 /**
  * Página principal de gestión de sucursales
@@ -43,12 +44,11 @@ function SucursalesPage() {
     activo: '',
   });
 
-  // Estados para modales
-  const [isFormModalOpen, setIsFormModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
-  const [sucursalSeleccionada, setSucursalSeleccionada] = useState(null);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [sucursalAEliminar, setSucursalAEliminar] = useState(null);
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    form: { isOpen: false, data: null, mode: 'create' },
+    delete: { isOpen: false, data: null },
+  });
 
   // Fetch sucursales con filtros
   const { data: sucursales, isLoading } = useSucursales({
@@ -78,15 +78,11 @@ function SucursalesPage() {
 
   // Handlers para acciones
   const handleNuevaSucursal = () => {
-    setModalMode('create');
-    setSucursalSeleccionada(null);
-    setIsFormModalOpen(true);
+    openModal('form', null, { mode: 'create' });
   };
 
   const handleEdit = (sucursal) => {
-    setModalMode('edit');
-    setSucursalSeleccionada(sucursal);
-    setIsFormModalOpen(true);
+    openModal('form', sucursal, { mode: 'edit' });
   };
 
   const handleVerDetalle = (sucursal) => {
@@ -98,20 +94,19 @@ function SucursalesPage() {
       toast.error('No se puede eliminar la sucursal matriz');
       return;
     }
-    setSucursalAEliminar(sucursal);
-    setIsDeleteModalOpen(true);
+    openModal('delete', sucursal);
   };
 
   const handleConfirmDelete = async () => {
+    const sucursalAEliminar = getModalData('delete');
     if (!sucursalAEliminar) return;
 
     try {
       await eliminarMutation.mutateAsync(sucursalAEliminar.id);
       toast.success(`Sucursal "${sucursalAEliminar.nombre}" eliminada correctamente`);
-      setIsDeleteModalOpen(false);
-      setSucursalAEliminar(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar la sucursal. Intenta nuevamente.');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar la sucursal. Intenta nuevamente.');
     }
   };
 
@@ -376,23 +371,16 @@ function SucursalesPage() {
 
       {/* Modal de Crear/Editar Sucursal */}
       <SucursalFormModal
-        isOpen={isFormModalOpen}
-        onClose={() => {
-          setIsFormModalOpen(false);
-          setModalMode('create');
-          setSucursalSeleccionada(null);
-        }}
-        mode={modalMode}
-        sucursal={sucursalSeleccionada}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        mode={getModalProps('form').mode || 'create'}
+        sucursal={getModalData('form')}
       />
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={isDeleteModalOpen}
-        onClose={() => {
-          setIsDeleteModalOpen(false);
-          setSucursalAEliminar(null);
-        }}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Confirmar Eliminación"
         maxWidth="md"
       >
@@ -413,7 +401,7 @@ function SucursalesPage() {
           </div>
 
           {/* Información de la sucursal */}
-          {sucursalAEliminar && (
+          {getModalData('delete') && (
             <div className="bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-lg flex items-center justify-center">
@@ -421,10 +409,10 @@ function SucursalesPage() {
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-gray-100">
-                    {sucursalAEliminar.nombre}
+                    {getModalData('delete').nombre}
                   </p>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {sucursalAEliminar.codigo || 'Sin código'}
+                    {getModalData('delete').codigo || 'Sin código'}
                   </p>
                 </div>
               </div>
@@ -444,10 +432,7 @@ function SucursalesPage() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                setIsDeleteModalOpen(false);
-                setSucursalAEliminar(null);
-              }}
+              onClick={() => closeModal('delete')}
               disabled={eliminarMutation.isPending}
             >
               Cancelar

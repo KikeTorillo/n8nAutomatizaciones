@@ -21,13 +21,17 @@ import {
   getColorProgreso,
   formatearFechaOnboarding
 } from '@/hooks/useOnboardingEmpleados';
+import { useModalManager } from '@/hooks/useModalManager';
 import PlantillaFormModal from './PlantillaFormModal';
 
 function OnboardingAdminPage() {
-  const [showPlantillaModal, setShowPlantillaModal] = useState(false);
-  const [plantillaEditar, setPlantillaEditar] = useState(null);
-  const [confirmEliminar, setConfirmEliminar] = useState(null);
   const [tabActiva, setTabActiva] = useState('dashboard'); // 'dashboard' | 'plantillas' | 'vencidas'
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: dashboardData, isLoading: loadingDashboard } = useDashboardOnboarding();
@@ -44,22 +48,21 @@ function OnboardingAdminPage() {
 
   // Editar plantilla
   const handleEditarPlantilla = (plantilla) => {
-    setPlantillaEditar(plantilla);
-    setShowPlantillaModal(true);
+    openModal('form', plantilla);
   };
 
   // Cerrar modal
   const handleClosePlantillaModal = () => {
-    setShowPlantillaModal(false);
-    setPlantillaEditar(null);
+    closeModal('form');
   };
 
   // Eliminar plantilla
   const handleEliminar = async () => {
-    if (!confirmEliminar) return;
+    const plantillaEliminar = getModalData('delete');
+    if (!plantillaEliminar) return;
     try {
-      await eliminarMutation.mutateAsync(confirmEliminar.id);
-      setConfirmEliminar(null);
+      await eliminarMutation.mutateAsync(plantillaEliminar.id);
+      closeModal('delete');
     } catch (err) {
       // Error manejado por el hook
     }
@@ -81,10 +84,7 @@ function OnboardingAdminPage() {
       actions={
         <Button
           variant="primary"
-          onClick={() => {
-            setPlantillaEditar(null);
-            setShowPlantillaModal(true);
-          }}
+          onClick={() => openModal('form', null)}
         >
           <Plus className="h-4 w-4 mr-2" />
           <span className="hidden sm:inline">Nueva Plantilla</span>
@@ -203,7 +203,7 @@ function OnboardingAdminPage() {
               </p>
               <Button
                 variant="primary"
-                onClick={() => setShowPlantillaModal(true)}
+                onClick={() => openModal('form', null)}
               >
                 <Plus className="h-4 w-4" />
                 Nueva Plantilla
@@ -244,7 +244,7 @@ function OnboardingAdminPage() {
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button
-                        onClick={() => setConfirmEliminar(plantilla)}
+                        onClick={() => openModal('delete', plantilla)}
                         className="p-1.5 text-gray-400 hover:text-red-600 rounded"
                         aria-label="Eliminar plantilla"
                       >
@@ -344,18 +344,18 @@ function OnboardingAdminPage() {
 
       {/* Modal Plantilla */}
       <PlantillaFormModal
-        isOpen={showPlantillaModal}
+        isOpen={isOpen('form')}
         onClose={handleClosePlantillaModal}
-        plantilla={plantillaEditar}
+        plantilla={getModalData('form')}
       />
 
       {/* Confirm Eliminar */}
       <ConfirmDialog
-        isOpen={!!confirmEliminar}
-        onClose={() => setConfirmEliminar(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar Plantilla"
-        message={`¿Estas seguro de eliminar la plantilla "${confirmEliminar?.nombre}"? Esta accion no se puede deshacer.`}
+        message={`¿Estas seguro de eliminar la plantilla "${getModalData('delete')?.nombre}"? Esta accion no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarMutation.isPending}

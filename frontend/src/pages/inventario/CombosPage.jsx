@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Package,
   Plus,
   Search,
   Edit2,
@@ -16,7 +15,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import Pagination from '@/components/ui/Pagination';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
-import { useToast } from '@/hooks/useToast';
+import { useCrudHandlers } from '@/hooks/useCrudHandlers';
 import { useCombos, useEliminarCombo } from '@/hooks/useCombosModificadores';
 import useSucursalStore from '@/store/sucursalStore';
 
@@ -34,15 +33,35 @@ const MANEJO_STOCK_LABELS = {
 };
 
 export default function CombosPage() {
-  const toast = useToast();
   const { sucursalActiva } = useSucursalStore();
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [comboEditando, setComboEditando] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [drawerKey, setDrawerKey] = useState(0);
   const limit = 10;
+
+  // Mutations
+  const eliminarMutation = useEliminarCombo();
+
+  // CRUD handlers centralizados
+  const {
+    isOpen,
+    handleNuevo,
+    handleEditar,
+    handleEliminar,
+    confirmarEliminar,
+    drawerKey,
+    handleDrawerSuccess,
+    closeModal,
+    formData,
+    deleteData,
+    isDeleting,
+  } = useCrudHandlers({
+    deleteMutation: eliminarMutation,
+    getDeleteId: (combo) => ({
+      productoId: combo.producto_id,
+      sucursalId: sucursalActiva?.id,
+    }),
+    entityName: 'combo',
+  });
 
   // Query
   const { data, isLoading, error } = useCombos({
@@ -54,45 +73,6 @@ export default function CombosPage() {
   // La API devuelve data como array directamente (via select en el hook)
   const combos = Array.isArray(data) ? data : (data?.combos || data || []);
   const paginacion = { total: combos.length, totalPages: 1 };
-
-  // Mutations
-  const eliminarMutation = useEliminarCombo();
-
-  // Handlers
-  const handleNuevo = () => {
-    setComboEditando(null);
-    setDrawerKey(k => k + 1);
-    setDrawerOpen(true);
-  };
-
-  const handleEditar = (combo) => {
-    setComboEditando(combo);
-    setDrawerKey(k => k + 1);
-    setDrawerOpen(true);
-  };
-
-  const handleEliminar = (combo) => {
-    setDeleteConfirm(combo);
-  };
-
-  const confirmarEliminar = async () => {
-    if (!deleteConfirm) return;
-    try {
-      await eliminarMutation.mutateAsync({
-        productoId: deleteConfirm.producto_id,
-        sucursalId: sucursalActiva?.id
-      });
-      toast.success('Combo eliminado');
-      setDeleteConfirm(null);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al eliminar');
-    }
-  };
-
-  const handleDrawerSuccess = () => {
-    setDrawerOpen(false);
-    setComboEditando(null);
-  };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
@@ -229,7 +209,7 @@ export default function CombosPage() {
                           ${parseFloat(combo.precio_calculado || combo.producto_precio || 0).toFixed(2)}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {combo.componentes?.length || 0} componentes
+                          {combo.total_componentes || combo.componentes?.length || 0} componentes
                         </p>
                       </div>
 
@@ -277,22 +257,22 @@ export default function CombosPage() {
       {/* Drawer */}
       <ComboFormDrawer
         key={drawerKey}
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        combo={comboEditando}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        combo={formData}
         onSuccess={handleDrawerSuccess}
       />
 
       {/* Confirm dialog */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmarEliminar}
         title="Eliminar combo"
-        message={`¿Eliminar el combo "${deleteConfirm?.producto_nombre}"? El producto seguirá existiendo pero ya no será un combo.`}
+        message={`¿Eliminar el combo "${deleteData?.producto_nombre}"? El producto seguirá existiendo pero ya no será un combo.`}
         confirmText="Eliminar"
         variant="danger"
-        isLoading={eliminarMutation.isPending}
+        isLoading={isDeleting}
       />
     </InventarioPageLayout>
   );

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, TrendingUp, Clock, Users, Calendar, ShoppingBag } from 'lucide-react';
-import StatCard from '@/components/dashboard/StatCard';
+import { StatCard } from '@/components/ui/StatCard';
 import Select from '@/components/ui/Select';
 import { useDashboardComisiones, useGraficaComisionesPorDia } from '@/hooks/useComisiones';
 import { useProfesionales } from '@/hooks/useProfesionales';
@@ -252,7 +252,8 @@ function ComisionesDashboard() {
           value={formatCurrency(totalComisiones)}
           subtitle="Comisiones generadas"
           icon={DollarSign}
-          color="green"
+          color="success"
+          variant="expanded"
           isLoading={loadingDashboard}
         />
 
@@ -261,7 +262,8 @@ function ComisionesDashboard() {
           value={formatCurrency(comisionesPendientes)}
           subtitle="Por pagar"
           icon={Clock}
-          color="orange"
+          color="warning"
+          variant="expanded"
           isLoading={loadingDashboard}
         />
 
@@ -270,7 +272,8 @@ function ComisionesDashboard() {
           value={formatCurrency(comisionesPagadas)}
           subtitle="Este período"
           icon={TrendingUp}
-          color="blue"
+          color="primary"
+          variant="expanded"
           isLoading={loadingDashboard}
         />
 
@@ -280,6 +283,7 @@ function ComisionesDashboard() {
           subtitle="Con comisiones"
           icon={Users}
           color="purple"
+          variant="expanded"
           isLoading={loadingDashboard}
         />
       </div>

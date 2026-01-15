@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input';
 import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useCategoriasProfesional,
   useCategoriasAgrupadas,
@@ -43,11 +44,16 @@ const TIPO_ICONS = {
  */
 function CategoriasPage() {
   const toast = useToast();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCategoria, setEditingCategoria] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Estado de filtros
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTipo, setFilterTipo] = useState('');
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: categorias = [], isLoading } = useCategoriasProfesional();
@@ -112,7 +118,6 @@ function CategoriasPage() {
 
   // Abrir drawer para crear
   const handleNuevo = (tipo = 'especialidad') => {
-    setEditingCategoria(null);
     reset({
       nombre: '',
       tipo_categoria: tipo,
@@ -125,12 +130,11 @@ function CategoriasPage() {
       orden: '',
       activo: true,
     });
-    setDrawerOpen(true);
+    openModal('form', null);
   };
 
   // Abrir drawer para editar
   const handleEditar = (categoria) => {
-    setEditingCategoria(categoria);
     reset({
       nombre: categoria.nombre || '',
       tipo_categoria: categoria.tipo_categoria || 'general',
@@ -140,16 +144,17 @@ function CategoriasPage() {
       orden: categoria.orden?.toString() || '',
       activo: categoria.activo ?? true,
     });
-    setDrawerOpen(true);
+    openModal('form', categoria);
   };
 
   // Confirmar eliminación
   const handleEliminar = (categoria) => {
-    setDeleteConfirm(categoria);
+    openModal('delete', categoria);
   };
 
   // Submit form
   const onSubmit = async (data) => {
+    const editingCategoria = getModalData('form');
     try {
       const payload = {
         nombre: data.nombre.trim(),
@@ -172,21 +177,23 @@ function CategoriasPage() {
         toast.success('Categoría creada');
       }
 
-      setDrawerOpen(false);
+      closeModal('form');
       reset();
-    } catch (error) {
-      toast.error(error.message || 'Error al guardar');
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar');
     }
   };
 
   // Confirmar delete
   const confirmarEliminar = async () => {
+    const deleteConfirm = getModalData('delete');
+    if (!deleteConfirm) return;
     try {
       await eliminarMutation.mutateAsync(deleteConfirm.id);
       toast.success('Categoría eliminada');
-      setDeleteConfirm(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar');
     }
   };
 
@@ -376,10 +383,10 @@ function CategoriasPage() {
 
       {/* Drawer Form */}
       <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingCategoria ? 'Editar Categoría' : 'Nueva Categoría'}
-        subtitle={editingCategoria ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Categoría' : 'Nueva Categoría'}
+        subtitle={getModalData('form') ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -460,7 +467,7 @@ function CategoriasPage() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => closeModal('form')}
             >
               Cancelar
             </Button>
@@ -469,7 +476,7 @@ function CategoriasPage() {
               className="flex-1"
               loading={crearMutation.isPending || actualizarMutation.isPending}
             >
-              {editingCategoria ? 'Actualizar' : 'Crear'}
+              {getModalData('form') ? 'Actualizar' : 'Crear'}
             </Button>
           </div>
         </form>
@@ -477,10 +484,10 @@ function CategoriasPage() {
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Eliminar categoría"
-        message={`¿Estás seguro de eliminar "${deleteConfirm?.nombre}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         variant="danger"
         onConfirm={confirmarEliminar}

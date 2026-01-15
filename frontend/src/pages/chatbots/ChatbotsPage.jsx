@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
@@ -6,6 +5,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/useChatbots';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import ConfigurarChatbotModal from '@/components/chatbots/ConfigurarChatbotModal';
 
 /**
@@ -15,9 +15,11 @@ import ConfigurarChatbotModal from '@/components/chatbots/ConfigurarChatbotModal
 function ChatbotsPage() {
   const toast = useToast();
 
-  // Estados para modales
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [chatbotAEliminar, setChatbotAEliminar] = useState(null);
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    config: { isOpen: false },
+    delete: { isOpen: false, data: null },
+  });
 
   // Fetch chatbots
   const { data, isLoading, error } = useChatbots();
@@ -28,7 +30,7 @@ function ChatbotsPage() {
 
   // Handler para crear nuevo chatbot
   const handleNuevoChatbot = () => {
-    setIsConfigModalOpen(true);
+    openModal('config');
   };
 
   // Handler para activar/desactivar chatbot
@@ -54,15 +56,16 @@ function ChatbotsPage() {
 
   // Handler para confirmar eliminación
   const handleConfirmDelete = async () => {
-    if (!chatbotAEliminar) return;
+    const chatbot = getModalData('delete');
+    if (!chatbot) return;
 
     try {
-      await eliminarMutation.mutateAsync(chatbotAEliminar.id);
+      await eliminarMutation.mutateAsync(chatbot.id);
       toast.success('Chatbot eliminado exitosamente');
-      setChatbotAEliminar(null);
-    } catch (error) {
+      closeModal('delete');
+    } catch (err) {
       toast.error(
-        error.response?.data?.error || error.message || 'Error al eliminar chatbot'
+        err.response?.data?.error || err.message || 'Error al eliminar chatbot'
       );
     }
   };
@@ -230,7 +233,7 @@ function ChatbotsPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setChatbotAEliminar(chatbot)}
+                    onClick={() => openModal('delete', chatbot)}
                     className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 border-red-200 dark:border-red-800"
                     disabled={eliminarMutation.isPending}
                   >
@@ -243,12 +246,12 @@ function ChatbotsPage() {
         )}
 
         {/* Modal de Configuración */}
-        {isConfigModalOpen && (
+        {isOpen('config') && (
           <ConfigurarChatbotModal
-            isOpen={isConfigModalOpen}
-            onClose={() => setIsConfigModalOpen(false)}
+            isOpen={isOpen('config')}
+            onClose={() => closeModal('config')}
             onSuccess={() => {
-              setIsConfigModalOpen(false);
+              closeModal('config');
               toast.success('Chatbot configurado exitosamente');
             }}
           />
@@ -256,11 +259,11 @@ function ChatbotsPage() {
 
         {/* Modal de Confirmación de Eliminación */}
         <ConfirmDialog
-          isOpen={!!chatbotAEliminar}
-          onClose={() => setChatbotAEliminar(null)}
+          isOpen={isOpen('delete')}
+          onClose={() => closeModal('delete')}
           onConfirm={handleConfirmDelete}
           title="Eliminar chatbot"
-          message={`Esta acción eliminará el chatbot "${chatbotAEliminar?.nombre}" y su workflow asociado en n8n. Esta acción no se puede deshacer.`}
+          message={`Esta acción eliminará el chatbot "${getModalData('delete')?.nombre}" y su workflow asociado en n8n. Esta acción no se puede deshacer.`}
           confirmText="Eliminar"
           cancelText="Cancelar"
           variant="danger"

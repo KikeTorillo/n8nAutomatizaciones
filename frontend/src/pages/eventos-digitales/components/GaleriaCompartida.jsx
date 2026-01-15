@@ -17,6 +17,7 @@
  * <GaleriaCompartida slug="mi-boda" token="abc123" isAdmin={false} permitirSubida={true} />
  */
 import { useState, useRef } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   Camera,
   Image,
@@ -34,6 +35,7 @@ import {
   ImagePlus
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
 import {
   useGaleria,
@@ -55,18 +57,22 @@ function GaleriaCompartida({
   const fileInputRef = useRef(null);
 
   // Estado local
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [showReportModal, setShowReportModal] = useState(false);
-  const [reportFotoId, setReportFotoId] = useState(null);
   const [reportMotivo, setReportMotivo] = useState('');
   const [filtroEstado, setFiltroEstado] = useState(''); // '', 'visible', 'oculta'
 
-  // Estado para subida de fotos
-  const [showUploadModal, setShowUploadModal] = useState(false);
+  // Estados de formulario para subida de fotos
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [caption, setCaption] = useState('');
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    lightbox: { isOpen: false },
+    report: { isOpen: false, data: null }, // data = fotoId
+    upload: { isOpen: false },
+    delete: { isOpen: false, data: null }, // data = fotoId
+  });
 
   // Queries - usar el hook correcto según el modo
   const galeriaAdmin = useGaleria(eventoId, { estado: filtroEstado || undefined });
@@ -90,11 +96,11 @@ function GaleriaCompartida({
   // Handlers
   const handleOpenLightbox = (index) => {
     setLightboxIndex(index);
-    setLightboxOpen(true);
+    openModal('lightbox');
   };
 
   const handleCloseLightbox = () => {
-    setLightboxOpen(false);
+    closeModal('lightbox');
   };
 
   const handlePrev = () => {
@@ -119,21 +125,26 @@ function GaleriaCompartida({
     }
   };
 
-  const handleEliminar = async (fotoId) => {
-    if (!confirm('¿Eliminar esta foto?')) return;
+  const handleAbrirEliminar = (fotoId) => {
+    openModal('delete', fotoId);
+  };
+
+  const handleConfirmarEliminar = async () => {
+    const fotoId = getModalData('delete');
+    if (!fotoId) return;
     try {
       await eliminarFoto.mutateAsync({ fotoId, eventoId });
       toast.success('Foto eliminada');
-      if (lightboxOpen) setLightboxOpen(false);
+      closeModal('delete');
+      if (isOpen('lightbox')) closeModal('lightbox');
     } catch (err) {
       toast.error(err.message);
     }
   };
 
   const handleOpenReport = (fotoId) => {
-    setReportFotoId(fotoId);
     setReportMotivo('');
-    setShowReportModal(true);
+    openModal('report', fotoId);
   };
 
   const handleReportar = async () => {
@@ -141,10 +152,11 @@ function GaleriaCompartida({
       toast.error('Indica el motivo del reporte');
       return;
     }
+    const fotoId = getModalData('report');
     try {
-      await reportarFoto.mutateAsync({ fotoId: reportFotoId, motivo: reportMotivo });
+      await reportarFoto.mutateAsync({ fotoId, motivo: reportMotivo });
       toast.success('Reporte enviado. Gracias por ayudarnos.');
-      setShowReportModal(false);
+      closeModal('report');
     } catch (err) {
       toast.error(err.message);
     }
@@ -152,11 +164,11 @@ function GaleriaCompartida({
 
   // Handlers de subida
   const handleOpenUpload = () => {
-    setShowUploadModal(true);
+    openModal('upload');
   };
 
   const handleCloseUpload = () => {
-    setShowUploadModal(false);
+    closeModal('upload');
     setSelectedFile(null);
     setPreviewUrl(null);
     setCaption('');
@@ -205,7 +217,7 @@ function GaleriaCompartida({
 
   // Keyboard navigation for lightbox
   const handleKeyDown = (e) => {
-    if (!lightboxOpen) return;
+    if (!isOpen('lightbox')) return;
     if (e.key === 'ArrowLeft') handlePrev();
     if (e.key === 'ArrowRight') handleNext();
     if (e.key === 'Escape') handleCloseLightbox();
@@ -325,7 +337,7 @@ function GaleriaCompartida({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleEliminar(foto.id);
+                      handleAbrirEliminar(foto.id);
                     }}
                     className="p-1.5 bg-white dark:bg-gray-800 rounded-full shadow-lg hover:bg-red-50 dark:hover:bg-red-900/30"
                     title="Eliminar"
@@ -371,7 +383,7 @@ function GaleriaCompartida({
       )}
 
       {/* Lightbox */}
-      {lightboxOpen && fotos[lightboxIndex] && (
+      {isOpen('lightbox') && fotos[lightboxIndex] && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center"
           onClick={handleCloseLightbox}
@@ -462,7 +474,7 @@ function GaleriaCompartida({
       />
 
       {/* Modal de Subida */}
-      {showUploadModal && (
+      {isOpen('upload') && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
@@ -559,8 +571,20 @@ function GaleriaCompartida({
         </div>
       )}
 
+      {/* Confirmación eliminar foto */}
+      <ConfirmDialog
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
+        onConfirm={handleConfirmarEliminar}
+        title="Eliminar foto"
+        message="¿Eliminar esta foto? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={eliminarFoto.isPending}
+      />
+
       {/* Modal de Reporte */}
-      {showReportModal && (
+      {isOpen('report') && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex justify-between items-center mb-4">
@@ -569,7 +593,7 @@ function GaleriaCompartida({
                 Reportar foto
               </h3>
               <button
-                onClick={() => setShowReportModal(false)}
+                onClick={() => closeModal('report')}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <X className="w-5 h-5" />
@@ -589,15 +613,15 @@ function GaleriaCompartida({
             />
 
             <div className="flex gap-2 justify-end">
-              <Button variant="outline" onClick={() => setShowReportModal(false)}>
+              <Button variant="outline" onClick={() => closeModal('report')}>
                 Cancelar
               </Button>
               <Button
                 onClick={handleReportar}
-                disabled={reportarFoto.isLoading}
+                disabled={reportarFoto.isPending}
                 className="bg-red-600 hover:bg-red-700"
               >
-                {reportarFoto.isLoading ? 'Enviando...' : 'Enviar reporte'}
+                {reportarFoto.isPending ? 'Enviando...' : 'Enviar reporte'}
               </Button>
             </div>
           </div>

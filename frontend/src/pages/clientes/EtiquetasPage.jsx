@@ -9,10 +9,10 @@
  * ====================================================================
  */
 
-import { useState } from 'react';
 import { Plus, Pencil, Trash2, Tag, Users } from 'lucide-react';
 import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import EtiquetaFormModal from '@/components/clientes/EtiquetaFormModal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
@@ -21,47 +21,42 @@ import Button from '@/components/ui/Button';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 
 export default function EtiquetasPage() {
-  const { toast } = useToast();
+  const toast = useToast();
   const { data: etiquetas = [], isLoading, error } = useEtiquetas({ soloActivas: 'false' });
   const eliminarEtiqueta = useEliminarEtiqueta();
 
-  // Modal de formulario
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [etiquetaEditar, setEtiquetaEditar] = useState(null);
-
-  // Modal de confirmación de eliminación
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [etiquetaEliminar, setEtiquetaEliminar] = useState(null);
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Abrir modal para crear
   const handleCrear = () => {
-    setEtiquetaEditar(null);
-    setIsModalOpen(true);
+    openModal('form', null);
   };
 
   // Abrir modal para editar
   const handleEditar = (etiqueta) => {
-    setEtiquetaEditar(etiqueta);
-    setIsModalOpen(true);
+    openModal('form', etiqueta);
   };
 
   // Confirmar eliminación
   const handleEliminarClick = (etiqueta) => {
-    setEtiquetaEliminar(etiqueta);
-    setIsDeleteOpen(true);
+    openModal('delete', etiqueta);
   };
 
   // Ejecutar eliminación
   const handleEliminar = async () => {
+    const etiquetaEliminar = getModalData('delete');
     if (!etiquetaEliminar) return;
 
     try {
       await eliminarEtiqueta.mutateAsync(etiquetaEliminar.id);
       toast.success('Etiqueta eliminada correctamente');
-      setIsDeleteOpen(false);
-      setEtiquetaEliminar(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar etiqueta');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar etiqueta');
     }
   };
 
@@ -187,24 +182,18 @@ export default function EtiquetasPage() {
 
       {/* Modal de formulario */}
       <EtiquetaFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEtiquetaEditar(null);
-        }}
-        etiqueta={etiquetaEditar}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        etiqueta={getModalData('form')}
       />
 
       {/* Modal de confirmacion de eliminacion */}
       <ConfirmDialog
-        isOpen={isDeleteOpen}
-        onClose={() => {
-          setIsDeleteOpen(false);
-          setEtiquetaEliminar(null);
-        }}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar etiqueta"
-        message={`¿Estas seguro de que deseas eliminar la etiqueta "${etiquetaEliminar?.nombre}"?`}
+        message={`¿Estas seguro de que deseas eliminar la etiqueta "${getModalData('delete')?.nombre}"?`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarEtiqueta.isLoading}

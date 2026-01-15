@@ -3,6 +3,7 @@
  * Módulo de Profesionales - Enero 2026
  */
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { HeartPulse, List, BarChart3, Plus } from 'lucide-react';
 import BackButton from '@/components/ui/BackButton';
 import {
@@ -49,7 +50,11 @@ function TabItem({ icon: Icon, label, isActive, onClick, count }) {
  */
 function IncapacidadesPage() {
   const [activeTab, setActiveTab] = useState('lista');
-  const [showFormModal, setShowFormModal] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    form: { isOpen: false },
+  });
 
   // Obtener conteo de incapacidades activas
   const { data: incapacidadesData } = useIncapacidades({ estado: 'activa', limite: 1 });
@@ -82,7 +87,7 @@ function IncapacidadesPage() {
             </div>
 
             <button
-              onClick={() => setShowFormModal(true)}
+              onClick={() => openModal('form')}
               className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -122,8 +127,8 @@ function IncapacidadesPage() {
 
       {/* Modal de registro */}
       <IncapacidadFormModal
-        isOpen={showFormModal}
-        onClose={() => setShowFormModal(false)}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
       />
     </div>
   );

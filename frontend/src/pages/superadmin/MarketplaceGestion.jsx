@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/useSuperAdminMarketplace';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
@@ -25,7 +26,11 @@ export default function MarketplaceGestion() {
   });
 
   const [showFilters, setShowFilters] = useState(true);
-  const [confirmarLimpiarAnalytics, setConfirmarLimpiarAnalytics] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    confirm: { isOpen: false },
+  });
 
   // Queries y Mutations
   const { data, isLoading, refetch } = usePerfilesAdmin(filtros);
@@ -75,7 +80,7 @@ export default function MarketplaceGestion() {
     try {
       await limpiarAnalytics.mutateAsync({ dias_antiguedad: 90 });
       success('Analytics antiguos eliminados exitosamente');
-      setConfirmarLimpiarAnalytics(false);
+      closeModal('confirm');
     } catch (err) {
       showError(err.message || 'Error al limpiar analytics');
     }
@@ -108,7 +113,7 @@ export default function MarketplaceGestion() {
           </p>
         </div>
         <Button
-          onClick={() => setConfirmarLimpiarAnalytics(true)}
+          onClick={() => openModal('confirm')}
           variant="danger"
           className="flex items-center gap-2"
         >
@@ -372,8 +377,8 @@ export default function MarketplaceGestion() {
 
       {/* Modal confirmar limpiar analytics */}
       <ConfirmDialog
-        isOpen={confirmarLimpiarAnalytics}
-        onClose={() => setConfirmarLimpiarAnalytics(false)}
+        isOpen={isOpen('confirm')}
+        onClose={() => closeModal('confirm')}
         onConfirm={handleLimpiarAnalytics}
         title="Limpiar Analytics"
         message="¿Estás seguro de eliminar los datos de analytics mayores a 90 días? Esta acción no se puede deshacer."

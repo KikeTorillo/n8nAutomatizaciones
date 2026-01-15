@@ -359,15 +359,17 @@ export function useClientesConPuntos(params = {}) {
 /**
  * Hook para obtener estadísticas del programa de lealtad
  * GET /pos/lealtad/estadisticas
+ * @param {number} sucursalId - ID de la sucursal (requerido para permisos)
  */
-export function useEstadisticasLealtad() {
+export function useEstadisticasLealtad(sucursalId) {
   return useQuery({
-    queryKey: ['lealtad-estadisticas'],
+    queryKey: ['lealtad-estadisticas', sucursalId],
     queryFn: async () => {
-      const response = await posApi.obtenerEstadisticasLealtad();
+      const response = await posApi.obtenerEstadisticasLealtad(sucursalId);
       return response.data.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
+    enabled: !!sucursalId,
   });
 }
 

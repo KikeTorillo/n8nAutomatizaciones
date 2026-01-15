@@ -19,6 +19,7 @@ import Input from '@/components/ui/Input';
 import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useDepartamentos,
   useArbolDepartamentos,
@@ -33,11 +34,14 @@ import {
  */
 function DepartamentosPage() {
   const toast = useToast();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingDepartamento, setEditingDepartamento] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedNodes, setExpandedNodes] = useState(new Set());
+
+  // Modal manager para form y delete
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: departamentos = [], isLoading } = useDepartamentos();
@@ -90,7 +94,6 @@ function DepartamentosPage() {
 
   // Abrir drawer para crear
   const handleNuevo = () => {
-    setEditingDepartamento(null);
     reset({
       nombre: '',
       codigo: '',
@@ -98,12 +101,11 @@ function DepartamentosPage() {
       parent_id: '',
       activo: true,
     });
-    setDrawerOpen(true);
+    openModal('form', null);
   };
 
   // Abrir drawer para editar
   const handleEditar = (departamento) => {
-    setEditingDepartamento(departamento);
     reset({
       nombre: departamento.nombre || '',
       codigo: departamento.codigo || '',
@@ -111,16 +113,17 @@ function DepartamentosPage() {
       parent_id: departamento.parent_id?.toString() || '',
       activo: departamento.activo ?? true,
     });
-    setDrawerOpen(true);
+    openModal('form', departamento);
   };
 
   // Confirmar eliminación
   const handleEliminar = (departamento) => {
-    setDeleteConfirm(departamento);
+    openModal('delete', departamento);
   };
 
   // Submit form
   const onSubmit = async (data) => {
+    const editingDepartamento = getModalData('form');
     try {
       const payload = {
         nombre: data.nombre.trim(),
@@ -141,21 +144,22 @@ function DepartamentosPage() {
         toast.success('Departamento creado');
       }
 
-      setDrawerOpen(false);
+      closeModal('form');
       reset();
-    } catch (error) {
-      toast.error(error.message || 'Error al guardar');
+    } catch (err) {
+      toast.error(err.message || 'Error al guardar');
     }
   };
 
   // Confirmar delete
   const confirmarEliminar = async () => {
+    const deleteData = getModalData('delete');
     try {
-      await eliminarMutation.mutateAsync(deleteConfirm.id);
+      await eliminarMutation.mutateAsync(deleteData.id);
       toast.success('Departamento eliminado');
-      setDeleteConfirm(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar');
     }
   };
 
@@ -358,10 +362,10 @@ function DepartamentosPage() {
 
       {/* Drawer Form */}
       <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingDepartamento ? 'Editar Departamento' : 'Nuevo Departamento'}
-        subtitle={editingDepartamento ? 'Modifica los datos del departamento' : 'Crea un nuevo departamento'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Departamento' : 'Nuevo Departamento'}
+        subtitle={getModalData('form') ? 'Modifica los datos del departamento' : 'Crea un nuevo departamento'}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -387,7 +391,7 @@ function DepartamentosPage() {
             >
               <option value="">Sin departamento padre</option>
               {departamentos
-                .filter(d => d.id !== editingDepartamento?.id)
+                .filter(d => d.id !== getModalData('form')?.id)
                 .map(d => (
                   <option key={d.id} value={d.id}>
                     {d.nombre}
@@ -425,7 +429,7 @@ function DepartamentosPage() {
               type="button"
               variant="outline"
               className="flex-1"
-              onClick={() => setDrawerOpen(false)}
+              onClick={() => closeModal('form')}
             >
               Cancelar
             </Button>
@@ -434,7 +438,7 @@ function DepartamentosPage() {
               className="flex-1"
               loading={crearMutation.isPending || actualizarMutation.isPending}
             >
-              {editingDepartamento ? 'Actualizar' : 'Crear'}
+              {getModalData('form') ? 'Actualizar' : 'Crear'}
             </Button>
           </div>
         </form>
@@ -442,10 +446,10 @@ function DepartamentosPage() {
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Eliminar departamento"
-        message={`¿Estás seguro de eliminar "${deleteConfirm?.nombre}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         variant="danger"
         onConfirm={confirmarEliminar}

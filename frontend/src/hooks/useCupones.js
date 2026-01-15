@@ -14,6 +14,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { posApi } from '@/services/api/endpoints';
+import useSucursalStore from '@/store/sucursalStore';
 
 // =========================================================================
 // HOOKS PARA POS (Uso en ventas)
@@ -88,8 +89,11 @@ export function useAplicarCupon() {
  * @param {Object} params - { page, limit, busqueda, activo, vigente, ordenPor, orden }
  */
 export function useCupones(params = {}) {
+  const { sucursalActiva } = useSucursalStore();
+  const sucursalId = sucursalActiva?.id;
+
   return useQuery({
-    queryKey: ['cupones', params],
+    queryKey: ['cupones', params, sucursalId],
     queryFn: async () => {
       // Sanitizar params
       const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
@@ -99,6 +103,11 @@ export function useCupones(params = {}) {
         return acc;
       }, {});
 
+      // Agregar sucursalId para verificación de permisos
+      if (sucursalId) {
+        sanitizedParams.sucursalId = sucursalId;
+      }
+
       const response = await posApi.listarCupones(sanitizedParams);
       return {
         cupones: response.data.data,
@@ -107,6 +116,7 @@ export function useCupones(params = {}) {
     },
     staleTime: 1000 * 60 * 2, // 2 minutos
     keepPreviousData: true,
+    enabled: !!sucursalId, // Solo ejecutar si hay sucursal
   });
 }
 
@@ -189,13 +199,20 @@ export function useEliminarCupon() {
  * GET /pos/cupones/:id/historial
  */
 export function useHistorialCupon(cuponId, params = {}) {
+  const { sucursalActiva } = useSucursalStore();
+  const sucursalId = sucursalActiva?.id;
+
   return useQuery({
-    queryKey: ['cupon-historial', cuponId, params],
+    queryKey: ['cupon-historial', cuponId, params, sucursalId],
     queryFn: async () => {
-      const response = await posApi.obtenerHistorialCupon(cuponId, params);
+      const paramsWithSucursal = { ...params };
+      if (sucursalId) {
+        paramsWithSucursal.sucursalId = sucursalId;
+      }
+      const response = await posApi.obtenerHistorialCupon(cuponId, paramsWithSucursal);
       return response.data.data;
     },
-    enabled: !!cuponId,
+    enabled: !!cuponId && !!sucursalId,
     staleTime: 1000 * 30, // 30 segundos
   });
 }
@@ -205,13 +222,17 @@ export function useHistorialCupon(cuponId, params = {}) {
  * GET /pos/cupones/:id/estadisticas
  */
 export function useEstadisticasCupon(cuponId) {
+  const { sucursalActiva } = useSucursalStore();
+  const sucursalId = sucursalActiva?.id;
+
   return useQuery({
-    queryKey: ['cupon-estadisticas', cuponId],
+    queryKey: ['cupon-estadisticas', cuponId, sucursalId],
     queryFn: async () => {
-      const response = await posApi.obtenerEstadisticasCupon(cuponId);
+      const params = sucursalId ? { sucursalId } : {};
+      const response = await posApi.obtenerEstadisticasCupon(cuponId, params);
       return response.data.data;
     },
-    enabled: !!cuponId,
+    enabled: !!cuponId && !!sucursalId,
     staleTime: 1000 * 60, // 1 minuto
   });
 }

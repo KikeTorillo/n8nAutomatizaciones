@@ -3,9 +3,11 @@ import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Input from '@/components/ui/Input';
+import StatCardGrid from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
 import { useVentasDiarias } from '@/hooks/useVentas';
 import POSNavTabs from '@/components/pos/POSNavTabs';
+import { exportarReporteVentasDiarias } from '@/utils/exportToExcel';
 
 /**
  * Página de Reporte de Ventas Diarias
@@ -33,7 +35,21 @@ export default function ReporteVentasDiariasPage() {
   };
 
   const handleExportarExcel = () => {
-    toast.info('Funcionalidad de exportación Excel en desarrollo');
+    try {
+      exportarReporteVentasDiarias(
+        {
+          resumen,
+          ventasPorHora,
+          topProductos,
+          detalle
+        },
+        filtros.fecha
+      );
+      toast.success('Reporte exportado correctamente');
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      toast.error('Error al exportar el reporte');
+    }
   };
 
   return (
@@ -122,63 +138,39 @@ export default function ReporteVentasDiariasPage() {
       ) : (
         <>
           {/* Cards de resumen */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ventas del Día</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                    {resumen.total_ventas || 0}
-                  </p>
-                </div>
-                <div className="bg-primary-100 dark:bg-primary-900/40 p-3 rounded-lg">
-                  <Receipt className="h-6 w-6 text-primary-600 dark:text-primary-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ingresos</p>
-                  <p className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
-                    ${parseFloat(resumen.total_ingresos || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-green-100 dark:bg-green-900/40 p-3 rounded-lg">
-                  <DollarSign className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Ticket Promedio</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                    ${parseFloat(resumen.ticket_promedio || 0).toFixed(2)}
-                  </p>
-                </div>
-                <div className="bg-purple-100 dark:bg-purple-900/40 p-3 rounded-lg">
-                  <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Items Vendidos</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 mt-1">
-                    {resumen.total_items_vendidos || 0}
-                  </p>
-                </div>
-                <div className="bg-orange-100 dark:bg-orange-900/40 p-3 rounded-lg">
-                  <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />
-                </div>
-              </div>
-            </div>
-          </div>
+          <StatCardGrid
+            stats={[
+              {
+                key: 'ventas',
+                icon: Receipt,
+                label: 'Ventas del Día',
+                value: resumen.total_ventas || 0,
+                color: 'primary',
+              },
+              {
+                key: 'ingresos',
+                icon: DollarSign,
+                label: 'Ingresos',
+                value: `$${parseFloat(resumen.total_ingresos || 0).toFixed(2)}`,
+                color: 'green',
+              },
+              {
+                key: 'ticket',
+                icon: TrendingUp,
+                label: 'Ticket Promedio',
+                value: `$${parseFloat(resumen.ticket_promedio || 0).toFixed(2)}`,
+                color: 'purple',
+              },
+              {
+                key: 'items',
+                icon: Package,
+                label: 'Items Vendidos',
+                value: resumen.total_items_vendidos || 0,
+                color: 'yellow',
+              },
+            ]}
+            columns={4}
+          />
 
           {/* Gráfica de ventas por hora */}
           {ventasPorHora.length > 0 && (

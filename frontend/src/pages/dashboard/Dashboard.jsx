@@ -5,7 +5,7 @@ import useAuthStore from '@/store/authStore';
 import { useModulos } from '@/hooks/useModulos';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
-import LimitProgressBar from '@/components/dashboard/LimitProgressBar';
+import { LimitProgressBar } from '@/components/ui/ProgressBar';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import AlertasWidget from '@/components/inventario/AlertasWidget';
 import { useEstadisticasOrganizacion } from '@/hooks/useEstadisticas';

@@ -15,9 +15,12 @@
  * ====================================================================
  */
 
-import { useEffect, useState } from 'react';
-import { ShoppingCart, CreditCard, CheckCircle, Star, Gift } from 'lucide-react';
+import { useEffect, useState, useCallback } from 'react';
+import { ShoppingCart, CreditCard, CheckCircle, Star, Gift, Maximize, Minimize } from 'lucide-react';
 import { usePOSReceiver, POS_MESSAGE_TYPES } from '@/hooks/usePOSBroadcast';
+
+// Key para localStorage
+const DISPLAY_STATE_KEY = 'nexo-pos-display-state';
 
 /**
  * Formatea precio en MXN
@@ -315,6 +318,77 @@ function CompleteState({ result, organizacion }) {
  */
 export default function CustomerDisplayPage() {
   const { displayState, organizacion, isConnected } = usePOSReceiver();
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+
+  // Persistir estado en localStorage para sobrevivir refresh
+  useEffect(() => {
+    if (displayState.type !== 'idle') {
+      localStorage.setItem(DISPLAY_STATE_KEY, JSON.stringify({
+        displayState,
+        organizacion,
+        timestamp: Date.now()
+      }));
+    }
+  }, [displayState, organizacion]);
+
+  // Restaurar estado de localStorage al montar (si hay datos recientes < 5 min)
+  useEffect(() => {
+    const saved = localStorage.getItem(DISPLAY_STATE_KEY);
+    if (saved) {
+      try {
+        const { timestamp } = JSON.parse(saved);
+        const fiveMinutes = 5 * 60 * 1000;
+        // Solo limpiar si es muy viejo, el hook usePOSReceiver maneja el estado real
+        if (Date.now() - timestamp > fiveMinutes) {
+          localStorage.removeItem(DISPLAY_STATE_KEY);
+        }
+      } catch {
+        localStorage.removeItem(DISPLAY_STATE_KEY);
+      }
+    }
+  }, []);
+
+  // Limpiar localStorage cuando vuelve a idle
+  useEffect(() => {
+    if (displayState.type === 'idle') {
+      localStorage.removeItem(DISPLAY_STATE_KEY);
+    }
+  }, [displayState.type]);
+
+  // Detectar cambios en fullscreen
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  // Ocultar controles después de 3 segundos de inactividad
+  useEffect(() => {
+    setShowControls(true);
+    const timer = setTimeout(() => setShowControls(false), 3000);
+    return () => clearTimeout(timer);
+  }, [displayState]);
+
+  // Toggle fullscreen
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (!document.fullscreenElement) {
+        await document.documentElement.requestFullscreen();
+      } else {
+        await document.exitFullscreen();
+      }
+    } catch (err) {
+      console.error('Error toggling fullscreen:', err);
+    }
+  }, []);
+
+  // Mostrar controles al mover mouse
+  const handleMouseMove = useCallback(() => {
+    setShowControls(true);
+  }, []);
 
   // Renderizar según estado
   const renderContent = () => {
@@ -335,21 +409,36 @@ export default function CustomerDisplayPage() {
   };
 
   return (
-    <div className="customer-display">
+    <div className="customer-display" onMouseMove={handleMouseMove}>
       {renderContent()}
 
-      {/* Indicador de conexión (solo en desarrollo) */}
-      {import.meta.env.DEV && (
-        <div
-          className={`fixed bottom-4 right-4 px-3 py-1 rounded-full text-xs font-medium ${
-            isConnected
-              ? 'bg-green-500 text-white'
-              : 'bg-red-500 text-white animate-pulse'
-          }`}
-        >
-          {isConnected ? 'Conectado' : 'Desconectado'}
-        </div>
-      )}
+      {/* Botón de fullscreen */}
+      <button
+        onClick={toggleFullscreen}
+        className={`fixed top-4 right-4 p-3 rounded-full bg-black/20 hover:bg-black/40 text-white transition-all duration-300 ${
+          showControls ? 'opacity-100' : 'opacity-0'
+        }`}
+        title={isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'}
+      >
+        {isFullscreen ? (
+          <Minimize className="w-6 h-6" />
+        ) : (
+          <Maximize className="w-6 h-6" />
+        )}
+      </button>
+
+      {/* Indicador de conexión */}
+      <div
+        className={`fixed bottom-4 right-4 px-3 py-1 rounded-full text-xs font-medium transition-opacity duration-300 ${
+          showControls ? 'opacity-100' : 'opacity-0'
+        } ${
+          isConnected
+            ? 'bg-green-500 text-white'
+            : 'bg-red-500 text-white animate-pulse'
+        }`}
+      >
+        {isConnected ? 'Conectado' : 'Desconectado'}
+      </div>
 
       {/* Estilos para animaciones */}
       <style>{`

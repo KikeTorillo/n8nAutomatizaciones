@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   FileText,
   Upload,
@@ -156,7 +157,11 @@ export default function ClienteDocumentosTab({ clienteId }) {
   // Estado local
   const [filtroTipo, setFiltroTipo] = useState('');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, documento: null });
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries y mutations
   const { data: documentos, isLoading, isError, refetch } = useDocumentosCliente(clienteId, {
@@ -197,22 +202,22 @@ export default function ClienteDocumentosTab({ clienteId }) {
   };
 
   const handleEliminar = (documento) => {
-    setDeleteConfirm({ open: true, documento });
+    openModal('delete', documento);
   };
 
   const confirmEliminar = async () => {
-    if (!deleteConfirm.documento) return;
+    const documento = getModalData('delete');
+    if (!documento) return;
 
     try {
       await eliminarDocumento.mutateAsync({
         clienteId,
-        documentoId: deleteConfirm.documento.id,
+        documentoId: documento.id,
       });
       toast('Documento eliminado', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo eliminar', { type: 'error' });
-    } finally {
-      setDeleteConfirm({ open: false, documento: null });
+      closeModal('delete');
+    } catch (err) {
+      toast(err.message || 'No se pudo eliminar', { type: 'error' });
     }
   };
 
@@ -337,11 +342,11 @@ export default function ClienteDocumentosTab({ clienteId }) {
 
       {/* Confirmación de eliminación */}
       <ConfirmDialog
-        isOpen={deleteConfirm.open}
-        onClose={() => setDeleteConfirm({ open: false, documento: null })}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmEliminar}
         title="Eliminar documento"
-        description={`¿Estás seguro de eliminar "${deleteConfirm.documento?.nombre}"? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarDocumento.isPending}

@@ -24,6 +24,7 @@ import Modal from '@/components/ui/Modal';
 import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import { listasPreciosApi, monedasApi, clientesApi, inventarioApi } from '@/services/api/endpoints';
 import Select from '@/components/ui/Select';
 import { useCurrency } from '@/hooks/useCurrency';
@@ -37,14 +38,15 @@ function ListasPreciosPage() {
   const toast = useToast();
   const queryClient = useQueryClient();
   const { formatCurrency } = useCurrency();
-
-  const [showForm, setShowForm] = useState(false);
-  const [editingLista, setEditingLista] = useState(null);
-  const [selectedLista, setSelectedLista] = useState(null);
-  const [showItems, setShowItems] = useState(false);
-  const [showClientes, setShowClientes] = useState(false);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Modal manager para form, items, clientes y delete
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    items: { isOpen: false, data: null },
+    clientes: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Query: Listar listas de precios
   const { data: listas = [], isLoading: loadingListas } = useQuery({
@@ -70,11 +72,10 @@ function ListasPreciosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
       toast.success('Lista de precios creada');
-      setShowForm(false);
-      setEditingLista(null);
+      closeModal('form');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al crear lista');
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Error al crear lista');
     },
   });
 
@@ -84,11 +85,10 @@ function ListasPreciosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
       toast.success('Lista actualizada');
-      setShowForm(false);
-      setEditingLista(null);
+      closeModal('form');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al actualizar lista');
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Error al actualizar lista');
     },
   });
 
@@ -98,10 +98,10 @@ function ListasPreciosPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
       toast.success('Lista eliminada');
-      setDeleteConfirm(null);
+      closeModal('delete');
     },
-    onError: (error) => {
-      toast.error(error.response?.data?.message || 'Error al eliminar lista');
+    onError: (err) => {
+      toast.error(err.response?.data?.message || 'Error al eliminar lista');
     },
   });
 
@@ -113,26 +113,23 @@ function ListasPreciosPage() {
 
   // Handlers
   const handleNueva = () => {
-    setEditingLista(null);
-    setShowForm(true);
+    openModal('form', null);
   };
 
   const handleEditar = (lista) => {
-    setEditingLista(lista);
-    setShowForm(true);
+    openModal('form', lista);
   };
 
   const handleVerItems = (lista) => {
-    setSelectedLista(lista);
-    setShowItems(true);
+    openModal('items', lista);
   };
 
   const handleVerClientes = (lista) => {
-    setSelectedLista(lista);
-    setShowClientes(true);
+    openModal('clientes', lista);
   };
 
   const handleGuardar = (formData) => {
+    const editingLista = getModalData('form');
     if (editingLista) {
       actualizarMutation.mutate({ id: editingLista.id, data: formData });
     } else {
@@ -193,7 +190,7 @@ function ListasPreciosPage() {
                 key={lista.id}
                 lista={lista}
                 onEdit={() => handleEditar(lista)}
-                onDelete={() => setDeleteConfirm(lista)}
+                onDelete={() => openModal('delete', lista)}
                 onVerItems={() => handleVerItems(lista)}
                 onVerClientes={() => handleVerClientes(lista)}
               />
@@ -204,62 +201,50 @@ function ListasPreciosPage() {
 
       {/* Drawer: Formulario de Lista */}
       <Drawer
-        isOpen={showForm}
-        onClose={() => {
-          setShowForm(false);
-          setEditingLista(null);
-        }}
-        title={editingLista ? 'Editar Lista' : 'Nueva Lista de Precios'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Lista' : 'Nueva Lista de Precios'}
       >
         <ListaForm
-          lista={editingLista}
+          lista={getModalData('form')}
           monedas={monedas}
           onSubmit={handleGuardar}
-          onCancel={() => {
-            setShowForm(false);
-            setEditingLista(null);
-          }}
+          onCancel={() => closeModal('form')}
           isLoading={crearMutation.isPending || actualizarMutation.isPending}
         />
       </Drawer>
 
       {/* Modal: Items de la lista */}
       <Modal
-        isOpen={showItems}
-        onClose={() => {
-          setShowItems(false);
-          setSelectedLista(null);
-        }}
-        title={`Items: ${selectedLista?.nombre}`}
+        isOpen={isOpen('items')}
+        onClose={() => closeModal('items')}
+        title={`Items: ${getModalData('items')?.nombre}`}
         size="lg"
       >
-        {selectedLista && (
-          <ListaItemsView listaId={selectedLista.id} />
+        {getModalData('items') && (
+          <ListaItemsView listaId={getModalData('items').id} />
         )}
       </Modal>
 
       {/* Modal: Clientes de la lista */}
       <Modal
-        isOpen={showClientes}
-        onClose={() => {
-          setShowClientes(false);
-          setSelectedLista(null);
-        }}
-        title={`Clientes: ${selectedLista?.nombre}`}
+        isOpen={isOpen('clientes')}
+        onClose={() => closeModal('clientes')}
+        title={`Clientes: ${getModalData('clientes')?.nombre}`}
         size="md"
       >
-        {selectedLista && (
-          <ListaClientesView listaId={selectedLista.id} />
+        {getModalData('clientes') && (
+          <ListaClientesView listaId={getModalData('clientes').id} />
         )}
       </Modal>
 
       {/* Confirm: Eliminar */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={() => eliminarMutation.mutate(deleteConfirm.id)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
+        onConfirm={() => eliminarMutation.mutate(getModalData('delete')?.id)}
         title="Eliminar Lista"
-        message={`¿Estás seguro de eliminar "${deleteConfirm?.nombre}"? Los clientes asignados perderán su lista especial.`}
+        message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Los clientes asignados perderán su lista especial.`}
         confirmText="Eliminar"
         variant="danger"
         isLoading={eliminarMutation.isPending}
@@ -513,7 +498,11 @@ function ListaItemsView({ listaId }) {
   const [tipoDescuento, setTipoDescuento] = useState('porcentaje'); // 'porcentaje' | 'fijo'
   const [valorDescuento, setValorDescuento] = useState('');
   const [cantidadMinima, setCantidadMinima] = useState('1');
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
+
+  // Modal para confirmación de eliminación de item
+  const { openModal: openItemModal, closeModal: closeItemModal, isOpen: isItemOpen, getModalData: getItemModalData } = useModalManager({
+    deleteItem: { isOpen: false, data: null },
+  });
 
   // Query: Items de la lista
   const { data: items = [], isLoading } = useQuery({
@@ -581,7 +570,7 @@ function ListaItemsView({ listaId }) {
       queryClient.invalidateQueries({ queryKey: ['lista-items', listaId] });
       queryClient.invalidateQueries({ queryKey: ['listas-precios'] });
       toast.success('Item eliminado de la lista');
-      setDeleteConfirm(null);
+      closeItemModal('deleteItem');
     },
     onError: (error) => {
       toast.error(error.response?.data?.message || 'Error al eliminar item');
@@ -993,7 +982,7 @@ function ListaItemsView({ listaId }) {
                   </td>
                   <td className="py-3">
                     <button
-                      onClick={() => setDeleteConfirm(item)}
+                      onClick={() => openItemModal('deleteItem', item)}
                       className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
                       title="Eliminar item"
                     >
@@ -1009,11 +998,11 @@ function ListaItemsView({ listaId }) {
 
       {/* Confirm: Eliminar item */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
-        onConfirm={() => eliminarMutation.mutate(deleteConfirm.id)}
+        isOpen={isItemOpen('deleteItem')}
+        onClose={() => closeItemModal('deleteItem')}
+        onConfirm={() => eliminarMutation.mutate(getItemModalData('deleteItem')?.id)}
         title="Eliminar Item"
-        message={`¿Eliminar "${deleteConfirm?.producto_nombre || deleteConfirm?.categoria_nombre}" de esta lista? El producto volverá a usar el descuento global.`}
+        message={`¿Eliminar "${getItemModalData('deleteItem')?.producto_nombre || getItemModalData('deleteItem')?.categoria_nombre}" de esta lista? El producto volverá a usar el descuento global.`}
         confirmText="Eliminar"
         variant="danger"
         isLoading={eliminarMutation.isPending}

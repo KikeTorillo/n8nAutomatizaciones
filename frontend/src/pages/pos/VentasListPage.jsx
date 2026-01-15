@@ -7,6 +7,8 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useVentas } from '@/hooks/useVentas';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
 import CancelarVentaModal from '@/components/pos/CancelarVentaModal';
@@ -19,6 +21,7 @@ import POSNavTabs from '@/components/pos/POSNavTabs';
  */
 export default function VentasListPage() {
   const toast = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -35,15 +38,22 @@ export default function VentasListPage() {
 
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
 
-  // Estado de modales
-  const [modalDetalle, setModalDetalle] = useState({ isOpen: false, ventaId: null });
-  const [modalCancelar, setModalCancelar] = useState({ isOpen: false, venta: null });
-  const [modalDevolver, setModalDevolver] = useState({ isOpen: false, venta: null });
+  // Estados de modales centralizados con useModalManager
+  const {
+    openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+  } = useModalManager({
+    detalle: { isOpen: false, data: null },
+    cancelar: { isOpen: false, data: null },
+    devolver: { isOpen: false, data: null },
+  });
 
   // Query
   const { data: ventasData, isLoading } = useVentas(filtros);
   const ventas = ventasData?.ventas || [];
-  const total = ventasData?.total || 0;
+  const total = ventasData?.totales?.total_ventas || ventas.length;
 
   // Calcular métricas desde los datos
   const metricas = useMemo(() => {
@@ -68,53 +78,27 @@ export default function VentasListPage() {
     { key: 'canceladas', icon: XCircle, label: 'Canceladas', value: metricas.ventasCanceladas, color: 'red' },
   ], [metricas]);
 
-  // Handler para exportar CSV
+  // Handler para exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
-    if (!ventas || ventas.length === 0) {
-      toast.error('No hay ventas para exportar');
-      return;
-    }
+    const datosExportar = ventas.map((v) => ({
+      folio: v.folio || '',
+      fecha: v.fecha_venta ? format(new Date(v.fecha_venta), 'dd/MM/yyyy HH:mm') : '',
+      cliente: v.cliente_nombre || 'Venta directa',
+      total: `$${parseFloat(v.total || 0).toFixed(2)}`,
+      metodo_pago: formatearMetodoPago(v.metodo_pago),
+      estado: v.estado || '',
+      estado_pago: v.estado_pago || '',
+    }));
 
-    try {
-      const headers = [
-        'Folio',
-        'Fecha',
-        'Cliente',
-        'Total',
-        'Método Pago',
-        'Estado',
-        'Estado Pago',
-      ];
-
-      const rows = ventas.map((v) => [
-        v.folio || '',
-        v.fecha_venta ? format(new Date(v.fecha_venta), 'dd/MM/yyyy HH:mm') : '',
-        v.cliente_nombre || 'Venta directa',
-        `$${parseFloat(v.total || 0).toFixed(2)}`,
-        formatearMetodoPago(v.metodo_pago),
-        v.estado || '',
-        v.estado_pago || '',
-      ]);
-
-      // BOM para UTF-8 (Excel)
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `ventas_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      toast.success('Ventas exportadas exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      toast.error('Error al exportar CSV');
-    }
+    exportCSV(datosExportar, [
+      { key: 'folio', header: 'Folio' },
+      { key: 'fecha', header: 'Fecha' },
+      { key: 'cliente', header: 'Cliente' },
+      { key: 'total', header: 'Total' },
+      { key: 'metodo_pago', header: 'Método Pago' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'estado_pago', header: 'Estado Pago' },
+    ], `ventas_${format(new Date(), 'yyyyMMdd_HHmm')}`);
   };
 
   // Handlers de filtros
@@ -136,9 +120,9 @@ export default function VentasListPage() {
     });
   };
 
-  // Handlers de acciones
+  // Handlers de acciones usando useModalManager
   const handleVerDetalle = (ventaId) => {
-    setModalDetalle({ isOpen: true, ventaId });
+    openModal('detalle', { id: ventaId });
   };
 
   const handleCancelar = (venta) => {
@@ -146,7 +130,7 @@ export default function VentasListPage() {
       toast.error('Esta venta ya está cancelada');
       return;
     }
-    setModalCancelar({ isOpen: true, venta });
+    openModal('cancelar', venta);
   };
 
   const handleDevolver = (venta) => {
@@ -158,7 +142,7 @@ export default function VentasListPage() {
       toast.error('Esta venta ya tiene devolución total');
       return;
     }
-    setModalDevolver({ isOpen: true, venta });
+    openModal('devolver', venta);
   };
 
   // Helpers de visualización
@@ -493,23 +477,23 @@ export default function VentasListPage() {
       </div>
       </div>
 
-      {/* Modales */}
+      {/* Modales usando useModalManager */}
       <VentaDetalleModal
-        isOpen={modalDetalle.isOpen}
-        onClose={() => setModalDetalle({ isOpen: false, ventaId: null })}
-        ventaId={modalDetalle.ventaId}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
+        ventaId={getModalData('detalle')?.id}
       />
 
       <CancelarVentaModal
-        isOpen={modalCancelar.isOpen}
-        onClose={() => setModalCancelar({ isOpen: false, venta: null })}
-        venta={modalCancelar.venta}
+        isOpen={isOpen('cancelar')}
+        onClose={() => closeModal('cancelar')}
+        venta={getModalData('cancelar')}
       />
 
       <DevolverItemsModal
-        isOpen={modalDevolver.isOpen}
-        onClose={() => setModalDevolver({ isOpen: false, venta: null })}
-        venta={modalDevolver.venta}
+        isOpen={isOpen('devolver')}
+        onClose={() => closeModal('devolver')}
+        venta={getModalData('devolver')}
       />
     </div>
   );

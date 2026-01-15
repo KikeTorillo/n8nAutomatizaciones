@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Route, Plus, Edit, Trash2, Search, X, Zap, Truck, ShoppingCart, Factory, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Route, Plus, Edit, Trash2, Search, X, Zap, Truck, ShoppingCart, Factory } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Drawer from '@/components/ui/Drawer';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useRutasOperacion,
@@ -47,11 +48,13 @@ function RutasOperacionPage() {
     activo: true,
   });
 
-  // Estado de modales/drawers
-  const [isFormOpen, setIsFormOpen] = useState(false);
-  const [modalMode, setModalMode] = useState('create');
-  const [rutaSeleccionada, setRutaSeleccionada] = useState(null);
-  const [modalEliminarAbierto, setModalEliminarAbierto] = useState(false);
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    form: { isOpen: false, data: null, mode: 'create' },
+    delete: { isOpen: false, data: null },
+  });
+
+  // Estado del formulario (se mantiene separado porque es estado del form interno)
   const [formData, setFormData] = useState(FORM_INICIAL);
 
   // Queries
@@ -93,14 +96,11 @@ function RutasOperacionPage() {
 
   // Handlers de acciones
   const handleNuevaRuta = () => {
-    setRutaSeleccionada(null);
     setFormData(FORM_INICIAL);
-    setModalMode('create');
-    setIsFormOpen(true);
+    openModal('form', null, { mode: 'create' });
   };
 
   const handleEditarRuta = (ruta) => {
-    setRutaSeleccionada(ruta);
     setFormData({
       codigo: ruta.codigo || '',
       nombre: ruta.nombre || '',
@@ -111,13 +111,11 @@ function RutasOperacionPage() {
       activo: ruta.activo !== false,
       es_default: ruta.es_default || false,
     });
-    setModalMode('edit');
-    setIsFormOpen(true);
+    openModal('form', ruta, { mode: 'edit' });
   };
 
   const handleAbrirModalEliminar = (ruta) => {
-    setRutaSeleccionada(ruta);
-    setModalEliminarAbierto(true);
+    openModal('delete', ruta);
   };
 
   const handleFormChange = (campo, valor) => {
@@ -125,6 +123,8 @@ function RutasOperacionPage() {
   };
 
   const handleGuardar = async () => {
+    const rutaSeleccionada = getModalData('form');
+    const modalMode = getModalProps('form').mode || 'create';
     try {
       if (modalMode === 'create') {
         await crearMutation.mutateAsync(formData);
@@ -133,18 +133,19 @@ function RutasOperacionPage() {
         await actualizarMutation.mutateAsync({ id: rutaSeleccionada.id, ...formData });
         showSuccess('Ruta actualizada exitosamente');
       }
-      setIsFormOpen(false);
+      closeModal('form');
     } catch (err) {
       showError(err.response?.data?.mensaje || 'Error al guardar ruta');
     }
   };
 
   const handleEliminar = async () => {
+    const rutaAEliminar = getModalData('delete');
+    if (!rutaAEliminar) return;
     try {
-      await eliminarMutation.mutateAsync(rutaSeleccionada.id);
+      await eliminarMutation.mutateAsync(rutaAEliminar.id);
       showSuccess('Ruta eliminada correctamente');
-      setModalEliminarAbierto(false);
-      setRutaSeleccionada(null);
+      closeModal('delete');
     } catch (err) {
       showError(err.response?.data?.mensaje || 'Error al eliminar ruta');
     }
@@ -416,9 +417,9 @@ function RutasOperacionPage() {
 
       {/* Drawer de Formulario */}
       <Drawer
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        title={modalMode === 'create' ? 'Nueva Ruta de Operación' : 'Editar Ruta'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalProps('form').mode === 'create' ? 'Nueva Ruta de Operación' : 'Editar Ruta'}
         size="md"
       >
         <div className="space-y-4">
@@ -555,7 +556,7 @@ function RutasOperacionPage() {
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setIsFormOpen(false)}
+              onClick={() => closeModal('form')}
             >
               Cancelar
             </Button>
@@ -565,7 +566,7 @@ function RutasOperacionPage() {
               isLoading={crearMutation.isPending || actualizarMutation.isPending}
               disabled={!formData.codigo || !formData.nombre}
             >
-              {modalMode === 'create' ? 'Crear' : 'Guardar'}
+              {getModalProps('form').mode === 'create' ? 'Crear' : 'Guardar'}
             </Button>
           </div>
         </div>
@@ -573,8 +574,8 @@ function RutasOperacionPage() {
 
       {/* Modal de Confirmación de Eliminación */}
       <Modal
-        isOpen={modalEliminarAbierto}
-        onClose={() => setModalEliminarAbierto(false)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         title="Eliminar Ruta"
         size="md"
       >
@@ -582,7 +583,7 @@ function RutasOperacionPage() {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             ¿Estás seguro de que deseas eliminar la ruta{' '}
             <strong className="text-gray-900 dark:text-gray-100">
-              {rutaSeleccionada?.nombre || rutaSeleccionada?.codigo}
+              {getModalData('delete')?.nombre || getModalData('delete')?.codigo}
             </strong>
             ?
           </p>
@@ -594,7 +595,7 @@ function RutasOperacionPage() {
           <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <Button
               variant="secondary"
-              onClick={() => setModalEliminarAbierto(false)}
+              onClick={() => closeModal('delete')}
             >
               Cancelar
             </Button>

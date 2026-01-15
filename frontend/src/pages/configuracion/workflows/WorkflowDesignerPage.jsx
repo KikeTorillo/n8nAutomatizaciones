@@ -10,6 +10,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNodesState, useEdgesState, addEdge, Panel } from 'reactflow';
 
@@ -76,7 +77,11 @@ function WorkflowDesignerPage() {
   const [selectedNode, setSelectedNode] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [isNodeConfigOpen, setIsNodeConfigOpen] = useState(false);
-  const [showPublishModal, setShowPublishModal] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    publish: { isOpen: false },
+  });
   const initialLoadDone = useRef(false);
 
   // Hook de validación
@@ -275,7 +280,7 @@ function WorkflowDesignerPage() {
       toast.error('Guarda los cambios antes de publicar');
       return;
     }
-    setShowPublishModal(true);
+    openModal('publish');
   };
 
   // Confirmar publicación/despublicación
@@ -288,7 +293,7 @@ function WorkflowDesignerPage() {
         activo: nuevoEstado,
       });
       setWorkflowData((prev) => ({ ...prev, activo: nuevoEstado }));
-      setShowPublishModal(false);
+      closeModal('publish');
       toast.success(nuevoEstado ? 'Workflow publicado' : 'Workflow despublicado');
     } catch (error) {
       toast.error(error.response?.data?.message || 'Error al cambiar estado');
@@ -469,8 +474,8 @@ function WorkflowDesignerPage() {
 
       {/* Publish Confirmation Modal */}
       <PublishWorkflowModal
-        isOpen={showPublishModal}
-        onClose={() => setShowPublishModal(false)}
+        isOpen={isOpen('publish')}
+        onClose={() => closeModal('publish')}
         onConfirm={handleConfirmPublish}
         workflow={workflowData}
         isPublishing={publicarMutation.isPending}

@@ -14,6 +14,7 @@ import Pagination from '@/components/ui/Pagination';
 import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
@@ -38,6 +39,7 @@ import { es } from 'date-fns/locale';
  */
 function NumerosSeriesPage() {
   const { showToast } = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de filtros
   const [filtros, setFiltros] = useState({
@@ -136,45 +138,34 @@ function NumerosSeriesPage() {
     return ESTADOS_NUMERO_SERIE[estado]?.label || estado;
   };
 
-  // Exportar CSV
+  // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!numerosSerie || numerosSerie.length === 0) {
       showToast('No hay datos para exportar', 'warning');
       return;
     }
 
-    try {
-      const headers = ['Número Serie', 'Producto', 'SKU', 'Lote', 'Estado', 'Vencimiento', 'Sucursal', 'Costo'];
+    const datosExportar = numerosSerie.map((ns) => ({
+      numero_serie: ns.numero_serie || '',
+      producto: ns.producto_nombre || '',
+      sku: ns.producto_sku || '',
+      lote: ns.lote || '',
+      estado: getEstadoLabel(ns.estado),
+      vencimiento: ns.fecha_vencimiento ? format(new Date(ns.fecha_vencimiento), 'dd/MM/yyyy') : '',
+      sucursal: ns.sucursal_nombre || '',
+      costo: parseFloat(ns.costo || 0).toFixed(2),
+    }));
 
-      const rows = numerosSerie.map(ns => [
-        ns.numero_serie || '',
-        ns.producto_nombre || '',
-        ns.producto_sku || '',
-        ns.lote || '',
-        getEstadoLabel(ns.estado),
-        ns.fecha_vencimiento ? format(new Date(ns.fecha_vencimiento), 'dd/MM/yyyy') : '',
-        ns.sucursal_nombre || '',
-        parseFloat(ns.costo || 0).toFixed(2)
-      ]);
-
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `numeros_serie_${format(new Date(), 'yyyyMMdd')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      showToast('Números de serie exportados exitosamente', 'success');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      showToast('Error al exportar CSV', 'error');
-    }
+    exportCSV(datosExportar, [
+      { key: 'numero_serie', header: 'Número Serie' },
+      { key: 'producto', header: 'Producto' },
+      { key: 'sku', header: 'SKU' },
+      { key: 'lote', header: 'Lote' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'vencimiento', header: 'Vencimiento' },
+      { key: 'sucursal', header: 'Sucursal' },
+      { key: 'costo', header: 'Costo' },
+    ], `numeros_serie_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   return (

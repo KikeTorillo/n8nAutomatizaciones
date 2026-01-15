@@ -28,8 +28,10 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Pagination from '@/components/ui/Pagination';
+import StatCardGrid from '@/components/ui/StatCardGrid';
 import CuponFormDrawer from '@/components/pos/CuponFormDrawer';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useCupones,
   useEliminarCupon,
@@ -51,14 +53,18 @@ const TIPOS_DESCUENTO = {
 export default function CuponesPage() {
   const toast = useToast();
 
-  // Estados de UI
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingCupon, setEditingCupon] = useState(null);
-  const [drawerKey, setDrawerKey] = useState(0); // Key para forzar remontaje del drawer
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
-  const [statsModalOpen, setStatsModalOpen] = useState(false);
-  const [selectedCuponId, setSelectedCuponId] = useState(null);
-  const [statsTab, setStatsTab] = useState('estadisticas'); // 'estadisticas' | 'historial'
+  // Estados de modales centralizados con useModalManager
+  const {
+    openModal,
+    closeModal,
+    isOpen,
+    getModalData,
+    getModalProps,
+  } = useModalManager({
+    form: { isOpen: false, data: null, mode: 'create' },
+    delete: { isOpen: false, data: null },
+    stats: { isOpen: false, data: null, tab: 'estadisticas' },
+  });
 
   // Filtros y paginacion
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,34 +88,34 @@ export default function CuponesPage() {
   const eliminarMutation = useEliminarCupon();
   const cambiarEstadoMutation = useCambiarEstadoCupon();
 
-  // Estadisticas e historial
+  // Estadisticas e historial (usando datos del modal)
+  const selectedCuponId = getModalData('stats')?.id;
+  const statsTab = getModalProps('stats').tab || 'estadisticas';
   const { data: estadisticas, isLoading: loadingStats } = useEstadisticasCupon(selectedCuponId);
   const { data: historial, isLoading: loadingHistorial } = useHistorialCupon(
     statsTab === 'historial' ? selectedCuponId : null,
     { limit: 20 }
   );
 
-  // Handlers
+  // Handlers usando useModalManager
   const handleNuevo = () => {
-    setEditingCupon(null);
-    setDrawerKey(k => k + 1); // Forzar remontaje del drawer
-    setDrawerOpen(true);
+    openModal('form', null, { mode: 'create' });
   };
 
   const handleEditar = (cupon) => {
-    setEditingCupon(cupon);
-    setDrawerKey(k => k + 1); // Forzar remontaje del drawer
-    setDrawerOpen(true);
+    openModal('form', cupon, { mode: 'edit' });
   };
 
   const handleEliminar = (cupon) => {
-    setDeleteConfirm(cupon);
+    openModal('delete', cupon);
   };
 
-  const handleVerEstadisticas = (cuponId) => {
-    setSelectedCuponId(cuponId);
-    setStatsTab('estadisticas');
-    setStatsModalOpen(true);
+  const handleVerEstadisticas = (cupon) => {
+    openModal('stats', cupon, { tab: 'estadisticas' });
+  };
+
+  const handleCambiarStatsTab = (tab) => {
+    openModal('stats', getModalData('stats'), { tab });
   };
 
   const handleToggleEstado = async (cupon) => {
@@ -126,15 +132,15 @@ export default function CuponesPage() {
 
   // Callback cuando se guarda exitosamente en el drawer
   const handleFormSuccess = () => {
-    setDrawerOpen(false);
-    setEditingCupon(null);
+    closeModal('form');
   };
 
   const confirmarEliminar = async () => {
+    const cuponToDelete = getModalData('delete');
     try {
-      await eliminarMutation.mutateAsync(deleteConfirm.id);
+      await eliminarMutation.mutateAsync(cuponToDelete.id);
       toast.success('Cupon eliminado');
-      setDeleteConfirm(null);
+      closeModal('delete');
     } catch (error) {
       toast.error(error.response?.data?.message || error.message || 'Error al eliminar');
     }
@@ -401,7 +407,7 @@ export default function CuponesPage() {
                       </button>
 
                       <button
-                        onClick={() => handleVerEstadisticas(cupon.id)}
+                        onClick={() => handleVerEstadisticas(cupon)}
                         className="p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                         title="Ver estadisticas"
                       >
@@ -443,27 +449,21 @@ export default function CuponesPage() {
         )}
       </div>
 
-      {/* Drawer de crear/editar - solo se renderiza cuando está abierto para forzar desmontaje */}
-      {drawerOpen && (
+      {/* Drawer de crear/editar usando useModalManager */}
+      {isOpen('form') && (
         <CuponFormDrawer
-          key={drawerKey}
-          isOpen={drawerOpen}
-          onClose={() => {
-            setDrawerOpen(false);
-            setEditingCupon(null);
-          }}
-          cupon={editingCupon}
+          key={`form-${getModalData('form')?.id || 'new'}`}
+          isOpen={isOpen('form')}
+          onClose={() => closeModal('form')}
+          cupon={getModalData('form')}
           onSuccess={handleFormSuccess}
         />
       )}
 
-      {/* Modal de estadisticas mejorado */}
+      {/* Modal de estadisticas usando useModalManager */}
       <Modal
-        isOpen={statsModalOpen}
-        onClose={() => {
-          setStatsModalOpen(false);
-          setSelectedCuponId(null);
-        }}
+        isOpen={isOpen('stats')}
+        onClose={() => closeModal('stats')}
         title={estadisticas ? `Estadísticas: ${estadisticas.nombre}` : 'Estadísticas del Cupón'}
         subtitle={estadisticas?.codigo ? `Código: ${estadisticas.codigo}` : undefined}
         size="lg"
@@ -471,7 +471,7 @@ export default function CuponesPage() {
         {/* Tabs */}
         <div className="flex border-b border-gray-200 dark:border-gray-700 mb-4">
           <button
-            onClick={() => setStatsTab('estadisticas')}
+            onClick={() => handleCambiarStatsTab('estadisticas')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               statsTab === 'estadisticas'
                 ? 'border-primary-500 text-primary-600 dark:text-primary-400'
@@ -482,7 +482,7 @@ export default function CuponesPage() {
             Estadísticas
           </button>
           <button
-            onClick={() => setStatsTab('historial')}
+            onClick={() => handleCambiarStatsTab('historial')}
             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               statsTab === 'historial'
                 ? 'border-primary-500 text-primary-600 dark:text-primary-400'
@@ -504,47 +504,39 @@ export default function CuponesPage() {
             ) : estadisticas ? (
               <div className="space-y-6">
                 {/* Grid principal de métricas */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Hash className="h-5 w-5 text-primary-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                      {estadisticas.total_usos || 0}
-                    </p>
-                    <p className="text-xs text-primary-700 dark:text-primary-300">Veces usado</p>
-                  </div>
-
-                  <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <DollarSign className="h-5 w-5 text-green-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                      ${parseFloat(estadisticas.total_descuento_dado || 0).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-green-700 dark:text-green-300">Descuento total dado</p>
-                  </div>
-
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <ShoppingCart className="h-5 w-5 text-blue-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                      ${parseFloat(estadisticas.total_ventas_con_cupon || 0).toFixed(2)}
-                    </p>
-                    <p className="text-xs text-blue-700 dark:text-blue-300">Ventas con cupón</p>
-                  </div>
-
-                  <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg text-center">
-                    <div className="flex items-center justify-center mb-2">
-                      <Users className="h-5 w-5 text-purple-500" />
-                    </div>
-                    <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                      {estadisticas.clientes_unicos || 0}
-                    </p>
-                    <p className="text-xs text-purple-700 dark:text-purple-300">Clientes únicos</p>
-                  </div>
-                </div>
+                <StatCardGrid
+                  stats={[
+                    {
+                      key: 'usos',
+                      icon: Hash,
+                      label: 'Veces usado',
+                      value: estadisticas.total_usos || 0,
+                      color: 'primary',
+                    },
+                    {
+                      key: 'descuento',
+                      icon: DollarSign,
+                      label: 'Descuento total dado',
+                      value: `$${parseFloat(estadisticas.total_descuento_dado || 0).toFixed(2)}`,
+                      color: 'green',
+                    },
+                    {
+                      key: 'ventas',
+                      icon: ShoppingCart,
+                      label: 'Ventas con cupón',
+                      value: `$${parseFloat(estadisticas.total_ventas_con_cupon || 0).toFixed(2)}`,
+                      color: 'blue',
+                    },
+                    {
+                      key: 'clientes',
+                      icon: Users,
+                      label: 'Clientes únicos',
+                      value: estadisticas.clientes_unicos || 0,
+                      color: 'purple',
+                    },
+                  ]}
+                  columns={4}
+                />
 
                 {/* Detalles adicionales */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -710,13 +702,13 @@ export default function CuponesPage() {
         )}
       </Modal>
 
-      {/* Confirmacion de eliminar */}
+      {/* Confirmacion de eliminar usando useModalManager */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmarEliminar}
         title="Eliminar cupon"
-        message={`¿Estas seguro de eliminar el cupon "${deleteConfirm?.nombre}"? Esta accion no se puede deshacer.`}
+        message={`¿Estas seguro de eliminar el cupon "${getModalData('delete')?.nombre}"? Esta accion no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

@@ -33,6 +33,7 @@ import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useWorkflowDefiniciones,
   useEliminarWorkflow,
@@ -90,8 +91,12 @@ function WorkflowsListPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroEntidad, setFiltroEntidad] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [confirmAction, setConfirmAction] = useState(null);
   const [menuAbierto, setMenuAbierto] = useState(null);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    delete: { isOpen: false, data: null },
+  });
 
   // Query params
   const queryParams = useMemo(() => ({
@@ -150,26 +155,20 @@ function WorkflowsListPage() {
   };
 
   const handleEliminar = (workflow) => {
-    setConfirmAction({
-      type: 'eliminar',
-      workflow,
-      title: 'Eliminar workflow',
-      message: `¿Eliminar "${workflow.nombre}"? Esta accion no se puede deshacer.`,
-    });
+    openModal('delete', workflow);
     setMenuAbierto(null);
   };
 
   const confirmarAccion = async () => {
-    if (!confirmAction) return;
+    const workflow = getModalData('delete');
+    if (!workflow) return;
 
     try {
-      if (confirmAction.type === 'eliminar') {
-        await eliminarMutation.mutateAsync(confirmAction.workflow.id);
-        toast.success('Workflow eliminado');
-      }
-      setConfirmAction(null);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al eliminar');
+      await eliminarMutation.mutateAsync(workflow.id);
+      toast.success('Workflow eliminado');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -297,11 +296,11 @@ function WorkflowsListPage() {
 
       {/* Confirm Dialog */}
       <ConfirmDialog
-        isOpen={!!confirmAction}
-        onClose={() => setConfirmAction(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmarAccion}
-        title={confirmAction?.title}
-        message={confirmAction?.message}
+        title="Eliminar workflow"
+        message={`¿Eliminar "${getModalData('delete')?.nombre}"? Esta accion no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarMutation.isPending}

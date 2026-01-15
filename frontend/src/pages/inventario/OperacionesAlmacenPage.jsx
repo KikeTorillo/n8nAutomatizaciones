@@ -22,6 +22,7 @@ import {
   PackageOpen,
   Send,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Input from '@/components/ui/Input';
@@ -261,8 +262,10 @@ export default function OperacionesAlmacenPage() {
   const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [vistaLista, setVistaLista] = useState(false);
 
-  // Modales
-  const [modalAsignar, setModalAsignar] = useState({ isOpen: false, operacion: null });
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    asignar: { isOpen: false, data: null },
+  });
 
   // Queries
   const sucursalId = getSucursalId();
@@ -293,21 +296,22 @@ export default function OperacionesAlmacenPage() {
   };
 
   const handleAsignarClick = (operacion) => {
-    setModalAsignar({ isOpen: true, operacion });
+    openModal('asignar', operacion);
   };
 
   const handleAsignarConfirmar = () => {
-    if (!modalAsignar.operacion) return;
+    const operacion = getModalData('asignar');
+    if (!operacion) return;
 
     asignarMutation.mutate(
-      { id: modalAsignar.operacion.id, usuarioId: user?.id },
+      { id: operacion.id, usuarioId: user?.id },
       {
         onSuccess: () => {
           showSuccess('Operación asignada correctamente');
-          setModalAsignar({ isOpen: false, operacion: null });
+          closeModal('asignar');
         },
-        onError: (error) => {
-          showError(error.message || 'Error al asignar operación');
+        onError: (err) => {
+          showError(err.message || 'Error al asignar operación');
         },
       }
     );
@@ -515,18 +519,18 @@ export default function OperacionesAlmacenPage() {
 
       {/* Modal Asignar */}
       <Modal
-        isOpen={modalAsignar.isOpen}
-        onClose={() => setModalAsignar({ isOpen: false, operacion: null })}
+        isOpen={isOpen('asignar')}
+        onClose={() => closeModal('asignar')}
         title="Asignar Operación"
       >
         <div className="p-4">
           <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Deseas asignarte la operación <strong>{modalAsignar.operacion?.folio}</strong>?
+            ¿Deseas asignarte la operación <strong>{getModalData('asignar')?.folio}</strong>?
           </p>
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              onClick={() => setModalAsignar({ isOpen: false, operacion: null })}
+              onClick={() => closeModal('asignar')}
             >
               Cancelar
             </Button>

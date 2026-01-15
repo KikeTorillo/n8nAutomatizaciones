@@ -25,6 +25,7 @@ import {
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useServicios } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 
 /**
  * Página principal de Gestión de Citas - FASE 1-4
@@ -33,6 +34,7 @@ function CitasPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de vista activa (lista o calendario)
   const [vistaActiva, setVistaActiva] = useState('lista'); // 'lista' o 'calendario'
@@ -171,82 +173,45 @@ function CitasPage() {
     });
   };
 
-  // Handler para exportar CSV
+  // Handler para exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
     if (!citas || citas.length === 0) {
       toast.error('No hay citas para exportar');
       return;
     }
 
-    try {
-      const headers = [
-        'Código',
-        'Fecha',
-        'Hora',
-        'Cliente',
-        'Teléfono',
-        'Profesional',
-        'Servicios',
-        'Total',
-        'Estado',
-      ];
+    const estadoLabels = {
+      pendiente: 'Pendiente',
+      confirmada: 'Confirmada',
+      en_curso: 'En Curso',
+      completada: 'Completada',
+      cancelada: 'Cancelada',
+      no_show: 'No Asistió',
+    };
 
-      const estadoLabels = {
-        pendiente: 'Pendiente',
-        confirmada: 'Confirmada',
-        en_curso: 'En Curso',
-        completada: 'Completada',
-        cancelada: 'Cancelada',
-        no_show: 'No Asistió',
-      };
+    const datosExportar = citas.map((c) => ({
+      codigo: c.codigo_cita || '',
+      fecha: c.fecha_cita ? format(new Date(c.fecha_cita.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+      hora: c.hora_inicio || '',
+      cliente: c.cliente_nombre || '',
+      telefono: c.cliente_telefono || '',
+      profesional: c.profesional_nombre || '',
+      servicios: c.servicios?.map((s) => s.nombre).join(', ') || c.servicio_nombre || '',
+      total: c.precio_total ? `$${Number(c.precio_total).toFixed(2)}` : '',
+      estado: estadoLabels[c.estado] || c.estado || '',
+    }));
 
-      const rows = citas.map((c) => {
-        // Formatear fecha
-        const fechaFormateada = c.fecha_cita
-          ? format(new Date(c.fecha_cita.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy')
-          : '';
-
-        // Formatear hora
-        const horaFormateada = c.hora_inicio || '';
-
-        // Concatenar servicios
-        const serviciosTexto = c.servicios?.map((s) => s.nombre).join(', ') || c.servicio_nombre || '';
-
-        // Formatear total
-        const totalFormateado = c.precio_total ? `$${Number(c.precio_total).toFixed(2)}` : '';
-
-        return [
-          c.codigo_cita || '',
-          fechaFormateada,
-          horaFormateada,
-          c.cliente_nombre || '',
-          c.cliente_telefono || '',
-          c.profesional_nombre || '',
-          serviciosTexto,
-          totalFormateado,
-          estadoLabels[c.estado] || c.estado || '',
-        ];
-      });
-
-      // BOM para UTF-8 (Excel)
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `citas_${format(new Date(), 'yyyyMMdd_HHmm')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      toast.success('Citas exportadas exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      toast.error('Error al exportar CSV');
-    }
+    exportCSV(datosExportar, [
+      { key: 'codigo', header: 'Código' },
+      { key: 'fecha', header: 'Fecha' },
+      { key: 'hora', header: 'Hora' },
+      { key: 'cliente', header: 'Cliente' },
+      { key: 'telefono', header: 'Teléfono' },
+      { key: 'profesional', header: 'Profesional' },
+      { key: 'servicios', header: 'Servicios' },
+      { key: 'total', header: 'Total' },
+      { key: 'estado', header: 'Estado' },
+    ], `citas_${format(new Date(), 'yyyyMMdd_HHmm')}`);
   };
 
   // Calcular estadísticas memoizadas para evitar recálculos innecesarios

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   FileText,
   Plus,
@@ -45,8 +46,12 @@ function PageManager({
   const [mostrarNueva, setMostrarNueva] = useState(false);
   const [editandoId, setEditandoId] = useState(null);
   const [menuAbiertoId, setMenuAbiertoId] = useState(null);
-  const [paginaAEliminar, setPaginaAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    delete: { isOpen: false, data: null },
+  });
 
   const reordenarPaginas = useReordenarPaginas();
 
@@ -89,6 +94,7 @@ function PageManager({
   };
 
   const handleEliminar = async () => {
+    const paginaAEliminar = getModalData('delete');
     if (!paginaAEliminar) return;
 
     setEliminando(true);
@@ -99,9 +105,9 @@ function PageManager({
         onSeleccionar(otraPagina);
       }
       toast.success('Página eliminada');
-      setPaginaAEliminar(null);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al eliminar');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al eliminar');
     } finally {
       setEliminando(false);
     }
@@ -113,7 +119,7 @@ function PageManager({
       toast.error('No puedes eliminar la página de inicio');
       return;
     }
-    setPaginaAEliminar(pagina);
+    openModal('delete', pagina);
   };
 
   return (
@@ -184,11 +190,11 @@ function PageManager({
 
       {/* Modal confirmar eliminar página */}
       <ConfirmDialog
-        isOpen={!!paginaAEliminar}
-        onClose={() => setPaginaAEliminar(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar Página"
-        message={`¿Estás seguro de eliminar la página "${paginaAEliminar?.titulo}"?`}
+        message={`¿Estás seguro de eliminar la página "${getModalData('delete')?.titulo}"?`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

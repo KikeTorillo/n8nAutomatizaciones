@@ -17,6 +17,7 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Checkbox from '@/components/ui/Checkbox';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useArbolCuentas,
   useCuentasContables,
@@ -65,13 +66,14 @@ function CuentasContablesPage() {
   const [vistaArbol, setVistaArbol] = useState(true);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Estado de modal
-  const [modalOpen, setModalOpen] = useState(false);
-  const [cuentaEditar, setCuentaEditar] = useState(null);
-  const [cuentaEliminar, setCuentaEliminar] = useState(null);
-
   // Estado de árbol expandido
   const [expandedNodes, setExpandedNodes] = useState(new Set());
+
+  // Modal manager para form y eliminar
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: arbolPlano, isLoading: loadingArbol } = useArbolCuentas({ solo_activas: soloActivas });
@@ -177,26 +179,24 @@ function CuentasContablesPage() {
 
   // Abrir modal para crear
   const handleNuevaCuenta = (cuentaPadre = null) => {
-    setCuentaEditar(cuentaPadre ? { cuenta_padre_id: cuentaPadre.id, cuenta_padre: cuentaPadre } : null);
-    setModalOpen(true);
+    openModal('form', cuentaPadre ? { cuenta_padre_id: cuentaPadre.id, cuenta_padre: cuentaPadre } : null);
   };
 
   // Abrir modal para editar
   const handleEditarCuenta = (cuenta) => {
-    setCuentaEditar(cuenta);
-    setModalOpen(true);
+    openModal('form', cuenta);
   };
 
   // Guardar cuenta
   const handleGuardar = async (formData) => {
+    const cuentaEditar = getModalData('form');
     try {
       if (cuentaEditar?.id) {
         await actualizarCuenta.mutateAsync({ id: cuentaEditar.id, ...formData });
       } else {
         await crearCuenta.mutateAsync(formData);
       }
-      setModalOpen(false);
-      setCuentaEditar(null);
+      closeModal('form');
     } catch {
       // Error manejado en el hook
     }
@@ -204,10 +204,11 @@ function CuentasContablesPage() {
 
   // Eliminar cuenta
   const handleEliminar = async () => {
+    const cuentaEliminar = getModalData('eliminar');
     if (!cuentaEliminar) return;
     try {
       await eliminarCuenta.mutateAsync(cuentaEliminar.id);
-      setCuentaEliminar(null);
+      closeModal('eliminar');
     } catch {
       // Error manejado en el hook
     }
@@ -281,7 +282,7 @@ function CuentasContablesPage() {
               <Edit2 className="w-4 h-4" />
             </button>
             <button
-              onClick={() => setCuentaEliminar(node)}
+              onClick={() => openModal('eliminar', node)}
               className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
               title="Eliminar"
             >
@@ -476,7 +477,7 @@ function CuentasContablesPage() {
                               <Edit2 className="w-4 h-4" />
                             </button>
                             <button
-                              onClick={() => setCuentaEliminar(cuenta)}
+                              onClick={() => openModal('eliminar', cuenta)}
                               className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                             >
                               <Trash2 className="w-4 h-4" />
@@ -500,23 +501,20 @@ function CuentasContablesPage() {
 
       {/* Modal Crear/Editar Cuenta */}
       <CuentaFormModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setCuentaEditar(null);
-        }}
-        cuenta={cuentaEditar}
+        open={isOpen('form')}
+        onClose={() => closeModal('form')}
+        cuenta={getModalData('form')}
         onSave={handleGuardar}
         isLoading={crearCuenta.isPending || actualizarCuenta.isPending}
       />
 
       {/* Confirm Eliminar */}
       <ConfirmDialog
-        open={!!cuentaEliminar}
-        onClose={() => setCuentaEliminar(null)}
+        open={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         onConfirm={handleEliminar}
         title="Eliminar Cuenta"
-        message={`¿Estás seguro de eliminar la cuenta "${cuentaEliminar?.codigo} - ${cuentaEliminar?.nombre}"? Esta acción desactivará la cuenta.`}
+        message={`¿Estás seguro de eliminar la cuenta "${getModalData('eliminar')?.codigo} - ${getModalData('eliminar')?.nombre}"? Esta acción desactivará la cuenta.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarCuenta.isPending}

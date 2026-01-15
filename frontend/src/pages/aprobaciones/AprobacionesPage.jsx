@@ -13,6 +13,7 @@ import {
   Users,
   ChevronRight,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Modal from '@/components/ui/Modal';
@@ -46,10 +47,14 @@ export default function AprobacionesPage() {
     offset: 0,
   });
 
-  // Modales
-  const [modalDetalle, setModalDetalle] = useState({ isOpen: false, instanciaId: null });
-  const [modalAprobar, setModalAprobar] = useState({ isOpen: false, instancia: null });
-  const [modalRechazar, setModalRechazar] = useState({ isOpen: false, instancia: null });
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    detalle: { isOpen: false, data: null },
+    aprobar: { isOpen: false, data: null },
+    rechazar: { isOpen: false, data: null },
+  });
+
+  // Estados de formularios
   const [comentarioAprobacion, setComentarioAprobacion] = useState('');
   const [motivoRechazo, setMotivoRechazo] = useState('');
 
@@ -60,7 +65,7 @@ export default function AprobacionesPage() {
   const { data: historialData, isLoading: loadingHistorial } = useHistorialAprobaciones(filtrosHistorial);
   const historial = historialData?.instancias || [];
 
-  const { data: instanciaDetalle } = useInstanciaWorkflow(modalDetalle.instanciaId);
+  const { data: instanciaDetalle } = useInstanciaWorkflow(getModalData('detalle'));
 
   // Mutations
   const aprobarMutation = useAprobarSolicitud();
@@ -68,25 +73,26 @@ export default function AprobacionesPage() {
 
   // Handlers
   const handleVerDetalle = (instanciaId) => {
-    setModalDetalle({ isOpen: true, instanciaId });
+    openModal('detalle', instanciaId);
   };
 
   const handleAbrirModalAprobar = (instancia) => {
     setComentarioAprobacion('');
-    setModalAprobar({ isOpen: true, instancia });
+    openModal('aprobar', instancia);
   };
 
   const handleAprobar = () => {
+    const instancia = getModalData('aprobar');
     aprobarMutation.mutate(
-      { id: modalAprobar.instancia.id, comentario: comentarioAprobacion },
+      { id: instancia.id, comentario: comentarioAprobacion },
       {
         onSuccess: () => {
           showSuccess('Solicitud aprobada correctamente');
-          setModalAprobar({ isOpen: false, instancia: null });
+          closeModal('aprobar');
           setComentarioAprobacion('');
         },
-        onError: (error) => {
-          showError(error.response?.data?.mensaje || 'Error al aprobar la solicitud');
+        onError: (err) => {
+          showError(err.response?.data?.mensaje || 'Error al aprobar la solicitud');
         },
       }
     );
@@ -94,7 +100,7 @@ export default function AprobacionesPage() {
 
   const handleAbrirModalRechazar = (instancia) => {
     setMotivoRechazo('');
-    setModalRechazar({ isOpen: true, instancia });
+    openModal('rechazar', instancia);
   };
 
   const handleRechazar = () => {
@@ -103,16 +109,17 @@ export default function AprobacionesPage() {
       return;
     }
 
+    const instancia = getModalData('rechazar');
     rechazarMutation.mutate(
-      { id: modalRechazar.instancia.id, motivo: motivoRechazo },
+      { id: instancia.id, motivo: motivoRechazo },
       {
         onSuccess: () => {
           showSuccess('Solicitud rechazada');
-          setModalRechazar({ isOpen: false, instancia: null });
+          closeModal('rechazar');
           setMotivoRechazo('');
         },
-        onError: (error) => {
-          showError(error.response?.data?.mensaje || 'Error al rechazar la solicitud');
+        onError: (err) => {
+          showError(err.response?.data?.mensaje || 'Error al rechazar la solicitud');
         },
       }
     );
@@ -443,8 +450,8 @@ export default function AprobacionesPage() {
 
       {/* Modal Detalle */}
       <Modal
-        isOpen={modalDetalle.isOpen}
-        onClose={() => setModalDetalle({ isOpen: false, instanciaId: null })}
+        isOpen={isOpen('detalle')}
+        onClose={() => closeModal('detalle')}
         title="Detalle de Solicitud"
         size="lg"
       >
@@ -567,15 +574,15 @@ export default function AprobacionesPage() {
 
       {/* Modal Aprobar */}
       <Modal
-        isOpen={modalAprobar.isOpen}
-        onClose={() => setModalAprobar({ isOpen: false, instancia: null })}
+        isOpen={isOpen('aprobar')}
+        onClose={() => closeModal('aprobar')}
         title="Aprobar Solicitud"
       >
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
             ¿Confirmas la aprobación de{' '}
             <span className="font-medium text-gray-900 dark:text-white">
-              {modalAprobar.instancia?.entidad_resumen?.folio || `#${modalAprobar.instancia?.entidad_id}`}
+              {getModalData('aprobar')?.entidad_resumen?.folio || `#${getModalData('aprobar')?.entidad_id}`}
             </span>
             ?
           </p>
@@ -591,7 +598,7 @@ export default function AprobacionesPage() {
           <div className="flex justify-end gap-3">
             <Button
               variant="ghost"
-              onClick={() => setModalAprobar({ isOpen: false, instancia: null })}
+              onClick={() => closeModal('aprobar')}
             >
               Cancelar
             </Button>
@@ -609,15 +616,15 @@ export default function AprobacionesPage() {
 
       {/* Modal Rechazar */}
       <Modal
-        isOpen={modalRechazar.isOpen}
-        onClose={() => setModalRechazar({ isOpen: false, instancia: null })}
+        isOpen={isOpen('rechazar')}
+        onClose={() => closeModal('rechazar')}
         title="Rechazar Solicitud"
       >
         <div className="space-y-4">
           <p className="text-gray-600 dark:text-gray-400">
             ¿Confirmas el rechazo de{' '}
             <span className="font-medium text-gray-900 dark:text-white">
-              {modalRechazar.instancia?.entidad_resumen?.folio || `#${modalRechazar.instancia?.entidad_id}`}
+              {getModalData('rechazar')?.entidad_resumen?.folio || `#${getModalData('rechazar')?.entidad_id}`}
             </span>
             ?
           </p>
@@ -634,7 +641,7 @@ export default function AprobacionesPage() {
           <div className="flex justify-end gap-3">
             <Button
               variant="ghost"
-              onClick={() => setModalRechazar({ isOpen: false, instancia: null })}
+              onClick={() => closeModal('rechazar')}
             >
               Cancelar
             </Button>

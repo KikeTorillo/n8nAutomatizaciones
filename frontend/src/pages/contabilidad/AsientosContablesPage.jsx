@@ -10,7 +10,6 @@ import {
   Check,
   X,
   FileSpreadsheet,
-  Calendar,
   AlertCircle,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -20,17 +19,16 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Textarea from '@/components/ui/Textarea';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useAsientosContables,
-  useAsiento,
   useCrearAsiento,
   useActualizarAsiento,
   usePublicarAsiento,
   useAnularAsiento,
   useEliminarAsiento,
-  useCuentasAfectables,
-  usePeriodosContables,
 } from '@/hooks/useContabilidad';
+import { AsientoFormModal, AsientoDetailModal } from '@/components/contabilidad';
 import { formatCurrency } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';
 
@@ -48,8 +46,8 @@ const TIPO_OPTIONS = [
   { value: 'manual', label: 'Manual' },
   { value: 'venta_pos', label: 'Venta POS' },
   { value: 'compra', label: 'Compra' },
-  { value: 'nomina', label: 'Nómina' },
-  { value: 'depreciacion', label: 'Depreciación' },
+  { value: 'nomina', label: 'Nomina' },
+  { value: 'depreciacion', label: 'Depreciacion' },
   { value: 'ajuste', label: 'Ajuste' },
   { value: 'cierre', label: 'Cierre' },
 ];
@@ -62,7 +60,7 @@ const ESTADO_COLORS = {
 };
 
 /**
- * Página de gestión de asientos contables
+ * Pagina de gestion de asientos contables
  */
 function AsientosContablesPage() {
   const [searchParams] = useSearchParams();
@@ -77,18 +75,21 @@ function AsientosContablesPage() {
   const [showFilters, setShowFilters] = useState(false);
   const [pagina, setPagina] = useState(1);
 
-  // Estado de modales
-  const [modalOpen, setModalOpen] = useState(false);
-  const [asientoVer, setAsientoVer] = useState(null);
-  const [asientoEditar, setAsientoEditar] = useState(null);
-  const [asientoEliminar, setAsientoEliminar] = useState(null);
-  const [asientoAnular, setAsientoAnular] = useState(null);
+  // Estado para motivo anulacion
   const [motivoAnulacion, setMotivoAnulacion] = useState('');
+
+  // Modal manager para form, ver, eliminar y anular
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    ver: { isOpen: false, data: null },
+    eliminar: { isOpen: false, data: null },
+    anular: { isOpen: false, data: null },
+  });
 
   // Verificar si viene con ?nuevo=true
   useEffect(() => {
     if (searchParams.get('nuevo') === 'true') {
-      setModalOpen(true);
+      openModal('form', null);
     }
   }, [searchParams]);
 
@@ -112,20 +113,19 @@ function AsientosContablesPage() {
 
   // Handlers
   const handleNuevoAsiento = () => {
-    setAsientoEditar(null);
-    setModalOpen(true);
+    openModal('form', null);
   };
 
   const handleEditarAsiento = (asiento) => {
-    setAsientoEditar(asiento);
-    setModalOpen(true);
+    openModal('form', asiento);
   };
 
   const handleVerAsiento = (asiento) => {
-    setAsientoVer(asiento);
+    openModal('ver', asiento);
   };
 
   const handleGuardar = async (formData) => {
+    const asientoEditar = getModalData('form');
     try {
       if (asientoEditar?.id) {
         await actualizarAsiento.mutateAsync({
@@ -136,8 +136,7 @@ function AsientosContablesPage() {
       } else {
         await crearAsiento.mutateAsync(formData);
       }
-      setModalOpen(false);
-      setAsientoEditar(null);
+      closeModal('form');
     } catch {
       // Error manejado en el hook
     }
@@ -152,6 +151,7 @@ function AsientosContablesPage() {
   };
 
   const handleAnular = async () => {
+    const asientoAnular = getModalData('anular');
     if (!asientoAnular || motivoAnulacion.length < 10) return;
     try {
       await anularAsiento.mutateAsync({
@@ -159,7 +159,7 @@ function AsientosContablesPage() {
         fecha: asientoAnular.fecha,
         motivo: motivoAnulacion,
       });
-      setAsientoAnular(null);
+      closeModal('anular');
       setMotivoAnulacion('');
     } catch {
       // Error manejado en el hook
@@ -167,13 +167,14 @@ function AsientosContablesPage() {
   };
 
   const handleEliminar = async () => {
+    const asientoEliminar = getModalData('eliminar');
     if (!asientoEliminar) return;
     try {
       await eliminarAsiento.mutateAsync({
         id: asientoEliminar.id,
         fecha: asientoEliminar.fecha,
       });
-      setAsientoEliminar(null);
+      closeModal('eliminar');
     } catch {
       // Error manejado en el hook
     }
@@ -203,17 +204,17 @@ function AsientosContablesPage() {
         {/* Filtros */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
           <div className="flex flex-col sm:flex-row gap-4">
-            {/* Búsqueda */}
+            {/* Busqueda */}
             <div className="flex-1">
               <Input
-                placeholder="Buscar por concepto o número..."
+                placeholder="Buscar por concepto o numero..."
                 value={busqueda}
                 onChange={(e) => setBusqueda(e.target.value)}
                 leftIcon={<Search className="w-4 h-4 text-gray-400" />}
               />
             </div>
 
-            {/* Fechas rápidas */}
+            {/* Fechas rapidas */}
             <div className="flex gap-2">
               <Input
                 type="date"
@@ -230,7 +231,7 @@ function AsientosContablesPage() {
               />
             </div>
 
-            {/* Botón filtros */}
+            {/* Boton filtros */}
             <Button
               variant="secondary"
               onClick={() => setShowFilters(!showFilters)}
@@ -271,7 +272,7 @@ function AsientosContablesPage() {
                 <thead className="bg-gray-50 dark:bg-gray-900">
                   <tr>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                      Número
+                      Numero
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                       Fecha
@@ -351,7 +352,7 @@ function AsientosContablesPage() {
                                 <Check className="w-4 h-4" />
                               </button>
                               <button
-                                onClick={() => setAsientoEliminar(asiento)}
+                                onClick={() => openModal('eliminar', asiento)}
                                 className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                                 title="Eliminar"
                               >
@@ -362,7 +363,7 @@ function AsientosContablesPage() {
 
                           {asiento.estado === 'publicado' && (
                             <button
-                              onClick={() => setAsientoAnular(asiento)}
+                              onClick={() => openModal('anular', asiento)}
                               className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
                               title="Anular"
                             >
@@ -381,16 +382,16 @@ function AsientosContablesPage() {
               <FileSpreadsheet className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
               <p className="text-gray-500 dark:text-gray-400">No se encontraron asientos</p>
               <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
-                {busqueda ? 'Intenta con otros términos' : 'Crea tu primer asiento contable'}
+                {busqueda ? 'Intenta con otros terminos' : 'Crea tu primer asiento contable'}
               </p>
             </div>
           )}
 
-          {/* Paginación */}
+          {/* Paginacion */}
           {asientosData?.paginacion && asientosData.paginacion.total_paginas > 1 && (
             <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
               <span className="text-sm text-gray-500 dark:text-gray-400">
-                Página {asientosData.paginacion.pagina_actual} de{' '}
+                Pagina {asientosData.paginacion.pagina_actual} de{' '}
                 {asientosData.paginacion.total_paginas}
               </span>
               <div className="flex gap-2">
@@ -418,30 +419,27 @@ function AsientosContablesPage() {
 
       {/* Modal Crear/Editar Asiento */}
       <AsientoFormModal
-        isOpen={modalOpen}
-        onClose={() => {
-          setModalOpen(false);
-          setAsientoEditar(null);
-        }}
-        asiento={asientoEditar}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        asiento={getModalData('form')}
         onSave={handleGuardar}
         isLoading={crearAsiento.isPending || actualizarAsiento.isPending}
       />
 
       {/* Modal Ver Asiento */}
       <AsientoDetailModal
-        isOpen={!!asientoVer}
-        onClose={() => setAsientoVer(null)}
-        asiento={asientoVer}
+        isOpen={isOpen('ver')}
+        onClose={() => closeModal('ver')}
+        asiento={getModalData('ver')}
       />
 
       {/* Confirm Eliminar */}
       <ConfirmDialog
-        open={!!asientoEliminar}
-        onClose={() => setAsientoEliminar(null)}
+        open={isOpen('eliminar')}
+        onClose={() => closeModal('eliminar')}
         onConfirm={handleEliminar}
         title="Eliminar Asiento"
-        message={`¿Estás seguro de eliminar el asiento #${asientoEliminar?.numero_asiento}? Esta acción no se puede deshacer.`}
+        message={`¿Estas seguro de eliminar el asiento #${getModalData('eliminar')?.numero_asiento}? Esta accion no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarAsiento.isPending}
@@ -449,9 +447,9 @@ function AsientosContablesPage() {
 
       {/* Modal Anular */}
       <Modal
-        isOpen={!!asientoAnular}
+        isOpen={isOpen('anular')}
         onClose={() => {
-          setAsientoAnular(null);
+          closeModal('anular');
           setMotivoAnulacion('');
         }}
         title="Anular Asiento"
@@ -462,22 +460,22 @@ function AsientosContablesPage() {
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
             <div>
               <p className="text-yellow-800 dark:text-yellow-300 font-medium">
-                Anular asiento #{asientoAnular?.numero_asiento}
+                Anular asiento #{getModalData('anular')?.numero_asiento}
               </p>
               <p className="text-yellow-700 dark:text-yellow-400 text-sm mt-1">
-                Un asiento anulado no se puede revertir. Se mantendrá en el historial pero no
-                afectará los saldos contables.
+                Un asiento anulado no se puede revertir. Se mantendra en el historial pero no
+                afectara los saldos contables.
               </p>
             </div>
           </div>
 
           <Textarea
-            label="Motivo de anulación"
+            label="Motivo de anulacion"
             required
             value={motivoAnulacion}
             onChange={(e) => setMotivoAnulacion(e.target.value)}
             rows={3}
-            placeholder="Describe el motivo de la anulación (mínimo 10 caracteres)"
+            placeholder="Describe el motivo de la anulacion (minimo 10 caracteres)"
             error={motivoAnulacion.length > 0 && motivoAnulacion.length < 10 ? 'El motivo debe tener al menos 10 caracteres' : undefined}
           />
 
@@ -485,7 +483,7 @@ function AsientosContablesPage() {
             <Button
               variant="secondary"
               onClick={() => {
-                setAsientoAnular(null);
+                closeModal('anular');
                 setMotivoAnulacion('');
               }}
             >
@@ -502,435 +500,6 @@ function AsientosContablesPage() {
         </div>
       </Modal>
     </div>
-  );
-}
-
-/**
- * Modal para crear/editar asiento contable
- */
-function AsientoFormModal({ isOpen, onClose, asiento, onSave, isLoading }) {
-  const [formData, setFormData] = useState({
-    fecha: format(new Date(), 'yyyy-MM-dd'),
-    concepto: '',
-    tipo: 'manual',
-    notas: '',
-    estado: 'borrador',
-    movimientos: [
-      { cuenta_id: '', concepto: '', debe: '', haber: '' },
-      { cuenta_id: '', concepto: '', debe: '', haber: '' },
-    ],
-  });
-
-  // Query cuentas afectables
-  const { data: cuentas } = useCuentasAfectables();
-
-  // Resetear form cuando cambia el asiento
-  useEffect(() => {
-    if (asiento?.id) {
-      setFormData({
-        fecha: asiento.fecha,
-        concepto: asiento.concepto || '',
-        tipo: asiento.tipo || 'manual',
-        notas: asiento.notas || '',
-        estado: asiento.estado || 'borrador',
-        movimientos:
-          asiento.movimientos?.map((m) => ({
-            cuenta_id: m.cuenta_id,
-            concepto: m.concepto || '',
-            debe: m.debe || '',
-            haber: m.haber || '',
-          })) || [],
-      });
-    } else {
-      setFormData({
-        fecha: format(new Date(), 'yyyy-MM-dd'),
-        concepto: '',
-        tipo: 'manual',
-        notas: '',
-        estado: 'borrador',
-        movimientos: [
-          { cuenta_id: '', concepto: '', debe: '', haber: '' },
-          { cuenta_id: '', concepto: '', debe: '', haber: '' },
-        ],
-      });
-    }
-  }, [asiento, isOpen]);
-
-  // Agregar movimiento
-  const addMovimiento = () => {
-    setFormData({
-      ...formData,
-      movimientos: [...formData.movimientos, { cuenta_id: '', concepto: '', debe: '', haber: '' }],
-    });
-  };
-
-  // Eliminar movimiento
-  const removeMovimiento = (index) => {
-    if (formData.movimientos.length <= 2) return;
-    setFormData({
-      ...formData,
-      movimientos: formData.movimientos.filter((_, i) => i !== index),
-    });
-  };
-
-  // Actualizar movimiento
-  const updateMovimiento = (index, field, value) => {
-    const newMovimientos = [...formData.movimientos];
-    newMovimientos[index] = { ...newMovimientos[index], [field]: value };
-    setFormData({ ...formData, movimientos: newMovimientos });
-  };
-
-  // Calcular totales
-  const totalDebe = formData.movimientos.reduce(
-    (sum, m) => sum + (parseFloat(m.debe) || 0),
-    0
-  );
-  const totalHaber = formData.movimientos.reduce(
-    (sum, m) => sum + (parseFloat(m.haber) || 0),
-    0
-  );
-  const cuadra = Math.abs(totalDebe - totalHaber) < 0.01;
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const dataToSave = {
-      ...formData,
-      movimientos: formData.movimientos
-        .filter((m) => m.cuenta_id && (m.debe || m.haber))
-        .map((m) => ({
-          ...m,
-          debe: parseFloat(m.debe) || 0,
-          haber: parseFloat(m.haber) || 0,
-        })),
-    };
-    onSave(dataToSave);
-  };
-
-  return (
-    <Modal
-      isOpen={isOpen}
-      onClose={onClose}
-      title={asiento?.id ? 'Editar Asiento' : 'Nuevo Asiento'}
-      size="xl"
-    >
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Datos generales */}
-        <div className="grid grid-cols-3 gap-4">
-          <Input
-            type="date"
-            label="Fecha *"
-            value={formData.fecha}
-            onChange={(e) => setFormData({ ...formData, fecha: e.target.value })}
-            required
-          />
-          <Select
-            label="Tipo"
-            value={formData.tipo}
-            onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-            options={TIPO_OPTIONS.filter((o) => o.value)}
-          />
-          <Select
-            label="Estado"
-            value={formData.estado}
-            onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-            options={[
-              { value: 'borrador', label: 'Borrador' },
-              { value: 'publicado', label: 'Publicado' },
-            ]}
-          />
-        </div>
-
-        <Input
-          label="Concepto *"
-          placeholder="Descripción del asiento"
-          value={formData.concepto}
-          onChange={(e) => setFormData({ ...formData, concepto: e.target.value })}
-          required
-        />
-
-        {/* Movimientos */}
-        <div>
-          <div className="flex justify-between items-center mb-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Movimientos</label>
-            <Button type="button" variant="ghost" size="sm" onClick={addMovimiento}>
-              <Plus className="w-4 h-4 mr-1" />
-              Agregar línea
-            </Button>
-          </div>
-
-          <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                    Cuenta
-                  </th>
-                  <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                    Concepto
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-32">
-                    Debe
-                  </th>
-                  <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase w-32">
-                    Haber
-                  </th>
-                  <th className="px-3 py-2 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {formData.movimientos.map((mov, index) => (
-                  <tr key={index}>
-                    <td className="px-2 py-2">
-                      <select
-                        value={mov.cuenta_id}
-                        onChange={(e) => updateMovimiento(index, 'cuenta_id', e.target.value)}
-                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
-                      >
-                        <option value="">Seleccionar cuenta</option>
-                        {cuentas?.map((c) => (
-                          <option key={c.id} value={c.id}>
-                            {c.codigo} - {c.nombre}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="px-2 py-2">
-                      <input
-                        type="text"
-                        value={mov.concepto}
-                        onChange={(e) => updateMovimiento(index, 'concepto', e.target.value)}
-                        placeholder="Concepto específico"
-                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500"
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={mov.debe}
-                        onChange={(e) => updateMovimiento(index, 'debe', e.target.value)}
-                        disabled={!!mov.haber}
-                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-right bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      <input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        value={mov.haber}
-                        onChange={(e) => updateMovimiento(index, 'haber', e.target.value)}
-                        disabled={!!mov.debe}
-                        className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-sm text-right bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-1 focus:ring-primary-500 disabled:bg-gray-100 dark:disabled:bg-gray-700"
-                      />
-                    </td>
-                    <td className="px-2 py-2">
-                      {formData.movimientos.length > 2 && (
-                        <button
-                          type="button"
-                          onClick={() => removeMovimiento(index)}
-                          className="p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-50 dark:bg-gray-900">
-                <tr>
-                  <td colSpan={2} className="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
-                    Totales:
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(totalDebe)}
-                  </td>
-                  <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(totalHaber)}
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          {/* Indicador de cuadre */}
-          <div className={`mt-2 px-3 py-2 rounded-lg flex items-center gap-2 ${
-            cuadra ? 'bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-red-50 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-          }`}>
-            {cuadra ? (
-              <>
-                <Check className="w-4 h-4" />
-                <span className="text-sm">El asiento cuadra correctamente</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle className="w-4 h-4" />
-                <span className="text-sm">
-                  Diferencia: {formatCurrency(Math.abs(totalDebe - totalHaber))}
-                </span>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Notas */}
-        <Textarea
-          label="Notas"
-          value={formData.notas}
-          onChange={(e) => setFormData({ ...formData, notas: e.target.value })}
-          rows={2}
-          placeholder="Notas adicionales (opcional)"
-        />
-
-        <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <Button variant="secondary" onClick={onClose} disabled={isLoading}>
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={isLoading || (formData.estado === 'publicado' && !cuadra)}
-          >
-            {isLoading ? 'Guardando...' : asiento?.id ? 'Actualizar' : 'Crear'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
-  );
-}
-
-/**
- * Modal para ver detalle de asiento
- */
-function AsientoDetailModal({ isOpen, onClose, asiento }) {
-  const { data: asientoDetalle, isLoading } = useAsiento(
-    asiento?.id,
-    asiento?.fecha
-  );
-
-  if (!asiento) return null;
-
-  return (
-    <Modal isOpen={isOpen} onClose={onClose} title={`Asiento #${asiento.numero_asiento}`} size="lg">
-      {isLoading ? (
-        <div className="p-4 text-center text-gray-500 dark:text-gray-400">Cargando detalle...</div>
-      ) : (
-        <div className="space-y-4">
-          {/* Info general */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Fecha</span>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
-                {format(new Date(asientoDetalle?.fecha || asiento.fecha), 'dd/MM/yyyy')}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Tipo</span>
-              <p className="font-medium capitalize text-gray-900 dark:text-gray-100">
-                {(asientoDetalle?.tipo || asiento.tipo)?.replace('_', ' ')}
-              </p>
-            </div>
-            <div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Estado</span>
-              <p>
-                <span
-                  className={`px-2 py-0.5 text-xs rounded-full ${
-                    ESTADO_COLORS[asientoDetalle?.estado || asiento.estado]
-                  }`}
-                >
-                  {asientoDetalle?.estado || asiento.estado}
-                </span>
-              </p>
-            </div>
-            <div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Creado por</span>
-              <p className="font-medium text-sm text-gray-900 dark:text-gray-100">
-                {asientoDetalle?.creado_por_nombre || 'Sistema'}
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <span className="text-xs text-gray-500 dark:text-gray-400">Concepto</span>
-            <p className="font-medium text-gray-900 dark:text-gray-100">{asientoDetalle?.concepto || asiento.concepto}</p>
-          </div>
-
-          {/* Movimientos */}
-          <div>
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Movimientos</h4>
-            <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Cuenta
-                    </th>
-                    <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Concepto
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Debe
-                    </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400">
-                      Haber
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {asientoDetalle?.movimientos?.map((mov, i) => (
-                    <tr key={i}>
-                      <td className="px-3 py-2 text-sm">
-                        <span className="font-mono text-gray-600 dark:text-gray-400">{mov.cuenta_codigo}</span>
-                        <span className="text-gray-500 dark:text-gray-400 ml-2">{mov.cuenta_nombre}</span>
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-600 dark:text-gray-400">{mov.concepto || '-'}</td>
-                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
-                        {mov.debe > 0 ? formatCurrency(mov.debe) : ''}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-right font-medium text-gray-900 dark:text-gray-100">
-                        {mov.haber > 0 ? formatCurrency(mov.haber) : ''}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-gray-50 dark:bg-gray-900">
-                  <tr>
-                    <td colSpan={2} className="px-3 py-2 text-right font-medium text-gray-700 dark:text-gray-300">
-                      Total:
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
-                      {formatCurrency(asientoDetalle?.total_debe || asiento.total_debe || 0)}
-                    </td>
-                    <td className="px-3 py-2 text-right font-bold text-gray-900 dark:text-gray-100">
-                      {formatCurrency(asientoDetalle?.total_haber || asiento.total_haber || 0)}
-                    </td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-
-          {/* Notas */}
-          {(asientoDetalle?.notas || asiento.notas) && (
-            <div>
-              <span className="text-xs text-gray-500 dark:text-gray-400">Notas</span>
-              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-900 p-3 rounded-lg mt-1">
-                {asientoDetalle?.notas || asiento.notas}
-              </p>
-            </div>
-          )}
-
-          <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button variant="secondary" onClick={onClose}>
-              Cerrar
-            </Button>
-          </div>
-        </div>
-      )}
-    </Modal>
   );
 }
 

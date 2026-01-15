@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FileSpreadsheet,
@@ -37,10 +38,12 @@ export default function AjusteMasivoDetallePage() {
     // Filtro de items
     const [filtroEstado, setFiltroEstado] = useState('todos');
 
-    // Modales
-    const [modalValidar, setModalValidar] = useState(false);
-    const [modalAplicar, setModalAplicar] = useState(false);
-    const [modalCancelar, setModalCancelar] = useState(false);
+    // Modales centralizados
+    const { openModal, closeModal, isOpen } = useModalManager({
+        validar: { isOpen: false },
+        aplicar: { isOpen: false },
+        cancelar: { isOpen: false },
+    });
 
     // Query
     const { data: ajuste, isLoading, error } = useAjusteMasivo(id);
@@ -55,7 +58,7 @@ export default function AjusteMasivoDetallePage() {
         validarMutation.mutate(parseInt(id), {
             onSuccess: (result) => {
                 showSuccess(`Validado: ${result.filas_validas} items validos`);
-                setModalValidar(false);
+                closeModal('validar');
             },
             onError: (err) => {
                 showError(err.message || 'Error al validar');
@@ -70,7 +73,7 @@ export default function AjusteMasivoDetallePage() {
                     ? `Aplicados ${result.aplicados?.length || 0} items, ${result.errores.length} con errores`
                     : `${result.aplicados?.length || 0} ajustes aplicados correctamente`;
                 showSuccess(msg);
-                setModalAplicar(false);
+                closeModal('aplicar');
             },
             onError: (err) => {
                 showError(err.message || 'Error al aplicar');
@@ -82,7 +85,7 @@ export default function AjusteMasivoDetallePage() {
         cancelarMutation.mutate(parseInt(id), {
             onSuccess: () => {
                 showSuccess('Ajuste cancelado');
-                setModalCancelar(false);
+                closeModal('cancelar');
                 navigate('/inventario/ajustes-masivos');
             },
             onError: (err) => {
@@ -189,19 +192,19 @@ export default function AjusteMasivoDetallePage() {
 
                         <div className="flex items-center gap-2">
                             {puedeValidar && (
-                                <Button onClick={() => setModalValidar(true)}>
+                                <Button onClick={() => openModal('validar')}>
                                     <FileCheck className="h-4 w-4 mr-1" />
                                     Validar
                                 </Button>
                             )}
                             {puedeAplicar && (
-                                <Button onClick={() => setModalAplicar(true)}>
+                                <Button onClick={() => openModal('aplicar')}>
                                     <Play className="h-4 w-4 mr-1" />
                                     Aplicar
                                 </Button>
                             )}
                             {puedeCancelar && (
-                                <Button variant="outline" onClick={() => setModalCancelar(true)}>
+                                <Button variant="outline" onClick={() => openModal('cancelar')}>
                                     <XCircle className="h-4 w-4 mr-1" />
                                     Cancelar
                                 </Button>
@@ -389,8 +392,8 @@ export default function AjusteMasivoDetallePage() {
 
             {/* Modal Validar */}
             <Modal
-                isOpen={modalValidar}
-                onClose={() => setModalValidar(false)}
+                isOpen={isOpen('validar')}
+                onClose={() => closeModal('validar')}
                 title="Validar Ajuste Masivo"
             >
                 <div className="p-4">
@@ -401,7 +404,7 @@ export default function AjusteMasivoDetallePage() {
                         Se verificara que los SKUs/codigos existan y se calculara el stock resultante.
                     </p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalValidar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('validar')}>
                             Cancelar
                         </Button>
                         <Button onClick={handleValidar} isLoading={validarMutation.isPending}>
@@ -414,8 +417,8 @@ export default function AjusteMasivoDetallePage() {
 
             {/* Modal Aplicar */}
             <Modal
-                isOpen={modalAplicar}
-                onClose={() => setModalAplicar(false)}
+                isOpen={isOpen('aplicar')}
+                onClose={() => closeModal('aplicar')}
                 title="Aplicar Ajustes"
             >
                 <div className="p-4">
@@ -432,7 +435,7 @@ export default function AjusteMasivoDetallePage() {
                         </div>
                     </div>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalAplicar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('aplicar')}>
                             Cancelar
                         </Button>
                         <Button onClick={handleAplicar} isLoading={aplicarMutation.isPending}>
@@ -445,8 +448,8 @@ export default function AjusteMasivoDetallePage() {
 
             {/* Modal Cancelar */}
             <Modal
-                isOpen={modalCancelar}
-                onClose={() => setModalCancelar(false)}
+                isOpen={isOpen('cancelar')}
+                onClose={() => closeModal('cancelar')}
                 title="Cancelar Ajuste"
             >
                 <div className="p-4">
@@ -457,7 +460,7 @@ export default function AjusteMasivoDetallePage() {
                         Esta accion eliminara el ajuste y todos sus items.
                     </p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalCancelar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('cancelar')}>
                             Volver
                         </Button>
                         <Button

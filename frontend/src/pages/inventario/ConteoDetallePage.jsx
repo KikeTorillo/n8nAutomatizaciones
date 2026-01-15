@@ -25,6 +25,7 @@ import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import BarcodeScanner from '@/components/common/BarcodeScanner';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
     useConteo,
     useIniciarConteo,
@@ -55,14 +56,16 @@ export default function ConteoDetallePage() {
     const [notasInput, setNotasInput] = useState('');
     const [filtroItems, setFiltroItems] = useState('todos'); // todos, pendientes, contados, diferencia
     const [mostrarResumen, setMostrarResumen] = useState(false);
-
-    // Modales
-    const [modalIniciar, setModalIniciar] = useState(false);
-    const [modalCompletar, setModalCompletar] = useState(false);
-    const [modalAplicarAjustes, setModalAplicarAjustes] = useState(false);
-    const [modalCancelar, setModalCancelar] = useState(false);
     const [motivoCancelacion, setMotivoCancelacion] = useState('');
-    const [showScanner, setShowScanner] = useState(false);
+
+    // Modal manager para los 5 modales
+    const { openModal, closeModal, isOpen } = useModalManager({
+        iniciar: { isOpen: false },
+        completar: { isOpen: false },
+        aplicarAjustes: { isOpen: false },
+        cancelar: { isOpen: false },
+        scanner: { isOpen: false },
+    });
 
     // Queries y Mutations
     const { data: conteo, isLoading, refetch } = useConteo(id);
@@ -162,10 +165,10 @@ export default function ConteoDetallePage() {
         try {
             await iniciarMutation.mutateAsync(id);
             showSuccess('Conteo iniciado');
-            setModalIniciar(false);
+            closeModal('iniciar');
             refetch();
-        } catch (error) {
-            showError(error.message || 'Error al iniciar conteo');
+        } catch (err) {
+            showError(err.message || 'Error al iniciar conteo');
         }
     };
 
@@ -173,10 +176,10 @@ export default function ConteoDetallePage() {
         try {
             await completarMutation.mutateAsync(id);
             showSuccess('Conteo completado');
-            setModalCompletar(false);
+            closeModal('completar');
             refetch();
-        } catch (error) {
-            showError(error.message || 'Error al completar conteo');
+        } catch (err) {
+            showError(err.message || 'Error al completar conteo');
         }
     };
 
@@ -184,10 +187,10 @@ export default function ConteoDetallePage() {
         try {
             const resultado = await aplicarAjustesMutation.mutateAsync(id);
             showSuccess(`Ajustes aplicados. ${resultado.ajustes_realizados?.length || 0} movimientos creados.`);
-            setModalAplicarAjustes(false);
+            closeModal('aplicarAjustes');
             refetch();
-        } catch (error) {
-            showError(error.message || 'Error al aplicar ajustes');
+        } catch (err) {
+            showError(err.message || 'Error al aplicar ajustes');
         }
     };
 
@@ -195,10 +198,10 @@ export default function ConteoDetallePage() {
         try {
             await cancelarMutation.mutateAsync({ id, motivo: motivoCancelacion });
             showSuccess('Conteo cancelado');
-            setModalCancelar(false);
+            closeModal('cancelar');
             navigate('/inventario/conteos');
-        } catch (error) {
-            showError(error.message || 'Error al cancelar conteo');
+        } catch (err) {
+            showError(err.message || 'Error al cancelar conteo');
         }
     };
 
@@ -274,21 +277,21 @@ export default function ConteoDetallePage() {
 
                         <div className="flex items-center gap-2 flex-wrap">
                             {puedeIniciar && (
-                                <Button onClick={() => setModalIniciar(true)}>
+                                <Button onClick={() => openModal('iniciar')}>
                                     <Play className="h-4 w-4 mr-1" />
                                     Iniciar Conteo
                                 </Button>
                             )}
 
                             {puedeCompletar && (
-                                <Button onClick={() => setModalCompletar(true)}>
+                                <Button onClick={() => openModal('completar')}>
                                     <CheckCircle className="h-4 w-4 mr-1" />
                                     Completar
                                 </Button>
                             )}
 
                             {puedeAplicarAjustes && (
-                                <Button onClick={() => setModalAplicarAjustes(true)}>
+                                <Button onClick={() => openModal('aplicarAjustes')}>
                                     <Save className="h-4 w-4 mr-1" />
                                     Aplicar Ajustes
                                 </Button>
@@ -297,7 +300,7 @@ export default function ConteoDetallePage() {
                             {puedeCancelar && (
                                 <Button
                                     variant="outline"
-                                    onClick={() => setModalCancelar(true)}
+                                    onClick={() => openModal('cancelar')}
                                     className="text-red-600 border-red-300 hover:bg-red-50 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30"
                                 >
                                     <XCircle className="h-4 w-4 mr-1" />
@@ -359,7 +362,7 @@ export default function ConteoDetallePage() {
                                         </div>
                                         <button
                                             type="button"
-                                            onClick={() => setShowScanner(true)}
+                                            onClick={() => openModal('scanner')}
                                             className="p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
                                             title="Escanear código de barras"
                                         >
@@ -372,13 +375,13 @@ export default function ConteoDetallePage() {
                                 </form>
 
                                 {/* Scanner de código de barras */}
-                                {showScanner && (
+                                {isOpen('scanner') && (
                                     <BarcodeScanner
-                                        onClose={() => setShowScanner(false)}
+                                        onClose={() => closeModal('scanner')}
                                         onScan={(scanResult) => {
                                             const codigo = scanResult.code || scanResult;
                                             setCodigoBusqueda(codigo);
-                                            setShowScanner(false);
+                                            closeModal('scanner');
                                             // Auto-buscar después de escanear
                                             setTimeout(() => {
                                                 handleBuscarItem({ preventDefault: () => {} });
@@ -669,7 +672,7 @@ export default function ConteoDetallePage() {
             </div>
 
             {/* Modales */}
-            <Modal isOpen={modalIniciar} onClose={() => setModalIniciar(false)} title="Iniciar Conteo">
+            <Modal isOpen={isOpen('iniciar')} onClose={() => closeModal('iniciar')} title="Iniciar Conteo">
                 <div className="p-4">
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                         ¿Deseas iniciar el conteo <strong>{conteo.folio}</strong>?
@@ -678,7 +681,7 @@ export default function ConteoDetallePage() {
                         Se generarán los productos a contar según los filtros configurados.
                     </p>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalIniciar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('iniciar')}>
                             Cancelar
                         </Button>
                         <Button onClick={handleIniciar} isLoading={iniciarMutation.isPending}>
@@ -689,7 +692,7 @@ export default function ConteoDetallePage() {
                 </div>
             </Modal>
 
-            <Modal isOpen={modalCompletar} onClose={() => setModalCompletar(false)} title="Completar Conteo">
+            <Modal isOpen={isOpen('completar')} onClose={() => closeModal('completar')} title="Completar Conteo">
                 <div className="p-4">
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                         ¿Deseas completar el conteo <strong>{conteo.folio}</strong>?
@@ -704,7 +707,7 @@ export default function ConteoDetallePage() {
                         </div>
                     )}
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalCompletar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('completar')}>
                             Cancelar
                         </Button>
                         <Button onClick={handleCompletar} isLoading={completarMutation.isPending}>
@@ -716,8 +719,8 @@ export default function ConteoDetallePage() {
             </Modal>
 
             <Modal
-                isOpen={modalAplicarAjustes}
-                onClose={() => setModalAplicarAjustes(false)}
+                isOpen={isOpen('aplicarAjustes')}
+                onClose={() => closeModal('aplicarAjustes')}
                 title="Aplicar Ajustes de Inventario"
             >
                 <div className="p-4">
@@ -732,7 +735,7 @@ export default function ConteoDetallePage() {
                         </p>
                     </div>
                     <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setModalAplicarAjustes(false)}>
+                        <Button variant="outline" onClick={() => closeModal('aplicarAjustes')}>
                             Cancelar
                         </Button>
                         <Button onClick={handleAplicarAjustes} isLoading={aplicarAjustesMutation.isPending}>
@@ -743,7 +746,7 @@ export default function ConteoDetallePage() {
                 </div>
             </Modal>
 
-            <Modal isOpen={modalCancelar} onClose={() => setModalCancelar(false)} title="Cancelar Conteo">
+            <Modal isOpen={isOpen('cancelar')} onClose={() => closeModal('cancelar')} title="Cancelar Conteo">
                 <div className="p-4">
                     <p className="text-gray-600 dark:text-gray-300 mb-4">
                         ¿Deseas cancelar el conteo <strong>{conteo.folio}</strong>?
@@ -756,7 +759,7 @@ export default function ConteoDetallePage() {
                         rows={3}
                     />
                     <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline" onClick={() => setModalCancelar(false)}>
+                        <Button variant="outline" onClick={() => closeModal('cancelar')}>
                             Volver
                         </Button>
                         <Button variant="danger" onClick={handleCancelar} isLoading={cancelarMutation.isPending}>

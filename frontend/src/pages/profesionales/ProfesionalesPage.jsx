@@ -22,6 +22,7 @@ import {
 } from '@/hooks/useProfesionales';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';
 
 /**
@@ -31,6 +32,7 @@ import { useModalManager } from '@/hooks/useModalManager';
 function ProfesionalesPage() {
   const navigate = useNavigate();
   const toast = useToast();
+  const { exportCSV } = useExportCSV();
   const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
@@ -92,33 +94,27 @@ function ProfesionalesPage() {
     ];
   }, [profesionales, pagination.total]);
 
-  // Exportar CSV
+  // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
-    if (profesionales.length === 0) {
-      toast.error('No hay profesionales para exportar');
-      return;
-    }
+    const datosExportar = profesionales.map(p => ({
+      nombre: p.nombre_completo || '',
+      email: p.email || '',
+      telefono: p.telefono || '',
+      departamento: p.departamento_nombre || '',
+      puesto: p.puesto_nombre || '',
+      estado: p.estado || '',
+      fecha_contratacion: p.fecha_contratacion ? format(new Date(p.fecha_contratacion), 'dd/MM/yyyy') : '',
+    }));
 
-    const BOM = '\uFEFF';
-    const headers = ['Nombre', 'Email', 'Teléfono', 'Departamento', 'Puesto', 'Estado', 'Fecha Contratación'];
-    const rows = profesionales.map(p => [
-      p.nombre_completo || '',
-      p.email || '',
-      p.telefono || '',
-      p.departamento_nombre || '',
-      p.puesto_nombre || '',
-      p.estado || '',
-      p.fecha_contratacion ? format(new Date(p.fecha_contratacion), 'dd/MM/yyyy') : ''
-    ].map(cell => `"${cell}"`).join(','));
-
-    const csvContent = [headers.join(','), ...rows].join('\n');
-    const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `profesionales_${format(new Date(), 'yyyyMMdd')}.csv`;
-    link.click();
-
-    toast.success('Archivo CSV descargado');
+    exportCSV(datosExportar, [
+      { key: 'nombre', header: 'Nombre' },
+      { key: 'email', header: 'Email' },
+      { key: 'telefono', header: 'Teléfono' },
+      { key: 'departamento', header: 'Departamento' },
+      { key: 'puesto', header: 'Puesto' },
+      { key: 'estado', header: 'Estado' },
+      { key: 'fecha_contratacion', header: 'Fecha Contratación' },
+    ], `profesionales_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   // Handlers

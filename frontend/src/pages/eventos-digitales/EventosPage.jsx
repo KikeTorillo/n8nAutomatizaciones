@@ -19,6 +19,7 @@ import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/useEventosDigitales';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 
 /**
  * Página principal de gestión de eventos digitales
@@ -31,7 +32,11 @@ function EventosPage() {
   const [busqueda, setBusqueda] = useState('');
   const [estadoFiltro, setEstadoFiltro] = useState('');
   const [tipoFiltro, setTipoFiltro] = useState('');
-  const [eventoAEliminar, setEventoAEliminar] = useState(null);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    delete: { isOpen: false, data: null },
+  });
 
   const { data, isLoading, refetch } = useEventos({
     pagina: page,
@@ -45,14 +50,15 @@ function EventosPage() {
   const publicarEvento = usePublicarEvento();
 
   const handleEliminar = async () => {
-    if (!eventoAEliminar) return;
+    const evento = getModalData('delete');
+    if (!evento) return;
 
     try {
-      await eliminarEvento.mutateAsync(eventoAEliminar.id);
+      await eliminarEvento.mutateAsync(evento.id);
       toast.success('Evento eliminado correctamente');
-      setEventoAEliminar(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al eliminar evento');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.message || 'Error al eliminar evento');
     }
   };
 
@@ -253,7 +259,7 @@ function EventosPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setEventoAEliminar(evento)}
+                        onClick={() => openModal('delete', evento)}
                         disabled={eliminarEvento.isPending}
                         className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                       >
@@ -311,11 +317,11 @@ function EventosPage() {
 
       {/* Modal de confirmación para eliminar */}
       <ConfirmDialog
-        isOpen={!!eventoAEliminar}
-        onClose={() => setEventoAEliminar(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar evento"
-        message={`¿Estás seguro de eliminar el evento "${eventoAEliminar?.nombre}"? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de eliminar el evento "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         cancelText="Cancelar"
         variant="danger"

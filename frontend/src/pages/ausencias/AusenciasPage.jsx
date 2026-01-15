@@ -24,6 +24,7 @@ import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import useAuthStore from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import {
   useSolicitudesPendientesAusencias,
   useMisAusencias,
@@ -281,6 +282,7 @@ function AusenciasPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get('tab');
   const toast = useToast();
+  const { exportCSV } = useExportCSV();
 
   const { user } = useAuthStore();
   const esAdmin = ['admin', 'propietario', 'super_admin'].includes(user?.rol);
@@ -416,107 +418,105 @@ function AusenciasPage() {
   const tabsExportables = ['mis-ausencias', 'mi-equipo', 'incapacidades'];
   const puedeExportar = tabsExportables.includes(activeTab);
 
-  // Handler para exportar CSV según tab activo
+  // Handler para exportar CSV según tab activo usando hook centralizado
   const handleExportarAusencias = () => {
-    try {
-      let headers = [];
-      let rows = [];
-      let filename = '';
+    const tiposLabel = {
+      enfermedad_general: 'Enfermedad General',
+      maternidad: 'Maternidad',
+      riesgo_trabajo: 'Riesgo de Trabajo',
+    };
+    const estadosLabel = {
+      activa: 'Activa',
+      finalizada: 'Finalizada',
+      cancelada: 'Cancelada',
+    };
 
-      switch (activeTab) {
-        case 'mis-ausencias': {
-          if (!misAusencias || misAusencias.length === 0) {
-            toast.error('No hay ausencias para exportar');
-            return;
-          }
-          headers = ['Código', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Estado', 'Motivo'];
-          rows = misAusencias.map((a) => [
-            a.codigo || '',
-            a.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
-            a.fechaInicio ? format(new Date(a.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            a.fechaFin ? format(new Date(a.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            a.dias || 0,
-            a.estadoConfig?.label || a.estado || '',
-            a.motivo || '',
-          ]);
-          filename = `mis_ausencias_${format(new Date(), 'yyyyMMdd')}.csv`;
-          break;
-        }
-
-        case 'mi-equipo': {
-          if (!pendientes || pendientes.length === 0) {
-            toast.error('No hay solicitudes del equipo para exportar');
-            return;
-          }
-          headers = ['Profesional', 'Puesto', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Estado', 'Motivo'];
-          rows = pendientes.map((s) => [
-            s.profesionalNombre || '',
-            s.puestoNombre || '',
-            s.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
-            s.fechaInicio ? format(new Date(s.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            s.fechaFin ? format(new Date(s.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            s.dias || 0,
-            s.estado || '',
-            s.motivo || '',
-          ]);
-          filename = `equipo_ausencias_${format(new Date(), 'yyyyMMdd')}.csv`;
-          break;
-        }
-
-        case 'incapacidades': {
-          const incapacidades = incapacidadesData?.data || [];
-          if (incapacidades.length === 0) {
-            toast.error('No hay incapacidades para exportar');
-            return;
-          }
-          const tiposLabel = {
-            enfermedad_general: 'Enfermedad General',
-            maternidad: 'Maternidad',
-            riesgo_trabajo: 'Riesgo de Trabajo',
-          };
-          const estadosLabel = {
-            activa: 'Activa',
-            finalizada: 'Finalizada',
-            cancelada: 'Cancelada',
-          };
-          headers = ['Código', 'Profesional', 'Tipo', 'Fecha Inicio', 'Fecha Fin', 'Días', 'Folio IMSS', 'Estado'];
-          rows = incapacidades.map((i) => [
-            i.codigo || '',
-            i.profesional_nombre || '',
-            tiposLabel[i.tipo_incapacidad] || i.tipo_incapacidad || '',
-            i.fecha_inicio ? format(new Date(i.fecha_inicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            i.fecha_fin ? format(new Date(i.fecha_fin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
-            i.dias_autorizados || 0,
-            i.folio_imss || '',
-            estadosLabel[i.estado] || i.estado || '',
-          ]);
-          filename = `incapacidades_${format(new Date(), 'yyyyMMdd')}.csv`;
-          break;
-        }
-
-        default:
-          toast.error('Este tab no soporta exportación');
+    switch (activeTab) {
+      case 'mis-ausencias': {
+        if (!misAusencias || misAusencias.length === 0) {
+          toast.error('No hay ausencias para exportar');
           return;
+        }
+        const datosExportar = misAusencias.map((a) => ({
+          codigo: a.codigo || '',
+          tipo: a.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
+          fecha_inicio: a.fechaInicio ? format(new Date(a.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          fecha_fin: a.fechaFin ? format(new Date(a.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          dias: a.dias || 0,
+          estado: a.estadoConfig?.label || a.estado || '',
+          motivo: a.motivo || '',
+        }));
+        exportCSV(datosExportar, [
+          { key: 'codigo', header: 'Código' },
+          { key: 'tipo', header: 'Tipo' },
+          { key: 'fecha_inicio', header: 'Fecha Inicio' },
+          { key: 'fecha_fin', header: 'Fecha Fin' },
+          { key: 'dias', header: 'Días' },
+          { key: 'estado', header: 'Estado' },
+          { key: 'motivo', header: 'Motivo' },
+        ], `mis_ausencias_${format(new Date(), 'yyyyMMdd')}`);
+        break;
       }
 
-      // BOM para UTF-8 (Excel)
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')),
-      ].join('\n');
+      case 'mi-equipo': {
+        if (!pendientes || pendientes.length === 0) {
+          toast.error('No hay solicitudes del equipo para exportar');
+          return;
+        }
+        const datosEquipo = pendientes.map((s) => ({
+          profesional: s.profesionalNombre || '',
+          puesto: s.puestoNombre || '',
+          tipo: s.tipo === 'vacaciones' ? 'Vacaciones' : 'Incapacidad',
+          fecha_inicio: s.fechaInicio ? format(new Date(s.fechaInicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          fecha_fin: s.fechaFin ? format(new Date(s.fechaFin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          dias: s.dias || 0,
+          estado: s.estado || '',
+          motivo: s.motivo || '',
+        }));
+        exportCSV(datosEquipo, [
+          { key: 'profesional', header: 'Profesional' },
+          { key: 'puesto', header: 'Puesto' },
+          { key: 'tipo', header: 'Tipo' },
+          { key: 'fecha_inicio', header: 'Fecha Inicio' },
+          { key: 'fecha_fin', header: 'Fecha Fin' },
+          { key: 'dias', header: 'Días' },
+          { key: 'estado', header: 'Estado' },
+          { key: 'motivo', header: 'Motivo' },
+        ], `equipo_ausencias_${format(new Date(), 'yyyyMMdd')}`);
+        break;
+      }
 
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      link.click();
-      URL.revokeObjectURL(link.href);
+      case 'incapacidades': {
+        const incapacidades = incapacidadesData?.data || [];
+        if (incapacidades.length === 0) {
+          toast.error('No hay incapacidades para exportar');
+          return;
+        }
+        const datosIncapacidades = incapacidades.map((i) => ({
+          codigo: i.codigo || '',
+          profesional: i.profesional_nombre || '',
+          tipo: tiposLabel[i.tipo_incapacidad] || i.tipo_incapacidad || '',
+          fecha_inicio: i.fecha_inicio ? format(new Date(i.fecha_inicio.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          fecha_fin: i.fecha_fin ? format(new Date(i.fecha_fin.split('T')[0] + 'T12:00:00'), 'dd/MM/yyyy') : '',
+          dias: i.dias_autorizados || 0,
+          folio_imss: i.folio_imss || '',
+          estado: estadosLabel[i.estado] || i.estado || '',
+        }));
+        exportCSV(datosIncapacidades, [
+          { key: 'codigo', header: 'Código' },
+          { key: 'profesional', header: 'Profesional' },
+          { key: 'tipo', header: 'Tipo' },
+          { key: 'fecha_inicio', header: 'Fecha Inicio' },
+          { key: 'fecha_fin', header: 'Fecha Fin' },
+          { key: 'dias', header: 'Días' },
+          { key: 'folio_imss', header: 'Folio IMSS' },
+          { key: 'estado', header: 'Estado' },
+        ], `incapacidades_${format(new Date(), 'yyyyMMdd')}`);
+        break;
+      }
 
-      toast.success('Exportación completada exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      toast.error('Error al exportar CSV');
+      default:
+        toast.error('Este tab no soporta exportación');
     }
   };
 

@@ -28,6 +28,7 @@ import {
   useProfesionalesSucursal,
 } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 
 // Mapeo de días de la semana
 const DIAS_SEMANA = {
@@ -49,11 +50,15 @@ function SucursalDetailPage() {
   const navigate = useNavigate();
   const toast = useToast();
 
-  // Estado para tabs y modales
+  // Estado para tab activo
   const [activeTab, setActiveTab] = useState('usuarios');
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isUsuariosModalOpen, setIsUsuariosModalOpen] = useState(false);
-  const [isProfesionalesModalOpen, setIsProfesionalesModalOpen] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    edit: { isOpen: false },
+    usuarios: { isOpen: false },
+    profesionales: { isOpen: false },
+  });
 
   // Fetch data
   const { data: sucursal, isLoading: isLoadingSucursal } = useSucursal(id);
@@ -147,7 +152,7 @@ function SucursalDetailPage() {
               </div>
             </div>
 
-            <Button onClick={() => setIsEditModalOpen(true)} className="w-full sm:w-auto">
+            <Button onClick={() => openModal('edit')} className="w-full sm:w-auto">
               <Edit2 className="w-4 h-4 mr-2" />
               Editar Sucursal
             </Button>
@@ -381,7 +386,7 @@ function SucursalDetailPage() {
                       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         Usuarios asignados
                       </h3>
-                      <Button size="sm" onClick={() => setIsUsuariosModalOpen(true)}>
+                      <Button size="sm" onClick={() => openModal('usuarios')}>
                         <Plus className="w-4 h-4 mr-1" />
                         Asignar Usuario
                       </Button>
@@ -401,7 +406,7 @@ function SucursalDetailPage() {
                           size="sm"
                           variant="outline"
                           className="mt-4"
-                          onClick={() => setIsUsuariosModalOpen(true)}
+                          onClick={() => openModal('usuarios')}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Asignar primer usuario
@@ -459,7 +464,7 @@ function SucursalDetailPage() {
                       <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
                         Profesionales asignados
                       </h3>
-                      <Button size="sm" onClick={() => setIsProfesionalesModalOpen(true)}>
+                      <Button size="sm" onClick={() => openModal('profesionales')}>
                         <Plus className="w-4 h-4 mr-1" />
                         Asignar Profesional
                       </Button>
@@ -479,7 +484,7 @@ function SucursalDetailPage() {
                           size="sm"
                           variant="outline"
                           className="mt-4"
-                          onClick={() => setIsProfesionalesModalOpen(true)}
+                          onClick={() => openModal('profesionales')}
                         >
                           <Plus className="w-4 h-4 mr-1" />
                           Asignar primer profesional
@@ -537,24 +542,24 @@ function SucursalDetailPage() {
 
       {/* Modal de Editar Sucursal */}
       <SucursalFormModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
+        isOpen={isOpen('edit')}
+        onClose={() => closeModal('edit')}
         mode="edit"
         sucursal={sucursal}
       />
 
       {/* Modal de Usuarios */}
       <SucursalUsuariosModal
-        isOpen={isUsuariosModalOpen}
-        onClose={() => setIsUsuariosModalOpen(false)}
+        isOpen={isOpen('usuarios')}
+        onClose={() => closeModal('usuarios')}
         sucursalId={parseInt(id, 10)}
         usuariosAsignados={usuarios}
       />
 
       {/* Modal de Profesionales */}
       <SucursalProfesionalesModal
-        isOpen={isProfesionalesModalOpen}
-        onClose={() => setIsProfesionalesModalOpen(false)}
+        isOpen={isOpen('profesionales')}
+        onClose={() => closeModal('profesionales')}
         sucursalId={parseInt(id, 10)}
         profesionalesAsignados={profesionales}
       />

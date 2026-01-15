@@ -9,6 +9,7 @@ import {
 import useAuthStore from '@/store/authStore';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   Settings,
   Calendar,
@@ -69,9 +70,13 @@ function ModulosPage() {
   const queryClient = useQueryClient();
   const { isAdmin } = useAuthStore();
 
-  // Estado local
-  const [confirmDialog, setConfirmDialog] = useState({ open: false, modulo: null, accion: null });
+  // Estado de expansión de módulos
   const [expandedModules, setExpandedModules] = useState({});
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalProps } = useModalManager({
+    confirm: { isOpen: false, modulo: null, accion: null },
+  });
 
   // Queries
   const { data: disponiblesData, isLoading: loadingDisponibles } = useModulosDisponibles();
@@ -186,7 +191,7 @@ function ModulosPage() {
         toast.warning(`No se puede desactivar. Los siguientes módulos dependen de este: ${dependientes.join(', ')}`);
         return;
       }
-      setConfirmDialog({ open: true, modulo, accion: 'desactivar' });
+      openModal('confirm', null, { modulo, accion: 'desactivar' });
     } else {
       // Activar
       if (!puedeActivar(modulo)) {
@@ -194,12 +199,13 @@ function ModulosPage() {
         toast.warning(`Dependencias faltantes. Primero activa: ${faltantes.join(', ')}`);
         return;
       }
-      setConfirmDialog({ open: true, modulo, accion: 'activar' });
+      openModal('confirm', null, { modulo, accion: 'activar' });
     }
   };
 
   const handleConfirm = async () => {
-    const { modulo, accion } = confirmDialog;
+    const confirmProps = getModalProps('confirm');
+    const { modulo, accion } = confirmProps;
 
     try {
       if (accion === 'activar') {
@@ -210,11 +216,11 @@ function ModulosPage() {
         toast.success('Módulo desactivado correctamente');
       }
       refetch();
-    } catch (error) {
-      toast.error(error.message || 'Error al procesar la solicitud');
+    } catch (err) {
+      toast.error(err.message || 'Error al procesar la solicitud');
     }
 
-    setConfirmDialog({ open: false, modulo: null, accion: null });
+    closeModal('confirm');
   };
 
   // Loading
@@ -460,18 +466,18 @@ function ModulosPage() {
 
       {/* Confirm Dialog */}
       <ConfirmDialog
-        isOpen={confirmDialog.open}
-        onClose={() => setConfirmDialog({ open: false, modulo: null, accion: null })}
+        isOpen={isOpen('confirm')}
+        onClose={() => closeModal('confirm')}
         onConfirm={handleConfirm}
-        title={confirmDialog.accion === 'activar' ? 'Activar módulo' : 'Desactivar módulo'}
+        title={getModalProps('confirm').accion === 'activar' ? 'Activar módulo' : 'Desactivar módulo'}
         message={
-          confirmDialog.accion === 'activar'
-            ? `¿Deseas activar el módulo "${confirmDialog.modulo}"? Esto habilitará todas sus funcionalidades.`
-            : `¿Deseas desactivar el módulo "${confirmDialog.modulo}"? Las funcionalidades asociadas dejarán de estar disponibles.`
+          getModalProps('confirm').accion === 'activar'
+            ? `¿Deseas activar el módulo "${getModalProps('confirm').modulo}"? Esto habilitará todas sus funcionalidades.`
+            : `¿Deseas desactivar el módulo "${getModalProps('confirm').modulo}"? Las funcionalidades asociadas dejarán de estar disponibles.`
         }
-        confirmText={confirmDialog.accion === 'activar' ? 'Activar' : 'Desactivar'}
+        confirmText={getModalProps('confirm').accion === 'activar' ? 'Activar' : 'Desactivar'}
         cancelText="Cancelar"
-        variant={confirmDialog.accion === 'activar' ? 'success' : 'warning'}
+        variant={getModalProps('confirm').accion === 'activar' ? 'success' : 'warning'}
         isLoading={activarMutation.isPending || desactivarMutation.isPending}
       />
     </div>

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -50,7 +50,11 @@ function AppHomePage() {
   const queryClient = useQueryClient();
   const { logout: clearAuth, user } = useAuthStore();
   const { resetOnboarding } = useOnboardingStore();
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    logout: { isOpen: false },
+  });
 
   // Módulos activos según el plan (para empleados, ya viene filtrado por backend)
   const {
@@ -97,9 +101,9 @@ function AppHomePage() {
     },
   });
 
-  const handleLogout = () => setShowLogoutDialog(true);
+  const handleLogout = () => openModal('logout');
   const confirmLogout = () => {
-    setShowLogoutDialog(false);
+    closeModal('logout');
     logoutMutation.mutate();
   };
 
@@ -495,8 +499,8 @@ function AppHomePage() {
 
       {/* Modal de confirmación de logout */}
       <ConfirmDialog
-        isOpen={showLogoutDialog}
-        onClose={() => setShowLogoutDialog(false)}
+        isOpen={isOpen('logout')}
+        onClose={() => closeModal('logout')}
         onConfirm={confirmLogout}
         title="Cerrar Sesión"
         message="¿Estás seguro que deseas cerrar sesión?"

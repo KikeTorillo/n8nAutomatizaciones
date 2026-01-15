@@ -29,6 +29,7 @@ import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useUsuarios,
   useCambiarEstadoUsuario,
@@ -64,14 +65,17 @@ const FILTROS_ESTADO = [
 function UsuariosPage() {
   const toast = useToast();
 
-  // Estados locales
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingUsuario, setEditingUsuario] = useState(null);
-  const [confirmAction, setConfirmAction] = useState(null);
+  // Estado de filtros y UI
   const [searchTerm, setSearchTerm] = useState('');
   const [filtroRol, setFiltroRol] = useState('');
   const [filtroEstado, setFiltroEstado] = useState('');
   const [vinculandoUsuario, setVinculandoUsuario] = useState(null);
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
+    form: { isOpen: false, data: null },
+    confirm: { isOpen: false, data: null, type: '', title: '', message: '' },
+  });
 
   // Query params
   const queryParams = useMemo(() => ({
@@ -95,19 +99,17 @@ function UsuariosPage() {
 
   // Handlers
   const handleNuevo = () => {
-    setEditingUsuario(null);
-    setDrawerOpen(true);
+    openModal('form', null);
   };
 
   const handleEditar = (usuario) => {
-    setEditingUsuario(usuario);
-    setDrawerOpen(true);
+    openModal('form', usuario);
   };
 
   const handleToggleActivo = (usuario) => {
-    setConfirmAction({
-      type: usuario.activo ? 'desactivar' : 'activar',
-      usuario,
+    const type = usuario.activo ? 'desactivar' : 'activar';
+    openModal('confirm', usuario, {
+      type,
       title: usuario.activo ? 'Desactivar usuario' : 'Activar usuario',
       message: usuario.activo
         ? `¿Desactivar a "${usuario.nombre}"? ${usuario.profesional_id ? 'También se desactivará su perfil de profesional.' : ''}`
@@ -127,26 +129,29 @@ function UsuariosPage() {
   };
 
   const confirmarAccion = async () => {
-    if (!confirmAction) return;
+    const confirmProps = getModalProps('confirm');
+    const usuario = confirmProps.data;
+    const actionType = confirmProps.type;
+    if (!usuario) return;
 
     try {
-      if (confirmAction.type === 'desactivar' || confirmAction.type === 'activar') {
-        const nuevoEstado = confirmAction.type === 'activar';
+      if (actionType === 'desactivar' || actionType === 'activar') {
+        const nuevoEstado = actionType === 'activar';
         await cambiarEstadoMutation.mutateAsync({
-          id: confirmAction.usuario.id,
+          id: usuario.id,
           activo: nuevoEstado,
         });
         toast.success(nuevoEstado ? 'Usuario activado' : 'Usuario desactivado');
-      } else if (confirmAction.type === 'desvincular') {
+      } else if (actionType === 'desvincular') {
         await vincularMutation.mutateAsync({
-          id: confirmAction.usuario.id,
+          id: usuario.id,
           profesionalId: null,
         });
         toast.success('Profesional desvinculado');
       }
-      setConfirmAction(null);
-    } catch (error) {
-      toast.error(error.message || 'Error al realizar la acción');
+      closeModal('confirm');
+    } catch (err) {
+      toast.error(err.message || 'Error al realizar la acción');
     }
   };
 
@@ -164,9 +169,8 @@ function UsuariosPage() {
   };
 
   const handleDesvincular = (usuario) => {
-    setConfirmAction({
+    openModal('confirm', usuario, {
       type: 'desvincular',
-      usuario,
       title: 'Desvincular profesional',
       message: `¿Desvincular el profesional "${usuario.profesional_nombre}" de este usuario?`,
     });
@@ -457,27 +461,24 @@ function UsuariosPage() {
 
       {/* Drawer Form */}
       <UsuarioFormDrawer
-        isOpen={drawerOpen}
-        onClose={() => {
-          setDrawerOpen(false);
-          setEditingUsuario(null);
-        }}
-        mode={editingUsuario ? 'edit' : 'create'}
-        usuario={editingUsuario}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        mode={getModalData('form') ? 'edit' : 'create'}
+        usuario={getModalData('form')}
       />
 
       {/* Confirm Dialog */}
       <ConfirmDialog
-        isOpen={!!confirmAction}
-        onClose={() => setConfirmAction(null)}
-        title={confirmAction?.title}
-        message={confirmAction?.message}
+        isOpen={isOpen('confirm')}
+        onClose={() => closeModal('confirm')}
+        title={getModalProps('confirm').title}
+        message={getModalProps('confirm').message}
         confirmText={
-          confirmAction?.type === 'desactivar' ? 'Desactivar' :
-          confirmAction?.type === 'activar' ? 'Activar' :
+          getModalProps('confirm').type === 'desactivar' ? 'Desactivar' :
+          getModalProps('confirm').type === 'activar' ? 'Activar' :
           'Confirmar'
         }
-        variant={confirmAction?.type === 'desactivar' ? 'danger' : 'default'}
+        variant={getModalProps('confirm').type === 'desactivar' ? 'danger' : 'default'}
         onConfirm={confirmarAccion}
         isLoading={cambiarEstadoMutation.isPending || vincularMutation.isPending}
       />

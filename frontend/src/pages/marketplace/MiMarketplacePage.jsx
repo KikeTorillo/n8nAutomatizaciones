@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { Store, FileText, BarChart3 } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import Button from '@/components/ui/Button';
@@ -16,7 +17,11 @@ import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMar
  */
 function MiMarketplacePage() {
   const [tabActivo, setTabActivo] = useState('perfil');
-  const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    crear: { isOpen: false },
+  });
 
   // Fetch del perfil del negocio
   const { data: perfil, isLoading, error } = useMiPerfilMarketplace();
@@ -59,7 +64,7 @@ function MiMarketplacePage() {
             <p className="text-gray-600 dark:text-gray-400 mb-6">
               Crea tu perfil público para aparecer en el directorio y captar nuevos clientes
             </p>
-            <Button size="lg" onClick={() => setMostrarModalCrear(true)}>
+            <Button size="lg" onClick={() => openModal('crear')}>
               Crear Perfil de Marketplace
             </Button>
           </div>
@@ -67,8 +72,8 @@ function MiMarketplacePage() {
 
         {/* Modal de creación de perfil */}
         <CrearPerfilMarketplaceModal
-          isOpen={mostrarModalCrear}
-          onClose={() => setMostrarModalCrear(false)}
+          isOpen={isOpen('crear')}
+          onClose={() => closeModal('crear')}
         />
       </div>
     );

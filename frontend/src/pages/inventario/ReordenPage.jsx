@@ -19,6 +19,7 @@ import {
   ChevronRight,
   LineChart,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useDashboardReorden,
   useProductosBajoMinimo,
@@ -36,8 +37,12 @@ import StockPronosticoChart from '@/components/inventario/reorden/StockPronostic
 
 export default function ReordenPage() {
   const [soloSinOC, setSoloSinOC] = useState(true);
-  const [productoSeleccionado, setProductoSeleccionado] = useState(null);
-  const [showConfirmEjecutar, setShowConfirmEjecutar] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    pronostico: { isOpen: false, data: null },
+    ejecutar: { isOpen: false },
+  });
 
   const { data: dashboard, isLoading: loadingDashboard } = useDashboardReorden();
   const { data: productosBajoMinimo, isLoading: loadingProductos } = useProductosBajoMinimo({
@@ -48,12 +53,12 @@ export default function ReordenPage() {
   const ejecutarMutation = useEjecutarReordenManual();
 
   const handleEjecutar = () => {
-    setShowConfirmEjecutar(true);
+    openModal('ejecutar');
   };
 
   const confirmEjecutar = () => {
     ejecutarMutation.mutate(undefined, {
-      onSettled: () => setShowConfirmEjecutar(false),
+      onSettled: () => closeModal('ejecutar'),
     });
   };
 
@@ -168,10 +173,10 @@ export default function ReordenPage() {
                 <div
                   key={producto.producto_id}
                   className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors cursor-pointer"
-                  onClick={() => setProductoSeleccionado(producto)}
+                  onClick={() => openModal('pronostico', producto)}
                   role="button"
                   tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setProductoSeleccionado(producto)}
+                  onKeyDown={(e) => e.key === 'Enter' && openModal('pronostico', producto)}
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
@@ -332,21 +337,21 @@ export default function ReordenPage() {
 
       {/* Modal de Pronostico de Stock */}
       <Modal
-        isOpen={!!productoSeleccionado}
-        onClose={() => setProductoSeleccionado(null)}
+        isOpen={isOpen('pronostico')}
+        onClose={() => closeModal('pronostico')}
         title="Pronostico de Stock"
-        subtitle={productoSeleccionado?.producto_nombre}
+        subtitle={getModalData('pronostico')?.producto_nombre}
         size="xl"
       >
-        {productoSeleccionado && (
-          <StockPronosticoChart productoId={productoSeleccionado.producto_id} dias={30} />
+        {getModalData('pronostico') && (
+          <StockPronosticoChart productoId={getModalData('pronostico').producto_id} dias={30} />
         )}
       </Modal>
 
       {/* Confirm Dialog para ejecutar reorden */}
       <ConfirmDialog
-        isOpen={showConfirmEjecutar}
-        onClose={() => setShowConfirmEjecutar(false)}
+        isOpen={isOpen('ejecutar')}
+        onClose={() => closeModal('ejecutar')}
         onConfirm={confirmEjecutar}
         title="Ejecutar Reorden"
         message="¿Ejecutar evaluacion de reorden ahora? Esto generara OCs para productos con stock bajo segun las reglas configuradas."

@@ -3821,7 +3821,7 @@ export const posApi = {
    * @param {number} id
    * @returns {Promise<Object>}
    */
-  obtenerEstadisticasCupon: (id) => apiClient.get(`/pos/cupones/${id}/estadisticas`),
+  obtenerEstadisticasCupon: (id, params = {}) => apiClient.get(`/pos/cupones/${id}/estadisticas`, { params }),
 
   /**
    * Activar/desactivar cupón
@@ -4029,9 +4029,13 @@ export const posApi = {
 
   /**
    * Obtener estadísticas del programa de lealtad
+   * @param {number} sucursalId - ID de la sucursal (requerido para permisos)
    * @returns {Promise<Object>} { clientes_activos, puntos_circulantes, canjes_mes, ... }
    */
-  obtenerEstadisticasLealtad: () => apiClient.get('/pos/lealtad/estadisticas'),
+  obtenerEstadisticasLealtad: (sucursalId) =>
+    apiClient.get('/pos/lealtad/estadisticas', {
+      params: sucursalId ? { sucursalId } : {}
+    }),
 
   // ========== Combos y Modificadores (Migrado a Inventario - Ene 2026) ==========
 

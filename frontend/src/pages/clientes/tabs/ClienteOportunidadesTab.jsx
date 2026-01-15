@@ -10,6 +10,7 @@
  */
 
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   TrendingUp,
   Plus,
@@ -224,9 +225,13 @@ export default function ClienteOportunidadesTab({ clienteId, usuarios = [] }) {
   // Estado local
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [filtroEstado, setFiltroEstado] = useState('');
-  const [perderConfirm, setPerderConfirm] = useState({ open: false, oportunidad: null });
-  const [deleteConfirm, setDeleteConfirm] = useState({ open: false, oportunidad: null });
   const [motivoPerdida, setMotivoPerdida] = useState('');
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    perder: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   // Queries y mutations
   const { data, isLoading, isError, refetch } = useOportunidadesCliente(clienteId, {
@@ -265,40 +270,40 @@ export default function ClienteOportunidadesTab({ clienteId, usuarios = [] }) {
 
   const handlePerder = (oportunidad) => {
     setMotivoPerdida('');
-    setPerderConfirm({ open: true, oportunidad });
+    openModal('perder', oportunidad);
   };
 
   const confirmPerder = async () => {
-    if (!perderConfirm.oportunidad) return;
+    const oportunidad = getModalData('perder');
+    if (!oportunidad) return;
 
     try {
       await marcarPerdida.mutateAsync({
-        oportunidadId: perderConfirm.oportunidad.id,
+        oportunidadId: oportunidad.id,
         motivoPerdida,
       });
       toast('Oportunidad marcada como perdida', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo marcar como perdida', { type: 'error' });
-    } finally {
-      setPerderConfirm({ open: false, oportunidad: null });
+      closeModal('perder');
       setMotivoPerdida('');
+    } catch (err) {
+      toast(err.message || 'No se pudo marcar como perdida', { type: 'error' });
     }
   };
 
   const handleEliminar = (oportunidad) => {
-    setDeleteConfirm({ open: true, oportunidad });
+    openModal('delete', oportunidad);
   };
 
   const confirmEliminar = async () => {
-    if (!deleteConfirm.oportunidad) return;
+    const oportunidad = getModalData('delete');
+    if (!oportunidad) return;
 
     try {
-      await eliminarOportunidad.mutateAsync(deleteConfirm.oportunidad.id);
+      await eliminarOportunidad.mutateAsync(oportunidad.id);
       toast('Oportunidad eliminada', { type: 'success' });
-    } catch (error) {
-      toast(error.message || 'No se pudo eliminar', { type: 'error' });
-    } finally {
-      setDeleteConfirm({ open: false, oportunidad: null });
+      closeModal('delete');
+    } catch (err) {
+      toast(err.message || 'No se pudo eliminar', { type: 'error' });
     }
   };
 
@@ -411,13 +416,13 @@ export default function ClienteOportunidadesTab({ clienteId, usuarios = [] }) {
 
       {/* Confirmación de pérdida */}
       <ConfirmDialog
-        isOpen={perderConfirm.open}
-        onClose={() => setPerderConfirm({ open: false, oportunidad: null })}
+        isOpen={isOpen('perder')}
+        onClose={() => closeModal('perder')}
         onConfirm={confirmPerder}
         title="Marcar como perdida"
         description={
           <div className="space-y-3">
-            <p>¿Estás seguro de marcar "{perderConfirm.oportunidad?.nombre}" como perdida?</p>
+            <p>¿Estás seguro de marcar "{getModalData('perder')?.nombre}" como perdida?</p>
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Motivo de pérdida (opcional)
@@ -439,11 +444,11 @@ export default function ClienteOportunidadesTab({ clienteId, usuarios = [] }) {
 
       {/* Confirmación de eliminación */}
       <ConfirmDialog
-        isOpen={deleteConfirm.open}
-        onClose={() => setDeleteConfirm({ open: false, oportunidad: null })}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmEliminar}
         title="Eliminar oportunidad"
-        description={`¿Estás seguro de eliminar "${deleteConfirm.oportunidad?.nombre}"? Esta acción no se puede deshacer.`}
+        description={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         confirmVariant="danger"
         isLoading={eliminarOportunidad.isPending}

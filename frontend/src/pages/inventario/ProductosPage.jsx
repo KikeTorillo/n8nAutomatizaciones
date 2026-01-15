@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useFilters } from '@/hooks/useFilters';
 import { useSavedFilters } from '@/hooks/useSavedFilters';
+import { useExportCSV } from '@/hooks/useExportCSV';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useProductos,
@@ -28,6 +29,7 @@ import BarcodeScanner from '@/components/common/BarcodeScanner';
  */
 function ProductosPage() {
   const { success: showSuccess, error: showError } = useToast();
+  const { exportCSV } = useExportCSV();
 
   // Estado de filtros con hook reutilizable
   const INITIAL_FILTERS = {
@@ -64,9 +66,6 @@ function ProductosPage() {
 
   // Estado del scanner
   const [showScanner, setShowScanner] = useState(false);
-
-  // Modal para guardar búsqueda
-  const [showSaveSearchModal, setShowSaveSearchModal] = useState(false);
 
   // Queries - usar filtrosQuery (debounced)
   const { data: productosData, isLoading: cargandoProductos } = useProductos(filtrosQuery);
@@ -183,48 +182,35 @@ function ProductosPage() {
     return 'Normal';
   };
 
-  // Exportar CSV
+  // Exportar CSV usando hook centralizado
   const handleExportarCSV = () => {
-    if (!productos || productos.length === 0) {
-      showError('No hay datos para exportar');
-      return;
-    }
+    const datosExportar = productos.map(p => ({
+      nombre: p.nombre || '',
+      sku: p.sku || '',
+      codigo_barras: p.codigo_barras || '',
+      categoria: p.categoria_nombre || 'Sin categoría',
+      proveedor: p.proveedor_nombre || 'Sin proveedor',
+      stock: p.stock_actual || 0,
+      stock_minimo: p.stock_minimo || 0,
+      stock_maximo: p.stock_maximo || 0,
+      precio_compra: parseFloat(p.precio_compra || 0).toFixed(2),
+      precio_venta: parseFloat(p.precio_venta || 0).toFixed(2),
+      estado: getStockLabel(p),
+    }));
 
-    try {
-      const headers = ['Nombre', 'SKU', 'Código Barras', 'Categoría', 'Proveedor', 'Stock', 'Mínimo', 'Máximo', 'Precio Compra', 'Precio Venta', 'Estado'];
-
-      const rows = productos.map(p => [
-        p.nombre || '',
-        p.sku || '',
-        p.codigo_barras || '',
-        p.categoria_nombre || 'Sin categoría',
-        p.proveedor_nombre || 'Sin proveedor',
-        p.stock_actual || 0,
-        p.stock_minimo || 0,
-        p.stock_maximo || 0,
-        parseFloat(p.precio_compra || 0).toFixed(2),
-        parseFloat(p.precio_venta || 0).toFixed(2),
-        getStockLabel(p)
-      ]);
-
-      const BOM = '\uFEFF';
-      const csvContent = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
-      ].join('\n');
-
-      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      link.href = URL.createObjectURL(blob);
-      link.download = `productos_${format(new Date(), 'yyyyMMdd')}.csv`;
-      link.click();
-      URL.revokeObjectURL(link.href);
-
-      showSuccess('Productos exportados exitosamente');
-    } catch (error) {
-      console.error('Error al exportar CSV:', error);
-      showError('Error al exportar CSV');
-    }
+    exportCSV(datosExportar, [
+      { key: 'nombre', header: 'Nombre' },
+      { key: 'sku', header: 'SKU' },
+      { key: 'codigo_barras', header: 'Código Barras' },
+      { key: 'categoria', header: 'Categoría' },
+      { key: 'proveedor', header: 'Proveedor' },
+      { key: 'stock', header: 'Stock' },
+      { key: 'stock_minimo', header: 'Mínimo' },
+      { key: 'stock_maximo', header: 'Máximo' },
+      { key: 'precio_compra', header: 'Precio Compra' },
+      { key: 'precio_venta', header: 'Precio Venta' },
+      { key: 'estado', header: 'Estado' },
+    ], `productos_${format(new Date(), 'yyyyMMdd')}`);
   };
 
   return (
@@ -277,7 +263,7 @@ function ProductosPage() {
           onAplicarBusqueda={aplicarBusqueda}
           onEliminarBusqueda={eliminarBusqueda}
           onToggleDefault={toggleDefault}
-          onGuardarBusqueda={() => setShowSaveSearchModal(true)}
+          onGuardarBusqueda={() => openModal('saveSearch')}
           filtrosActivos={filtrosActivos}
           className="mb-6"
           searchBar={
@@ -585,8 +571,8 @@ function ProductosPage() {
 
         {/* Modal Guardar Búsqueda */}
         <SavedSearchModal
-          isOpen={showSaveSearchModal}
-          onClose={() => setShowSaveSearchModal(false)}
+          isOpen={isOpen('saveSearch')}
+          onClose={() => closeModal('saveSearch')}
           filtrosActuales={filtros}
           onSave={handleGuardarBusqueda}
           existeNombre={existeNombre}

@@ -11,9 +11,6 @@ import {
   Settings,
   Trash2,
   Edit2,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Package,
   Truck,
   FolderTree,
@@ -34,6 +31,7 @@ import { useProductos } from '@/hooks/useProductos';
 import { Link } from 'react-router-dom';
 import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { useModalManager } from '@/hooks/useModalManager';
 
 const DIAS_SEMANA = [
   { value: 1, label: 'Lunes' },
@@ -60,10 +58,13 @@ const TIPOS_ALCANCE = [
 ];
 
 export default function ReglasReordenPage() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [editingRegla, setEditingRegla] = useState(null);
-  const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [filtroActivo, setFiltroActivo] = useState('todas');
+
+  // Estado de modales centralizado con useModalManager
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    delete: { isOpen: false, data: null },
+  });
 
   const { data: reglas, isLoading } = useReglasReorden({
     activo: filtroActivo === 'todas' ? undefined : filtroActivo === 'activas'
@@ -80,23 +81,22 @@ export default function ReglasReordenPage() {
   const eliminarMutation = useEliminarReglaReorden();
 
   const handleNueva = () => {
-    setEditingRegla(null);
-    setDrawerOpen(true);
+    openModal('form', null);
   };
 
   const handleEditar = (regla) => {
-    setEditingRegla(regla);
-    setDrawerOpen(true);
+    openModal('form', regla);
   };
 
   const handleEliminar = (regla) => {
-    setDeleteConfirm(regla);
+    openModal('delete', regla);
   };
 
   const confirmDelete = () => {
-    if (deleteConfirm) {
-      eliminarMutation.mutate(deleteConfirm.id, {
-        onSuccess: () => setDeleteConfirm(null),
+    const reglaAEliminar = getModalData('delete');
+    if (reglaAEliminar) {
+      eliminarMutation.mutate(reglaAEliminar.id, {
+        onSuccess: () => closeModal('delete'),
       });
     }
   };
@@ -109,13 +109,14 @@ export default function ReglasReordenPage() {
   };
 
   const handleSubmit = (data) => {
+    const editingRegla = getModalData('form');
     if (editingRegla) {
       actualizarMutation.mutate(
         { id: editingRegla.id, data },
-        { onSuccess: () => setDrawerOpen(false) }
+        { onSuccess: () => closeModal('form') }
       );
     } else {
-      crearMutation.mutate(data, { onSuccess: () => setDrawerOpen(false) });
+      crearMutation.mutate(data, { onSuccess: () => closeModal('form') });
     }
   };
 
@@ -210,29 +211,29 @@ export default function ReglasReordenPage() {
 
       {/* Drawer para crear/editar */}
       <Drawer
-        isOpen={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        title={editingRegla ? 'Editar Regla' : 'Nueva Regla de Reabastecimiento'}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        title={getModalData('form') ? 'Editar Regla' : 'Nueva Regla de Reabastecimiento'}
       >
         <ReglaForm
-          regla={editingRegla}
+          regla={getModalData('form')}
           rutas={rutas || []}
           proveedores={proveedores || []}
           categorias={categorias || []}
           productos={productos}
           onSubmit={handleSubmit}
-          onCancel={() => setDrawerOpen(false)}
+          onCancel={() => closeModal('form')}
           isLoading={crearMutation.isPending || actualizarMutation.isPending}
         />
       </Drawer>
 
       {/* Confirm delete */}
       <ConfirmDialog
-        isOpen={!!deleteConfirm}
-        onClose={() => setDeleteConfirm(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={confirmDelete}
         title="Eliminar Regla"
-        message={`¿Estas seguro de eliminar la regla "${deleteConfirm?.nombre}"? Esta accion no se puede deshacer.`}
+        message={`¿Estas seguro de eliminar la regla "${getModalData('delete')?.nombre}"? Esta accion no se puede deshacer.`}
         confirmLabel="Eliminar"
         variant="danger"
         isLoading={eliminarMutation.isPending}

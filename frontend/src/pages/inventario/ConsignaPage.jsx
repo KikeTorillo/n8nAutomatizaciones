@@ -26,6 +26,7 @@ import {
   Calendar,
   Building2,
 } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   useAcuerdosConsigna,
   useStockConsigna,
@@ -83,20 +84,20 @@ export default function ConsignaPage() {
   const [filtroEstadoLiq, setFiltroEstadoLiq] = useState('');
   const [filtroProveedor, setFiltroProveedor] = useState('');
 
-  // Modales/Drawers
-  const [showNuevoAcuerdo, setShowNuevoAcuerdo] = useState(false);
-  const [acuerdoSeleccionado, setAcuerdoSeleccionado] = useState(null);
-  const [acuerdoRecibir, setAcuerdoRecibir] = useState(null);
-  const [acuerdoDevolver, setAcuerdoDevolver] = useState(null);
-  const [showNuevaLiquidacion, setShowNuevaLiquidacion] = useState(false);
-  const [liquidacionSeleccionada, setLiquidacionSeleccionada] = useState(null);
-
-  // Estados para ConfirmDialogs
-  const [confirmActivar, setConfirmActivar] = useState(null);
-  const [confirmPausar, setConfirmPausar] = useState(null);
-  const [confirmTerminar, setConfirmTerminar] = useState(null);
-  const [confirmLiq, setConfirmLiq] = useState(null);
-  const [confirmCancelarLiq, setConfirmCancelarLiq] = useState(null);
+  // Modales/Drawers centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    nuevoAcuerdo: { isOpen: false },
+    detalleAcuerdo: { isOpen: false, data: null },
+    recibirMercancia: { isOpen: false, data: null },
+    devolverMercancia: { isOpen: false, data: null },
+    nuevaLiquidacion: { isOpen: false },
+    detalleLiquidacion: { isOpen: false, data: null },
+    activar: { isOpen: false, data: null },
+    pausar: { isOpen: false, data: null },
+    terminar: { isOpen: false, data: null },
+    confirmarLiq: { isOpen: false, data: null },
+    cancelarLiq: { isOpen: false, data: null },
+  });
 
   // Queries
   const { data: acuerdosData, isLoading: loadingAcuerdos } = useAcuerdosConsigna({
@@ -141,27 +142,27 @@ export default function ConsignaPage() {
   };
 
   // Handlers - abren ConfirmDialog
-  const handleActivar = (id) => setConfirmActivar(id);
-  const handlePausar = (id) => setConfirmPausar(id);
-  const handleTerminar = (id) => setConfirmTerminar(id);
-  const handleConfirmarLiq = (id) => setConfirmLiq(id);
-  const handleCancelarLiq = (id) => setConfirmCancelarLiq(id);
+  const handleActivar = (id) => openModal('activar', id);
+  const handlePausar = (id) => openModal('pausar', id);
+  const handleTerminar = (id) => openModal('terminar', id);
+  const handleConfirmarLiq = (id) => openModal('confirmarLiq', id);
+  const handleCancelarLiq = (id) => openModal('cancelarLiq', id);
 
   // Confirmaciones
   const doActivar = () => {
-    activarMutation.mutate(confirmActivar, { onSettled: () => setConfirmActivar(null) });
+    activarMutation.mutate(getModalData('activar'), { onSettled: () => closeModal('activar') });
   };
   const doPausar = () => {
-    pausarMutation.mutate(confirmPausar, { onSettled: () => setConfirmPausar(null) });
+    pausarMutation.mutate(getModalData('pausar'), { onSettled: () => closeModal('pausar') });
   };
   const doTerminar = () => {
-    terminarMutation.mutate(confirmTerminar, { onSettled: () => setConfirmTerminar(null) });
+    terminarMutation.mutate(getModalData('terminar'), { onSettled: () => closeModal('terminar') });
   };
   const doConfirmarLiq = () => {
-    confirmarLiqMutation.mutate(confirmLiq, { onSettled: () => setConfirmLiq(null) });
+    confirmarLiqMutation.mutate(getModalData('confirmarLiq'), { onSettled: () => closeModal('confirmarLiq') });
   };
   const doCancelarLiq = () => {
-    cancelarLiqMutation.mutate(confirmCancelarLiq, { onSettled: () => setConfirmCancelarLiq(null) });
+    cancelarLiqMutation.mutate(getModalData('cancelarLiq'), { onSettled: () => closeModal('cancelarLiq') });
   };
 
   return (
@@ -170,7 +171,7 @@ export default function ConsignaPage() {
       title="Consigna"
       subtitle="Inventario en consignación - stock de proveedores, pago al vender"
       actions={
-        <Button variant="primary" onClick={() => setShowNuevoAcuerdo(true)} icon={Plus}>
+        <Button variant="primary" onClick={() => openModal('nuevoAcuerdo')} icon={Plus}>
           <span className="hidden sm:inline">Nuevo Acuerdo</span>
           <span className="sm:hidden">Nuevo</span>
         </Button>
@@ -225,7 +226,7 @@ export default function ConsignaPage() {
             size="sm"
             onClick={() => {
               setActiveTab('liquidaciones');
-              setShowNuevaLiquidacion(true);
+              openModal('nuevaLiquidacion');
             }}
           >
             Generar Liquidacion
@@ -344,7 +345,7 @@ export default function ConsignaPage() {
                             <td className="px-4 py-3 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-1">
                                 <button
-                                  onClick={() => setAcuerdoSeleccionado(acuerdo)}
+                                  onClick={() => openModal('detalleAcuerdo', acuerdo)}
                                   className="p-1.5 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
                                   title="Ver detalle"
                                 >
@@ -353,14 +354,14 @@ export default function ConsignaPage() {
                                 {acuerdo.estado === 'activo' && (
                                   <>
                                     <button
-                                      onClick={() => setAcuerdoRecibir(acuerdo)}
+                                      onClick={() => openModal('recibirMercancia', acuerdo)}
                                       className="p-1.5 text-gray-500 hover:text-green-600"
                                       title="Recibir mercancia"
                                     >
                                       <PackagePlus className="h-4 w-4" />
                                     </button>
                                     <button
-                                      onClick={() => setAcuerdoDevolver(acuerdo)}
+                                      onClick={() => openModal('devolverMercancia', acuerdo)}
                                       className="p-1.5 text-gray-500 hover:text-amber-600"
                                       title="Devolver mercancia"
                                     >
@@ -518,7 +519,7 @@ export default function ConsignaPage() {
                     </button>
                   ))}
                 </div>
-                <Button variant="outline" onClick={() => setShowNuevaLiquidacion(true)}>
+                <Button variant="outline" onClick={() => openModal('nuevaLiquidacion')}>
                   <Plus className="h-4 w-4 mr-1" />
                   Nueva Liquidacion
                 </Button>
@@ -605,7 +606,7 @@ export default function ConsignaPage() {
                           <td className="px-4 py-3 whitespace-nowrap text-right">
                             <div className="flex items-center justify-end gap-1">
                               <button
-                                onClick={() => setLiquidacionSeleccionada(liq)}
+                                onClick={() => openModal('detalleLiquidacion', liq)}
                                 className="p-1.5 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
                                 title="Ver detalle"
                               >
@@ -631,7 +632,7 @@ export default function ConsignaPage() {
                               )}
                               {liq.estado === 'confirmada' && (
                                 <button
-                                  onClick={() => setLiquidacionSeleccionada(liq)}
+                                  onClick={() => openModal('detalleLiquidacion', liq)}
                                   className="p-1.5 text-gray-500 hover:text-green-600"
                                   title="Registrar pago"
                                 >
@@ -654,55 +655,57 @@ export default function ConsignaPage() {
 
       {/* Modales y Drawers */}
       <AcuerdoFormDrawer
-        isOpen={showNuevoAcuerdo}
-        onClose={() => setShowNuevoAcuerdo(false)}
+        isOpen={isOpen('nuevoAcuerdo')}
+        onClose={() => closeModal('nuevoAcuerdo')}
       />
 
       <AcuerdoDetalleModal
-        acuerdo={acuerdoSeleccionado}
-        isOpen={!!acuerdoSeleccionado}
-        onClose={() => setAcuerdoSeleccionado(null)}
+        acuerdo={getModalData('detalleAcuerdo')}
+        isOpen={isOpen('detalleAcuerdo')}
+        onClose={() => closeModal('detalleAcuerdo')}
         onRecibir={() => {
-          setAcuerdoRecibir(acuerdoSeleccionado);
-          setAcuerdoSeleccionado(null);
+          const acuerdo = getModalData('detalleAcuerdo');
+          closeModal('detalleAcuerdo');
+          openModal('recibirMercancia', acuerdo);
         }}
         onDevolver={() => {
-          setAcuerdoDevolver(acuerdoSeleccionado);
-          setAcuerdoSeleccionado(null);
+          const acuerdo = getModalData('detalleAcuerdo');
+          closeModal('detalleAcuerdo');
+          openModal('devolverMercancia', acuerdo);
         }}
-        onActivar={() => handleActivar(acuerdoSeleccionado?.id)}
-        onPausar={() => handlePausar(acuerdoSeleccionado?.id)}
-        onTerminar={() => handleTerminar(acuerdoSeleccionado?.id)}
+        onActivar={() => handleActivar(getModalData('detalleAcuerdo')?.id)}
+        onPausar={() => handlePausar(getModalData('detalleAcuerdo')?.id)}
+        onTerminar={() => handleTerminar(getModalData('detalleAcuerdo')?.id)}
       />
 
       <RecibirMercanciaDrawer
-        acuerdo={acuerdoRecibir}
-        isOpen={!!acuerdoRecibir}
-        onClose={() => setAcuerdoRecibir(null)}
+        acuerdo={getModalData('recibirMercancia')}
+        isOpen={isOpen('recibirMercancia')}
+        onClose={() => closeModal('recibirMercancia')}
       />
 
       <DevolverMercanciaDrawer
-        acuerdo={acuerdoDevolver}
-        isOpen={!!acuerdoDevolver}
-        onClose={() => setAcuerdoDevolver(null)}
+        acuerdo={getModalData('devolverMercancia')}
+        isOpen={isOpen('devolverMercancia')}
+        onClose={() => closeModal('devolverMercancia')}
       />
 
       <LiquidacionFormModal
-        isOpen={showNuevaLiquidacion}
-        onClose={() => setShowNuevaLiquidacion(false)}
+        isOpen={isOpen('nuevaLiquidacion')}
+        onClose={() => closeModal('nuevaLiquidacion')}
         acuerdos={acuerdos?.filter((a) => a.estado === 'activo') || []}
       />
 
       <LiquidacionDetalleModal
-        liquidacion={liquidacionSeleccionada}
-        isOpen={!!liquidacionSeleccionada}
-        onClose={() => setLiquidacionSeleccionada(null)}
+        liquidacion={getModalData('detalleLiquidacion')}
+        isOpen={isOpen('detalleLiquidacion')}
+        onClose={() => closeModal('detalleLiquidacion')}
       />
 
       {/* ConfirmDialogs */}
       <ConfirmDialog
-        isOpen={!!confirmActivar}
-        onClose={() => setConfirmActivar(null)}
+        isOpen={isOpen('activar')}
+        onClose={() => closeModal('activar')}
         onConfirm={doActivar}
         title="Activar Acuerdo"
         message="Activar este acuerdo de consignacion? Podras recibir y vender productos."
@@ -710,8 +713,8 @@ export default function ConsignaPage() {
         isLoading={activarMutation.isPending}
       />
       <ConfirmDialog
-        isOpen={!!confirmPausar}
-        onClose={() => setConfirmPausar(null)}
+        isOpen={isOpen('pausar')}
+        onClose={() => closeModal('pausar')}
         onConfirm={doPausar}
         title="Pausar Acuerdo"
         message="Pausar este acuerdo? No se podran recibir ni vender productos."
@@ -720,8 +723,8 @@ export default function ConsignaPage() {
         isLoading={pausarMutation.isPending}
       />
       <ConfirmDialog
-        isOpen={!!confirmTerminar}
-        onClose={() => setConfirmTerminar(null)}
+        isOpen={isOpen('terminar')}
+        onClose={() => closeModal('terminar')}
         onConfirm={doTerminar}
         title="Terminar Acuerdo"
         message="Terminar este acuerdo? Debe devolver todo el stock primero. Esta accion no se puede deshacer."
@@ -730,8 +733,8 @@ export default function ConsignaPage() {
         isLoading={terminarMutation.isPending}
       />
       <ConfirmDialog
-        isOpen={!!confirmLiq}
-        onClose={() => setConfirmLiq(null)}
+        isOpen={isOpen('confirmarLiq')}
+        onClose={() => closeModal('confirmarLiq')}
         onConfirm={doConfirmarLiq}
         title="Confirmar Liquidacion"
         message="Confirmar esta liquidacion? Se marcara como lista para pago."
@@ -739,8 +742,8 @@ export default function ConsignaPage() {
         isLoading={confirmarLiqMutation.isPending}
       />
       <ConfirmDialog
-        isOpen={!!confirmCancelarLiq}
-        onClose={() => setConfirmCancelarLiq(null)}
+        isOpen={isOpen('cancelarLiq')}
+        onClose={() => closeModal('cancelarLiq')}
         onConfirm={doCancelarLiq}
         title="Cancelar Liquidacion"
         message="Cancelar esta liquidacion? Los movimientos quedaran disponibles para una nueva liquidacion."

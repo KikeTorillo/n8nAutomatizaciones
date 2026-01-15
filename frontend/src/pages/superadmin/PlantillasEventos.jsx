@@ -14,6 +14,7 @@ import Textarea from '@/components/ui/Textarea';
 import Checkbox from '@/components/ui/Checkbox';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/useModalManager';
 import {
   usePlantillas,
   useCrearPlantilla,
@@ -193,8 +194,12 @@ function PlantillasEventos() {
   const [editingId, setEditingId] = useState(null);
   const [filtroTipo, setFiltroTipo] = useState('');
   const [filtroCategoria, setFiltroCategoria] = useState('');
-  const [plantillaAEliminar, setPlantillaAEliminar] = useState(null);
   const [activeSection, setActiveSection] = useState('basico'); // basico, tema, avanzado
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    delete: { isOpen: false, data: null },
+  });
   const [formData, setFormData] = useState({
     nombre: '',
     codigo: '',
@@ -305,18 +310,19 @@ function PlantillasEventos() {
   };
 
   const handleEliminar = async () => {
-    if (!plantillaAEliminar) return;
+    const plantillaId = getModalData('delete');
+    if (!plantillaId) return;
 
     try {
-      const result = await eliminarPlantilla.mutateAsync(plantillaAEliminar);
+      const result = await eliminarPlantilla.mutateAsync(plantillaId);
       if (result.desactivado) {
         toast.info('Plantilla desactivada (está en uso)');
       } else {
         toast.success('Plantilla eliminada');
       }
-      setPlantillaAEliminar(null);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Error al eliminar');
+      closeModal('delete');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Error al eliminar');
     }
   };
 
@@ -839,7 +845,7 @@ function PlantillasEventos() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setPlantillaAEliminar(plantilla.id)}
+                      onClick={() => openModal('delete', plantilla.id)}
                       className="text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -867,8 +873,8 @@ function PlantillasEventos() {
 
       {/* Modal de confirmación para eliminar */}
       <ConfirmDialog
-        isOpen={!!plantillaAEliminar}
-        onClose={() => setPlantillaAEliminar(null)}
+        isOpen={isOpen('delete')}
+        onClose={() => closeModal('delete')}
         onConfirm={handleEliminar}
         title="Eliminar plantilla"
         message="¿Estás seguro de eliminar esta plantilla? Si está en uso, solo será desactivada."

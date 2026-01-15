@@ -4,6 +4,7 @@
  * Enero 2026
  */
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { HeartPulse, List, BarChart3, Plus, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
@@ -19,7 +20,11 @@ import {
 function IncapacidadesAdminTab() {
   const queryClient = useQueryClient();
   const [activeSection, setActiveSection] = useState('lista');
-  const [showFormModal, setShowFormModal] = useState(false);
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    form: { isOpen: false },
+  });
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ['incapacidades'] });
@@ -42,7 +47,7 @@ function IncapacidadesAdminTab() {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setShowFormModal(true)}
+            onClick={() => openModal('form')}
           >
             <Plus className="w-4 h-4 mr-1" />
             Registrar
@@ -88,8 +93,8 @@ function IncapacidadesAdminTab() {
 
       {/* Modal de registro */}
       <IncapacidadFormModal
-        isOpen={showFormModal}
-        onClose={() => setShowFormModal(false)}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
       />
     </div>
   );

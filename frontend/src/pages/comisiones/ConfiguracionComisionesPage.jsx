@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Plus, Filter, X, Calendar, Package } from 'lucide-react';
+import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import Select from '@/components/ui/Select';
@@ -24,11 +25,11 @@ function ConfiguracionComisionesPage() {
   // Tab activo
   const [activeTab, setActiveTab] = useState('servicio');
 
-  // Estados
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isHistorialModalOpen, setIsHistorialModalOpen] = useState(false);
-  const [configuracionSeleccionada, setConfiguracionSeleccionada] = useState(null);
-  const [historialParams, setHistorialParams] = useState({ profesionalId: null, servicioId: null });
+  // Modales centralizados
+  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+    form: { isOpen: false, data: null },
+    historial: { isOpen: false, data: null },
+  });
 
   // Filtros
   const [filtros, setFiltros] = useState({
@@ -48,18 +49,15 @@ function ConfiguracionComisionesPage() {
 
   // Handlers
   const handleNuevaConfiguracion = () => {
-    setConfiguracionSeleccionada(null);
-    setIsModalOpen(true);
+    openModal('form', null);
   };
 
   const handleEditar = (config) => {
-    setConfiguracionSeleccionada(config);
-    setIsModalOpen(true);
+    openModal('form', config);
   };
 
   const handleVerHistorial = (profesionalId, servicioId) => {
-    setHistorialParams({ profesionalId, servicioId });
-    setIsHistorialModalOpen(true);
+    openModal('historial', { profesionalId, servicioId });
   };
 
   const handleLimpiarFiltros = () => {
@@ -257,20 +255,17 @@ function ConfiguracionComisionesPage() {
 
       {/* Modales */}
       <ConfigComisionModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setConfiguracionSeleccionada(null);
-        }}
-        configuracion={configuracionSeleccionada}
+        isOpen={isOpen('form')}
+        onClose={() => closeModal('form')}
+        configuracion={getModalData('form')}
         aplicaA={activeTab}
       />
 
       <HistorialCambiosModal
-        isOpen={isHistorialModalOpen}
-        onClose={() => setIsHistorialModalOpen(false)}
-        profesionalId={historialParams.profesionalId}
-        servicioId={historialParams.servicioId}
+        isOpen={isOpen('historial')}
+        onClose={() => closeModal('historial')}
+        profesionalId={getModalData('historial')?.profesionalId}
+        servicioId={getModalData('historial')?.servicioId}
       />
     </div>
   );

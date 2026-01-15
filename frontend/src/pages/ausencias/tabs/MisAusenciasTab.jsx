@@ -4,6 +4,7 @@
  * Enero 2026
  */
 import { useState } from 'react';
+import { useModalManager } from '@/hooks/useModalManager';
 import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import Button from '@/components/ui/Button';
@@ -142,8 +143,12 @@ function MisAusenciasTab() {
   const queryClient = useQueryClient();
   const anioActual = new Date().getFullYear();
 
-  const [modalVacaciones, setModalVacaciones] = useState(false);
   const [filtroTipo, setFiltroTipo] = useState(null); // null = todos
+
+  // Modales centralizados
+  const { openModal, closeModal, isOpen } = useModalManager({
+    vacaciones: { isOpen: false },
+  });
 
   // Dashboard consolidado
   const { data: dashboard, isLoading, error, vacaciones } = useDashboardAusencias(anioActual);
@@ -187,7 +192,7 @@ function MisAusenciasTab() {
           <Button
             variant="primary"
             size="sm"
-            onClick={() => setModalVacaciones(true)}
+            onClick={() => openModal('vacaciones')}
           >
             <Plus className="w-4 h-4 mr-1" />
             Solicitar Vacaciones
@@ -333,8 +338,8 @@ function MisAusenciasTab() {
 
       {/* Modal de solicitud de vacaciones */}
       <SolicitudVacacionesModal
-        isOpen={modalVacaciones}
-        onClose={() => setModalVacaciones(false)}
+        isOpen={isOpen('vacaciones')}
+        onClose={() => closeModal('vacaciones')}
       />
     </div>
   );

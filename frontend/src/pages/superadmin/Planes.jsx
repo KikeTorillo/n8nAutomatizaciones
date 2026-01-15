@@ -3,26 +3,23 @@
  * Actualizado: Muestra límites de servicios
  */
 
-import { useState } from 'react';
 import { Edit2 } from 'lucide-react';
 import useSuperAdmin from '../../hooks/useSuperAdmin';
+import { useModalManager } from '../../hooks/useModalManager';
 import EditarPlanModal from '../../components/superadmin/EditarPlanModal';
 import Button from '../../components/ui/Button';
 
 export default function SuperAdminPlanes() {
     const { usePlanes } = useSuperAdmin();
     const { data: planes, isLoading } = usePlanes();
-    const [modalOpen, setModalOpen] = useState(false);
-    const [planSeleccionado, setPlanSeleccionado] = useState(null);
+
+    // Modales centralizados
+    const { openModal, closeModal, isOpen, getModalData } = useModalManager({
+        edit: { isOpen: false, data: null },
+    });
 
     const handleEditarPlan = (plan) => {
-        setPlanSeleccionado(plan);
-        setModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setModalOpen(false);
-        setPlanSeleccionado(null);
+        openModal('edit', plan);
     };
 
     if (isLoading) {
@@ -90,9 +87,9 @@ export default function SuperAdminPlanes() {
 
             {/* Modal de Edición */}
             <EditarPlanModal
-                isOpen={modalOpen}
-                onClose={handleCloseModal}
-                plan={planSeleccionado}
+                isOpen={isOpen('edit')}
+                onClose={() => closeModal('edit')}
+                plan={getModalData('edit')}
             />
         </div>
     );
