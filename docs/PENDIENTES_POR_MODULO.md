@@ -18,47 +18,44 @@
 
 ### 1. Inventario ✅ COMPLETADO
 
-| Página | Estado | Notas |
-|--------|--------|-------|
-| ProductosPage | ✅ | DataTable + AdvancedFilterPanel |
-| ProductoFormModal | ✅ | **Refactorizado**: 1042→403 líneas, tabs extraídos a `producto-form/` |
-| CategoriasPage | ✅ | TreeView reutilizable |
-| ProveedoresPage | ✅ | DataTable + FilterPanel |
-| MovimientosPage | ✅ | DataTable + FilterPanel + Pagination |
-| ConteosPage | ✅ | DataTable + StatCardGrid |
-| OrdenesCompraPage | ✅ | DataTable + SmartButtons |
-| ReordenPage | ✅ | Cards con ConfirmDialog |
-| DropshipPage | ✅ | DataTable + StatCard |
-| ConsignaPage | ✅ | 3 DataTables + StatCard |
-| OperacionesAlmacenPage | ✅ | Kanban + StatCardGrid |
-| BatchPickingPage | ✅ | Cards + StatCardGrid |
-| AlertasPage | ✅ | Cards + FilterPanel + Pagination |
-| UbicacionesAlmacenPage | ✅ | TreeView reutilizable |
-| NumerosSeriesPage | ✅ | DataTable + StatCardGrid |
-| RutasOperacionPage | ✅ | DataTable |
-| AjustesMasivosPage | ✅ | SkeletonCard + StatCardGrid |
-| AjusteMasivoDetallePage | ✅ | DataTable (migrado de HTML table) |
-| CombosPage | ✅ | Cards |
-
-**Componentes creados en auditoría:**
-- `components/ui/TreeNode.jsx` - TreeView, TreeNode, useTreeExpansion
-- `components/inventario/producto-form/` - 6 archivos (schemas + 4 tabs + index)
+24 páginas homologadas. Ver `components/inventario/producto-form/` para patrón de formularios con tabs.
 
 ---
 
-### 2. POS ⬜ PENDIENTE
+### 2. POS ✅ COMPLETADO
+
+| Página | Estado | Notas |
+|--------|--------|-------|
+| VentaPOSPage | ✅ | Grid visual + Carrito |
+| VentasListPage | ✅ | DataTable + Filtros |
+| PromocionesPage | ✅ | DataTable + useFilters + formulario con tabs |
+| CuponesPage | ✅ | DataTable + useFilters + CuponStatsModal con tabs |
+| LealtadPage | ✅ | Compacto |
+| CorteCajaPage | ✅ | Reportes |
+| ReporteVentasDiariasPage | ✅ | Reportes |
+| CustomerDisplayPage | ✅ | Pantalla cliente |
+
+**Componentes creados:**
+- `POSPageLayout.jsx` - Layout wrapper para POS
+- `promocion-form/` - schemas.js + 3 tabs (General, Tipo, Condiciones)
+- `PromocionFormDrawer.jsx` - Drawer con tabs
+- `PromocionStatsModal.jsx` - Estadísticas de promoción
+- `CuponStatsModal.jsx` - Estadísticas con tabs (Stats/Historial)
+
+---
+
+### 3. Configuración ✅ COMPLETADO
 
 | Página | Estado |
 |--------|--------|
-| VentaPOSPage | ⬜ |
-| HistorialVentasPage | ⬜ |
-| SesionesCajaPage | ⬜ |
-| CuponesPage | ⬜ |
-| PromocionesPage | ⬜ |
+| ConfiguracionPage | ✅ |
+| UsuariosPage | ✅ |
+| RolesPage | ✅ |
+| WorkflowDesignerPage | ✅ |
 
 ---
 
-### 3. Agendamiento ⬜ PENDIENTE
+### 4. Agendamiento ⬜ PENDIENTE
 
 | Página | Estado |
 |--------|--------|
@@ -68,7 +65,7 @@
 
 ---
 
-### 4. Profesionales ⬜ PENDIENTE
+### 5. Profesionales ⬜ PENDIENTE
 
 | Página | Estado |
 |--------|--------|
@@ -77,7 +74,7 @@
 
 ---
 
-### 5. Clientes ⬜ PENDIENTE
+### 6. Clientes ⬜ PENDIENTE
 
 | Página | Estado |
 |--------|--------|
@@ -86,35 +83,24 @@
 
 ---
 
-### 6. Configuración ⬜ PENDIENTE
-
-| Página | Estado |
-|--------|--------|
-| ConfiguracionPage | ⬜ |
-| UsuariosPage | ⬜ |
-| WorkflowDesignerPage | ⬜ |
-
----
-
 ## Componentes UI Disponibles
 
 ### Layouts
-- `BasePageLayout`, `InventarioPageLayout`, `AgendamientoPageLayout`
+- `BasePageLayout`, `InventarioPageLayout`, `POSPageLayout`, `AgendamientoPageLayout`
 
 ### Datos
 - `DataTable` - Tablas con sorting, acciones, responsive
-- `TreeView` / `TreeNode` - Árboles jerárquicos (nuevo)
+- `TreeView` / `TreeNode` - Árboles jerárquicos
 - `EmptyState`, `SkeletonTable`, `SkeletonCard`, `Pagination`
 
 ### Filtros
-- `FilterPanel` - Filtros colapsables
 - `AdvancedFilterPanel` - Filtros con búsquedas guardadas
 - `SearchInput`, `SmartButtons`
 
 ### Modales
 - `Drawer` - Formularios móviles
 - `Modal` - Visualización
-- `ConfirmDialog` - Acciones destructivas (soporta children)
+- `ConfirmDialog` - Acciones destructivas
 
 ### Estadísticas
 - `StatCard`, `StatCardGrid`
@@ -126,7 +112,8 @@
 | Hook | Uso |
 |------|-----|
 | `useModalManager` | Gestionar múltiples modales |
-| `useTreeExpansion` | Estado expansión árboles (nuevo) |
+| `useFilters` | Estado de filtros con debounce y persistencia |
+| `useTreeExpansion` | Estado expansión árboles |
 | `useExportCSV` | Exportar datos a CSV |
 | `useToast` | Notificaciones |
 
@@ -141,4 +128,3 @@
 ### Media Prioridad
 - [ ] Kitting/BOM
 - [ ] CFDI 4.0 México
-- [ ] Sync Google/Outlook Calendar
