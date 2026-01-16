@@ -1,13 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
 import {
   Package, FolderTree, Truck, ArrowLeftRight, AlertTriangle, BarChart3,
   ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft, Clock,
   ClipboardList, FileSpreadsheet, RefreshCw, Send, Handshake, Boxes, Layers,
-  ChevronDown, Check, PackagePlus
 } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import NavDropdown from '@/components/ui/NavDropdown';
+import GenericNavTabs from '@/components/ui/GenericNavTabs';
 
 /**
  * Definición de grupos de navegación para Inventario
@@ -73,169 +69,15 @@ const NAV_GROUPS = [
 ];
 
 /**
- * Encuentra el grupo e item activo basado en la ruta actual
- */
-function getActiveInfo(pathname) {
-  for (const group of NAV_GROUPS) {
-    for (const item of group.items) {
-      if (pathname === item.path || pathname.startsWith(item.path + '/')) {
-        return { groupId: group.id, itemId: item.id };
-      }
-    }
-  }
-  return { groupId: null, itemId: null };
-}
-
-/**
- * Selector móvil - Un único dropdown con todos los items agrupados
- */
-function MobileNavSelector({ groups, activeGroupId, activeItemId }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
-
-  // Encontrar el item activo para mostrar en el botón
-  const activeItem = groups
-    .flatMap(g => g.items)
-    .find(item => item.id === activeItemId);
-
-  const activeGroup = groups.find(g => g.id === activeGroupId);
-
-  // Cerrar al hacer click fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // Cerrar con Escape
-  useEffect(() => {
-    function handleKeyDown(event) {
-      if (event.key === 'Escape') setIsOpen(false);
-    }
-    if (isOpen) {
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }
-  }, [isOpen]);
-
-  const handleItemClick = (path) => {
-    navigate(path);
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          'w-full flex items-center justify-between gap-2 px-4 py-3 text-sm font-medium rounded-lg transition-colors',
-          'bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600',
-          'text-gray-900 dark:text-gray-100'
-        )}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-      >
-        <div className="flex items-center gap-2">
-          {activeGroup && <activeGroup.icon className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-          <span className="text-gray-500 dark:text-gray-400">
-            {activeGroup?.label || 'Inventario'}
-          </span>
-          <ChevronDown className="h-3 w-3 text-gray-400" />
-          {activeItem && (
-            <>
-              <span className="text-gray-900 dark:text-gray-100">{activeItem.label}</span>
-            </>
-          )}
-        </div>
-        <ChevronDown className={cn('h-5 w-5 text-gray-400 transition-transform', isOpen && 'rotate-180')} />
-      </button>
-
-      {isOpen && (
-        <div
-          className="absolute left-0 right-0 mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50 max-h-[70vh] overflow-y-auto"
-          role="menu"
-        >
-          {groups.map((group) => {
-            const GroupIcon = group.icon;
-            return (
-              <div key={group.id}>
-                {/* Header del grupo */}
-                <div className="px-4 py-2 flex items-center gap-2">
-                  <GroupIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-                  <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    {group.label}
-                  </span>
-                </div>
-                {/* Items del grupo */}
-                {group.items.map((item) => {
-                  const ItemIcon = item.icon;
-                  const isItemActive = item.id === activeItemId;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => handleItemClick(item.path)}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-4 pl-10 py-2.5 text-sm text-left transition-colors',
-                        isItemActive
-                          ? 'bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-400'
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                      )}
-                      role="menuitem"
-                    >
-                      <ItemIcon className={cn('h-4 w-4', isItemActive ? 'text-primary-600 dark:text-primary-400' : 'text-gray-400')} />
-                      <span className="flex-1">{item.label}</span>
-                      {isItemActive && <Check className="h-4 w-4 text-primary-600 dark:text-primary-400" />}
-                    </button>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-/**
  * InventarioNavTabs - Navegación principal del módulo Inventario
- * Desktop: 5 dropdowns con grupos
- * Mobile: 1 selector único con todos los items
+ * Usa GenericNavTabs en modo grouped (dropdowns)
  */
 export default function InventarioNavTabs() {
-  const location = useLocation();
-  const { groupId, itemId } = getActiveInfo(location.pathname);
-
   return (
-    <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-      {/* Desktop: Grupos horizontales con dropdowns */}
-      <div className="hidden md:flex items-center gap-1 px-4 py-2">
-        {NAV_GROUPS.map((group) => (
-          <NavDropdown
-            key={group.id}
-            label={group.label}
-            icon={group.icon}
-            items={group.items}
-            isActive={group.id === groupId}
-            activeItemId={itemId}
-          />
-        ))}
-      </div>
-
-      {/* Mobile: Selector único */}
-      <div className="md:hidden px-4 py-2">
-        <MobileNavSelector
-          groups={NAV_GROUPS}
-          activeGroupId={groupId}
-          activeItemId={itemId}
-        />
-      </div>
-    </nav>
+    <GenericNavTabs
+      groups={NAV_GROUPS}
+      fallbackLabel="Inventario"
+      fallbackIcon={Package}
+    />
   );
 }

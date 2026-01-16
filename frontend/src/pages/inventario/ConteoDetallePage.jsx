@@ -21,9 +21,14 @@ import {
 } from 'lucide-react';
 import { extractProductCode } from '@/utils/gs1Parser';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
 import Textarea from '@/components/ui/Textarea';
 import BarcodeScanner from '@/components/common/BarcodeScanner';
+import {
+    IniciarConteoModal,
+    CompletarConteoModal,
+    AplicarAjustesModal,
+    CancelarConteoModal,
+} from '@/components/inventario/conteos/modales';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
@@ -672,103 +677,39 @@ export default function ConteoDetallePage() {
             </div>
 
             {/* Modales */}
-            <Modal isOpen={isOpen('iniciar')} onClose={() => closeModal('iniciar')} title="Iniciar Conteo">
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas iniciar el conteo <strong>{conteo.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Se generarán los productos a contar según los filtros configurados.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('iniciar')}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleIniciar} isLoading={iniciarMutation.isPending}>
-                            <Play className="h-4 w-4 mr-1" />
-                            Iniciar
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            <IniciarConteoModal
+                isOpen={isOpen('iniciar')}
+                onClose={() => closeModal('iniciar')}
+                conteo={conteo}
+                onConfirm={handleIniciar}
+                isLoading={iniciarMutation.isPending}
+            />
 
-            <Modal isOpen={isOpen('completar')} onClose={() => closeModal('completar')} title="Completar Conteo">
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas completar el conteo <strong>{conteo.folio}</strong>?
-                    </p>
-                    {conteo.resumen?.con_diferencia > 0 && (
-                        <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/30 rounded-lg mb-4">
-                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
-                            <p className="text-sm text-amber-700 dark:text-amber-300">
-                                Hay {conteo.resumen.con_diferencia} producto(s) con diferencia que generarán ajustes
-                                de inventario.
-                            </p>
-                        </div>
-                    )}
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('completar')}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleCompletar} isLoading={completarMutation.isPending}>
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Completar
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            <CompletarConteoModal
+                isOpen={isOpen('completar')}
+                onClose={() => closeModal('completar')}
+                conteo={conteo}
+                onConfirm={handleCompletar}
+                isLoading={completarMutation.isPending}
+            />
 
-            <Modal
+            <AplicarAjustesModal
                 isOpen={isOpen('aplicarAjustes')}
                 onClose={() => closeModal('aplicarAjustes')}
-                title="Aplicar Ajustes de Inventario"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas aplicar los ajustes del conteo <strong>{conteo.folio}</strong>?
-                    </p>
-                    <div className="flex items-start gap-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg mb-4">
-                        <Package className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5" />
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                            Se crearán movimientos de inventario para ajustar el stock de los{' '}
-                            {conteo.resumen?.con_diferencia || 0} producto(s) con diferencia.
-                        </p>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('aplicarAjustes')}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleAplicarAjustes} isLoading={aplicarAjustesMutation.isPending}>
-                            <Save className="h-4 w-4 mr-1" />
-                            Aplicar Ajustes
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                conteo={conteo}
+                onConfirm={handleAplicarAjustes}
+                isLoading={aplicarAjustesMutation.isPending}
+            />
 
-            <Modal isOpen={isOpen('cancelar')} onClose={() => closeModal('cancelar')} title="Cancelar Conteo">
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas cancelar el conteo <strong>{conteo.folio}</strong>?
-                    </p>
-                    <Textarea
-                        label="Motivo de cancelación (opcional)"
-                        value={motivoCancelacion}
-                        onChange={(e) => setMotivoCancelacion(e.target.value)}
-                        placeholder="Ingresa el motivo..."
-                        rows={3}
-                    />
-                    <div className="flex justify-end gap-2 mt-4">
-                        <Button variant="outline" onClick={() => closeModal('cancelar')}>
-                            Volver
-                        </Button>
-                        <Button variant="danger" onClick={handleCancelar} isLoading={cancelarMutation.isPending}>
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Cancelar Conteo
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+            <CancelarConteoModal
+                isOpen={isOpen('cancelar')}
+                onClose={() => closeModal('cancelar')}
+                conteo={conteo}
+                onConfirm={handleCancelar}
+                isLoading={cancelarMutation.isPending}
+                motivo={motivoCancelacion}
+                onMotivoChange={setMotivoCancelacion}
+            />
         </div>
     );
 }

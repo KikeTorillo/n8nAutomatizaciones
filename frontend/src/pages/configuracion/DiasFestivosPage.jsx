@@ -11,12 +11,13 @@ import {
   CheckCircle,
   Loader2,
 } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfigPageHeader, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/useBloqueos';
@@ -27,7 +28,7 @@ import {
   prepararFeriadosParaImportacion,
   obtenerInfoPais,
 } from '@/data/feriados-latam';
-import { format, parseISO, getYear } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 /**
@@ -159,33 +160,22 @@ function DiasFestivosPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/configuracion" label="Configuración" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Días Festivos
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Feriados nacionales y días no laborables
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                onClick={() => openModal('importar')}
-                icon={<Download className="h-4 w-4" />}
-              >
-                Importar
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ConfigPageHeader
+        title="Días Festivos"
+        subtitle="Feriados nacionales y días no laborables"
+        icon={Calendar}
+        maxWidth="max-w-6xl"
+        actions={
+          <Button
+            variant="outline"
+            onClick={() => openModal('importar')}
+            size="sm"
+          >
+            <Download className="h-4 w-4 mr-2" />
+            Importar
+          </Button>
+        }
+      />
 
       {/* Content */}
       <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -256,20 +246,16 @@ function DiasFestivosPage() {
             <Loader2 className="h-8 w-8 text-primary-600 animate-spin" />
           </div>
         ) : feriadosFiltrados.length === 0 ? (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-8 text-center">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full mb-4">
-              <Calendar className="h-8 w-8 text-red-600 dark:text-red-400" />
-            </div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              No hay feriados registrados
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400 mb-4">
-              Importa feriados de tu país para comenzar
-            </p>
-            <Button onClick={() => openModal('importar')} icon={<Download className="h-4 w-4" />}>
-              Importar Feriados
-            </Button>
-          </div>
+          <ConfigEmptyState
+            icon={Calendar}
+            title="No hay feriados registrados"
+            description="Importa feriados de tu país para comenzar"
+            actionLabel="Importar Feriados"
+            onAction={() => openModal('importar')}
+            isFiltered={!!busqueda}
+            filteredTitle="No se encontraron feriados"
+            filteredDescription="Intenta con otro término de búsqueda"
+          />
         ) : (
           <div className="space-y-6">
             {Object.entries(feriadosPorMes).map(([mes, feriadosMes]) => (

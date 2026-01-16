@@ -18,7 +18,7 @@ import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
-import { SeatingChartEditor } from './components';
+import { SeatingChartEditor } from '@/components/eventos-digitales';
 import useAuthStore from '@/store/authStore';
 import {
   useEvento,
@@ -48,7 +48,7 @@ import {
   UbicacionesTab,
   RegalosTab,
   FelicitacionesTab,
-} from './tabs';
+} from '@/components/eventos-digitales';
 
 /**
  * Pagina de detalle de evento digital con tabs

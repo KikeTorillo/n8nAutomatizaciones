@@ -1,25 +1,26 @@
-import { useState, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useMemo } from 'react';
 import {
   Tag,
   Plus,
   Edit2,
   Trash2,
   Loader2,
-  Search,
   Award,
   Star,
   Layers,
   GraduationCap,
 } from 'lucide-react';
 
-import BackButton from '@/components/ui/BackButton';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
-import Drawer from '@/components/ui/Drawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import {
+  ConfigPageHeader,
+  ConfigSearchBar,
+  ConfigEmptyState,
+  ConfigCrudDrawer,
+} from '@/components/configuracion';
+import { useConfigCrud } from '@/hooks/useConfigCrud';
 import {
   useCategoriasProfesional,
   useCategoriasAgrupadas,
@@ -38,23 +39,17 @@ const TIPO_ICONS = {
   general: Award,
 };
 
+// Opciones de filtro para el select
+const TIPO_OPTIONS = Object.entries(TIPOS_CATEGORIA).map(([key, value]) => ({
+  value: key,
+  label: value.label,
+}));
+
 /**
  * Página de configuración de Categorías de Profesional
- * CRUD completo agrupado por tipo
+ * Refactorizada con componentes genéricos
  */
 function CategoriasPage() {
-  const toast = useToast();
-
-  // Estado de filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterTipo, setFilterTipo] = useState('');
-
-  // Estado de modales centralizado con useModalManager
-  const { openModal, closeModal, isOpen, getModalData } = useModalManager({
-    form: { isOpen: false, data: null },
-    delete: { isOpen: false, data: null },
-  });
-
   // Queries
   const { data: categorias = [], isLoading } = useCategoriasProfesional();
   const { data: categoriasAgrupadas = {} } = useCategoriasAgrupadas();
@@ -64,14 +59,25 @@ function CategoriasPage() {
   const actualizarMutation = useActualizarCategoriaProfesional();
   const eliminarMutation = useEliminarCategoriaProfesional();
 
-  // Form
+  // CRUD hook centralizado
   const {
-    register,
+    searchTerm,
+    setSearchTerm,
+    filters,
+    setFilter,
+    isOpen,
+    closeModal,
+    getModalData,
+    handleNew,
+    handleEdit,
+    handleDelete,
+    confirmDelete,
+    form,
     handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm({
+    isSubmitting,
+    isEditing,
+  } = useConfigCrud({
+    items: categorias,
     defaultValues: {
       nombre: '',
       tipo_categoria: 'especialidad',
@@ -81,10 +87,37 @@ function CategoriasPage() {
       orden: '',
       activo: true,
     },
+    createMutation: crearMutation,
+    updateMutation: actualizarMutation,
+    deleteMutation: eliminarMutation,
+    toastMessages: {
+      created: 'Categoría creada',
+      updated: 'Categoría actualizada',
+      deleted: 'Categoría eliminada',
+    },
+    preparePayload: (data) => ({
+      nombre: data.nombre.trim(),
+      tipo_categoria: data.tipo_categoria,
+      descripcion: data.descripcion?.trim() || undefined,
+      color: data.color || undefined,
+      icono: data.icono?.trim() || undefined,
+      orden: data.orden ? parseInt(data.orden) : undefined,
+      activo: data.activo,
+    }),
+    prepareEditValues: (item) => ({
+      nombre: item.nombre || '',
+      tipo_categoria: item.tipo_categoria || 'general',
+      descripcion: item.descripcion || '',
+      color: item.color || '#753572',
+      icono: item.icono || '',
+      orden: item.orden?.toString() || '',
+      activo: item.activo ?? true,
+    }),
   });
 
-  const tipoSeleccionado = watch('tipo_categoria');
+  const { register, watch, formState: { errors } } = form;
   const colorSeleccionado = watch('color');
+  const filterTipo = filters.tipo_categoria || '';
 
   // Filtrar categorías
   const categoriasFiltradas = useMemo(() => {
@@ -116,88 +149,22 @@ function CategoriasPage() {
     }, {});
   }, [categoriasFiltradas, filterTipo]);
 
-  // Abrir drawer para crear
-  const handleNuevo = (tipo = 'especialidad') => {
-    reset({
-      nombre: '',
+  // Handler especial para crear con tipo preseleccionado
+  const handleNuevoConTipo = (tipo = 'especialidad') => {
+    const colorMap = {
+      especialidad: '#753572',
+      nivel: '#3B82F6',
+      area: '#10B981',
+      certificacion: '#F59E0B',
+      general: '#6B7280',
+    };
+    handleNew({
       tipo_categoria: tipo,
-      descripcion: '',
-      color: TIPOS_CATEGORIA[tipo]?.color === 'purple' ? '#753572' :
-             TIPOS_CATEGORIA[tipo]?.color === 'blue' ? '#3B82F6' :
-             TIPOS_CATEGORIA[tipo]?.color === 'green' ? '#10B981' :
-             TIPOS_CATEGORIA[tipo]?.color === 'yellow' ? '#F59E0B' : '#6B7280',
-      icono: '',
-      orden: '',
-      activo: true,
+      color: colorMap[tipo] || '#753572',
     });
-    openModal('form', null);
   };
 
-  // Abrir drawer para editar
-  const handleEditar = (categoria) => {
-    reset({
-      nombre: categoria.nombre || '',
-      tipo_categoria: categoria.tipo_categoria || 'general',
-      descripcion: categoria.descripcion || '',
-      color: categoria.color || '#753572',
-      icono: categoria.icono || '',
-      orden: categoria.orden?.toString() || '',
-      activo: categoria.activo ?? true,
-    });
-    openModal('form', categoria);
-  };
-
-  // Confirmar eliminación
-  const handleEliminar = (categoria) => {
-    openModal('delete', categoria);
-  };
-
-  // Submit form
-  const onSubmit = async (data) => {
-    const editingCategoria = getModalData('form');
-    try {
-      const payload = {
-        nombre: data.nombre.trim(),
-        tipo_categoria: data.tipo_categoria,
-        descripcion: data.descripcion?.trim() || undefined,
-        color: data.color || undefined,
-        icono: data.icono?.trim() || undefined,
-        orden: data.orden ? parseInt(data.orden) : undefined,
-        activo: data.activo,
-      };
-
-      if (editingCategoria) {
-        await actualizarMutation.mutateAsync({
-          id: editingCategoria.id,
-          data: payload,
-        });
-        toast.success('Categoría actualizada');
-      } else {
-        await crearMutation.mutateAsync(payload);
-        toast.success('Categoría creada');
-      }
-
-      closeModal('form');
-      reset();
-    } catch (err) {
-      toast.error(err.message || 'Error al guardar');
-    }
-  };
-
-  // Confirmar delete
-  const confirmarEliminar = async () => {
-    const deleteConfirm = getModalData('delete');
-    if (!deleteConfirm) return;
-    try {
-      await eliminarMutation.mutateAsync(deleteConfirm.id);
-      toast.success('Categoría eliminada');
-      closeModal('delete');
-    } catch (err) {
-      toast.error(err.message || 'Error al eliminar');
-    }
-  };
-
-  // Componente de grupo
+  // Componente de grupo (específico de esta página)
   const GrupoCategoria = ({ tipo, items }) => {
     const TipoIcon = TIPO_ICONS[tipo] || Tag;
     const tipoInfo = TIPOS_CATEGORIA[tipo] || { label: tipo, color: 'gray' };
@@ -214,122 +181,58 @@ function CategoriasPage() {
               {items.length}
             </span>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => handleNuevo(tipo)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => handleNuevoConTipo(tipo)}>
             <Plus className="w-4 h-4" />
           </Button>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {items.map(categoria => (
-            <div
+            <CategoriaCard
               key={categoria.id}
-              className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors"
-            >
-              {/* Color indicator */}
-              <div
-                className="w-3 h-3 rounded-full flex-shrink-0"
-                style={{ backgroundColor: categoria.color || '#753572' }}
-              />
-
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                    {categoria.nombre}
-                  </span>
-                  {!categoria.activo && (
-                    <span className="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">
-                      Inactivo
-                    </span>
-                  )}
-                </div>
-                {categoria.descripcion && (
-                  <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
-                    {categoria.descripcion}
-                  </p>
-                )}
-              </div>
-
-              {/* Actions */}
-              <div className="flex items-center gap-1 flex-shrink-0">
-                <button
-                  onClick={() => handleEditar(categoria)}
-                  className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                  title="Editar"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleEliminar(categoria)}
-                  className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                  title="Eliminar"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+              categoria={categoria}
+              onEdit={() => handleEdit(categoria)}
+              onDelete={() => handleDelete(categoria)}
+            />
           ))}
         </div>
       </div>
     );
   };
 
+  const isFiltered = !!(searchTerm || filterTipo);
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <BackButton to="/configuracion" label="Configuración" />
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                  Categorías de Profesional
-                </h1>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Especialidades, niveles, áreas y certificaciones
-                </p>
-              </div>
-            </div>
-            <Button onClick={() => handleNuevo()} size="sm">
-              <Plus className="w-4 h-4 mr-2" />
-              Nueva
-            </Button>
-          </div>
-        </div>
-      </div>
+      <ConfigPageHeader
+        title="Categorías de Profesional"
+        subtitle="Especialidades, niveles, áreas y certificaciones"
+        icon={Tag}
+        actions={
+          <Button onClick={() => handleNuevoConTipo()} size="sm">
+            <Plus className="w-4 h-4 mr-2" />
+            Nueva
+          </Button>
+        }
+      />
 
-      {/* Content */}
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Buscar categoría..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-          <select
-            value={filterTipo}
-            onChange={(e) => setFilterTipo(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-          >
-            <option value="">Todos los tipos</option>
-            {Object.entries(TIPOS_CATEGORIA).map(([key, value]) => (
-              <option key={key} value={key}>{value.label}</option>
-            ))}
-          </select>
-        </div>
+        <ConfigSearchBar
+          value={searchTerm}
+          onChange={setSearchTerm}
+          placeholder="Buscar categoría..."
+          filters={[
+            {
+              name: 'tipo_categoria',
+              value: filterTipo,
+              onChange: (v) => setFilter('tipo_categoria', v),
+              options: TIPO_OPTIONS,
+              placeholder: 'Todos los tipos',
+            },
+          ]}
+        />
 
-        {/* Stats */}
+        {/* Stats por tipo */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
           {Object.entries(TIPOS_CATEGORIA).slice(0, 4).map(([tipo, info]) => {
             const TipoIcon = TIPO_ICONS[tipo] || Tag;
@@ -354,25 +257,21 @@ function CategoriasPage() {
           })}
         </div>
 
-        {/* Grouped List */}
+        {/* Lista agrupada */}
         <div className="bg-gray-50 dark:bg-gray-900 rounded-xl p-4">
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
             </div>
           ) : Object.keys(categoriasAgrupadasFiltradas).length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl">
-              <Tag className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-4">
-                {searchTerm || filterTipo ? 'No se encontraron categorías' : 'No hay categorías configuradas'}
-              </p>
-              {!searchTerm && !filterTipo && (
-                <Button onClick={() => handleNuevo()} variant="outline" size="sm">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Crear primera categoría
-                </Button>
-              )}
-            </div>
+            <ConfigEmptyState
+              icon={Tag}
+              title="No hay categorías configuradas"
+              description="Crea tu primera categoría para organizar a tus profesionales"
+              actionLabel="Crear primera categoría"
+              onAction={() => handleNuevoConTipo()}
+              isFiltered={isFiltered}
+            />
           ) : (
             Object.entries(categoriasAgrupadasFiltradas).map(([tipo, items]) => (
               items.length > 0 && <GrupoCategoria key={tipo} tipo={tipo} items={items} />
@@ -382,105 +281,88 @@ function CategoriasPage() {
       </main>
 
       {/* Drawer Form */}
-      <Drawer
+      <ConfigCrudDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
-        title={getModalData('form') ? 'Editar Categoría' : 'Nueva Categoría'}
-        subtitle={getModalData('form') ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
+        title={isEditing ? 'Editar Categoría' : 'Nueva Categoría'}
+        subtitle={isEditing ? 'Modifica los datos de la categoría' : 'Crea una nueva categoría de profesional'}
+        onSubmit={handleSubmit}
+        isLoading={isSubmitting}
+        isEditing={isEditing}
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label="Nombre"
-            placeholder="Ej: Corte Clásico"
-            error={errors.nombre?.message}
-            {...register('nombre', { required: 'El nombre es requerido' })}
+        <Input
+          label="Nombre"
+          placeholder="Ej: Corte Clásico"
+          error={errors.nombre?.message}
+          {...register('nombre', { required: 'El nombre es requerido' })}
+        />
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Tipo de Categoría
+          </label>
+          <select
+            {...register('tipo_categoria')}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+          >
+            {TIPO_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Descripción (Opcional)
+          </label>
+          <textarea
+            {...register('descripcion')}
+            rows={3}
+            placeholder="Descripción de la categoría..."
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
           />
+        </div>
 
+        <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Tipo de Categoría
+              Color
             </label>
-            <select
-              {...register('tipo_categoria')}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-            >
-              {Object.entries(TIPOS_CATEGORIA).map(([key, value]) => (
-                <option key={key} value={key}>{value.label}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Descripción (Opcional)
-            </label>
-            <textarea
-              {...register('descripcion')}
-              rows={3}
-              placeholder="Descripción de la categoría..."
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Color
-              </label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  {...register('color')}
-                  className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
-                />
-                <span className="text-sm text-gray-500">{colorSeleccionado}</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="color"
+                {...register('color')}
+                className="w-10 h-10 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
+              />
+              <span className="text-sm text-gray-500">{colorSeleccionado}</span>
             </div>
-            <Input
-              label="Orden"
-              type="number"
-              placeholder="0"
-              {...register('orden')}
-            />
           </div>
-
           <Input
-            label="Icono (Opcional)"
-            placeholder="Nombre del icono Lucide"
-            {...register('icono')}
+            label="Orden"
+            type="number"
+            placeholder="0"
+            {...register('orden')}
           />
+        </div>
 
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="activo"
-              {...register('activo')}
-              className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
-            />
-            <label htmlFor="activo" className="text-sm text-gray-700 dark:text-gray-300">
-              Categoría activa
-            </label>
-          </div>
+        <Input
+          label="Icono (Opcional)"
+          placeholder="Nombre del icono Lucide"
+          {...register('icono')}
+        />
 
-          <div className="flex gap-3 pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => closeModal('form')}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              className="flex-1"
-              loading={crearMutation.isPending || actualizarMutation.isPending}
-            >
-              {getModalData('form') ? 'Actualizar' : 'Crear'}
-            </Button>
-          </div>
-        </form>
-      </Drawer>
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            id="activo"
+            {...register('activo')}
+            className="w-4 h-4 text-primary-600 rounded focus:ring-primary-500"
+          />
+          <label htmlFor="activo" className="text-sm text-gray-700 dark:text-gray-300">
+            Categoría activa
+          </label>
+        </div>
+      </ConfigCrudDrawer>
 
       {/* Confirm Delete Dialog */}
       <ConfirmDialog
@@ -490,9 +372,56 @@ function CategoriasPage() {
         message={`¿Estás seguro de eliminar "${getModalData('delete')?.nombre}"? Esta acción no se puede deshacer.`}
         confirmText="Eliminar"
         variant="danger"
-        onConfirm={confirmarEliminar}
+        onConfirm={confirmDelete}
         isLoading={eliminarMutation.isPending}
       />
+    </div>
+  );
+}
+
+/**
+ * Card de categoría individual
+ */
+function CategoriaCard({ categoria, onEdit, onDelete }) {
+  return (
+    <div className="flex items-center gap-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition-colors">
+      <div
+        className="w-3 h-3 rounded-full flex-shrink-0"
+        style={{ backgroundColor: categoria.color || '#753572' }}
+      />
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-gray-900 dark:text-gray-100 truncate">
+            {categoria.nombre}
+          </span>
+          {!categoria.activo && (
+            <span className="text-xs text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded">
+              Inactivo
+            </span>
+          )}
+        </div>
+        {categoria.descripcion && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+            {categoria.descripcion}
+          </p>
+        )}
+      </div>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <button
+          onClick={onEdit}
+          className="p-1.5 text-gray-400 hover:text-primary-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          title="Editar"
+        >
+          <Edit2 className="w-4 h-4" />
+        </button>
+        <button
+          onClick={onDelete}
+          className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+          title="Eliminar"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
     </div>
   );
 }

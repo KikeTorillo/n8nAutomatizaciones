@@ -240,7 +240,7 @@ function ModulosPage() {
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <BackButton to="/home" label="Volver al Inicio" className="mb-3" />
+          <BackButton to="/configuracion" label="Configuración" className="mb-3" />
           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
             Gestión de Módulos
           </h1>

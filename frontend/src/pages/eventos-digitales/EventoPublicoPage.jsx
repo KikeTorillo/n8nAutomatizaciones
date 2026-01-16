@@ -4,11 +4,7 @@ import {
   Calendar,
   CalendarPlus,
   Clock,
-  MapPin,
-  Gift,
   Heart,
-  Send,
-  ExternalLink,
   Check,
   X,
   PartyPopper,
@@ -16,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Download,
-  QrCode,
   Camera
 } from 'lucide-react';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
@@ -25,7 +20,6 @@ import {
   useEventoPublico,
   useInvitacionPublica,
   useConfirmarRSVP,
-  useGaleriaPublica,
 } from '@/hooks/useEventosDigitales';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import {
@@ -35,8 +29,13 @@ import {
   TituloTematico,
   DecoracionEsquinas,
   MarcoFoto,
-  IconoPrincipal
-} from './components';
+  IconoPrincipal,
+  EventoUbicaciones,
+  EventoRegalos,
+  EventoFelicitaciones,
+  EventoRSVP,
+} from '@/components/eventos-digitales';
+import '@/components/eventos-digitales/publico/EventoAnimations.css';
 
 /**
  * Página pública del evento digital (RSVP)
@@ -374,74 +373,6 @@ function EventoPublicoPage() {
         fontFamily: tema.fuente_cuerpo,
       }}
     >
-      {/* Animation Styles */}
-      <style>{`
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(40px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes scaleIn {
-          from {
-            opacity: 0;
-            transform: scale(0.9);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes slideInLeft {
-          from {
-            opacity: 0;
-            transform: translateX(-50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        @keyframes slideInRight {
-          from {
-            opacity: 0;
-            transform: translateX(50px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        .animate-fadeInUp {
-          animation: fadeInUp 0.8s ease-out forwards;
-        }
-        .animate-fadeIn {
-          animation: fadeIn 0.6s ease-out forwards;
-        }
-        .animate-scaleIn {
-          animation: scaleIn 0.7s ease-out forwards;
-        }
-        .animate-slideInLeft {
-          animation: slideInLeft 0.8s ease-out forwards;
-        }
-        .animate-slideInRight {
-          animation: slideInRight 0.8s ease-out forwards;
-        }
-        .stagger-1 { animation-delay: 0.1s; }
-        .stagger-2 { animation-delay: 0.2s; }
-        .stagger-3 { animation-delay: 0.3s; }
-        .stagger-4 { animation-delay: 0.4s; }
-        .stagger-5 { animation-delay: 0.5s; }
-      `}</style>
-
       {/* Hero Section - Fullscreen */}
       <section
         ref={sectionRefs.inicio}
@@ -847,529 +778,52 @@ function EventoPublicoPage() {
 
         {/* Ubicaciones */}
         {configuracion.mostrar_ubicaciones !== false && ubicaciones.length > 0 && (
-          <section
+          <EventoUbicaciones
             ref={sectionRefs.ubicaciones}
-            data-section="ubicaciones"
-            className="py-20"
-            style={{ backgroundColor: tema.color_secundario + '30' }}
-          >
-            <div className="max-w-5xl mx-auto px-4">
-              <div className={`text-center mb-12 ${getAnimationClass('ubicaciones')}`}>
-                <h2
-                  className="text-4xl sm:text-5xl font-bold mb-4"
-                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-                >
-                  Ubicaciones
-                </h2>
-                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
-                  Te esperamos en
-                </p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {ubicaciones.map((ubi, ubiIdx) => (
-                  <div
-                    key={ubi.id}
-                    className={`relative overflow-hidden rounded-3xl p-8 transition-transform hover:scale-[1.02] ${visibleSections.has('ubicaciones') ? (ubiIdx % 2 === 0 ? 'animate-slideInLeft' : 'animate-slideInRight') : 'opacity-0'}`}
-                    style={{
-                      animationDelay: `${ubiIdx * 0.15}s`,
-                      backgroundColor: 'white',
-                      boxShadow: `0 10px 40px ${tema.color_primario}15`
-                    }}
-                  >
-                    {/* Decorative corner */}
-                    <div
-                      className="absolute top-0 right-0 w-24 h-24 opacity-10"
-                      style={{
-                        background: `radial-gradient(circle at top right, ${tema.color_primario}, transparent)`
-                      }}
-                    />
-
-                    <div className="flex items-start gap-5">
-                      <div
-                        className="w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0"
-                        style={{ backgroundColor: tema.color_secundario }}
-                      >
-                        <MapPin className="w-8 h-8" style={{ color: tema.color_primario }} />
-                      </div>
-                      <div className="flex-1">
-                        <p
-                          className="text-sm font-semibold uppercase tracking-wider mb-1"
-                          style={{ color: tema.color_primario }}
-                        >
-                          {ubi.tipo}
-                        </p>
-                        <h3
-                          className="text-2xl font-bold mb-3"
-                          style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-                        >
-                          {ubi.nombre}
-                        </h3>
-                        {ubi.hora_inicio && (
-                          <p className="flex items-center gap-2 mb-2" style={{ color: tema.color_texto_claro }}>
-                            <Clock className="w-4 h-4" />
-                            {ubi.hora_inicio}{ubi.hora_fin ? ` - ${ubi.hora_fin}` : ''}
-                          </p>
-                        )}
-                        {ubi.direccion && (
-                          <p className="mb-2" style={{ color: tema.color_texto_claro }}>{ubi.direccion}</p>
-                        )}
-                        {ubi.codigo_vestimenta && (
-                          <p className="text-sm mb-3" style={{ color: tema.color_texto_claro }}>
-                            <span className="font-medium">Vestimenta:</span> {ubi.codigo_vestimenta}
-                          </p>
-                        )}
-                        {ubi.google_maps_url && (
-                          <a
-                            href={ubi.google_maps_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all hover:scale-105"
-                            style={{
-                              backgroundColor: tema.color_primario,
-                              color: 'white'
-                            }}
-                          >
-                            <MapPin className="w-4 h-4" />
-                            Ver en Maps
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+            ubicaciones={ubicaciones}
+            tema={tema}
+            visibleSections={visibleSections}
+          />
         )}
 
         {/* Mesa de Regalos */}
         {configuracion.mostrar_mesa_regalos !== false && regalos.length > 0 && (
-          <section
+          <EventoRegalos
             ref={sectionRefs.regalos}
-            data-section="regalos"
-            className="max-w-5xl mx-auto px-4 py-20"
-          >
-            <div className={`text-center mb-12 ${getAnimationClass('regalos')}`}>
-              <h2
-                className="text-4xl sm:text-5xl font-bold mb-4"
-                style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-              >
-                Mesa de Regalos
-              </h2>
-              <p className="text-lg max-w-xl mx-auto" style={{ color: tema.color_texto_claro }}>
-                Tu presencia es nuestro mejor regalo, pero si deseas obsequiarnos algo
-              </p>
-            </div>
-
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {regalos.filter(r => !r.comprado).map((regalo, idx) => (
-                <div
-                  key={regalo.id}
-                  className={`group relative overflow-hidden rounded-3xl p-6 transition-all hover:scale-[1.02] ${visibleSections.has('regalos') ? 'animate-scaleIn' : 'opacity-0'}`}
-                  style={{
-                    animationDelay: `${idx * 0.1}s`,
-                    backgroundColor: 'white',
-                    boxShadow: `0 10px 40px ${tema.color_primario}10`
-                  }}
-                >
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
-                    style={{ backgroundColor: tema.color_secundario }}
-                  >
-                    <Gift className="w-7 h-7" style={{ color: tema.color_primario }} />
-                  </div>
-                  <h3
-                    className="text-xl font-bold mb-2"
-                    style={{ color: tema.color_texto }}
-                  >
-                    {regalo.nombre}
-                  </h3>
-                  {regalo.descripcion && (
-                    <p className="text-sm mb-3" style={{ color: tema.color_texto_claro }}>
-                      {regalo.descripcion}
-                    </p>
-                  )}
-                  {regalo.precio && (
-                    <p
-                      className="text-2xl font-bold mb-4"
-                      style={{ color: tema.color_primario }}
-                    >
-                      ${regalo.precio.toLocaleString()}
-                    </p>
-                  )}
-                  {regalo.url_externa && (
-                    <a
-                      href={regalo.url_externa}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium transition-colors"
-                      style={{ color: tema.color_primario }}
-                    >
-                      Ver regalo
-                      <ExternalLink className="w-4 h-4" />
-                    </a>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
+            regalos={regalos}
+            tema={tema}
+            visibleSections={visibleSections}
+          />
         )}
 
         {/* Felicitaciones */}
         {configuracion.permitir_felicitaciones !== false && (
-          <section
+          <EventoFelicitaciones
             ref={sectionRefs.felicitaciones}
-            data-section="felicitaciones"
-            className="py-20"
-            style={{ backgroundColor: tema.color_secundario + '30' }}
-          >
-            <div className="max-w-5xl mx-auto px-4">
-              <div className={`text-center mb-12 ${getAnimationClass('felicitaciones')}`}>
-                <h2
-                  className="text-4xl sm:text-5xl font-bold mb-4"
-                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-                >
-                  Libro de Firmas
-                </h2>
-                <p className="text-lg" style={{ color: tema.color_texto_claro }}>
-                  Déjanos tus buenos deseos
-                </p>
-              </div>
-
-              {/* Form */}
-              <form
-                onSubmit={handleEnviarFelicitacion}
-                className={`max-w-xl mx-auto rounded-3xl p-8 ${visibleSections.has('felicitaciones') ? 'animate-scaleIn stagger-2' : 'opacity-0'}`}
-                style={{
-                  backgroundColor: 'white',
-                  boxShadow: `0 10px 40px ${tema.color_primario}10`
-                }}
-              >
-                <div className="space-y-5">
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: tema.color_texto }}
-                    >
-                      Tu Nombre
-                    </label>
-                    <input
-                      type="text"
-                      value={felicitacionForm.nombre_autor}
-                      onChange={(e) => setFelicitacionForm({ ...felicitacionForm, nombre_autor: e.target.value })}
-                      placeholder="Escribe tu nombre"
-                      required
-                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
-                      style={{
-                        borderColor: tema.color_secundario,
-                        backgroundColor: 'white',
-                        color: tema.color_texto
-                      }}
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-sm font-medium mb-2"
-                      style={{ color: tema.color_texto }}
-                    >
-                      Tu Mensaje
-                    </label>
-                    <textarea
-                      value={felicitacionForm.mensaje}
-                      onChange={(e) => setFelicitacionForm({ ...felicitacionForm, mensaje: e.target.value })}
-                      rows={4}
-                      className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
-                      style={{
-                        borderColor: tema.color_secundario,
-                        backgroundColor: 'white',
-                        color: tema.color_texto
-                      }}
-                      placeholder="Escribe tus buenos deseos..."
-                      required
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="w-full py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: tema.color_primario,
-                      boxShadow: `0 10px 30px ${tema.color_primario}40`
-                    }}
-                  >
-                    <span className="flex items-center justify-center gap-2">
-                      <Send className="w-5 h-5" />
-                      Enviar Felicitación
-                    </span>
-                  </button>
-                </div>
-              </form>
-
-              {/* Messages */}
-              {felicitaciones.length > 0 && (
-                <div className="grid sm:grid-cols-2 gap-6 mt-12">
-                  {felicitaciones.map((fel, idx) => (
-                    <div
-                      key={fel.id}
-                      className={`relative rounded-3xl p-6 transition-transform hover:scale-[1.02] ${visibleSections.has('felicitaciones') ? 'animate-fadeInUp' : 'opacity-0'}`}
-                      style={{
-                        animationDelay: `${0.3 + idx * 0.1}s`,
-                        backgroundColor: 'white',
-                        boxShadow: `0 5px 20px ${tema.color_primario}10`
-                      }}
-                    >
-                      <div
-                        className="absolute top-6 left-6 text-6xl opacity-10"
-                        style={{ color: tema.color_primario, fontFamily: 'serif' }}
-                      >
-                        "
-                      </div>
-                      <p
-                        className="text-lg italic mb-4 relative z-10"
-                        style={{ color: tema.color_texto }}
-                      >
-                        {fel.mensaje}
-                      </p>
-                      <p
-                        className="font-semibold"
-                        style={{ color: tema.color_primario }}
-                      >
-                        — {fel.nombre_autor}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </section>
+            felicitaciones={felicitaciones}
+            tema={tema}
+            visibleSections={visibleSections}
+            form={felicitacionForm}
+            setForm={setFelicitacionForm}
+            onSubmit={handleEnviarFelicitacion}
+          />
         )}
 
         {/* RSVP */}
         {token && invitado && (
-          <section
+          <EventoRSVP
             ref={sectionRefs.rsvp}
-            data-section="rsvp"
-            className="max-w-5xl mx-auto px-4 py-20"
-          >
-            <div className="max-w-lg mx-auto">
-              <div className={`text-center mb-10 ${getAnimationClass('rsvp')}`}>
-                <h2
-                  className="text-4xl sm:text-5xl font-bold mb-4"
-                  style={{ color: tema.color_texto, fontFamily: tema.fuente_titulo }}
-                >
-                  Confirmar Asistencia
-                </h2>
-              </div>
-
-              {invitado.estado_rsvp === 'pendiente' ? (
-                <div
-                  className={`rounded-3xl p-8 ${visibleSections.has('rsvp') ? 'animate-scaleIn stagger-2' : 'opacity-0'}`}
-                  style={{
-                    backgroundColor: 'white',
-                    boxShadow: `0 20px 60px ${tema.color_primario}15`
-                  }}
-                >
-                  <div className="text-center mb-8">
-                    <p className="text-lg" style={{ color: tema.color_texto_claro }}>
-                      Hola <span className="font-bold" style={{ color: tema.color_primario }}>{invitado.nombre}</span>
-                    </p>
-                    <p style={{ color: tema.color_texto_claro }}>
-                      Nos encantaría contar con tu presencia
-                    </p>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: tema.color_texto }}
-                      >
-                        Número de personas
-                      </label>
-                      <select
-                        value={rsvpForm.num_asistentes}
-                        onChange={(e) => setRsvpForm({ ...rsvpForm, num_asistentes: parseInt(e.target.value) })}
-                        className="w-full px-4 py-3 border-2 rounded-xl"
-                        style={{
-                          borderColor: tema.color_secundario,
-                          backgroundColor: 'white',
-                          color: tema.color_texto
-                        }}
-                      >
-                        {[...Array(invitado.max_acompanantes + 1)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>{i + 1} persona{i > 0 ? 's' : ''}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: tema.color_texto }}
-                      >
-                        Mensaje (opcional)
-                      </label>
-                      <textarea
-                        value={rsvpForm.mensaje_rsvp}
-                        onChange={(e) => setRsvpForm({ ...rsvpForm, mensaje_rsvp: e.target.value })}
-                        rows={3}
-                        className="w-full px-4 py-3 border-2 rounded-xl"
-                        style={{
-                          borderColor: tema.color_secundario,
-                          backgroundColor: 'white',
-                          color: tema.color_texto
-                        }}
-                        placeholder="Un mensaje especial..."
-                      />
-                    </div>
-
-                    <div>
-                      <label
-                        className="block text-sm font-medium mb-2"
-                        style={{ color: tema.color_texto }}
-                      >
-                        Restricciones dietéticas (opcional)
-                      </label>
-                      <input
-                        type="text"
-                        value={rsvpForm.restricciones_dieteticas}
-                        onChange={(e) => setRsvpForm({ ...rsvpForm, restricciones_dieteticas: e.target.value })}
-                        placeholder="Ej: Vegetariano, sin gluten..."
-                        className="w-full px-4 py-3 border-2 rounded-xl focus:outline-none transition-colors"
-                        style={{
-                          borderColor: tema.color_secundario,
-                          backgroundColor: 'white',
-                          color: tema.color_texto
-                        }}
-                      />
-                    </div>
-
-                    <div className="flex gap-4 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => handleRSVP(true)}
-                        disabled={confirmarRSVP.isLoading}
-                        className="flex-1 py-4 rounded-xl font-semibold text-white transition-all hover:scale-[1.02]"
-                        style={{
-                          backgroundColor: tema.color_primario,
-                          boxShadow: `0 10px 30px ${tema.color_primario}40`
-                        }}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <Check className="w-5 h-5" />
-                          Confirmo
-                        </span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleRSVP(false)}
-                        disabled={confirmarRSVP.isLoading}
-                        className="flex-1 py-4 rounded-xl font-semibold border-2 transition-all hover:scale-[1.02]"
-                        style={{
-                          borderColor: tema.color_secundario,
-                          color: tema.color_texto_claro
-                        }}
-                      >
-                        <span className="flex items-center justify-center gap-2">
-                          <X className="w-5 h-5" />
-                          No asistiré
-                        </span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div
-                  className={`text-center rounded-3xl p-10 ${visibleSections.has('rsvp') ? 'animate-scaleIn' : 'opacity-0'}`}
-                  style={{
-                    backgroundColor: invitado.estado_rsvp === 'confirmado' ? tema.color_secundario : '#fee2e2'
-                  }}
-                >
-                  <div
-                    className="inline-flex items-center gap-3 text-2xl font-bold mb-4"
-                    style={{
-                      color: invitado.estado_rsvp === 'confirmado' ? tema.color_primario : '#dc2626'
-                    }}
-                  >
-                    {invitado.estado_rsvp === 'confirmado' ? (
-                      <>
-                        <Check className="w-8 h-8" />
-                        <span>¡Asistencia Confirmada!</span>
-                      </>
-                    ) : (
-                      <>
-                        <X className="w-8 h-8" />
-                        <span>No asistirás al evento</span>
-                      </>
-                    )}
-                  </div>
-                  {invitado.estado_rsvp === 'confirmado' && invitado.num_asistentes > 0 && (
-                    <p style={{ color: tema.color_texto_claro }}>
-                      {invitado.num_asistentes} persona{invitado.num_asistentes > 1 ? 's' : ''} confirmada{invitado.num_asistentes > 1 ? 's' : ''}
-                    </p>
-                  )}
-                  {/* Mensaje de confirmación personalizado */}
-                  {invitado.estado_rsvp === 'confirmado' && configuracion.mensaje_confirmacion && (
-                    <p className="mt-4 text-lg italic" style={{ color: tema.color_texto }}>
-                      {configuracion.mensaje_confirmacion}
-                    </p>
-                  )}
-
-                  {/* Código QR para check-in (solo si el organizador lo habilitó) */}
-                  {invitado.estado_rsvp === 'confirmado' && configuracion.mostrar_qr_invitado === true && (
-                    <div className="mt-8 pt-6 border-t" style={{ borderColor: tema.color_secundario }}>
-                      <div className="flex items-center justify-center gap-2 mb-4">
-                        <QrCode className="w-5 h-5" style={{ color: tema.color_primario }} />
-                        <p className="font-medium" style={{ color: tema.color_texto }}>
-                          Tu pase de entrada
-                        </p>
-                      </div>
-                      {loadingQR ? (
-                        <div className="flex justify-center py-4">
-                          <LoadingSpinner />
-                        </div>
-                      ) : qrImage ? (
-                        <div className="flex flex-col items-center">
-                          <div className="bg-white p-4 rounded-2xl shadow-lg inline-block">
-                            <img
-                              src={qrImage}
-                              alt="Código QR de entrada"
-                              className="w-48 h-48"
-                            />
-                          </div>
-                          <p className="text-sm mt-4" style={{ color: tema.color_texto_claro }}>
-                            Muestra este código en la entrada
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  )}
-
-                  {/* Mesa asignada (si tiene seating chart habilitado) */}
-                  {invitado.estado_rsvp === 'confirmado' && invitado.mesa_nombre && (
-                    <div className="mt-8 pt-6 border-t" style={{ borderColor: tema.color_secundario }}>
-                      <div className="text-center">
-                        <p className="text-sm mb-2" style={{ color: tema.color_texto_claro }}>
-                          Tu mesa asignada
-                        </p>
-                        <p
-                          className="text-3xl font-bold"
-                          style={{ color: tema.color_primario }}
-                        >
-                          {invitado.mesa_numero ? `Mesa ${invitado.mesa_numero}` : invitado.mesa_nombre}
-                        </p>
-                        {invitado.mesa_numero && invitado.mesa_nombre !== `Mesa ${invitado.mesa_numero}` && (
-                          <p className="text-sm mt-1" style={{ color: tema.color_texto_claro }}>
-                            {invitado.mesa_nombre}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
+            invitado={invitado}
+            configuracion={configuracion}
+            tema={tema}
+            visibleSections={visibleSections}
+            rsvpForm={rsvpForm}
+            setRsvpForm={setRsvpForm}
+            onConfirm={handleRSVP}
+            isLoading={confirmarRSVP.isLoading}
+            qrImage={qrImage}
+            loadingQR={loadingQR}
+          />
         )}
 
         {/* Galería Compartida - Fotos de Invitados (al final) */}
