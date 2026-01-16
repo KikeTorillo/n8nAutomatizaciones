@@ -12,28 +12,35 @@ import {
     User,
     Calendar,
     Package,
-    Filter,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Alert from '@/components/ui/Alert';
+import Badge from '@/components/ui/Badge';
+import { DataTable } from '@/components/ui/DataTable';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
 import { useToast } from '@/hooks/useToast';
+import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useAjusteMasivo,
     useValidarAjusteMasivo,
     useAplicarAjusteMasivo,
     useCancelarAjusteMasivo,
-    ESTADOS_AJUSTE_MASIVO,
     ESTADOS_AJUSTE_MASIVO_CONFIG,
     ESTADOS_ITEM_AJUSTE_CONFIG,
 } from '@/hooks/useAjustesMasivos';
 
 /**
- * Pagina de detalle de un ajuste masivo
+ * Página de detalle de un ajuste masivo
+ * Homologada con componentes UI estándar
  */
 export default function AjusteMasivoDetallePage() {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { success: showSuccess, error: showError, warning: showWarning } = useToast();
+    const { success: showSuccess, error: showError } = useToast();
 
     // Filtro de items
     const [filtroEstado, setFiltroEstado] = useState('todos');
@@ -57,7 +64,7 @@ export default function AjusteMasivoDetallePage() {
     const handleValidar = () => {
         validarMutation.mutate(parseInt(id), {
             onSuccess: (result) => {
-                showSuccess(`Validado: ${result.filas_validas} items validos`);
+                showSuccess(`Validado: ${result.filas_validas} items válidos`);
                 closeModal('validar');
             },
             onError: (err) => {
@@ -112,50 +119,71 @@ export default function AjusteMasivoDetallePage() {
         return item.estado === filtroEstado;
     }) || [];
 
-    // Renderizar estado
-    const renderEstado = (estado) => {
-        const config = ESTADOS_AJUSTE_MASIVO_CONFIG[estado] || ESTADOS_AJUSTE_MASIVO_CONFIG.pendiente;
-        return (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.badgeClass}`}>
-                {config.label}
-            </span>
-        );
+    // Mapeo de badges
+    const getBadgeVariant = (estado, config) => {
+        const info = config[estado];
+        if (!info) return 'default';
+        const colorMap = {
+            'bg-gray-100': 'default',
+            'bg-blue-100': 'info',
+            'bg-green-100': 'success',
+            'bg-yellow-100': 'warning',
+            'bg-red-100': 'error',
+        };
+        const baseColor = info.badgeClass?.split(' ')[0];
+        return colorMap[baseColor] || 'default';
     };
 
-    const renderEstadoItem = (estado) => {
-        const config = ESTADOS_ITEM_AJUSTE_CONFIG[estado] || ESTADOS_ITEM_AJUSTE_CONFIG.pendiente;
-        return (
-            <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${config.badgeClass}`}>
-                {config.label}
-            </span>
-        );
-    };
-
+    // Estados de carga y error
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                    <p className="mt-4 text-gray-500 dark:text-gray-400">Cargando ajuste...</p>
+            <InventarioPageLayout
+                icon={FileSpreadsheet}
+                title="Cargando ajuste..."
+                subtitle=""
+                actions={
+                    <Button variant="outline" onClick={() => navigate('/inventario/ajustes-masivos')}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        Volver
+                    </Button>
+                }
+            >
+                <div className="space-y-6">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        {[...Array(4)].map((_, i) => (
+                            <SkeletonCard key={i} className="h-20" />
+                        ))}
+                    </div>
+                    <SkeletonTable rows={8} columns={8} />
                 </div>
-            </div>
+            </InventarioPageLayout>
         );
     }
 
     if (error || !ajuste) {
         return (
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-                <div className="text-center">
-                    <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
-                        Ajuste no encontrado
-                    </h2>
-                    <Button onClick={() => navigate('/inventario/ajustes-masivos')}>
+            <InventarioPageLayout
+                icon={FileSpreadsheet}
+                title="Ajuste no encontrado"
+                subtitle=""
+                actions={
+                    <Button variant="outline" onClick={() => navigate('/inventario/ajustes-masivos')}>
                         <ArrowLeft className="h-4 w-4 mr-1" />
                         Volver
                     </Button>
-                </div>
-            </div>
+                }
+            >
+                <EmptyState
+                    icon={XCircle}
+                    title="Ajuste no encontrado"
+                    description="El ajuste que buscas no existe o fue eliminado"
+                    action={
+                        <Button onClick={() => navigate('/inventario/ajustes-masivos')}>
+                            Ir a Ajustes Masivos
+                        </Button>
+                    }
+                />
+            </InventarioPageLayout>
         );
     }
 
@@ -163,317 +191,232 @@ export default function AjusteMasivoDetallePage() {
     const puedeAplicar = ajuste.estado === 'validado';
     const puedeCancelar = ['pendiente', 'validado'].includes(ajuste.estado);
 
+    const estadoConfig = ESTADOS_AJUSTE_MASIVO_CONFIG[ajuste.estado] || ESTADOS_AJUSTE_MASIVO_CONFIG.pendiente;
+
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-            {/* Header */}
-            <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <button
-                                onClick={() => navigate('/inventario/ajustes-masivos')}
-                                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300"
-                            >
-                                <ArrowLeft className="h-5 w-5" />
-                            </button>
-                            <div>
-                                <div className="flex items-center gap-3">
-                                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                                        <FileSpreadsheet className="h-7 w-7 text-primary-600" />
-                                        {ajuste.folio}
-                                    </h1>
-                                    {renderEstado(ajuste.estado)}
-                                </div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                                    {ajuste.archivo_nombre}
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                            {puedeValidar && (
-                                <Button onClick={() => openModal('validar')}>
-                                    <FileCheck className="h-4 w-4 mr-1" />
-                                    Validar
-                                </Button>
-                            )}
-                            {puedeAplicar && (
-                                <Button onClick={() => openModal('aplicar')}>
-                                    <Play className="h-4 w-4 mr-1" />
-                                    Aplicar
-                                </Button>
-                            )}
-                            {puedeCancelar && (
-                                <Button variant="outline" onClick={() => openModal('cancelar')}>
-                                    <XCircle className="h-4 w-4 mr-1" />
-                                    Cancelar
-                                </Button>
-                            )}
-                        </div>
-                    </div>
+        <InventarioPageLayout
+            icon={FileSpreadsheet}
+            title={
+                <div className="flex items-center gap-3">
+                    <span>{ajuste.folio}</span>
+                    <Badge variant={getBadgeVariant(ajuste.estado, ESTADOS_AJUSTE_MASIVO_CONFIG)} size="sm">
+                        {estadoConfig.label}
+                    </Badge>
                 </div>
-            </div>
-
-            {/* Contenido */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {/* Info del ajuste */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
-                                <User className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Creado por</p>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    {ajuste.usuario_nombre || 'Usuario'}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-gray-100 dark:bg-gray-900 rounded-lg">
-                                <Calendar className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Fecha</p>
-                                <p className="font-medium text-gray-900 dark:text-white text-sm">
-                                    {formatFecha(ajuste.creado_en)}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
-                                <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Items Validos</p>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    {ajuste.filas_validas || 0} / {ajuste.total_filas || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-red-100 dark:bg-red-900 rounded-lg">
-                                <AlertTriangle className="h-5 w-5 text-red-600 dark:text-red-400" />
-                            </div>
-                            <div>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">Con Errores</p>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                    {ajuste.filas_error || 0}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+            }
+            subtitle={ajuste.archivo_nombre}
+            actions={
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => navigate('/inventario/ajustes-masivos')}>
+                        <ArrowLeft className="h-4 w-4 mr-1" />
+                        <span className="hidden sm:inline">Volver</span>
+                    </Button>
+                    {puedeValidar && (
+                        <Button size="sm" onClick={() => openModal('validar')}>
+                            <FileCheck className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Validar</span>
+                        </Button>
+                    )}
+                    {puedeAplicar && (
+                        <Button size="sm" onClick={() => openModal('aplicar')}>
+                            <Play className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Aplicar</span>
+                        </Button>
+                    )}
+                    {puedeCancelar && (
+                        <Button variant="outline" size="sm" onClick={() => openModal('cancelar')}>
+                            <XCircle className="h-4 w-4 mr-1" />
+                            <span className="hidden sm:inline">Cancelar</span>
+                        </Button>
+                    )}
                 </div>
+            }
+        >
+            <div className="space-y-6">
+                {/* Estadísticas */}
+                <StatCardGrid
+                    columns={4}
+                    stats={[
+                        { icon: User, label: 'Creado por', value: ajuste.usuario_nombre || 'Usuario' },
+                        { icon: Calendar, label: 'Fecha', value: formatFecha(ajuste.creado_en), subtext: '' },
+                        { icon: CheckCircle, label: 'Items Válidos', value: `${ajuste.filas_validas || 0} / ${ajuste.total_filas || 0}`, color: 'green' },
+                        { icon: AlertTriangle, label: 'Con Errores', value: ajuste.filas_error || 0, color: ajuste.filas_error > 0 ? 'red' : undefined },
+                    ]}
+                />
 
                 {/* Filtros de items */}
-                <div className="flex items-center gap-2 mb-4">
-                    <Filter className="h-4 w-4 text-gray-400" />
-                    <div className="flex gap-2">
-                        {['todos', 'pendiente', 'valido', 'error', 'aplicado'].map((estado) => (
-                            <button
-                                key={estado}
-                                onClick={() => setFiltroEstado(estado)}
-                                className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
-                                    filtroEstado === estado
-                                        ? 'bg-primary-600 text-white'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                                }`}
-                            >
-                                {estado === 'todos' ? 'Todos' : estado.charAt(0).toUpperCase() + estado.slice(1)}
-                            </button>
-                        ))}
-                    </div>
+                <div className="flex flex-wrap items-center gap-2">
+                    {['todos', 'pendiente', 'valido', 'error', 'aplicado'].map((estado) => (
+                        <button
+                            key={estado}
+                            onClick={() => setFiltroEstado(estado)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                                filtroEstado === estado
+                                    ? 'bg-primary-600 text-white'
+                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                            }`}
+                        >
+                            {estado === 'todos' ? 'Todos' : estado.charAt(0).toUpperCase() + estado.slice(1)}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Tabla de items */}
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    {itemsFiltrados.length === 0 ? (
-                        <div className="p-8 text-center">
-                            <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-500 dark:text-gray-400">
-                                No hay items con este filtro
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-900">
-                                    <tr>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            #
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            SKU / Codigo
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Producto
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Cantidad
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Stock Antes
-                                        </th>
-                                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Stock Despues
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Motivo
-                                        </th>
-                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                                            Estado
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                                    {itemsFiltrados.map((item) => (
-                                        <tr key={item.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                                            <td className="px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
-                                                {item.fila_numero}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="font-mono text-sm text-gray-900 dark:text-white">
-                                                    {item.sku_csv || item.codigo_barras_csv || '-'}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className="text-sm text-gray-900 dark:text-white">
-                                                    {item.producto_nombre || '-'}
-                                                </span>
-                                                {item.variante_id && (
-                                                    <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
-                                                        (Variante)
-                                                    </span>
-                                                )}
-                                            </td>
-                                            <td className={`px-4 py-3 text-right font-medium ${
-                                                item.cantidad_ajuste > 0
-                                                    ? 'text-green-600 dark:text-green-400'
-                                                    : 'text-red-600 dark:text-red-400'
-                                            }`}>
-                                                {item.cantidad_ajuste > 0 ? '+' : ''}
-                                                {item.cantidad_ajuste}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-sm text-gray-600 dark:text-gray-400">
-                                                {item.stock_antes ?? '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-right text-sm text-gray-900 dark:text-white font-medium">
-                                                {item.stock_despues ?? '-'}
-                                            </td>
-                                            <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400 max-w-[150px] truncate">
-                                                {item.motivo_csv || '-'}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                {renderEstadoItem(item.estado)}
-                                                {item.error_mensaje && (
-                                                    <p className="text-xs text-red-500 mt-1 truncate max-w-[150px]" title={item.error_mensaje}>
-                                                        {item.error_mensaje}
-                                                    </p>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
+                <DataTable
+                    columns={[
+                        {
+                            key: 'fila',
+                            header: '#',
+                            width: 'sm',
+                            render: (row) => (
+                                <span className="text-sm text-gray-500 dark:text-gray-400">
+                                    {row.fila_numero}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'sku',
+                            header: 'SKU / Código',
+                            render: (row) => (
+                                <span className="font-mono text-sm text-gray-900 dark:text-white">
+                                    {row.sku_csv || row.codigo_barras_csv || '-'}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'producto',
+                            header: 'Producto',
+                            render: (row) => (
+                                <div>
+                                    <span className="text-sm text-gray-900 dark:text-white">
+                                        {row.producto_nombre || '-'}
+                                    </span>
+                                    {row.variante_id && (
+                                        <span className="ml-2 text-xs text-gray-500 dark:text-gray-400">
+                                            (Variante)
+                                        </span>
+                                    )}
+                                </div>
+                            ),
+                        },
+                        {
+                            key: 'cantidad',
+                            header: 'Cantidad',
+                            align: 'right',
+                            render: (row) => (
+                                <span className={`font-medium ${
+                                    row.cantidad_ajuste > 0
+                                        ? 'text-green-600 dark:text-green-400'
+                                        : 'text-red-600 dark:text-red-400'
+                                }`}>
+                                    {row.cantidad_ajuste > 0 ? '+' : ''}
+                                    {row.cantidad_ajuste}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'stock_antes',
+                            header: 'Stock Antes',
+                            align: 'right',
+                            hideOnMobile: true,
+                            render: (row) => (
+                                <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    {row.stock_antes ?? '-'}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'stock_despues',
+                            header: 'Stock Después',
+                            align: 'right',
+                            hideOnMobile: true,
+                            render: (row) => (
+                                <span className="text-sm text-gray-900 dark:text-white font-medium">
+                                    {row.stock_despues ?? '-'}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'motivo',
+                            header: 'Motivo',
+                            hideOnMobile: true,
+                            render: (row) => (
+                                <span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[150px] block" title={row.motivo_csv}>
+                                    {row.motivo_csv || '-'}
+                                </span>
+                            ),
+                        },
+                        {
+                            key: 'estado',
+                            header: 'Estado',
+                            render: (row) => {
+                                const config = ESTADOS_ITEM_AJUSTE_CONFIG[row.estado] || ESTADOS_ITEM_AJUSTE_CONFIG.pendiente;
+                                return (
+                                    <div>
+                                        <Badge variant={getBadgeVariant(row.estado, ESTADOS_ITEM_AJUSTE_CONFIG)} size="sm">
+                                            {config.label}
+                                        </Badge>
+                                        {row.error_mensaje && (
+                                            <p className="text-xs text-red-500 mt-1 truncate max-w-[150px]" title={row.error_mensaje}>
+                                                {row.error_mensaje}
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            },
+                        },
+                    ]}
+                    data={itemsFiltrados}
+                    isLoading={false}
+                    emptyState={{
+                        icon: Package,
+                        title: 'No hay items con este filtro',
+                        description: 'Intenta cambiar el filtro de estado',
+                    }}
+                    skeletonRows={8}
+                />
             </div>
 
             {/* Modal Validar */}
-            <Modal
+            <ConfirmDialog
                 isOpen={isOpen('validar')}
                 onClose={() => closeModal('validar')}
+                onConfirm={handleValidar}
                 title="Validar Ajuste Masivo"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas validar el ajuste <strong>{ajuste.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Se verificara que los SKUs/codigos existan y se calculara el stock resultante.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('validar')}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleValidar} isLoading={validarMutation.isPending}>
-                            <FileCheck className="h-4 w-4 mr-1" />
-                            Validar
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                message={`¿Deseas validar el ajuste ${ajuste.folio}? Se verificará que los SKUs/códigos existan y se calculará el stock resultante.`}
+                confirmText="Validar"
+                variant="info"
+                isLoading={validarMutation.isPending}
+            />
 
             {/* Modal Aplicar */}
-            <Modal
+            <ConfirmDialog
                 isOpen={isOpen('aplicar')}
                 onClose={() => closeModal('aplicar')}
+                onConfirm={handleAplicar}
                 title="Aplicar Ajustes"
+                message={`¿Deseas aplicar los ajustes de ${ajuste.folio}?`}
+                confirmText="Aplicar"
+                variant="warning"
+                isLoading={aplicarMutation.isPending}
+                size="md"
             >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas aplicar los ajustes de <strong>{ajuste.folio}</strong>?
-                    </p>
-                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                        <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                            <div className="text-sm text-yellow-700 dark:text-yellow-300">
-                                <p className="font-medium">Esta accion no se puede deshacer</p>
-                                <p>Se crearan {ajuste.filas_validas || 0} movimientos de inventario.</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('aplicar')}>
-                            Cancelar
-                        </Button>
-                        <Button onClick={handleAplicar} isLoading={aplicarMutation.isPending}>
-                            <Play className="h-4 w-4 mr-1" />
-                            Aplicar
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
+                <Alert variant="warning" icon={AlertTriangle} title="Esta acción no se puede deshacer">
+                    <p className="text-sm">Se crearán {ajuste.filas_validas || 0} movimientos de inventario.</p>
+                </Alert>
+            </ConfirmDialog>
 
             {/* Modal Cancelar */}
-            <Modal
+            <ConfirmDialog
                 isOpen={isOpen('cancelar')}
                 onClose={() => closeModal('cancelar')}
+                onConfirm={handleCancelar}
                 title="Cancelar Ajuste"
-            >
-                <div className="p-4">
-                    <p className="text-gray-600 dark:text-gray-300 mb-4">
-                        ¿Deseas cancelar el ajuste <strong>{ajuste.folio}</strong>?
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                        Esta accion eliminara el ajuste y todos sus items.
-                    </p>
-                    <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => closeModal('cancelar')}>
-                            Volver
-                        </Button>
-                        <Button
-                            variant="danger"
-                            onClick={handleCancelar}
-                            isLoading={cancelarMutation.isPending}
-                        >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Cancelar Ajuste
-                        </Button>
-                    </div>
-                </div>
-            </Modal>
-        </div>
+                message={`¿Deseas cancelar el ajuste ${ajuste.folio}? Esta acción eliminará el ajuste y todos sus items.`}
+                confirmText="Cancelar Ajuste"
+                variant="danger"
+                isLoading={cancelarMutation.isPending}
+            />
+        </InventarioPageLayout>
     );
 }

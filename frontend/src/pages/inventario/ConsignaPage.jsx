@@ -44,8 +44,10 @@ import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Badge from '@/components/ui/Badge';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { formatCurrency } from '@/lib/utils';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import AcuerdoFormDrawer from '@/components/inventario/consigna/AcuerdoFormDrawer';
 import AcuerdoDetalleModal from '@/components/inventario/consigna/AcuerdoDetalleModal';
@@ -180,37 +182,15 @@ export default function ConsignaPage() {
       <div className="space-y-6">
 
       {/* Metricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <MetricCard
-          title="Acuerdos Activos"
-          value={stats.acuerdosActivos}
-          icon={Handshake}
-          color="green"
-          loading={loadingAcuerdos}
-        />
-        <MetricCard
-          title="Unidades en Stock"
-          value={stats.totalStock}
-          icon={Package}
-          color="blue"
-          loading={loadingStock}
-        />
-        <MetricCard
-          title="Valor en Consigna"
-          value={formatCurrency(stats.valorStock)}
-          icon={DollarSign}
-          color="primary"
-          loading={loadingStock}
-          isMonetary
-        />
-        <MetricCard
-          title="Pend. Liquidar"
-          value={stats.pendienteLiquidar}
-          icon={AlertTriangle}
-          color={stats.pendienteLiquidar > 0 ? 'amber' : 'gray'}
-          loading={false}
-        />
-      </div>
+      <StatCardGrid
+        columns={4}
+        stats={[
+          { icon: Handshake, label: 'Acuerdos Activos', value: loadingAcuerdos ? '...' : stats.acuerdosActivos, color: 'green' },
+          { icon: Package, label: 'Unidades en Stock', value: loadingStock ? '...' : stats.totalStock, color: 'blue' },
+          { icon: DollarSign, label: 'Valor en Consigna', value: loadingStock ? '...' : formatCurrency(stats.valorStock), color: 'primary' },
+          { icon: AlertTriangle, label: 'Pend. Liquidar', value: stats.pendienteLiquidar, color: stats.pendienteLiquidar > 0 ? 'yellow' : undefined },
+        ]}
+      />
 
       {/* Alerta de pendientes de liquidar */}
       {pendienteLiquidar?.length > 0 && (
@@ -281,119 +261,108 @@ export default function ConsignaPage() {
               </div>
 
               {/* Tabla de acuerdos */}
-              <div className="overflow-x-auto">
-                {loadingAcuerdos ? (
-                  <LoadingSpinner />
-                ) : acuerdos?.length === 0 ? (
-                  <EmptyState
-                    icon={Handshake}
-                    title="No hay acuerdos de consignación"
-                    description="Crea un acuerdo para recibir productos en consignación"
-                  />
-                ) : (
-                  <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Folio
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Proveedor
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Comision
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Productos
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Estado
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Acciones
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {acuerdos?.map((acuerdo) => {
-                        const estadoInfo = ESTADOS_ACUERDO[acuerdo.estado] || ESTADOS_ACUERDO.borrador;
-                        const IconEstado = estadoInfo.icon;
-
-                        return (
-                          <tr
-                            key={acuerdo.id}
-                            className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                          >
-                            <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
-                              {acuerdo.folio}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                              {acuerdo.proveedor_nombre || acuerdo.proveedor_razon_social}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                              <span className="inline-flex items-center gap-1">
-                                <Percent className="h-3 w-3" />
-                                {acuerdo.porcentaje_comision}%
-                              </span>
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                              {acuerdo.total_productos || 0}
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
-                              <EstadoBadge estado={acuerdo.estado} config={ESTADOS_ACUERDO} />
-                            </td>
-                            <td className="px-4 py-3 whitespace-nowrap text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <button
-                                  onClick={() => openModal('detalleAcuerdo', acuerdo)}
-                                  className="p-1.5 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
-                                  title="Ver detalle"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
-                                {acuerdo.estado === 'activo' && (
-                                  <>
-                                    <button
-                                      onClick={() => openModal('recibirMercancia', acuerdo)}
-                                      className="p-1.5 text-gray-500 hover:text-green-600"
-                                      title="Recibir mercancia"
-                                    >
-                                      <PackagePlus className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => openModal('devolverMercancia', acuerdo)}
-                                      className="p-1.5 text-gray-500 hover:text-amber-600"
-                                      title="Devolver mercancia"
-                                    >
-                                      <PackageMinus className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handlePausar(acuerdo.id)}
-                                      className="p-1.5 text-gray-500 hover:text-amber-600"
-                                      title="Pausar"
-                                    >
-                                      <Pause className="h-4 w-4" />
-                                    </button>
-                                  </>
-                                )}
-                                {(acuerdo.estado === 'borrador' || acuerdo.estado === 'pausado') && (
-                                  <button
-                                    onClick={() => handleActivar(acuerdo.id)}
-                                    className="p-1.5 text-gray-500 hover:text-green-600"
-                                    title="Activar"
-                                  >
-                                    <Play className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              <DataTable
+                columns={[
+                  {
+                    key: 'folio',
+                    header: 'Folio',
+                    render: (row) => (
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{row.folio}</span>
+                    ),
+                  },
+                  {
+                    key: 'proveedor',
+                    header: 'Proveedor',
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {row.proveedor_nombre || row.proveedor_razon_social}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'comision',
+                    header: 'Comisión',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="inline-flex items-center gap-1 text-sm text-gray-700 dark:text-gray-300">
+                        <Percent className="h-3 w-3" />
+                        {row.porcentaje_comision}%
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'productos',
+                    header: 'Productos',
+                    hideOnMobile: true,
+                    align: 'center',
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{row.total_productos || 0}</span>
+                    ),
+                  },
+                  {
+                    key: 'estado',
+                    header: 'Estado',
+                    render: (row) => {
+                      const BADGE_VARIANT = { gray: 'default', green: 'success', amber: 'warning', red: 'error', blue: 'info' };
+                      const info = ESTADOS_ACUERDO[row.estado] || { label: row.estado, color: 'gray' };
+                      return <Badge variant={BADGE_VARIANT[info.color] || 'default'} size="sm">{info.label}</Badge>;
+                    },
+                  },
+                  {
+                    key: 'actions',
+                    header: '',
+                    align: 'right',
+                    render: (row) => (
+                      <DataTableActions>
+                        <DataTableActionButton
+                          icon={Eye}
+                          label="Ver detalle"
+                          onClick={() => openModal('detalleAcuerdo', row)}
+                          variant="ghost"
+                        />
+                        {row.estado === 'activo' && (
+                          <>
+                            <DataTableActionButton
+                              icon={PackagePlus}
+                              label="Recibir mercancía"
+                              onClick={() => openModal('recibirMercancia', row)}
+                              variant="primary"
+                            />
+                            <DataTableActionButton
+                              icon={PackageMinus}
+                              label="Devolver mercancía"
+                              onClick={() => openModal('devolverMercancia', row)}
+                              variant="ghost"
+                            />
+                            <DataTableActionButton
+                              icon={Pause}
+                              label="Pausar"
+                              onClick={() => handlePausar(row.id)}
+                              variant="ghost"
+                            />
+                          </>
+                        )}
+                        {(row.estado === 'borrador' || row.estado === 'pausado') && (
+                          <DataTableActionButton
+                            icon={Play}
+                            label="Activar"
+                            onClick={() => handleActivar(row.id)}
+                            variant="primary"
+                          />
+                        )}
+                      </DataTableActions>
+                    ),
+                  },
+                ]}
+                data={acuerdos || []}
+                isLoading={loadingAcuerdos}
+                emptyState={{
+                  icon: Handshake,
+                  title: 'No hay acuerdos de consignación',
+                  description: 'Crea un acuerdo para recibir productos en consignación',
+                }}
+                skeletonRows={5}
+              />
             </div>
           )}
 
@@ -417,85 +386,89 @@ export default function ConsignaPage() {
               </div>
 
               {/* Tabla de stock */}
-              <div className="overflow-x-auto">
-                {loadingStock ? (
-                  <LoadingSpinner />
-                ) : stockConsigna?.length === 0 ? (
-                  <EmptyState
-                    icon={Warehouse}
-                    title="No hay stock en consignación"
-                    description="El stock aparecerá cuando recibas mercancía de un acuerdo activo"
-                  />
-                ) : (
-                  <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Producto
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Acuerdo
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Proveedor
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Disponible
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Reservado
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Precio Consigna
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Valor
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {stockConsigna?.map((stock, idx) => (
-                        <tr
-                          key={`${stock.id}-${idx}`}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        >
-                          <td className="px-4 py-3">
-                            <div className="flex flex-col">
-                              <span className="font-medium text-gray-900 dark:text-gray-100">
-                                {stock.producto_nombre}
-                              </span>
-                              <span className="text-xs text-gray-500 dark:text-gray-400">
-                                {stock.producto_sku}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                            {stock.acuerdo_folio}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                            {stock.proveedor_nombre}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {stock.cantidad_disponible}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">
-                            {stock.cantidad_reservada || 0}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-700 dark:text-gray-300">
-                            {formatCurrency(parseFloat(stock.precio_consigna || 0))}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {formatCurrency(
-                              parseFloat(stock.cantidad_disponible || 0) *
-                                parseFloat(stock.precio_consigna || 0)
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              <DataTable
+                columns={[
+                  {
+                    key: 'producto',
+                    header: 'Producto',
+                    width: 'xl',
+                    render: (row) => (
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900 dark:text-gray-100">
+                          {row.producto_nombre}
+                        </span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                          {row.producto_sku}
+                        </span>
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'acuerdo',
+                    header: 'Acuerdo',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{row.acuerdo_folio}</span>
+                    ),
+                  },
+                  {
+                    key: 'proveedor',
+                    header: 'Proveedor',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{row.proveedor_nombre}</span>
+                    ),
+                  },
+                  {
+                    key: 'disponible',
+                    header: 'Disponible',
+                    align: 'right',
+                    render: (row) => (
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {row.cantidad_disponible}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'reservado',
+                    header: 'Reservado',
+                    align: 'right',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">{row.cantidad_reservada || 0}</span>
+                    ),
+                  },
+                  {
+                    key: 'precio',
+                    header: 'Precio Consigna',
+                    align: 'right',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {formatCurrency(parseFloat(row.precio_consigna || 0))}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'valor',
+                    header: 'Valor',
+                    align: 'right',
+                    render: (row) => (
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {formatCurrency(parseFloat(row.cantidad_disponible || 0) * parseFloat(row.precio_consigna || 0))}
+                      </span>
+                    ),
+                  },
+                ]}
+                data={stockConsigna || []}
+                isLoading={loadingStock}
+                emptyState={{
+                  icon: Warehouse,
+                  title: 'No hay stock en consignación',
+                  description: 'El stock aparecerá cuando recibas mercancía de un acuerdo activo',
+                }}
+                skeletonRows={5}
+              />
             </div>
           )}
 
@@ -526,127 +499,134 @@ export default function ConsignaPage() {
               </div>
 
               {/* Tabla de liquidaciones */}
-              <div className="overflow-x-auto">
-                {loadingLiq ? (
-                  <LoadingSpinner />
-                ) : liquidaciones?.length === 0 ? (
-                  <EmptyState
-                    icon={FileText}
-                    title="No hay liquidaciones"
-                    description="Las liquidaciones se generan para pagar al proveedor las ventas realizadas"
-                  />
-                ) : (
-                  <table className="w-full">
-                    <thead className="bg-gray-50 dark:bg-gray-700">
-                      <tr>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Folio
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Acuerdo
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Proveedor
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Periodo
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Ventas
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Comision
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          A Pagar
-                        </th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Estado
-                        </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
-                          Acciones
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                      {liquidaciones?.map((liq) => (
-                        <tr
-                          key={liq.id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                        >
-                          <td className="px-4 py-3 whitespace-nowrap font-medium text-gray-900 dark:text-gray-100">
-                            {liq.folio}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                            {liq.acuerdo_folio}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                            {liq.proveedor_nombre}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {liq.fecha_desde && format(new Date(liq.fecha_desde), 'dd/MM', { locale: es })}
-                              {' - '}
-                              {liq.fecha_hasta && format(new Date(liq.fecha_hasta), 'dd/MM', { locale: es })}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-900 dark:text-gray-100">
-                            {formatCurrency(parseFloat(liq.subtotal_ventas || 0))}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">
-                            {formatCurrency(parseFloat(liq.comision || 0))}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {formatCurrency(parseFloat(liq.total_pagar_proveedor || 0))}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <EstadoBadge estado={liq.estado} config={ESTADOS_LIQUIDACION} />
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => openModal('detalleLiquidacion', liq)}
-                                className="p-1.5 text-gray-500 hover:text-primary-600 dark:hover:text-primary-400"
-                                title="Ver detalle"
-                              >
-                                <Eye className="h-4 w-4" />
-                              </button>
-                              {liq.estado === 'borrador' && (
-                                <>
-                                  <button
-                                    onClick={() => handleConfirmarLiq(liq.id)}
-                                    className="p-1.5 text-gray-500 hover:text-green-600"
-                                    title="Confirmar"
-                                  >
-                                    <CheckCircle className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleCancelarLiq(liq.id)}
-                                    className="p-1.5 text-gray-500 hover:text-red-600"
-                                    title="Cancelar"
-                                  >
-                                    <XCircle className="h-4 w-4" />
-                                  </button>
-                                </>
-                              )}
-                              {liq.estado === 'confirmada' && (
-                                <button
-                                  onClick={() => openModal('detalleLiquidacion', liq)}
-                                  className="p-1.5 text-gray-500 hover:text-green-600"
-                                  title="Registrar pago"
-                                >
-                                  <DollarSign className="h-4 w-4" />
-                                </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+              <DataTable
+                columns={[
+                  {
+                    key: 'folio',
+                    header: 'Folio',
+                    render: (row) => (
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{row.folio}</span>
+                    ),
+                  },
+                  {
+                    key: 'acuerdo',
+                    header: 'Acuerdo',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{row.acuerdo_folio}</span>
+                    ),
+                  },
+                  {
+                    key: 'proveedor',
+                    header: 'Proveedor',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-700 dark:text-gray-300">{row.proveedor_nombre}</span>
+                    ),
+                  },
+                  {
+                    key: 'periodo',
+                    header: 'Periodo',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <div className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-400">
+                        <Calendar className="h-3 w-3" />
+                        {row.fecha_desde && format(new Date(row.fecha_desde), 'dd/MM', { locale: es })}
+                        {' - '}
+                        {row.fecha_hasta && format(new Date(row.fecha_hasta), 'dd/MM', { locale: es })}
+                      </div>
+                    ),
+                  },
+                  {
+                    key: 'ventas',
+                    header: 'Ventas',
+                    align: 'right',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-900 dark:text-gray-100">
+                        {formatCurrency(parseFloat(row.subtotal_ventas || 0))}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'comision',
+                    header: 'Comisión',
+                    align: 'right',
+                    hideOnMobile: true,
+                    render: (row) => (
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        {formatCurrency(parseFloat(row.comision || 0))}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'total',
+                    header: 'A Pagar',
+                    align: 'right',
+                    render: (row) => (
+                      <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                        {formatCurrency(parseFloat(row.total_pagar_proveedor || 0))}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: 'estado',
+                    header: 'Estado',
+                    render: (row) => {
+                      const BADGE_VARIANT = { gray: 'default', green: 'success', amber: 'warning', red: 'error', blue: 'info' };
+                      const info = ESTADOS_LIQUIDACION[row.estado] || { label: row.estado, color: 'gray' };
+                      return <Badge variant={BADGE_VARIANT[info.color] || 'default'} size="sm">{info.label}</Badge>;
+                    },
+                  },
+                  {
+                    key: 'actions',
+                    header: '',
+                    align: 'right',
+                    render: (row) => (
+                      <DataTableActions>
+                        <DataTableActionButton
+                          icon={Eye}
+                          label="Ver detalle"
+                          onClick={() => openModal('detalleLiquidacion', row)}
+                          variant="ghost"
+                        />
+                        {row.estado === 'borrador' && (
+                          <>
+                            <DataTableActionButton
+                              icon={CheckCircle}
+                              label="Confirmar"
+                              onClick={() => handleConfirmarLiq(row.id)}
+                              variant="primary"
+                            />
+                            <DataTableActionButton
+                              icon={XCircle}
+                              label="Cancelar"
+                              onClick={() => handleCancelarLiq(row.id)}
+                              variant="danger"
+                            />
+                          </>
+                        )}
+                        {row.estado === 'confirmada' && (
+                          <DataTableActionButton
+                            icon={DollarSign}
+                            label="Registrar pago"
+                            onClick={() => openModal('detalleLiquidacion', row)}
+                            variant="primary"
+                          />
+                        )}
+                      </DataTableActions>
+                    ),
+                  },
+                ]}
+                data={liquidaciones || []}
+                isLoading={loadingLiq}
+                emptyState={{
+                  icon: FileText,
+                  title: 'No hay liquidaciones',
+                  description: 'Las liquidaciones se generan para pagar al proveedor las ventas realizadas',
+                }}
+                skeletonRows={5}
+              />
             </div>
           )}
         </div>
@@ -752,69 +732,5 @@ export default function ConsignaPage() {
         isLoading={cancelarLiqMutation.isPending}
       />
     </InventarioPageLayout>
-  );
-}
-
-// ==================== COMPONENTES AUXILIARES ====================
-
-function MetricCard({ title, value, icon: Icon, color, loading, isMonetary }) {
-  const colorClasses = {
-    primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-    gray: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
-    blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-    green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-  };
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      <div className="flex items-center justify-between">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-      <div className="mt-3">
-        {loading ? (
-          <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        ) : (
-          <p
-            className={`text-2xl font-bold text-gray-900 dark:text-gray-100 ${isMonetary ? 'text-lg' : ''}`}
-          >
-            {value}
-          </p>
-        )}
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-      </div>
-    </div>
-  );
-}
-
-function EstadoBadge({ estado, config }) {
-  const info = config[estado] || { label: estado, color: 'gray', icon: Clock };
-  const Icon = info.icon;
-
-  const colorClasses = {
-    gray: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
-    blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
-    green: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
-    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300',
-    red: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colorClasses[info.color]}`}
-    >
-      <Icon className="h-3 w-3" />
-      {info.label}
-    </span>
-  );
-}
-
-function LoadingSpinner() {
-  return (
-    <div className="flex justify-center py-8">
-      <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-    </div>
   );
 }

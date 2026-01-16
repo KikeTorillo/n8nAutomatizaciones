@@ -13,6 +13,9 @@ import Button from './Button';
  * @param {string} cancelText - Texto del botón cancelar (default: "Cancelar")
  * @param {string} variant - Estilo visual: 'danger', 'warning', 'success', 'info' (default: 'warning')
  * @param {boolean} isLoading - Estado de carga del botón confirmar
+ * @param {boolean} disabled - Deshabilitar botón confirmar (para validaciones externas)
+ * @param {React.ReactNode} children - Contenido adicional (ej: alertas, textarea)
+ * @param {string} size - Tamaño del modal: 'sm', 'md' (default: 'sm')
  */
 function ConfirmDialog({
   isOpen,
@@ -23,7 +26,10 @@ function ConfirmDialog({
   confirmText = 'Confirmar',
   cancelText = 'Cancelar',
   variant = 'warning',
-  isLoading = false
+  isLoading = false,
+  disabled = false,
+  children,
+  size = 'sm'
 }) {
   const handleConfirm = () => {
     onConfirm();
@@ -61,10 +67,10 @@ function ConfirmDialog({
   const Icon = config.icon;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="sm" showCloseButton={false}>
-      <div className="text-center">
+    <Modal isOpen={isOpen} onClose={onClose} size={size} showCloseButton={false}>
+      <div className={children ? '' : 'text-center'}>
         {/* Ícono */}
-        <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full ${config.iconBg} mb-4`}>
+        <div className={`${children ? '' : 'mx-auto'} flex items-center justify-center h-12 w-12 rounded-full ${config.iconBg} mb-4`}>
           <Icon className={`h-6 w-6 ${config.iconColor}`} />
         </div>
 
@@ -74,12 +80,19 @@ function ConfirmDialog({
         </h3>
 
         {/* Mensaje */}
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
           {message}
         </p>
 
+        {/* Contenido adicional (children) */}
+        {children && (
+          <div className="mb-6">
+            {children}
+          </div>
+        )}
+
         {/* Botones */}
-        <div className="flex gap-3 justify-center">
+        <div className={`flex gap-3 ${children ? 'justify-end pt-4 border-t border-gray-200 dark:border-gray-700' : 'justify-center'}`}>
           <Button
             variant="secondary"
             onClick={onClose}
@@ -91,7 +104,7 @@ function ConfirmDialog({
           <Button
             onClick={handleConfirm}
             isLoading={isLoading}
-            disabled={isLoading}
+            disabled={isLoading || disabled}
             className={`px-6 ${config.confirmButton}`}
           >
             {confirmText}

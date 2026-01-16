@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { FolderTree, Plus, Edit, Trash2, ChevronRight, ChevronDown, AlertTriangle } from 'lucide-react';
+import { useState, useCallback } from 'react';
+import { FolderTree, Plus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Alert from '@/components/ui/Alert';
+import { TreeView, useTreeExpansion } from '@/components/ui/TreeNode';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
@@ -13,122 +14,6 @@ import {
   useEliminarCategoria,
 } from '@/hooks/useCategorias';
 import CategoriaFormModal from '@/components/inventario/CategoriaFormModal';
-
-/**
- * Componente para renderizar nodo del árbol de categorías
- */
-function NodoCategoria({
-  categoria,
-  nivel = 0,
-  onEditar,
-  onEliminar,
-  expandido,
-  onToggleExpansion,
-}) {
-  const tieneHijos = categoria.hijos && categoria.hijos.length > 0;
-  const isExpanded = expandido[categoria.id];
-
-  return (
-    <div>
-      {/* Nodo Actual */}
-      <div
-        className={`flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-700 mb-2 bg-white dark:bg-gray-800 ${
-          nivel > 0 ? 'ml-8' : ''
-        }`}
-      >
-        <div className="flex items-center space-x-3 flex-1">
-          {/* Toggle Expansión */}
-          {tieneHijos ? (
-            <button
-              onClick={() => onToggleExpansion(categoria.id)}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
-          ) : (
-            <div className="w-6" /> /* Espaciador */
-          )}
-
-          {/* Indicador de Color */}
-          {categoria.color && (
-            <div
-              className="w-4 h-4 rounded"
-              style={{ backgroundColor: categoria.color }}
-            />
-          )}
-
-          {/* Nombre y Descripción */}
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                {categoria.nombre}
-              </h3>
-              {!categoria.activo && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded">
-                  Inactiva
-                </span>
-              )}
-              {tieneHijos && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
-                  {categoria.hijos.length} subcategoría{categoria.hijos.length !== 1 ? 's' : ''}
-                </span>
-              )}
-            </div>
-            {categoria.descripcion && (
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{categoria.descripcion}</p>
-            )}
-          </div>
-
-          {/* Metadatos */}
-          <div className="text-xs text-gray-500 dark:text-gray-400 mr-4">
-            Orden: {categoria.orden}
-          </div>
-        </div>
-
-        {/* Acciones */}
-        <div className="flex items-center space-x-2">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => onEditar(categoria)}
-            icon={Edit}
-          >
-            Editar
-          </Button>
-          <Button
-            variant="danger"
-            size="sm"
-            onClick={() => onEliminar(categoria)}
-            icon={Trash2}
-          >
-            Eliminar
-          </Button>
-        </div>
-      </div>
-
-      {/* Hijos (Subcategorías) */}
-      {tieneHijos && isExpanded && (
-        <div className="ml-4">
-          {categoria.hijos.map((hijo) => (
-            <NodoCategoria
-              key={hijo.id}
-              categoria={hijo}
-              nivel={nivel + 1}
-              onEditar={onEditar}
-              onEliminar={onEliminar}
-              expandido={expandido}
-              onToggleExpansion={onToggleExpansion}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * Página principal de Gestión de Categorías
@@ -143,7 +28,7 @@ function CategoriasPage() {
   });
 
   // Estado UI
-  const [expandido, setExpandido] = useState({});
+  const { expanded, toggle, expandAll, collapseAll } = useTreeExpansion();
   const [mostrarInactivas, setMostrarInactivas] = useState(false);
 
   // Queries
@@ -182,30 +67,74 @@ function CategoriasPage() {
     });
   };
 
-  const handleToggleExpansion = (categoriaId) => {
-    setExpandido((prev) => ({
-      ...prev,
-      [categoriaId]: !prev[categoriaId],
-    }));
-  };
-
   const handleExpandirTodas = () => {
-    const nuevosExpandidos = {};
-    const expandirRecursivo = (categorias) => {
-      categorias.forEach((cat) => {
-        if (cat.hijos && cat.hijos.length > 0) {
-          nuevosExpandidos[cat.id] = true;
-          expandirRecursivo(cat.hijos);
-        }
-      });
-    };
-    expandirRecursivo(arbol);
-    setExpandido(nuevosExpandidos);
+    expandAll(arbol, 'hijos');
   };
 
   const handleContraerTodas = () => {
-    setExpandido({});
+    collapseAll();
   };
+
+  // Render callbacks para TreeView
+  const renderCategoriaContent = useCallback((categoria, { hasChildren }) => (
+    <>
+      {/* Indicador de Color */}
+      {categoria.color && (
+        <div
+          className="w-4 h-4 rounded flex-shrink-0"
+          style={{ backgroundColor: categoria.color }}
+        />
+      )}
+
+      {/* Nombre y Descripción */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center space-x-2 flex-wrap">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            {categoria.nombre}
+          </h3>
+          {!categoria.activo && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded">
+              Inactiva
+            </span>
+          )}
+          {hasChildren && (
+            <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
+              {categoria.hijos.length} subcategoría{categoria.hijos.length !== 1 ? 's' : ''}
+            </span>
+          )}
+        </div>
+        {categoria.descripcion && (
+          <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">{categoria.descripcion}</p>
+        )}
+      </div>
+
+      {/* Metadatos */}
+      <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden sm:block">
+        Orden: {categoria.orden}
+      </div>
+    </>
+  ), []);
+
+  const renderCategoriaActions = useCallback((categoria) => (
+    <>
+      <Button
+        variant="secondary"
+        size="sm"
+        onClick={() => handleEditarCategoria(categoria)}
+        icon={Edit}
+      >
+        <span className="hidden sm:inline">Editar</span>
+      </Button>
+      <Button
+        variant="danger"
+        size="sm"
+        onClick={() => handleAbrirModalEliminar(categoria)}
+        icon={Trash2}
+      >
+        <span className="hidden sm:inline">Eliminar</span>
+      </Button>
+    </>
+  ), []);
 
   // Filtrar categorías inactivas si corresponde
   const arbolFiltrado = mostrarInactivas
@@ -268,34 +197,24 @@ function CategoriasPage() {
 
         {/* Árbol de Categorías */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          {cargandoArbol ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando categorías...</span>
-            </div>
-          ) : arbolFiltrado.length === 0 ? (
-            <EmptyState
-              icon={FolderTree}
-              title="No hay categorías"
-              description="Comienza creando tu primera categoría"
-              actionLabel="Nueva Categoría"
-              onAction={handleNuevaCategoria}
-            />
-          ) : (
-            <div className="space-y-2">
-              {arbolFiltrado.map((categoria) => (
-                <NodoCategoria
-                  key={categoria.id}
-                  categoria={categoria}
-                  nivel={0}
-                  onEditar={handleEditarCategoria}
-                  onEliminar={handleAbrirModalEliminar}
-                  expandido={expandido}
-                  onToggleExpansion={handleToggleExpansion}
-                />
-              ))}
-            </div>
-          )}
+          <TreeView
+            data={arbolFiltrado}
+            childrenKey="hijos"
+            expandedState={expanded}
+            onToggleExpand={toggle}
+            renderContent={renderCategoriaContent}
+            renderActions={renderCategoriaActions}
+            isLoading={cargandoArbol}
+            emptyState={
+              <EmptyState
+                icon={FolderTree}
+                title="No hay categorías"
+                description="Comienza creando tu primera categoría"
+                actionLabel="Nueva Categoría"
+                onAction={handleNuevaCategoria}
+              />
+            }
+          />
         </div>
 
       {/* Modal de Formulario */}
@@ -307,58 +226,28 @@ function CategoriasPage() {
       />
 
       {/* Modal de Confirmación de Eliminación */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('eliminar')}
         onClose={() => closeModal('eliminar')}
+        onConfirm={handleEliminar}
         title="Eliminar Categoría"
+        message={`¿Estás seguro de que deseas eliminar la categoría "${getModalData('eliminar')?.nombre}"? Esta acción no se puede deshacer.`}
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={eliminarMutation.isPending}
         size="md"
       >
-        {(() => {
-          const categoriaEliminar = getModalData('eliminar');
-          return (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ¿Estás seguro de que deseas eliminar la categoría{' '}
-                <strong className="text-gray-900 dark:text-gray-100">
-                  {categoriaEliminar?.nombre}
-                </strong>
-                ?
-              </p>
-
-              {categoriaEliminar?.hijos?.length > 0 && (
-                <Alert variant="warning" icon={AlertTriangle} title="Atención">
-                  <p className="text-sm">
-                    Esta categoría tiene{' '}
-                    <strong>{categoriaEliminar.hijos.length}</strong>{' '}
-                    subcategoría{categoriaEliminar.hijos.length !== 1 ? 's' : ''}. Las
-                    subcategorías quedarán sin padre.
-                  </p>
-                </Alert>
-              )}
-
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Esta acción no se puede deshacer.
-              </p>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button
-                  variant="secondary"
-                  onClick={() => closeModal('eliminar')}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={handleEliminar}
-                  isLoading={eliminarMutation.isPending}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          );
-        })()}
-      </Modal>
+        {getModalData('eliminar')?.hijos?.length > 0 && (
+          <Alert variant="warning" icon={AlertTriangle} title="Atención">
+            <p className="text-sm">
+              Esta categoría tiene{' '}
+              <strong>{getModalData('eliminar').hijos.length}</strong>{' '}
+              subcategoría{getModalData('eliminar').hijos.length !== 1 ? 's' : ''}. Las
+              subcategorías quedarán sin padre.
+            </p>
+          </Alert>
+        )}
+      </ConfirmDialog>
     </InventarioPageLayout>
   );
 }

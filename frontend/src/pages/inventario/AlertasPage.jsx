@@ -1,12 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
   AlertCircle,
   AlertTriangle,
   TrendingDown,
   Clock,
   XCircle,
-  Filter,
-  X,
   CheckCircle,
   CheckCheck,
   ShoppingCart,
@@ -14,10 +12,11 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
 import EmptyState from '@/components/ui/EmptyState';
 import Badge from '@/components/ui/Badge';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import { Pagination } from '@/components/ui/Pagination';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
@@ -29,44 +28,98 @@ import {
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 
+const ITEMS_PER_PAGE = 20;
+
 /**
  * Página principal de Alertas de Inventario
  */
 function AlertasPage() {
   const { showToast } = useToast();
 
-  // Estado de filtros
+  // Estado de filtros y paginación
   // NOTA: soloNoLeidas controla el checkbox, luego se convierte a leida para el backend
   const [filtros, setFiltros] = useState({
     tipo_alerta: '',
     nivel: '',
     soloNoLeidas: false, // false = mostrar todas, true = solo no leídas
     soloNecesitanAccion: false, // Solo mostrar alertas que NO tienen OC pendiente
-    producto_id: '',
     fecha_desde: '',
     fecha_hasta: '',
   });
+  const [page, setPage] = useState(1);
 
   // Estado de selección
   const [alertasSeleccionadas, setAlertasSeleccionadas] = useState([]);
 
+  // Config de filtros para FilterPanel
+  const filterConfig = useMemo(() => [
+    {
+      key: 'tipo_alerta',
+      label: 'Tipo',
+      type: 'select',
+      options: [
+        { value: 'stock_minimo', label: 'Stock Mínimo' },
+        { value: 'stock_agotado', label: 'Stock Agotado' },
+        { value: 'proximo_vencimiento', label: 'Próximo Vencimiento' },
+        { value: 'vencido', label: 'Vencido' },
+        { value: 'sin_movimiento', label: 'Sin Movimiento' },
+      ],
+    },
+    {
+      key: 'nivel',
+      label: 'Nivel',
+      type: 'select',
+      options: [
+        { value: 'info', label: 'Info' },
+        { value: 'warning', label: 'Warning' },
+        { value: 'critical', label: 'Critical' },
+      ],
+    },
+    { key: 'fecha_desde', label: 'Desde', type: 'date' },
+    { key: 'fecha_hasta', label: 'Hasta', type: 'date' },
+    {
+      key: 'soloNoLeidas',
+      label: 'No leídas',
+      type: 'checkbox',
+      checkboxLabel: 'Solo no leídas',
+    },
+    {
+      key: 'soloNecesitanAccion',
+      label: 'Acción',
+      type: 'checkbox',
+      checkboxLabel: 'Solo las que necesitan acción',
+    },
+  ], []);
+
   // Preparar parámetros para el backend
   // soloNoLeidas: true → leida: false (filtrar solo no leídas)
   // soloNoLeidas: false → no enviar leida (mostrar todas)
-  const queryParams = {
+  const queryParams = useMemo(() => ({
     tipo_alerta: filtros.tipo_alerta,
     nivel: filtros.nivel,
-    producto_id: filtros.producto_id,
     fecha_desde: filtros.fecha_desde,
     fecha_hasta: filtros.fecha_hasta,
     ...(filtros.soloNoLeidas ? { leida: false } : {}),
     ...(filtros.soloNecesitanAccion ? { solo_necesitan_accion: true } : {}),
-  };
+    limit: ITEMS_PER_PAGE,
+    offset: (page - 1) * ITEMS_PER_PAGE,
+  }), [filtros, page]);
 
   // Queries
   const { data: alertasData, isLoading: cargandoAlertas } = useAlertas(queryParams);
   const alertas = alertasData?.alertas || [];
-  const total = alertasData?.contadores?.total || alertas.length;
+  const total = alertasData?.contadores?.total || alertasData?.total || alertas.length;
+
+  // Calcular paginación
+  const totalPages = Math.ceil(total / ITEMS_PER_PAGE);
+  const pagination = {
+    page,
+    limit: ITEMS_PER_PAGE,
+    total,
+    totalPages,
+    hasNext: page < totalPages,
+    hasPrev: page > 1,
+  };
 
   // Mutations
   const marcarUnaMutation = useMarcarAlertaLeida();
@@ -76,6 +129,7 @@ function AlertasPage() {
   // Handlers de filtros
   const handleFiltroChange = (campo, valor) => {
     setFiltros((prev) => ({ ...prev, [campo]: valor }));
+    setPage(1); // Reset página al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
@@ -84,10 +138,14 @@ function AlertasPage() {
       nivel: '',
       soloNoLeidas: false,
       soloNecesitanAccion: false,
-      producto_id: '',
       fecha_desde: '',
       fecha_hasta: '',
     });
+    setPage(1);
+  };
+
+  const handlePageChange = (newPage) => {
+    setPage(newPage);
   };
 
   // Handlers de selección
@@ -246,109 +304,15 @@ function AlertasPage() {
       <div className="space-y-6">
 
         {/* Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex items-center space-x-2 mb-4">
-            <Filter className="h-5 w-5 text-gray-600 dark:text-gray-400" />
-            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">Filtros</h3>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-            {/* Tipo de Alerta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Tipo
-              </label>
-              <Select
-                value={filtros.tipo_alerta}
-                onChange={(e) => handleFiltroChange('tipo_alerta', e.target.value)}
-              >
-                <option value="">Todos</option>
-                <option value="stock_minimo">Stock Mínimo</option>
-                <option value="stock_agotado">Stock Agotado</option>
-                <option value="proximo_vencimiento">Próximo Vencimiento</option>
-                <option value="vencido">Vencido</option>
-                <option value="sin_movimiento">Sin Movimiento</option>
-              </Select>
-            </div>
-
-            {/* Nivel */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Nivel
-              </label>
-              <Select
-                value={filtros.nivel}
-                onChange={(e) => handleFiltroChange('nivel', e.target.value)}
-              >
-                <option value="">Todos</option>
-                <option value="info">Info</option>
-                <option value="warning">Warning</option>
-                <option value="critical">Critical</option>
-              </Select>
-            </div>
-
-            {/* Fecha Desde */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Desde
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_desde}
-                onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-
-            {/* Fecha Hasta */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Hasta
-              </label>
-              <input
-                type="date"
-                value={filtros.fecha_hasta}
-                onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-
-            {/* Botón Limpiar */}
-            <div className="flex items-end">
-              <Button
-                variant="secondary"
-                onClick={handleLimpiarFiltros}
-                icon={X}
-                className="flex-1"
-              >
-                Limpiar
-              </Button>
-            </div>
-          </div>
-
-          {/* Toggles */}
-          <div className="mt-4 flex flex-wrap gap-6">
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filtros.soloNoLeidas}
-                onChange={(e) => handleFiltroChange('soloNoLeidas', e.target.checked)}
-                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Solo no leídas</span>
-            </label>
-            <label className="flex items-center space-x-2 cursor-pointer">
-              <input
-                type="checkbox"
-                checked={filtros.soloNecesitanAccion}
-                onChange={(e) => handleFiltroChange('soloNecesitanAccion', e.target.checked)}
-                className="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500 bg-white dark:bg-gray-700"
-              />
-              <span className="text-sm text-gray-700 dark:text-gray-300">Solo las que necesitan acción</span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">(sin OC pendiente)</span>
-            </label>
-          </div>
-        </div>
+        <FilterPanel
+          filters={filtros}
+          onFilterChange={handleFiltroChange}
+          onClearFilters={handleLimpiarFiltros}
+          filterConfig={filterConfig}
+          showSearch={false}
+          defaultExpanded={false}
+          className="mb-6"
+        />
 
         {/* Lista de Alertas */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
@@ -513,6 +477,16 @@ function AlertasPage() {
             </div>
           )}
         </div>
+
+        {/* Paginación */}
+        {!cargandoAlertas && total > 0 && (
+          <Pagination
+            pagination={pagination}
+            onPageChange={handlePageChange}
+            showInfo={true}
+            size="md"
+          />
+        )}
       </div>
     </InventarioPageLayout>
   );

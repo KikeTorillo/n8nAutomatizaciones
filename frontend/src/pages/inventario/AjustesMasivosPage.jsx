@@ -17,7 +17,8 @@ import {
     FileCheck,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Alert from '@/components/ui/Alert';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
@@ -542,95 +543,45 @@ export default function AjustesMasivosPage() {
             )}
 
             {/* Modal confirmar validar */}
-            {isOpen('validar') && (
-                <Modal
-                    isOpen={isOpen('validar')}
-                    onClose={() => closeModal('validar')}
-                    title="Validar Ajuste Masivo"
-                >
-                    <div className="p-4">
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            ¿Deseas validar el ajuste <strong>{getModalData('validar')?.ajuste?.folio}</strong>?
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Se verificara que los SKUs/codigos de barras existan y se calculara el stock resultante.
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => closeModal('validar')}>
-                                Cancelar
-                            </Button>
-                            <Button onClick={handleValidar} isLoading={validarMutation.isPending}>
-                                <FileCheck className="h-4 w-4 mr-1" />
-                                Validar
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            <ConfirmDialog
+                isOpen={isOpen('validar')}
+                onClose={() => closeModal('validar')}
+                onConfirm={handleValidar}
+                title="Validar Ajuste Masivo"
+                message={`¿Deseas validar el ajuste ${getModalData('validar')?.ajuste?.folio}? Se verificará que los SKUs/códigos de barras existan y se calculará el stock resultante.`}
+                confirmText="Validar"
+                variant="info"
+                isLoading={validarMutation.isPending}
+            />
 
             {/* Modal confirmar aplicar */}
-            {isOpen('aplicar') && (
-                <Modal
-                    isOpen={isOpen('aplicar')}
-                    onClose={() => closeModal('aplicar')}
-                    title="Aplicar Ajustes de Inventario"
-                >
-                    <div className="p-4">
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            ¿Deseas aplicar los ajustes del folio <strong>{getModalData('aplicar')?.ajuste?.folio}</strong>?
-                        </p>
-                        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mb-4">
-                            <div className="flex items-start gap-2">
-                                <AlertTriangle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                                <div className="text-sm text-yellow-700 dark:text-yellow-300">
-                                    <p className="font-medium">Esta accion no se puede deshacer</p>
-                                    <p>Se crearan movimientos de inventario para cada item valido.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => closeModal('aplicar')}>
-                                Cancelar
-                            </Button>
-                            <Button onClick={handleAplicar} isLoading={aplicarMutation.isPending}>
-                                <Play className="h-4 w-4 mr-1" />
-                                Aplicar Ajustes
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            <ConfirmDialog
+                isOpen={isOpen('aplicar')}
+                onClose={() => closeModal('aplicar')}
+                onConfirm={handleAplicar}
+                title="Aplicar Ajustes de Inventario"
+                message={`¿Deseas aplicar los ajustes del folio ${getModalData('aplicar')?.ajuste?.folio}?`}
+                confirmText="Aplicar Ajustes"
+                variant="warning"
+                isLoading={aplicarMutation.isPending}
+                size="md"
+            >
+                <Alert variant="warning" icon={AlertTriangle} title="Esta acción no se puede deshacer">
+                    <p className="text-sm">Se crearán movimientos de inventario para cada item válido.</p>
+                </Alert>
+            </ConfirmDialog>
 
             {/* Modal confirmar cancelar */}
-            {isOpen('cancelar') && (
-                <Modal
-                    isOpen={isOpen('cancelar')}
-                    onClose={() => closeModal('cancelar')}
-                    title="Cancelar Ajuste Masivo"
-                >
-                    <div className="p-4">
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            ¿Deseas cancelar el ajuste <strong>{getModalData('cancelar')?.ajuste?.folio}</strong>?
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Esta accion eliminara el ajuste y todos sus items.
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => closeModal('cancelar')}>
-                                Volver
-                            </Button>
-                            <Button
-                                variant="danger"
-                                onClick={handleCancelar}
-                                isLoading={cancelarMutation.isPending}
-                            >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Cancelar Ajuste
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            <ConfirmDialog
+                isOpen={isOpen('cancelar')}
+                onClose={() => closeModal('cancelar')}
+                onConfirm={handleCancelar}
+                title="Cancelar Ajuste Masivo"
+                message={`¿Deseas cancelar el ajuste ${getModalData('cancelar')?.ajuste?.folio}? Esta acción eliminará el ajuste y todos sus items.`}
+                confirmText="Cancelar Ajuste"
+                variant="danger"
+                isLoading={cancelarMutation.isPending}
+            />
         </InventarioPageLayout>
     );
 }

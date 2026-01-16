@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Boxes,
@@ -7,13 +7,9 @@ import {
   CheckCircle,
   XCircle,
   User,
-  Filter,
   RefreshCw,
   Clock,
   ArrowRight,
-  ChevronDown,
-  ChevronUp,
-  Search,
   Eye,
   Settings,
   Truck,
@@ -24,9 +20,8 @@ import {
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import StatCardGrid from '@/components/ui/StatCardGrid';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -259,8 +254,34 @@ export default function OperacionesAlmacenPage() {
     asignado_a: '',
     origen_tipo: '',
   });
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
   const [vistaLista, setVistaLista] = useState(false);
+
+  // Configuración de filtros para FilterPanel
+  const filterConfig = useMemo(() => [
+    {
+      key: 'tipo_operacion',
+      label: 'Tipo Operación',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todos los tipos' },
+        ...Object.entries(LABELS_TIPO_OPERACION).map(([key, label]) => ({
+          value: key,
+          label,
+        })),
+      ],
+    },
+    {
+      key: 'origen_tipo',
+      label: 'Origen',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todos los orígenes' },
+        { value: 'orden_compra', label: 'Orden de Compra' },
+        { value: 'venta', label: 'Venta' },
+        { value: 'solicitud_transferencia', label: 'Transferencia' },
+      ],
+    },
+  ], []);
 
   // Modales centralizados
   const { openModal, closeModal, isOpen, getModalData } = useModalManager({
@@ -378,12 +399,6 @@ export default function OperacionesAlmacenPage() {
             icon={RefreshCw}
             className={isLoading ? '[&_svg]:animate-spin' : ''}
           />
-          <Button
-            variant={mostrarFiltros ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            icon={Filter}
-          />
         </div>
       }
     >
@@ -427,43 +442,15 @@ export default function OperacionesAlmacenPage() {
       </div>
 
       {/* Filtros */}
-      {mostrarFiltros && (
-        <div className="mb-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Select
-                label="Tipo Operación"
-                value={filtros.tipo_operacion}
-                onChange={(e) => handleFiltroChange('tipo_operacion', e.target.value)}
-              >
-                <option value="">Todos los tipos</option>
-                {Object.entries(LABELS_TIPO_OPERACION).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </Select>
-              <Select
-                label="Origen"
-                value={filtros.origen_tipo}
-                onChange={(e) => handleFiltroChange('origen_tipo', e.target.value)}
-              >
-                <option value="">Todos los orígenes</option>
-                <option value="orden_compra">Orden de Compra</option>
-                <option value="venta_pos">Venta POS</option>
-                <option value="solicitud_transferencia">Transferencia</option>
-              </Select>
-              <div className="flex items-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={handleLimpiarFiltros}
-                  className="flex-1"
-                >
-                  Limpiar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <FilterPanel
+        filters={filtros}
+        onFilterChange={handleFiltroChange}
+        onClearFilters={handleLimpiarFiltros}
+        showSearch={false}
+        filterConfig={filterConfig}
+        defaultExpanded={false}
+        className="mb-4"
+      />
 
       {/* Kanban Board */}
       <div className="overflow-x-auto -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
@@ -518,32 +505,16 @@ export default function OperacionesAlmacenPage() {
       </div>
 
       {/* Modal Asignar */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('asignar')}
         onClose={() => closeModal('asignar')}
+        onConfirm={handleAsignarConfirmar}
         title="Asignar Operación"
-      >
-        <div className="p-4">
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Deseas asignarte la operación <strong>{getModalData('asignar')?.folio}</strong>?
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => closeModal('asignar')}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="primary"
-              onClick={handleAsignarConfirmar}
-              disabled={asignarMutation.isPending}
-            >
-              {asignarMutation.isPending ? 'Asignando...' : 'Asignarme'}
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={`¿Deseas asignarte la operación ${getModalData('asignar')?.folio}?`}
+        confirmText="Asignarme"
+        variant="info"
+        isLoading={asignarMutation.isPending}
+      />
     </InventarioPageLayout>
   );
 }

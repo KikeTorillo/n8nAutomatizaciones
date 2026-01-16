@@ -38,7 +38,8 @@ import { es } from 'date-fns/locale';
 import Modal from '@/components/ui/Modal';
 import Button from '@/components/ui/Button';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { DataTable, DataTableActionButton, DataTableActions } from '@/components/ui/DataTable';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { formatCurrency } from '@/lib/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 
@@ -140,44 +141,17 @@ export default function DropshipPage() {
       <div className="space-y-6">
 
       {/* Metricas */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-        <MetricCard
-          title="Ventas Pendientes"
-          value={stats?.ventas_pendientes || 0}
-          icon={ShoppingBag}
-          color="amber"
-          loading={loadingStats}
-        />
-        <MetricCard
-          title="Borradores"
-          value={stats?.borradores || 0}
-          icon={Clock}
-          color="gray"
-          loading={loadingStats}
-        />
-        <MetricCard
-          title="Enviadas"
-          value={stats?.enviadas || 0}
-          icon={Truck}
-          color="blue"
-          loading={loadingStats}
-        />
-        <MetricCard
-          title="Entregadas"
-          value={stats?.entregadas || 0}
-          icon={CheckCircle}
-          color="green"
-          loading={loadingStats}
-        />
-        <MetricCard
-          title="Total Pendiente"
-          value={formatCurrency(parseFloat(stats?.total_pendiente) || 0)}
-          icon={Package}
-          color="primary"
-          loading={loadingStats}
-          isMonetary
-        />
-      </div>
+      <StatCardGrid
+        columns={4}
+        className="lg:grid-cols-5"
+        stats={[
+          { icon: ShoppingBag, label: 'Ventas Pendientes', value: loadingStats ? '...' : (stats?.ventas_pendientes || 0), color: 'yellow' },
+          { icon: Clock, label: 'Borradores', value: loadingStats ? '...' : (stats?.borradores || 0) },
+          { icon: Truck, label: 'Enviadas', value: loadingStats ? '...' : (stats?.enviadas || 0), color: 'blue' },
+          { icon: CheckCircle, label: 'Entregadas', value: loadingStats ? '...' : (stats?.entregadas || 0), color: 'green' },
+          { icon: Package, label: 'Total Pendiente', value: loadingStats ? '...' : formatCurrency(parseFloat(stats?.total_pendiente) || 0), color: 'primary' },
+        ]}
+      />
 
       {/* Ventas Pendientes de Generar OC */}
       {(ventasPendientes?.length > 0 || loadingPendientes) && (
@@ -260,115 +234,115 @@ export default function DropshipPage() {
         </div>
 
         {/* Tabla de OC */}
-        <div className="overflow-x-auto">
-          {loadingOrdenes ? (
-            <div className="flex justify-center py-8">
-              <RefreshCw className="h-6 w-6 animate-spin text-gray-400" />
-            </div>
-          ) : ordenes?.length === 0 ? (
-            <EmptyState
-              icon={Truck}
-              title="No hay órdenes dropship"
-              description="Las órdenes dropship aparecerán cuando haya ventas con productos de envío directo"
-            />
-          ) : (
-            <table className="w-full">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Folio
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Cliente
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Proveedor
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Total
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Fecha
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {ordenes?.map((orden) => {
-                  const estadoInfo = ESTADOS[orden.estado] || ESTADOS.borrador;
-                  const IconEstado = estadoInfo.icon;
-
-                  return (
-                    <tr
-                      key={orden.id}
-                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900 dark:text-gray-100">
-                            {orden.folio}
-                          </span>
-                          {orden.venta_folio && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              ({orden.venta_folio})
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-900 dark:text-gray-100">
-                            {orden.cliente_nombre || 'Sin cliente'}
-                          </span>
-                          {orden.cliente_telefono && (
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {orden.cliente_telefono}
-                            </span>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                        {orden.proveedor_nombre}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                        {formatCurrency(parseFloat(orden.total))}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full
-                            ${estadoInfo.color === 'gray' && 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}
-                            ${estadoInfo.color === 'blue' && 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'}
-                            ${estadoInfo.color === 'green' && 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'}
-                            ${estadoInfo.color === 'red' && 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'}
-                          `}
-                        >
-                          <IconEstado className="h-3 w-3" />
-                          {estadoInfo.label}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                        {format(new Date(orden.creado_en), 'dd/MM/yy HH:mm', { locale: es })}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-right">
-                        <button
-                          onClick={() => openModal('detalle', orden)}
-                          className="text-primary-600 hover:text-primary-700 dark:text-primary-400"
-                        >
-                          <Eye className="h-5 w-5" />
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <DataTable
+          columns={[
+            {
+              key: 'folio',
+              header: 'Folio',
+              render: (row) => (
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-gray-900 dark:text-gray-100">
+                    {row.folio}
+                  </span>
+                  {row.venta_folio && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      ({row.venta_folio})
+                    </span>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'cliente',
+              header: 'Cliente',
+              hideOnMobile: true,
+              render: (row) => (
+                <div className="flex flex-col">
+                  <span className="text-sm text-gray-900 dark:text-gray-100">
+                    {row.cliente_nombre || 'Sin cliente'}
+                  </span>
+                  {row.cliente_telefono && (
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      {row.cliente_telefono}
+                    </span>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'proveedor',
+              header: 'Proveedor',
+              hideOnMobile: true,
+              render: (row) => (
+                <span className="text-sm text-gray-700 dark:text-gray-300">
+                  {row.proveedor_nombre}
+                </span>
+              ),
+            },
+            {
+              key: 'total',
+              header: 'Total',
+              render: (row) => (
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {formatCurrency(parseFloat(row.total))}
+                </span>
+              ),
+            },
+            {
+              key: 'estado',
+              header: 'Estado',
+              render: (row) => {
+                const estadoInfo = ESTADOS[row.estado] || ESTADOS.borrador;
+                const IconEstado = estadoInfo.icon;
+                const colorClasses = {
+                  gray: 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300',
+                  blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300',
+                  green: 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300',
+                  red: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300',
+                };
+                return (
+                  <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-full ${colorClasses[estadoInfo.color]}`}>
+                    <IconEstado className="h-3 w-3" />
+                    {estadoInfo.label}
+                  </span>
+                );
+              },
+            },
+            {
+              key: 'fecha',
+              header: 'Fecha',
+              hideOnMobile: true,
+              render: (row) => (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  {format(new Date(row.creado_en), 'dd/MM/yy HH:mm', { locale: es })}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (row) => (
+                <DataTableActions>
+                  <DataTableActionButton
+                    icon={Eye}
+                    label="Ver detalle"
+                    onClick={() => openModal('detalle', row)}
+                    variant="primary"
+                  />
+                </DataTableActions>
+              ),
+            },
+          ]}
+          data={ordenes || []}
+          isLoading={loadingOrdenes}
+          emptyState={{
+            icon: Truck,
+            title: 'No hay órdenes dropship',
+            description: 'Las órdenes dropship aparecerán cuando haya ventas con productos de envío directo',
+          }}
+          skeletonRows={5}
+        />
       </div>
       </div>
 
@@ -529,76 +503,31 @@ export default function DropshipPage() {
       />
 
       {/* Modal cancelación con motivo */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('cancelar')}
         onClose={() => closeModal('cancelar')}
+        onConfirm={ejecutarCancelar}
         title="Cancelar orden dropship"
+        message="¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer."
+        confirmText="Confirmar cancelación"
+        variant="danger"
+        isLoading={cancelarMutation.isPending}
+        disabled={!motivoCancelacion.trim()}
+        size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de cancelar esta orden? Esta acción no se puede deshacer.
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Motivo de cancelación *
-            </label>
-            <textarea
-              value={motivoCancelacion}
-              onChange={(e) => setMotivoCancelacion(e.target.value)}
-              placeholder="Ingresa el motivo..."
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
-            />
-          </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="ghost" onClick={() => closeModal('cancelar')}>
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={ejecutarCancelar}
-              disabled={!motivoCancelacion.trim() || cancelarMutation.isPending}
-            >
-              {cancelarMutation.isPending ? 'Cancelando...' : 'Confirmar cancelación'}
-            </Button>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Motivo de cancelación *
+          </label>
+          <textarea
+            value={motivoCancelacion}
+            onChange={(e) => setMotivoCancelacion(e.target.value)}
+            placeholder="Ingresa el motivo..."
+            rows={3}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500"
+          />
         </div>
-      </Modal>
+      </ConfirmDialog>
     </InventarioPageLayout>
-  );
-}
-
-// Componente de Metrica
-function MetricCard({ title, value, icon, color, loading, isMonetary }) {
-  const colorClasses = {
-    primary: 'bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400',
-    gray: 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400',
-    blue: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
-    green: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
-    amber: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400',
-  };
-
-  const IconComp = icon;
-
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-      <div className="flex items-center justify-between">
-        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
-          <IconComp className="h-5 w-5" />
-        </div>
-      </div>
-      <div className="mt-3">
-        {loading ? (
-          <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        ) : (
-          <p
-            className={`text-2xl font-bold text-gray-900 dark:text-gray-100 ${isMonetary ? 'text-lg' : ''}`}
-          >
-            {value}
-          </p>
-        )}
-        <p className="text-sm text-gray-500 dark:text-gray-400">{title}</p>
-      </div>
-    </div>
   );
 }

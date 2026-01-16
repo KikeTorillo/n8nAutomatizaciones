@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import {
@@ -8,21 +8,15 @@ import {
     Play,
     CheckCircle,
     XCircle,
-    Filter,
-    Search,
-    Calendar,
-    ChevronDown,
-    ChevronUp,
     AlertTriangle,
     Diff,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Textarea from '@/components/ui/Textarea';
-import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import Pagination from '@/components/ui/Pagination';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -58,15 +52,46 @@ export default function ConteosPage() {
         offset: 0,
     });
 
-    const [mostrarFiltros, setMostrarFiltros] = useState(false);
     const [motivoCancelacion, setMotivoCancelacion] = useState('');
-    const [busquedaInput, setBusquedaInput] = useState('');
-    const busquedaDebounced = useDebounce(busquedaInput, 300);
 
-    // Actualizar filtros cuando cambia la búsqueda debounced
-    useEffect(() => {
-        setFiltros((prev) => ({ ...prev, folio: busquedaDebounced, offset: 0 }));
-    }, [busquedaDebounced]);
+    // Configuración de filtros para FilterPanel
+    const filterConfig = useMemo(() => [
+        {
+            key: 'estado',
+            label: 'Estado',
+            type: 'select',
+            options: [
+                { value: '', label: 'Todos los estados' },
+                { value: 'borrador', label: 'Borrador' },
+                { value: 'en_proceso', label: 'En Proceso' },
+                { value: 'completado', label: 'Completado' },
+                { value: 'ajustado', label: 'Ajustado' },
+                { value: 'cancelado', label: 'Cancelado' },
+            ],
+        },
+        {
+            key: 'tipo_conteo',
+            label: 'Tipo',
+            type: 'select',
+            options: [
+                { value: '', label: 'Todos los tipos' },
+                ...Object.entries(TIPOS_CONTEO_LABELS).map(([key, label]) => ({
+                    value: key,
+                    label,
+                })),
+            ],
+        },
+        {
+            key: 'fecha_desde',
+            label: 'Desde',
+            type: 'date',
+        },
+        {
+            key: 'fecha_hasta',
+            label: 'Hasta',
+            type: 'date',
+        },
+    ], []);
 
     // Modal manager
     const { isOpen, getModalData, openModal, closeModal } = useModalManager();
@@ -257,103 +282,24 @@ export default function ConteosPage() {
             title="Conteos"
             subtitle={`${total} conteo${total !== 1 ? 's' : ''} en total`}
             actions={
-                <>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setMostrarFiltros(!mostrarFiltros)}
-                        className="flex-1 sm:flex-none"
-                    >
-                        <Filter className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Filtros</span>
-                        {mostrarFiltros ? (
-                            <ChevronUp className="h-4 w-4 ml-1" />
-                        ) : (
-                            <ChevronDown className="h-4 w-4 ml-1" />
-                        )}
-                    </Button>
-                    <Button onClick={handleNuevoConteo} className="flex-1 sm:flex-none">
-                        <Plus className="h-4 w-4 mr-1" />
-                        <span className="hidden sm:inline">Nuevo Conteo</span>
-                        <span className="sm:hidden">Nuevo</span>
-                    </Button>
-                </>
+                <Button onClick={handleNuevoConteo} className="flex-1 sm:flex-none">
+                    <Plus className="h-4 w-4 mr-1" />
+                    <span className="hidden sm:inline">Nuevo Conteo</span>
+                    <span className="sm:hidden">Nuevo</span>
+                </Button>
             }
         >
             {/* Filtros */}
-            {mostrarFiltros && (
-                <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                            {/* Búsqueda por folio */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="text"
-                                    placeholder="Buscar por folio..."
-                                    value={busquedaInput}
-                                    onChange={(e) => setBusquedaInput(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Estado */}
-                            <select
-                                value={filtros.estado}
-                                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            >
-                                <option value="">Todos los estados</option>
-                                <option value="borrador">Borrador</option>
-                                <option value="en_proceso">En Proceso</option>
-                                <option value="completado">Completado</option>
-                                <option value="ajustado">Ajustado</option>
-                                <option value="cancelado">Cancelado</option>
-                            </select>
-
-                            {/* Tipo de conteo */}
-                            <select
-                                value={filtros.tipo_conteo}
-                                onChange={(e) => handleFiltroChange('tipo_conteo', e.target.value)}
-                                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                            >
-                                <option value="">Todos los tipos</option>
-                                {Object.entries(TIPOS_CONTEO_LABELS).map(([key, label]) => (
-                                    <option key={key} value={key}>
-                                        {label}
-                                    </option>
-                                ))}
-                            </select>
-
-                            {/* Fecha desde */}
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={filtros.fecha_desde}
-                                    onChange={(e) => handleFiltroChange('fecha_desde', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            {/* Fecha hasta */}
-                            <div className="relative">
-                                <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                                <input
-                                    type="date"
-                                    value={filtros.fecha_hasta}
-                                    onChange={(e) => handleFiltroChange('fecha_hasta', e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                                />
-                            </div>
-                        </div>
-
-                    <div className="flex justify-end mt-4 col-span-full">
-                        <Button variant="ghost" size="sm" onClick={handleLimpiarFiltros}>
-                            Limpiar filtros
-                        </Button>
-                    </div>
-                </div>
-            )}
+            <FilterPanel
+                filters={filtros}
+                onFilterChange={handleFiltroChange}
+                onClearFilters={handleLimpiarFiltros}
+                searchKey="folio"
+                searchPlaceholder="Buscar por folio..."
+                filterConfig={filterConfig}
+                defaultExpanded={false}
+                className="mb-6"
+            />
 
             {/* Estadísticas rápidas */}
             <StatCardGrid
@@ -367,147 +313,163 @@ export default function ConteosPage() {
             />
 
             {/* Tabla de conteos */}
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-                    {isLoading ? (
-                        <SkeletonTable rows={5} columns={7} />
-                    ) : conteos.length === 0 ? (
-                        <EmptyState
-                            icon={ClipboardList}
-                            title="No hay conteos de inventario"
-                            description="Crea tu primer conteo para comenzar a gestionar el inventario físico"
-                            action={
-                                <Button onClick={handleNuevoConteo}>
-                                    <Plus className="h-4 w-4 mr-1" />
-                                    Crear primer conteo
-                                </Button>
-                            }
+            <DataTable
+              columns={[
+                {
+                  key: 'folio',
+                  header: 'Folio',
+                  render: (row) => (
+                    <span className="font-mono text-sm font-medium text-primary-600 dark:text-primary-400">
+                      {row.folio}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'tipo',
+                  header: 'Tipo',
+                  hideOnMobile: true,
+                  render: (row) => (
+                    <span className="text-sm text-gray-900 dark:text-white">
+                      {TIPOS_CONTEO_LABELS[row.tipo_conteo] || row.tipo_conteo}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'estado',
+                  header: 'Estado',
+                  render: (row) => renderEstado(row.estado),
+                },
+                {
+                  key: 'progreso',
+                  header: 'Progreso',
+                  hideOnMobile: true,
+                  render: (row) => (
+                    <div className="flex items-center gap-2">
+                      <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-[100px]">
+                        <div
+                          className="h-full bg-primary-600 rounded-full"
+                          style={{
+                            width: `${row.total_productos > 0
+                              ? Math.round((row.total_contados / row.total_productos) * 100)
+                              : 0}%`,
+                          }}
                         />
-                    ) : (
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                                <thead className="bg-gray-50 dark:bg-gray-900">
-                                    <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Folio
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Tipo
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Estado
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Progreso
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Diferencias
-                                        </th>
-                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Fecha
-                                        </th>
-                                        <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                            Acciones
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                    {conteos.map((conteo) => (
-                                        <tr
-                                            key={conteo.id}
-                                            className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                                            onClick={() => handleVerDetalle(conteo.id)}
-                                        >
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="font-mono text-sm font-medium text-primary-600 dark:text-primary-400">
-                                                    {conteo.folio}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm text-gray-900 dark:text-white">
-                                                    {TIPOS_CONTEO_LABELS[conteo.tipo_conteo] || conteo.tipo_conteo}
-                                                </span>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {renderEstado(conteo.estado)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden max-w-[100px]">
-                                                        <div
-                                                            className="h-full bg-primary-600 rounded-full"
-                                                            style={{
-                                                                width: `${conteo.total_productos > 0
-                                                                        ? Math.round((conteo.total_contados / conteo.total_productos) * 100)
-                                                                        : 0
-                                                                    }%`,
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <span className="text-xs text-gray-500 dark:text-gray-400">
-                                                        {conteo.total_contados}/{conteo.total_productos}
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {conteo.total_con_diferencia > 0 ? (
-                                                    <span className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
-                                                        <AlertTriangle className="h-4 w-4" />
-                                                        {conteo.total_con_diferencia}
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                {formatFecha(conteo.creado_en)}
-                                            </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                                                <div
-                                                    className="flex items-center justify-end gap-2"
-                                                    onClick={(e) => e.stopPropagation()}
-                                                >
-                                                    {getAcciones(conteo).map((accion, idx) => (
-                                                        <button
-                                                            key={idx}
-                                                            onClick={accion.onClick}
-                                                            className={`p-2.5 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center justify-center ${accion.className}`}
-                                                            title={accion.label}
-                                                            aria-label={accion.label}
-                                                        >
-                                                            <accion.icon className="h-5 w-5" />
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
-                </div>
-
-                {/* Paginación */}
-                {conteos.length > 0 && total > filtros.limit && (
-                    <div className="mt-4">
-                        <Pagination
-                            pagination={{
-                                page: Math.floor(filtros.offset / filtros.limit) + 1,
-                                limit: filtros.limit,
-                                total,
-                                totalPages: Math.ceil(total / filtros.limit),
-                                hasNext: filtros.offset + filtros.limit < total,
-                                hasPrev: filtros.offset > 0,
-                            }}
-                            onPageChange={(page) =>
-                                setFiltros((prev) => ({
-                                    ...prev,
-                                    offset: (page - 1) * prev.limit,
-                                }))
-                            }
-                        />
+                      </div>
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {row.total_contados}/{row.total_productos}
+                      </span>
                     </div>
-                )}
+                  ),
+                },
+                {
+                  key: 'diferencias',
+                  header: 'Diferencias',
+                  hideOnMobile: true,
+                  render: (row) => (
+                    row.total_con_diferencia > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-sm text-amber-600 dark:text-amber-400">
+                        <AlertTriangle className="h-4 w-4" />
+                        {row.total_con_diferencia}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                    )
+                  ),
+                },
+                {
+                  key: 'fecha',
+                  header: 'Fecha',
+                  hideOnMobile: true,
+                  render: (row) => (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
+                      {formatFecha(row.creado_en)}
+                    </span>
+                  ),
+                },
+                {
+                  key: 'actions',
+                  header: '',
+                  align: 'right',
+                  render: (row) => (
+                    <div onClick={(e) => e.stopPropagation()}>
+                      <DataTableActions>
+                        <DataTableActionButton
+                          icon={Eye}
+                          label="Ver detalle"
+                          onClick={() => handleVerDetalle(row.id)}
+                          variant="ghost"
+                        />
+                        {row.estado === 'borrador' && (
+                          <>
+                            <DataTableActionButton
+                              icon={Play}
+                              label="Iniciar"
+                              onClick={() => handleAbrirModalIniciar(row)}
+                              variant="primary"
+                            />
+                            <DataTableActionButton
+                              icon={XCircle}
+                              label="Cancelar"
+                              onClick={() => handleAbrirModalCancelar(row)}
+                              variant="danger"
+                            />
+                          </>
+                        )}
+                        {row.estado === 'en_proceso' && (
+                          <>
+                            <DataTableActionButton
+                              icon={ClipboardList}
+                              label="Continuar conteo"
+                              onClick={() => handleVerDetalle(row.id)}
+                              variant="primary"
+                            />
+                            <DataTableActionButton
+                              icon={XCircle}
+                              label="Cancelar"
+                              onClick={() => handleAbrirModalCancelar(row)}
+                              variant="danger"
+                            />
+                          </>
+                        )}
+                        {row.estado === 'completado' && (
+                          <DataTableActionButton
+                            icon={CheckCircle}
+                            label="Aplicar ajustes"
+                            onClick={() => handleVerDetalle(row.id)}
+                            variant="primary"
+                          />
+                        )}
+                      </DataTableActions>
+                    </div>
+                  ),
+                },
+              ]}
+              data={conteos}
+              isLoading={isLoading}
+              onRowClick={(row) => handleVerDetalle(row.id)}
+              emptyState={{
+                icon: ClipboardList,
+                title: 'No hay conteos de inventario',
+                description: 'Crea tu primer conteo para comenzar a gestionar el inventario físico',
+                actionLabel: 'Crear primer conteo',
+                onAction: handleNuevoConteo,
+              }}
+              pagination={total > filtros.limit ? {
+                page: Math.floor(filtros.offset / filtros.limit) + 1,
+                limit: filtros.limit,
+                total,
+                totalPages: Math.ceil(total / filtros.limit),
+                hasNext: filtros.offset + filtros.limit < total,
+                hasPrev: filtros.offset > 0,
+              } : undefined}
+              onPageChange={(page) =>
+                setFiltros((prev) => ({
+                  ...prev,
+                  offset: (page - 1) * prev.limit,
+                }))
+              }
+              skeletonRows={5}
+            />
 
             {/* Modal crear conteo */}
             {isOpen('form') && (
@@ -520,67 +482,37 @@ export default function ConteosPage() {
             )}
 
             {/* Modal confirmar iniciar */}
-            {isOpen('iniciar') && (
-                <Modal
-                    isOpen={isOpen('iniciar')}
-                    onClose={() => closeModal('iniciar')}
-                    title="Iniciar Conteo"
-                >
-                    <div className="p-4">
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            ¿Deseas iniciar el conteo <strong>{getModalData('iniciar')?.conteo?.folio}</strong>?
-                        </p>
-                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                            Se generarán los productos a contar según los filtros configurados. Una vez iniciado,
-                            podrás registrar las cantidades contadas.
-                        </p>
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => closeModal('iniciar')}>
-                                Cancelar
-                            </Button>
-                            <Button onClick={handleIniciar} isLoading={iniciarMutation.isPending}>
-                                <Play className="h-4 w-4 mr-1" />
-                                Iniciar Conteo
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            <ConfirmDialog
+                isOpen={isOpen('iniciar')}
+                onClose={() => closeModal('iniciar')}
+                onConfirm={handleIniciar}
+                title="Iniciar Conteo"
+                message={`¿Deseas iniciar el conteo ${getModalData('iniciar')?.conteo?.folio}? Se generarán los productos a contar según los filtros configurados. Una vez iniciado, podrás registrar las cantidades contadas.`}
+                confirmText="Iniciar Conteo"
+                variant="info"
+                isLoading={iniciarMutation.isPending}
+            />
 
             {/* Modal confirmar cancelar */}
-            {isOpen('cancelar') && (
-                <Modal
-                    isOpen={isOpen('cancelar')}
-                    onClose={() => closeModal('cancelar')}
-                    title="Cancelar Conteo"
-                >
-                    <div className="p-4">
-                        <p className="text-gray-600 dark:text-gray-300 mb-4">
-                            ¿Deseas cancelar el conteo <strong>{getModalData('cancelar')?.conteo?.folio}</strong>?
-                        </p>
-                        <Textarea
-                            label="Motivo de cancelación (opcional)"
-                            value={motivoCancelacion}
-                            onChange={(e) => setMotivoCancelacion(e.target.value)}
-                            placeholder="Ingresa el motivo de la cancelación..."
-                            rows={3}
-                        />
-                        <div className="flex justify-end gap-2 mt-4">
-                            <Button variant="outline" onClick={() => closeModal('cancelar')}>
-                                Volver
-                            </Button>
-                            <Button
-                                variant="danger"
-                                onClick={handleCancelar}
-                                isLoading={cancelarMutation.isPending}
-                            >
-                                <XCircle className="h-4 w-4 mr-1" />
-                                Cancelar Conteo
-                            </Button>
-                        </div>
-                    </div>
-                </Modal>
-            )}
+            <ConfirmDialog
+                isOpen={isOpen('cancelar')}
+                onClose={() => closeModal('cancelar')}
+                onConfirm={handleCancelar}
+                title="Cancelar Conteo"
+                message={`¿Deseas cancelar el conteo ${getModalData('cancelar')?.conteo?.folio}?`}
+                confirmText="Cancelar Conteo"
+                variant="danger"
+                isLoading={cancelarMutation.isPending}
+                size="md"
+            >
+                <Textarea
+                    label="Motivo de cancelación (opcional)"
+                    value={motivoCancelacion}
+                    onChange={(e) => setMotivoCancelacion(e.target.value)}
+                    placeholder="Ingresa el motivo de la cancelación..."
+                    rows={3}
+                />
+            </ConfirmDialog>
         </InventarioPageLayout>
     );
 }

@@ -2,8 +2,8 @@ import { useState, useMemo } from 'react';
 import { Package, Plus, Edit, Trash2, TrendingDown, Upload, ImageIcon, ScanLine, Tag, Search, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import EmptyState from '@/components/ui/EmptyState';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
 import { AdvancedFilterPanel, FilterChip, SavedSearchModal } from '@/components/ui/filters';
 import { useToast } from '@/hooks/useToast';
@@ -344,162 +344,139 @@ function ProductosPage() {
         )}
 
         {/* Tabla de Productos */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Producto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    SKU / Código
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Categoría
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Proveedor
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Stock
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Precio Venta
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {cargandoProductos ? (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                      Cargando productos...
-                    </td>
-                  </tr>
-                ) : productos.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" className="px-6 py-8">
-                      <EmptyState
-                        icon={Package}
-                        title="No se encontraron productos"
-                        description="Crea tu primer producto para comenzar a gestionar el inventario"
-                        actionLabel="Crear Primer Producto"
-                        onAction={handleNuevoProducto}
+        <DataTable
+          columns={[
+            {
+              key: 'nombre',
+              header: 'Producto',
+              width: 'xl',
+              render: (row) => (
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0 h-10 w-10">
+                    {row.imagen_url ? (
+                      <img
+                        src={row.imagen_url}
+                        alt={row.nombre}
+                        className="h-10 w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
                       />
-                    </td>
-                  </tr>
-                ) : (
-                  productos.map((producto) => (
-                      <tr key={producto.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center space-x-3">
-                            {/* Imagen del producto */}
-                            <div className="flex-shrink-0 h-10 w-10">
-                              {producto.imagen_url ? (
-                                <img
-                                  src={producto.imagen_url}
-                                  alt={producto.nombre}
-                                  className="h-10 w-10 rounded-lg object-cover border border-gray-200 dark:border-gray-600"
-                                />
-                              ) : (
-                                <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
-                                  <ImageIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
-                                </div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                {producto.nombre}
-                              </div>
-                              {producto.descripcion && (
-                                <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
-                                  {producto.descripcion}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{producto.sku || '-'}</div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">{producto.codigo_barras || '-'}</div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-gray-100">
-                            {obtenerNombreCategoria(producto.categoria_id)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="text-sm text-gray-900 dark:text-gray-100">
-                            {obtenerNombreProveedor(producto.proveedor_id)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {producto.stock_actual} {producto.unidad_medida || 'unid'}
-                          </div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            Min: {producto.stock_minimo} | Max: {producto.stock_maximo}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            ${parseFloat(producto.precio_venta || 0).toFixed(2)}
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <Badge variant={getStockVariant(producto)} size="sm">
-                            {getStockLabel(producto)}
-                          </Badge>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-                          <div className="flex items-center justify-center space-x-2">
-                            <button
-                              onClick={() => handleEditarProducto(producto)}
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                              title="Editar"
-                              aria-label="Editar producto"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleAjustarStock(producto)}
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                              title="Ajustar Stock"
-                              aria-label="Ajustar stock"
-                            >
-                              <TrendingDown className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleGenerarEtiqueta(producto)}
-                              className="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-                              title="Generar Etiqueta"
-                              aria-label="Generar etiqueta"
-                            >
-                              <Tag className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleAbrirModalEliminar(producto)}
-                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300"
-                              title="Eliminar"
-                              aria-label="Eliminar producto"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
+                    ) : (
+                      <div className="h-10 w-10 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                        <ImageIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {row.nombre}
+                    </div>
+                    {row.descripcion && (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                        {row.descripcion}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: 'sku',
+              header: 'SKU / Código',
+              hideOnMobile: true,
+              render: (row) => (
+                <div>
+                  <div className="text-sm text-gray-900 dark:text-gray-100">{row.sku || '-'}</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">{row.codigo_barras || '-'}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'categoria_id',
+              header: 'Categoría',
+              hideOnMobile: true,
+              render: (row) => obtenerNombreCategoria(row.categoria_id),
+            },
+            {
+              key: 'proveedor_id',
+              header: 'Proveedor',
+              hideOnMobile: true,
+              render: (row) => obtenerNombreProveedor(row.proveedor_id),
+            },
+            {
+              key: 'stock_actual',
+              header: 'Stock',
+              align: 'right',
+              render: (row) => (
+                <div>
+                  <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {row.stock_actual} {row.unidad_medida || 'unid'}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Min: {row.stock_minimo} | Max: {row.stock_maximo}
+                  </div>
+                </div>
+              ),
+            },
+            {
+              key: 'precio_venta',
+              header: 'Precio',
+              align: 'right',
+              hideOnMobile: true,
+              render: (row) => `$${parseFloat(row.precio_venta || 0).toFixed(2)}`,
+            },
+            {
+              key: 'estado',
+              header: 'Estado',
+              align: 'center',
+              render: (row) => (
+                <Badge variant={getStockVariant(row)} size="sm">
+                  {getStockLabel(row)}
+                </Badge>
+              ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (row) => (
+                <DataTableActions>
+                  <DataTableActionButton
+                    icon={Edit}
+                    label="Editar"
+                    onClick={() => handleEditarProducto(row)}
+                    variant="primary"
+                  />
+                  <DataTableActionButton
+                    icon={TrendingDown}
+                    label="Ajustar Stock"
+                    onClick={() => handleAjustarStock(row)}
+                    variant="primary"
+                  />
+                  <DataTableActionButton
+                    icon={Tag}
+                    label="Generar Etiqueta"
+                    onClick={() => handleGenerarEtiqueta(row)}
+                    variant="primary"
+                  />
+                  <DataTableActionButton
+                    icon={Trash2}
+                    label="Eliminar"
+                    onClick={() => handleAbrirModalEliminar(row)}
+                    variant="danger"
+                  />
+                </DataTableActions>
+              ),
+            },
+          ]}
+          data={productos}
+          isLoading={cargandoProductos}
+          emptyState={{
+            icon: Package,
+            title: 'No se encontraron productos',
+            description: 'Crea tu primer producto para comenzar a gestionar el inventario',
+            actionLabel: 'Crear Primer Producto',
+            onAction: handleNuevoProducto,
+          }}
+        />
 
         {/* Modal Formulario Producto */}
         {isOpen('form') && (
@@ -538,36 +515,16 @@ function ProductosPage() {
         )}
 
         {/* Modal Confirmar Eliminación */}
-        <Modal
+        <ConfirmDialog
           isOpen={isOpen('eliminar')}
           onClose={() => closeModal('eliminar')}
-          title="Confirmar Eliminación"
-        >
-          <div className="space-y-4">
-            <p className="text-gray-700 dark:text-gray-300">
-              ¿Estás seguro de que deseas eliminar el producto{' '}
-              <span className="font-semibold">{getModalData('eliminar')?.producto?.nombre}</span>?
-            </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              Esta acción marcará el producto como inactivo. Podrás reactivarlo después si lo necesitas.
-            </p>
-            <div className="flex justify-end space-x-3">
-              <Button
-                variant="secondary"
-                onClick={() => closeModal('eliminar')}
-              >
-                Cancelar
-              </Button>
-              <Button
-                variant="danger"
-                onClick={handleEliminar}
-                loading={eliminarMutation.isPending}
-              >
-                Eliminar
-              </Button>
-            </div>
-          </div>
-        </Modal>
+          onConfirm={handleEliminar}
+          title="Eliminar Producto"
+          message={`¿Estás seguro de que deseas eliminar el producto "${getModalData('eliminar')?.producto?.nombre}"? Esta acción marcará el producto como inactivo. Podrás reactivarlo después si lo necesitas.`}
+          confirmText="Eliminar"
+          variant="danger"
+          isLoading={eliminarMutation.isPending}
+        />
 
         {/* Modal Guardar Búsqueda */}
         <SavedSearchModal

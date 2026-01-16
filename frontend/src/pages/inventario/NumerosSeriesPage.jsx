@@ -1,18 +1,16 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import {
-  Search, X, RefreshCw, Package, AlertTriangle, Clock,
+  RefreshCw, Package, AlertTriangle, Clock,
   CheckCircle, XCircle, Eye, History, BarChart3, FileSpreadsheet
 } from 'lucide-react';
 import Alert from '@/components/ui/Alert';
 import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import StatCardGrid from '@/components/ui/StatCardGrid';
-import EmptyState from '@/components/ui/EmptyState';
-import Pagination from '@/components/ui/Pagination';
 import Badge from '@/components/ui/Badge';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import { FilterPanel } from '@/components/ui/FilterPanel';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';
@@ -71,6 +69,34 @@ function NumerosSeriesPage() {
 
   // Mutations
   const marcarDefectuosoMutation = useMarcarDefectuoso();
+
+  // Configuración de filtros para FilterPanel
+  const filterConfig = useMemo(() => [
+    {
+      key: 'estado',
+      label: 'Estado',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todos los estados' },
+        ...Object.entries(ESTADOS_NUMERO_SERIE).map(([key, { label }]) => ({
+          value: key,
+          label,
+        })),
+      ],
+    },
+    {
+      key: 'sucursal_id',
+      label: 'Sucursal',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todas las sucursales' },
+        ...sucursales.map((s) => ({
+          value: s.id.toString(),
+          label: s.nombre,
+        })),
+      ],
+    },
+  ], [sucursales]);
 
   // Handlers
   const handleFiltroChange = (campo, valor) => {
@@ -224,197 +250,154 @@ function NumerosSeriesPage() {
         )}
 
         {/* Filtros */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 mb-6">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                <Input
-                  placeholder="Buscar por NS, lote, producto..."
-                  value={filtros.busqueda}
-                  onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
-
-            <Select
-              value={filtros.estado}
-              onChange={(e) => handleFiltroChange('estado', e.target.value)}
-              className="w-40"
-            >
-              <option value="">Todos los estados</option>
-              {Object.entries(ESTADOS_NUMERO_SERIE).map(([key, { label }]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </Select>
-
-            <Select
-              value={filtros.sucursal_id}
-              onChange={(e) => handleFiltroChange('sucursal_id', e.target.value)}
-              className="w-40"
-            >
-              <option value="">Todas las sucursales</option>
-              {sucursales.map((s) => (
-                <option key={s.id} value={s.id}>{s.nombre}</option>
-              ))}
-            </Select>
-
-            <Button variant="ghost" size="sm" onClick={handleLimpiarFiltros}>
-              <X size={16} />
-              Limpiar
-            </Button>
-
-            <Button variant="ghost" size="sm" onClick={() => refetch()}>
-              <RefreshCw size={16} />
-            </Button>
+        <div className="flex items-center gap-4 mb-6">
+          <div className="flex-1">
+            <FilterPanel
+              filters={filtros}
+              onFilterChange={handleFiltroChange}
+              onClearFilters={handleLimpiarFiltros}
+              searchKey="busqueda"
+              searchPlaceholder="Buscar por NS, lote, producto..."
+              filterConfig={filterConfig}
+              defaultExpanded={false}
+            />
           </div>
+          <Button variant="ghost" size="sm" onClick={() => refetch()}>
+            <RefreshCw size={16} />
+          </Button>
         </div>
 
         {/* Tabla */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Numero de Serie
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Producto
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Lote
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Vencimiento
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Sucursal
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Costo
-                  </th>
-                  <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {isLoading ? (
-                  <tr>
-                    <td colSpan={8} className="p-0">
-                      <SkeletonTable rows={5} columns={8} />
-                    </td>
-                  </tr>
-                ) : numerosSerie.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="px-4 py-8">
-                      <EmptyState
-                        icon={Package}
-                        title="No se encontraron números de serie"
-                        description="No hay números de serie que coincidan con los filtros aplicados"
-                      />
-                    </td>
-                  </tr>
-                ) : (
-                  numerosSerie.map((ns) => {
-                    const vencimiento = formatearFechaVencimiento(ns.fecha_vencimiento);
-                    return (
-                      <tr key={ns.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                        <td className="px-4 py-3">
-                          <div className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {ns.numero_serie}
-                          </div>
-                        </td>
-                        <td className="px-4 py-3">
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{ns.producto_nombre}</div>
-                          <div className="text-xs text-gray-500 dark:text-gray-400">{ns.producto_sku}</div>
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                          {ns.lote || '-'}
-                        </td>
-                        <td className="px-4 py-3">
-                          <Badge variant={ESTADO_NS_VARIANT[ns.estado] || 'default'} size="sm">
-                            {getEstadoLabel(ns.estado)}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-3 text-sm">
-                          {ns.fecha_vencimiento ? (
-                            <span className={
-                              vencimiento.status === 'error' ? 'text-red-600 dark:text-red-400' :
-                              vencimiento.status === 'warning' ? 'text-yellow-600 dark:text-yellow-400' :
-                              'text-gray-600 dark:text-gray-300'
-                            }>
-                              {vencimiento.text}
-                            </span>
-                          ) : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                          {ns.sucursal_nombre || '-'}
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 dark:text-gray-300">
-                          {ns.costo_unitario ? `$${Number(ns.costo_unitario).toFixed(2)}` : '-'}
-                        </td>
-                        <td className="px-4 py-3 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            <button
-                              onClick={() => handleVerDetalle(ns.id)}
-                              className="p-1.5 text-gray-400 hover:text-primary-600 dark:hover:text-primary-400"
-                              title="Ver detalle"
-                              aria-label="Ver detalle del número de serie"
-                            >
-                              <Eye size={16} />
-                            </button>
-                            <button
-                              onClick={() => handleVerHistorial(ns.id)}
-                              className="p-1.5 text-gray-400 hover:text-blue-600 dark:hover:text-blue-400"
-                              title="Ver historial"
-                              aria-label="Ver historial de movimientos"
-                            >
-                              <History size={16} />
-                            </button>
-                            {ns.estado === 'disponible' && (
-                              <button
-                                onClick={() => handleAbrirDefectuoso(ns.id)}
-                                className="p-1.5 text-gray-400 hover:text-red-600 dark:hover:text-red-400"
-                                title="Marcar defectuoso"
-                                aria-label="Marcar como defectuoso"
-                              >
-                                <XCircle size={16} />
-                              </button>
-                            )}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Paginacion */}
-          {pagination.totalPages > 1 && (
-            <div className="px-4 border-t border-gray-200 dark:border-gray-700">
-              <Pagination
-                pagination={{
-                  page: filtros.page,
-                  limit: filtros.limit,
-                  total: pagination.total,
-                  totalPages: pagination.totalPages,
-                  hasNext: filtros.page < pagination.totalPages,
-                  hasPrev: filtros.page > 1,
-                }}
-                onPageChange={handlePageChange}
-                size="sm"
-              />
-            </div>
-          )}
-        </div>
+        <DataTable
+          columns={[
+            {
+              key: 'numero_serie',
+              header: 'Número de Serie',
+              width: 'lg',
+              render: (row) => (
+                <div className="font-mono text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {row.numero_serie}
+                </div>
+              ),
+            },
+            {
+              key: 'producto',
+              header: 'Producto',
+              width: 'xl',
+              render: (row) => (
+                <div>
+                  <div className="text-sm text-gray-900 dark:text-gray-100">{row.producto_nombre}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{row.producto_sku}</div>
+                </div>
+              ),
+            },
+            {
+              key: 'lote',
+              header: 'Lote',
+              hideOnMobile: true,
+              render: (row) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {row.lote || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'estado',
+              header: 'Estado',
+              align: 'center',
+              render: (row) => (
+                <Badge variant={ESTADO_NS_VARIANT[row.estado] || 'default'} size="sm">
+                  {getEstadoLabel(row.estado)}
+                </Badge>
+              ),
+            },
+            {
+              key: 'vencimiento',
+              header: 'Vencimiento',
+              hideOnMobile: true,
+              render: (row) => {
+                if (!row.fecha_vencimiento) return <span className="text-sm text-gray-400">-</span>;
+                const vencimiento = formatearFechaVencimiento(row.fecha_vencimiento);
+                return (
+                  <span className={
+                    vencimiento.status === 'error' ? 'text-sm text-red-600 dark:text-red-400' :
+                    vencimiento.status === 'warning' ? 'text-sm text-yellow-600 dark:text-yellow-400' :
+                    'text-sm text-gray-600 dark:text-gray-300'
+                  }>
+                    {vencimiento.text}
+                  </span>
+                );
+              },
+            },
+            {
+              key: 'sucursal',
+              header: 'Sucursal',
+              hideOnMobile: true,
+              render: (row) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {row.sucursal_nombre || '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'costo',
+              header: 'Costo',
+              hideOnMobile: true,
+              align: 'right',
+              render: (row) => (
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  {row.costo_unitario ? `$${Number(row.costo_unitario).toFixed(2)}` : '-'}
+                </span>
+              ),
+            },
+            {
+              key: 'actions',
+              header: '',
+              align: 'right',
+              render: (row) => (
+                <DataTableActions>
+                  <DataTableActionButton
+                    icon={Eye}
+                    label="Ver detalle"
+                    onClick={() => handleVerDetalle(row.id)}
+                    variant="primary"
+                  />
+                  <DataTableActionButton
+                    icon={History}
+                    label="Ver historial"
+                    onClick={() => handleVerHistorial(row.id)}
+                    variant="ghost"
+                  />
+                  {row.estado === 'disponible' && (
+                    <DataTableActionButton
+                      icon={XCircle}
+                      label="Marcar defectuoso"
+                      onClick={() => handleAbrirDefectuoso(row.id)}
+                      variant="danger"
+                    />
+                  )}
+                </DataTableActions>
+              ),
+            },
+          ]}
+          data={numerosSerie}
+          isLoading={isLoading}
+          emptyState={{
+            icon: Package,
+            title: 'No se encontraron números de serie',
+            description: 'No hay números de serie que coincidan con los filtros aplicados',
+          }}
+          pagination={{
+            page: filtros.page,
+            limit: filtros.limit,
+            total: pagination.total,
+            totalPages: pagination.totalPages,
+            hasNext: filtros.page < pagination.totalPages,
+            hasPrev: filtros.page > 1,
+          }}
+          onPageChange={handlePageChange}
+          skeletonRows={8}
+        />
 
       {/* Modal Detalle */}
       <Modal
@@ -549,52 +532,35 @@ function NumerosSeriesPage() {
       </Modal>
 
       {/* Modal Marcar Defectuoso */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('defectuoso')}
         onClose={() => {
           closeModal('defectuoso');
           setMotivoDefectuoso('');
         }}
+        onConfirm={handleMarcarDefectuoso}
         title="Marcar como Defectuoso"
+        message="Esta acción marcará el número de serie como defectuoso y ya no estará disponible para venta."
+        confirmText="Marcar Defectuoso"
+        variant="danger"
+        isLoading={marcarDefectuosoMutation.isPending}
+        disabled={!motivoDefectuoso.trim()}
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            Esta accion marcara el numero de serie como defectuoso y ya no estara disponible para venta.
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Motivo *
-            </label>
-            <textarea
-              value={motivoDefectuoso}
-              onChange={(e) => setMotivoDefectuoso(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                       bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              rows={3}
-              placeholder="Describe el motivo del defecto..."
-            />
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => {
-                closeModal('defectuoso');
-                setMotivoDefectuoso('');
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleMarcarDefectuoso}
-              disabled={marcarDefectuosoMutation.isPending}
-            >
-              {marcarDefectuosoMutation.isPending ? 'Procesando...' : 'Marcar Defectuoso'}
-            </Button>
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Motivo (requerido)
+          </label>
+          <textarea
+            value={motivoDefectuoso}
+            onChange={(e) => setMotivoDefectuoso(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                     bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+            rows={3}
+            placeholder="Describe el motivo del defecto..."
+          />
         </div>
-      </Modal>
+      </ConfirmDialog>
     </InventarioPageLayout>
   );
 }

@@ -1,25 +1,24 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   MapPin,
   Plus,
   Edit,
   Trash2,
-  ChevronRight,
-  ChevronDown,
   Lock,
   Unlock,
   Package,
   ArrowRightLeft,
   BarChart3,
   Search,
-  Filter,
   RefreshCw,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
-import Drawer from '@/components/ui/Drawer';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import Alert from '@/components/ui/Alert';
 import EmptyState from '@/components/ui/EmptyState';
+import { TreeView, useTreeExpansion } from '@/components/ui/TreeNode';
 import { useToast } from '@/hooks/useToast';
 import useSucursalStore from '@/store/sucursalStore';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -27,11 +26,8 @@ import {
   useArbolUbicaciones,
   useEstadisticasUbicaciones,
   useStockUbicacion,
-  useCrearUbicacion,
-  useActualizarUbicacion,
   useEliminarUbicacion,
   useToggleBloqueoUbicacion,
-  useMoverStockUbicacion,
 } from '@/hooks/useInventario';
 import UbicacionFormDrawer from '@/components/inventario/ubicaciones/UbicacionFormDrawer';
 import MoverStockDrawer from '@/components/inventario/ubicaciones/MoverStockDrawer';
@@ -43,177 +39,6 @@ const TIPOS_UBICACION = {
   estante: { label: 'Estante', color: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300' },
   bin: { label: 'Bin', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300' },
 };
-
-/**
- * Componente para renderizar nodo del árbol de ubicaciones
- */
-function NodoUbicacion({
-  ubicacion,
-  nivel = 0,
-  onEditar,
-  onEliminar,
-  onToggleBloqueo,
-  onVerStock,
-  onMoverStock,
-  onCrearHijo,
-  expandido,
-  onToggleExpansion,
-}) {
-  const tieneHijos = ubicacion.children && ubicacion.children.length > 0;
-  const isExpanded = expandido[ubicacion.id];
-  const tipoInfo = TIPOS_UBICACION[ubicacion.tipo] || { label: ubicacion.tipo, color: 'bg-gray-100 text-gray-700' };
-
-  return (
-    <div>
-      {/* Nodo Actual */}
-      <div
-        className={`flex items-center justify-between p-3 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg border mb-2 ${
-          ubicacion.bloqueada
-            ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
-            : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800'
-        }`}
-        style={{ marginLeft: `${nivel * 2}rem` }}
-      >
-        <div className="flex items-center space-x-3 flex-1 min-w-0">
-          {/* Toggle Expansión */}
-          {tieneHijos ? (
-            <button
-              onClick={() => onToggleExpansion(ubicacion.id)}
-              className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded flex-shrink-0"
-            >
-              {isExpanded ? (
-                <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              )}
-            </button>
-          ) : (
-            <div className="w-6 flex-shrink-0" />
-          )}
-
-          {/* Color/Icono */}
-          {ubicacion.color ? (
-            <div
-              className="w-4 h-4 rounded flex-shrink-0"
-              style={{ backgroundColor: ubicacion.color }}
-            />
-          ) : (
-            <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
-          )}
-
-          {/* Info Principal */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-2 flex-wrap">
-              <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
-                {ubicacion.codigo}
-              </h3>
-              <span className={`px-2 py-0.5 text-xs font-medium rounded ${tipoInfo.color}`}>
-                {tipoInfo.label}
-              </span>
-              {ubicacion.bloqueada && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded flex items-center gap-1">
-                  <Lock className="h-3 w-3" /> Bloqueada
-                </span>
-              )}
-              {ubicacion.es_picking && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded">
-                  Picking
-                </span>
-              )}
-              {ubicacion.es_recepcion && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300 rounded">
-                  Recepción
-                </span>
-              )}
-              {tieneHijos && (
-                <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
-                  {ubicacion.children.length} sub-ubicaciones
-                </span>
-              )}
-            </div>
-            {ubicacion.nombre && (
-              <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{ubicacion.nombre}</p>
-            )}
-          </div>
-
-          {/* Capacidad */}
-          {ubicacion.capacidad_maxima > 0 && (
-            <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden sm:block">
-              <span className={ubicacion.capacidad_ocupada / ubicacion.capacidad_maxima > 0.9 ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
-                {ubicacion.capacidad_ocupada || 0}/{ubicacion.capacidad_maxima}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Acciones */}
-        <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
-          {ubicacion.tipo !== 'zona' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onVerStock(ubicacion)}
-              icon={Package}
-              title="Ver Stock"
-            />
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onToggleBloqueo(ubicacion)}
-            icon={ubicacion.bloqueada ? Unlock : Lock}
-            title={ubicacion.bloqueada ? 'Desbloquear' : 'Bloquear'}
-          />
-          {ubicacion.tipo !== 'bin' && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onCrearHijo(ubicacion)}
-              icon={Plus}
-              title="Crear Sub-ubicación"
-            />
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEditar(ubicacion)}
-            icon={Edit}
-            title="Editar"
-          />
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => onEliminar(ubicacion)}
-            icon={Trash2}
-            title="Eliminar"
-            className="text-red-600 hover:text-red-700 dark:text-red-400"
-          />
-        </div>
-      </div>
-
-      {/* Hijos */}
-      {tieneHijos && isExpanded && (
-        <div>
-          {ubicacion.children.map((hijo) => (
-            <NodoUbicacion
-              key={hijo.id}
-              ubicacion={hijo}
-              nivel={nivel + 1}
-              onEditar={onEditar}
-              onEliminar={onEliminar}
-              onToggleBloqueo={onToggleBloqueo}
-              onVerStock={onVerStock}
-              onMoverStock={onMoverStock}
-              onCrearHijo={onCrearHijo}
-              expandido={expandido}
-              onToggleExpansion={onToggleExpansion}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /**
  * Card de Estadísticas
@@ -336,7 +161,7 @@ function UbicacionesAlmacenPage() {
   const [drawerKey, setDrawerKey] = useState(0); // Key para forzar remount de Vaul
 
   // Estado UI
-  const [expandido, setExpandido] = useState({});
+  const { expanded, toggle, expandAll, collapseAll } = useTreeExpansion();
   const [busqueda, setBusqueda] = useState('');
 
   // Queries
@@ -404,30 +229,127 @@ function UbicacionesAlmacenPage() {
     openModal('moverStock', null);
   };
 
-  const handleToggleExpansion = (ubicacionId) => {
-    setExpandido((prev) => ({
-      ...prev,
-      [ubicacionId]: !prev[ubicacionId],
-    }));
-  };
-
   const handleExpandirTodas = () => {
-    const nuevosExpandidos = {};
-    const expandirRecursivo = (ubicaciones) => {
-      ubicaciones.forEach((u) => {
-        if (u.children && u.children.length > 0) {
-          nuevosExpandidos[u.id] = true;
-          expandirRecursivo(u.children);
-        }
-      });
-    };
-    expandirRecursivo(arbol);
-    setExpandido(nuevosExpandidos);
+    expandAll(arbol, 'children');
   };
 
   const handleContraerTodas = () => {
-    setExpandido({});
+    collapseAll();
   };
+
+  // Render callbacks para TreeView
+  const getNodeClassName = useCallback((ubicacion) => (
+    ubicacion.bloqueada
+      ? 'border-red-300 dark:border-red-700 bg-red-50 dark:bg-red-900/20'
+      : ''
+  ), []);
+
+  const renderUbicacionContent = useCallback((ubicacion, { hasChildren }) => {
+    const tipoInfo = TIPOS_UBICACION[ubicacion.tipo] || { label: ubicacion.tipo, color: 'bg-gray-100 text-gray-700' };
+
+    return (
+      <>
+        {/* Color/Icono */}
+        {ubicacion.color ? (
+          <div
+            className="w-4 h-4 rounded flex-shrink-0"
+            style={{ backgroundColor: ubicacion.color }}
+          />
+        ) : (
+          <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
+        )}
+
+        {/* Info Principal */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-2 flex-wrap">
+            <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+              {ubicacion.codigo}
+            </h3>
+            <span className={`px-2 py-0.5 text-xs font-medium rounded ${tipoInfo.color}`}>
+              {tipoInfo.label}
+            </span>
+            {ubicacion.bloqueada && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded flex items-center gap-1">
+                <Lock className="h-3 w-3" /> Bloqueada
+              </span>
+            )}
+            {ubicacion.es_picking && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-orange-100 text-orange-700 dark:bg-orange-900/40 dark:text-orange-300 rounded">
+                Picking
+              </span>
+            )}
+            {ubicacion.es_recepcion && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-cyan-100 text-cyan-700 dark:bg-cyan-900/40 dark:text-cyan-300 rounded">
+                Recepción
+              </span>
+            )}
+            {hasChildren && (
+              <span className="px-2 py-0.5 text-xs font-medium bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 rounded">
+                {ubicacion.children.length} sub-ubicaciones
+              </span>
+            )}
+          </div>
+          {ubicacion.nombre && (
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5 truncate">{ubicacion.nombre}</p>
+          )}
+        </div>
+
+        {/* Capacidad */}
+        {ubicacion.capacidad_maxima > 0 && (
+          <div className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 hidden sm:block">
+            <span className={ubicacion.capacidad_ocupada / ubicacion.capacidad_maxima > 0.9 ? 'text-red-600 dark:text-red-400 font-medium' : ''}>
+              {ubicacion.capacidad_ocupada || 0}/{ubicacion.capacidad_maxima}
+            </span>
+          </div>
+        )}
+      </>
+    );
+  }, []);
+
+  const renderUbicacionActions = useCallback((ubicacion) => (
+    <>
+      {ubicacion.tipo !== 'zona' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleVerStock(ubicacion)}
+          icon={Package}
+          title="Ver Stock"
+        />
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleToggleBloqueo(ubicacion)}
+        icon={ubicacion.bloqueada ? Unlock : Lock}
+        title={ubicacion.bloqueada ? 'Desbloquear' : 'Bloquear'}
+      />
+      {ubicacion.tipo !== 'bin' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => handleCrearHijo(ubicacion)}
+          icon={Plus}
+          title="Crear Sub-ubicación"
+        />
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleEditarUbicacion(ubicacion)}
+        icon={Edit}
+        title="Editar"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => handleAbrirModalEliminar(ubicacion)}
+        icon={Trash2}
+        title="Eliminar"
+        className="text-red-600 hover:text-red-700 dark:text-red-400"
+      />
+    </>
+  ), []);
 
   // Filtrar por búsqueda
   const arbolFiltrado = useMemo(() => {
@@ -585,47 +507,34 @@ function UbicacionesAlmacenPage() {
 
         {/* Árbol de Ubicaciones */}
         <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6">
-          {cargandoArbol ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
-              <span className="ml-3 text-gray-600 dark:text-gray-400">Cargando ubicaciones...</span>
-            </div>
-          ) : arbolFiltrado.length === 0 ? (
-            <EmptyState
-              icon={MapPin}
-              title={busqueda ? 'Sin resultados' : 'No hay ubicaciones'}
-              description={
-                busqueda
-                  ? 'No se encontraron ubicaciones con ese criterio'
-                  : 'Comienza creando tu primera zona de almacén'
-              }
-              action={
-                !busqueda && (
-                  <Button variant="primary" onClick={handleNuevaUbicacion} icon={Plus}>
-                    Nueva Ubicación
-                  </Button>
-                )
-              }
-            />
-          ) : (
-            <div className="space-y-1">
-              {arbolFiltrado.map((ubicacion) => (
-                <NodoUbicacion
-                  key={ubicacion.id}
-                  ubicacion={ubicacion}
-                  nivel={0}
-                  onEditar={handleEditarUbicacion}
-                  onEliminar={handleAbrirModalEliminar}
-                  onToggleBloqueo={handleToggleBloqueo}
-                  onVerStock={handleVerStock}
-                  onMoverStock={handleMoverStock}
-                  onCrearHijo={handleCrearHijo}
-                  expandido={expandido}
-                  onToggleExpansion={handleToggleExpansion}
-                />
-              ))}
-            </div>
-          )}
+          <TreeView
+            data={arbolFiltrado}
+            childrenKey="children"
+            expandedState={expanded}
+            onToggleExpand={toggle}
+            renderContent={renderUbicacionContent}
+            renderActions={renderUbicacionActions}
+            nodeClassName={getNodeClassName}
+            isLoading={cargandoArbol}
+            emptyState={
+              <EmptyState
+                icon={MapPin}
+                title={busqueda ? 'Sin resultados' : 'No hay ubicaciones'}
+                description={
+                  busqueda
+                    ? 'No se encontraron ubicaciones con ese criterio'
+                    : 'Comienza creando tu primera zona de almacén'
+                }
+                action={
+                  !busqueda && (
+                    <Button variant="primary" onClick={handleNuevaUbicacion} icon={Plus}>
+                      Nueva Ubicación
+                    </Button>
+                  )
+                }
+              />
+            }
+          />
         </div>
 
       {/* Drawer de Formulario */}
@@ -656,53 +565,24 @@ function UbicacionesAlmacenPage() {
       />
 
       {/* Modal de Eliminación */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('eliminar')}
         onClose={() => closeModal('eliminar')}
+        onConfirm={handleEliminar}
         title="Eliminar Ubicación"
+        message={`¿Estás seguro de que deseas eliminar la ubicación "${getModalData('eliminar')?.codigo}"? Solo se puede eliminar si no tiene stock ni sub-ubicaciones.`}
+        confirmText="Eliminar"
+        variant="danger"
+        isLoading={eliminarMutation.isPending}
+        disabled={getModalData('eliminar')?.children?.length > 0}
         size="md"
       >
-        {(() => {
-          const ubicacionEliminar = getModalData('eliminar');
-          return (
-            <div className="space-y-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                ¿Estás seguro de que deseas eliminar la ubicación{' '}
-                <strong className="text-gray-900 dark:text-gray-100">
-                  {ubicacionEliminar?.codigo}
-                </strong>
-                ?
-              </p>
-
-              {ubicacionEliminar?.children?.length > 0 && (
-                <div className="bg-yellow-50 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-300">
-                    Esta ubicación tiene sub-ubicaciones. Debes eliminarlas primero.
-                  </p>
-                </div>
-              )}
-
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Solo se puede eliminar si no tiene stock ni sub-ubicaciones.
-              </p>
-
-              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                <Button variant="secondary" onClick={() => closeModal('eliminar')}>
-                  Cancelar
-                </Button>
-                <Button
-                  variant="danger"
-                  onClick={handleEliminar}
-                  isLoading={eliminarMutation.isPending}
-                  disabled={ubicacionEliminar?.children?.length > 0}
-                >
-                  Eliminar
-                </Button>
-              </div>
-            </div>
-          );
-        })()}
-      </Modal>
+        {getModalData('eliminar')?.children?.length > 0 && (
+          <Alert variant="warning" icon={Lock} title="Operación no permitida">
+            <p className="text-sm">Esta ubicación tiene sub-ubicaciones. Debes eliminarlas primero.</p>
+          </Alert>
+        )}
+      </ConfirmDialog>
     </InventarioPageLayout>
   );
 }

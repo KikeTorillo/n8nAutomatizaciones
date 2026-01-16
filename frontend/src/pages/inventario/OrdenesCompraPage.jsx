@@ -28,10 +28,8 @@ import Modal from '@/components/ui/Modal';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Textarea from '@/components/ui/Textarea';
 import StatCardGrid from '@/components/ui/StatCardGrid';
-import EmptyState from '@/components/ui/EmptyState';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
-import Pagination from '@/components/ui/Pagination';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
 import SmartButtons from '@/components/ui/SmartButtons';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
@@ -633,218 +631,151 @@ export default function OrdenesCompraPage() {
       )}
 
       {/* Tabla de órdenes */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        {isLoading ? (
-          <SkeletonTable rows={5} columns={8} />
-        ) : ordenes.length === 0 ? (
-          <EmptyState
-            icon={ShoppingCart}
-            title="No se encontraron órdenes de compra"
-            description="Crea una nueva orden para comenzar"
-            actionLabel="Nueva Orden"
-            onAction={handleNuevaOrden}
-          />
-        ) : (
-          <>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Folio
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Fecha
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Proveedor
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Items
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Total
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Estado
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Pago
-                    </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Acciones
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                  {ordenes.map((orden) => (
-                    <tr key={orden.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-primary-600 dark:text-primary-400">{orden.folio}</div>
-                        {orden.referencia_proveedor && (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">Ref: {orden.referencia_proveedor}</div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
-                          {new Date(orden.fecha_orden).toLocaleDateString('es-MX', {
-                            year: 'numeric',
-                            month: 'short',
-                            day: 'numeric',
-                          })}
-                        </div>
-                        {orden.fecha_entrega_esperada && (
-                          <div className="text-xs text-gray-400 dark:text-gray-500">
-                            Entrega: {new Date(orden.fecha_entrega_esperada).toLocaleDateString('es-MX')}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <Building2 className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
-                          <div className="text-sm text-gray-900 dark:text-gray-100">{orden.proveedor_nombre}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">{orden.items_count || 0} productos</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          ${parseFloat(orden.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                        </div>
-                        {parseFloat(orden.monto_pagado || 0) > 0 && (
-                          <div className="text-xs text-green-600 dark:text-green-400">
-                            Pagado: ${parseFloat(orden.monto_pagado).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
-                          </div>
-                        )}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={ESTADO_OC_VARIANT[orden.estado] || 'default'} size="sm">
-                          {formatearEstado(orden.estado)}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <Badge variant={ESTADO_PAGO_VARIANT[orden.estado_pago] || 'default'} size="sm">
-                          {formatearEstadoPago(orden.estado_pago)}
-                        </Badge>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex justify-end gap-1">
-                          {/* Ver detalle */}
-                          <button
-                            onClick={() => handleVerDetalle(orden.id)}
-                            className="p-1.5 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-                            title="Ver detalle"
-                            aria-label="Ver detalle de la orden"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </button>
-
-                          {/* Editar (solo borrador) */}
-                          {orden.estado === 'borrador' && (
-                            <button
-                              onClick={() => handleEditar(orden)}
-                              className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
-                              title="Editar"
-                              aria-label="Editar orden"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          {/* Enviar (solo borrador con items) */}
-                          {orden.estado === 'borrador' && (orden.items_count || 0) > 0 && (
-                            <button
-                              onClick={() => handleAbrirModalEnviar(orden)}
-                              className="p-1.5 text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:bg-primary-50 dark:hover:bg-primary-900/30 rounded"
-                              title="Enviar al proveedor"
-                              aria-label="Enviar orden al proveedor"
-                            >
-                              <Send className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          {/* Recibir mercancía (enviada o parcial) */}
-                          {['enviada', 'parcial'].includes(orden.estado) && (
-                            <button
-                              onClick={() => handleRecibirMercancia(orden)}
-                              className="p-1.5 text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded"
-                              title="Recibir mercancía"
-                              aria-label="Recibir mercancía"
-                            >
-                              <Package className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          {/* Registrar pago (no cancelada, no borrador, no pagada) */}
-                          {orden.estado !== 'cancelada' &&
-                           orden.estado !== 'borrador' &&
-                           orden.estado_pago !== 'pagado' && (
-                            <button
-                              onClick={() => handleRegistrarPago(orden)}
-                              className="p-1.5 text-emerald-600 dark:text-emerald-400 hover:text-emerald-900 dark:hover:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded"
-                              title="Registrar pago"
-                              aria-label="Registrar pago"
-                            >
-                              <DollarSign className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          {/* Cancelar (borrador, enviada, parcial) */}
-                          {['borrador', 'enviada', 'parcial'].includes(orden.estado) && (
-                            <button
-                              onClick={() => handleAbrirModalCancelar(orden)}
-                              className="p-1.5 text-orange-600 dark:text-orange-400 hover:text-orange-900 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/30 rounded"
-                              title="Cancelar orden"
-                              aria-label="Cancelar orden"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </button>
-                          )}
-
-                          {/* Eliminar (solo borrador) */}
-                          {orden.estado === 'borrador' && (
-                            <button
-                              onClick={() => handleAbrirModalEliminar(orden)}
-                              className="p-1.5 text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30 rounded"
-                              title="Eliminar"
-                              aria-label="Eliminar orden"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Paginación */}
-            {total > filtros.limit && (
-              <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
-                <Pagination
-                  pagination={{
-                    page: Math.floor(filtros.offset / filtros.limit) + 1,
-                    limit: filtros.limit,
-                    total,
-                    totalPages: Math.ceil(total / filtros.limit),
-                    hasNext: filtros.offset + filtros.limit < total,
-                    hasPrev: filtros.offset > 0,
-                  }}
-                  onPageChange={(page) =>
-                    setFiltros((prev) => ({
-                      ...prev,
-                      offset: (page - 1) * prev.limit,
-                    }))
-                  }
-                />
+      <DataTable
+        columns={[
+          {
+            key: 'folio',
+            header: 'Folio',
+            width: 'md',
+            render: (row) => (
+              <div>
+                <div className="text-sm font-medium text-primary-600 dark:text-primary-400">{row.folio}</div>
+                {row.referencia_proveedor && (
+                  <div className="text-xs text-gray-400 dark:text-gray-500">Ref: {row.referencia_proveedor}</div>
+                )}
               </div>
-            )}
-          </>
-        )}
-      </div>
+            ),
+          },
+          {
+            key: 'fecha',
+            header: 'Fecha',
+            hideOnMobile: true,
+            render: (row) => (
+              <div>
+                <div className="text-sm text-gray-900 dark:text-gray-100">
+                  {new Date(row.fecha_orden).toLocaleDateString('es-MX', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </div>
+                {row.fecha_entrega_esperada && (
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                    Entrega: {new Date(row.fecha_entrega_esperada).toLocaleDateString('es-MX')}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'proveedor',
+            header: 'Proveedor',
+            hideOnMobile: true,
+            render: (row) => (
+              <div className="flex items-center">
+                <Building2 className="h-4 w-4 mr-2 text-gray-400 dark:text-gray-500" />
+                <div className="text-sm text-gray-900 dark:text-gray-100">{row.proveedor_nombre}</div>
+              </div>
+            ),
+          },
+          {
+            key: 'items',
+            header: 'Items',
+            hideOnMobile: true,
+            render: (row) => (
+              <div className="text-sm text-gray-900 dark:text-gray-100">{row.items_count || 0} productos</div>
+            ),
+          },
+          {
+            key: 'total',
+            header: 'Total',
+            render: (row) => (
+              <div>
+                <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                  ${parseFloat(row.total || 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                </div>
+                {parseFloat(row.monto_pagado || 0) > 0 && (
+                  <div className="text-xs text-green-600 dark:text-green-400">
+                    Pagado: ${parseFloat(row.monto_pagado).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                  </div>
+                )}
+              </div>
+            ),
+          },
+          {
+            key: 'estado',
+            header: 'Estado',
+            align: 'center',
+            render: (row) => (
+              <Badge variant={ESTADO_OC_VARIANT[row.estado] || 'default'} size="sm">
+                {formatearEstado(row.estado)}
+              </Badge>
+            ),
+          },
+          {
+            key: 'pago',
+            header: 'Pago',
+            align: 'center',
+            hideOnMobile: true,
+            render: (row) => (
+              <Badge variant={ESTADO_PAGO_VARIANT[row.estado_pago] || 'default'} size="sm">
+                {formatearEstadoPago(row.estado_pago)}
+              </Badge>
+            ),
+          },
+          {
+            key: 'actions',
+            header: '',
+            align: 'right',
+            render: (row) => (
+              <DataTableActions>
+                <DataTableActionButton icon={Eye} label="Ver detalle" onClick={() => handleVerDetalle(row.id)} variant="ghost" />
+                {row.estado === 'borrador' && (
+                  <DataTableActionButton icon={Edit} label="Editar" onClick={() => handleEditar(row)} variant="primary" />
+                )}
+                {row.estado === 'borrador' && (row.items_count || 0) > 0 && (
+                  <DataTableActionButton icon={Send} label="Enviar" onClick={() => handleAbrirModalEnviar(row)} variant="primary" />
+                )}
+                {['enviada', 'parcial'].includes(row.estado) && (
+                  <DataTableActionButton icon={Package} label="Recibir" onClick={() => handleRecibirMercancia(row)} variant="ghost" />
+                )}
+                {row.estado !== 'cancelada' && row.estado !== 'borrador' && row.estado_pago !== 'pagado' && (
+                  <DataTableActionButton icon={DollarSign} label="Pago" onClick={() => handleRegistrarPago(row)} variant="ghost" />
+                )}
+                {['borrador', 'enviada', 'parcial'].includes(row.estado) && (
+                  <DataTableActionButton icon={XCircle} label="Cancelar" onClick={() => handleAbrirModalCancelar(row)} variant="ghost" />
+                )}
+                {row.estado === 'borrador' && (
+                  <DataTableActionButton icon={Trash2} label="Eliminar" onClick={() => handleAbrirModalEliminar(row)} variant="danger" />
+                )}
+              </DataTableActions>
+            ),
+          },
+        ]}
+        data={ordenes}
+        isLoading={isLoading}
+        emptyState={{
+          icon: ShoppingCart,
+          title: 'No se encontraron órdenes de compra',
+          description: 'Crea una nueva orden para comenzar',
+          actionLabel: 'Nueva Orden',
+          onAction: handleNuevaOrden,
+        }}
+        pagination={total > filtros.limit ? {
+          page: Math.floor(filtros.offset / filtros.limit) + 1,
+          limit: filtros.limit,
+          total,
+          totalPages: Math.ceil(total / filtros.limit),
+          hasNext: filtros.offset + filtros.limit < total,
+          hasPrev: filtros.offset > 0,
+        } : undefined}
+        onPageChange={(page) =>
+          setFiltros((prev) => ({
+            ...prev,
+            offset: (page - 1) * prev.limit,
+          }))
+        }
+      />
     </div>
 
       {/* Modales */}
@@ -918,44 +849,25 @@ export default function OrdenesCompraPage() {
       />
 
       {/* Modal de Cancelación */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('cancelar')}
         onClose={() => closeModal('cancelar')}
+        onConfirm={handleCancelar}
         title="Cancelar Orden de Compra"
+        message={`¿Estás seguro de que deseas cancelar la orden ${getModalData('cancelar')?.orden?.folio}?`}
+        confirmText="Cancelar Orden"
+        variant="danger"
+        isLoading={cancelarMutation.isPending}
         size="md"
       >
-        <div className="space-y-4">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            ¿Estás seguro de que deseas cancelar la orden{' '}
-            <strong className="text-gray-900 dark:text-gray-100">{getModalData('cancelar')?.orden?.folio}</strong>?
-          </p>
-
-          <Textarea
-            label="Motivo de cancelación (opcional)"
-            value={motivoCancelacion}
-            onChange={(e) => setMotivoCancelacion(e.target.value)}
-            rows={3}
-            placeholder="Indica el motivo de la cancelación..."
-          />
-
-          <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <Button
-              variant="secondary"
-              onClick={() => closeModal('cancelar')}
-            >
-              Volver
-            </Button>
-            <Button
-              variant="danger"
-              onClick={handleCancelar}
-              isLoading={cancelarMutation.isPending}
-              icon={XCircle}
-            >
-              Cancelar Orden
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        <Textarea
+          label="Motivo de cancelación (opcional)"
+          value={motivoCancelacion}
+          onChange={(e) => setMotivoCancelacion(e.target.value)}
+          rows={3}
+          placeholder="Indica el motivo de la cancelación..."
+        />
+      </ConfirmDialog>
 
       {/* Modal de Auto-generar OCs */}
       <Modal

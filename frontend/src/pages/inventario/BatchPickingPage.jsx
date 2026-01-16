@@ -9,7 +9,6 @@ import {
   Eye,
   Trash2,
   RefreshCw,
-  Filter,
   Package,
   User,
   Clock,
@@ -18,10 +17,12 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { SkeletonCard } from '@/components/ui/SkeletonCard';
+import { FilterPanel } from '@/components/ui/FilterPanel';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
@@ -329,7 +330,22 @@ export default function BatchPickingPage() {
   const [filtros, setFiltros] = useState({
     estado: '',
   });
-  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+
+  // Configuración de filtros para FilterPanel
+  const filterConfig = [
+    {
+      key: 'estado',
+      label: 'Estado',
+      type: 'select',
+      options: [
+        { value: '', label: 'Todos los estados' },
+        { value: 'borrador', label: 'Borrador' },
+        { value: 'en_proceso', label: 'En Proceso' },
+        { value: 'completado', label: 'Completado' },
+        { value: 'cancelado', label: 'Cancelado' },
+      ],
+    },
+  ];
 
   // Estado de modales centralizado con useModalManager
   const { openModal, closeModal, isOpen, getModalData, getModalProps } = useModalManager({
@@ -458,12 +474,6 @@ export default function BatchPickingPage() {
             icon={RefreshCw}
             className={isLoading ? '[&_svg]:animate-spin' : ''}
           />
-          <Button
-            variant={mostrarFiltros ? 'primary' : 'secondary'}
-            size="sm"
-            onClick={() => setMostrarFiltros(!mostrarFiltros)}
-            icon={Filter}
-          />
         </div>
       }
     >
@@ -480,38 +490,23 @@ export default function BatchPickingPage() {
       </div>
 
       {/* Filtros */}
-      {mostrarFiltros && (
-        <div className="mb-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Select
-                label="Estado"
-                value={filtros.estado}
-                onChange={(e) => handleFiltroChange('estado', e.target.value)}
-              >
-                <option value="">Todos los estados</option>
-                {Object.entries(LABELS_ESTADO_BATCH).map(([key, label]) => (
-                  <option key={key} value={key}>{label}</option>
-                ))}
-              </Select>
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setFiltros({ estado: '' })}
-                >
-                  Limpiar
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <FilterPanel
+        filters={filtros}
+        onFilterChange={handleFiltroChange}
+        onClearFilters={() => setFiltros({ estado: '' })}
+        showSearch={false}
+        filterConfig={filterConfig}
+        defaultExpanded={false}
+        className="mb-4"
+      />
 
       {/* Lista de Batches */}
       <div>
         {isLoading ? (
-          <div className="flex items-center justify-center py-12">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[...Array(6)].map((_, i) => (
+              <SkeletonCard key={i} className="h-48" />
+            ))}
           </div>
         ) : batches.length === 0 ? (
           <EmptyState
@@ -552,38 +547,16 @@ export default function BatchPickingPage() {
       />
 
       {/* Modal Confirmar Acción */}
-      <Modal
+      <ConfirmDialog
         isOpen={isOpen('confirmar')}
         onClose={() => closeModal('confirmar')}
+        onConfirm={handleConfirmarAccion}
         title={`Confirmar ${getModalProps('confirmar').accion || ''}`}
-      >
-        <div className="p-4">
-          <p className="text-gray-600 dark:text-gray-300 mb-4">
-            ¿Estás seguro de que deseas <strong>{getModalProps('confirmar').accion}</strong> el batch{' '}
-            <strong>{getModalData('confirmar')?.folio}</strong>?
-          </p>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              onClick={() => closeModal('confirmar')}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant={getModalProps('confirmar').accion === 'eliminar' || getModalProps('confirmar').accion === 'cancelar' ? 'danger' : 'primary'}
-              onClick={handleConfirmarAccion}
-              disabled={
-                iniciarMutation.isPending ||
-                completarMutation.isPending ||
-                cancelarMutation.isPending ||
-                eliminarMutation.isPending
-              }
-            >
-              Confirmar
-            </Button>
-          </div>
-        </div>
-      </Modal>
+        message={`¿Estás seguro de que deseas ${getModalProps('confirmar').accion} el batch ${getModalData('confirmar')?.folio}?`}
+        confirmText="Confirmar"
+        variant={getModalProps('confirmar').accion === 'eliminar' || getModalProps('confirmar').accion === 'cancelar' ? 'danger' : 'info'}
+        isLoading={iniciarMutation.isPending || completarMutation.isPending || cancelarMutation.isPending || eliminarMutation.isPending}
+      />
     </InventarioPageLayout>
   );
 }
