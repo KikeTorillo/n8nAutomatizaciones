@@ -12,7 +12,7 @@
  * ====================================================================
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import {
   Edit,
@@ -27,14 +27,18 @@ import {
   ChevronDown,
   Check,
   TrendingUp,
+  Calendar,
+  ShoppingCart,
+  DollarSign,
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import BackButton from '@/components/ui/BackButton';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
+import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
 import { useCliente, useEstadisticasCliente } from '@/hooks/useClientes';
 import { useUsuarios } from '@/hooks/useUsuarios';
-import { cn } from '@/lib/utils';
+import { cn, formatCurrency } from '@/lib/utils';
 
 // Tabs components
 import ClienteGeneralTab from './tabs/ClienteGeneralTab';
@@ -135,9 +139,44 @@ function ClienteTabs({ activeTab, onTabChange }) {
 }
 
 /**
- * Header del cliente con información resumida
+ * Header del cliente con información resumida y estadísticas
  */
-function ClienteHeader({ cliente, onEdit }) {
+function ClienteHeader({ cliente, estadisticas, onEdit }) {
+  // Configuracion de StatCards con estadisticas del cliente
+  const statsConfig = useMemo(
+    () => [
+      {
+        key: 'citas',
+        icon: Calendar,
+        label: 'Total Citas',
+        value: estadisticas?.total_citas || 0,
+        color: 'blue',
+      },
+      {
+        key: 'compras',
+        icon: ShoppingCart,
+        label: 'Compras',
+        value: estadisticas?.total_compras || 0,
+        color: 'green',
+      },
+      {
+        key: 'invertido',
+        icon: DollarSign,
+        label: 'Total Invertido',
+        value: formatCurrency(estadisticas?.total_invertido || 0),
+        color: 'primary',
+      },
+      {
+        key: 'ultima_visita',
+        icon: Clock,
+        label: 'Dias desde ultima visita',
+        value: estadisticas?.dias_sin_visita ?? '-',
+        color: 'yellow',
+      },
+    ],
+    [estadisticas]
+  );
+
   return (
     <div className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -145,7 +184,7 @@ function ClienteHeader({ cliente, onEdit }) {
           <BackButton to="/clientes" label="Volver a Clientes" />
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
             {cliente.foto_url ? (
               <img
@@ -235,6 +274,9 @@ function ClienteHeader({ cliente, onEdit }) {
             Editar
           </Button>
         </div>
+
+        {/* Estadisticas del cliente */}
+        <StatCardGrid stats={statsConfig} columns={4} />
       </div>
     </div>
   );
@@ -323,9 +365,10 @@ function ClienteDetailPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Header con info resumida */}
+      {/* Header con info resumida y estadisticas */}
       <ClienteHeader
         cliente={cliente}
+        estadisticas={estadisticas}
         onEdit={() => navigate(`/clientes/${id}/editar`)}
       />
 

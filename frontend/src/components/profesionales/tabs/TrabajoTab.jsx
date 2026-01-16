@@ -37,7 +37,8 @@ function TrabajoTab({ profesional }) {
   const { data: motivosSalida = [] } = useMotivosSalida();
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
   const { data: puestos = [] } = usePuestos({ activo: true });
-  const { data: profesionalesData } = useProfesionales();
+  // Fix: Limitar query a profesionales activos para el select de supervisores
+  const { data: profesionalesData } = useProfesionales({ activo: true, limit: 100 });
 
   // Filtrar profesionales para supervisor (excluir al profesional actual)
   // useProfesionales retorna { profesionales: [...], pagination: {...} }

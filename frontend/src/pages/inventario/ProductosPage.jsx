@@ -18,7 +18,7 @@ import {
 } from '@/hooks/useProductos';
 import { useCategorias } from '@/hooks/useCategorias';
 import { useProveedores } from '@/hooks/useProveedores';
-import ProductoFormModal from '@/components/inventario/ProductoFormModal';
+import ProductoFormDrawer from '@/components/inventario/ProductoFormDrawer';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';
 import GenerarEtiquetaModal from '@/components/inventario/GenerarEtiquetaModal';
@@ -480,7 +480,7 @@ function ProductosPage() {
 
         {/* Modal Formulario Producto */}
         {isOpen('form') && (
-          <ProductoFormModal
+          <ProductoFormDrawer
             isOpen={isOpen('form')}
             onClose={() => closeModal('form')}
             mode={getModalData('form')?.mode || 'create'}

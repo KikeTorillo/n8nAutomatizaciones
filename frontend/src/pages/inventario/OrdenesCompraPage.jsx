@@ -43,7 +43,7 @@ import {
 } from '@/hooks/useOrdenesCompra';
 import { useProveedores } from '@/hooks/useProveedores';
 import { useSugerenciasOC, useAutoGenerarOCs } from '@/hooks/useInventario';
-import OrdenCompraFormModal from '@/components/inventario/ordenes-compra/OrdenCompraFormModal';
+import OrdenCompraFormDrawer from '@/components/inventario/ordenes-compra/OrdenCompraFormDrawer';
 import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/OrdenCompraDetalleModal';
 import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';
 import RegistrarPagoModal from '@/components/inventario/ordenes-compra/RegistrarPagoModal';
@@ -779,7 +779,7 @@ export default function OrdenesCompraPage() {
     </div>
 
       {/* Modales */}
-      <OrdenCompraFormModal
+      <OrdenCompraFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
         orden={getModalData('form')?.orden}

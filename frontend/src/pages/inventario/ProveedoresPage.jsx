@@ -12,7 +12,7 @@ import {
   useProveedores,
   useEliminarProveedor,
 } from '@/hooks/useProveedores';
-import ProveedorFormModal from '@/components/inventario/ProveedorFormModal';
+import ProveedorFormDrawer from '@/components/inventario/ProveedorFormDrawer';
 
 /**
  * Página principal de Gestión de Proveedores
@@ -269,7 +269,7 @@ function ProveedoresPage() {
         />
 
       {/* Modal de Formulario */}
-      <ProveedorFormModal
+      <ProveedorFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
         proveedor={getModalData('form')?.proveedor}

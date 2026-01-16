@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import {
@@ -24,6 +24,7 @@ import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';
+import { useFilters } from '@/hooks/useFilters';
 
 /**
  * Página principal de gestión de profesionales
@@ -33,7 +34,6 @@ function ProfesionalesPage() {
   const navigate = useNavigate();
   const toast = useToast();
   const { exportCSV } = useExportCSV();
-  const [busqueda, setBusqueda] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
   // Vista y paginación
@@ -41,12 +41,23 @@ function ProfesionalesPage() {
   const [page, setPage] = useState(1);
   const limit = 20;
 
-  // Filtros
-  const [filtros, setFiltros] = useState({
-    activo: '',
-    estado: '',
-    departamento_id: '',
-  });
+  // Filtros con persistencia y debounce automático
+  const {
+    filtros,
+    filtrosQuery,
+    hasFiltrosActivos,
+    filtrosActivos,
+    setFiltro,
+    limpiarFiltros,
+  } = useFilters(
+    {
+      busqueda: '',
+      activo: '',
+      estado: '',
+      departamento_id: '',
+    },
+    { moduloId: 'profesionales.lista' }
+  );
 
   // Fetch departamentos para filtros
   const { data: departamentos = [] } = useDepartamentos({ activo: true });
@@ -63,14 +74,19 @@ function ProfesionalesPage() {
     servicios: { isOpen: false, data: null },
   });
 
+  // Resetear página al cambiar filtros
+  useEffect(() => {
+    setPage(1);
+  }, [filtrosQuery]);
+
   // Fetch profesionales con filtros y paginación
   const { data, isLoading } = useProfesionales({
     page,
     limit,
-    busqueda,
-    activo: filtros.activo === '' ? undefined : filtros.activo === 'true',
-    estado: filtros.estado || undefined,
-    departamento_id: filtros.departamento_id ? parseInt(filtros.departamento_id, 10) : undefined,
+    busqueda: filtrosQuery.busqueda || undefined,
+    activo: filtrosQuery.activo === '' ? undefined : filtrosQuery.activo === 'true',
+    estado: filtrosQuery.estado || undefined,
+    departamento_id: filtrosQuery.departamento_id ? parseInt(filtrosQuery.departamento_id, 10) : undefined,
   });
 
   // Extraer profesionales y paginación de la respuesta
@@ -119,9 +135,7 @@ function ProfesionalesPage() {
 
   // Handlers
   const handleLimpiarFiltros = () => {
-    setFiltros({ activo: '', estado: '', departamento_id: '' });
-    setBusqueda('');
-    setPage(1);
+    limpiarFiltros();
   };
 
   const handlePageChange = (newPage) => {
@@ -130,13 +144,11 @@ function ProfesionalesPage() {
   };
 
   const handleBusquedaChange = (e) => {
-    setBusqueda(e.target.value);
-    setPage(1);
+    setFiltro('busqueda', e.target.value);
   };
 
   const handleFiltroChange = (campo, valor) => {
-    setFiltros(prev => ({ ...prev, [campo]: valor }));
-    setPage(1);
+    setFiltro(campo, valor);
   };
 
   const handleNuevoProfesional = () => {
@@ -171,13 +183,6 @@ function ProfesionalesPage() {
   const handleGestionarServicios = (profesional) => {
     openModal('servicios', profesional);
   };
-
-  // Verificar si hay filtros activos
-  const hasFiltrosActivos =
-    filtros.activo !== '' ||
-    filtros.estado !== '' ||
-    filtros.departamento_id !== '' ||
-    busqueda !== '';
 
   // Configuración de ViewTabs
   const viewTabsConfig = useMemo(() => [
@@ -259,7 +264,7 @@ function ProfesionalesPage() {
             <Input
               type="text"
               placeholder="Buscar por nombre o email..."
-              value={busqueda}
+              value={filtros.busqueda}
               onChange={handleBusquedaChange}
               className="pl-10"
             />
@@ -273,7 +278,7 @@ function ProfesionalesPage() {
             Filtros
             {hasFiltrosActivos && (
               <span className="ml-2 px-2 py-0.5 text-xs bg-primary-600 text-white rounded-full">
-                {Object.values(filtros).filter((v) => v !== '').length + (busqueda ? 1 : 0)}
+                {filtrosActivos}
               </span>
             )}
           </Button>

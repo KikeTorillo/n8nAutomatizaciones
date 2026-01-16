@@ -23,7 +23,7 @@ import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SkeletonTable } from '@/components/ui/SkeletonTable';
-import TransferenciaFormModal from '@/components/sucursales/TransferenciaFormModal';
+import TransferenciaFormDrawer from '@/components/sucursales/TransferenciaFormDrawer';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useTransferencias,
@@ -444,7 +444,7 @@ function TransferenciasPage() {
         </div>
 
       {/* Modal crear transferencia */}
-      <TransferenciaFormModal
+      <TransferenciaFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
       />

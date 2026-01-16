@@ -9,13 +9,14 @@ import { Pagination } from '@/components/ui/Pagination';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
 import CitaDetailModal from '@/components/citas/CitaDetailModal';
-import CitaFormModal from '@/components/citas/CitaFormModal';
+import CitaFormDrawer from '@/components/citas/CitaFormDrawer';
 import CompletarCitaModal from '@/components/citas/CompletarCitaModal';
 import NoShowModal from '@/components/citas/NoShowModal';
 import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
 import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
 import { useModalManager } from '@/hooks/useModalManager';
+import { useFilters } from '@/hooks/useFilters';
 import {
   useCitas,
   useCitasDelDia,
@@ -43,16 +44,24 @@ function CitasPage() {
   const [page, setPage] = useState(1);
   const ITEMS_PER_PAGE = 20;
 
-  // Estado de filtros (incluye sucursal_id para multi-sucursal)
-  const [filtros, setFiltros] = useState({
-    busqueda: '',
-    estado: '',
-    profesional_id: '',
-    servicio_id: '',
-    sucursal_id: '',
-    fecha_desde: '',
-    fecha_hasta: '',
-  });
+  // Estado de filtros con persistencia usando useFilters
+  const {
+    filtros,
+    filtrosQuery,
+    setFiltros,
+    limpiarFiltros,
+  } = useFilters(
+    {
+      busqueda: '',
+      estado: '',
+      profesional_id: '',
+      servicio_id: '',
+      sucursal_id: '',
+      fecha_desde: '',
+      fecha_hasta: '',
+    },
+    { moduloId: 'agendamiento.citas' }
+  );
 
   // Estado de modales centralizado con useModalManager
   const {
@@ -83,9 +92,9 @@ function CitasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state?.abrirModal]); // Solo depender de abrirModal, no del objeto completo
 
-  // Queries con paginación
+  // Queries con paginación (usa filtrosQuery con debounce automático)
   const { data: citasData, isLoading: cargandoCitas } = useCitas({
-    ...filtros,
+    ...filtrosQuery,
     page,
     limit: ITEMS_PER_PAGE,
   });
@@ -108,22 +117,14 @@ function CitasPage() {
   const confirmarMutation = useConfirmarCita();
   const iniciarMutation = useIniciarCita();
 
-  // Handlers de filtros
+  // Handlers de filtros (useFilters maneja la persistencia)
   const handleFiltrosChange = (nuevosFiltros) => {
     setFiltros(nuevosFiltros);
     setPage(1); // Resetear a página 1 al cambiar filtros
   };
 
   const handleLimpiarFiltros = () => {
-    setFiltros({
-      busqueda: '',
-      estado: '',
-      profesional_id: '',
-      servicio_id: '',
-      sucursal_id: '',
-      fecha_desde: '',
-      fecha_hasta: '',
-    });
+    limpiarFiltros();
     setPage(1); // Resetear a página 1 al limpiar filtros
   };
 
@@ -340,7 +341,7 @@ function CitasPage() {
       />
 
       {/* Modal de Formulario Crear/Editar */}
-      <CitaFormModal
+      <CitaFormDrawer
         key={`${getModalProps('formulario').mode}-${getModalData('formulario')?.id || 'new'}`}
         isOpen={isOpen('formulario')}
         onClose={() => closeModal('formulario')}

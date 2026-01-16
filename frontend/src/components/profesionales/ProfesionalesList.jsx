@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Users,
   Eye,
@@ -12,6 +13,7 @@ import {
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Pagination } from '@/components/ui/Pagination';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import ProfesionalStatsCard from './ProfesionalStatsCard';
 import { ESTADOS_LABORALES } from '@/hooks/useProfesionales';
 
@@ -104,6 +106,141 @@ function ProfesionalesList({
 
     return variantMap[config.color] || 'default';
   };
+
+  // Columnas para DataTable
+  const columns = useMemo(() => [
+    {
+      key: 'profesional',
+      header: 'Profesional',
+      width: 'xl',
+      render: (row) => (
+        <div className="flex items-center">
+          {row.foto_url ? (
+            <img
+              src={row.foto_url}
+              alt={row.nombre_completo}
+              className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+            />
+          ) : (
+            <div
+              className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold"
+              style={{ backgroundColor: row.color_calendario || '#753572' }}
+            >
+              {row.nombre_completo?.charAt(0).toUpperCase()}
+            </div>
+          )}
+          <div className="ml-4">
+            <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {row.nombre_completo}
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400">
+              {row.puesto_nombre || 'Sin puesto'}
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'contacto',
+      header: 'Contacto',
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          {row.email && (
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <Mail className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+              <span className="truncate max-w-[150px]">{row.email}</span>
+            </div>
+          )}
+          {row.telefono && (
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <Phone className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+              {row.telefono}
+            </div>
+          )}
+        </div>
+      ),
+    },
+    {
+      key: 'departamento_nombre',
+      header: 'Departamento',
+      hideOnMobile: true,
+      render: (row) => (
+        <div className="text-sm text-gray-900 dark:text-gray-100">
+          {row.departamento_nombre || '-'}
+        </div>
+      ),
+    },
+    {
+      key: 'estado',
+      header: 'Estado',
+      render: (row) => (
+        <Badge
+          variant={row.activo ? getEstadoBadgeVariant(row.estado || 'activo') : 'default'}
+          size="sm"
+        >
+          {row.activo
+            ? ESTADOS_LABORALES[row.estado]?.label || 'Activo'
+            : 'Inactivo'}
+        </Badge>
+      ),
+    },
+    {
+      key: 'citas',
+      header: 'Citas',
+      hideOnMobile: true,
+      render: (row) => (
+        <div>
+          <div className="text-sm text-gray-900 dark:text-gray-100">
+            {row.total_citas_completadas || 0} citas
+          </div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            {row.total_clientes_atendidos || 0} clientes
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'calificacion',
+      header: 'Calificación',
+      hideOnMobile: true,
+      render: (row) => renderEstrellas(row.calificacion_promedio),
+    },
+    {
+      key: 'actions',
+      header: '',
+      align: 'right',
+      render: (row) => (
+        <DataTableActions>
+          <DataTableActionButton
+            icon={Clock}
+            label="Horarios"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGestionarHorarios(row);
+            }}
+          />
+          <DataTableActionButton
+            icon={Calendar}
+            label="Servicios"
+            onClick={(e) => {
+              e.stopPropagation();
+              onGestionarServicios(row);
+            }}
+          />
+          <DataTableActionButton
+            icon={Trash2}
+            label="Desactivar"
+            variant="danger"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(row);
+            }}
+          />
+        </DataTableActions>
+      ),
+    },
+  ], [onDelete, onGestionarHorarios, onGestionarServicios]);
 
   return (
     <div className="space-y-4">
@@ -263,170 +400,17 @@ function ProfesionalesList({
 
       {/* Vista Tabla */}
       {viewMode === 'table' && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-              <thead className="bg-gray-50 dark:bg-gray-700">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Profesional
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Contacto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Departamento
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Citas
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Calificacion
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {profesionales.map((profesional) => (
-                  <tr
-                    key={profesional.id}
-                    id={`profesional-${profesional.id}`}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                    onClick={() => onVerDetalle(profesional)}
-                  >
-                    {/* Profesional */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        {profesional.foto_url ? (
-                          <img
-                            src={profesional.foto_url}
-                            alt={profesional.nombre_completo}
-                            className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
-                          />
-                        ) : (
-                          <div
-                            className="flex-shrink-0 h-10 w-10 rounded-full flex items-center justify-center text-white font-semibold"
-                            style={{ backgroundColor: profesional.color_calendario || '#753572' }}
-                          >
-                            {profesional.nombre_completo?.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                            {profesional.nombre_completo}
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {profesional.puesto_nombre || 'Sin puesto'}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-
-                    {/* Contacto */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex flex-col gap-1">
-                        {profesional.email && (
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <Mail className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                            <span className="truncate max-w-[150px]">{profesional.email}</span>
-                          </div>
-                        )}
-                        {profesional.telefono && (
-                          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                            <Phone className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                            {profesional.telefono}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Departamento */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {profesional.departamento_nombre || '-'}
-                      </div>
-                    </td>
-
-                    {/* Estado */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant={profesional.activo ? getEstadoBadgeVariant(profesional.estado || 'activo') : 'default'}
-                        size="sm"
-                      >
-                        {profesional.activo
-                          ? ESTADOS_LABORALES[profesional.estado]?.label || 'Activo'
-                          : 'Inactivo'}
-                      </Badge>
-                    </td>
-
-                    {/* Citas */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-gray-100">
-                        {profesional.total_citas_completadas || 0} citas
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {profesional.total_clientes_atendidos || 0} clientes
-                      </div>
-                    </td>
-
-                    {/* Calificacion */}
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {renderEstrellas(profesional.calificacion_promedio)}
-                    </td>
-
-                    {/* Acciones */}
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onGestionarHorarios(profesional);
-                          }}
-                          title="Horarios"
-                          aria-label="Gestionar horarios de trabajo"
-                        >
-                          <Clock className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onGestionarServicios(profesional);
-                          }}
-                          title="Servicios"
-                          aria-label="Gestionar servicios asignados"
-                        >
-                          <Calendar className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDelete(profesional);
-                          }}
-                          className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/30"
-                          title="Desactivar"
-                          aria-label="Desactivar profesional"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
+        <DataTable
+          columns={columns}
+          data={profesionales}
+          keyField="id"
+          onRowClick={onVerDetalle}
+          emptyState={{
+            icon: Users,
+            title: 'No se encontraron profesionales',
+            description: 'Intenta ajustar los filtros o la búsqueda',
+          }}
+        />
       )}
 
       {/* Paginación */}

@@ -1,6 +1,29 @@
+/**
+ * ====================================================================
+ * CLIENTE FORM - Formulario con React Hook Form + Zod
+ * ====================================================================
+ *
+ * Formulario reutilizable para crear/editar clientes.
+ * Migrado a React Hook Form + Zod (Enero 2026).
+ */
 import { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
-import { Save, Camera, X, Loader2, User, Tag, Building2, UserCircle, MapPin, Tags, MessageCircle, Send } from 'lucide-react';
+import {
+  Save,
+  Camera,
+  X,
+  Loader2,
+  User,
+  Tag,
+  Building2,
+  UserCircle,
+  MapPin,
+  Tags,
+  MessageCircle,
+  Send,
+} from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
@@ -13,152 +36,81 @@ import { useToast } from '@/hooks/useToast';
 import { useEstadosMexico, usePaises } from '@/hooks/useUbicaciones';
 import { listasPreciosApi } from '@/services/api/endpoints';
 import EtiquetasSelector from './EtiquetasSelector';
-import { useAsignarEtiquetasCliente } from '@/hooks/useEtiquetasClientes';
+import {
+  clienteSchema,
+  clienteDefaults,
+  clienteToFormData,
+  formDataToApi,
+} from '@/schemas/cliente.schema';
 
 /**
  * Formulario reutilizable para crear/editar clientes
+ * @param {Object} props
+ * @param {Object} props.cliente - Cliente a editar (null para crear)
+ * @param {Function} props.onSubmit - Callback con datos y etiquetaIds
+ * @param {boolean} props.isLoading - Estado de carga del submit
  */
 function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
   const toast = useToast();
   const uploadMutation = useUploadArchivo();
-  const asignarEtiquetas = useAsignarEtiquetasCliente();
 
-  // Estado para etiquetas (separado del formData porque se guarda aparte)
+  // Estado para etiquetas (separado del form porque se guarda aparte)
   const [etiquetaIds, setEtiquetaIds] = useState([]);
 
-  const [formData, setFormData] = useState({
-    nombre_completo: '',
-    telefono: '',
-    email: '',
-    fecha_nacimiento: '',
-    notas_medicas: '',
-    marketing_permitido: true,
-    activo: true,
-    lista_precios_id: '',
-    preferencias: {
-      profesional_preferido: '',
-      servicios_favoritos: [],
-    },
-    foto_url: '',
-    // Nuevos campos (Ene 2026)
-    tipo: 'persona',  // 'persona' o 'empresa'
-    rfc: '',
-    razon_social: '',
-    // Dirección estructurada
-    calle: '',
-    colonia: '',
-    ciudad: '',
-    estado_id: '',
-    codigo_postal: '',
-    pais_id: '1',  // México por defecto
-    // Canales digitales (Ene 2026 - Fase 3)
-    telegram_chat_id: '',
-    whatsapp_phone: '',
-  });
-
-  const [errors, setErrors] = useState({});
+  // Estado para foto
   const [fotoPreview, setFotoPreview] = useState(null);
   const [fotoFile, setFotoFile] = useState(null);
 
-  // Cargar datos de profesionales y servicios para preferencias
+  // React Hook Form con Zod
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(clienteSchema),
+    defaultValues: clienteDefaults,
+  });
+
+  // Watch del tipo para campos condicionales
+  const tipoCliente = watch('tipo');
+
+  // Cargar datos de profesionales para preferencias
   const { data: profesionalesData } = useProfesionales();
   const profesionales = profesionalesData?.profesionales || [];
-  const { data: serviciosData } = useServiciosDashboard();
-  const servicios = serviciosData?.servicios || [];
 
-  // Cargar listas de precios disponibles
+  // Cargar servicios para favoritos (reservado para uso futuro)
+  const { data: _serviciosData } = useServiciosDashboard();
+  // const servicios = _serviciosData?.servicios || [];
+
+  // Cargar listas de precios
   const { data: listasPreciosData } = useQuery({
     queryKey: ['listas-precios', { soloActivas: true }],
     queryFn: () => listasPreciosApi.listar({ soloActivas: true }),
-    staleTime: 1000 * 60 * 5, // 5 min
+    staleTime: 1000 * 60 * 5,
   });
   const listasPrecios = listasPreciosData?.data?.data || [];
 
-  // Cargar estados de México y países (Ene 2026)
+  // Cargar estados y paises
   const { data: estados = [] } = useEstadosMexico();
   const { data: paises = [] } = usePaises();
 
-  // Si hay un cliente, cargar sus datos
-  // ⚠️ IMPORTANTE: Mapear campos del backend a frontend
-  // Backend devuelve: nombre, alergias, profesional_preferido_id
-  // Frontend usa: nombre_completo, notas_medicas, preferencias.profesional_preferido
+  // Cargar datos del cliente cuando cambia
   useEffect(() => {
     if (cliente) {
-      setFormData({
-        nombre_completo: cliente.nombre || '', // Backend devuelve "nombre"
-        telefono: cliente.telefono || '',
-        email: cliente.email || '',
-        fecha_nacimiento: cliente.fecha_nacimiento
-          ? cliente.fecha_nacimiento.split('T')[0]
-          : '',
-        notas_medicas: cliente.alergias || '', // Backend devuelve "alergias"
-        marketing_permitido: cliente.marketing_permitido ?? true,
-        activo: cliente.activo ?? true,
-        lista_precios_id: cliente.lista_precios_id?.toString() || '',
-        preferencias: {
-          profesional_preferido: cliente.profesional_preferido_id || '', // Backend devuelve "profesional_preferido_id"
-          servicios_favoritos: [], // Este campo NO existe en backend
-        },
-        foto_url: cliente.foto_url || '',
-        // Nuevos campos (Ene 2026)
-        tipo: cliente.tipo || 'persona',
-        rfc: cliente.rfc || '',
-        razon_social: cliente.razon_social || '',
-        // Dirección estructurada
-        calle: cliente.calle || '',
-        colonia: cliente.colonia || '',
-        ciudad: cliente.ciudad || '',
-        estado_id: cliente.estado_id?.toString() || '',
-        codigo_postal: cliente.codigo_postal || '',
-        pais_id: cliente.pais_id?.toString() || '1',
-        // Canales digitales (Ene 2026 - Fase 3)
-        telegram_chat_id: cliente.telegram_chat_id || '',
-        whatsapp_phone: cliente.whatsapp_phone || '',
-      });
+      const formData = clienteToFormData(cliente);
+      reset(formData);
       setFotoPreview(cliente.foto_url || null);
 
-      // Cargar etiquetas del cliente
+      // Cargar etiquetas
       if (cliente.etiquetas && Array.isArray(cliente.etiquetas)) {
         setEtiquetaIds(cliente.etiquetas.map((e) => e.id));
       }
     }
-  }, [cliente]);
+  }, [cliente, reset]);
 
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-
-    // Limpiar error del campo
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: null }));
-    }
-  };
-
-  const handlePreferenciasChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      preferencias: {
-        ...prev.preferencias,
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleServiciosFavoritosChange = (servicioId) => {
-    const servicios = formData.preferencias.servicios_favoritos || [];
-    const yaExiste = servicios.includes(servicioId);
-
-    const nuevosServicios = yaExiste
-      ? servicios.filter((id) => id !== servicioId)
-      : [...servicios, servicioId];
-
-    handlePreferenciasChange('servicios_favoritos', nuevosServicios);
-  };
-
-  // Handler para seleccionar archivo de foto
+  // Handler para foto
   const handleFotoChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -175,63 +127,15 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
     }
   };
 
-  // Handler para eliminar foto
   const handleEliminarFoto = () => {
     setFotoFile(null);
     setFotoPreview(null);
-    setFormData((prev) => ({ ...prev, foto_url: '' }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-
-    // Campos requeridos
-    if (!formData.nombre_completo.trim()) {
-      newErrors.nombre_completo = 'El nombre es requerido';
-    }
-
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = 'El teléfono es requerido';
-    } else if (formData.telefono.length !== 10) {
-      newErrors.telefono = 'El teléfono debe tener exactamente 10 dígitos';
-    }
-
-    // Email (opcional, pero si se proporciona debe ser válido)
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'El email no es válido';
-    }
-
-    // RFC (solo para empresas, opcional pero si se proporciona debe ser válido)
-    if (formData.tipo === 'empresa' && formData.rfc) {
-      const rfcPattern = /^[A-ZÑ&]{3,4}[0-9]{6}[A-Z0-9]{3}$/i;
-      if (!rfcPattern.test(formData.rfc)) {
-        newErrors.rfc = 'El RFC no es válido (formato: XXXX000000XXX)';
-      }
-    }
-
-    // Código postal (opcional, pero si se proporciona debe ser de 5 dígitos)
-    if (formData.codigo_postal && !/^[0-9]{5}$/.test(formData.codigo_postal)) {
-      newErrors.codigo_postal = 'El código postal debe ser de 5 dígitos';
-    }
-
-    // WhatsApp (opcional, pero si se proporciona debe tener formato internacional)
-    if (formData.whatsapp_phone && !/^\+\d{10,15}$/.test(formData.whatsapp_phone)) {
-      newErrors.whatsapp_phone = 'Formato internacional: +521XXXXXXXXXX';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!validate()) {
-      return;
-    }
-
+  // Submit del formulario
+  const onFormSubmit = async (formData) => {
     try {
-      // Subir foto si hay un archivo nuevo
+      // Subir foto si hay archivo nuevo
       let fotoUrlFinal = formData.foto_url;
       if (fotoFile) {
         const resultado = await uploadMutation.mutateAsync({
@@ -242,56 +146,20 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         fotoUrlFinal = resultado?.url || resultado;
       }
 
-      // Preparar datos para enviar
-      // ⚠️ CRÍTICO: Mapear campos del frontend a los nombres que espera el backend
-      // Backend espera: nombre, alergias, profesional_preferido_id
-      // Frontend usa: nombre_completo, notas_medicas, preferencias.profesional_preferido
-      const dataToSubmit = {
-        nombre: formData.nombre_completo, // Backend espera "nombre" no "nombre_completo"
-        telefono: formData.telefono,
-        email: formData.email?.trim() || undefined,
-        fecha_nacimiento: formData.fecha_nacimiento?.trim() || undefined,
-        alergias: formData.notas_medicas?.trim() || undefined, // Backend espera "alergias"
-        marketing_permitido: formData.marketing_permitido,
-        activo: formData.activo,
-        lista_precios_id: formData.lista_precios_id
-          ? parseInt(formData.lista_precios_id)
-          : null, // null para quitar asignación
-        profesional_preferido_id: formData.preferencias.profesional_preferido
-          ? parseInt(formData.preferencias.profesional_preferido)
-          : undefined,
-        foto_url: fotoUrlFinal || undefined,
-        // Nota: servicios_favoritos NO existe en backend, se omite
+      // Transformar datos al formato del backend
+      const dataToSubmit = formDataToApi(formData, fotoUrlFinal);
 
-        // Nuevos campos (Ene 2026)
-        tipo: formData.tipo,
-        // RFC y razón social solo para empresas
-        rfc: formData.tipo === 'empresa' ? (formData.rfc?.trim().toUpperCase() || undefined) : undefined,
-        razon_social: formData.tipo === 'empresa' ? (formData.razon_social?.trim() || undefined) : undefined,
-        // Dirección estructurada
-        calle: formData.calle?.trim() || undefined,
-        colonia: formData.colonia?.trim() || undefined,
-        ciudad: formData.ciudad?.trim() || undefined,
-        estado_id: formData.estado_id ? parseInt(formData.estado_id) : undefined,
-        codigo_postal: formData.codigo_postal?.trim() || undefined,
-        pais_id: formData.pais_id ? parseInt(formData.pais_id) : 1,
-        // Canales digitales (Ene 2026 - Fase 3)
-        telegram_chat_id: formData.telegram_chat_id?.trim() || undefined,
-        whatsapp_phone: formData.whatsapp_phone?.trim() || undefined,
-      };
+      setFotoFile(null);
 
-      setFotoFile(null); // Limpiar archivo después de subir
-
-      // Pasar etiquetaIds junto con los datos del cliente
-      // El componente padre manejará la asignación de etiquetas después de crear/actualizar
+      // Pasar datos y etiquetas al padre
       onSubmit(dataToSubmit, etiquetaIds);
-    } catch (error) {
+    } catch {
       toast.error('No se pudo subir la foto');
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit(onFormSubmit)} className="space-y-6">
       {/* Foto del Cliente */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -299,7 +167,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         </h3>
 
         <div className="flex items-center gap-6">
-          {/* Preview con botón de subir */}
           <div className="flex-shrink-0 relative">
             <div className="w-24 h-24 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-50 dark:bg-gray-700 overflow-hidden">
               {fotoPreview ? (
@@ -313,7 +180,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
                 <User className="w-10 h-10 text-gray-400" />
               )}
             </div>
-            {/* Botón de cámara para subir */}
             <label className="absolute -bottom-1 -right-1 bg-primary-600 text-white rounded-full p-2 cursor-pointer hover:bg-primary-700 transition-colors shadow-lg">
               <Camera className="h-4 w-4" />
               <input
@@ -324,7 +190,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
                 disabled={uploadMutation.isPending}
               />
             </label>
-            {/* Botón de eliminar */}
             {fotoPreview && (
               <button
                 type="button"
@@ -334,7 +199,6 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
                 <X className="h-3 w-3" />
               </button>
             )}
-            {/* Loading de subida */}
             {uploadMutation.isPending && (
               <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-75 dark:bg-opacity-75 rounded-full flex items-center justify-center">
                 <Loader2 className="h-6 w-6 text-primary-600 dark:text-primary-400 animate-spin" />
@@ -342,333 +206,400 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
             )}
           </div>
 
-          {/* Instrucciones */}
           <div className="flex-1">
             <p className="text-sm text-gray-700 dark:text-gray-300">
-              Haz clic en el ícono de cámara para subir una foto del cliente.
+              Haz clic en el icono de camara para subir una foto del cliente.
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              PNG, JPG o WEBP. Máximo 5MB.
+              PNG, JPG o WEBP. Maximo 5MB.
             </p>
           </div>
         </div>
       </div>
 
-      {/* Tipo de Cliente (Ene 2026) */}
+      {/* Tipo de Cliente */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Tipo de Cliente
         </h3>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Persona */}
-          <label
-            className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              formData.tipo === 'persona'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-            }`}
-          >
-            <input
-              type="radio"
-              name="tipo"
-              value="persona"
-              checked={formData.tipo === 'persona'}
-              onChange={handleChange}
-              className="sr-only"
-            />
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              formData.tipo === 'persona'
-                ? 'bg-primary-100 dark:bg-primary-800'
-                : 'bg-gray-100 dark:bg-gray-700'
-            }`}>
-              <UserCircle className={`w-5 h-5 ${
-                formData.tipo === 'persona'
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`} />
-            </div>
-            <div>
-              <p className={`font-medium ${
-                formData.tipo === 'persona'
-                  ? 'text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300'
-              }`}>
-                Persona Física
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Cliente individual
-              </p>
-            </div>
-          </label>
+        <Controller
+          name="tipo"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Persona */}
+              <label
+                className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  field.value === 'persona'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+              >
+                <input
+                  type="radio"
+                  {...field}
+                  value="persona"
+                  checked={field.value === 'persona'}
+                  onChange={() => field.onChange('persona')}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    field.value === 'persona'
+                      ? 'bg-primary-100 dark:bg-primary-800'
+                      : 'bg-gray-100 dark:bg-gray-700'
+                  }`}
+                >
+                  <UserCircle
+                    className={`w-5 h-5 ${
+                      field.value === 'persona'
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <p
+                    className={`font-medium ${
+                      field.value === 'persona'
+                        ? 'text-primary-700 dark:text-primary-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Persona Fisica
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Cliente individual
+                  </p>
+                </div>
+              </label>
 
-          {/* Empresa */}
-          <label
-            className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-              formData.tipo === 'empresa'
-                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
-            }`}
-          >
-            <input
-              type="radio"
-              name="tipo"
-              value="empresa"
-              checked={formData.tipo === 'empresa'}
-              onChange={handleChange}
-              className="sr-only"
-            />
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-              formData.tipo === 'empresa'
-                ? 'bg-primary-100 dark:bg-primary-800'
-                : 'bg-gray-100 dark:bg-gray-700'
-            }`}>
-              <Building2 className={`w-5 h-5 ${
-                formData.tipo === 'empresa'
-                  ? 'text-primary-600 dark:text-primary-400'
-                  : 'text-gray-500 dark:text-gray-400'
-              }`} />
+              {/* Empresa */}
+              <label
+                className={`flex-1 flex items-center gap-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                  field.value === 'empresa'
+                    ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+              >
+                <input
+                  type="radio"
+                  {...field}
+                  value="empresa"
+                  checked={field.value === 'empresa'}
+                  onChange={() => field.onChange('empresa')}
+                  className="sr-only"
+                />
+                <div
+                  className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                    field.value === 'empresa'
+                      ? 'bg-primary-100 dark:bg-primary-800'
+                      : 'bg-gray-100 dark:bg-gray-700'
+                  }`}
+                >
+                  <Building2
+                    className={`w-5 h-5 ${
+                      field.value === 'empresa'
+                        ? 'text-primary-600 dark:text-primary-400'
+                        : 'text-gray-500 dark:text-gray-400'
+                    }`}
+                  />
+                </div>
+                <div>
+                  <p
+                    className={`font-medium ${
+                      field.value === 'empresa'
+                        ? 'text-primary-700 dark:text-primary-300'
+                        : 'text-gray-700 dark:text-gray-300'
+                    }`}
+                  >
+                    Empresa
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Cliente B2B con facturacion
+                  </p>
+                </div>
+              </label>
             </div>
-            <div>
-              <p className={`font-medium ${
-                formData.tipo === 'empresa'
-                  ? 'text-primary-700 dark:text-primary-300'
-                  : 'text-gray-700 dark:text-gray-300'
-              }`}>
-                Empresa
-              </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Cliente B2B con facturación
-              </p>
-            </div>
-          </label>
-        </div>
+          )}
+        />
 
         {/* Campos condicionales para empresa */}
-        {formData.tipo === 'empresa' && (
+        {tipoCliente === 'empresa' && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                RFC
-              </label>
-              <Input
-                name="rfc"
-                value={formData.rfc}
-                onChange={handleChange}
-                placeholder="XAXX010101000"
-                maxLength={13}
-                error={errors.rfc}
-                className="uppercase"
-              />
-              {errors.rfc && (
-                <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.rfc}</p>
+            <Controller
+              name="rfc"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    RFC
+                  </label>
+                  <Input
+                    {...field}
+                    placeholder="XAXX010101000"
+                    maxLength={13}
+                    className="uppercase"
+                    error={errors.rfc?.message}
+                  />
+                  {errors.rfc && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.rfc.message}
+                    </p>
+                  )}
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    RFC mexicano para facturacion
+                  </p>
+                </div>
               )}
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                RFC mexicano para facturación
-              </p>
-            </div>
+            />
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Razón Social
-              </label>
-              <Input
-                name="razon_social"
-                value={formData.razon_social}
-                onChange={handleChange}
-                placeholder="Empresa S.A. de C.V."
-              />
-            </div>
+            <Controller
+              name="razon_social"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Razon Social
+                  </label>
+                  <Input {...field} placeholder="Empresa S.A. de C.V." />
+                </div>
+              )}
+            />
           </div>
         )}
       </div>
 
-      {/* Información Básica */}
+      {/* Informacion Basica */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Información Básica
+          Informacion Basica
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {formData.tipo === 'empresa' ? 'Nombre Comercial *' : 'Nombre Completo *'}
-            </label>
-            <Input
+            <Controller
               name="nombre_completo"
-              value={formData.nombre_completo}
-              onChange={handleChange}
-              placeholder={formData.tipo === 'empresa' ? 'Mi Empresa' : 'Juan Pérez García'}
-              error={errors.nombre_completo}
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    {tipoCliente === 'empresa' ? 'Nombre Comercial *' : 'Nombre Completo *'}
+                  </label>
+                  <Input
+                    {...field}
+                    placeholder={tipoCliente === 'empresa' ? 'Mi Empresa' : 'Juan Perez Garcia'}
+                    error={errors.nombre_completo?.message}
+                  />
+                  {errors.nombre_completo && (
+                    <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                      {errors.nombre_completo.message}
+                    </p>
+                  )}
+                </div>
+              )}
             />
-            {errors.nombre_completo && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.nombre_completo}</p>
-            )}
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Teléfono *
-            </label>
-            <Input
-              type="tel"
-              name="telefono"
-              value={formData.telefono}
-              onChange={handleChange}
-              placeholder="5512345678"
-              maxLength={10}
-              error={errors.telefono}
-            />
-            {errors.telefono && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.telefono}</p>
+          <Controller
+            name="telefono"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Telefono *
+                </label>
+                <Input
+                  {...field}
+                  type="tel"
+                  placeholder="5512345678"
+                  maxLength={10}
+                  error={errors.telefono?.message}
+                />
+                {errors.telefono && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.telefono.message}
+                  </p>
+                )}
+              </div>
             )}
-          </div>
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Email
-            </label>
-            <Input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="cliente@ejemplo.com"
-              error={errors.email}
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.email}</p>
+          <Controller
+            name="email"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Email
+                </label>
+                <Input
+                  {...field}
+                  type="email"
+                  placeholder="cliente@ejemplo.com"
+                  error={errors.email?.message}
+                />
+                {errors.email && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
             )}
-          </div>
+          />
 
-          {/* Fecha de nacimiento solo para personas físicas */}
-          {formData.tipo === 'persona' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Fecha de Nacimiento
-              </label>
-              <Input
-                type="date"
-                name="fecha_nacimiento"
-                value={formData.fecha_nacimiento}
-                onChange={handleChange}
-              />
-            </div>
+          {tipoCliente === 'persona' && (
+            <Controller
+              name="fecha_nacimiento"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Fecha de Nacimiento
+                  </label>
+                  <Input {...field} type="date" />
+                </div>
+              )}
+            />
           )}
         </div>
       </div>
 
-      {/* Dirección Estructurada (Ene 2026) */}
+      {/* Direccion */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <MapPin className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-          Dirección
+          Direccion
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Calle y Número
-            </label>
-            <Input
+            <Controller
               name="calle"
-              value={formData.calle}
-              onChange={handleChange}
-              placeholder="Av. Insurgentes Sur 1234, Int. 5"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Calle y Numero
+                  </label>
+                  <Input {...field} placeholder="Av. Insurgentes Sur 1234, Int. 5" />
+                </div>
+              )}
             />
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Colonia
-            </label>
-            <Input
-              name="colonia"
-              value={formData.colonia}
-              onChange={handleChange}
-              placeholder="Del Valle"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Ciudad
-            </label>
-            <Input
-              name="ciudad"
-              value={formData.ciudad}
-              onChange={handleChange}
-              placeholder="Ciudad de México"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Estado
-            </label>
-            <Select
-              name="estado_id"
-              value={formData.estado_id}
-              onChange={handleChange}
-              placeholder="Selecciona un estado"
-              options={estados.map((estado) => ({
-                value: estado.id.toString(),
-                label: estado.nombre || estado.nombre_corto,
-              }))}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Código Postal
-            </label>
-            <Input
-              name="codigo_postal"
-              value={formData.codigo_postal}
-              onChange={handleChange}
-              placeholder="03100"
-              maxLength={5}
-              error={errors.codigo_postal}
-            />
-            {errors.codigo_postal && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.codigo_postal}</p>
+          <Controller
+            name="colonia"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Colonia
+                </label>
+                <Input {...field} placeholder="Del Valle" />
+              </div>
             )}
-          </div>
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              País
-            </label>
-            <Select
-              name="pais_id"
-              value={formData.pais_id}
-              onChange={handleChange}
-              options={paises.map((pais) => ({
-                value: pais.id.toString(),
-                label: pais.nombre,
-              }))}
-            />
-          </div>
+          <Controller
+            name="ciudad"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Ciudad
+                </label>
+                <Input {...field} placeholder="Ciudad de Mexico" />
+              </div>
+            )}
+          />
+
+          <Controller
+            name="estado_id"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Estado
+                </label>
+                <Select
+                  {...field}
+                  placeholder="Selecciona un estado"
+                  options={estados.map((estado) => ({
+                    value: estado.id.toString(),
+                    label: estado.nombre || estado.nombre_corto,
+                  }))}
+                />
+              </div>
+            )}
+          />
+
+          <Controller
+            name="codigo_postal"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Codigo Postal
+                </label>
+                <Input
+                  {...field}
+                  placeholder="03100"
+                  maxLength={5}
+                  error={errors.codigo_postal?.message}
+                />
+                {errors.codigo_postal && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.codigo_postal.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
+
+          <Controller
+            name="pais_id"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Pais
+                </label>
+                <Select
+                  {...field}
+                  options={paises.map((pais) => ({
+                    value: pais.id.toString(),
+                    label: pais.nombre,
+                  }))}
+                />
+              </div>
+            )}
+          />
         </div>
       </div>
 
-      {/* Notas Médicas */}
+      {/* Notas Medicas */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Información Adicional
+          Informacion Adicional
         </h3>
 
-        <Textarea
+        <Controller
           name="notas_medicas"
-          label="Notas Médicas"
-          value={formData.notas_medicas}
-          onChange={handleChange}
-          rows={3}
-          placeholder="Alergias, condiciones médicas relevantes, etc."
+          control={control}
+          render={({ field }) => (
+            <Textarea
+              {...field}
+              label="Notas Medicas"
+              rows={3}
+              placeholder="Alergias, condiciones medicas relevantes, etc."
+            />
+          )}
         />
       </div>
 
-      {/* Canales de Contacto Digital (Ene 2026 - Fase 3) */}
+      {/* Canales Digitales */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <MessageCircle className="w-5 h-5 text-primary-500" />
@@ -676,119 +607,111 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         </h3>
 
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          Configura canales adicionales para comunicación automática con el cliente
+          Configura canales adicionales para comunicacion automatica con el cliente
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-              <Send className="w-4 h-4 text-blue-500" />
-              Telegram Chat ID
-            </label>
-            <Input
-              name="telegram_chat_id"
-              value={formData.telegram_chat_id}
-              onChange={handleChange}
-              placeholder="123456789"
-            />
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              ID numérico del chat de Telegram para notificaciones
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
-              <MessageCircle className="w-4 h-4 text-green-500" />
-              WhatsApp
-            </label>
-            <Input
-              name="whatsapp_phone"
-              value={formData.whatsapp_phone}
-              onChange={handleChange}
-              placeholder="+521XXXXXXXXXX"
-              error={errors.whatsapp_phone}
-            />
-            {errors.whatsapp_phone && (
-              <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.whatsapp_phone}</p>
+          <Controller
+            name="telegram_chat_id"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                  <Send className="w-4 h-4 text-blue-500" />
+                  Telegram Chat ID
+                </label>
+                <Input {...field} placeholder="123456789" />
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  ID numerico del chat de Telegram para notificaciones
+                </p>
+              </div>
             )}
-            <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Número con código de país para mensajes de WhatsApp
-            </p>
-          </div>
+          />
+
+          <Controller
+            name="whatsapp_phone"
+            control={control}
+            render={({ field }) => (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-2">
+                  <MessageCircle className="w-4 h-4 text-green-500" />
+                  WhatsApp
+                </label>
+                <Input
+                  {...field}
+                  placeholder="+521XXXXXXXXXX"
+                  error={errors.whatsapp_phone?.message}
+                />
+                {errors.whatsapp_phone && (
+                  <p className="mt-1 text-sm text-red-600 dark:text-red-400">
+                    {errors.whatsapp_phone.message}
+                  </p>
+                )}
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  Numero con codigo de pais para mensajes de WhatsApp
+                </p>
+              </div>
+            )}
+          />
         </div>
       </div>
 
-      {/* Preferencias y Precios */}
+      {/* Preferencias */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
           Preferencias
         </h3>
 
         <div className="space-y-4">
-          <Select
-            label="Profesional Preferido"
-            value={formData.preferencias.profesional_preferido}
-            onChange={(e) =>
-              handlePreferenciasChange('profesional_preferido', e.target.value)
-            }
-            placeholder="Sin preferencia"
-            options={profesionales.map((prof) => ({
-              value: prof.id.toString(),
-              label: prof.nombre_completo,
-            }))}
-          />
-
-          {/* Lista de Precios */}
-          {listasPrecios.length > 0 && (
-            <div>
+          <Controller
+            name="profesional_preferido"
+            control={control}
+            render={({ field }) => (
               <Select
-                label={
-                  <span className="flex items-center gap-1">
-                    <Tag className="h-4 w-4 text-primary-500" />
-                    Lista de Precios
-                  </span>
-                }
-                name="lista_precios_id"
-                value={formData.lista_precios_id}
-                onChange={handleChange}
-                placeholder="Sin lista asignada (precios estándar)"
-                options={listasPrecios.map((lista) => ({
-                  value: lista.id.toString(),
-                  label: `${lista.codigo} - ${lista.nombre}${lista.descuento_global_pct > 0 ? ` (${lista.descuento_global_pct}% dto.)` : ''}`,
+                {...field}
+                label="Profesional Preferido"
+                placeholder="Sin preferencia"
+                options={profesionales.map((prof) => ({
+                  value: prof.id.toString(),
+                  label: prof.nombre_completo,
                 }))}
               />
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Asigna una lista de precios para aplicar descuentos automáticos en el POS
-              </p>
-            </div>
-          )}
+            )}
+          />
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Servicios Favoritos
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-              {servicios.map((servicio) => (
-                <div
-                  key={servicio.id}
-                  className="p-2 border border-gray-200 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer"
-                  onClick={() => handleServiciosFavoritosChange(servicio.id)}
-                >
-                  <Checkbox
-                    label={servicio.nombre}
-                    checked={(formData.preferencias.servicios_favoritos || []).includes(
-                      servicio.id
-                    )}
-                    onChange={() => handleServiciosFavoritosChange(servicio.id)}
+          {listasPrecios.length > 0 && (
+            <Controller
+              name="lista_precios_id"
+              control={control}
+              render={({ field }) => (
+                <div>
+                  <Select
+                    {...field}
+                    label={
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-4 w-4 text-primary-500" />
+                        Lista de Precios
+                      </span>
+                    }
+                    placeholder="Sin lista asignada (precios estandar)"
+                    options={listasPrecios.map((lista) => ({
+                      value: lista.id.toString(),
+                      label: `${lista.codigo} - ${lista.nombre}${
+                        lista.descuento_global_pct > 0 ? ` (${lista.descuento_global_pct}% dto.)` : ''
+                      }`,
+                    }))}
                   />
+                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    Asigna una lista de precios para aplicar descuentos automaticos en el POS
+                  </p>
                 </div>
-              ))}
-            </div>
-          </div>
+              )}
+            />
+          )}
         </div>
       </div>
 
-      {/* Etiquetas (Ene 2026 - Fase 2) */}
+      {/* Etiquetas */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
           <Tags className="w-5 h-5 text-primary-500" />
@@ -807,44 +730,46 @@ function ClienteForm({ cliente = null, onSubmit, isLoading = false }) {
         />
       </div>
 
-      {/* Configuración */}
+      {/* Configuracion */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-          Configuración
+          Configuracion
         </h3>
 
         <div className="space-y-3">
-          <Checkbox
-            label="Permitir envío de mensajes de marketing"
-            description="El cliente recibirá promociones y novedades"
-            checked={formData.marketing_permitido}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                marketing_permitido: e.target.checked,
-              }))
-            }
+          <Controller
+            name="marketing_permitido"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                label="Permitir envio de mensajes de marketing"
+                description="El cliente recibira promociones y novedades"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            )}
           />
 
-          <Checkbox
-            label="Cliente activo"
-            checked={formData.activo}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                activo: e.target.checked,
-              }))
-            }
+          <Controller
+            name="activo"
+            control={control}
+            render={({ field }) => (
+              <Checkbox
+                label="Cliente activo"
+                checked={field.value}
+                onChange={(e) => field.onChange(e.target.checked)}
+              />
+            )}
           />
         </div>
       </div>
 
-      {/* Botones de Acción */}
+      {/* Botones de Accion */}
       <div className="flex justify-end gap-3">
         <Button
           type="submit"
-          isLoading={isLoading || uploadMutation.isPending}
-          disabled={isLoading || uploadMutation.isPending}
+          isLoading={isLoading || uploadMutation.isPending || isSubmitting}
+          disabled={isLoading || uploadMutation.isPending || isSubmitting}
         >
           {uploadMutation.isPending ? (
             <>

@@ -1,262 +1,189 @@
+/**
+ * ====================================================================
+ * CLIENTES LIST - Lista con DataTable + SkeletonTable
+ * ====================================================================
+ *
+ * Componente de lista de clientes homologado con DataTable generico.
+ * Migrado de tabla HTML manual (Enero 2026).
+ */
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Phone, Mail, Calendar, ChevronLeft, ChevronRight, UserCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import LoadingSpinner from '@/components/common/LoadingSpinner';
-import EmptyState from '@/components/ui/EmptyState';
+import { Phone, Mail, Calendar, UserCircle, Edit, Building2 } from 'lucide-react';
+import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import EtiquetasBadges from './EtiquetasBadges';
 
 /**
- * Componente de lista de clientes con tabla y paginación
- * @param {boolean} showPagination - Mostrar paginación (default: true)
+ * Componente de lista de clientes con DataTable y paginacion
+ * @param {Object} props
+ * @param {Array} props.clientes - Lista de clientes
+ * @param {Object} props.pagination - Objeto de paginacion del backend
+ * @param {boolean} props.isLoading - Estado de carga
+ * @param {Function} props.onPageChange - Callback para cambio de pagina
+ * @param {boolean} props.showPagination - Mostrar paginacion (default: true)
  */
-function ClientesList({ clientes, pagination, isLoading, onPageChange, showPagination = true }) {
+function ClientesList({
+  clientes,
+  pagination,
+  isLoading,
+  onPageChange,
+  showPagination = true,
+}) {
   const navigate = useNavigate();
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center py-12">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (!clientes || clientes.length === 0) {
-    return (
-      <EmptyState
-        icon={UserCircle}
-        title="No hay clientes registrados"
-        description="Comienza agregando tu primer cliente o atiende un cliente walk-in"
-        actionLabel="Agregar Cliente"
-        onAction={() => navigate('/clientes/nuevo')}
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-4">
-      {/* Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Contacto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Citas
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Última Cita
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Estado
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {clientes.map((cliente) => (
-                <tr
-                  key={cliente.id}
-                  className="hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer transition-colors"
-                  onClick={() => navigate(`/clientes/${cliente.id}`)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {cliente.foto_url ? (
-                        <img
-                          src={cliente.foto_url}
-                          alt={cliente.nombre}
-                          className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
-                        />
-                      ) : (
-                        <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
-                          <span className="text-primary-600 dark:text-primary-400 font-semibold">
-                            {cliente.nombre?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                      )}
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                          {cliente.nombre}
-                        </div>
-                        {cliente.email && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {cliente.email}
-                          </div>
-                        )}
-                        {/* Etiquetas (Fase 2 - Ene 2026) */}
-                        {cliente.etiquetas && cliente.etiquetas.length > 0 && (
-                          <div className="mt-1">
-                            <EtiquetasBadges etiquetas={cliente.etiquetas} size="xs" maxVisible={2} />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      {cliente.telefono && (
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                          <Phone className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                          {cliente.telefono}
-                        </div>
-                      )}
-                      {cliente.email && (
-                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                          <Mail className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                          {cliente.email}
-                        </div>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900 dark:text-gray-100">
-                      {cliente.total_citas || 0} citas
-                    </div>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    {cliente.ultima_cita ? (
-                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                        <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
-                        {(() => {
-                          // Extraer solo la parte de fecha (YYYY-MM-DD) ignorando la hora/timezone
-                          const fechaSolo = String(cliente.ultima_cita).split('T')[0];
-                          const [year, month, day] = fechaSolo.split('-');
-                          // Crear fecha en timezone local evitando conversiones UTC
-                          const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-                          return fecha.toLocaleDateString('es-ES');
-                        })()}
-                      </div>
-                    ) : (
-                      <span className="text-sm text-gray-400 dark:text-gray-500">Sin citas</span>
-                    )}
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span
-                      className={`
-                        px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
-                        ${cliente.activo
-                          ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
-                          : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
-                        }
-                      `}
-                    >
-                      {cliente.activo ? 'Activo' : 'Inactivo'}
-                    </span>
-                  </td>
-
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        navigate(`/clientes/${cliente.id}/editar`);
-                      }}
-                      aria-label={`Editar cliente ${cliente.nombre}`}
-                    >
-                      Editar
-                    </Button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Pagination */}
-      {showPagination && pagination && pagination.totalPages > 1 && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-700 dark:text-gray-300">
-              Mostrando{' '}
-              <span className="font-medium">
-                {(pagination.page - 1) * pagination.limit + 1}
-              </span>
-              {' - '}
-              <span className="font-medium">
-                {Math.min(pagination.page * pagination.limit, pagination.total)}
-              </span>
-              {' de '}
-              <span className="font-medium">{pagination.total}</span>
-              {' clientes'}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page - 1)}
-                disabled={!pagination.hasPrev}
-              >
-                <ChevronLeft className="w-4 h-4 mr-1" />
-                Anterior
-              </Button>
-
-              <div className="flex items-center gap-1">
-                {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
-                  .filter((page) => {
-                    // Mostrar solo páginas cercanas a la actual
-                    return (
-                      page === 1 ||
-                      page === pagination.totalPages ||
-                      Math.abs(page - pagination.page) <= 1
-                    );
-                  })
-                  .map((page, index, array) => {
-                    // Agregar "..." si hay un salto
-                    const showEllipsis =
-                      index > 0 && array[index - 1] !== page - 1;
-
-                    return (
-                      <div key={page} className="flex items-center">
-                        {showEllipsis && (
-                          <span className="px-2 text-gray-400 dark:text-gray-500">...</span>
-                        )}
-                        <button
-                          onClick={() => onPageChange(page)}
-                          className={`
-                            min-w-[2.5rem] h-10 px-3 rounded-md text-sm font-medium
-                            transition-colors
-                            ${page === pagination.page
-                              ? 'bg-primary-600 dark:bg-primary-500 text-white'
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
-                            }
-                          `}
-                        >
-                          {page}
-                        </button>
-                      </div>
-                    );
-                  })}
+  // Definir columnas con useMemo
+  const columns = useMemo(
+    () => [
+      {
+        key: 'cliente',
+        header: 'Cliente',
+        width: 'xl',
+        render: (row) => (
+          <div className="flex items-center">
+            {row.foto_url ? (
+              <img
+                src={row.foto_url}
+                alt={row.nombre}
+                className="flex-shrink-0 h-10 w-10 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+              />
+            ) : (
+              <div className="flex-shrink-0 h-10 w-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+                <span className="text-primary-600 dark:text-primary-400 font-semibold">
+                  {row.nombre?.charAt(0).toUpperCase()}
+                </span>
               </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onPageChange(pagination.page + 1)}
-                disabled={!pagination.hasNext}
-              >
-                Siguiente
-                <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+            )}
+            <div className="ml-4">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  {row.nombre}
+                </span>
+                {row.tipo === 'empresa' && (
+                  <Building2 className="w-3.5 h-3.5 text-blue-500" />
+                )}
+              </div>
+              {row.email && (
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  {row.email}
+                </div>
+              )}
+              {row.etiquetas && row.etiquetas.length > 0 && (
+                <div className="mt-1">
+                  <EtiquetasBadges etiquetas={row.etiquetas} size="xs" maxVisible={2} />
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        ),
+      },
+      {
+        key: 'contacto',
+        header: 'Contacto',
+        hideOnMobile: true,
+        render: (row) => (
+          <div className="flex flex-col gap-1">
+            {row.telefono && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Phone className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+                {row.telefono}
+              </div>
+            )}
+            {row.email && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                <Mail className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+                {row.email}
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        key: 'citas',
+        header: 'Citas',
+        hideOnMobile: true,
+        render: (row) => (
+          <div className="text-sm text-gray-900 dark:text-gray-100">
+            {row.total_citas || 0} citas
+          </div>
+        ),
+      },
+      {
+        key: 'ultima_cita',
+        header: 'Ultima Cita',
+        hideOnMobile: true,
+        render: (row) => {
+          if (!row.ultima_cita) {
+            return <span className="text-sm text-gray-400 dark:text-gray-500">Sin citas</span>;
+          }
+          // Extraer solo la parte de fecha (YYYY-MM-DD) ignorando la hora/timezone
+          const fechaSolo = String(row.ultima_cita).split('T')[0];
+          const [year, month, day] = fechaSolo.split('-');
+          const fecha = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+          return (
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+              <Calendar className="w-4 h-4 mr-2 text-gray-400 dark:text-gray-500" />
+              {fecha.toLocaleDateString('es-ES')}
+            </div>
+          );
+        },
+      },
+      {
+        key: 'estado',
+        header: 'Estado',
+        render: (row) => (
+          <span
+            className={`
+              px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full
+              ${
+                row.activo
+                  ? 'bg-green-100 dark:bg-green-900/40 text-green-800 dark:text-green-300'
+                  : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
+              }
+            `}
+          >
+            {row.activo ? 'Activo' : 'Inactivo'}
+          </span>
+        ),
+      },
+      {
+        key: 'actions',
+        header: '',
+        align: 'right',
+        render: (row) => (
+          <DataTableActions>
+            <DataTableActionButton
+              icon={Edit}
+              label={`Editar cliente ${row.nombre}`}
+              variant="primary"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/clientes/${row.id}/editar`);
+              }}
+            />
+          </DataTableActions>
+        ),
+      },
+    ],
+    [navigate]
+  );
+
+  return (
+    <DataTable
+      columns={columns}
+      data={clientes || []}
+      keyField="id"
+      isLoading={isLoading}
+      onRowClick={(row) => navigate(`/clientes/${row.id}`)}
+      pagination={showPagination ? pagination : null}
+      onPageChange={onPageChange}
+      skeletonRows={10}
+      emptyState={{
+        icon: UserCircle,
+        title: 'No hay clientes registrados',
+        description: 'Comienza agregando tu primer cliente o atiende un cliente walk-in',
+        actionLabel: 'Agregar Cliente',
+        onAction: () => navigate('/clientes/nuevo'),
+      }}
+    />
   );
 }
 

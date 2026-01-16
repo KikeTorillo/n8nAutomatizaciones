@@ -13,7 +13,7 @@ import { Plus, Pencil, Trash2, Tag, Users } from 'lucide-react';
 import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
-import EtiquetaFormModal from '@/components/clientes/EtiquetaFormModal';
+import EtiquetaFormDrawer from '@/components/clientes/EtiquetaFormDrawer';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import EmptyState from '@/components/ui/EmptyState';
 import SkeletonTable from '@/components/ui/SkeletonTable';
@@ -181,7 +181,7 @@ export default function EtiquetasPage() {
       )}
 
       {/* Modal de formulario */}
-      <EtiquetaFormModal
+      <EtiquetaFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
         etiqueta={getModalData('form')}

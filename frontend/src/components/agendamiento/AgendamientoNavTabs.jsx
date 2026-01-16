@@ -1,4 +1,4 @@
-import { Calendar, Bell } from 'lucide-react';
+import { Calendar, Bell, Briefcase } from 'lucide-react';
 import GenericNavTabs from '@/components/ui/GenericNavTabs';
 
 /**
@@ -7,6 +7,7 @@ import GenericNavTabs from '@/components/ui/GenericNavTabs';
  */
 const NAV_ITEMS = [
   { id: 'citas', label: 'Citas', icon: Calendar, path: '/citas' },
+  { id: 'servicios', label: 'Servicios', icon: Briefcase, path: '/servicios' },
   { id: 'recordatorios', label: 'Recordatorios', icon: Bell, path: '/recordatorios' },
 ];
 

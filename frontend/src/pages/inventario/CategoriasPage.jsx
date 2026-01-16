@@ -13,7 +13,7 @@ import {
   useArbolCategorias,
   useEliminarCategoria,
 } from '@/hooks/useCategorias';
-import CategoriaFormModal from '@/components/inventario/CategoriaFormModal';
+import CategoriaFormDrawer from '@/components/inventario/CategoriaFormDrawer';
 
 /**
  * Página principal de Gestión de Categorías
@@ -218,7 +218,7 @@ function CategoriasPage() {
         </div>
 
       {/* Modal de Formulario */}
-      <CategoriaFormModal
+      <CategoriaFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
         categoria={getModalData('form')?.categoria}

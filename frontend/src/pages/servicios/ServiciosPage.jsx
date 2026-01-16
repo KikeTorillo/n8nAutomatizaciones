@@ -7,7 +7,7 @@ import Modal from '@/components/ui/Modal';
 import { StatCardGrid } from '@/components/ui/StatCardGrid';
 import { ViewTabs } from '@/components/ui/ViewTabs';
 import ServiciosList from '@/components/servicios/ServiciosList';
-import ServicioFormModal from '@/components/servicios/ServicioFormModal';
+import ServicioFormDrawer from '@/components/servicios/ServicioFormDrawer';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
 import ServiciosFilters from '@/components/servicios/ServiciosFilters';
 import ServiciosSinProfesionalesAlert from '@/components/servicios/ServiciosSinProfesionalesAlert';
@@ -274,7 +274,7 @@ function ServiciosPage() {
       </div>
 
       {/* Modal de Crear/Editar Servicio */}
-      <ServicioFormModal
+      <ServicioFormDrawer
         key={`${getModalProps('formulario').mode}-${getModalData('formulario')?.id || 'new'}`}
         isOpen={isOpen('formulario')}
         onClose={() => closeModal('formulario')}

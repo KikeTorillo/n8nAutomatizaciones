@@ -24,7 +24,7 @@ import Input from '@/components/ui/Input';
 import Select from '@/components/ui/Select';
 import Modal from '@/components/ui/Modal';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import SucursalFormModal from '@/components/sucursales/SucursalFormModal';
+import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
 import { useSucursales, useEliminarSucursal } from '@/hooks/useSucursales';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
@@ -370,7 +370,7 @@ function SucursalesPage() {
       </div>
 
       {/* Modal de Crear/Editar Sucursal */}
-      <SucursalFormModal
+      <SucursalFormDrawer
         isOpen={isOpen('form')}
         onClose={() => closeModal('form')}
         mode={getModalProps('form').mode || 'create'}

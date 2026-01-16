@@ -211,21 +211,46 @@ await RLSContextManager.withBypass(async (db) => { ... });
 - **Colores**: Solo `primary-*` (nunca blue, indigo, purple) - primario: `#753572`
 - **Formularios complejos**: React Hook Form + Zod para validación
 
-### Componentes UI
+### Componentes UI (Atomic Design)
+
+Los componentes UI están organizados siguiendo Atomic Design en `components/ui/`:
+
+**Atoms** (`ui/atoms/`) - Elementos básicos:
+| Componente | Uso |
+|------------|-----|
+| `Button`, `Input`, `Select`, `Textarea` | Controles de formulario |
+| `Checkbox`, `MultiSelect` | Selección múltiple |
+| `Badge`, `Alert`, `ProgressBar` | Feedback visual |
+| `IconPicker` | Selector de iconos |
+
+**Molecules** (`ui/molecules/`) - Combinaciones de átomos:
+| Componente | Uso |
+|------------|-----|
+| `SearchInput` | Búsqueda con debounce |
+| `Pagination` | Paginación server-side |
+| `StatCard` | Card de métrica con icono, label, valor |
+| `EmptyState` | Estado vacío genérico |
+| `ViewTabs` | Tabs para cambiar vistas (Lista/Calendario) |
+| `SkeletonTable` | Skeleton loading para tablas |
+| `Breadcrumb`, `NavDropdown` | Navegación |
+| `Toast`, `ThemeToggle` | Feedback y UI |
+
+**Organisms** (`ui/organisms/`) - Componentes complejos:
 | Componente | Uso |
 |------------|-----|
 | `Drawer` | Formularios móviles (bottom sheet) - iOS Safari compatible |
 | `Modal` | Confirmaciones y visualización |
 | `ConfirmDialog` | Acciones destructivas |
-| `Tabs` | Navegación en vistas de detalle (ver Profesionales) |
-| `StatCard` | Card de métrica con icono, label, valor, color |
-| `StatCardGrid` | Grid responsivo de StatCards (2 cols mobile, 4 desktop) |
-| `ViewTabs` | Tabs para cambiar vistas (Lista/Calendario/etc.) |
-| `EmptyState` | Estado vacío genérico con icono, título, descripción, acción |
-| `SkeletonTable` | Skeleton loading para tablas |
-| `SkeletonCard` | Skeleton loading para cards |
-| `Pagination` | Paginación server-side con números de página |
-| `ExpandableCrudSection` | Sección expandible CRUD reutilizable (Educación, Experiencia, Habilidades, Cuentas) |
+| `DataTable` | Tabla de datos con acciones |
+| `FilterPanel` | Panel de filtros avanzados |
+| `StatCardGrid` | Grid responsivo de StatCards |
+| `ExpandableCrudSection` | Sección expandible CRUD reutilizable |
+
+**Templates** (`ui/templates/`) - Layouts de página:
+| Componente | Uso |
+|------------|-----|
+| `BasePageLayout` | Layout base para páginas |
+| `ModuleGuard` | Protección de acceso a módulos |
 
 ### Hooks Reutilizables (Nuevos Ene 2026)
 | Hook | Uso |
@@ -419,11 +444,26 @@ backend/app/
 └── core/           # ModuleRegistry, RouteLoader (auto-discovery)
 
 frontend/src/
-├── components/     # 188 componentes (28 categorías)
+├── components/
+│   └── ui/         # Atomic Design (35 componentes)
+│       ├── atoms/      # Button, Input, Select, etc. (10)
+│       ├── molecules/  # Pagination, StatCard, etc. (12)
+│       ├── organisms/  # Modal, DataTable, etc. (11)
+│       └── templates/  # BasePageLayout, ModuleGuard (2)
 ├── pages/          # 128 páginas (31 categorías)
-├── hooks/          # 69 hooks especializados
-├── store/          # 4 stores Zustand (auth, theme, sucursal, onboarding)
-└── services/api/   # endpoints.js centralizado (400+ métodos)
+├── hooks/          # 92 hooks organizados por dominio
+│   ├── inventario/   # 14 hooks
+│   ├── almacen/      # 7 hooks
+│   ├── pos/          # 9 hooks
+│   ├── agendamiento/ # 6 hooks
+│   ├── personas/     # 24 hooks
+│   ├── sistema/      # 13 hooks
+│   ├── utils/        # 11 hooks
+│   └── otros/        # 8 hooks
+├── store/          # 4 stores Zustand
+└── services/api/
+    ├── endpoints.js  # Re-exports centralizados
+    └── modules/      # 58 APIs modulares
 
 sql/
 ├── 35 directorios  # 199 archivos SQL
@@ -433,28 +473,31 @@ sql/
 
 ---
 
-## Frontend - Hooks Principales (71 total)
+## Frontend - Hooks por Dominio (92 total)
 
-### Inventario (14)
+### inventario/ (14)
 `useInventario`, `useProductos`, `useNumerosSerie`, `useVariantes`, `useAtributos`, `useCategorias`, `useProveedores`, `useOrdenesCompra`, `useValoracion`, `useUbicacionesAlmacen`, `useConteos`, `useAjustesMasivos`, `useLandedCosts`, `useInventoryAtDate`
 
-### Operaciones Almacén (8)
-`useOperacionesAlmacen`, `useBatchPicking`, `usePaquetes`, `useConsigna`, `useDropship`, `useReorden`, `useConfiguracionAlmacen`, `useRutasOperacion`
+### almacen/ (7)
+`useOperacionesAlmacen`, `useBatchPicking`, `usePaquetes`, `useConsigna`, `useDropship`, `useReorden`, `useConfiguracionAlmacen`
 
-### POS & Ventas (5)
-`usePOS`, `useVentas`, `useCupones`, `usePromociones`, `useBarcodeScanner`
+### pos/ (9)
+`usePOS`, `usePOSCart`, `useVentas`, `useCupones`, `usePromociones`, `useBarcodeScanner`, `usePOSBroadcast`, `useCombosModificadores`, `useLealtad`
 
-### Gestión Citas (5)
-`useCitas`, `useHorarios`, `useBloqueos`, `useTiposBloqueo`, `useRecordatorios`
+### agendamiento/ (6)
+`useCitas`, `useHorarios`, `useServicios`, `useBloqueos`, `useTiposBloqueo`, `useRecordatorios`
 
-### Gestión Personas (16)
-`useClientes`, `useProfesionales`, `useUsuarios`, `useOrganigrama`, `usePuestos`, `useDepartamentos`, `useVacaciones`, `useOnboardingEmpleados`, `useDocumentosEmpleado`, `useEducacionFormal`, `useExperienciaLaboral`, `useHabilidades`, `useCuentasBancarias`, `useCategoriasPago`, `useMotivosSalida`, `useUbicacionesTrabajo`
+### personas/ (24)
+`useClientes`, `useProfesionales`, `useUsuarios`, `useOrganigrama`, `usePuestos`, `useDepartamentos`, `useVacaciones`, `useIncapacidades`, `useAusencias`, `useOnboardingEmpleados`, `useDocumentosEmpleado`, `useEducacionFormal`, `useExperienciaLaboral`, `useHabilidades`, `useCuentasBancarias`, `useCategoriasPago`, `useMotivosSalida`, `useUbicacionesTrabajo`, `useCategoriasProfesional`, `useEtiquetasClientes`, `useClienteActividades`, `useClienteDocumentos`, `useOportunidades`, `useClienteCredito`
 
-### Sistema (7)
-`useModulos`, `useAccesoModulo`, `usePermisos`, `useNotificaciones`, `useCustomFields`, `useWorkflows`, `useSucursales`
+### sistema/ (13)
+`useAuth`, `useModulos`, `useAccesoModulo`, `useNotificaciones`, `useAppNotifications`, `useCustomFields`, `useSucursales`, `useTheme`, `useWorkflows`, `useWorkflowDesigner`, `useWorkflowValidation`, `useSuperAdmin`, `useSuperAdminMarketplace`
 
-### Otros (16)
-`useAuth`, `useTheme`, `useToast`, `useStorage`, `useCurrency`, `useEstadisticas`, `useEventosDigitales`, `useMarketplace`, `useWebsite`, `useComisiones`, `useContabilidad`, `useSuperAdmin`, `useSuperAdminMarketplace`, `useChatbots`, `useAppNotifications`, `useUbicaciones`
+### utils/ (11)
+`useToast`, `useDebounce`, `useModalManager`, `useCurrency`, `useStorage`, `useFilters`, `useSavedFilters`, `useExportCSV`, `useRecordNavigation`, `useCrudHandlers`, `useConfigCrud`
+
+### otros/ (8)
+`useEstadisticas`, `useUbicaciones`, `useContabilidad`, `useWebsite`, `useEventosDigitales`, `useChatbots`, `useMarketplace`, `useComisiones`
 
 ---
 

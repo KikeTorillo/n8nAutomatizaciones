@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import SucursalFormModal from '@/components/sucursales/SucursalFormModal';
+import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
 import SucursalUsuariosModal from '@/components/sucursales/SucursalUsuariosModal';
 import SucursalProfesionalesModal from '@/components/sucursales/SucursalProfesionalesModal';
 import {
@@ -541,7 +541,7 @@ function SucursalDetailPage() {
       </div>
 
       {/* Modal de Editar Sucursal */}
-      <SucursalFormModal
+      <SucursalFormDrawer
         isOpen={isOpen('edit')}
         onClose={() => closeModal('edit')}
         mode="edit"

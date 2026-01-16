@@ -12,7 +12,7 @@ import { useProfesionales } from '@/hooks/useProfesionales';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
 import BloqueosCalendar from '@/components/bloqueos/BloqueosCalendar';
 import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';
-import BloqueoFormModal from '@/components/bloqueos/BloqueoFormModal';
+import BloqueoFormDrawer from '@/components/bloqueos/BloqueoFormDrawer';
 import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
 import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
@@ -289,7 +289,7 @@ function OtrosBloqueoTab() {
       )}
 
       {/* Modal de formulario */}
-      <BloqueoFormModal
+      <BloqueoFormDrawer
         isOpen={isOpen('form')}
         onClose={handleCerrarFormulario}
         bloqueo={getModalData('form')?.bloqueo}

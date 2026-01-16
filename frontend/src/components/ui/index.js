@@ -1,59 +1,57 @@
 /**
  * Exportaciones centralizadas de componentes UI
  *
- * Guía de uso:
- * - Componentes de entrada: Button, Input, Select, Textarea, Checkbox, MultiSelect
- * - Componentes de feedback: Modal, Drawer, ConfirmDialog, Alert, Toast, Badge
- * - Componentes de datos: StatCard, StatCardGrid, ProgressBar, Pagination
- * - Componentes de estado: EmptyState, SkeletonTable, SkeletonCard, SkeletonList, LoadingSpinner
- * - Componentes de navegación: Breadcrumb, ViewTabs, RecordNavigation, NavDropdown
+ * Organización Atomic Design:
+ * - atoms/     - Elementos básicos (Button, Input, Select, etc.)
+ * - molecules/ - Combinaciones de átomos (SearchInput, Pagination, etc.)
+ * - organisms/ - Componentes complejos (Modal, DataTable, etc.)
+ * - templates/ - Layouts de página (BasePageLayout, ModuleGuard)
+ *
+ * Los imports existentes siguen funcionando:
+ *   import Button from '@/components/ui/Button'
+ *   import { Button, Input } from '@/components/ui'
  */
 
-// Entrada
-export { default as Button } from './Button';
-export { default as Input } from './Input';
-export { default as Select } from './Select';
-export { default as Textarea } from './Textarea';
-export { default as Checkbox } from './Checkbox';
-export { default as MultiSelect } from './MultiSelect';
-export { default as IconPicker } from './IconPicker';
-export { default as SearchInput } from './SearchInput';
+// ========== ATOMS ==========
+export { default as Button } from './atoms/Button';
+export { default as Input } from './atoms/Input';
+export { default as Select } from './atoms/Select';
+export { default as Textarea } from './atoms/Textarea';
+export { default as Checkbox } from './atoms/Checkbox';
+export { default as MultiSelect } from './atoms/MultiSelect';
+export { default as IconPicker } from './atoms/IconPicker';
+export { default as Alert } from './atoms/Alert';
+export { default as Badge } from './atoms/Badge';
+export { ProgressBar, LimitProgressBar } from './atoms/ProgressBar';
 
-// Feedback
-export { default as Modal } from './Modal';
-export { default as Drawer } from './Drawer';
-export { default as ConfirmDialog } from './ConfirmDialog';
-export { default as Alert } from './Alert';
-export { default as Toast } from './Toast';
-export { default as Badge } from './Badge';
+// ========== MOLECULES ==========
+export { default as SearchInput } from './molecules/SearchInput';
+export { Pagination } from './molecules/Pagination';
+export { default as StatCard } from './molecules/StatCard';
+export { EmptyState } from './molecules/EmptyState';
+export { ViewTabs } from './molecules/ViewTabs';
+export { default as Breadcrumb } from './molecules/Breadcrumb';
+export { default as NavDropdown } from './molecules/NavDropdown';
+export { default as RecordNavigation } from './molecules/RecordNavigation';
+export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonTable';
+export { default as Toast } from './molecules/Toast';
+export { default as BackButton } from './molecules/BackButton';
+export { default as ThemeToggle } from './molecules/ThemeToggle';
 
-// Datos y métricas
-export { StatCard } from './StatCard';
-export { default as StatCardGrid } from './StatCardGrid';
-export { ProgressBar, LimitProgressBar } from './ProgressBar';
-export { default as Pagination } from './Pagination';
-export { DataTable, DataTableActions, DataTableActionButton } from './DataTable';
-export { FilterPanel, FilterChips } from './FilterPanel';
+// ========== ORGANISMS ==========
+export { default as Modal } from './organisms/Modal';
+export { default as Drawer } from './organisms/Drawer';
+export { default as ConfirmDialog } from './organisms/ConfirmDialog';
+export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
+export { FilterPanel, FilterChips } from './organisms/FilterPanel';
+export { default as StatCardGrid } from './organisms/StatCardGrid';
+export { default as ExpandableCrudSection } from './organisms/ExpandableCrudSection';
+export { default as GenericNavTabs } from './organisms/GenericNavTabs';
+export { default as SmartButtons } from './organisms/SmartButtons';
+export { TreeView, useTreeExpansion } from './organisms/TreeNode';
+export { default as MobileNavSelector } from './organisms/MobileNavSelector';
 
-// Estados de carga y vacíos
-export { default as EmptyState } from './EmptyState';
-export { SkeletonTable, SkeletonCard, SkeletonList } from './SkeletonTable';
-export { default as LoadingSpinner } from '../common/LoadingSpinner';
-
-// Navegación
-export { default as Breadcrumb } from './Breadcrumb';
-export { default as ViewTabs } from './ViewTabs';
-export { default as RecordNavigation } from './RecordNavigation';
-export { default as NavDropdown } from './NavDropdown';
-export { default as BackButton } from './BackButton';
-
-// Utilidades
-export { default as SmartButtons } from './SmartButtons';
-export { default as ModuleGuard } from './ModuleGuard';
-export { default as ThemeToggle } from './ThemeToggle';
-export { default as ExpandableCrudSection } from './ExpandableCrudSection';
-
-// Filters
+// Filters (organisms)
 export {
   AdvancedFilterPanel,
   FilterChip,
@@ -62,4 +60,11 @@ export {
   FilterSelect,
   SavedSearchList,
   SavedSearchModal,
-} from './filters';
+} from './organisms/filters';
+
+// ========== TEMPLATES ==========
+export { default as BasePageLayout } from './templates/BasePageLayout';
+export { default as ModuleGuard } from './templates/ModuleGuard';
+
+// ========== EXTERNOS ==========
+export { default as LoadingSpinner } from '../common/LoadingSpinner';
