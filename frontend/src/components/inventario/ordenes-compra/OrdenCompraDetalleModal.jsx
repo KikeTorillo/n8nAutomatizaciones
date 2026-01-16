@@ -12,10 +12,12 @@ import {
   Check,
   X
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import RecordNavigation from '@/components/ui/RecordNavigation';
+import {
+  Button,
+  ConfirmDialog,
+  Modal,
+  RecordNavigation
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useOrdenCompra,

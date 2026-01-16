@@ -15,10 +15,12 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-import BackButton from '@/components/ui/BackButton';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
+import {
+  BackButton,
+  Button,
+  Input,
+  Modal
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { monedasApi } from '@/services/api/endpoints';
 import { useCurrency } from '@/hooks/useCurrency';

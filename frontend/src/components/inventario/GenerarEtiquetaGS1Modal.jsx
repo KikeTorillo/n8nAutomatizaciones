@@ -20,8 +20,7 @@ import {
   Copy,
 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import {
   generateGS1Code,
   validateGS1Params,

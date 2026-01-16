@@ -17,8 +17,7 @@ import {
 } from 'lucide-react';
 import JsBarcode from 'jsbarcode';
 import QRCode from 'qrcode';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import GenerarEtiquetaGS1Modal from './GenerarEtiquetaGS1Modal';
 
 const FORMATOS_ETIQUETA = {

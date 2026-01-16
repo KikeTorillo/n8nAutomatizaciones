@@ -12,13 +12,15 @@ import {
   FileSpreadsheet,
   AlertCircle,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Textarea from '@/components/ui/Textarea';
+import {
+  BackButton,
+  Button,
+  ConfirmDialog,
+  Input,
+  Modal,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useAsientosContables,

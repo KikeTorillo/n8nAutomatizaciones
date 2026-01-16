@@ -1,5 +1,5 @@
 import { cn } from '@/lib/utils';
-import BackButton from '@/components/ui/BackButton';
+import BackButton from '../molecules/BackButton';
 
 /**
  * BasePageLayout - Layout base unificado para módulos

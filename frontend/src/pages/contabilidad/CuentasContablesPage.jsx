@@ -9,12 +9,14 @@ import {
   Filter,
   BookOpen,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  BackButton,
+  Button,
+  Checkbox,
+  ConfirmDialog,
+  Input,
+  Select
+} from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useArbolCuentas,

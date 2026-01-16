@@ -1,5 +1,5 @@
 import { Controller } from 'react-hook-form';
-import Input from '@/components/ui/Input';
+import { Input } from '@/components/ui';
 import { DIAS_SEMANA } from './schemas';
 
 /**

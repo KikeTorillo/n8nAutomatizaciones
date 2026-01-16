@@ -8,11 +8,13 @@ import {
   Users, Calendar, Check, X, Eye, Loader2, AlertCircle,
   RefreshCw, User, Clock
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Badge from '@/components/ui/Badge';
-import Textarea from '@/components/ui/Textarea';
-import EmptyState from '@/components/ui/EmptyState';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Modal,
+  Textarea
+} from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useSolicitudesPendientes,

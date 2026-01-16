@@ -7,7 +7,7 @@
  * porque las habilidades se muestran como tags en flex-wrap
  */
 import { Wrench, Edit2, Trash2, CheckCircle, Shield } from 'lucide-react';
-import ExpandableCrudSection from '@/components/ui/ExpandableCrudSection';
+import { ExpandableCrudSection } from '@/components/ui';
 import HabilidadDrawer from './drawers/HabilidadDrawer';
 import { useToast } from '@/hooks/useToast';
 import {

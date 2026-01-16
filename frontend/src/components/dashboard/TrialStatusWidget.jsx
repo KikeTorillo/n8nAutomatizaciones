@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { subscripcionesApi } from '@/services/api/endpoints';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { Clock, Sparkles, CreditCard, AlertCircle } from 'lucide-react';
 
 /**

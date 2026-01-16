@@ -10,10 +10,14 @@ import {
   ChevronRight,
   Star,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import { Pagination } from '@/components/ui/Pagination';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
+import {
+  Badge,
+  Button,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  Pagination
+} from '@/components/ui';
 import ProfesionalStatsCard from './ProfesionalStatsCard';
 import { ESTADOS_LABORALES } from '@/hooks/useProfesionales';
 

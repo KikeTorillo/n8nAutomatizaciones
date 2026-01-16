@@ -3,9 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useCrearPerfil } from '@/hooks/useMarketplace';
 import { useUbicacionSelector, usePaisDefault } from '@/hooks/useUbicaciones';
 import { useToast } from '@/hooks/useToast';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Button, Input, Select } from '@/components/ui';
 import { X, ChevronRight, ChevronLeft, Check, Store, Loader2 } from 'lucide-react';
 
 /**

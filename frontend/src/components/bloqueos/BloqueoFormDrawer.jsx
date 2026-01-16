@@ -3,11 +3,13 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect, useMemo } from 'react';
 import { AlertCircle, Calendar, Clock, User, Building, Info } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 import FormField from '@/components/forms/FormField';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useCrearBloqueo, useActualizarBloqueo } from '@/hooks/useBloqueos';
 import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';

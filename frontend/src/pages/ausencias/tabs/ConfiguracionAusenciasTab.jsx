@@ -5,9 +5,7 @@
 import { useState } from 'react';
 import { Settings, Layers, Sliders, RefreshCw, Info } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/ui/Alert';
-import EmptyState from '@/components/ui/EmptyState';
+import { Alert, Button, EmptyState } from '@/components/ui';
 import {
   usePoliticaVacaciones,
   useActualizarPoliticaVacaciones,

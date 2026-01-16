@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 /**
  * Header del calendario con controles de navegación

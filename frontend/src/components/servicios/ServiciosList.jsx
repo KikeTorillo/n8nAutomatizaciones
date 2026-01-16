@@ -1,9 +1,11 @@
 import { Briefcase, Edit, Trash2, AlertTriangle, CheckCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import { Pagination } from '@/components/ui/Pagination';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Pagination,
+  SkeletonTable
+} from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
 import { formatDuration, parseProfessionalsCount, parsePrice } from '@/utils/formatters';
 

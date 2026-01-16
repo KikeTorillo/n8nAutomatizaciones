@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Package, Check, AlertTriangle, Hash, Plus, X, ChevronDown, ChevronUp, ScanLine, Info } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useOrdenCompra, useRecibirMercancia } from '@/hooks/useOrdenesCompra';
 import { useVerificarExistencia } from '@/hooks/useNumerosSerie';

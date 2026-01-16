@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, ArrowLeft } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ProfesionalHeader from '@/components/profesionales/ProfesionalHeader';
 import ProfesionalTabs from '@/components/profesionales/ProfesionalTabs';

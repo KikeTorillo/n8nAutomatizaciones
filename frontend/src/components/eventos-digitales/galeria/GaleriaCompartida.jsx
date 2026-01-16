@@ -34,8 +34,7 @@ import {
   Plus,
   ImagePlus
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useGaleria,

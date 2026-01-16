@@ -10,10 +10,12 @@ import {
   Calendar,
   FileText,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
+import {
+  BackButton,
+  Button,
+  Input,
+  Select
+} from '@/components/ui';
 import {
   usePeriodosContables,
   useCuentasAfectables,

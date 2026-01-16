@@ -13,8 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+import { Badge, Button } from '@/components/ui';
 
 /**
  * Estados del paquete con colores y descripciones

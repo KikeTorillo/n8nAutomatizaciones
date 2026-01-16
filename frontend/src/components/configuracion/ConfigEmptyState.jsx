@@ -1,5 +1,5 @@
 import { Plus, Search } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 /**
  * Estado vacío genérico para páginas de configuración

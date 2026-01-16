@@ -7,10 +7,8 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Drawer from '../ui/Drawer';
+import { Button, Checkbox, Drawer } from '@/components/ui';
 import FormField from '../forms/FormField';
-import Checkbox from '../ui/Checkbox';
-import Button from '../ui/Button';
 import { useToast } from '@/hooks/useToast';
 import useSuperAdmin from '@/hooks/useSuperAdmin';
 

@@ -41,13 +41,17 @@ import {
 import { useProveedores } from '@/hooks/useProveedores';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Badge from '@/components/ui/Badge';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  Modal,
+  StatCardGrid
+} from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import AcuerdoFormDrawer from '@/components/inventario/consigna/AcuerdoFormDrawer';
 import AcuerdoDetalleModal from '@/components/inventario/consigna/AcuerdoDetalleModal';

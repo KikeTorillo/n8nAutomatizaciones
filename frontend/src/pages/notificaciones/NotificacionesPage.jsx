@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { Bell, Settings } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import BackButton from '@/components/ui/BackButton';
-import Button from '@/components/ui/Button';
+import { BackButton, Button } from '@/components/ui';
 import { NotificacionesLista } from '@/components/notificaciones';
 
 /**

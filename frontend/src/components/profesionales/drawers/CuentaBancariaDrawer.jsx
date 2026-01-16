@@ -8,10 +8,12 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 import { Loader2, CreditCard } from 'lucide-react';
 import { useToast } from '@/hooks/useToast';
 import {

@@ -1,6 +1,5 @@
 import { DollarSign, Globe, ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Input, Select } from '@/components/ui';
 
 /**
  * Tab Precios del formulario de producto

@@ -29,8 +29,7 @@ import { useProveedores } from '@/hooks/useProveedores';
 import { useCategorias } from '@/hooks/useCategorias';
 import { useProductos } from '@/hooks/useProductos';
 import { Link } from 'react-router-dom';
-import Drawer from '@/components/ui/Drawer';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog, Drawer } from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 
 const DIAS_SEMANA = [

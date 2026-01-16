@@ -23,8 +23,7 @@ import {
   Trash2,
   ChevronDown,
 } from 'lucide-react';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
+import { Input, Select } from '@/components/ui';
 
 // Operadores disponibles según tipo de campo
 const OPERADORES = {

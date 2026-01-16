@@ -3,8 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileText, Sparkles, Settings } from 'lucide-react';
 
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import useSucursalStore from '@/store/sucursalStore';
 import { useCrearPromocion, useActualizarPromocion } from '@/hooks/usePromociones';

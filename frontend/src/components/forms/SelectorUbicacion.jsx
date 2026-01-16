@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
-import Select from '@/components/ui/Select';
+import { Select } from '@/components/ui';
 import { useUbicacionSelector } from '@/hooks/useUbicaciones';
 
 /**

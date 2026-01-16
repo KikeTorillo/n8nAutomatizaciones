@@ -20,7 +20,7 @@ import {
   Minus,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui';
 import {
   DndContext,
   closestCenter,

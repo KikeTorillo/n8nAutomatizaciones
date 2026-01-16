@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, AlertCircle } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { serviciosApi } from '@/services/api/endpoints';
 import { useAsignarProfesional, useDesasignarProfesional } from '@/hooks/useServicios';
 import { useToast } from '@/hooks/useToast';

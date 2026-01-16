@@ -3,8 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormField from '@/components/forms/FormField';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Button, Input } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { AlertCircle, CheckCircle2, ExternalLink } from 'lucide-react';
 

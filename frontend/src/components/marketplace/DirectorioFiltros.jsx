@@ -1,6 +1,5 @@
 import { X, Loader2 } from 'lucide-react';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import { Button, Select } from '@/components/ui';
 import EstrellaRating from './EstrellaRating';
 import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
 

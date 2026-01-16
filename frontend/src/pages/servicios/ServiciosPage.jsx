@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
 import { Plus, Search, Filter, AlertTriangle, Briefcase, CheckCircle, DollarSign, List, XCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { ViewTabs } from '@/components/ui/ViewTabs';
+import {
+  BackButton,
+  Button,
+  Input,
+  Modal,
+  StatCardGrid,
+  ViewTabs
+} from '@/components/ui';
 import ServiciosList from '@/components/servicios/ServiciosList';
 import ServicioFormDrawer from '@/components/servicios/ServicioFormDrawer';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';

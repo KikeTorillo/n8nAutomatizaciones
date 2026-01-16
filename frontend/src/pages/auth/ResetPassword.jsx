@@ -7,7 +7,7 @@ import { authApi } from '@/services/api/endpoints';
 import { resetPasswordSchema } from '@/lib/validations';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
 import { useToast } from '@/hooks/useToast';
 import { Eye, EyeOff, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';

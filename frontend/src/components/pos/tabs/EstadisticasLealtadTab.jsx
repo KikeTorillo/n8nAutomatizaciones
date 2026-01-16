@@ -5,7 +5,7 @@ import {
   TrendingUp,
   Loader2
 } from 'lucide-react';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import { StatCardGrid } from '@/components/ui';
 
 /**
  * Tab de Estadísticas del Programa de Lealtad

@@ -8,7 +8,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { paquetesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * QUERY KEYS para paquetes
@@ -111,6 +111,7 @@ export function useEtiquetaPaquete(id) {
  */
 export function useCrearPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ operacionId, data }) => paquetesApi.crear(operacionId, data),
@@ -131,6 +132,7 @@ export function useCrearPaquete() {
  */
 export function useActualizarPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, data }) => paquetesApi.actualizar(id, data),
@@ -153,6 +155,7 @@ export function useActualizarPaquete() {
  */
 export function useAgregarItemPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ paqueteId, data }) => paquetesApi.agregarItem(paqueteId, data),
@@ -176,6 +179,7 @@ export function useAgregarItemPaquete() {
  */
 export function useRemoverItemPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ paqueteId, itemId }) => paquetesApi.removerItem(paqueteId, itemId),
@@ -199,6 +203,7 @@ export function useRemoverItemPaquete() {
  */
 export function useCerrarPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => paquetesApi.cerrar(id),
@@ -218,6 +223,7 @@ export function useCerrarPaquete() {
  */
 export function useCancelarPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, motivo }) => paquetesApi.cancelar(id, { motivo }),
@@ -241,6 +247,7 @@ export function useCancelarPaquete() {
  */
 export function useEtiquetarPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, data }) => paquetesApi.etiquetar(id, data),
@@ -261,6 +268,7 @@ export function useEtiquetarPaquete() {
  */
 export function useEnviarPaquete() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => paquetesApi.enviar(id),

@@ -3,8 +3,7 @@ import PropTypes from 'prop-types';
 import { Calendar, Clock, User, Package } from 'lucide-react';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { obtenerColorEstado, obtenerLabelEstado } from '@/utils/citaValidators';
-import { DataTable, DataTableActions } from '@/components/ui/DataTable';
-import Button from '@/components/ui/Button';
+import { Button, DataTable, DataTableActions } from '@/components/ui';
 
 /**
  * Componente para listar citas usando DataTable genérico

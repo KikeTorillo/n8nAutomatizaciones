@@ -11,10 +11,12 @@ import {
   Calendar,
   Search
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
+import {
+  Button,
+  Drawer,
+  Select,
+  Textarea
+} from '@/components/ui';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useToast } from '@/hooks/useToast';
 import { useCrearOrdenCompra, useActualizarOrdenCompra, useAgregarItemsOrdenCompra } from '@/hooks/useOrdenesCompra';

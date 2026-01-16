@@ -11,9 +11,7 @@ import {
   GraduationCap,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog, Input } from '@/components/ui';
 import {
   ConfigPageHeader,
   ConfigSearchBar,

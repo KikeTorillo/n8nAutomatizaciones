@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useCrearUbicacion,

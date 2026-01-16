@@ -10,9 +10,7 @@ import {
   Wallet,
   AlertCircle
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Input, Modal } from '@/components/ui';
 import TecladoBilletes from './TecladoBilletes';
 
 /**

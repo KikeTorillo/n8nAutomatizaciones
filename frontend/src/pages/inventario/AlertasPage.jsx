@@ -11,12 +11,14 @@ import {
   Package,
   TrendingUp,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import EmptyState from '@/components/ui/EmptyState';
-import Badge from '@/components/ui/Badge';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
-import { Pagination } from '@/components/ui/Pagination';
-import { FilterPanel } from '@/components/ui/FilterPanel';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  FilterPanel,
+  Pagination,
+  SkeletonTable
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

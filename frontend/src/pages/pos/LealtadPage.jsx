@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Award, Settings, BarChart3, Gift } from 'lucide-react';
 
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui';
 import NivelLealtadDrawer from '@/components/pos/NivelLealtadDrawer';
 import POSPageHeader from '@/components/pos/POSPageHeader';
 import ConfiguracionLealtadTab from '@/components/pos/tabs/ConfiguracionLealtadTab';

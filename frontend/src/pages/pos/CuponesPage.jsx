@@ -16,10 +16,12 @@ import {
 } from 'lucide-react';
 
 import POSPageLayout from '@/components/pos/POSPageLayout';
-import Button from '@/components/ui/Button';
-import { DataTable } from '@/components/ui/DataTable';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import SearchInput from '@/components/ui/SearchInput';
+import {
+  Button,
+  ConfirmDialog,
+  DataTable,
+  SearchInput
+} from '@/components/ui';
 import CuponFormDrawer from '@/components/pos/CuponFormDrawer';
 import CuponStatsModal from '@/components/pos/CuponStatsModal';
 import { useToast } from '@/hooks/useToast';

@@ -6,8 +6,7 @@
 import { useState } from 'react';
 import { Palmtree, Users, BarChart3, RefreshCw, Clock, CheckCircle, Calendar } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '@/components/ui/Button';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import { Button, StatCardGrid } from '@/components/ui';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
 import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/useVacaciones';
 

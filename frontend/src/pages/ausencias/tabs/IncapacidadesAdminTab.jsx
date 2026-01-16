@@ -7,7 +7,7 @@ import { useState } from 'react';
 import { useModalManager } from '@/hooks/useModalManager';
 import { HeartPulse, List, BarChart3, Plus, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import {
   IncapacidadesList,
   IncapacidadFormModal,

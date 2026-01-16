@@ -1,5 +1,5 @@
 import { Bell, Settings } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import { NotificacionesPreferencias } from '@/components/notificaciones';
 
 /**

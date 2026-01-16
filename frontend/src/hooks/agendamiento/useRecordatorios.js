@@ -20,7 +20,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { recordatoriosApi } from '@/services/api/endpoints';
-import useToast from '../utils/useToast';
+import { useToast } from '../utils/useToast';
 
 // ==================== QUERY KEYS ====================
 

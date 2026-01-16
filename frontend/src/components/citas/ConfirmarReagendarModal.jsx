@@ -1,6 +1,5 @@
 import { Calendar, AlertTriangle, ArrowRight, User, Clock, Package } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 
 /**

@@ -4,12 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery } from '@tanstack/react-query';
 import { Briefcase, ImageIcon, Camera, X, Loader2, Globe, Plus, Trash2, ChevronDown, ChevronUp } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import FormField from '@/components/forms/FormField';
 import { profesionalesApi, monedasApi } from '@/services/api/endpoints';
 import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/useServicios';

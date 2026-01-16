@@ -10,8 +10,7 @@ import {
     ArrowRight,
     File,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useCrearAjusteMasivo, useDescargarPlantillaAjustes, parsearCSVAjustes } from '@/hooks/useAjustesMasivos';
 import { useToast } from '@/hooks/useToast';
 

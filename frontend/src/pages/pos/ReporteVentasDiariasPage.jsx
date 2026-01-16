@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { BarChart3, Calendar, DollarSign, Package, TrendingUp, Download, Receipt } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import {
+  BackButton,
+  Button,
+  Input,
+  StatCardGrid
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useVentasDiarias } from '@/hooks/useVentas';
 import POSNavTabs from '@/components/pos/POSNavTabs';

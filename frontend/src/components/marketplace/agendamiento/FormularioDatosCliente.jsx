@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { User, Mail, Phone } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Input } from '@/components/ui';
 
 /**
  * Componente para ingresar datos del cliente (Paso 3)

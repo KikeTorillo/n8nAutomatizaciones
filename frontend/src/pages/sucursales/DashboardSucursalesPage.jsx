@@ -2,8 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore from '@/store/authStore';
 import { useSucursales, useMetricasSucursales } from '@/hooks/useSucursales';
-import BackButton from '@/components/ui/BackButton';
-import Button from '@/components/ui/Button';
+import { BackButton, Button } from '@/components/ui';
 import {
   Building2,
   TrendingUp,

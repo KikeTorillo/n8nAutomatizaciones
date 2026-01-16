@@ -9,7 +9,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { consignaApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * QUERY KEYS para consigna
@@ -188,6 +188,7 @@ export function usePendienteLiquidar() {
  */
 export function useCrearAcuerdoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (data) => consignaApi.crearAcuerdo(data),
@@ -206,6 +207,7 @@ export function useCrearAcuerdoConsigna() {
  */
 export function useActualizarAcuerdoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, data }) => consignaApi.actualizarAcuerdo(id, data),
@@ -225,6 +227,7 @@ export function useActualizarAcuerdoConsigna() {
  */
 export function useActivarAcuerdoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => consignaApi.activarAcuerdo(id),
@@ -244,6 +247,7 @@ export function useActivarAcuerdoConsigna() {
  */
 export function usePausarAcuerdoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => consignaApi.pausarAcuerdo(id),
@@ -263,6 +267,7 @@ export function usePausarAcuerdoConsigna() {
  */
 export function useTerminarAcuerdoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => consignaApi.terminarAcuerdo(id),
@@ -284,6 +289,7 @@ export function useTerminarAcuerdoConsigna() {
  */
 export function useAgregarProductoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.agregarProducto(acuerdoId, data),
@@ -303,6 +309,7 @@ export function useAgregarProductoConsigna() {
  */
 export function useActualizarProductoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ acuerdoId, productoId, data, varianteId }) =>
@@ -322,6 +329,7 @@ export function useActualizarProductoConsigna() {
  */
 export function useRemoverProductoConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ acuerdoId, productoId, varianteId }) =>
@@ -344,6 +352,7 @@ export function useRemoverProductoConsigna() {
  */
 export function useRecibirMercanciaConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.recibirMercancia(acuerdoId, data),
@@ -364,6 +373,7 @@ export function useRecibirMercanciaConsigna() {
  */
 export function useAjustarStockConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ stockId, data }) => consignaApi.ajustarStock(stockId, data),
@@ -383,6 +393,7 @@ export function useAjustarStockConsigna() {
  */
 export function useDevolverMercanciaConsigna() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ acuerdoId, data }) => consignaApi.devolverMercancia(acuerdoId, data),
@@ -405,6 +416,7 @@ export function useDevolverMercanciaConsigna() {
  */
 export function useGenerarLiquidacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (data) => consignaApi.generarLiquidacion(data),
@@ -424,6 +436,7 @@ export function useGenerarLiquidacion() {
  */
 export function useConfirmarLiquidacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => consignaApi.confirmarLiquidacion(id),
@@ -444,6 +457,7 @@ export function useConfirmarLiquidacion() {
  */
 export function usePagarLiquidacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, data }) => consignaApi.pagarLiquidacion(id, data),
@@ -463,6 +477,7 @@ export function usePagarLiquidacion() {
  */
 export function useCancelarLiquidacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => consignaApi.cancelarLiquidacion(id),

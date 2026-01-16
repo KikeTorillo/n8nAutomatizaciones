@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, TrendingUp, Clock, Users, Calendar, ShoppingBag } from 'lucide-react';
-import { StatCard } from '@/components/ui/StatCard';
-import Select from '@/components/ui/Select';
+import { Select, StatCard } from '@/components/ui';
 import { useDashboardComisiones, useGraficaComisionesPorDia } from '@/hooks/useComisiones';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { formatCurrency } from '@/lib/utils';

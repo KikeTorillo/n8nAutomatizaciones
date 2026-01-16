@@ -10,6 +10,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { configuracionAlmacenApi } from '@/services/api/endpoints';
 import useSucursalStore from '@/store/sucursalStore';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * QUERY KEYS para configuración de almacén
@@ -99,6 +100,7 @@ export function useDescripcionesPasos() {
  */
 export function useActualizarConfiguracion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ sucursalId, data }) => {
@@ -116,10 +118,11 @@ export function useActualizarConfiguracion() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(variables.sucursalId));
+      toast.success('Configuración de almacén actualizada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar configuración');
+      const backendMessage = error.response?.data?.message || 'Error al actualizar configuración';
+      toast.error(backendMessage);
     },
   });
 }
@@ -130,6 +133,7 @@ export function useActualizarConfiguracion() {
  */
 export function useCrearUbicacionesDefault() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (sucursalId) => {
@@ -158,10 +162,11 @@ export function useCrearUbicacionesDefault() {
 
       // También invalidar para asegurar coherencia
       queryClient.invalidateQueries(CONFIGURACION_ALMACEN_KEYS.detail(sucursalId));
+      toast.success('Ubicaciones por defecto creadas');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear ubicaciones por defecto');
+      const backendMessage = error.response?.data?.message || 'Error al crear ubicaciones por defecto';
+      toast.error(backendMessage);
     },
   });
 }
@@ -277,18 +282,3 @@ export const DESCRIPCIONES_PASOS_ENVIO = {
   [PASOS_ENVIO.TRES_PASOS]: 'Incluye etapa de empaque antes del envío',
 };
 
-export default {
-  useConfiguracionesAlmacen,
-  useConfiguracionAlmacen,
-  useMultietapa,
-  useDescripcionesPasos,
-  useActualizarConfiguracion,
-  useCrearUbicacionesDefault,
-  useConfiguracionAlmacenManager,
-  PASOS_RECEPCION,
-  PASOS_ENVIO,
-  LABELS_PASOS_RECEPCION,
-  LABELS_PASOS_ENVIO,
-  DESCRIPCIONES_PASOS_RECEPCION,
-  DESCRIPCIONES_PASOS_ENVIO,
-};

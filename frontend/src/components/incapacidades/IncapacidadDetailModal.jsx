@@ -17,9 +17,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
+import { Badge, Button, Modal } from '@/components/ui';
 import {
   useFinalizarIncapacidad,
   useCancelarIncapacidad,

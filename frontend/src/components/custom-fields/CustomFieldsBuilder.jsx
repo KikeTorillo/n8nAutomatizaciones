@@ -10,13 +10,15 @@ import {
   CUSTOM_FIELD_ANCHOS,
 } from '@/hooks/useCustomFields';
 import { useToast } from '@/hooks/useToast';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
-import Drawer from '@/components/ui/Drawer';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  Checkbox,
+  ConfirmDialog,
+  Drawer,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import {
   Plus,
   Edit2,

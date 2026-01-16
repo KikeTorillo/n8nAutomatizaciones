@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router-dom';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ClienteForm from '@/components/clientes/ClienteForm';
 import { useCliente, useCrearCliente, useActualizarCliente } from '@/hooks/useClientes';

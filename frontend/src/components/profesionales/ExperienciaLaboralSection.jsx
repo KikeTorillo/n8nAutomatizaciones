@@ -5,7 +5,7 @@
  * Reducido de 234 LOC a ~90 LOC (-62%)
  */
 import { Briefcase, Building2, Edit2, Trash2 } from 'lucide-react';
-import ExpandableCrudSection from '@/components/ui/ExpandableCrudSection';
+import { ExpandableCrudSection } from '@/components/ui';
 import ExperienciaDrawer from './drawers/ExperienciaDrawer';
 import {
   useExperienciaLaboral,

@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Calendar, RefreshCw, Clock, Package, TrendingUp, TrendingDown, Minus, AlertCircle, Download, Filter, X } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { Button, EmptyState, Select } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import { useInventoryAtDate, useFechasDisponibles, useGenerarSnapshot, useCompararInventario } from '@/hooks/useInventoryAtDate';

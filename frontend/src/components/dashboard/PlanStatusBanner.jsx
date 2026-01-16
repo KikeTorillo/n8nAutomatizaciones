@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { useModulos } from '@/hooks/useModulos';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import {
   Sparkles,
   Calendar,

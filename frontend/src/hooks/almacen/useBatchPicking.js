@@ -11,6 +11,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { batchPickingApi } from '@/services/api/endpoints';
 import useSucursalStore from '@/store/sucursalStore';
 import { OPERACIONES_ALMACEN_KEYS } from './useOperacionesAlmacen';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * QUERY KEYS para batch picking
@@ -149,6 +150,7 @@ export function useOperacionesDisponiblesParaBatch(sucursalId) {
  */
 export function useCrearBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ sucursalId, operacionIds, nombre }) => {
@@ -162,10 +164,11 @@ export function useCrearBatch() {
     onSuccess: () => {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Batch creado exitosamente');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear batch');
+      const backendMessage = error.response?.data?.message || 'Error al crear batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -175,6 +178,7 @@ export function useCrearBatch() {
  */
 export function useActualizarBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
@@ -184,10 +188,11 @@ export function useActualizarBatch() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(result.id));
+      toast.success('Batch actualizado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar batch');
+      const backendMessage = error.response?.data?.message || 'Error al actualizar batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -197,6 +202,7 @@ export function useActualizarBatch() {
  */
 export function useEliminarBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -206,10 +212,11 @@ export function useEliminarBatch() {
     onSuccess: () => {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Batch eliminado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al eliminar batch');
+      const backendMessage = error.response?.data?.message || 'Error al eliminar batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -219,6 +226,7 @@ export function useEliminarBatch() {
  */
 export function useAgregarOperacionBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ batchId, operacionId }) => {
@@ -231,10 +239,11 @@ export function useAgregarOperacionBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(variables.batchId));
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.listaConsolidada(variables.batchId));
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Operación agregada al batch');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al agregar operación al batch');
+      const backendMessage = error.response?.data?.message || 'Error al agregar operación al batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -244,6 +253,7 @@ export function useAgregarOperacionBatch() {
  */
 export function useQuitarOperacionBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ batchId, operacionId }) => {
@@ -254,10 +264,11 @@ export function useQuitarOperacionBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(variables.batchId));
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.listaConsolidada(variables.batchId));
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Operación quitada del batch');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al quitar operación del batch');
+      const backendMessage = error.response?.data?.message || 'Error al quitar operación del batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -267,6 +278,7 @@ export function useQuitarOperacionBatch() {
  */
 export function useIniciarBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -277,10 +289,11 @@ export function useIniciarBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(id));
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Batch iniciado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al iniciar batch');
+      const backendMessage = error.response?.data?.message || 'Error al iniciar batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -290,6 +303,7 @@ export function useIniciarBatch() {
  */
 export function useProcesarItemBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ batchId, productoId, varianteId, ubicacionId, cantidad }) => {
@@ -305,10 +319,11 @@ export function useProcesarItemBatch() {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.detail(variables.batchId));
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.listaConsolidada(variables.batchId));
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.estadisticas(variables.batchId));
+      toast.success('Item procesado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al procesar item');
+      const backendMessage = error.response?.data?.message || 'Error al procesar item';
+      toast.error(backendMessage);
     },
   });
 }
@@ -318,6 +333,7 @@ export function useProcesarItemBatch() {
  */
 export function useCompletarBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -330,10 +346,11 @@ export function useCompletarBatch() {
       // Invalidar inventario ya que puede haber movimientos de stock
       queryClient.invalidateQueries(['productos']);
       queryClient.invalidateQueries(['movimientos-inventario']);
+      toast.success('Batch completado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al completar batch');
+      const backendMessage = error.response?.data?.message || 'Error al completar batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -343,6 +360,7 @@ export function useCompletarBatch() {
  */
 export function useCancelarBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -352,10 +370,11 @@ export function useCancelarBatch() {
     onSuccess: () => {
       queryClient.invalidateQueries(BATCH_PICKING_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Batch cancelado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al cancelar batch');
+      const backendMessage = error.response?.data?.message || 'Error al cancelar batch';
+      toast.error(backendMessage);
     },
   });
 }
@@ -469,24 +488,3 @@ export const COLORES_ESTADO_BATCH = {
   [ESTADOS_BATCH.CANCELADO]: 'red',
 };
 
-export default {
-  useBatchPickings,
-  useBatchPicking,
-  useListaConsolidada,
-  useEstadisticasBatch,
-  useBatchesPendientes,
-  useOperacionesDisponiblesParaBatch,
-  useCrearBatch,
-  useActualizarBatch,
-  useEliminarBatch,
-  useAgregarOperacionBatch,
-  useQuitarOperacionBatch,
-  useIniciarBatch,
-  useProcesarItemBatch,
-  useCompletarBatch,
-  useCancelarBatch,
-  useBatchPickingManager,
-  ESTADOS_BATCH,
-  LABELS_ESTADO_BATCH,
-  COLORES_ESTADO_BATCH,
-};

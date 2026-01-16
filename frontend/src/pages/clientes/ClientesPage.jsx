@@ -20,12 +20,14 @@ import {
   Building2,
   Layers,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import {
+  Button,
+  Input,
+  MultiSelect,
+  StatCardGrid,
+  ViewTabs
+} from '@/components/ui';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
-import MultiSelect from '@/components/ui/MultiSelect';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { ViewTabs } from '@/components/ui/ViewTabs';
 import { useClientes, useEstadisticasClientes } from '@/hooks/useClientes';
 import { useEtiquetas } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';

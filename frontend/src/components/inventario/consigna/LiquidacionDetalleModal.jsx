@@ -14,9 +14,7 @@ import {
   CreditCard,
   FileText,
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog, Modal } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

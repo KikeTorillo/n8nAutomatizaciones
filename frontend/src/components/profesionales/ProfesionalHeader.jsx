@@ -9,9 +9,7 @@ import {
   Mail,
   Phone,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton, Badge, Button } from '@/components/ui';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
 import { ESTADOS_LABORALES, TIPOS_CONTRATACION } from '@/hooks/useProfesionales';

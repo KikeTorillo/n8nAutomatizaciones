@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== QUERY KEYS ====================
 
@@ -81,6 +81,7 @@ export function useEmpleoActual(profesionalId) {
  */
 export function useCrearExperiencia() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, data }) => {
@@ -104,6 +105,7 @@ export function useCrearExperiencia() {
  */
 export function useActualizarExperiencia() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, experienciaId, data }) => {
@@ -130,6 +132,7 @@ export function useActualizarExperiencia() {
  */
 export function useEliminarExperiencia() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, experienciaId }) => {
@@ -153,6 +156,7 @@ export function useEliminarExperiencia() {
  */
 export function useReordenarExperiencia() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, orden }) => {

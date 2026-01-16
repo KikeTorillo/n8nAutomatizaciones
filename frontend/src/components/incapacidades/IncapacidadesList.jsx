@@ -18,12 +18,14 @@ import {
   Plus,
   ArrowUpRight,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import Select from '@/components/ui/Select';
-import Input from '@/components/ui/Input';
-import Pagination from '@/components/ui/Pagination';
-import EmptyState from '@/components/ui/EmptyState';
+import {
+  Badge,
+  Button,
+  EmptyState,
+  Input,
+  Pagination,
+  Select
+} from '@/components/ui';
 import {
   useIncapacidades,
   useCancelarIncapacidad,

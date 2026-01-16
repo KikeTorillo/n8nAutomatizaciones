@@ -292,5 +292,3 @@ export function useBarcodeScanner(options = {}) {
         scannerRef
     };
 }
-
-export default useBarcodeScanner;

@@ -12,8 +12,7 @@ import {
   AlertTriangle,
   BookOpen,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton, Button } from '@/components/ui';
 import { useConfiguracionContable, useActualizarConfiguracion } from '@/hooks/useContabilidad';
 
 /**

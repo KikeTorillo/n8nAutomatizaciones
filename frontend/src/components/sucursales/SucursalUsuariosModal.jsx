@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users, Search, Check, Shield } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { usuariosApi } from '@/services/api/endpoints';
 import { useAsignarUsuarioSucursal } from '@/hooks/useSucursales';

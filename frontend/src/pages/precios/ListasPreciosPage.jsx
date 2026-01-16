@@ -18,15 +18,17 @@ import {
   DollarSign,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
-import Drawer from '@/components/ui/Drawer';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  ConfirmDialog,
+  Drawer,
+  Input,
+  Modal,
+  Select
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import { listasPreciosApi, monedasApi, clientesApi, inventarioApi } from '@/services/api/endpoints';
-import Select from '@/components/ui/Select';
 import { useCurrency } from '@/hooks/useCurrency';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 

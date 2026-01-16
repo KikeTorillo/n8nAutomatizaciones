@@ -21,8 +21,7 @@ import {
 import TimelineItem from './TimelineItem';
 import QuickNoteInput from './QuickNoteInput';
 import TareaDrawer from './TareaDrawer';
-import EmptyState from '@/components/ui/EmptyState';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog, EmptyState } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 
 export default function ClienteTimeline({

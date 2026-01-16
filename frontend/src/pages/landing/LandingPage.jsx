@@ -16,7 +16,7 @@ import {
   ArrowRight,
   Play
 } from 'lucide-react';
-import ThemeToggle from '@/components/ui/ThemeToggle';
+import { ThemeToggle } from '@/components/ui';
 
 const modules = [
   {

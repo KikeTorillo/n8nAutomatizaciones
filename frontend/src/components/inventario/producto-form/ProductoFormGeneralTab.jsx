@@ -1,7 +1,5 @@
 import { Package, ImageIcon, X, Loader2 } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
+import { Input, Select, Textarea } from '@/components/ui';
 
 /**
  * Tab General del formulario de producto

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, Edit, Trash2, History, CheckCircle, XCircle, Globe } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog } from '@/components/ui';
 import { useEliminarConfiguracionComision } from '@/hooks/useComisiones';
 import { formatCurrency } from '@/lib/utils';
 

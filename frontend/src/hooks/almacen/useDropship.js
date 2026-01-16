@@ -6,6 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dropshipApi } from '@/services/api/endpoints';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== QUERIES ====================
 
@@ -88,11 +89,17 @@ export function useOrdenDropship(id) {
  */
 export function useActualizarConfigDropship() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (data) => dropshipApi.actualizarConfiguracion(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dropship', 'configuracion'] });
+      toast.success('Configuración de dropship actualizada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al actualizar configuración';
+      toast.error(msg);
     },
   });
 }
@@ -102,12 +109,18 @@ export function useActualizarConfigDropship() {
  */
 export function useCrearOCDesdeVenta() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (ventaId) => dropshipApi.crearDesdeVenta(ventaId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['dropship'] });
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      toast.success('Orden de compra dropship creada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al crear orden de compra';
+      toast.error(msg);
     },
   });
 }
@@ -117,12 +130,18 @@ export function useCrearOCDesdeVenta() {
  */
 export function useConfirmarEntregaDropship() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, notas }) => dropshipApi.confirmarEntrega(id, { notas }),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['dropship'] });
       queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
+      toast.success('Entrega confirmada exitosamente');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al confirmar entrega';
+      toast.error(msg);
     },
   });
 }
@@ -132,12 +151,18 @@ export function useConfirmarEntregaDropship() {
  */
 export function useCancelarDropship() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, motivo }) => dropshipApi.cancelar(id, { motivo }),
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ['dropship'] });
       queryClient.invalidateQueries({ queryKey: ['dropship', 'ordenes', id] });
+      toast.success('Orden dropship cancelada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al cancelar orden';
+      toast.error(msg);
     },
   });
 }

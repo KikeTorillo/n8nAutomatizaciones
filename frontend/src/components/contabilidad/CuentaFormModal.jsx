@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Modal,
+  Select
+} from '@/components/ui';
 
 // Opciones de tipo de cuenta (solo con valor)
 const TIPO_OPTIONS = [

@@ -14,10 +14,12 @@ import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/useEtiquetasClientes'
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import EtiquetaFormDrawer from '@/components/clientes/EtiquetaFormDrawer';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import EmptyState from '@/components/ui/EmptyState';
-import SkeletonTable from '@/components/ui/SkeletonTable';
-import Button from '@/components/ui/Button';
+import {
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  SkeletonTable
+} from '@/components/ui';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
 
 export default function EtiquetasPage() {

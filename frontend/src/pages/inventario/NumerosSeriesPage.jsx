@@ -3,14 +3,18 @@ import {
   RefreshCw, Package, AlertTriangle, Clock,
   CheckCircle, XCircle, Eye, History, BarChart3, FileSpreadsheet
 } from 'lucide-react';
-import Alert from '@/components/ui/Alert';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import StatCardGrid from '@/components/ui/StatCardGrid';
-import Badge from '@/components/ui/Badge';
-import { FilterPanel } from '@/components/ui/FilterPanel';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
+import {
+  Alert,
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  FilterPanel,
+  Modal,
+  StatCardGrid
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';

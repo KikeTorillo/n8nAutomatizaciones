@@ -101,19 +101,25 @@ class ResponseHelper {
 
   /**
    * Respuesta paginada
+   * Soporta nomenclatura en inglés (page, limit, total) y español (paginaActual, elementosPorPagina, totalElementos)
    */
   static paginated(res, data, pagination, message = 'Datos obtenidos exitosamente') {
+    // Normalizar nomenclatura (soportar español e inglés)
+    const page = pagination.page ?? pagination.paginaActual ?? 1;
+    const limit = pagination.limit ?? pagination.elementosPorPagina ?? 20;
+    const total = pagination.total ?? pagination.totalElementos ?? 0;
+
     return res.status(200).json({
       success: true,
       message,
       data,
       pagination: {
-        page: pagination.page,
-        limit: pagination.limit,
-        total: pagination.total,
-        totalPages: Math.ceil(pagination.total / pagination.limit),
-        hasNext: pagination.page * pagination.limit < pagination.total,
-        hasPrev: pagination.page > 1
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit) || 0,
+        hasNext: page * limit < total,
+        hasPrev: page > 1
       },
       timestamp: new Date().toISOString()
     });

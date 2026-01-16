@@ -5,12 +5,14 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { Building2 } from 'lucide-react';
 
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
 import { useCrearSucursal, useActualizarSucursal } from '@/hooks/useSucursales';
 

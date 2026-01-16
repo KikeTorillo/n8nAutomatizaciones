@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { Upload, X, FileImage, FileText, File, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { useToast } from '@/hooks/useToast';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 /**
  * Tipos MIME permitidos

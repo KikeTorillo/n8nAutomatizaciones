@@ -13,9 +13,7 @@ import {
   Eye,
   X as XIcon
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import Pagination from '@/components/ui/Pagination';
+import { Badge, Button, Pagination } from '@/components/ui';
 import {
   useMisSolicitudesVacaciones,
   useCancelarSolicitud,

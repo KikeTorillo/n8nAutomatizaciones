@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Search, User, Clock, CheckCircle, AlertCircle } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/useClientes';
 import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';

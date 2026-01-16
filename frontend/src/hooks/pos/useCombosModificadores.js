@@ -615,39 +615,3 @@ export function useCombosModificadoresPOS(productoId = null) {
         },
     };
 }
-
-export default {
-    // Combos
-    useVerificarCombo,
-    useCombo,
-    useCombos,
-    useCrearCombo,
-    useActualizarCombo,
-    useEliminarCombo,
-    useComboPrecio,
-    useComboStock,
-
-    // Grupos de modificadores
-    useGruposModificadores,
-    useCrearGrupoModificadores,
-    useActualizarGrupoModificadores,
-    useEliminarGrupoModificadores,
-
-    // Modificadores
-    useCrearModificador,
-    useActualizarModificador,
-    useEliminarModificador,
-
-    // Modificadores de producto
-    useModificadoresProducto,
-    useTieneModificadores,
-
-    // Asignaciones
-    useAsignacionesProducto,
-    useAsignarGrupoAProducto,
-    useAsignarGrupoACategoria,
-    useEliminarAsignacionProducto,
-
-    // Hook combinado para POS
-    useCombosModificadoresPOS,
-};

@@ -1,4 +1,4 @@
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 
 /**
  * Header genérico para páginas de configuración

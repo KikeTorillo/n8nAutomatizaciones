@@ -1,7 +1,5 @@
 import { Filter } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import { Button, Input, Select } from '@/components/ui';
 import { useProfesionales } from '@/hooks/useProfesionales';
 
 /**

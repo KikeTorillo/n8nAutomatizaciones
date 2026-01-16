@@ -18,11 +18,8 @@ export { default as Input } from './atoms/Input';
 export { default as Select } from './atoms/Select';
 export { default as Textarea } from './atoms/Textarea';
 export { default as Checkbox } from './atoms/Checkbox';
-export { default as MultiSelect } from './atoms/MultiSelect';
-export { default as IconPicker } from './atoms/IconPicker';
 export { default as Alert } from './atoms/Alert';
 export { default as Badge } from './atoms/Badge';
-export { ProgressBar, LimitProgressBar } from './atoms/ProgressBar';
 
 // ========== MOLECULES ==========
 export { default as SearchInput } from './molecules/SearchInput';
@@ -37,6 +34,10 @@ export { SkeletonTable, SkeletonCard, SkeletonList } from './molecules/SkeletonT
 export { default as Toast } from './molecules/Toast';
 export { default as BackButton } from './molecules/BackButton';
 export { default as ThemeToggle } from './molecules/ThemeToggle';
+// Componentes con lógica compleja (movidos desde atoms/ Ene 2026)
+export { default as MultiSelect } from './molecules/MultiSelect';
+export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
+export { default as IconPicker } from './molecules/IconPicker';
 
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';

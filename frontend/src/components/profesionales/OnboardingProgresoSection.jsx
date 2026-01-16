@@ -8,8 +8,7 @@ import {
   CheckCircle2, Clock, AlertTriangle, ExternalLink, Trash2,
   User, UserCheck, Users
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog } from '@/components/ui';
 import OnboardingAplicarDrawer from './drawers/OnboardingAplicarDrawer';
 import {
   useProgresoOnboarding,

@@ -15,7 +15,7 @@ import {
   Lock,
   Info,
 } from 'lucide-react';
-import { EmptyState } from '@/components/ui/EmptyState';
+import { EmptyState } from '@/components/ui';
 import {
   obtenerColorTipoBloqueo,
   obtenerLabelTipoBloqueo,

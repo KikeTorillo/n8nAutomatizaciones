@@ -3,12 +3,14 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Building2, Phone, MapPin } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { useCrearProveedor, useActualizarProveedor } from '@/hooks/useProveedores';
 import { useToast } from '@/hooks/useToast';
 import { usePaises, useEstadosPorPais, useCiudadesPorEstado } from '@/hooks/useUbicaciones';

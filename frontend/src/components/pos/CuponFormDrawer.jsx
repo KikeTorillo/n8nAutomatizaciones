@@ -2,9 +2,7 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, Percent, DollarSign } from 'lucide-react';
 
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useCrearCupon, useActualizarCupon } from '@/hooks/useCupones';
 

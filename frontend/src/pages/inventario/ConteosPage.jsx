@@ -11,12 +11,16 @@ import {
     AlertTriangle,
     Diff,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Textarea from '@/components/ui/Textarea';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import { FilterPanel } from '@/components/ui/FilterPanel';
+import {
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  FilterPanel,
+  StatCardGrid,
+  Textarea
+} from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

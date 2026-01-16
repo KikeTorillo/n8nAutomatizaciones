@@ -11,9 +11,7 @@ import {
   HeartPulse,
 } from 'lucide-react';
 import PropTypes from 'prop-types';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/ui/Alert';
-import EmptyState from '@/components/ui/EmptyState';
+import { Alert, Button, EmptyState } from '@/components/ui';
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import useAuthStore from '@/store/authStore';

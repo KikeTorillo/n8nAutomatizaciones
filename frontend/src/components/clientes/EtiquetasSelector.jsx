@@ -13,7 +13,7 @@
 import { useMemo } from 'react';
 import { Tag } from 'lucide-react';
 import { useEtiquetas } from '@/hooks/useEtiquetasClientes';
-import MultiSelect from '@/components/ui/MultiSelect';
+import { MultiSelect } from '@/components/ui';
 import EtiquetasBadges from './EtiquetasBadges';
 
 /**

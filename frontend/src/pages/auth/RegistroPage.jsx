@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/useToast';
 import { authApi } from '@/services/api/endpoints';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 
 /**

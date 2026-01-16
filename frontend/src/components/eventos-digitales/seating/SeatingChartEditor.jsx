@@ -11,10 +11,12 @@ import {
   useDroppable,
 } from '@dnd-kit/core';
 import { Plus, Users, LayoutGrid, Check, Move, GripVertical } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Drawer from '@/components/ui/Drawer';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  ConfirmDialog,
+  Drawer,
+  Input
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useMesas,

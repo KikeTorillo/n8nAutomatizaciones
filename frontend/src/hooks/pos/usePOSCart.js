@@ -504,5 +504,3 @@ export function usePOSCart({ hayPromocionExclusiva = false, descuentoPromociones
     prepararItemsParaVenta,
   };
 }
-
-export default usePOSCart;

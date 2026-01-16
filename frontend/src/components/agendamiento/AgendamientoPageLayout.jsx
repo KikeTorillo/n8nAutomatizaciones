@@ -1,4 +1,4 @@
-import BasePageLayout from '@/components/ui/BasePageLayout';
+import { BasePageLayout } from '@/components/ui';
 import AgendamientoNavTabs from './AgendamientoNavTabs';
 
 /**

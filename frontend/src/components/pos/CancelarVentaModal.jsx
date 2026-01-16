@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { AlertTriangle, XCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Textarea from '@/components/ui/Textarea';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  ConfirmDialog,
+  Modal,
+  Textarea
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import useAuthStore from '@/store/authStore';
 import { useCancelarVenta } from '@/hooks/useVentas';

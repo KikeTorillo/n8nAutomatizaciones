@@ -10,11 +10,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useDropzone } from 'react-dropzone';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import {
   useSubirDocumento,
   TIPOS_DOCUMENTO_EMPLEADO,

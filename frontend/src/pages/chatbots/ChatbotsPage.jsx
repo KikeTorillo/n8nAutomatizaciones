@@ -1,7 +1,5 @@
 import { Plus, Bot, MessageCircle, MessageSquare, Power, Trash2 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { BackButton, Button, ConfirmDialog } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useChatbots, useEliminarChatbot, useCambiarEstadoChatbot } from '@/hooks/useChatbots';
 import { useToast } from '@/hooks/useToast';

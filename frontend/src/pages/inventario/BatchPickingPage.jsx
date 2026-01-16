@@ -15,14 +15,16 @@ import {
   PackageCheck,
   ListChecks,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Input from '@/components/ui/Input';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { SkeletonCard } from '@/components/ui/SkeletonCard';
-import { FilterPanel } from '@/components/ui/FilterPanel';
+import {
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  FilterPanel,
+  Input,
+  Modal,
+  SkeletonCard,
+  StatCardGrid
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

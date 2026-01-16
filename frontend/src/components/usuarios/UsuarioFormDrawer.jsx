@@ -13,9 +13,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Shield, Loader2, Mail, Info } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
+import { Button, Drawer, Select } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
 import {
   useCrearUsuarioDirecto,

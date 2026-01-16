@@ -34,7 +34,7 @@
 
 | Bug | Ubicación | Descripción |
 |-----|-----------|-------------|
-| Paginación NaN | `ClientesPage.jsx` | Muestra "NaN-NaN de X" en paginación |
+| ~~Paginación NaN~~ | ~~`ClientesPage.jsx`~~ | ~~Muestra "NaN-NaN de X" en paginación~~ - **RESUELTO 16 Ene 2026** (fix en ResponseHelper.paginated) |
 
 ### Prioridad Media
 
@@ -153,7 +153,7 @@ import Button from '../atoms/Button';
 ## Próximos Pasos Sugeridos
 
 1. **Corto plazo** (esta semana)
-   - [ ] Corregir bug de paginación NaN
+   - [x] Corregir bug de paginación NaN (RESUELTO)
    - [ ] Verificar resto de módulos en navegador
 
 2. **Mediano plazo** (próximas 2 semanas)

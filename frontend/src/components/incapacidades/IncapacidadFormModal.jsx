@@ -15,10 +15,12 @@ import {
   Upload,
   Info,
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Input,
+  Modal,
+  Select
+} from '@/components/ui';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import {
   useCrearIncapacidad,

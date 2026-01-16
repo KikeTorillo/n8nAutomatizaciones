@@ -1,9 +1,13 @@
 import { useState } from 'react';
 import { Route, Plus, Edit, Trash2, Search, X, Zap, Truck, ShoppingCart, Factory } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import Drawer from '@/components/ui/Drawer';
+import {
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  Drawer
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

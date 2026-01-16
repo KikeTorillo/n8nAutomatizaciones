@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { BarChart3, TrendingUp, DollarSign, AlertCircle, Download, Calculator, Settings, Layers, Package, Info } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import Alert from '@/components/ui/Alert';
-import StatCardGrid from '@/components/ui/StatCardGrid';
-import EmptyState from '@/components/ui/EmptyState';
-import { SkeletonTable, SkeletonCard } from '@/components/ui/SkeletonTable';
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  SkeletonCard,
+  SkeletonTable,
+  StatCardGrid
+} from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useValorInventario,

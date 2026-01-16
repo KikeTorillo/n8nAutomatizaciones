@@ -16,13 +16,15 @@ import {
     AlertTriangle,
     FileCheck,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Alert from '@/components/ui/Alert';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
-import Pagination from '@/components/ui/Pagination';
+import {
+  Alert,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Pagination,
+  SkeletonTable,
+  StatCardGrid
+} from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

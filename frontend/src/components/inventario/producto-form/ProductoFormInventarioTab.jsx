@@ -1,6 +1,5 @@
 import { TrendingUp } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Input, Select } from '@/components/ui';
 
 /**
  * Tab Inventario del formulario de producto

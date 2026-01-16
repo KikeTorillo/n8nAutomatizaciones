@@ -13,12 +13,15 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Alert from '@/components/ui/Alert';
-import EmptyState from '@/components/ui/EmptyState';
-import { TreeView, useTreeExpansion } from '@/components/ui/TreeNode';
+import {
+  Alert,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Modal,
+  TreeView,
+  useTreeExpansion
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import useSucursalStore from '@/store/sucursalStore';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

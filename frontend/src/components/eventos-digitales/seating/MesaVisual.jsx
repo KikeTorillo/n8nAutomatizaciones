@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDraggable, useDroppable } from '@dnd-kit/core';
 import { Edit2, Trash2, X, Users, ChevronDown, ChevronUp } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui';
 
 /**
  * Componente visual de una mesa en el seating chart

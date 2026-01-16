@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi, onboardingEmpleadosApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== QUERY KEYS ====================
 
@@ -87,6 +87,7 @@ export function usePlantillasSugeridas(profesionalId) {
  */
 export function useCrearPlantilla() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -109,6 +110,7 @@ export function useCrearPlantilla() {
  */
 export function useActualizarPlantilla() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ plantillaId, data }) => {
@@ -134,6 +136,7 @@ export function useActualizarPlantilla() {
  */
 export function useEliminarPlantilla() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (plantillaId) => {
@@ -158,6 +161,7 @@ export function useEliminarPlantilla() {
  */
 export function useCrearTarea() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ plantillaId, data }) => {
@@ -182,6 +186,7 @@ export function useCrearTarea() {
  */
 export function useActualizarTarea() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ tareaId, data, plantillaId }) => {
@@ -209,6 +214,7 @@ export function useActualizarTarea() {
  */
 export function useEliminarTarea() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ tareaId, plantillaId }) => {
@@ -235,6 +241,7 @@ export function useEliminarTarea() {
  */
 export function useReordenarTareas() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ plantillaId, items }) => {
@@ -284,6 +291,7 @@ export function useProgresoOnboarding(profesionalId, options = {}) {
  */
 export function useAplicarPlantilla() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, plantillaId }) => {
@@ -309,6 +317,7 @@ export function useAplicarPlantilla() {
  */
 export function useMarcarTareaOnboarding() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, tareaId, completado = true, notas }) => {
@@ -339,6 +348,7 @@ export function useMarcarTareaOnboarding() {
  */
 export function useEliminarProgresoOnboarding() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (profesionalId) => {

@@ -1,5 +1,5 @@
 import { History, ArrowRight } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
+import { Modal } from '@/components/ui';
 import { useHistorialConfiguracion } from '@/hooks/useComisiones';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';

@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Clock, DollarSign, Plus, User } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import { useMovimientosCaja, useRegistrarMovimientoCaja } from '@/hooks/usePOS';
 import { useToast } from '@/hooks/useToast';
 

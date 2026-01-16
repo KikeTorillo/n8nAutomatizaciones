@@ -1,5 +1,5 @@
 import { Users, Tag, TrendingUp } from 'lucide-react';
-import GenericNavTabs from '@/components/ui/GenericNavTabs';
+import { GenericNavTabs } from '@/components/ui';
 
 /**
  * Definición de items de navegación para Clientes

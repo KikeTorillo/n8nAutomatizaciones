@@ -23,14 +23,18 @@ import {
   FileSpreadsheet,
 } from 'lucide-react';
 import { format } from 'date-fns';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Textarea from '@/components/ui/Textarea';
-import StatCardGrid from '@/components/ui/StatCardGrid';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import Badge from '@/components/ui/Badge';
-import SmartButtons from '@/components/ui/SmartButtons';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  Modal,
+  SmartButtons,
+  StatCardGrid,
+  Textarea
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import { useModalManager } from '@/hooks/useModalManager';

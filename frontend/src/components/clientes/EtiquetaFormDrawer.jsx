@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { COLORES_ETIQUETAS, useCrearEtiqueta, useActualizarEtiqueta } from '@/hooks/useEtiquetasClientes';
 import { useToast } from '@/hooks/useToast';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui';
 
 // Schema de validación
 const etiquetaSchema = z.object({

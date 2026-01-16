@@ -14,10 +14,12 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Modal from '@/components/ui/Modal';
-import Textarea from '@/components/ui/Textarea';
+import {
+  BackButton,
+  Button,
+  Modal,
+  Textarea
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useAprobacionesPendientes,

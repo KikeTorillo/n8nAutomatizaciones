@@ -1,6 +1,5 @@
 import { Loader2 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 
 /**
  * Drawer genérico para formularios CRUD en páginas de configuración

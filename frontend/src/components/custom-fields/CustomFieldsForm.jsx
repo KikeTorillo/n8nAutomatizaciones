@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useCustomFieldsValores, useCustomFieldsDefiniciones } from '@/hooks/useCustomFields';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
-import MultiSelect from '@/components/ui/MultiSelect';
+import {
+  Checkbox,
+  Input,
+  MultiSelect,
+  Select,
+  Textarea
+} from '@/components/ui';
 import {
   Calendar,
   Clock,

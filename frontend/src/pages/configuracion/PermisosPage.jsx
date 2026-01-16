@@ -16,9 +16,7 @@ import {
   Unlock,
 } from 'lucide-react';
 
-import BackButton from '@/components/ui/BackButton';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
+import { BackButton, Button, Select } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { permisosApi } from '@/services/api/endpoints';
 

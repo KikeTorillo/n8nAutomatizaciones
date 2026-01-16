@@ -7,7 +7,7 @@ import {
   useDesactivarModulo,
 } from '@/hooks/useModulos';
 import useAuthStore from '@/store/authStore';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { BackButton, ConfirmDialog } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
@@ -27,7 +27,6 @@ import {
   RefreshCw,
   Info,
 } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
 import { configuracionAgendamientoApi } from '@/services/api/endpoints';
 
 /**

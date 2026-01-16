@@ -11,10 +11,12 @@ import {
   FolderTree,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import {
+  Button,
+  ConfirmDialog,
+  Input,
+  StatCardGrid
+} from '@/components/ui';
 import {
   ConfigPageHeader,
   ConfigSearchBar,

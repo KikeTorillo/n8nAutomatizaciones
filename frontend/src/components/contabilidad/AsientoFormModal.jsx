@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus, Trash2, Check, AlertCircle } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
-import Textarea from '@/components/ui/Textarea';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { useCuentasAfectables } from '@/hooks/useContabilidad';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';

@@ -9,9 +9,7 @@ import {
   Loader2, Edit2, Trash2, Building2, Briefcase,
   Calendar, Clock
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import {
   usePlantillasOnboarding,

@@ -12,11 +12,13 @@ import {
   Loader2,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  ConfirmDialog,
+  Input,
+  Modal,
+  Select
+} from '@/components/ui';
 import { ConfigPageHeader, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';

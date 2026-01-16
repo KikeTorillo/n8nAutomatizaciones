@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { Plus, Filter, X, Calendar, Package } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Select from '@/components/ui/Select';
+import { BackButton, Button, Select } from '@/components/ui';
 import ConfiguracionComisionesTable from '@/components/comisiones/ConfiguracionComisionesTable';
 import ConfigComisionModal from '@/components/comisiones/ConfigComisionModal';
 import HistorialCambiosModal from '@/components/comisiones/HistorialCambiosModal';

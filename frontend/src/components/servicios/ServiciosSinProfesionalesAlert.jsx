@@ -1,6 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
-import Alert from '@/components/ui/Alert';
-import Button from '@/components/ui/Button';
+import { Alert, Button } from '@/components/ui';
 
 /**
  * Alerta que muestra servicios activos sin profesionales asignados

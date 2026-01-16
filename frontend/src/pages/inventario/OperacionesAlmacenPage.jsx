@@ -19,10 +19,12 @@ import {
   Send,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { FilterPanel } from '@/components/ui/FilterPanel';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import {
+  Button,
+  ConfirmDialog,
+  FilterPanel,
+  StatCardGrid
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

@@ -1,8 +1,10 @@
 import { Tag, Layers, Truck, Plus } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Checkbox,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { VariantesGrid } from '../variantes';
 
 /**

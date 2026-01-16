@@ -1,5 +1,5 @@
 import { Package, Percent, DollarSign, Gift, Tag } from 'lucide-react';
-import Input from '@/components/ui/Input';
+import { Input } from '@/components/ui';
 import { TIPOS_PROMOCION } from './schemas';
 
 /**

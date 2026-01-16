@@ -20,8 +20,7 @@ import {
   ClipboardList,
   FileSpreadsheet,
 } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
-import Button from '@/components/ui/Button';
+import { BackButton, Button } from '@/components/ui';
 import useAuthStore from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';

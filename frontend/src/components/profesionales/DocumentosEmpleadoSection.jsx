@@ -7,8 +7,7 @@
  * porque difiere del patrón ExpandableCrudSection
  */
 import { useState } from 'react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog } from '@/components/ui';
 import {
   useDocumentosEmpleado,
   useEliminarDocumento,

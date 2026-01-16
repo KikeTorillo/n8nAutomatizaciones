@@ -8,7 +8,7 @@ import useAuthStore from '@/store/authStore';
 import { loginSchema } from '@/lib/validations';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 import { useToast } from '@/hooks/useToast';
 import { Eye, EyeOff, Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';

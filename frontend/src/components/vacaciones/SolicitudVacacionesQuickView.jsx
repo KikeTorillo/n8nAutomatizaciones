@@ -6,8 +6,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { User, Calendar, Check, X, Loader2, Building } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import {
   useAprobarSolicitud,
   useRechazarSolicitud,

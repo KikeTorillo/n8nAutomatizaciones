@@ -1,4 +1,4 @@
-import Input from '@/components/ui/Input';
+import { Input } from '@/components/ui';
 
 /**
  * Tab de información general de la promoción

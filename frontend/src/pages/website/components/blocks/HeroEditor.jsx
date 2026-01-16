@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Save, Image } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
-import Button from '@/components/ui/Button';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 
 /**
  * HeroEditor - Editor del bloque Hero

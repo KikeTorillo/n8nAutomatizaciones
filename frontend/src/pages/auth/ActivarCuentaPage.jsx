@@ -9,7 +9,7 @@ import { authApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
 
 /**

@@ -9,10 +9,12 @@ import {
   Box
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import EmptyState from '@/components/ui/EmptyState';
-import Pagination from '@/components/ui/Pagination';
+import {
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  Pagination
+} from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
 import { useCrudHandlers } from '@/hooks/useCrudHandlers';

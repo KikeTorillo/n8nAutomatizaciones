@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Textarea from '@/components/ui/Textarea';
+import { Button, Modal, Textarea } from '@/components/ui';
 import { ClipboardList, Calendar, User, Info } from 'lucide-react';
 import { useCategorias } from '@/hooks/useCategorias';
 import { useUsuarios } from '@/hooks/useUsuarios';

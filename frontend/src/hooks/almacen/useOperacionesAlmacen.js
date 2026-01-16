@@ -10,6 +10,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { operacionesAlmacenApi } from '@/services/api/endpoints';
 import useSucursalStore from '@/store/sucursalStore';
+import { useToast } from '@/hooks/useToast';
 
 /**
  * QUERY KEYS para operaciones de almacén
@@ -151,6 +152,7 @@ export function useOperacionesKanban(sucursalId) {
  */
 export function useCrearOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -159,10 +161,11 @@ export function useCrearOperacion() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Operación creada exitosamente');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al crear operación');
+      const backendMessage = error.response?.data?.message || 'Error al crear operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -172,6 +175,7 @@ export function useCrearOperacion() {
  */
 export function useActualizarOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
@@ -181,10 +185,11 @@ export function useActualizarOperacion() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
+      toast.success('Operación actualizada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al actualizar operación');
+      const backendMessage = error.response?.data?.message || 'Error al actualizar operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -194,6 +199,7 @@ export function useActualizarOperacion() {
  */
 export function useAsignarOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, usuarioId }) => {
@@ -203,10 +209,11 @@ export function useAsignarOperacion() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
+      toast.success('Operación asignada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al asignar operación');
+      const backendMessage = error.response?.data?.message || 'Error al asignar operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -216,6 +223,7 @@ export function useAsignarOperacion() {
  */
 export function useIniciarOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -225,10 +233,11 @@ export function useIniciarOperacion() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
+      toast.success('Operación iniciada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al iniciar operación');
+      const backendMessage = error.response?.data?.message || 'Error al iniciar operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -238,6 +247,7 @@ export function useIniciarOperacion() {
  */
 export function useCompletarOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, items }) => {
@@ -252,10 +262,11 @@ export function useCompletarOperacion() {
       // Invalidar inventario ya que puede haber movimientos de stock
       queryClient.invalidateQueries(['productos']);
       queryClient.invalidateQueries(['movimientos-inventario']);
+      toast.success('Operación completada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al completar operación');
+      const backendMessage = error.response?.data?.message || 'Error al completar operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -265,6 +276,7 @@ export function useCompletarOperacion() {
  */
 export function useCancelarOperacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, motivo }) => {
@@ -274,10 +286,11 @@ export function useCancelarOperacion() {
     onSuccess: (result) => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.detail(result.id));
+      toast.success('Operación cancelada');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al cancelar operación');
+      const backendMessage = error.response?.data?.message || 'Error al cancelar operación';
+      toast.error(backendMessage);
     },
   });
 }
@@ -287,6 +300,7 @@ export function useCancelarOperacion() {
  */
 export function useProcesarItem() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ itemId, cantidadProcesada, ubicacionDestinoId }) => {
@@ -298,10 +312,11 @@ export function useProcesarItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Item procesado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al procesar item');
+      const backendMessage = error.response?.data?.message || 'Error al procesar item';
+      toast.error(backendMessage);
     },
   });
 }
@@ -311,6 +326,7 @@ export function useProcesarItem() {
  */
 export function useCancelarItem() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (itemId) => {
@@ -319,10 +335,11 @@ export function useCancelarItem() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries(OPERACIONES_ALMACEN_KEYS.all);
+      toast.success('Item cancelado');
     },
     onError: (error) => {
-      const backendMessage = error.response?.data?.message;
-      throw new Error(backendMessage || 'Error al cancelar item');
+      const backendMessage = error.response?.data?.message || 'Error al cancelar item';
+      toast.error(backendMessage);
     },
   });
 }
@@ -459,25 +476,3 @@ export const COLORES_ESTADO_OPERACION = {
   [ESTADOS_OPERACION.CANCELADA]: 'red',
 };
 
-export default {
-  useOperacionesAlmacen,
-  useOperacionAlmacen,
-  useCadenaOperaciones,
-  useOperacionesPendientes,
-  useEstadisticasOperaciones,
-  useOperacionesKanban,
-  useCrearOperacion,
-  useActualizarOperacion,
-  useAsignarOperacion,
-  useIniciarOperacion,
-  useCompletarOperacion,
-  useCancelarOperacion,
-  useProcesarItem,
-  useCancelarItem,
-  useOperacionesAlmacenManager,
-  TIPOS_OPERACION,
-  ESTADOS_OPERACION,
-  LABELS_TIPO_OPERACION,
-  LABELS_ESTADO_OPERACION,
-  COLORES_ESTADO_OPERACION,
-};

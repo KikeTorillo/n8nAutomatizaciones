@@ -5,12 +5,14 @@ import {
   Plus, Search, Filter, X, AlertTriangle, Users,
   UserCheck, Umbrella, Stethoscope, LayoutGrid, LayoutList, Download
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
-import { ViewTabs } from '@/components/ui/ViewTabs';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  StatCardGrid,
+  ViewTabs
+} from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import ProfesionalesList from '@/components/profesionales/ProfesionalesList';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';

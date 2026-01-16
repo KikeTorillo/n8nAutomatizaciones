@@ -1,5 +1,5 @@
 import { Pencil } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { cn } from '@/lib/utils';
 
 /**

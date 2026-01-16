@@ -9,10 +9,12 @@ import {
   Package,
   Search,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import {
   useSucursales,

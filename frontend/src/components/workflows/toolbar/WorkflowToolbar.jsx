@@ -17,7 +17,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 function WorkflowToolbar({
   workflow,

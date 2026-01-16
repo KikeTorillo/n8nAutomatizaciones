@@ -14,7 +14,7 @@ import {
   GitBranch,
   CalendarDays,
 } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import useAuthStore from '@/store/authStore';
 
 /**

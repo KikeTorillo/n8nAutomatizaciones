@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/useSuperAdminMarketplace';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  ConfirmDialog,
+  Input,
+  Select
+} from '@/components/ui';
 import EstrellaRating from '@/components/marketplace/EstrellaRating';
 import { Store, Filter, Trash2, ExternalLink, CheckCircle, XCircle } from 'lucide-react';
 

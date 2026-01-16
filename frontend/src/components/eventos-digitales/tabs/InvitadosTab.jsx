@@ -14,8 +14,7 @@ import {
   Phone,
   MoreVertical,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Input } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useToast } from '@/hooks/useToast';

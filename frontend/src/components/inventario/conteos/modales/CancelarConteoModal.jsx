@@ -1,7 +1,5 @@
 import { XCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Textarea from '@/components/ui/Textarea';
+import { Button, Modal, Textarea } from '@/components/ui';
 
 /**
  * Modal para confirmar cancelación de conteo

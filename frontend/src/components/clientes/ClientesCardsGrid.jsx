@@ -1,9 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { UserCircle } from 'lucide-react';
 import ClienteCard from './ClienteCard';
-import EmptyState from '@/components/ui/EmptyState';
+import { EmptyState, Pagination } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
-import Pagination from '@/components/ui/Pagination';
 
 /**
  * Componente de grid de tarjetas de clientes

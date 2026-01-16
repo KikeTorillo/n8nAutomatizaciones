@@ -3,11 +3,13 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Calendar, User, Briefcase, Package, Clock, DollarSign, Repeat, ChevronDown, ChevronUp, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import MultiSelect from '@/components/ui/MultiSelect';
-import Textarea from '@/components/ui/Textarea';
+import {
+  Button,
+  Drawer,
+  MultiSelect,
+  Select,
+  Textarea
+} from '@/components/ui';
 import FormField from '@/components/forms/FormField';
 import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecurrencia } from '@/hooks/useCitas';
 import { useClientes } from '@/hooks/useClientes';

@@ -1,6 +1,5 @@
 import { Controller } from 'react-hook-form';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Input, Select } from '@/components/ui';
 
 /**
  * Componente FormField integrado con React Hook Form

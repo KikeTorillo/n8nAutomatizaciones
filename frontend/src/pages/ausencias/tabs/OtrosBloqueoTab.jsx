@@ -14,8 +14,7 @@ import BloqueosCalendar from '@/components/bloqueos/BloqueosCalendar';
 import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';
 import BloqueoFormDrawer from '@/components/bloqueos/BloqueoFormDrawer';
 import BloqueoDetailModal from '@/components/bloqueos/BloqueoDetailModal';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import { Button, Modal } from '@/components/ui';
 import {
   calcularEstadisticasBloqueos,
   filtrarBloqueos,

@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { AlertCircle, XCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Textarea from '@/components/ui/Textarea';
+import { Button, Modal, Textarea } from '@/components/ui';
 import { useCancelarCita } from '@/hooks/useCitas';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 import { useToast } from '@/hooks/useToast';

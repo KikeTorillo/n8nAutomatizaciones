@@ -13,8 +13,7 @@ import {
   Plus,
   Settings,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton, Button } from '@/components/ui';
 import { useDashboardContabilidad, useInicializarCatalogoSAT } from '@/hooks/useContabilidad';
 import { formatCurrency } from '@/lib/utils';
 

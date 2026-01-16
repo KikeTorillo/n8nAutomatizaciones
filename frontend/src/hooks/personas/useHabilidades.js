@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi, habilidadesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== CONSTANTES ====================
 
@@ -107,6 +107,7 @@ export function useProfesionalesConHabilidad(habilidadId, options = {}) {
  */
 export function useCrearHabilidadCatalogo() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -129,6 +130,7 @@ export function useCrearHabilidadCatalogo() {
  */
 export function useActualizarHabilidadCatalogo() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ habilidadId, data }) => {
@@ -152,6 +154,7 @@ export function useActualizarHabilidadCatalogo() {
  */
 export function useEliminarHabilidadCatalogo() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (habilidadId) => {
@@ -215,6 +218,7 @@ export function useHabilidadEmpleadoDetalle(profesionalId, habilidadEmpleadoId) 
  */
 export function useAsignarHabilidad() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, data }) => {
@@ -237,6 +241,7 @@ export function useAsignarHabilidad() {
  */
 export function useAsignarHabilidadesBatch() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, habilidades }) => {
@@ -259,6 +264,7 @@ export function useAsignarHabilidadesBatch() {
  */
 export function useActualizarHabilidadEmpleado() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, habilidadEmpleadoId, data }) => {
@@ -284,6 +290,7 @@ export function useActualizarHabilidadEmpleado() {
  */
 export function useEliminarHabilidadEmpleado() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, habilidadEmpleadoId }) => {
@@ -306,6 +313,7 @@ export function useEliminarHabilidadEmpleado() {
  */
 export function useVerificarHabilidadEmpleado() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, habilidadEmpleadoId, verificado }) => {

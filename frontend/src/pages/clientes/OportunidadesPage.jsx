@@ -12,10 +12,12 @@
 import { useState, useMemo } from 'react';
 import { TrendingUp, List, Columns3, DollarSign, Target, Clock, CheckCircle } from 'lucide-react';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
-import { ViewTabs } from '@/components/ui/ViewTabs';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import EmptyState from '@/components/ui/EmptyState';
-import SkeletonTable from '@/components/ui/SkeletonTable';
+import {
+  EmptyState,
+  SkeletonTable,
+  StatCardGrid,
+  ViewTabs
+} from '@/components/ui';
 import PipelineKanban from '@/components/clientes/PipelineKanban';
 import {
   useOportunidades,

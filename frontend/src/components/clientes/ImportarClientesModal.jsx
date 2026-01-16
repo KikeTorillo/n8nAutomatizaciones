@@ -14,8 +14,7 @@
 import { useState, useCallback } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X, ChevronRight, ChevronLeft, Loader2 } from 'lucide-react';
 import Papa from 'papaparse';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { useImportarClientesCSV } from '@/hooks/useClientes';
 

@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, User, Building2, Key, Check } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Button, Input, Select } from '@/components/ui';
 import { useCrearProfesional, TIPOS_CONTRATACION } from '@/hooks/useProfesionales';
 import { useDepartamentos } from '@/hooks/useDepartamentos';
 import { usePuestos } from '@/hooks/usePuestos';

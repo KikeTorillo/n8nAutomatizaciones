@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { organizacionesApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import {
   Rocket,
   Users,

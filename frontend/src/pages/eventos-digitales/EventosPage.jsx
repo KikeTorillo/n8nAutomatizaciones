@@ -12,10 +12,12 @@ import {
   Share2,
   ExternalLink
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  BackButton,
+  Button,
+  ConfirmDialog,
+  Input
+} from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/useEventosDigitales';
 import { useToast } from '@/hooks/useToast';

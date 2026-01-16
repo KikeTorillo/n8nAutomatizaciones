@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, Calendar, Edit } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import EtiquetasBadges from './EtiquetasBadges';
 
 /**

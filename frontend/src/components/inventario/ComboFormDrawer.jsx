@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { Loader2, Package, Plus, Trash2, AlertCircle } from 'lucide-react';
 
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import ProductoSelectorInline from '@/components/pos/ProductoSelectorInline';
 import { useToast } from '@/hooks/useToast';
 import { useCombo, useCrearCombo, useActualizarCombo } from '@/hooks/useCombosModificadores';

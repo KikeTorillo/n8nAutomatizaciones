@@ -35,11 +35,15 @@ import {
 } from '@/hooks/useDropship';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { DataTable, DataTableActionButton, DataTableActions } from '@/components/ui/DataTable';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import {
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  Modal,
+  StatCardGrid
+} from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 

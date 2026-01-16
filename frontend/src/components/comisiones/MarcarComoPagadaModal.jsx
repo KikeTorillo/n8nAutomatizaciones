@@ -2,11 +2,13 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { CheckCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
+import {
+  Button,
+  Input,
+  Modal,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { useMarcarComoPagada } from '@/hooks/useComisiones';
 import { useToast } from '@/hooks/useToast';
 import { formatCurrency } from '@/lib/utils';

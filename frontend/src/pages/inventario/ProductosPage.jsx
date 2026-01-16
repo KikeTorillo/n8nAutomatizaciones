@@ -1,11 +1,17 @@
 import { useState, useMemo } from 'react';
 import { Package, Plus, Edit, Trash2, TrendingDown, Upload, ImageIcon, ScanLine, Tag, Search, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import Badge from '@/components/ui/Badge';
-import { AdvancedFilterPanel, FilterChip, SavedSearchModal } from '@/components/ui/filters';
+import {
+  AdvancedFilterPanel,
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  FilterChip,
+  SavedSearchModal
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';
 import { useFilters } from '@/hooks/useFilters';

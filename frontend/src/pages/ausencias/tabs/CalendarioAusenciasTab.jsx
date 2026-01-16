@@ -26,9 +26,7 @@ import {
 } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Badge from '@/components/ui/Badge';
+import { Badge, Button, Modal } from '@/components/ui';
 import { useCalendarioAusencias, formatRangoFechas } from '@/hooks/useAusencias';
 import { useDepartamentosActivos } from '@/hooks/useDepartamentos';
 

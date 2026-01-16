@@ -2,7 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { subscripcionesApi, planesApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { CreditCard, ArrowLeft, CheckCircle, Clock, ExternalLink } from 'lucide-react';
 
 /**

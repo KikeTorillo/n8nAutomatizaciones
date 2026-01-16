@@ -3,8 +3,7 @@
  * Migrado de Modal a Drawer - Enero 2026
  */
 import { useState, useEffect } from 'react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { Loader2, ClipboardList, CheckCircle2, Users, Building2, Calendar } from 'lucide-react';
 import {
   usePlantillasSugeridas,

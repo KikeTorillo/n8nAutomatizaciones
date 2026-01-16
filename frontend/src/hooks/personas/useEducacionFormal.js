@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== CONSTANTES ====================
 
@@ -95,6 +95,7 @@ export function useEducacionEnCurso(profesionalId) {
  */
 export function useCrearEducacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, data }) => {
@@ -118,6 +119,7 @@ export function useCrearEducacion() {
  */
 export function useActualizarEducacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, educacionId, data }) => {
@@ -144,6 +146,7 @@ export function useActualizarEducacion() {
  */
 export function useEliminarEducacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, educacionId }) => {
@@ -167,6 +170,7 @@ export function useEliminarEducacion() {
  */
 export function useReordenarEducacion() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, orden }) => {

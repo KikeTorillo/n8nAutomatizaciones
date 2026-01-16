@@ -18,11 +18,13 @@ import {
   RotateCcw,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
+import {
+  Button,
+  EmptyState,
+  Modal,
+  Select,
+  SkeletonTable
+} from '@/components/ui';
 import TransferenciaFormDrawer from '@/components/sucursales/TransferenciaFormDrawer';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

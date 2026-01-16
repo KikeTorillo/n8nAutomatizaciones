@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { bloqueosApi } from '@/services/api/endpoints';
-import useToast from '../utils/useToast';
+import { useToast } from '../utils/useToast';
 
 /**
  * Hook para listar bloqueos con filtros

@@ -18,11 +18,13 @@ import {
   ArrowRightLeft,
   BarChart3,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
+import {
+  BackButton,
+  Button,
+  Input,
+  Modal,
+  Select
+} from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
 import { useSucursales, useEliminarSucursal } from '@/hooks/useSucursales';

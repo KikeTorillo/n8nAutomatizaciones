@@ -22,10 +22,12 @@ import {
   ChevronDown,
   AlertTriangle,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 
 // Tipos de acción disponibles
 const TIPOS_ACCION = [

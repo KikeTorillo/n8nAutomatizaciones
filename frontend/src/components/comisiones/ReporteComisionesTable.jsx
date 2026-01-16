@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DollarSign, CheckCircle, Clock, XCircle, Eye } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

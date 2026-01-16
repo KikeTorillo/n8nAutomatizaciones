@@ -4,10 +4,10 @@
  */
 
 import { Edit2 } from 'lucide-react';
-import useSuperAdmin from '../../hooks/useSuperAdmin';
-import { useModalManager } from '../../hooks/useModalManager';
-import EditarPlanModal from '../../components/superadmin/EditarPlanModal';
-import Button from '../../components/ui/Button';
+import useSuperAdmin from '@/hooks/useSuperAdmin';
+import { useModalManager } from '@/hooks/useModalManager';
+import EditarPlanModal from '@/components/superadmin/EditarPlanModal';
+import { Button } from '@/components/ui';
 
 export default function SuperAdminPlanes() {
     const { usePlanes } = useSuperAdmin();

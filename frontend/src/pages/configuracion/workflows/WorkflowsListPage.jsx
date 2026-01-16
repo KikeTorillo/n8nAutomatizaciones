@@ -21,8 +21,7 @@ import {
   MoreVertical,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog } from '@/components/ui';
 import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';

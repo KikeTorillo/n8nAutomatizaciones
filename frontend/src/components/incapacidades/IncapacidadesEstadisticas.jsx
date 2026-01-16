@@ -14,7 +14,7 @@ import {
   BarChart3,
   PieChart,
 } from 'lucide-react';
-import Select from '@/components/ui/Select';
+import { Select } from '@/components/ui';
 import {
   useEstadisticasIncapacidades,
   TIPOS_INCAPACIDAD_CONFIG,

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 
 /**

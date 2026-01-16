@@ -5,6 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { reordenApi, inventarioApi } from '@/services/api/endpoints';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== DASHBOARD ====================
 
@@ -90,12 +91,18 @@ export function useReglaReorden(id) {
  */
 export function useCrearReglaReorden() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (data) => reordenApi.crearRegla(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      toast.success('Regla de reorden creada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al crear regla';
+      toast.error(msg);
     },
   });
 }
@@ -105,6 +112,7 @@ export function useCrearReglaReorden() {
  */
 export function useActualizarReglaReorden() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: ({ id, data }) => reordenApi.actualizarRegla(id, data),
@@ -112,6 +120,11 @@ export function useActualizarReglaReorden() {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
       queryClient.invalidateQueries({ queryKey: ['reorden', 'regla', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      toast.success('Regla de reorden actualizada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al actualizar regla';
+      toast.error(msg);
     },
   });
 }
@@ -121,12 +134,18 @@ export function useActualizarReglaReorden() {
  */
 export function useEliminarReglaReorden() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: (id) => reordenApi.eliminarRegla(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reorden', 'reglas'] });
       queryClient.invalidateQueries({ queryKey: ['reorden', 'dashboard'] });
+      toast.success('Regla de reorden eliminada');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al eliminar regla';
+      toast.error(msg);
     },
   });
 }
@@ -138,12 +157,18 @@ export function useEliminarReglaReorden() {
  */
 export function useEjecutarReordenManual() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: () => reordenApi.ejecutarManual(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['reorden'] });
       queryClient.invalidateQueries({ queryKey: ['ordenes-compra'] });
+      toast.success('Reorden ejecutado exitosamente');
+    },
+    onError: (error) => {
+      const msg = error.response?.data?.message || 'Error al ejecutar reorden';
+      toast.error(msg);
     },
   });
 }

@@ -10,8 +10,7 @@ import {
   Gem,
   Users
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import EmptyState from '@/components/ui/EmptyState';
+import { Button, EmptyState } from '@/components/ui';
 
 // Mapeo de iconos para niveles
 const ICONOS = {

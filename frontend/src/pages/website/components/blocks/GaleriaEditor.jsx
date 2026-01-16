@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Save, Plus, Trash2, Image, GripVertical } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
-import Button from '@/components/ui/Button';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Select
+} from '@/components/ui';
 
 /**
  * GaleriaEditor - Editor del bloque Galería

@@ -1,6 +1,6 @@
 import { AlertCircle, TrendingDown, Clock, XCircle, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { useDashboardAlertas } from '@/hooks/useInventario';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';

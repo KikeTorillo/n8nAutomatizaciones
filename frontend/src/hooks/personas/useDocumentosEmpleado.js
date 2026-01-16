@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // ==================== CONSTANTES ====================
 
@@ -91,6 +91,7 @@ export function useDocumentoEmpleado(profesionalId, documentoId) {
  */
 export function useSubirDocumento() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, formData }) => {
@@ -113,6 +114,7 @@ export function useSubirDocumento() {
  */
 export function useActualizarDocumento() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, documentoId, data }) => {
@@ -138,6 +140,7 @@ export function useActualizarDocumento() {
  */
 export function useEliminarDocumento() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, documentoId }) => {
@@ -160,6 +163,7 @@ export function useEliminarDocumento() {
  */
 export function useVerificarDocumento() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, documentoId, verificado, notas_verificacion }) => {
@@ -188,6 +192,8 @@ export function useVerificarDocumento() {
  * Obtiene URL firmada temporal para descargar documento
  */
 export function useObtenerUrlDocumento() {
+  const toast = useToast();
+
   return useMutation({
     mutationFn: async ({ profesionalId, documentoId, expiry = 3600 }) => {
       const response = await profesionalesApi.obtenerUrlDocumento(profesionalId, documentoId, { expiry });
@@ -205,6 +211,7 @@ export function useObtenerUrlDocumento() {
  */
 export function useReemplazarArchivo() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ profesionalId, documentoId, formData }) => {

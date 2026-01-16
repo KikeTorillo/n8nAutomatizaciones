@@ -5,7 +5,7 @@
  */
 import { useState } from 'react';
 import { Calendar, Users, CalendarDays } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import {
   VacacionesDashboard,
   SolicitudesEquipoSection,

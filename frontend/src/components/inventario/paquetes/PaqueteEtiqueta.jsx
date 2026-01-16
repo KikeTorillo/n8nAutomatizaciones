@@ -1,7 +1,6 @@
 import { useRef } from 'react';
 import { Package, Printer, X, Box, Scale, Ruler, Barcode } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
+import { Button, Modal } from '@/components/ui';
 import { useEtiquetaPaquete } from '@/hooks/usePaquetes';
 
 /**

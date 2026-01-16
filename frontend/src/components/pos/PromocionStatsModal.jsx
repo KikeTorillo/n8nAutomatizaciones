@@ -1,6 +1,5 @@
 import { Loader2, BarChart3, Calendar, Hash, DollarSign, Clock } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import { Modal, StatCardGrid } from '@/components/ui';
 import { useEstadisticasPromocion } from '@/hooks/usePromociones';
 
 /**

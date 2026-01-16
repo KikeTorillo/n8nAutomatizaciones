@@ -1,11 +1,15 @@
 import { useState, useMemo } from 'react';
 import { Building2, Plus, Edit, Trash2, Phone, Mail, Globe, MapPin } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import Badge from '@/components/ui/Badge';
-import { FilterPanel } from '@/components/ui/FilterPanel';
+import {
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  FilterPanel
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

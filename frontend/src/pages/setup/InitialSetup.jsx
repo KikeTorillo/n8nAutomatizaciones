@@ -14,7 +14,7 @@ import useAuthStore from '@/store/authStore';
 import { authApi } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
 import FormField from '@/components/forms/FormField';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 
 // Esquema de validación con Zod

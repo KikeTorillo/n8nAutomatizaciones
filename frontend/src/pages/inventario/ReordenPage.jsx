@@ -29,9 +29,7 @@ import {
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import Modal from '@/components/ui/Modal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Button from '@/components/ui/Button';
+import { Button, ConfirmDialog, Modal } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import StockPronosticoChart from '@/components/inventario/reorden/StockPronosticoChart';
 

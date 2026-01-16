@@ -23,7 +23,7 @@ import AperturaCajaModal from '@/components/pos/AperturaCajaModal';
 import CierreCajaModal from '@/components/pos/CierreCajaModal';
 import MovimientosCajaDrawer from '@/components/pos/MovimientosCajaDrawer';
 import ModificadoresProductoModal from '@/components/pos/ModificadoresProductoModal';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { ConfirmDialog } from '@/components/ui';
 import { playCashRegisterSound } from '@/utils/audioFeedback';
 
 /**

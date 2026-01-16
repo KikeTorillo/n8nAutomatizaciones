@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { AlertCircle } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Textarea from '@/components/ui/Textarea';
+import { Button, Modal, Textarea } from '@/components/ui';
 import { useNoShowCita } from '@/hooks/useCitas';
 import { useToast } from '@/hooks/useToast';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';

@@ -1,7 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Settings, FileText } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton, Button } from '@/components/ui';
 import ComisionesDashboard from '@/components/comisiones/ComisionesDashboard';
 
 /**

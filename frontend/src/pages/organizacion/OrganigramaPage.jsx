@@ -11,8 +11,7 @@ import {
   X,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import { Button, StatCardGrid } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
 import { useOrganigrama } from '@/hooks/useOrganigrama';
 import useThemeStore from '@/store/themeStore';

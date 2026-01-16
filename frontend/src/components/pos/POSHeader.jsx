@@ -1,5 +1,5 @@
 import { User, DollarSign, Lock, ArrowUpDown, MoreVertical, Monitor, Trash2 } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import ClienteSelector from '@/components/pos/ClienteSelector';
 
 /**

@@ -28,9 +28,7 @@ import {
   useDistribuirTodosCostos,
 } from '@/hooks/useLandedCosts';
 import { formatCurrency } from '@/lib/utils';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
+import { Button, Input, Select } from '@/components/ui';
 
 // Tipos de costo con iconos
 const TIPOS_COSTO = [

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui';
 import PlatformCard from './PlatformCard';
 import TelegramConfigForm from './TelegramConfigForm';
 import WhatsAppConfigForm from './WhatsAppConfigForm';

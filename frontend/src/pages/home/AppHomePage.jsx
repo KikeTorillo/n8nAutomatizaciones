@@ -33,11 +33,9 @@ import { authApi } from '@/services/api/endpoints';
 
 import AppCard from '@/components/home/AppCard';
 import QuickActions from '@/components/home/QuickActions';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog, ThemeToggle } from '@/components/ui';
 import TrialStatusWidget from '@/components/dashboard/TrialStatusWidget';
 import PlanStatusBanner from '@/components/dashboard/PlanStatusBanner';
-import ThemeToggle from '@/components/ui/ThemeToggle';
 import SucursalSelector from '@/components/sucursales/SucursalSelector';
 import { NotificacionesBell } from '@/components/notificaciones';
 

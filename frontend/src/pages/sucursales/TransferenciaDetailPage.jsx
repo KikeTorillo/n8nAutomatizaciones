@@ -14,10 +14,12 @@ import {
   FileText,
   AlertTriangle,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
-import Modal from '@/components/ui/Modal';
+import {
+  BackButton,
+  Button,
+  Input,
+  Modal
+} from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import {
   useTransferencia,

@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { UserCircle, Search, X, Plus, Check } from 'lucide-react';
 import { useBuscarClientes, useCrearCliente } from '@/hooks/useClientes';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Button, Input } from '@/components/ui';
 
 /**
  * ClienteSelector - Selector de cliente para POS

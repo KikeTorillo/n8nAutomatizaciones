@@ -5,8 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Minus, Package, Hash, AlertCircle } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useProductosAcuerdo, useRecibirMercanciaConsigna } from '@/hooks/useConsigna';
 
 export default function RecibirMercanciaDrawer({ acuerdo, isOpen, onClose }) {

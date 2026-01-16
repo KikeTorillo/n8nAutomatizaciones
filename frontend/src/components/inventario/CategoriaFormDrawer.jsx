@@ -3,12 +3,14 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { FolderTree, Palette } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
-import IconPicker from '@/components/ui/IconPicker';
+import {
+  Button,
+  Checkbox,
+  Drawer,
+  IconPicker,
+  Select,
+  Textarea
+} from '@/components/ui';
 import FieldWrapper from '@/components/forms/FieldWrapper';
 import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/useCategorias';
 import { useToast } from '@/hooks/useToast';

@@ -26,9 +26,7 @@ import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';
 import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
-import Input from '@/components/ui/Input';
+import { BackButton, Button, Input } from '@/components/ui';
 
 /**
  * Página de configuración del negocio

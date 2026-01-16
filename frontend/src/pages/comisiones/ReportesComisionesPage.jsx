@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import Button from '@/components/ui/Button';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton, Button, Modal } from '@/components/ui';
 import ReportesComisionesFiltros from '@/components/comisiones/ReportesComisionesFiltros';
 import ReporteComisionesTable from '@/components/comisiones/ReporteComisionesTable';
 import ExportButtons from '@/components/comisiones/ExportButtons';
-import Modal from '@/components/ui/Modal';
 import { useComisionesPorPeriodo } from '@/hooks/useComisiones';
 import { useModalManager } from '@/hooks/useModalManager';
 import { formatCurrency } from '@/lib/utils';

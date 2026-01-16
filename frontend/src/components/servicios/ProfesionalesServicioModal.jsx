@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Users, AlertCircle, GripVertical, ChevronDown, ChevronUp, RefreshCw, Info } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { profesionalesApi, serviciosApi } from '@/services/api/endpoints';
 import {
   useProfesionalesServicio,

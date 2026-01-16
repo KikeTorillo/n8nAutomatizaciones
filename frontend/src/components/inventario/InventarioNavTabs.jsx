@@ -3,7 +3,7 @@ import {
   ShoppingCart, Tag, MapPin, Hash, Route, ArrowRightLeft, Clock,
   ClipboardList, FileSpreadsheet, RefreshCw, Send, Handshake, Boxes, Layers,
 } from 'lucide-react';
-import GenericNavTabs from '@/components/ui/GenericNavTabs';
+import { GenericNavTabs } from '@/components/ui';
 
 /**
  * Definición de grupos de navegación para Inventario

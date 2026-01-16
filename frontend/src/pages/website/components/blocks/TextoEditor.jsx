@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Save, Bold, Italic, List, AlignLeft, AlignCenter, AlignRight } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import {
+  Button,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 
 /**
  * TextoEditor - Editor del bloque de texto enriquecido

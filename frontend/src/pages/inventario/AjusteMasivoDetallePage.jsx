@@ -13,15 +13,17 @@ import {
     Calendar,
     Package,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Alert from '@/components/ui/Alert';
-import Badge from '@/components/ui/Badge';
-import { DataTable } from '@/components/ui/DataTable';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { SkeletonTable } from '@/components/ui/SkeletonTable';
-import { SkeletonCard } from '@/components/ui/SkeletonCard';
+import {
+  Alert,
+  Badge,
+  Button,
+  ConfirmDialog,
+  DataTable,
+  EmptyState,
+  SkeletonCard,
+  SkeletonTable,
+  StatCardGrid
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

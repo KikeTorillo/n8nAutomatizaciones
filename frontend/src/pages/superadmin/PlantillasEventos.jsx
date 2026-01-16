@@ -6,12 +6,14 @@
 
 import { useState } from 'react';
 import { Plus, Edit, Trash2, Palette, Sparkles, Layout } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  ConfirmDialog,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';

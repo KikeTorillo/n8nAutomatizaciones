@@ -1,8 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DollarSign, Lock, FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Input, Modal } from '@/components/ui';
 import { useResumenSesionCaja, useCerrarSesionCaja } from '@/hooks/usePOS';
 import { useToast } from '@/hooks/useToast';
 

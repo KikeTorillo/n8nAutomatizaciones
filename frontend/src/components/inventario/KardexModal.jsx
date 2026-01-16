@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { FileBarChart, TrendingUp, TrendingDown, Filter, Download } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
+import { Button, Modal } from '@/components/ui';
 import { useKardex } from '@/hooks/useInventario';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

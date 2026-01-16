@@ -24,11 +24,13 @@ import {
   MessageCircle,
   Send,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Checkbox from '@/components/ui/Checkbox';
-import Select from '@/components/ui/Select';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { useServiciosDashboard } from '@/hooks/useEstadisticas';
 import { useProfesionales } from '@/hooks/useProfesionales';
 import { useUploadArchivo } from '@/hooks/useStorage';

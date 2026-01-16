@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { useModalManager } from '@/hooks/useModalManager';
 import { HeartPulse, List, BarChart3, Plus } from 'lucide-react';
-import BackButton from '@/components/ui/BackButton';
+import { BackButton } from '@/components/ui';
 import {
   IncapacidadesList,
   IncapacidadFormModal,

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { usePerfilPublico } from '@/hooks/useMarketplace';
 import SelectorServiciosPublico from '@/components/marketplace/agendamiento/SelectorServiciosPublico';

@@ -17,9 +17,7 @@ import {
   Boxes,
   Send,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
-import Modal from '@/components/ui/Modal';
+import { Button, Modal, Select } from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

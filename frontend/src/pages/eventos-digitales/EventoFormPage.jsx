@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { PartyPopper, Save, Image, Trash2, Plus, Upload } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Checkbox from '@/components/ui/Checkbox';
-import BackButton from '@/components/ui/BackButton';
+import {
+  BackButton,
+  Button,
+  Checkbox,
+  Input
+} from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useToast } from '@/hooks/useToast';
 import { useUploadArchivo } from '@/hooks/useStorage';

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { ChevronLeft, ChevronRight, MessageSquare } from 'lucide-react';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import { Button, Select } from '@/components/ui';
 import LoadingSpinner from '@/components/common/LoadingSpinner';
 import ReseñaCard from './ReseñaCard';
 import EstrellaRating from './EstrellaRating';

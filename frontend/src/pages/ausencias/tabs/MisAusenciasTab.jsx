@@ -7,10 +7,13 @@ import { useState } from 'react';
 import { useModalManager } from '@/hooks/useModalManager';
 import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-import Button from '@/components/ui/Button';
-import Alert from '@/components/ui/Alert';
-import EmptyState from '@/components/ui/EmptyState';
-import StatCardGrid from '@/components/ui/StatCardGrid';
+import {
+  Alert,
+  Badge,
+  Button,
+  EmptyState,
+  StatCardGrid
+} from '@/components/ui';
 import {
   useDashboardAusencias,
   useMisAusencias,
@@ -24,7 +27,6 @@ import {
   SolicitudVacacionesModal,
 } from '@/components/vacaciones';
 import { formatDias, ESTADOS_SOLICITUD } from '@/hooks/useVacaciones';
-import Badge from '@/components/ui/Badge';
 
 /**
  * Card de incapacidad activa

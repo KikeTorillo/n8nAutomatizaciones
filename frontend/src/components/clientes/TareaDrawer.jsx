@@ -14,7 +14,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui';
 import { PRIORIDADES } from '@/hooks/useClienteActividades';
 
 // Schema de validación

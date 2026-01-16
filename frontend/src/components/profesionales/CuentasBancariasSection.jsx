@@ -5,7 +5,7 @@
  * Reducido de 264 LOC a ~120 LOC (-55%)
  */
 import { Building2, CreditCard, Star, Edit2, Trash2 } from 'lucide-react';
-import ExpandableCrudSection from '@/components/ui/ExpandableCrudSection';
+import { ExpandableCrudSection } from '@/components/ui';
 import CuentaBancariaDrawer from './drawers/CuentaBancariaDrawer';
 import { useToast } from '@/hooks/useToast';
 import {

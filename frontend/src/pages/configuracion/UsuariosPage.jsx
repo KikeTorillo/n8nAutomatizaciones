@@ -18,9 +18,7 @@ import {
   Link2Off,
 } from 'lucide-react';
 
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
 import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
 import { useToast } from '@/hooks/useToast';
 import { useModalManager } from '@/hooks/useModalManager';

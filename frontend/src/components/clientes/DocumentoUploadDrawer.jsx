@@ -21,7 +21,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
+import { Drawer } from '@/components/ui';
 import { TIPOS_DOCUMENTO, formatFileSize } from '@/hooks/useClienteDocumentos';
 
 // Schema de validación

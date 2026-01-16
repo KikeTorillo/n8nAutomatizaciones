@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { formatDate } from '@/lib/utils';
 import { MessageSquare, User } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import EstrellaRating from './EstrellaRating';
 
 /**

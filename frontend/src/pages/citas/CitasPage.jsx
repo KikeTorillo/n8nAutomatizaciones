@@ -2,10 +2,12 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { format } from 'date-fns';
 import { Calendar, Plus, TrendingUp, Clock, CheckCircle, List, CalendarDays, FileSpreadsheet } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
-import { ViewTabs } from '@/components/ui/ViewTabs';
-import { Pagination } from '@/components/ui/Pagination';
+import {
+  Button,
+  Pagination,
+  StatCardGrid,
+  ViewTabs
+} from '@/components/ui';
 import CitasList from '@/components/citas/CitasList';
 import CitaFilters from '@/components/citas/CitaFilters';
 import CitaDetailModal from '@/components/citas/CitaDetailModal';

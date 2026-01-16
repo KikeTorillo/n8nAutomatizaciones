@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/useToast';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 import { Building2, UserCheck, Sparkles, ArrowRight, Loader2 } from 'lucide-react';
 import ModuloSelector from '@/components/onboarding/ModuloSelector';
 

@@ -9,7 +9,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, Mail, Calendar, UserCircle, Edit, Building2 } from 'lucide-react';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
+import { DataTable, DataTableActionButton, DataTableActions } from '@/components/ui';
 import EtiquetasBadges from './EtiquetasBadges';
 
 /**

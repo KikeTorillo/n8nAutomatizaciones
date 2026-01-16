@@ -1,7 +1,6 @@
 import { Search, X, Filter, Building2 } from 'lucide-react';
 import { useState } from 'react';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
+import { Button, Select } from '@/components/ui';
 import useSucursalStore from '@/store/sucursalStore';
 
 /**

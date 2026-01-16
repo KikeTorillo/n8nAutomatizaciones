@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Clock, Trash2, AlertCircle, CheckCircle, Calendar } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import {
+  Button,
+  ConfirmDialog,
+  Drawer,
+  Input,
+  Select
+} from '@/components/ui';
 import {
   useHorariosProfesional,
   useCrearHorarioSemanal,

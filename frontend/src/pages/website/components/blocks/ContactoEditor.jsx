@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save, MapPin, Phone, Mail, Clock } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Checkbox from '@/components/ui/Checkbox';
-import Button from '@/components/ui/Button';
+import { Button, Checkbox, Input } from '@/components/ui';
 
 /**
  * ContactoEditor - Editor del bloque Contacto

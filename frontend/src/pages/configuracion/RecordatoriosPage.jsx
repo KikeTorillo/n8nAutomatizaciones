@@ -8,9 +8,7 @@ import {
   useEstadisticasRecordatorios,
   useEnviarPrueba,
 } from '@/hooks/useRecordatorios';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import { StatCardGrid } from '@/components/ui/StatCardGrid';
+import { Button, Input, StatCardGrid } from '@/components/ui';
 import {
   Bell,
   Save,

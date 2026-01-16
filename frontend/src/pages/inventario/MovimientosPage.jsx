@@ -1,11 +1,15 @@
 import { useState, useMemo } from 'react';
 import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import { DataTable, DataTableActions, DataTableActionButton } from '@/components/ui/DataTable';
-import { Pagination } from '@/components/ui/Pagination';
-import { FilterPanel } from '@/components/ui/FilterPanel';
+import {
+  Badge,
+  Button,
+  DataTable,
+  DataTableActionButton,
+  DataTableActions,
+  FilterPanel,
+  Pagination
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import { useExportCSV } from '@/hooks/useExportCSV';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';

@@ -1,11 +1,14 @@
 import { useState, useCallback } from 'react';
 import { FolderTree, Plus, Edit, Trash2, AlertTriangle } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
-import Button from '@/components/ui/Button';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
-import { EmptyState } from '@/components/ui/EmptyState';
-import Alert from '@/components/ui/Alert';
-import { TreeView, useTreeExpansion } from '@/components/ui/TreeNode';
+import {
+  Alert,
+  Button,
+  ConfirmDialog,
+  EmptyState,
+  TreeView,
+  useTreeExpansion
+} from '@/components/ui';
 import { useToast } from '@/hooks/useToast';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {

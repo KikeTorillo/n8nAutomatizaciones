@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Save } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Select from '@/components/ui/Select';
-import Button from '@/components/ui/Button';
+import { Button, Input, Select } from '@/components/ui';
 
 /**
  * SeparadorEditor - Editor del bloque Separador

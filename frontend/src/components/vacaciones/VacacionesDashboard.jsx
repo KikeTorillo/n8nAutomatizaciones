@@ -5,9 +5,7 @@
  */
 import { useState } from 'react';
 import { Plus, Calendar, Filter, RefreshCw, Clock, User, FileText, X } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import Modal from '@/components/ui/Modal';
-import Badge from '@/components/ui/Badge';
+import { Badge, Button, Modal } from '@/components/ui';
 import { useModalManager } from '@/hooks/useModalManager';
 import {
   useDashboardVacaciones,

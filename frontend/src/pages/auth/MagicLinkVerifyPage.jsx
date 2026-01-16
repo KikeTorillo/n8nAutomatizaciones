@@ -14,7 +14,7 @@ import useAuthStore from '@/store/authStore';
 import { useToast } from '@/hooks/useToast';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 function MagicLinkVerifyPage() {
   const { token } = useParams();

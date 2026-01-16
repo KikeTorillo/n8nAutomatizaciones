@@ -31,8 +31,7 @@ import {
   NOTIFICACION_NIVELES,
   NOTIFICACION_CATEGORIAS,
 } from '@/hooks/useNotificaciones';
-import Button from '@/components/ui/Button';
-import Select from '@/components/ui/Select';
+import { Button, Select } from '@/components/ui';
 
 /**
  * Iconos por categoria de notificacion

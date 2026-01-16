@@ -5,7 +5,7 @@
  */
 import React from 'react';
 import { AlertCircle, RefreshCw, Home } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 class ChunkErrorBoundary extends React.Component {
   constructor(props) {

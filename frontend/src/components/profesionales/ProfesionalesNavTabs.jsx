@@ -1,5 +1,5 @@
 import { Users, Network, ClipboardList } from 'lucide-react';
-import GenericNavTabs from '@/components/ui/GenericNavTabs';
+import { GenericNavTabs } from '@/components/ui';
 
 /**
  * Definición de items de navegación para Profesionales

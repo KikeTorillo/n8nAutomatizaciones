@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, RotateCcw, Check } from 'lucide-react';
-import Button from '@/components/ui/Button';
+import { Button } from '@/components/ui';
 
 /**
  * Teclado de billetes para pago en efectivo

@@ -5,7 +5,7 @@
  * Reducido de 247 LOC a ~80 LOC (-67%)
  */
 import { GraduationCap, BookOpen, Edit2, Trash2 } from 'lucide-react';
-import ExpandableCrudSection from '@/components/ui/ExpandableCrudSection';
+import { ExpandableCrudSection } from '@/components/ui';
 import EducacionDrawer from './drawers/EducacionDrawer';
 import {
   useEducacionFormal,

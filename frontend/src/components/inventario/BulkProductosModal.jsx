@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Upload, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
+import { Button, Drawer } from '@/components/ui';
 import { useBulkCrearProductos } from '@/hooks/useProductos';
 import { useToast } from '@/hooks/useToast';
 

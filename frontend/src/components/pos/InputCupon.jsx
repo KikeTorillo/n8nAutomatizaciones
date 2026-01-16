@@ -1,7 +1,6 @@
 import { useState, useCallback } from 'react';
 import { Tag, Check, X, Loader2, Percent, DollarSign, AlertCircle } from 'lucide-react';
-import Input from '@/components/ui/Input';
-import Button from '@/components/ui/Button';
+import { Button, Input } from '@/components/ui';
 import { useValidarCupon } from '@/hooks/useCupones';
 
 /**

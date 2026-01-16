@@ -25,9 +25,7 @@ import {
   Loader2,
   Filter,
 } from 'lucide-react';
-import Button from '@/components/ui/Button';
-import EmptyState from '@/components/ui/EmptyState';
-import ConfirmDialog from '@/components/ui/ConfirmDialog';
+import { Button, ConfirmDialog, EmptyState } from '@/components/ui';
 import {
   useDocumentosCliente,
   useCrearDocumento,

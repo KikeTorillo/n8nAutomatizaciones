@@ -7,12 +7,14 @@ import {
   Plus, Trash2, GripVertical, Loader2, User, UserCheck, Users,
   ExternalLink, ChevronDown, ChevronUp
 } from 'lucide-react';
-import Modal from '@/components/ui/Modal';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
-import Textarea from '@/components/ui/Textarea';
-import Select from '@/components/ui/Select';
-import Checkbox from '@/components/ui/Checkbox';
+import {
+  Button,
+  Checkbox,
+  Input,
+  Modal,
+  Select,
+  Textarea
+} from '@/components/ui';
 import { DepartamentoSelect, PuestoSelect } from '@/components/organizacion';
 import {
   usePlantillaOnboarding,

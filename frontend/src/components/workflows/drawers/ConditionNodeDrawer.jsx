@@ -16,9 +16,7 @@ import {
   X,
   HelpCircle,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import ConditionEditor from '../editors/ConditionEditor';
 
 /**

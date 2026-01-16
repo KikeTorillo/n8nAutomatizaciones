@@ -4,7 +4,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vacacionesApi } from '@/services/api/endpoints';
-import { toast } from 'sonner';
+import { useToast } from '@/hooks/useToast';
 
 // === Constantes ===
 
@@ -61,6 +61,7 @@ export function usePoliticaVacaciones() {
  */
 export function useActualizarPoliticaVacaciones() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -98,6 +99,7 @@ export function useNivelesVacaciones(filtros = {}) {
  */
 export function useCrearNivelVacaciones() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -119,6 +121,7 @@ export function useCrearNivelVacaciones() {
  */
 export function useActualizarNivelVacaciones() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, data }) => {
@@ -140,6 +143,7 @@ export function useActualizarNivelVacaciones() {
  */
 export function useEliminarNivelVacaciones() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (id) => {
@@ -161,6 +165,7 @@ export function useEliminarNivelVacaciones() {
  */
 export function useCrearNivelesPreset() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -213,6 +218,7 @@ export function useSaldosVacaciones(filtros = {}) {
  */
 export function useAjustarSaldo() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, dias_ajuste, motivo }) => {
@@ -235,6 +241,7 @@ export function useAjustarSaldo() {
  */
 export function useGenerarSaldosAnio() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -258,6 +265,7 @@ export function useGenerarSaldosAnio() {
  */
 export function useCrearSolicitudVacaciones() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async (data) => {
@@ -362,6 +370,7 @@ export function useSolicitudVacaciones(id) {
  */
 export function useAprobarSolicitud() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, notas_internas }) => {
@@ -383,6 +392,7 @@ export function useAprobarSolicitud() {
  */
 export function useRechazarSolicitud() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, motivo_rechazo, notas_internas }) => {
@@ -404,6 +414,7 @@ export function useRechazarSolicitud() {
  */
 export function useCancelarSolicitud() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   return useMutation({
     mutationFn: async ({ id, motivo }) => {
@@ -487,46 +498,3 @@ export function calcularProgresoNivel(nivelInfo) {
   };
 }
 
-export default {
-  // Política
-  usePoliticaVacaciones,
-  useActualizarPoliticaVacaciones,
-
-  // Niveles
-  useNivelesVacaciones,
-  useCrearNivelVacaciones,
-  useActualizarNivelVacaciones,
-  useEliminarNivelVacaciones,
-  useCrearNivelesPreset,
-
-  // Saldos
-  useMiSaldoVacaciones,
-  useSaldosVacaciones,
-  useAjustarSaldo,
-  useGenerarSaldosAnio,
-
-  // Solicitudes
-  useCrearSolicitudVacaciones,
-  useMisSolicitudesVacaciones,
-  useSolicitudesVacaciones,
-  useSolicitudesCalendario,
-  useSolicitudesPendientes,
-  useSolicitudVacaciones,
-  useAprobarSolicitud,
-  useRechazarSolicitud,
-  useCancelarSolicitud,
-
-  // Dashboard
-  useDashboardVacaciones,
-  useEstadisticasVacaciones,
-
-  // Constantes
-  ESTADOS_SOLICITUD,
-  TIPOS_APROBADOR,
-  TURNOS_MEDIO_DIA,
-
-  // Utilidades
-  getEstadoSolicitud,
-  formatDias,
-  calcularProgresoNivel,
-};

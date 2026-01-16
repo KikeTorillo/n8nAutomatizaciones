@@ -22,9 +22,7 @@ import {
   Save,
   X,
 } from 'lucide-react';
-import Drawer from '@/components/ui/Drawer';
-import Button from '@/components/ui/Button';
-import Input from '@/components/ui/Input';
+import { Button, Drawer, Input } from '@/components/ui';
 import ApprovalNodeDrawer from './ApprovalNodeDrawer';
 import ConditionNodeDrawer from './ConditionNodeDrawer';
 import ActionNodeDrawer from './ActionNodeDrawer';
