@@ -30,7 +30,7 @@ import {
   useEliminarNotificacion,
   NOTIFICACION_NIVELES,
   NOTIFICACION_CATEGORIAS,
-} from '@/hooks/useNotificaciones';
+} from '@/hooks/sistema';
 import { Button, Select } from '@/components/ui';
 
 /**

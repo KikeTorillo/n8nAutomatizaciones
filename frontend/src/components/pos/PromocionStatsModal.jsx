@@ -1,6 +1,6 @@
 import { Loader2, BarChart3, Calendar, Hash, DollarSign, Clock } from 'lucide-react';
 import { Modal, StatCardGrid } from '@/components/ui';
-import { useEstadisticasPromocion } from '@/hooks/usePromociones';
+import { useEstadisticasPromocion } from '@/hooks/pos';
 
 /**
  * Modal para mostrar estadísticas de una promoción

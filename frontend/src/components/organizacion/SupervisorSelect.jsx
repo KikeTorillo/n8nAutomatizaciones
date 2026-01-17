@@ -1,6 +1,6 @@
 import { forwardRef, useMemo } from 'react';
 import { Select } from '@/components/ui';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useProfesionales } from '@/hooks/personas';
 import { UserCheck } from 'lucide-react';
 
 /**

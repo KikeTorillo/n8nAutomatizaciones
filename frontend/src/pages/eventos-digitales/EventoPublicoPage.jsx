@@ -15,12 +15,12 @@ import {
   Camera
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useEventoPublico,
   useInvitacionPublica,
   useConfirmarRSVP,
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
 import {
   GaleriaCompartida,

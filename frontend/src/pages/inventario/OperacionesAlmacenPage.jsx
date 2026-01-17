@@ -20,14 +20,14 @@ import {
   ChevronUp,
   ChevronDown,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Button,
   ConfirmDialog,
   FilterPanel,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useOperacionesAlmacen,
@@ -41,7 +41,7 @@ import {
   LABELS_TIPO_OPERACION,
   LABELS_ESTADO_OPERACION,
   COLORES_ESTADO_OPERACION,
-} from '@/hooks/useOperacionesAlmacen';
+} from '@/hooks/almacen';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import useAuthStore, { selectUser } from '@/store/authStore';
 

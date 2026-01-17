@@ -24,14 +24,14 @@ import {
 } from '@/components/ui';
 import CuponFormDrawer from '@/components/pos/CuponFormDrawer';
 import CuponStatsModal from '@/components/pos/CuponStatsModal';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 import {
   useCupones,
   useEliminarCupon,
   useCambiarEstadoCupon
-} from '@/hooks/useCupones';
+} from '@/hooks/pos';
 
 // Tipos de descuento disponibles
 const TIPOS_DESCUENTO = {

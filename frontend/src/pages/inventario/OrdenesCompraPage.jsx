@@ -35,18 +35,18 @@ import {
   StatCardGrid,
   Textarea
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useOrdenesCompra,
   useEliminarOrdenCompra,
   useEnviarOrdenCompra,
   useCancelarOrdenCompra,
-} from '@/hooks/useOrdenesCompra';
-import { useProveedores } from '@/hooks/useProveedores';
-import { useSugerenciasOC, useAutoGenerarOCs } from '@/hooks/useInventario';
+} from '@/hooks/inventario';
+import { useProveedores } from '@/hooks/inventario';
+import { useSugerenciasOC, useAutoGenerarOCs } from '@/hooks/inventario';
 import OrdenCompraFormDrawer from '@/components/inventario/ordenes-compra/OrdenCompraFormDrawer';
 import OrdenCompraDetalleModal from '@/components/inventario/ordenes-compra/OrdenCompraDetalleModal';
 import RecibirMercanciaModal from '@/components/inventario/ordenes-compra/RecibirMercanciaModal';

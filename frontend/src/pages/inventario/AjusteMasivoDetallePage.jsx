@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
     FileSpreadsheet,
@@ -24,7 +24,7 @@ import {
   SkeletonTable,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useAjusteMasivo,
@@ -33,7 +33,7 @@ import {
     useCancelarAjusteMasivo,
     ESTADOS_AJUSTE_MASIVO_CONFIG,
     ESTADOS_ITEM_AJUSTE_CONFIG,
-} from '@/hooks/useAjustesMasivos';
+} from '@/hooks/inventario';
 
 /**
  * Página de detalle de un ajuste masivo

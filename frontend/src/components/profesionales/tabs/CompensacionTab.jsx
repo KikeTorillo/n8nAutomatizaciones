@@ -5,9 +5,9 @@ import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
 import CuentasBancariasSection from '@/components/profesionales/CuentasBancariasSection';
 import MisComisionesSection from '@/components/profesionales/MisComisionesSection';
-import { FORMAS_PAGO } from '@/hooks/useProfesionales';
-import { useCategoriasPagoOptions } from '@/hooks/useCategoriasPago';
-import { useCurrency } from '@/hooks/useCurrency';
+import { FORMAS_PAGO } from '@/hooks/personas';
+import { useCategoriasPagoOptions } from '@/hooks/personas';
+import { useCurrency } from '@/hooks/utils';
 import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**

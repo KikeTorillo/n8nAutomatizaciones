@@ -20,10 +20,10 @@ import {
   Select
 } from '@/components/ui';
 import { ConfigPageHeader, ConfigEmptyState } from '@/components/configuracion';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/useBloqueos';
-import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useBloqueos, useCrearBloqueo, useEliminarBloqueo } from '@/hooks/agendamiento';
+import { useTiposBloqueo } from '@/hooks/agendamiento';
 import {
   FERIADOS_LATAM,
   PAISES_DISPONIBLES,

@@ -18,7 +18,7 @@ import {
   Send,
 } from 'lucide-react';
 import { Button, Modal, Select } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useConfiguracionAlmacen,
@@ -30,8 +30,8 @@ import {
   LABELS_PASOS_ENVIO,
   DESCRIPCIONES_PASOS_RECEPCION,
   DESCRIPCIONES_PASOS_ENVIO,
-} from '@/hooks/useConfiguracionAlmacen';
-import { useArbolUbicaciones } from '@/hooks/useUbicacionesAlmacen';
+} from '@/hooks/almacen';
+import { useArbolUbicaciones } from '@/hooks/inventario';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**

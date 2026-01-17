@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { FileImage, FileText, File, Download, Trash2, Eye, ExternalLink, Loader2, MoreVertical } from 'lucide-react';
-import { useArchivos, useEliminarArchivo } from '@/hooks/useStorage';
-import { useToast } from '@/hooks/useToast';
+import { useArchivos, useEliminarArchivo } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 import { Button, ConfirmDialog } from '@/components/ui';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useEstadisticasPerfil } from '@/hooks/useMarketplace';
+import { useEstadisticasPerfil } from '@/hooks/otros';
 import { LoadingSpinner } from '@/components/ui';
 import {
   Chart as ChartJS,

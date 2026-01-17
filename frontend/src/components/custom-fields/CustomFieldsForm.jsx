@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useCustomFieldsValores, useCustomFieldsDefiniciones } from '@/hooks/useCustomFields';
+import { useCustomFieldsValores, useCustomFieldsDefiniciones } from '@/hooks/sistema';
 import {
   Checkbox,
   Input,

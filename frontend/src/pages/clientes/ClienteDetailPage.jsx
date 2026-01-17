@@ -33,8 +33,8 @@ import {
 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner, StatCardGrid } from '@/components/ui';
 import ClienteEtiquetasEditor from '@/components/clientes/ClienteEtiquetasEditor';
-import { useCliente, useEstadisticasCliente } from '@/hooks/useClientes';
-import { useUsuarios } from '@/hooks/useUsuarios';
+import { useCliente, useEstadisticasCliente } from '@/hooks/personas';
+import { useUsuarios } from '@/hooks/personas';
 import { cn, formatCurrency } from '@/lib/utils';
 
 // Tabs components

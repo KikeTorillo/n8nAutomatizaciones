@@ -7,14 +7,14 @@
 import { Building2, CreditCard, Star, Edit2, Trash2 } from 'lucide-react';
 import { ExpandableCrudSection } from '@/components/ui';
 import CuentaBancariaDrawer from './drawers/CuentaBancariaDrawer';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCuentasBancarias,
   useEliminarCuentaBancaria,
   useEstablecerCuentaPrincipal,
   TIPOS_CUENTA_BANCARIA,
   USOS_CUENTA_BANCARIA,
-} from '@/hooks/useCuentasBancarias';
+} from '@/hooks/personas';
 
 // Ocultar número de cuenta parcialmente
 const maskAccountNumber = (num) => {

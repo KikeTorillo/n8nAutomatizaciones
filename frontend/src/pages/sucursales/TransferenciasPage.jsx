@@ -17,7 +17,7 @@ import {
   ChevronUp,
   RotateCcw,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Button,
   EmptyState,
@@ -32,8 +32,8 @@ import {
   useSucursales,
   useEnviarTransferencia,
   useCancelarTransferencia,
-} from '@/hooks/useSucursales';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
 
 // Mapeo de estados a colores e iconos
 const estadoConfig = {

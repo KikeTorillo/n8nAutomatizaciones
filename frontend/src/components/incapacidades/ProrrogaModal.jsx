@@ -16,7 +16,7 @@ import { Button, Input, Modal } from '@/components/ui';
 import {
   useCrearProrroga,
   getTipoIncapacidadConfig,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 
 // Schema de validación para prórroga
 const prorrogaSchema = z.object({

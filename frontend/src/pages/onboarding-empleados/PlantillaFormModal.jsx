@@ -24,7 +24,7 @@ import {
   useActualizarTarea,
   useEliminarTarea,
   useReordenarTareas
-} from '@/hooks/useOnboardingEmpleados';
+} from '@/hooks/personas';
 
 const RESPONSABLES = [
   { value: 'empleado', label: 'Empleado', icon: User },

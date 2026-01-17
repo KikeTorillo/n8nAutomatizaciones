@@ -15,12 +15,12 @@ import {
   Textarea
 } from '@/components/ui';
 import { Loader2, GraduationCap } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCrearEducacion,
   useActualizarEducacion,
   NIVELES_EDUCACION,
-} from '@/hooks/useEducacionFormal';
+} from '@/hooks/personas';
 import { educacionSchema } from '@/schemas/profesionales.schemas';
 
 // ====================================================================

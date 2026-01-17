@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
-import { usePerfilPublico } from '@/hooks/useMarketplace';
+import { usePerfilPublico } from '@/hooks/otros';
 import SelectorServiciosPublico from '@/components/marketplace/agendamiento/SelectorServiciosPublico';
 import SelectorFechaHoraPublico from '@/components/marketplace/agendamiento/SelectorFechaHoraPublico';
 import FormularioDatosCliente from '@/components/marketplace/agendamiento/FormularioDatosCliente';

@@ -14,7 +14,7 @@ import { z } from 'zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser, selectSetAuth, selectIsAuthenticated } from '@/store/authStore';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';

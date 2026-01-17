@@ -1,6 +1,6 @@
 import { Filter } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useProfesionales } from '@/hooks/personas';
 
 /**
  * Componente de filtros para reportes de comisiones

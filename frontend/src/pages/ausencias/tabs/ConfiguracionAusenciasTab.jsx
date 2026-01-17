@@ -11,8 +11,8 @@ import {
   useActualizarPoliticaVacaciones,
   useNivelesVacaciones,
   useCrearNivelesPreset,
-} from '@/hooks/useVacaciones';
-import { formatDias } from '@/hooks/useVacaciones';
+} from '@/hooks/personas';
+import { formatDias } from '@/hooks/personas';
 
 /**
  * Sección de política de vacaciones

@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Toast } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Contenedor de toasts posicionado en la esquina superior derecha

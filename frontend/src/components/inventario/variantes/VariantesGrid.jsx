@@ -9,8 +9,8 @@ import {
   AlertTriangle,
   Image as ImageIcon
 } from 'lucide-react';
-import { useVariantes, useAjustarStockVariante, useEliminarVariante } from '@/hooks/useVariantes';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useVariantes, useAjustarStockVariante, useEliminarVariante } from '@/hooks/inventario';
+import { useCurrency } from '@/hooks/utils';
 import { toast } from 'sonner';
 
 /**

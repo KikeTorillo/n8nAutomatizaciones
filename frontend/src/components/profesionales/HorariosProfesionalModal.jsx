@@ -11,8 +11,8 @@ import {
   useHorariosProfesional,
   useCrearHorarioSemanal,
   useEliminarHorario,
-} from '@/hooks/useHorarios';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
 import { aFormatoISO } from '@/utils/dateHelpers';
 
 /**

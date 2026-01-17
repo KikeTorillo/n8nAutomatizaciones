@@ -1,6 +1,6 @@
 import { Download, FileSpreadsheet, FileText } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

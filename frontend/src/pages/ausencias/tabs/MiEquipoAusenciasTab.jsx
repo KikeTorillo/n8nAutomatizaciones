@@ -8,8 +8,8 @@ import { RefreshCw, HeartPulse, Calendar, Users } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, EmptyState } from '@/components/ui';
 import { SolicitudesEquipoSection } from '@/components/vacaciones';
-import { useIncapacidades } from '@/hooks/useIncapacidades';
-import { formatRangoFechas, calcularDiasRestantes } from '@/hooks/useAusencias';
+import { useIncapacidades } from '@/hooks/personas';
+import { formatRangoFechas, calcularDiasRestantes } from '@/hooks/personas';
 
 /**
  * Card de incapacidad del equipo

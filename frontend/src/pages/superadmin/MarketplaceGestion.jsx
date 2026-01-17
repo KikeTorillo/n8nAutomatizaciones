@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/useSuperAdminMarketplace';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { usePerfilesAdmin, useActivarPerfil, useLimpiarAnalytics } from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   Button,
   ConfirmDialog,

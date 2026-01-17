@@ -9,14 +9,14 @@
 import { Wrench, Edit2, Trash2, CheckCircle, Shield } from 'lucide-react';
 import { ExpandableCrudSection } from '@/components/ui';
 import HabilidadDrawer from './drawers/HabilidadDrawer';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useHabilidadesEmpleado,
   useEliminarHabilidadEmpleado,
   useVerificarHabilidadEmpleado,
   getCategoriaConfig,
   getNivelConfig,
-} from '@/hooks/useHabilidades';
+} from '@/hooks/personas';
 
 // Colores para niveles
 const nivelColors = {

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { ArrowDownCircle, ArrowUpCircle, Clock, DollarSign, Plus, User } from 'lucide-react';
 import { Button, Drawer, Input } from '@/components/ui';
-import { useMovimientosCaja, useRegistrarMovimientoCaja } from '@/hooks/usePOS';
-import { useToast } from '@/hooks/useToast';
+import { useMovimientosCaja, useRegistrarMovimientoCaja } from '@/hooks/pos';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Drawer para ver y registrar movimientos de caja (entradas/salidas)

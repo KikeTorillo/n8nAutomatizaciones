@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Upload, Download, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useBulkCrearProductos } from '@/hooks/useProductos';
-import { useToast } from '@/hooks/useToast';
+import { useBulkCrearProductos } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Template CSV para descarga

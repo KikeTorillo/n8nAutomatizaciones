@@ -2,9 +2,9 @@ import { useState } from 'react';
 import PropTypes from 'prop-types';
 import { AlertCircle, XCircle } from 'lucide-react';
 import { Button, Modal, Textarea } from '@/components/ui';
-import { useCancelarCita } from '@/hooks/useCitas';
+import { useCancelarCita } from '@/hooks/agendamiento';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Modal especializado para cancelar citas

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCrearPerfil } from '@/hooks/useMarketplace';
-import { useUbicacionSelector, usePaisDefault } from '@/hooks/useUbicaciones';
-import { useToast } from '@/hooks/useToast';
+import { useCrearPerfil } from '@/hooks/otros';
+import { useUbicacionSelector, usePaisDefault } from '@/hooks/otros';
+import { useToast } from '@/hooks/utils';
 import { Button, Input, Select } from '@/components/ui';
 import { X, ChevronRight, ChevronLeft, Check, Store, Loader2 } from 'lucide-react';
 

@@ -20,9 +20,10 @@ import {
 import {
   useSubirDocumento,
   TIPOS_DOCUMENTO_EMPLEADO,
-  formatFileSize,
+  // formatFileSize moved to @/lib/utils
   prepararFormDataDocumento,
-} from '@/hooks/useDocumentosEmpleado';
+} from '@/hooks/personas';
+import { formatFileSize } from '@/lib/utils';
 import { Upload, X, FileText, Loader2 } from 'lucide-react';
 import {
   documentoMetadataSchema,

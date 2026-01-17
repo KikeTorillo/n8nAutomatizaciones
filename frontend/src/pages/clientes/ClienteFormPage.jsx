@@ -1,9 +1,9 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { BackButton, LoadingSpinner } from '@/components/ui';
 import ClienteForm from '@/components/clientes/ClienteForm';
-import { useCliente, useCrearCliente, useActualizarCliente } from '@/hooks/useClientes';
-import { useAsignarEtiquetasCliente } from '@/hooks/useEtiquetasClientes';
-import { useToast } from '@/hooks/useToast';
+import { useCliente, useCrearCliente, useActualizarCliente } from '@/hooks/personas';
+import { useAsignarEtiquetasCliente } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Página para crear o editar un cliente

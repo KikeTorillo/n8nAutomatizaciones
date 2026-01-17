@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { Package, Printer, X, Box, Scale, Ruler, Barcode } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
-import { useEtiquetaPaquete } from '@/hooks/usePaquetes';
+import { useEtiquetaPaquete } from '@/hooks/almacen';
 
 /**
  * Modal para visualizar e imprimir etiqueta de paquete

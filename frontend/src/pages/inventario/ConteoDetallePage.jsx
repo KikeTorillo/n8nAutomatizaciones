@@ -27,8 +27,8 @@ import {
     AplicarAjustesModal,
     CancelarConteoModal,
 } from '@/components/inventario/conteos/modales';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
     useConteo,
     useIniciarConteo,
@@ -40,7 +40,7 @@ import {
     ESTADOS_CONTEO,
     ESTADOS_CONTEO_CONFIG,
     TIPOS_CONTEO_LABELS,
-} from '@/hooks/useConteos';
+} from '@/hooks/inventario';
 
 /**
  * Página de detalle de un conteo de inventario

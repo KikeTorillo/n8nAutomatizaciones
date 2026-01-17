@@ -3,9 +3,28 @@
  * Re-exports centralizados para el módulo de ventas
  */
 
-export * from './usePOS';
-export * from './usePOSCart';
+// usePOS - exports selectivos para evitar conflictos con useVentas
+// (solo hooks de caja y sesiones que son únicos)
+export {
+  useSesionCaja,
+  useSesionCajaActiva,
+  useSesionesCaja,
+  useAbrirSesionCaja,
+  useCerrarSesionCaja,
+  useMovimientosCaja,
+  useRegistrarMovimientoCaja,
+  useResumenSesionCaja,
+  usePagosVenta,
+  useRegistrarPagosSplit,
+  useProductosPOS,
+  useCategoriasPOS,
+} from './usePOS';
+
+// useVentas - todos los hooks de ventas (prioridad sobre usePOS)
 export * from './useVentas';
+
+// Otros hooks de POS
+export * from './usePOSCart';
 export * from './useCupones';
 export * from './usePromociones';
 export * from './useBarcodeScanner';

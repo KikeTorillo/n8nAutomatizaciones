@@ -13,7 +13,7 @@ import {
   getNivelEducacionLabel,
   getEstadoEstudio,
   formatearRangoAnios,
-} from '@/hooks/useEducacionFormal';
+} from '@/hooks/personas';
 
 /**
  * Card individual de educación

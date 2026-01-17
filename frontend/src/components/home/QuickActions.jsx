@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom';
 import { Plus, Calendar, UserPlus, ShoppingCart, Package, Bell } from 'lucide-react';
-import { useModulos } from '@/hooks/useModulos';
+import { useModulos } from '@/hooks/sistema';
 
 /**
  * QuickActions - Accesos rápidos contextuales basados en módulos activos

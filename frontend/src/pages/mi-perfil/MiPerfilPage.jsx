@@ -16,9 +16,9 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import useAuthStore from '@/store/authStore';
-import { useProfesional } from '@/hooks/useProfesionales';
-import { useBloqueos } from '@/hooks/useBloqueos';
-import { useSaldosVacaciones } from '@/hooks/useVacaciones';
+import { useProfesional } from '@/hooks/personas';
+import { useBloqueos } from '@/hooks/agendamiento';
+import { useSaldosVacaciones } from '@/hooks/personas';
 import {
   obtenerColorTipoBloqueo,
   calcularDiasBloqueo,

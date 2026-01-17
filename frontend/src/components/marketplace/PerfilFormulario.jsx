@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useActualizarPerfil } from '@/hooks/useMarketplace';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useUbicacionSelector } from '@/hooks/useUbicaciones';
+import { useActualizarPerfil } from '@/hooks/otros';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useUbicacionSelector } from '@/hooks/otros';
 import { Button, Input } from '@/components/ui';
 import GaleriaEditor from './GaleriaEditor';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { Save, Edit2, X, Camera, Loader2, Image, ImagePlus } from 'lucide-react';
 
 /**

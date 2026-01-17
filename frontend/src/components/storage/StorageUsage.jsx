@@ -1,5 +1,5 @@
 import { HardDrive, FileText, AlertTriangle, Loader2 } from 'lucide-react';
-import { useStorageUsage } from '@/hooks/useStorage';
+import { useStorageUsage } from '@/hooks/utils';
 
 /**
  * Formatea el tamaño en bytes a una unidad legible

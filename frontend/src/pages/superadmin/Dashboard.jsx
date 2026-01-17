@@ -3,7 +3,7 @@
  * Vista global con métricas del sistema completo
  */
 
-import useSuperAdmin from '../../hooks/useSuperAdmin';
+import { useSuperAdmin } from '@/hooks/sistema';
 import MetricCard from '../../components/superadmin/MetricCard';
 
 export default function SuperAdminDashboard() {

@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, User, Building2, Key, Check } from 'lucide-react';
 import { Button, Input, Select } from '@/components/ui';
-import { useCrearProfesional, TIPOS_CONTRATACION } from '@/hooks/useProfesionales';
-import { useDepartamentos } from '@/hooks/useDepartamentos';
-import { usePuestos } from '@/hooks/usePuestos';
-import { useToast } from '@/hooks/useToast';
+import { useCrearProfesional, TIPOS_CONTRATACION } from '@/hooks/personas';
+import { useDepartamentos } from '@/hooks/personas';
+import { usePuestos } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 
 // Pasos del wizard
 const PASOS = [

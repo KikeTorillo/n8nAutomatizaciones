@@ -18,10 +18,10 @@ import {
   Textarea
 } from '@/components/ui';
 import FieldWrapper from '@/components/forms/FieldWrapper';
-import { useToast } from '@/hooks/useToast';
-import { useCrearOrdenCompra, useActualizarOrdenCompra, useAgregarItemsOrdenCompra } from '@/hooks/useOrdenesCompra';
-import { useProveedores } from '@/hooks/useProveedores';
-import { useProductos } from '@/hooks/useProductos';
+import { useToast } from '@/hooks/utils';
+import { useCrearOrdenCompra, useActualizarOrdenCompra, useAgregarItemsOrdenCompra } from '@/hooks/inventario';
+import { useProveedores } from '@/hooks/inventario';
+import { useProductos } from '@/hooks/inventario';
 
 /**
  * Schema de validación para la orden

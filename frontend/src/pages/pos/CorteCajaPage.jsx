@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DollarSign, Calendar, TrendingUp, CreditCard, Package, Download } from 'lucide-react';
 import { BackButton, Button, Input } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useCorteCaja } from '@/hooks/useVentas';
+import { useToast } from '@/hooks/utils';
+import { useCorteCaja } from '@/hooks/pos';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 
 /**

@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui';
 import DirectorioFiltros from '@/components/marketplace/DirectorioFiltros';
 import DirectorioGrid from '@/components/marketplace/DirectorioGrid';
-import { usePerfilesMarketplace } from '@/hooks/useMarketplace';
+import { usePerfilesMarketplace } from '@/hooks/otros';
 
 /**
  * Página pública del directorio de marketplace

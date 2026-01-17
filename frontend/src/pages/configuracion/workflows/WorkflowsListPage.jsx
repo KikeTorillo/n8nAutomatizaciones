@@ -23,14 +23,14 @@ import {
 
 import { Button, ConfirmDialog } from '@/components/ui';
 import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   useWorkflowDefiniciones,
   useEliminarWorkflow,
   useDuplicarWorkflow,
   usePublicarWorkflow,
-} from '@/hooks/useWorkflowDesigner';
+} from '@/hooks/sistema';
 
 // Constantes
 const ENTIDADES_TIPO = [

@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Calendar, Clock, Send, AlertCircle } from 'lucide-react';
 import { Alert, Button, Modal } from '@/components/ui';
-import { useCrearSolicitudVacaciones, TURNOS_MEDIO_DIA } from '@/hooks/useVacaciones';
+import { useCrearSolicitudVacaciones, TURNOS_MEDIO_DIA } from '@/hooks/personas';
 
 // Schema de validación
 const solicitudSchema = z.object({

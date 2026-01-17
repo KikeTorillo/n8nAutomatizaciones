@@ -3,8 +3,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Users, Search, Check, Shield } from 'lucide-react';
 import { Button, Drawer, Input, LoadingSpinner } from '@/components/ui';
 import { usuariosApi } from '@/services/api/endpoints';
-import { useAsignarUsuarioSucursal } from '@/hooks/useSucursales';
-import { useToast } from '@/hooks/useToast';
+import { useAsignarUsuarioSucursal } from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Drawer para asignar usuarios a una sucursal

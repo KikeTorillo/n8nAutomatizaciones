@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { ArrowRight, Package, MapPin, Search } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useUbicaciones,
   useMoverStockUbicacion,
   useStockUbicacion,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 
 // Schema de validación
 const moverStockSchema = z.object({

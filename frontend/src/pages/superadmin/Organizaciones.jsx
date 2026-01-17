@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import useSuperAdmin from '../../hooks/useSuperAdmin';
+import { useSuperAdmin } from '@/hooks/sistema';
 
 export default function SuperAdminOrganizaciones() {
     const [filtros, setFiltros] = useState({ page: 1, limit: 20 });

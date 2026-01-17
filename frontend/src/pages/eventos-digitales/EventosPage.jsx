@@ -19,9 +19,9 @@ import {
   Input,
   LoadingSpinner
 } from '@/components/ui';
-import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/useEventosDigitales';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useEventos, useEliminarEvento, usePublicarEvento } from '@/hooks/otros';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 
 /**
  * Página principal de gestión de eventos digitales

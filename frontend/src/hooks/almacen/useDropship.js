@@ -6,7 +6,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { dropshipApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 // ==================== QUERIES ====================
 

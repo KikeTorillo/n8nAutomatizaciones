@@ -6,14 +6,14 @@
 import { useState } from 'react';
 import { Plus, Calendar, Filter, RefreshCw, Clock, User, FileText, X } from 'lucide-react';
 import { Badge, Button, Modal } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useDashboardVacaciones,
   usePoliticaVacaciones,
   getEstadoSolicitud,
   formatDias,
   ESTADOS_SOLICITUD
-} from '@/hooks/useVacaciones';
+} from '@/hooks/personas';
 import SaldoVacacionesCard from './SaldoVacacionesCard';
 import SolicitudVacacionesModal from './SolicitudVacacionesModal';
 import SolicitudesVacacionesList from './SolicitudesVacacionesList';

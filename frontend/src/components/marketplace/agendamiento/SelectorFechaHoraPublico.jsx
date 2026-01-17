@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, AlertCircle, Loader2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { useDisponibilidadPublica } from '@/hooks/useMarketplace';
+import { useDisponibilidadPublica } from '@/hooks/otros';
 
 /**
  * Componente para seleccionar fecha y hora con verificación de disponibilidad en tiempo real (Paso 2)

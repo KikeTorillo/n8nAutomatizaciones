@@ -15,11 +15,11 @@ import {
   Textarea
 } from '@/components/ui';
 import { Loader2, Briefcase } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCrearExperiencia,
   useActualizarExperiencia,
-} from '@/hooks/useExperienciaLaboral';
+} from '@/hooks/personas';
 import { experienciaSchema } from '@/schemas/profesionales.schemas';
 
 // ====================================================================

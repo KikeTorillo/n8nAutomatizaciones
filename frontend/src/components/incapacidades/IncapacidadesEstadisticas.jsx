@@ -18,7 +18,7 @@ import { Select } from '@/components/ui';
 import {
   useEstadisticasIncapacidades,
   TIPOS_INCAPACIDAD_CONFIG,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 
 /**
  * Tarjeta de estadística

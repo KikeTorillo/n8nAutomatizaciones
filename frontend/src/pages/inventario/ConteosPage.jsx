@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDebounce } from '@/hooks/useDebounce';
+import { useDebounce } from '@/hooks/utils';
 import {
     ClipboardList,
     Plus,
@@ -21,8 +21,8 @@ import {
   StatCardGrid,
   Textarea
 } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useConteos,
@@ -34,7 +34,7 @@ import {
     TIPOS_CONTEO,
     TIPOS_CONTEO_LABELS,
     ESTADOS_CONTEO_CONFIG,
-} from '@/hooks/useConteos';
+} from '@/hooks/inventario';
 import ConteoFormModal from '@/components/inventario/conteos/ConteoFormModal';
 
 /**

@@ -12,7 +12,7 @@ import {
 import { BackButton, Badge, Button } from '@/components/ui';
 import HorariosProfesionalModal from '@/components/profesionales/HorariosProfesionalModal';
 import ServiciosProfesionalModal from '@/components/profesionales/ServiciosProfesionalModal';
-import { ESTADOS_LABORALES, TIPOS_CONTRATACION } from '@/hooks/useProfesionales';
+import { ESTADOS_LABORALES, TIPOS_CONTRATACION } from '@/hooks/personas';
 
 /**
  * Header sticky para la página de detalle del profesional

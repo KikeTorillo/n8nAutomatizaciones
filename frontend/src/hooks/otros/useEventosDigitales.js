@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { eventosDigitalesApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hooks para el módulo de Eventos Digitales (invitaciones de bodas, XV años, etc.)
@@ -20,14 +21,7 @@ export function useEventos(params = {}) {
   return useQuery({
     queryKey: ['eventos-digitales', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarEventos(sanitizedParams);
+      const response = await eventosDigitalesApi.listarEventos(sanitizeParams(params));
       return {
         eventos: response.data.data.eventos || [],
         paginacion: response.data.data.paginacion || null,
@@ -92,14 +86,7 @@ export function useInvitados(eventoId, params = {}) {
   return useQuery({
     queryKey: ['invitados-evento', eventoId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarInvitados(eventoId, sanitizedParams);
+      const response = await eventosDigitalesApi.listarInvitados(eventoId, sanitizeParams(params));
       const data = response.data.data;
       return {
         invitados: data.invitados || [],
@@ -146,14 +133,7 @@ export function useMesaRegalos(eventoId, params = {}) {
   return useQuery({
     queryKey: ['mesa-regalos-evento', eventoId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarRegalos(eventoId, sanitizedParams);
+      const response = await eventosDigitalesApi.listarRegalos(eventoId, sanitizeParams(params));
       return response.data.data.regalos || [];
     },
     enabled: !!eventoId,
@@ -174,14 +154,7 @@ export function useFelicitaciones(eventoId, params = {}) {
   return useQuery({
     queryKey: ['felicitaciones-evento', eventoId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarFelicitaciones(eventoId, sanitizedParams);
+      const response = await eventosDigitalesApi.listarFelicitaciones(eventoId, sanitizeParams(params));
       return {
         felicitaciones: response.data.data.felicitaciones || [],
         total: response.data.data.total || 0,
@@ -204,14 +177,7 @@ export function usePlantillas(params = {}) {
   return useQuery({
     queryKey: ['plantillas-eventos', params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarPlantillas(sanitizedParams);
+      const response = await eventosDigitalesApi.listarPlantillas(sanitizeParams(params));
       return response.data.data.plantillas || [];
     },
     staleTime: 1000 * 60 * 10, // 10 minutos (plantillas cambian poco)
@@ -1251,14 +1217,7 @@ export function useGaleria(eventoId, params = {}) {
   return useQuery({
     queryKey: ['galeria-evento', eventoId, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await eventosDigitalesApi.listarFotos(eventoId, sanitizedParams);
+      const response = await eventosDigitalesApi.listarFotos(eventoId, sanitizeParams(params));
       return response.data.data;
     },
     enabled: !!eventoId,

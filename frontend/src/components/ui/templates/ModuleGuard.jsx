@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useModulos } from '@/hooks/useModulos';
+import { useModulos } from '@/hooks/sistema';
 import { Lock, Package, ShoppingCart, DollarSign, Globe, Bot, Calendar, ArrowLeft } from 'lucide-react';
 import Button from '../atoms/Button';
 

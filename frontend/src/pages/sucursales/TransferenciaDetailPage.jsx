@@ -26,9 +26,9 @@ import {
   useEnviarTransferencia,
   useRecibirTransferencia,
   useCancelarTransferencia,
-} from '@/hooks/useSucursales';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+} from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 
 // Configuración de estados
 const estadoConfig = {

@@ -1,7 +1,7 @@
 import PropTypes from 'prop-types';
 import { Search, Filter, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useMemo } from 'react';
-import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
+import { useTiposBloqueo } from '@/hooks/agendamiento';
 import { Input, Select } from '@/components/ui';
 import { OPCIONES_ORIGEN_BLOQUEO, obtenerLabelOrigenBloqueo } from '@/utils/bloqueoHelpers';
 

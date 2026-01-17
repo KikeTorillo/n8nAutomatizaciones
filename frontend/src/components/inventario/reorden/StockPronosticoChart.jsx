@@ -28,7 +28,7 @@ import {
   Calendar,
   RefreshCw,
 } from 'lucide-react';
-import { useHistoricoStock } from '@/hooks/useReorden';
+import { useHistoricoStock } from '@/hooks/almacen';
 
 // Registrar componentes de Chart.js
 ChartJS.register(

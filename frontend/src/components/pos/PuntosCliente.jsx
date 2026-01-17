@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { Star, Gift, ChevronRight, TrendingUp } from 'lucide-react';
-import { useLealtadPOS, useCalcularPuntos } from '@/hooks/useLealtad';
+import { useLealtadPOS, useCalcularPuntos } from '@/hooks/pos';
 import CanjePuntosModal from './CanjePuntosModal';
 
 /**

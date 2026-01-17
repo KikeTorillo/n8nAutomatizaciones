@@ -17,18 +17,18 @@ import NoShowModal from '@/components/citas/NoShowModal';
 import CancelarCitaModal from '@/components/citas/CancelarCitaModal';
 import CalendarioMensual from '@/components/citas/CalendarioMensual';
 import AgendamientoPageLayout from '@/components/agendamiento/AgendamientoPageLayout';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 import {
   useCitas,
   useCitasDelDia,
   useConfirmarCita,
   useIniciarCita,
-} from '@/hooks/useCitas';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useServicios } from '@/hooks/useServicios';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
+} from '@/hooks/agendamiento';
+import { useProfesionales } from '@/hooks/personas';
+import { useServicios } from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
 
 /**
  * Página principal de Gestión de Citas - FASE 1-4

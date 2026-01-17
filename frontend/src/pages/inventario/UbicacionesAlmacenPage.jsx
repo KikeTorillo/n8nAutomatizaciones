@@ -12,7 +12,7 @@ import {
   Search,
   RefreshCw,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Alert,
   Button,
@@ -22,7 +22,7 @@ import {
   TreeView,
   useTreeExpansion
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
@@ -31,7 +31,7 @@ import {
   useStockUbicacion,
   useEliminarUbicacion,
   useToggleBloqueoUbicacion,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 import UbicacionFormDrawer from '@/components/inventario/ubicaciones/UbicacionFormDrawer';
 import MoverStockDrawer from '@/components/inventario/ubicaciones/MoverStockDrawer';
 

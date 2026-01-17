@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { Plus, Filter, X, Calendar, Package } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { BackButton, Button, Select } from '@/components/ui';
 import ConfiguracionComisionesTable from '@/components/comisiones/ConfiguracionComisionesTable';
 import ConfigComisionModal from '@/components/comisiones/ConfigComisionModal';
 import HistorialCambiosModal from '@/components/comisiones/HistorialCambiosModal';
-import { useConfiguracionesComision } from '@/hooks/useComisiones';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useConfiguracionesComision } from '@/hooks/otros';
+import { useProfesionales } from '@/hooks/personas';
 
 // Tabs disponibles
 const TABS = [

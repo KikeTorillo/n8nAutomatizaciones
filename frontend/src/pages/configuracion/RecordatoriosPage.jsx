@@ -7,7 +7,7 @@ import {
   useActualizarConfiguracion,
   useEstadisticasRecordatorios,
   useEnviarPrueba,
-} from '@/hooks/useRecordatorios';
+} from '@/hooks/agendamiento';
 import { Button, Input, StatCardGrid } from '@/components/ui';
 import {
   Bell,

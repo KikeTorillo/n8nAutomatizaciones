@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   DndContext,
   DragOverlay,
@@ -17,7 +17,7 @@ import {
   Drawer,
   Input
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useMesas,
   useEstadisticasMesas,
@@ -28,7 +28,7 @@ import {
   useAsignarInvitadoAMesa,
   useDesasignarInvitadoDeMesa,
   useInvitados,
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 import MesaVisual from './MesaVisual';
 import InvitadoChip from './InvitadoChip';
 

@@ -11,9 +11,12 @@ import {
 } from 'date-fns';
 import CalendarioHeader from '@/components/citas/CalendarioHeader';
 import CalendarioDiaBloqueo from './CalendarioDiaBloqueo';
-import { useBloqueos } from '@/hooks/useBloqueos';
+import { useBloqueos } from '@/hooks/agendamiento';
 import { aFormatoISO, generarRangoFechas } from '@/utils/dateHelpers';
 import { LABELS_TIPO_BLOQUEO } from '@/utils/bloqueoHelpers';
+
+// Constante fuera del componente para evitar recreación (Fase 3 Ene 2026)
+const DIAS_SEMANA = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 /**
  * Componente de calendario mensual para visualizar bloqueos
@@ -125,7 +128,7 @@ function BloqueosCalendar({ profesionalId = null, onVerBloqueo, onCrearBloqueo }
       <div className="p-4">
         {/* Encabezado de días de la semana */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map((dia) => (
+          {DIAS_SEMANA.map((dia) => (
             <div
               key={dia}
               className="text-center text-xs font-semibold text-gray-600 dark:text-gray-400 py-2 uppercase"

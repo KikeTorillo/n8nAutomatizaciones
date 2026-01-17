@@ -18,8 +18,8 @@ import {
   useEliminarPlantilla,
   getColorProgreso,
   formatearFechaOnboarding
-} from '@/hooks/useOnboardingEmpleados';
-import { useModalManager } from '@/hooks/useModalManager';
+} from '@/hooks/personas';
+import { useModalManager } from '@/hooks/utils';
 import PlantillaFormModal from './PlantillaFormModal';
 
 function OnboardingAdminPage() {

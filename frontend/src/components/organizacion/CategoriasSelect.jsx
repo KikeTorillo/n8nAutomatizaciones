@@ -1,6 +1,6 @@
 import { forwardRef, useMemo, useState, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { useCategoriasAgrupadas, useCategoriasProfesional, TIPOS_CATEGORIA } from '@/hooks/useCategoriasProfesional';
+import { useCategoriasAgrupadas, useCategoriasProfesional, TIPOS_CATEGORIA } from '@/hooks/personas';
 import { Check, ChevronDown, X, Tag, Award, Layers, BookOpen, Star } from 'lucide-react';
 
 // Iconos por tipo de categoría

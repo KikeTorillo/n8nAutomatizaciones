@@ -12,7 +12,7 @@ import {
   useEliminarExperiencia,
   formatearRangoFechas,
   calcularDuracion,
-} from '@/hooks/useExperienciaLaboral';
+} from '@/hooks/personas';
 
 /**
  * Card individual de experiencia laboral

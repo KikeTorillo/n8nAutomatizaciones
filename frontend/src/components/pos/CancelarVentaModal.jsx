@@ -6,9 +6,9 @@ import {
   Modal,
   Textarea
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import useAuthStore, { selectUser } from '@/store/authStore';
-import { useCancelarVenta } from '@/hooks/useVentas';
+import { useCancelarVenta } from '@/hooks/pos';
 
 /**
  * Modal para cancelar una venta

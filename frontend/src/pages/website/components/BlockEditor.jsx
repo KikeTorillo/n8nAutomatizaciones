@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   GripVertical,
   Trash2,

@@ -14,7 +14,7 @@ import {
   Textarea
 } from '@/components/ui';
 import SelectorUbicacion from '@/components/forms/SelectorUbicacion';
-import { useCrearSucursal, useActualizarSucursal } from '@/hooks/useSucursales';
+import { useCrearSucursal, useActualizarSucursal } from '@/hooks/sistema';
 
 // ==================== SCHEMA DE VALIDACIÓN ====================
 const sucursalSchema = z.object({

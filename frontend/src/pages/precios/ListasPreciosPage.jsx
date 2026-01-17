@@ -26,10 +26,10 @@ import {
   Modal,
   Select
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import { listasPreciosApi, monedasApi, clientesApi, inventarioApi } from '@/services/api/endpoints';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useCurrency } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 
 /**

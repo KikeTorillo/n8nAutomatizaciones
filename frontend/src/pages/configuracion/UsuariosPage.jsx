@@ -20,8 +20,8 @@ import {
 
 import { Button, ConfirmDialog, StatCardGrid } from '@/components/ui';
 import { ConfigPageHeader, ConfigSearchBar, ConfigEmptyState } from '@/components/configuracion';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   useUsuarios,
   useCambiarEstadoUsuario,
@@ -29,7 +29,7 @@ import {
   useVincularProfesionalAUsuario,
   useProfesionalesSinUsuario,
   ROLES_USUARIO,
-} from '@/hooks/useUsuarios';
+} from '@/hooks/personas';
 import UsuarioFormDrawer from '@/components/usuarios/UsuarioFormDrawer';
 
 // Opciones de filtros

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button, Modal, Textarea } from '@/components/ui';
 import { ClipboardList, Calendar, User, Info } from 'lucide-react';
-import { useCategorias } from '@/hooks/useCategorias';
-import { useUsuarios } from '@/hooks/useUsuarios';
-import { TIPOS_CONTEO, TIPOS_CONTEO_LABELS } from '@/hooks/useConteos';
+import { useCategorias } from '@/hooks/inventario';
+import { useUsuarios } from '@/hooks/personas';
+import { TIPOS_CONTEO, TIPOS_CONTEO_LABELS } from '@/hooks/inventario';
 
 /**
  * Modal para crear un nuevo conteo de inventario

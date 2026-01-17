@@ -9,8 +9,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Checkbox, Drawer } from '@/components/ui';
 import FormField from '../forms/FormField';
-import { useToast } from '@/hooks/useToast';
-import useSuperAdmin from '@/hooks/useSuperAdmin';
+import { useToast } from '@/hooks/utils';
+import { useSuperAdmin } from '@/hooks/sistema';
 
 // Schema de validación con Zod
 const editarPlanSchema = z.object({

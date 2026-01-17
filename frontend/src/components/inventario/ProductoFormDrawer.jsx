@@ -4,12 +4,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useQuery } from '@tanstack/react-query';
 import { Package, DollarSign, TrendingUp, Settings } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useCrearProducto, useActualizarProducto } from '@/hooks/useProductos';
-import { useCategorias } from '@/hooks/useCategorias';
-import { useProveedores } from '@/hooks/useProveedores';
-import { useToast } from '@/hooks/useToast';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useCrearProducto, useActualizarProducto } from '@/hooks/inventario';
+import { useCategorias } from '@/hooks/inventario';
+import { useProveedores } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useCurrency } from '@/hooks/utils';
 import { monedasApi, inventarioApi } from '@/services/api/endpoints';
 import { GenerarVariantesModal } from './variantes';
 

@@ -8,7 +8,7 @@ import { Palmtree, Users, BarChart3, RefreshCw, Clock, CheckCircle, Calendar } f
 import { useQueryClient } from '@tanstack/react-query';
 import { Button, StatCardGrid } from '@/components/ui';
 import { VacacionesDashboard, SolicitudesEquipoSection } from '@/components/vacaciones';
-import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/useVacaciones';
+import { useSaldosVacaciones, useEstadisticasVacaciones } from '@/hooks/personas';
 
 /**
  * Sección de estadísticas

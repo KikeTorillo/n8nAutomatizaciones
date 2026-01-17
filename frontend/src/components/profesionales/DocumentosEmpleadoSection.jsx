@@ -15,8 +15,9 @@ import {
   useObtenerUrlDocumento,
   getTipoDocumentoLabel,
   getEstadoVencimiento,
-  formatFileSize,
-} from '@/hooks/useDocumentosEmpleado';
+  // formatFileSize moved to @/lib/utils
+} from '@/hooks/personas';
+import { formatFileSize } from '@/lib/utils';
 import DocumentoUploadDrawer from './drawers/DocumentoUploadDrawer';
 import {
   ChevronDown,

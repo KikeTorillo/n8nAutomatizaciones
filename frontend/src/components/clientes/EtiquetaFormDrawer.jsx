@@ -13,8 +13,8 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { COLORES_ETIQUETAS, useCrearEtiqueta, useActualizarEtiqueta } from '@/hooks/useEtiquetasClientes';
-import { useToast } from '@/hooks/useToast';
+import { COLORES_ETIQUETAS, useCrearEtiqueta, useActualizarEtiqueta } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 import { Drawer } from '@/components/ui';
 
 // Schema de validación

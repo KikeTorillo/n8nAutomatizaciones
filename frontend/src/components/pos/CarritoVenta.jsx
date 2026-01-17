@@ -1,7 +1,7 @@
 import { Plus, Minus, Trash2, ShoppingCart, Percent, Globe, Tag, RefreshCw, User } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { monedasApi } from '@/services/api/endpoints';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useCurrency } from '@/hooks/utils';
 import InputCupon from './InputCupon';
 import PromocionesAplicadas from './PromocionesAplicadas';
 

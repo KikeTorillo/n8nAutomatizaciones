@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { DollarSign, AlertCircle } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useRegistrarPagoOrdenCompra } from '@/hooks/useOrdenesCompra';
+import { useToast } from '@/hooks/utils';
+import { useRegistrarPagoOrdenCompra } from '@/hooks/inventario';
 
 /**
  * Modal para registrar pagos de una orden de compra

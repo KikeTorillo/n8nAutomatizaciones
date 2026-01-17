@@ -10,7 +10,7 @@
  */
 
 import { useState, useCallback, useEffect, useMemo, useRef } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useNodesState, useEdgesState, addEdge, Panel } from 'reactflow';
 
@@ -19,8 +19,8 @@ import WorkflowToolbar from '@/components/workflows/toolbar/WorkflowToolbar';
 import NodePalette from '@/components/workflows/toolbar/NodePalette';
 import { NodeConfigDrawer, WorkflowSettingsDrawer } from '@/components/workflows/drawers';
 import { PublishWorkflowModal } from '@/components/workflows/modals';
-import { useToast } from '@/hooks/useToast';
-import { useWorkflowValidation } from '@/hooks/useWorkflowValidation';
+import { useToast } from '@/hooks/utils';
+import { useWorkflowValidation } from '@/hooks/sistema';
 import {
   useWorkflowDefinicion,
   useCrearWorkflow,
@@ -30,7 +30,7 @@ import {
   transicionesToEdges,
   nodesToPasos,
   edgesToTransiciones,
-} from '@/hooks/useWorkflowDesigner';
+} from '@/hooks/sistema';
 
 // ID counter para nodos nuevos
 let nodeIdCounter = 0;

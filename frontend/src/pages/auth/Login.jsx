@@ -10,7 +10,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
 import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { Eye, EyeOff, Mail, Loader2, ArrowLeft, CheckCircle } from 'lucide-react';
 import { z } from 'zod';
 

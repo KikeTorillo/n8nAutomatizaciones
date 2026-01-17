@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { FileBarChart, TrendingUp, TrendingDown, ArrowLeftRight, FileSpreadsheet } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Badge,
   Button,
@@ -10,12 +10,12 @@ import {
   FilterPanel,
   Pagination
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
-import { useMovimientos } from '@/hooks/useInventario';
-import { useProductos } from '@/hooks/useProductos';
-import { useProveedores } from '@/hooks/useProveedores';
+import { useMovimientos } from '@/hooks/inventario';
+import { useProductos } from '@/hooks/inventario';
+import { useProveedores } from '@/hooks/inventario';
 import KardexModal from '@/components/inventario/KardexModal';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';

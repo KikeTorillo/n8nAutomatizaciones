@@ -17,8 +17,8 @@ import {
 } from '@/components/ui';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import ComboFormDrawer from '@/components/inventario/ComboFormDrawer';
-import { useCrudHandlers } from '@/hooks/useCrudHandlers';
-import { useCombos, useEliminarCombo } from '@/hooks/useCombosModificadores';
+import { useCrudHandlers } from '@/hooks/utils';
+import { useCombos, useEliminarCombo } from '@/hooks/pos';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Etiquetas para tipos de precio

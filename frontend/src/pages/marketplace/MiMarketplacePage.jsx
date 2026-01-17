@@ -1,8 +1,8 @@
 import { useState, lazy, Suspense } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { Store, FileText, BarChart3, Loader2 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
-import { useMiPerfilMarketplace } from '@/hooks/useMarketplace';
+import { useMiPerfilMarketplace } from '@/hooks/otros';
 import PerfilFormulario from '@/components/marketplace/PerfilFormulario';
 import ListaReseñas from '@/components/marketplace/ListaReseñas';
 import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMarketplaceModal';

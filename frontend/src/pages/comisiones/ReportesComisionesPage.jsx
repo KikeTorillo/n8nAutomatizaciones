@@ -3,8 +3,8 @@ import { BackButton, Button, Modal } from '@/components/ui';
 import ReportesComisionesFiltros from '@/components/comisiones/ReportesComisionesFiltros';
 import ReporteComisionesTable from '@/components/comisiones/ReporteComisionesTable';
 import ExportButtons from '@/components/comisiones/ExportButtons';
-import { useComisionesPorPeriodo } from '@/hooks/useComisiones';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useComisionesPorPeriodo } from '@/hooks/otros';
+import { useModalManager } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 

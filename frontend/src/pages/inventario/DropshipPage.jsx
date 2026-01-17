@@ -22,7 +22,7 @@ import {
   AlertTriangle,
   ArrowRight,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useDropshipEstadisticas,
   useDropshipConfiguracion,
@@ -32,7 +32,7 @@ import {
   useCrearOCDesdeVenta,
   useConfirmarEntregaDropship,
   useCancelarDropship,
-} from '@/hooks/useDropship';
+} from '@/hooks/almacen';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {

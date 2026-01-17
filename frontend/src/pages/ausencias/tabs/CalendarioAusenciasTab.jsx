@@ -27,8 +27,8 @@ import {
 import { es } from 'date-fns/locale';
 import { useQueryClient } from '@tanstack/react-query';
 import { Badge, Button, Modal } from '@/components/ui';
-import { useCalendarioAusencias, formatRangoFechas } from '@/hooks/useAusencias';
-import { useDepartamentosActivos } from '@/hooks/useDepartamentos';
+import { useCalendarioAusencias, formatRangoFechas } from '@/hooks/personas';
+import { useDepartamentosActivos } from '@/hooks/personas';
 
 /**
  * Celda del calendario

@@ -15,8 +15,8 @@ import {
   useEtiquetas,
   useAgregarEtiquetaCliente,
   useQuitarEtiquetaCliente,
-} from '@/hooks/useEtiquetasClientes';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 import EtiquetasBadges from './EtiquetasBadges';
 
 /**

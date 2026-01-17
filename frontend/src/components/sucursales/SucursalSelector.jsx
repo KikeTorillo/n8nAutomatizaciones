@@ -6,7 +6,7 @@ import useSucursalStore, {
   selectSetSucursalActiva,
   selectSetSucursalesDisponibles,
 } from '@/store/sucursalStore';
-import { useSucursalesUsuario } from '@/hooks/useSucursales';
+import { useSucursalesUsuario } from '@/hooks/sistema';
 import useAuthStore, { selectUser } from '@/store/authStore';
 
 /**

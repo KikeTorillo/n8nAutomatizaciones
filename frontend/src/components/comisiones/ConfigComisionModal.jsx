@@ -11,12 +11,12 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useCrearConfiguracionComision } from '@/hooks/useComisiones';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useServicios } from '@/hooks/useServicios';
-import { useProductos } from '@/hooks/useProductos';
-import { useCategorias } from '@/hooks/useCategorias';
-import { useToast } from '@/hooks/useToast';
+import { useCrearConfiguracionComision } from '@/hooks/otros';
+import { useProfesionales } from '@/hooks/personas';
+import { useServicios } from '@/hooks/agendamiento';
+import { useProductos } from '@/hooks/inventario';
+import { useCategorias } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Schema de validación Zod para configuración de comisión

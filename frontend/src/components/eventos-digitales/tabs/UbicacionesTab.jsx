@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Edit, Trash2, MapPin, Clock, ExternalLink } from 'lucide-react';
 import { Button, Input, LoadingSpinner } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Tab de ubicaciones del evento

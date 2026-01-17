@@ -7,10 +7,10 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Drawer } from '@/components/ui';
-import { useCrearAcuerdoConsigna, useActualizarAcuerdoConsigna } from '@/hooks/useConsigna';
-import { useProveedores } from '@/hooks/useProveedores';
-import { useSucursales } from '@/hooks/useSucursales';
-import { useUbicacionesAlmacen } from '@/hooks/useUbicacionesAlmacen';
+import { useCrearAcuerdoConsigna, useActualizarAcuerdoConsigna } from '@/hooks/almacen';
+import { useProveedores } from '@/hooks/inventario';
+import { useSucursales } from '@/hooks/sistema';
+import { useUbicacionesAlmacen } from '@/hooks/inventario';
 
 const schema = z.object({
   proveedor_id: z.coerce.number().min(1, 'Selecciona un proveedor'),

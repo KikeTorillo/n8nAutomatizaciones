@@ -18,8 +18,8 @@ import {
   getResponsableInfo,
   getColorProgreso,
   formatearFechaOnboarding,
-  calcularDiasRestantes
-} from '@/hooks/useOnboardingEmpleados';
+  calcularDiasRestantesOnboarding as calcularDiasRestantes,
+} from '@/hooks/personas';
 
 /**
  * Sección de Progreso de Onboarding del empleado

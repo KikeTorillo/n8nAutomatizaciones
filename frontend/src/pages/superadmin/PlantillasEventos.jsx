@@ -15,14 +15,14 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   usePlantillas,
   useCrearPlantilla,
   useActualizarPlantilla,
   useEliminarPlantilla,
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 
 const TIPOS_EVENTO = [
   { value: 'boda', label: 'Boda' },

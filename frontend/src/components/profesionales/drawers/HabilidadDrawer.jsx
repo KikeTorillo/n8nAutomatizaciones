@@ -16,7 +16,7 @@ import {
   Textarea
 } from '@/components/ui';
 import { Loader2, Wrench, Search, Plus } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useAsignarHabilidad,
   useActualizarHabilidadEmpleado,
@@ -25,7 +25,7 @@ import {
   NIVELES_HABILIDAD,
   CATEGORIAS_HABILIDAD,
   getCategoriaConfig,
-} from '@/hooks/useHabilidades';
+} from '@/hooks/personas';
 import {
   habilidadEmpleadoSchema,
   nuevaHabilidadCatalogoSchema,

@@ -11,12 +11,12 @@ import {
   Textarea
 } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
-import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecurrencia } from '@/hooks/useCitas';
-import { useClientes } from '@/hooks/useClientes';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useServicios } from '@/hooks/useServicios';
+import { useCrearCita, useActualizarCita, useCrearCitaRecurrente, usePreviewRecurrencia } from '@/hooks/agendamiento';
+import { useClientes } from '@/hooks/personas';
+import { useProfesionales } from '@/hooks/personas';
+import { useServicios } from '@/hooks/agendamiento';
 import { serviciosApi, configuracionAgendamientoApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { useQuery } from '@tanstack/react-query';
 import { aFormatoISO } from '@/utils/dateHelpers';
 

@@ -13,7 +13,7 @@ import {
   BookOpen,
 } from 'lucide-react';
 import { BackButton, Button } from '@/components/ui';
-import { useConfiguracionContable, useActualizarConfiguracion } from '@/hooks/useContabilidad';
+import { useConfiguracionContable, useActualizarConfiguracion } from '@/hooks/otros';
 
 /**
  * Página de configuración del módulo de contabilidad

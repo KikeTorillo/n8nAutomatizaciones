@@ -23,7 +23,7 @@ import {
   useConfirmarLiquidacion,
   usePagarLiquidacion,
   useCancelarLiquidacion,
-} from '@/hooks/useConsigna';
+} from '@/hooks/almacen';
 
 const ESTADOS = {
   borrador: { label: 'Borrador', color: 'gray', icon: Clock },

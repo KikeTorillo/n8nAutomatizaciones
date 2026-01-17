@@ -4,7 +4,7 @@
  * Enero 2026
  */
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { RefreshCw, Plus, Calendar, HeartPulse, AlertCircle, CheckCircle, Clock } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
@@ -21,12 +21,12 @@ import {
   calcularDiasRestantes,
   TIPOS_AUSENCIA_CONFIG,
   getTipoIncapacidadConfig,
-} from '@/hooks/useAusencias';
+} from '@/hooks/personas';
 import {
   SaldoVacacionesCard,
   SolicitudVacacionesModal,
 } from '@/components/vacaciones';
-import { formatDias, ESTADOS_SOLICITUD } from '@/hooks/useVacaciones';
+import { formatDias, ESTADOS_SOLICITUD } from '@/hooks/personas';
 
 /**
  * Card de incapacidad activa

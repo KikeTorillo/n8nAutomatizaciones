@@ -15,12 +15,12 @@ import {
   Input,
   Select
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useSucursales,
   useCrearTransferencia,
-} from '@/hooks/useSucursales';
-import { useProductos } from '@/hooks/useProductos';
+} from '@/hooks/sistema';
+import { useProductos } from '@/hooks/inventario';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 // Schema de validación

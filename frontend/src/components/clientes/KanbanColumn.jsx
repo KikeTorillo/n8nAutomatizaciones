@@ -12,7 +12,7 @@
 import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { cn } from '@/lib/utils';
-import { formatMoney } from '@/hooks/useOportunidades';
+import { formatMoney } from '@/hooks/personas';
 import KanbanCard from './KanbanCard';
 
 /**

@@ -11,7 +11,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useMutation } from '@tanstack/react-query';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore, { selectSetAuth } from '@/store/authStore';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import AuthLayout from '@/components/auth/AuthLayout';
 import { Loader2, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui';

@@ -6,10 +6,10 @@ import {
   Modal,
   Textarea
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import useAuthStore, { selectUser } from '@/store/authStore';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
-import { useVenta, useDevolverItems } from '@/hooks/useVentas';
+import { useVenta, useDevolverItems } from '@/hooks/pos';
 
 /**
  * Modal para procesar devolución de items de una venta

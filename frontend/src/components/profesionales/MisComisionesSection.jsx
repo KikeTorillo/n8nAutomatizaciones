@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useComisionesProfesional } from '@/hooks/useComisiones';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useComisionesProfesional } from '@/hooks/otros';
+import { useCurrency } from '@/hooks/utils';
 import { cn } from '@/lib/utils';
 
 // ====================================================================

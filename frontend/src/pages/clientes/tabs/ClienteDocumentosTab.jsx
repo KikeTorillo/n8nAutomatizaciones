@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   FileText,
   Upload,
@@ -35,9 +35,10 @@ import {
   TIPOS_DOCUMENTO,
   getTipoDocumento,
   getEstadoVencimiento,
-  formatFileSize,
-} from '@/hooks/useClienteDocumentos';
-import { useToast } from '@/hooks/useToast';
+  // formatFileSize moved to @/lib/utils
+} from '@/hooks/personas';
+import { formatFileSize } from '@/lib/utils';
+import { useToast } from '@/hooks/utils';
 import DocumentoUploadDrawer from '@/components/clientes/DocumentoUploadDrawer';
 
 /**

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Package, X, Check } from 'lucide-react';
-import { useBuscarProductos } from '@/hooks/useProductos';
+import { useBuscarProductos } from '@/hooks/inventario';
 
 /**
  * Selector de producto inline con búsqueda

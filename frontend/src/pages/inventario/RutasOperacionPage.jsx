@@ -8,8 +8,8 @@ import {
   DataTableActions,
   Drawer
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useRutasOperacion,
@@ -17,7 +17,7 @@ import {
   useCrearRuta,
   useActualizarRuta,
   useEliminarRuta,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 
 // Tipos de ruta con sus iconos y colores
 const TIPOS_RUTA = {

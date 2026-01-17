@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { Loader2, Percent, DollarSign } from 'lucide-react';
 
 import { Button, Drawer, Input } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useCrearCupon, useActualizarCupon } from '@/hooks/useCupones';
+import { useToast } from '@/hooks/utils';
+import { useCrearCupon, useActualizarCupon } from '@/hooks/pos';
 
 // Tipos de descuento disponibles
 const TIPOS_DESCUENTO = {

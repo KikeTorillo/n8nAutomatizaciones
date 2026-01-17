@@ -27,9 +27,9 @@ import {
   Select
 } from '@/components/ui';
 import SucursalFormDrawer from '@/components/sucursales/SucursalFormDrawer';
-import { useSucursales, useEliminarSucursal } from '@/hooks/useSucursales';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useSucursales, useEliminarSucursal } from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 
 /**
  * Página principal de gestión de sucursales

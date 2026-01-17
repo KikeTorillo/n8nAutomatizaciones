@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { DollarSign, TrendingUp, Clock, ChevronRight } from 'lucide-react';
-import { useDashboardComisiones } from '@/hooks/useComisiones';
+import { useDashboardComisiones } from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 import { startOfMonth, endOfMonth, format } from 'date-fns';
 import { es } from 'date-fns/locale';

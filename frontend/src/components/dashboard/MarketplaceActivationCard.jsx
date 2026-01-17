@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useMiPerfilMarketplace } from '@/hooks/useMarketplace';
+import { useMiPerfilMarketplace } from '@/hooks/otros';
 import { Button } from '@/components/ui';
 import { Store, TrendingUp, Users, MapPin, X } from 'lucide-react';
 import CrearPerfilMarketplaceModal from '@/components/marketplace/CrearPerfilMarketplaceModal';

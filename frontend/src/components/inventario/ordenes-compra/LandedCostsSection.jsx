@@ -26,7 +26,7 @@ import {
   useEliminarCostoAdicional,
   useDistribuirCosto,
   useDistribuirTodosCostos,
-} from '@/hooks/useLandedCosts';
+} from '@/hooks/inventario';
 import { formatCurrency } from '@/lib/utils';
 import { Button, Input, Select } from '@/components/ui';
 

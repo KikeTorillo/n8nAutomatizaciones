@@ -31,11 +31,11 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useServiciosDashboard } from '@/hooks/useEstadisticas';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useToast } from '@/hooks/useToast';
-import { useEstadosMexico, usePaises } from '@/hooks/useUbicaciones';
+import { useServiciosDashboard } from '@/hooks/otros';
+import { useProfesionales } from '@/hooks/personas';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
+import { useEstadosMexico, usePaises } from '@/hooks/otros';
 import { listasPreciosApi } from '@/services/api/endpoints';
 import EtiquetasSelector from './EtiquetasSelector';
 import {

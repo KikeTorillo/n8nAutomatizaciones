@@ -25,8 +25,8 @@ import {
   SkeletonTable,
   StatCardGrid
 } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
     useAjustesMasivos,
@@ -36,7 +36,7 @@ import {
     useDescargarPlantillaAjustes,
     ESTADOS_AJUSTE_MASIVO,
     ESTADOS_AJUSTE_MASIVO_CONFIG,
-} from '@/hooks/useAjustesMasivos';
+} from '@/hooks/inventario';
 import AjusteMasivoModal from '@/components/inventario/ajustes-masivos/AjusteMasivoModal';
 
 /**

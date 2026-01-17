@@ -3,11 +3,11 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button, Drawer } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCrearUbicacion,
   useActualizarUbicacion,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 
 // Schema de validación
 const ubicacionSchema = z.object({

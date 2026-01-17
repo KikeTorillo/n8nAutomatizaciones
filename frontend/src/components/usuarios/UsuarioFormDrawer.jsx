@@ -19,8 +19,8 @@ import {
   useCrearUsuarioDirecto,
   useActualizarUsuario,
   ROLES_USUARIO,
-} from '@/hooks/useUsuarios';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 
 // ====================================================================
 // SCHEMA DE VALIDACIÓN (sin password - se usa invitación)

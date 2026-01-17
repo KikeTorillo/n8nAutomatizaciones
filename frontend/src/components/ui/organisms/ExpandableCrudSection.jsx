@@ -32,7 +32,7 @@ import PropTypes from 'prop-types';
 import { ChevronDown, Loader2, AlertCircle, Plus } from 'lucide-react';
 import Button from '../atoms/Button';
 import ConfirmDialog from './ConfirmDialog';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * IMPORTANTE: Memoizar `renderItem` con useCallback en el componente padre

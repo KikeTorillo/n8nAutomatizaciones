@@ -14,10 +14,10 @@ import {
 } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
 import { profesionalesApi, monedasApi } from '@/services/api/endpoints';
-import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/useServicios';
-import { useToast } from '@/hooks/useToast';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useCurrency } from '@/hooks/useCurrency';
+import { useCrearServicio, useActualizarServicio, useServicio } from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useCurrency } from '@/hooks/utils';
 
 /**
  * Schema de validación Zod para CREAR servicio

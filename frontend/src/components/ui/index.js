@@ -21,6 +21,7 @@ export { default as Checkbox } from './atoms/Checkbox';
 export { default as Alert } from './atoms/Alert';
 export { default as Badge } from './atoms/Badge';
 export { default as LoadingSpinner } from './atoms/LoadingSpinner';
+export { default as Label } from './atoms/Label';
 
 // ========== MOLECULES ==========
 export { default as SearchInput } from './molecules/SearchInput';
@@ -39,6 +40,8 @@ export { default as ThemeToggle } from './molecules/ThemeToggle';
 export { default as MultiSelect } from './molecules/MultiSelect';
 export { ProgressBar, LimitProgressBar } from './molecules/ProgressBar';
 export { default as IconPicker } from './molecules/IconPicker';
+// Nuevos (Ene 2026) - Fase 2 mejoras UI
+export { default as FormGroup } from './molecules/FormGroup';
 
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';
@@ -64,6 +67,12 @@ export {
   FilterSelect,
   SavedSearchList,
   SavedSearchModal,
+  // FilterPanelBase y utilidades (Fase 2 Ene 2026)
+  FilterPanelBase,
+  filterInputStyles,
+  filterLabelStyles,
+  countActiveFilters,
+  useActiveFilters,
 } from './organisms/filters';
 
 // ========== TEMPLATES ==========

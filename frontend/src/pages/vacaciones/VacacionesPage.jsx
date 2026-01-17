@@ -11,7 +11,7 @@ import {
   SolicitudesEquipoSection,
   CalendarioEquipoVacaciones,
 } from '@/components/vacaciones';
-import { useSolicitudesPendientes } from '@/hooks/useVacaciones';
+import { useSolicitudesPendientes } from '@/hooks/personas';
 
 /**
  * Tab item component

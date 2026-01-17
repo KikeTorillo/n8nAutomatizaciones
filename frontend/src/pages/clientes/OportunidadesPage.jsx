@@ -24,8 +24,8 @@ import {
   useEstadisticasPipeline,
   formatMoney,
   getEstado,
-  getPrioridad,
-} from '@/hooks/useOportunidades';
+  getPrioridadOportunidad,
+} from '@/hooks/personas';
 
 // Configuracion de tabs de vista
 const VIEW_TABS = [
@@ -158,7 +158,7 @@ function OportunidadesLista({ data, isLoading }) {
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
             {oportunidades.map((oportunidad) => {
               const estado = getEstado(oportunidad.estado);
-              const prioridad = getPrioridad(oportunidad.prioridad);
+              const prioridad = getPrioridadOportunidad(oportunidad.prioridad);
 
               return (
                 <tr

@@ -24,13 +24,13 @@ import {
   useActualizarReglaReorden,
   useEliminarReglaReorden,
   useRutasOperacion,
-} from '@/hooks/useReorden';
-import { useProveedores } from '@/hooks/useProveedores';
-import { useCategorias } from '@/hooks/useCategorias';
-import { useProductos } from '@/hooks/useProductos';
+} from '@/hooks/almacen';
+import { useProveedores } from '@/hooks/inventario';
+import { useCategorias } from '@/hooks/inventario';
+import { useProductos } from '@/hooks/inventario';
 import { Link } from 'react-router-dom';
 import { ConfirmDialog, Drawer } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 
 const DIAS_SEMANA = [
   { value: 1, label: 'Lunes' },

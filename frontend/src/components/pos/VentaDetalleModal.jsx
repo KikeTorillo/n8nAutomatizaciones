@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Receipt, User, Calendar, DollarSign, CreditCard, Package, FileText, Printer, Download } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
-import { useVenta } from '@/hooks/useVentas';
+import { useVenta } from '@/hooks/pos';
 import { posApi } from '@/services/api/endpoints';
 
 /**

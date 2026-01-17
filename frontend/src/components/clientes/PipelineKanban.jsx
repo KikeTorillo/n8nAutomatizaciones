@@ -21,12 +21,12 @@ import {
 } from '@dnd-kit/core';
 import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
 import { Loader2, AlertCircle } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   usePipeline,
   useEtapasPipeline,
   useMoverOportunidad,
-} from '@/hooks/useOportunidades';
+} from '@/hooks/personas';
 import KanbanColumn from './KanbanColumn';
 import KanbanCard from './KanbanCard';
 

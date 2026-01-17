@@ -28,12 +28,12 @@ import {
   ViewTabs
 } from '@/components/ui';
 import ClientesPageLayout from '@/components/clientes/ClientesPageLayout';
-import { useClientes, useEstadisticasClientes } from '@/hooks/useClientes';
-import { useEtiquetas } from '@/hooks/useEtiquetasClientes';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
+import { useClientes, useEstadisticasClientes } from '@/hooks/personas';
+import { useEtiquetas } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 import WalkInModal from '@/components/clientes/WalkInModal';
 import ImportarClientesModal from '@/components/clientes/ImportarClientesModal';
 import ClientesList from '@/components/clientes/ClientesList';

@@ -14,7 +14,7 @@ import {
   X,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import useWebsiteEditor, { useWebsiteBloques } from '@/hooks/useWebsite';
+import { useWebsiteEditor, useWebsiteBloques } from '@/hooks/otros';
 import { BackButton } from '@/components/ui';
 
 // Componentes del editor

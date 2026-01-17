@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DollarSign, Lock, FileText } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
-import { useAbrirSesionCaja } from '@/hooks/usePOS';
-import { useToast } from '@/hooks/useToast';
+import { useAbrirSesionCaja } from '@/hooks/pos';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Modal para abrir sesión de caja

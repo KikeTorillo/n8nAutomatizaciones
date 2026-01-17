@@ -14,13 +14,13 @@ import PropTypes from 'prop-types';
 import { Alert, Button, EmptyState, LoadingSpinner } from '@/components/ui';
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import useAuthStore from '@/store/authStore';
-import { useBloqueos } from '@/hooks/useBloqueos';
-import { useSaldosVacaciones } from '@/hooks/useVacaciones';
+import { useBloqueos } from '@/hooks/agendamiento';
+import { useSaldosVacaciones } from '@/hooks/personas';
 import {
   useIncapacidadesActivasProfesional,
   getTipoIncapacidadConfig,
   formatDiasIncapacidad,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 import {
   obtenerColorTipoBloqueo,
   obtenerLabelTipoBloqueo,

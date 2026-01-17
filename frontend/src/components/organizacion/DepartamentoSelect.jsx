@@ -1,6 +1,6 @@
 import { forwardRef, useMemo } from 'react';
 import { Select } from '@/components/ui';
-import { useDepartamentos, useArbolDepartamentos } from '@/hooks/useDepartamentos';
+import { useDepartamentos, useArbolDepartamentos } from '@/hooks/personas';
 import { Building2 } from 'lucide-react';
 
 /**

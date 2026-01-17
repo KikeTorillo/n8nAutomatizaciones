@@ -9,8 +9,8 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useActualizarProfesional } from '@/hooks/useProfesionales';
-import { useToast } from '@/hooks/useToast';
+import { useActualizarProfesional } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Schemas de validación Zod por tipo de campo

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import useAuthStore, { selectUser } from '@/store/authStore';
-import { useSucursales, useMetricasSucursales } from '@/hooks/useSucursales';
+import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
 import { BackButton, Button } from '@/components/ui';
 import {
   Building2,

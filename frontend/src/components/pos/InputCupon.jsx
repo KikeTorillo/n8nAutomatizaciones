@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { Tag, Check, X, Loader2, Percent, DollarSign, AlertCircle } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { useValidarCupon } from '@/hooks/useCupones';
+import { useValidarCupon } from '@/hooks/pos';
 
 /**
  * Componente para ingresar y validar cupones de descuento en POS

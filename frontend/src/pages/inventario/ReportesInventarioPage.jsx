@@ -15,7 +15,7 @@ import {
   useAnalisisABC,
   useRotacionInventario,
   useResumenAlertas,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 import {
   useResumenValoracion,
   useConfiguracionValoracion,
@@ -24,7 +24,7 @@ import {
   METODOS_VALORACION,
   DESCRIPCIONES_METODOS,
   formatearValor,
-} from '@/hooks/useValoracion';
+} from '@/hooks/inventario';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

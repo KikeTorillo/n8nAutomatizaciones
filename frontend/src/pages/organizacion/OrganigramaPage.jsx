@@ -13,7 +13,7 @@ import {
 
 import { Button, StatCardGrid } from '@/components/ui';
 import ProfesionalesPageLayout from '@/components/profesionales/ProfesionalesPageLayout';
-import { useOrganigrama } from '@/hooks/useOrganigrama';
+import { useOrganigrama } from '@/hooks/personas';
 import useThemeStore, { selectResolvedTheme } from '@/store/themeStore';
 
 // Ene 2026: Lazy loading de D3OrgChart (~650KB d3)

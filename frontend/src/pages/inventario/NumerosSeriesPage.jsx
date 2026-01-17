@@ -15,9 +15,9 @@ import {
   Modal,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useNumerosSerie,
@@ -30,8 +30,8 @@ import {
   ESTADOS_NUMERO_SERIE,
   ACCIONES_HISTORIAL,
   formatearFechaVencimiento,
-} from '@/hooks/useNumerosSerie';
-import { useSucursales } from '@/hooks/useSucursales';
+} from '@/hooks/inventario';
+import { useSucursales } from '@/hooks/sistema';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 

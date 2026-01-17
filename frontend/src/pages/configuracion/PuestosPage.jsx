@@ -21,14 +21,14 @@ import {
   ConfigEmptyState,
   ConfigCrudDrawer,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/useConfigCrud';
+import { useConfigCrud } from '@/hooks/utils';
 import {
   usePuestos,
   useCrearPuesto,
   useActualizarPuesto,
   useEliminarPuesto,
-} from '@/hooks/usePuestos';
-import { useDepartamentos } from '@/hooks/useDepartamentos';
+} from '@/hooks/personas';
+import { useDepartamentos } from '@/hooks/personas';
 
 /**
  * Página de configuración de Puestos

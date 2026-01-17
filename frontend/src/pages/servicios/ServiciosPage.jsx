@@ -13,9 +13,9 @@ import ServicioFormDrawer from '@/components/servicios/ServicioFormDrawer';
 import ProfesionalesServicioModal from '@/components/servicios/ProfesionalesServicioModal';
 import ServiciosFilters from '@/components/servicios/ServiciosFilters';
 import ServiciosSinProfesionalesAlert from '@/components/servicios/ServiciosSinProfesionalesAlert';
-import { useServicios, useEliminarServicio } from '@/hooks/useServicios';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useServicios, useEliminarServicio } from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
 
 /**

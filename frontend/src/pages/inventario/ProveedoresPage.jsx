@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Building2, Plus, Edit, Trash2, Phone, Mail, Globe, MapPin } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Badge,
   Button,
@@ -10,12 +10,12 @@ import {
   DataTableActions,
   FilterPanel
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useProveedores,
   useEliminarProveedor,
-} from '@/hooks/useProveedores';
+} from '@/hooks/inventario';
 import ProveedorFormDrawer from '@/components/inventario/ProveedorFormDrawer';
 
 /**

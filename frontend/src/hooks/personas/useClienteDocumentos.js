@@ -309,22 +309,7 @@ export function getEstadoVencimiento(estado) {
   return ESTADOS_VENCIMIENTO.find(e => e.value === estado) || ESTADOS_VENCIMIENTO[3];
 }
 
-/**
- * Formatear tamaño de archivo
- */
-export function formatFileSize(bytes) {
-  if (!bytes) return '';
-  const units = ['B', 'KB', 'MB', 'GB'];
-  let size = bytes;
-  let unitIndex = 0;
-
-  while (size >= 1024 && unitIndex < units.length - 1) {
-    size /= 1024;
-    unitIndex++;
-  }
-
-  return `${size.toFixed(1)} ${units[unitIndex]}`;
-}
+// NOTA: formatFileSize movido a @/lib/utils
 
 /**
  * Verificar si un documento está por vencer (próximos 30 días)

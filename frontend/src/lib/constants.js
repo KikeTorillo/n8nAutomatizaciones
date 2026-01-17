@@ -22,7 +22,7 @@ export const ESTADOS_CITA = {
 // Las industrias/categorías ahora son dinámicas y se gestionan desde la base de datos.
 //
 // ✅ USO CORRECTO:
-//   import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
+//   import { useCategoriasMarketplace } from '@/hooks/otros';
 //   const { data: categorias } = useCategoriasMarketplace();
 //
 // CARACTERÍSTICAS:

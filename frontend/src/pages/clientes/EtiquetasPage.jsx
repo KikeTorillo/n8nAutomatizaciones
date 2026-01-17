@@ -10,9 +10,9 @@
  */
 
 import { Plus, Pencil, Trash2, Tag, Users } from 'lucide-react';
-import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/useEtiquetasClientes';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useEtiquetas, useEliminarEtiqueta } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import EtiquetaFormDrawer from '@/components/clientes/EtiquetaFormDrawer';
 import {
   Button,

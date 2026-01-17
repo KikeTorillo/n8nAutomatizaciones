@@ -5,7 +5,7 @@
 import { useState, useEffect } from 'react';
 import { Plus, Minus, PackageMinus } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useStockConsigna, useDevolverMercanciaConsigna } from '@/hooks/useConsigna';
+import { useStockConsigna, useDevolverMercanciaConsigna } from '@/hooks/almacen';
 
 export default function DevolverMercanciaDrawer({ acuerdo, isOpen, onClose }) {
   const [items, setItems] = useState([]);

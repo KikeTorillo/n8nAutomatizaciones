@@ -6,7 +6,7 @@ import {
   Gift
 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Tab de Configuración del Programa de Lealtad

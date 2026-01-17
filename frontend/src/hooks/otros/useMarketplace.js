@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { marketplaceApi } from '@/services/api/endpoints';
+import { sanitizeParams } from '@/lib/params';
 
 /**
  * Hooks personalizados para el marketplace de clientes
@@ -45,21 +46,16 @@ export function usePerfilesMarketplace(params = {}) {
   return useQuery({
     queryKey: ['perfiles-marketplace', params],
     queryFn: async () => {
-      // ⚠️ CRÍTICO: Sanitizar params - eliminar valores vacíos
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          // Validar rating_min (1-5)
-          if (key === 'rating_min') {
-            const num = parseInt(value);
-            if (!isNaN(num) && num >= 1 && num <= 5) {
-              acc[key] = num;
-            }
-          } else {
-            acc[key] = value;
-          }
+      // Sanitizar params y validar rating_min (1-5)
+      const sanitizedParams = sanitizeParams(params);
+      if (sanitizedParams.rating_min) {
+        const num = parseInt(sanitizedParams.rating_min);
+        if (!isNaN(num) && num >= 1 && num <= 5) {
+          sanitizedParams.rating_min = num;
+        } else {
+          delete sanitizedParams.rating_min;
         }
-        return acc;
-      }, {});
+      }
 
       const response = await marketplaceApi.getPerfiles(sanitizedParams);
       return {
@@ -135,14 +131,7 @@ export function useEstadisticasPerfil(id, params = {}) {
   return useQuery({
     queryKey: ['estadisticas-perfil', id, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await marketplaceApi.getEstadisticasPerfil(id, sanitizedParams);
+      const response = await marketplaceApi.getEstadisticasPerfil(id, sanitizeParams(params));
       return response.data.data;
     },
     enabled: !!id,
@@ -167,14 +156,7 @@ export function useReseñasNegocio(slug, params = {}) {
   return useQuery({
     queryKey: ['resenas-negocio', slug, params],
     queryFn: async () => {
-      const sanitizedParams = Object.entries(params).reduce((acc, [key, value]) => {
-        if (value !== '' && value !== null && value !== undefined) {
-          acc[key] = value;
-        }
-        return acc;
-      }, {});
-
-      const response = await marketplaceApi.getReseñas(slug, sanitizedParams);
+      const response = await marketplaceApi.getReseñas(slug, sanitizeParams(params));
       return {
         resenas: response.data.data.resenas || [],
         paginacion: response.data.data.paginacion || null,
@@ -237,12 +219,7 @@ export function useDisponibilidadPublica(organizacionId, params = {}) {
       // Sanitizar parámetros
       const sanitizedParams = {
         organizacion_id: organizacionId,
-        ...Object.entries(params).reduce((acc, [key, value]) => {
-          if (value !== '' && value !== null && value !== undefined) {
-            acc[key] = value;
-          }
-          return acc;
-        }, {})
+        ...sanitizeParams(params)
       };
 
       // Convertir servicios_ids a array si es necesario

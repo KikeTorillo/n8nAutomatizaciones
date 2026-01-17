@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Hash, Search, Check, AlertTriangle, Package } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useNumerosSerieDisponibles } from '@/hooks/useNumerosSerie';
+import { useNumerosSerieDisponibles } from '@/hooks/inventario';
 
 /**
  * Modal para seleccionar número de serie al vender en POS

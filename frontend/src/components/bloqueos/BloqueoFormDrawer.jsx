@@ -10,9 +10,9 @@ import {
   Select
 } from '@/components/ui';
 import FormField from '@/components/forms/FormField';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useCrearBloqueo, useActualizarBloqueo } from '@/hooks/useBloqueos';
-import { useTiposBloqueo } from '@/hooks/useTiposBloqueo';
+import { useProfesionales } from '@/hooks/personas';
+import { useCrearBloqueo, useActualizarBloqueo } from '@/hooks/agendamiento';
+import { useTiposBloqueo } from '@/hooks/agendamiento';
 import {
   bloqueoFormSchema,
   bloqueoFormDefaults,

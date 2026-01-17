@@ -19,7 +19,7 @@ import CalendarioHeader from '@/components/citas/CalendarioHeader';
 import CalendarioDiaVacaciones from './CalendarioDiaVacaciones';
 import FiltrosCalendarioVacaciones from './FiltrosCalendarioVacaciones';
 import SolicitudVacacionesQuickView from './SolicitudVacacionesQuickView';
-import { useSolicitudesCalendario } from '@/hooks/useVacaciones';
+import { useSolicitudesCalendario } from '@/hooks/personas';
 import { aFormatoISO, generarRangoFechas } from '@/utils/dateHelpers';
 
 function CalendarioEquipoVacaciones({ soloEquipo = false }) {

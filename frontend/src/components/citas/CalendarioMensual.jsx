@@ -11,10 +11,10 @@ import {
 import CalendarioHeader from './CalendarioHeader';
 import CalendarioDia from './CalendarioDia';
 import ConfirmarReagendarModal from './ConfirmarReagendarModal';
-import { useCitas, useActualizarCita } from '@/hooks/useCitas';
+import { useCitas, useActualizarCita } from '@/hooks/agendamiento';
 import { aFormatoISO } from '@/utils/dateHelpers';
 import { validarSolapamiento } from '@/utils/citaValidators';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Componente principal del calendario mensual con funcionalidad de drag & drop

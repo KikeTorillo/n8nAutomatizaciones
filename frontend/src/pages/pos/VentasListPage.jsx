@@ -8,10 +8,10 @@ import {
   Select,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useVentas } from '@/hooks/useVentas';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useVentas } from '@/hooks/pos';
 import VentaDetalleModal from '@/components/pos/VentaDetalleModal';
 import CancelarVentaModal from '@/components/pos/CancelarVentaModal';
 import DevolverItemsModal from '@/components/pos/DevolverItemsModal';

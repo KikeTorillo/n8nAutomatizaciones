@@ -24,7 +24,7 @@ import {
   getTipoIncapacidadConfig,
   getEstadoIncapacidadConfig,
   formatDiasIncapacidad,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 import ProrrogaModal from './ProrrogaModal';
 
 /**

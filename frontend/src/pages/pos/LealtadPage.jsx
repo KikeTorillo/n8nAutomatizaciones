@@ -7,8 +7,8 @@ import POSPageHeader from '@/components/pos/POSPageHeader';
 import ConfiguracionLealtadTab from '@/components/pos/tabs/ConfiguracionLealtadTab';
 import NivelesLealtadTab from '@/components/pos/tabs/NivelesLealtadTab';
 import EstadisticasLealtadTab from '@/components/pos/tabs/EstadisticasLealtadTab';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   useConfiguracionLealtad,
   useGuardarConfiguracionLealtad,
@@ -17,7 +17,7 @@ import {
   useCrearNivelesDefault,
   useEstadisticasLealtad,
   useClientesConPuntos
-} from '@/hooks/useLealtad';
+} from '@/hooks/pos';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 
 export default function LealtadPage() {

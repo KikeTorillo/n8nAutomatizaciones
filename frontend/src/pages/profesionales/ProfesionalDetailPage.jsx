@@ -4,7 +4,7 @@ import { Button, LoadingSpinner } from '@/components/ui';
 import ProfesionalHeader from '@/components/profesionales/ProfesionalHeader';
 import ProfesionalTabs from '@/components/profesionales/ProfesionalTabs';
 import ProfesionalProgressBar from '@/components/profesionales/ProfesionalProgressBar';
-import { useProfesional } from '@/hooks/useProfesionales';
+import { useProfesional } from '@/hooks/personas';
 
 // Tabs
 import GeneralTab from '@/components/profesionales/tabs/GeneralTab';

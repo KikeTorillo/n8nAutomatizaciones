@@ -9,7 +9,7 @@ import {
   usePlantillasSugeridas,
   useAplicarPlantilla,
   usePlantillasOnboarding
-} from '@/hooks/useOnboardingEmpleados';
+} from '@/hooks/personas';
 
 export default function OnboardingAplicarDrawer({
   isOpen,

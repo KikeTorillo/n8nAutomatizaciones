@@ -7,8 +7,8 @@ import {
   useProfesionalesServicio,
   useAsignarProfesional,
   useDesasignarProfesional,
-} from '@/hooks/useServicios';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
 import { getArrayDiff } from '@/utils/arrayDiff';
 
 /**

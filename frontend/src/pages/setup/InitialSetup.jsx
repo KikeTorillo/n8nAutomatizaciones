@@ -15,7 +15,7 @@ import { authApi } from '@/services/api/endpoints';
 import apiClient from '@/services/api/client';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 // Esquema de validación con Zod
 const setupSchema = z.object({

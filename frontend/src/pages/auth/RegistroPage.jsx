@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Mail } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { authApi } from '@/services/api/endpoints';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';

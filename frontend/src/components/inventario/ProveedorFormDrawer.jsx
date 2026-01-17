@@ -11,9 +11,9 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useCrearProveedor, useActualizarProveedor } from '@/hooks/useProveedores';
-import { useToast } from '@/hooks/useToast';
-import { usePaises, useEstadosPorPais, useCiudadesPorEstado } from '@/hooks/useUbicaciones';
+import { useCrearProveedor, useActualizarProveedor } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
+import { usePaises, useEstadosPorPais, useCiudadesPorEstado } from '@/hooks/otros';
 
 /**
  * Schema de validación Zod para proveedores

@@ -13,21 +13,21 @@ import {
   Users,
   ChevronRight,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   BackButton,
   Button,
   Modal,
   Textarea
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useAprobacionesPendientes,
   useHistorialAprobaciones,
   useAprobarSolicitud,
   useRechazarSolicitud,
   useInstanciaWorkflow,
-} from '@/hooks/useWorkflows';
+} from '@/hooks/sistema';
 
 /**
  * Página de Aprobaciones

@@ -15,7 +15,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Minus, Check, AlertCircle, Package, Sliders } from 'lucide-react';
-import { useModificadoresProducto, useCombo, useVerificarCombo } from '@/hooks/useCombosModificadores';
+import { useModificadoresProducto, useCombo, useVerificarCombo } from '@/hooks/pos';
 
 /**
  * Modal para seleccionar modificadores de un producto

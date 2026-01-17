@@ -9,7 +9,7 @@ import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
 import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { Eye, EyeOff, CheckCircle, XCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 function ResetPassword() {

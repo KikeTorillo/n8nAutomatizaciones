@@ -26,7 +26,7 @@ import {
   Calendar,
   Building2,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useAcuerdosConsigna,
   useStockConsigna,
@@ -37,8 +37,8 @@ import {
   useTerminarAcuerdoConsigna,
   useConfirmarLiquidacion,
   useCancelarLiquidacion,
-} from '@/hooks/useConsigna';
-import { useProveedores } from '@/hooks/useProveedores';
+} from '@/hooks/almacen';
+import { useProveedores } from '@/hooks/inventario';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import {

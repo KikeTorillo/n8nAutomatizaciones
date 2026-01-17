@@ -27,16 +27,16 @@ import {
 } from '@/components/ui';
 import PromocionFormDrawer from '@/components/pos/PromocionFormDrawer';
 import PromocionStatsModal from '@/components/pos/PromocionStatsModal';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
 import {
   usePromociones,
   useEliminarPromocion,
   useCambiarEstadoPromocion,
   useDuplicarPromocion,
-} from '@/hooks/usePromociones';
+} from '@/hooks/pos';
 import { TIPOS_PROMOCION } from '@/components/pos/promocion-form';
 
 // Filtros iniciales

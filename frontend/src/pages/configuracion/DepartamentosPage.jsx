@@ -23,14 +23,14 @@ import {
   ConfigEmptyState,
   ConfigCrudDrawer,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/useConfigCrud';
+import { useConfigCrud } from '@/hooks/utils';
 import {
   useDepartamentos,
   useArbolDepartamentos,
   useCrearDepartamento,
   useActualizarDepartamento,
   useEliminarDepartamento,
-} from '@/hooks/useDepartamentos';
+} from '@/hooks/personas';
 
 /**
  * Página de configuración de Departamentos

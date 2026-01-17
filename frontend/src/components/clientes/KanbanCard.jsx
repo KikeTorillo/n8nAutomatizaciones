@@ -13,7 +13,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, User, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { formatMoney, getPrioridad } from '@/hooks/useOportunidades';
+import { formatMoney, getPrioridadOportunidad } from '@/hooks/personas';
 
 /**
  * KanbanCard - Card de oportunidad arrastrable
@@ -43,7 +43,7 @@ export default function KanbanCard({ oportunidad, isDragging = false }) {
     transition,
   };
 
-  const prioridad = getPrioridad(oportunidad.prioridad);
+  const prioridad = getPrioridadOportunidad(oportunidad.prioridad);
   const isCurrentlyDragging = isDragging || isSortableDragging;
 
   return (

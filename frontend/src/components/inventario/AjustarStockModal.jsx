@@ -5,8 +5,8 @@ import { z } from 'zod';
 import { TrendingUp, TrendingDown, AlertCircle } from 'lucide-react';
 import { Button, Drawer, Textarea } from '@/components/ui';
 import FieldWrapper from '@/components/forms/FieldWrapper';
-import { useAjustarStock } from '@/hooks/useProductos';
-import { useToast } from '@/hooks/useToast';
+import { useAjustarStock } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Schema de validación Zod para ajuste de stock

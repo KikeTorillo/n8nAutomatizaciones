@@ -21,12 +21,12 @@ import {
   useProfesionales,
   useEliminarProfesional,
   ESTADOS_LABORALES
-} from '@/hooks/useProfesionales';
-import { useDepartamentos } from '@/hooks/useDepartamentos';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
+} from '@/hooks/personas';
+import { useDepartamentos } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
 
 /**
  * Página principal de gestión de profesionales

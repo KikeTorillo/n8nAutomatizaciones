@@ -19,7 +19,7 @@ import {
   Pagination
 } from '@/components/ui';
 import ProfesionalStatsCard from './ProfesionalStatsCard';
-import { ESTADOS_LABORALES } from '@/hooks/useProfesionales';
+import { ESTADOS_LABORALES } from '@/hooks/personas';
 
 /**
  * Componente de lista de profesionales con cards/tabla responsivos

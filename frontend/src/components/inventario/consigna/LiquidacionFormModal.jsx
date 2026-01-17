@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { Calculator, Calendar } from 'lucide-react';
 import { Button, Modal } from '@/components/ui';
-import { useGenerarLiquidacion, usePendienteLiquidar } from '@/hooks/useConsigna';
+import { useGenerarLiquidacion, usePendienteLiquidar } from '@/hooks/almacen';
 import { formatCurrency } from '@/lib/utils';
 import { format, subDays, startOfMonth, endOfMonth } from 'date-fns';
 

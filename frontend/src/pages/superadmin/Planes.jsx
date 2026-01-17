@@ -4,8 +4,8 @@
  */
 
 import { Edit2 } from 'lucide-react';
-import useSuperAdmin from '@/hooks/useSuperAdmin';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useSuperAdmin } from '@/hooks/sistema';
+import { useModalManager } from '@/hooks/utils';
 import EditarPlanModal from '@/components/superadmin/EditarPlanModal';
 import { Button } from '@/components/ui';
 

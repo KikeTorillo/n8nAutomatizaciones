@@ -12,18 +12,18 @@ import {
   FilterChip,
   SavedSearchModal
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useFilters } from '@/hooks/useFilters';
-import { useSavedFilters } from '@/hooks/useSavedFilters';
-import { useExportCSV } from '@/hooks/useExportCSV';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
+import { useFilters } from '@/hooks/utils';
+import { useSavedFilters } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useProductos,
   useEliminarProducto,
-} from '@/hooks/useProductos';
-import { useCategorias } from '@/hooks/useCategorias';
-import { useProveedores } from '@/hooks/useProveedores';
+} from '@/hooks/inventario';
+import { useCategorias } from '@/hooks/inventario';
+import { useProveedores } from '@/hooks/inventario';
 import ProductoFormDrawer from '@/components/inventario/ProductoFormDrawer';
 import BulkProductosModal from '@/components/inventario/BulkProductosModal';
 import AjustarStockModal from '@/components/inventario/AjustarStockModal';

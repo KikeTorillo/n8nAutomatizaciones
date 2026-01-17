@@ -5,7 +5,7 @@
  */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { profesionalesApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 // ==================== QUERY KEYS ====================
 

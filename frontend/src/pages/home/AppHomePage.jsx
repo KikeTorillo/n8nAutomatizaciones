@@ -1,4 +1,4 @@
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -26,9 +26,9 @@ import {
 
 import useAuthStore, { selectLogout, selectUser } from '@/store/authStore';
 import useOnboardingStore from '@/store/onboardingStore';
-import { useModulos } from '@/hooks/useModulos';
-import { useAppNotifications } from '@/hooks/useAppNotifications';
-import { useSucursales, useMetricasSucursales } from '@/hooks/useSucursales';
+import { useModulos } from '@/hooks/sistema';
+import { useAppNotifications } from '@/hooks/sistema';
+import { useSucursales, useMetricasSucursales } from '@/hooks/sistema';
 import { authApi } from '@/services/api/endpoints';
 
 import AppCard from '@/components/home/AppCard';

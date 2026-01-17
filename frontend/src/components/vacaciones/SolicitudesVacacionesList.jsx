@@ -20,7 +20,7 @@ import {
   getEstadoSolicitud,
   formatDias,
   ESTADOS_SOLICITUD
-} from '@/hooks/useVacaciones';
+} from '@/hooks/personas';
 
 /**
  * Formatea una fecha en formato legible

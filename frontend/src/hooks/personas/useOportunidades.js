@@ -430,7 +430,7 @@ export function useMarcarPerdida() {
 /**
  * Obtener configuración de prioridad
  */
-export function getPrioridad(prioridad) {
+export function getPrioridadOportunidad(prioridad) {
   return PRIORIDADES_OPORTUNIDAD.find(p => p.value === prioridad) || PRIORIDADES_OPORTUNIDAD[1];
 }
 

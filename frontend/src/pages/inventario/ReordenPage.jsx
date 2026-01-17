@@ -20,13 +20,13 @@ import {
   LineChart,
   Loader2,
 } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useDashboardReorden,
   useProductosBajoMinimo,
   useEjecutarReordenManual,
   useLogsReorden,
-} from '@/hooks/useReorden';
+} from '@/hooks/almacen';
 import { Link } from 'react-router-dom';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Calendar, Clock, DollarSign, User, Mail, Phone, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui';
-import { useCrearCitaPublica } from '@/hooks/useMarketplace';
-import { useToast } from '@/hooks/useToast';
+import { useCrearCitaPublica } from '@/hooks/otros';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Componente de confirmación y creación de cita (Paso 4)

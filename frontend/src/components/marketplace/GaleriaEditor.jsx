@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Camera, X, Loader2, ImagePlus, GripVertical } from 'lucide-react';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useToast } from '@/hooks/useToast';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Componente para editar galería de imágenes del Marketplace

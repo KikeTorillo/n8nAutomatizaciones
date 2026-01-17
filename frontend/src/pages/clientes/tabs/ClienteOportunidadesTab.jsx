@@ -10,7 +10,7 @@
  */
 
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   TrendingUp,
   Plus,
@@ -32,12 +32,12 @@ import {
   useMarcarGanada,
   useMarcarPerdida,
   useEliminarOportunidad,
-  getPrioridad,
+  getPrioridadOportunidad,
   getEstado,
   formatMoney,
-} from '@/hooks/useOportunidades';
-import { useEtapasPipeline } from '@/hooks/useOportunidades';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/personas';
+import { useEtapasPipeline } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 import OportunidadFormDrawer from '@/components/clientes/OportunidadFormDrawer';
 
 /**
@@ -51,7 +51,7 @@ function OportunidadCard({
   isLoading,
 }) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const prioridadInfo = getPrioridad(oportunidad.prioridad);
+  const prioridadInfo = getPrioridadOportunidad(oportunidad.prioridad);
   const estadoInfo = getEstado(oportunidad.estado);
 
   return (

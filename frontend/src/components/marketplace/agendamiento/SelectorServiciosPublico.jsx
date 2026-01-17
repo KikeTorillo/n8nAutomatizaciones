@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Clock, DollarSign, Check } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
-import { useServiciosPublicos } from '@/hooks/useMarketplace';
+import { useServiciosPublicos } from '@/hooks/otros';
 
 /**
  * Componente para seleccionar servicios (Paso 1)

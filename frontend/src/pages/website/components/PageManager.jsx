@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   FileText,
   Plus,
@@ -30,7 +30,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useReordenarPaginas } from '@/hooks/useWebsite';
+import { useReordenarPaginas } from '@/hooks/otros';
 
 /**
  * PageManager - Gestión de páginas del sitio

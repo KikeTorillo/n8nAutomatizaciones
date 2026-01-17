@@ -34,7 +34,7 @@ import {
   formatDiasIncapacidad,
   TIPOS_INCAPACIDAD_CONFIG,
   ESTADOS_INCAPACIDAD_CONFIG,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 import IncapacidadDetailModal from './IncapacidadDetailModal';
 
 /**

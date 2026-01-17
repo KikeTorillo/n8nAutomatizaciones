@@ -15,14 +15,14 @@ import {
   Select
 } from '@/components/ui';
 import { Loader2, CreditCard } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCrearCuentaBancaria,
   useActualizarCuentaBancaria,
   TIPOS_CUENTA_BANCARIA,
   USOS_CUENTA_BANCARIA,
   MONEDAS_CUENTA,
-} from '@/hooks/useCuentasBancarias';
+} from '@/hooks/personas';
 import { cuentaBancariaSchema } from '@/schemas/profesionales.schemas';
 
 // ====================================================================

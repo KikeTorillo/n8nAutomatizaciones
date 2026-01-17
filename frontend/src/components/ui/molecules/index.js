@@ -20,3 +20,6 @@ export { default as ThemeToggle } from './ThemeToggle';
 export { default as MultiSelect } from './MultiSelect';
 export { ProgressBar, LimitProgressBar } from './ProgressBar';
 export { default as IconPicker } from './IconPicker';
+
+// Nuevos (Ene 2026) - Fase 2 mejoras UI
+export { default as FormGroup } from './FormGroup';

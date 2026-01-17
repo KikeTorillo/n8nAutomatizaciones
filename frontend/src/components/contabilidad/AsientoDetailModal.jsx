@@ -1,5 +1,5 @@
 import { Button, Modal } from '@/components/ui';
-import { useAsiento } from '@/hooks/useContabilidad';
+import { useAsiento } from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 

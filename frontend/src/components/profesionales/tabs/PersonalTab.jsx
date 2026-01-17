@@ -11,7 +11,7 @@ import {
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
-import { GENEROS, ESTADOS_CIVILES } from '@/hooks/useProfesionales';
+import { GENEROS, ESTADOS_CIVILES } from '@/hooks/personas';
 
 /**
  * Tab Personal del profesional

@@ -22,13 +22,13 @@ import {
 } from 'lucide-react';
 import { BackButton, Button } from '@/components/ui';
 import useAuthStore, { selectUser } from '@/store/authStore';
-import { useToast } from '@/hooks/useToast';
-import { useExportCSV } from '@/hooks/useExportCSV';
+import { useToast } from '@/hooks/utils';
+import { useExportCSV } from '@/hooks/utils';
 import {
   useSolicitudesPendientesAusencias,
   useMisAusencias,
-} from '@/hooks/useAusencias';
-import { useIncapacidades } from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
+import { useIncapacidades } from '@/hooks/personas';
 
 // Tabs - Lazy loading para mejor performance
 import MisAusenciasTab from './tabs/MisAusenciasTab';

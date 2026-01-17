@@ -1,7 +1,7 @@
 import { X, Loader2 } from 'lucide-react';
 import { Button, Select } from '@/components/ui';
 import EstrellaRating from './EstrellaRating';
-import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
+import { useCategoriasMarketplace } from '@/hooks/otros';
 
 /**
  * Componente de filtros para el directorio de marketplace

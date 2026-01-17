@@ -18,7 +18,7 @@ import {
   ConfigEmptyState,
   ConfigCrudDrawer,
 } from '@/components/configuracion';
-import { useConfigCrud } from '@/hooks/useConfigCrud';
+import { useConfigCrud } from '@/hooks/utils';
 import {
   useCategoriasProfesional,
   useCategoriasAgrupadas,
@@ -26,7 +26,7 @@ import {
   useActualizarCategoriaProfesional,
   useEliminarCategoriaProfesional,
   TIPOS_CATEGORIA,
-} from '@/hooks/useCategoriasProfesional';
+} from '@/hooks/personas';
 
 // Iconos por tipo de categoría
 const TIPO_ICONS = {

@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Check, AlertCircle, Loader2, Building2, User, Lock } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { invitacionesApi } from '@/services/api/endpoints';
 import PasswordStrengthIndicator from '@/components/auth/PasswordStrengthIndicator';
 

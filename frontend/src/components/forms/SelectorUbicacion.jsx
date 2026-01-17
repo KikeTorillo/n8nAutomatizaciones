@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Controller } from 'react-hook-form';
 import { Select } from '@/components/ui';
-import { useUbicacionSelector } from '@/hooks/useUbicaciones';
+import { useUbicacionSelector } from '@/hooks/otros';
 
 /**
  * Componente SelectorUbicacion - Selección cascada Estado → Ciudad

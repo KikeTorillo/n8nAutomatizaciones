@@ -8,7 +8,7 @@ import { forgotPasswordSchema } from '@/lib/validations';
 import AuthLayout from '@/components/auth/AuthLayout';
 import FormField from '@/components/forms/FormField';
 import { Button } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { Mail, ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react';
 
 function ForgotPassword() {

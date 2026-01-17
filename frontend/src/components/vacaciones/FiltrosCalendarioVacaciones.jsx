@@ -4,7 +4,7 @@
  */
 import PropTypes from 'prop-types';
 import { Filter, Users, Building } from 'lucide-react';
-import { useDepartamentosActivos } from '@/hooks/useDepartamentos';
+import { useDepartamentosActivos } from '@/hooks/personas';
 
 function FiltrosCalendarioVacaciones({ filtros = {}, onFiltrosChange, soloEquipo = false }) {
   const { data: departamentos = [] } = useDepartamentosActivos();

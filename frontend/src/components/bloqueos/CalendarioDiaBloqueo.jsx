@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { format } from 'date-fns';
 import { Lock, Clock, Building, User, Plus } from 'lucide-react';
 import { obtenerColorTipoBloqueo, esBloqueoDiaCompleto } from '@/utils/bloqueoHelpers';
@@ -5,6 +6,8 @@ import { obtenerColorTipoBloqueo, esBloqueoDiaCompleto } from '@/utils/bloqueoHe
 /**
  * Componente de celda individual del calendario para bloqueos
  * Muestra el día y los bloqueos programados para ese día
+ *
+ * Memoizado para evitar re-renders innecesarios (Fase 3 Ene 2026)
  */
 function CalendarioDiaBloqueo({
   dia,
@@ -171,4 +174,15 @@ function CalendarioDiaBloqueo({
   );
 }
 
-export default CalendarioDiaBloqueo;
+// Función de comparación para memo (Fase 3 Ene 2026)
+function areEqual(prev, next) {
+  return (
+    prev.dia.getTime() === next.dia.getTime() &&
+    prev.bloqueos.length === next.bloqueos.length &&
+    prev.esDelMesActual === next.esDelMesActual &&
+    prev.esHoy === next.esHoy &&
+    prev.isLoading === next.isLoading
+  );
+}
+
+export default memo(CalendarioDiaBloqueo, areEqual);

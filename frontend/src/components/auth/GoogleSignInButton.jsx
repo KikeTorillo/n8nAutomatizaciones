@@ -11,7 +11,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore, { selectSetAuth } from '@/store/authStore';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { Loader2 } from 'lucide-react';
 
 // Google Client ID desde variables de entorno

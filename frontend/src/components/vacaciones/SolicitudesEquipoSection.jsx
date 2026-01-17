@@ -15,14 +15,14 @@ import {
   Modal,
   Textarea
 } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useSolicitudesPendientes,
   useAprobarSolicitud,
   useRechazarSolicitud,
   getEstadoSolicitud,
   formatDias
-} from '@/hooks/useVacaciones';
+} from '@/hooks/personas';
 
 /**
  * Formatea una fecha en formato legible

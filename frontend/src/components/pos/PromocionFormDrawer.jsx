@@ -4,9 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, FileText, Sparkles, Settings } from 'lucide-react';
 
 import { Button, Drawer } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectSucursalActiva } from '@/store/sucursalStore';
-import { useCrearPromocion, useActualizarPromocion } from '@/hooks/usePromociones';
+import { useCrearPromocion, useActualizarPromocion } from '@/hooks/pos';
 
 import {
   PromocionFormGeneralTab,

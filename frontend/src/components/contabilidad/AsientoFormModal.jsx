@@ -7,7 +7,7 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useCuentasAfectables } from '@/hooks/useContabilidad';
+import { useCuentasAfectables } from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 

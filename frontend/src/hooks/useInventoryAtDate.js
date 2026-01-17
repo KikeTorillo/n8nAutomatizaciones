@@ -1,3 +1,0 @@
-// Re-export para compatibilidad - hook movido a inventario/
-export * from './inventario/useInventoryAtDate';
-export { default } from './inventario/useInventoryAtDate';

@@ -15,9 +15,9 @@ import {
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
-import { IDIOMAS_DISPONIBLES, useActualizarProfesional } from '@/hooks/useProfesionales';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useToast } from '@/hooks/useToast';
+import { IDIOMAS_DISPONIBLES, useActualizarProfesional } from '@/hooks/personas';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Tab General del profesional

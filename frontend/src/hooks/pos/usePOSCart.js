@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 import useAuthStore, { selectUser } from '@/store/authStore';
 import { listasPreciosApi } from '@/services/api/endpoints';
@@ -174,13 +174,19 @@ export function usePOSCart({ hayPromocionExclusiva = false, descuentoPromociones
   }, [items, clienteSeleccionado, sucursalId, toast]);
 
   // Recalcular precios cuando cambia el cliente
+  // Ene 2026: Guardamos el cliente anterior para detectar cambios reales
+  const clienteIdRef = useRef(clienteSeleccionado?.id);
+
   useEffect(() => {
-    preciosCache.current.clear();
-    if (items.length > 0) {
-      recalcularPreciosCarrito();
+    // Solo recalcular si el cliente realmente cambió (evitar recálculos al agregar items)
+    if (clienteIdRef.current !== clienteSeleccionado?.id) {
+      clienteIdRef.current = clienteSeleccionado?.id;
+      preciosCache.current.clear();
+      if (items.length > 0) {
+        recalcularPreciosCarrito();
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clienteSeleccionado?.id]);
+  }, [clienteSeleccionado?.id, items.length, recalcularPreciosCarrito]);
 
   // ==================== HANDLERS ====================
 

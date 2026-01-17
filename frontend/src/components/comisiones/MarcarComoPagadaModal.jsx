@@ -9,8 +9,8 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useMarcarComoPagada } from '@/hooks/useComisiones';
-import { useToast } from '@/hooks/useToast';
+import { useMarcarComoPagada } from '@/hooks/otros';
+import { useToast } from '@/hooks/utils';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 

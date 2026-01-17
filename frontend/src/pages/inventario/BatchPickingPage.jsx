@@ -25,8 +25,8 @@ import {
   SkeletonCard,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useBatchPickings,
@@ -40,7 +40,7 @@ import {
   ESTADOS_BATCH,
   LABELS_ESTADO_BATCH,
   COLORES_ESTADO_BATCH,
-} from '@/hooks/useBatchPicking';
+} from '@/hooks/almacen';
 import useSucursalStore, { selectGetSucursalId } from '@/store/sucursalStore';
 
 /**

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Package, ShoppingCart, X, ScanBarcode } from 'lucide-react';
-import { useBuscarProductos } from '@/hooks/useProductos';
+import { useBuscarProductos } from '@/hooks/inventario';
 import { BarcodeScanner } from '@/components/ui';
 import { extractProductCode } from '@/utils/gs1Parser';
 

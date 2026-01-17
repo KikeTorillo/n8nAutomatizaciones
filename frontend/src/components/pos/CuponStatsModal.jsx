@@ -13,7 +13,7 @@ import {
   Receipt
 } from 'lucide-react';
 import { Modal, StatCardGrid } from '@/components/ui';
-import { useEstadisticasCupon, useHistorialCupon } from '@/hooks/useCupones';
+import { useEstadisticasCupon, useHistorialCupon } from '@/hooks/pos';
 
 /**
  * Modal para mostrar estadísticas e historial de un cupón

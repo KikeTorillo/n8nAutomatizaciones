@@ -12,7 +12,7 @@ import {
   useRechazarSolicitud,
   getEstadoSolicitud,
   formatDias,
-} from '@/hooks/useVacaciones';
+} from '@/hooks/personas';
 
 function formatFecha(fecha) {
   if (!fecha) return '-';

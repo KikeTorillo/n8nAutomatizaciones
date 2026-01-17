@@ -12,8 +12,8 @@ import {
   Textarea
 } from '@/components/ui';
 import FieldWrapper from '@/components/forms/FieldWrapper';
-import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/useCategorias';
-import { useToast } from '@/hooks/useToast';
+import { useCrearCategoria, useActualizarCategoria, useCategorias } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Schema de validación Zod para categorías

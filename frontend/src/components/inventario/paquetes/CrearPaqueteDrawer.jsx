@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Package, Plus, Trash2, Scale, Ruler, Save, X } from 'lucide-react';
 import { Button, Drawer, Input } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useCrearPaquete,
   useActualizarPaquete,
@@ -13,7 +13,7 @@ import {
   useAgregarItemPaquete,
   useRemoverItemPaquete,
   useCerrarPaquete,
-} from '@/hooks/usePaquetes';
+} from '@/hooks/almacen';
 
 // Schema de validacion para dimensiones
 const dimensionesSchema = z.object({

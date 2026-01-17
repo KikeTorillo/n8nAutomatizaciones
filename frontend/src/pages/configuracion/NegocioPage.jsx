@@ -23,9 +23,9 @@ import {
 
 import useAuthStore, { selectUser } from '@/store/authStore';
 import { organizacionesApi, monedasApi } from '@/services/api/endpoints';
-import { useToast } from '@/hooks/useToast';
-import { useUploadArchivo } from '@/hooks/useStorage';
-import { useCategoriasMarketplace } from '@/hooks/useMarketplace';
+import { useToast } from '@/hooks/utils';
+import { useUploadArchivo } from '@/hooks/utils';
+import { useCategoriasMarketplace } from '@/hooks/otros';
 import { BackButton, Button, Input } from '@/components/ui';
 
 /**

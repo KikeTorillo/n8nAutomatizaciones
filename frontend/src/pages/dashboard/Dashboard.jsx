@@ -2,12 +2,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { serviciosApi } from '@/services/api/endpoints';
 import useAuthStore, { selectUser } from '@/store/authStore';
-import { useModulos } from '@/hooks/useModulos';
+import { useModulos } from '@/hooks/sistema';
 import { BackButton, Button, LimitProgressBar } from '@/components/ui';
 import CitasDelDia from '@/components/dashboard/CitasDelDia';
 import AlertasWidget from '@/components/inventario/AlertasWidget';
-import { useEstadisticasOrganizacion } from '@/hooks/useEstadisticas';
-import { useCitasDelDia } from '@/hooks/useCitas';
+import { useEstadisticasOrganizacion } from '@/hooks/otros';
+import { useCitasDelDia } from '@/hooks/agendamiento';
 import {
   AlertCircle,
   AlertTriangle,

@@ -11,8 +11,8 @@ import {
     File,
 } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
-import { useCrearAjusteMasivo, useDescargarPlantillaAjustes, parsearCSVAjustes } from '@/hooks/useAjustesMasivos';
-import { useToast } from '@/hooks/useToast';
+import { useCrearAjusteMasivo, useDescargarPlantillaAjustes, parsearCSVAjustes } from '@/hooks/inventario';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Modal para crear un nuevo ajuste masivo desde CSV

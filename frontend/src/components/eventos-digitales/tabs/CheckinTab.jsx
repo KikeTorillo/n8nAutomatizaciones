@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Camera, ScanLine, X, UserCheck, AlertCircle } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Tab de check-in con scanner QR

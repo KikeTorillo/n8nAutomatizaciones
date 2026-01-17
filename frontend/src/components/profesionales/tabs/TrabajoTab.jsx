@@ -10,10 +10,10 @@ import {
 import InfoCard from '@/components/profesionales/cards/InfoCard';
 import EditableField from '@/components/profesionales/cards/EditableField';
 import QuickEditDrawer from '@/components/profesionales/cards/QuickEditDrawer';
-import { ESTADOS_LABORALES, TIPOS_CONTRATACION, FORMAS_PAGO, useProfesionales } from '@/hooks/useProfesionales';
-import { useMotivosSalida } from '@/hooks/useMotivosSalida';
-import { useDepartamentos } from '@/hooks/useDepartamentos';
-import { usePuestos } from '@/hooks/usePuestos';
+import { ESTADOS_LABORALES, TIPOS_CONTRATACION, FORMAS_PAGO, useProfesionales } from '@/hooks/personas';
+import { useMotivosSalida } from '@/hooks/personas';
+import { useDepartamentos } from '@/hooks/personas';
+import { usePuestos } from '@/hooks/personas';
 
 // Días de la semana para ubicaciones
 const DIAS_SEMANA = [

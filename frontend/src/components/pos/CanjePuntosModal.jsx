@@ -14,7 +14,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Gift, Star, AlertCircle, CheckCircle } from 'lucide-react';
-import { useValidarCanje } from '@/hooks/useLealtad';
+import { useValidarCanje } from '@/hooks/pos';
 
 /**
  * Modal para canjear puntos de lealtad

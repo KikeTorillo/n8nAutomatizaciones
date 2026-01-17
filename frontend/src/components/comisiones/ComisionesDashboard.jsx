@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { DollarSign, TrendingUp, Clock, Users, Calendar, ShoppingBag } from 'lucide-react';
 import { Select, StatCard } from '@/components/ui';
-import { useDashboardComisiones, useGraficaComisionesPorDia } from '@/hooks/useComisiones';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useDashboardComisiones, useGraficaComisionesPorDia } from '@/hooks/otros';
+import { useProfesionales } from '@/hooks/personas';
 import { formatCurrency } from '@/lib/utils';
 import { startOfMonth, endOfMonth, subMonths, format } from 'date-fns';
 import { es } from 'date-fns/locale';

@@ -15,7 +15,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Loader2 } from 'lucide-react';
 import { Drawer } from '@/components/ui';
-import { PRIORIDADES } from '@/hooks/useClienteActividades';
+import { PRIORIDADES } from '@/hooks/personas';
 
 // Schema de validación
 const tareaSchema = z.object({

@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { UserCheck, Search, Check } from 'lucide-react';
 import { Button, Drawer, Input, LoadingSpinner } from '@/components/ui';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useAsignarProfesionalSucursal } from '@/hooks/useSucursales';
-import { useToast } from '@/hooks/useToast';
+import { useProfesionales } from '@/hooks/personas';
+import { useAsignarProfesionalSucursal } from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Drawer para asignar profesionales a una sucursal

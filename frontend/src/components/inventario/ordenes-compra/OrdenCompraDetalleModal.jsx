@@ -18,14 +18,14 @@ import {
   Modal,
   RecordNavigation
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useOrdenCompra,
   useAgregarItemsOrdenCompra,
   useActualizarItemOrdenCompra,
   useEliminarItemOrdenCompra,
-} from '@/hooks/useOrdenesCompra';
-import { useProductos } from '@/hooks/useProductos';
+} from '@/hooks/inventario';
+import { useProductos } from '@/hooks/inventario';
 import LandedCostsSection from './LandedCostsSection';
 
 /**

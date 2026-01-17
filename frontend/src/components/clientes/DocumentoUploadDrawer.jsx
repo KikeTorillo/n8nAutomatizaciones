@@ -22,7 +22,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { Drawer } from '@/components/ui';
-import { TIPOS_DOCUMENTO, formatFileSize } from '@/hooks/useClienteDocumentos';
+import { TIPOS_DOCUMENTO } from '@/hooks/personas';
+import { formatFileSize } from '@/lib/utils';
 
 // Schema de validación
 const documentoSchema = z.object({

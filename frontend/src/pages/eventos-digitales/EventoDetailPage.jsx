@@ -15,7 +15,7 @@ import {
   LayoutGrid,
 } from 'lucide-react';
 import { BackButton, Button, LoadingSpinner } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { SeatingChartEditor } from '@/components/eventos-digitales';
 import useAuthStore from '@/store/authStore';
 import {
@@ -39,7 +39,7 @@ import {
   useEliminarRegalo,
   useAprobarFelicitacion,
   useRechazarFelicitacion,
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 import {
   InvitadosTab,
   CheckinTab,

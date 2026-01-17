@@ -17,7 +17,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { ShoppingCart, CreditCard, CheckCircle, Star, Gift, Maximize, Minimize } from 'lucide-react';
-import { usePOSReceiver, POS_MESSAGE_TYPES } from '@/hooks/usePOSBroadcast';
+import { usePOSReceiver, POS_MESSAGE_TYPES } from '@/hooks/pos';
 
 // Key para localStorage
 const DISPLAY_STATE_KEY = 'nexo-pos-display-state';

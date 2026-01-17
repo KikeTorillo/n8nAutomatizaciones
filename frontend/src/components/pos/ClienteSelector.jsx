@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { UserCircle, Search, X, Plus, Check } from 'lucide-react';
-import { useBuscarClientes, useCrearCliente } from '@/hooks/useClientes';
+import { useBuscarClientes, useCrearCliente } from '@/hooks/personas';
 import { Button, Input } from '@/components/ui';
 
 /**

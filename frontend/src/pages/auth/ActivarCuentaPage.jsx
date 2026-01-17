@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Eye, EyeOff, Check, AlertCircle, Loader2, Building2 } from 'lucide-react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { authApi } from '@/services/api/endpoints';
 import useAuthStore, { selectSetAuth } from '@/store/authStore';
 import AuthLayout from '@/components/auth/AuthLayout';

@@ -13,8 +13,8 @@ import {
   useNotificacionesTipos,
   useActualizarNotificacionesPreferencias,
   NOTIFICACION_CATEGORIAS,
-} from '@/hooks/useNotificaciones';
-import { useToast } from '@/hooks/useToast';
+} from '@/hooks/sistema';
+import { useToast } from '@/hooks/utils';
 import { Button, Checkbox } from '@/components/ui';
 
 /**

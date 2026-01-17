@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X, Palette, Ruler, Plus, Loader2, Sparkles } from 'lucide-react';
-import { useAtributos, useCrearAtributosDefecto } from '@/hooks/useAtributos';
-import { useGenerarVariantes } from '@/hooks/useVariantes';
+import { useAtributos, useCrearAtributosDefecto } from '@/hooks/inventario';
+import { useGenerarVariantes } from '@/hooks/inventario';
 import { toast } from 'sonner';
 
 /**

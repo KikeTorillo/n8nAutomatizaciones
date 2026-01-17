@@ -15,8 +15,8 @@ import {
   MoreVertical,
 } from 'lucide-react';
 import { Button, Input, LoadingSpinner } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
-import { useToast } from '@/hooks/useToast';
+import { useModalManager } from '@/hooks/utils';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Tab de invitados del evento

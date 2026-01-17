@@ -27,8 +27,8 @@ import {
   useProductosAcuerdo,
   useAgregarProductoConsigna,
   useRemoverProductoConsigna,
-} from '@/hooks/useConsigna';
-import { useProductos } from '@/hooks/useProductos';
+} from '@/hooks/almacen';
+import { useProductos } from '@/hooks/inventario';
 
 const ESTADOS = {
   borrador: { label: 'Borrador', color: 'gray', icon: Clock },

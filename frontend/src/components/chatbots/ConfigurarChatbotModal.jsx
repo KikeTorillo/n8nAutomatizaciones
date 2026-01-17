@@ -3,8 +3,8 @@ import { Drawer } from '@/components/ui';
 import PlatformCard from './PlatformCard';
 import TelegramConfigForm from './TelegramConfigForm';
 import WhatsAppConfigForm from './WhatsAppConfigForm';
-import { useConfigurarTelegram, useConfigurarWhatsApp } from '@/hooks/useChatbots';
-import { useToast } from '@/hooks/useToast';
+import { useConfigurarTelegram, useConfigurarWhatsApp } from '@/hooks/otros';
+import { useToast } from '@/hooks/utils';
 import { MessageCircle, MessageSquare, Bot } from 'lucide-react';
 
 /**

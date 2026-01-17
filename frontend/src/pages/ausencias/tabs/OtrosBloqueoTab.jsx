@@ -5,10 +5,10 @@
  * Enero 2026
  */
 import { useState, useMemo } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { Plus, Lock, Calendar, TrendingDown, Clock, CalendarDays, List } from 'lucide-react';
-import { useBloqueos, useEliminarBloqueo } from '@/hooks/useBloqueos';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useBloqueos, useEliminarBloqueo } from '@/hooks/agendamiento';
+import { useProfesionales } from '@/hooks/personas';
 import BloqueosList from '@/components/bloqueos/BloqueosList';
 import BloqueosCalendar from '@/components/bloqueos/BloqueosCalendar';
 import BloqueoFilters from '@/components/bloqueos/BloqueoFilters';

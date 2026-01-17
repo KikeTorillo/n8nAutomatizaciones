@@ -27,7 +27,7 @@ import {
   useMarcarTodasNotificacionesLeidas,
   useArchivarNotificacion,
   NOTIFICACION_NIVELES,
-} from '@/hooks/useNotificaciones';
+} from '@/hooks/sistema';
 
 /**
  * Iconos por categoria de notificacion

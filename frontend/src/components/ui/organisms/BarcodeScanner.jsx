@@ -12,7 +12,7 @@
 
 import React, { useEffect, useId } from 'react';
 import { X, Camera, CameraOff, RotateCcw, Volume2, VolumeX } from 'lucide-react';
-import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/useBarcodeScanner';
+import { useBarcodeScanner, FORMAT_PRESETS } from '@/hooks/pos';
 
 const BarcodeScanner = ({
     onScan,

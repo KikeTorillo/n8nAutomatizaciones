@@ -6,8 +6,8 @@ import {
   Input,
   StatCardGrid
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useVentasDiarias } from '@/hooks/useVentas';
+import { useToast } from '@/hooks/utils';
+import { useVentasDiarias } from '@/hooks/pos';
 import POSNavTabs from '@/components/pos/POSNavTabs';
 import { exportarReporteVentasDiarias } from '@/utils/exportToExcel';
 

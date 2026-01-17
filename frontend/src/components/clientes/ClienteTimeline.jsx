@@ -17,12 +17,12 @@ import {
   useCompletarTarea,
   useEliminarActividad,
   TIPOS_TIMELINE,
-} from '@/hooks/useClienteActividades';
+} from '@/hooks/personas';
 import TimelineItem from './TimelineItem';
 import QuickNoteInput from './QuickNoteInput';
 import TareaDrawer from './TareaDrawer';
 import { ConfirmDialog, EmptyState } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 
 export default function ClienteTimeline({
   clienteId,

@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 
 import { BackButton, Button, Select } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { permisosApi } from '@/services/api/endpoints';
 
 /**

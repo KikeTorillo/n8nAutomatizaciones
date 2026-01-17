@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useModulos } from '@/hooks/useModulos';
+import { useModulos } from '@/hooks/sistema';
 import { Button } from '@/components/ui';
 import {
   Sparkles,

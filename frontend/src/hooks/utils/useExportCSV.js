@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { exportarTablaCSV, exportarDatosCSV } from '@/utils/exportToExcel';
 
 /**

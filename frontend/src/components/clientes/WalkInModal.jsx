@@ -6,10 +6,10 @@ import {
   Input,
   Select
 } from '@/components/ui';
-import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/useClientes';
-import { useServiciosDashboard } from '@/hooks/useEstadisticas';
-import { useProfesionales } from '@/hooks/useProfesionales';
-import { useToast } from '@/hooks/useToast';
+import { useBuscarPorTelefono, useCrearWalkIn, useDisponibilidadInmediata } from '@/hooks/personas';
+import { useServiciosDashboard } from '@/hooks/otros';
+import { useProfesionales } from '@/hooks/personas';
+import { useToast } from '@/hooks/utils';
 
 /**
  * Modal para atender clientes walk-in (sin cita previa)

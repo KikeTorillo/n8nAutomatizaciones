@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { CheckCircle2, Star } from 'lucide-react';
 import { Button, Modal, Textarea } from '@/components/ui';
-import { useCompletarCita } from '@/hooks/useCitas';
-import { useToast } from '@/hooks/useToast';
+import { useCompletarCita } from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
 import { formatearFecha, formatearHora } from '@/utils/dateHelpers';
 
 /**

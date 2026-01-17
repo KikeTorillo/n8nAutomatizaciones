@@ -3,7 +3,7 @@
  * Fase 3 del Plan de Empleados Competitivo - Enero 2026
  */
 import { Calendar, Clock, TrendingUp, AlertCircle } from 'lucide-react';
-import { formatDias, calcularProgresoNivel } from '@/hooks/useVacaciones';
+import { formatDias, calcularProgresoNivel } from '@/hooks/personas';
 
 /**
  * Tarjeta que muestra el saldo de vacaciones del usuario

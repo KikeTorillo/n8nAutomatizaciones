@@ -8,14 +8,14 @@ import {
   Input,
   LoadingSpinner
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useUploadArchivo } from '@/hooks/useStorage';
+import { useToast } from '@/hooks/utils';
+import { useUploadArchivo } from '@/hooks/utils';
 import {
   useEvento,
   usePlantillasPorTipo,
   useCrearEvento,
   useActualizarEvento
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 
 /**
  * Página de formulario para crear/editar evento digital

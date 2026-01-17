@@ -25,7 +25,7 @@ import {
   User,
   AlertCircle,
 } from 'lucide-react';
-import { formatRelativeDate, getTipoActividad, getPrioridad, getEstadoTarea } from '@/hooks/useClienteActividades';
+import { formatRelativeDate, getTipoActividad, getPrioridad, getEstadoTarea } from '@/hooks/personas';
 
 // Mapeo de iconos por tipo
 const ICONOS = {

@@ -21,11 +21,11 @@ import {
   Modal,
   Select
 } from '@/components/ui';
-import { useProfesionales } from '@/hooks/useProfesionales';
+import { useProfesionales } from '@/hooks/personas';
 import {
   useCrearIncapacidad,
   TIPOS_INCAPACIDAD_CONFIG,
-} from '@/hooks/useIncapacidades';
+} from '@/hooks/personas';
 
 // Schema de validación
 const incapacidadSchema = z.object({

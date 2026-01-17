@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { Loader2, Award, Star, Crown, Gem } from 'lucide-react';
 
 import { Button, Drawer, Input } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useCrearNivelLealtad, useActualizarNivelLealtad } from '@/hooks/useLealtad';
+import { useToast } from '@/hooks/utils';
+import { useCrearNivelLealtad, useActualizarNivelLealtad } from '@/hooks/pos';
 
 // Colores predefinidos para niveles
 const COLORES_NIVEL = [

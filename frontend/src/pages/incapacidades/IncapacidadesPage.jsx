@@ -3,7 +3,7 @@
  * Módulo de Profesionales - Enero 2026
  */
 import { useState } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import { HeartPulse, List, BarChart3, Plus } from 'lucide-react';
 import { BackButton } from '@/components/ui';
 import {
@@ -11,7 +11,7 @@ import {
   IncapacidadFormModal,
   IncapacidadesEstadisticas,
 } from '@/components/incapacidades';
-import { useIncapacidades } from '@/hooks/useIncapacidades';
+import { useIncapacidades } from '@/hooks/personas';
 
 /**
  * Tab item component

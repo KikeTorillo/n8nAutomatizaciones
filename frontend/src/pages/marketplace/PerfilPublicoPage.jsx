@@ -18,7 +18,7 @@ import ReseñasSection from '@/components/marketplace/ReseñasSection';
 import MapaUbicacion from '@/components/marketplace/MapaUbicacion';
 import ServicioCard from '@/components/marketplace/ServicioCard';
 import ProfesionalCard from '@/components/marketplace/ProfesionalCard';
-import { usePerfilPublico, useReseñasNegocio } from '@/hooks/useMarketplace';
+import { usePerfilPublico, useReseñasNegocio } from '@/hooks/otros';
 import { marketplaceApi } from '@/services/api/endpoints';
 
 /**

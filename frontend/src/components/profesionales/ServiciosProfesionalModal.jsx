@@ -3,8 +3,8 @@ import { useQuery } from '@tanstack/react-query';
 import { Briefcase, AlertCircle } from 'lucide-react';
 import { Button, Drawer } from '@/components/ui';
 import { serviciosApi } from '@/services/api/endpoints';
-import { useAsignarProfesional, useDesasignarProfesional } from '@/hooks/useServicios';
-import { useToast } from '@/hooks/useToast';
+import { useAsignarProfesional, useDesasignarProfesional } from '@/hooks/agendamiento';
+import { useToast } from '@/hooks/utils';
 import { getArrayDiff } from '@/utils/arrayDiff';
 
 /**

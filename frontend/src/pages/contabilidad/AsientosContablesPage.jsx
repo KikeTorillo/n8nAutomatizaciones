@@ -21,7 +21,7 @@ import {
   Select,
   Textarea
 } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useAsientosContables,
   useCrearAsiento,
@@ -29,7 +29,7 @@ import {
   usePublicarAsiento,
   useAnularAsiento,
   useEliminarAsiento,
-} from '@/hooks/useContabilidad';
+} from '@/hooks/otros';
 import { AsientoFormModal, AsientoDetailModal } from '@/components/contabilidad';
 import { formatCurrency } from '@/lib/utils';
 import { format, startOfMonth, endOfMonth } from 'date-fns';

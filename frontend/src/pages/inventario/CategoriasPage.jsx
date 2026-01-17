@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { FolderTree, Plus, Edit, Trash2, AlertTriangle } from 'lucide-react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Alert,
   Button,
@@ -9,13 +9,13 @@ import {
   TreeView,
   useTreeExpansion
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useCategorias,
   useArbolCategorias,
   useEliminarCategoria,
-} from '@/hooks/useCategorias';
+} from '@/hooks/inventario';
 import CategoriaFormDrawer from '@/components/inventario/CategoriaFormDrawer';
 
 /**

@@ -1,6 +1,6 @@
 import { forwardRef, useMemo } from 'react';
 import { Select } from '@/components/ui';
-import { usePuestos, usePuestosPorDepartamento } from '@/hooks/usePuestos';
+import { usePuestos, usePuestosPorDepartamento } from '@/hooks/personas';
 import { Briefcase } from 'lucide-react';
 
 /**

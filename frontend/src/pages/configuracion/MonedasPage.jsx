@@ -21,10 +21,10 @@ import {
   Input,
   Modal
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import { monedasApi } from '@/services/api/endpoints';
-import { useCurrency } from '@/hooks/useCurrency';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useCurrency } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 
 /**
  * Pares de tasas de cambio predefinidos

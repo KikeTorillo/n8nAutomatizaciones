@@ -17,14 +17,14 @@ import {
   Input,
   Select
 } from '@/components/ui';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   useArbolCuentas,
   useCuentasContables,
   useCrearCuenta,
   useActualizarCuenta,
   useEliminarCuenta,
-} from '@/hooks/useContabilidad';
+} from '@/hooks/otros';
 import CuentaFormModal from '@/components/contabilidad/CuentaFormModal';
 
 // Opciones de tipo de cuenta

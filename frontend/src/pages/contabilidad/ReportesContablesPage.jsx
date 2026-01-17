@@ -23,7 +23,7 @@ import {
   useLibroMayor,
   useEstadoResultados,
   useBalanceGeneral,
-} from '@/hooks/useContabilidad';
+} from '@/hooks/otros';
 import { formatCurrency } from '@/lib/utils';
 import { format, startOfYear, endOfMonth, startOfMonth } from 'date-fns';
 

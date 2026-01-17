@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { DollarSign, Lock, FileText, TrendingUp, TrendingDown, AlertTriangle, CheckCircle, Calculator, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button, Input, Modal } from '@/components/ui';
-import { useResumenSesionCaja, useCerrarSesionCaja } from '@/hooks/usePOS';
-import { useToast } from '@/hooks/useToast';
+import { useResumenSesionCaja, useCerrarSesionCaja } from '@/hooks/pos';
+import { useToast } from '@/hooks/utils';
 
 // Denominaciones del peso mexicano
 const DENOMINACIONES = {

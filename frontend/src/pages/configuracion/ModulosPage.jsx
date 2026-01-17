@@ -5,11 +5,11 @@ import {
   useModulosActivos,
   useActivarModulo,
   useDesactivarModulo,
-} from '@/hooks/useModulos';
+} from '@/hooks/sistema';
 import useAuthStore, { selectIsAdmin } from '@/store/authStore';
 import { BackButton, ConfirmDialog } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useToast } from '@/hooks/utils';
+import { useModalManager } from '@/hooks/utils';
 import {
   Settings,
   Calendar,

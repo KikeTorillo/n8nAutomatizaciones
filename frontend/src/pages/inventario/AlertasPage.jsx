@@ -19,14 +19,14 @@ import {
   Pagination,
   SkeletonTable
 } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import InventarioPageLayout from '@/components/inventario/InventarioPageLayout';
 import {
   useAlertas,
   useMarcarAlertaLeida,
   useMarcarVariasAlertasLeidas,
   useGenerarOCDesdeProducto,
-} from '@/hooks/useInventario';
+} from '@/hooks/inventario';
 import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 

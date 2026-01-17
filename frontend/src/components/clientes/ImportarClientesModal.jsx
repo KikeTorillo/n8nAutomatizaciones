@@ -16,7 +16,7 @@ import { Upload, FileText, CheckCircle, AlertCircle, X, ChevronRight, ChevronLef
 import Papa from 'papaparse';
 import { Button, Modal } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { useImportarClientesCSV } from '@/hooks/useClientes';
+import { useImportarClientesCSV } from '@/hooks/personas';
 
 // Campos disponibles para mapeo
 const CAMPOS_SISTEMA = [

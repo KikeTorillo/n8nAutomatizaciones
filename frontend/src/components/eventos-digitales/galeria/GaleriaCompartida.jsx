@@ -17,7 +17,7 @@
  * <GaleriaCompartida slug="mi-boda" token="abc123" isAdmin={false} permitirSubida={true} />
  */
 import { useState, useRef } from 'react';
-import { useModalManager } from '@/hooks/useModalManager';
+import { useModalManager } from '@/hooks/utils';
 import {
   Camera,
   Image,
@@ -35,7 +35,7 @@ import {
   ImagePlus
 } from 'lucide-react';
 import { Button, ConfirmDialog } from '@/components/ui';
-import { useToast } from '@/hooks/useToast';
+import { useToast } from '@/hooks/utils';
 import {
   useGaleria,
   useGaleriaPublica,
@@ -43,7 +43,7 @@ import {
   useEliminarFoto,
   useReportarFoto,
   useSubirFotoPublica
-} from '@/hooks/useEventosDigitales';
+} from '@/hooks/otros';
 
 function GaleriaCompartida({
   eventoId,
