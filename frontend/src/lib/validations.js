@@ -388,3 +388,238 @@ export const zodErrorToFormErrors = (zodError) => {
     return acc;
   }, {});
 };
+
+// ==================== FIELD HELPERS (Ene 2026) ====================
+// Helpers reutilizables para campos comunes en formularios
+
+/**
+ * String opcional que convierte "" a undefined
+ * Útil para campos opcionales que Joi rechaza si vienen vacíos
+ *
+ * @param {string} label - Etiqueta del campo (para mensajes de error)
+ * @param {number} min - Mínimo de caracteres (default: 0)
+ * @param {number} max - Máximo de caracteres (default: 255)
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   descripcion: optionalString('Descripción', 0, 500),
+ * });
+ */
+export const optionalString = (label = 'Campo', min = 0, max = 255) =>
+  z.string()
+    .optional()
+    .or(z.literal(''))
+    .transform(val => val?.trim() || undefined)
+    .pipe(
+      z.string()
+        .min(min, min > 0 ? `${label} debe tener al menos ${min} caracteres` : undefined)
+        .max(max, `${label} no puede exceder ${max} caracteres`)
+        .optional()
+    );
+
+/**
+ * String requerido con trim automático
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {number} min - Mínimo de caracteres (default: 1)
+ * @param {number} max - Máximo de caracteres (default: 255)
+ * @returns {z.ZodString}
+ *
+ * @example
+ * const schema = z.object({
+ *   nombre: requiredString('Nombre', 2, 100),
+ * });
+ */
+export const requiredString = (label = 'Campo', min = 1, max = 255) =>
+  z.string({ required_error: `${label} es requerido` })
+    .min(min, `${label} debe tener al menos ${min} caracteres`)
+    .max(max, `${label} no puede exceder ${max} caracteres`)
+    .transform(val => val.trim());
+
+/**
+ * Número opcional desde input HTML (maneja strings vacíos)
+ * Convierte "", null, undefined a undefined
+ *
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   cantidad_minima: optionalNumber(),
+ * });
+ */
+export const optionalNumber = () =>
+  z.preprocess(
+    val => (val === '' || val === null || val === undefined) ? undefined : val,
+    z.coerce.number().optional()
+  );
+
+/**
+ * Número requerido positivo
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodNumber}
+ *
+ * @example
+ * const schema = z.object({
+ *   precio: requiredPositiveNumber('Precio'),
+ * });
+ */
+export const requiredPositiveNumber = (label = 'Campo') =>
+  z.coerce.number({ required_error: `${label} es requerido` })
+    .positive(`${label} debe ser positivo`);
+
+/**
+ * Número requerido no negativo (permite 0)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodNumber}
+ */
+export const requiredNonNegativeNumber = (label = 'Campo') =>
+  z.coerce.number({ required_error: `${label} es requerido` })
+    .min(0, `${label} no puede ser negativo`);
+
+/**
+ * Email opcional (convierte "" a undefined)
+ *
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   email_secundario: optionalEmail(),
+ * });
+ */
+export const optionalEmail = () =>
+  z.string()
+    .optional()
+    .or(z.literal(''))
+    .transform(val => val?.trim() || undefined)
+    .pipe(z.string().email('Email inválido').optional());
+
+/**
+ * Fecha opcional (sin hora, formato YYYY-MM-DD)
+ * Convierte "" a undefined y quita la parte de hora si existe
+ *
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   fecha_nacimiento: optionalDate(),
+ * });
+ */
+export const optionalDate = () =>
+  z.string()
+    .optional()
+    .or(z.literal(''))
+    .transform(val => val?.split('T')[0] || undefined);
+
+/**
+ * Fecha requerida (formato YYYY-MM-DD)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodString}
+ */
+export const requiredDate = (label = 'Fecha') =>
+  z.string({ required_error: `${label} es requerida` })
+    .min(1, `${label} es requerida`)
+    .transform(val => val.split('T')[0]);
+
+/**
+ * ID numérico opcional (para selects de relaciones)
+ * Convierte "", "0", null a undefined
+ *
+ * @returns {z.ZodOptional}
+ *
+ * @example
+ * const schema = z.object({
+ *   categoria_id: optionalId(),
+ * });
+ */
+export const optionalId = () =>
+  z.preprocess(
+    val => (val === '' || val === '0' || val === 0 || val === null || val === undefined) ? undefined : val,
+    z.coerce.number().int().positive().optional()
+  );
+
+/**
+ * ID numérico requerido (para selects de relaciones)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @returns {z.ZodNumber}
+ *
+ * @example
+ * const schema = z.object({
+ *   categoria_id: requiredId('Categoría'),
+ * });
+ */
+export const requiredId = (label = 'Campo') =>
+  z.coerce.number({ required_error: `${label} es requerido` })
+    .int(`${label} debe ser un número entero`)
+    .positive(`${label} es requerido`);
+
+/**
+ * Boolean que acepta "true"/"false" strings (de checkboxes HTML)
+ *
+ * @param {boolean} defaultValue - Valor por defecto
+ * @returns {z.ZodBoolean}
+ */
+export const booleanField = (defaultValue = false) =>
+  z.preprocess(
+    val => {
+      if (val === 'true' || val === true || val === 1 || val === '1') return true;
+      if (val === 'false' || val === false || val === 0 || val === '0') return false;
+      return defaultValue;
+    },
+    z.boolean()
+  );
+
+/**
+ * Array de IDs (para multi-selects)
+ *
+ * @param {boolean} optional - Si el array es opcional
+ * @returns {z.ZodArray}
+ *
+ * @example
+ * const schema = z.object({
+ *   profesionales_ids: idsArray(true),
+ * });
+ */
+export const idsArray = (optional = false) => {
+  const schema = z.array(z.coerce.number().int().positive());
+  return optional ? schema.optional().default([]) : schema.min(1, 'Selecciona al menos una opción');
+};
+
+/**
+ * Precio (número con hasta 2 decimales, no negativo)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {boolean} required - Si es requerido
+ * @returns {z.ZodNumber}
+ */
+export const priceField = (label = 'Precio', required = true) => {
+  const schema = z.coerce.number()
+    .min(0, `${label} no puede ser negativo`)
+    .max(99999999.99, `${label} excede el límite`)
+    .transform(val => Math.round(val * 100) / 100); // Redondear a 2 decimales
+
+  return required
+    ? schema.refine(val => val !== undefined && val !== null, { message: `${label} es requerido` })
+    : schema.optional();
+};
+
+/**
+ * Porcentaje (0-100)
+ *
+ * @param {string} label - Etiqueta del campo
+ * @param {boolean} required - Si es requerido
+ * @returns {z.ZodNumber}
+ */
+export const percentageField = (label = 'Porcentaje', required = true) => {
+  const schema = z.coerce.number()
+    .min(0, `${label} debe ser al menos 0%`)
+    .max(100, `${label} no puede exceder 100%`);
+
+  return required
+    ? schema.refine(val => val !== undefined && val !== null, { message: `${label} es requerido` })
+    : schema.optional();
+};

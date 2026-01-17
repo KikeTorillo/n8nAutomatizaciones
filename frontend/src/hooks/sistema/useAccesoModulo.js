@@ -1,21 +1,25 @@
 import { useQuery } from '@tanstack/react-query';
+import { useCallback, useEffect } from 'react';
 import { profesionalesApi, permisosApi } from '@/services/api/endpoints';
 import useAuthStore from '@/store/authStore';
+import usePermisosStore from '@/store/permisosStore';
 
 /**
  * Hook para validar acceso a módulos y obtener profesional vinculado
  *
- * ACTUALIZADO Dic 2025:
- * Los permisos ahora se gestionan via sistema normalizado en BD
- * (permisos_catalogo, permisos_rol, permisos_usuario_sucursal)
- *
- * El hook ahora consulta la API de permisos para validación real.
+ * ACTUALIZADO Ene 2026:
+ * Integrado con permisosStore para cache local optimizada.
+ * Los permisos se cachean en localStorage y se invalidan al cambiar sucursal.
  *
  * @param {string} modulo - Módulo a validar: 'agendamiento' | 'pos' | 'inventario'
  * @returns {Object} { tieneAcceso, profesional, isLoading, error }
  */
 export function useAccesoModulo(modulo) {
   const { user, isAuthenticated } = useAuthStore();
+  const {
+    tienePermiso: tienePermisoCache,
+    setPermisoVerificado,
+  } = usePermisosStore();
 
   // Obtener profesional vinculado
   const {
@@ -41,6 +45,10 @@ export function useAccesoModulo(modulo) {
 
   // Verificar permiso de acceso al módulo
   const codigoPermiso = `${modulo}.acceso`;
+
+  // Consultar cache del store primero
+  const permisoCacheado = tienePermisoCache(codigoPermiso, sucursalId);
+
   const {
     data: permisoData,
     isLoading: loadingPermiso,
@@ -52,25 +60,34 @@ export function useAccesoModulo(modulo) {
 
       try {
         const response = await permisosApi.verificar(codigoPermiso, sucursalId);
-        return response.data.data || { tiene: false };
+        const resultado = response.data.data || { tiene: false };
+
+        // Guardar en el store para cache local
+        setPermisoVerificado(codigoPermiso, sucursalId, resultado.tiene);
+
+        return resultado;
       } catch (err) {
         // Si el endpoint falla, fallback a lógica por rol
         console.warn(`Error verificando permiso ${codigoPermiso}:`, err);
         return null;
       }
     },
-    enabled: isAuthenticated && !!user?.id && !!sucursalId,
+    enabled: isAuthenticated && !!user?.id && !!sucursalId && permisoCacheado === null,
     staleTime: 1000 * 60 * 5, // 5 minutos
     refetchOnWindowFocus: false,
   });
 
   // Calcular acceso
-  // Prioridad: 1) Respuesta de API, 2) Fallback por rol
+  // Prioridad: 1) Cache local, 2) Respuesta de API, 3) Fallback por rol
   const rolesConAccesoCompleto = ['admin', 'propietario', 'super_admin'];
   const tieneAccesoPorRol = rolesConAccesoCompleto.includes(user?.rol);
 
   let tieneAcceso = false;
-  if (permisoData !== undefined && permisoData !== null) {
+
+  if (permisoCacheado !== null) {
+    // Usar cache del store
+    tieneAcceso = permisoCacheado;
+  } else if (permisoData !== undefined && permisoData !== null) {
     // Usar respuesta de la API
     tieneAcceso = permisoData.tiene === true;
   } else {
@@ -79,7 +96,8 @@ export function useAccesoModulo(modulo) {
     tieneAcceso = tieneAccesoPorRol || (profesional?.id && user?.rol === 'empleado');
   }
 
-  const isLoading = loadingProfesional || loadingPermiso;
+  // Si usamos cache, no estamos cargando el permiso
+  const isLoading = loadingProfesional || (permisoCacheado === null && loadingPermiso);
   const error = errorProfesional || errorPermiso;
 
   return {
@@ -92,19 +110,30 @@ export function useAccesoModulo(modulo) {
     profesionalId: profesional?.id || null,
     profesionalNombre: profesional?.nombre_completo || null,
     sucursalId,
+    // Información de cache
+    desdeCache: permisoCacheado !== null,
   };
 }
 
 /**
  * Hook para verificar un permiso específico
+ * Integrado con permisosStore para cache optimizada
  *
  * @param {string} codigoPermiso - Código del permiso (ej: 'pos.descuentos', 'inventario.ordenes_compra')
  * @param {number} sucursalId - ID de la sucursal (opcional, usa la del usuario si no se especifica)
- * @returns {Object} { tiene, valor, isLoading, error }
+ * @returns {Object} { tiene, valor, isLoading, error, desdeCache }
  */
 export function usePermiso(codigoPermiso, sucursalIdParam) {
   const { user, isAuthenticated } = useAuthStore();
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
+
+  const {
+    tienePermiso: tienePermisoCache,
+    setPermisoVerificado,
+  } = usePermisosStore();
+
+  // Consultar cache del store primero
+  const permisoCacheado = tienePermisoCache(codigoPermiso, sucursalId);
 
   const { data, isLoading, error, isError } = useQuery({
     queryKey: ['permiso', codigoPermiso, sucursalId],
@@ -112,9 +141,14 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
       if (!sucursalId) return { tiene: false, valor: null };
 
       const response = await permisosApi.verificar(codigoPermiso, sucursalId);
-      return response.data.data || { tiene: false };
+      const resultado = response.data.data || { tiene: false };
+
+      // Guardar en el store
+      setPermisoVerificado(codigoPermiso, sucursalId, resultado.tiene);
+
+      return resultado;
     },
-    enabled: isAuthenticated && !!user?.id && !!sucursalId && !!codigoPermiso,
+    enabled: isAuthenticated && !!user?.id && !!sucursalId && !!codigoPermiso && permisoCacheado === null,
     staleTime: 1000 * 60 * 5,
     refetchOnWindowFocus: false,
   });
@@ -123,12 +157,23 @@ export function usePermiso(codigoPermiso, sucursalIdParam) {
   const rolesConAccesoCompleto = ['admin', 'propietario', 'super_admin'];
   const tieneAccesoPorRol = rolesConAccesoCompleto.includes(user?.rol);
 
+  // Determinar si tiene el permiso
+  let tiene = false;
+  if (tieneAccesoPorRol) {
+    tiene = true;
+  } else if (permisoCacheado !== null) {
+    tiene = permisoCacheado;
+  } else if (data?.tiene !== undefined) {
+    tiene = data.tiene === true;
+  }
+
   return {
-    tiene: tieneAccesoPorRol || data?.tiene === true,
+    tiene,
     valor: data?.valor,
-    isLoading,
+    isLoading: permisoCacheado === null && isLoading,
     error,
     isError,
+    desdeCache: permisoCacheado !== null,
   };
 }
 
@@ -143,13 +188,27 @@ export function useResumenPermisos(sucursalIdParam) {
   const { user, isAuthenticated } = useAuthStore();
   const sucursalId = sucursalIdParam || user?.sucursal_id || user?.sucursales?.[0]?.id;
 
+  const { setMultiplesPermisos } = usePermisosStore();
+
   const { data, isLoading, error, isError, refetch } = useQuery({
     queryKey: ['permisos-resumen', user?.id, sucursalId],
     queryFn: async () => {
       if (!sucursalId) return {};
 
       const response = await permisosApi.obtenerResumen(sucursalId);
-      return response.data.data || {};
+      const permisos = response.data.data || {};
+
+      // Guardar todos los permisos en el store
+      if (permisos && typeof permisos === 'object') {
+        const permisosArray = Object.entries(permisos).map(([codigo, tiene]) => ({
+          codigo,
+          sucursalId,
+          tiene: Boolean(tiene),
+        }));
+        setMultiplesPermisos(permisosArray);
+      }
+
+      return permisos;
     },
     enabled: isAuthenticated && !!user?.id && !!sucursalId,
     staleTime: 1000 * 60 * 5,
@@ -203,6 +262,21 @@ export function useUsuariosDisponibles() {
     },
     staleTime: 1000 * 60 * 5, // 5 minutos
   });
+}
+
+/**
+ * Hook para invalidar cache de permisos al cambiar de sucursal
+ * Debe usarse en componentes de alto nivel (ej: SucursalSelector)
+ *
+ * @param {number} sucursalId - ID de la sucursal actual
+ */
+export function useInvalidarPermisosAlCambiarSucursal(sucursalId) {
+  const { invalidarCache } = usePermisosStore();
+
+  useEffect(() => {
+    // Invalidar cache cuando cambia la sucursal
+    invalidarCache();
+  }, [sucursalId, invalidarCache]);
 }
 
 export default useAccesoModulo;

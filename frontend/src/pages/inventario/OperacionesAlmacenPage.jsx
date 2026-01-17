@@ -17,6 +17,8 @@ import {
   ClipboardCheck,
   PackageOpen,
   Send,
+  ChevronUp,
+  ChevronDown,
 } from 'lucide-react';
 import { useModalManager } from '@/hooks/useModalManager';
 import {

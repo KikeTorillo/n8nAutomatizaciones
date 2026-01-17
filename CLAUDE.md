@@ -444,26 +444,25 @@ backend/app/
 └── core/           # ModuleRegistry, RouteLoader (auto-discovery)
 
 frontend/src/
+├── app/
+│   ├── router.jsx      # Router simplificado (~25 líneas)
+│   └── routes/         # Rutas modularizadas por dominio
+│       ├── helpers/routeHelpers.jsx
+│       ├── auth.routes.jsx, public.routes.jsx
+│       ├── inventario.routes.jsx, pos.routes.jsx
+│       ├── personas.routes.jsx, configuracion.routes.jsx
+│       └── index.js    # Agregador allRoutes
 ├── components/
-│   └── ui/         # Atomic Design (35 componentes)
-│       ├── atoms/      # Button, Input, Select, etc. (10)
-│       ├── molecules/  # Pagination, StatCard, etc. (12)
-│       ├── organisms/  # Modal, DataTable, etc. (11)
-│       └── templates/  # BasePageLayout, ModuleGuard (2)
-├── pages/          # 128 páginas (31 categorías)
-├── hooks/          # 92 hooks organizados por dominio
-│   ├── inventario/   # 14 hooks
-│   ├── almacen/      # 7 hooks
-│   ├── pos/          # 9 hooks
-│   ├── agendamiento/ # 6 hooks
-│   ├── personas/     # 24 hooks
-│   ├── sistema/      # 13 hooks
-│   ├── utils/        # 11 hooks
-│   └── otros/        # 8 hooks
-├── store/          # 4 stores Zustand
-└── services/api/
-    ├── endpoints.js  # Re-exports centralizados
-    └── modules/      # 58 APIs modulares
+│   └── ui/         # Atomic Design (38 componentes)
+│       ├── atoms/      # Button, Input, LoadingSpinner, etc.
+│       ├── molecules/  # Pagination, StatCard, Toast, etc.
+│       ├── organisms/  # Modal, DataTable, BarcodeScanner, ToastContainer, etc.
+│       └── templates/  # BasePageLayout, ModuleGuard
+├── pages/          # 128 páginas
+├── hooks/          # 92 hooks por dominio
+├── store/          # 5 stores Zustand
+├── lib/validations.js  # Helpers Zod reutilizables
+└── services/api/   # 58 APIs modulares
 
 sql/
 ├── 35 directorios  # 199 archivos SQL
@@ -501,7 +500,7 @@ sql/
 
 ---
 
-## Stores Zustand (4)
+## Stores Zustand (5)
 
 | Store | Estado Principal | Persistencia |
 |-------|-----------------|--------------|
@@ -509,6 +508,7 @@ sql/
 | **sucursalStore** | sucursalActiva, sucursalesDisponibles | localStorage |
 | **themeStore** | theme (light/dark/system), resolvedTheme | localStorage |
 | **onboardingStore** | formData, registroEnviado, organizacion_id | localStorage |
+| **permisosStore** | permisos[], permisosVerificados{}, cache 5min | localStorage |
 
 ---
 
@@ -573,4 +573,4 @@ sql/
 
 ---
 
-**Actualizado**: 10 Enero 2026
+**Actualizado**: 16 Enero 2026

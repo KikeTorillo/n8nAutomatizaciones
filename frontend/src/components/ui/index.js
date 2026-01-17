@@ -20,6 +20,7 @@ export { default as Textarea } from './atoms/Textarea';
 export { default as Checkbox } from './atoms/Checkbox';
 export { default as Alert } from './atoms/Alert';
 export { default as Badge } from './atoms/Badge';
+export { default as LoadingSpinner } from './atoms/LoadingSpinner';
 
 // ========== MOLECULES ==========
 export { default as SearchInput } from './molecules/SearchInput';
@@ -42,6 +43,7 @@ export { default as IconPicker } from './molecules/IconPicker';
 // ========== ORGANISMS ==========
 export { default as Modal } from './organisms/Modal';
 export { default as Drawer } from './organisms/Drawer';
+export { default as BarcodeScanner } from './organisms/BarcodeScanner';
 export { default as ConfirmDialog } from './organisms/ConfirmDialog';
 export { DataTable, DataTableActions, DataTableActionButton } from './organisms/DataTable';
 export { FilterPanel, FilterChips } from './organisms/FilterPanel';
@@ -51,6 +53,7 @@ export { default as GenericNavTabs } from './organisms/GenericNavTabs';
 export { default as SmartButtons } from './organisms/SmartButtons';
 export { TreeView, useTreeExpansion } from './organisms/TreeNode';
 export { default as MobileNavSelector } from './organisms/MobileNavSelector';
+export { default as ToastContainer } from './organisms/ToastContainer';
 
 // Filters (organisms)
 export {
@@ -68,4 +71,4 @@ export { default as BasePageLayout } from './templates/BasePageLayout';
 export { default as ModuleGuard } from './templates/ModuleGuard';
 
 // ========== EXTERNOS ==========
-export { default as LoadingSpinner } from '../common/LoadingSpinner';
+export { default as ChunkErrorBoundary } from '../common/ChunkErrorBoundary';
